@@ -16,5 +16,10 @@ yarn install
 ## Dev
 Start local dev server for Vue client, with Hot Module Replacement.
 ```
+# Start client
 yarn workspace client run dev
+
+
+# Start server
+yarn workspace server run serve
 ```
