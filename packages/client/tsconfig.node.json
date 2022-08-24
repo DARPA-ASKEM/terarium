@@ -1,0 +1,12 @@
+// This is the TypeScript configuration file for Vite, which runs in Node
+// `tsconfig.json` configures TypeScript for the `src` folder, which runs in
+//  the browser.
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
