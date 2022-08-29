@@ -1,4 +1,5 @@
 {
   "name": "shared",
-  "main": "index.ts"
+  "main": "index.ts",
+  "type": "module"
 }
