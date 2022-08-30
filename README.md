@@ -3,8 +3,8 @@ TERArium is the client application for the ASKEM program. TERArium provides capa
 
 ## Install and dependencies
 TERArium is built with Typescript, Vue3, and Koa backend. To run and develop TERArium, you will need these as a prerequisite:
-- Yarn 2
-- NodeJS 18
+- [Yarn 2](https://yarnpkg.com/getting-started/install)
+- [NodeJS 18](https://nodejs.org/en/download/current/)
 
 To install the package dependencies, run the command in the root diretory
 
@@ -17,9 +17,11 @@ yarn install
 Start local dev server for Vue client, with Hot Module Replacement.
 ```
 # Start client
-yarn workspace client run dev
-
+yarn workspace client dev
 
 # Start server
-yarn workspace server run serve
+yarn workspace server serve
+
+# Start client and server
+yarn dev
 ```

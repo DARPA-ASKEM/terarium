@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "dev": "yarn run serve",
     "serve": "ts-node-esm src/app.ts"
   },
   "author": "",
