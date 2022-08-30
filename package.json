@@ -7,7 +7,6 @@
   ],
   "scripts": {
     "build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
-    "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
-    "serve": "ts-node-esm src/app.ts"
+    "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev"
   }
 }
