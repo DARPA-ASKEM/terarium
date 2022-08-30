@@ -2,20 +2,25 @@ import Koa from 'koa';
 import Router from 'koa-router';
 import logger from 'koa-logger';
 import json from 'koa-json';
+import serve from 'koa-static';
 
 import { MyType, add } from 'shared';
 
+const port = 3000;
 const app = new Koa();
 const router = new Router();
 
-router.get('/', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
+app.use(serve('dist/web'));
+
+
+router.get('/api', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   ctx.body = {
     msg: 'TERArium'
   };
   await next();
 });
 
-router.get('/test', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
+router.get('/api/test', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   const test: MyType = {
     name: 'test'
   };
@@ -30,6 +35,8 @@ app.use(json());
 app.use(logger());
 app.use(router.routes()).use(router.allowedMethods());
 
-app.listen(3000, () => {
-  console.log('Server started');
+
+
+app.listen(port, () => {
+  console.log(`Server started on ${port}`);
 });
