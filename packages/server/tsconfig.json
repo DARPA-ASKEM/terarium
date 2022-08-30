@@ -19,9 +19,6 @@
     "paths": {
       "@/*": [
         "src/*"
-      ],
-      "shared": [
-        "../shared"
       ]
     },
     "lib": [

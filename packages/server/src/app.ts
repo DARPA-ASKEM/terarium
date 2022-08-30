@@ -12,10 +12,13 @@ const router = new Router();
 
 app.use(serve('dist/web'));
 
-
 router.get('/api', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   ctx.body = {
-    msg: 'TERArium'
+    API: {
+      description: 'This is the root of TERArium API',
+      routes: {
+      }
+    }
   };
   await next();
 });
