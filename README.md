@@ -20,7 +20,7 @@ Start local dev server for Vue client, with Hot Module Replacement.
 yarn workspace client run dev
 
 # Start server
-yarn workspace server serve
+yarn workspace server run serve
 
 # Start client and server
 yarn dev
