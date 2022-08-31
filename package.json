@@ -4,5 +4,9 @@
   "private": true,
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
+    "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev"
+  }
 }
