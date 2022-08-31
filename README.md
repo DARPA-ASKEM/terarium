@@ -23,5 +23,5 @@ yarn workspace client run dev
 yarn workspace server run serve
 
 # Start client and server
-yarn dev
+yarn run dev
 ```
