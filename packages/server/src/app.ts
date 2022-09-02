@@ -3,6 +3,7 @@ import Router from 'koa-router';
 import logger from 'koa-logger';
 import json from 'koa-json';
 import serve from 'koa-static';
+import koaBody from 'koa-body';
 
 import { MyType, add } from 'shared';
 
@@ -23,7 +24,7 @@ router.get('/api', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   await next();
 });
 
-router.get('/api/test', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
+router.get('/api/test-get', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   const test: MyType = {
     name: 'test'
   };
@@ -34,12 +35,21 @@ router.get('/api/test', async (ctx: Koa.ParameterizedContext, next: Koa.Next) =>
   await next();
 });
 
+router.post('/api/test-post', koaBody(), async (ctx: Koa.ParameterizedContext, next: Koa.Next ) => {
+  console.log(ctx.request.body);
+  ctx.body = JSON.stringify(ctx.request.body);
+  await next();
+});
+
 app.use(json());
 app.use(logger());
 app.use(router.routes()).use(router.allowedMethods());
 
 
-
 app.listen(port, () => {
   console.log(`Server started on ${port}`);
 });
+
+// process.on('SIGTERM', () => {
+//   console.log('SIGTERM detected');
+// });
