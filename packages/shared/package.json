@@ -3,7 +3,7 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "lint": "npx eslint . --fix",
+    "lint": "npx eslint . --ext .ts --fix",
     "prettier": "npx prettier './**/*.ts' --write",
     "format": "yarn lint && yarn prettier"
   }

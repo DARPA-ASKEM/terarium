@@ -8,8 +8,8 @@
     "build": "tsc --build",
     "dev": "yarn run serve",
     "serve": "ts-node-esm src/app.ts",
-    "lint": "npx eslint . --fix",
-    "prettier": "npx prettier 'src/**/*.ts' --write",
+    "lint": "npx eslint . --ext .ts --fix",
+    "prettier": "npx prettier './**/*.ts' --write",
     "format": "yarn lint && yarn prettier"
   },
   "author": "",
