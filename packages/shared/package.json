@@ -1,5 +1,10 @@
 {
   "name": "shared",
   "main": "index.ts",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "lint": "npx eslint . --fix",
+    "prettier": "npx prettier './**/*.ts' --write",
+    "format": "yarn lint && yarn prettier"
+  }
 }
