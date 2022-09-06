@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { MyType, add } from 'shared';
+import { MyType, add } from 'shared'; // eslint-disable-line
 
 defineProps<{ msg: string }>();
 
@@ -22,13 +22,21 @@ const myThing = ref<MyType>({ name: 'Terarium' });
 
   <p>
     Check out
-    <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank"
+    <a
+      href="https://vuejs.org/guide/quick-start.html#local"
+      target="_blank"
+      rel="noopener noreferrer"
       >create-vue</a
     >, the official Vue + Vite starter
   </p>
   <p>
     Install
-    <a href="https://github.com/johnsoncodehk/volar" target="_blank">Volar</a>
+    <a
+      href="https://github.com/johnsoncodehk/volar"
+      target="_blank"
+      rel="noopener noreferrer"
+      >Volar</a
+    >
     in your IDE for a better DX
   </p>
   <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p>
