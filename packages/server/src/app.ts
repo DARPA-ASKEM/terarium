@@ -36,7 +36,6 @@ router.get('/api/test-get', async (ctx: Koa.ParameterizedContext, next: Koa.Next
 });
 
 router.post('/api/test-post', koaBody(), async (ctx: Koa.ParameterizedContext, next: Koa.Next ) => {
-  console.log(ctx.request.body);
   ctx.body = JSON.stringify(ctx.request.body);
   await next();
 });
@@ -49,7 +48,3 @@ app.use(router.routes()).use(router.allowedMethods());
 app.listen(port, () => {
   console.log(`Server started on ${port}`);
 });
-
-// process.on('SIGTERM', () => {
-//   console.log('SIGTERM detected');
-// });
