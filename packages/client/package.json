@@ -6,10 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "lint": "npx eslint . --ext .ts,.vue --fix",
-    "prettier": "npx prettier './**/*.{vue,ts}' --write",
-    "format": "yarn lint && yarn prettier"
+    "preview": "vite preview"
   },
   "dependencies": {
     "vue": "^3.2.37"

@@ -7,10 +7,7 @@
   "scripts": {
     "build": "tsc --build",
     "dev": "yarn run serve",
-    "serve": "ts-node-esm src/app.ts",
-    "lint": "npx eslint . --ext .ts --fix",
-    "prettier": "npx prettier './**/*.ts' --write",
-    "format": "yarn lint && yarn prettier"
+    "serve": "ts-node-esm src/app.ts"
   },
   "author": "",
   "dependencies": {

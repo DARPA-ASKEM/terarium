@@ -31,10 +31,7 @@ const myThing = ref<MyType>({ name: 'Terarium' });
   </p>
   <p>
     Install
-    <a
-      href="https://github.com/johnsoncodehk/volar"
-      target="_blank"
-      rel="noopener noreferrer"
+    <a href="https://github.com/johnsoncodehk/volar" target="_blank" rel="noopener noreferrer"
       >Volar</a
     >
     in your IDE for a better DX

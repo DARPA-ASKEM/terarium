@@ -22,19 +22,16 @@ router.get('/api', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   await next();
 });
 
-router.get(
-  '/api/test',
-  async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
-    const test: MyType = {
-      name: 'test',
-    };
-    const a = add(1, 2);
-    ctx.body = {
-      msg: `${test.name}, ${a}`,
-    };
-    await next();
-  }
-);
+router.get('/api/test', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
+  const test: MyType = {
+    name: 'test',
+  };
+  const a = add(1, 2);
+  ctx.body = {
+    msg: `${test.name}, ${a}`,
+  };
+  await next();
+});
 
 app.use(json());
 app.use(logger());

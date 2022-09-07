@@ -8,7 +8,9 @@
   "scripts": {
     "build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
     "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
-    "format": "yarn workspaces foreach --parallel --interlaced --verbose run format"
+    "lint": "eslint . --ext .ts,.vue --fix",
+    "prettier": "prettier './**/*.{vue,ts}' --write",
+    "format": "yarn lint && yarn prettier"
   },
   "lint-staged": {
     "*.ts": [
