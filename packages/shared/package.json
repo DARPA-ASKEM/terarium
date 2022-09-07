@@ -1,7 +1,5 @@
 {
   "name": "shared",
   "main": "index.ts",
-  "type": "module",
-  "scripts": {
-  }
+  "type": "module"
 }

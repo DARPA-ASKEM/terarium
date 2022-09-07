@@ -25,3 +25,13 @@ yarn workspace server run serve
 # Start client and server
 yarn run dev
 ```
+
+
+## Working with Docker
+```
+# Docker build
+docker build . -t <image_name>
+
+# Run, make TERArium available on http://localhost:3000
+docker run -p 3000:3000 -ti <image_name>
+```
