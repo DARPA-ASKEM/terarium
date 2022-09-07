@@ -16,19 +16,19 @@ router.get('/api', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   ctx.body = {
     API: {
       description: 'This is the root of TERArium API',
-      routes: {},
-    },
+      routes: {}
+    }
   };
   await next();
 });
 
 router.get('/api/test', async (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
   const test: MyType = {
-    name: 'test',
+    name: 'test'
   };
   const a = add(1, 2);
   ctx.body = {
-    msg: `${test.name}, ${a}`,
+    msg: `${test.name}, ${a}`
   };
   await next();
 });

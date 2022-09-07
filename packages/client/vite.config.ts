@@ -8,8 +8,8 @@ export default defineConfig({
   // Syntax sugar for specifying imports
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+      '@': path.resolve(__dirname, './src')
+    }
   },
   // Server proxy - change here to connect to API server (e.g. staging environment)
   server: {
@@ -17,9 +17,9 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000/api',
         changeOrigin: true,
-        rewrite: (_path) => _path.replace(/^\/api/, ''),
-      },
-    },
+        rewrite: (_path) => _path.replace(/^\/api/, '')
+      }
+    }
   },
-  plugins: [vue()],
+  plugins: [vue()]
 });
