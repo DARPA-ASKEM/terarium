@@ -729,6 +729,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/devtools-api@npm:^6.1.4":
+  version: 6.2.1
+  resolution: "@vue/devtools-api@npm:6.2.1"
+  checksum: 34765af0be9b0cc7e3def73b2792b1514e3c348852c5a7503fe07d013f0e907af6c27c0a32c0637dd748caf37c075af8e53ca3220433e0bd34b6f3405f358272
+  languageName: node
+  linkType: hard
+
 "@vue/eslint-config-airbnb-with-typescript@npm:^7.0.0":
   version: 7.0.0
   resolution: "@vue/eslint-config-airbnb-with-typescript@npm:7.0.0"
@@ -1206,6 +1213,7 @@ __metadata:
     typescript: ^4.6.4
     vite: ^3.0.7
     vue: ^3.2.37
+    vue-router: 4
     vue-tsc: ^0.39.5
   languageName: unknown
   linkType: soft
@@ -4731,6 +4739,17 @@ __metadata:
   peerDependencies:
     eslint: ">=6.0.0"
   checksum: 61248eb504b8d0cbc95ed3f7ec6b11b72782cd76e4049798626f9c09031d620691a967231985c79d8ece8b04864797e465b7f47bcf91828e18344ae3691d9066
+  languageName: node
+  linkType: hard
+
+"vue-router@npm:4":
+  version: 4.1.5
+  resolution: "vue-router@npm:4.1.5"
+  dependencies:
+    "@vue/devtools-api": ^6.1.4
+  peerDependencies:
+    vue: ^3.2.0
+  checksum: cafa2f4e14188bca0d4d45e05a901b6ff7bb3933010a6b2c9372bed7fa872bb2e18f1f033b23f540d3a75e1ecd6840b79a5ba5a714de01942d02e1e6cce88dec
   languageName: node
   linkType: hard
 
