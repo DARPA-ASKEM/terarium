@@ -10,5 +10,11 @@
 # !.yarn/cache
 .pnp.*
 
+# NPM
 node_modules
 dist
+
+# IDE
+.nova/*
+.vscode/*
+.idea/*
