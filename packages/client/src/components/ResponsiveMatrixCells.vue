@@ -1,7 +1,10 @@
 <template>
-    <p>Responsive Matrix Cells</p>
+	<p>Responsive Matrix Cells</p>
+	<div>{{ data }}</div>
 </template>
 
 <script setup lang="ts">
-    console.log('Responsive Matrix Cells');
+import { ref } from 'vue';
+
+const data = ref(0);
 </script>
