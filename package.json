@@ -10,14 +10,11 @@
     "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
     "lint": "eslint . --ext .ts,.vue --fix",
     "prettier": "prettier './**/*.{vue,ts}' --write",
-    "format": "yarn lint && yarn prettier"
+    "format": "yarn lint && yarn prettier",
+    "postinstall": "husky install"
   },
   "lint-staged": {
-    "*.ts": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.vue": [
+    "*.{ts,vue}": [
       "eslint --fix",
       "prettier --write"
     ]
@@ -28,6 +25,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-vue": "^9.4.0",
     "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
     "prettier": "^2.7.1"
   }
 }
