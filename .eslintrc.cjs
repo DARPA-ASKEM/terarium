@@ -7,5 +7,8 @@ module.exports = {
     '@vue/eslint-config-airbnb-with-typescript',
     'prettier' // Turns off the formatting rules from the linter since formatting is handled by prettier
   ],
-  parser: 'vue-eslint-parser'
+  parser: 'vue-eslint-parser',
+	rules: {
+		'vue/multi-word-component-names': 'off'
+	}
 };
