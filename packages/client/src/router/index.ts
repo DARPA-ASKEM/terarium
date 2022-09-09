@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import Home from '@/views/Home.vue';
 import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 
@@ -8,9 +8,12 @@ const routes = [
 ];
 
 const router = createRouter({
-	// 4. Provide the history implementation to use. We are using the hash history for simplicity here.
-	history: createWebHashHistory(),
-	routes // short for `routes: routes`
+	// Provide the history implementation to use. We are using HTML5 Mode
+	// https://router.vuejs.org/guide/essentials/history-mode.html#html5-mode
+	history: createWebHistory(),
+
+	// short for `routes: routes`
+	routes
 });
 
 export default router;
