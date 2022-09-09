@@ -1,7 +1,5 @@
-<script lang="ts">
-</script>
+<script lang="ts"></script>
 
 <template>
-	<div> Home placeholder </div>
+	<div>Home placeholder</div>
 </template>
-
