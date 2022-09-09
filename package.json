@@ -14,11 +14,7 @@
     "postinstall": "husky install"
   },
   "lint-staged": {
-    "*.ts": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.vue": [
+    "*.{ts,vue}": [
       "eslint --fix",
       "prettier --write"
     ]
