@@ -2,11 +2,12 @@
 // `tsconfig.json` configures TypeScript for the `src` folder, which runs in
 //  the browser.
 {
-  "compilerOptions": {
-    "composite": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
+	"compilerOptions": {
+		"composite": true,
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"types": ["vite/client", "vue"],
+		"allowSyntheticDefaultImports": true
+	},
+	"include": ["vite.config.ts"]
 }
