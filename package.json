@@ -1,31 +1,32 @@
 {
-  "name": "terarium",
-  "packageManager": "yarn@3.2.2",
-  "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
-    "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
-    "lint": "eslint . --ext .ts,.vue --fix",
-    "prettier": "prettier './**/*.{vue,ts}' --write",
-    "format": "yarn lint && yarn prettier",
-    "postinstall": "husky install"
-  },
-  "lint-staged": {
-    "*.{ts,vue}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  },
-  "devDependencies": {
-    "@vue/eslint-config-airbnb-with-typescript": "^7.0.0",
-    "eslint": "^8.23.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-vue": "^9.4.0",
-    "husky": "^8.0.1",
-    "lint-staged": "^13.0.3",
-    "prettier": "^2.7.1"
-  }
+	"name": "terarium",
+	"packageManager": "yarn@3.2.2",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
+		"dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
+		"lint": "eslint . --ext .ts,.vue --fix",
+		"test": "yarn workspaces foreach --parallel --verbose run test:ci",
+		"prettier": "prettier './**/*.{vue,ts}' --write",
+		"format": "yarn lint && yarn prettier",
+		"postinstall": "husky install"
+	},
+	"lint-staged": {
+		"*.{ts,vue}": [
+			"eslint --fix",
+			"prettier --write"
+		]
+	},
+	"devDependencies": {
+		"@vue/eslint-config-airbnb-with-typescript": "^7.0.0",
+		"eslint": "^8.23.0",
+		"eslint-config-prettier": "^8.5.0",
+		"eslint-plugin-vue": "^9.4.0",
+		"husky": "^8.0.1",
+		"lint-staged": "^13.0.3",
+		"prettier": "^2.7.1"
+	}
 }
