@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc --build",
     "dev": "yarn run serve",
-    "serve": "ts-node-esm src/app.ts"
+    "serve": "mkdir -p packages/server/dist/web && ts-node-esm src/app.ts"
   },
   "author": "",
   "dependencies": {
