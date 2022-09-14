@@ -5,6 +5,6 @@ test.describe('test Responsive Matrix component', () => {
 	test('should display the correct message', async ({ mount }) => {
 		const component = await mount(ResponsiveMatrixCells);
 
-		await expect(component.locator('p')).toContainText('Test');
+		await expect(component.locator('p')).toContainText('Responsive Matrix Cells');
 	});
 });
