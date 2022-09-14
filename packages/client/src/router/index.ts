@@ -8,8 +8,7 @@ const routes = [
 ];
 
 const router = createRouter({
-	// Provide the history implementation to use. We are using HTML5 Mode
-	// https://router.vuejs.org/guide/essentials/history-mode.html#html5-mode
+	// 4. Provide the history implementation to use. We are using the hash history for simplicity here.
 	history: createWebHashHistory(),
 
 	// short for `routes: routes`
