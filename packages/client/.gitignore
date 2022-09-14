@@ -27,3 +27,5 @@ dist-ssr
 coverage
 /tests/e2e/test-report/
 /tests/e2e/test-results/
+/tests/component/test-report/
+/playwright/.cache/

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { MyType, add } from 'shared'; // eslint-disable-line
+import { MyType, add } from 'shared/src/index'; // eslint-disable-line
 
 defineProps<{ msg: string }>();
 
