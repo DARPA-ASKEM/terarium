@@ -1,4 +1,4 @@
-package software.uncharted;
+package software.uncharted.terarium;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
