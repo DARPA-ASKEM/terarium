@@ -1,4 +1,4 @@
-package software.uncharted;
+package software.uncharted.terarium.routes;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
