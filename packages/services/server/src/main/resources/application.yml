@@ -1,2 +1,19 @@
 greeting:
   message: "hello"
+
+quarkus:
+  # OIDC Configuration
+  oidc:
+    auth-server-url: "http://localhost:8079/realms/Uncharted"
+    client-id: "app"
+    credentials:
+      secret: "jtbQhs6SlfynqJaygVpwav2kLzAme2b4"
+      tls:
+        verification: "none"
+  # Enable Policy Enforcement
+  keycloak:
+    policy-enforcer:
+      enable: true
+  # HTTP configuration
+  http:
+    port: 3000
