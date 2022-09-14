@@ -11,6 +11,8 @@
 		"lint": "eslint . --ext .ts,.vue --fix",
 		"lint:ci": "eslint . --ext .ts,.vue",
 		"test": "yarn workspaces foreach --parallel --verbose run test:ci",
+		"test:e2e": "yarn workspaces foreach --parallel --verbose run test:e2e",
+		"test:ct": "yarn workspaces foreach --parallel --verbose run test:ct",
 		"prettier": "prettier --ignore-path .prettierignore --write './**/*.{vue,ts}'",
 		"prettier:ci": "prettier --ignore-path .prettierignore --check '**/*.{vue,ts}'",
 		"format": "yarn lint && yarn prettier",

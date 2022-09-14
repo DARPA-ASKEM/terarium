@@ -1,0 +1,39 @@
+# This workflow runs E2E tests using Playwright
+#
+#   See: https://playwright.dev/
+
+name: Playwright Tests
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  e2e-tests:
+    timeout-minutes: 60
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node v18.8.0
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.8.0
+        cache: 'yarn'
+
+    - name: Install dependencies
+      run: yarn install --immutable
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Run Playwright tests
+      run: yarn playwright test:e2e
+
+    - name: Upload test artifacts on failure
+      uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
