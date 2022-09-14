@@ -1,22 +1,27 @@
 {
-  "name": "client",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "vue": "^3.2.37",
-    "vue-router": "4"
-  },
-  "devDependencies": {
-    "@rushstack/eslint-patch": "^1.1.4",
-    "@vitejs/plugin-vue": "^3.0.3",
-    "typescript": "^4.6.4",
-    "vite": "^3.0.7",
-    "vue-tsc": "^0.39.5"
-  }
+	"name": "client",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vue-tsc --noEmit && vite build",
+		"preview": "vite preview",
+		"test": "vitest",
+		"test:ci": "vitest run",
+		"test:coverage": "vitest run --coverage"
+	},
+	"dependencies": {
+		"vue": "^3.2.37",
+		"vue-router": "4"
+	},
+	"devDependencies": {
+		"@rushstack/eslint-patch": "^1.1.4",
+		"@vitejs/plugin-vue": "^3.0.3",
+		"@vitest/coverage-c8": "0.23.2",
+		"typescript": "^4.6.4",
+		"vite": "^3.0.7",
+		"vitest": "0.23.2",
+		"vue-tsc": "^0.39.5"
+	}
 }
