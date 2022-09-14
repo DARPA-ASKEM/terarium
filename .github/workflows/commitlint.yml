@@ -25,3 +25,5 @@ jobs:
       # Uncomment this if you want to validate all commits in this PR not just the PR comment
       # - uses: wagoid/commitlint-github-action@v5
       - uses: JulienKode/pull-request-name-linter-action@v0.5.0
+        with:
+          configuration-path: ./.commitlintrc.yml
