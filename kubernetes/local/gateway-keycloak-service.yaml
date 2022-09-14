@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-keycloak
+spec:
+  ports:
+    - name: 8079-tcp
+      port: 8079
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    software.uncharted.terarium: gateway-keycloak
+  type: LoadBalancer
+status:
+  loadBalancer: {}
