@@ -35,7 +35,7 @@ jobs:
           # ~/Library/Caches/ms-playwright on MacOS
           # ~/.cache/ms-playwright on Linux
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-e2e-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
 
       # Install playwright browsers if cache hit failed
       - if: ${{ steps.cache-browsers.outputs.cache-hit != 'true' }}
@@ -80,7 +80,7 @@ jobs:
           # ~/Library/Caches/ms-playwright on MacOS
           # ~/.cache/ms-playwright on Linux
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-ct-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
 
       # Install playwright browsers if cache hit failed
       - if: ${{ steps.cache-browsers.outputs.cache-hit != 'true' }}
