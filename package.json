@@ -8,6 +8,7 @@
   "scripts": {
     "build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
     "dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
+    "serve": "yarn workspace server run serve && yarn workspace client run serve && cp -r packages/client/dist/* packages/server/dist/web/",
     "lint": "eslint . --ext .ts,.vue --fix",
     "prettier": "prettier './**/*.{vue,ts}' --write",
     "format": "yarn lint && yarn prettier"
