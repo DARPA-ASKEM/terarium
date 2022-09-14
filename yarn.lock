@@ -1378,7 +1378,6 @@ __metadata:
     "@rushstack/eslint-patch": ^1.1.4
     "@vitejs/plugin-vue": ^3.0.3
     "@vitest/coverage-c8": 0.23.2
-    shared: 0.0.0
     typescript: ^4.6.4
     vite: ^3.0.7
     vitest: 0.23.2
@@ -4693,7 +4692,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shared@0.0.0, shared@workspace:packages/shared":
+"shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "shared@workspace:packages/shared"
   dependencies:
