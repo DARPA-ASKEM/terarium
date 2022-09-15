@@ -5,10 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 import java.time.Instant;
 
+
+@Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "projects")
