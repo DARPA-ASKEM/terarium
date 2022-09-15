@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    software.uncharted.terarium: gateway-httpd
+  name: gateway-httpd
+spec:
+  containers:
+    - image: docker-hub.uncharted.software/auth/httpd-openidc:dev-1.0.0
+      name: gateway-httpd
+      ports:
+        - containerPort: 80
+          protocol: TCP
+      resources: {}
+      volumeMounts:
+        - name: htdocs-volume
+          mountPath: /usr/local/apache2/htdocs
+        - name: config-volume
+          mountPath: /usr/local/apache2/conf/default
+  volumes:
+    - name: htdocs-volume
+      configMap:
+        name: gateway-httpd-htdocs
+    - name: config-volume
+      configMap:
+        name: gateway-httpd-config
+  restartPolicy: Always
+status: {}

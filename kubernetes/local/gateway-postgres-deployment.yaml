@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    software.uncharted.terarium: gateway-postgres
+  name: gateway-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      software.uncharted.terarium: gateway-postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        software.uncharted.terarium: gateway-postgres
+    spec:
+      containers:
+        - image: postgres:14.4-alpine
+          name: gateway-postgres
+          env:
+            - name: POSTGRES_USER
+              value: keycloak
+            - name: POSTGRES_PASSWORD
+              value: keycloak
+          ports:
+            - containerPort: 5432
+          resources: {}
+      restartPolicy: Always
+status: {}
