@@ -1,0 +1,31 @@
+# This action makes PRs require conventional commits in both
+#   the pull request title, and commit message.
+#
+#   See: https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional
+
+name: Lint PR Commit Messages
+on:
+  pull_request:
+    types: ['opened', 'edited', 'reopened', 'synchronize']
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      # Uncomment this if you want to validate all commits in this PR not just the PR comment
+      # with:
+      #   fetch-depth: 0
+      - name: Use Node.js 18.8.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
+      - name: Install CommitLint Dependency
+        run: yarn add @commitlint/config-conventional
+      # Uncomment this if you want to validate all commits in this PR not just the PR comment
+      # - uses: wagoid/commitlint-github-action@v5
+      - name: Lint the PR message
+        uses: JulienKode/pull-request-name-linter-action@v0.5.0
+        with:
+          configuration-path: ./.commitlintrc.yml

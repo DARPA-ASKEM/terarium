@@ -1,22 +1,46 @@
-# server-scaffold Project
+# TERArium
+TERArium is the client application for the ASKEM program. TERArium provides capabilities to create, modify, simulate, and publish machine extracted models.
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+## Install and dependencies
+The TERArium client is built with Typescript and Vue3. The TERArium server is built with Java and Quarkus. To run and develop TERArium, you will need these as a prerequisite:
+- [Yarn 2](https://yarnpkg.com/getting-started/install)
+- [NodeJS 18](https://nodejs.org/en/download/current/)
+- [JDK 17](https://openjdk.org/projects/jdk/17/)
+- [Quarkus CLI](https://quarkus.io/guides/cli-tooling)
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
 
-## Running the application in dev mode
+## Running the server in dev mode
 
 You can run your application in dev mode that enables live coding using:
-```shell script
+```
 ./gradlew quarkusDev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+or, if you have the Quarkus CLI
+```
+quarkus dev
+```
 
-## Packaging and running the application
+> **_NOTE:_** Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+
+
+## Running the client in dev mode
+
+To install client package dependencies, run the command in the root diretory
+```
+yarn install
+```
+
+Start local dev server for Vue client, with Hot Module Replacement.
+```
+yarn workspace client run dev
+```
+
+
+## Packaging and running the server
 
 The application can be packaged using:
-```shell script
+```
 ./gradlew build
 ```
 It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
@@ -25,7 +49,7 @@ Be aware that it’s not an _über-jar_ as the dependencies are copied into the 
 The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
 
 If you want to build an _über-jar_, execute the following command:
-```shell script
+```
 ./gradlew build -Dquarkus.package.type=uber-jar
 ```
 
@@ -34,37 +58,35 @@ The application, packaged as an _über-jar_, is now runnable using `java -jar bu
 ## Creating a native executable
 
 You can create a native executable using: 
-```shell script
+```
 ./gradlew build -Dquarkus.package.type=native
 ```
 
 Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
+```
 ./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./build/server-scaffold-1.0.0-SNAPSHOT-runner`
+You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSHOT-runner`
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/gradle-tooling.
 
-## Related Guides
+## Packaging and running the client
 
-- RESTEasy Classic JSON-B ([guide](https://quarkus.io/guides/rest-json)): JSON-B serialization support for RESTEasy Classic
-- SmallRye OpenAPI ([guide](https://quarkus.io/guides/openapi-swaggerui)): Document your REST APIs with OpenAPI - comes with Swagger UI
-- YAML Configuration ([guide](https://quarkus.io/guides/config#yaml)): Use YAML to configure your Quarkus application
 
-## Provided Code
+## Working with Docker
+```
+# Docker build
+docker build . -t <image_name>
 
-### YAML Config
+# Run, make TERArium available on http://localhost:3000
+docker run -p 3000:3000 -ti <image_name>
+```
 
-Configure your application with YAML
 
-[Related guide section...](https://quarkus.io/guides/config-reference#configuration-examples)
+# Conventional Commits
 
-The Quarkus application configuration is located in `src/main/resources/application.yml`.
+This repository follows the [Conventional Commits Specification](https://conventionalcommits.org/) using [CommitLint](https://github.com/conventional-changelog/commitlint) to validate the commit message on the PR. If the message does not conform to the specification the PR will not be allowed to be merged.
 
-### RESTEasy JAX-RS
+This automatic check is done through the use of CI workflows on GitHub defined in [commitlint.yml](.github/workflows/commitlint.yml). It uses the configuration from the [Commitlint Configuration File](.commitlintrc.yml). 
 
-Easily start your RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
+> Currently the CI configuration is set to check only the PR message as the commits are being squashed. If this ever changes and all commits need to be validated then appropriate changes (as commented) in the [commitlint.yml](..github/workflows/commitlint.yml) should be made.

@@ -1,5 +1,15 @@
 {
-  "name": "shared",
-  "main": "index.ts",
-  "type": "module"
+	"name": "shared",
+	"main": "index.ts",
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"test": "vitest",
+		"test:ci": "vitest run",
+		"test:coverage": "vitest run --coverage"
+	},
+	"devDependencies": {
+		"@vitest/coverage-c8": "0.23.2",
+		"vitest": "0.23.2"
+	}
 }
