@@ -10,11 +10,8 @@ on:
     branches: [main]
 jobs:
   e2e-tests:
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ubuntu-22.04
-    # use docker image of playwright with dependencies
-    container:
-      image: mcr.microsoft.com/playwright:v1.25.2-jammy
     # Shard the tests across multiple machines to improve performance
     # Can be increased as needed starting with a small pool
     strategy:
@@ -25,8 +22,37 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Use Node v18.8.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
+
       - name: Install dependencies
         run: yarn install --immutable
+
+      - name: Cache Browsers
+        id: cache-browsers
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-playwright-browsers
+        with:
+          # Playwright browsers are stored in
+          # %USERPROFILE%\AppData\Local\ms-playwright on Windows
+          # ~/Library/Caches/ms-playwright on MacOS
+          # ~/.cache/ms-playwright on Linux
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+
+      # Install Playwright browsers and dependencies if cache miss
+      - if: ${{ steps.cache-browsers.outputs.cache-hit != 'true' }}
+        name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # Install Playwright dependencies only if cache hit
+      - if: ${{ steps.cache-browsers.outputs.cache-hit == 'true' }}
+        name: Install Playwright Dependencies
+        run: npx playwright install-deps
 
       - name: Run Playwright tests
         # run: yarn workspace client test:e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
@@ -42,16 +68,42 @@ jobs:
           retention-days: 10
 
   ct-tests:
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ubuntu-22.04
-    # use docker image of playwright with dependencies
-    container:
-      image: mcr.microsoft.com/playwright:v1.25.2-jammy
     steps:
       - uses: actions/checkout@v3
 
+      - name: Use Node v18.8.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
+
       - name: Install dependencies
         run: yarn install --immutable
+
+      - name: Cache Browsers
+        id: cache-browsers
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-playwright-browsers
+        with:
+          # Playwright browsers are stored in
+          # %USERPROFILE%\AppData\Local\ms-playwright on Windows
+          # ~/Library/Caches/ms-playwright on MacOS
+          # ~/.cache/ms-playwright on Linux
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+
+      # Install Playwright browsers and dependencies if cache miss
+      - if: ${{ steps.cache-browsers.outputs.cache-hit != 'true' }}
+        name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # Install Playwright dependencies only if cache hit
+      - if: ${{ steps.cache-browsers.outputs.cache-hit == 'true' }}
+        name: Install Playwright Dependencies
+        run: npx playwright install-deps
 
       - name: Run Playwright tests
         run: yarn test:ct
