@@ -12,6 +12,13 @@ jobs:
   e2e-tests:
     timeout-minutes: 60
     runs-on: ubuntu-22.04
+    # Shard the tests across multiple machines to improve performance
+    # Can be increased as needed starting with a small pool
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
     steps:
       - uses: actions/checkout@v3
 
@@ -48,7 +55,8 @@ jobs:
         run: npx playwright install-deps
 
       - name: Run Playwright tests
-        run: yarn test:e2e
+        run: yarn workspace client test:e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        # run: yarn test:e2e
 
       - name: Upload test artifacts on failure
         uses: actions/upload-artifact@v3
