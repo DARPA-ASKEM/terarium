@@ -11,9 +11,6 @@ WORKDIR TERArium
 
 # Install
 RUN yarn install
-RUN yarn workspace client run build
-RUN mkdir -p packages/server/dist/web
-RUN cp -r packages/client/dist/* packages/server/dist/web/
 
 # Entry
-CMD yarn workspace server run serve
+CMD yarn run serve

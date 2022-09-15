@@ -44,5 +44,11 @@ nb-configuration.xml
 !.yarn/versions
 .pnp.*
 
+# NPM
 node_modules
 dist
+
+# IDE
+.nova/*
+.vscode/*
+.idea/*
