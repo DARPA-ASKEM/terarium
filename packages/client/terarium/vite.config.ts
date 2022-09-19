@@ -13,6 +13,7 @@ export default defineConfig({
 	},
 	// Server proxy - change here to connect to API server (e.g. staging environment)
 	server: {
+		port: 8080,
 		proxy: {
 			'/api': {
 				target: 'http://localhost:3000/api',
