@@ -6,7 +6,7 @@ metadata:
   name: gateway-httpd
 spec:
   containers:
-    - image: docker-hub.uncharted.software/auth/httpd-openidc:dev-1.0.0
+    - image: docker.uncharted.software/auth/httpd-openidc:dev-1.0.0
       name: gateway-httpd
       ports:
         - containerPort: 80

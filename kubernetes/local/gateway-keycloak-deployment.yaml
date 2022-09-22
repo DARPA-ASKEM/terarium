@@ -6,7 +6,7 @@ metadata:
   name: gateway-keycloak
 spec:
   containers:
-    - image: docker-hub.uncharted.com/auth/keycloak:dev-1.0.0
+    - image: docker.uncharted.com/auth/keycloak:dev-1.0.0
       name: gateway-keycloak
       args:
         - start-dev
@@ -26,7 +26,7 @@ spec:
           value: gateway-postgres
       resources: {}
   initContainers:
-    - image: docker-hub.uncharted.com/auth/keycloak:dev-1.0.0
+    - image: docker.uncharted.com/auth/keycloak:dev-1.0.0
       name: init-gateway-keycloak
       args:
         - import
