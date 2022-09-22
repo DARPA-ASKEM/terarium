@@ -1,8 +1,10 @@
 # TERArium
-TERArium is the client application for the ASKEM program. TERArium provides capabilities to create, modify, simulate, and publish machine extracted models.
+TERArium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish machine extracted models.
 
-## Install and dependencies
-TERArium is built with Typescript, Vue3, and Koa backend. To run and develop TERArium, you will need these as a prerequisite:
+## Description
+
+## Installation
+TERArium is built with Typescript, Vue3, and Jav backend. To run and develop TERArium, you will need these as a prerequisite:
 - [Yarn 2](https://yarnpkg.com/getting-started/install)
 - [NodeJS 18](https://nodejs.org/en/download/current/)
 
@@ -11,7 +13,8 @@ To install the package dependencies, run the command in the root diretory
 ```
 yarn install
 ```
-
+### Testing
+---
 
 ## Dev
 Start local dev server for Vue client, with Hot Module Replacement.
@@ -43,3 +46,6 @@ This repository follows the [Conventional Commits Specification](https://convent
 This automatic check is done through the use of CI workflows on GitHub defined in [commitlint.yml](.github/workflows/commitlint.yml). It uses the configuration from the [Commitlint Configuration File](.commitlintrc.yml). 
 
 > Currently the CI configuration is set to check only the PR message as the commits are being squashed. If this ever changes and all commits need to be validated then appropriate changes (as commented) in the [commitlint.yml](..github/workflows/commitlint.yml) should be made.
+
+## License
+[Apache License 2.0](LICENSE)
