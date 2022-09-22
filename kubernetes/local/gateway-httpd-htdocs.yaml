@@ -12,7 +12,7 @@ data:
         <title>Landing Page</title>
         <link rel="stylesheet" href="style.css">
       <body>
-        <h2>Uncharted Auth</h2>
+        <h2>Terarium Auth</h2>
         <p>Go to <a href="/app/">/app/</a>.</p>
         <p>There are two users:</p>
         <ul>
