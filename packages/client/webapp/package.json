@@ -1,21 +1,25 @@
 {
-	"name": "client",
+	"name": "webapp",
 	"private": true,
 	"version": "0.0.0",
-	"type": "module",
 	"scripts": {
 		"dev": "vite",
 		"build": "vue-tsc --noEmit && vite build",
 		"preview": "vite preview",
 		"test": "vitest",
 		"test:ci": "vitest run",
-		"test:coverage": "vitest run --coverage"
+		"test:coverage": "vitest run --coverage",
+		"test:e2e": "playwright test",
+		"test:e2e:snapshots": "playwright test --update-snapshots",
+		"test:ct": "playwright test -c playwright-ct.config.ts"
 	},
 	"dependencies": {
 		"vue": "3.2.39",
 		"vue-router": "4.1.5"
 	},
 	"devDependencies": {
+		"@playwright/experimental-ct-vue": "1.25.2",
+		"@playwright/test": "1.25.2",
 		"@rushstack/eslint-patch": "1.2.0",
 		"@vitejs/plugin-vue": "3.1.0",
 		"@vitest/coverage-c8": "0.23.2",
