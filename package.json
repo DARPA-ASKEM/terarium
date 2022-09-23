@@ -8,7 +8,7 @@
 	"scripts": {
 		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
 		"dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
-		"serve": "yarn workspace webapp run build && cp -r packages/client/webapp/dist/*",
+		"serve": "yarn workspace webapp run build",
 		"lint": "eslint . --ext .ts,.vue --fix",
 		"lint:ci": "eslint . --ext .ts,.vue",
 		"test": "yarn workspaces foreach --parallel --verbose run test:ci",
