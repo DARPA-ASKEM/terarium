@@ -22,8 +22,7 @@
 		"src/**/*.tsx",
 		"src/**/*.vue",
 		"tests/**/*.spec.ts",
-		"tests/**/*.test.ts",
-		"playwright/**/*.ts"
+		"tests/**/*.test.ts"
 	],
 	"references": [{ "path": "./tsconfig.node.json" }]
 }
