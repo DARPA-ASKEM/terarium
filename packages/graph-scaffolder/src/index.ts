@@ -8,11 +8,11 @@ import {
 	getAStarPath
 } from './core';
 
-import { simplifyPath } from './utils/simplify';
+import simplifyPath from './utils/simplify';
 import { moveTo, moveToLabel } from './fn/move-to';
 import { group, ungroup } from './fn/group';
 import { highlight } from './fn/highlight';
-import { unHighlight } from './fn/un-highlight';
+import unHighlight from './fn/un-highlight';
 
 import type { INode, IEdge, IGraph } from './types';
 
