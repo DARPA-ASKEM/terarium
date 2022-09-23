@@ -8,6 +8,7 @@ The TERArium client is built with Typescript and Vue3. The TERArium server is bu
 - [JDK 17](https://openjdk.org/projects/jdk/17/)
 - [Quarkus CLI](https://quarkus.io/guides/cli-tooling)
 
+> NOTE: You **must** enable Kubernetes support in Docker. Go to your Docker dashboard -> Settings (Gear icon) -> Kubernetes -> Enable Kubernetes
 
 ## Running the server in dev mode
 
@@ -26,14 +27,14 @@ quarkus dev
 
 ## Running the client in dev mode
 
-To install client package dependencies, run the command in the root diretory
+To install package dependencies, run the command in the root diretory
 ```
 yarn install
 ```
 
-Start local dev server for Vue client, with Hot Module Replacement.
+Start local dev server for Vue webapp, with Hot Module Replacement.
 ```
-yarn workspace client run dev
+yarn workspace webapp run dev
 ```
 
 
