@@ -9,5 +9,11 @@
 		"types": ["vite/client", "vue"],
 		"allowSyntheticDefaultImports": true
 	},
-	"include": ["vite.config.ts"]
+	"include": [
+		"package.json",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"playwright.config.ts",
+		"playwright-ct.config.ts"
+	]
 }
