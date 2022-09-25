@@ -188,7 +188,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 	 * Edge interactions
 	 */
 	enableEdgeInteraction(selection: D3Selection, renderer: Renderer<V, E>): void {
-		selection.each((_unused, edgeIndex: number, edges: SVGGElement[]) => {
+		const setupEmitters = (_unused: any, edgeIndex: number, edges: SVGGElement[]) => {
 			const edge = d3.select(edges[edgeIndex]);
 			const emit = renderer.emit.bind(renderer);
 
@@ -206,7 +206,9 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				evt.stopPropagation();
 				emit('edge-mouse-leave', evt, d3.select(this), renderer);
 			});
-		});
+		};
+
+		selection.each(setupEmitters as any);
 	}
 
 	/**
@@ -345,6 +347,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		function nodeDragStart(evt: any): void {
 			evt.sourceEvent.stopPropagation();
 
+			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
 			const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
 			nodeDraggingIds = [node.datum().label, ...childrenNodes.data().map((d) => d.label)];

@@ -24,6 +24,7 @@ export const group = <V, E>(G: Renderer<V, E>, groupName: string, nodeIds: strin
 		label: groupName,
 		type: 'custom',
 		nodes: [],
+		/* @ts-ignore */
 		data: null,
 		x: 0,
 		y: 0,
