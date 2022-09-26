@@ -1,6 +1,6 @@
 <script setup lang="ts">
 function logout() {
-	// alert('logout');
+	// alert('logout'); // placeholder for later
 }
 </script>
 
