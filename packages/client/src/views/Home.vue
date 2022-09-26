@@ -1,11 +1,11 @@
 <script setup lang="ts">
 function apiCall() {
-	console.log('api call');
+	alert('api call');
 }
 </script>
 
 <template>
-	<div id="home">
+	<main>
 		<p>Test API calls/Home placeholder</p>
 		<div class="test-api-calls">
 			<button type="button" @click="apiCall">New Project</button>
@@ -19,11 +19,11 @@ function apiCall() {
 			<button type="button" @click="apiCall">Get Model</button>
 			<button type="button" @click="apiCall">Delete Model</button>
 		</div>
-	</div>
+	</main>
 </template>
 
-<style>
-#home {
+<style scoped>
+main {
 	place-items: center;
 	margin: 0 auto;
 	max-width: 1280px;
@@ -36,8 +36,8 @@ function apiCall() {
 	margin: 2rem;
 	justify-content: center;
 }
-.test-api-calls button {
-	margin: 0 1rem;
+button[type='button'] {
+	margin: 0.5rem 1rem;
 	min-width: 10rem;
 }
 </style>
