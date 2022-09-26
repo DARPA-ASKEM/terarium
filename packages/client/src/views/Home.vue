@@ -1,6 +1,6 @@
 <script setup lang="ts">
 function apiCall() {
-	alert('api call');
+	// alert('api call');
 }
 </script>
 
