@@ -10,6 +10,21 @@ The TERArium client is built with Typescript and Vue3. The TERArium server is bu
 
 > NOTE: You **must** enable Kubernetes support in Docker. Go to your Docker dashboard -> Settings (Gear icon) -> Kubernetes -> Enable Kubernetes
 
+### macOS
+
+Installing/Using [Homebrew](https://brew.sh/) to install the following:
+    * [Temurin](https://adoptium.net/temurin)
+    * OpenJDK
+    * [Gradle](https://gradle.org)
+    * [Quarkus](https://quarkus.io/guides/cli-tooling).
+
+```bash
+brew install temurin 
+brew install openjdk
+brew install gradle
+brew install quarkus
+```
+
 ## Running the server in dev mode
 
 You can run your application in dev mode that enables live coding using:
@@ -22,7 +37,7 @@ or, if you have the Quarkus CLI
 quarkus dev
 ```
 
-> **_NOTE:_** Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+> NOTE: Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
 
 ## Running the client in dev mode

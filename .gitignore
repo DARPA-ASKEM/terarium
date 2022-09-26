@@ -21,6 +21,9 @@ nb-configuration.xml
 .vscode
 .factorypath
 
+# Nova
+.nova/*
+
 # OSX
 .DS_Store
 
@@ -47,8 +50,3 @@ nb-configuration.xml
 # NPM
 node_modules
 dist
-
-# IDE
-.nova/*
-.vscode/*
-.idea/*
