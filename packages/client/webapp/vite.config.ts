@@ -12,17 +12,19 @@ export default defineConfig({
 			'@': path.resolve(__dirname, './src')
 		}
 	},
-	// Server proxy - change here to connect to API server (e.g. staging environment)
+	base: '/app/',
 	server: {
 		port: 8080,
 		strictPort: true,
-		proxy: {
-			'/api': {
-				target: 'http://localhost:3000/api',
-				changeOrigin: true,
-				rewrite: (_path) => _path.replace(/^\/api/, '')
-			}
+		// Due to the reverse proxy being present the following
+		// HMR port option is set as per NOTE in the docs
+		// https://vitejs.dev/config/server-options.html#server-hmr
+		hmr: {
+			port: 8080
 		}
+	},
+	preview: {
+		port: 8080
 	},
 	plugins: [vue()],
 	test: {

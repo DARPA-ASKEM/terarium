@@ -56,8 +56,8 @@ data:
       </Location>
 
       <Location /app/>
-        ProxyPass http://host.docker.internal:8080/
-        ProxyPassReverse http://host.docker.internal:8080/
+        ProxyPass http://host.docker.internal:8080/app/
+        ProxyPassReverse http://host.docker.internal:8080/app/
 
         AuthType openid-connect
         Require valid-user

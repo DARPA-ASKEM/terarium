@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
+import authRoute from './utils/uncloakIntercept';
 
 test.describe('main landing page test', () => {
 	test.beforeEach(async ({ page }) => {
+		await authRoute(page);
+
 		// Go to the starting (base) url before each test as defined in the config
 		await page.goto('/');
 	});
@@ -11,9 +14,9 @@ test.describe('main landing page test', () => {
 		await expect(page).toHaveTitle(/TERArium/);
 
 		// create a locator
-		const placeholder = page.locator('text=Home placeholder');
+		const header = page.locator('text=TERArium Test Client App');
 
 		// Expect an attribute "to be strictly equal" to the value.
-		await expect(placeholder).toBeVisible();
+		await expect(header).toBeVisible();
 	});
 });
