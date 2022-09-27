@@ -1,6 +1,5 @@
 <template>
-	<div>Home placeholder</div>
-	<h1>Test Client App</h1>
+	<header>TERArium Test Client App</header>
 	<p><a href="/logout">logout</a></p>
 
 	<h2>User rights required</h2>
