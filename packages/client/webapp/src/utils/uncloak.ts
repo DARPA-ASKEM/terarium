@@ -1,17 +1,11 @@
-let accessToken: string | null;
+import { useAuthStore } from '../stores/auth';
 
-export const getAccessToken = async () => {
-	const response = await fetch('/silent-check-sso.html');
-
-	if (response.ok) {
-		accessToken = response.headers.get('OIDC_access_token');
-	}
-};
-
+// eslint-disable-next-line import/prefer-default-export
 export const uncloak = async (url: string) => {
+	const auth = useAuthStore();
 	const response = await fetch(url, {
 		headers: {
-			Authorization: `Bearer ${accessToken}`
+			Authorization: `Bearer ${auth.token}`
 		}
 	});
 
@@ -20,5 +14,3 @@ export const uncloak = async (url: string) => {
 		console.log(`STATUS: ${response.status} Response: ${JSON.stringify(data)}`);
 	}
 };
-
-export const isAuthorized = () => accessToken != null;

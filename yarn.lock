@@ -575,6 +575,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/devtools-api@npm:^6.2.1":
+  version: 6.4.1
+  resolution: "@vue/devtools-api@npm:6.4.1"
+  checksum: 9c8020ed73e60e01bde7c127338c087ae32948cbb45626681ee6c048c871fbe9a6d5a6f87654ff3fae1fb873c5fc3cd05f56ff2585640fb618f634b62cf17b5c
+  languageName: node
+  linkType: hard
+
 "@vue/eslint-config-airbnb-with-typescript@npm:7.0.0":
   version: 7.0.0
   resolution: "@vue/eslint-config-airbnb-with-typescript@npm:7.0.0"
@@ -3725,6 +3732,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pinia@npm:2.0.22":
+  version: 2.0.22
+  resolution: "pinia@npm:2.0.22"
+  dependencies:
+    "@vue/devtools-api": ^6.2.1
+    vue-demi: "*"
+  peerDependencies:
+    "@vue/composition-api": ^1.4.0
+    typescript: ">=4.4.4"
+    vue: ^2.6.14 || ^3.2.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+    typescript:
+      optional: true
+  checksum: 394906326758ac41acfdf4a29263c952c2cb7f35ebf87771a025ab492bdde7cf7fd87a49f82ec3a98bf8323ed2cb231f1ad272f7ea522694a9fab5a5cde3e727
+  languageName: node
+  linkType: hard
+
 "playwright-core@npm:1.25.2":
   version: 1.25.2
   resolution: "playwright-core@npm:1.25.2"
@@ -4705,6 +4731,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vue-demi@npm:*":
+  version: 0.13.11
+  resolution: "vue-demi@npm:0.13.11"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: 0fbe9bf8ab7fe498ffa2bbd0cfc8f6f43a6bbaa5eda3e20ef1b70dca7c8b0ddb216a7ff2f632b694fe0735805638975abb441c621ec0bd2e6d4656353f316c15
+  languageName: node
+  linkType: hard
+
 "vue-eslint-parser@npm:^9.0.1, vue-eslint-parser@npm:^9.0.3":
   version: 9.1.0
   resolution: "vue-eslint-parser@npm:9.1.0"
@@ -4769,6 +4811,7 @@ __metadata:
     "@rushstack/eslint-patch": 1.2.0
     "@vitejs/plugin-vue": 3.1.0
     "@vitest/coverage-c8": 0.23.2
+    pinia: 2.0.22
     typescript: 4.8.3
     vite: 3.1.1
     vitest: 0.23.2

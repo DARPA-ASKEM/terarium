@@ -1,9 +1,18 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useAuthStore } from '../stores/auth';
+
+const auth = useAuthStore();
+
+const logout = () => {
+	auth.logout();
+	window.location.assign('/logout');
+};
+</script>
 
 <template>
 	<nav>
 		<header>TERArium</header>
-		<button type="button"><a href="/logout">Logout</a></button>
+		<button type="button" @click="logout">Logout</button>
 	</nav>
 </template>
 
