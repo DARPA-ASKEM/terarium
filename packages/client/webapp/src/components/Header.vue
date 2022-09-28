@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
@@ -7,12 +8,14 @@ const logout = () => {
 	auth.logout();
 	window.location.assign('/logout');
 };
+
+const authenticatedLabel = computed(() => (auth.isAuthenticated ? 'Logout' : 'Login'));
 </script>
 
 <template>
 	<nav>
 		<header>TERArium</header>
-		<button type="button" @click="logout">Logout</button>
+		<button type="button" @click="logout">{{ authenticatedLabel }}</button>
 	</nav>
 </template>
 

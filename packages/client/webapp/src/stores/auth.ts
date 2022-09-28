@@ -50,6 +50,7 @@ export const useAuthStore = defineStore('auth', {
 			clearTimeout(timer);
 			// TODO: reenable when fixed
 			// this.fetchSSO();
+			this.logout();
 		}
 	}
 });
