@@ -14,22 +14,22 @@ The TERArium client is built with Typescript and Vue3. The TERArium server is bu
 ### macOS
 
 Installing/Using [Homebrew](https://brew.sh/) to install the following:
-    * [Temurin](https://adoptium.net/temurin)
-    * OpenJDK
+    * [Temurin](https://adoptium.net/temurin) OR OpenJDK
     * [Gradle](https://gradle.org)
     * [Quarkus](https://quarkus.io/guides/cli-tooling).
 
 ```bash
 brew tap homebrew/cask-versions
-brew install --cask temurin17 
-brew install openjdk@17
+brew install --cask temurin17 # OR brew install openjdk@17 
 brew install gradle
-brew install quarkus OR brew install quarkusio/tap/quarkus
+brew install quarkusio/tap/quarkus
 ```
 
 ## Running the server in dev mode
 
-You can run your application in dev mode that enables live coding using:
+First, launch the authentication service before running the server (see documentation [here](kubernetes/local/README.md)).
+
+Then, you can run your application in dev mode that enables live coding using:
 ```
 ./gradlew quarkusDev
 ```
