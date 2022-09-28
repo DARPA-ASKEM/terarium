@@ -22,7 +22,7 @@ Installing/Using [Homebrew](https://brew.sh/) to install the following:
 brew install temurin 
 brew install openjdk
 brew install gradle
-brew install quarkus
+brew install quarkus OR brew install quarkusio/tap/quarkus
 ```
 
 ## Running the server in dev mode
