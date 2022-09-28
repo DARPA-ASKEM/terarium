@@ -76,6 +76,8 @@ export const useAuthStore = defineStore('auth', {
 		logout() {
 			this.userId = null;
 			this.userToken = null;
+			this.name = null;
+			this.email = null;
 		},
 		autoRenew() {
 			console.log('RENEW SSO');
