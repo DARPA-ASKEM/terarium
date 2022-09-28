@@ -15,6 +15,7 @@ const authenticatedLabel = computed(() => (auth.isAuthenticated ? 'Logout' : 'Lo
 <template>
 	<nav>
 		<header>TERArium</header>
+		<span>{{ auth.name }}</span>
 		<button type="button" @click="logout">{{ authenticatedLabel }}</button>
 	</nav>
 </template>

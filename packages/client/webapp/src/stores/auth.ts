@@ -1,5 +1,27 @@
 import { defineStore } from 'pinia';
 
+/**
+ * Decode the OIDC token for additional information
+ * @param token the OIDC token
+ * @returns decoded JSON object representing the token
+ * @throws an Error if token is not formatted as expected
+ */
+const decode = (token: string) => {
+	// split the string up based on delimiter '.'
+	const tokens = token.split('.');
+
+	// retrieve only the 2nd one
+	if (tokens.length !== 3) {
+		throw new Error('Failed to Decode OIDC Token');
+	}
+	const infoToken = tokens[1];
+
+	// decode the token
+	const decodedToken = window.atob(infoToken);
+	// const decodedToken = base64Decoder(infoToken);
+	return JSON.parse(decodedToken);
+};
+
 let timer: NodeJS.Timeout;
 /**
  * Main store used for authentication
@@ -35,6 +57,16 @@ export const useAuthStore = defineStore('auth', {
 			const expiresIn = expirationTimestamp - new Date().getTime();
 
 			this.userToken = accessToken;
+
+			if (accessToken) {
+				const tokenInfo = decode(accessToken);
+
+				this.name = tokenInfo.name;
+				this.email = tokenInfo.email;
+
+				// TODO: other info we can gather
+				// preferred_username, given_name, family_name, realm_access.roles etc
+			}
 
 			// TODO: seems the expiration is not correct upon renewal
 			timer = setTimeout(() => {

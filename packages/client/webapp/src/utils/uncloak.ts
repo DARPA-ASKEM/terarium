@@ -9,8 +9,11 @@ export const uncloak = async (url: string) => {
 		}
 	});
 
-	if (response.ok) {
-		const data = await response.json();
-		console.log(`STATUS: ${response.status} Response: ${JSON.stringify(data)}`);
+	if (!response.ok) {
+		console.log('Unauthorized Access');
+		return;
 	}
+
+	const data = await response.json();
+	console.log(`STATUS: ${response.status} Response: ${JSON.stringify(data)}`);
 };
