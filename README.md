@@ -9,6 +9,7 @@ The TERArium client is built with Typescript and Vue3. The TERArium server is bu
 - [Quarkus CLI](https://quarkus.io/guides/cli-tooling)
 
 > NOTE: You **must** enable Kubernetes support in Docker. Go to your Docker dashboard -> Settings (Gear icon) -> Kubernetes -> Enable Kubernetes
+> NOTE: The latest jdk version (i.e., 19) is not supportted and hence the reference to the usage of an earlier version (e.g., openjdk17)
 
 ### macOS
 
@@ -19,8 +20,9 @@ Installing/Using [Homebrew](https://brew.sh/) to install the following:
     * [Quarkus](https://quarkus.io/guides/cli-tooling).
 
 ```bash
-brew install temurin 
-brew install openjdk
+brew tap homebrew/cask-versions
+brew install --cask temurin17 
+brew install openjdk@17
 brew install gradle
 brew install quarkus OR brew install quarkusio/tap/quarkus
 ```
