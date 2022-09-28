@@ -14,7 +14,7 @@ test.describe('main landing page test', () => {
 		await expect(page).toHaveTitle(/TERArium/);
 
 		// create a locator
-		const header = page.locator('text=TERArium Test Client App');
+		const header = page.locator('text=Test API calls/Home placeholder');
 
 		// Expect an attribute "to be strictly equal" to the value.
 		await expect(header).toBeVisible();

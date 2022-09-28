@@ -9,7 +9,7 @@ build/
 bin/
 
 # IntelliJ
-.idea
+.idea/*
 *.ipr
 *.iml
 *.iws
@@ -18,7 +18,7 @@ bin/
 nb-configuration.xml
 
 # Visual Studio Code
-.vscode
+.vscode/*
 .factorypath
 
 # Nova
@@ -50,3 +50,4 @@ nb-configuration.xml
 # NPM
 node_modules
 dist
+
