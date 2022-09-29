@@ -213,6 +213,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@pinia/testing@npm:0.0.14":
+  version: 0.0.14
+  resolution: "@pinia/testing@npm:0.0.14"
+  dependencies:
+    vue-demi: "*"
+  peerDependencies:
+    pinia: ">=2.0.19"
+  checksum: 314dfa5f0eb8efe8055152ea1409f709c3a06614cdc15aaae8f92d424371bdaae844531358235d2ad922456c54059df96ac9da84298fd8b72be0d6a1b65459af
+  languageName: node
+  linkType: hard
+
 "@pkgr/utils@npm:^2.3.1":
   version: 2.3.1
   resolution: "@pkgr/utils@npm:2.3.1"
@@ -4827,6 +4838,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webapp@workspace:packages/client/webapp"
   dependencies:
+    "@pinia/testing": 0.0.14
     "@playwright/experimental-ct-vue": 1.25.2
     "@playwright/test": 1.25.2
     "@rushstack/eslint-patch": 1.2.0

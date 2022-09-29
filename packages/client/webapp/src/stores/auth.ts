@@ -32,8 +32,8 @@ export const useAuthStore = defineStore('auth', {
 		userId: null,
 		userToken: null as string | null,
 		expires: null as number | null,
-		name: null,
-		email: null
+		name: null as string | null,
+		email: null as string | null
 	}),
 	getters: {
 		token: (state) => state.userToken,
