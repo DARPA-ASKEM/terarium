@@ -44,7 +44,14 @@ export const useAuthStore = defineStore('auth', {
 		 * Retrieve access tokens from Keycloak
 		 */
 		async fetchSSO() {
-			const response = await fetch('/silent-check-sso.html');
+			// const response = await fetch('/silent-check-sso.html', { cache: 'no-store' });
+			// TODO: can this be done on the gateway so as not to expose the URL?
+			const response =
+				this.userToken !== null
+					? await fetch(
+							`/app/redirect_uri?refresh=http://localhost:8078/silent-check-sso.html&access_token=${this.userToken}`
+					  )
+					: await fetch('/silent-check-sso.html');
 
 			if (!response.ok) {
 				const error = new Error('Authentication Failed');
@@ -54,7 +61,6 @@ export const useAuthStore = defineStore('auth', {
 			const accessToken = response.headers.get('OIDC_access_token');
 			const expirationTimestamp =
 				+(response?.headers?.get('OIDC_access_token_expires') ?? 0) * 1000;
-			const expiresIn = expirationTimestamp - new Date().getTime();
 
 			this.userToken = accessToken;
 
@@ -68,7 +74,7 @@ export const useAuthStore = defineStore('auth', {
 				// preferred_username, given_name, family_name, realm_access.roles etc
 			}
 
-			// TODO: seems the expiration is not correct upon renewal
+			const expiresIn = expirationTimestamp - new Date().getTime();
 			timer = setTimeout(() => {
 				this.autoRenew();
 			}, expiresIn);
@@ -83,8 +89,8 @@ export const useAuthStore = defineStore('auth', {
 			console.log('RENEW SSO');
 			clearTimeout(timer);
 			// TODO: reenable when fixed
-			// this.fetchSSO();
-			this.logout();
+			this.fetchSSO();
+			// this.logout();
 		}
 	}
 });
