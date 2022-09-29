@@ -44,12 +44,11 @@ export const useAuthStore = defineStore('auth', {
 		 * Retrieve access tokens from Keycloak
 		 */
 		async fetchSSO() {
-			// const response = await fetch('/silent-check-sso.html', { cache: 'no-store' });
-			// TODO: can this be done on the gateway so as not to expose the URL?
+			// Fetch or refresh the access token
 			const response =
 				this.userToken !== null
 					? await fetch(
-							`/app/redirect_uri?refresh=http://localhost:8078/silent-check-sso.html&access_token=${this.userToken}`
+							`/app/redirect_uri?refresh=/silent-check-sso.html&access_token=${this.userToken}`
 					  )
 					: await fetch('/silent-check-sso.html');
 
@@ -88,9 +87,7 @@ export const useAuthStore = defineStore('auth', {
 		autoRenew() {
 			console.log('RENEW SSO');
 			clearTimeout(timer);
-			// TODO: reenable when fixed
 			this.fetchSSO();
-			// this.logout();
 		}
 	}
 });
