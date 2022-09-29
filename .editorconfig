@@ -20,3 +20,6 @@ indent_style = space
 
 [*.{cmd,bat}]
 end_of_line = crlf
+
+[*.gradle]
+indent_size = 4

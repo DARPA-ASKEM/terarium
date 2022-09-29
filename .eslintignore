@@ -2,3 +2,4 @@
 **/dist
 **/assets
 **/node_modules
+**/playwright
