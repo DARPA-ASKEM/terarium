@@ -10,19 +10,19 @@ function apiCall() {}
 		<p>Test API calls/Home placeholder</p>
 		<div>
 			<Button @click="apiCall">New Project</Button>
-			<Button @click="apiCall">Update Project</Button>
-			<Button @click="apiCall">Get Projects</Button>
-			<Button @click="apiCall">Delete Project</Button>
+			<Button action @click="apiCall">Update Project</Button>
+			<Button success @click="apiCall">Get Projects</Button>
+			<Button info @click="apiCall">Delete Project</Button>
 		</div>
 		<div>
-			<Button @click="apiCall">New Model</Button>
-			<Button @click="apiCall">Update Model</Button>
+			<Button warning @click="apiCall">New Model</Button>
+			<Button danger @click="apiCall">Update Model</Button>
 			<Button @click="apiCall">Get Model</Button>
 			<Button @click="apiCall">Delete Model</Button>
 		</div>
 		<div>
 			<Button @click="uncloak('/api/user/me')">User Call</Button>
-			<Button primary @click="uncloak('/api/admin')">Admin Call</Button>
+			<Button @click="uncloak('/api/admin')">Admin Call</Button>
 		</div>
 	</main>
 </template>

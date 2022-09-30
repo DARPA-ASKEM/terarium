@@ -4,19 +4,50 @@
 
 <style scoped>
 button {
-	background-color: var(--un-color-black-50);
-	border: 0;
+	--btn-color: var(--un-color-black-5);
+	--btn-bg: var(--un-color-black-50);
+	--btn-border: var(--un-color-black-60);
+	background-color: var(--btn-bg);
+	border: 2px solid var(--btn-border);
 	border-radius: 4px;
 	box-shadow: var(--un-box-shadow-small);
-	color: var(--un-color-black-5);
+	color: var(--btn-color);
 	font: var(--un-font-large);
 	min-width: 5em;
 	outline: 0;
 	padding: 0.5em 1em;
 }
 
-button[primary] {
-	background-color: var(--un-color-accent);
+/* Types */
+
+button[action] {
+	--btn-color: var(--un-color-body-text-primary);
+	--btn-bg: var(--un-color-accent);
+	--btn-border: var(--un-color-accent-dark);
+}
+
+button[success] {
+	--btn-color: var(--un-color-feedback-success-darker);
+	--btn-bg: var(--un-color-feedback-success);
+	--btn-border: var(--un-color-feedback-success-darker);
+}
+
+button[info] {
+	--btn-color: var(--un-color-feedback-info-darker);
+	--btn-bg: var(--un-color-feedback-info);
+	--btn-border: var(--un-color-feedback-info-darker);
+}
+
+button[warning] {
+	--btn-color: var(--un-color-feedback-warning-darker);
+	--btn-bg: var(--un-color-feedback-warning);
+	--btn-border: var(--un-color-feedback-warning-darker);
+}
+
+button[danger] {
+	--btn-color: var(--un-color-feedback-danger-darker);
+	--btn-bg: var(--un-color-feedback-danger);
+	--btn-border: var(--un-color-feedback-danger-darker);
 }
 
 /*
