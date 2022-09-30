@@ -1,6 +1,17 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"config:base"
-	]
+		"config:base",
+		":rebaseStalePrs",
+		":enableVulnerabilityAlertsWithLabel(Security)",
+		":pinVersions",
+		":label(RenovateBot)",
+		":semanticCommits"
+	],
+	"npm": {
+		"stabilityDays": 3
+	},
+	"assigneesFromCodeOwners": true,
+	"assigneesSampleSize": 1,
+	"semanticCommitType": "build"
 }
