@@ -1,0 +1,53 @@
+/* -- fix for iOS --*/
+html,
+body {
+	overflow-x: hidden;
+	position: relative;
+}
+
+/* -- Normalize -- */
+body {
+	margin: 0;
+	padding: 0;
+}
+
+a, div, em, figure, footer, form, h1, h2, h3, h4, h5, h6, header, img, li, ol, p, span, strong, ul {
+	border: 0;
+	font: inherit;
+	margin: 0;
+	padding: 0;
+	vertical-align: baseline;
+}
+
+ol, ul {
+	list-style: disc;
+}
+
+img {
+	display: block;
+	max-width: 100%;
+}
+
+/* -- Small Reset -- */
+html {
+	box-sizing: border-box;
+	min-height: 100%;
+}
+html *, html *::before, html *::after {
+	box-sizing: inherit;
+}
+
+body {
+	height: 100%;
+	width: 100%;
+}
+
+p a {
+	color: inherit;
+	text-decoration: none;
+}
+
+a:hover, a:focus {
+	cursor: pointer;
+	text-decoration: underline;
+}
