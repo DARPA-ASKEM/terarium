@@ -12,7 +12,7 @@
 	"npm": {
 		"stabilityDays": 3
 	},
-	"assigneesFromCodeOwners": true,
-	"assigneesSampleSize": 1,
+	"reviewersFromCodeOwners": true,
+	"reviewersSampleSize": 1,
 	"semanticCommitType": "build"
 }
