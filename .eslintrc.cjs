@@ -9,6 +9,8 @@ module.exports = {
   ],
   parser: 'vue-eslint-parser',
 	rules: {
-		'vue/multi-word-component-names': 'off'
+		'vue/multi-word-component-names': 'off',
+		'vuejs-accessibility/click-events-have-key-events': 'off',
+		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 	}
 };
