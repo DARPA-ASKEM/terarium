@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import Button from '@/components/Button.vue';
 
 const auth = useAuthStore();
 
@@ -16,7 +17,7 @@ const authenticatedLabel = computed(() => (auth.isAuthenticated ? 'Logout' : 'Lo
 	<nav>
 		<header>TERArium</header>
 		<span>{{ auth.name }}</span>
-		<button type="button" @click="logout">{{ authenticatedLabel }}</button>
+		<Button @click="logout">{{ authenticatedLabel }}</Button>
 	</nav>
 </template>
 
@@ -31,11 +32,6 @@ nav {
 
 header {
 	font-weight: bold;
-	font-size: 2rem;
-}
-
-a {
-	color: white;
-	text-decoration: none;
+	font-size: var(--un-font-xlarge);
 }
 </style>
