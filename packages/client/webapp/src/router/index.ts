@@ -1,10 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Home from '@/views/Home.vue';
 import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
+import DataExplorer from '@/views/DataExplorer.vue';
 
 const routes = [
 	{ path: '/', component: Home },
-	{ path: '/results', component: ResponsiveMatrixCells }
+	{ path: '/results', component: ResponsiveMatrixCells },
+	{ path: '/explorer', component: DataExplorer }
 ];
 
 const router = createRouter({
