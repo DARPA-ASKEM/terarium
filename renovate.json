@@ -6,9 +6,9 @@
 		":enableVulnerabilityAlertsWithLabel(Security)",
 		":pinVersions",
 		":label(RenovateBot)",
-		":semanticCommits",
-		"schedule:weekly"
+		":semanticCommits"
 	],
+	"schedule": ["before 6am on Tuesday"],
 	"npm": {
 		"stabilityDays": 3
 	},
