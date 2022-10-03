@@ -25,7 +25,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    background-color: var(--un-color-black-70);
-		color: var(--un-color-black-5);
+   /*  background-color: var(--un-color-black-70);
+		color: var(--un-color-black-5); */
   }
 }
