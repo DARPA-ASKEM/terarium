@@ -1,5 +1,24 @@
 <template>
 	<div class="search-container">
+		<div class="nav-bar">
+			<ul class="nav">
+				<li>
+					<button :class="{ active: resultType === 'all' }" @click="resultType = 'all'">All</button>
+				</li>
+				<li>
+					<button :class="{ active: resultType === 'datacubes' }" @click="resultType = 'datacubes'">
+						Models
+					</button>
+				</li>
+				<li>
+					<button :class="{ active: resultType === 'articles' }" @click="resultType = 'articles'">
+						Articles
+					</button>
+				</li>
+			</ul>
+			<slot v-if="resultType === 'articles'" name="xdd"></slot>
+			<slot v-if="resultType === 'datacubes'" name="datacube"></slot>
+		</div>
 		<datacubes-listview
 			v-if="resultType === 'datacubes'"
 			class="list-view"
@@ -18,6 +37,11 @@
 			@toggle-article-selected="toggleDataItemSelected"
 			@set-article-selected="setDataItemSelected"
 		/>
+		<common-listview
+			v-if="resultType === 'all'"
+			class="list-view"
+			:input-items="filteredDataItems"
+		/>
 	</div>
 </template>
 
@@ -25,18 +49,21 @@
 import { defineComponent, PropType } from 'vue';
 import DatacubesListview from '@/components/data-explorer/datacubes-listview.vue';
 import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
+import CommonListview from '@/components/data-explorer/common-listview.vue';
 import { Datacube } from '@/types/Datacube';
 import { XDDArticle } from '@/types/XDD';
+import { SearchResults } from '@/types/common';
 
 export default defineComponent({
 	name: 'Search',
 	components: {
 		DatacubesListview,
-		ArticlesListview
+		ArticlesListview,
+		CommonListview
 	},
 	props: {
 		filteredDataItems: {
-			type: Array as PropType<(Datacube | XDDArticle)[]>,
+			type: Array as PropType<SearchResults[]>,
 			default: () => []
 		},
 		enableMultipleSelection: {
@@ -49,17 +76,23 @@ export default defineComponent({
 		}
 	},
 	emits: ['toggle-data-item-selected', 'set-data-item-selected'],
+	data: () => ({
+		resultType: 'all'
+	}),
 	computed: {
-		resultType(): string {
-			return this.filteredDataItems.length > 0 && this.filteredDataItems[0].outputs !== undefined
-				? 'datacubes'
-				: 'articles';
-		},
 		filteredDatacubes() {
-			return this.filteredDataItems as Datacube[];
+			const resList = this.filteredDataItems.find((res) => res.searchSubsystem === 'datacube');
+			if (resList) {
+				return resList.results as Datacube[];
+			}
+			return [];
 		},
 		filteredArticles() {
-			return this.filteredDataItems as XDDArticle[];
+			const resList = this.filteredDataItems.find((res) => res.searchSubsystem === 'xdd');
+			if (resList) {
+				return resList.results as XDDArticle[];
+			}
+			return [];
 		}
 	},
 	methods: {
@@ -80,11 +113,54 @@ export default defineComponent({
 	display: flex;
 	flex-direction: column;
 	padding-right: 10px;
-	gap: 5px;
+	gap: 1px;
 
 	.list-view {
 		flex: 1;
 		min-height: 0;
+	}
+
+	.nav-bar {
+		display: flex;
+		justify-content: center;
+		background-color: #f3f3f3;
+
+		.nav {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			border: 1px solid #e7e7e7;
+			background-color: #f3f3f3;
+			margin-right: 2rem;
+
+			li {
+				float: left;
+			}
+
+			li button {
+				display: block;
+				color: #666;
+				text-align: center;
+				padding: 14px 16px;
+				text-decoration: none;
+				border-radius: 0;
+				background: darkgray;
+				border: none;
+				padding: 4px 8px;
+			}
+
+			li button:hover:not(.active) {
+				background-color: #ddd;
+				border: none;
+			}
+
+			li button.active {
+				color: white;
+				background-color: #04aa6d;
+				border: none;
+			}
+		}
 	}
 }
 </style>

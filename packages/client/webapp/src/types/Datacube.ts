@@ -8,4 +8,5 @@ export type Datacube = {
 	display_name: string;
 	name: string;
 	type: string;
+	source: string;
 };

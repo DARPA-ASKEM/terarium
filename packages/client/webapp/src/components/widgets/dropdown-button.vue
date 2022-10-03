@@ -5,7 +5,7 @@
 				{{ innerButtonLabel ? `${innerButtonLabel}: ` : '' }}
 				<strong>{{ selectedItemDisplayName }}</strong>
 			</span>
-			<i class="fa-regular fa-angle-down" />
+			<i class="fa fa-angle-down" />
 		</button>
 		<dropdown-control
 			v-if="isDropdownOpen"
@@ -26,7 +26,7 @@
 					@click="emitItemSelection(item.value)"
 				>
 					{{ item.displayName }}
-					<i v-if="item.selected" style="margin-left: 1rem" class="fa-solid fa-check fa-lg" />
+					<i v-if="item.selected" style="margin-left: 1rem" class="fa fa-check fa-lg" />
 				</div>
 			</template>
 		</dropdown-control>

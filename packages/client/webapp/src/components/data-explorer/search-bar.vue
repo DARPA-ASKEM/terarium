@@ -1,13 +1,13 @@
 <template>
 	<div class="search-bar-container">
 		<div>
-			<label for="search" class="search-label">Search</label>
+			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
 			<input
 				id="search"
+				v-model="searchText"
 				type="text"
 				name="search"
-				:value="searchText"
-				placeholder="search text here..."
+				:placeholder="searchPlaceholder"
 				@keyup.enter="addSearchTerm"
 				@input="searchTextHandler"
 			/>
@@ -20,9 +20,16 @@
 				</span>
 			</div>
 		</div>
-		<slot name="xdd"></slot>
-		<button type="button" class="btn clear-button" @click="clearText">
+		<button v-if="enableClearButton" type="button" class="btn clear-button" @click="clearText">
 			<i class="fa fa-remove" />&nbsp;Clear
+		</button>
+		<button
+			v-if="enableSearchButton"
+			type="button"
+			class="btn clear-button search-button"
+			@click="execSearch"
+		>
+			<i class="fa fa-search" />&nbsp;Search
 		</button>
 	</div>
 </template>
@@ -40,6 +47,22 @@ export default defineComponent({
 		enableMultiTermSearch: {
 			type: Boolean,
 			default: false
+		},
+		searchLabel: {
+			type: String,
+			default: 'Search'
+		},
+		searchPlaceholder: {
+			type: String,
+			default: 'search text here...'
+		},
+		enableClearButton: {
+			type: Boolean,
+			default: true
+		},
+		enableSearchButton: {
+			type: Boolean,
+			default: true
 		}
 	},
 	emits: ['search-text-changed'],
@@ -53,7 +76,7 @@ export default defineComponent({
 	},
 	watch: {
 		searchTerms() {
-			this.$emit('search-text-changed', this.searchTerms);
+			this.execSearch();
 		}
 	},
 	methods: {
@@ -74,6 +97,9 @@ export default defineComponent({
 				const term = event.target.value;
 				this.searchTerms = this.enableMultiTermSearch ? [...this.searchTerms, term] : [term];
 			}
+		},
+		execSearch() {
+			this.$emit('search-text-changed', this.searchTerms);
 		}
 	}
 });
@@ -93,6 +119,10 @@ export default defineComponent({
 	padding-left: 8px;
 	padding-right: 8px;
 	margin: 4px;
+}
+
+.search-button {
+	background-color: dodgerblue;
 }
 
 .flex-aligned {

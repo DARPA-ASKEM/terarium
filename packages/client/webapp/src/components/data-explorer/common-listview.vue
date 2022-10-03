@@ -4,60 +4,33 @@
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />TITLE and AUTHOR</th>
-						<th>PUBLISHER and ABSTRACT</th>
-						<th>JOURNAL</th>
-						<th>KNOWN TERMS</th>
+						<th><span class="left-cover" />Name</th>
+						<th>Desc</th>
+						<th>Source</th>
 						<th>PREVIEW<span class="right-cover" /></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr
-						v-for="d in articles"
-						:key="d._gddid"
-						class="tr-item"
-						:class="{ selected: isSelected(d) }"
-						@click="updateExpandedRow(d)"
-					>
+					<tr v-for="d in items" :key="d.id" class="tr-item" @click="updateExpandedRow(d)">
 						<td class="output-col">
 							<div class="output-layout">
-								<!-- in case of requesting multiple selection -->
-								<div class="radio" @click.stop="updateSelection(d)">
-									<template v-if="enableMultipleSelection">
-										<span v-show="isSelected(d)"
-											><i class="fa-lg fa-regular fa-square-check"></i
-										></span>
-										<span v-show="!isSelected(d)"><i class="fa-lg fa-regular fa-square"></i></span>
-									</template>
-									<template v-else>
-										<span v-show="isSelected(d)"><i class="fa-lg fa-regular fa-circle"></i></span>
-										<span v-show="!isSelected(d)"
-											><i class="fa-lg fa-regular fa-circle-xmark"></i
-										></span>
-									</template>
+								<div class="radio">
 									<i
-										class="fa-lg fa-solid fa-file-lines"
+										class="fa-regular fa-lg fa-fw"
+										:class="getTypeIcon(d)"
 										style="margin-left: 4px; margin-right: 4px"
 									></i>
 								</div>
 								<div class="content">
-									<div class="text-bold">{{ formatTitle(d) }}</div>
-									<div v-if="isExpanded(d)" class="knobs">
-										<multiline-description :text="formatArticleAuthors(d)" />
-									</div>
+									<div>{{ formatName(d) }}</div>
 								</div>
 							</div>
 						</td>
 						<td class="desc-col">
-							<div class="text-bold">{{ d.publisher }}</div>
 							<multiline-description :text="formatDescription(d)" />
 						</td>
 						<td class="period-col">
-							<div class="text-bold">{{ d.journal }}</div>
-							<div>{{ '' }}</div>
-						</td>
-						<td class="region-col">
-							<div v-html="formatKnownTerms(d)"></div>
+							<multiline-description :text="formatSource(d)" />
 						</td>
 						<td class="timeseries-col">
 							<div class="timeseries-container">
@@ -65,7 +38,7 @@
 							</div>
 						</td>
 					</tr>
-					<tr v-if="articles.length === 0" class="tr-item">
+					<tr v-if="items.length === 0" class="tr-item">
 						<td colspan="100%" style="text-align: center">No data available</td>
 					</tr>
 				</tbody>
@@ -75,39 +48,72 @@
 </template>
 
 <script lang="ts">
-// import moment from 'moment';
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
+import { SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
+import { Datacube } from '@/types/Datacube';
+
+type GenericResult = {
+	id: string;
+	name: string;
+	desc: string;
+	source: string;
+	type: string;
+};
 
 export default defineComponent({
-	name: 'ArticlesListview',
+	name: 'CommonListview',
 	components: {
 		MultilineDescription
 	},
 	props: {
-		articles: {
-			type: Array as PropType<XDDArticle[]>,
+		inputItems: {
+			type: Array as PropType<SearchResults[]>,
 			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<string[]>,
-			required: true
-		},
-		enableMultipleSelection: {
-			type: Boolean,
-			default: false
 		}
 	},
-	emits: ['toggle-article-selected', 'set-article-selected'],
 	setup(props) {
 		const expandedRowId = ref('');
 
-		const { articles } = toRefs(props);
+		const { inputItems } = toRefs(props);
+
+		const items = ref<GenericResult[]>([]);
 
 		watch(
-			articles,
+			inputItems,
 			() => {
+				// transform incoming results of differnt types into a generic one
+				const list: GenericResult[] = [];
+				inputItems.value.forEach((item) => {
+					if (item.searchSubsystem === 'xdd') {
+						const results = item.results as XDDArticle[];
+						results.forEach((article) => {
+							list.push({
+								// eslint-disable-next-line no-underscore-dangle
+								id: article._gddid,
+								name: article.title,
+								desc: article.abstract ?? '', // FIXME: XDD should always return valid abstract
+								source: article.author.map((a) => a.name).join('\n'),
+								type: 'xdd'
+							});
+						});
+					}
+					if (item.searchSubsystem === 'datacube') {
+						const results = item.results as Datacube[];
+						results.forEach((datacube) => {
+							list.push({
+								id: datacube.id,
+								name: datacube.name,
+								desc: datacube.description,
+								source: datacube.status, // FIXME
+								type: 'datacube'
+							});
+						});
+					}
+				});
+				items.value = list;
+
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const elem: any = document.getElementsByClassName('table-fixed-head');
 				if (elem.length === 0) return;
@@ -117,51 +123,36 @@ export default defineComponent({
 		);
 
 		return {
-			expandedRowId
+			expandedRowId,
+			items
 		};
 	},
 	methods: {
-		isExpanded(article: XDDArticle) {
-			return this.expandedRowId === article.title;
+		isExpanded(item: GenericResult) {
+			return this.expandedRowId === item.id;
 		},
-		updateExpandedRow(article: XDDArticle) {
-			this.expandedRowId = this.expandedRowId === article.title ? '' : article.title;
+		updateExpandedRow(article: GenericResult) {
+			this.expandedRowId = this.expandedRowId === article.id ? '' : article.id;
 		},
-		formatTitle(d: XDDArticle) {
-			return d.title ? d.title : d.title;
+		formatName(item: GenericResult) {
+			return item.name;
 		},
-		formatArticleAuthors(d: XDDArticle) {
-			return d.author.map((a) => a.name).join('\n');
+		formatDescription(item: GenericResult) {
+			const maxSize = 120;
+			return this.isExpanded(item) || item.desc.length < maxSize
+				? item.desc
+				: `${item.desc.substring(0, maxSize)}...`;
 		},
-		isSelected(article: XDDArticle) {
-			return this.selectedSearchItems.find((item) => item === article.title) !== undefined;
+		formatSource(item: GenericResult) {
+			const maxSize = 25;
+			return this.isExpanded(item) || item.source.length < maxSize
+				? item.source
+				: `${item.source.substring(0, maxSize)}...`;
 		},
-		updateSelection(article: XDDArticle) {
-			const item = article.title;
-			if (this.enableMultipleSelection) {
-				// if the article is not in the list add it, otherwise remove it
-				this.$emit('toggle-article-selected', item);
-			} else {
-				// only one selection is allowed, so replace the entire array
-				this.$emit('set-article-selected', item);
-			}
-		},
-		formatDescription(d: XDDArticle) {
-			if (!d.abstract) return '';
-			return this.isExpanded(d) || d.abstract.length < 140
-				? d.abstract
-				: `${d.abstract.substring(0, 140)}...`;
-		},
-		formatKnownTerms(d: XDDArticle) {
-			let knownTerms = '';
-			if (d.known_terms) {
-				d.known_terms.forEach((term) => {
-					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
-					knownTerms += '<br />';
-					knownTerms += Object.values(term).flat().join(' ');
-				});
-			}
-			return knownTerms;
+		getTypeIcon(d: GenericResult) {
+			return `fa-regular ${
+				d.type === 'datacube' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-file-lines'
+			}`;
 		}
 	}
 });

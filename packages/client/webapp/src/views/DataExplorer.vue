@@ -10,8 +10,15 @@
 		<div class="explorer-content">
 			<search-bar
 				class="search-bar"
-				:enable-multi-term-search="true"
+				:enable-multi-term-search="false"
 				@search-text-changed="filterData"
+			/>
+			<search
+				class="search"
+				:filtered-data-items="filteredDataItems"
+				:enable-multiple-selection="true"
+				:selected-search-items="selectedSearchItems"
+				@toggle-data-item-selected="toggleDataItemSelected"
 			>
 				<template #xdd>
 					<dropdown-button
@@ -21,15 +28,19 @@
 						:selected-item="xddDataset"
 						@item-selected="xddDatasetSelectionChanged"
 					/>
+					<div class="xdd-known-terms">
+						<search-bar
+							class="search-bar"
+							:enable-multi-term-search="true"
+							:search-label="''"
+							:enable-clear-button="false"
+							:enable-search-button="false"
+							:search-placeholder="'known terms...'"
+							@search-text-changed="addKnownTerm"
+						/>
+					</div>
 				</template>
-			</search-bar>
-			<search
-				class="search"
-				:filtered-data-items="filteredDataItems"
-				:enable-multiple-selection="true"
-				:selected-search-items="selectedSearchItems"
-				@toggle-data-item-selected="toggleDataItemSelected"
-			/>
+			</search>
 			<simple-pagination
 				:current-page-length="filteredDataItemsCount"
 				:page-count="pageCount"
@@ -50,10 +61,8 @@ import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 
-import { Datacube, DatacubeFilterAttributes } from '@/types/Datacube';
-import { ArticleFilterAttributes, XDDArticle } from '@/types/XDD';
-
 import { fetchData, getXDDSets } from '@/services/data';
+import { SearchParameters, SearchResults } from '@/types/common';
 
 // FIXME: page count is not taken into consideration
 // FIXME: consider facets
@@ -70,7 +79,7 @@ export default defineComponent({
 		DropdownButton
 	},
 	setup() {
-		const filteredDataItems = ref<(Datacube | XDDArticle)[]>([]);
+		const filteredDataItems = ref<SearchResults[]>([]);
 		const selectedSearchItems = ref<string[]>([]);
 		const filter = ref<string[]>([]);
 		return {
@@ -82,8 +91,10 @@ export default defineComponent({
 	data: () => ({
 		pageCount: 0,
 		pageSize: 50,
+		// xdd
 		xddDatasets: [] as string[],
-		xddDataset: null as string | null
+		xddDataset: null as string | null,
+		knownTerms: [] as string[]
 	}),
 	computed: {
 		navBackLabel() {
@@ -96,13 +107,15 @@ export default defineComponent({
 	watch: {
 		filter() {
 			this.refresh();
+		},
+		knownTerms() {
+			this.refresh();
 		}
 	},
 	async mounted() {
 		this.xddDatasets = await getXDDSets();
 		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
-			const indx = this.xddDatasets.length - 1;
-			this.xddDataset = this.xddDatasets[indx];
+			this.xddDataset = 'all';
 		}
 
 		this.refresh();
@@ -117,7 +130,7 @@ export default defineComponent({
 			this.fetchDataItemList();
 		},
 		xddDatasetSelectionChanged(newDataset: string) {
-			this.xddDataset = newDataset;
+			this.xddDataset = newDataset === 'all' ? null : newDataset;
 		},
 		// retrieves filtered data items list
 		async fetchDataItemList() {
@@ -128,42 +141,18 @@ export default defineComponent({
 			//   size: this.pageSize
 			// };
 
-			const allData: (Datacube | XDDArticle)[] = await fetchData(true /* xdd */);
-			const filteredData: (Datacube | XDDArticle)[] = [];
-
-			const addToFilteredData = (items: (Datacube | XDDArticle)[]) => {
-				// should only include unique items
-				filteredData.push(...items);
+			const searchParams: SearchParameters = {
+				xdd: {
+					known_terms: this.knownTerms,
+					dataset: this.xddDataset === 'all' ? null : this.xddDataset
+				}
 			};
 
-			// apply filter to allData according to search type: for datacubes or articles
-			//  match against relevant search attributes, DatacubeFilterAttributes
-			if (allData.length > 0 && this.filter.length > 0) {
-				const firstDataItem = allData[0];
-				const receviedDatacubes = firstDataItem.outputs !== undefined;
-				this.filter.forEach((filterTerm) => {
-					if (receviedDatacubes) {
-						// datacubes
-						DatacubeFilterAttributes.forEach((datacubeAttr) => {
-							const resultsAsDatacubes = allData as Datacube[];
-							const fr = resultsAsDatacubes.filter((d) => d[datacubeAttr].includes(filterTerm));
-							addToFilteredData(fr);
-						});
-					} else {
-						// articles
+			// FIXME: should we allow multiple search terms?
+			const searchTerm = this.filter.length > 0 ? this.filter[0] : '';
 
-						ArticleFilterAttributes.forEach((articleAttr) => {
-							const resultsAsArticles = allData as XDDArticle[];
-							const fr = resultsAsArticles.filter((d) =>
-								d[articleAttr].toLowerCase().includes(filterTerm)
-							);
-							addToFilteredData(fr);
-						});
-					}
-				});
-			}
-
-			this.filteredDataItems = this.filter.length > 0 ? filteredData : allData;
+			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
+			this.filteredDataItems = allData;
 		},
 		async refresh() {
 			this.pageCount = 0;
@@ -182,9 +171,10 @@ export default defineComponent({
 			if (this.isDataItemSelected(itemID)) {
 				this.selectedSearchItems = this.selectedSearchItems.filter((item) => item !== itemID);
 			} else {
-				const dataitem = this.filteredDataItems.find(
-					(item) => item.id === itemID || item.title === itemID
-				);
+				const dataitem = this.filteredDataItems
+					.map((res) => res.results)
+					.flat()
+					.find((item) => item.id === itemID || item.title === itemID);
 				if (dataitem === undefined) {
 					return;
 				}
@@ -193,6 +183,19 @@ export default defineComponent({
 		},
 		onSelection() {
 			console.log(`received ${this.selectedSearchItems.length.toString()} items!`);
+		},
+		removeKnownTerm(term: string) {
+			this.knownTerms = this.knownTerms.filter((t) => t !== term);
+		},
+		addKnownTerm(knownTerms: string[]) {
+			if (knownTerms.length === 0) {
+				this.knownTerms = [];
+			}
+			knownTerms.forEach((term) => {
+				if (!this.knownTerms.includes(term)) {
+					this.knownTerms.push(term);
+				}
+			});
 		}
 	}
 });
@@ -214,6 +217,17 @@ export default defineComponent({
 		display: flex;
 		flex-direction: column;
 		flex: 1;
+	}
+
+	.xdd-known-terms {
+		margin-left: 1rem;
+		display: flex;
+
+		::v-deep .search-bar-container input {
+			margin: 4px;
+			padding: 4px;
+			min-width: 100px;
+		}
 	}
 }
 </style>

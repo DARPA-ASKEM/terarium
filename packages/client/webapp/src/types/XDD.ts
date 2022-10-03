@@ -23,7 +23,7 @@ export type XDDArticle = {
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string; //
-	known_terms: XDDArticleKnownTerms[]; //
+	known_terms?: XDDArticleKnownTerms[]; // FIXME
 	link: XDDArticleLink[];
 	number: string;
 	pages: string;
