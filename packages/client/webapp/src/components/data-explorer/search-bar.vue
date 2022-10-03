@@ -20,6 +20,7 @@
 				</span>
 			</div>
 		</div>
+		<slot name="xdd"></slot>
 		<button type="button" class="btn clear-button" @click="clearText">
 			<i class="fa fa-remove" />&nbsp;Clear
 		</button>
@@ -33,6 +34,10 @@ export default defineComponent({
 	name: 'SearchBar',
 	props: {
 		realtime: {
+			type: Boolean,
+			default: false
+		},
+		enableMultiTermSearch: {
 			type: Boolean,
 			default: false
 		}
@@ -67,7 +72,7 @@ export default defineComponent({
 		addSearchTerm(event) {
 			if (!this.realtime) {
 				const term = event.target.value;
-				this.searchTerms = [...this.searchTerms, term];
+				this.searchTerms = this.enableMultiTermSearch ? [...this.searchTerms, term] : [term];
 			}
 		}
 	}

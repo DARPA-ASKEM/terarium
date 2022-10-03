@@ -8,7 +8,21 @@
 			@selection="onSelection"
 		/>
 		<div class="explorer-content">
-			<search-bar class="search-bar" @search-text-changed="filterData" />
+			<search-bar
+				class="search-bar"
+				:enable-multi-term-search="true"
+				@search-text-changed="filterData"
+			>
+				<template #xdd>
+					<dropdown-button
+						:inner-button-label="'Dataset'"
+						:is-dropdown-left-aligned="true"
+						:items="xddDatasets"
+						:selected-item="xddDataset"
+						@item-selected="xddDatasetSelectionChanged"
+					/>
+				</template>
+			</search-bar>
 			<search
 				class="search"
 				:filtered-data-items="filteredDataItems"
@@ -34,11 +48,12 @@ import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import Search from '@/components/data-explorer/search.vue';
 import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
+import DropdownButton from '@/components/widgets/dropdown-button.vue';
 
 import { Datacube, DatacubeFilterAttributes } from '@/types/Datacube';
 import { ArticleFilterAttributes, XDDArticle } from '@/types/XDD';
 
-import fetchData from '@/services/data';
+import { fetchData, getXDDSets } from '@/services/data';
 
 // FIXME: page count is not taken into consideration
 // FIXME: consider facets
@@ -51,7 +66,8 @@ export default defineComponent({
 		Search,
 		ModalHeader,
 		SimplePagination,
-		SearchBar
+		SearchBar,
+		DropdownButton
 	},
 	setup() {
 		const filteredDataItems = ref<(Datacube | XDDArticle)[]>([]);
@@ -65,7 +81,9 @@ export default defineComponent({
 	},
 	data: () => ({
 		pageCount: 0,
-		pageSize: 50
+		pageSize: 50,
+		xddDatasets: [] as string[],
+		xddDataset: null as string | null
 	}),
 	computed: {
 		navBackLabel() {
@@ -80,7 +98,13 @@ export default defineComponent({
 			this.refresh();
 		}
 	},
-	mounted() {
+	async mounted() {
+		this.xddDatasets = await getXDDSets();
+		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
+			const indx = this.xddDatasets.length - 1;
+			this.xddDataset = this.xddDatasets[indx];
+		}
+
 		this.refresh();
 	},
 	methods: {
@@ -91,6 +115,9 @@ export default defineComponent({
 		nextPage() {
 			this.pageCount += 1;
 			this.fetchDataItemList();
+		},
+		xddDatasetSelectionChanged(newDataset: string) {
+			this.xddDataset = newDataset;
 		},
 		// retrieves filtered data items list
 		async fetchDataItemList() {

@@ -1,17 +1,35 @@
 import { Datacube } from '../types/Datacube';
 import { XDDArticle, XDDResult } from '../types/XDD';
 
+const getXDDSets = async () => {
+	const url = 'https://xdd.wisc.edu/sets/';
+	const response = await fetch(url);
+	const rawdata = await response.json();
+	return rawdata.available_sets;
+};
+
+const searchXDDArticles = async (term: string, dataset?: string, dict?: string[]) => {
+	let url = `https://xdd.wisc.edu/api/articles?term=${term}&max=100&include_score=true`;
+	if (dataset) {
+		url += `&dataset=${dataset}`;
+	}
+	if (dict) {
+		url += `&dict=${dict.join(',')}`;
+	}
+	// full_results
+	const response = await fetch(url);
+	const rawdata: XDDResult = await response.json();
+	const { data } = rawdata.success;
+	return data;
+};
+
 const fetchData = async (xdd = false) => {
 	// @TEMP: mock data simulating fetching of data resources from the server
 	const tempDataList: (Datacube | XDDArticle)[] = [];
 
 	if (xdd) {
-		const url =
-			'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=github&dict=genes%2Ccovid-19_drugs&max=100&include_score=true';
-		const response = await fetch(url);
-		const rawdata: XDDResult = await response.json();
-		const { data } = rawdata.success;
-		tempDataList.push(...data);
+		const result = await searchXDDArticles('github', 'xdd-covid-19', ['genes', 'covid-19_drugs']);
+		tempDataList.push(...result);
 	} else {
 		//
 		// mock data
@@ -120,4 +138,4 @@ const fetchData = async (xdd = false) => {
 	return tempDataList;
 };
 
-export default fetchData;
+export { fetchData, getXDDSets };
