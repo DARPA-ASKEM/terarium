@@ -93,8 +93,8 @@ export default defineComponent({
 								// eslint-disable-next-line no-underscore-dangle
 								id: article._gddid,
 								name: article.title,
-								desc: article.abstract ?? '', // FIXME: XDD should always return valid abstract
-								source: article.author.map((a) => a.name).join('\n'),
+								desc: article.journal ?? article.abstract ?? '', // FIXME: XDD should always return valid abstract
+								source: article.publisher ?? article.author.map((a) => a.name).join('\n'),
 								type: 'xdd'
 							});
 						});
