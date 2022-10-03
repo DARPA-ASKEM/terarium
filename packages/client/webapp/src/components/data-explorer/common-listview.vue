@@ -106,7 +106,7 @@ export default defineComponent({
 								id: datacube.id,
 								name: datacube.name,
 								desc: datacube.description,
-								source: datacube.status, // FIXME
+								source: datacube.source,
 								type: 'datacube'
 							});
 						});

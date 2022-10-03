@@ -2,11 +2,10 @@ export const DatacubeFilterAttributes = ['name', 'description'];
 
 export type Datacube = {
 	id: string;
-	description: string;
-	status: string;
-	outputs: [];
-	display_name: string;
 	name: string;
+	description: string;
+	source: string; // author and affailiation
+	status: string;
+	category: string;
 	type: string;
-	source: string;
 };

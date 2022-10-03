@@ -4,10 +4,9 @@
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />VARIABLE INFORMATION</th>
-						<th>SOURCE and DESCRIPTION</th>
-						<th>PERIOD</th>
-						<th>REGION</th>
+						<th><span class="left-cover" />NAME and DESCRIPTION</th>
+						<th>SOURCE</th>
+						<th>CATEGORY</th>
 						<th>PREVIEW<span class="right-cover" /></th>
 					</tr>
 				</thead>
@@ -52,24 +51,15 @@
 										Processing
 									</button>
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
-									<multiline-description :text="formatOutputDescription(d)" />
-									<div v-if="isExpanded(d)" class="knobs">
-										Input Conditions:<br />
-										{{ 'initial conditions...\ntransient states...' }}
-									</div>
+									<multiline-description :text="formatDescription(d)" />
 								</div>
 							</div>
 						</td>
 						<td class="desc-col">
-							<div class="text-bold">{{ d.name }}</div>
-							<multiline-description :text="formatDescription(d)" />
+							<div class="text-bold">{{ d.source }}</div>
 						</td>
 						<td class="period-col">
-							<div class="text-bold">{{ 'period' }}</div>
-							<div>{{ 'timestamp' }}</div>
-						</td>
-						<td class="region-col">
-							<div>{{ 'country' }}</div>
+							<div class="text-bold">{{ d.category }}</div>
 						</td>
 						<td class="timeseries-col">
 							<div class="timeseries-container">
@@ -84,10 +74,17 @@
 </template>
 
 <script lang="ts">
-// import moment from 'moment';
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Datacube } from '@/types/Datacube';
+
+/**
+ * name: string;
+	description: string;
+	source: string; // author and affailiation
+	status: string;
+	category: string;
+ */
 
 export default defineComponent({
 	name: 'DatacubesListview',

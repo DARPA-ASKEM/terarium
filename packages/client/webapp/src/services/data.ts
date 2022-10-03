@@ -24,102 +24,99 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 	const allDatacubes: Datacube[] = [
 		{
 			id: '1',
-			description: 'test cube 1',
+			description:
+				'CHIME is a modified SIR model of outbreak progression that is limited to short term forecasting. It is only applicable during the period prior to a region’s peak infections, and it accounts only for a single significant social distancing policy.',
 			status: 'ready',
-			outputs: [],
-			display_name: 'one',
-			name: 'one',
+			category: 'Mechanistic - compartmental',
+			name: 'CHIME',
 			type: 'model',
-			source: 'Univerisy of XYZ'
+			source: 'Jeffrey Kantor, Notre Dame'
 		},
 		{
 			id: '2',
-			description: 'another lone desc for cube 2 regarding covid model',
-			status: 'deprecated',
-			outputs: [],
-			display_name: 'two',
-			name: 'two_',
+			description:
+				'Short Colab notebook in Python used to teach SIR at Notre Dame. Basic SIR/SEIR with mitigation measures like social distancing',
+			status: 'ready',
+			category: 'Mechanistic - compartmental',
+			name: 'University of Notre Dame CBE 30338 Class Model',
 			type: 'model',
-			source: 'Univerisy of ABC'
+			source: 'Penn Medicine'
 		},
 		{
 			id: '3',
-			description: 'happy face',
+			description:
+				'This model predicts based on an SEIR model augmented with underdetection and interventions (gov response). Projections account for reopening and assume interventions would be re-enacted if cases continue to climb.',
 			status: 'ready',
-			outputs: [],
-			display_name: 'three',
-			name: 'three',
+			name: 'CovidAnalytics-DELPHI (Differential Equations Leads to Predictions of Hospitalizations and Infections) [also known as MIT-ORC]',
 			type: 'model',
-			source: 'Univerisy of ABC'
+			source: 'CovidAnalytics at MIT (from MIT Operations Research Center, MIT-ORC)',
+			category: 'Mechanistic - compartmental'
 		},
 		{
 			id: '4',
-			description: '',
-			status: 'disabled',
-			outputs: [],
-			display_name: 'four',
-			name: 'four4',
+			description:
+				'Spatial compartment model using public mobility data and local parameters. Spatially distributed SEIR model.',
+			status: 'ready',
+			name: 'JHU-APL-Bucky',
 			type: 'dataset',
-			source: ''
+			source: 'John Hopkins University Applied Physics Lab',
+			category: 'Mechanistic - compartmental/metapopulation'
 		},
 		{
 			id: '5',
-			description: 'i like this one',
+			description:
+				'Multi-layer complex network. Nodes represent people, edges are social contacts, and layers are different social activities (6 layers - home, work, transport, school, religious activities, random). States of infection are included (SIIIIRD - 7 states). Supports simulation of isolation, social distancing, pecautionary measures. In terms of population demographics, considers age distribution and family size. ',
 			status: 'processing',
-			outputs: [],
-			display_name: 'Five',
-			name: 'five',
+			category: 'Mechanistic: Agent-based model (ABM)',
+			name: 'COmplexVID-19',
 			type: 'model',
-			source: 'Univerisy of 123'
+			source: 'University of Sao Paulo'
 		},
 		{
 			id: '6',
-			description: 'yes yes',
+			description: `The simulation iterates through every member (agent) of the population once every day of the simulation. The agents will be in one of the following states throughout the epidemic: susceptible, incubation, illness, hospitalized, in ICU, dead and recovered.
+			Factors such as the person's age, the contact matrix for the country, public mobility limitations, testing practices, and available healthcare capacity will have influence on how the state transitions work.
+			Model is based on simulating interactions on an individual level, so arbitrary rules can be evaluated easily. Allows examining the features of the pathogen (such as contagiousness and lethality) and the features of the population (such as the number of close contacts per day) separately. Some important parameters like the reproduction number R, are emergent properties that yield their value during the simulation`,
 			status: 'ready',
-			outputs: [],
-			display_name: 'six',
-			name: 'six covid model',
+			category: 'Mechanistic: Agent-based model (ABM)',
+			name: 'REINA',
 			type: 'model',
-			source: 'Univerisy of 345'
+			source: 'University of Helsinki, Finnish Institute for Health and Welfare'
 		},
 		{
 			id: '7',
-			description: 'nice work',
+			description: '',
 			status: 'ready',
-			outputs: [],
-			display_name: 'seven',
-			name: 'seven',
+			category: 'indexed temporal',
+			name: 'temporal_data123',
 			type: 'dataset',
-			source: ''
+			source: 'University of XYZ'
 		},
 		{
 			id: '8',
 			description: '',
 			status: 'disabled',
-			outputs: [],
-			display_name: 'eight',
-			name: 'eight',
-			type: 'model',
+			category: 'n/a',
+			name: 'temp',
+			type: 'dataset',
 			source: ''
 		},
 		{
 			id: '9',
-			description: 'this is a github copy of the data explorer showing a lot of nice things',
-			status: 'ready',
-			outputs: [],
-			display_name: 'nine',
-			name: 'nine',
-			type: 'model',
-			source: 'Univerisy of XYZ'
+			description: 'this is a github dataset showing a lot of nice things',
+			status: 'deprecated',
+			category: 'weather',
+			name: 'weather_temp_seasonal_history',
+			type: 'dataset',
+			source: ''
 		},
 		{
 			id: '10',
-			description: 'good work',
+			description: 'population of the world at different resolution',
 			status: 'registered',
-			outputs: [],
-			display_name: 'ten',
-			name: 'ten',
-			type: 'model',
+			category: 'population',
+			name: 'pop_datasetjan2022',
+			type: 'dataset',
 			source: ''
 		}
 	];
