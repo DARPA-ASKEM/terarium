@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-httpd-config
+data:
+  000-default.conf: |
+    <VirtualHost *:80>
+      ServerName localhost
+      ErrorLog /proc/self/fd/1
+      CustomLog /proc/self/fd/2 combined
+      LogLevel debug
+
+      Header set OIDC_access_token "%{OIDC_access_token}e" env=OIDC_access_token
+      Header set OIDC_access_token_expires "%{OIDC_access_token_expires}e" env=OIDC_access_token_expires
+
+      RequestHeader set X-Forwarded-Proto "http" early
+      RequestHeader set X-Forwarded-Port 8078
+
+      ProxyPreserveHost On
+
+      #OIDCProviderMetadataURL http://gateway-keycloak:8080/realms/Uncharted/.well-known/openid-configuration
+      OIDCProviderMetadataURL http://host.docker.internal:8079/realms/Uncharted/.well-known/openid-configuration
+      OIDCSSLValidateServer off
+      OIDCRedirectURI http://localhost:8078/app/redirect_uri
+      OIDCDefaultURL http://localhost:8078/app/
+      OIDCCryptoPassphrase 0123456789
+      OIDCClientID app
+      OIDCClientSecret jtbQhs6SlfynqJaygVpwav2kLzAme2b4
+      OIDCScope "openid email profile"
+      OIDCXForwardedHeaders X-Forwarded-Host X-Forwarded-Port X-Forwarded-Proto
+      OIDCPassClaimsAs headers
+
+      OIDCRemoteUserClaim sub
+      OIDCPassClaimsAs environment
+
+      OIDCInfoHook userinfo
+
+      # See fast if we accumulate state cookies
+      LimitRequestFieldSize 4096
+
+      Header setifempty Cache-Control "max-age=0, must-revalidate"
+
+      RedirectTemp /logout http://localhost:8078/app/redirect_uri?logout=http://localhost:8078/app/
+
+      <Location /api/>
+        ProxyPass http://host.docker.internal:3000/api/ timeout=10 retry=0 keepalive=On
+        ProxyPassReverse http://host.docker.internal:3000/api/
+
+        AuthType openid-connect
+        Require valid-user
+      </Location>
+
+      <Location /silent-check-sso.html>
+        AuthType openid-connect
+        Require valid-user
+      </Location>
+
+      <Location /app/>
+        ProxyPass http://host.docker.internal:8080/app/
+        ProxyPassReverse http://host.docker.internal:8080/app/
+
+        AuthType openid-connect
+        Require valid-user
+      </Location>
+    </VirtualHost>

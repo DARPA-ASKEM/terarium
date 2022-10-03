@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-httpd-htdocs
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <title>Landing Page</title>
+        <link rel="stylesheet" href="styles.css">
+      <body>
+        <h2>Terarium Auth</h2>
+        <p>Go to <a href="/app/">/app/</a>.</p>
+        <p>There are two users:</p>
+        <ul>
+          <li>Adam the administrator <code>adam@test.io:asdf1ASDF</code></li>
+          <li>Ursula the user <code>ursula@test.io:asdf1ASDF</code></li>
+        </ul>
+      </body>
+    </html>
+  silent-check-sso.html: |
+    <html>
+    <body>
+        <script>
+            parent.postMessage(location.href, location.origin)
+        </script>
+    </body>
+    </html>
+  styles.css: |
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+    }
