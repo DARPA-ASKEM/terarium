@@ -15,7 +15,6 @@
 	"reviewers": ["@bencodrington", "@dgauldie", "@mwdchang", "@YohannParis"],
 	"reviewersSampleSize": 1,
 	"semanticCommitType": "build",
-	"platformAutomerge": true,
 	"automergeStrategy": "squash",
 	"packageRules": [
 		{
@@ -28,7 +27,8 @@
 			"description": "Automatically merge minor and patch-level updates",
 			"matchUpdateTypes": ["minor", "patch", "digest"],
 			"automerge": true,
-			"automergeType": "pr"
+			"automergeType": "pr",
+			"platformAutomerge": true
 		}
 	]
 }
