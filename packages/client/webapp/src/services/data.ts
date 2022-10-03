@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import {
 	DatacubeSearchParams,
 	SearchParameters,
@@ -122,19 +123,15 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 	];
 
 	if (term.length > 0) {
-		const addToFilteredData = (items: Datacube[]) => {
-			// should only include unique items
-			finalDatacubes.push(...items);
-		};
 		DatacubeFilterAttributes.forEach((datacubeAttr) => {
 			const resultsAsDatacubes = allDatacubes;
-			const fr = resultsAsDatacubes.filter((d) => d[datacubeAttr].includes(term));
-			addToFilteredData(fr);
+			const items = resultsAsDatacubes.filter((d) => d[datacubeAttr].toLowerCase().includes(term));
+			finalDatacubes.push(...items);
 		});
 	}
 
 	return {
-		results: term.length > 0 ? finalDatacubes : allDatacubes,
+		results: term.length > 0 ? uniqBy(finalDatacubes, 'id') : allDatacubes,
 		searchSubsystem: 'datacube'
 	};
 };

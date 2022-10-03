@@ -122,7 +122,7 @@ export default defineComponent({
 
 	.nav-bar {
 		display: flex;
-		justify-content: center;
+		align-items: center;
 		background-color: #f3f3f3;
 
 		.nav {
@@ -133,6 +133,7 @@ export default defineComponent({
 			border: 1px solid #e7e7e7;
 			background-color: #f3f3f3;
 			margin-right: 2rem;
+			margin-left: 5rem;
 
 			li {
 				float: left;
