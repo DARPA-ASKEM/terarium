@@ -12,7 +12,23 @@
 	"npm": {
 		"stabilityDays": 3
 	},
-	"reviewersFromCodeOwners": true,
+	"reviewers": ["@bencodrington", "@dgauldie", "@mwdchang", "@YohannParis"],
 	"reviewersSampleSize": 1,
-	"semanticCommitType": "build"
+	"semanticCommitType": "build",
+	"platformAutomerge": true,
+	"automergeStrategy": "squash",
+	"packageRules": [
+		{
+			"description": "Trigger breaking release for major updates",
+			"matchUpdateTypes": ["major"],
+			"semanticCommitType": "feat",
+			"commitMessageSuffix": "BREAKING CHANGE: Major update"
+		},
+		{
+			"description": "Automatically merge minor and patch-level updates",
+			"matchUpdateTypes": ["minor", "patch", "digest"],
+			"automerge": true,
+			"automergeType": "pr"
+		}
+	]
 }
