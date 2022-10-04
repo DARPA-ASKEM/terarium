@@ -16,9 +16,9 @@
 			>
 				<template #sort>
 					<toggle-button
-						:value="sortedResults"
-						:label="'Sorted Results'"
-						@change="toggleSortedResults"
+						:value="rankedResults"
+						:label="'Ranked Results'"
+						@change="toggleRankedResults"
 					/>
 				</template>
 			</search-bar>
@@ -114,7 +114,7 @@ export default defineComponent({
 		xddDatasets: [] as string[],
 		xddDataset: null as string | null,
 		knownTerms: [] as string[],
-		sortedResults: false // disable sorted results to enable pagination
+		rankedResults: true // disable sorted results to enable pagination
 	}),
 	computed: {
 		navBackLabel() {
@@ -136,7 +136,7 @@ export default defineComponent({
 		knownTerms() {
 			this.refresh();
 		},
-		sortedResults() {
+		rankedResults() {
 			this.refresh();
 		}
 	},
@@ -150,8 +150,8 @@ export default defineComponent({
 		this.refresh();
 	},
 	methods: {
-		toggleSortedResults() {
-			this.sortedResults = !this.sortedResults;
+		toggleRankedResults() {
+			this.rankedResults = !this.rankedResults;
 		},
 		prevPage() {
 			// this won't work with XDD since apparently there is no way to navigate results backward
@@ -183,7 +183,7 @@ export default defineComponent({
 					known_terms: this.knownTerms,
 					dataset: this.xddDataset === 'all' ? null : this.xddDataset,
 					pageSize: this.pageSize,
-					enablePagination: !this.sortedResults
+					enablePagination: !this.rankedResults
 				}
 			};
 
