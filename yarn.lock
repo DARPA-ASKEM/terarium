@@ -96,7 +96,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fortawesome/fontawesome-free@npm:^6.2.0":
+"@fortawesome/fontawesome-free@npm:6.2.0":
   version: 6.2.0
   resolution: "@fortawesome/fontawesome-free@npm:6.2.0"
   checksum: fd3fcc0a963b907110922b5ac0ca67633aea20b5034102a1f5d285830f7f7a27f9c9de0c4a30228ccd2579bd8f95581a1bbef9519c7b74632e7012d60dd57bb7
@@ -316,6 +316,13 @@ __metadata:
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
   checksum: e60b153664572116dfea673c5bda7778dbff150498f44f998e34b5886d8afc47f16799280e4b6e241c0472aef1bc36add771c569c68fc5125fc2ae519a3eb9ac
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:4.14.186":
+  version: 4.14.186
+  resolution: "@types/lodash@npm:4.14.186"
+  checksum: ee0c1368a8100bb6efb88335107473a41928fc307ff1ef4ff1278868ccddba9c04c68c36d1ffe3a0392ef4a956e1955f7de3203ec09df4f1655dd1b88485c549
   languageName: node
   linkType: hard
 
@@ -1994,7 +2001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-import-resolver-typescript@npm:^3.4.0, eslint-import-resolver-typescript@npm:^3.5.1":
+"eslint-import-resolver-typescript@npm:3.5.1, eslint-import-resolver-typescript@npm:^3.4.0":
   version: 3.5.1
   resolution: "eslint-import-resolver-typescript@npm:3.5.1"
   dependencies:
@@ -3215,7 +3222,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:^4.17.21":
+"lodash@npm:4.17.21, lodash@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
@@ -4136,7 +4143,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.55.0":
+"sass@npm:1.55.0":
   version: 1.55.0
   resolution: "sass@npm:1.55.0"
   dependencies:
@@ -4966,17 +4973,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webapp@workspace:packages/client/webapp"
   dependencies:
-    "@fortawesome/fontawesome-free": ^6.2.0
+    "@fortawesome/fontawesome-free": 6.2.0
     "@pinia/testing": 0.0.14
     "@playwright/experimental-ct-vue": 1.25.2
     "@playwright/test": 1.25.2
     "@rushstack/eslint-patch": 1.2.0
+    "@types/lodash": 4.14.186
     "@vitejs/plugin-vue": 3.1.0
     "@vitest/coverage-c8": 0.23.4
-    eslint-import-resolver-typescript: ^3.5.1
-    lodash: ^4.17.21
+    eslint-import-resolver-typescript: 3.5.1
+    lodash: 4.17.21
     pinia: 2.0.22
-    sass: ^1.55.0
+    sass: 1.55.0
     typescript: 4.8.3
     vite: 3.1.1
     vitest: 0.23.2

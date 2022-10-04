@@ -182,7 +182,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	const rawdata: XDDResult = await response.json();
 
 	if (rawdata.success) {
-		// eslint-disable-next-line camelcase
+		// eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
 		const { data, hits, scrollId, next_page } = rawdata.success;
 		return {
 			results: data as XDDArticle[],

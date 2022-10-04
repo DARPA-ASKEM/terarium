@@ -3,15 +3,29 @@
 		<div class="nav-bar">
 			<ul class="nav">
 				<li>
-					<button :class="{ active: resultType === 'all' }" @click="resultType = 'all'">All</button>
+					<button
+						type="button"
+						:class="{ active: resultType === 'all' }"
+						@click="resultType = 'all'"
+					>
+						All
+					</button>
 				</li>
 				<li>
-					<button :class="{ active: resultType === 'datacube' }" @click="resultType = 'datacube'">
+					<button
+						type="button"
+						:class="{ active: resultType === 'datacube' }"
+						@click="resultType = 'datacube'"
+					>
 						Models
 					</button>
 				</li>
 				<li>
-					<button :class="{ active: resultType === 'xdd' }" @click="resultType = 'xdd'">
+					<button
+						type="button"
+						:class="{ active: resultType === 'xdd' }"
+						@click="resultType = 'xdd'"
+					>
 						Articles
 					</button>
 				</li>
