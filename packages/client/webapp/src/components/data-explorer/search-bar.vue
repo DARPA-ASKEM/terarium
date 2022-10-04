@@ -40,6 +40,7 @@
 		>
 			<i class="fa fa-search" />&nbsp;Search
 		</button>
+		<slot v-if="showSortedResults" name="sort"></slot>
 	</div>
 </template>
 
@@ -72,6 +73,10 @@ export default defineComponent({
 		enableSearchButton: {
 			type: Boolean,
 			default: true
+		},
+		showSortedResults: {
+			type: Boolean,
+			default: false
 		}
 	},
 	emits: ['search-text-changed'],

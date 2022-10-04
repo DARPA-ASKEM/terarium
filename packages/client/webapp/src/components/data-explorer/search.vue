@@ -78,6 +78,7 @@ export default defineComponent({
 	},
 	emits: ['toggle-data-item-selected', 'set-data-item-selected'],
 	data: () => ({
+		// FIXME: refactor as part of the parent state and use enum instead
 		resultType: 'all'
 	}),
 	computed: {

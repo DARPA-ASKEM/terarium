@@ -11,8 +11,17 @@
 			<search-bar
 				class="search-bar"
 				:enable-multi-term-search="false"
+				:show-sorted-results="true"
 				@search-text-changed="filterData"
-			/>
+			>
+				<template #sort>
+					<toggle-button
+						:value="sortedResults"
+						:label="'Sorted Results'"
+						@change="toggleSortedResults"
+					/>
+				</template>
+			</search-bar>
 			<search
 				class="search"
 				:filtered-data-items="filteredDataItems"
@@ -68,6 +77,7 @@ import Search from '@/components/data-explorer/search.vue';
 import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
+import ToggleButton from '@/components/widgets/toggle-button.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import { SearchParameters, SearchResults } from '@/types/common';
@@ -84,7 +94,8 @@ export default defineComponent({
 		ModalHeader,
 		SimplePagination,
 		SearchBar,
-		DropdownButton
+		DropdownButton,
+		ToggleButton
 	},
 	setup() {
 		const filteredDataItems = ref<SearchResults[]>([]);
@@ -102,7 +113,8 @@ export default defineComponent({
 		// xdd
 		xddDatasets: [] as string[],
 		xddDataset: null as string | null,
-		knownTerms: [] as string[]
+		knownTerms: [] as string[],
+		sortedResults: false // disable sorted results to enable pagination
 	}),
 	computed: {
 		navBackLabel() {
@@ -112,9 +124,9 @@ export default defineComponent({
 			// FIXME: this should depend on the selected results tab (e.g., ALL, Models, Articles)
 			let total = 0;
 			this.filteredDataItems.forEach((resList) => {
-				total += resList?.hits ?? resList?.results.length ?? 0;
+				total += resList?.results.length ?? 0;
 			});
-			return Math.ceil(total / this.pageSize);
+			return total;
 		}
 	},
 	watch: {
@@ -122,6 +134,9 @@ export default defineComponent({
 			this.refresh();
 		},
 		knownTerms() {
+			this.refresh();
+		},
+		sortedResults() {
 			this.refresh();
 		}
 	},
@@ -135,12 +150,20 @@ export default defineComponent({
 		this.refresh();
 	},
 	methods: {
+		toggleSortedResults() {
+			this.sortedResults = !this.sortedResults;
+		},
 		prevPage() {
+			// this won't work with XDD since apparently there is no way to navigate results backward
 			this.pageCount -= 1;
 			this.fetchDataItemList();
 		},
 		nextPage() {
 			this.pageCount += 1;
+			// check if previous results "hasMore" and continue fetching results
+			// note the next_page URL would need to be cached and passed down to the fetch service
+			//  but this is only valid for XDD,
+			//  and thus we need to cache both the original URL and the pagination one
 			this.fetchDataItemList();
 		},
 		xddDatasetSelectionChanged(newDataset: string) {
@@ -160,7 +183,7 @@ export default defineComponent({
 					known_terms: this.knownTerms,
 					dataset: this.xddDataset === 'all' ? null : this.xddDataset,
 					pageSize: this.pageSize,
-					enablePagination: true // FIXME: control via user selection
+					enablePagination: !this.sortedResults
 				}
 			};
 
