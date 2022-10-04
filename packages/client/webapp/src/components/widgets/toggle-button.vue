@@ -85,7 +85,7 @@ $toggle-size: 40px;
 				position: relative;
 				display: inline-block;
 				width: $toggle-size;
-				height: $toggle-size / 2;
+				height: calc($toggle-size / 2);
 				background: $toggle-off;
 				border: 1px solid $toggle-off;
 				border-radius: 10px;
