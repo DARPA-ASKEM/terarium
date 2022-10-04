@@ -39,6 +39,13 @@
 							@search-text-changed="addKnownTerm"
 						/>
 					</div>
+					<button
+						type="button"
+						class="co-occurrence-matrix-btn"
+						:disabled="knownTerms.length !== 2"
+					>
+						<i class="fa-light fa-table-cells" />&nbsp;co-occurrence matrix
+					</button>
 				</template>
 			</search>
 			<simple-pagination
@@ -107,7 +114,7 @@ export default defineComponent({
 			this.filteredDataItems.forEach((resList) => {
 				total += resList?.hits ?? resList?.results.length ?? 0;
 			});
-			return total / this.pageSize;
+			return Math.ceil(total / this.pageSize);
 		}
 	},
 	watch: {
@@ -152,7 +159,8 @@ export default defineComponent({
 				xdd: {
 					known_terms: this.knownTerms,
 					dataset: this.xddDataset === 'all' ? null : this.xddDataset,
-					pageSize: this.pageSize
+					pageSize: this.pageSize,
+					enablePagination: true // FIXME: control via user selection
 				}
 			};
 
@@ -236,6 +244,14 @@ export default defineComponent({
 			padding: 4px;
 			min-width: 100px;
 		}
+	}
+
+	.co-occurrence-matrix-btn {
+		background-color: darkcyan;
+		padding: 4px;
+		padding-left: 8px;
+		padding-right: 8px;
+		margin: 4px;
 	}
 }
 </style>

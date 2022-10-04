@@ -139,16 +139,26 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.pageSize ?? 50;
 
+	// NOTE when true it disables ranking of results
+	const enablePagination = xddSearchParam?.enablePagination ?? false;
+
 	// "full_results": "Optional. When this parameter is included (no value required),
 	//  an overview of total number of matching articles is returned,
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
-	//  Also, the "max" parameter will be ignored
-	let url = `https://xdd.wisc.edu/api/articles?term=${term}&include_score=true&full_results`;
+	//  NOTE: the "max" parameter will be ignored
+	//  NOTE: results may not be ranked in this mode
+	let url = `https://xdd.wisc.edu/api/articles?term=${term}`;
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
 	if (xddSearchParam?.known_terms && xddSearchParam?.known_terms.length > 0) {
 		url += `&dict=${xddSearchParam.known_terms.join(',')}`;
+	}
+	if (enablePagination) {
+		url += '&full_results';
+	} else {
+		// request results to be ranked
+		url += '&include_score=true';
 	}
 
 	// "max": "Maximum number of articles to return (default is all)",
@@ -172,11 +182,15 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	const rawdata: XDDResult = await response.json();
 
 	if (rawdata.success) {
-		const { data, hits } = rawdata.success;
+		// eslint-disable-next-line camelcase
+		const { data, hits, scrollId, next_page } = rawdata.success;
 		return {
 			results: data as XDDArticle[],
 			searchSubsystem: 'xdd',
-			hits
+			hits,
+			hasMore: scrollId !== null && scrollId !== '',
+			// eslint-disable-next-line camelcase
+			nextPage: next_page
 		};
 	}
 
