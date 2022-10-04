@@ -137,21 +137,53 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	const limitResultsCount = '10';
-	let url = `https://xdd.wisc.edu/api/articles?term=${term}&max=${limitResultsCount}&include_score=true`;
+	const limitResultsCount = xddSearchParam?.pageSize ?? 50;
+
+	// "full_results": "Optional. When this parameter is included (no value required),
+	//  an overview of total number of matching articles is returned,
+	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
+	//  Also, the "max" parameter will be ignored
+	let url = `https://xdd.wisc.edu/api/articles?term=${term}&include_score=true&full_results`;
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
 	if (xddSearchParam?.known_terms && xddSearchParam?.known_terms.length > 0) {
 		url += `&dict=${xddSearchParam.known_terms.join(',')}`;
 	}
+
+	// "max": "Maximum number of articles to return (default is all)",
+	url += `&max=${limitResultsCount}`;
+
+	// "per_page": "Maximum number of results to include in one response.
+	//  Applies to full_results pagination or single-page requests.
+	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter,
+	//        floor rounded to a multiple of 25."
+	url += `&per_page=${limitResultsCount}`;
+
+	// url = 'https://xdd.wisc.edu/api/articles?&include_score=true&max=25&term=abbott&publisher=USGS&full_results';
+
+	// this will give error if "max" param is not included since the result is too large
+	//  either set "max"
+	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
+	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
+
 	// full_results
 	const response = await fetch(url);
 	const rawdata: XDDResult = await response.json();
-	const { data } = rawdata.success;
+
+	if (rawdata.success) {
+		const { data, hits } = rawdata.success;
+		return {
+			results: data as XDDArticle[],
+			searchSubsystem: 'xdd',
+			hits
+		};
+	}
+
 	return {
-		results: data as XDDArticle[],
-		searchSubsystem: 'xdd'
+		results: [] as XDDArticle[],
+		searchSubsystem: 'xdd',
+		hits: 0
 	};
 };
 

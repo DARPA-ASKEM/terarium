@@ -6,21 +6,22 @@
 					<button :class="{ active: resultType === 'all' }" @click="resultType = 'all'">All</button>
 				</li>
 				<li>
-					<button :class="{ active: resultType === 'datacubes' }" @click="resultType = 'datacubes'">
+					<button :class="{ active: resultType === 'datacube' }" @click="resultType = 'datacube'">
 						Models
 					</button>
 				</li>
 				<li>
-					<button :class="{ active: resultType === 'articles' }" @click="resultType = 'articles'">
+					<button :class="{ active: resultType === 'xdd' }" @click="resultType = 'xdd'">
 						Articles
 					</button>
 				</li>
 			</ul>
-			<slot v-if="resultType === 'articles'" name="xdd"></slot>
-			<slot v-if="resultType === 'datacubes'" name="datacube"></slot>
+			<div class="results-count">Found {{ resultsCount }} results</div>
+			<slot v-if="resultType === 'xdd'" name="xdd"></slot>
+			<slot v-if="resultType === 'datacube'" name="datacube"></slot>
 		</div>
 		<datacubes-listview
-			v-if="resultType === 'datacubes'"
+			v-if="resultType === 'datacube'"
 			class="list-view"
 			:datacubes="filteredDatacubes"
 			:enable-multiple-selection="enableMultipleSelection"
@@ -29,7 +30,7 @@
 			@set-datacube-selected="setDataItemSelected"
 		/>
 		<articles-listview
-			v-if="resultType === 'articles'"
+			v-if="resultType === 'xdd'"
 			class="list-view"
 			:articles="filteredArticles"
 			:enable-multiple-selection="enableMultipleSelection"
@@ -93,6 +94,26 @@ export default defineComponent({
 				return resList.results as XDDArticle[];
 			}
 			return [];
+		},
+		resultsCount() {
+			let total = 0;
+			if (this.resultType === 'all') {
+				// count the results from all subsystems
+				this.filteredDataItems.forEach((res) => {
+					const count = res?.hits ?? res?.results.length;
+					total += count;
+				});
+			} else {
+				// only return the results count for the selected subsystems
+				const resList = this.filteredDataItems.find(
+					(res) => res.searchSubsystem === this.resultType
+				);
+				if (resList) {
+					// eslint-disable-next-line no-unsafe-optional-chaining
+					total += resList?.hits ?? resList?.results.length;
+				}
+			}
+			return total;
 		}
 	},
 	methods: {
@@ -161,6 +182,11 @@ export default defineComponent({
 				background-color: #04aa6d;
 				border: none;
 			}
+		}
+
+		.results-count {
+			color: blue;
+			margin-right: 2rem;
 		}
 	}
 }

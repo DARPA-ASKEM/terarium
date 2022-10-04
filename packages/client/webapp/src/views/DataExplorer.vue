@@ -55,6 +55,7 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 
+import { cloneDeep } from 'lodash';
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import Search from '@/components/data-explorer/search.vue';
 import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
@@ -101,7 +102,12 @@ export default defineComponent({
 			return 'Back to Home';
 		},
 		filteredDataItemsCount() {
-			return this.filteredDataItems.length;
+			// FIXME: this should depend on the selected results tab (e.g., ALL, Models, Articles)
+			let total = 0;
+			this.filteredDataItems.forEach((resList) => {
+				total += resList?.hits ?? resList?.results.length ?? 0;
+			});
+			return total / this.pageSize;
 		}
 	},
 	watch: {
@@ -115,6 +121,7 @@ export default defineComponent({
 	async mounted() {
 		this.xddDatasets = await getXDDSets();
 		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
+			this.xddDatasets.push('all');
 			this.xddDataset = 'all';
 		}
 
@@ -144,7 +151,8 @@ export default defineComponent({
 			const searchParams: SearchParameters = {
 				xdd: {
 					known_terms: this.knownTerms,
-					dataset: this.xddDataset === 'all' ? null : this.xddDataset
+					dataset: this.xddDataset === 'all' ? null : this.xddDataset,
+					pageSize: this.pageSize
 				}
 			};
 
@@ -159,7 +167,7 @@ export default defineComponent({
 			await this.fetchDataItemList();
 		},
 		filterData(filterTerms: string[]) {
-			this.filter = filterTerms;
+			this.filter = cloneDeep(filterTerms);
 		},
 		async onClose() {
 			this.$router.push('/');
@@ -223,7 +231,7 @@ export default defineComponent({
 		margin-left: 1rem;
 		display: flex;
 
-		::v-deep .search-bar-container input {
+		:deep(.search-bar-container input) {
 			margin: 4px;
 			padding: 4px;
 			min-width: 100px;

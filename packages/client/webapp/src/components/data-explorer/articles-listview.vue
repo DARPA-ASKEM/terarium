@@ -4,8 +4,8 @@
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />TITLE and AUTHOR</th>
-						<th>PUBLISHER and ABSTRACT</th>
+						<th><span class="left-cover" />TITLE and ABSTRACT</th>
+						<th>PUBLISHER and AUTHOR</th>
 						<th>JOURNAL</th>
 						<th>KNOWN TERMS</th>
 						<th>PREVIEW<span class="right-cover" /></th>
@@ -42,19 +42,19 @@
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatTitle(d) }}</div>
-									<div v-if="isExpanded(d)" class="knobs">
-										<multiline-description :text="formatArticleAuthors(d)" />
-									</div>
+									<multiline-description :text="formatDescription(d)" />
 								</div>
 							</div>
 						</td>
 						<td class="desc-col">
 							<div class="text-bold">{{ d.publisher }}</div>
-							<multiline-description :text="formatDescription(d)" />
+							<div v-if="isExpanded(d)" class="knobs">
+								<multiline-description :text="formatArticleAuthors(d)" />
+							</div>
 						</td>
 						<td class="period-col">
 							<div class="text-bold">{{ d.journal }}</div>
-							<div>{{ '' }}</div>
+							<div>{{ d.type ?? '' }}</div>
 						</td>
 						<td class="region-col">
 							<div v-html="formatKnownTerms(d)"></div>

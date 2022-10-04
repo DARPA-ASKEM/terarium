@@ -20,14 +20,23 @@
 				</span>
 			</div>
 		</div>
-		<button v-if="enableClearButton" type="button" class="btn clear-button" @click="clearText">
+		<button
+			v-if="enableClearButton"
+			type="button"
+			class="btn clear-button"
+			:class="{ 'clear-button-disabled': isClearButtonDisabled }"
+			:disabled="isClearButtonDisabled"
+			@click="clearText"
+		>
 			<i class="fa fa-remove" />&nbsp;Clear
 		</button>
 		<button
 			v-if="enableSearchButton"
 			type="button"
 			class="btn clear-button search-button"
-			@click="execSearch"
+			:class="{ 'search-button-disabled': isSearchButtonDisabled }"
+			:disabled="isSearchButtonDisabled"
+			@click="searchBtnHandler"
 		>
 			<i class="fa fa-search" />&nbsp;Search
 		</button>
@@ -74,6 +83,14 @@ export default defineComponent({
 			searchTerms
 		};
 	},
+	computed: {
+		isClearButtonDisabled() {
+			return this.searchText === '' && this.searchTerms.length === 0;
+		},
+		isSearchButtonDisabled() {
+			return this.searchText === '' && this.searchTerms.length === 0;
+		}
+	},
 	watch: {
 		searchTerms() {
 			this.execSearch();
@@ -82,7 +99,9 @@ export default defineComponent({
 	methods: {
 		clearText() {
 			this.searchText = '';
-			this.searchTerms = [];
+			if (this.searchTerms.length > 0) {
+				this.searchTerms = [];
+			}
 		},
 		searchTextHandler(event) {
 			if (this.realtime) {
@@ -91,11 +110,19 @@ export default defineComponent({
 		},
 		removeSearchTerm(term: string) {
 			this.searchTerms = this.searchTerms.filter((t) => t !== term);
+			this.searchText = '';
 		},
 		addSearchTerm(event) {
 			if (!this.realtime) {
 				const term = event.target.value;
 				this.searchTerms = this.enableMultiTermSearch ? [...this.searchTerms, term] : [term];
+			}
+		},
+		searchBtnHandler() {
+			if (this.searchTerms.length === 0) {
+				this.searchTerms = [this.searchText];
+			} else {
+				this.execSearch();
 			}
 		},
 		execSearch() {
@@ -123,6 +150,14 @@ export default defineComponent({
 
 .search-button {
 	background-color: dodgerblue;
+}
+.search-button-disabled {
+	background-color: darken($color: dodgerblue, $amount: 25%);
+	cursor: not-allowed;
+}
+.clear-button-disabled {
+	background-color: darken($color: white, $amount: 50%);
+	cursor: not-allowed;
 }
 
 .flex-aligned {
