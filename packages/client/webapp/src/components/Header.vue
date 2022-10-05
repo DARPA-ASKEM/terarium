@@ -15,7 +15,7 @@ const authenticatedLabel = computed(() => (auth.isAuthenticated ? 'Logout' : 'Lo
 
 <template>
 	<nav>
-		<header>TERArium</header>
+		<img src="/assets/images/logo.png" height="32" width="128" alt="TERArium logo" />
 		<span>{{ auth.name }}</span>
 		<Button @click="logout">{{ authenticatedLabel }}</Button>
 	</nav>
