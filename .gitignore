@@ -52,3 +52,5 @@ node_modules
 dist
 build
 
+# MISC
+create.sql
