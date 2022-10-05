@@ -1,37 +1,41 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import Login from '@carbon/icons-vue/es/login/16';
+import Logout from '@carbon/icons-vue/es/logout/16';
 import { useAuthStore } from '../stores/auth';
 import Button from '@/components/Button.vue';
 
 const auth = useAuthStore();
+
+const isAuthenticated = computed(() => auth.isAuthenticated);
 
 const logout = () => {
 	auth.logout();
 	window.location.assign('/logout');
 };
 
-const authenticatedLabel = computed(() => (auth.isAuthenticated ? 'Logout' : 'Login'));
+const login = () => window.location.assign('http://localhost:8078');
 </script>
 
 <template>
 	<nav>
-		<img src="/assets/images/logo.png" height="32" width="128" alt="TERArium logo" />
-		<span>{{ auth.name }}</span>
-		<Button @click="logout">{{ authenticatedLabel }}</Button>
+		<img src="assets/images/logo.png" height="32" width="128" alt="TERArium logo" />
+		{{ auth.name }}
+		<Button v-if="isAuthenticated" @click="logout">Logout <Logout /></Button>
+		<Button v-else @click="login">Login <Login /></Button>
 	</nav>
 </template>
 
 <style scoped>
 nav {
-	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	border-bottom: 1px solid lightgrey;
+	display: flex;
+	justify-content: space-between;
 	padding: 0.5rem 1rem;
 }
 
 header {
-	font-weight: bold;
 	font-size: var(--un-font-xlarge);
 }
 </style>

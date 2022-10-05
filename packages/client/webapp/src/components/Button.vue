@@ -8,10 +8,13 @@ button {
 	--btn-background: var(--un-color-black-50);
 	--btn-border: var(--un-color-black-60);
 
+	align-items: center;
 	background: var(--btn-background);
 	border: 1px solid var(--btn-border);
 	border-radius: 4px;
 	color: var(--btn-color);
+	display: flex;
+	gap: 0.5em;
 	font: var(--un-font-large);
 	min-width: 5em;
 	outline: 0;

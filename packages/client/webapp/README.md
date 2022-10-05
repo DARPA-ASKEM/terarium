@@ -1,6 +1,9 @@
 # Vue 3 + TypeScript + Vite
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+- TERArium uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+- We are using IBM Carbon Icons:
+  - Check how to use them [within Vue](https://github.com/carbon-design-system/carbon/tree/v10/packages/icons-vue).
+  - The reference [icons library](https://carbondesignsystem.com/guidelines/icons/library).
 
 ## Recommended IDE Setup
 
@@ -20,7 +23,7 @@ You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/
 This project is set up to use [Playwright](https://playwright.dev/) as its End-to-End (E2E) testing. Playwright is a modern E2E testing framework for web apps that tests multiple browsers, with full context isolation. The tests can be run manually through the CLI or if using Visual Studio Code, can be integrated using the official [Playwright Extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Additionally the project uses GitLab CI/CD to automatically run the tests.
 
 > If tests include screenshot capture then they also need to be updated for CI/CD use cases running on Linux as they will not match snapshots generated under Windows or OSX.
- 
+
 For unit testing the project uses [Vitest](https://vitest.dev/). Vitest is focused on delivering the best DX possible for lightning fast, headless testing. It uses built-in [Chai](https://www.chaijs.com/) for assertions and [Jest Expect](https://jestjs.io/docs/expect) compatible APIs. See [Vitest Info](#vitest) for more details.
 
 ## Playwright
@@ -66,8 +69,8 @@ Example
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-  await expect(page).toHaveTitle(/Playwright/);
+	await page.goto('https://playwright.dev/');
+	await expect(page).toHaveTitle(/Playwright/);
 });
 ```
 
@@ -119,11 +122,13 @@ npx playwright codegen
 ```
 
 ### Component Testing
-Component testing is also configured through `Playwright` and works similarly to `E2E` tests. The configuration for component tests are in a separate configuration found in [playwright-ct.config.ts](playwright-ct.config.ts). It is configured to look for tests in the `tests/component` directory and should be suffixed with the `spec` name as other tests (ie `foo.spec.ts`). For further information and configuration options refer to the [official documentation](https://playwright.dev/docs/test-components). 
+
+Component testing is also configured through `Playwright` and works similarly to `E2E` tests. The configuration for component tests are in a separate configuration found in [playwright-ct.config.ts](playwright-ct.config.ts). It is configured to look for tests in the `tests/component` directory and should be suffixed with the `spec` name as other tests (ie `foo.spec.ts`). For further information and configuration options refer to the [official documentation](https://playwright.dev/docs/test-components).
 
 > NOTE: Component testing is still in experimental stage and may change in the future. As such there are [limitations](https://github.com/microsoft/playwright/issues/14298) of the framework currently.
 
 To run the component tests within the project simply run:
+
 ```sh
 yarn test:ct
 ```
