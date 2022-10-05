@@ -35,27 +35,36 @@ Before running the tests, make sure that TERArium has installed dependencies and
 - `yarn test:e2e` by default runs every integration across all 3 browsers (Chromium, FireFox, WebKit)
 - `yarn test:ct` runs component specific tests
 
-### Unit Tests
+#### Writing Integration Tests
 
-Other than integration tests, packages might contain unit tests under their `tests/unit` directory. Unit tests are powered by [Vitest](https://vitest.dev/). The detailed config is either inside `vite.config.ts` or `vitest.config.ts` files.
+Tests have access to the `page` object from Playwright ([`Page`](https://playwright.dev/docs/api/class-page)) instance that has already navigated to the served main page. So, writing a test is as simple as:
 
-- `yarn test` runs unit tests under each package.
+```ts
+import { test, expect } from '@playwright/test';
 
-### Test Env and Helpers
-
-Inside playground tests, you can import the `page` object from `~utils`, which is a Playwright [`Page`](https://playwright.dev/docs/api/class-page) instance that has already navigated to the served page of the current playground. So, writing a test is as simple as:
-
-```js
-import { page } from '~utils'
-
-test('should work', async () => {
+test('should work', async (page) => {
   expect(await page.textContent('.foo')).toMatch('foo')
 })
 ```
+### Unit Tests
 
-Some common test helpers (e.g. `testDir`, `isBuild`, or `editFile`) are also available in the utils. Source code is located at `playground/test-utils.ts`.
+Along with integration tests, packages also contain unit tests under their `tests/unit` directory. Unit tests are powered by [Vitest](https://vitest.dev/). The detailed config is either inside `vite.config.ts` or `vitest.config.ts` files.
 
-Note: The test build environment uses a [different default set of Vite config](https://github.com/vitejs/vite/blob/main/playground/vitestSetup.ts#L102-L122) to skip transpilation during tests to make it faster. This may produce a different result compared to the default production build.
+- `yarn test` runs unit tests under each package.
+
+#### Writing Unit Tests
+
+Writing unit tests is simple and very similar to integration tests. Unit tests also have the same APIs as JEST so if you are familiar with that this should be simple:
+
+```ts
+import { assert, describe, expect, it } from 'vitest';
+
+describe('basic tests', () => {
+	it('should have the correct square root', () => {
+		assert.equal(Math.sqrt(4), 2);
+	});
+});
+```
 
 ## Pull Request Guidelines
 
@@ -64,6 +73,7 @@ Note: The test build environment uses a [different default set of Vite config](h
 - If adding a new feature:
   - Add accompanying test case.
   - Provide a convincing reason to add this feature. Ideally, you should open a suggestion issue first, and have it approved before working on it.
+  - Reference the feautre ticket if applicable
 
 - If fixing a bug:
   - Reference the issue being resolved by adding (resolves #123)
