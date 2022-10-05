@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import Login from '@carbon/icons-vue/es/login/16';
 import Logout from '@carbon/icons-vue/es/logout/16';
 import { useAuthStore } from '../stores/auth';
-import Button from '@/components/Button.vue';
 
 const auth = useAuthStore();
 
@@ -19,7 +18,8 @@ const login = () => window.location.assign('http://localhost:8078');
 
 <template>
 	<nav>
-		<img src="@assets/images/logo.png" height="32" width="128" alt="TERArium logo" />
+		<!-- Use relative path instead of alias for now as Component Tests seem to have an issue -->
+		<img src="../assets/images/logo.png" height="32" width="128" alt="logo" />
 		{{ auth.name }}
 		<Button v-if="isAuthenticated" @click="logout">Logout <Logout /></Button>
 		<Button v-else @click="login">Login <Login /></Button>

@@ -43,6 +43,9 @@ const config: PlaywrightTestConfig = {
 		}
 	},
 
+	/* Folder for test artifacts such as screenshots, videos, traces, etc. */
+	outputDir: './tests/component/test-results/',
+
 	/* Configure projects for major browsers */
 	projects: [
 		{
