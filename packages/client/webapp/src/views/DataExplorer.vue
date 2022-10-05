@@ -81,6 +81,8 @@ import ToggleButton from '@/components/widgets/toggle-button.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import { SearchParameters, SearchResults } from '@/types/common';
+import { Datacube } from '@/types/Datacube';
+import { XDDArticle } from '@/types/XDD';
 
 // FIXME: page count is not taken into consideration
 // FIXME: consider facets
@@ -213,7 +215,9 @@ export default defineComponent({
 				const dataitem = this.filteredDataItems
 					.map((res) => res.results)
 					.flat()
-					.find((item) => item.id === itemID || item.title === itemID);
+					.find(
+						(item) => (item as Datacube).id === itemID || (item as XDDArticle).title === itemID
+					);
 				if (dataitem === undefined) {
 					return;
 				}

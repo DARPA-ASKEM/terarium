@@ -125,7 +125,9 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 	if (term.length > 0) {
 		DatacubeFilterAttributes.forEach((datacubeAttr) => {
 			const resultsAsDatacubes = allDatacubes;
-			const items = resultsAsDatacubes.filter((d) => d[datacubeAttr].toLowerCase().includes(term));
+			const items = resultsAsDatacubes.filter((d) =>
+				d[datacubeAttr as keyof Datacube].toLowerCase().includes(term)
+			);
 			finalDatacubes.push(...items);
 		});
 	}
@@ -211,7 +213,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	const promise1 = new Promise<SearchResults>((resolve, reject) => {
 		try {
 			resolve(searchXDDArticles(term, searchParam?.xdd));
-		} catch (err) {
+		} catch (err: any) {
 			reject(new Error('Error fetching XDD results', err));
 		}
 	});
@@ -220,7 +222,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
 			resolve(getDatacubes(term, searchParam?.datacubes));
-		} catch (err) {
+		} catch (err: any) {
 			reject(new Error('Error fetching datacubes results', err));
 		}
 	});

@@ -108,18 +108,18 @@ export default defineComponent({
 				this.searchTerms = [];
 			}
 		},
-		searchTextHandler(event) {
+		searchTextHandler(event: Event) {
 			if (this.realtime) {
-				this.searchTerms = [event.target.value];
+				this.searchTerms = [(event.target as HTMLInputElement).value];
 			}
 		},
 		removeSearchTerm(term: string) {
 			this.searchTerms = this.searchTerms.filter((t) => t !== term);
 			this.searchText = '';
 		},
-		addSearchTerm(event) {
+		addSearchTerm(event: Event) {
 			if (!this.realtime) {
-				const term = event.target.value;
+				const term = (event.target as HTMLInputElement).value;
 				this.searchTerms = this.enableMultiTermSearch ? [...this.searchTerms, term] : [term];
 			}
 		},

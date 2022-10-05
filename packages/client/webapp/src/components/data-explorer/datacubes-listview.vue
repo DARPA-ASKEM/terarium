@@ -146,7 +146,7 @@ export default defineComponent({
 			this.expandedRowId = this.expandedRowId === datacube.id ? '' : datacube.id;
 		},
 		formatOutputName(d: Datacube) {
-			return d.display_name ? d.display_name : d.name;
+			return d.name;
 		},
 		formatOutputDescription(d: Datacube) {
 			return d.description;
