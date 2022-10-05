@@ -30,17 +30,17 @@ function openDataExplorer() {
 	<main>
 		<p>Test API calls/Home placeholder</p>
 		<div class="test-api-calls">
-			<button type="button" @click="apiCall">New Project</button>
-			<button type="button" @click="apiCall">Update Project</button>
-			<button type="button" @click="apiCall">Get Projects</button>
-			<button type="button" @click="apiCall">Delete Project</button>
+			<button type="button">New Project</button>
+			<button type="button">Update Project</button>
+			<button type="button">Get Projects</button>
+			<button type="button">Delete Project</button>
 		</div>
 		<div class="test-api-calls">
 			<button type="button" @click="openDataExplorer">Data Explorer</button>
-			<button type="button" @click="apiCall">New Model</button>
-			<button type="button" @click="apiCall">Update Model</button>
-			<button type="button" @click="apiCall">Get Model</button>
-			<button type="button" @click="apiCall">Delete Model</button>
+			<button type="button">New Model</button>
+			<button type="button">Update Model</button>
+			<button type="button">Get Model</button>
+			<button type="button">Delete Model</button>
 		</div>
 		<div class="test-api-calls">
 			<button type="button" @click="apiCall('user')">User Call</button>
