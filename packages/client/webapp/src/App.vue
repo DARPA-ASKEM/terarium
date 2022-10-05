@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, computed } from 'vue';
-import { useAuthStore } from './stores/auth';
 import Header from '@/components/Header.vue';
+import { useAuthStore } from './stores/auth';
 
 const auth = useAuthStore();
 
