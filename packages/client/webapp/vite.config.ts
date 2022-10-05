@@ -9,7 +9,9 @@ export default defineConfig({
 	// Syntax sugar for specifying imports
 	resolve: {
 		alias: {
-			'@': path.resolve(__dirname, './src')
+			'@': path.resolve(__dirname, './src'),
+			'@assets': path.resolve(__dirname, './src/assets'),
+			'@node_modules': path.resolve(__dirname, '../../../node_modules')
 		}
 	},
 	base: '/app/',

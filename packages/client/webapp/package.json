@@ -15,6 +15,8 @@
 	},
 	"dependencies": {
 		"@carbon/icons-vue": "10.49.1",
+		"@ibm/plex": "^6.1.1",
+		"@uncharted.software/design-tokens": "^1.1.0",
 		"pinia": "2.0.22",
 		"vue": "3.2.39",
 		"vue-router": "4.1.5"

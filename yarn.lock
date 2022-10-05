@@ -151,6 +151,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ibm/plex@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@ibm/plex@npm:6.1.1"
+  checksum: 832f1928732374d15208151d251b31b73ad196006274807a82aaf8075f83b308faa379e3d1dc0bb0952f1ad0848f8bdc1f67cd477404bab7f1f30daf202ccdaa
+  languageName: node
+  linkType: hard
+
 "@istanbuljs/schema@npm:^0.1.2, @istanbuljs/schema@npm:^0.1.3":
   version: 0.1.3
   resolution: "@istanbuljs/schema@npm:0.1.3"
@@ -450,6 +457,13 @@ __metadata:
     "@typescript-eslint/types": 5.37.0
     eslint-visitor-keys: ^3.3.0
   checksum: d6193550f77413aead0cb267e058df80b80a488c8fb4e39beb5f0a70b971c41682a6391903fbc5f3dd859a872016288c434d631b8efc3ac5a04edbdb7b63b5f6
+  languageName: node
+  linkType: hard
+
+"@uncharted.software/design-tokens@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@uncharted.software/design-tokens@npm:1.1.0"
+  checksum: 89632f7c12eeb9d35e733cf26f429fbc740b80ce0109bbe8488d9edf6cf7b4ae6cab83cb111d2e177b45d70ecd2e900e1aee73f92151b2ecde5da7921c2146ae
   languageName: node
   linkType: hard
 
@@ -4855,10 +4869,12 @@ __metadata:
   resolution: "webapp@workspace:packages/client/webapp"
   dependencies:
     "@carbon/icons-vue": 10.49.1
+    "@ibm/plex": ^6.1.1
     "@pinia/testing": 0.0.14
     "@playwright/experimental-ct-vue": 1.25.2
     "@playwright/test": 1.25.2
     "@rushstack/eslint-patch": 1.2.0
+    "@uncharted.software/design-tokens": ^1.1.0
     "@vitejs/plugin-vue": 3.1.0
     "@vitest/coverage-c8": 0.23.2
     pinia: 2.0.22

@@ -19,7 +19,7 @@ const login = () => window.location.assign('http://localhost:8078');
 
 <template>
 	<nav>
-		<img src="assets/images/logo.png" height="32" width="128" alt="TERArium logo" />
+		<img src="@assets/images/logo.png" height="32" width="128" alt="TERArium logo" />
 		{{ auth.name }}
 		<Button v-if="isAuthenticated" @click="logout">Logout <Logout /></Button>
 		<Button v-else @click="login">Login <Login /></Button>
