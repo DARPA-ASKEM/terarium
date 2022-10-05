@@ -4,11 +4,14 @@ Hi! We're really excited that you're interested in contributing to TERArium! Bef
 
 ## Repo Setup
 
-The TERArium repo is a mixed repo using yarn workspaces and Java backend components. The package manager used to install and link dependencies must be [yarn](https://yarnpkg.com/getting-started).
+The TERArium repo is a mixed repo using yarn workspaces and Java backend components. The package manager used to install and link dependencies is [yarn](https://yarnpkg.com/getting-started) and [gradle](https://gradle.org/).
 
 To develop and test the core application:
 
-1. ???
+1. Stand up the Gatweay servers by running the `gateway.sh up` script from within the `kubernetes/local` directory.
+2. Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
+3. Start the front end by doing `yarn install` followed by `yarn workspaces webapp dev`
+4. Navigate your browser to `localhost:8078` 
 
 ## Debugging Front End
 
