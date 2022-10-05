@@ -14,6 +14,7 @@
 		"test:ct": "playwright test -c playwright-ct.config.ts"
 	},
 	"dependencies": {
+		"@carbon/icons-vue": "10.49.1",
 		"pinia": "2.0.22",
 		"vue": "3.2.39",
 		"vue-router": "4.1.5"
