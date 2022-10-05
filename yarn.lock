@@ -65,7 +65,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@carbon/icon-helpers@npm:10.34.0, @carbon/icon-helpers@npm:^10.29.0":
+"@carbon/icon-helpers@npm:^10.29.0":
   version: 10.34.0
   resolution: "@carbon/icon-helpers@npm:10.34.0"
   checksum: ed06c8c098e3bcb5b31d83e59794c1079a3a0bf379cb1088c7523f48aad0ad3704b274644214720d78b863809882884c361690a59f327749dab70cb918d61db0
@@ -4868,7 +4868,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webapp@workspace:packages/client/webapp"
   dependencies:
-    "@carbon/icon-helpers": 10.34.0
     "@carbon/icons-vue": 10.49.1
     "@ibm/plex": 6.1.1
     "@pinia/testing": 0.0.14
