@@ -8,6 +8,13 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
+
+	/* Overwriting Uncharted design-tokens for TERArium */
+	--un-color-accent-darker: #133013ff;
+	--un-color-accent-dark: #1C5A1Cff;
+	--un-color-accent: #2D8E2Dff;
+	--un-color-accent-light: #92E192ff;
+	--un-color-accent-lighter: #E4FAE4ff;
 }
 
 :root {
