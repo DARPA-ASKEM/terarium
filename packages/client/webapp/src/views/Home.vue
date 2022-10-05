@@ -1,28 +1,52 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { uncloak } from '../utils/uncloak';
 import Button from '@/components/Button.vue';
 
-function apiCall() {}
+const router = useRouter();
+
+async function apiCall(type = '') {
+	if (type === 'user') {
+		const data = await uncloak('/api/user/me');
+		if (data === null) {
+			console.log('Unauthorized Access');
+		}
+		console.log(`Response: ${JSON.stringify(data)}`);
+	}
+	if (type === 'admin') {
+		const data = await uncloak('/api/admin');
+		if (data === null) {
+			console.log('Unauthorized Access');
+		}
+		console.log(`Response: ${JSON.stringify(data)}`);
+	}
+}
+
+function openDataExplorer() {
+	router.push('/explorer');
+}
 </script>
 
 <template>
 	<main>
 		<p>Test API calls/Home placeholder</p>
 		<div>
-			<Button @click="apiCall">New Project</Button>
-			<Button action @click="apiCall">Update Project</Button>
-			<Button success @click="apiCall">Get Projects</Button>
-			<Button info @click="apiCall">Delete Project</Button>
+			<Button>New Project</Button>
+			<Button action>Update Project</Button>
+			<Button success>Get Projects</Button>
+			<Button info>Delete Project</Button>
 		</div>
 		<div>
-			<Button warning @click="apiCall">New Model</Button>
-			<Button danger @click="apiCall">Update Model</Button>
-			<Button @click="apiCall">Get Model</Button>
-			<Button @click="apiCall">Delete Model</Button>
+      <Button @click="openDataExplorer">Data Explorer</Button>
+			<Button warning>New Model</Button>
+			<Button danger>Update Model</Button>
+			<Button>Get Model</Button>
+			<Button>Delete Model</Button>
 		</div>
 		<div>
-			<Button @click="uncloak('/api/user/me')">User Call</Button>
-			<Button @click="uncloak('/api/admin')">Admin Call</Button>
+			<Button @click="apiCall('user')">User Call</Button>
+			<Button @click="apiCall('admin')">Admin Call</Button>
+
 		</div>
 	</main>
 </template>

@@ -51,3 +51,5 @@ nb-configuration.xml
 node_modules
 dist
 
+# MISC
+create.sql
