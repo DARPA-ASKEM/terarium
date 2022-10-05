@@ -24,5 +24,6 @@ The graph data is specified in the format of `{nodes, edges}` and allows for nes
 
 ### Running examples
 ```
+yarn install
 npm run develop
 ```
