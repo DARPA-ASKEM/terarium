@@ -1,0 +1,63 @@
+{
+  "name": "graph-scaffolder",
+  "version": "0.0.0",
+  "description": "Scaffolds SVG node-and-link diagrams.",
+  "license": "Apache-2.0",
+  "main": "build/lib/index.js",
+  "types": "build/types/index.d.ts",
+  "type": "module",
+  "files": [
+    "build/dist",
+    "build/lib",
+    "build/types"
+  ],
+  "keywords": [
+    "graph",
+    "svg"
+  ],
+  "scripts": {
+    "build": "run-p build:all build:types",
+    "build:all": "node esbuild.mjs --all",
+    "build:dist": "node esbuild.mjs --dist",
+    "build:examples": "node esbuild.mjs --examples",
+    "build:lib": "node esbuild.mjs --lib",
+    "build:types": "tsc --declaration --emitDeclarationOnly --skipLibCheck --project ./tsconfig.d.json --outDir ./build/types",
+    "clean": "run-p clean:**",
+    "clean:build": "rimraf build",
+    "clean:cache": "rimraf .rts2_cache",
+    "watch": "run-p watch:*",
+    "watch:scripts": "yarn build:all --watch",
+    "watch:types": "yarn build:types --watch",
+    "develop": "yarn build:examples --watch --dev-server",
+    "esbuild": "node esbuild.mjs",
+    "examples": "run-s build:examples",
+    "test": "jest",
+    "lint": "eslint --fix --config ./.eslintrc.cjs \"./{src,tests,examples}/**/*.{js,ts}\""
+  },
+  "dependencies": {
+    "d3": "^7.1.1",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/d3": "^7.1.0",
+    "@types/jest": "^26.0.23",
+    "@types/lodash": "^4.14.185",
+    "@typescript-eslint/eslint-plugin": "^4.25.0",
+    "@typescript-eslint/parser": "^4.25.0",
+    "copy": "^0.3.2",
+    "dagre": "^0.8.5",
+    "esbuild": "^0.12.11",
+    "esbuild-jest": "^0.5.0",
+    "eslint": "^7.27.0",
+    "eslint-config-esnext": "^4.1.0",
+    "eslint-plugin-import": "^2.23.3",
+    "globby": "^11.0.1",
+    "jest": "^27.0.5",
+    "live-server": "^1.2.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^3.0.2",
+    "run-p": "^0.0.0",
+    "typescript": "^4.1.2",
+    "yargs": "^16.2.0"
+  }
+}
