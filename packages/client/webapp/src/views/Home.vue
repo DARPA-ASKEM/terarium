@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import Button from '@/components/Button.vue';
 import { uncloak } from '../utils/uncloak';
 
 const router = useRouter();
@@ -29,42 +30,38 @@ function openDataExplorer() {
 <template>
 	<main>
 		<p>Test API calls/Home placeholder</p>
-		<div class="test-api-calls">
-			<button type="button">New Project</button>
-			<button type="button">Update Project</button>
-			<button type="button">Get Projects</button>
-			<button type="button">Delete Project</button>
+		<div>
+			<Button>New Project</Button>
+			<Button action>Update Project</Button>
+			<Button success>Get Projects</Button>
+			<Button info>Delete Project</Button>
 		</div>
-		<div class="test-api-calls">
-			<button type="button" @click="openDataExplorer">Data Explorer</button>
-			<button type="button">New Model</button>
-			<button type="button">Update Model</button>
-			<button type="button">Get Model</button>
-			<button type="button">Delete Model</button>
+		<div>
+			<Button @click="openDataExplorer">Data Explorer</Button>
+			<Button warning>New Model</Button>
+			<Button danger>Update Model</Button>
+			<Button>Get Model</Button>
+			<Button>Delete Model</Button>
 		</div>
-		<div class="test-api-calls">
-			<button type="button" @click="apiCall('user')">User Call</button>
-			<button type="button" @click="apiCall('admin')">Admin Call</button>
+		<div>
+			<Button @click="apiCall('user')">User Call</Button>
+			<Button @click="apiCall('admin')">Admin Call</Button>
 		</div>
 	</main>
 </template>
 
 <style scoped>
 main {
-	place-items: center;
 	margin: 0 auto;
 	max-width: 1280px;
 	padding: 2rem;
 	text-align: center;
 }
 
-.test-api-calls {
+div {
 	display: flex;
-	margin: 2rem;
+	gap: 1em;
+	margin: 2em;
 	justify-content: center;
-}
-button[type='button'] {
-	margin: 0.5rem 1rem;
-	min-width: 10rem;
 }
 </style>
