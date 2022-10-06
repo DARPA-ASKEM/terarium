@@ -14,7 +14,10 @@
 		"test:ct": "playwright test -c playwright-ct.config.ts"
 	},
 	"dependencies": {
+		"@carbon/icons-vue": "10.49.1",
 		"@fortawesome/fontawesome-free": "6.2.0",
+		"@ibm/plex": "6.1.1",
+		"@uncharted.software/design-tokens": "1.1.0",
 		"eslint-import-resolver-typescript": "3.5.1",
 		"lodash": "4.17.21",
 		"pinia": "2.0.22",
