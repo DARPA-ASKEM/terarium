@@ -1297,7 +1297,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:^7.1.0":
+"@types/d3@npm:^7.1.0, @types/d3@npm:^7.4.0":
   version: 7.4.0
   resolution: "@types/d3@npm:7.4.0"
   dependencies:
@@ -1400,7 +1400,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.186, @types/lodash@npm:^4.14.185":
+"@types/lodash@npm:^4.14.185, @types/lodash@npm:^4.14.186":
   version: 4.14.186
   resolution: "@types/lodash@npm:4.14.186"
   checksum: ee0c1368a8100bb6efb88335107473a41928fc307ff1ef4ff1278868ccddba9c04c68c36d1ffe3a0392ef4a956e1955f7de3203ec09df4f1655dd1b88485c549
@@ -3622,7 +3622,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3@npm:^7.1.1":
+"d3@npm:^7.1.1, d3@npm:^7.6.1":
   version: 7.6.1
   resolution: "d3@npm:7.6.1"
   dependencies:
@@ -7884,7 +7884,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.21, lodash@npm:^4.7.0":
+"lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.21, lodash@npm:^4.7.0":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
@@ -11305,12 +11305,15 @@ __metadata:
     "@playwright/experimental-ct-vue": 1.25.2
     "@playwright/test": 1.25.2
     "@rushstack/eslint-patch": 1.2.0
-    "@types/lodash": 4.14.186
+    "@types/d3": ^7.4.0
+    "@types/lodash": ^4.14.186
     "@vitejs/plugin-vue": 3.1.2
     "@vitest/coverage-c8": 0.23.4
+    d3: ^7.6.1
+    dagre: ^0.8.5
     eslint-import-resolver-typescript: 3.5.1
     graph-scaffolder: "*"
-    lodash: 4.17.21
+    lodash: ^4.17.21
     pinia: 2.0.22
     sass: 1.55.0
     typescript: 4.8.3
