@@ -32,7 +32,7 @@
 				</search-bar>
 				<search
 					class="search"
-					:data-items="dataItems"
+					:data-items="filteredDataItems"
 					:result-type="resultType"
 					:results-count="resultsCount"
 					:enable-multiple-selection="true"
@@ -83,7 +83,7 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep } from 'lodash';
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import Search from '@/components/data-explorer/search.vue';
 import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
@@ -99,6 +99,7 @@ import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle } from '@/types/XDD';
 import { Datacube } from '@/types/Datacube';
 import { useQueryStore } from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
+import { applyFacetFiltersToData } from '@/utils/data-util';
 
 // FIXME: page count is not taken into consideration
 // FIXME: improve the search bar with auto-complete
@@ -117,12 +118,14 @@ export default defineComponent({
 	},
 	setup() {
 		const dataItems = ref<SearchResults[]>([]);
+		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
 		const selectedSearchItems = ref<string[]>([]);
 		const filter = ref<string[]>([]);
 		const query = useQueryStore();
 		return {
 			filter,
 			dataItems,
+			filteredDataItems,
 			selectedSearchItems,
 			query
 		};
@@ -149,13 +152,15 @@ export default defineComponent({
 			let total = 0;
 			if (this.resultType === 'all') {
 				// count the results from all subsystems
-				this.dataItems.forEach((res) => {
+				this.filteredDataItems.forEach((res) => {
 					const count = res?.hits ?? res?.results.length;
 					total += count;
 				});
 			} else {
 				// only return the results count for the selected subsystems
-				const resList = this.dataItems.find((res) => res.searchSubsystem === this.resultType);
+				const resList = this.filteredDataItems.find(
+					(res) => res.searchSubsystem === this.resultType
+				);
 				if (resList) {
 					// eslint-disable-next-line no-unsafe-optional-chaining
 					total += resList?.hits ?? resList?.results.length;
@@ -169,22 +174,32 @@ export default defineComponent({
 	},
 	watch: {
 		filter() {
+			// re-fetch data from the server, apply filters, and re-calculate the facets
 			this.refresh();
 		},
 		clientFilters(n, o) {
 			if (filtersUtil.isEqual(n, o)) return;
-			this.refresh();
+			// data has not changed; the user just changed one of the facet filters
+			this.applyFiltersToData(); // this will trigger facet re-calculation
 		},
 		knownTerms() {
+			// re-fetch data from the server, apply filters, and re-calculate the facets
 			this.refresh();
 		},
 		rankedResults() {
+			// re-fetch data from the server, apply filters, and re-calculate the facets
 			this.refresh();
 		},
 		resultType() {
+			// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
+			// re-calculate the facets
 			this.calculateFacets();
 		},
 		dataItems() {
+			// new data has arrived, apply filters, if any
+			this.applyFiltersToData(); // this will trigger facet re-calculation
+		},
+		filteredDataItems() {
 			this.calculateFacets();
 		}
 	},
@@ -229,7 +244,10 @@ export default defineComponent({
 			// retrieves filtered & unfiltered facet data
 			// const defaultFilters = { clauses: [] };
 			this.facets = getFacets(this.dataItems, this.resultType /* , defaultFilters */);
-			this.filteredFacets = getFacets(this.dataItems, this.resultType, this.clientFilters);
+			this.filteredFacets = getFacets(
+				this.filteredDataItems,
+				this.resultType /* , this.clientFilters */
+			);
 		},
 		// retrieves filtered data items list
 		async fetchDataItemList() {
@@ -255,12 +273,14 @@ export default defineComponent({
 			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
 			this.dataItems = allData;
 		},
+		applyFiltersToData() {
+			const allDataCloned = cloneDeep(this.dataItems);
+			applyFacetFiltersToData(allDataCloned, this.resultType, this.clientFilters);
+			this.filteredDataItems = allDataCloned;
+		},
 		async refresh() {
 			this.pageCount = 0;
 			await this.fetchDataItemList();
-			if (isEmpty(this.facets)) {
-				this.calculateFacets();
-			}
 		},
 		filterData(filterTerms: string[]) {
 			this.filter = cloneDeep(filterTerms);
@@ -275,7 +295,7 @@ export default defineComponent({
 			if (this.isDataItemSelected(itemID)) {
 				this.selectedSearchItems = this.selectedSearchItems.filter((item) => item !== itemID);
 			} else {
-				const dataitem = this.dataItems
+				const dataitem = this.filteredDataItems
 					.map((res) => res.results)
 					.flat()
 					.find(

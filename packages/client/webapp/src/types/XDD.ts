@@ -78,14 +78,4 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[YEAR]: 'Publication Year'
 };
 
-export const FACET_FIELDS: string[] = [
-	TYPE,
-	// TITLE,
-	JOURNAL,
-	// VOL,
-	// NUMBER,
-	// AUTHORS,
-	PUBLISHER,
-	// PAGES,
-	YEAR
-];
+export const FACET_FIELDS: string[] = [JOURNAL, PUBLISHER, YEAR];

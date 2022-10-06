@@ -4,7 +4,6 @@ import {
 	FACET_FIELDS as DATACUBE_FACET_FIELDS,
 	DISPLAY_NAMES as DATACUBE_DISPLAY_NAMES
 } from '@/types/Datacube';
-import { Filters } from '@/types/Filter';
 import {
 	XDDArticle,
 	FACET_FIELDS as XDD_FACET_FIELDS,
@@ -15,8 +14,7 @@ import { groupBy } from 'lodash';
 // FIXME:
 // XDD does not support Facets natively, so we will perform aggregations on the fly to build facets from XDD data
 // ideally, this should be done by the server side or at least cached as a hook or composoable
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getXDDFacets = (articles: XDDArticle[], filters?: Filters) => {
+export const getXDDFacets = (articles: XDDArticle[]) => {
 	const facets = {} as Facets;
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -39,8 +37,7 @@ export const getXDDFacets = (articles: XDDArticle[], filters?: Filters) => {
 	return facets;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getDatacubeFacets = (articles: Datacube[], filters?: Filters) => {
+export const getDatacubeFacets = (articles: Datacube[]) => {
 	const facets = {} as Facets;
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -63,7 +60,7 @@ export const getDatacubeFacets = (articles: Datacube[], filters?: Filters) => {
 	return facets;
 };
 
-export const getFacets = (results: SearchResults[], resultType: string, filters?: Filters) => {
+export const getFacets = (results: SearchResults[], resultType: string) => {
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		const resultsObj = results.find((res) => res.searchSubsystem === resultType);
@@ -73,12 +70,11 @@ export const getFacets = (results: SearchResults[], resultType: string, filters?
 			// e.g., XDD will have facets that leverage the XDD fields and stats
 			if (resultType === 'xdd') {
 				const xddResults = resultsObj.results as XDDArticle[];
-				facets = getXDDFacets(xddResults, filters);
+				facets = getXDDFacets(xddResults);
 			}
-			// TODO: add support for datacube and refactor
 			if (resultType === 'datacube') {
 				const datacubeResults = resultsObj.results as Datacube[];
-				facets = getDatacubeFacets(datacubeResults, filters);
+				facets = getDatacubeFacets(datacubeResults);
 			}
 		}
 	}
