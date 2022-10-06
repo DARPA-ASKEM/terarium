@@ -5,7 +5,7 @@
 		:current-tab-name="currentTab"
 		@set-active="setActive"
 	>
-		<div v-if="currentTab === 'Data Facets'" class="facet-panel-list">
+		<div v-if="currentTab === tabName" class="facet-panel-list">
 			<div v-for="facet in formattedFacets" :key="facet.label">
 				<numerical-facet
 					v-if="facet.isNumerical"
@@ -39,6 +39,8 @@ import SidePanel from '@/components/side-panel/side-panel.vue';
 import { Facets, FacetBucket } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
 
+const TAB_NAME = 'Data Facets';
+
 export default defineComponent({
 	name: 'FacetsPanel',
 	components: {
@@ -60,10 +62,19 @@ export default defineComponent({
 			default: 'all'
 		}
 	},
+	watch: {
+		resultType: {
+			handler() {
+				this.setActive(this.resultType === 'all' ? '' : this.tabName);
+			},
+			immediate: true
+		}
+	},
 	data: () => ({
+		tabName: TAB_NAME,
 		// FIXME: add label for the facet tab that matches the current resultType
-		facetTabs: [{ name: 'Data Facets', icon: 'fa-lg fa-solid fa-file-lines' }],
-		currentTab: 'Data Facets'
+		facetTabs: [{ name: TAB_NAME, icon: 'fa-lg fa-solid fa-file-lines' }],
+		currentTab: TAB_NAME
 	}),
 	computed: {
 		formattedFacets() {
