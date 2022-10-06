@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeMount, computed } from 'vue';
 import Header from '@/components/Header.vue';
+import Sidebar from '@/components/Sidebar.vue';
 import { useAuthStore } from './stores/auth';
 
 const auth = useAuthStore();
@@ -23,5 +24,6 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 
 <template>
 	<Header />
+	<Sidebar v-if="isAuthenticated" />
 	<router-view v-if="isAuthenticated"></router-view>
 </template>

@@ -26,7 +26,8 @@ nav {
 	align-items: center;
 	justify-content: space-between;
 	border-bottom: 1px solid lightgrey;
-	padding: 0.5rem 1rem;
+	height: 4rem;
+	padding: 0 1rem;
 }
 
 header {

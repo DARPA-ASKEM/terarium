@@ -52,7 +52,7 @@ function openDataExplorer() {
 <style scoped>
 main {
 	place-items: center;
-	margin: 0 auto;
+	margin: 0 auto 0 60px; /* this 60px value is the width of the sidebar this may make more sense if this width was a global css variable? */
 	max-width: 1280px;
 	padding: 2rem;
 	text-align: center;
