@@ -96,10 +96,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fortawesome/fontawesome-common-types@npm:^0.2.36":
+  version: 0.2.36
+  resolution: "@fortawesome/fontawesome-common-types@npm:0.2.36"
+  checksum: d604ac51da0b1597127fde70c64157b70ead6af7f2643ab7dfca268ef99d4ed0b4cc823afba206362422a622e389828408bec573df802bf4f02b118d0fa18dc8
+  languageName: node
+  linkType: hard
+
 "@fortawesome/fontawesome-free@npm:6.2.0":
   version: 6.2.0
   resolution: "@fortawesome/fontawesome-free@npm:6.2.0"
   checksum: fd3fcc0a963b907110922b5ac0ca67633aea20b5034102a1f5d285830f7f7a27f9c9de0c4a30228ccd2579bd8f95581a1bbef9519c7b74632e7012d60dd57bb7
+  languageName: node
+  linkType: hard
+
+"@fortawesome/free-regular-svg-icons@npm:^5.10.2":
+  version: 5.15.4
+  resolution: "@fortawesome/free-regular-svg-icons@npm:5.15.4"
+  dependencies:
+    "@fortawesome/fontawesome-common-types": ^0.2.36
+  checksum: 2e6039e3bb2125940ed2cb5738b6562b082755c1e45b73571ee92d976773ab81118c9efb9a7b57453b664a025613e81e1dafd2235aafeaadd8f0d75f8e1fe25e
+  languageName: node
+  linkType: hard
+
+"@fortawesome/free-solid-svg-icons@npm:^5.10.2":
+  version: 5.15.4
+  resolution: "@fortawesome/free-solid-svg-icons@npm:5.15.4"
+  dependencies:
+    "@fortawesome/fontawesome-common-types": ^0.2.36
+  checksum: eb037b703827ee37af3387a964afc7a190ff42a674ef46f4a6c295b634a38e849741eca78306b6423eaf3062d6ab1e7372aac5be2aec06f0fd9e8bd8110efcf9
   languageName: node
   linkType: hard
 
@@ -448,6 +473,39 @@ __metadata:
     "@typescript-eslint/types": 5.37.0
     eslint-visitor-keys: ^3.3.0
   checksum: d6193550f77413aead0cb267e058df80b80a488c8fb4e39beb5f0a70b971c41682a6391903fbc5f3dd859a872016288c434d631b8efc3ac5a04edbdb7b63b5f6
+  languageName: node
+  linkType: hard
+
+"@uncharted.software/css-options@npm:^3.2.4":
+  version: 3.2.5
+  resolution: "@uncharted.software/css-options@npm:3.2.5"
+  checksum: bdfa9995fc84bb86abee730019aa44851b1865e311a009d39658fb9c686ea97fa91f32447824c14fd060c2e6c4a0567a6ed604641c9b1c33a3cb30d5a1b8c54d
+  languageName: node
+  linkType: hard
+
+"@uncharted.software/facets-core@npm:^3.2.5, @uncharted.software/facets-core@npm:^3.2.6":
+  version: 3.2.6
+  resolution: "@uncharted.software/facets-core@npm:3.2.6"
+  dependencies:
+    "@fortawesome/free-regular-svg-icons": ^5.10.2
+    "@fortawesome/free-solid-svg-icons": ^5.10.2
+    "@uncharted.software/css-options": ^3.2.4
+    lit-element: ^2.2.1
+    lit-html: ^1.1.2
+  checksum: 6c1793e8268212119e40ad63215dbd4f76518bf6da921f1638f53c6711d0d231ea630d116462a53db53423f537d29e60a7dfb04f86eda98a697deb48524e7f86
+  languageName: node
+  linkType: hard
+
+"@uncharted.software/facets-plugins@npm:^3.2.5":
+  version: 3.2.5
+  resolution: "@uncharted.software/facets-plugins@npm:3.2.5"
+  dependencies:
+    "@fortawesome/free-regular-svg-icons": ^5.10.2
+    "@fortawesome/free-solid-svg-icons": ^5.10.2
+    "@uncharted.software/facets-core": ^3.2.5
+    lit-element: ^2.2.1
+    lit-html: ^1.1.2
+  checksum: 6ea5748755c063de0e7990966437e5274b72a08143cde83a401f98f1c6596898792bd9e8c2102588915105cb953857238a735c3100982d2516b8f1787899e1ad
   languageName: node
   linkType: hard
 
@@ -3199,6 +3257,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lit-element@npm:^2.2.1":
+  version: 2.5.1
+  resolution: "lit-element@npm:2.5.1"
+  dependencies:
+    lit-html: ^1.1.1
+  checksum: c4f45d0cc84d49cc9dca2502b5e0bd14289c46a5ee331c21fb0014693541a4824887f8c2c6725310d380d713adecbe31fba1eda6f8aabc14927f524d6527f6c9
+  languageName: node
+  linkType: hard
+
+"lit-html@npm:^1.1.1, lit-html@npm:^1.1.2":
+  version: 1.4.1
+  resolution: "lit-html@npm:1.4.1"
+  checksum: 6e1bb335cd8493700d2f1eaf1e019c2f6bf78ac641bdba5e2ff9f1545430e0fec15c6721ee1c8ca75559e1d52a1d34cdc568da46319681304299d9aff83a6346
+  languageName: node
+  linkType: hard
+
 "local-pkg@npm:^0.4.2":
   version: 0.4.2
   resolution: "local-pkg@npm:0.4.2"
@@ -4979,6 +5053,8 @@ __metadata:
     "@playwright/test": 1.25.2
     "@rushstack/eslint-patch": 1.2.0
     "@types/lodash": 4.14.186
+    "@uncharted.software/facets-core": ^3.2.6
+    "@uncharted.software/facets-plugins": ^3.2.5
     "@vitejs/plugin-vue": 3.1.2
     "@vitest/coverage-c8": 0.23.4
     eslint-import-resolver-typescript: 3.5.1

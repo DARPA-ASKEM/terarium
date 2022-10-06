@@ -26,3 +26,22 @@ export type SearchResults = {
 	hasMore?: boolean;
 	next_page?: string;
 };
+
+// Facet
+export type FacetBucket = {
+	key: string;
+	value: number;
+};
+
+export type Facets = {
+	[key: string]: FacetBucket[];
+};
+
+// Side panel
+export type SidePanelTab = {
+	name: string;
+	icon?: string;
+	imgSrc?: string;
+	isGreyscale?: string;
+	badgeCount?: number;
+};

@@ -7,63 +7,75 @@
 			@close="onClose"
 			@selection="onSelection"
 		/>
-		<div class="explorer-content">
-			<search-bar
-				class="search-bar"
-				:enable-multi-term-search="false"
-				:show-sorted-results="true"
-				@search-text-changed="filterData"
-			>
-				<template #sort>
-					<toggle-button
-						:value="rankedResults"
-						:label="'Ranked Results'"
-						@change="toggleRankedResults"
-					/>
-				</template>
-			</search-bar>
-			<search
-				class="search"
-				:filtered-data-items="filteredDataItems"
-				:enable-multiple-selection="true"
-				:selected-search-items="selectedSearchItems"
-				@toggle-data-item-selected="toggleDataItemSelected"
-			>
-				<template #xdd>
-					<dropdown-button
-						:inner-button-label="'Dataset'"
-						:is-dropdown-left-aligned="true"
-						:items="xddDatasets"
-						:selected-item="xddDataset"
-						@item-selected="xddDatasetSelectionChanged"
-					/>
-					<div class="xdd-known-terms">
-						<search-bar
-							class="search-bar"
-							:enable-multi-term-search="true"
-							:search-label="''"
-							:enable-clear-button="false"
-							:enable-search-button="false"
-							:search-placeholder="'known terms...'"
-							@search-text-changed="addKnownTerm"
+		<div class="flex h-100">
+			<div class="flex h-100" style="height: auto">
+				<facets-panel
+					:facets="facets"
+					:filtered-facets="filteredFacets"
+					:result-type="resultType"
+				/>
+			</div>
+			<div class="explorer-content flex-grow-1 h-100">
+				<search-bar
+					class="search-bar"
+					:enable-multi-term-search="false"
+					:show-sorted-results="true"
+					@search-text-changed="filterData"
+				>
+					<template #sort>
+						<toggle-button
+							:value="rankedResults"
+							:label="'Ranked Results'"
+							@change="toggleRankedResults"
 						/>
-					</div>
-					<button
-						type="button"
-						class="co-occurrence-matrix-btn"
-						:disabled="knownTerms.length !== 2"
-					>
-						<i class="fa-light fa-table-cells" />&nbsp;co-occurrence matrix
-					</button>
-				</template>
-			</search>
-			<simple-pagination
-				:current-page-length="filteredDataItemsCount"
-				:page-count="pageCount"
-				:page-size="pageSize"
-				@next-page="nextPage"
-				@prev-page="prevPage"
-			/>
+					</template>
+				</search-bar>
+				<search
+					class="search"
+					:data-items="dataItems"
+					:result-type="resultType"
+					:results-count="resultsCount"
+					:enable-multiple-selection="true"
+					:selected-search-items="selectedSearchItems"
+					@result-type-changed="updateResultType"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				>
+					<template #xdd>
+						<dropdown-button
+							:inner-button-label="'Dataset'"
+							:is-dropdown-left-aligned="true"
+							:items="xddDatasets"
+							:selected-item="xddDataset"
+							@item-selected="xddDatasetSelectionChanged"
+						/>
+						<div class="xdd-known-terms">
+							<search-bar
+								class="search-bar"
+								:enable-multi-term-search="true"
+								:search-label="''"
+								:enable-clear-button="false"
+								:enable-search-button="false"
+								:search-placeholder="'known terms...'"
+								@search-text-changed="addKnownTerm"
+							/>
+						</div>
+						<button
+							type="button"
+							class="co-occurrence-matrix-btn"
+							:disabled="knownTerms.length !== 2"
+						>
+							<i class="fa-light fa-table-cells" />&nbsp;co-occurrence matrix
+						</button>
+					</template>
+				</search>
+				<simple-pagination
+					:current-page-length="resultsCount"
+					:page-count="pageCount"
+					:page-size="pageSize"
+					@next-page="nextPage"
+					@prev-page="prevPage"
+				/>
+			</div>
 		</div>
 	</div>
 </template>
@@ -71,21 +83,22 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import Search from '@/components/data-explorer/search.vue';
 import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import ToggleButton from '@/components/widgets/toggle-button.vue';
+import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
-import { SearchParameters, SearchResults } from '@/types/common';
+import { SearchParameters, SearchResults, Facets } from '@/types/common';
+import { getFacets } from '@/utils/facets';
+import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle } from '@/types/XDD';
 import { Datacube } from '@/types/Datacube';
-import { XDDArticle } from '@/types/XDD';
 
 // FIXME: page count is not taken into consideration
-// FIXME: consider facets
 // FIXME: improve the search bar with auto-complete
 // FIXME: remove SASS
 
@@ -97,37 +110,53 @@ export default defineComponent({
 		SimplePagination,
 		SearchBar,
 		DropdownButton,
-		ToggleButton
+		ToggleButton,
+		FacetsPanel
 	},
 	setup() {
-		const filteredDataItems = ref<SearchResults[]>([]);
+		const dataItems = ref<SearchResults[]>([]);
 		const selectedSearchItems = ref<string[]>([]);
 		const filter = ref<string[]>([]);
 		return {
 			filter,
-			filteredDataItems,
+			dataItems,
 			selectedSearchItems
 		};
 	},
 	data: () => ({
 		pageCount: 0,
-		pageSize: 50,
+		pageSize: XDD_RESULT_DEFAULT_PAGE_SIZE,
 		// xdd
 		xddDatasets: [] as string[],
 		xddDataset: null as string | null,
 		knownTerms: [] as string[],
-		rankedResults: true // disable sorted results to enable pagination
+		rankedResults: true, // disable sorted results to enable pagination
+		// facets
+		facets: {} as Facets,
+		filteredFacets: {} as Facets,
+		//
+		resultType: 'all' as string
 	}),
 	computed: {
 		navBackLabel() {
 			return 'Back to Home';
 		},
-		filteredDataItemsCount() {
-			// FIXME: this should depend on the selected results tab (e.g., ALL, Models, Articles)
+		resultsCount() {
 			let total = 0;
-			this.filteredDataItems.forEach((resList) => {
-				total += resList?.results.length ?? 0;
-			});
+			if (this.resultType === 'all') {
+				// count the results from all subsystems
+				this.dataItems.forEach((res) => {
+					const count = res?.hits ?? res?.results.length;
+					total += count;
+				});
+			} else {
+				// only return the results count for the selected subsystems
+				const resList = this.dataItems.find((res) => res.searchSubsystem === this.resultType);
+				if (resList) {
+					// eslint-disable-next-line no-unsafe-optional-chaining
+					total += resList?.hits ?? resList?.results.length;
+				}
+			}
 			return total;
 		}
 	},
@@ -140,6 +169,14 @@ export default defineComponent({
 		},
 		rankedResults() {
 			this.refresh();
+		},
+		resultType() {
+			// re-calculate the facets
+			this.calculateFacets();
+		},
+		dataItems() {
+			// re-calculate the facets
+			this.calculateFacets();
 		}
 	},
 	async mounted() {
@@ -152,6 +189,14 @@ export default defineComponent({
 		this.refresh();
 	},
 	methods: {
+		updateResultType(newResultType: string) {
+			this.resultType = newResultType;
+			if (this.resultType === 'all') {
+				// TODO:
+				// collapse the Facets panel
+				// because there should not be visible facets when all different types of results are shown
+			}
+		},
 		toggleRankedResults() {
 			this.rankedResults = !this.rankedResults;
 		},
@@ -170,6 +215,11 @@ export default defineComponent({
 		},
 		xddDatasetSelectionChanged(newDataset: string) {
 			this.xddDataset = newDataset === 'all' ? null : newDataset;
+		},
+		calculateFacets() {
+			// retrieves filtered & unfiltered facet data
+			this.facets = getFacets(this.dataItems, this.resultType);
+			this.filteredFacets = getFacets(this.dataItems, this.resultType, this.filter);
 		},
 		// retrieves filtered data items list
 		async fetchDataItemList() {
@@ -193,11 +243,14 @@ export default defineComponent({
 			const searchTerm = this.filter.length > 0 ? this.filter[0] : '';
 
 			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
-			this.filteredDataItems = allData;
+			this.dataItems = allData;
 		},
 		async refresh() {
 			this.pageCount = 0;
 			await this.fetchDataItemList();
+			if (isEmpty(this.facets)) {
+				this.calculateFacets();
+			}
 		},
 		filterData(filterTerms: string[]) {
 			this.filter = cloneDeep(filterTerms);
@@ -212,7 +265,7 @@ export default defineComponent({
 			if (this.isDataItemSelected(itemID)) {
 				this.selectedSearchItems = this.selectedSearchItems.filter((item) => item !== itemID);
 			} else {
-				const dataitem = this.filteredDataItems
+				const dataitem = this.dataItems
 					.map((res) => res.results)
 					.flat()
 					.find(
@@ -246,6 +299,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @import '../styles/variables.scss';
+@import '../styles/util.scss';
 
 .data-explorer-container {
 	position: relative;

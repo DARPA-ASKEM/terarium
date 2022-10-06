@@ -6,7 +6,7 @@ import {
 	XDDSearchParams
 } from '@/types/common';
 import { Datacube, DatacubeFilterAttributes } from '../types/Datacube';
-import { XDDArticle, XDDResult } from '../types/XDD';
+import { XDDArticle, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
 
 const getXDDSets = async () => {
 	const url = 'https://xdd.wisc.edu/sets/';
@@ -139,7 +139,7 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	const limitResultsCount = xddSearchParam?.pageSize ?? 50;
+	const limitResultsCount = xddSearchParam?.pageSize ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
 	// NOTE when true it disables ranking of results
 	const enablePagination = xddSearchParam?.enablePagination ?? false;

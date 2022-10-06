@@ -6,7 +6,7 @@
 					<button
 						type="button"
 						:class="{ active: resultType === 'all' }"
-						@click="resultType = 'all'"
+						@click="onResultTypeChanged('all')"
 					>
 						All
 					</button>
@@ -15,7 +15,7 @@
 					<button
 						type="button"
 						:class="{ active: resultType === 'datacube' }"
-						@click="resultType = 'datacube'"
+						@click="onResultTypeChanged('datacube')"
 					>
 						Models
 					</button>
@@ -24,7 +24,7 @@
 					<button
 						type="button"
 						:class="{ active: resultType === 'xdd' }"
-						@click="resultType = 'xdd'"
+						@click="onResultTypeChanged('xdd')"
 					>
 						Articles
 					</button>
@@ -52,11 +52,7 @@
 			@toggle-article-selected="toggleDataItemSelected"
 			@set-article-selected="setDataItemSelected"
 		/>
-		<common-listview
-			v-if="resultType === 'all'"
-			class="list-view"
-			:input-items="filteredDataItems"
-		/>
+		<common-listview v-if="resultType === 'all'" class="list-view" :input-items="dataItems" />
 	</div>
 </template>
 
@@ -77,7 +73,7 @@ export default defineComponent({
 		CommonListview
 	},
 	props: {
-		filteredDataItems: {
+		dataItems: {
 			type: Array as PropType<SearchResults[]>,
 			default: () => []
 		},
@@ -88,47 +84,31 @@ export default defineComponent({
 		selectedSearchItems: {
 			type: Array as PropType<string[]>,
 			required: true
+		},
+		resultType: {
+			type: String,
+			default: 'all'
+		},
+		resultsCount: {
+			type: Number,
+			default: 0
 		}
 	},
-	emits: ['toggle-data-item-selected', 'set-data-item-selected'],
-	data: () => ({
-		// FIXME: refactor as part of the parent state and use enum instead
-		resultType: 'all'
-	}),
+	emits: ['toggle-data-item-selected', 'set-data-item-selected', 'result-type-changed'],
 	computed: {
 		filteredDatacubes() {
-			const resList = this.filteredDataItems.find((res) => res.searchSubsystem === 'datacube');
+			const resList = this.dataItems.find((res) => res.searchSubsystem === 'datacube');
 			if (resList) {
 				return resList.results as Datacube[];
 			}
 			return [];
 		},
 		filteredArticles() {
-			const resList = this.filteredDataItems.find((res) => res.searchSubsystem === 'xdd');
+			const resList = this.dataItems.find((res) => res.searchSubsystem === 'xdd');
 			if (resList) {
 				return resList.results as XDDArticle[];
 			}
 			return [];
-		},
-		resultsCount() {
-			let total = 0;
-			if (this.resultType === 'all') {
-				// count the results from all subsystems
-				this.filteredDataItems.forEach((res) => {
-					const count = res?.hits ?? res?.results.length;
-					total += count;
-				});
-			} else {
-				// only return the results count for the selected subsystems
-				const resList = this.filteredDataItems.find(
-					(res) => res.searchSubsystem === this.resultType
-				);
-				if (resList) {
-					// eslint-disable-next-line no-unsafe-optional-chaining
-					total += resList?.hits ?? resList?.results.length;
-				}
-			}
-			return total;
 		}
 	},
 	methods: {
@@ -137,6 +117,9 @@ export default defineComponent({
 		},
 		setDataItemSelected(item: string) {
 			this.$emit('set-data-item-selected', item);
+		},
+		onResultTypeChanged(newResultType: string) {
+			this.$emit('result-type-changed', newResultType);
 		}
 	}
 });
