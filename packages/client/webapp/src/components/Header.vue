@@ -19,7 +19,7 @@ const login = () => window.location.assign('http://localhost:8078');
 <template>
 	<nav>
 		<!-- Use relative path instead of alias for now as Component Tests seem to have an issue -->
-		<img src="../assets/images/logo.png" height="32" width="128" alt="logo" />
+		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
 		{{ auth.name }}
 		<Button v-if="isAuthenticated" @click="logout">Logout <Logout /></Button>
 		<Button v-else @click="login">Login <Login /></Button>
