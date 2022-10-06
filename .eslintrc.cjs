@@ -11,6 +11,7 @@ module.exports = {
 	rules: {
 		'vue/multi-word-component-names': 'off',
 		'vuejs-accessibility/click-events-have-key-events': 'off',
-		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
+		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+		'no-plusplus': 'off'
 	}
 };

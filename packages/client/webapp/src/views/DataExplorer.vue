@@ -97,6 +97,8 @@ import { SearchParameters, SearchResults, Facets } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle } from '@/types/XDD';
 import { Datacube } from '@/types/Datacube';
+import { useQueryStore } from '@/stores/query';
+import filtersUtil from '@/utils/filters-util';
 
 // FIXME: page count is not taken into consideration
 // FIXME: improve the search bar with auto-complete
@@ -117,10 +119,12 @@ export default defineComponent({
 		const dataItems = ref<SearchResults[]>([]);
 		const selectedSearchItems = ref<string[]>([]);
 		const filter = ref<string[]>([]);
+		const query = useQueryStore();
 		return {
 			filter,
 			dataItems,
-			selectedSearchItems
+			selectedSearchItems,
+			query
 		};
 	},
 	data: () => ({
@@ -158,10 +162,17 @@ export default defineComponent({
 				}
 			}
 			return total;
+		},
+		clientFilters() {
+			return this.query.clientFilters;
 		}
 	},
 	watch: {
 		filter() {
+			this.refresh();
+		},
+		clientFilters(n, o) {
+			if (filtersUtil.isEqual(n, o)) return;
 			this.refresh();
 		},
 		knownTerms() {
@@ -171,11 +182,9 @@ export default defineComponent({
 			this.refresh();
 		},
 		resultType() {
-			// re-calculate the facets
 			this.calculateFacets();
 		},
 		dataItems() {
-			// re-calculate the facets
 			this.calculateFacets();
 		}
 	},
@@ -218,8 +227,9 @@ export default defineComponent({
 		},
 		calculateFacets() {
 			// retrieves filtered & unfiltered facet data
-			this.facets = getFacets(this.dataItems, this.resultType);
-			this.filteredFacets = getFacets(this.dataItems, this.resultType, this.filter);
+			// const defaultFilters = { clauses: [] };
+			this.facets = getFacets(this.dataItems, this.resultType /* , defaultFilters */);
+			this.filteredFacets = getFacets(this.dataItems, this.resultType, this.clientFilters);
 		},
 		// retrieves filtered data items list
 		async fetchDataItemList() {

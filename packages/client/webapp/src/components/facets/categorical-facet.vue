@@ -43,11 +43,12 @@
 
 import { defineComponent } from 'vue';
 
-// import { mapActions, mapGetters } from 'vuex';
-import _ from 'lodash';
+import { isEqual } from 'lodash';
 
 import '@uncharted.software/facets-core';
-// import filtersUtil from '@/utils/filters-util';
+import filtersUtil from '@/utils/filters-util';
+
+import { useQueryStore } from '@/stores/query';
 
 const FACET_DEFAULT_SIZE = 5;
 
@@ -88,18 +89,20 @@ export default defineComponent({
 			default: false
 		}
 	},
+	setup(props) {
+		const query = useQueryStore();
+		return {
+			query
+		};
+	},
 	data() {
 		return {
 			moreLevel: 0
 		};
 	},
 	computed: {
-		// ...mapGetters({
-		//   filters: 'query/filters'
-		// }),
 		facetData() {
 			const values = [];
-			// eslint-disable-next-line no-plusplus
 			for (let i = 0; i < this.numToDisplay; ++i) {
 				const b = this.sortedJoinedData[i];
 				const labelName = this.formatterFn ? this.formatterFn(b.key) : b.key;
@@ -154,7 +157,7 @@ export default defineComponent({
 				: this.moreNumToDisplay;
 		},
 		selection() {
-			const facetClause = null; // filtersUtil.findPositiveFacetClause(this.filters, this.facet);
+			const facetClause = filtersUtil.findPositiveFacetClause(this.query.clientFilters, this.facet);
 			if (facetClause) {
 				const keyIndexDict = this.sortedJoinedData.reduce((a, d, i) => {
 					a[d.key] = i;
@@ -198,21 +201,18 @@ export default defineComponent({
 		}
 	},
 	methods: {
-		// ...mapActions({
-		//   setSearchClause: 'query/setSearchClause',
-		// }),
 		updateSelection(event) {
 			const facet = event.currentTarget;
 			if (
 				event.detail.changedProperties.get('selection') !== undefined &&
-				!_.isEqual(facet.selection, this.selection)
+				!isEqual(facet.selection, this.selection)
 			) {
 				if (facet.selection) {
 					const selectedIndexes = Object.keys(facet.selection);
 					const values = selectedIndexes.map((s) => this.sortedJoinedData[parseInt(s)].key);
-					// this.setSearchClause({ field: this.facet, values });
+					this.query.setSearchClause({ field: this.facet, values });
 				} else {
-					// this.setSearchClause({ field: this.facet, values: [] });
+					this.query.setSearchClause({ field: this.facet, values: [] });
 				}
 			}
 		},

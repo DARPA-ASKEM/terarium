@@ -37,13 +37,14 @@
 
 import { defineComponent } from 'vue';
 
-// import { mapActions, mapGetters } from 'vuex';
 import { isEqual } from 'lodash';
 
 import '@uncharted.software/facets-core';
 import '@uncharted.software/facets-plugins';
 
-// import filtersUtil from '@/utils/filters-util';
+import filtersUtil from '@/utils/filters-util';
+
+import { useQueryStore } from '@/stores/query';
 
 /**
  * Facet 3 component - displays aggregated search terms and update query state.
@@ -74,10 +75,13 @@ export default defineComponent({
 			default: () => []
 		}
 	},
+	setup(props) {
+		const query = useQueryStore();
+		return {
+			query
+		};
+	},
 	computed: {
-		// ...mapGetters({
-		//   filters: 'query/filters'
-		// }),
 		max() {
 			const values = this.baseData.map((b) => b.value);
 			return Math.max(...values);
@@ -96,7 +100,7 @@ export default defineComponent({
 			};
 		},
 		selection() {
-			const facetClause = null; // filtersUtil.findPositiveFacetClause(this.filters, this.facet);
+			const facetClause = filtersUtil.findPositiveFacetClause(this.query.filters, this.facet);
 			if (facetClause) {
 				const values = facetClause.values[0];
 				const selIndexes = this.baseData.reduce(
@@ -126,9 +130,6 @@ export default defineComponent({
 		}
 	},
 	methods: {
-		// ...mapActions({
-		//   setSearchClause: 'query/setSearchClause'
-		// }),
 		updateSelection(event) {
 			const facet = event.currentTarget;
 			if (
@@ -146,9 +147,9 @@ export default defineComponent({
 							? this.baseData[facet.selection[1]].key
 							: (this.baseData[1].key - this.baseData[0].key) * this.baseData.length +
 							  this.baseData[0].key;
-					// this.setSearchClause({ field: this.facet, values: [[from, to]] });
+					this.query.setSearchClause({ field: this.facet, values: [[from, to]] });
 				} else {
-					// this.setSearchClause({ field: this.facet, values: [[0, this.baseData.length]] });
+					this.query.setSearchClause({ field: this.facet, values: [[0, this.baseData.length]] });
 				}
 			}
 		}
