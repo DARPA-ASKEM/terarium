@@ -12,9 +12,15 @@ const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 
 	traverseGraph(graphData, (node: INode<V>) => {
 		if (node.width && node.height) {
-			g.setNode(node.id, { label: node.id, width: node.width, height: node.height });
+			g.setNode(node.id, {
+				label: node.id,
+				width: node.width,
+				height: node.height,
+				x: node.x,
+				y: node.y
+			});
 		} else {
-			g.setNode(node.id, { label: node.id });
+			g.setNode(node.id, { label: node.id, x: node.x, y: node.y });
 		}
 		if (!_.isEmpty(node.nodes)) {
 			// eslint-disable-next-line
@@ -72,65 +78,8 @@ type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
 let g: IGraph<NodeData, EdgeData> = {
 	width: 500,
 	height: 500,
-	nodes: [
-		{
-			id: 'susceptible',
-			label: 'susceptible',
-			x: 0,
-			y: 0,
-			height: 50,
-			width: 50,
-			data: { type: 'species' },
-			nodes: []
-		},
-		{
-			id: 'infected',
-			label: 'infected',
-			x: 0,
-			y: 0,
-			height: 50,
-			width: 50,
-			data: { type: 'species' },
-			nodes: []
-		},
-		{
-			id: 'recovered',
-			label: 'recovered',
-			x: 0,
-			y: 0,
-			height: 50,
-			width: 50,
-			data: { type: 'species' },
-			nodes: []
-		},
-		{
-			id: 'infection',
-			label: 'infection',
-			x: 0,
-			y: 0,
-			height: 40,
-			width: 40,
-			data: { type: 'transition' },
-			nodes: []
-		},
-		{
-			id: 'recovery',
-			label: 'recovery',
-			x: 0,
-			y: 0,
-			height: 40,
-			width: 40,
-			data: { type: 'transition' },
-			nodes: []
-		}
-	],
-	edges: [
-		{ id: '1', source: 'susceptible', target: 'infection', points: [], data: null },
-		{ id: '2', source: 'infection', target: 'infected', points: [], data: { val: 2 } },
-		{ id: '3', source: 'infected', target: 'recovery', points: [], data: null },
-		{ id: '4', source: 'recovery', target: 'recovered', points: [], data: null },
-		{ id: '5', source: 'infected', target: 'infection', points: [], data: null }
-	]
+	nodes: [],
+	edges: []
 };
 
 export const pathFn = d3
@@ -138,21 +87,34 @@ export const pathFn = d3
 	.x((d) => d.x)
 	.y((d) => d.y);
 
+const MARKER_VIEWBOX = '-5 -5 10 10';
+const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
-	/*
-	constructor(options: any) {
-		super(options);
-		this.on('node-drag-start', (e, evt) => {
-			const shiftKey = evt.sourceEvent.shiftKey;
-			if (shiftKey) return;
-		});
+	setupDefs() {
+		const svg = d3.select(this.svgEl);
 
-		this.on('node-drag-move', (e, evt) => {
-			const shiftKey = evt.sourceEvent.shiftKey;
-			if (shiftKey) return;
-		});
+		// Clean up
+		svg.select('defs').selectAll('.edge-marker-end').remove();
+
+		// Arrow defs
+		svg
+			.select('defs')
+			.append('marker')
+			.classed('edge-marker-end', true)
+			.attr('id', 'arrowhead')
+			.attr('viewBox', MARKER_VIEWBOX)
+			.attr('refX', 2)
+			.attr('refY', 0)
+			.attr('orient', 'auto')
+			.attr('markerWidth', 15)
+			.attr('markerHeight', 15)
+			.attr('markerUnits', 'userSpaceOnUse')
+			.attr('xoverflow', 'visible')
+			.append('svg:path')
+			.attr('d', ARROW)
+			.style('fill', '#000')
+			.style('stroke', 'none');
 	}
-	*/
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const species = selection.filter((d) => d.data.type === 'species');
@@ -160,6 +122,7 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		transitions
 			.append('rect')
+			.classed('shape', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
 			.style('fill', '#88C')
@@ -167,6 +130,7 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		species
 			.append('circle')
+			.classed('shape', true)
 			.attr('cx', (d) => d.width * 0.5)
 			.attr('cy', (d) => d.height * 0.5)
 			.attr('r', (d) => d.width * 0.5)
@@ -183,12 +147,20 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
-			.style('stroke', '#000');
+			.style('stroke', '#000')
+			.style('stroke-width', 2)
+			.attr('marker-end', 'url(#arrowhead)');
 	}
 }
 
 let renderer: SampleRenderer | null = null;
 g = runLayout(_.cloneDeep(g));
+
+let placeCounter = 0;
+let transitionCounter = 0;
+let modelId = ''; // The session model
+let source: any = null;
+let target: any = null;
 
 export default defineComponent({
 	name: 'TA2Playground',
@@ -202,24 +174,98 @@ export default defineComponent({
 			runLayout
 		});
 
+		renderer.on('node-click', (evtName, evt, d) => {
+			if (evt.shiftKey) {
+				if (source) {
+					target = d;
+					target.select('.shape').style('stroke', '#000').style('stroke-width', 4);
+				} else {
+					source = d;
+					source.select('.shape').style('stroke', '#000').style('stroke-width', 4);
+				}
+			} else {
+				if (source) {
+					source.select('.shape').style('stroke', null).style('stroke-width', null);
+				}
+				if (target) {
+					target.select('.shape').style('stroke', null).style('stroke-width', null);
+				}
+				source = null;
+				target = null;
+			}
+
+			if (source && target) {
+				this.addEdge(source, target);
+				source = null;
+				target = null;
+			}
+		});
+
 		// Test
 		const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
 		const testData = await test.json();
-		console.log('test data', testData);
+		modelId = testData.id;
 
 		this.refresh();
+		this.jsonOutput();
 	},
 	methods: {
 		async refresh() {
 			await renderer.setData(g);
 			await renderer.render();
 		},
-		addPlace() {
+		async jsonOutput() {
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
+				method: 'GET'
+			});
+			const output = await resp.json();
+			d3.select('#output').text(JSON.stringify(output, null, 2));
+		},
+		// eslint-disable-next-line
+		async addEdge(source: any, target: any) {
+			g.edges.push({
+				source: source.datum().id,
+				target: target.datum().id,
+				points: [
+					{
+						x: source.datum().x + source.datum().width * 0.5,
+						y: source.datum().y + source.datum().height * 0.5
+					},
+					{
+						x: target.datum().x + target.datum().width * 0.5,
+						y: target.datum().y + target.datum().height * 0.5
+					}
+				]
+			});
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					edges: [
+						{
+							source: source.datum().id,
+							target: target.datum().id
+						}
+					]
+				})
+			});
+
+			// g = runLayout(_.cloneDeep(g));
+			this.refresh();
+			this.jsonOutput();
+		},
+		async addPlace() {
 			console.log('add place');
-			const now = `${Date.now()}`;
+			placeCounter++;
+			const id = `p-${placeCounter}`;
+
 			g.nodes.push({
-				id: now,
-				label: now,
+				id,
+				label: id,
 				x: Math.random() * 400,
 				y: Math.random() * 400,
 				height: 50,
@@ -228,13 +274,32 @@ export default defineComponent({
 				nodes: []
 			});
 			this.refresh();
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					nodes: [
+						{
+							name: id,
+							type: 'S'
+						}
+					]
+				})
+			});
+			this.jsonOutput();
 		},
-		addTransition() {
+		async addTransition() {
 			console.log('add transition');
-			const now = `${Date.now()}`;
+			transitionCounter++;
+			const id = `t-${transitionCounter}`;
+
 			g.nodes.push({
-				id: now,
-				label: now,
+				id,
+				label: id,
 				x: Math.random() * 400,
 				y: Math.random() * 400,
 				height: 50,
@@ -243,13 +308,36 @@ export default defineComponent({
 				nodes: []
 			});
 			this.refresh();
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					nodes: [
+						{
+							name: id,
+							type: 'T'
+						}
+					]
+				})
+			});
+			this.jsonOutput();
 		}
 	}
 });
 </script>
 
 <template>
-	<button type="button" @click="addPlace">Add place</button>
-	<button type="button" @click="addTransition">Add transition</button>
-	<div id="playground" style="width: 400px; height: 400px; border: 1px solid #888"></div>
+	<div style="margin: 10px">
+		<p>A playground for testing TA2 API integrations.</p>
+		<button type="button" @click="addPlace">Add place</button>
+		<button type="button" @click="addTransition">Add transition</button>
+		<div style="display: flex">
+			<div id="playground" style="width: 400px; height: 400px; border: 1px solid #888"></div>
+			<div id="output" style="width: 400px; height: 400px; border: 1px solid #888"></div>
+		</div>
+	</div>
 </template>
