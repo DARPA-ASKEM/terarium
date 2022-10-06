@@ -5945,7 +5945,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graph-scaffolder@workspace:packages/client/graph-scaffolder":
+"graph-scaffolder@*, graph-scaffolder@workspace:packages/client/graph-scaffolder":
   version: 0.0.0-use.local
   resolution: "graph-scaffolder@workspace:packages/client/graph-scaffolder"
   dependencies:
@@ -11309,6 +11309,7 @@ __metadata:
     "@vitejs/plugin-vue": 3.1.2
     "@vitest/coverage-c8": 0.23.4
     eslint-import-resolver-typescript: 3.5.1
+    graph-scaffolder: "*"
     lodash: 4.17.21
     pinia: 2.0.22
     sass: 1.55.0
