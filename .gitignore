@@ -50,6 +50,7 @@ nb-configuration.xml
 # NPM
 node_modules
 dist
+build
 
 # MISC
 create.sql

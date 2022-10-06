@@ -2,4 +2,6 @@
 **/dist
 **/assets
 **/node_modules
+**/examples
 **/playwright
+
