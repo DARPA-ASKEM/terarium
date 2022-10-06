@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { uncloak } from '../utils/uncloak';
 import Button from '@/components/Button.vue';
+import { uncloak } from '../utils/uncloak';
 
 const router = useRouter();
 
@@ -37,7 +37,7 @@ function openDataExplorer() {
 			<Button info>Delete Project</Button>
 		</div>
 		<div>
-      <Button @click="openDataExplorer">Data Explorer</Button>
+			<Button @click="openDataExplorer">Data Explorer</Button>
 			<Button warning>New Model</Button>
 			<Button danger>Update Model</Button>
 			<Button>Get Model</Button>
@@ -46,7 +46,6 @@ function openDataExplorer() {
 		<div>
 			<Button @click="apiCall('user')">User Call</Button>
 			<Button @click="apiCall('admin')">Admin Call</Button>
-
 		</div>
 	</main>
 </template>
