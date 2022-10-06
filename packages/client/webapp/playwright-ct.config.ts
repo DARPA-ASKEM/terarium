@@ -37,11 +37,15 @@ const config: PlaywrightTestConfig = {
 			plugins: [vue()],
 			resolve: {
 				alias: {
-					'@': resolve(__dirname, './src')
+					'@': resolve(__dirname, './src'),
+					'@assets': resolve(__dirname, './src/assets')
 				}
 			}
 		}
 	},
+
+	/* Folder for test artifacts such as screenshots, videos, traces, etc. */
+	outputDir: './tests/component/test-results/',
 
 	/* Configure projects for major browsers */
 	projects: [
