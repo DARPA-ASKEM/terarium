@@ -76,7 +76,7 @@ describe('basic tests', () => {
 - If adding a new feature:
   - Add accompanying test case.
   - Provide a convincing reason to add this feature. Ideally, you should open a suggestion issue first, and have it approved before working on it.
-  - Reference the feautre ticket if applicable
+  - Reference the feature ticket if applicable
 
 - If fixing a bug:
   - Reference the issue being resolved by adding (resolves #123)
