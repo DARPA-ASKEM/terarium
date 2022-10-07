@@ -1,75 +1,77 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from '@/components/Button.vue';
-import SimulationPlan from '@carbon/icons-vue/es/data-player/32';
-import MachineLearningModel from '@carbon/icons-vue/es/machine-learning-model/32';
-import Dataset from '@carbon/icons-vue/es/table--split/32';
-import ProvenanceGraph from '@carbon/icons-vue/es/flow/32';
-import Search from '@carbon/icons-vue/es/search--locate/32';
-import User from '@carbon/icons-vue/es/user/32';
+import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
+import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
+import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
+import IconSearchLocate32 from '@carbon/icons-vue/es/search--locate/32';
+import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
+import IconUser32 from '@carbon/icons-vue/es/user/32';
+import IconLogout16 from '@carbon/icons-vue/es/logout/16';
+import { useAuthStore } from '../stores/auth';
 
-const props = defineProps<{ sidebarPosition: String }>();
-const emit = defineEmits(['updateSidebarPosition']);
+const auth = useAuthStore();
 
-const mode = ref('Simulation Plan');
-const collapsed = ref(false);
+const selectedMode = ref('Simulation Plan');
+const isCollapsed = ref(false);
 
-function updateMode(modeOption: string) {
-	if (modeOption === mode.value) {
-		collapsed.value = !collapsed.value;
-		return;
+// Get sidebar position if saved in local storage
+const sidebarPosition = ref(localStorage.sidebarPosition ? localStorage.sidebarPosition : 'left');
+
+const logout = () => {
+	// Later move mode specific features into their own components
+	auth.logout();
+	window.location.assign('/logout');
+};
+
+function updateMode(mode: string) {
+	if (mode === selectedMode.value) {
+		isCollapsed.value = !isCollapsed.value;
+	} else {
+		selectedMode.value = mode;
+		isCollapsed.value = false;
 	}
-	collapsed.value = false;
-	mode.value = modeOption;
 }
 
 function moveSidebar() {
-	if (localStorage.sidebarPosition === 'left') {
-		localStorage.setItem('sidebarPosition', 'right');
-	} else {
-		localStorage.setItem('sidebarPosition', 'left');
-	}
-	emit('updateSidebarPosition', localStorage.sidebarPosition);
-}
-
-function styleModeOption(modeOption: string) {
-	if (mode.value === modeOption) return 'chosenMode';
-	return '';
+	localStorage.sidebarPosition = sidebarPosition.value === 'left' ? 'right' : 'left';
+	sidebarPosition.value = localStorage.sidebarPosition;
 }
 </script>
 
 <template>
-	<section :class="props.sidebarPosition">
+	<section :class="sidebarPosition">
 		<nav class="mode-selection">
 			<ul>
-				<li :class="styleModeOption('Simulation Plan')" @click="updateMode('Simulation Plan')">
-					<SimulationPlan />
+				<li :active="selectedMode === 'Simulation Plan'" @click="updateMode('Simulation Plan')">
+					<IconDataPlayer32 />
 				</li>
-				<li :class="styleModeOption('Model View')" @click="updateMode('Model View')">
-					<MachineLearningModel />
+				<li :active="selectedMode === 'Model View'" @click="updateMode('Model View')">
+					<IconMachineLearningModel32 />
 				</li>
-				<li :class="styleModeOption('Datasets')" @click="updateMode('Datasets')">
-					<Dataset />
+				<li :active="selectedMode === 'Datasets'" @click="updateMode('Datasets')">
+					<IconTableSplit32 />
 				</li>
-				<li :class="styleModeOption('Data Explorer')" @click="updateMode('Data Explorer')">
-					<Search />
+				<li :active="selectedMode === 'Data Explorer'" @click="updateMode('Data Explorer')">
+					<IconSearchLocate32 />
 				</li>
 			</ul>
 			<ul>
-				<li :class="styleModeOption('Provenace Graph')" @click="updateMode('Provenace Graph')">
-					<ProvenanceGraph />
+				<li :active="selectedMode === 'Provenace Graph'" @click="updateMode('Provenace Graph')">
+					<IconProvenanceGraph32 />
 				</li>
-				<li :class="styleModeOption('Profile')" @click="updateMode('Profile')">
-					<User />
+				<li :active="selectedMode === 'Profile'" @click="updateMode('Profile')">
+					<IconUser32 />
 				</li>
 			</ul>
 		</nav>
-		<nav v-if="!collapsed" class="mode-configuration">
-			<header>{{ mode }}</header>
-			<div>
-				<Button v-if="mode === 'Profile'" @click="moveSidebar()"> Move sidebar </Button>
+		<div v-if="!isCollapsed" class="mode-configuration">
+			<header>{{ selectedMode }}</header>
+			<div v-if="selectedMode === 'Profile'">
+				<Button @click="moveSidebar"> Move sidebar </Button>
+				<Button @click="logout">Logout <IconLogout16 /></Button>
 			</div>
-		</nav>
+		</div>
 	</section>
 </template>
 
@@ -80,6 +82,7 @@ section {
 }
 
 section.right {
+	order: 1;
 	flex-direction: row-reverse;
 }
 
@@ -118,17 +121,17 @@ nav.mode-selection ul li {
 }
 
 nav.mode-selection ul li:hover,
-nav.mode-selection ul li.chosenMode {
+nav.mode-selection ul li[active] {
 	background-color: white;
 	color: green;
 }
 
-nav.mode-configuration {
+.mode-configuration {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 	background-color: var(--un-color-accent-lighter);
 	width: 15rem;
-}
-
-nav.mode-configuration {
 	padding: 0.5rem;
 }
 </style>

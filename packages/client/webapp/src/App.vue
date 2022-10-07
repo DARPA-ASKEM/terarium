@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeMount, ref, computed } from 'vue';
+import { onBeforeMount, computed } from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { useAuthStore } from './stores/auth';
@@ -11,13 +11,9 @@ const auth = useAuthStore();
  */
 onBeforeMount(() => {
 	auth.fetchSSO();
-	if (localStorage.sidebarPosition === undefined) {
-		localStorage.setItem('sidebarPosition', 'left');
-	}
 });
 
 const isAuthenticated = computed(() => auth.isAuthenticated);
-const sidebarPosition = ref(localStorage.sidebarPosition);
 // watch(isAuthenticated, (currentValue, oldValue) => {
 // 	if (!currentValue && currentValue !== oldValue) {
 // 		window.location.assign('/logout');
@@ -27,22 +23,14 @@ const sidebarPosition = ref(localStorage.sidebarPosition);
 
 <template>
 	<Header />
-	<div :class="sidebarPosition" v-if="isAuthenticated">
-		<Sidebar
-			:sidebar-position="sidebarPosition"
-			@updateSidebarPosition="(newPosition) => (sidebarPosition = newPosition)"
-		/>
+	<main v-if="isAuthenticated">
+		<Sidebar />
 		<router-view />
-	</div>
+	</main>
 </template>
 
 <style scoped>
-div {
+main {
 	display: flex;
-	height: calc(100vh - 3.5rem);
-}
-
-div.right {
-	flex-direction: row-reverse;
 }
 </style>
