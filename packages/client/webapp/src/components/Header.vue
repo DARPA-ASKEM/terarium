@@ -4,6 +4,7 @@ import IconLogin16 from '@carbon/icons-vue/es/login/16';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
+
 const login = () => window.location.assign('http://localhost:8078');
 </script>
 
