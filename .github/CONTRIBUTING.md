@@ -4,7 +4,7 @@ Hi! We're really excited that you're interested in contributing to TERArium! Bef
 
 ## Repo Setup
 
-The TERArium repo is a mixed repo using yarn workspaces and Java backend components. The package manager used to install and link dependencies is [yarn](https://yarnpkg.com/getting-started) and [gradle](https://gradle.org/).
+The TERArium repo is a mixed repo using yarn workspaces and Java backend components. The package managers used to install and link dependencies are [yarn](https://yarnpkg.com/getting-started) and [gradle](https://gradle.org/).
 
 To develop and test the core application:
 
