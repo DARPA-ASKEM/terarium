@@ -125,7 +125,7 @@ flowchart TD
 	C --> D
 	B --> |Yes| D[1. Verify fix locally\n2. Review code\n3. Require tests\n4. Request changes if needed]
 	D --> E[Approve or Reject]
-	B --> |No| G[Disuccss potential issues, are there too many changes?]
+	B --> |No| G[Discuss potential issues, are there too many changes?]
 	G --> H[Add priority labels and additional relevant reviewers for discussion]
 	H --> D
 	E --> F[Merge if approved by 2 or more members\n 1. Use 'Squash and Merge'\n2. Edit commit message to follow convention\n3. Add relevant issues reference in body]
