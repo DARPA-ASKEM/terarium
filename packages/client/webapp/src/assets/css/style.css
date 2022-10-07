@@ -27,6 +27,8 @@
 body {
 	background-color: inherit;
 	color: inherit;
+	display: flex;
+	flex-direction: column;
 	font: inherit;
 }
 

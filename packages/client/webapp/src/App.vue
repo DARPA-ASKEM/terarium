@@ -32,5 +32,6 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 <style scoped>
 main {
 	display: flex;
+	flex-grow: 1;
 }
 </style>
