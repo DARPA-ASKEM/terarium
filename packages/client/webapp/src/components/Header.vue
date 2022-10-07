@@ -30,10 +30,13 @@ const projectName = 'Name of the project that can be long for clarity and precis
 <style scoped>
 nav {
 	align-items: center;
+	background-color: var(--un-color-body-surface-primary);
 	border-bottom: 1px solid lightgrey;
+	box-shadow: var(--un-box-shadow-small);
 	display: flex;
 	justify-content: space-between;
 	padding: 0.5rem 1rem;
+	z-index: var(--un-z-index-navbar);
 }
 
 header {

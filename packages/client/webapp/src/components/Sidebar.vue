@@ -77,8 +77,10 @@ function moveSidebar() {
 
 <style scoped>
 section {
+	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	height: 100%;
+	z-index: var(--un-z-index-sidebar);
 }
 
 section.right {
@@ -90,12 +92,6 @@ nav {
 	display: flex;
 	flex-direction: column;
 	background-color: var(--un-color-accent-light);
-	border-right: 1px solid lightgrey;
-}
-
-section.right nav {
-	border-left: 1px solid lightgrey;
-	border-right: 0;
 }
 
 ul {
@@ -103,8 +99,11 @@ ul {
 }
 
 nav.mode-selection {
+	box-shadow: var(--un-box-shadow-small);
 	justify-content: space-between;
+	padding: 0.33em 0;
 	width: 4rem;
+	z-index: calc(var(--un-z-index-sidebar) + 1);
 }
 
 nav.mode-selection ul li {
