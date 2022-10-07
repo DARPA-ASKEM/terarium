@@ -21,7 +21,7 @@ const login = () => window.location.assign('http://localhost:8078');
 <style scoped>
 nav {
 	align-items: center;
-	border-bottom: 1px solid lightgrey;
+	border-bottom: 1px solid var(--un-color-black-20);
 	display: flex;
 	justify-content: space-between;
 	padding: 0.5rem 1rem;

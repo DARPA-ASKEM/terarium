@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Button from '@/components/Button.vue';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
@@ -12,11 +12,12 @@ import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
 
-const selectedMode = ref('Simulation Plan');
-const isCollapsed = ref(false);
-
+const selectedMode = ref('');
 // Get sidebar position if saved in local storage
-const sidebarPosition = ref(localStorage.sidebarPosition ? localStorage.sidebarPosition : 'left');
+const sidebarPosition = ref(
+	localStorage.getItem('sidebarPosition') ? localStorage.getItem('sidebarPosition') : 'left'
+);
+const isCollapsed = computed(() => selectedMode.value.length === 0);
 
 const logout = () => {
 	// Later move mode specific features into their own components
@@ -25,17 +26,12 @@ const logout = () => {
 };
 
 function updateMode(mode: string) {
-	if (mode === selectedMode.value) {
-		isCollapsed.value = !isCollapsed.value;
-	} else {
-		selectedMode.value = mode;
-		isCollapsed.value = false;
-	}
+	selectedMode.value = mode === selectedMode.value ? '' : mode;
 }
 
 function moveSidebar() {
-	localStorage.sidebarPosition = sidebarPosition.value === 'left' ? 'right' : 'left';
-	sidebarPosition.value = localStorage.sidebarPosition;
+	localStorage.setItem('sidebarPosition', sidebarPosition.value === 'left' ? 'right' : 'left');
+	sidebarPosition.value = localStorage.getItem('sidebarPosition');
 }
 </script>
 
@@ -69,7 +65,10 @@ function moveSidebar() {
 			<header>{{ selectedMode }}</header>
 			<div v-if="selectedMode === 'Profile'">
 				<Button @click="moveSidebar"> Move sidebar </Button>
-				<Button @click="logout">Logout <IconLogout16 /></Button>
+				<Button @click="logout"
+					>Logout
+					<IconLogout16 />
+				</Button>
 			</div>
 		</div>
 	</section>
@@ -90,11 +89,11 @@ nav {
 	display: flex;
 	flex-direction: column;
 	background-color: var(--un-color-accent-light);
-	border-right: 1px solid lightgrey;
+	border-right: 1px solid var(--un-color-black-20);
 }
 
 section.right nav {
-	border-left: 1px solid lightgrey;
+	border-left: 1px solid var(--un-color-black-20);
 	border-right: 0;
 }
 
@@ -104,7 +103,6 @@ ul {
 
 nav.mode-selection {
 	justify-content: space-between;
-	width: 4rem;
 }
 
 nav.mode-selection ul li {
@@ -112,18 +110,18 @@ nav.mode-selection ul li {
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
-	height: 3rem;
-	width: 3rem;
-	margin: 0.5rem auto;
+	height: 3.25rem;
+	width: 3.25rem;
+	margin: 0.5rem;
 	border-radius: 5px;
-	background-color: whitesmoke;
-	color: black;
+	background-color: var(--un-color-body-surface-secondary);
+	color: var(--un-color-black-100);
 }
 
 nav.mode-selection ul li:hover,
 nav.mode-selection ul li[active='true'] {
-	background-color: white;
-	color: green;
+	background-color: var(--un-color-white);
+	color: var(--un-color-accent);
 }
 
 .mode-configuration {
