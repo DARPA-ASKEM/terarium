@@ -1,8 +1,8 @@
 ---
 name: Task request
 about: Template for development tasks
-title: ''
-labels: ''
+title: '[TASK]: '
+labels: 'task'
 assignees: ''
 
 ---
