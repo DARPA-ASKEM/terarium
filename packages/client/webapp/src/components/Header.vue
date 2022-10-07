@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import Login from '@carbon/icons-vue/es/login/16';
-import Logout from '@carbon/icons-vue/es/logout/16';
+import Button from '@/components/Button.vue';
+import IconLogin16 from '@carbon/icons-vue/es/login/16';
+import IconLogout16 from '@carbon/icons-vue/es/logout/16';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
@@ -21,8 +22,8 @@ const login = () => window.location.assign('http://localhost:8078');
 		<!-- Use relative path instead of alias for now as Component Tests seem to have an issue -->
 		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
 		{{ auth.name }}
-		<Button v-if="isAuthenticated" @click="logout">Logout <Logout /></Button>
-		<Button v-else @click="login">Login <Login /></Button>
+		<Button v-if="isAuthenticated" @click="logout">Logout <IconLogout16 /></Button>
+		<Button v-else @click="login">Login <IconLogin16 /></Button>
 	</nav>
 </template>
 
