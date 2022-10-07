@@ -121,7 +121,7 @@ nav.mode-selection ul li {
 }
 
 nav.mode-selection ul li:hover,
-nav.mode-selection ul li[active] {
+nav.mode-selection ul li[active='true'] {
 	background-color: white;
 	color: green;
 }
