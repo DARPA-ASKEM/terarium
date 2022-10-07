@@ -31,17 +31,11 @@ function openDataExplorer() {
 	<section>
 		<p>Test API calls/Home placeholder</p>
 		<div>
-			<Button>New Project</Button>
-			<Button action>Update Project</Button>
-			<Button success>Get Projects</Button>
-			<Button info>Delete Project</Button>
-		</div>
-		<div>
 			<Button @click="openDataExplorer">Data Explorer</Button>
-			<Button warning>New Model</Button>
-			<Button danger>Update Model</Button>
-			<Button>Get Model</Button>
-			<Button>Delete Model</Button>
+			<Button>Normal</Button>
+			<Button action>Action</Button>
+			<Button danger>Danger</Button>
+			<Button info>Info</Button>
 		</div>
 		<div>
 			<Button @click="apiCall('user')">User Call</Button>

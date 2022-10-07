@@ -41,7 +41,7 @@ function moveSidebar() {
 
 <template>
 	<section :class="sidebarPosition">
-		<nav class="mode-selection">
+		<nav>
 			<ul>
 				<li :active="selectedMode === 'Simulation Plan'" @click="updateMode('Simulation Plan')">
 					<IconDataPlayer32 />
@@ -91,14 +91,14 @@ section.right {
 nav {
 	display: flex;
 	flex-direction: column;
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-accent);
 }
 
 ul {
 	list-style: none;
 }
 
-nav.mode-selection {
+nav {
 	box-shadow: var(--un-box-shadow-small);
 	justify-content: space-between;
 	padding: 0.33em 0;
@@ -106,30 +106,45 @@ nav.mode-selection {
 	z-index: calc(var(--un-z-index-sidebar) + 1);
 }
 
-nav.mode-selection ul li {
+nav ul {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+}
+
+nav ul li {
+	border-radius: 4px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
 	height: 3rem;
 	width: 3rem;
-	margin: 0.5rem auto;
-	border-radius: 5px;
-	background-color: whitesmoke;
-	color: black;
 }
 
-nav.mode-selection ul li:hover,
-nav.mode-selection ul li[active='true'] {
-	background-color: white;
-	color: green;
+nav svg {
+	fill: var(--un-color-accent-light);
+}
+
+nav li[active='true'] svg {
+	fill: var(--un-color-white);
+}
+
+nav li:hover {
+	background-color: var(--un-color-white);
+}
+
+nav li:hover svg {
+	fill: var(--un-color-accent);
 }
 
 .mode-configuration {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--un-color-accent-light);
 	width: 15rem;
 	padding: 0.5rem;
 }

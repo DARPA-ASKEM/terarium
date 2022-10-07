@@ -14,8 +14,9 @@ button {
 	border-radius: 4px;
 	color: var(--btn-color);
 	display: flex;
-	gap: 0.5em;
 	font: var(--un-font-large);
+	justify-content: center;
+	gap: 0.5em;
 	min-width: 5em;
 	outline: 0;
 	padding: 0.5em 1em;
