@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Sidebar component for navigating modes
+ * */
 import { ref, computed } from 'vue';
 import Button from '@/components/Button.vue';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
@@ -10,17 +13,28 @@ import IconUser32 from '@carbon/icons-vue/es/user/32';
 import IconLogout16 from '@carbon/icons-vue/es/logout/16';
 import { useAuthStore } from '../stores/auth';
 
+const enum Mode {
+	SimulationPlan = 'Simulation Plan',
+	ModelView = 'Model View',
+	Datasets = 'Datasets',
+	DataExplorer = 'Data Explorer',
+	ProvenanceGraph = 'Provenance Graph',
+	Profile = 'Profile'
+}
+
 const auth = useAuthStore();
 
-const selectedMode = ref('');
 // Get sidebar position if saved in local storage
-const sidebarPosition = ref(
-	localStorage.getItem('sidebarPosition') ? localStorage.getItem('sidebarPosition') : 'left'
+const isSidebarPositionRight = ref(
+	localStorage.getItem('isSidebarPositionRight')
+		? localStorage.getItem('isSidebarPositionRight') === 'true'
+		: false
 );
+const selectedMode = ref('');
 const isCollapsed = computed(() => selectedMode.value.length === 0);
 
+// Later move mode specific features into their own components
 const logout = () => {
-	// Later move mode specific features into their own components
 	auth.logout();
 	window.location.assign('/logout');
 };
@@ -30,40 +44,43 @@ function updateMode(mode: string) {
 }
 
 function moveSidebar() {
-	localStorage.setItem('sidebarPosition', sidebarPosition.value === 'left' ? 'right' : 'left');
-	sidebarPosition.value = localStorage.getItem('sidebarPosition');
+	localStorage.setItem('isSidebarPositionRight', (!isSidebarPositionRight.value).toString());
+	isSidebarPositionRight.value = localStorage.getItem('isSidebarPositionRight') === 'true';
 }
 </script>
 
 <template>
-	<section :class="sidebarPosition">
+	<section :class="{ right: isSidebarPositionRight }">
 		<nav class="mode-selection">
 			<ul>
-				<li :active="selectedMode === 'Simulation Plan'" @click="updateMode('Simulation Plan')">
+				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
 					<IconDataPlayer32 />
 				</li>
-				<li :active="selectedMode === 'Model View'" @click="updateMode('Model View')">
+				<li :active="selectedMode === Mode.ModelView" @click="updateMode(Mode.ModelView)">
 					<IconMachineLearningModel32 />
 				</li>
-				<li :active="selectedMode === 'Datasets'" @click="updateMode('Datasets')">
+				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
 					<IconTableSplit32 />
 				</li>
-				<li :active="selectedMode === 'Data Explorer'" @click="updateMode('Data Explorer')">
+				<li :active="selectedMode === Mode.DataExplorer" @click="updateMode(Mode.DataExplorer)">
 					<IconSearchLocate32 />
 				</li>
 			</ul>
 			<ul>
-				<li :active="selectedMode === 'Provenace Graph'" @click="updateMode('Provenace Graph')">
+				<li
+					:active="selectedMode === Mode.ProvenanceGraph"
+					@click="updateMode(Mode.ProvenanceGraph)"
+				>
 					<IconProvenanceGraph32 />
 				</li>
-				<li :active="selectedMode === 'Profile'" @click="updateMode('Profile')">
+				<li :active="selectedMode === Mode.Profile" @click="updateMode(Mode.Profile)">
 					<IconUser32 />
 				</li>
 			</ul>
 		</nav>
-		<div v-if="!isCollapsed" class="mode-configuration">
+		<div v-if="!isCollapsed" class="mode-configuration" :class="{ right: isSidebarPositionRight }">
 			<header>{{ selectedMode }}</header>
-			<div v-if="selectedMode === 'Profile'">
+			<div v-if="selectedMode === Mode.Profile">
 				<Button @click="moveSidebar"> Move sidebar </Button>
 				<Button @click="logout"
 					>Logout
@@ -92,6 +109,7 @@ nav {
 	border-right: 1px solid var(--un-color-black-20);
 }
 
+.mode-configuration.right,
 section.right nav {
 	border-left: 1px solid var(--un-color-black-20);
 	border-right: 0;
@@ -129,6 +147,7 @@ nav.mode-selection ul li[active='true'] {
 	flex-direction: column;
 	justify-content: space-between;
 	background-color: var(--un-color-accent-lighter);
+	border-right: 1px solid var(--un-color-black-20);
 	width: 15rem;
 	padding: 0.5rem;
 }
