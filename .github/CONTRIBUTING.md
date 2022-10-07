@@ -121,7 +121,7 @@ flowchart TD
 flowchart TD
 	A{Bug fix or feature?}
 	A --> |Bug Fix| B{Strict fix without side effects?}
-	A --> |Feature| C[1. Add `enhancement` label\n2. Disscuss feature need\n3. Review code]
+	A --> |Feature| C[1. Add `enhancement` label\n2. Discuss feature need\n3. Review code]
 	C --> D
 	B --> |Yes| D[1. Verify fix locally\n2. Review code\n3. Require tests\n4. Request changes if needed]
 	D --> E[Approve or Reject]
