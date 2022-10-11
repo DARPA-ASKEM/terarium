@@ -6,7 +6,7 @@
 					<button
 						type="button"
 						:class="{ active: resultType === 'all' }"
-						@click="resultType = 'all'"
+						@click="onResultTypeChanged('all')"
 					>
 						All
 					</button>
@@ -14,8 +14,8 @@
 				<li>
 					<button
 						type="button"
-						:class="{ active: resultType === 'datacube' }"
-						@click="resultType = 'datacube'"
+						:class="{ active: resultType === 'model' }"
+						@click="onResultTypeChanged('model')"
 					>
 						Models
 					</button>
@@ -24,7 +24,7 @@
 					<button
 						type="button"
 						:class="{ active: resultType === 'xdd' }"
-						@click="resultType = 'xdd'"
+						@click="onResultTypeChanged('xdd')"
 					>
 						Articles
 					</button>
@@ -32,16 +32,16 @@
 			</ul>
 			<div class="results-count">Found {{ resultsCount }} results</div>
 			<slot v-if="resultType === 'xdd'" name="xdd"></slot>
-			<slot v-if="resultType === 'datacube'" name="datacube"></slot>
+			<slot v-if="resultType === 'model'" name="model"></slot>
 		</div>
-		<datacubes-listview
-			v-if="resultType === 'datacube'"
+		<models-listview
+			v-if="resultType === 'model'"
 			class="list-view"
-			:datacubes="filteredDatacubes"
+			:models="filteredModels"
 			:enable-multiple-selection="enableMultipleSelection"
 			:selected-search-items="selectedSearchItems"
-			@toggle-datacube-selected="toggleDataItemSelected"
-			@set-datacube-selected="setDataItemSelected"
+			@toggle-model-selected="toggleDataItemSelected"
+			@set-model-selected="setDataItemSelected"
 		/>
 		<articles-listview
 			v-if="resultType === 'xdd'"
@@ -52,32 +52,28 @@
 			@toggle-article-selected="toggleDataItemSelected"
 			@set-article-selected="setDataItemSelected"
 		/>
-		<common-listview
-			v-if="resultType === 'all'"
-			class="list-view"
-			:input-items="filteredDataItems"
-		/>
+		<common-listview v-if="resultType === 'all'" class="list-view" :input-items="dataItems" />
 	</div>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
-import DatacubesListview from '@/components/data-explorer/datacubes-listview.vue';
+import ModelsListview from '@/components/data-explorer/models-listview.vue';
 import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import CommonListview from '@/components/data-explorer/common-listview.vue';
-import { Datacube } from '@/types/Datacube';
+import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults } from '@/types/common';
 
 export default defineComponent({
 	name: 'Search',
 	components: {
-		DatacubesListview,
+		ModelsListview,
 		ArticlesListview,
 		CommonListview
 	},
 	props: {
-		filteredDataItems: {
+		dataItems: {
 			type: Array as PropType<SearchResults[]>,
 			default: () => []
 		},
@@ -88,47 +84,31 @@ export default defineComponent({
 		selectedSearchItems: {
 			type: Array as PropType<string[]>,
 			required: true
+		},
+		resultType: {
+			type: String,
+			default: 'all'
+		},
+		resultsCount: {
+			type: Number,
+			default: 0
 		}
 	},
-	emits: ['toggle-data-item-selected', 'set-data-item-selected'],
-	data: () => ({
-		// FIXME: refactor as part of the parent state and use enum instead
-		resultType: 'all'
-	}),
+	emits: ['toggle-data-item-selected', 'set-data-item-selected', 'result-type-changed'],
 	computed: {
-		filteredDatacubes() {
-			const resList = this.filteredDataItems.find((res) => res.searchSubsystem === 'datacube');
+		filteredModels() {
+			const resList = this.dataItems.find((res) => res.searchSubsystem === 'model');
 			if (resList) {
-				return resList.results as Datacube[];
+				return resList.results as Model[];
 			}
 			return [];
 		},
 		filteredArticles() {
-			const resList = this.filteredDataItems.find((res) => res.searchSubsystem === 'xdd');
+			const resList = this.dataItems.find((res) => res.searchSubsystem === 'xdd');
 			if (resList) {
 				return resList.results as XDDArticle[];
 			}
 			return [];
-		},
-		resultsCount() {
-			let total = 0;
-			if (this.resultType === 'all') {
-				// count the results from all subsystems
-				this.filteredDataItems.forEach((res) => {
-					const count = res?.hits ?? res?.results.length;
-					total += count;
-				});
-			} else {
-				// only return the results count for the selected subsystems
-				const resList = this.filteredDataItems.find(
-					(res) => res.searchSubsystem === this.resultType
-				);
-				if (resList) {
-					// eslint-disable-next-line no-unsafe-optional-chaining
-					total += resList?.hits ?? resList?.results.length;
-				}
-			}
-			return total;
 		}
 	},
 	methods: {
@@ -137,6 +117,9 @@ export default defineComponent({
 		},
 		setDataItemSelected(item: string) {
 			this.$emit('set-data-item-selected', item);
+		},
+		onResultTypeChanged(newResultType: string) {
+			this.$emit('result-type-changed', newResultType);
 		}
 	}
 });
