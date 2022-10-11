@@ -52,7 +52,7 @@ import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
-import { Datacube } from '@/types/Datacube';
+import { Model } from '@/types/Model';
 
 type GenericResult = {
 	id: string;
@@ -99,15 +99,15 @@ export default defineComponent({
 							});
 						});
 					}
-					if (item.searchSubsystem === 'datacube') {
-						const results = item.results as Datacube[];
-						results.forEach((datacube) => {
+					if (item.searchSubsystem === 'model') {
+						const results = item.results as Model[];
+						results.forEach((model) => {
 							list.push({
-								id: datacube.id,
-								name: datacube.name,
-								desc: datacube.description,
-								source: datacube.source,
-								type: 'datacube'
+								id: model.id,
+								name: model.name,
+								desc: model.description,
+								source: model.source,
+								type: 'model'
 							});
 						});
 					}
@@ -151,7 +151,7 @@ export default defineComponent({
 		},
 		getTypeIcon(d: GenericResult) {
 			return `fa-regular ${
-				d.type === 'datacube' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-file-lines'
+				d.type === 'model' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-file-lines'
 			}`;
 		}
 	}

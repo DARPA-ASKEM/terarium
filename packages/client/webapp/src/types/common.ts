@@ -1,4 +1,4 @@
-import { Datacube } from './Datacube';
+import { Model } from './Model';
 import { XDDArticle } from './XDD';
 
 export type XDDSearchParams = {
@@ -8,16 +8,16 @@ export type XDDSearchParams = {
 	pageSize?: number;
 };
 
-export type DatacubeSearchParams = {
+export type ModelSearchParams = {
 	country?: string;
 };
 
 export type SearchParameters = {
 	xdd?: XDDSearchParams;
-	datacubes?: DatacubeSearchParams;
+	models?: ModelSearchParams;
 };
 
-export type ResultType = Datacube | XDDArticle;
+export type ResultType = Model | XDDArticle;
 
 export type SearchResults = {
 	results: ResultType[];
@@ -25,4 +25,23 @@ export type SearchResults = {
 	hits?: number;
 	hasMore?: boolean;
 	next_page?: string;
+};
+
+// Facet
+export type FacetBucket = {
+	key: string;
+	value: number;
+};
+
+export type Facets = {
+	[key: string]: FacetBucket[];
+};
+
+// Side panel
+export type SidePanelTab = {
+	name: string;
+	icon?: string;
+	imgSrc?: string;
+	isGreyscale?: string;
+	badgeCount?: number;
 };

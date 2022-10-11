@@ -17,6 +17,8 @@ module.exports = {
 		'no-param-reassign': 'off',
 		'no-continue': 'off',
 		'vuejs-accessibility/click-events-have-key-events': 'off',
-		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off'
+		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+		'no-plusplus': 'off',
+		"import/prefer-default-export": "off",
 	}
 };

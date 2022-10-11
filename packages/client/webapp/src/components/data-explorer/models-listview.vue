@@ -12,7 +12,7 @@
 				</thead>
 				<tbody>
 					<tr
-						v-for="d in datacubes"
+						v-for="d in models"
 						:key="d.id"
 						class="tr-item"
 						:class="{ selected: isSelected(d) }"
@@ -76,7 +76,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { Datacube } from '@/types/Datacube';
+import { Model } from '@/types/Model';
 
 /**
  * name: string;
@@ -87,13 +87,13 @@ import { Datacube } from '@/types/Datacube';
  */
 
 export default defineComponent({
-	name: 'DatacubesListview',
+	name: 'ModelsListview',
 	components: {
 		MultilineDescription
 	},
 	props: {
-		datacubes: {
-			type: Array as PropType<Datacube[]>,
+		models: {
+			type: Array as PropType<Model[]>,
 			default: () => []
 		},
 		selectedSearchItems: {
@@ -105,14 +105,14 @@ export default defineComponent({
 			default: false
 		}
 	},
-	emits: ['toggle-datacube-selected', 'set-datacube-selected'],
+	emits: ['toggle-model-selected', 'set-model-selected'],
 	setup(props) {
 		const expandedRowId = ref('');
 
-		const { datacubes } = toRefs(props);
+		const { models } = toRefs(props);
 
 		watch(
-			datacubes,
+			models,
 			() => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const elem: any = document.getElementsByClassName('table-fixed-head');
@@ -127,52 +127,52 @@ export default defineComponent({
 		};
 	},
 	methods: {
-		isDisabled(datacube: Datacube) {
-			return datacube.status === 'deprecated';
+		isDisabled(model: Model) {
+			return model.status === 'deprecated';
 		},
-		isProcessing(datacube: Datacube) {
-			return datacube.status === 'processing';
+		isProcessing(model: Model) {
+			return model.status === 'processing';
 		},
-		isNotPublished(datacube: Datacube) {
-			return datacube.status === 'registered';
+		isNotPublished(model: Model) {
+			return model.status === 'registered';
 		},
-		isDeprecated(datacube: Datacube) {
-			return datacube.status === 'deprecated';
+		isDeprecated(model: Model) {
+			return model.status === 'deprecated';
 		},
-		isExpanded(datacube: Datacube) {
-			return this.expandedRowId === datacube.id;
+		isExpanded(model: Model) {
+			return this.expandedRowId === model.id;
 		},
-		updateExpandedRow(datacube: Datacube) {
-			this.expandedRowId = this.expandedRowId === datacube.id ? '' : datacube.id;
+		updateExpandedRow(model: Model) {
+			this.expandedRowId = this.expandedRowId === model.id ? '' : model.id;
 		},
-		formatOutputName(d: Datacube) {
+		formatOutputName(d: Model) {
 			return d.name;
 		},
-		formatOutputDescription(d: Datacube) {
+		formatOutputDescription(d: Model) {
 			return d.description;
 		},
-		isSelected(datacube: Datacube) {
-			return this.selectedSearchItems.find((item) => item === datacube.id) !== undefined;
+		isSelected(model: Model) {
+			return this.selectedSearchItems.find((item) => item === model.id) !== undefined;
 		},
-		updateSelection(datacube: Datacube) {
-			if (!this.isDisabled(datacube)) {
-				const item = datacube.id;
+		updateSelection(model: Model) {
+			if (!this.isDisabled(model)) {
+				const item = model.id;
 				if (this.enableMultipleSelection) {
-					// if the datacube is not in the list add it, otherwise remove it
-					this.$emit('toggle-datacube-selected', item);
+					// if the model is not in the list add it, otherwise remove it
+					this.$emit('toggle-model-selected', item);
 				} else {
 					// only one selection is allowed, so replace the entire array
-					this.$emit('set-datacube-selected', item);
+					this.$emit('set-model-selected', item);
 				}
 			}
 		},
-		formatDescription(d: Datacube) {
+		formatDescription(d: Model) {
 			if (!d.description) return '';
 			return this.isExpanded(d) || d.description.length < 140
 				? d.description
 				: `${d.description.substring(0, 140)}...`;
 		},
-		getTypeIcon(d: Datacube) {
+		getTypeIcon(d: Model) {
 			return `fa-regular ${
 				d.type === 'model' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-table-cells'
 			}`;
