@@ -8,6 +8,7 @@ import {
 import { Datacube, DatacubeFilterAttributes } from '../types/Datacube';
 import { XDDArticle, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const XDD_API_KEY = '';
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api';
 const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
@@ -16,8 +17,7 @@ const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
 const fetchXDD = async (url: string) => {
 	const headers = new Headers();
 	headers.append('Content-Type', 'application/json');
-	headers.append('x-api-key', XDD_API_KEY);
-	headers.append('Access-Control-Allow-Credentials', 'true');
+	// headers.append('x-api-key', XDD_API_KEY);
 	return fetch(url, {
 		// mode: 'no-cors',
 		headers
