@@ -7,7 +7,6 @@ import Button from '@/components/Button.vue';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconSearchLocate32 from '@carbon/icons-vue/es/search--locate/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import IconLogout16 from '@carbon/icons-vue/es/logout/16';
@@ -62,9 +61,6 @@ function moveSidebar() {
 				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
 					<IconTableSplit32 />
 				</li>
-				<li :active="selectedMode === Mode.DataExplorer" @click="updateMode(Mode.DataExplorer)">
-					<IconSearchLocate32 />
-				</li>
 			</ul>
 			<ul>
 				<li
@@ -114,6 +110,7 @@ ul {
 }
 
 nav {
+	background-color: var(--un-color-accent);
 	box-shadow: var(--un-box-shadow-small);
 	justify-content: space-between;
 	padding: 0.33em 0;

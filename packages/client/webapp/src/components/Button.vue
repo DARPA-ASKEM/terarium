@@ -10,14 +10,14 @@ button {
 
 	align-items: center;
 	background: var(--btn-background);
-	border: 1px solid var(--btn-border);
+	box-shadow: var(--un-box-shadow-small);
+	border: 0;
 	border-radius: 4px;
 	color: var(--btn-color);
 	display: flex;
 	font: var(--un-font-large);
 	justify-content: center;
 	gap: 0.5em;
-	min-width: 5em;
 	outline: 0;
 	padding: 0.5em 1em;
 	transition-duration: 0.2s;

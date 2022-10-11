@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
 import IconLogin16 from '@carbon/icons-vue/es/login/16';
+import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
@@ -23,7 +24,8 @@ const projectName = 'Name of the project that can be long for clarity and precis
 			</p>
 		</header>
 
-		<Button v-if="!auth.isAuthenticated" @click="login"> Login <IconLogin16 /> </Button>
+		<Button class="dataExplorer" @click="router.push('/explorer')"><IconSearchLocate16 /></Button>
+		<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
 	</nav>
 </template>
 
@@ -59,5 +61,9 @@ header a {
 header a:hover,
 header a:focus {
 	color: var(--un-color-accent-dark);
+}
+
+button.dataExplorer {
+	background-color: var(--un-color-accent);
 }
 </style>
