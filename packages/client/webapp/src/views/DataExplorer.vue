@@ -335,6 +335,7 @@ export default defineComponent({
 	position: relative;
 	box-sizing: border-box;
 	overflow: hidden;
+	width: 100%;
 
 	.explorer-content {
 		.search {
