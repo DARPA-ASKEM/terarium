@@ -1,28 +1,43 @@
 import { uniqBy } from 'lodash';
 import {
-	DatacubeSearchParams,
+	ModelSearchParams,
 	SearchParameters,
 	SearchResults,
 	XDDSearchParams
 } from '@/types/common';
-import { Datacube, DatacubeFilterAttributes } from '../types/Datacube';
-import { XDDArticle, XDDResult } from '../types/XDD';
+import { Model, ModelFilterAttributes } from '../types/Model';
+import { XDDArticle, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const XDD_API_KEY = '';
+const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api';
+const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
+
+// A unified method to execute an XDD fetch passing the API key and other header params as needed
+const fetchXDD = async (url: string) => {
+	const headers = new Headers();
+	headers.append('Content-Type', 'application/json');
+	// headers.append('x-api-key', XDD_API_KEY);
+	return fetch(url, {
+		// mode: 'no-cors',
+		headers
+	});
+};
 
 const getXDDSets = async () => {
-	const url = 'https://xdd.wisc.edu/sets/';
-	const response = await fetch(url);
+	const response = await fetchXDD(DATASET_API_URL);
 	const rawdata = await response.json();
 	return rawdata.available_sets;
 };
 
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchParams) => {
-	const finalDatacubes: Datacube[] = [];
+const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => {
+	const finalModels: Model[] = [];
 
 	//
 	// @TEMP: mock data list simulating data (e.g. models) fetched from the server
 	//
-	const allDatacubes: Datacube[] = [
+	const allModels: Model[] = [
 		{
 			id: '1',
 			description:
@@ -123,23 +138,23 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 	];
 
 	if (term.length > 0) {
-		DatacubeFilterAttributes.forEach((datacubeAttr) => {
-			const resultsAsDatacubes = allDatacubes;
-			const items = resultsAsDatacubes.filter((d) =>
-				d[datacubeAttr as keyof Datacube].toLowerCase().includes(term)
+		ModelFilterAttributes.forEach((modelAttr) => {
+			const resultsAsModels = allModels;
+			const items = resultsAsModels.filter((d) =>
+				d[modelAttr as keyof Model].toLowerCase().includes(term)
 			);
-			finalDatacubes.push(...items);
+			finalModels.push(...items);
 		});
 	}
 
 	return {
-		results: term.length > 0 ? uniqBy(finalDatacubes, 'id') : allDatacubes,
-		searchSubsystem: 'datacube'
+		results: term.length > 0 ? uniqBy(finalModels, 'id') : allModels,
+		searchSubsystem: 'model'
 	};
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	const limitResultsCount = xddSearchParam?.pageSize ?? 50;
+	const limitResultsCount = xddSearchParam?.pageSize ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
 	// NOTE when true it disables ranking of results
 	const enablePagination = xddSearchParam?.enablePagination ?? false;
@@ -149,7 +164,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	let url = `https://xdd.wisc.edu/api/articles?term=${term}`;
+	let url = `${ARTICLES_API_BASE}/articles?term=${term}`;
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
@@ -180,7 +195,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
 	// full_results
-	const response = await fetch(url);
+	const response = await fetchXDD(url);
 	const rawdata: XDDResult = await response.json();
 
 	if (rawdata.success) {
@@ -218,12 +233,12 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 		}
 	});
 
-	// datacubes (e.g., for models)
+	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getDatacubes(term, searchParam?.datacubes));
+			resolve(getModels(term, searchParam?.models));
 		} catch (err: any) {
-			reject(new Error('Error fetching datacubes results', err));
+			reject(new Error('Error fetching models results', err));
 		}
 	});
 
