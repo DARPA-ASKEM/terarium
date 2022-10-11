@@ -31,7 +31,7 @@ const projectName = 'Name of the project that can be long for clarity and precis
 nav {
 	align-items: center;
 	background-color: var(--un-color-body-surface-primary);
-	border-bottom: 1px solid lightgrey;
+	border-bottom: 1px solid var(--un-color-black-20);
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
 	justify-content: space-between;
