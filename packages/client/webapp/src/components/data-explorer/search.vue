@@ -14,8 +14,8 @@
 				<li>
 					<button
 						type="button"
-						:class="{ active: resultType === 'datacube' }"
-						@click="onResultTypeChanged('datacube')"
+						:class="{ active: resultType === 'model' }"
+						@click="onResultTypeChanged('model')"
 					>
 						Models
 					</button>
@@ -32,16 +32,16 @@
 			</ul>
 			<div class="results-count">Found {{ resultsCount }} results</div>
 			<slot v-if="resultType === 'xdd'" name="xdd"></slot>
-			<slot v-if="resultType === 'datacube'" name="datacube"></slot>
+			<slot v-if="resultType === 'model'" name="model"></slot>
 		</div>
-		<datacubes-listview
-			v-if="resultType === 'datacube'"
+		<models-listview
+			v-if="resultType === 'model'"
 			class="list-view"
-			:datacubes="filteredDatacubes"
+			:models="filteredModels"
 			:enable-multiple-selection="enableMultipleSelection"
 			:selected-search-items="selectedSearchItems"
-			@toggle-datacube-selected="toggleDataItemSelected"
-			@set-datacube-selected="setDataItemSelected"
+			@toggle-model-selected="toggleDataItemSelected"
+			@set-model-selected="setDataItemSelected"
 		/>
 		<articles-listview
 			v-if="resultType === 'xdd'"
@@ -58,17 +58,17 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
-import DatacubesListview from '@/components/data-explorer/datacubes-listview.vue';
+import ModelsListview from '@/components/data-explorer/models-listview.vue';
 import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import CommonListview from '@/components/data-explorer/common-listview.vue';
-import { Datacube } from '@/types/Datacube';
+import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults } from '@/types/common';
 
 export default defineComponent({
 	name: 'Search',
 	components: {
-		DatacubesListview,
+		ModelsListview,
 		ArticlesListview,
 		CommonListview
 	},
@@ -96,10 +96,10 @@ export default defineComponent({
 	},
 	emits: ['toggle-data-item-selected', 'set-data-item-selected', 'result-type-changed'],
 	computed: {
-		filteredDatacubes() {
-			const resList = this.dataItems.find((res) => res.searchSubsystem === 'datacube');
+		filteredModels() {
+			const resList = this.dataItems.find((res) => res.searchSubsystem === 'model');
 			if (resList) {
-				return resList.results as Datacube[];
+				return resList.results as Model[];
 			}
 			return [];
 		},

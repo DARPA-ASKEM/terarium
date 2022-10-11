@@ -1,6 +1,6 @@
-export const DatacubeFilterAttributes = ['name', 'description'];
+export const ModelFilterAttributes = ['name', 'description'];
 
-export type Datacube = {
+export type Model = {
 	id: string;
 	name: string;
 	description: string;
@@ -11,16 +11,16 @@ export type Datacube = {
 };
 
 //
-// Datacube Field names
+// Model Field names
 //
-export const TYPE = 'type'; // Type of datacube (model, dataset, etc)
+export const TYPE = 'type'; // Type of model (model, dataset, etc)
 export const SOURCE = 'source'; // Article title
-export const STATUS = 'status'; // Status of the datacube, e.g., ready, deprecated, ...
+export const STATUS = 'status'; // Status of the model, e.g., ready, deprecated, ...
 export const CATEGORY = 'category'; // category
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
-	[TYPE]: 'Datacube Type',
-	[SOURCE]: 'Datacube Source',
+	[TYPE]: 'Model Type',
+	[SOURCE]: 'Model Source',
 	[STATUS]: 'Status',
 	[CATEGORY]: 'Category'
 };

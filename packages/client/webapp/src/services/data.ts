@@ -1,11 +1,11 @@
 import { uniqBy } from 'lodash';
 import {
-	DatacubeSearchParams,
+	ModelSearchParams,
 	SearchParameters,
 	SearchResults,
 	XDDSearchParams
 } from '@/types/common';
-import { Datacube, DatacubeFilterAttributes } from '../types/Datacube';
+import { Model, ModelFilterAttributes } from '../types/Model';
 import { XDDArticle, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -31,13 +31,13 @@ const getXDDSets = async () => {
 };
 
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchParams) => {
-	const finalDatacubes: Datacube[] = [];
+const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => {
+	const finalModels: Model[] = [];
 
 	//
 	// @TEMP: mock data list simulating data (e.g. models) fetched from the server
 	//
-	const allDatacubes: Datacube[] = [
+	const allModels: Model[] = [
 		{
 			id: '1',
 			description:
@@ -138,18 +138,18 @@ const getDatacubes = async (term: string, datacubeSearchParam?: DatacubeSearchPa
 	];
 
 	if (term.length > 0) {
-		DatacubeFilterAttributes.forEach((datacubeAttr) => {
-			const resultsAsDatacubes = allDatacubes;
-			const items = resultsAsDatacubes.filter((d) =>
-				d[datacubeAttr as keyof Datacube].toLowerCase().includes(term)
+		ModelFilterAttributes.forEach((modelAttr) => {
+			const resultsAsModels = allModels;
+			const items = resultsAsModels.filter((d) =>
+				d[modelAttr as keyof Model].toLowerCase().includes(term)
 			);
-			finalDatacubes.push(...items);
+			finalModels.push(...items);
 		});
 	}
 
 	return {
-		results: term.length > 0 ? uniqBy(finalDatacubes, 'id') : allDatacubes,
-		searchSubsystem: 'datacube'
+		results: term.length > 0 ? uniqBy(finalModels, 'id') : allModels,
+		searchSubsystem: 'model'
 	};
 };
 
@@ -233,12 +233,12 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 		}
 	});
 
-	// datacubes (e.g., for models)
+	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getDatacubes(term, searchParam?.datacubes));
+			resolve(getModels(term, searchParam?.models));
 		} catch (err: any) {
-			reject(new Error('Error fetching datacubes results', err));
+			reject(new Error('Error fetching models results', err));
 		}
 	});
 

@@ -1,7 +1,7 @@
 import { SearchResults } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
-import { Datacube } from '@/types/Datacube';
+import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 
 const applyFiltersToArticles = (articles: XDDArticle[], filters: Filters) => {
@@ -20,19 +20,19 @@ const applyFiltersToArticles = (articles: XDDArticle[], filters: Filters) => {
 	});
 };
 
-const applyFiltersToDatacubes = (datacubes: Datacube[], filters: Filters) => {
+const applyFiltersToModels = (models: Model[], filters: Filters) => {
 	const { clauses } = filters;
 	clauses.forEach((c: any) => {
 		const filterField: string = c.field; // the field to filter on
 		const filterValues = c.values; // array of values to filter upon
 		const isNot = !c.isNot; // is the filter reversed?
-		const filteredDatacubes = datacubes.filter(
-			(datacube) =>
+		const filteredModels = models.filter(
+			(model) =>
 				// direct query against XDD Article fields
-				filterValues.includes(datacube[filterField as keyof Datacube]) === isNot
+				filterValues.includes(model[filterField as keyof Model]) === isNot
 		);
 		// use splice to filter in place
-		datacubes.splice(0, datacubes.length, ...filteredDatacubes);
+		models.splice(0, models.length, ...filteredModels);
 	});
 };
 
@@ -55,9 +55,9 @@ export const applyFacetFiltersToData = (
 			const xddResults = resultsObj.results as XDDArticle[];
 			applyFiltersToArticles(xddResults, filters);
 		}
-		if (resultType === 'datacube') {
-			const datacubeResults = resultsObj.results as Datacube[];
-			applyFiltersToDatacubes(datacubeResults, filters);
+		if (resultType === 'model') {
+			const modelResults = resultsObj.results as Model[];
+			applyFiltersToModels(modelResults, filters);
 		}
 	}
 };

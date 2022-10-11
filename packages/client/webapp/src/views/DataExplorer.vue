@@ -96,7 +96,7 @@ import { fetchData, getXDDSets } from '@/services/data';
 import { SearchParameters, SearchResults, Facets } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle } from '@/types/XDD';
-import { Datacube } from '@/types/Datacube';
+import { Model } from '@/types/Model';
 import { useQueryStore } from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
@@ -298,9 +298,7 @@ export default defineComponent({
 				const dataitem = this.filteredDataItems
 					.map((res) => res.results)
 					.flat()
-					.find(
-						(item) => (item as Datacube).id === itemID || (item as XDDArticle).title === itemID
-					);
+					.find((item) => (item as Model).id === itemID || (item as XDDArticle).title === itemID);
 				if (dataitem === undefined) {
 					return;
 				}

@@ -1,9 +1,9 @@
 import { Facets, SearchResults, FacetBucket } from '@/types/common';
 import {
-	Datacube,
-	FACET_FIELDS as DATACUBE_FACET_FIELDS,
-	DISPLAY_NAMES as DATACUBE_DISPLAY_NAMES
-} from '@/types/Datacube';
+	Model,
+	FACET_FIELDS as MODEL_FACET_FIELDS,
+	DISPLAY_NAMES as MODEL_DISPLAY_NAMES
+} from '@/types/Model';
 import {
 	XDDArticle,
 	FACET_FIELDS as XDD_FACET_FIELDS,
@@ -37,11 +37,11 @@ export const getXDDFacets = (articles: XDDArticle[]) => {
 	return facets;
 };
 
-export const getDatacubeFacets = (articles: Datacube[]) => {
+export const getModelFacets = (articles: Model[]) => {
 	const facets = {} as Facets;
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
-		const articlesMap = articles.map((art) => art[fieldName as keyof Datacube]);
+		const articlesMap = articles.map((art) => art[fieldName as keyof Model]);
 		const grouped = groupBy(articlesMap);
 		Object.keys(grouped).forEach((gKey) => {
 			if (gKey !== '') {
@@ -51,7 +51,7 @@ export const getDatacubeFacets = (articles: Datacube[]) => {
 		return aggs;
 	};
 
-	DATACUBE_FACET_FIELDS.forEach((field) => {
+	MODEL_FACET_FIELDS.forEach((field) => {
 		const facetForField = aggField(field);
 		if (facetForField.length > 0) {
 			facets[field] = facetForField;
@@ -72,9 +72,9 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 				const xddResults = resultsObj.results as XDDArticle[];
 				facets = getXDDFacets(xddResults);
 			}
-			if (resultType === 'datacube') {
-				const datacubeResults = resultsObj.results as Datacube[];
-				facets = getDatacubeFacets(datacubeResults);
+			if (resultType === 'model') {
+				const modelResults = resultsObj.results as Model[];
+				facets = getModelFacets(modelResults);
 			}
 		}
 	}
@@ -85,8 +85,8 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 	if (resultType === 'xdd') {
 		return XDD_DISPLAY_NAMES[key];
 	}
-	if (resultType === 'datacube') {
-		return DATACUBE_DISPLAY_NAMES[key];
+	if (resultType === 'model') {
+		return MODEL_DISPLAY_NAMES[key];
 	}
 	return key;
 };
