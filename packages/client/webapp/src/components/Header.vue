@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import IconLogin16 from '@carbon/icons-vue/es/login/16';
+import Button from '@/components/Button.vue';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
