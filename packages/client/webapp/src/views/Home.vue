@@ -28,7 +28,7 @@ function openDataExplorer() {
 </script>
 
 <template>
-	<main>
+	<section>
 		<p>Test API calls/Home placeholder</p>
 		<div>
 			<Button>New Project</Button>
@@ -47,11 +47,11 @@ function openDataExplorer() {
 			<Button @click="apiCall('user')">User Call</Button>
 			<Button @click="apiCall('admin')">Admin Call</Button>
 		</div>
-	</main>
+	</section>
 </template>
 
 <style scoped>
-main {
+section {
 	margin: 0 auto;
 	max-width: 1280px;
 	padding: 2rem;
