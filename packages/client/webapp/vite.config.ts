@@ -28,7 +28,17 @@ export default defineConfig({
 	preview: {
 		port: 8080
 	},
-	plugins: [vue()],
+	plugins: [
+		vue({
+			template: {
+				compilerOptions: {
+					// treat all components starting with `facet` as custom elements
+					// ignore facets as custom elements
+					isCustomElement: (tag) => tag.startsWith('facet-')
+				}
+			}
+		})
+	],
 	test: {
 		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']
 	}
