@@ -266,8 +266,8 @@ export default defineComponent({
 			g.nodes.push({
 				id,
 				label: id,
-				x: Math.random() * 400,
-				y: Math.random() * 400,
+				x: Math.random() * 500,
+				y: Math.random() * 500,
 				height: 50,
 				width: 50,
 				data: { type: 'species' },
@@ -300,8 +300,8 @@ export default defineComponent({
 			g.nodes.push({
 				id,
 				label: id,
-				x: Math.random() * 400,
-				y: Math.random() * 400,
+				x: Math.random() * 500,
+				y: Math.random() * 500,
 				height: 50,
 				width: 50,
 				data: { type: 'transition' },
@@ -331,13 +331,25 @@ export default defineComponent({
 </script>
 
 <template>
-	<div style="margin: 10px">
+	<section class="playground">
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
 		<div style="display: flex">
-			<div id="playground" style="width: 400px; height: 400px; border: 1px solid #888"></div>
-			<div id="output" style="width: 400px; height: 400px; border: 1px solid #888"></div>
+			<div id="playground" class="playground-panel"></div>
+			<div id="output" class="playground-panel"></div>
 		</div>
-	</div>
+	</section>
 </template>
+
+<style scoped>
+.playground {
+	margin: 10px;
+}
+
+.playground-panel {
+	width: 500px;
+	height: 500px;
+	border: 1px solid #888;
+}
+</style>
