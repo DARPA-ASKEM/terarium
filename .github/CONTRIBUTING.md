@@ -87,9 +87,13 @@ describe('basic tests', () => {
 
 - Make sure tests pass!
 
-- PR messages must follow the [commit message convention](../Conventional%20Commits%20Cheat%20Sheet.pdf) so that changelogs can be automatically generated. PR messages are automatically validated before being able to be merged by the use of GitHub Workflows.
+- Follow the PR template guide to submit your PR with the appropriate required information for review.
+
+- PR title must follow the [commit message convention](../Conventional%20Commits%20Cheat%20Sheet.pdf) so that changelogs can be automatically generated. PR messages are automatically validated before being able to be merged by the use of GitHub Workflows.
 
 - No need to worry about code style as long as you have installed the dev dependencies. Modified files are automatically formatted with Prettier on commit (by invoking [Git Hooks](https://git-scm.com/docs/githooks) via [Husky](https://typicode.github.io/husky/#/)).
+
+
 
 ## Maintenance Guidelines
 
