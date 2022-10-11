@@ -5,7 +5,6 @@ import Sidebar from '@/components/Sidebar.vue';
 import { useAuthStore } from './stores/auth';
 
 const auth = useAuthStore();
-
 /**
  * Before mounting go fetch the SSO
  * to make sure user has credentials to view app
@@ -24,6 +23,15 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 
 <template>
 	<Header />
-	<Sidebar v-if="isAuthenticated" />
-	<router-view v-if="isAuthenticated"></router-view>
+	<main v-if="isAuthenticated">
+		<Sidebar />
+		<router-view />
+	</main>
 </template>
+
+<style scoped>
+main {
+	display: flex;
+	flex-grow: 1;
+}
+</style>

@@ -1,0 +1,20 @@
+# This file defines the codeowners of certain pieces of the code.
+# These owners will automatically be requested as reviewers when
+# a pull request is made that matches the filter.
+
+# Each line is a file pattern followed by one or more owners.
+# Order is important; the last matching pattern takes the most
+# precedence.
+
+# Global Owners. Unless a later match takes precedence
+* @dgauldie @mwdchang @YohannParis @bencodrington
+
+# Client code owners
+/packages/client/ @bencodrington @mwdchang @YohannParis
+/packages/shared/ @bencodrington @mwdchang @YohannParis
+
+# Backend server owners
+/packages/server/ @mwdchang @dgauldie @bigglesandginger
+
+# Documentation owners
+docs/*  @dgauldie @pascaleproulx @YohannParis
