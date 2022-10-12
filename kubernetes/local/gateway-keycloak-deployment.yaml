@@ -24,8 +24,21 @@ spec:
           value: openidctest
         - name: KC_DB_URL_HOST
           value: gateway-postgres
+      volumeMounts:
+        - name: theme-volume
+          mountPath: /opt/keycloak/themes/terrarium
       resources: {}
   initContainers:
+    - image: docker.uncharted.software/auth/terrarium-theme:0.0.1
+      name: gateway-terrarium-theme
+      args:
+        - cp
+        - -r
+        - /static
+        - /shared
+      volumeMounts:
+        - name: theme-volume
+          mountPath: /shared
     - image: docker.uncharted.software/auth/keycloak:dev-1.1.0
       name: init-gateway-keycloak
       args:
@@ -53,4 +66,6 @@ spec:
     - name: realm-volume
       configMap:
         name: gateway-keycloak-realm
+    - name: theme-volume
+      emptyDir: {}
 status: {}
