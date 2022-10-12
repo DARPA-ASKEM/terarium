@@ -35,9 +35,16 @@ export type XDDArticle = {
 	_gddid: string;
 };
 
+export type XDDDictionary = {
+	name: string;
+	base_classification: string;
+	source: string;
+	case_sensitive: boolean;
+};
+
 export type XDDResult = {
 	success?: {
-		data: XDDArticle[];
+		data: XDDArticle[] | XDDDictionary[];
 		// URL to fetch next page results
 		// https://xdd.wisc.edu/api/articles?&include_score=true&per_page=100&term=abbott&publisher=USGS&full_results
 		// "https://xdd.wisc.edu/api/articles?scroll_id=a5e403ac-76b9-4400-94bb-59c9e3e030d6"
