@@ -6,7 +6,7 @@ test.describe('test ModelSidebarPanel component', () => {
 		const component = await mount(ModelSidebarPanel);
 		const header = await component.locator('header');
 
-		await expect(header).toBe('Model Space');
+		await expect(header).toHaveText('Model Space');
 	});
 
 	test('should display the button to open model from code', async ({ mount }) => {
