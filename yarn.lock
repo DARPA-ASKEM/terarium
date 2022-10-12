@@ -992,26 +992,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/experimental-ct-vue@npm:1.27.0":
-  version: 1.27.0
-  resolution: "@playwright/experimental-ct-vue@npm:1.27.0"
+"@playwright/experimental-ct-vue@npm:1.27.1":
+  version: 1.27.1
+  resolution: "@playwright/experimental-ct-vue@npm:1.27.1"
   dependencies:
-    "@playwright/test": 1.27.0
+    "@playwright/test": 1.27.1
     "@vitejs/plugin-vue": ^2.3.1
     vite: ^2.9.5
-  checksum: 0e7f66848f168aa7a162938486ffe0e4c97dc520826aa9256a7a12dcaa57b6dc250c37fd4429a55f4a86a8859fb8c11f15ad5d81c11f343dcc908e76a0424b50
+  checksum: 5ae6693d5e7c7ae565e20f36895c27968f11a81728435b7ba42bca08b0f62135ef4745e2fc5787d8e4ad227d358c17847b62104ce2b603c246258bc7df5fc06d
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.27.0":
-  version: 1.27.0
-  resolution: "@playwright/test@npm:1.27.0"
+"@playwright/test@npm:1.27.1":
+  version: 1.27.1
+  resolution: "@playwright/test@npm:1.27.1"
   dependencies:
     "@types/node": "*"
-    playwright-core: 1.27.0
+    playwright-core: 1.27.1
   bin:
     playwright: cli.js
-  checksum: ee72ba5f00b0ebc344e2ea710f8c8c11b82f187bbce4f90918a93081b24c50ac18dc4b6f0b56509a06c17d9bf6a0e4482cf62d9021a6db05cd403b5bcc65e13f
+  checksum: 92f219a78c21da03c6599d92c313c914e73cc374306366130fb3bd4701555179394ec5a3000d9375ce59f5a03c00f20d1ddaae50c85583ce475e17795a622699
   languageName: node
   linkType: hard
 
@@ -9026,12 +9026,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.27.0":
-  version: 1.27.0
-  resolution: "playwright-core@npm:1.27.0"
+"playwright-core@npm:1.27.1":
+  version: 1.27.1
+  resolution: "playwright-core@npm:1.27.1"
   bin:
     playwright: cli.js
-  checksum: e45565af0c33c34ccf7b513d8e84eda5101f0e12d495e9e1c2bfe16b675ddcdd8f064c449a1bd908365f2f126c8d40cc14bf95976e881e2e1620cd239240ed23
+  checksum: fd65d3eb29978e0e7a755158625e8922a66ca9d599b7c24ddf920822b261d81c51a5964ef8e0e5ed9b2b12dc64541c5949b6a898d965e107f43261964e8c29a0
   languageName: node
   linkType: hard
 
@@ -11314,8 +11314,8 @@ __metadata:
     "@fortawesome/fontawesome-free": 6.2.0
     "@ibm/plex": 6.1.1
     "@pinia/testing": 0.0.14
-    "@playwright/experimental-ct-vue": 1.27.0
-    "@playwright/test": 1.27.0
+    "@playwright/experimental-ct-vue": 1.27.1
+    "@playwright/test": 1.27.1
     "@rushstack/eslint-patch": 1.2.0
     "@types/lodash": 4.14.186
     "@uncharted.software/design-tokens": 1.1.0
