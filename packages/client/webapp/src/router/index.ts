@@ -2,11 +2,13 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import Home from '@/views/Home.vue';
 import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
+import Theia from '@/views/theia.vue';
 
 const routes = [
 	{ path: '/', component: Home },
 	{ path: '/results', component: ResponsiveMatrixCells },
-	{ path: '/explorer', component: DataExplorer }
+	{ path: '/explorer', component: DataExplorer },
+	{ path: '/theia', component: Theia }
 ];
 
 const router = createRouter({
