@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, PropType } from 'vue';
 /**
  * Simple overlay for loading things
  */
@@ -27,8 +27,8 @@ export default defineComponent({
 			default: ''
 		},
 		cancelFn: {
-			type: Function,
-			default: () => {}
+			type: Function as PropType<Function | null>,
+			default: null
 		}
 	}
 });
