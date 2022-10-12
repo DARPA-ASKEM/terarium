@@ -36,7 +36,7 @@ import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
 import SidePanel from '@/components/side-panel/side-panel.vue';
 
-import { Facets, FacetBucket } from '@/types/common';
+import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
 
 const TAB_NAME = 'Data Facets';
@@ -59,15 +59,7 @@ export default defineComponent({
 		},
 		resultType: {
 			type: String,
-			default: 'all'
-		}
-	},
-	watch: {
-		resultType: {
-			handler() {
-				this.setActive(this.resultType === 'all' ? '' : this.tabName);
-			},
-			immediate: true
+			default: ResourceType.ALL
 		}
 	},
 	data: () => ({
@@ -124,7 +116,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables';
+@import '@/styles/variables';
 .facet-panel-container {
 	margin-top: 5px;
 }

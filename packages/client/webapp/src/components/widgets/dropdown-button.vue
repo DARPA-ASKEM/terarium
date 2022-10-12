@@ -197,6 +197,6 @@ export default defineComponent({
 	display: flex;
 	align-items: center;
 	font-weight: normal;
-	padding: 5px;
+	// padding: 5px;
 }
 </style>

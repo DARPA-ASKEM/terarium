@@ -50,7 +50,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { SearchResults } from '@/types/common';
+import { ResourceType, SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 
@@ -86,7 +86,7 @@ export default defineComponent({
 				// transform incoming results of differnt types into a generic one
 				const list: GenericResult[] = [];
 				inputItems.value.forEach((item) => {
-					if (item.searchSubsystem === 'xdd') {
+					if (item.searchSubsystem === ResourceType.XDD) {
 						const results = item.results as XDDArticle[];
 						results.forEach((article) => {
 							list.push({
@@ -95,11 +95,11 @@ export default defineComponent({
 								name: article.title,
 								desc: article.journal ?? article.abstract ?? '', // FIXME: XDD should always return valid abstract
 								source: article.publisher ?? article.author.map((a) => a.name).join('\n'),
-								type: 'xdd'
+								type: ResourceType.XDD
 							});
 						});
 					}
-					if (item.searchSubsystem === 'model') {
+					if (item.searchSubsystem === ResourceType.MODEL) {
 						const results = item.results as Model[];
 						results.forEach((model) => {
 							list.push({
@@ -107,7 +107,7 @@ export default defineComponent({
 								name: model.name,
 								desc: model.description,
 								source: model.source,
-								type: 'model'
+								type: ResourceType.MODEL
 							});
 						});
 					}
@@ -151,7 +151,7 @@ export default defineComponent({
 		},
 		getTypeIcon(d: GenericResult) {
 			return `fa-regular ${
-				d.type === 'model' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-file-lines'
+				d.type === ResourceType.MODEL ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-file-lines'
 			}`;
 		}
 	}
@@ -159,7 +159,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
 .search-listview-container {
 	background: $background-light-2;
 	color: black;

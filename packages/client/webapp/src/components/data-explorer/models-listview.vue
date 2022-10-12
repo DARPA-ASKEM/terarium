@@ -77,6 +77,7 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Model } from '@/types/Model';
+import { ResourceType } from '@/types/common';
 
 /**
  * name: string;
@@ -174,7 +175,7 @@ export default defineComponent({
 		},
 		getTypeIcon(d: Model) {
 			return `fa-regular ${
-				d.type === 'model' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-table-cells'
+				d.type === ResourceType.MODEL ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-table-cells'
 			}`;
 		}
 	}
@@ -182,7 +183,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
 .search-listview-container {
 	background: $background-light-2;
 	color: black;

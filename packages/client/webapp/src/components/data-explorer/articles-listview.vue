@@ -159,6 +159,7 @@ export default defineComponent({
 					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
 					knownTerms += '<br />';
 					knownTerms += Object.values(term).flat().join(' ');
+					knownTerms += '<br />';
 				});
 			}
 			return knownTerms;
@@ -168,7 +169,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
 .search-listview-container {
 	background: $background-light-2;
 	color: black;

@@ -1,4 +1,4 @@
-import { SearchResults } from '@/types/common';
+import { ResourceType, SearchResults } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
@@ -51,11 +51,11 @@ export const applyFacetFiltersToData = (
 		// extract facets based on the result type
 		// because we would have different facets for different result types
 		// e.g., XDD will have facets that leverage the XDD fields and stats
-		if (resultType === 'xdd') {
+		if (resultType === ResourceType.XDD) {
 			const xddResults = resultsObj.results as XDDArticle[];
 			applyFiltersToArticles(xddResults, filters);
 		}
-		if (resultType === 'model') {
+		if (resultType === ResourceType.MODEL) {
 			const modelResults = resultsObj.results as Model[];
 			applyFiltersToModels(modelResults, filters);
 		}
