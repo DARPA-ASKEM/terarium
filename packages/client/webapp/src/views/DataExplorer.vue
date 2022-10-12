@@ -103,6 +103,7 @@ import { getFacets } from '@/utils/facets';
 import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { useQueryStore } from '@/stores/query';
+import { useAppStore } from '@/stores/app';
 import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
 
@@ -127,12 +128,14 @@ export default defineComponent({
 		const selectedSearchItems = ref<string[]>([]);
 		const filter = ref<string[]>([]);
 		const query = useQueryStore();
+		const app = useAppStore();
 		return {
 			filter,
 			dataItems,
 			filteredDataItems,
 			selectedSearchItems,
-			query
+			query,
+			app
 		};
 	},
 	data: () => ({
@@ -269,6 +272,8 @@ export default defineComponent({
 			//   size: this.pageSize
 			// };
 
+			this.app.enableOverlay();
+
 			const searchParams: SearchParameters = {
 				xdd: {
 					known_terms: this.dictNames,
@@ -283,6 +288,8 @@ export default defineComponent({
 
 			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
 			this.dataItems = allData;
+
+			this.app.disableOverlay();
 		},
 		applyFiltersToData() {
 			const allDataCloned = cloneDeep(this.dataItems);

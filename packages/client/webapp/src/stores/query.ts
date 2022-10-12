@@ -5,7 +5,7 @@ import FiltersUtil from '@/utils/filters-util';
 import { Clause, Filters } from '@/types/Filter';
 
 /**
- * Main store used for authentication
+ * Main store used for data explorer search query
  */
 // eslint-disable-next-line import/prefer-default-export
 export const useQueryStore = defineStore('query', {
