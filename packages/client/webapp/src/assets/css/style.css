@@ -15,11 +15,6 @@
 	--un-color-accent: #2D8E2Dff;
 	--un-color-accent-light: #92E192ff;
 	--un-color-accent-lighter: #E4FAE4ff;
-
-	--un-z-index-sidebar: 50;
-	--un-z-index-navbar: 100;
-	--un-z-index-notification: 300;
-	--un-z-index-modal: 500;
 }
 
 :root {

@@ -15,51 +15,54 @@ const projectName = 'Name of the project that can be long for clarity and precis
 </script>
 
 <template>
-	<nav>
-		<header>
-			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-			<p>
-				<a @click="homepage">Projects</a>
-				<span>{{ projectName }}</span>
-			</p>
-		</header>
+	<header>
+		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+		<p>
+			<a @click="homepage">Projects</a>
+			<span>{{ projectName }}</span>
+		</p>
 
-		<Button class="dataExplorer" @click="router.push('/explorer')"><IconSearchLocate16 /></Button>
-		<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
-	</nav>
+		<aside>
+			<Button class="dataExplorer" @click="router.push('/explorer')"><IconSearchLocate16 /></Button>
+			<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
+		</aside>
+	</header>
 </template>
 
 <style scoped>
-nav {
+header {
 	align-items: center;
 	background-color: var(--un-color-body-surface-primary);
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
-	justify-content: space-between;
-	padding: 0.5rem 1rem;
-	z-index: var(--un-z-index-navbar);
+	gap: 2em;
+	padding: 0.5em 1em;
 }
 
-header {
+p {
 	align-items: center;
 	display: flex;
 	font-size: var(--un-font-xlarge);
-	gap: 2em;
-	justify-content: space-around;
 }
 
-header p > * + *::before {
+p > * + *::before {
 	content: '>';
 	margin: 0 1em;
 }
 
-header a {
+p a {
 	text-decoration: underline;
 }
 
-header a:hover,
-header a:focus {
+p a:hover,
+p a:focus {
 	color: var(--un-color-accent-dark);
+}
+
+aside {
+	display: flex;
+	margin-left: auto; /* Push it to the far side */
+	gap: 1em;
 }
 
 button.dataExplorer {

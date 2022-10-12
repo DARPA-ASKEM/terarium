@@ -15,7 +15,7 @@ button {
 	border-radius: 4px;
 	color: var(--btn-color);
 	display: flex;
-	font: var(--un-font-large);
+	font: var(--un-font-body);
 	justify-content: center;
 	gap: 0.5em;
 	outline: 0;

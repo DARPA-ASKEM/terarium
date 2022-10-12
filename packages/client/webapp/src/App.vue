@@ -33,5 +33,29 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 main {
 	display: flex;
 	flex-grow: 1;
+	isolation: isolate;
+}
+
+/* Sidebar */
+main > nav {
+	z-index: 2;
+}
+
+/* Pages */
+main > section {
+	z-index: 1;
+}
+</style>
+<style>
+body {
+	isolation: isolate;
+}
+
+header {
+	z-index: 2;
+}
+
+main {
+	z-index: 1;
 }
 </style>
