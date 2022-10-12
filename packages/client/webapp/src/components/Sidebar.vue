@@ -119,7 +119,7 @@ nav {
 	background-color: var(--un-color-accent);
 	box-shadow: var(--un-box-shadow-small);
 	justify-content: space-between;
-	padding: 0.33em 0;
+	padding: 0.33rem 0;
 	width: 4rem;
 }
 
@@ -162,7 +162,7 @@ aside {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	width: max(15em, 20vw);
+	width: max(15rem, 20vw);
 	z-index: 1;
 }
 </style>

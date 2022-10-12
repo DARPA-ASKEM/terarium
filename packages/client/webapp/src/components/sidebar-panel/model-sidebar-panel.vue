@@ -30,8 +30,8 @@ main {
 	display: flex;
 	flex-grow: 1;
 	flex-direction: column;
-	gap: 1em;
-	padding: 1em;
+	gap: 1rem;
+	padding: 1rem;
 }
 
 header {

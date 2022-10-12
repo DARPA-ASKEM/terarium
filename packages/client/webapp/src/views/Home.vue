@@ -46,8 +46,8 @@ section {
 
 div {
 	display: flex;
-	gap: 1em;
-	margin: 2em;
+	gap: 1rem;
+	margin: 2rem;
 	justify-content: center;
 }
 </style>
