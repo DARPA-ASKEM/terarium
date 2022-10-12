@@ -45,19 +45,16 @@ export const applyFacetFiltersToData = (
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
-
-	const resultsObj = results.find((res) => res.searchSubsystem === resultType);
-	if (resultsObj) {
-		// extract facets based on the result type
-		// because we would have different facets for different result types
-		// e.g., XDD will have facets that leverage the XDD fields and stats
-		if (resultType === ResourceType.XDD) {
-			const xddResults = resultsObj.results as XDDArticle[];
-			applyFiltersToArticles(xddResults, filters);
+	results.forEach((resultsObj) => {
+		if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
+			if (resultsObj.searchSubsystem === ResourceType.XDD) {
+				const xddResults = resultsObj.results as XDDArticle[];
+				applyFiltersToArticles(xddResults, filters);
+			}
+			if (resultsObj.searchSubsystem === ResourceType.MODEL) {
+				const modelResults = resultsObj.results as Model[];
+				applyFiltersToModels(modelResults, filters);
+			}
 		}
-		if (resultType === ResourceType.MODEL) {
-			const modelResults = resultsObj.results as Model[];
-			applyFiltersToModels(modelResults, filters);
-		}
-	}
+	});
 };

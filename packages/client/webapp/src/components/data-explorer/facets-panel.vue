@@ -65,7 +65,7 @@ export default defineComponent({
 	data: () => ({
 		tabName: TAB_NAME,
 		// FIXME: add label for the facet tab that matches the current resultType
-		facetTabs: [{ name: TAB_NAME, icon: 'fa-lg fa-solid fa-file-lines' }],
+		facetTabs: [{ name: TAB_NAME, icon: 'fa-lg fa-solid fa-filter-circle-xmark' }],
 		currentTab: TAB_NAME
 	}),
 	computed: {

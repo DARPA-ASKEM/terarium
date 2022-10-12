@@ -107,7 +107,6 @@ import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
 
 // FIXME: page count is not taken into consideration
-// FIXME: improve the search bar with auto-complete
 // FIXME: remove SASS
 
 export default defineComponent({
