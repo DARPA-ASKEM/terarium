@@ -7,7 +7,6 @@ import Button from '@/components/Button.vue';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconSearchLocate32 from '@carbon/icons-vue/es/search--locate/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import IconLogout16 from '@carbon/icons-vue/es/logout/16';
@@ -51,7 +50,7 @@ function moveSidebar() {
 
 <template>
 	<section :class="{ right: isSidebarPositionRight }">
-		<nav class="mode-selection">
+		<nav>
 			<ul>
 				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
 					<IconDataPlayer32 />
@@ -61,9 +60,6 @@ function moveSidebar() {
 				</li>
 				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
 					<IconTableSplit32 />
-				</li>
-				<li :active="selectedMode === Mode.DataExplorer" @click="updateMode(Mode.DataExplorer)">
-					<IconSearchLocate32 />
 				</li>
 			</ul>
 			<ul>
@@ -78,7 +74,7 @@ function moveSidebar() {
 				</li>
 			</ul>
 		</nav>
-		<div v-if="!isCollapsed" class="mode-configuration" :class="{ right: isSidebarPositionRight }">
+		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
 			<header>{{ selectedMode }}</header>
 			<div v-if="selectedMode === Mode.Profile">
 				<Button @click="moveSidebar"> Move sidebar </Button>
@@ -87,14 +83,16 @@ function moveSidebar() {
 					<IconLogout16 />
 				</Button>
 			</div>
-		</div>
+		</aside>
 	</section>
 </template>
 
 <style scoped>
 section {
+	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	height: 100%;
+	isolation: isolate;
 }
 
 section.right {
@@ -106,49 +104,62 @@ nav {
 	display: flex;
 	flex-direction: column;
 	background-color: var(--un-color-accent-light);
-	border-right: 1px solid var(--un-color-black-20);
-}
-
-.mode-configuration.right,
-section.right nav {
-	border-left: 1px solid var(--un-color-black-20);
-	border-right: 0;
+	z-index: 2;
 }
 
 ul {
 	list-style: none;
 }
 
-nav.mode-selection {
+nav {
+	background-color: var(--un-color-accent);
+	box-shadow: var(--un-box-shadow-small);
 	justify-content: space-between;
+	padding: 0.33em 0;
+	width: 4rem;
 }
 
-nav.mode-selection ul li {
+nav ul {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+}
+
+nav ul li {
+	border-radius: 4px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
-	height: 3.25rem;
-	width: 3.25rem;
-	margin: 0.5rem;
-	border-radius: 5px;
-	background-color: var(--un-color-body-surface-secondary);
-	color: var(--un-color-black-100);
+	height: 3rem;
+	width: 3rem;
 }
 
-nav.mode-selection ul li:hover,
-nav.mode-selection ul li[active='true'] {
+nav svg {
+	fill: var(--un-color-accent-light);
+}
+
+nav li[active='true'] svg {
+	fill: var(--un-color-white);
+}
+
+nav li:hover {
 	background-color: var(--un-color-white);
-	color: var(--un-color-accent);
 }
 
-.mode-configuration {
+nav li:hover svg {
+	fill: var(--un-color-accent);
+}
+
+aside {
+	background-color: var(--un-color-accent-light);
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	background-color: var(--un-color-accent-lighter);
-	border-right: 1px solid var(--un-color-black-20);
-	width: 15rem;
 	padding: 0.5rem;
+	width: 15rem;
+	z-index: 1;
 }
 </style>
