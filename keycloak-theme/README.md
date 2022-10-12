@@ -12,3 +12,6 @@ If any changes are made to the theme the Docker image needs to be rebuild by usi
 >Make sure that you update the version number.
 
 Once build make sure that it is pushed to the appropriate repository.
+
+## Theming
+Currently only the login screen is being rethemed. Additional views can be rethemed as well such as `account`, `admin`, `email` and `welcome` screens. This is a basic approach that can be reused for other screens. If others are made they should be placed as subdirectories under the `terarium` directory so that the image generated copies them accordingly.
