@@ -10,7 +10,7 @@ test.describe('Data-Explorer page test', () => {
 	});
 
 	test('should display the data-explorer', async ({ page }) => {
-		await page.locator('button.dataExplorer').click();
+		await page.locator('button.data-explorer').click();
 		const dataExplorer = await page.locator('.data-explorer-container');
 		await expect(dataExplorer).toBeVisible();
 	});
