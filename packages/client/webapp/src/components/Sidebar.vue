@@ -49,37 +49,42 @@ function moveSidebar() {
 </script>
 
 <template>
-	<nav :class="{ right: isSidebarPositionRight }">
-		<ul>
-			<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
-				<IconDataPlayer32 />
-			</li>
-			<li :active="selectedMode === Mode.ModelView" @click="updateMode(Mode.ModelView)">
-				<IconMachineLearningModel32 />
-			</li>
-			<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
-				<IconTableSplit32 />
-			</li>
-		</ul>
-		<ul>
-			<li :active="selectedMode === Mode.ProvenanceGraph" @click="updateMode(Mode.ProvenanceGraph)">
-				<IconProvenanceGraph32 />
-			</li>
-			<li :active="selectedMode === Mode.Profile" @click="updateMode(Mode.Profile)">
-				<IconUser32 />
-			</li>
-		</ul>
-	</nav>
-	<aside v-if="!isCollapsed" class="mode-configuration" :class="{ right: isSidebarPositionRight }">
-		<header>{{ selectedMode }}</header>
-		<main v-if="selectedMode === Mode.Profile">
-			<Button @click="moveSidebar"> Move sidebar </Button>
-			<Button @click="logout"
-				>Logout
-				<IconLogout16 />
-			</Button>
-		</main>
-	</aside>
+	<section :class="{ right: isSidebarPositionRight }">
+		<nav>
+			<ul>
+				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
+					<IconDataPlayer32 />
+				</li>
+				<li :active="selectedMode === Mode.ModelView" @click="updateMode(Mode.ModelView)">
+					<IconMachineLearningModel32 />
+				</li>
+				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
+					<IconTableSplit32 />
+				</li>
+			</ul>
+			<ul>
+				<li
+					:active="selectedMode === Mode.ProvenanceGraph"
+					@click="updateMode(Mode.ProvenanceGraph)"
+				>
+					<IconProvenanceGraph32 />
+				</li>
+				<li :active="selectedMode === Mode.Profile" @click="updateMode(Mode.Profile)">
+					<IconUser32 />
+				</li>
+			</ul>
+		</nav>
+		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
+			<header>{{ selectedMode }}</header>
+			<div v-if="selectedMode === Mode.Profile">
+				<Button @click="moveSidebar"> Move sidebar </Button>
+				<Button @click="logout"
+					>Logout
+					<IconLogout16 />
+				</Button>
+			</div>
+		</aside>
+	</section>
 </template>
 
 <style scoped>
@@ -87,6 +92,7 @@ section {
 	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	height: 100%;
+	isolation: isolate;
 }
 
 section.right {
@@ -98,6 +104,7 @@ nav {
 	display: flex;
 	flex-direction: column;
 	background-color: var(--un-color-accent-light);
+	z-index: 2;
 }
 
 ul {
@@ -110,7 +117,6 @@ nav {
 	justify-content: space-between;
 	padding: 0.33em 0;
 	width: 4rem;
-	z-index: calc(var(--un-z-index-sidebar) + 1);
 }
 
 nav ul {
@@ -147,12 +153,13 @@ nav li:hover svg {
 	fill: var(--un-color-accent);
 }
 
-.mode-configuration {
+aside {
+	background-color: var(--un-color-accent-light);
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	background-color: var(--un-color-accent-light);
-	width: 15rem;
 	padding: 0.5rem;
+	width: 15rem;
+	z-index: 1;
 }
 </style>
