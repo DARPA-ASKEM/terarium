@@ -23,7 +23,7 @@
 		<button
 			v-if="enableClearButton"
 			type="button"
-			class="btn clear-button"
+			class="btn clear-button button-padding"
 			:class="{ 'clear-button-disabled': isClearButtonDisabled }"
 			:disabled="isClearButtonDisabled"
 			@click="clearText"
@@ -33,7 +33,7 @@
 		<button
 			v-if="enableSearchButton"
 			type="button"
-			class="btn clear-button search-button"
+			class="btn button-padding search-button"
 			:class="{ 'search-button-disabled': isSearchButtonDisabled }"
 			:disabled="isSearchButtonDisabled"
 			@click="searchBtnHandler"
@@ -145,19 +145,23 @@ export default defineComponent({
 	justify-content: center;
 }
 
-.clear-button {
-	color: white;
+.button-padding {
 	padding: 4px;
 	padding-left: 8px;
 	padding-right: 8px;
 	margin: 4px;
+	cursor: pointer;
+}
+
+.clear-button {
+	color: white;
 }
 
 .search-button {
-	background-color: dodgerblue;
+	background-color: #2d8e2dff;
 }
 .search-button-disabled {
-	background-color: darken($color: dodgerblue, $amount: 25%);
+	background-color: darken($color: #92e192ff, $amount: 50%);
 	cursor: not-allowed;
 }
 .clear-button-disabled {
@@ -173,7 +177,7 @@ export default defineComponent({
 .flex-aligned-item {
 	display: flex;
 	align-items: center;
-	color: blue;
+	color: var(--un-color-accent-darker);
 
 	.flex-aligned-item-delete-btn {
 		color: red;

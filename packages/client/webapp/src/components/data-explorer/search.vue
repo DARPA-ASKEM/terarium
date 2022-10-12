@@ -183,7 +183,7 @@ export default defineComponent({
 		}
 
 		.results-count {
-			color: blue;
+			color: #1c5a1cff;
 			margin-right: 2rem;
 		}
 	}
