@@ -26,16 +26,13 @@ spec:
           value: gateway-postgres
       volumeMounts:
         - name: theme-volume
-          mountPath: /opt/keycloak/themes/terrarium
+          mountPath: /opt/keycloak/themes/terarium
       resources: {}
   initContainers:
-    - image: docker.uncharted.software/auth/terrarium-theme:0.0.1
-      name: gateway-terrarium-theme
-      args:
-        - cp
-        - -r
-        - /static
-        - /shared
+    - image: docker.uncharted.software/auth/terarium-theme:0.0.1
+      name: gateway-terarium-theme
+      command: ['/bin/sh']
+      args: ['-c', 'cp -r /terarium/* /shared']
       volumeMounts:
         - name: theme-volume
           mountPath: /shared

@@ -1,1 +1,0 @@
-docker build -t docker.uncharted.software/auth/terrarium-theme:0.0.1 .

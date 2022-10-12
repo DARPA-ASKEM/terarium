@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 138 138" class="terrarium-logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 138 138" class="terarium-logo">
     <title>TERArium</title>
     <defs>
         <style type="text/css">
@@ -33,7 +33,7 @@
     </defs>
     <g id="Page-1" class="logo" stroke="none" stroke-width="0.5" fill="none" fill-rule="evenodd">
         <g id="Artboard" stroke="#000000" fill-rule="nonzero">
-            <g id="terrarium-outline" transform="translate(17.000000, 12.000000)">
+            <g id="terarium-outline" transform="translate(17.000000, 12.000000)">
                 <path d="M52.2980769,60.5 C53.3076923,60.5 54.2163462,60.3 55.125,59.8 L55.3269231,59.7 C58.0528846,58.2 58.8605769,54.8 57.3461538,52.2 C56.3365385,50.5 54.4182692,49.4 52.5,49.4 C51.4903846,49.4 50.5817308,49.6 49.6730769,50.1 L49.4711538,50.2 C46.7451923,51.7 45.9375,55.1 47.4519231,57.7 C48.4615385,59.4 50.2788462,60.5 52.2980769,60.5 Z" id="arrow-arm-dot-one" class="dot"></path>
 
                 <path d="M67.4423077,51.7 C68.4519231,51.7 69.3605769,51.5 70.2692308,51 L70.7740385,50.7 C73.5,49.2 74.3076923,45.8 72.7932692,43.2 C71.7836538,41.5 69.8653846,40.4 67.9471154,40.4 C66.9375,40.4 66.0288462,40.6 65.1201923,41.1 L64.6153846,41.4 C61.8894231,42.9 61.0817308,46.3 62.5961538,48.9 C63.6057692,50.7 65.5240385,51.7 67.4423077,51.7 Z" id="arrow-arm-dot-two" class="dot"></path>

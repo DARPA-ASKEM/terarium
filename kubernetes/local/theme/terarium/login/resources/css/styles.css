@@ -2,7 +2,7 @@
 /* @import url('../../keycloak/lib/zocial/zocial.css'); */
 
 html {
-    --un-color-accent-darker: #133013ff;
+  --un-color-accent-darker: #133013ff;
 	--un-color-accent-dark: #1C5A1Cff;
 	--un-color-accent: #2D8E2Dff;
 	--un-color-accent-light: #92E192ff;
@@ -47,7 +47,7 @@ div#kc-header::after {
 }
 
 .login-pf body {
-    background: url("../img/terrarium.svg") no-repeat -40% top fixed #f0f0f0;
+    background: url("../img/terarium.svg") no-repeat -40% top fixed #f0f0f0;
     background-size: 80%;
 }
 
@@ -97,7 +97,7 @@ form#kc-form-login {
 /* label change Username, Password text*/
 div#kc-form label {
     display: block;
-    color: var(--terrarium-dark-gray);
+    color: var(--un-color-accent-darker);
     font-size: small;
 }
 
