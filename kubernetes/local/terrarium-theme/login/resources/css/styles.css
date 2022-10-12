@@ -2,9 +2,11 @@
 /* @import url('../../keycloak/lib/zocial/zocial.css'); */
 
 html {
-    --terrarium-green: #144214;
-		--terrarium-highlight: #2D8E2Dff;
-    --terrarium-dark-gray: #221f20;
+    --un-color-accent-darker: #133013ff;
+	--un-color-accent-dark: #1C5A1Cff;
+	--un-color-accent: #2D8E2Dff;
+	--un-color-accent-light: #92E192ff;
+	--un-color-accent-lighter: #E4FAE4ff;
 }
 
 body {
@@ -23,11 +25,11 @@ div#kc-header-wrapper {
 div#kc-header {
     width:100%;
     height: 60px;
-    background-color: black;
+    background-color: white;
     background-image: url('../img/logo.png');
     background-repeat: no-repeat;
     background-size: 180px;
-    background-position: 2.5rem 0;
+    background-position: 2.5rem center;
 }
 
 /* Change content to change the title of the page
@@ -35,7 +37,7 @@ div#kc-header::after {
 }*/
 
 .card-pf {
-    border-color: var(--terrarium-green);
+    border-color: var(--un-color-accent);
     margin: auto 2.5rem auto auto;
     max-width: 400px;
 }
@@ -45,8 +47,8 @@ div#kc-header::after {
 }
 
 .login-pf body {
-    background: url("../img/terrarium-outline.svg") no-repeat -40% top fixed #f0f0f0;
-    background-size: 75%;
+    background: url("../img/terrarium.svg") no-repeat -40% top fixed #f0f0f0;
+    background-size: 80%;
 }
 
 @media (max-width: 767px) {
@@ -60,11 +62,11 @@ div#kc-header::after {
 }
 
 .login-pf a:hover {
-    color: var(--terrarium-dark-gray)
+    color: var(--un-color-accent-darker)
 }
 
 .login-pf a {
-    color: var(--terrarium-green);
+    color: var(--un-color-accent);
 }
 
 div#kc-form-options {
@@ -117,7 +119,7 @@ input[type=text], input[type=password] {
 /*button*/
 input[type=submit].pf-c-button.pf-m-primary {
     border: none;
-    background-color: var(--terrarium-green);
+    background-color: var(--un-color-accent);
     color: white;
     font-weight: bold;
     margin-top: 2rem;
@@ -126,7 +128,7 @@ input[type=submit].pf-c-button.pf-m-primary {
 
 input[type=submit]:hover.pf-c-button.pf-m-primary {
     cursor: pointer;
-    background-color: lightcoral;
+    background-color: var(--un-color-accent-light);
 }
 
 span#input-error {
