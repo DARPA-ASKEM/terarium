@@ -3,12 +3,8 @@ import Button from '@/components/Button.vue';
 import IconLogin16 from '@carbon/icons-vue/es/login/16';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
 
-const auth = useAuthStore();
 const router = useRouter();
-
-const login = () => window.location.assign('http://localhost:8078');
 
 const goToHomepage = () => router.push('/');
 const goToDataExplorer = () => router.push('/explorer');
@@ -26,7 +22,7 @@ const projectName = 'Name of the project that can be long for clarity and precis
 
 		<aside>
 			<Button class="data-explorer" @click="goToDataExplorer"><IconSearchLocate16 /></Button>
-			<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
+			<Button v-if="false" @click="login">Login <IconLogin16 /></Button>
 		</aside>
 	</header>
 </template>
