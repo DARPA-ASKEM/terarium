@@ -10,11 +10,12 @@ import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import IconLogout16 from '@carbon/icons-vue/es/logout/16';
+import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import { useAuthStore } from '../stores/auth';
 
 const enum Mode {
 	SimulationPlan = 'Simulation Plan',
-	ModelView = 'Model View',
+	Models = 'Models',
 	Datasets = 'Datasets',
 	DataExplorer = 'Data Explorer',
 	ProvenanceGraph = 'Provenance Graph',
@@ -55,7 +56,7 @@ function moveSidebar() {
 				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
 					<IconDataPlayer32 />
 				</li>
-				<li :active="selectedMode === Mode.ModelView" @click="updateMode(Mode.ModelView)">
+				<li :active="selectedMode === Mode.Models" @click="updateMode(Mode.Models)">
 					<IconMachineLearningModel32 />
 				</li>
 				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
@@ -75,14 +76,17 @@ function moveSidebar() {
 			</ul>
 		</nav>
 		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
-			<header>{{ selectedMode }}</header>
-			<div v-if="selectedMode === Mode.Profile">
-				<Button @click="moveSidebar"> Move sidebar </Button>
-				<Button @click="logout"
-					>Logout
-					<IconLogout16 />
-				</Button>
-			</div>
+			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
+			<template v-else>
+				<header>{{ selectedMode }}</header>
+				<div v-if="selectedMode === Mode.Profile">
+					<Button @click="moveSidebar"> Move sidebar </Button>
+					<Button @click="logout"
+						>Logout
+						<IconLogout16 />
+					</Button>
+				</div>
+			</template>
 		</aside>
 	</section>
 </template>
@@ -158,8 +162,7 @@ aside {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	padding: 0.5rem;
-	width: 15rem;
+	width: max(15em, 20vw);
 	z-index: 1;
 }
 </style>
