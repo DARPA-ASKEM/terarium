@@ -30,6 +30,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	font: inherit;
+	isolation: isolate;
 }
 
 @media (prefers-color-scheme: dark) {
