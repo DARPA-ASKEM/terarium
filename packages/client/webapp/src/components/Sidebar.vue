@@ -104,13 +104,6 @@ nav {
 	display: flex;
 	flex-direction: column;
 	background-color: var(--un-color-accent-light);
-	border-right: 1px solid var(--un-color-black-20);
-}
-
-.mode-configuration.right,
-section.right nav {
-	border-left: 1px solid var(--un-color-black-20);
-	border-right: 0;
 }
 
 ul {
