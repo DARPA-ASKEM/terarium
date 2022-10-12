@@ -23,7 +23,9 @@ const projectName = 'Name of the project that can be long for clarity and precis
 		</p>
 
 		<aside>
-			<Button class="dataExplorer" @click="router.push('/explorer')"><IconSearchLocate16 /></Button>
+			<Button class="data-explorer" @click="router.push('/explorer')"
+				><IconSearchLocate16
+			/></Button>
 			<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
 		</aside>
 	</header>
@@ -65,7 +67,7 @@ aside {
 	gap: 1em;
 }
 
-button.dataExplorer {
+button.data-explorer {
 	background-color: var(--un-color-accent);
 }
 </style>
