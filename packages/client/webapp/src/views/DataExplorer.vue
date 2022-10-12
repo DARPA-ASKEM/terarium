@@ -8,7 +8,7 @@
 			@selection="onSelection"
 		/>
 		<div class="flex h-100">
-			<div class="flex h-100" style="height: auto">
+			<div class="flex h-100 facets-panel-container">
 				<facets-panel
 					:facets="facets"
 					:filtered-facets="filteredFacets"
@@ -31,7 +31,6 @@
 					</template>
 				</search-bar>
 				<search
-					class="search"
 					:data-items="filteredDataItems"
 					:result-type="resultType"
 					:results-count="resultsCount"
@@ -330,16 +329,19 @@ export default defineComponent({
 @import '../styles/util.scss';
 
 .data-explorer-container {
-	position: relative;
+	position: absolute;
+	left: 0px;
+	top: 0px;
 	box-sizing: border-box;
-	overflow: hidden;
 	width: 100%;
+	height: calc(100vh - 50px);
+
+	.facets-panel-container {
+		background-color: $background-light-2;
+		height: calc(100vh - 50px);
+	}
 
 	.explorer-content {
-		.search {
-			height: calc(100% - 100px);
-		}
-
 		display: flex;
 		flex-direction: column;
 		flex: 1;

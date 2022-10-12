@@ -22,16 +22,30 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 </script>
 
 <template>
-	<Header />
+	<Header class="header" />
 	<main v-if="isAuthenticated">
-		<Sidebar />
-		<router-view />
+		<Sidebar class="sidebar" />
+		<router-view class="page" />
 	</main>
 </template>
 
 <style scoped>
+.header {
+	z-index: 2;
+}
+
 main {
 	display: flex;
 	flex-grow: 1;
+	isolation: isolate;
+	z-index: 1;
+}
+
+.sidebar {
+	z-index: 2;
+}
+
+.page {
+	z-index: 1;
 }
 </style>
