@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import { uncloak } from '../utils/uncloak';
-
-const router = useRouter();
 
 async function apiCall(type = '') {
 	if (type === 'user') {
@@ -21,27 +18,16 @@ async function apiCall(type = '') {
 		console.log(`Response: ${JSON.stringify(data)}`);
 	}
 }
-
-function openDataExplorer() {
-	router.push('/explorer');
-}
 </script>
 
 <template>
 	<section>
 		<p>Test API calls/Home placeholder</p>
 		<div>
-			<Button>New Project</Button>
-			<Button action>Update Project</Button>
-			<Button success>Get Projects</Button>
-			<Button info>Delete Project</Button>
-		</div>
-		<div>
-			<Button @click="openDataExplorer">Data Explorer</Button>
-			<Button warning>New Model</Button>
-			<Button danger>Update Model</Button>
-			<Button>Get Model</Button>
-			<Button>Delete Model</Button>
+			<Button>Normal</Button>
+			<Button action>Action</Button>
+			<Button danger>Danger</Button>
+			<Button info>Info</Button>
 		</div>
 		<div>
 			<Button @click="apiCall('user')">User Call</Button>
