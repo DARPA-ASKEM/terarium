@@ -8,7 +8,6 @@
 		":label(RenovateBot)",
 		":semanticCommits"
 	],
-	"schedule": ["before 6am on Tuesday"],
 	"npm": {
 		"stabilityDays": 3
 	},
