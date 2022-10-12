@@ -17,9 +17,9 @@ button {
 	display: flex;
 	font: var(--un-font-body);
 	justify-content: center;
-	gap: 0.5em;
+	gap: 0.5rem;
 	outline: 0;
-	padding: 0.5em 1em;
+	padding: 0.5rem 1rem;
 	transition-duration: 0.2s;
 	transition-property: background;
 	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
