@@ -36,7 +36,7 @@
 										></span>
 									</template>
 									<i
-										class="fa-lg fa-solid fa-file-lines"
+										:class="getResourceTypeIcon(ResourceType.XDD)"
 										style="margin-left: 4px; margin-right: 4px"
 									></i>
 								</div>
@@ -79,6 +79,8 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
+import { ResourceType } from '@/types/common';
+import { getResourceTypeIcon } from '@/utils/data-util';
 
 export default defineComponent({
 	name: 'ArticlesListview',
@@ -117,7 +119,9 @@ export default defineComponent({
 		);
 
 		return {
-			expandedRowId
+			expandedRowId,
+			ResourceType,
+			getResourceTypeIcon
 		};
 	},
 	methods: {

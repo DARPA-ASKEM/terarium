@@ -17,7 +17,7 @@
 								<div class="radio">
 									<i
 										class="fa-regular fa-lg fa-fw"
-										:class="getTypeIcon(d)"
+										:class="getResourceTypeIcon(d.type)"
 										style="margin-left: 4px; margin-right: 4px"
 									></i>
 								</div>
@@ -53,6 +53,7 @@ import MultilineDescription from '@/components/widgets/multiline-description.vue
 import { ResourceType, SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
+import { getResourceTypeIcon } from '@/utils/data-util';
 
 type GenericResult = {
 	id: string;
@@ -107,7 +108,7 @@ export default defineComponent({
 								name: model.name,
 								desc: model.description,
 								source: model.source,
-								type: ResourceType.MODEL
+								type: model.type
 							});
 						});
 					}
@@ -124,7 +125,8 @@ export default defineComponent({
 
 		return {
 			expandedRowId,
-			items
+			items,
+			getResourceTypeIcon
 		};
 	},
 	methods: {
@@ -148,11 +150,6 @@ export default defineComponent({
 			return this.isExpanded(item) || item.source.length < maxSize
 				? item.source
 				: `${item.source.substring(0, maxSize)}...`;
-		},
-		getTypeIcon(d: GenericResult) {
-			return `fa-regular ${
-				d.type === ResourceType.MODEL ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-file-lines'
-			}`;
 		}
 	}
 });

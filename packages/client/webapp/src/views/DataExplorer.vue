@@ -68,7 +68,7 @@
 							class="co-occurrence-matrix-btn"
 							:disabled="dictNames.length !== 2"
 						>
-							<i class="fa-light fa-table-cells" />&nbsp;co-occurrence matrix
+							<i class="fa-solid fa-table-cells-large" />&nbsp;co-occurrence matrix
 						</button>
 					</template>
 				</search>

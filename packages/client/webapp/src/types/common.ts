@@ -4,6 +4,7 @@ import { XDDArticle } from './XDD';
 export enum ResourceType {
 	XDD = 'xdd',
 	MODEL = 'model',
+	DATASET = 'dataset',
 	ALL = 'all'
 }
 

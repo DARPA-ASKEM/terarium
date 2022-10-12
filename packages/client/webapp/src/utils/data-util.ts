@@ -58,3 +58,16 @@ export const applyFacetFiltersToData = (
 		}
 	});
 };
+
+export const getResourceTypeIcon = (type: string) => {
+	if (type === ResourceType.MODEL) {
+		return 'fa-regular fa-brands fa-connectdevelop';
+	}
+	if (type === ResourceType.DATASET) {
+		return 'fa-regular fa-solid fa-table-cells';
+	}
+	if (type === ResourceType.XDD) {
+		return 'fa-solid fa-file';
+	}
+	return 'fa-regular fa-solid fa-file-lines';
+};
