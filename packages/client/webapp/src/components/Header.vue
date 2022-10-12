@@ -9,7 +9,9 @@ const auth = useAuthStore();
 const router = useRouter();
 
 const login = () => window.location.assign('http://localhost:8078');
-const homepage = () => router.push('/');
+
+const goToHomepage = () => router.push('/');
+const goToDataExplorer = () => router.push('/explorer');
 
 const projectName = 'Name of the project that can be long for clarity and precision';
 </script>
@@ -18,14 +20,12 @@ const projectName = 'Name of the project that can be long for clarity and precis
 	<header>
 		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
 		<p>
-			<a @click="homepage">Projects</a>
+			<a @click="goToHomepage">Projects</a>
 			<span>{{ projectName }}</span>
 		</p>
 
 		<aside>
-			<Button class="data-explorer" @click="router.push('/explorer')"
-				><IconSearchLocate16
-			/></Button>
+			<Button class="data-explorer" @click="goToDataExplorer"><IconSearchLocate16 /></Button>
 			<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
 		</aside>
 	</header>
