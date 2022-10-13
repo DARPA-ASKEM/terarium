@@ -12,7 +12,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # Image owner
-  OWNER: askem
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
   build-push:
@@ -35,6 +35,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Lowercase the owner for docker image naming conventions
+      - name: set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+
       # Build and push Docker Theme image
       - name: Build and Push Terarium Keycloak Theme Docker Image
         uses: docker/build-push-action@v3
@@ -42,4 +47,4 @@ jobs:
           context: ./keycloak-theme
           push: true
           tags: |
-            ${{ env.REGISTRY}}/${{ env.OWNER }}/terarium-theme:latest
+            ${{ env.REGISTRY}}/${{ env.OWNER_LC }}/terarium-theme:latest
