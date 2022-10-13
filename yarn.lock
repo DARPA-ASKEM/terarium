@@ -1345,7 +1345,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3@npm:7.4.0":
+"@types/d3@npm:7.4.0, @types/d3@npm:^7.4.0":
   version: 7.4.0
   resolution: "@types/d3@npm:7.4.0"
   dependencies:
@@ -1448,7 +1448,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.186":
+"@types/lodash@npm:4.14.186, @types/lodash@npm:^4.14.186":
   version: 4.14.186
   resolution: "@types/lodash@npm:4.14.186"
   checksum: ee0c1368a8100bb6efb88335107473a41928fc307ff1ef4ff1278868ccddba9c04c68c36d1ffe3a0392ef4a956e1955f7de3203ec09df4f1655dd1b88485c549
@@ -1456,9 +1456,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 18.8.4
-  resolution: "@types/node@npm:18.8.4"
-  checksum: c2b87f6b0b1f02b2ce61ca7cb93ea287119bda086a3f33e48da8f5e70c24ad7141cc3465946e0e36abb7eba70c7b320c7659842096e4aa573b3a8d557322c818
+  version: 18.8.5
+  resolution: "@types/node@npm:18.8.5"
+  checksum: f7d896f54743178e64c534c6da16f582505acf18904ecd0ee8541cb4bc1d429ba514e7ecfd5145221b71adbd6ae1ff72df082f667e56d056fcd1a719df948e08
   languageName: node
   linkType: hard
 
@@ -3637,7 +3637,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3@npm:7.6.1":
+"d3@npm:7.6.1, d3@npm:^7.6.1":
   version: 7.6.1
   resolution: "d3@npm:7.6.1"
   dependencies:
@@ -3675,7 +3675,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dagre@npm:0.8.5":
+"dagre@npm:0.8.5, dagre@npm:^0.8.5":
   version: 0.8.5
   resolution: "dagre@npm:0.8.5"
   dependencies:
@@ -3734,9 +3734,9 @@ __metadata:
   linkType: hard
 
 "decimal.js@npm:^10.2.1":
-  version: 10.4.1
-  resolution: "decimal.js@npm:10.4.1"
-  checksum: 5da6dc74af5b73d954741b24d404ef6da07841794d9e51412a2708ec384dd7b4bced3365fb178f4cd119b7ef45f0b34344014a4dc0494c8374c5e746df3cb410
+  version: 10.4.2
+  resolution: "decimal.js@npm:10.4.2"
+  checksum: 536cd6816a3197f2e1aa3da4860856cb5a2db73f6fafe8cb3b924ccc63f9b7d78296acc13dccbd419bd958ccc6357921fb15467f883b37cab04bfba7044cada2
   languageName: node
   linkType: hard
 
@@ -5951,7 +5951,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graph-scaffolder@workspace:packages/client/graph-scaffolder":
+"graph-scaffolder@*, graph-scaffolder@workspace:packages/client/graph-scaffolder":
   version: 0.0.0-use.local
   resolution: "graph-scaffolder@workspace:packages/client/graph-scaffolder"
   dependencies:
@@ -9045,13 +9045,13 @@ __metadata:
   linkType: hard
 
 "postcss@npm:^8.1.10, postcss@npm:^8.4.13, postcss@npm:^8.4.16":
-  version: 8.4.17
-  resolution: "postcss@npm:8.4.17"
+  version: 8.4.18
+  resolution: "postcss@npm:8.4.18"
   dependencies:
     nanoid: ^3.3.4
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
-  checksum: a6d9096dd711e17f7b1d18ff5dcb4fdedf3941d5a3dc8b0e4ea873b8f31972d57f73d6da9a8aed7ff389eb52190ed34f6a94f299a7f5ddc68b08a24a48f77eb9
+  checksum: 9349fd99849b2e3d2e134ff949b7770ecb12375f352723ce2bcc06167eba3850ea7844c1b191a85cd915d6a396b4e8ee9a5267e6cc5d8d003d0cbc7a97555d39
   languageName: node
   linkType: hard
 
@@ -11309,13 +11309,17 @@ __metadata:
     "@playwright/experimental-ct-vue": 1.27.1
     "@playwright/test": 1.27.1
     "@rushstack/eslint-patch": 1.2.0
-    "@types/lodash": 4.14.186
+    "@types/d3": ^7.4.0
+    "@types/lodash": ^4.14.186
     "@uncharted.software/design-tokens": 1.1.0
     "@uncharted.software/facets-core": 3.2.6
     "@uncharted.software/facets-plugins": 3.2.5
     "@vitejs/plugin-vue": 3.1.2
     "@vitest/coverage-c8": 0.23.4
+    d3: ^7.6.1
+    dagre: ^0.8.5
     eslint-import-resolver-typescript: 3.5.1
+    graph-scaffolder: "*"
     lodash: 4.17.21
     pinia: 2.0.23
     sass: 1.55.0
