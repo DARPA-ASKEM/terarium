@@ -26,8 +26,10 @@ jobs:
 
     strategy:
       matrix:
-        context: [keycloak-theme]
-        img: [terarium-theme]
+        include:
+          - context: 'keycloak-theme'
+            image_name: 'terarium-theme'
+          # add others here as needed
 
     steps:
       # Checkout the repository
@@ -47,19 +49,20 @@ jobs:
         run: |
           echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
 
+      # Retrieve meta information for the docker file
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.OWNER_LC }}/${{ matrix.img }}
+          images: ${{ env.OWNER_LC }}/${{ matrix.image_name }}
           tags: |
-            typre=semver,pattern={{version}}
+            type=semver,pattern={{version}}
 
       # Build and push Docker Theme image
       - name: Build and Push Terarium Keycloak Theme Docker Image
         uses: docker/build-push-action@v3
         with:
           context: ./${{ matrix.context }}
-          push: true
-          tags: |
-            ${{ env.REGISTRY}}/${{ env.OWNER_LC }}/terarium-theme:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
