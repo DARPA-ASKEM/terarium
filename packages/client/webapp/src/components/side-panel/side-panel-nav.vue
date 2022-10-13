@@ -95,7 +95,7 @@ li {
 		content: '';
 		display: block;
 		position: absolute;
-		width: 50%;
+		width: 5%; // 50%
 		height: 100%;
 		top: 0;
 		z-index: -1;

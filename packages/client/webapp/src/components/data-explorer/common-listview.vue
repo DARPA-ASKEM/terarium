@@ -4,16 +4,16 @@
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />Name</th>
-						<th>Desc</th>
-						<th>Source</th>
+						<th><span class="left-cover" />NAME</th>
+						<th>DESCRIPTION</th>
+						<th>SOURCE</th>
 						<th>PREVIEW<span class="right-cover" /></th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr v-for="d in items" :key="d.id" class="tr-item" @click="updateExpandedRow(d)">
-						<td class="output-col">
-							<div class="output-layout">
+						<td class="name-col">
+							<div class="name-layout">
 								<div class="radio">
 									<i
 										class="fa-regular fa-lg fa-fw"
@@ -29,12 +29,12 @@
 						<td class="desc-col">
 							<multiline-description :text="formatDescription(d)" />
 						</td>
-						<td class="period-col">
+						<td class="source-col">
 							<multiline-description :text="formatSource(d)" />
 						</td>
-						<td class="timeseries-col">
-							<div class="timeseries-container">
-								<!-- timeseries renderer -->
+						<td class="preview-col">
+							<div class="preview-container">
+								<!-- preview renderer -->
 							</div>
 						</td>
 					</tr>
@@ -144,7 +144,7 @@ export default defineComponent({
 				: `${item.desc.substring(0, maxSize)}...`;
 		},
 		formatSource(item: GenericResult) {
-			const maxSize = 25;
+			const maxSize = 40;
 			return this.isExpanded(item) || item.source.length < maxSize
 				? item.source
 				: `${item.source.substring(0, maxSize)}...`;
@@ -197,7 +197,7 @@ export default defineComponent({
 	.table-fixed-head {
 		overflow-y: auto;
 		overflow-x: hidden;
-		height: 600px;
+		height: 100%;
 		width: 100%;
 	}
 	.table-fixed-head thead th {
@@ -226,7 +226,7 @@ export default defineComponent({
 	}
 	.tr-item.selected {
 		border: 2px double $selected;
-		.output-col {
+		.name-col {
 			border-left: 4px solid $selected;
 		}
 		td {
@@ -234,13 +234,12 @@ export default defineComponent({
 		}
 	}
 	.text-bold {
-		font-size: $font-size-large;
-		font-weight: 600;
+		font-weight: 500;
 		margin-bottom: 5px;
 	}
-	.output-col {
-		width: 33%;
-		.output-layout {
+	.name-col {
+		width: 20%;
+		.name-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
@@ -274,20 +273,18 @@ export default defineComponent({
 		width: 33%;
 		overflow-wrap: anywhere;
 	}
-	.region-col {
-		width: 200px;
-	}
-	.period-col {
-		width: 120px;
+	.source-col {
+		width: 20%;
 	}
 	// time series hidden until actually put into use
-	.timeseries-col {
+	.preview-col {
 		padding-left: 5px;
 		padding-right: 10px;
+		width: 20%;
 	}
-	.timeseries-container {
+	.preview-container {
 		background-color: #f1f1f1;
-		width: 110px;
+		width: 100%;
 		height: 50px;
 	}
 }
