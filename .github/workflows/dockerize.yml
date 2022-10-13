@@ -55,7 +55,10 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.OWNER_LC }}/${{ matrix.image_name }}
+          flavor: latest=true
           tags: |
+            # set latest tag for default branch
+            type=raw,value=main,enable={{is_default_branch}}
             type=semver,pattern={{version}}
 
       # Build and push Docker Theme image
