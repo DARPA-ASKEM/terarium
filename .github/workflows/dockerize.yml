@@ -39,8 +39,7 @@ jobs:
       - name: Build and Push Terarium Keycloak Theme Docker Image
         uses: docker/build-push-action@v3
         with:
-          context: .
-          file: ./keycloak-theme/Dockerfile
+          context: ./keycloak-theme
           push: true
           tags: |
             ${{ env.REGISTRY}}/${{ env.OWNER }}/terarium-theme:latest
