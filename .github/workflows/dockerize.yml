@@ -41,7 +41,6 @@ jobs:
         with:
           context: .
           file: ./keycloak-theme/Dockerfile
-          target: final
           push: true
           tags: |
             ${{ env.REGISTRY}}/${{ env.OWNER }}/terarium-theme:latest
