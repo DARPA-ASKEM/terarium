@@ -154,9 +154,6 @@ export default defineComponent({
 		resultType: ResourceType.ALL as string
 	}),
 	computed: {
-		navBackLabel() {
-			return 'Back to Home';
-		},
 		resultsCount() {
 			let total = 0;
 			if (this.resultType === ResourceType.ALL) {
@@ -303,8 +300,8 @@ export default defineComponent({
 		filterData(filterTerms: string[]) {
 			this.filter = cloneDeep(filterTerms);
 		},
-		async onClose() {
-			this.$router.push('/');
+		onClose() {
+			this.app.hideDataExplorer();
 		},
 		isDataItemSelected(id: string) {
 			return this.selectedSearchItems.find((item) => item === id) !== undefined;

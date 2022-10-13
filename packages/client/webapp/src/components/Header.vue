@@ -4,14 +4,16 @@ import IconLogin16 from '@carbon/icons-vue/es/login/16';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useAppStore } from '../stores/app';
 
 const auth = useAuthStore();
 const router = useRouter();
+const app = useAppStore();
 
 const login = () => window.location.assign('http://localhost:8078');
 
 const goToHomepage = () => router.push('/');
-const goToDataExplorer = () => router.push('/explorer');
+const goToDataExplorer = () => app.showDataExplorer();
 
 const projectName = 'Name of the project that can be long for clarity and precision';
 </script>
