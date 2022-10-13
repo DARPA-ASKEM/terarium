@@ -27,10 +27,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Terarium Keycloak Theme Docker Image
-        env:
-          REGISTRY: ghcr.io
-          OWNER: ${{ github.repository_owner }}
-          IMAGE_NAME: terarium-theme
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -38,4 +34,4 @@ jobs:
           target: final
           push: true
           tags: |
-            $REGISTRY/$OWNER/$IMAGE_NAME:latest
+            ghcr.io/${{ github.repository_owner }}/terarium-theme:latest
