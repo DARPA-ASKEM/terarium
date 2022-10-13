@@ -1,0 +1,246 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&display=swap');
+/* @import url('../../keycloak/lib/zocial/zocial.css'); */
+
+html {
+  --un-color-accent-darker: #133013ff;
+	--un-color-accent-dark: #1C5A1Cff;
+	--un-color-accent: #2D8E2Dff;
+	--un-color-accent-light: #92E192ff;
+	--un-color-accent-lighter: #E4FAE4ff;
+}
+
+body {
+    /* font-family: ProximaNova, sans-serif;
+    font-family: BatterSeaSans, sans-serif; */
+    font-family: 'IBM Plex Sans', sans-serif;
+    margin: 0px;
+}
+
+/*Get rid of keycloak title*/
+div#kc-header-wrapper {
+    display: none;
+}
+
+/*title banner size and colour*/
+div#kc-header {
+    width:100%;
+    height: 60px;
+    background-color: white;
+    background-image: url('../img/logo.png');
+    background-repeat: no-repeat;
+    background-size: 180px;
+    background-position: 2.5rem center;
+}
+
+/* Change content to change the title of the page
+div#kc-header::after {
+}*/
+
+.card-pf {
+    border-color: var(--un-color-accent);
+    margin: auto 2.5rem auto auto;
+    max-width: 400px;
+}
+
+.login-pf-page {
+    padding: 0%;
+}
+
+.login-pf body {
+    background: url("../img/terarium.svg") no-repeat -40% top fixed #f0f0f0;
+    background-size: 80%;
+}
+
+@media (max-width: 767px) {
+    .login-pf-page .login-pf-page-header {
+        margin-bottom: 0%;
+    }
+
+    .login-pf body {
+        background-image: none;
+    }
+}
+
+.login-pf a:hover {
+    color: var(--un-color-accent-darker)
+}
+
+.login-pf a {
+    color: var(--un-color-accent);
+}
+
+div#kc-form-options {
+    display: none;
+}
+
+/* header, #kc-content {
+    color: var(--uncharted-dark-gray);
+    margin: 2rem 3rem;
+} */
+
+h1 {
+    font-weight: normal;
+    margin-bottom: 0%;
+}
+
+a {
+    font-weight: bold;
+}
+
+/* div#kc-form {
+} */
+
+form#kc-form-login {
+    margin-top: 3rem;
+}
+
+/* label change Username, Password text*/
+div#kc-form label {
+    display: block;
+    color: var(--un-color-accent-darker);
+    font-size: small;
+}
+
+/*fields and button*/
+input[type=text], input[type=password], input[type=submit] {
+    box-sizing: border-box;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1rem;
+    border-radius: 3px;
+}
+
+/*fields*/
+input[type=text], input[type=password] {
+    background-color: white;
+    padding: 10px;
+    border: 1px solid gray;
+}
+
+/*button*/
+input[type=submit].pf-c-button.pf-m-primary {
+    border: none;
+    background-color: var(--un-color-accent);
+    color: white;
+    font-weight: bold;
+    margin-top: 2rem;
+    padding: 15px;
+}
+
+input[type=submit]:hover.pf-c-button.pf-m-primary {
+    cursor: pointer;
+    background-color: var(--un-color-accent-light);
+}
+
+span#input-error {
+    display: block;
+    color: darkred;
+    font-size: 1rem;
+}
+
+/* Could be useful for later */
+/*
+div#social-login {
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    float: right;
+    width: 150px;
+    padding: 20px 0 200px 40px;
+}
+
+div.social-login span {
+    display: none;
+}
+
+a.zocial {
+    border: none;
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.8), rgba(255,255,255,0.1)) !important;
+    background: -moz-linear-gradient(top, rgba(255,255,255,0.8), rgba(255,255,255,0.1)) !important;
+    background: -ms-linear-gradient(top, rgba(255,255,255,0.8), rgba(255,255,255,0.1)) !important;
+    background: -o-linear-gradient(top, rgba(255,255,255,0.8), rgba(255,255,255,0.1)) !important;
+    box-shadow: 0px 0px 6px rgba(0,0,0,0.5);
+    color: rgba(0,0,0,0.6);
+    width: 130px;
+    text-shadow: none;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+}
+
+div#kc-info {
+}
+
+div#info-area {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    margin-top: 45px;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    width: 99%;
+}
+
+div#info-area p {
+    margin-right: 30px;
+    display: inline;
+    text-shadow: none;
+    font-size: 20px;
+}
+
+div#kc-form-options div {
+    display: inline-block;
+    margin-right: 20px;
+    font-size: 25px;
+}
+
+div#kc-form-options div label {
+    font-size: 20px;
+}
+
+div#kc-feedback {
+    box-shadow: 0px 0px 6px rgba(0,0,0,0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+}
+
+div#kc-feedback-wrapper {
+    padding: 1em;
+}
+
+div.feedback-success {
+    background-color: rgba(155,155,255,0.1);
+}
+
+div.feedback-warning {
+    background-color: rgba(255,175,0,0.1);
+}
+
+div.feedback-error {
+    background-color: rgba(255,0,0,0.1);
+}
+
+div#kc-registration {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    margin-top: 2em;
+}
+
+div#kc-social-providers ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+div#kc-social-providers ul li {
+    margin-bottom: 20px;
+}
+
+div#kc-social-providers ul li span {
+    display: inline;
+    width: 100px;
+}
+*/
