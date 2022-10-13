@@ -9,7 +9,7 @@
 		"test:coverage": "vitest run --coverage"
 	},
 	"devDependencies": {
-		"@vitest/coverage-c8": "0.23.4",
-		"vitest": "0.23.2"
+		"@vitest/coverage-c8": "0.24.1",
+		"vitest": "0.24.1"
 	}
 }
