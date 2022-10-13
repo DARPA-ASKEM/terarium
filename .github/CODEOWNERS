@@ -26,3 +26,5 @@ docs/*  @dgauldie @pascaleproulx @YohannParis
 # Solution: make files used by renovate owned by everyone
 **/package.json
 **/yarn.lock
+**/Dockerfile*
+**/gradle.properties

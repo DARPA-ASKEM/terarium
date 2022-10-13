@@ -32,9 +32,9 @@ For unit testing the project uses [Vitest](https://vitest.dev/). Vitest is focus
 
 The global configuration for `Playwright` is found at the project root in the [playwright.config.js](playwright.config.js) file. This file sets up the various global parameters as well the main test type projects. The configuration is set with reasonable defaults for most use cases but refer to the official [Documentation](https://playwright.dev/docs/intro) for full list of options.
 
-> Note that these defaults can also be overriden at the test and test suite level if needed.
+> Note that these defaults can also be overridden at the test and test suite level if needed.
 
-`Playwright` has been configured to automatically start or reuse the existingdevelopment server on port `5173`. If the test started the server then upon completion of the tests the server _should_ exit automatically, however on the occasion that something goes wrong you can use the following to find the process id running on that port and kill it manually. If the server is reused the server _should_ maintain active.
+`Playwright` has been configured to automatically start or reuse the existing development server on port `5173`. If the test started the server then upon completion of the tests the server _should_ exit automatically, however on the occasion that something goes wrong you can use the following to find the process id running on that port and kill it manually. If the server is reused the server _should_ maintain active.
 
 ```sh
 # NOTE: This command was tested on OSX only.
@@ -52,11 +52,11 @@ Using the [Playwright](https://marketplace.visualstudio.com/items?itemName=ms-pl
 
 For debugging simply set up a breakpoint in the test and run the test in debug mode and the test will pause at that location.
 
-> Note that the timouts will continue so tests may fail just sitting on a breakdown
+> Note that the timeouts will continue so tests may fail just sitting on a breakdown
 
 #### Creating Tests
 
-To create a new test simply make a new `xzy.spec.js` file inside the `tests/e2e/` folder, import
+To create a new test simply make a new `xzy.spec.ts` file inside the `tests/e2e/` folder, import
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -131,6 +131,28 @@ To run the component tests within the project simply run:
 
 ```sh
 yarn test:ct
+```
+
+To create a new test simply make a new `[component-name].spec.ts` file inside the `tests/component/` folder, import
+
+```ts
+import { test, expect } from '@playwright/experimental-ct-vue';
+```
+
+and write your tests.
+Example
+
+```ts
+import { test, expect } from '@playwright/experimental-ct-vue';
+import Foo from '@/components/Foo.vue';
+
+test.describe('test Foo component', () => {
+	test('should display the correct title', async ({ mount }) => {
+		const component = await mount(Foo);
+		const title = await component.locator('h1');
+		await expect(title).toBeVisible();
+	});
+});
 ```
 
 ## Vitest

@@ -18,8 +18,8 @@
 						:class="{ selected: isSelected(d) }"
 						@click="updateExpandedRow(d)"
 					>
-						<td class="output-col">
-							<div class="output-layout">
+						<td class="name-and-desc-col">
+							<div class="name-and-desc-layout">
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
 									<template v-if="enableMultipleSelection">
@@ -55,15 +55,15 @@
 								</div>
 							</div>
 						</td>
-						<td class="desc-col">
+						<td class="source-col">
 							<div class="text-bold">{{ d.source }}</div>
 						</td>
-						<td class="period-col">
+						<td class="category-col">
 							<div class="text-bold">{{ d.category }}</div>
 						</td>
-						<td class="timeseries-col">
-							<div class="timeseries-container">
-								<!-- timeseries renderer -->
+						<td class="preview-col">
+							<div class="preview-container">
+								<!-- preview renderer -->
 							</div>
 						</td>
 					</tr>
@@ -220,7 +220,7 @@ export default defineComponent({
 	.table-fixed-head {
 		overflow-y: auto;
 		overflow-x: hidden;
-		height: 600px;
+		height: 100%;
 		width: 100%;
 	}
 	.table-fixed-head thead th {
@@ -249,7 +249,7 @@ export default defineComponent({
 	}
 	.tr-item.selected {
 		border: 2px double $selected;
-		.output-col {
+		.name-and-desc-col {
 			border-left: 4px solid $selected;
 		}
 		td {
@@ -257,13 +257,12 @@ export default defineComponent({
 		}
 	}
 	.text-bold {
-		font-size: $font-size-large;
-		font-weight: 600;
+		font-weight: 500;
 		margin-bottom: 5px;
 	}
-	.output-col {
-		width: 33%;
-		.output-layout {
+	.name-and-desc-col {
+		width: 45%;
+		.name-and-desc-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
@@ -293,24 +292,21 @@ export default defineComponent({
 			}
 		}
 	}
-	.desc-col {
+	.source-col {
 		width: 33%;
 		overflow-wrap: anywhere;
 	}
-	.region-col {
-		width: 200px;
-	}
-	.period-col {
-		width: 120px;
+	.category-col {
+		width: 10%;
 	}
 	// time series hidden until actually put into use
-	.timeseries-col {
+	.preview-col {
 		padding-left: 5px;
 		padding-right: 10px;
 	}
-	.timeseries-container {
+	.preview-container {
 		background-color: #f1f1f1;
-		width: 110px;
+		width: 100%;
 		height: 50px;
 	}
 }

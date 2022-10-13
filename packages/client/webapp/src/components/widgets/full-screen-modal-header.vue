@@ -39,7 +39,7 @@ export default defineComponent({
 @import '../../styles/variables.scss';
 
 .full-screen-modal-header-container {
-	background-color: $accent-dark;
+	background-color: var(--un-color-accent-dark);
 	display: flex;
 	align-items: center;
 	min-height: 48px;
