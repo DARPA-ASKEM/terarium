@@ -27,3 +27,4 @@ docs/*  @dgauldie @pascaleproulx @YohannParis
 **/package.json
 **/yarn.lock
 **/Dockerfile*
+**/gradle.properties
