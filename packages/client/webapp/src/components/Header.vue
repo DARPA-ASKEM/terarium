@@ -39,8 +39,8 @@ header {
 	background-color: var(--un-color-body-surface-primary);
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
-	gap: 2em;
-	padding: 0.5em 1em;
+	gap: 2rem;
+	padding: 0.5rem 1rem;
 }
 
 p {
@@ -51,7 +51,7 @@ p {
 
 p > * + *::before {
 	content: '>';
-	margin: 0 1em;
+	margin: 0 1rem;
 }
 
 p a {
@@ -66,7 +66,7 @@ p a:focus {
 aside {
 	display: flex;
 	margin-left: auto; /* Push it to the far side */
-	gap: 1em;
+	gap: 1rem;
 }
 
 button.data-explorer {
