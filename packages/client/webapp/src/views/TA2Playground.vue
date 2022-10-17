@@ -162,6 +162,9 @@ let modelId = ''; // The session model
 let source: any = null;
 let target: any = null;
 
+let numRabbits = 100;
+let numWolves = 10;
+
 export default defineComponent({
 	name: 'TA2Playground',
 	async mounted() {
@@ -211,8 +214,109 @@ export default defineComponent({
 	},
 	methods: {
 		async refresh() {
-			await renderer.setData(g);
-			await renderer.render();
+			await renderer?.setData(g);
+			await renderer?.render();
+		},
+		async LotkaVolterra() {
+			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
+			const testData = await test.json();
+			modelId = testData.id;
+
+			console.log('modle id is', modelId);
+
+			// Reset
+			g.nodes = [];
+			g.edges = [];
+
+			g.nodes.push({
+				id: 'rabbits',
+				label: 'rabbits',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'species' }
+			});
+			g.nodes.push({
+				id: 'wolves',
+				label: 'wolves',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'species' }
+			});
+			g.nodes.push({
+				id: 'death',
+				label: 'death',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'transition' }
+			});
+			g.nodes.push({
+				id: 'birth',
+				label: 'birth',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'transition' }
+			});
+			g.nodes.push({
+				id: 'predation',
+				label: 'predation',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'transition' }
+			});
+
+			g.edges.push({ source: 'wolves', target: 'death', points: [] });
+			g.edges.push({ source: 'predation', target: 'wolves', points: [] });
+			g.edges.push({ source: 'wolves', target: 'predation', points: [] });
+			g.edges.push({ source: 'rabbits', target: 'predation', points: [] });
+			g.edges.push({ source: 'rabbits', target: 'birth', points: [] });
+			g.edges.push({ source: 'birth', target: 'rabbits', points: [] });
+
+			g = runLayout(_.cloneDeep(g));
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					nodes: [
+						{ name: 'rabbits', type: 'S' },
+						{ name: 'wolves', type: 'S' },
+						{ name: 'birth', type: 'T' },
+						{ name: 'death', type: 'T' },
+						{ name: 'predation', type: 'T' }
+					],
+					edges: [
+						{ source: 'wolves', target: 'death' },
+						{ source: 'predation', target: 'wolves' },
+						{ source: 'predation', target: 'wolves' },
+						{ source: 'wolves', target: 'predation' },
+						{ source: 'rabbits', target: 'predation' },
+						{ source: 'rabbits', target: 'birth' },
+						{ source: 'birth', target: 'rabbits' },
+						{ source: 'birth', target: 'rabbits' }
+					]
+				})
+			});
+
+			this.refresh();
+			this.jsonOutput();
 		},
 		async jsonOutput() {
 			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
@@ -325,6 +429,75 @@ export default defineComponent({
 				})
 			});
 			this.jsonOutput();
+		},
+		async simulate() {
+			numWolves = +(Math.random() * 100).toFixed();
+			numRabbits = +(Math.random() * 100).toFixed();
+
+			// Run a simulation on LotkaVolterra with random values
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/simulate`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					variables: {
+						rabbits: numRabbits,
+						wolves: numWolves
+					},
+					parameters: {
+						birth: 0.3,
+						predation: 0.015,
+						death: 0.7
+					}
+				})
+			});
+			const output = await resp.json();
+			this.renderResult(output);
+		},
+		renderResult(result: any) {
+			const el = d3.select('#solution');
+			el.selectAll('*').remove();
+			console.log(result);
+
+			const svg = el.append('svg').style('width', '100%').style('height', '100%');
+
+			svg
+				.append('text')
+				.attr('x', 20)
+				.attr('y', 35)
+				.style('stroke', null)
+				.style('fill', 'red')
+				.text(`rabbits: ${numRabbits}`);
+
+			svg
+				.append('text')
+				.attr('x', 120)
+				.attr('y', 35)
+				.style('stroke', null)
+				.style('fill', 'blue')
+				.text(`wolves: ${numWolves}`);
+
+			for (let idx = 0; idx < result.u.length; idx++) {
+				const bars = result.u[idx];
+
+				svg
+					.append('circle')
+					.attr('cx', 6 * idx)
+					.attr('cy', 200 - bars[0])
+					.attr('r', 3)
+					.style('stroke', null)
+					.style('fill', 'red');
+
+				svg
+					.append('circle')
+					.attr('cx', 6 * idx)
+					.attr('cy', 200 - bars[1])
+					.attr('r', 3)
+					.style('stroke', null)
+					.style('fill', 'blue');
+			}
 		}
 	}
 });
@@ -335,9 +508,14 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
+		&nbsp;
+		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
+		<button type="button" @click="simulate">Simulate</button>
+
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="output" class="playground-panel"></div>
+			<div id="solution" class="playground-panel"></div>
 		</div>
 	</section>
 </template>
