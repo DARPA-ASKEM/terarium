@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
-import IconList24 from '@carbon/icons-vue/es/list/24';
-// import IconTime32 from '@carbon/icons-vue/es/time/32';
-// import IconFire32 from '@carbon/icons-vue/es/fire/32';
-// import IconCoronavirus32 from '@carbon/icons-vue/es/coronavirus/32';
-// import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
+import ProjectCard from '@/components/ProjectCard.vue';
+import IconTime32 from '@carbon/icons-vue/es/time/32';
+import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
+import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
+import IconFire32 from '@carbon/icons-vue/es/fire/32';
+import IconCoronavirus32 from '@carbon/icons-vue/es/coronavirus/32';
+
 import { uncloak } from '../utils/uncloak';
 
 const projectCategories: string[] = ['Recents', 'Trending', 'Epidemiology'];
@@ -32,17 +34,24 @@ async function apiCall(type = '') {
 	<section>
 		<h2>Projects</h2>
 		<div v-for="(category, c) in projectCategories" :key="c">
-			<h3><IconTime32 />{{ category }}</h3>
-			<div class="project-carousel">
-				<div class="project" v-for="(project, p) in dummyProjects" :key="p">
-					<!-- <IconAddFilled32 v-if="p === 0" /> -->
-					<div class="details">
-						<div class="name">{{ project }} {{ p }}</div>
-						<div class="actions">
-							<IconList24 />
-						</div>
-					</div>
+			<h3>
+				<IconTime32 v-if="category === 'Recents'" />
+				<IconFire32 v-else-if="category === 'Trending'" />
+				<IconCoronavirus32 v-else-if="category === 'Epidemiology'" />
+				{{ category /** Maybe a better way to do the above */ }}
+			</h3>
+			<div class="project-carousel-container">
+				<IconChevronLeft32 />
+				<div class="project-carousel">
+					<ProjectCard
+						v-for="(projectName, p) in dummyProjects"
+						:key="p"
+						:category="category"
+						:projectName="projectName"
+						:p="p"
+					/>
 				</div>
+				<IconChevronRight32 />
 			</div>
 		</div>
 		<div class="test">
@@ -65,7 +74,7 @@ async function apiCall(type = '') {
 section {
 	color: var(--un-color-black-80);
 	margin: 1rem auto;
-	width: 80%;
+	width: 95%;
 	text-align: center;
 }
 
@@ -79,12 +88,13 @@ h2 {
 	border-bottom: 2px solid var(--un-color-black-20);
 	font-size: 2.5rem;
 	padding: 1rem 0 1rem 0;
-	margin-bottom: 0.5rem;
+	margin: 0 3rem 0.5rem 3rem;
 	padding-left: 1rem;
 }
 
 h3 {
 	font-size: 2rem;
+	margin-left: 4rem;
 	font-weight: 400;
 	display: flex;
 	align-items: center;
@@ -92,53 +102,44 @@ h3 {
 }
 
 h3 svg {
-	margin: 0 0.5rem;
+	margin-right: 0.5rem;
 	color: var(--un-color-accent);
+}
+
+.project-carousel-container {
+	display: flex;
+	align-items: center;
+}
+
+.project-carousel-container svg {
+	min-width: max-content;
+	margin: 0.5rem;
+	margin-bottom: 1rem;
+	cursor: pointer;
+	visibility: hidden;
+}
+
+.project-carousel-container svg:hover {
+	background-color: var(--un-color-black-5);
+	color: var(--un-color-accent);
+	border-radius: 10rem;
+}
+
+.project-carousel-container:hover .project-carousel {
+	height: 22rem;
+}
+
+.project-carousel-container:hover svg {
+	visibility: visible;
 }
 
 .project-carousel {
 	display: flex;
-	overflow-x: scroll;
-	overflow-y: hidden;
-}
-
-.project-carousel .project {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	height: 15rem;
-	min-width: 20rem;
-	border: 1px solid var(--un-color-black-20);
-	background-color: var(--un-color-black-5);
-	border-radius: 10px;
-	margin: 0.5rem;
+	height: 18rem;
 	transition: 0.2s;
-	text-align: left;
-}
-
-.project-carousel .project .details {
-	border-top: 1px solid var(--un-color-black-20);
-}
-
-.details .name,
-.details .actions {
-	font-weight: 500;
-	padding: 0.5rem 1rem;
-}
-
-.details .actions {
-	/* display: none; */
-	padding: 0 0 0.25rem 1rem;
-}
-
-.details .actions svg:hover {
-	color: var(--un-color-accent);
-	cursor: pointer;
-}
-
-.project-carousel .project svg {
-	color: var(--un-color-black-80);
-	margin: auto;
+	align-items: center;
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .test {
