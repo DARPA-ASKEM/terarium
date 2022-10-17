@@ -514,8 +514,8 @@ export default defineComponent({
 
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
-			<div id="output" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
+			<div id="output" class="playground-panel"></div>
 		</div>
 	</section>
 </template>
