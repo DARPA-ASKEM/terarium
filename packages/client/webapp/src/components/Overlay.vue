@@ -53,7 +53,7 @@ export default defineComponent({
 
 	.message-container {
 		font-size: 4rem;
-		color: $text-color-light;
+		color: var(--un-color-black-20);
 	}
 
 	.message-secondary-container {
