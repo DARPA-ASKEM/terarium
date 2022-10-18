@@ -27,7 +27,7 @@
 							</div>
 						</td>
 						<td v-for="v in clustersInfo.variables" :key="v">
-							<div v-if="c.clusterVariables.includes(v)" class="preview-container"></div>
+							<div v-if="isClusterIncludesVariable(c, v)" class="preview-container"></div>
 						</td>
 					</tr>
 				</tbody>
@@ -41,7 +41,7 @@ import { defineComponent, PropType } from 'vue';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
-import { groupBy } from 'lodash';
+import { groupBy, omit, uniq } from 'lodash';
 import { isModel, isXDDArticle } from '@/utils/data-util';
 
 type ResultsCluster = {
@@ -62,6 +62,10 @@ export default defineComponent({
 			type: Array as PropType<ResultType[]>,
 			required: true
 		},
+		dictNames: {
+			type: Array as PropType<string[]>,
+			default: () => []
+		},
 		resultType: {
 			type: String,
 			default: ResourceType.ALL
@@ -69,7 +73,8 @@ export default defineComponent({
 	},
 	emits: ['toggle-data-item-selected'],
 	data: () => ({
-		ResourceType
+		ResourceType,
+		defaultClusterName: '[No Name]'
 	}),
 	computed: {
 		filteredModels() {
@@ -113,34 +118,103 @@ export default defineComponent({
 			}
 
 			if (this.resultType === ResourceType.XDD) {
-				const clusterVariable = 'journal';
-				const clusteredArticles = groupBy(this.filteredArticles, clusterVariable);
+				// cluster by known_terms, e.g., genes, and if not available then by some default field
+				let clusterVariable = 'publisher';
+				let articlesToCluster = this.filteredArticles;
+				let clusteredArticles: { [clusterKey: string]: XDDArticle[] } = {};
+				const mutualExclusiveClutering = true;
+
+				const areKnownTermsIncluded = this.dictNames.length > 0;
+				if (areKnownTermsIncluded) {
+					// REVIEW: not sure why when known_terms are included the results are coming as an array
+					//         for each article although the known terms
+					//         are actually included as a multi-key object in the known_terms array
+					// FIXME: should we allow clustering across multiple known_terms?
+					const dicNamesIndex = 0;
+
+					clusterVariable = this.dictNames[dicNamesIndex];
+					articlesToCluster = this.filteredArticles.map((ar) => ({
+						...ar,
+						[clusterVariable]:
+							ar.known_terms && ar.known_terms.length > 0
+								? ar.known_terms[dicNamesIndex][clusterVariable]
+								: []
+					}));
+
+					if (mutualExclusiveClutering) {
+						// i.e., each cluster will only includes the items that exactly match the cluster variable
+						clusteredArticles = groupBy(articlesToCluster, clusterVariable);
+					} else {
+						// special clustering is needed
+						//  since the cluster field (or key), e.g., known_terms, is an array
+						// and also because each cluster may include items included in other clusters
+						clusteredArticles = articlesToCluster.reduce((carry, element) => {
+							if (element.known_terms !== undefined) {
+								if (element.known_terms.length > 0) {
+									// check current known terms and add them to the relevant cluster
+									element.known_terms[dicNamesIndex][clusterVariable].forEach((tag) => {
+										carry[tag] = carry[tag] || [];
+										carry[tag].push({ ...element });
+									});
+								} else {
+									// no known terms associated with this article, so add to the default cluster (with key = '')
+									const tag = '';
+									carry[tag] = carry[tag] || [];
+									carry[tag].push({ ...element });
+								}
+							}
+							return carry;
+						}, {});
+					}
+				} else {
+					clusteredArticles = groupBy(articlesToCluster, clusterVariable);
+				}
+
 				const names = Object.keys(clusteredArticles);
+				const invalidClusterNameIndex = names.findIndex((name) => name === '');
+				if (invalidClusterNameIndex >= 0) {
+					clusteredArticles[this.defaultClusterName] = clusteredArticles[''];
+					clusteredArticles = omit(clusteredArticles, ['']); // remove invalid cluster
+					names[invalidClusterNameIndex] = this.defaultClusterName;
+				}
+
 				vars.push(...names);
+				let letterCounter = 'A'.charCodeAt(0);
 				names.forEach((name) => {
-					// are all the cluster items selected?
 					const clusterItems = clusteredArticles[name];
+
+					// are all the cluster items selected?
 					// FIXME: this is not reflected in the facets panel
 					const isClusterSelected = clusterItems.every((clusterItem) =>
 						this.isDataItemSelected(clusterItem)
 					);
+
+					const clusterVars = areKnownTermsIncluded
+						? uniq(clusterItems.map((item) => (item as any)[clusterVariable]).flat())
+						: [name];
+
+					const clusterName = String.fromCharCode(letterCounter++);
 					const c: ResultsCluster = {
-						name,
+						name: `Cluster ${clusterName}`, // name // 'Cluster ' + clusterName
 						selected: isClusterSelected,
 						items: clusterItems,
-						clusterVariables: [name]
+						clusterVariables: clusterVars
 					};
 					res.push(c);
 				});
 			}
 
 			return {
-				clusters: res,
+				clusters: res, // @TODO: consider sorting clusters
 				variables: vars
 			};
 		}
 	},
 	methods: {
+		isClusterIncludesVariable(c: ResultsCluster, v: string) {
+			if (c.clusterVariables.length === 0 && v === this.defaultClusterName) return true;
+			return c.clusterVariables.includes(v);
+		},
 		updateSelection(cluster: ResultsCluster) {
 			cluster.selected = !cluster.selected;
 			cluster.items.forEach((item) => {
@@ -211,13 +285,17 @@ export default defineComponent({
 	}
 	.table-fixed-head {
 		overflow-y: auto;
-		overflow-x: hidden;
+		overflow-x: auto;
 		height: 100%;
 		width: 100%;
 	}
 	.table-fixed-head thead th {
 		transform: rotate(-180deg);
 		writing-mode: vertical-lr;
+		position: sticky;
+		top: -1px;
+		z-index: 1;
+		background-color: aliceblue;
 	}
 
 	.tr-item {
@@ -240,14 +318,13 @@ export default defineComponent({
 			}
 			.content {
 				flex: 1 1 auto;
-				overflow-wrap: anywhere;
 			}
 		}
 	}
 	.preview-container {
-		background-color: lightgray;
-		height: 50px;
-		width: 50px;
+		background-color: gray;
+		height: 30px;
+		width: 20px;
 		margin: 0 auto;
 	}
 }
