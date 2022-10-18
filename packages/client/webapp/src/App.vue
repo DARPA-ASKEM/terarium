@@ -6,10 +6,8 @@ import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 
 import useAuthStore from './stores/auth';
-import useAppStore from './stores/app';
 
 const auth = useAuthStore();
-const appStore = useAppStore();
 
 /**
  * Before mounting go fetch the SSO
@@ -26,22 +24,31 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 // 	}
 // });
 
-const overlayActivated = computed(() => appStore.overlayActivated);
-const overlayMessage = computed(() => appStore.overlayMessage);
-const overlayMessageSecondary = computed(() => appStore.overlayMessageSecondary);
-const overlayCancelFn = computed(() => appStore.overlayCancelFn);
+const overlayActivated = ref(false);
+const overlayMessage = ref('Loading...');
+
+const enableOverlay = (message?: string) => {
+	overlayActivated.value = true;
+	if (message !== undefined) {
+		overlayMessage.value = message;
+	}
+};
+
+const disableOverlay = () => {
+	overlayActivated.value = false;
+};
 
 const dataExplorerActivated = ref(false);
 </script>
 
 <template>
-	<overlay
-		v-if="overlayActivated"
-		:message="overlayMessage"
-		:messageSecondary="overlayMessageSecondary"
-		:cancel-fn="overlayCancelFn"
+	<overlay v-if="overlayActivated" :message="overlayMessage" />
+	<data-explorer
+		v-if="dataExplorerActivated"
+		@hide="dataExplorerActivated = false"
+		@show-overlay="enableOverlay"
+		@hide-overlay="disableOverlay"
 	/>
-	<data-explorer v-if="dataExplorerActivated" @hide="dataExplorerActivated = false" />
 	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main v-if="isAuthenticated">
 		<Sidebar class="sidebar" />

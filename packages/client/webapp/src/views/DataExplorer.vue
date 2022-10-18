@@ -103,7 +103,6 @@ import { getFacets } from '@/utils/facets';
 import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
-import useAppStore from '@/stores/app';
 import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
 
@@ -122,21 +121,19 @@ export default defineComponent({
 		FacetsPanel,
 		AutoComplete
 	},
-	emits: ['hide'],
+	emits: ['hide', 'show-overlay', 'hide-overlay'],
 	setup() {
 		const dataItems = ref<SearchResults[]>([]);
 		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
 		const selectedSearchItems = ref<string[]>([]);
 		const filter = ref<string[]>([]);
 		const query = useQueryStore();
-		const app = useAppStore();
 		return {
 			filter,
 			dataItems,
 			filteredDataItems,
 			selectedSearchItems,
-			query,
-			app
+			query
 		};
 	},
 	data: () => ({
@@ -270,7 +267,7 @@ export default defineComponent({
 			//   size: this.pageSize
 			// };
 
-			this.app.enableOverlay();
+			this.$emit('show-overlay');
 
 			const searchParams: SearchParameters = {
 				xdd: {
@@ -287,7 +284,7 @@ export default defineComponent({
 			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
 			this.dataItems = allData;
 
-			this.app.disableOverlay();
+			this.$emit('hide-overlay');
 		},
 		applyFiltersToData() {
 			const allDataCloned = cloneDeep(this.dataItems);
