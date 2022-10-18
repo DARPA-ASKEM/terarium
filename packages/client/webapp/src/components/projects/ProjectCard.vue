@@ -1,30 +1,25 @@
 <script setup lang="ts">
 import IconNoImage32 from '@carbon/icons-vue/es/no-image/32';
-import IconList24 from '@carbon/icons-vue/es/list/24';
 
 interface Props {
 	name: string;
 }
-const props = withDefaults(defineProps<Props>(), { name: '' });
+const props = withDefaults(defineProps<Props>(), {
+	name: 'Default Project Name'
+});
 </script>
 
 <template>
 	<li class="project-card">
 		<IconNoImage32 />
-		<div class="details">
-			<div class="name">{{ props?.name }}</div>
-			<div class="actions">
-				<IconList24 />
-			</div>
-		</div>
+		<footer>{{ props?.name }}</footer>
 	</li>
 </template>
 
 <style scoped>
 .project-card {
-	color: var(--un-color-black-80);
 	border: 1px solid var(--un-color-black-20);
-	background-color: var(--un-color-black-5);
+	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
@@ -42,21 +37,9 @@ const props = withDefaults(defineProps<Props>(), { name: '' });
 	cursor: pointer;
 }
 
-.details {
+footer {
 	border-top: 1px solid var(--un-color-black-20);
-}
-
-.details div {
 	padding: 0.5rem 1rem;
-}
-
-.details .actions {
-	display: none;
-	padding: 0 0 0.25rem 1rem;
-}
-
-.project-card:hover .details .actions {
-	display: block;
 }
 
 svg {

@@ -44,7 +44,7 @@ const dummyProjects: string[] = Array(8)
 <style scoped>
 section {
 	color: var(--un-color-body-text-secondary);
-	margin: 1rem auto;
+	padding-top: 1rem;
 }
 
 h2 {

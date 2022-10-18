@@ -16,10 +16,8 @@ function createNewProject() {}
 
 <style scoped>
 .new-project-card {
-	color: var(--un-color-black-80);
 	border: 1px solid var(--un-color-black-20);
-	background-color: var(--un-color-black-5);
-	font-weight: 500;
+	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
