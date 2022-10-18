@@ -57,6 +57,13 @@ export type XDDResult = {
 	};
 };
 
+export type XDDSearchParams = {
+	known_terms?: string[];
+	dataset?: string | null;
+	enablePagination: boolean;
+	pageSize?: number;
+};
+
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
 
 //
