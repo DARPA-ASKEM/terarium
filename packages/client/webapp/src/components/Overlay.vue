@@ -35,7 +35,6 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables';
 
 .overlay-container {
 	position: absolute;
