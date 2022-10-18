@@ -22,22 +22,12 @@
 							<div class="name-and-desc-layout">
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
-									<template v-if="enableMultipleSelection">
-										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-square-check"></i
-										></span>
-										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-square"></i
-										></span>
-									</template>
-									<template v-else>
-										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-circle"></i
-										></span>
-										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-circle-xmark"></i
-										></span>
-									</template>
+									<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
+										><i class="fa-lg fa-regular fa-square-check"></i
+									></span>
+									<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
+										><i class="fa-lg fa-regular fa-square"></i
+									></span>
 									<i class="fa-regular fa-lg fa-fw" :class="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
@@ -77,8 +67,8 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Model } from '@/types/Model';
-import { ResourceType } from '@/types/common';
-import { getResourceTypeIcon } from '@/utils/data-util';
+import { ResourceType, ResultType } from '@/types/common';
+import { getResourceTypeIcon, isModel } from '@/utils/data-util';
 
 /**
  * name: string;
@@ -99,15 +89,11 @@ export default defineComponent({
 			default: () => []
 		},
 		selectedSearchItems: {
-			type: Array as PropType<string[]>,
+			type: Array as PropType<ResultType[]>,
 			required: true
-		},
-		enableMultipleSelection: {
-			type: Boolean,
-			default: false
 		}
 	},
-	emits: ['toggle-model-selected', 'set-model-selected'],
+	emits: ['toggle-model-selected'],
 	setup(props) {
 		const expandedRowId = ref('');
 
@@ -156,18 +142,17 @@ export default defineComponent({
 			return d.description;
 		},
 		isSelected(model: Model) {
-			return this.selectedSearchItems.find((item) => item === model.id) !== undefined;
+			return this.selectedSearchItems.find((item) => {
+				if (isModel(item)) {
+					const itemAsModel = item as Model;
+					return itemAsModel.id === model.id;
+				}
+				return false;
+			});
 		},
 		updateSelection(model: Model) {
 			if (!this.isDisabled(model)) {
-				const item = model.id;
-				if (this.enableMultipleSelection) {
-					// if the model is not in the list add it, otherwise remove it
-					this.$emit('toggle-model-selected', item);
-				} else {
-					// only one selection is allowed, so replace the entire array
-					this.$emit('set-model-selected', item);
-				}
+				this.$emit('toggle-model-selected', model);
 			}
 		},
 		formatDescription(d: Model) {

@@ -21,20 +21,11 @@
 					>
 						<td class="title-and-abstract-col">
 							<div class="title-and-abstract-layout">
-								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
-									<template v-if="enableMultipleSelection">
-										<span v-show="isSelected(d)"
-											><i class="fa-lg fa-regular fa-square-check"></i
-										></span>
-										<span v-show="!isSelected(d)"><i class="fa-lg fa-regular fa-square"></i></span>
-									</template>
-									<template v-else>
-										<span v-show="isSelected(d)"><i class="fa-lg fa-regular fa-circle"></i></span>
-										<span v-show="!isSelected(d)"
-											><i class="fa-lg fa-regular fa-circle-xmark"></i
-										></span>
-									</template>
+									<span v-show="isSelected(d)"
+										><i class="fa-lg fa-regular fa-square-check"></i
+									></span>
+									<span v-show="!isSelected(d)"><i class="fa-lg fa-regular fa-square"></i></span>
 									<i
 										:class="getResourceTypeIcon(ResourceType.XDD)"
 										style="margin-left: 4px; margin-right: 4px"
@@ -79,7 +70,7 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
-import { ResourceType } from '@/types/common';
+import { ResourceType, ResultType } from '@/types/common';
 import { getResourceTypeIcon } from '@/utils/data-util';
 
 export default defineComponent({
@@ -93,15 +84,11 @@ export default defineComponent({
 			default: () => []
 		},
 		selectedSearchItems: {
-			type: Array as PropType<string[]>,
+			type: Array as PropType<ResultType[]>,
 			required: true
-		},
-		enableMultipleSelection: {
-			type: Boolean,
-			default: false
 		}
 	},
-	emits: ['toggle-article-selected', 'set-article-selected'],
+	emits: ['toggle-article-selected'],
 	setup(props) {
 		const expandedRowId = ref('');
 
@@ -138,17 +125,16 @@ export default defineComponent({
 			return d.author.map((a) => a.name).join('\n');
 		},
 		isSelected(article: XDDArticle) {
-			return this.selectedSearchItems.find((item) => item === article.title) !== undefined;
+			return this.selectedSearchItems.find((item) => {
+				const itemAsArticle = item as XDDArticle;
+				if (itemAsArticle) {
+					return itemAsArticle.title === article.title;
+				}
+				return false;
+			});
 		},
 		updateSelection(article: XDDArticle) {
-			const item = article.title;
-			if (this.enableMultipleSelection) {
-				// if the article is not in the list add it, otherwise remove it
-				this.$emit('toggle-article-selected', item);
-			} else {
-				// only one selection is allowed, so replace the entire array
-				this.$emit('set-article-selected', item);
-			}
+			this.$emit('toggle-article-selected', article);
 		},
 		formatDescription(d: XDDArticle) {
 			if (!d.abstract) return '';

@@ -1,17 +1,6 @@
 <template>
 	<full-screen-modal-header icon="angle-left" :nav-back-label="navBackLabel" @close="onBack">
-		<button
-			type="button"
-			class="btn btn-call-to-action"
-			:disabled="selectedSearchItems.length < 1"
-			@click="onSelection"
-		>
-			<i class="fa fa-fw fa-plus-circle" />
-			{{ selectLabel }}
-		</button>
-		<span>
-			<span class="selected">{{ selectedSearchItems.length }} &nbsp; selected</span>
-		</span>
+		<slot name="content"></slot>
 	</full-screen-modal-header>
 </template>
 
@@ -25,28 +14,13 @@ export default defineComponent({
 		FullScreenModalHeader
 	},
 	props: {
-		selectLabel: {
-			type: String,
-			default: 'Add'
-		},
 		navBackLabel: {
 			type: String,
 			default: ''
-		},
-		showNamingModal: {
-			type: Boolean,
-			default: false
-		},
-		selectedSearchItems: {
-			type: Array,
-			required: true
 		}
 	},
-	emits: ['close', 'selection'],
+	emits: ['close'],
 	methods: {
-		onSelection() {
-			this.$emit('selection');
-		},
 		onBack() {
 			this.$emit('close');
 		}
@@ -54,9 +28,4 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-.selected {
-	font-weight: bold;
-	margin: 12px;
-}
-</style>
+<style lang="scss" scoped></style>

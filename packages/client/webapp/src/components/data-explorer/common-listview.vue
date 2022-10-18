@@ -11,12 +11,21 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="d in items" :key="d.id" class="tr-item" @click="updateExpandedRow(d)">
+					<tr
+						v-for="d in items"
+						:key="d.id"
+						class="tr-item"
+						:class="{ selected: isSelected(d) }"
+						@click="updateExpandedRow(d)"
+					>
 						<td class="name-col">
 							<div class="name-layout">
-								<div class="radio">
+								<div class="radio" @click.stop="updateSelection(d)">
+									<span v-show="isSelected(d)"
+										><i class="fa-lg fa-regular fa-square-check"></i
+									></span>
+									<span v-show="!isSelected(d)"><i class="fa-lg fa-regular fa-square"></i></span>
 									<i
-										class="fa-regular fa-lg fa-fw"
 										:class="getResourceTypeIcon(d.type)"
 										style="margin-left: 4px; margin-right: 4px"
 									></i>
@@ -50,10 +59,10 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { ResourceType, SearchResults } from '@/types/common';
+import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
-import { getResourceTypeIcon } from '@/utils/data-util';
+import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 
 type GenericResult = {
 	id: string;
@@ -72,8 +81,13 @@ export default defineComponent({
 		inputItems: {
 			type: Array as PropType<SearchResults[]>,
 			default: () => []
+		},
+		selectedSearchItems: {
+			type: Array as PropType<ResultType[]>,
+			required: true
 		}
 	},
+	emits: ['toggle-item-selected'],
 	setup(props) {
 		const expandedRowId = ref('');
 
@@ -150,6 +164,44 @@ export default defineComponent({
 			return this.isExpanded(item) || item.source.length < maxSize
 				? item.source
 				: `${item.source.substring(0, maxSize)}...`;
+		},
+		getOriginalItem(item: GenericResult) {
+			// FIXME: make this func computed
+			const originalResults = this.inputItems.find((items) => items.searchSubsystem === item.type);
+			if (originalResults) {
+				const idField = item.type === ResourceType.XDD ? '_gddid' : 'id'; // FIXME
+				const originalItem = originalResults.results.find(
+					(resItem) => resItem[idField] === item.id
+				);
+				return originalItem;
+			}
+			return undefined;
+		},
+		updateSelection(item: GenericResult) {
+			// get the original item that corresponds to this "transformed" item
+			const originalItem = this.getOriginalItem(item);
+			if (originalItem) {
+				this.$emit('toggle-item-selected', originalItem);
+			}
+		},
+		isSelected(item: GenericResult) {
+			const originalItem: ResultType | undefined = this.getOriginalItem(item);
+			if (originalItem) {
+				return this.selectedSearchItems.find((searchItem) => {
+					if (isModel(originalItem)) {
+						const itemAsModel = originalItem as Model;
+						const searchItemAsModel = searchItem as Model;
+						return searchItemAsModel.id === itemAsModel.id;
+					}
+					if (isXDDArticle(originalItem)) {
+						const itemAsArticle = originalItem as XDDArticle;
+						const searchItemAsArticle = searchItem as XDDArticle;
+						return searchItemAsArticle.title === itemAsArticle.title; // FIXME: should this be _gddid
+					}
+					return false;
+				});
+			}
+			return false;
 		}
 	}
 });

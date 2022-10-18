@@ -1,5 +1,6 @@
 <template>
 	<div class="search-bar-container">
+		<slot name="dataset"></slot>
 		<div>
 			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
 			<input
@@ -12,7 +13,7 @@
 				@input="searchTextHandler"
 			/>
 		</div>
-		<div v-if="!realtime" class="flex-aligned" style="margin-bottom: 5px">
+		<div v-if="!realtime" class="flex-aligned">
 			<div v-for="searchTerm in searchTerms" :key="searchTerm" class="flex-aligned-item">
 				{{ searchTerm }}
 				<span class="flex-aligned-item-delete-btn" @click.stop="removeSearchTerm(searchTerm)">
@@ -23,8 +24,8 @@
 		<button
 			v-if="enableClearButton"
 			type="button"
-			class="btn clear-button button-padding"
-			:class="{ 'clear-button-disabled': isClearButtonDisabled }"
+			class="search-and-clear-buttons button-padding"
+			:class="{ 'button-disabled': isClearButtonDisabled }"
 			:disabled="isClearButtonDisabled"
 			@click="clearText"
 		>
@@ -33,14 +34,14 @@
 		<button
 			v-if="enableSearchButton"
 			type="button"
-			class="btn button-padding search-button"
-			:class="{ 'search-button-disabled': isSearchButtonDisabled }"
+			class="search-and-clear-buttons button-padding"
+			:class="{ 'button-disabled': isSearchButtonDisabled }"
 			:disabled="isSearchButtonDisabled"
 			@click="searchBtnHandler"
 		>
 			<i class="fa fa-search" />&nbsp;Search
 		</button>
-		<slot v-if="showSortedResults" name="sort"></slot>
+		<slot name="sort"></slot>
 	</div>
 </template>
 
@@ -60,11 +61,11 @@ export default defineComponent({
 		},
 		searchLabel: {
 			type: String,
-			default: 'Search'
+			default: ''
 		},
 		searchPlaceholder: {
 			type: String,
-			default: 'search text here...'
+			default: 'search term here...'
 		},
 		enableClearButton: {
 			type: Boolean,
@@ -73,10 +74,6 @@ export default defineComponent({
 		enableSearchButton: {
 			type: Boolean,
 			default: true
-		},
-		showSortedResults: {
-			type: Boolean,
-			default: false
 		}
 	},
 	emits: ['search-text-changed'],
@@ -140,8 +137,7 @@ export default defineComponent({
 <style lang="scss" scoped>
 .search-bar-container {
 	display: flex;
-	background-color: darkgray;
-	align-items: baseline;
+	align-items: center;
 	justify-content: center;
 }
 
@@ -153,31 +149,30 @@ export default defineComponent({
 	cursor: pointer;
 }
 
-.clear-button {
+button {
+	border-width: thin;
+	border-color: white;
+	border-radius: 6px;
+}
+
+.search-and-clear-buttons {
 	color: white;
 }
 
-.search-button {
-	background-color: #2d8e2dff;
-}
-.search-button-disabled {
+.button-disabled {
 	background-color: darken($color: #92e192ff, $amount: 50%);
-	cursor: not-allowed;
-}
-.clear-button-disabled {
-	background-color: darken($color: white, $amount: 50%);
 	cursor: not-allowed;
 }
 
 .flex-aligned {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 }
 
 .flex-aligned-item {
 	display: flex;
 	align-items: center;
-	color: var(--un-color-accent-darker);
+	color: white;
 
 	.flex-aligned-item-delete-btn {
 		color: red;
@@ -188,17 +183,25 @@ export default defineComponent({
 }
 
 .search-label {
-	color: black;
+	color: white;
 	font-weight: bold;
 	padding: 8px;
 }
 
 input[type='text'] {
 	padding: 6px;
-	border: none;
-	margin-top: 8px;
 	margin-right: 16px;
+	margin-left: 16px;
 	font-size: 17px;
 	min-width: 300px;
+	border-color: white;
+	border-width: 1px;
+	border-style: solid;
+	background-color: transparent;
+	color: white;
+}
+
+input[type='text']:focus {
+	outline: none;
 }
 </style>
