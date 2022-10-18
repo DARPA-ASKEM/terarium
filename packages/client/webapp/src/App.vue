@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { onBeforeMount, computed } from 'vue';
+import { onBeforeMount, computed, ref } from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import { useAuthStore } from './stores/auth';
+import Overlay from '@/components/Overlay.vue';
+import DataExplorer from '@/views/DataExplorer.vue';
+
+import useAuthStore from './stores/auth';
 
 const auth = useAuthStore();
+
 /**
  * Before mounting go fetch the SSO
  * to make sure user has credentials to view app
@@ -19,10 +23,34 @@ const isAuthenticated = computed(() => auth.isAuthenticated);
 // 		window.location.assign('/logout');
 // 	}
 // });
+
+const overlayActivated = ref(false);
+const overlayMessage = ref('Loading...');
+
+const enableOverlay = (message?: string) => {
+	overlayActivated.value = true;
+	if (message !== undefined) {
+		overlayMessage.value = message;
+	}
+};
+
+const disableOverlay = () => {
+	overlayActivated.value = false;
+};
+
+const dataExplorerActivated = ref(false);
 </script>
 
 <template>
-	<Header class="header" />
+	<overlay v-if="overlayActivated" :message="overlayMessage" />
+	<data-explorer
+		v-if="dataExplorerActivated"
+		class="data-explorer"
+		@hide="dataExplorerActivated = false"
+		@show-overlay="enableOverlay"
+		@hide-overlay="disableOverlay"
+	/>
+	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main v-if="isAuthenticated">
 		<Sidebar class="sidebar" />
 		<router-view class="page" />
@@ -47,5 +75,9 @@ main {
 
 .page {
 	z-index: 1;
+}
+
+.data-explorer {
+	z-index: 3;
 }
 </style>

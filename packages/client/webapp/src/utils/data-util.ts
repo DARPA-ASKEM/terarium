@@ -1,4 +1,4 @@
-import { SearchResults } from '@/types/common';
+import { ResourceType, SearchResults } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
@@ -45,19 +45,29 @@ export const applyFacetFiltersToData = (
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
+	results.forEach((resultsObj) => {
+		if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
+			if (resultsObj.searchSubsystem === ResourceType.XDD) {
+				const xddResults = resultsObj.results as XDDArticle[];
+				applyFiltersToArticles(xddResults, filters);
+			}
+			if (resultsObj.searchSubsystem === ResourceType.MODEL) {
+				const modelResults = resultsObj.results as Model[];
+				applyFiltersToModels(modelResults, filters);
+			}
+		}
+	});
+};
 
-	const resultsObj = results.find((res) => res.searchSubsystem === resultType);
-	if (resultsObj) {
-		// extract facets based on the result type
-		// because we would have different facets for different result types
-		// e.g., XDD will have facets that leverage the XDD fields and stats
-		if (resultType === 'xdd') {
-			const xddResults = resultsObj.results as XDDArticle[];
-			applyFiltersToArticles(xddResults, filters);
-		}
-		if (resultType === 'model') {
-			const modelResults = resultsObj.results as Model[];
-			applyFiltersToModels(modelResults, filters);
-		}
+export const getResourceTypeIcon = (type: string) => {
+	if (type === ResourceType.MODEL) {
+		return 'fa-regular fa-brands fa-connectdevelop';
 	}
+	if (type === ResourceType.DATASET) {
+		return 'fa-regular fa-solid fa-table-cells';
+	}
+	if (type === ResourceType.XDD) {
+		return 'fa-solid fa-file';
+	}
+	return 'fa-regular fa-solid fa-file-lines';
 };

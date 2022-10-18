@@ -26,8 +26,7 @@ let timer: NodeJS.Timeout;
 /**
  * Main store used for authentication
  */
-// eslint-disable-next-line import/prefer-default-export
-export const useAuthStore = defineStore('auth', {
+const useAuthStore = defineStore('auth', {
 	state: () => ({
 		userId: null,
 		userToken: null as string | null,
@@ -91,3 +90,5 @@ export const useAuthStore = defineStore('auth', {
 		}
 	}
 });
+
+export default useAuthStore;

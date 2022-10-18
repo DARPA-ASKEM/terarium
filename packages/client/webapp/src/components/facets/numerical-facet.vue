@@ -44,7 +44,7 @@ import '@uncharted.software/facets-plugins';
 
 import filtersUtil from '@/utils/filters-util';
 
-import { useQueryStore } from '@/stores/query';
+import useQueryStore from '@/stores/query';
 
 /**
  * Facet 3 component - displays aggregated search terms and update query state.
