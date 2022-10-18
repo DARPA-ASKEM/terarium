@@ -1,13 +1,13 @@
 import { uniqBy } from 'lodash';
+import { ResourceType, SearchParameters, SearchResults } from '@/types/common';
+import { Model, ModelSearchParams } from '../types/Model';
 import {
-	ModelSearchParams,
-	ResourceType,
-	SearchParameters,
-	SearchResults,
-	XDDSearchParams
-} from '@/types/common';
-import { Model, ModelFilterAttributes } from '../types/Model';
-import { XDDArticle, XDDDictionary, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
+	XDDArticle,
+	XDDDictionary,
+	XDDResult,
+	XDDSearchParams,
+	XDD_RESULT_DEFAULT_PAGE_SIZE
+} from '../types/XDD';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const XDD_API_KEY = '';
@@ -149,6 +149,10 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		}
 	];
 
+	//
+	// simulate applying filters to the model query
+	//
+	const ModelFilterAttributes = ['name', 'description'];
 	if (term.length > 0) {
 		ModelFilterAttributes.forEach((modelAttr) => {
 			const resultsAsModels = allModels;
