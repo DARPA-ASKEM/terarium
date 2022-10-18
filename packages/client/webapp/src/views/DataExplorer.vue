@@ -122,6 +122,7 @@ export default defineComponent({
 		FacetsPanel,
 		AutoComplete
 	},
+	emits: ['hide'],
 	setup() {
 		const dataItems = ref<SearchResults[]>([]);
 		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
@@ -301,7 +302,7 @@ export default defineComponent({
 			this.filter = cloneDeep(filterTerms);
 		},
 		onClose() {
-			this.app.hideDataExplorer();
+			this.$emit('hide');
 		},
 		isDataItemSelected(id: string) {
 			return this.selectedSearchItems.find((item) => item === id) !== undefined;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeMount, computed } from 'vue';
+import { onBeforeMount, computed, ref } from 'vue';
 import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import Overlay from '@/components/Overlay.vue';
@@ -31,7 +31,7 @@ const overlayMessage = computed(() => appStore.overlayMessage);
 const overlayMessageSecondary = computed(() => appStore.overlayMessageSecondary);
 const overlayCancelFn = computed(() => appStore.overlayCancelFn);
 
-const dataExplorerActivated = computed(() => appStore.dataExplorerActivated);
+const dataExplorerActivated = ref(false);
 </script>
 
 <template>
@@ -41,8 +41,8 @@ const dataExplorerActivated = computed(() => appStore.dataExplorerActivated);
 		:messageSecondary="overlayMessageSecondary"
 		:cancel-fn="overlayCancelFn"
 	/>
-	<data-explorer v-if="dataExplorerActivated" />
-	<Header class="header" />
+	<data-explorer v-if="dataExplorerActivated" @hide="dataExplorerActivated = false" />
+	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main v-if="isAuthenticated">
 		<Sidebar class="sidebar" />
 		<router-view class="page" />

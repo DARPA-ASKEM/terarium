@@ -14,8 +14,7 @@ export const useAppStore = defineStore('app', {
 		overlayActivated: false as boolean,
 		overlayMessage: 'Loading...' as string,
 		overlayMessageSecondary: '' as string,
-		overlayCancelFn: null as Function | null,
-		dataExplorerActivated: false as boolean
+		overlayCancelFn: null as Function | null
 	}),
 	actions: {
 		enableOverlayWithCancel(payload: MsgCancel) {
@@ -39,12 +38,6 @@ export const useAppStore = defineStore('app', {
 		},
 		setOverlayCancelFn(fn) {
 			this.overlayCancelFn = fn;
-		},
-		showDataExplorer() {
-			this.dataExplorerActivated = true;
-		},
-		hideDataExplorer() {
-			this.dataExplorerActivated = false;
 		}
 	}
 });
