@@ -45,6 +45,7 @@ const dataExplorerActivated = ref(false);
 	<overlay v-if="overlayActivated" :message="overlayMessage" />
 	<data-explorer
 		v-if="dataExplorerActivated"
+		class="data-explorer"
 		@hide="dataExplorerActivated = false"
 		@show-overlay="enableOverlay"
 		@hide-overlay="disableOverlay"
@@ -74,5 +75,9 @@ main {
 
 .page {
 	z-index: 1;
+}
+
+.data-explorer {
+	z-index: 3;
 }
 </style>

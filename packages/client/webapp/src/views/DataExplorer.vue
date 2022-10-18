@@ -1,5 +1,5 @@
 <template>
-	<div class="data-explorer-container" style="z-index: 3">
+	<div class="data-explorer-container">
 		<modal-header
 			:nav-back-label="'Back to Home'"
 			:select-label="'Add selected items'"
