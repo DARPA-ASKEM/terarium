@@ -10,7 +10,7 @@ interface Props {
 	p: Number;
 }
 
-// Not sure how to get rid of these underlines - I am following these rules: https://vuejs.org/api/sfc-script-setup.html#typescript-only-features
+// Not sure how to get rid of these red underlines - I am following these rules: https://vuejs.org/api/sfc-script-setup.html#typescript-only-features
 const props = withDefaults(defineProps<Props>(), {
 	category: '',
 	projectName: '',

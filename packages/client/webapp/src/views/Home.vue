@@ -48,6 +48,7 @@ async function apiCall(type = '') {
 						:key="p"
 						:category="category"
 						:projectName="projectName"
+						:isNewProjectCard="p === 0 && category === 'Recents'"
 						:p="p"
 					/>
 				</div>
