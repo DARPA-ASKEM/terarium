@@ -8,8 +8,7 @@ type MsgCancel = {
 /**
  * Main store used for app-level state
  */
-// eslint-disable-next-line import/prefer-default-export
-export const useAppStore = defineStore('app', {
+const useAppStore = defineStore('app', {
 	state: () => ({
 		overlayActivated: false as boolean,
 		overlayMessage: 'Loading...' as string,
@@ -41,3 +40,5 @@ export const useAppStore = defineStore('app', {
 		}
 	}
 });
+
+export default useAppStore;

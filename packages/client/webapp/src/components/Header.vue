@@ -3,7 +3,7 @@ import Button from '@/components/Button.vue';
 import IconLogin16 from '@carbon/icons-vue/es/login/16';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
+import useAuthStore from '../stores/auth';
 
 const emit = defineEmits(['show-data-explorer']);
 

@@ -48,7 +48,7 @@ import { isEqual } from 'lodash';
 import '@uncharted.software/facets-core';
 import filtersUtil from '@/utils/filters-util';
 
-import { useQueryStore } from '@/stores/query';
+import useQueryStore from '@/stores/query';
 
 const FACET_DEFAULT_SIZE = 5;
 

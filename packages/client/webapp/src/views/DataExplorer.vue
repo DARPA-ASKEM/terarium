@@ -102,8 +102,8 @@ import { SearchParameters, SearchResults, Facets, ResourceType } from '@/types/c
 import { getFacets } from '@/utils/facets';
 import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types/XDD';
 import { Model } from '@/types/Model';
-import { useQueryStore } from '@/stores/query';
-import { useAppStore } from '@/stores/app';
+import useQueryStore from '@/stores/query';
+import useAppStore from '@/stores/app';
 import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
 

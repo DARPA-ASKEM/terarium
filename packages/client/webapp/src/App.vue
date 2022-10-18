@@ -5,8 +5,8 @@ import Sidebar from '@/components/Sidebar.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 
-import { useAuthStore } from './stores/auth';
-import { useAppStore } from './stores/app';
+import useAuthStore from './stores/auth';
+import useAppStore from './stores/app';
 
 const auth = useAuthStore();
 const appStore = useAppStore();
