@@ -28,7 +28,7 @@ export default defineComponent({
 	position: relative;
 	display: block;
 	background: $background-light-1;
-	box-sizing: border-box;
+	// box-sizing: border-box;
 	opacity: 1;
 	z-index: 51;
 	border-radius: 4px;

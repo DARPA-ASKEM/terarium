@@ -178,6 +178,10 @@ $input-element-height: 37px;
 	--placeholder-color: black;
 }
 
+input[type='text']:focus {
+	outline: none;
+}
+
 .form-control::placeholder {
 	color: var(--placeholder-color);
 }

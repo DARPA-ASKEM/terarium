@@ -60,11 +60,10 @@ $toggle-size: 40px;
 	display: flex;
 	align-items: center;
 	.title {
-		padding: 5px;
+		padding: 6px;
 		text-align: center;
 		font-weight: normal;
-		color: black;
-		font-weight: 500;
+		font-weight: 400;
 	}
 	label {
 		display: flex;
