@@ -4,18 +4,15 @@ import IconList24 from '@carbon/icons-vue/es/list/24';
 import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
 
 interface Props {
-	category: String;
-	projectName: String;
-	isNewProjectCard: Boolean;
-	p: Number;
+	category: string;
+	projectName: string;
+	isNewProjectCard: boolean;
 }
 
-// Not sure how to get rid of these red underlines - I am following these rules: https://vuejs.org/api/sfc-script-setup.html#typescript-only-features
 const props = withDefaults(defineProps<Props>(), {
 	category: '',
 	projectName: '',
-	isNewProjectCard: false,
-	p: 0
+	isNewProjectCard: false
 });
 
 function createNewProject() {}

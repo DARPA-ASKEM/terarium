@@ -47,9 +47,8 @@ async function apiCall(type = '') {
 						v-for="(projectName, p) in dummyProjects"
 						:key="p"
 						:category="category"
-						:projectName="projectName"
+						:projectName="projectName + ' ' + p"
 						:isNewProjectCard="p === 0 && category === 'Recents'"
-						:p="p"
 					/>
 				</div>
 				<IconChevronRight32 />
