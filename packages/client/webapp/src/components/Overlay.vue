@@ -58,7 +58,7 @@ export default defineComponent({
 
 	.message-secondary-container {
 		font-size: 2.25rem;
-		color: $text-color-light;
+		color: var(--un-color-black-20);
 	}
 }
 </style>
