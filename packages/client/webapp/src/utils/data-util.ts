@@ -1,4 +1,4 @@
-import { ResourceType, SearchResults } from '@/types/common';
+import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
@@ -71,3 +71,11 @@ export const getResourceTypeIcon = (type: string) => {
 	}
 	return 'fa-regular fa-solid fa-file-lines';
 };
+
+export function isModel(item: ResultType): item is Model {
+	return (<Model>item).status !== undefined;
+}
+
+export function isXDDArticle(item: ResultType): item is XDDArticle {
+	return (<XDDArticle>item).publisher !== undefined;
+}
