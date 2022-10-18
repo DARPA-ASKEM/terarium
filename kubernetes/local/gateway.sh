@@ -12,7 +12,7 @@ if [[ ${1} == "up" ]]; then
 
     if [ ${APPLE_SILICON:-0} -eq 0 ]; then
 			docker pull docker.uncharted.software/auth/httpd-openidc:dev-1.0.1
-			docker pull docker.uncharted.software/auth/keycloak:dev-1.1.0
+			docker pull docker.uncharted.software/auth/keycloak:dev-1.0.0
     else
         echo "not pulling latest images as Apple Silicon httpd-openidc has not been pushed to the repo"
     fi

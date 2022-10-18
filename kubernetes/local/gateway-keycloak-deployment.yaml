@@ -6,7 +6,7 @@ metadata:
   name: gateway-keycloak
 spec:
   containers:
-    - image: docker.uncharted.software/auth/keycloak:dev-1.1.0
+    - image: docker.uncharted.software/auth/keycloak:dev-1.0.0
       name: gateway-keycloak
       args:
         - start-dev
@@ -36,7 +36,7 @@ spec:
       volumeMounts:
         - name: theme-volume
           mountPath: /shared
-    - image: docker.uncharted.software/auth/keycloak:dev-1.1.0
+    - image: docker.uncharted.software/auth/keycloak:dev-1.0.0
       name: init-gateway-keycloak
       args:
         - import
