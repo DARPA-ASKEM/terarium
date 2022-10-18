@@ -10,7 +10,7 @@ import {
 } from '../types/XDD';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const XDD_API_KEY = '';
+const XDD_API_KEY = ''; // COSMOS_API_KEY
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
 const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
 const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
@@ -184,8 +184,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
-	if (xddSearchParam?.known_terms && xddSearchParam?.known_terms.length > 0) {
-		url += `&dict=${xddSearchParam.known_terms.join(',')}`;
+	if (xddSearchParam?.dict_names && xddSearchParam?.dict_names.length > 0) {
+		url += `&dict=${xddSearchParam.dict_names.join(',')}`;
 	}
 	if (enablePagination) {
 		url += '&full_results';

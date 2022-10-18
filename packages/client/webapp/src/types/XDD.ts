@@ -58,7 +58,7 @@ export type XDDResult = {
 };
 
 export type XDDSearchParams = {
-	known_terms?: string[];
+	dict_names?: string[];
 	dataset?: string | null;
 	enablePagination: boolean;
 	pageSize?: number;

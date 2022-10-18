@@ -142,6 +142,7 @@
 							:data-items="filteredDataItems"
 							:result-type="resultType"
 							:selected-search-items="selectedSearchItems"
+							:dict-names="dictNames"
 							@toggle-data-item-selected="toggleDataItemSelected"
 						/>
 					</div>
@@ -384,7 +385,7 @@ export default defineComponent({
 
 			const searchParams: SearchParameters = {
 				xdd: {
-					known_terms: this.dictNames,
+					dict_names: this.dictNames,
 					dataset: this.xddDataset === ResourceType.ALL ? null : this.xddDataset,
 					pageSize: this.pageSize,
 					enablePagination: !this.rankedResults
@@ -500,6 +501,7 @@ export default defineComponent({
 			background-color: lightgray;
 			padding: 0.5rem;
 			align-items: center;
+			height: var(--nav-bar-height);
 
 			.nav-left-container {
 				display: flex;
