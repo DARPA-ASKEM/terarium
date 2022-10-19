@@ -29,11 +29,6 @@ const props = withDefaults(defineProps<Props>(), {
 	margin: 0.5rem;
 	transition: 0.2s;
 	text-align: left;
-}
-
-.project-card:hover {
-	height: 20rem;
-	min-width: 25rem;
 	cursor: pointer;
 }
 
