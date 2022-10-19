@@ -481,6 +481,7 @@ export default defineComponent({
 	top: 0px;
 	right: 0px;
 	display: flex;
+	width: 100vw;
 
 	--header-height: 50px;
 	--footer-height: 50px;
@@ -490,6 +491,7 @@ export default defineComponent({
 		display: flex;
 		flex-direction: column;
 		flex-grow: 1;
+		overflow: auto;
 
 		.header {
 			height: var(--header-height);
@@ -580,6 +582,7 @@ export default defineComponent({
 		background-color: $background-light-2;
 		height: calc(100vh - var(--footer-height) - var(--nav-bar-height));
 		display: flex;
+		overflow: auto;
 	}
 
 	.results-content {
