@@ -16,7 +16,7 @@ function createNewProject() {}
 
 <style scoped>
 .new-project-card {
-	border: 1px solid var(--un-color-black-20);
+	border: 1px solid var(--un-color-body-stroke);
 	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
@@ -38,20 +38,20 @@ function createNewProject() {}
 	justify-content: center;
 	cursor: pointer;
 	background-color: transparent;
-	color: var(--un-color-black-50);
+	color: var(--un-color-body-text-disabled);
 	box-shadow: none;
 }
 
 .new-project-card button:hover {
-	background-color: var(--un-color-black-30);
-	color: var(--un-color-black-5);
+	background-color: var(--un-color-body-surface-secondary);
+	color: var(--un-color-body-text-secondary);
 }
 
 .new-project-card button svg {
-	color: var(--un-color-black-40);
+	color: var(--un-color-body-text-disabled);
 }
 
 .new-project-card button:hover svg {
-	color: var(--un-color-black-5);
+	color: var(--un-color-body-text-secondary);
 }
 </style>

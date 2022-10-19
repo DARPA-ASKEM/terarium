@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style scoped>
 .project-card {
-	border: 1px solid var(--un-color-black-20);
+	border: 1px solid var(--un-color-body-stroke);
 	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
@@ -38,17 +38,13 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 footer {
-	border-top: 1px solid var(--un-color-black-20);
+	border-top: 1px solid var(--un-color-body-stroke);
 	padding: 0.5rem 1rem;
 }
 
 svg {
-	color: var(--un-color-black-40);
+	color: var(--un-color-body-text-disabled);
 	cursor: pointer;
 	margin: auto;
-}
-
-svg:hover {
-	color: var(--un-color-black-30);
 }
 </style>
