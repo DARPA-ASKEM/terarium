@@ -4,8 +4,12 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
-
+import { useRouter } from 'vue-router';
 import useAuthStore from './stores/auth';
+import { HOME_PATH } from './router/index';
+
+const router = useRouter();
+const sidebarHidden = computed(() => router.currentRoute.value.path === HOME_PATH);
 
 const auth = useAuthStore();
 
@@ -52,7 +56,7 @@ const dataExplorerActivated = ref(false);
 	/>
 	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main v-if="isAuthenticated">
-		<Sidebar class="sidebar" />
+		<Sidebar v-if="!sidebarHidden" class="sidebar" />
 		<router-view class="page" />
 	</main>
 </template>
@@ -71,6 +75,10 @@ main {
 
 .sidebar {
 	z-index: 2;
+}
+
+.hidden {
+	visibility: hidden;
 }
 
 .page {

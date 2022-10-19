@@ -4,8 +4,10 @@ import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import Theia from '@/views/theia.vue';
 
+export const HOME_PATH = '/';
+
 const routes = [
-	{ path: '/', component: Home },
+	{ path: HOME_PATH, component: Home },
 	{ path: '/results', component: ResponsiveMatrixCells },
 	{ path: '/ta2-playground', component: TA2Playground },
 	{ path: '/theia', component: Theia }
