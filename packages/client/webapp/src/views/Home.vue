@@ -5,7 +5,7 @@ import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconFire32 from '@carbon/icons-vue/es/fire/32';
 import IconCoronavirus32 from '@carbon/icons-vue/es/coronavirus/32';
-import NewProjectCard from '../components/projects/NewProjectCard.vue';
+import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -13,11 +13,13 @@ const enum Categories {
 	Epidemiology = 'Epidemiology'
 }
 
-const categories = new Map<string, { icon: string }>([
+const categories = new Map<string, { icon: object }>([
 	[Categories.Recents, { icon: IconTime32 }],
 	[Categories.Trending, { icon: IconFire32 }],
 	[Categories.Epidemiology, { icon: IconCoronavirus32 }]
 ]);
+
+console.log(categories);
 
 const dummyProjects: string[] = Array(8)
 	.fill('Project')
@@ -28,7 +30,10 @@ const dummyProjects: string[] = Array(8)
 	<section>
 		<h2>Projects</h2>
 		<template v-for="[key, value] in categories" :key="key">
-			<h3><component :is="value.icon" />{{ key }}</h3>
+			<header>
+				<component :is="value.icon" />
+				<h3>{{ key }}</h3>
+			</header>
 			<div class="project-carousel">
 				<IconChevronLeft32 />
 				<ul>
@@ -47,6 +52,11 @@ section {
 	padding-top: 1rem;
 }
 
+header {
+	display: flex;
+	align-items: center;
+}
+
 h2 {
 	font: var(--un-font-h2);
 }
@@ -56,11 +66,11 @@ h3 {
 }
 
 h2,
-h3 {
+header {
 	margin-left: 4rem;
 }
 
-h3 svg {
+header svg {
 	margin-right: 0.5rem;
 	color: var(--un-color-accent);
 }
@@ -84,17 +94,14 @@ h3 svg {
 	border-radius: 10rem;
 }
 
-.project-carousel:hover .project-carousel {
-	height: 22rem;
-}
-
 .project-carousel:hover svg {
 	visibility: visible;
 }
 
 ul {
 	display: flex;
-	height: 18rem;
+	height: 16rem;
+	margin: 0.5rem 0;
 	transition: 0.2s;
 	align-items: center;
 	overflow-x: auto;

@@ -10,10 +10,10 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-	<li class="project-card">
+	<div class="project-card">
 		<IconNoImage32 />
 		<footer>{{ props?.name }}</footer>
-	</li>
+	</div>
 </template>
 
 <style scoped>

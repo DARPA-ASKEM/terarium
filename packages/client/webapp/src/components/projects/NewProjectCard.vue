@@ -37,7 +37,7 @@ function createNewProject() {}
 	margin: auto;
 	justify-content: center;
 	cursor: pointer;
-	background-color: var(--un-color-black-5);
+	background-color: transparent;
 	color: var(--un-color-black-50);
 	box-shadow: none;
 }
