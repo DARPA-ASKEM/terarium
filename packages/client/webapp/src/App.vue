@@ -77,10 +77,6 @@ main {
 	z-index: 2;
 }
 
-.hidden {
-	visibility: hidden;
-}
-
 .page {
 	z-index: 1;
 }
