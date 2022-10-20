@@ -3,6 +3,7 @@ import { ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import { Model, ModelSearchParams } from '../types/Model';
 import {
 	XDDArticle,
+	XDDArtifact,
 	XDDDictionary,
 	XDDResult,
 	XDDSearchParams,
@@ -12,14 +13,13 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const XDD_API_KEY = ''; // COSMOS_API_KEY
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
-const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
+const DATASET_API_URL = 'https://xdd.wisc.edu/sets';
 const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
 
 // A unified method to execute an XDD fetch passing the API key and other header params as needed
 const fetchXDD = async (url: string) => {
 	const headers = new Headers();
 	headers.append('Content-Type', 'application/json');
-	// headers.append('x-api-key', XDD_API_KEY);
 	return fetch(url, {
 		// mode: 'no-cors',
 		headers
@@ -169,6 +169,39 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	};
 };
 
+const getXDDArtifacts = async (doc_doi?: string, xddSearchParam?: XDDSearchParams) => {
+	// COSMOS API URL starts similarly to the DATASET base URL
+	let url = `${DATASET_API_URL}`;
+	if (xddSearchParam?.dataset) {
+		url += `/${xddSearchParam.dataset}/`;
+	}
+	// COSMOS API part
+	url += 'cosmos/api/v3_beta/search?';
+	// since COSMOS is a protected API, we MUST specify the api key
+	url += `api_key=${XDD_API_KEY}`;
+
+	// restrict the type of object to search for
+	if (xddSearchParam?.type) {
+		url += `&type=${xddSearchParam?.type}`;
+	}
+
+	// by default ignore including artifact bytes (e.g., figures base64 bytes)
+	if (xddSearchParam?.ignore_bytes) {
+		url += '&ignore_bytes';
+	}
+
+	// search against a specific document doi
+	if (doc_doi) {
+		url += `&doi=${doc_doi}`;
+	}
+
+	const response = await fetchXDD(url);
+	const rawdata = await response.json();
+
+	const { objects } = rawdata as { objects: XDDArtifact[] };
+	return objects || ([] as XDDArtifact[]);
+};
+
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.pageSize ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
@@ -263,4 +296,4 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-export { fetchData, getXDDSets, getXDDDictionaries };
+export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts };
