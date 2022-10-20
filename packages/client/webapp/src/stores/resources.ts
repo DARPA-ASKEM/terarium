@@ -11,7 +11,8 @@ import { omit } from 'lodash';
 const useResourcesStore = defineStore('resources', {
 	state: () => ({
 		documents: {} as { [id: string]: XDDArticle },
-		models: {} as { [id: string]: Model }
+		models: {} as { [id: string]: Model },
+		xddDataset: null as string | null
 	}),
 	actions: {
 		addResource(resource: ResultType) {
@@ -31,6 +32,9 @@ const useResourcesStore = defineStore('resources', {
 			if (isXDDArticle(resource)) {
 				this.documents = omit(this.documents, [resId]);
 			}
+		},
+		setXDDDataset(dataset: string | null) {
+			this.xddDataset = dataset;
 		}
 	}
 });

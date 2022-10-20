@@ -202,6 +202,7 @@ import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData, isModel, isXDDArticle } from '@/utils/data-util';
 import DrilldownPanel from '@/components/drilldown-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
+import useResourcesStore from '@/stores/resources';
 
 // FIXME: page count is not taken into consideration
 // FIXME: remove SASS
@@ -237,7 +238,7 @@ export default defineComponent({
 		const filter = ref<string[]>([]);
 		const query = useQueryStore();
 		const activeDrilldownTab = ref<string | null>('selected-resources');
-
+		const resources = useResourcesStore();
 		return {
 			filter,
 			dataItems,
@@ -245,7 +246,8 @@ export default defineComponent({
 			selectedSearchItems,
 			query,
 			drilldownTabs: DRILLDOWN_TABS,
-			activeDrilldownTab
+			activeDrilldownTab,
+			resources
 		};
 	},
 	data: () => ({
@@ -253,7 +255,6 @@ export default defineComponent({
 		pageSize: XDD_RESULT_DEFAULT_PAGE_SIZE,
 		// xdd
 		xddDatasets: [] as string[],
-		xddDataset: null as string | null,
 		dictNames: [] as string[],
 		rankedResults: true, // disable sorted/ranked results to enable pagination
 		xddDictionaries: [] as XDDDictionary[],
@@ -267,6 +268,9 @@ export default defineComponent({
 		ViewType
 	}),
 	computed: {
+		xddDataset() {
+			return this.resources.xddDataset;
+		},
 		resultsCount() {
 			let total = 0;
 			if (this.resultType === ResourceType.ALL) {
@@ -326,7 +330,7 @@ export default defineComponent({
 		this.xddDatasets = await getXDDSets();
 		this.xddDictionaries = (await getXDDDictionaries()) as XDDDictionary[];
 		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
-			this.xddDataset = this.xddDatasets[this.xddDatasets.length - 1];
+			this.xddDatasetSelectionChanged(this.xddDatasets[this.xddDatasets.length - 1]);
 			this.xddDatasets.push(ResourceType.ALL);
 		}
 
@@ -363,7 +367,7 @@ export default defineComponent({
 		},
 		xddDatasetSelectionChanged(newDataset: string) {
 			if (this.xddDataset !== newDataset) {
-				this.xddDataset = newDataset;
+				this.resources.setXDDDataset(newDataset);
 			}
 		},
 		calculateFacets() {

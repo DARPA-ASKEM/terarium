@@ -68,6 +68,7 @@ const props = defineProps({
 const resourcesStore = useResourcesStore();
 
 const doc = computed(() => resourcesStore.documents[props.id] || null);
+const xddDataset = computed(() => resourcesStore.xddDataset);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
@@ -114,7 +115,7 @@ const fetchArtifacts = async () => {
 		// use 'type' to filter the extractions to a given type
 		//  Also, the dataset MUST be specified
 		const searchParams: XDDSearchParams = {
-			dataset: 'xdd-covid-19' // FIXME: load the current dataset from the store
+			dataset: xddDataset.value
 		};
 		artifacts.value = await getXDDArtifacts(doi.value, searchParams);
 	}
