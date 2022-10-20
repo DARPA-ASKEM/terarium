@@ -81,7 +81,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables';
+@import '@/styles/variables';
 $small-width: 250px;
 $large-width: 380px;
 

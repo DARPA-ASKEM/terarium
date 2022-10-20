@@ -1,4 +1,4 @@
-import { useAuthStore } from '../stores/auth';
+import useAuthStore from '../stores/auth';
 
 // eslint-disable-next-line import/prefer-default-export
 export const uncloak = async (url: string) => {

@@ -5,8 +5,8 @@
 				<li>
 					<button
 						type="button"
-						:class="{ active: resultType === 'all' }"
-						@click="onResultTypeChanged('all')"
+						:class="{ active: resultType === ResourceType.ALL }"
+						@click="onResultTypeChanged(ResourceType.ALL)"
 					>
 						All
 					</button>
@@ -14,8 +14,8 @@
 				<li>
 					<button
 						type="button"
-						:class="{ active: resultType === 'model' }"
-						@click="onResultTypeChanged('model')"
+						:class="{ active: resultType === ResourceType.MODEL }"
+						@click="onResultTypeChanged(ResourceType.MODEL)"
 					>
 						Models
 					</button>
@@ -23,19 +23,19 @@
 				<li>
 					<button
 						type="button"
-						:class="{ active: resultType === 'xdd' }"
-						@click="onResultTypeChanged('xdd')"
+						:class="{ active: resultType === ResourceType.XDD }"
+						@click="onResultTypeChanged(ResourceType.XDD)"
 					>
 						Articles
 					</button>
 				</li>
 			</ul>
 			<div class="results-count">Found {{ resultsCount }} results</div>
-			<slot v-if="resultType === 'xdd'" name="xdd"></slot>
-			<slot v-if="resultType === 'model'" name="model"></slot>
+			<slot v-if="resultType === ResourceType.XDD" name="xdd"></slot>
+			<slot v-if="resultType === ResourceType.MODEL" name="model"></slot>
 		</div>
 		<models-listview
-			v-if="resultType === 'model'"
+			v-if="resultType === ResourceType.MODEL"
 			class="list-view"
 			:models="filteredModels"
 			:enable-multiple-selection="enableMultipleSelection"
@@ -44,7 +44,7 @@
 			@set-model-selected="setDataItemSelected"
 		/>
 		<articles-listview
-			v-if="resultType === 'xdd'"
+			v-if="resultType === ResourceType.XDD"
 			class="list-view"
 			:articles="filteredArticles"
 			:enable-multiple-selection="enableMultipleSelection"
@@ -52,7 +52,11 @@
 			@toggle-article-selected="toggleDataItemSelected"
 			@set-article-selected="setDataItemSelected"
 		/>
-		<common-listview v-if="resultType === 'all'" class="list-view" :input-items="dataItems" />
+		<common-listview
+			v-if="resultType === ResourceType.ALL"
+			class="list-view"
+			:input-items="dataItems"
+		/>
 	</div>
 </template>
 
@@ -63,7 +67,7 @@ import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import CommonListview from '@/components/data-explorer/common-listview.vue';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
-import { SearchResults } from '@/types/common';
+import { SearchResults, ResourceType } from '@/types/common';
 
 export default defineComponent({
 	name: 'Search',
@@ -87,7 +91,7 @@ export default defineComponent({
 		},
 		resultType: {
 			type: String,
-			default: 'all'
+			default: ResourceType.ALL
 		},
 		resultsCount: {
 			type: Number,
@@ -95,16 +99,19 @@ export default defineComponent({
 		}
 	},
 	emits: ['toggle-data-item-selected', 'set-data-item-selected', 'result-type-changed'],
+	data: () => ({
+		ResourceType
+	}),
 	computed: {
 		filteredModels() {
-			const resList = this.dataItems.find((res) => res.searchSubsystem === 'model');
+			const resList = this.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
 			if (resList) {
 				return resList.results as Model[];
 			}
 			return [];
 		},
 		filteredArticles() {
-			const resList = this.dataItems.find((res) => res.searchSubsystem === 'xdd');
+			const resList = this.dataItems.find((res) => res.searchSubsystem === ResourceType.XDD);
 			if (resList) {
 				return resList.results as XDDArticle[];
 			}

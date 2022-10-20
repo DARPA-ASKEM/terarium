@@ -38,7 +38,7 @@
 											><i class="fa-lg fa-regular fa-circle-xmark"></i
 										></span>
 									</template>
-									<i class="fa-regular fa-lg fa-fw" :class="getTypeIcon(d)" />
+									<i class="fa-regular fa-lg fa-fw" :class="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
 									<button v-if="isNotPublished(d)" type="button" class="not-ready-label">
@@ -77,6 +77,8 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Model } from '@/types/Model';
+import { ResourceType } from '@/types/common';
+import { getResourceTypeIcon } from '@/utils/data-util';
 
 /**
  * name: string;
@@ -123,7 +125,9 @@ export default defineComponent({
 		);
 
 		return {
-			expandedRowId
+			expandedRowId,
+			ResourceType,
+			getResourceTypeIcon
 		};
 	},
 	methods: {
@@ -171,18 +175,13 @@ export default defineComponent({
 			return this.isExpanded(d) || d.description.length < 140
 				? d.description
 				: `${d.description.substring(0, 140)}...`;
-		},
-		getTypeIcon(d: Model) {
-			return `fa-regular ${
-				d.type === 'model' ? 'fa-brands fa-connectdevelop' : 'fa-solid fa-table-cells'
-			}`;
 		}
 	}
 });
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
 .search-listview-container {
 	background: $background-light-2;
 	color: black;

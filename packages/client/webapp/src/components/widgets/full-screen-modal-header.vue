@@ -36,7 +36,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .full-screen-modal-header-container {
 	background-color: var(--un-color-accent-dark);

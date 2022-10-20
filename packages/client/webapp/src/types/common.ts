@@ -1,6 +1,13 @@
 import { Model } from './Model';
 import { XDDArticle } from './XDD';
 
+export enum ResourceType {
+	XDD = 'xdd',
+	MODEL = 'model',
+	DATASET = 'dataset',
+	ALL = 'all'
+}
+
 export type XDDSearchParams = {
 	known_terms?: string[];
 	dataset?: string | null;
@@ -13,8 +20,8 @@ export type ModelSearchParams = {
 };
 
 export type SearchParameters = {
-	xdd?: XDDSearchParams;
-	models?: ModelSearchParams;
+	[ResourceType.XDD]?: XDDSearchParams;
+	[ResourceType.MODEL]?: ModelSearchParams;
 };
 
 export type ResultType = Model | XDDArticle;
@@ -27,7 +34,9 @@ export type SearchResults = {
 	next_page?: string;
 };
 
-// Facet
+//
+// Facets
+//
 export type FacetBucket = {
 	key: string;
 	value: number;
