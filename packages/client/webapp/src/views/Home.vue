@@ -28,28 +28,33 @@ const dummyProjects: string[] = Array(8)
 	<section>
 		<h2>Projects</h2>
 		<template v-for="[key, value] in categories" :key="key">
-			<header>
-				<component :is="value.icon" />
-				<h3>{{ key }}</h3>
-			</header>
-			<div class="project-carousel">
-				<IconChevronLeft32 class="chevron-left" />
-				<ul>
-					<li v-if="key === Categories.Recents">
-						<NewProjectCard />
-					</li>
-					<li v-for="(project, index) in dummyProjects" :key="index">
-						<ProjectCard :name="project" />
-					</li>
-				</ul>
-				<IconChevronRight32 class="chevron-right" />
-			</div>
+			<template v-if="dummyProjects.length > 0 || key === Categories.Recents">
+				<header>
+					<component :is="value.icon" />
+					<h3>{{ key }}</h3>
+				</header>
+				<div class="project-carousel">
+					<IconChevronLeft32 class="chevron-left" />
+					<ul>
+						<li v-if="key === Categories.Recents">
+							<NewProjectCard />
+						</li>
+						<li v-for="(project, index) in dummyProjects" :key="index">
+							<ProjectCard :name="project" />
+						</li>
+					</ul>
+					<IconChevronRight32 class="chevron-right" />
+				</div>
+			</template>
 		</template>
 	</section>
 </template>
 
 <style scoped>
 section {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
 	color: var(--un-color-body-text-secondary);
 	background-color: var(--un-color-body-surface-secondary);
 	margin-bottom: 10rem;
@@ -58,6 +63,7 @@ section {
 header {
 	display: flex;
 	align-items: center;
+	z-index: -1;
 }
 
 h2 {
@@ -103,7 +109,7 @@ header svg {
 }
 
 .project-carousel svg:hover {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--un-color-body-surface-background);
 	color: var(--un-color-accent);
 	border-radius: 10rem;
 }
