@@ -3,17 +3,19 @@
 		<header>Documents space</header>
 		<section>
 			Project Documents:
-			<div
-				v-for="doc in documents"
-				:key="doc._gddid"
-				class="doc-link"
-				:class="{ active: doc._gddid === docID }"
-				@click="openDocumentPage(doc)"
-			>
-				<span>{{ formatTitle(doc) }}</span>
-				<span class="doc-delete-btn" @click.stop="removeDoc(doc)">
-					<i class="fa fa-fw fa-close" />
-				</span>
+			<div class="document-list-container">
+				<div
+					v-for="doc in documents"
+					:key="doc._gddid"
+					class="doc-link"
+					:class="{ active: doc._gddid === docID }"
+					@click="openDocumentPage(doc)"
+				>
+					<span>{{ formatTitle(doc) }}</span>
+					<span class="doc-delete-btn" @click.stop="removeDoc(doc)">
+						<i class="fa fa-fw fa-close" />
+					</span>
+				</div>
 			</div>
 		</section>
 	</main>
@@ -27,7 +29,8 @@
 import useResourcesStore from '@/stores/resources';
 import { XDDArticle } from '@/types/XDD';
 import { getResourceID } from '@/utils/data-util';
-import { computed, ref } from 'vue';
+import { isEmpty } from 'lodash';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -52,6 +55,13 @@ const openDocumentPage = (doc: XDDArticle) => {
 const removeDoc = (doc: XDDArticle) => {
 	resourcesStore.removeResource(doc);
 };
+
+onMounted(() => {
+	const routeParams = router.currentRoute.value.params;
+	if (!isEmpty(routeParams) && routeParams.id !== '' && docID.value === '') {
+		docID.value = routeParams.id as string;
+	}
+});
 </script>
 
 <style scoped>
@@ -62,11 +72,24 @@ main {
 	flex-direction: column;
 	gap: 1rem;
 	padding: 1rem;
+	height: calc(100vh - 50px);
+	overflow: hidden;
+	width: 100%;
 }
 
 header {
 	color: var(--un-color-body-text-secondary);
 	font: var(--un-font-h6);
+}
+
+section {
+	height: 100%;
+}
+
+.document-list-container {
+	overflow-y: auto;
+	height: 100%;
+	margin-top: 8px;
 }
 
 .doc-link {
@@ -84,9 +107,11 @@ header {
 .active {
 	text-decoration: underline;
 	font-size: medium;
+	background-color: lightgreen;
 }
 
 .doc-delete-btn {
 	color: red;
+	padding-right: 1rem;
 }
 </style>

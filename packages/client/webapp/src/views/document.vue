@@ -5,8 +5,9 @@
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
 			<div class="desc">{{ formatDescription(doc) }}</div>
 			<div class="doi">{{ doi }}</div>
-			<div class="artifacts-header"><b>Document Artifacts:</b></div>
-			<div>Found {{ artifacts.length }} Extractions</div>
+			<div class="artifacts-header">
+				<b>Document Artifacts:</b> Found {{ artifacts.length }} Extractions
+			</div>
 			<div class="extractions-container">
 				<div class="nav-container">
 					<ul class="nav">
@@ -134,6 +135,9 @@ onMounted(async () => {
 .doc-view-container {
 	padding: 1rem;
 	font-size: large;
+	height: calc(100vh - 50px);
+	width: 100%;
+	overflow: auto;
 }
 
 .title {
@@ -166,11 +170,15 @@ onMounted(async () => {
 	flex-direction: column;
 	gap: 1rem;
 	padding-left: 1rem;
+	width: 100%;
+	height: 100%;
 }
 
 .nav-container {
 	display: flex;
 	align-items: center;
+	background-color: white;
+	overflow: auto;
 }
 
 .nav {
