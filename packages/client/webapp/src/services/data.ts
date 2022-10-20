@@ -248,7 +248,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getModels(term, searchParam?.models));
+			resolve(getModels(term, searchParam?.model));
 		} catch (err: any) {
 			reject(new Error('Error fetching models results', err));
 		}
