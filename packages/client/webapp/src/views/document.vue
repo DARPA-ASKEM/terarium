@@ -107,13 +107,10 @@ watch(extractions, (currentValue, oldValue) => {
 	}
 });
 
-// TODO:
-// allow removal of doc from the list of project documents in the left panel
-
 const fetchArtifacts = async () => {
 	if (doc.value !== null && doi.value !== '') {
-		// use 'type' to filter the extractions to a given type
-		//  Also, the dataset MUST be specified
+		// a 'type' may be used to filter the extractions to a given artifact types, e.g. Figure
+		// Note: the dataset MUST be specified for the COSMOS API to work
 		const searchParams: XDDSearchParams = {
 			dataset: xddDataset.value
 		};
