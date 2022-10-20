@@ -326,8 +326,8 @@ export default defineComponent({
 		this.xddDatasets = await getXDDSets();
 		this.xddDictionaries = (await getXDDDictionaries()) as XDDDictionary[];
 		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
+			this.xddDataset = this.xddDatasets[this.xddDatasets.length - 1];
 			this.xddDatasets.push(ResourceType.ALL);
-			this.xddDataset = ResourceType.ALL;
 		}
 
 		this.refresh();
