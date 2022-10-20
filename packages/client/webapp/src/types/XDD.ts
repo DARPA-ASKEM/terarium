@@ -1,3 +1,10 @@
+export enum XDDExtractionType {
+	Table = 'Table',
+	Figure = 'Figure',
+	Equation = 'Equation',
+	Body = 'Body Text' // Section
+}
+
 export type XDDArticleAuthor = {
 	name: string;
 };
@@ -35,6 +42,24 @@ export type XDDArticle = {
 	_gddid: string;
 };
 
+export type XDDArtifactExtraction = {
+	id: string; // Internal COSMOS id of object
+	bytes?: string | null; // base64 ASCII-decoded image bytes of the object
+	content?: string; // Text content within the object
+	page_number?: string; // Source page number within the document
+	/* cls in the results sometimes is mapped, e.g., specifying "Body Text" => "Section" */
+	cls: XDDExtractionType | string; // COSMOS-computed class of the object.
+	base_confidence?: number; // Confidence score (logit) of the initial COSMOS classification
+	postprocessing_confidence?: number; // Confidence score of the COSMOS post-processing model
+	header_content?: string; // Content field
+};
+
+export type XDDArtifact = {
+	pdf_name: string; // Filename of document
+	children: XDDArtifactExtraction[]; // array of extractions from this artifact
+	bibjson: XDDArticle; // Bibliographical JSON of document (looked up within xDD)
+};
+
 export type XDDDictionary = {
 	name: string;
 	base_classification: string;
@@ -60,8 +85,10 @@ export type XDDResult = {
 export type XDDSearchParams = {
 	dict_names?: string[];
 	dataset?: string | null;
-	enablePagination: boolean;
+	enablePagination?: boolean;
 	pageSize?: number;
+	type?: XDDExtractionType;
+	ignore_bytes?: boolean;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
