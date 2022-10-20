@@ -79,3 +79,11 @@ export function isModel(item: ResultType): item is Model {
 export function isXDDArticle(item: ResultType): item is XDDArticle {
 	return (<XDDArticle>item).publisher !== undefined;
 }
+
+export function getResourceID(item: ResultType) {
+	if (isXDDArticle(item)) {
+		// eslint-disable-next-line no-underscore-dangle
+		return (item as XDDArticle)._gddid;
+	}
+	return item.id;
+}
