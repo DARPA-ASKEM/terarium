@@ -69,7 +69,13 @@ export default defineComponent({
 		},
 		formatDescription(item: ResultType) {
 			const maxSize = 120;
-			const itemDesc = (item as Model).description || (item as XDDArticle).abstract || '[No Desc]';
+			let itemDesc = '[No Desc]';
+			if (isModel(item)) {
+				itemDesc = (item as Model).description || itemDesc;
+			}
+			if (isXDDArticle(item)) {
+				itemDesc = (item as XDDArticle).abstract || (item as XDDArticle).journal || itemDesc;
+			}
 			return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
 		},
 		isSelected(item: ResultType) {

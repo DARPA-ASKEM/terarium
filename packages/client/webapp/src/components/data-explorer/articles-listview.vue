@@ -71,7 +71,7 @@ import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
 import { ResourceType, ResultType } from '@/types/common';
-import { getResourceTypeIcon } from '@/utils/data-util';
+import { getResourceTypeIcon, isXDDArticle } from '@/utils/data-util';
 
 export default defineComponent({
 	name: 'ArticlesListview',
@@ -126,8 +126,8 @@ export default defineComponent({
 		},
 		isSelected(article: XDDArticle) {
 			return this.selectedSearchItems.find((item) => {
-				const itemAsArticle = item as XDDArticle;
-				if (itemAsArticle) {
+				if (isXDDArticle(item)) {
+					const itemAsArticle = item as XDDArticle;
 					return itemAsArticle.title === article.title;
 				}
 				return false;
