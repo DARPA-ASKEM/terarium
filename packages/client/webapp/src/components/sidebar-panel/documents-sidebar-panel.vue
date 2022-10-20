@@ -7,6 +7,7 @@
 				v-for="doc in documents"
 				:key="doc._gddid"
 				class="doc-link"
+				:class="{ active: doc._gddid === docID }"
 				@click="openDocumentPage(doc)"
 			>
 				{{ formatTitle(doc) }}
@@ -23,7 +24,7 @@
 import useResourcesStore from '@/stores/resources';
 import { XDDArticle } from '@/types/XDD';
 import { getResourceID } from '@/utils/data-util';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -37,10 +38,12 @@ const formatTitle = (doc: XDDArticle) => {
 	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
 };
 
+const docID = ref('');
+
 const openDocumentPage = (doc: XDDArticle) => {
 	// pass this doc id as param
-	const docID = getResourceID(doc);
-	router.push({ path: `/docs/${docID}` });
+	docID.value = getResourceID(doc);
+	router.push({ path: `/docs/${docID.value}` });
 };
 </script>
 
@@ -66,5 +69,10 @@ header {
 }
 .doc-link:hover {
 	text-decoration: underline;
+}
+
+.active {
+	text-decoration: underline;
+	font-size: medium;
 }
 </style>

@@ -59,6 +59,7 @@ import { groupBy } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
+	// this id is received as the document id mapped from the route param
 	id: {
 		type: String,
 		default: ''
@@ -107,7 +108,6 @@ watch(extractions, (currentValue, oldValue) => {
 });
 
 // TODO:
-// highlight selected doc on the list of doc in the left panel
 // allow removal of doc from the list of project documents in the left panel
 
 const fetchArtifacts = async () => {
