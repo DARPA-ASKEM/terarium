@@ -92,7 +92,7 @@ header svg {
 }
 
 .project-carousel svg {
-	/* chevron arrows - see about making the right ones appear as required (by watching scrollbar position)
+	/* 	chevron arrows - see about making the right ones appear as required (by watching scrollbar position)
 		eg. if I am on the very left of the carousel don't show the left arrow
 	*/
 	position: absolute;
