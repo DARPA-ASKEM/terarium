@@ -36,7 +36,7 @@
 										></span>
 									</template>
 									<i
-										class="fa-lg fa-solid fa-file-lines"
+										:class="getResourceTypeIcon(ResourceType.XDD)"
 										style="margin-left: 4px; margin-right: 4px"
 									></i>
 								</div>
@@ -79,6 +79,8 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
+import { ResourceType } from '@/types/common';
+import { getResourceTypeIcon } from '@/utils/data-util';
 
 export default defineComponent({
 	name: 'ArticlesListview',
@@ -117,7 +119,9 @@ export default defineComponent({
 		);
 
 		return {
-			expandedRowId
+			expandedRowId,
+			ResourceType,
+			getResourceTypeIcon
 		};
 	},
 	methods: {
@@ -159,6 +163,7 @@ export default defineComponent({
 					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
 					knownTerms += '<br />';
 					knownTerms += Object.values(term).flat().join(' ');
+					knownTerms += '<br />';
 				});
 			}
 			return knownTerms;
@@ -168,7 +173,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
 .search-listview-container {
 	background: $background-light-2;
 	color: black;

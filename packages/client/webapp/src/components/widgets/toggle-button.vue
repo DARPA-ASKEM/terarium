@@ -49,7 +49,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables';
+@import '@/styles/variables';
 
 $toggle-on: #4e4e54;
 $toggle-off: $label-color;

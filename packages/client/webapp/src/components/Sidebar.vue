@@ -11,7 +11,7 @@ import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import IconLogout16 from '@carbon/icons-vue/es/logout/16';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
-import { useAuthStore } from '../stores/auth';
+import useAuthStore from '../stores/auth';
 
 const enum Mode {
 	SimulationPlan = 'Simulation Plan',

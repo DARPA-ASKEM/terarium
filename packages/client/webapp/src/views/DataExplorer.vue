@@ -48,22 +48,27 @@
 							@item-selected="xddDatasetSelectionChanged"
 						/>
 						<div class="xdd-known-terms">
-							<search-bar
-								class="search-bar"
-								:enable-multi-term-search="true"
-								:search-label="''"
-								:enable-clear-button="false"
-								:enable-search-button="false"
-								:search-placeholder="'known terms...'"
-								@search-text-changed="addKnownTerm"
+							<auto-complete
+								:focus-input="true"
+								:style-results="true"
+								:placeholder-color="'gray'"
+								:placeholder-message="'dict name...'"
+								:search-fn="searchXDDDictionaries"
+								@item-selected="addDictName"
 							/>
+							<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
+								{{ term }}
+								<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
+									<i class="fa fa-fw fa-close" />
+								</span>
+							</div>
 						</div>
 						<button
 							type="button"
 							class="co-occurrence-matrix-btn"
-							:disabled="knownTerms.length !== 2"
+							:disabled="dictNames.length !== 2"
 						>
-							<i class="fa-light fa-table-cells" />&nbsp;co-occurrence matrix
+							<i class="fa-solid fa-table-cells-large" />&nbsp;co-occurrence matrix
 						</button>
 					</template>
 				</search>
@@ -89,19 +94,19 @@ import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import ToggleButton from '@/components/widgets/toggle-button.vue';
+import AutoComplete from '@/components/widgets/autocomplete.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 
-import { fetchData, getXDDSets } from '@/services/data';
-import { SearchParameters, SearchResults, Facets } from '@/types/common';
+import { fetchData, getXDDSets, getXDDDictionaries } from '@/services/data';
+import { SearchParameters, SearchResults, Facets, ResourceType } from '@/types/common';
 import { getFacets } from '@/utils/facets';
-import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle } from '@/types/XDD';
+import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types/XDD';
 import { Model } from '@/types/Model';
-import { useQueryStore } from '@/stores/query';
+import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
 
 // FIXME: page count is not taken into consideration
-// FIXME: improve the search bar with auto-complete
 // FIXME: remove SASS
 
 export default defineComponent({
@@ -113,8 +118,10 @@ export default defineComponent({
 		SearchBar,
 		DropdownButton,
 		ToggleButton,
-		FacetsPanel
+		FacetsPanel,
+		AutoComplete
 	},
+	emits: ['hide', 'show-overlay', 'hide-overlay'],
 	setup() {
 		const dataItems = ref<SearchResults[]>([]);
 		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
@@ -135,21 +142,19 @@ export default defineComponent({
 		// xdd
 		xddDatasets: [] as string[],
 		xddDataset: null as string | null,
-		knownTerms: [] as string[],
-		rankedResults: true, // disable sorted results to enable pagination
+		dictNames: [] as string[],
+		rankedResults: true, // disable sorted/ranked results to enable pagination
+		xddDictionaries: [] as XDDDictionary[],
 		// facets
 		facets: {} as Facets,
 		filteredFacets: {} as Facets,
 		//
-		resultType: 'all' as string
+		resultType: ResourceType.ALL as string
 	}),
 	computed: {
-		navBackLabel() {
-			return 'Back to Home';
-		},
 		resultsCount() {
 			let total = 0;
-			if (this.resultType === 'all') {
+			if (this.resultType === ResourceType.ALL) {
 				// count the results from all subsystems
 				this.filteredDataItems.forEach((res) => {
 					const count = res?.hits ?? res?.results.length;
@@ -181,7 +186,7 @@ export default defineComponent({
 			// data has not changed; the user just changed one of the facet filters
 			this.applyFiltersToData(); // this will trigger facet re-calculation
 		},
-		knownTerms() {
+		dictNames() {
 			// re-fetch data from the server, apply filters, and re-calculate the facets
 			this.refresh();
 		},
@@ -204,21 +209,26 @@ export default defineComponent({
 	},
 	async mounted() {
 		this.xddDatasets = await getXDDSets();
+		this.xddDictionaries = (await getXDDDictionaries()) as XDDDictionary[];
 		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
-			this.xddDatasets.push('all');
-			this.xddDataset = 'all';
+			this.xddDatasets.push(ResourceType.ALL);
+			this.xddDataset = ResourceType.ALL;
 		}
 
 		this.refresh();
 	},
 	methods: {
+		searchXDDDictionaries(query: string) {
+			return new Promise((resolve) => {
+				const suggestionResults: string[] = [];
+				if (query.length < 1) resolve(suggestionResults); // early exit
+				resolve(
+					this.xddDictionaries.map((dic) => dic.name).filter((dictName) => dictName.includes(query))
+				);
+			});
+		},
 		updateResultType(newResultType: string) {
 			this.resultType = newResultType;
-			if (this.resultType === 'all') {
-				// TODO:
-				// collapse the Facets panel
-				// because there should not be visible facets when all different types of results are shown
-			}
 		},
 		toggleRankedResults() {
 			this.rankedResults = !this.rankedResults;
@@ -237,7 +247,7 @@ export default defineComponent({
 			this.fetchDataItemList();
 		},
 		xddDatasetSelectionChanged(newDataset: string) {
-			this.xddDataset = newDataset === 'all' ? null : newDataset;
+			this.xddDataset = newDataset === ResourceType.ALL ? null : newDataset;
 		},
 		calculateFacets() {
 			// retrieves filtered & unfiltered facet data
@@ -257,10 +267,12 @@ export default defineComponent({
 			//   size: this.pageSize
 			// };
 
+			this.$emit('show-overlay');
+
 			const searchParams: SearchParameters = {
 				xdd: {
-					known_terms: this.knownTerms,
-					dataset: this.xddDataset === 'all' ? null : this.xddDataset,
+					known_terms: this.dictNames,
+					dataset: this.xddDataset === ResourceType.ALL ? null : this.xddDataset,
 					pageSize: this.pageSize,
 					enablePagination: !this.rankedResults
 				}
@@ -271,6 +283,8 @@ export default defineComponent({
 
 			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
 			this.dataItems = allData;
+
+			this.$emit('hide-overlay');
 		},
 		applyFiltersToData() {
 			const allDataCloned = cloneDeep(this.dataItems);
@@ -284,8 +298,8 @@ export default defineComponent({
 		filterData(filterTerms: string[]) {
 			this.filter = cloneDeep(filterTerms);
 		},
-		async onClose() {
-			this.$router.push('/');
+		onClose() {
+			this.$emit('hide');
 		},
 		isDataItemSelected(id: string) {
 			return this.selectedSearchItems.find((item) => item === id) !== undefined;
@@ -307,26 +321,22 @@ export default defineComponent({
 		onSelection() {
 			console.log(`received ${this.selectedSearchItems.length.toString()} items!`);
 		},
-		removeKnownTerm(term: string) {
-			this.knownTerms = this.knownTerms.filter((t) => t !== term);
+		removeDictName(term: string) {
+			this.dictNames = this.dictNames.filter((t) => t !== term);
 		},
-		addKnownTerm(knownTerms: string[]) {
-			if (knownTerms.length === 0) {
-				this.knownTerms = [];
+		addDictName(term: string) {
+			if (term === undefined || term === '') return;
+			if (!this.dictNames.includes(term)) {
+				this.dictNames = [...this.dictNames, term]; // clone to trigger reactivity
 			}
-			knownTerms.forEach((term) => {
-				if (!this.knownTerms.includes(term)) {
-					this.knownTerms.push(term);
-				}
-			});
 		}
 	}
 });
 </script>
 
 <style lang="scss" scoped>
-@import '../styles/variables.scss';
-@import '../styles/util.scss';
+@import '@/styles/variables.scss';
+@import '@/styles/util.scss';
 
 .data-explorer-container {
 	position: absolute;
@@ -351,6 +361,19 @@ export default defineComponent({
 		margin-left: 1rem;
 		display: flex;
 
+		.flex-aligned-item {
+			display: flex;
+			align-items: center;
+			color: var(--un-color-accent-darker);
+
+			.flex-aligned-item-delete-btn {
+				color: red;
+			}
+			.flex-aligned-item-delete-btn:hover {
+				cursor: pointer;
+			}
+		}
+
 		:deep(.search-bar-container input) {
 			margin: 4px;
 			padding: 4px;
@@ -360,10 +383,8 @@ export default defineComponent({
 
 	.co-occurrence-matrix-btn {
 		background-color: darkcyan;
-		padding: 4px;
 		padding-left: 8px;
 		padding-right: 8px;
-		margin: 4px;
 	}
 }
 </style>
