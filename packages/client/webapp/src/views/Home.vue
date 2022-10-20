@@ -88,8 +88,6 @@ header svg {
 .project-carousel {
 	display: flex;
 	align-items: center;
-	/* width: 100vw;
-	overflow: auto; */
 	z-index: -1;
 }
 
@@ -121,7 +119,6 @@ header svg {
 ul {
 	display: flex;
 	margin: 0.5rem 4rem;
-	/* padding-right: 0 4rem; */
 	transition: 0.2s;
 	align-items: center;
 	gap: 0.5rem;
