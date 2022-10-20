@@ -6018,7 +6018,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graph-scaffolder@*, graph-scaffolder@workspace:packages/client/graph-scaffolder":
+"graph-scaffolder@portal:./../graph-scaffolder::locator=webapp%40workspace%3Apackages%2Fclient%2Fwebapp":
+  version: 0.0.0-use.local
+  resolution: "graph-scaffolder@portal:./../graph-scaffolder::locator=webapp%40workspace%3Apackages%2Fclient%2Fwebapp"
+  dependencies:
+    d3: 7.6.1
+    lodash: 4.17.21
+  languageName: node
+  linkType: soft
+
+"graph-scaffolder@workspace:packages/client/graph-scaffolder":
   version: 0.0.0-use.local
   resolution: "graph-scaffolder@workspace:packages/client/graph-scaffolder"
   dependencies:
@@ -11085,7 +11094,7 @@ __metadata:
     d3: 7.6.1
     dagre: 0.8.5
     eslint-import-resolver-typescript: 3.5.1
-    graph-scaffolder: "*"
+    graph-scaffolder: "portal:./../graph-scaffolder"
     lodash: 4.17.21
     pinia: 2.0.23
     sass: 1.55.0
