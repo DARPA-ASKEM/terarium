@@ -5,7 +5,7 @@
 				<thead>
 					<tr>
 						<th></th>
-						<th v-for="v in clustersInfo.variables" :key="v">{{ v }}</th>
+						<th v-for="v in clustersInfo.variables" :key="v">{{ formatColumnName(v) }}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -236,6 +236,10 @@ export default defineComponent({
 				}
 				return false;
 			});
+		},
+		formatColumnName(v: string) {
+			const maxColumnNameChars = 25;
+			return v.length < maxColumnNameChars ? v : `${v.substring(0, maxColumnNameChars)}...`;
 		}
 	}
 });
@@ -246,7 +250,6 @@ export default defineComponent({
 .search-matrixview-container {
 	background: $background-light-2;
 	color: black;
-	min-height: 0px;
 	width: 100%;
 	display: flex;
 	flex-direction: column;
