@@ -162,7 +162,10 @@
 			"
 		>
 			<template #content>
-				<selected-resources-options-pane :selected-search-items="selectedSearchItems" />
+				<selected-resources-options-pane
+					:selected-search-items="selectedSearchItems"
+					@close="onClose"
+				/>
 			</template>
 		</drilldown-panel>
 	</div>
@@ -453,7 +456,7 @@ export default defineComponent({
 			}
 		},
 		onSelection() {
-			console.log(`received ${this.selectedSearchItems.length.toString()} items!`);
+			console.log(`selected ${this.selectedSearchItems.length.toString()} items!`);
 		},
 		removeDictName(term: string) {
 			this.dictNames = this.dictNames.filter((t) => t !== term);

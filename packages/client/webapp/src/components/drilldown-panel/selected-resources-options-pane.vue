@@ -3,7 +3,7 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-to-title">Add to:</div>
 		<div class="add-selected-buttons">
-			<Button action>Current Project</Button>
+			<Button action @click="addToCurrentProject">Current Project</Button>
 			<Button action>Other Project</Button>
 		</div>
 		<div class="selected-items-container">
@@ -35,6 +35,7 @@ import MultilineDescription from '@/components/widgets/multiline-description.vue
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
+import useResourcesStore from '@/stores/resources';
 
 export default defineComponent({
 	name: 'SelectedResourcesOptionsPane',
@@ -49,8 +50,11 @@ export default defineComponent({
 			required: true
 		}
 	},
+	emits: ['close'],
 	setup() {
+		const resources = useResourcesStore();
 		return {
+			resources,
 			getResourceTypeIcon
 		};
 	},
@@ -91,6 +95,13 @@ export default defineComponent({
 				return ResourceType.XDD;
 			}
 			return ResourceType.ALL;
+		},
+		addToCurrentProject() {
+			// send selected items to the store
+			this.selectedSearchItems.forEach((selectedItem) => {
+				this.resources.addResource(selectedItem);
+			});
+			this.$emit('close');
 		}
 	}
 });
