@@ -1495,6 +1495,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:18.11.3":
+  version: 18.11.3
+  resolution: "@types/node@npm:18.11.3"
+  checksum: 3a2a9142d891a90a195c296149bf64a69cc0abcc42f543be911ab22b2e0ead85ff077f90af92f0f13f6e3e5e72501469200fd753dfd1101825d4646a89d3ee47
+  languageName: node
+  linkType: hard
+
 "@types/prettier@npm:^2.1.5":
   version: 2.7.1
   resolution: "@types/prettier@npm:2.7.1"
@@ -11069,6 +11076,7 @@ __metadata:
     "@rushstack/eslint-patch": 1.2.0
     "@types/d3": 7.4.0
     "@types/lodash": 4.14.186
+    "@types/node": 18.11.3
     "@uncharted.software/design-tokens": 1.1.0
     "@uncharted.software/facets-core": 3.2.6
     "@uncharted.software/facets-plugins": 3.2.5
