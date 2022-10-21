@@ -3,8 +3,10 @@
 		<div v-if="doc">
 			<div class="title">{{ doc.title }}</div>
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
+			<div class="journal">{{ doc.journal }}</div>
+			<div class="publisher">{{ doc.publisher }}</div>
 			<div class="desc">{{ formatDescription(doc) }}</div>
-			<div class="doi">{{ doi }}</div>
+			<div class="doi">DOI: {{ doi }}</div>
 			<div class="artifacts-header">
 				<b>Document Artifacts:</b> Found {{ artifacts.length }} Extractions
 			</div>
@@ -149,6 +151,12 @@ onMounted(async () => {
 
 .authors {
 	font-style: italic;
+	padding-top: 8px;
+}
+
+.journal,
+.publisher,
+.doi {
 	padding-top: 8px;
 }
 
