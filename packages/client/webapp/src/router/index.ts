@@ -10,7 +10,7 @@ const routes = [
 	{ path: '/results', component: ResponsiveMatrixCells },
 	{ path: '/ta2-playground', component: TA2Playground },
 	{ path: '/theia', component: Theia },
-	{ path: '/docs/:id', component: DocumentView, props: true }
+	{ path: '/docs/:id?', component: DocumentView, props: true }
 ];
 
 const router = createRouter({

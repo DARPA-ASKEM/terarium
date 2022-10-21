@@ -54,6 +54,7 @@ const openDocumentPage = (doc: XDDArticle) => {
 
 const removeDoc = (doc: XDDArticle) => {
 	resourcesStore.removeResource(doc);
+	router.push('/docs'); // clear the doc ID as a URL param
 };
 
 onMounted(() => {
