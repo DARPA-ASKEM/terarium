@@ -52,6 +52,7 @@ const useAuthStore = defineStore('auth', {
 					: await fetch('/silent-check-sso.html');
 
 			if (!response.ok) {
+				window.location.assign('http://localhost:8078/app/');
 				const error = new Error('Authentication Failed');
 				throw error;
 			}
@@ -82,6 +83,7 @@ const useAuthStore = defineStore('auth', {
 			this.userToken = null;
 			this.name = null;
 			this.email = null;
+			window.location.assign('/logout');
 		},
 		autoRenew() {
 			console.log('RENEW SSO');
