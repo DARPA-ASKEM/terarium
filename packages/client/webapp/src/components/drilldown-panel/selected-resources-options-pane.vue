@@ -74,7 +74,12 @@ export default defineComponent({
 				itemDesc = (item as Model).description || itemDesc;
 			}
 			if (isXDDArticle(item)) {
-				itemDesc = (item as XDDArticle).abstract || (item as XDDArticle).journal || itemDesc;
+				itemDesc =
+					((item as XDDArticle).abstract && typeof (item as XDDArticle).abstract === 'string'
+						? (item as XDDArticle).abstract
+						: false) ||
+					(item as XDDArticle).journal ||
+					itemDesc;
 			}
 			return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
 		},

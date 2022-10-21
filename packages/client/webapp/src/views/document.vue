@@ -76,7 +76,8 @@ const xddDataset = computed(() => resourcesStore.xddDataset);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
-const formatDescription = (d: XDDArticle) => d.abstract || '[no abstract]';
+const formatDescription = (d: XDDArticle) =>
+	(d.abstract && typeof d.abstract === 'string' ? d.abstract : false) || '[no abstract]';
 
 const doi = computed(() => {
 	let docIdentifier = '';

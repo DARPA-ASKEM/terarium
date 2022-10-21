@@ -137,7 +137,7 @@ export default defineComponent({
 			this.$emit('toggle-article-selected', article);
 		},
 		formatDescription(d: XDDArticle) {
-			if (!d.abstract) return '';
+			if (!d.abstract || typeof d.abstract !== 'string') return '';
 			return this.isExpanded(d) || d.abstract.length < 140
 				? d.abstract
 				: `${d.abstract.substring(0, 140)}...`;
