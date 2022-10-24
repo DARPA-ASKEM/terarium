@@ -3,9 +3,6 @@
 // `tsconfig.node.json` configures TypeScript for Vite, which runs in Node.
 {
 	"compilerOptions": {
-		"noImplicitReturns": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
 		"composite": true,
 		"esModuleInterop": true,
@@ -16,10 +13,13 @@
 		"module": "ESNext",
 		"moduleResolution": "node",
 		"noImplicitAny": false, /* IBM Carbon Icons-Vue does not support TypeScript */
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"paths": {
 			/* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
 			"@/*": ["src/*"],
-			"graph_scaffolder/*": ["../graph-scaffolder/src/*"]
+			"graph-scaffolder/*": ["../graph-scaffolder/src/*"]
 		},
 		"resolveJsonModule": true,
 		"skipLibCheck": true,

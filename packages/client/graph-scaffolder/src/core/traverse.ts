@@ -81,7 +81,7 @@ export const getAStarPath = (
 		return [start, goal];
 	}
 
-	const cameFrom = [];
+	const cameFrom : number[] = [];
 	const gScore: { [key: string]: number } = {};
 	const fScore: { [key: string]: number } = {};
 	const heap = new BinaryHeap<number>(9999, (e) => fScore[e]);

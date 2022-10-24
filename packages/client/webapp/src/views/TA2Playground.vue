@@ -1,5 +1,5 @@
 <script lang="ts">
-import graphScaffolder, { IGraph, INode, IEdge } from 'graph_scaffolder/index';
+import graphScaffolder, { IGraph, INode, IEdge } from 'graph-scaffolder/index';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';

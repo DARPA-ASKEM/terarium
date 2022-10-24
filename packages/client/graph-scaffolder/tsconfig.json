@@ -1,12 +1,25 @@
 {
 	"compilerOptions": {
+		"baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
 		"composite": true,
-		"outDir": "dist",
-		"strict": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"jsx": "preserve",
+		"lib": ["ESNext", "DOM"],
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"noImplicitAny": false, /* IBM Carbon Icons-Vue does not support TypeScript */
+		"noImplicitReturns": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noImplicitReturns": true,
-		"esModuleInterop": true
+		"outDir": "dist",
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"target": "ESNext",
+		"useDefineForClassFields": true
 	},
 	"include": ["src"]
 }

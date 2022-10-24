@@ -41,5 +41,12 @@ export default defineConfig({
 	],
 	test: {
 		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']
+	},
+	build: {
+		rollupOptions: {
+			external: [
+				'graph-scaffolder/index'
+			]
+		}
 	}
 });
