@@ -16,7 +16,7 @@ import unHighlight from './fn/un-highlight';
 
 import type { INode, IEdge, IGraph } from './types';
 
-export {
+const graphScaffolder = {
 	Renderer,
 	BasicRenderer,
 	DeltaRenderer,
@@ -30,8 +30,14 @@ export {
 	unHighlight,
 	group,
 	ungroup,
-	INode,
-	IEdge,
-	IGraph,
 	simplifyPath
 };
+
+export {
+	INode,
+	IEdge,
+	IGraph
+}
+
+export default graphScaffolder;
+

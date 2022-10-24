@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { Renderer } from '../core';
 import { INode, IEdge } from '../types';
 
-interface HighlightOptions {
+export interface HighlightOptions {
 	color?: string;
 	duration?: number;
 }

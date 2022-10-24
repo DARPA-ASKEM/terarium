@@ -3,27 +3,35 @@
 // `tsconfig.node.json` configures TypeScript for Vite, which runs in Node.
 {
 	"compilerOptions": {
-		"target": "ESNext",
-		"useDefineForClassFields": true,
-		"module": "ESNext",
-		"moduleResolution": "Node",
-		"strict": true,
-		"jsx": "preserve",
-		"sourceMap": true,
-		"resolveJsonModule": true,
-		"isolatedModules": true,
-		"esModuleInterop": true,
-		"lib": ["ESNext", "DOM"],
-		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
-    "paths": {
-      /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
-      "@/*": ["src/*"]
-    },
-    "noImplicitAny": false /* IBM Carbon Icons-Vue does not support TypeScript */
+		"composite": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"jsx": "preserve",
+		"lib": ["ESNext", "DOM"],
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"noImplicitAny": false, /* IBM Carbon Icons-Vue does not support TypeScript */
+		"paths": {
+			/* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
+			"@/*": ["src/*"],
+			"graph_scaffolder/*": ["../graph-scaffolder/src/*"]
+		},
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"target": "ESNext",
+		"useDefineForClassFields": true
 	},
 	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts"],
 	"exclude": ["node_modules"],
-	"references": [{ "path": "./tsconfig.node.json" }]
+	"references": [
+		{ "path": "../graph-scaffolder" },
+		{ "path": "./tsconfig.node.json" }
+	]
 }

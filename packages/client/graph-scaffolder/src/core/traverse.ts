@@ -37,7 +37,7 @@ export const flattenGraph = <V, E>(
 /**
  * AStar path find
  */
-interface IGrid {
+export interface IGrid {
 	w: number;
 	h: number;
 }
