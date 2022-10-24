@@ -6,7 +6,7 @@
 			:disabled="selectedSearchItems.length < 1"
 			@click="onSelection"
 		>
-			<i class="fa fa-fw fa-plus-circle" />
+			<IconAddFilled16 />
 			{{ selectLabel }}
 		</button>
 		<span>
@@ -17,12 +17,14 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import IconAddFilled16 from '@carbon/icons-vue/es/add--filled/16';
 import FullScreenModalHeader from '@/components/widgets/full-screen-modal-header.vue';
 
 export default defineComponent({
 	name: 'DataExplorerModalHeader',
 	components: {
-		FullScreenModalHeader
+		FullScreenModalHeader,
+		IconAddFilled16
 	},
 	props: {
 		selectLabel: {
