@@ -52,7 +52,7 @@ const useAuthStore = defineStore('auth', {
 					: await fetch('/silent-check-sso.html');
 
 			if (!response.ok) {
-				// window.location.assign('http://localhost:8078/app/');
+				this.logout();
 				const error = new Error('Authentication Failed');
 				throw error;
 			}
