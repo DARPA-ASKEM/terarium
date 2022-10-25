@@ -171,6 +171,7 @@ export default defineComponent({
 .dropdown-button-container {
 	position: relative;
 }
+
 .dropdown-control {
 	position: absolute;
 	right: 0;
@@ -182,17 +183,21 @@ export default defineComponent({
 		left: 0;
 		right: auto;
 	}
+
 	&.above {
 		bottom: 90%;
 		top: auto;
 	}
 }
+
 .dropdown-option {
 	white-space: nowrap;
 }
+
 .dropdown-option-selected {
 	color: $selected-dark;
 }
+
 .dropdown-btn {
 	display: flex;
 	align-items: center;

@@ -10,7 +10,7 @@
 			{{ selectLabel }}
 		</button>
 		<span>
-			<span class="selected">{{ selectedSearchItems.length }} &nbsp; selected</span>
+			<span class="selected">{{ selectedSearchItems.length }} selected</span>
 		</span>
 	</full-screen-modal-header>
 </template>
