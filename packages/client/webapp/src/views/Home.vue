@@ -18,8 +18,6 @@ import Button from '@/components/Button.vue';</script>
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
-import projectService from "@/services/project-service";
 import {uncloak} from '@/utils/uncloak';
 
 async function apiCall(type = '') {
@@ -38,20 +36,6 @@ async function apiCall(type = '') {
 		console.log(`Response: ${JSON.stringify(data)}`);
 	}
 }
-
-
-export default defineComponent({
-	name: 'Home',
-	methods: {
-		newProject() {
-			projectService.createProject('newProject', 'projectDescription');
-		},
-		getProjects() {
-			projectService.getProjects();
-		}
-
-	}
-});
 </script>
 
 <style scoped>
