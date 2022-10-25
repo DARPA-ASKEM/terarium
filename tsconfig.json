@@ -1,0 +1,11 @@
+{
+	"exclude": [
+		"packages/client/**/tests/**",
+		"packages/client/**/dist/**"
+	],
+	"references": [
+		{ "path": "./packages/client/shared" },
+		{ "path": "./packages/client/graph-scaffolder" },
+		{ "path": "./packages/client/webapp" }
+	]
+}
