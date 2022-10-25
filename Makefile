@@ -66,8 +66,8 @@ clean-webapp:
 	rm -rf $(PROJECT_DIR)/packages/client/webapp/docker/dist
 
 image-webapp: clean-webapp yarn-install
-	yarn workspace graph-scaffolder tsc --build
-	yarn workspace webapp build
+	yarn tsc --build
+	yarn build
 	mv $(PROJECT_DIR)/packages/client/webapp/dist $(PROJECT_DIR)/packages/client/webapp/docker
 	docker build -t $(DOCKER_IMAGE_ROOT)/webapp:$(DOCKER_IMAGE_TAG) $(PROJECT_DIR)/packages/client/webapp/docker
 

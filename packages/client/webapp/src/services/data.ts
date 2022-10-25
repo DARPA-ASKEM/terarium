@@ -239,7 +239,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 		try {
 			resolve(searchXDDArticles(term, searchParam?.xdd));
 		} catch (err: any) {
-			reject(new Error('Error fetching XDD results', err));
+			reject(new Error(`Error fetching XDD results: ${err}`));
 		}
 	});
 
@@ -248,7 +248,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 		try {
 			resolve(getModels(term, searchParam?.model));
 		} catch (err: any) {
-			reject(new Error('Error fetching models results', err));
+			reject(new Error(`Error fetching models results: ${err}`));
 		}
 	});
 

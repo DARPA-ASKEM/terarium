@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import path from 'path';
+import * as path from 'path';
 
 // See: https://vitejs.dev/config/
 // See: https://vitejs.dev/config/server-options.html#server-proxy

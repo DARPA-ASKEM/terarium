@@ -1,6 +1,26 @@
 <script setup lang="ts">
-import Button from '@/components/Button.vue';
-import { uncloak } from '../utils/uncloak';
+import Button from '@/components/Button.vue';</script>
+
+<template>
+	<section>
+		<p>Test API calls/Home placeholder</p>
+		<div>
+			<Button>Normal</Button>
+			<Button action>Action</Button>
+			<Button danger>Danger</Button>
+			<Button info>Info</Button>
+		</div>
+		<div>
+			<Button @click="apiCall('user')">User Call</Button>
+			<Button @click="apiCall('admin')">Admin Call</Button>
+		</div>
+	</section>
+</template>
+
+<script lang="ts">
+import {defineComponent} from "vue";
+import projectService from "@/services/project-service";
+import {uncloak} from '@/utils/uncloak';
 
 async function apiCall(type = '') {
 	if (type === 'user') {
@@ -18,23 +38,21 @@ async function apiCall(type = '') {
 		console.log(`Response: ${JSON.stringify(data)}`);
 	}
 }
-</script>
 
-<template>
-	<section>
-		<p>Test API calls/Home placeholder</p>
-		<div>
-			<Button>Normal</Button>
-			<Button action>Action</Button>
-			<Button danger>Danger</Button>
-			<Button info>Info</Button>
-		</div>
-		<div>
-			<Button @click="apiCall('user')">User Call</Button>
-			<Button @click="apiCall('admin')">Admin Call</Button>
-		</div>
-	</section>
-</template>
+
+export default defineComponent({
+	name: 'Home',
+	methods: {
+		newProject() {
+			projectService.createProject('newProject', 'projectDescription');
+		},
+		getProjects() {
+			projectService.getProjects();
+		}
+
+	}
+});
+</script>
 
 <style scoped>
 section {

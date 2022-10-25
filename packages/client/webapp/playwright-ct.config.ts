@@ -34,6 +34,7 @@ const config: PlaywrightTestConfig = {
 
 		/* Vite specific config */
 		ctViteConfig: {
+			// @ts-ignore
 			plugins: [vue()],
 			resolve: {
 				alias: {
