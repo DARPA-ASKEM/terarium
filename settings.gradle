@@ -11,4 +11,5 @@ pluginManagement {
 
 rootProject.name='terarium'
 
-include 'packages:services:server'
+include 'packages:services:hmi-server'
+include 'packages:services:mock-data-server'

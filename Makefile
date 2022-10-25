@@ -45,22 +45,23 @@ publish-native-hmi-server: clean-hmi-server
 	./gradlew :packages:services:hmi-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)-native -Dquarkus.package.type=native
 
 
-TARGETS += data-server
-clean-data-server:
-	./gradlew :packages:services:data-server:clean
+TARGETS += mock-data-server
+clean-mock-data-server:
+	./gradlew :packages:services:mock-data-server:clean
 
-image-data-server: clean-data-server
-	./gradlew :packages:services:data-server:build -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
+image-mock-data-server: clean-mock-data-server
+	./gradlew :packages:services:mock-data-server:build -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
 
-publish-data-server: clean-data-server
-	./gradlew :packages:services:data-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
+publish-mock-data-server: clean-mock-data-server
+	./gradlew :packages:services:mock-data-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
 
-publish-native-data-server: clean-data-server
-	./gradlew :packages:services:data-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)-native -Dquarkus.package.type=native
+publish-native-mock-data-server: clean-mock-data-server
+	./gradlew :packages:services:mock-data-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)-native -Dquarkus.package.type=native
 
 
 TARGETS += webapp
 clean-webapp:
+	rm -rf $(PROJECT_DIR)/packages/client/graph-scaffolder/dist
 	rm -rf $(PROJECT_DIR)/packages/client/webapp/dist
 	rm -rf $(PROJECT_DIR)/packages/client/webapp/docker/dist
 

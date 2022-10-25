@@ -1,0 +1,60 @@
+plugins {
+    id "java"
+    id "io.quarkus"
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+
+	// REST server
+	implementation "io.quarkus:quarkus-resteasy"
+	implementation "io.quarkus:quarkus-resteasy-jackson"
+	implementation "io.quarkus:quarkus-resteasy-jsonb"
+    implementation "io.quarkus:quarkus-smallrye-openapi"
+    implementation "io.quarkus:quarkus-arc"
+
+	// REST client
+	implementation "io.quarkus:quarkus-rest-client"
+
+	// Auth dependencies
+	implementation "io.quarkus:quarkus-oidc"
+    implementation "io.quarkus:quarkus-keycloak-authorization"
+
+	// Docker dependencies
+	implementation "io.quarkus:quarkus-container-image-docker"
+	implementation "io.quarkus:quarkus-kubernetes"
+
+	// Test
+    testImplementation "io.rest-assured:rest-assured"
+    testImplementation "io.quarkus:quarkus-test-oidc-server"
+    testImplementation "io.quarkus:quarkus-junit5"
+    testImplementation "io.quarkus:quarkus-test-keycloak-server"
+
+    // lombok
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+
+	// Annotations
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+}
+
+group "software.uncharted"
+version "1.0.0-SNAPSHOT"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-parameters"
+}
+
+compileTestJava {
+    options.encoding = "UTF-8"
+}
