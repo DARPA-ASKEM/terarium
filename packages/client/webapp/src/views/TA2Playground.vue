@@ -370,8 +370,8 @@ export default defineComponent({
 			g.nodes.push({
 				id,
 				label: id,
-				x: Math.random() * 500,
-				y: Math.random() * 500,
+				x: Math.random() * 400,
+				y: Math.random() * 400,
 				height: 50,
 				width: 50,
 				data: { type: 'species' },
@@ -404,8 +404,8 @@ export default defineComponent({
 			g.nodes.push({
 				id,
 				label: id,
-				x: Math.random() * 500,
-				y: Math.random() * 500,
+				x: Math.random() * 400,
+				y: Math.random() * 400,
 				height: 50,
 				width: 50,
 				data: { type: 'transition' },
@@ -498,6 +498,15 @@ export default defineComponent({
 					.style('stroke', null)
 					.style('fill', 'blue');
 			}
+		},
+		async stratify() {
+			console.log('Start Stratify');
+			const resp = await fetch(`http://localhost:8888/api/models/stratify`, {
+				method: 'GET'
+			});
+			const output = await resp.text(); // .json();
+			console.log(output);
+			this.jsonOutput();
 		}
 	}
 });
@@ -508,6 +517,7 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
+		<button type="button" @click="stratify">Stratify</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
