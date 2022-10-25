@@ -54,7 +54,7 @@ const dataExplorerActivated = ref(false);
 	/>
 	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main v-if="isAuthenticated">
-		<Sidebar v-if="isSidebarVisible" class="sidebar" />
+		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" />
 		<router-view class="page" />
 	</main>
 </template>
