@@ -3,6 +3,7 @@ import HomeView from '@/views/Home.vue';
 import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
+import { computed } from 'vue';
 
 export enum RoutePath {
 	Home = '/',
@@ -26,8 +27,10 @@ const router = createRouter({
 	routes
 });
 
-export function useIsCurrentRouteHome() {
-	return router.currentRoute.value.path === RoutePath.Home;
+export function useCurrentRouter() {
+	return {
+		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home)
+	};
 }
 
 export default router;

@@ -5,9 +5,10 @@ import Sidebar from '@/components/Sidebar.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 import useAuthStore from './stores/auth';
-import { useIsCurrentRouteHome } from './router/index';
+import { useCurrentRouter } from './router/index';
 
-const isSidebarVisible = computed(() => !useIsCurrentRouteHome());
+const { isCurrentRouteHome } = useCurrentRouter();
+const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
 const auth = useAuthStore();
 
