@@ -370,8 +370,8 @@ export default defineComponent({
 			g.nodes.push({
 				id,
 				label: id,
-				x: Math.random() * 400,
-				y: Math.random() * 400,
+				x: Math.random() * 500,
+				y: Math.random() * 500,
 				height: 50,
 				width: 50,
 				data: { type: 'species' },
@@ -404,8 +404,8 @@ export default defineComponent({
 			g.nodes.push({
 				id,
 				label: id,
-				x: Math.random() * 400,
-				y: Math.random() * 400,
+				x: Math.random() * 500,
+				y: Math.random() * 500,
 				height: 50,
 				width: 50,
 				data: { type: 'transition' },
@@ -504,9 +504,95 @@ export default defineComponent({
 			const resp = await fetch(`http://localhost:8888/api/models/stratify`, {
 				method: 'GET'
 			});
-			const output = await resp.text(); // .json();
+			const output = await resp.json();
 			console.log(output);
+			this.drawResult(output);
+		},
+		// Expects a JSON of a model with labels T, S, I, O.
+		// Will need some serious work, This is just done so i can draw strat result.
+		async drawResult(model) {
+			console.log('Draw Result');
+			// Reset
+			g.nodes = [];
+			g.edges = [];
+
+			const x = JSON.stringify({
+				nodes: [
+					{ name: 'rabbits', type: 'S' },
+					{ name: 'wolves', type: 'S' },
+					{ name: 'birth', type: 'T' },
+					{ name: 'death', type: 'T' },
+					{ name: 'predation', type: 'T' }
+				],
+				edges: [
+					{ source: 'wolves', target: 'death' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'wolves', target: 'predation' },
+					{ source: 'rabbits', target: 'predation' },
+					{ source: 'rabbits', target: 'birth' },
+					{ source: 'birth', target: 'rabbits' },
+					{ source: 'birth', target: 'rabbits' }
+				]
+			});
+			console.log(x);
+
+			const nodeHeight = 20;
+			const nodeWidth = 20;
+			let nodeX = 0;
+			let nodeY = 0;
+			// for (var aNode of model.S){
+			for (let i = 0; i < model.S.length; i++) {
+				const aNode = model.S[i];
+
+				nodeX += 30;
+				nodeY += 30;
+				console.log(aNode);
+				g.nodes.push({
+					id: i + 1, // aNode.sname,
+					label: aNode.sname,
+					x: nodeX,
+					y: nodeY,
+					height: nodeHeight,
+					width: nodeWidth,
+					nodes: [],
+					data: { type: 'species' }
+				});
+			}
+			nodeX = 100;
+			nodeY = 0;
+			// for (var aTransition of model.T){
+			for (let j = 0; j < model.T.length; j++) {
+				const aTransition = model.T[j];
+				console.log(aTransition);
+				nodeX += 30;
+				nodeY += 30;
+				g.nodes.push({
+					id: j + 1, // aTransition.tname,
+					label: aTransition.tname,
+					x: nodeX,
+					y: nodeY,
+					height: nodeHeight,
+					width: nodeWidth,
+					nodes: [],
+					data: { type: 'transition' }
+				});
+			}
+
+			// TODO: Fix edges.
+			// for (var iEdges of model.I){
+			// 	console.log(iEdges)
+			// 	let edgeSource = iEdges.is;
+			// 	let edgeTrans = iEdges.it;
+			// 	console.log("Source: " + edgeSource);
+			// 	console.log("Trans " + edgeTrans);
+			// 	g.edges.push({source: edgeSource, target: edgeTrans, points: []});
+			// }
+
+			// g = runLayout(_.cloneDeep(g));
+			this.refresh();
 			this.jsonOutput();
+			// this.jsonOutput();
 		}
 	}
 });
