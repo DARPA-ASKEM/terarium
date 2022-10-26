@@ -2,46 +2,19 @@
 //  the browser.
 // `tsconfig.node.json` configures TypeScript for Vite, which runs in Node.
 {
+	"extends": "../../../tsconfig.base.json",
 	"compilerOptions": {
-		"baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
-		"composite": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"isolatedModules": true,
 		"jsx": "preserve",
 		"lib": [
 			"ESNext",
 			"DOM"
 		],
 		"module": "ESNext",
-		"moduleResolution": "node",
-		"noImplicitAny": false, /* IBM Carbon Icons-Vue does not support TypeScript */
-		"noImplicitReturns": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"outDir": "dist",
-		"paths": {
-			/* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
-			"@/*": [
-				"src/*"
-			],
-			"graph-scaffolder/*": [
-				"../graph-scaffolder/src/*"
-			]
-		},
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
 		"sourceMap": true,
-		"strict": true,
-		"target": "ESNext",
-		"useDefineForClassFields": true
+		"target": "ESNext"
 	},
 	"include": [
-		"src/**/*.ts",
-		"src/**/*.d.ts",
-		"src/**/*.tsx",
-		"src/**/*.vue",
-		"tests/**/*.ts"
+		"src"
 	],
 	"exclude": [
 		"node_modules"

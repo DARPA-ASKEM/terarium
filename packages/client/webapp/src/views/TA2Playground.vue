@@ -89,6 +89,7 @@ export const pathFn = d3
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
+
 class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
 		const svg = d3.select(this.svgEl);

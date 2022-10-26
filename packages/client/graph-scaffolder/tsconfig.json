@@ -1,20 +1,9 @@
 {
+	"extends": "../../../tsconfig.base.json",
 	"compilerOptions": {
-		"baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
-		"composite": true,
-		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-		"isolatedModules": true,
-		"moduleResolution": "node",
-		"noImplicitAny": false, /* IBM Carbon Icons-Vue does not support TypeScript */
-		"noImplicitReturns": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"outDir": "dist",
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"sourceMap": true,
-		"strict": true,
+		"composite": true
 	},
-	"include": ["src"]
+	"include": [
+		"src"
+	]
 }

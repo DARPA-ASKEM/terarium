@@ -1,0 +1,45 @@
+{
+	"compilerOptions": {
+		"baseUrl": "./",
+		"composite": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"moduleResolution": "node",
+		"noImplicitAny": false,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"outDir": "dist",
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true
+	},
+	"exclude": [
+		"packages/client/**/tests/**",
+		"packages/client/**/dist/**"
+	],
+	"paths": {
+		"@app/graph-scaffolder": [
+			"packages/client/graph-scaffolder/src"
+		],
+		"@app/graph-scaffolder/*": [
+			"packages/client/graph-scaffolder/src/*"
+		],
+		"@app/webapp": [
+			"packages/client/webapp/src"
+		],
+		"@app/webapp/*": [
+			"packages/client/webapp/src/*"
+		]
+	},
+	"references": [
+		{
+			"path": "@app/packages/client/graph-scaffolder"
+		},
+		{
+			"path": "@app/packages/client/webapp"
+		}
+	]
+}

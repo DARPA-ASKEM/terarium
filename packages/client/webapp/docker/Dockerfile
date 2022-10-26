@@ -8,7 +8,7 @@ RUN apk add --no-cache curl && apk add --no-cache bash && apk add --no-cache vim
 COPY default.conf /etc/nginx/conf.d/
 
 # copy the web assets
-COPY ./dist /var/www
+COPY ./dist /var/www/app
 
 # install wait-for-it
 ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /usr/local/bin/wait-for-it.sh
