@@ -64,10 +64,16 @@ const useAuthStore = defineStore('auth', {
 			this.userToken = accessToken;
 
 			if (accessToken) {
-				const tokenInfo = decode(accessToken);
+				try {
+					const tokenInfo = decode(accessToken);
 
-				this.name = tokenInfo.name;
-				this.email = tokenInfo.email;
+					this.name = tokenInfo.name;
+					this.email = tokenInfo.email;
+				} catch (error) {
+					console.error('Unable to decode authentication token for additional user information');
+					this.name = null;
+					this.email = null;
+				}
 
 				// TODO: other info we can gather
 				// preferred_username, given_name, family_name, realm_access.roles etc
