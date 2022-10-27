@@ -1,28 +1,39 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   labels:
     software.uncharted.terarium: gateway-httpd
   name: gateway-httpd
 spec:
-  containers:
-    - image: ghcr.io/unchartedsoftware/httpd-openidc:0.1.2
-      name: gateway-httpd
-      ports:
-        - containerPort: 80
-          protocol: TCP
-      resources: {}
-      volumeMounts:
+  replicas: 1
+  selector:
+    matchLabels:
+      software.uncharted.terarium: gateway-httpd
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        software.uncharted.terarium: gateway-httpd
+    spec:
+      containers:
+        - image: ghcr.io/unchartedsoftware/httpd-openidc:0.1.2
+          name: gateway-httpd
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - name: htdocs-volume
+              mountPath: /usr/local/apache2/htdocs
+            - name: config-volume
+              mountPath: /usr/local/apache2/conf/default
+      volumes:
         - name: htdocs-volume
-          mountPath: /usr/local/apache2/htdocs
+          configMap:
+            name: gateway-httpd-htdocs
         - name: config-volume
-          mountPath: /usr/local/apache2/conf/default
-  volumes:
-    - name: htdocs-volume
-      configMap:
-        name: gateway-httpd-htdocs
-    - name: config-volume
-      configMap:
-        name: gateway-httpd-config
-  restartPolicy: Always
+          configMap:
+            name: gateway-httpd-config
+      restartPolicy: Always
 status: {}
