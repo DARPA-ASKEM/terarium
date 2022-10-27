@@ -1,61 +1,29 @@
 <template>
 	<div class="data-explorer-container">
-		<modal-header
-			:nav-back-label="'Back to Home'"
-			:select-label="'Add selected items'"
-			:selected-search-items="selectedSearchItems"
-			@close="onClose"
-			@selection="onSelection"
-		/>
+		<modal-header :nav-back-label="'Back to Home'" :select-label="'Add selected items'"
+			:selected-search-items="selectedSearchItems" @close="onClose" @selection="onSelection" />
 		<div class="flex h-100">
 			<div class="flex h-100 facets-panel-container">
-				<facets-panel
-					:facets="facets"
-					:filtered-facets="filteredFacets"
-					:result-type="resultType"
-				/>
+				<facets-panel :facets="facets" :filtered-facets="filteredFacets" :result-type="resultType" />
 			</div>
 			<div class="explorer-content flex-grow-1 h-100">
-				<search-bar
-					class="search-bar"
-					:enable-multi-term-search="false"
-					:show-sorted-results="true"
-					@search-text-changed="filterData"
-				>
+				<search-bar class="search-bar" :enable-multi-term-search="false" :show-sorted-results="true"
+					@search-text-changed="filterData">
 					<template #sort>
-						<toggle-button
-							:value="rankedResults"
-							:label="'Ranked Results'"
-							@change="toggleRankedResults"
-						/>
+						<toggle-button :value="rankedResults" :label="'Ranked Results'" @change="toggleRankedResults" />
 					</template>
 				</search-bar>
-				<search
-					:data-items="filteredDataItems"
-					:result-type="resultType"
-					:results-count="resultsCount"
-					:enable-multiple-selection="true"
-					:selected-search-items="selectedSearchItems"
-					@result-type-changed="updateResultType"
-					@toggle-data-item-selected="toggleDataItemSelected"
-				>
+				<search :data-items="filteredDataItems" :result-type="resultType" :results-count="resultsCount"
+					:enable-multiple-selection="true" :selected-search-items="selectedSearchItems"
+					@result-type-changed="updateResultType" @toggle-data-item-selected="toggleDataItemSelected">
 					<template #xdd>
-						<dropdown-button
-							:inner-button-label="'Dataset'"
-							:is-dropdown-left-aligned="true"
-							:items="xddDatasets"
-							:selected-item="xddDataset"
-							@item-selected="xddDatasetSelectionChanged"
-						/>
+						<dropdown-button :inner-button-label="'Dataset'" :is-dropdown-left-aligned="true"
+							:items="xddDatasets" :selected-item="xddDataset"
+							@item-selected="xddDatasetSelectionChanged" />
 						<div class="xdd-known-terms">
-							<auto-complete
-								:focus-input="true"
-								:style-results="true"
-								:placeholder-color="'gray'"
-								:placeholder-message="'dict name...'"
-								:search-fn="searchXDDDictionaries"
-								@item-selected="addDictName"
-							/>
+							<auto-complete :focus-input="true" :style-results="true" :placeholder-color="'gray'"
+								:placeholder-message="'dict name...'" :search-fn="searchXDDDictionaries"
+								@item-selected="addDictName" />
 							<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
 								{{ term }}
 								<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
@@ -63,22 +31,13 @@
 								</span>
 							</div>
 						</div>
-						<button
-							type="button"
-							class="co-occurrence-matrix-btn"
-							:disabled="dictNames.length !== 2"
-						>
+						<button type="button" class="co-occurrence-matrix-btn" :disabled="dictNames.length !== 2">
 							<IconScatterMatrix16 />&nbsp;co-occurrence matrix
 						</button>
 					</template>
 				</search>
-				<simple-pagination
-					:current-page-length="resultsCount"
-					:page-count="pageCount"
-					:page-size="pageSize"
-					@next-page="nextPage"
-					@prev-page="prevPage"
-				/>
+				<simple-pagination :current-page-length="resultsCount" :page-count="pageCount" :page-size="pageSize"
+					@next-page="nextPage" @prev-page="prevPage" />
 			</div>
 		</div>
 	</div>
@@ -350,47 +309,47 @@ export default defineComponent({
 	box-sizing: border-box;
 	width: 100%;
 	height: calc(100vh - 50px);
+}
 
-	.facets-panel-container {
-		background-color: $background-light-2;
-		height: calc(100vh - 50px);
-	}
+.data-explorer-container .facets-panel-container {
+	background-color: $background-light-2;
+	height: calc(100vh - 50px);
+}
 
-	.explorer-content {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-	}
+.data-explorer-container .explorer-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
 
-	.xdd-known-terms {
-		margin-left: 1rem;
-		display: flex;
+.data-explorer-container .xdd-known-terms {
+	margin-left: 1rem;
+	display: flex;
+}
 
-		.flex-aligned-item {
-			display: flex;
-			align-items: center;
-			color: var(--un-color-accent-darker);
+.data-explorer-container .xdd-known-terms .flex-aligned-item {
+	display: flex;
+	align-items: center;
+	color: var(--un-color-accent-darker);
+}
 
-			.flex-aligned-item-delete-btn {
-				color: red;
-			}
+.data-explorer-container .xdd-known-terms .flex-aligned-item .flex-aligned-item-delete-btn {
+	color: red;
+}
 
-			.flex-aligned-item-delete-btn:hover {
-				cursor: pointer;
-			}
-		}
+.data-explorer-container .xdd-known-terms .flex-aligned-item .flex-aligned-item-delete-btn:hover {
+	cursor: pointer;
+}
 
-		:deep(.search-bar-container input) {
-			margin: 4px;
-			padding: 4px;
-			min-width: 100px;
-		}
-	}
+.data-explorer-container .xdd-known-terms :deep(.search-bar-container input) {
+	margin: 4px;
+	padding: 4px;
+	min-width: 100px;
+}
 
-	.co-occurrence-matrix-btn {
-		background-color: darkcyan;
-		padding-left: 8px;
-		padding-right: 8px;
-	}
+.data-explorer-container .co-occurrence-matrix-btn {
+	background-color: darkcyan;
+	padding-left: 8px;
+	padding-right: 8px;
 }
 </style>
