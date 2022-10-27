@@ -23,20 +23,20 @@
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
 									<template v-if="enableMultipleSelection">
-										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-square-check"></i
-										></span>
-										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-square"></i
-										></span>
+										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconCheckboxChecked20 />
+										</span>
+										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconCheckbox20 />
+										</span>
 									</template>
 									<template v-else>
-										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-circle"></i
-										></span>
-										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-circle-xmark"></i
-										></span>
+										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconRadioButton20 />
+										</span>
+										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconCloseOutline20 />
+										</span>
 									</template>
 									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
@@ -79,7 +79,10 @@ import MultilineDescription from '@/components/widgets/multiline-description.vue
 import { Model } from '@/types/Model';
 import { ResourceType } from '@/types/common';
 import { getResourceTypeIcon } from '@/utils/data-util';
-
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
+import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
 /**
  * name: string;
 	description: string;
@@ -91,7 +94,11 @@ import { getResourceTypeIcon } from '@/utils/data-util';
 export default defineComponent({
 	name: 'ModelsListview',
 	components: {
-		MultilineDescription
+		MultilineDescription,
+		IconCheckbox20,
+		IconCheckboxChecked20,
+		IconRadioButton20,
+		IconCloseOutline20
 	},
 	props: {
 		models: {

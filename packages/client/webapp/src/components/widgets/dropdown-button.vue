@@ -5,7 +5,7 @@
 				{{ innerButtonLabel ? `${innerButtonLabel}: ` : '' }}
 				<strong>{{ selectedItemDisplayName }}</strong>
 			</span>
-			<i class="fa fa-angle-down" />
+			<IconChevronDown16 />
 		</button>
 		<dropdown-control
 			v-if="isDropdownOpen"
@@ -26,7 +26,7 @@
 					@click="emitItemSelection(item.value)"
 				>
 					{{ item.displayName }}
-					<i v-if="item.selected" style="margin-left: 1rem" class="fa fa-check fa-lg" />
+					<IconCheckmark16 v-if="item.selected" />
 				</div>
 			</template>
 		</dropdown-control>
@@ -37,6 +37,8 @@
 import { computed, defineComponent, PropType, ref, toRefs, watchEffect } from 'vue';
 import { cloneDeep } from 'lodash';
 import DropdownControl from '@/components/widgets/dropdown-control.vue';
+import IconChevronDown16 from '@carbon/icons-vue/es/chevron--down/16';
+import IconCheckmark16 from '@carbon/icons-vue/es/checkmark/24';
 
 export type DropdownItem = {
 	displayName: string;
@@ -48,7 +50,9 @@ export type DropdownItem = {
 export default defineComponent({
 	name: 'DropdownButton',
 	components: {
-		DropdownControl
+		DropdownControl,
+		IconChevronDown16,
+		IconCheckmark16
 	},
 	props: {
 		items: {
@@ -192,6 +196,9 @@ export default defineComponent({
 
 .dropdown-option {
 	white-space: nowrap;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .dropdown-option-selected {
