@@ -309,47 +309,47 @@ export default defineComponent({
 	box-sizing: border-box;
 	width: 100%;
 	height: calc(100vh - 50px);
-}
 
-.data-explorer-container .facets-panel-container {
-	background-color: $background-light-2;
-	height: calc(100vh - 50px);
-}
+	.facets-panel-container {
+		background-color: $background-light-2;
+		height: calc(100vh - 50px);
+	}
 
-.data-explorer-container .explorer-content {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-}
+	.explorer-content {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
 
-.data-explorer-container .xdd-known-terms {
-	margin-left: 1rem;
-	display: flex;
-}
+	.xdd-known-terms {
+		margin-left: 1rem;
+		display: flex;
 
-.data-explorer-container .xdd-known-terms .flex-aligned-item {
-	display: flex;
-	align-items: center;
-	color: var(--un-color-accent-darker);
-}
+		.flex-aligned-item {
+			display: flex;
+			align-items: center;
+			color: var(--un-color-accent-darker);
 
-.data-explorer-container .xdd-known-terms .flex-aligned-item .flex-aligned-item-delete-btn {
-	color: red;
-}
+			.flex-aligned-item-delete-btn {
+				color: red;
+			}
 
-.data-explorer-container .xdd-known-terms .flex-aligned-item .flex-aligned-item-delete-btn:hover {
-	cursor: pointer;
-}
+			.flex-aligned-item-delete-btn:hover {
+				cursor: pointer;
+			}
+		}
 
-.data-explorer-container .xdd-known-terms :deep(.search-bar-container input) {
-	margin: 4px;
-	padding: 4px;
-	min-width: 100px;
-}
+		:deep(.search-bar-container input) {
+			margin: 4px;
+			padding: 4px;
+			min-width: 100px;
+		}
+	}
 
-.data-explorer-container .co-occurrence-matrix-btn {
-	background-color: darkcyan;
-	padding-left: 8px;
-	padding-right: 8px;
+	.co-occurrence-matrix-btn {
+		background-color: darkcyan;
+		padding-left: 8px;
+		padding-right: 8px;
+	}
 }
 </style>
