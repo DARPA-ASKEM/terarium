@@ -4,8 +4,11 @@ import Header from '@/components/Header.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
-
 import useAuthStore from './stores/auth';
+import { useCurrentRouter } from './router/index';
+
+const { isCurrentRouteHome } = useCurrentRouter();
+const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
 const auth = useAuthStore();
 
@@ -52,7 +55,7 @@ const dataExplorerActivated = ref(false);
 	/>
 	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main v-if="isAuthenticated">
-		<Sidebar class="sidebar" />
+		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" />
 		<router-view class="page" />
 	</main>
 </template>
