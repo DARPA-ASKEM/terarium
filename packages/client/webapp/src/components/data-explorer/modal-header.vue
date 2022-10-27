@@ -1,5 +1,5 @@
 <template>
-	<full-screen-modal-header icon="angle-left" :nav-back-label="navBackLabel" @close="onBack">
+	<full-screen-modal-header :showIcon="true" :nav-back-label="navBackLabel" @close="onBack">
 		<button
 			type="button"
 			class="btn btn-call-to-action"
