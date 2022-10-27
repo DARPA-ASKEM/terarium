@@ -15,7 +15,6 @@
 	},
 	"dependencies": {
 		"@carbon/icons-vue": "10.49.1",
-		"@fortawesome/fontawesome-free": "6.2.0",
 		"@ibm/plex": "6.1.1",
 		"@uncharted.software/design-tokens": "1.1.0",
 		"@uncharted.software/facets-core": "3.2.6",
