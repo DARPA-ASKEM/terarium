@@ -430,6 +430,110 @@ export default defineComponent({
 			});
 			this.jsonOutput();
 		},
+		async addNode(
+			id: string,
+			label: string,
+			x: number,
+			y: number,
+			height: number,
+			width: number,
+			type: string
+		) {
+			// console.log('add transition');
+			let nodeType = 'D'; // Default
+			if (type === 'transition') {
+				nodeType = 'T';
+			} else if (type === 'species') {
+				nodeType = 'S';
+			}
+			g.nodes.push({
+				id,
+				label,
+				x,
+				y,
+				height,
+				width,
+				data: { type },
+				nodes: []
+			});
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					nodes: [
+						{
+							name: id,
+							type: nodeType
+						}
+					]
+				})
+			});
+			this.jsonOutput();
+		},
+		// Not sure how to overload functions so here we are
+		async addEdgeID(sourceID: string, targetID: string) {
+			let sourceX;
+			let sourceY;
+			let targetX;
+			let targetY;
+			let sourceLabel;
+			let targetLabel;
+			// Find source and target's locations
+			// there has to be a better way to get the source and target locations
+			for (let i = 0; i < g.nodes.length; i++) {
+				if (sourceLabel && targetLabel) {
+					break;
+				}
+				if (g.nodes[i].id === sourceID) {
+					sourceLabel = g.nodes[i].label;
+					sourceX = g.nodes[i].x + g.nodes[i].width * 0.5;
+					sourceY = g.nodes[i].y + g.nodes[i].height * 0.5;
+				}
+				if (g.nodes[i].id === targetID) {
+					targetLabel = g.nodes[i].label;
+					targetX = g.nodes[i].x + g.nodes[i].width * 0.5;
+					targetY = g.nodes[i].y + g.nodes[i].height * 0.5;
+				}
+			}
+			g.edges.push({
+				source: sourceLabel,
+				target: targetLabel,
+				points: [
+					{
+						x: sourceX, // + source.datum().width * 0.5,
+						y: sourceY // + source.datum().height * 0.5
+					},
+					{
+						x: targetX, // + target.datum().width * 0.5,
+						y: targetY // + target.datum().height * 0.5
+					}
+				]
+			});
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					edges: [
+						{
+							source: sourceID,
+							target: targetID
+						}
+					]
+				})
+			});
+
+			// g = runLayout(_.cloneDeep(g));
+			// this.refresh();
+			// this.jsonOutput();
+		},
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
 			numRabbits = +(Math.random() * 100).toFixed();
@@ -506,93 +610,86 @@ export default defineComponent({
 			});
 			const output = await resp.json();
 			console.log(output);
-			this.drawResult(output);
+			this.createModel(output);
 		},
 		// Expects a JSON of a model with labels T, S, I, O.
-		// Will need some serious work, This is just done so i can draw strat result.
-		async drawResult(model) {
-			console.log('Draw Result');
-			// Reset
+		// Will need some serious work, This is just done so i can help test stratification
+		async createModel(model) {
+			console.log('Starting Create Model');
+			const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
+			const modelData = await newModel.json();
+			modelId = modelData.id;
+			console.log(`Model ID: ${modelId}`);
+			// Reset current nodes and edges
 			g.nodes = [];
 			g.edges = [];
-
-			const x = JSON.stringify({
-				nodes: [
-					{ name: 'rabbits', type: 'S' },
-					{ name: 'wolves', type: 'S' },
-					{ name: 'birth', type: 'T' },
-					{ name: 'death', type: 'T' },
-					{ name: 'predation', type: 'T' }
-				],
-				edges: [
-					{ source: 'wolves', target: 'death' },
-					{ source: 'predation', target: 'wolves' },
-					{ source: 'predation', target: 'wolves' },
-					{ source: 'wolves', target: 'predation' },
-					{ source: 'rabbits', target: 'predation' },
-					{ source: 'rabbits', target: 'birth' },
-					{ source: 'birth', target: 'rabbits' },
-					{ source: 'birth', target: 'rabbits' }
-				]
-			});
-			console.log(x);
 
 			const nodeHeight = 20;
 			const nodeWidth = 20;
 			let nodeX = 0;
 			let nodeY = 0;
-			// for (var aNode of model.S){
+			// Nodes
 			for (let i = 0; i < model.S.length; i++) {
 				const aNode = model.S[i];
-
 				nodeX += 30;
 				nodeY += 30;
-				console.log(aNode);
-				g.nodes.push({
-					id: i + 1, // aNode.sname,
-					label: aNode.sname,
-					x: nodeX,
-					y: nodeY,
-					height: nodeHeight,
-					width: nodeWidth,
-					nodes: [],
-					data: { type: 'species' }
-				});
+				this.addNode(`s-${i + 1}`, aNode.sname, nodeX, nodeY, nodeHeight, nodeWidth, 'species');
 			}
+			// Move Transitions 100 to the right of S
 			nodeX = 100;
 			nodeY = 0;
-			// for (var aTransition of model.T){
-			for (let j = 0; j < model.T.length; j++) {
-				const aTransition = model.T[j];
-				console.log(aTransition);
+			for (let i = 0; i < model.T.length; i++) {
+				const aTransition = model.T[i];
 				nodeX += 30;
 				nodeY += 30;
-				g.nodes.push({
-					id: j + 1, // aTransition.tname,
-					label: aTransition.tname,
-					x: nodeX,
-					y: nodeY,
-					height: nodeHeight,
-					width: nodeWidth,
-					nodes: [],
-					data: { type: 'transition' }
-				});
-			}
+				this.addNode(
+					`t-${i + 1}`,
+					aTransition.tname,
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					'transition'
+				);
+			} // end T
 
-			// TODO: Fix edges.
-			// for (var iEdges of model.I){
-			// 	console.log(iEdges)
-			// 	let edgeSource = iEdges.is;
-			// 	let edgeTrans = iEdges.it;
-			// 	console.log("Source: " + edgeSource);
-			// 	console.log("Trans " + edgeTrans);
-			// 	g.edges.push({source: edgeSource, target: edgeTrans, points: []});
-			// }
+			// Edges
+			for (let i = 0; i < model.I.length; i++) {
+				const iEdges = model.I[i];
+				const sourceID = `s-${iEdges.is}`;
+				const transitionID = `t-${iEdges.it}`;
+				this.addEdgeID(sourceID, transitionID);
+			}
+			for (let i = 0; i < model.O.length; i++) {
+				const iEdges = model.O[i];
+				const sourceID = `s-${iEdges.os}`;
+				const transitionID = `t-${iEdges.ot}`;
+				this.addEdgeID(transitionID, sourceID);
+			}
 
 			// g = runLayout(_.cloneDeep(g));
 			this.refresh();
 			this.jsonOutput();
-			// this.jsonOutput();
+		}, // end draw
+
+		async testCreateModel() {
+			const aModel: JSON = <JSON>(<unknown>{
+				T: [{ tname: 'birth' }, { tname: 'death' }, { tname: 'predation' }],
+				S: [{ sname: 'rabbits' }, { sname: 'wolves' }],
+				I: [
+					{ it: 2, is: 2 },
+					{ it: 3, is: 2 },
+					{ it: 3, is: 1 },
+					{ it: 1, is: 1 }
+				],
+				O: [
+					{ ot: 3, os: 2 },
+					{ ot: 3, os: 2 },
+					{ ot: 1, os: 1 },
+					{ ot: 1, os: 1 }
+				]
+			});
+			this.createModel(aModel);
 		}
 	}
 });
@@ -606,6 +703,7 @@ export default defineComponent({
 		<button type="button" @click="stratify">Stratify</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
+		<button type="button" @click="testCreateModel">Lotka Test</button>
 		<button type="button" @click="simulate">Simulate</button>
 
 		<div style="display: flex">
