@@ -73,12 +73,10 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          # Lowercase the owner for docker image naming conventions
-          echo "OWNER_LC=${OWNER,,}"
           echo "VERSION=test" >>${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
+          # Lowercase the owner for docker image naming conventions
           echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
-          echo $DOCKER_ORG
 
       # 2.3 - Login against the docker registry
       - name: Login to registry ${{ env.REGISTRY }}

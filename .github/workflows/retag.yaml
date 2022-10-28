@@ -51,6 +51,7 @@ jobs:
       - name: Show matrix
         run: |
           echo ${{ steps.images.outputs.matrix }}
+          echo ${{ github.ref_name }}
           echo ${{ github.event.base_ref }}
           echo ${{ env.PROTECTED_BRANCH }}
           echo ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
@@ -58,7 +59,7 @@ jobs:
   retag:
     name: Retag images and push
     # skip this job if taggin not on the main branch
-    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    # if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
     runs-on: ubuntu-22.04
     permissions:
       packages: write
@@ -91,7 +92,7 @@ jobs:
           # Lowercase the owner for docker image naming conventions
           echo "OWNER_LC=${github.repository_owner,,}"
           VERSION=$( echo ${{ github.ref_name }} | sed "s/^.//")
-          DOCKER_IMAGE=${{env.REGISTRY}}/${OWNER_LC}/${{matrix.target}}
+          DOCKER_IMAGE=${{env.REGISTRY}}/${OWNER,,}/${{matrix.target}}
           docker pull ${DOCKER_IMAGE}:${{env.CURRENT_TAG}}
           declare -a shaVals="($(docker manifest inspect ${DOCKER_IMAGE}:${{env.CURRENT_TAG}} | jq '.manifests | .[].digest' | jq -csr '. | @sh'))"
           amendManifest="docker manifest create ${DOCKER_IMAGE}:${VERSION}"
