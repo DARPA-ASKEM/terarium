@@ -59,7 +59,7 @@
 							<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
 								{{ term }}
 								<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
-									<i class="fa fa-fw fa-close" />
+									<IconClose16 />
 								</span>
 							</div>
 						</div>
@@ -68,7 +68,7 @@
 							class="co-occurrence-matrix-btn"
 							:disabled="dictNames.length !== 2"
 						>
-							<i class="fa-solid fa-table-cells-large" />&nbsp;co-occurrence matrix
+							<IconScatterMatrix16 />&nbsp;co-occurrence matrix
 						</button>
 					</template>
 				</search>
@@ -106,6 +106,9 @@ import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import { applyFacetFiltersToData } from '@/utils/data-util';
 
+import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
+
 // FIXME: page count is not taken into consideration
 // FIXME: remove SASS
 
@@ -119,7 +122,9 @@ export default defineComponent({
 		DropdownButton,
 		ToggleButton,
 		FacetsPanel,
-		AutoComplete
+		AutoComplete,
+		IconScatterMatrix16,
+		IconClose16
 	},
 	emits: ['hide', 'show-overlay', 'hide-overlay'],
 	setup() {
@@ -369,6 +374,7 @@ export default defineComponent({
 			.flex-aligned-item-delete-btn {
 				color: red;
 			}
+
 			.flex-aligned-item-delete-btn:hover {
 				cursor: pointer;
 			}

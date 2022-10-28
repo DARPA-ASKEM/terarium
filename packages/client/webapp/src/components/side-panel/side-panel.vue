@@ -37,14 +37,14 @@ export default defineComponent({
 		 * `tabs` prop structure
 		 * {
 		 *  name: string,
-		 *  icon: string (optional) - only include one of [icon, imgSrc],
+		 *  icon: string (optional) - only include one of [icon, imgSrc], // USE IBM ICON INSTEAD (WON'T BE A STRING)
 		 *  imgSrc: string (optional) - relative to assets folder,
 		 *  isGreyscale: boolean (optional),
 		 *  badgeCount: number (optional)
 		 * }
 		 * e.g. {
 		 *  name: 'Cube Information',
-		 *  icon: useIcon ? 'fa fa-fw fa-cube' : null,
+		 *  icon: useIcon ? 'fa fa-fw fa-cube' : null, // USE IBM ICON INSTEAD
 		 *  imgSrc: useIcon ? null : 'imageOfCube.png',
 		 *  isGreyscale: !useIcon,
 		 *  badgeCount: 12
@@ -135,6 +135,7 @@ $large-width: 380px;
 	height: $navbar-outer-height;
 	display: flex;
 	align-items: center;
+
 	h5 {
 		margin: 0;
 		margin-left: 8px;
@@ -155,6 +156,7 @@ $large-width: 380px;
 .slide-fade-enter-active,
 .slide-fade-leave-active {
 	transition: all $layout-transition;
+
 	.side-panel-content,
 	.side-panel-header {
 		transition: opacity 0.1s ease;
