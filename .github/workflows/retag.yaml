@@ -89,8 +89,6 @@ jobs:
       # Push the image back up
       - name: Pull latest image with tag ${{ env.CURRENT_TAG }}, and retag with ${{ github.ref_name }}
         run: |
-          # Lowercase the owner for docker image naming conventions
-          echo "OWNER_LC=${github.repository_owner,,}"
           VERSION=$( echo ${{ github.ref_name }} | sed "s/^.//")
           DOCKER_IMAGE=${{env.REGISTRY}}/${OWNER,,}/${{matrix.target}}
           docker pull ${DOCKER_IMAGE}:${{env.CURRENT_TAG}}
