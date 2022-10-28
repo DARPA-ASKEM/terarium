@@ -19,6 +19,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
   BAKE_FILE: docker-bake.hcl
   BAKE_GROUP: prod
 
@@ -72,9 +73,12 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
+          # Lowercase the owner for docker image naming conventions
+          echo "OWNER_LC=${OWNER,,}"
           echo "VERSION=${{ github.ref_name }}" >>${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
-          echo "DOCKER_ORG=${{ github.repository_owner }}" >> ${GITHUB_ENV}
+          echo "DOCKER_ORG=${ OWNER_LC }" >> ${GITHUB_ENV}
+          echo ${GITHUB_ENV}
 
       # 2.3 - Login against the docker registry
       - name: Login to registry ${{ env.REGISTRY }}

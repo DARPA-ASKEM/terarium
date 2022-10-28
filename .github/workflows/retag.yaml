@@ -20,6 +20,7 @@ on:
 # default environment variables
 env:
   REGISTRY: ghcr.io
+  OWNER: ${{github.repository_owner}}
   BAKE_FILE: docker-bake.hcl
   BAKE_GROUP: prod
   CURRENT_TAG: latest
@@ -87,8 +88,10 @@ jobs:
       # Push the image back up
       - name: Pull latest image with tag ${{ env.CURRENT_TAG }}, and retag with ${{ github.ref_name }}
         run: |
+          # Lowercase the owner for docker image naming conventions
+          echo "OWNER_LC=${github.repository_owner,,}"
           VERSION=$( echo ${{ github.ref_name }} | sed "s/^.//")
-          DOCKER_IMAGE=${{env.REGISTRY}}/${{github.repository_owner}}/${{matrix.target}}
+          DOCKER_IMAGE=${{env.REGISTRY}}/${OWNER_LC}/${{matrix.target}}
           docker pull ${DOCKER_IMAGE}:${{env.CURRENT_TAG}}
           declare -a shaVals="($(docker manifest inspect ${DOCKER_IMAGE}:${{env.CURRENT_TAG}} | jq '.manifests | .[].digest' | jq -csr '. | @sh'))"
           amendManifest="docker manifest create ${DOCKER_IMAGE}:${VERSION}"
