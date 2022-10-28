@@ -2,7 +2,7 @@
 
 Hi! We're really excited that you're interested in contributing to TERArium! Before submitting your contribution, please read through the following guide.
 
-## Repo Setup
+## Repository Setup
 
 The TERArium repo is a mixed repo using yarn workspaces and Java backend components. The package managers used to install and link dependencies are [yarn](https://yarnpkg.com/getting-started) and [gradle](https://gradle.org/).
 
@@ -84,6 +84,7 @@ spec:
   - name: regcred
 ```
 
+
 ## Debugging Front End
 
 To debug the front end you need:
@@ -94,6 +95,12 @@ To debug the front end you need:
 
 3. Click the "JavaScript Debug Termimal" button in the _Run and Debug view_, which opens a terminal in VS Code.
 
+## Releasing
+New docker images are automatically built when changes are pushed into `main`. This will generate all images with the `latest` tag associated with it. For releasing of new stable versions simply add a git tag on `main` of the form `v#.#.#` or `v#.#.#-[a..z]`. This will automatically trigger a retagging of the latest build with the specified tag.
+
+> NOTE: Careful that you wait until the main build has completed so that the tag is pulling the correct `latest`
+
+---
 ## Debugging Backend
 
 ???

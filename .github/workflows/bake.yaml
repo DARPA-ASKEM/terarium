@@ -13,9 +13,6 @@ name: Build Docker Images from Bake file
 on:
   push:
     branches: ['main']
-  # for testing
-  pull_request:
-    branches: ['main']
 
 env:
   REGISTRY: ghcr.io

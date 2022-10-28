@@ -29,7 +29,7 @@ env:
 jobs:
   images:
     name: Retrieve all image names from bake file
-    # if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.images.outputs.matrix }}
@@ -59,7 +59,7 @@ jobs:
   retag:
     name: Retag images and push
     # skip this job if taggin not on the main branch
-    # if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
     runs-on: ubuntu-22.04
     permissions:
       packages: write
