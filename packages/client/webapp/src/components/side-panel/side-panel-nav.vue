@@ -16,7 +16,7 @@
 					:src="getImgUrl(tab.imgSrc)"
 					alt=""
 				/>
-				<i v-else :class="tab.icon" />
+				<component :is="tab.icon" />
 				<span v-if="tab.badgeCount !== undefined && tab.badgeCount > 0" class="counter-badge">
 					{{ tab.badgeCount }}
 				</span>
