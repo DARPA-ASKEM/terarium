@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
-import IconLogin16 from '@carbon/icons-vue/es/login/16';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useRouter } from 'vue-router';
+
+const emit = defineEmits(['show-data-explorer']);
 
 const router = useRouter();
 
 const goToHomepage = () => router.push('/');
-const goToDataExplorer = () => router.push('/explorer');
+const goToDataExplorer = () => emit('show-data-explorer');
 
 const projectName = 'Name of the project that can be long for clarity and precision';
 </script>
@@ -22,7 +23,6 @@ const projectName = 'Name of the project that can be long for clarity and precis
 
 		<aside>
 			<Button class="data-explorer" @click="goToDataExplorer"><IconSearchLocate16 /></Button>
-			<Button v-if="false" @click="login">Login <IconLogin16 /></Button>
 		</aside>
 	</header>
 </template>

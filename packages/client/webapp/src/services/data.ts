@@ -1,17 +1,19 @@
 import { uniqBy } from 'lodash';
 import {
 	ModelSearchParams,
+	ResourceType,
 	SearchParameters,
 	SearchResults,
 	XDDSearchParams
 } from '@/types/common';
 import { Model, ModelFilterAttributes } from '../types/Model';
-import { XDDArticle, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
+import { XDDArticle, XDDDictionary, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const XDD_API_KEY = '';
-const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api';
+const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
 const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
+const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
 
 // A unified method to execute an XDD fetch passing the API key and other header params as needed
 const fetchXDD = async (url: string) => {
@@ -28,6 +30,16 @@ const getXDDSets = async () => {
 	const response = await fetchXDD(DATASET_API_URL);
 	const rawdata = await response.json();
 	return rawdata.available_sets;
+};
+
+const getXDDDictionaries = async () => {
+	const response = await fetchXDD(DICTIONARY_API_URL);
+	const rawdata: XDDResult = await response.json();
+	if (rawdata.success) {
+		const { data } = rawdata.success;
+		return data;
+	}
+	return [] as XDDDictionary[];
 };
 
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
@@ -149,7 +161,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 
 	return {
 		results: term.length > 0 ? uniqBy(finalModels, 'id') : allModels,
-		searchSubsystem: 'model'
+		searchSubsystem: ResourceType.MODEL
 	};
 };
 
@@ -164,7 +176,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	let url = `${ARTICLES_API_BASE}/articles?term=${term}`;
+	let url = `${ARTICLES_API_BASE}?term=${term}`;
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
@@ -203,7 +215,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		const { data, hits, scrollId, next_page } = rawdata.success;
 		return {
 			results: data as XDDArticle[],
-			searchSubsystem: 'xdd',
+			searchSubsystem: ResourceType.XDD,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',
 			// eslint-disable-next-line camelcase
@@ -213,7 +225,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	return {
 		results: [] as XDDArticle[],
-		searchSubsystem: 'xdd',
+		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
 };
@@ -247,4 +259,4 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-export { fetchData, getXDDSets };
+export { fetchData, getXDDSets, getXDDDictionaries };

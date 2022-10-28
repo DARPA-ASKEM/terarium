@@ -1,14 +1,22 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import Home from '@/views/Home.vue';
+import HomeView from '@/views/Home.vue';
 import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
-import DataExplorer from '@/views/DataExplorer.vue';
-import Theia from '@/views/theia.vue';
+import TA2Playground from '@/views/TA2Playground.vue';
+import TheiaView from '@/views/theia.vue';
+import { computed } from 'vue';
+
+export enum RoutePath {
+	Home = '/',
+	Results = '/results',
+	Ta2Playground = '/ta2-playground',
+	Theia = '/theia'
+}
 
 const routes = [
-	{ path: '/', component: Home },
-	{ path: '/results', component: ResponsiveMatrixCells },
-	{ path: '/explorer', component: DataExplorer },
-	{ path: '/theia', component: Theia }
+	{ path: RoutePath.Home, component: HomeView },
+	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
+	{ path: RoutePath.Ta2Playground, component: TA2Playground },
+	{ path: RoutePath.Theia, component: TheiaView }
 ];
 
 const router = createRouter({
@@ -18,5 +26,11 @@ const router = createRouter({
 	// short for `routes: routes`
 	routes
 });
+
+export function useCurrentRouter() {
+	return {
+		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home)
+	};
+}
 
 export default router;

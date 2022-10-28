@@ -1,8 +1,12 @@
-import { SearchResults } from '@/types/common';
+import { ResourceType, SearchResults } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
+import IconDocument20 from '@carbon/icons-vue/es/document/20';
+import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
+import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
+import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
 
 const applyFiltersToArticles = (articles: XDDArticle[], filters: Filters) => {
 	const { clauses } = filters;
@@ -45,19 +49,29 @@ export const applyFacetFiltersToData = (
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
+	results.forEach((resultsObj) => {
+		if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
+			if (resultsObj.searchSubsystem === ResourceType.XDD) {
+				const xddResults = resultsObj.results as XDDArticle[];
+				applyFiltersToArticles(xddResults, filters);
+			}
+			if (resultsObj.searchSubsystem === ResourceType.MODEL) {
+				const modelResults = resultsObj.results as Model[];
+				applyFiltersToModels(modelResults, filters);
+			}
+		}
+	});
+};
 
-	const resultsObj = results.find((res) => res.searchSubsystem === resultType);
-	if (resultsObj) {
-		// extract facets based on the result type
-		// because we would have different facets for different result types
-		// e.g., XDD will have facets that leverage the XDD fields and stats
-		if (resultType === 'xdd') {
-			const xddResults = resultsObj.results as XDDArticle[];
-			applyFiltersToArticles(xddResults, filters);
-		}
-		if (resultType === 'model') {
-			const modelResults = resultsObj.results as Model[];
-			applyFiltersToModels(modelResults, filters);
-		}
+export const getResourceTypeIcon = (type: string) => {
+	switch (type) {
+		case ResourceType.MODEL:
+			return IconMachineLearningModel20;
+		case ResourceType.DATASET:
+			return IconTableSplit20;
+		case ResourceType.XDD:
+			return IconDocumentBlank20;
+		default:
+			return IconDocument20;
 	}
 };

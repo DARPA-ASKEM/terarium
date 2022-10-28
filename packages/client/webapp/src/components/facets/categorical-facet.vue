@@ -28,8 +28,8 @@
 						<span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
 					</div>
 					<div class="facet-footer-more-controls">
-						<span v-if="hasLess" class="less" @click="viewLess"> less </span>
-						<span v-if="hasMore" class="more" @click="viewMore"> more </span>
+						<span v-if="hasLess" class="less" @click="viewLess"> <IconChevronUp16 />less </span>
+						<span v-if="hasMore" class="more" @click="viewMore"> <IconChevronDown16 />more </span>
 					</div>
 				</div>
 			</div>
@@ -48,7 +48,9 @@ import { isEqual } from 'lodash';
 import '@uncharted.software/facets-core';
 import filtersUtil from '@/utils/filters-util';
 
-import { useQueryStore } from '@/stores/query';
+import useQueryStore from '@/stores/query';
+import IconChevronDown16 from '@carbon/icons-vue/es/chevron--down/16';
+import IconChevronUp16 from '@carbon/icons-vue/es/chevron--up/16';
 
 const FACET_DEFAULT_SIZE = 5;
 
@@ -63,6 +65,10 @@ const FACET_DEFAULT_SIZE = 5;
  */
 export default defineComponent({
 	name: 'CategoricalFacet',
+	components: {
+		IconChevronDown16,
+		IconChevronUp16
+	},
 	props: {
 		baseData: {
 			type: Array,
@@ -230,6 +236,7 @@ export default defineComponent({
 .facet-pointer {
 	cursor: pointer;
 }
+
 .facet-font {
 	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
@@ -247,8 +254,10 @@ export default defineComponent({
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 16px;
+
 	.facet-footer-more {
 		margin-bottom: 4px;
+
 		.facet-footer-more-section {
 			display: flex;
 			flex-direction: row;
@@ -256,6 +265,7 @@ export default defineComponent({
 			justify-content: flex-start;
 			align-content: stretch;
 			align-items: flex-start;
+
 			.facet-footer-more-count {
 				order: 0;
 				flex: 1 1 auto;
@@ -266,15 +276,13 @@ export default defineComponent({
 				order: 0;
 				flex: 0 1 auto;
 				align-self: auto;
-				.more:before {
-					font-family: FontAwesome;
-					content: '\f107 ';
-				}
-				.less:before {
-					font-family: FontAwesome;
-					content: '\f106 ';
+
+				.more,
+				.less {
+					display: inline-flex;
 				}
 			}
+
 			.facet-footer-more-controls > span {
 				cursor: pointer;
 			}

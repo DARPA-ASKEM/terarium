@@ -16,7 +16,7 @@
 					:src="getImgUrl(tab.imgSrc)"
 					alt=""
 				/>
-				<i v-else :class="tab.icon" />
+				<component :is="tab.icon" />
 				<span v-if="tab.badgeCount !== undefined && tab.badgeCount > 0" class="counter-badge">
 					{{ tab.badgeCount }}
 				</span>
@@ -63,7 +63,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables';
+@import '@/styles/variables';
 
 .side-panel-nav-container {
 	margin: 0;
@@ -95,7 +95,7 @@ li {
 		content: '';
 		display: block;
 		position: absolute;
-		width: 50%;
+		width: 5%; // 50%
 		height: 100%;
 		top: 0;
 		z-index: -1;

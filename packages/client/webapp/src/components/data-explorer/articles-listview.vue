@@ -19,26 +19,28 @@
 						:class="{ selected: isSelected(d) }"
 						@click="updateExpandedRow(d)"
 					>
-						<td class="output-col">
-							<div class="output-layout">
+						<td class="title-and-abstract-col">
+							<div class="title-and-abstract-layout">
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
 									<template v-if="enableMultipleSelection">
-										<span v-show="isSelected(d)"
-											><i class="fa-lg fa-regular fa-square-check"></i
-										></span>
-										<span v-show="!isSelected(d)"><i class="fa-lg fa-regular fa-square"></i></span>
+										<span v-show="isSelected(d)">
+											<IconCheckboxChecked20 />
+										</span>
+										<span v-show="!isSelected(d)">
+											<IconCheckbox20 />
+										</span>
 									</template>
 									<template v-else>
-										<span v-show="isSelected(d)"><i class="fa-lg fa-regular fa-circle"></i></span>
-										<span v-show="!isSelected(d)"
-											><i class="fa-lg fa-regular fa-circle-xmark"></i
-										></span>
+										<span v-show="isSelected(d)">
+											<IconRadioButton20 />
+										</span>
+										<span v-show="!isSelected(d)">
+											<IconCloseOutline20 />
+										</span>
 									</template>
-									<i
-										class="fa-lg fa-solid fa-file-lines"
-										style="margin-left: 4px; margin-right: 4px"
-									></i>
+									<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+									<!-- Not sure if I should just make this the icon, there might have been a reason this was dynamic before-->
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatTitle(d) }}</div>
@@ -46,22 +48,22 @@
 								</div>
 							</div>
 						</td>
-						<td class="desc-col">
+						<td class="publisher-and-author-col">
 							<div class="text-bold">{{ d.publisher }}</div>
 							<div v-if="isExpanded(d)" class="knobs">
 								<multiline-description :text="formatArticleAuthors(d)" />
 							</div>
 						</td>
-						<td class="period-col">
+						<td class="journal-col">
 							<div class="text-bold">{{ d.journal }}</div>
 							<div>{{ d.type ?? '' }}</div>
 						</td>
-						<td class="region-col">
+						<td class="known-terms-col">
 							<div v-html="formatKnownTerms(d)"></div>
 						</td>
-						<td class="timeseries-col">
-							<div class="timeseries-container">
-								<!-- timeseries renderer -->
+						<td class="preview-col">
+							<div class="preview-container">
+								<!-- preview renderer -->
 							</div>
 						</td>
 					</tr>
@@ -79,11 +81,21 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
+import { ResourceType } from '@/types/common';
+import { getResourceTypeIcon } from '@/utils/data-util';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
+import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
 
 export default defineComponent({
 	name: 'ArticlesListview',
 	components: {
-		MultilineDescription
+		MultilineDescription,
+		IconCheckbox20,
+		IconCheckboxChecked20,
+		IconRadioButton20,
+		IconCloseOutline20
 	},
 	props: {
 		articles: {
@@ -117,7 +129,9 @@ export default defineComponent({
 		);
 
 		return {
-			expandedRowId
+			expandedRowId,
+			ResourceType,
+			getResourceTypeIcon
 		};
 	},
 	methods: {
@@ -159,6 +173,7 @@ export default defineComponent({
 					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
 					knownTerms += '<br />';
 					knownTerms += Object.values(term).flat().join(' ');
+					knownTerms += '<br />';
 				});
 			}
 			return knownTerms;
@@ -168,24 +183,29 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '../../styles/variables.scss';
+@import '@/styles/variables.scss';
+
 .search-listview-container {
 	background: $background-light-2;
 	color: black;
 	width: 100%;
+
 	table {
 		border-collapse: collapse;
 		width: 100%;
 		vertical-align: top;
 	}
+
 	th,
 	td {
 		padding: 8px 16px;
 	}
+
 	tr {
 		border: 2px solid $separator;
 		cursor: pointer;
 	}
+
 	thead {
 		tr {
 			border: none;
@@ -195,26 +215,31 @@ export default defineComponent({
 			border: none;
 		}
 	}
+
 	td {
 		background: $background-light-1;
 		vertical-align: top;
 	}
+
 	tr th {
 		font-size: $font-size-small;
 		font-weight: normal;
 	}
+
 	.table-fixed-head {
 		overflow-y: auto;
 		overflow-x: hidden;
-		height: 600px;
+		height: 100%;
 		width: 100%;
 	}
+
 	.table-fixed-head thead th {
 		position: sticky;
 		top: -1px;
 		z-index: 1;
 		background-color: aliceblue;
 	}
+
 	.left-cover,
 	.right-cover {
 		// Cover left and right gap in the fixed table header
@@ -225,6 +250,7 @@ export default defineComponent({
 		background: $background-light-2;
 		top: 0;
 	}
+
 	.right-cover {
 		left: unset;
 		right: -2px;
@@ -233,37 +259,46 @@ export default defineComponent({
 	.tr-item {
 		height: 50px;
 	}
+
 	.tr-item.selected {
 		border: 2px double $selected;
-		.output-col {
+
+		.title-and-abstract-col {
 			border-left: 4px solid $selected;
 		}
+
 		td {
 			background-color: $tinted-background;
 		}
 	}
+
 	.text-bold {
-		font-size: $font-size-large;
-		font-weight: 600;
+		font-weight: 500;
 		margin-bottom: 5px;
 	}
-	.output-col {
-		width: 33%;
-		.output-layout {
+
+	.title-and-abstract-col {
+		width: 40%;
+
+		.title-and-abstract-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
+
 			.radio {
 				flex: 0 0 auto;
 				align-self: flex-start;
 				margin: 3px 5px 0 0;
+
 				.disabled {
 					color: $background-light-3;
 				}
 			}
+
 			.content {
 				flex: 1 1 auto;
 				overflow-wrap: anywhere;
+
 				.not-ready-label {
 					font-weight: 600;
 					border: none;
@@ -273,30 +308,36 @@ export default defineComponent({
 					padding: 6px;
 					float: right;
 				}
+
 				.knobs {
 					margin-top: 10px;
 				}
 			}
 		}
 	}
-	.desc-col {
+
+	.publisher-and-author-col {
 		width: 33%;
 		overflow-wrap: anywhere;
 	}
-	.region-col {
-		width: 200px;
+
+	.known-terms-col {
+		width: 20%;
 	}
-	.period-col {
+
+	.journal-col {
 		width: 120px;
 	}
+
 	// time series hidden until actually put into use
-	.timeseries-col {
+	.preview-col {
 		padding-left: 5px;
 		padding-right: 10px;
 	}
-	.timeseries-container {
+
+	.preview-container {
 		background-color: #f1f1f1;
-		width: 110px;
+		width: 100px;
 		height: 50px;
 	}
 }
