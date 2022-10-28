@@ -77,7 +77,7 @@ jobs:
           echo "OWNER_LC=${OWNER,,}"
           echo "VERSION=${{ github.ref_name }}" >>${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
-          echo "DOCKER_ORG=${ OWNER_LC }" >> ${GITHUB_ENV}
+          echo "DOCKER_ORG=${OWNER_LC}" >> ${GITHUB_ENV}
           echo ${GITHUB_ENV}
 
       # 2.3 - Login against the docker registry
