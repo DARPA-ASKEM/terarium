@@ -15,11 +15,7 @@
 						<td class="name-col">
 							<div class="name-layout">
 								<div class="radio">
-									<i
-										class="fa-regular fa-lg fa-fw"
-										:class="getResourceTypeIcon(d.type)"
-										style="margin-left: 4px; margin-right: 4px"
-									></i>
+									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
 									<div>{{ formatName(d) }}</div>
@@ -54,6 +50,7 @@ import { ResourceType, SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { getResourceTypeIcon } from '@/utils/data-util';
+import IconDocument20 from '@carbon/icons-vue/es/document/20';
 
 type GenericResult = {
 	id: string;
@@ -66,7 +63,8 @@ type GenericResult = {
 export default defineComponent({
 	name: 'CommonListview',
 	components: {
-		MultilineDescription
+		MultilineDescription,
+		IconDocument20
 	},
 	props: {
 		inputItems: {
@@ -157,23 +155,28 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+
 .search-listview-container {
 	background: $background-light-2;
 	color: black;
 	width: 100%;
+
 	table {
 		border-collapse: collapse;
 		width: 100%;
 		vertical-align: top;
 	}
+
 	th,
 	td {
 		padding: 8px 16px;
 	}
+
 	tr {
 		border: 2px solid $separator;
 		cursor: pointer;
 	}
+
 	thead {
 		tr {
 			border: none;
@@ -183,26 +186,31 @@ export default defineComponent({
 			border: none;
 		}
 	}
+
 	td {
 		background: $background-light-1;
 		vertical-align: top;
 	}
+
 	tr th {
 		font-size: $font-size-small;
 		font-weight: normal;
 	}
+
 	.table-fixed-head {
 		overflow-y: auto;
 		overflow-x: hidden;
 		height: 100%;
 		width: 100%;
 	}
+
 	.table-fixed-head thead th {
 		position: sticky;
 		top: -1px;
 		z-index: 1;
 		background-color: aliceblue;
 	}
+
 	.left-cover,
 	.right-cover {
 		// Cover left and right gap in the fixed table header
@@ -213,6 +221,7 @@ export default defineComponent({
 		background: $background-light-2;
 		top: 0;
 	}
+
 	.right-cover {
 		left: unset;
 		right: -2px;
@@ -221,36 +230,46 @@ export default defineComponent({
 	.tr-item {
 		height: 50px;
 	}
+
 	.tr-item.selected {
 		border: 2px double $selected;
+
 		.name-col {
 			border-left: 4px solid $selected;
 		}
+
 		td {
 			background-color: $tinted-background;
 		}
 	}
+
 	.text-bold {
 		font-weight: 500;
 		margin-bottom: 5px;
 	}
+
 	.name-col {
 		width: 20%;
+
 		.name-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
+
 			.radio {
 				flex: 0 0 auto;
 				align-self: flex-start;
 				margin: 3px 5px 0 0;
+
 				.disabled {
 					color: $background-light-3;
 				}
 			}
+
 			.content {
 				flex: 1 1 auto;
 				overflow-wrap: anywhere;
+
 				.not-ready-label {
 					font-weight: 600;
 					border: none;
@@ -260,25 +279,30 @@ export default defineComponent({
 					padding: 6px;
 					float: right;
 				}
+
 				.knobs {
 					margin-top: 10px;
 				}
 			}
 		}
 	}
+
 	.desc-col {
 		width: 33%;
 		overflow-wrap: anywhere;
 	}
+
 	.source-col {
 		width: 20%;
 	}
+
 	// time series hidden until actually put into use
 	.preview-col {
 		padding-left: 5px;
 		padding-right: 10px;
 		width: 20%;
 	}
+
 	.preview-container {
 		background-color: #f1f1f1;
 		width: 100%;
