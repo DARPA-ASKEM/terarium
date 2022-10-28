@@ -75,10 +75,10 @@ jobs:
         run: |
           # Lowercase the owner for docker image naming conventions
           echo "OWNER_LC=${OWNER,,}"
-          echo "VERSION=${{ github.ref_name }}" >>${GITHUB_ENV}
+          echo "VERSION=test" >>${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
-          echo "DOCKER_ORG=${OWNER_LC}" >> ${GITHUB_ENV}
-          echo ${GITHUB_ENV}
+          echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
+          echo $DOCKER_ORG
 
       # 2.3 - Login against the docker registry
       - name: Login to registry ${{ env.REGISTRY }}
