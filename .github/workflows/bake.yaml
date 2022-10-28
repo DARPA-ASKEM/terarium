@@ -22,6 +22,7 @@ env:
   OWNER: ${{ github.repository_owner }}
   BAKE_FILE: docker-bake.hcl
   BAKE_GROUP: prod
+  CURRENT_TAG: latest
 
 jobs:
   # Generate a matrix based on all the targets defined in the
@@ -73,7 +74,7 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          echo "VERSION=test" >>${GITHUB_ENV}
+          echo "VERSION=${{ env.CURRENT_TAG }}" >>${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
           # Lowercase the owner for docker image naming conventions
           echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
