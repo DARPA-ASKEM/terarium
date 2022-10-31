@@ -38,6 +38,7 @@ import SidePanel from '@/components/side-panel/side-panel.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
+import IconFilterRemove32 from '@carbon/icons-vue/es/filter--remove/32';
 
 const TAB_NAME = 'Data Facets';
 
@@ -65,7 +66,7 @@ export default defineComponent({
 	data: () => ({
 		tabName: TAB_NAME,
 		// FIXME: add label for the facet tab that matches the current resultType
-		facetTabs: [{ name: TAB_NAME, icon: 'fa-lg fa-solid fa-filter-circle-xmark' }],
+		facetTabs: [{ name: TAB_NAME, icon: IconFilterRemove32 }],
 		currentTab: TAB_NAME
 	}),
 	computed: {
@@ -117,9 +118,11 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @import '@/styles/variables';
+
 .facet-panel-container {
 	margin-top: 5px;
 }
+
 .facet-panel-list {
 	padding-bottom: 10rem;
 }

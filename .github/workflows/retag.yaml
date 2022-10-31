@@ -1,0 +1,104 @@
+# Automatically tag the latest versions of the images with the appropriate version
+# tag. This works by scanning the specified bake file for all images associated with
+# it and pulls them locally, re-tag the, and finally push.
+#
+# NOTE: Will retrieve just the image tags from the bake file, i.e will strip out the
+# registry, organization and tag pieces automatically.
+#
+# NOTE: This relies on tags to be properly defined within the bake file and currently
+# will pick up all target images defined
+
+name: Docker Image Re-tag
+
+on:
+  push:
+    # only trigger on version tags
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-[a-z]+'
+
+# default environment variables
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{github.repository_owner}}
+  BAKE_FILE: docker-bake.hcl
+  BAKE_GROUP: prod
+  CURRENT_TAG: latest
+  PROTECTED_BRANCH: main
+
+jobs:
+  images:
+    name: Retrieve all image names from bake file
+    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.images.outputs.matrix }}
+
+    steps:
+      # 1.0 - Checkout the files
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 1.1 - Generate a matrix output of all the docker images
+      # Deconstruct the full path to just the image tags
+      # NOTE: Assumes they are unique
+      - name: Create matrix
+        id: images
+        run: |
+          echo "matrix=$(docker buildx bake ${{ env.BAKE_GROUP }} -f ${{ env.BAKE_FILE }} --print | jq '.target | .[].tags | .[] | match("([^\/]*):").captures[0].string' | jq -cs '.')" >> $GITHUB_OUTPUT
+
+      # 1.2 (optional) - output the resulting images list found
+      - name: Show matrix
+        run: |
+          echo ${{ steps.images.outputs.matrix }}
+          echo ${{ github.ref_name }}
+          echo ${{ github.event.base_ref }}
+          echo ${{ env.PROTECTED_BRANCH }}
+          echo ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+
+  retag:
+    name: Retag images and push
+    # skip this job if taggin not on the main branch
+    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+      contents: read
+      checks: read
+    needs:
+      - images
+
+    # Build out the matrix strategy depending on the images found
+    # within the bake file
+    strategy:
+      fail-fast: true
+      matrix:
+        target: ${{ fromJson(needs.images.outputs.matrix) }}
+
+    steps:
+      # 2.1 - Login against the docker registry
+      - name: Login to registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2.2 - Reconstructs the docker image path and pulls the latest
+      # Retags the image with the version provided from tag
+      # Push the image back up
+      - name: Pull latest image with tag ${{ env.CURRENT_TAG }}, and retag with ${{ github.ref_name }}
+        run: |
+          VERSION=$( echo ${{ github.ref_name }} | sed "s/^.//")
+          DOCKER_IMAGE=${{env.REGISTRY}}/${OWNER,,}/${{matrix.target}}
+          docker pull ${DOCKER_IMAGE}:${{env.CURRENT_TAG}}
+          declare -a shaVals="($(docker manifest inspect ${DOCKER_IMAGE}:${{env.CURRENT_TAG}} | jq '.manifests | .[].digest' | jq -csr '. | @sh'))"
+          amendManifest="docker manifest create ${DOCKER_IMAGE}:${VERSION}"
+          for sha in ${shaVals[*]}
+          do
+            amendManifest="$amendManifest --amend ${DOCKER_IMAGE}@$sha"
+          done
+
+          echo $amendManifest
+          $amendManifest
+          docker manifest push ${DOCKER_IMAGE}:${VERSION}

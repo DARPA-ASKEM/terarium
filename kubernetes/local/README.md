@@ -37,5 +37,8 @@ Running `./gateway.sh status` will show the status of the various Gateway servic
 
 To bring the Gateway stack down, simply run `./gateway.sh down` and all the services will be torn down.
 
+### Private Registries
+If the deployments access private registries, Kubernetes will not be able to automatically pull those images for you. To do so, a secret with the required credentials is required and used for the deployment. To do this refer to the [registry documentation](../../.github/CONTRIBUTING.md#kubernetes).
+
 ## Theming Keycloak
 It is possible to theme different Keycloak views. To do so the new themes should be placed under `/opt/keycloak/themes/` directory. This local deployment shows and example of how to retheme the login page by loading a data image that contains the theme that is copied over to the Keycloak POD on initialization. If additional themes are made for other views the main theme image should be update as described [here](../../keycloak-theme/README.md).
