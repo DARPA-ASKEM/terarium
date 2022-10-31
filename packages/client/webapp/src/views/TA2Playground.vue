@@ -682,7 +682,7 @@ export default defineComponent({
 			this.createModel(output);
 		}, // end stratify
 		// Expects a JSON of a model with labels T, S, I, O.
-		// Will need some serious work, This is just done so i can help test stratification
+		// This is mostly done for stratification testing. Will require a deeper look in future
 		async createModel(model) {
 			console.log('Starting Create Model');
 			const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
@@ -814,6 +814,7 @@ export default defineComponent({
 			});
 			this.createModel(typeModel);
 		},
+		// Provided a valid model ID draw said model on the playground
 		async loadModel() {
 			const providedModel = (document.getElementById('loadModelID') as HTMLInputElement).value;
 			modelId = providedModel;
@@ -869,7 +870,6 @@ export default defineComponent({
 			}
 
 			// g = runLayout(_.cloneDeep(g));
-			this.refresh();
 			this.refresh();
 			this.jsonOutput();
 		}
