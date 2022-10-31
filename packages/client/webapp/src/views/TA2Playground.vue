@@ -498,43 +498,7 @@ export default defineComponent({
 		}, // end drawNode
 		// Not sure how to overload functions so here we are
 		async addEdgeID(sourceID: string, targetID: string) {
-			let sourceX;
-			let sourceY;
-			let targetX;
-			let targetY;
-			let sourceLabel;
-			let targetLabel;
-			// Find source and target's locations
-			// there has to be a better way to get the source and target locations
-			for (let i = 0; i < g.nodes.length; i++) {
-				if (sourceLabel && targetLabel) {
-					break;
-				}
-				if (g.nodes[i].id === sourceID) {
-					sourceLabel = g.nodes[i].label;
-					sourceX = g.nodes[i].x + g.nodes[i].width * 0.5;
-					sourceY = g.nodes[i].y + g.nodes[i].height * 0.5;
-				}
-				if (g.nodes[i].id === targetID) {
-					targetLabel = g.nodes[i].label;
-					targetX = g.nodes[i].x + g.nodes[i].width * 0.5;
-					targetY = g.nodes[i].y + g.nodes[i].height * 0.5;
-				}
-			}
-			g.edges.push({
-				source: sourceLabel,
-				target: targetLabel,
-				points: [
-					{
-						x: sourceX, // + source.datum().width * 0.5,
-						y: sourceY // + source.datum().height * 0.5
-					},
-					{
-						x: targetX, // + target.datum().width * 0.5,
-						y: targetY // + target.datum().height * 0.5
-					}
-				]
-			});
+			this.drawEdgeID(sourceID, targetID);
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
 				method: 'POST',
