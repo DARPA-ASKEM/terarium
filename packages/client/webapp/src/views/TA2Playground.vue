@@ -780,7 +780,6 @@ export default defineComponent({
 					{ ot: 3, os: 4 }
 				]
 			});
-			console.log('SIR:');
 			this.createModel(SIRDModel);
 
 			const QNotQModel: JSON = <JSON>(<unknown>{
@@ -795,7 +794,6 @@ export default defineComponent({
 					{ ot: 2, os: 2 }
 				]
 			});
-			console.log('QNotQ:');
 			this.createModel(QNotQModel);
 
 			const typeModel: JSON = <JSON>(<unknown>{
@@ -814,7 +812,6 @@ export default defineComponent({
 					{ ot: 3, os: 1 }
 				]
 			});
-			console.log('Type:');
 			this.createModel(typeModel);
 		},
 		async loadModel() {
