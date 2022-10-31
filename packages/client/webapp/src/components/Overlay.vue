@@ -1,6 +1,6 @@
 <template>
 	<div class="overlay-container">
-		<div class="message-container"><i class="fa fa-spin fa-spinner" /> {{ message }}</div>
+		<div class="message-container">{{ message }}</div>
 		<div v-if="messageSecondary !== ''" class="message-secondary-container">
 			{{ messageSecondary }}
 		</div>

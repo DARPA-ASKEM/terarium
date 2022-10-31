@@ -23,22 +23,22 @@
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
 									<template v-if="enableMultipleSelection">
-										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-square-check"></i
-										></span>
-										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-square"></i
-										></span>
+										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconCheckboxChecked20 />
+										</span>
+										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconCheckbox20 />
+										</span>
 									</template>
 									<template v-else>
-										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-circle"></i
-										></span>
-										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }"
-											><i class="fa-lg fa-regular fa-circle-xmark"></i
-										></span>
+										<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconRadioButton20 />
+										</span>
+										<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }">
+											<IconCloseOutline20 />
+										</span>
 									</template>
-									<i class="fa-regular fa-lg fa-fw" :class="getResourceTypeIcon(d.type)" />
+									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
 									<button v-if="isNotPublished(d)" type="button" class="not-ready-label">
@@ -79,7 +79,10 @@ import MultilineDescription from '@/components/widgets/multiline-description.vue
 import { Model } from '@/types/Model';
 import { ResourceType } from '@/types/common';
 import { getResourceTypeIcon } from '@/utils/data-util';
-
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
+import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
 /**
  * name: string;
 	description: string;
@@ -91,7 +94,11 @@ import { getResourceTypeIcon } from '@/utils/data-util';
 export default defineComponent({
 	name: 'ModelsListview',
 	components: {
-		MultilineDescription
+		MultilineDescription,
+		IconCheckbox20,
+		IconCheckboxChecked20,
+		IconRadioButton20,
+		IconCloseOutline20
 	},
 	props: {
 		models: {
@@ -182,23 +189,28 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
+
 .search-listview-container {
 	background: $background-light-2;
 	color: black;
 	width: 100%;
+
 	table {
 		border-collapse: collapse;
 		width: 100%;
 		vertical-align: top;
 	}
+
 	th,
 	td {
 		padding: 8px 16px;
 	}
+
 	tr {
 		border: 2px solid $separator;
 		cursor: pointer;
 	}
+
 	thead {
 		tr {
 			border: none;
@@ -208,26 +220,31 @@ export default defineComponent({
 			border: none;
 		}
 	}
+
 	td {
 		background: $background-light-1;
 		vertical-align: top;
 	}
+
 	tr th {
 		font-size: $font-size-small;
 		font-weight: normal;
 	}
+
 	.table-fixed-head {
 		overflow-y: auto;
 		overflow-x: hidden;
 		height: 100%;
 		width: 100%;
 	}
+
 	.table-fixed-head thead th {
 		position: sticky;
 		top: -1px;
 		z-index: 1;
 		background-color: aliceblue;
 	}
+
 	.left-cover,
 	.right-cover {
 		// Cover left and right gap in the fixed table header
@@ -238,6 +255,7 @@ export default defineComponent({
 		background: $background-light-2;
 		top: 0;
 	}
+
 	.right-cover {
 		left: unset;
 		right: -2px;
@@ -246,36 +264,46 @@ export default defineComponent({
 	.tr-item {
 		height: 50px;
 	}
+
 	.tr-item.selected {
 		border: 2px double $selected;
+
 		.name-and-desc-col {
 			border-left: 4px solid $selected;
 		}
+
 		td {
 			background-color: $tinted-background;
 		}
 	}
+
 	.text-bold {
 		font-weight: 500;
 		margin-bottom: 5px;
 	}
+
 	.name-and-desc-col {
 		width: 45%;
+
 		.name-and-desc-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
+
 			.radio {
 				flex: 0 0 auto;
 				align-self: flex-start;
 				margin: 3px 5px 0 0;
+
 				.disabled {
 					color: $background-light-3;
 				}
 			}
+
 			.content {
 				flex: 1 1 auto;
 				overflow-wrap: anywhere;
+
 				.not-ready-label {
 					font-weight: 600;
 					border: none;
@@ -285,24 +313,29 @@ export default defineComponent({
 					padding: 6px;
 					float: right;
 				}
+
 				.knobs {
 					margin-top: 10px;
 				}
 			}
 		}
 	}
+
 	.source-col {
 		width: 33%;
 		overflow-wrap: anywhere;
 	}
+
 	.category-col {
 		width: 10%;
 	}
+
 	// time series hidden until actually put into use
 	.preview-col {
 		padding-left: 5px;
 		padding-right: 10px;
 	}
+
 	.preview-container {
 		background-color: #f1f1f1;
 		width: 100%;

@@ -16,7 +16,7 @@
 			<div v-for="searchTerm in searchTerms" :key="searchTerm" class="flex-aligned-item">
 				{{ searchTerm }}
 				<span class="flex-aligned-item-delete-btn" @click.stop="removeSearchTerm(searchTerm)">
-					<i class="fa fa-fw fa-close" />
+					<IconClose16 />
 				</span>
 			</div>
 		</div>
@@ -28,7 +28,7 @@
 			:disabled="isClearButtonDisabled"
 			@click="clearText"
 		>
-			<i class="fa fa-remove" />&nbsp;Clear
+			<IconClose16 />Clear
 		</button>
 		<button
 			v-if="enableSearchButton"
@@ -38,7 +38,7 @@
 			:disabled="isSearchButtonDisabled"
 			@click="searchBtnHandler"
 		>
-			<i class="fa fa-search" />&nbsp;Search
+			<IconSearch16 />Search
 		</button>
 		<slot v-if="showSortedResults" name="sort"></slot>
 	</div>
@@ -46,9 +46,15 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
+import IconSearch16 from '@carbon/icons-vue/es/search/16';
 
 export default defineComponent({
 	name: 'SearchBar',
+	components: {
+		IconClose16,
+		IconSearch16
+	},
 	props: {
 		realtime: {
 			type: Boolean,
@@ -160,10 +166,12 @@ export default defineComponent({
 .search-button {
 	background-color: #2d8e2dff;
 }
+
 .search-button-disabled {
 	background-color: darken($color: #92e192ff, $amount: 50%);
 	cursor: not-allowed;
 }
+
 .clear-button-disabled {
 	background-color: darken($color: white, $amount: 50%);
 	cursor: not-allowed;
@@ -182,6 +190,7 @@ export default defineComponent({
 	.flex-aligned-item-delete-btn {
 		color: red;
 	}
+
 	.flex-aligned-item-delete-btn:hover {
 		cursor: pointer;
 	}

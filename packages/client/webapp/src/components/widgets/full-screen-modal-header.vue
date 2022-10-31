@@ -1,8 +1,8 @@
 <template>
 	<div class="full-screen-modal-header-container">
 		<div class="navBack" @click="close">
-			<i v-if="icon !== null" class="fa fa-fw" :class="`fa-${icon}`" />
-			<span>{{ navBackLabel }}</span>
+			<IconChevronLeft32 v-if="showIcon" />
+			{{ navBackLabel }}
 		</div>
 		<div class="centered-slot">
 			<slot />
@@ -13,13 +13,17 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 
 export default defineComponent({
 	name: 'FullScreenModalHeader',
+	components: {
+		IconChevronLeft32
+	},
 	props: {
-		icon: {
-			type: String,
-			default: null
+		showIcon: {
+			type: Boolean,
+			default: false
 		},
 		navBackLabel: {
 			type: String,
@@ -68,10 +72,13 @@ export default defineComponent({
 	.navBack {
 		font-weight: 600;
 		font-size: $font-size-large;
+		display: inline-flex;
+		align-items: center;
 		color: #ffffff;
 		cursor: pointer;
-		i {
-			margin-right: 5px;
+
+		span {
+			box-sizing: border-box;
 		}
 	}
 
