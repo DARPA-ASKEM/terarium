@@ -1,5 +1,6 @@
 <script lang="ts">
 import { BasicRenderer, IGraph, INode, IEdge, traverseGraph } from 'graph-scaffolder';
+import { petrinetValidator } from '@/utils/petrinet-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
@@ -287,6 +288,7 @@ export default defineComponent({
 			g.edges.push({ source: 'birth', target: 'rabbits', points: [] });
 
 			g = runLayout(_.cloneDeep(g));
+			console.log(g);
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
 				method: 'POST',
@@ -323,6 +325,7 @@ export default defineComponent({
 				method: 'GET'
 			});
 			const output = await resp.json();
+			petrinetValidator(g, output);
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
 		// eslint-disable-next-line
