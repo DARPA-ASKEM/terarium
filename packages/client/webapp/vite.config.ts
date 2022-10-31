@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
 import vue from '@vitejs/plugin-vue';
 import * as path from 'path';
 
@@ -11,7 +11,8 @@ export default defineConfig({
 		alias: {
 			'@': path.resolve(__dirname, './src'),
 			'@assets': path.resolve(__dirname, './src/assets'),
-			'@node_modules': path.resolve(__dirname, '../../../node_modules')
+			'@node_modules': path.resolve(__dirname, '../../../node_modules'),
+			'@graph-scaffolder': path.resolve(__dirname, '../graph-scaffolder/src')
 		}
 	},
 	base: '/app/',
@@ -41,12 +42,5 @@ export default defineConfig({
 	],
 	test: {
 		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']
-	},
-	build: {
-		rollupOptions: {
-			external: [
-				'graph-scaffolder/index'
-			]
-		}
 	}
 });

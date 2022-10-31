@@ -4,17 +4,30 @@
 {
 	"extends": "../../../tsconfig.base.json",
 	"compilerOptions": {
+		"baseUrl": ".",
+		"composite": true,
 		"jsx": "preserve",
 		"lib": [
 			"ESNext",
 			"DOM"
 		],
 		"module": "ESNext",
-		"sourceMap": true,
-		"target": "ESNext"
+		"target": "ESNext",
+		"outDir": "dist",
+		"paths": {
+			"@/*": [
+				"src/*"
+			],
+			"@graph-scaffolder/*": [
+				"../graph-scaffolder/src/*"
+			]
+		}
 	},
 	"include": [
-		"src"
+		"src/**/*.ts",
+		"src/**/*.d.ts",
+		"src/**/*.tsx",
+		"src/**/*.vue"
 	],
 	"exclude": [
 		"node_modules"
@@ -22,9 +35,6 @@
 	"references": [
 		{
 			"path": "../graph-scaffolder"
-		},
-		{
-			"path": "./tsconfig.node.json"
 		}
 	]
 }
