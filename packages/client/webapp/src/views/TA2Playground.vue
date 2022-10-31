@@ -430,6 +430,8 @@ export default defineComponent({
 			});
 			this.jsonOutput();
 		},
+		// provide node details and a flag
+		// createFlag: True = create new + draw, False = just draw
 		async addNode(
 			id: string,
 			label: string,
@@ -437,7 +439,8 @@ export default defineComponent({
 			y: number,
 			height: number,
 			width: number,
-			type: string
+			type: string,
+			createFlag: boolean
 		) {
 			// console.log('add transition');
 			let nodeType = 'D'; // Default
@@ -457,66 +460,28 @@ export default defineComponent({
 				nodes: []
 			});
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: nodeType
-						}
-					]
-				})
-			});
+			if (createFlag === true) {
+				await fetch(`http://localhost:8888/api/models/${modelId}`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						nodes: [
+							{
+								name: id,
+								type: nodeType
+							}
+						]
+					})
+				});
+			}
 			this.jsonOutput();
 		}, // end addNode
-		async drawNode(
-			id: string,
-			label: string,
-			x: number,
-			y: number,
-			height: number,
-			width: number,
-			type: string
-		) {
-			g.nodes.push({
-				id,
-				label,
-				x,
-				y,
-				height,
-				width,
-				data: { type },
-				nodes: []
-			});
-
-			this.jsonOutput();
-		}, // end drawNode
 		// Not sure how to overload functions so here we are
-		async addEdgeID(sourceID: string, targetID: string) {
-			this.drawEdgeID(sourceID, targetID);
-
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					edges: [
-						{
-							source: sourceID,
-							target: targetID
-						}
-					]
-				})
-			});
-		}, // end addEdge
-		async drawEdgeID(sourceID: string, targetID: string) {
+		// createFlag: True - Create and draw, false - just draw
+		async addEdgeID(sourceID: string, targetID: string, createFlag: boolean) {
 			let sourceX;
 			let sourceY;
 			let targetX;
@@ -554,7 +519,25 @@ export default defineComponent({
 					}
 				]
 			});
-		}, // end drawEdge
+
+			if (createFlag === true) {
+				await fetch(`http://localhost:8888/api/models/${modelId}`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						edges: [
+							{
+								source: sourceID,
+								target: targetID
+							}
+						]
+					})
+				});
+			}
+		}, // end addEdge
 
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
@@ -643,16 +626,31 @@ export default defineComponent({
 			);
 			const output = await resp.json();
 			console.log(output);
-			this.createModel(output);
+			this.createModel(output, true);
 		}, // end stratify
 		// Expects a JSON of a model with labels T, S, I, O.
 		// This is mostly done for stratification testing. Will require a deeper look in future
-		async createModel(model) {
-			console.log('Starting Create Model');
-			const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-			const modelData = await newModel.json();
-			modelId = modelData.id;
-			console.log(`Model ID: ${modelId}`);
+		// I dont expect this to stick around. It has a lot of reused code from drawModel.
+		async createModel(model, createFlag = false) {
+			// Flag is true so we need to call API PUT new model ID
+			if (createFlag === true) {
+				console.log('Starting Create Model');
+				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
+				const modelData = await newModel.json();
+				modelId = modelData.id;
+				console.log(`Model ID: ${modelId}`);
+			}
+			// Create flag is false so we need to pull a model ID from form and use GET
+			else {
+				console.log('Starting Draw Model');
+				const providedModel = (document.getElementById('loadModelID') as HTMLInputElement).value;
+				modelId = providedModel;
+				const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
+					method: 'GET'
+				});
+				model = await resp.json();
+			}
+
 			// Reset current nodes and edges
 			g.nodes = [];
 			g.edges = [];
@@ -666,7 +664,16 @@ export default defineComponent({
 				const aNode = model.S[i];
 				nodeX += 30;
 				nodeY += 30;
-				this.addNode(`s-${i + 1}`, aNode.sname, nodeX, nodeY, nodeHeight, nodeWidth, 'species');
+				this.addNode(
+					`s-${i + 1}`,
+					aNode.sname,
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					'species',
+					createFlag
+				);
 			}
 			// Move Transitions 100 to the right of S
 			nodeX = 100;
@@ -682,7 +689,8 @@ export default defineComponent({
 					nodeY,
 					nodeHeight,
 					nodeWidth,
-					'transition'
+					'transition',
+					createFlag
 				);
 			} // end T
 
@@ -691,13 +699,13 @@ export default defineComponent({
 				const iEdges = model.I[i];
 				const sourceID = `s-${iEdges.is}`;
 				const transitionID = `t-${iEdges.it}`;
-				this.addEdgeID(sourceID, transitionID);
+				this.addEdgeID(sourceID, transitionID, createFlag);
 			}
 			for (let i = 0; i < model.O.length; i++) {
 				const iEdges = model.O[i];
 				const sourceID = `s-${iEdges.os}`;
 				const transitionID = `t-${iEdges.ot}`;
-				this.addEdgeID(transitionID, sourceID);
+				this.addEdgeID(transitionID, sourceID, createFlag);
 			}
 
 			// g = runLayout(_.cloneDeep(g));
@@ -722,7 +730,7 @@ export default defineComponent({
 					{ ot: 1, os: 1 }
 				]
 			});
-			this.createModel(aModel);
+			this.createModel(aModel, true);
 		}, // End testCreateModel
 
 		// Used to create sample models for stratifying tests
@@ -744,7 +752,7 @@ export default defineComponent({
 					{ ot: 3, os: 4 }
 				]
 			});
-			this.createModel(SIRDModel);
+			this.createModel(SIRDModel, true);
 
 			const QNotQModel: JSON = <JSON>(<unknown>{
 				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
@@ -758,7 +766,7 @@ export default defineComponent({
 					{ ot: 2, os: 2 }
 				]
 			});
-			this.createModel(QNotQModel);
+			this.createModel(QNotQModel, true);
 
 			const typeModel: JSON = <JSON>(<unknown>{
 				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
@@ -776,66 +784,7 @@ export default defineComponent({
 					{ ot: 3, os: 1 }
 				]
 			});
-			this.createModel(typeModel);
-		},
-		// Provided a valid model ID draw said model on the playground
-		async loadModel() {
-			const providedModel = (document.getElementById('loadModelID') as HTMLInputElement).value;
-			modelId = providedModel;
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
-				method: 'GET'
-			});
-			const model = await resp.json();
-
-			g.nodes = [];
-			g.edges = [];
-
-			const nodeHeight = 20;
-			const nodeWidth = 20;
-			let nodeX = 0;
-			let nodeY = 0;
-			// Nodes
-			for (let i = 0; i < model.S.length; i++) {
-				const aNode = model.S[i];
-				nodeX += 30;
-				nodeY += 30;
-				this.drawNode(`s-${i + 1}`, aNode.sname, nodeX, nodeY, nodeHeight, nodeWidth, 'species');
-			}
-			// Move Transitions 100 to the right of S
-			nodeX = 100;
-			nodeY = 0;
-			for (let i = 0; i < model.T.length; i++) {
-				const aTransition = model.T[i];
-				nodeX += 30;
-				nodeY += 30;
-				this.drawNode(
-					`t-${i + 1}`,
-					aTransition.tname,
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					'transition'
-				);
-			} // end T
-
-			// Edges
-			for (let i = 0; i < model.I.length; i++) {
-				const iEdges = model.I[i];
-				const sourceID = `s-${iEdges.is}`;
-				const transitionID = `t-${iEdges.it}`;
-				this.drawEdgeID(sourceID, transitionID);
-			}
-			for (let i = 0; i < model.O.length; i++) {
-				const iEdges = model.O[i];
-				const sourceID = `s-${iEdges.os}`;
-				const transitionID = `t-${iEdges.ot}`;
-				this.drawEdgeID(transitionID, sourceID);
-			}
-
-			// g = runLayout(_.cloneDeep(g));
-			this.refresh();
-			this.jsonOutput();
+			this.createModel(typeModel, true);
 		}
 	}
 });
@@ -855,7 +804,7 @@ export default defineComponent({
 			<label for="loadModel">
 				<input type="text" id="loadModelID" placeholder="Model ID" />
 			</label>
-			<button type="button" @click="loadModel">Load Model</button>
+			<button type="button" @click="createModel">Load Model</button>
 		</form>
 		<form>
 			<label for="stratify">
