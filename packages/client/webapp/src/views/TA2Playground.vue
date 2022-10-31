@@ -288,7 +288,6 @@ export default defineComponent({
 			g.edges.push({ source: 'birth', target: 'rabbits', points: [] });
 
 			g = runLayout(_.cloneDeep(g));
-			console.log(g);
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
 				method: 'POST',

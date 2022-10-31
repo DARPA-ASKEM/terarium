@@ -22,19 +22,24 @@ interface Output {
 	os: number;
 }
 
-export const petrinetValidator = (graph: IGraph, petrinet: Petrinet) => {
+export const petrinetValidator = (
+	graph: IGraph,
+	petrinet: Petrinet,
+	isBoundedPetrinet: boolean = true
+) => {
 	const { edges } = graph;
 	let isValidPetrinet: boolean = true;
 
-	if (edges.length < 2) isValidPetrinet = false; // Needs at least 2 edges to point to a state after one transition
+	// Needs at least 2 edges to point to a state after one transition
+	if ((edges.length < 2 && isBoundedPetrinet) || edges.length === 0) isValidPetrinet = false;
 
-	if (isValidPetrinet) {
-		// Check if every transition node is pointing at at least one state node
+	if (isValidPetrinet && isBoundedPetrinet) {
 		const transitionNodeNames: string[] = petrinet.T.map((transition) => transition.tname);
 		const transitionEdgeSources: string[] = edges
 			.filter((edge) => edge.source.charAt(0) === 't')
 			.map((node) => node.source);
 
+		// Check if every transition node is pointing at at least one state node
 		for (let i = 0; i < transitionNodeNames.length; i++) {
 			// If a transition is recognized as a source, it is pointing at another node
 			if (!transitionEdgeSources.includes(transitionNodeNames[i])) {
