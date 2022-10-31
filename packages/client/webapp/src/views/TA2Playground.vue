@@ -713,26 +713,6 @@ export default defineComponent({
 			this.jsonOutput();
 		}, // end createModel
 
-		async testCreateModel() {
-			const aModel: JSON = <JSON>(<unknown>{
-				T: [{ tname: 'birth' }, { tname: 'death' }, { tname: 'predation' }],
-				S: [{ sname: 'rabbits' }, { sname: 'wolves' }],
-				I: [
-					{ it: 2, is: 2 },
-					{ it: 3, is: 2 },
-					{ it: 3, is: 1 },
-					{ it: 1, is: 1 }
-				],
-				O: [
-					{ ot: 3, os: 2 },
-					{ ot: 3, os: 2 },
-					{ ot: 1, os: 1 },
-					{ ot: 1, os: 1 }
-				]
-			});
-			this.createModel(aModel, true);
-		}, // End testCreateModel
-
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async createSampleModels() {
@@ -798,7 +778,6 @@ export default defineComponent({
 		<button type="button" @click="createSampleModels">Create Models</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
-		<button type="button" @click="testCreateModel">Lotka Test</button>
 		<button type="button" @click="simulate">Simulate</button>
 		<form>
 			<label for="loadModel">
