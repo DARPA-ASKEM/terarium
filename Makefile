@@ -1,10 +1,11 @@
 version=3.81
 
-BACKUP_TIME := `date -u +%F-%H%M%S`
 PROJECT_DIR ?= .
-DEPLOY_LOCAL := ${PROJECT_DIR}/deploy/local
 DOCKER_IMAGE_TAG ?= dev
-DOCKER_IMAGE_ROOT := docker.uncharted.software/terarium
+DOCKER_REGISTRY := ghcr.io
+DOCKER_ORG := darpa-askem
+
+
 
 .SECONDEXPANSION:
 
@@ -56,10 +57,10 @@ image-webapp: clean-webapp yarn-install
 	yarn workspace graph-scaffolder tsc --build
 	yarn workspace webapp build
 	mv $(PROJECT_DIR)/packages/client/webapp/dist $(PROJECT_DIR)/packages/client/webapp/docker
-	docker build -t $(DOCKER_IMAGE_ROOT)/webapp:$(DOCKER_IMAGE_TAG) $(PROJECT_DIR)/packages/client/webapp/docker
+	docker build -t $(DOCKER_REGISTRY)/$(DOCKER_ORG)/webapp:$(DOCKER_IMAGE_TAG) $(PROJECT_DIR)/packages/client/webapp/docker
 
 publish-webapp: image-webapp
-	docker push $(DOCKER_IMAGE_ROOT)/webapp:$(DOCKER_IMAGE_TAG)
+	docker push $(DOCKER_REGISTRY)/$(DOCKER_ORG)/webapp:$(DOCKER_IMAGE_TAG)
 
 publish-native-webapp:
 	# Do nothing
