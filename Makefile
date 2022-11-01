@@ -45,19 +45,6 @@ publish-native-hmi-server: clean-hmi-server
 	./gradlew :packages:services:hmi-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)-native -Dquarkus.package.type=native
 
 
-TARGETS += mock-data-server
-clean-mock-data-server:
-	./gradlew :packages:services:mock-data-server:clean
-
-image-mock-data-server: clean-mock-data-server
-	./gradlew :packages:services:mock-data-server:build -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
-
-publish-mock-data-server: clean-mock-data-server
-	./gradlew :packages:services:mock-data-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
-
-publish-native-mock-data-server: clean-mock-data-server
-	./gradlew :packages:services:mock-data-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)-native -Dquarkus.package.type=native
-
 
 TARGETS += webapp
 clean-webapp:
