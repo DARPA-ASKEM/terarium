@@ -1,15 +1,14 @@
 pluginManagement {
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-        mavenLocal()
-    }
-    plugins {
-        id "${quarkusPluginId}" version "${quarkusPluginVersion}"
-    }
+	repositories {
+		mavenCentral()
+		gradlePluginPortal()
+		mavenLocal()
+	}
+	plugins {
+		id "${quarkusPluginId}" version "${quarkusPluginVersion}"
+	}
 }
 
-rootProject.name='terarium'
+rootProject.name = "terarium"
 
-include 'packages:services:hmi-server'
-include 'packages:services:mock-data-server'
+include "packages:services:hmi-server"
