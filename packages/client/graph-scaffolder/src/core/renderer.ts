@@ -143,7 +143,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			};
 
 			const saveEdgeMap = (d: IEdge<E>) => {
-				this.oldEdgeMap.set(d.id??"", {
+				this.oldEdgeMap.set(d.id ?? '', {
 					points: d.points
 				});
 			};

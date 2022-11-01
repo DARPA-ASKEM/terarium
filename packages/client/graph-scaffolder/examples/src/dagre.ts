@@ -1,10 +1,10 @@
 import * as _ from 'lodash';
 import dagre from 'dagre';
-import {IGraph} from '../../src/types';
-import {traverseGraph} from '../../src/core/traverse';
+import { IGraph } from '../../src/types';
+import { traverseGraph } from '../../src/core/traverse';
 
 export const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
-	const g = new dagre.graphlib.Graph({compound: true});
+	const g = new dagre.graphlib.Graph({ compound: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(function () {
 		return {};
@@ -12,9 +12,9 @@ export const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 
 	traverseGraph(graphData, (node) => {
 		if (node.width && node.height) {
-			g.setNode(node.id, {label: node.id, width: node.width, height: node.height});
+			g.setNode(node.id, { label: node.id, width: node.width, height: node.height });
 		} else {
-			g.setNode(node.id, {label: node.id});
+			g.setNode(node.id, { label: node.id });
 		}
 		if (!_.isEmpty(node.nodes)) {
 			for (const child of node.nodes) {

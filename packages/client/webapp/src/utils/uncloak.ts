@@ -17,6 +17,4 @@ const uncloak = async (url: string) => {
 	return data;
 };
 
-export {
-	uncloak
-};
+export { uncloak };

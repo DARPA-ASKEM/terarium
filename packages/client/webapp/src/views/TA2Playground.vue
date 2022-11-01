@@ -1,12 +1,12 @@
 <script lang="ts">
-import graphScaffolder, {IEdge, IGraph, INode} from '@graph-scaffolder/index';
+import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
-import {defineComponent} from 'vue';
+import { defineComponent } from 'vue';
 
 const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
-	const g = new dagre.graphlib.Graph({compound: true});
+	const g = new dagre.graphlib.Graph({ compound: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
 
@@ -20,7 +20,7 @@ const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 				y: node.y
 			});
 		} else {
-			g.setNode(node.id, {label: node.id, x: node.x, y: node.y});
+			g.setNode(node.id, { label: node.id, x: node.x, y: node.y });
 		}
 		if (!_.isEmpty(node.nodes)) {
 			// eslint-disable-next-line
@@ -206,7 +206,7 @@ export default defineComponent({
 		});
 
 		// Test
-		const test = await fetch('http://localhost:8888/api/models', {method: 'PUT'});
+		const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
 		const testData = await test.json();
 		modelId = testData.id;
 
@@ -219,7 +219,7 @@ export default defineComponent({
 			await renderer?.render();
 		},
 		async LotkaVolterra() {
-			const test = await fetch('http://localhost:8888/api/models', {method: 'PUT'});
+			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
 			const testData = await test.json();
 			modelId = testData.id;
 
@@ -237,7 +237,7 @@ export default defineComponent({
 				height: 50,
 				width: 50,
 				nodes: [],
-				data: {type: 'species'}
+				data: { type: 'species' }
 			});
 			g.nodes.push({
 				id: 'wolves',
@@ -247,7 +247,7 @@ export default defineComponent({
 				height: 50,
 				width: 50,
 				nodes: [],
-				data: {type: 'species'}
+				data: { type: 'species' }
 			});
 			g.nodes.push({
 				id: 'death',
@@ -257,7 +257,7 @@ export default defineComponent({
 				height: 50,
 				width: 50,
 				nodes: [],
-				data: {type: 'transition'}
+				data: { type: 'transition' }
 			});
 			g.nodes.push({
 				id: 'birth',
@@ -267,7 +267,7 @@ export default defineComponent({
 				height: 50,
 				width: 50,
 				nodes: [],
-				data: {type: 'transition'}
+				data: { type: 'transition' }
 			});
 			g.nodes.push({
 				id: 'predation',
@@ -277,15 +277,33 @@ export default defineComponent({
 				height: 50,
 				width: 50,
 				nodes: [],
-				data: {type: 'transition'}
+				data: { type: 'transition' }
 			});
 
-			g.edges.push({id: '1', source: 'wolves', target: 'death', points: [], data: {val: 1}});
-			g.edges.push({id: '2', source: 'predation', target: 'wolves', points: [], data: {val: 1}});
-			g.edges.push({id: '3', source: 'wolves', target: 'predation', points: [], data: {val: 1}});
-			g.edges.push({id: '4', source: 'rabbits', target: 'predation', points: [], data: {val: 1}});
-			g.edges.push({id: '5', source: 'rabbits', target: 'birth', points: [], data: {val: 1}});
-			g.edges.push({id: '6', source: 'birth', target: 'rabbits', points: [], data: {val: 1}});
+			g.edges.push({ id: '1', source: 'wolves', target: 'death', points: [], data: { val: 1 } });
+			g.edges.push({
+				id: '2',
+				source: 'predation',
+				target: 'wolves',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({
+				id: '3',
+				source: 'wolves',
+				target: 'predation',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({
+				id: '4',
+				source: 'rabbits',
+				target: 'predation',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
+			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
 
 			g = runLayout(_.cloneDeep(g));
 
@@ -297,21 +315,21 @@ export default defineComponent({
 				},
 				body: JSON.stringify({
 					nodes: [
-						{name: 'rabbits', type: 'S'},
-						{name: 'wolves', type: 'S'},
-						{name: 'birth', type: 'T'},
-						{name: 'death', type: 'T'},
-						{name: 'predation', type: 'T'}
+						{ name: 'rabbits', type: 'S' },
+						{ name: 'wolves', type: 'S' },
+						{ name: 'birth', type: 'T' },
+						{ name: 'death', type: 'T' },
+						{ name: 'predation', type: 'T' }
 					],
 					edges: [
-						{source: 'wolves', target: 'death'},
-						{source: 'predation', target: 'wolves'},
-						{source: 'predation', target: 'wolves'},
-						{source: 'wolves', target: 'predation'},
-						{source: 'rabbits', target: 'predation'},
-						{source: 'rabbits', target: 'birth'},
-						{source: 'birth', target: 'rabbits'},
-						{source: 'birth', target: 'rabbits'}
+						{ source: 'wolves', target: 'death' },
+						{ source: 'predation', target: 'wolves' },
+						{ source: 'predation', target: 'wolves' },
+						{ source: 'wolves', target: 'predation' },
+						{ source: 'rabbits', target: 'predation' },
+						{ source: 'rabbits', target: 'birth' },
+						{ source: 'birth', target: 'rabbits' },
+						{ source: 'birth', target: 'rabbits' }
 					]
 				})
 			});
@@ -342,7 +360,7 @@ export default defineComponent({
 						y: target.datum().y + target.datum().height * 0.5
 					}
 				],
-				data: {val: 1}
+				data: { val: 1 }
 			});
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
@@ -377,7 +395,7 @@ export default defineComponent({
 				y: Math.random() * 500,
 				height: 50,
 				width: 50,
-				data: {type: 'species'},
+				data: { type: 'species' },
 				nodes: []
 			});
 			this.refresh();
@@ -411,7 +429,7 @@ export default defineComponent({
 				y: Math.random() * 500,
 				height: 50,
 				width: 50,
-				data: {type: 'transition'},
+				data: { type: 'transition' },
 				nodes: []
 			});
 			this.refresh();
