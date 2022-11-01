@@ -1,4 +1,4 @@
-FROM docker-hub.uncharted.software/nginx:1.23-alpine
+FROM nginx:1.23-alpine
 
 # update packages and add some basics
 RUN apk update
@@ -11,5 +11,5 @@ COPY default.conf /etc/nginx/conf.d/
 COPY ./dist /var/www/app
 
 # install wait-for-it
-ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /usr/local/bin/wait-for-it.sh
+ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/81b1373f17855a4dc21156cfe1694c31d7d1792e/wait-for-it.sh /usr/local/bin/wait-for-it.sh
 RUN chmod +x /usr/local/bin/wait-for-it.sh
