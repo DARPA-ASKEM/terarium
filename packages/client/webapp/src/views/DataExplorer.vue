@@ -8,6 +8,8 @@ import Search from '@/components/data-explorer/search.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import AutoComplete from '@/components/widgets/autocomplete.vue';
 import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
+import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import { XDDArticle, XDDDictionary, XDD_RESULT_DEFAULT_PAGE_SIZE } from '@/types/XDD';
@@ -299,7 +301,7 @@ watch(resultType, () => {
 							<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
 								{{ term }}
 								<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
-									<i class="fa fa-fw fa-close" />
+									<IconClose16 />
 								</span>
 							</div>
 						</div>
@@ -308,7 +310,7 @@ watch(resultType, () => {
 							class="co-occurrence-matrix-btn"
 							:disabled="dictNames.length !== 2"
 						>
-							<i class="fa-solid fa-table-cells-large" />&nbsp;co-occurrence matrix
+							<IconScatterMatrix16 />&nbsp;co-occurrence matrix
 						</button>
 					</template>
 				</search>
