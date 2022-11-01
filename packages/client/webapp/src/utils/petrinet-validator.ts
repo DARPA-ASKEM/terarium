@@ -1,4 +1,4 @@
-import { IGraph, IEdge /* traverseGraph */ } from 'graph-scaffolder';
+import { IGraph, IEdge } from 'graph-scaffolder';
 
 interface Petrinet {
 	S: State[];
@@ -32,29 +32,86 @@ export const petrinetValidator = (
 	petrinet: Petrinet,
 	isBoundedPetrinet: boolean = true
 ) => {
-	const { edges } = graph;
+	const edges: IEdge[] = graph.edges;
 	let isValidPetrinet: boolean = true;
 
-	// Requires at least one edge
-	if (edges.length < 1) isValidPetrinet = false;
+	if (edges.length < 1) isValidPetrinet = false; // Requires at least one edge
 
 	if (isValidPetrinet) {
 		const transitionNodeNames: string[] = petrinet.T.map((transition) => transition.tname);
-		const nodeNames: string[] = [...transitionNodeNames, ...petrinet.S.map((state) => state.sname)]; // Append state names
-		const edgeSourcesAndTargets: string[] = [
-			...edges.map((edge) => [edge.source, edge.target])
-		].flat();
+		const stateNodeNames: string[] = petrinet.S.map((state) => state.sname);
 
-		// Check that every node is at least either a source or a target
-		for (let i = 0; i < nodeNames.length; i++) {
-			if (!edgeSourcesAndTargets.includes(nodeNames[i])) {
-				isValidPetrinet = false;
+		/* ----- Make sure there aren't multiple petrinet bodies -----*/
+		const statesSurroundingTransitions: string[][] = [];
+		// Save all the states where the current transition is a source or a target
+		for (let i = 0; i < transitionNodeNames.length; i++) {
+			const statesSurroundingTransition: string[] = [];
+			const edgesWithCommonTransition = edges.filter(
+				(edge) => edge.source === transitionNodeNames[i] || edge.target === transitionNodeNames[i]
+			);
+
+			for (let j = 0; j < edgesWithCommonTransition.length; j++) {
+				const { source, target } = edgesWithCommonTransition[j];
+				statesSurroundingTransition.push(source.charAt(0) === 'p' ? source : target);
+			}
+			statesSurroundingTransitions.push(statesSurroundingTransition);
+		}
+		console.log(statesSurroundingTransitions);
+
+		// const statesToMerge: string[][] = [];
+		const connectedStates: string[] = [];
+		// Merge all the arrays in statesSurroundingTransitions that have common values
+		for (let i = 0; i < statesSurroundingTransitions.length; i++) {
+			const statesToMerge: string[] = statesSurroundingTransitions[i];
+
+			for (let j = 0; j < statesSurroundingTransitions.length; j++) {
+				if (statesToMerge.some((anyPlace) => statesSurroundingTransitions[j].includes(anyPlace))) {
+					statesToMerge.push(...statesSurroundingTransitions[j]);
+					console.log(statesToMerge);
+				}
+			}
+
+			// connectedStates.push(...statesToMerge);// condition
+			console.log([...new Set(statesToMerge)], stateNodeNames, 11111);
+			if ([...new Set(statesToMerge)].length === stateNodeNames.length) {
+				console.log('break');
 				break;
 			}
 		}
+		console.log([...new Set(connectedStates)]);
+		if ([...new Set(connectedStates)].length !== stateNodeNames.length) isValidPetrinet = false; // every state node name should be in connected states
 
+		/* ----- Check that every node is at least either a source or a target - could be redundant due to the check above -----*/
+		if (isValidPetrinet) {
+			const nodeNames: string[] = [...transitionNodeNames, ...stateNodeNames];
+			const edgeSourcesAndTargets: string[] = [
+				...edges.map((edge) => [edge.source, edge.target])
+			].flat();
+			for (let i = 0; i < nodeNames.length; i++) {
+				if (!edgeSourcesAndTargets.includes(nodeNames[i])) {
+					isValidPetrinet = false;
+					break;
+				}
+			}
+		}
+
+		/* ----- Check if it's a bipartite graph (place -> transition -> place) -----*/
+		if (isValidPetrinet) {
+			for (let i = 0; i < edges.length; i++) {
+				const { source, target } = edges[i];
+
+				if (
+					(source.charAt(0) === 'p' && target.charAt(0) !== 't') ||
+					(source.charAt(0) === 't' && target.charAt(0) !== 'p')
+				) {
+					isValidPetrinet = false;
+					break;
+				}
+			}
+		}
+
+		/* ----- Check if every transition node is bounded by state nodes -----*/
 		if (isValidPetrinet && isBoundedPetrinet) {
-			// Check if every transition node is bounded by state nodes
 			const transitionEdgeSources = extractEdgesAttribute(edges, 't', 'source');
 			const transitionEdgeTargets = extractEdgesAttribute(edges, 't', 'target');
 
@@ -71,27 +128,8 @@ export const petrinetValidator = (
 		}
 	}
 
-	if (isValidPetrinet) {
-		// Check if it's a bipartite graph (place -> transition -> place)
-		for (let i = 0; i < edges.length; i++) {
-			const { source, target } = edges[i];
-
-			if (
-				(source.charAt(0) === 'p' && target.charAt(0) !== 't') ||
-				(source.charAt(0) === 't' && target.charAt(0) !== 'p')
-			) {
-				isValidPetrinet = false;
-				break;
-			}
-		}
-	}
-
-	// Make sure there aren't multiple petrinet bodies - try traversal?
-	// traverseGraph(graph);
-
-	// console.log(graph);
 	// console.table(graph.nodes);
-	// console.table(graph.edges);
+	console.table(edges);
 
 	// console.log("states")
 	// console.table(petrinet.S);
