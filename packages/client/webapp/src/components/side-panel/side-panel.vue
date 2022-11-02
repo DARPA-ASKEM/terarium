@@ -82,13 +82,16 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 @import '@/styles/variables';
-$small-width: 250px;
-$large-width: 380px;
+
+:root {
+	--small-width: 400px;
+	--large-width: 380px;
+}
 
 .side-panel-container {
 	flex-grow: 0;
 	flex-shrink: 0;
-	min-width: $navbar-outer-height;
+	min-width: var(--navbar-outer-height);
 	position: relative;
 	margin-right: 10px;
 	filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.12));
@@ -96,14 +99,14 @@ $large-width: 380px;
 	.side-panel-header,
 	.side-panel-body,
 	.side-panel-content {
-		width: $small-width;
+		width: var(--small-width);
 	}
 
 	&.large {
 		.side-panel-header,
 		.side-panel-body,
 		.side-panel-content {
-			width: $large-width;
+			width: var(--large-width);
 		}
 	}
 
@@ -122,7 +125,7 @@ $large-width: 380px;
 	position: absolute;
 	top: 0;
 	right: 0;
-	width: $navbar-outer-height;
+	width: var(--navbar-outer-height);
 	display: flex;
 	flex-direction: column;
 }
@@ -132,7 +135,7 @@ $large-width: 380px;
 }
 
 .side-panel-header {
-	height: $navbar-outer-height;
+	height: var(--navbar-outer-height);
 	display: flex;
 	align-items: center;
 
@@ -140,13 +143,18 @@ $large-width: 380px;
 		margin: 0;
 		margin-left: 8px;
 		flex: 1;
-		@include header-secondary;
+		// @include header-secondary;
+		font-size: var(--font-size-medium);
+		text-transform: uppercase;
+		letter-spacing: 0.066rem;
+		color: var(--label-color);
+		font-weight: 600;
 	}
 }
 
 .side-panel-body {
 	position: relative;
-	margin-right: $navbar-outer-height; // width of the side-panel-nav
+	margin-right: var(--navbar-outer-height); // width of the side-panel-nav
 	background-color: #ffffff;
 	display: flex;
 	flex-direction: column;
@@ -155,7 +163,7 @@ $large-width: 380px;
 
 .slide-fade-enter-active,
 .slide-fade-leave-active {
-	transition: all $layout-transition;
+	transition: all var(--layout-transition);
 
 	.side-panel-content,
 	.side-panel-header {

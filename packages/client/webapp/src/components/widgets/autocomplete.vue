@@ -155,14 +155,17 @@ $input-element-height: 37px;
 		max-height: 220px;
 		z-index: 2; // suggestion list on top of the other UI
 	}
+
 	.autocomplete-results {
 		padding: 0;
 		margin-left: 1rem;
-		background-color: $background-light-1;
+		background-color: var(--background-light-1);
+
 		.is-active {
-			background-color: $background-light-3;
+			background-color: var(--background-light-3);
 		}
 	}
+
 	:deep(.autocomplete-result) {
 		list-style: none;
 		text-align: left;

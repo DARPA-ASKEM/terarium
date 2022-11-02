@@ -52,13 +52,14 @@ export default defineComponent({
 @import '@/styles/variables';
 
 $toggle-on: #4e4e54;
-$toggle-off: $label-color;
+$toggle-off: var(--label-color);
 
 $toggle-size: 40px;
 
 .switcher {
 	display: flex;
 	align-items: center;
+
 	.title {
 		padding: 5px;
 		text-align: center;
@@ -66,6 +67,7 @@ $toggle-size: 40px;
 		color: black;
 		font-weight: 500;
 	}
+
 	label {
 		display: flex;
 		padding: 0;
@@ -102,14 +104,17 @@ $toggle-size: 40px;
 					left: 0;
 				}
 			}
+
 			&:checked + span {
 				background: $toggle-on;
 				border-color: $toggle-on;
+
 				small {
 					left: 50%;
 					background: #ffffff;
 				}
 			}
+
 			& + span::after {
 				content: 'Off';
 				color: #ffffff;
@@ -118,6 +123,7 @@ $toggle-size: 40px;
 				font-size: 12px; // $font-size-small
 				height: 12px;
 			}
+
 			&:checked + span::after {
 				content: 'On';
 				left: 1px;

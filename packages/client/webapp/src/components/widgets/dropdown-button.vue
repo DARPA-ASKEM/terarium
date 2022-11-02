@@ -202,7 +202,7 @@ export default defineComponent({
 }
 
 .dropdown-option-selected {
-	color: $selected-dark;
+	color: var(--selected-dark);
 }
 
 .dropdown-btn {

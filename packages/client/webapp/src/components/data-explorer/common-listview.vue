@@ -154,10 +154,10 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@import '@/styles/variables';
 
 .search-listview-container {
-	background: $background-light-2;
+	background: var(--background-light-2);
 	color: black;
 	width: 100%;
 
@@ -173,7 +173,7 @@ export default defineComponent({
 	}
 
 	tr {
-		border: 2px solid $separator;
+		border: 2px solid var(--separator);
 		cursor: pointer;
 	}
 
@@ -188,12 +188,12 @@ export default defineComponent({
 	}
 
 	td {
-		background: $background-light-1;
+		background: var(--background-light-1);
 		vertical-align: top;
 	}
 
 	tr th {
-		font-size: $font-size-small;
+		font-size: var(--font-size-small);
 		font-weight: normal;
 	}
 
@@ -218,7 +218,7 @@ export default defineComponent({
 		height: 100%;
 		width: 2px;
 		left: -2px;
-		background: $background-light-2;
+		background: var(--background-light-2);
 		top: 0;
 	}
 
@@ -232,14 +232,14 @@ export default defineComponent({
 	}
 
 	.tr-item.selected {
-		border: 2px double $selected;
+		border: 2px double var(--selected);
 
 		.name-col {
-			border-left: 4px solid $selected;
+			border-left: 4px solid var(--selected);
 		}
 
 		td {
-			background-color: $tinted-background;
+			background-color: var(--tinted-background);
 		}
 	}
 
@@ -262,7 +262,7 @@ export default defineComponent({
 				margin: 3px 5px 0 0;
 
 				.disabled {
-					color: $background-light-3;
+					color: var(--background-light-3);
 				}
 			}
 
@@ -274,7 +274,7 @@ export default defineComponent({
 					font-weight: 600;
 					border: none;
 					border-radius: 5px;
-					background-color: $background-light-3;
+					background-color: var(--background-light-3);
 					color: darkgray;
 					padding: 6px;
 					float: right;

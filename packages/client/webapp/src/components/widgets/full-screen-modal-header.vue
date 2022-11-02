@@ -40,7 +40,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
+@import '@/styles/variables';
 
 .full-screen-modal-header-container {
 	background-color: var(--un-color-accent-dark);
@@ -71,7 +71,7 @@ export default defineComponent({
 
 	.navBack {
 		font-weight: 600;
-		font-size: $font-size-large;
+		font-size: var(--font-size-large);
 		display: inline-flex;
 		align-items: center;
 		color: #ffffff;

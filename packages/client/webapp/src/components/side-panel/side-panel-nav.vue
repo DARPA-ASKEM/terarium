@@ -85,7 +85,7 @@ li {
 	border-bottom-right-radius: 3px;
 	color: rgba(0, 0, 0, 0.61);
 	margin-bottom: 5px;
-	background: $background-light-1-faded;
+	background: var(--background-light-1-faded);
 	transform: translateX(-25%);
 	transition: transform 0.1s ease;
 
@@ -102,12 +102,12 @@ li {
 		// Overlap the tab slightly to cover tiny
 		// gaps during animation
 		right: calc(100% - 1px);
-		background: $background-light-1;
+		background: var(--background-light-1);
 	}
 
 	button {
-		width: $navbar-outer-height;
-		height: $navbar-outer-height;
+		width: var(--navbar-outer-height);
+		height: var(--navbar-outer-height);
 		background-color: transparent;
 		border-radius: 0;
 		border: none;
@@ -123,7 +123,7 @@ li {
 		.counter-badge {
 			display: inline-block;
 			padding: 3px 7px;
-			font-size: $font-size-small;
+			font-size: var(--font-size-small);
 			font-weight: bold;
 			color: white;
 			line-height: 1;
@@ -131,8 +131,8 @@ li {
 			background-color: #545353;
 			border-radius: 10px;
 			position: absolute;
-			left: calc($navbar-outer-height / 2);
-			bottom: calc($navbar-outer-height / 2);
+			left: calc(var(--navbar-outer-height) / 2);
+			bottom: calc(var(--navbar-outer-height) / 2);
 			top: auto;
 		}
 	}
@@ -147,14 +147,14 @@ li {
 	}
 
 	&:not(.active):hover {
-		background-color: $background-light-1;
+		background-color: var(--background-light-1);
 		color: #000;
 	}
 
 	&.active {
 		transform: translateX(0);
-		background-color: $background-light-1;
-		color: $selected-dark;
+		background-color: var(--background-light-1);
+		color: var(--selected-dark);
 	}
 
 	&:hover {
