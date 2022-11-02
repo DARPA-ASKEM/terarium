@@ -90,7 +90,7 @@ export const petrinetValidator = (graph: IGraph, isBoundedPetrinet: boolean = tr
 		}
 		statesSurroundingTransitions.push(statesSurroundingTransition);
 	}
-	console.log(statesSurroundingTransitions);
+	// console.log(statesSurroundingTransitions);
 
 	const connectedStates: string[] = statesSurroundingTransitions[0];
 	let potentialConnections: string[][] = [];
@@ -108,8 +108,8 @@ export const petrinetValidator = (graph: IGraph, isBoundedPetrinet: boolean = tr
 			}
 		}
 
-		console.log([...new Set(connectedStates)]);
-		console.log(potentialConnections);
+		// console.log([...new Set(connectedStates)]);
+		// console.log(potentialConnections);
 
 		// If the potential connections from the last iteration are the exact same then there is more than one petrinet body
 		if (statesToMerge.length === potentialConnections.length) {

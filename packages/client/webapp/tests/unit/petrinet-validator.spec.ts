@@ -922,9 +922,8 @@ const trueGraphs: IGraph[] = [
 	}
 ];
 
-// Can be true or false depending on whether unbounded graphs are acceptable - check #4
+// Caught by check #4 (or not if unbounded graphs are set to be accepted)
 const unbounded: IGraph = {
-	// Caught by check #4 (or not if unbounded graphs are set to be accepted)
 	nodes: [
 		{
 			id: 't-1',
