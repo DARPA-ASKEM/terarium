@@ -3,8 +3,8 @@ import { petrinetValidator } from '@/utils/petrinet-validator';
 import { IGraph } from 'graph-scaffolder';
 
 const falseGraphs: IGraph[] = [
+	// No edges - caught by check #1.
 	{
-		// No edges - caught by check #1.
 		nodes: [
 			{
 				id: 'p-1',
@@ -33,8 +33,8 @@ const falseGraphs: IGraph[] = [
 		],
 		edges: []
 	},
+	// A node is not recognized as a source or a target - caught by check #2
 	{
-		// A node is not recognized as a source or a target - caught by check #2
 		nodes: [
 			{
 				id: 'p-1',
@@ -104,8 +104,8 @@ const falseGraphs: IGraph[] = [
 			}
 		]
 	},
+	// Doesn't follow bipartite pattern (place -> place -> transition) - caught by check #3
 	{
-		// Doesn't follow bipartite pattern (place -> place -> transition) - caught by check #3
 		nodes: [
 			{
 				id: 'p-1',
@@ -178,8 +178,8 @@ const falseGraphs: IGraph[] = [
 ];
 
 const trueGraphs: IGraph[] = [
+	// Small petrinet
 	{
-		// Small petrinet
 		nodes: [
 			{
 				id: 'p-1',
