@@ -84,7 +84,7 @@ export default defineComponent({
 @import '@/styles/variables';
 
 :root {
-	--small-width: 400px;
+	--small-width: 250px;
 	--large-width: 380px;
 }
 
