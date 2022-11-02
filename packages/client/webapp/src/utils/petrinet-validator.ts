@@ -1,26 +1,4 @@
-import { IGraph, IEdge } from 'graph-scaffolder';
-
-interface Petrinet {
-	S: State[];
-	T: Transition[];
-	I: Input[];
-	O: Output[];
-}
-
-interface State {
-	sname: string;
-}
-interface Transition {
-	tname: string;
-}
-interface Input {
-	it: number;
-	is: number;
-}
-interface Output {
-	ot: number;
-	os: number;
-}
+import { IGraph, INode, IEdge } from 'graph-scaffolder';
 
 const extractEdgesAttribute = (
 	edges: IEdge[],
@@ -34,13 +12,10 @@ const extractEdgesAttribute = (
 /*
     Validates petrinet - check #2 must come before check #5 to avoid an infinite loop
 */
-export const petrinetValidator = (
-	graph: IGraph,
-	petrinet: Petrinet,
-	isBoundedPetrinet: boolean = true
-): boolean => {
-	const edges: IEdge[] = graph.edges;
+export const petrinetValidator = (graph: IGraph, isBoundedPetrinet: boolean = true): boolean => {
+	const { nodes, edges }: { nodes: INode[]; edges: IEdge[] } = graph;
 
+	console.log(graph);
 	// console.table(graph.nodes);
 	// console.table(edges);
 	// console.log("states")
@@ -51,8 +26,12 @@ export const petrinetValidator = (
 	/* ----- 1. Requires at least one edge ----- */
 	if (edges.length < 1) return false;
 
-	const transitionNames: string[] = petrinet.T.map((transition) => transition.tname);
-	const stateNames: string[] = petrinet.S.map((state) => state.sname);
+	const transitionNames: string[] = nodes
+		.filter((node) => node.id.charAt(0) === 't')
+		.map((node) => node.id);
+	const stateNames: string[] = nodes
+		.filter((node) => node.id.charAt(0) === 'p')
+		.map((node) => node.id);
 
 	/* ----- 2. Check that every node is at least either a source or a target ----- */
 	const nodeNames: string[] = [...transitionNames, ...stateNames];
@@ -60,7 +39,10 @@ export const petrinetValidator = (
 		...edges.map((edge) => [edge.source, edge.target])
 	].flat();
 	for (let i = 0; i < nodeNames.length; i++) {
-		if (!edgeSourcesAndTargets.includes(nodeNames[i])) return false;
+		if (!edgeSourcesAndTargets.includes(nodeNames[i])) {
+			console.log('#2');
+			return false;
+		}
 	}
 
 	/* ----- 3. Check if it's a bipartite graph (place -> transition -> place) ----- */
@@ -70,8 +52,10 @@ export const petrinetValidator = (
 		if (
 			(source.charAt(0) === 'p' && target.charAt(0) !== 't') ||
 			(source.charAt(0) === 't' && target.charAt(0) !== 'p')
-		)
+		) {
+			console.log('#3');
 			return false;
+		}
 	}
 
 	/* ----- 4. Check if every transition node is bounded by state nodes ----- */
@@ -84,8 +68,10 @@ export const petrinetValidator = (
 			if (
 				!transitionEdgeSources.includes(transitionNames[i]) ||
 				!transitionEdgeTargets.includes(transitionNames[i])
-			)
+			) {
+				console.log('#4');
 				return false;
+			}
 		}
 	}
 
@@ -126,7 +112,10 @@ export const petrinetValidator = (
 		console.log(potentialConnections);
 
 		// If the potential connections from the last iteration are the exact same then there is more than one petrinet body
-		if (statesToMerge.length === potentialConnections.length) return false;
+		if (statesToMerge.length === potentialConnections.length) {
+			console.log('#5');
+			return false;
+		}
 	} while (potentialConnections.length > 0);
 
 	return true; // All checks have been successfully passed

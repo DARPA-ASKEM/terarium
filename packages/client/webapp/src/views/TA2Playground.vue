@@ -324,7 +324,7 @@ export default defineComponent({
 				method: 'GET'
 			});
 			const output = await resp.json();
-			console.log(petrinetValidator(g, output) ? 'Valid Petrinet' : 'Invalid Petrinet');
+			console.log(petrinetValidator(g) ? 'Valid Petrinet' : 'Invalid Petrinet');
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
 		// eslint-disable-next-line
