@@ -15,17 +15,17 @@ const extractEdgesAttribute = (
 export const petrinetValidator = (graph: IGraph, isBoundedPetrinet: boolean = true): boolean => {
 	const { nodes, edges }: { nodes: INode[]; edges: IEdge[] } = graph;
 
-	console.log(graph);
-	// console.table(graph.nodes);
+	// console.log(graph);
+	// console.table(nodes);
 	// console.table(edges);
-	// console.log("states")
-	// console.table(petrinet.S);
-	// console.log("transitions")
-	// console.table(petrinet.T);
 
 	/* ----- 1. Requires at least one edge ----- */
-	if (edges.length < 1) return false;
+	if (edges.length < 1) {
+		console.log('#1');
+		return false;
+	}
 
+	// transitionNames, stateNames are used across most of the checks
 	const transitionNames: string[] = nodes
 		.filter((node) => node.id.charAt(0) === 't')
 		.map((node) => node.id);
