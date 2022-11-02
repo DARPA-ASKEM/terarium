@@ -25,7 +25,6 @@ export const petrinetValidator = (graph: IGraph, isBoundedPetrinet: boolean = tr
 		return false;
 	}
 
-	// transitionNames, stateNames are used across most of the checks
 	const transitionNames: string[] = nodes
 		.filter((node) => node.id.charAt(0) === 't')
 		.map((node) => node.id);
