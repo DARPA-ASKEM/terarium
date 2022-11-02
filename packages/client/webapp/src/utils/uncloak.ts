@@ -1,7 +1,6 @@
 import useAuthStore from '../stores/auth';
 
-// eslint-disable-next-line import/prefer-default-export
-const uncloak = async (url: string) => {
+export const uncloak = async (url: string) => {
 	const auth = useAuthStore();
 	const response = await fetch(url, {
 		headers: {
@@ -16,5 +15,3 @@ const uncloak = async (url: string) => {
 	const data = await response.json();
 	return data;
 };
-
-export { uncloak };
