@@ -48,7 +48,7 @@
     "dagre": "0.8.5",
     "esbuild": "0.15.12",
     "esbuild-jest": "0.5.0",
-    "eslint": "8.25.0",
+    "eslint": "8.26.0",
     "eslint-config-esnext": "4.1.0",
     "eslint-plugin-import": "2.26.0",
     "globby": "13.1.2",
