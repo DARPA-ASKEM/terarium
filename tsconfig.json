@@ -1,11 +1,3 @@
 {
-	"references": [
-		{
-			"path": "packages/client/graph-scaffolder"
-		},
-		{
-			"path": "packages/client/webapp"
-		}
-	],
 	"include": []
 }
