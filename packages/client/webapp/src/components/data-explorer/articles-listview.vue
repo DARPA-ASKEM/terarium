@@ -289,23 +289,9 @@ tr th {
 	margin: 3px 5px 0 0;
 }
 
-.title-and-abstract-layout .radio .disabled {
-	color: var(--background-light-3);
-}
-
 .title-and-abstract-layout .content {
 	flex: 1 1 auto;
 	overflow-wrap: anywhere;
-}
-
-.title-and-abstract-layout .content .not-ready-label {
-	font-weight: 600;
-	border: none;
-	border-radius: 5px;
-	background-color: var(--background-light-3);
-	color: darkgray;
-	padding: 6px;
-	float: right;
 }
 
 .title-and-abstract-layout .content .knobs {
