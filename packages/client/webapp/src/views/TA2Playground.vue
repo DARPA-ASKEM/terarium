@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
 import { defineComponent } from 'vue';
+import * as strat from '@/utils/TA2/stratify';
 
 const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	const g = new dagre.graphlib.Graph({ compound: true });
@@ -357,10 +358,6 @@ export default defineComponent({
 					]
 				})
 			});
-
-			// g = runLayout(_.cloneDeep(g));
-			this.refresh();
-			this.jsonOutput();
 		},
 		async addPlace() {
 			console.log('add place');
@@ -442,7 +439,6 @@ export default defineComponent({
 			type: string,
 			createFlag: boolean
 		) {
-			// console.log('add transition');
 			let nodeType = 'D'; // Default
 			if (type === 'transition') {
 				nodeType = 'T';
@@ -608,32 +604,18 @@ export default defineComponent({
 					.style('fill', 'blue');
 			}
 		},
-
-		// Providing the ID of 3 Models (model A, model B, and the type Model)
-		// Create a new model of based off of the stratification
-		// TODO: Better error handling (models not found for example)
-		async stratify() {
-			console.log('Start Stratify');
-			const modelA = (document.getElementById('stratifyModelA') as HTMLInputElement).value;
-			const modelB = (document.getElementById('stratifyModelB') as HTMLInputElement).value;
-			const typeModel = (document.getElementById('stratifyTypeModel') as HTMLInputElement).value;
-
-			if (!modelA || !modelB || !typeModel) {
-				console.log('An ID must be provided for each model');
-				return;
-			}
-			console.log(`Stratifying: ${modelA} ${modelB} ${typeModel}`);
-			const resp = await fetch(
-				`http://localhost:8888/api/models/stratify/${modelA}/${modelB}/${typeModel}`,
-				{
-					method: 'GET'
-				}
-			);
-			const output = await resp.json();
-			console.log(output);
-			this.createModel(output, true);
-		}, // end stratify
+		// Pulls model ID from form and sends model to createModel function for the actual work
+		async drawModel() {
+			const providedModel = (document.getElementById('loadModelID') as HTMLInputElement).value;
+			modelId = providedModel;
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
+				method: 'GET'
+			});
+			const model = await resp.json();
+			this.createModel(model, false);
+		},
 		// Expects a JSON of a model with labels T, S, I, O.
+		// populates g + depending on provided flag POST changes to model ID
 		// This is mostly done for stratification testing. Will require a deeper look in future
 		async createModel(model, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
@@ -647,12 +629,6 @@ export default defineComponent({
 			// Create flag is false so we need to pull a model ID from form and use GET
 			else {
 				console.log('Starting Draw Model');
-				const providedModel = (document.getElementById('loadModelID') as HTMLInputElement).value;
-				modelId = providedModel;
-				const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
-					method: 'GET'
-				});
-				model = await resp.json();
 			}
 
 			// Reset current nodes and edges
@@ -716,7 +692,13 @@ export default defineComponent({
 			this.refresh();
 			this.jsonOutput();
 		}, // end createModel
-
+		async stratify() {
+			const modelA = (document.getElementById('stratifyModelA') as HTMLInputElement).value;
+			const modelB = (document.getElementById('stratifyModelB') as HTMLInputElement).value;
+			const typeModel = (document.getElementById('stratifyTypeModel') as HTMLInputElement).value;
+			const outputModel = await strat.stratify(modelA, modelB, typeModel);
+			this.createModel(outputModel, true);
+		},
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async createSampleModels() {
@@ -787,7 +769,7 @@ export default defineComponent({
 			<label for="loadModel">
 				<input type="text" id="loadModelID" placeholder="Model ID" />
 			</label>
-			<button type="button" @click="createModel">Load Model</button>
+			<button type="button" @click="drawModel">Load Model</button>
 		</form>
 		<form>
 			<label for="stratify">
