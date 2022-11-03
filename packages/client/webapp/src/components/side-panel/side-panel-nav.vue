@@ -62,20 +62,17 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 @import '@/styles/variables';
 
 .side-panel-nav-container {
 	margin: 0;
 	padding: 0;
+}
 
-	// If no tab is open, all tabs should take
-	//  the full square width
-	&.all-tabs-closed {
-		li:not(:hover) {
-			transform: translateX(0);
-		}
-	}
+/* If no tab is open, all tabs should take the full square width */
+.side-panel-nav-container.all-tabs-closed li:not(:hover) {
+	transform: translateX(0);
 }
 
 li {
@@ -88,77 +85,68 @@ li {
 	background: var(--background-light-1-faded);
 	transform: translateX(-25%);
 	transition: transform 0.1s ease;
+}
 
-	// Add a white rectangle to the left of each
-	//  tab to show during the hover animation
-	&::before {
-		content: '';
-		display: block;
-		position: absolute;
-		width: 5%; // 50%
-		height: 100%;
-		top: 0;
-		z-index: -1;
-		// Overlap the tab slightly to cover tiny
-		// gaps during animation
-		right: calc(100% - 1px);
-		background: var(--background-light-1);
-	}
+/* Add a white rectangle to the left of each tab to show during the hover animation */
+li::before {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 5%;
+	height: 100%;
+	top: 0;
+	z-index: -1;
+	/* // Overlap the tab slightly to cover tiny gaps during animation */
+	right: calc(100% - 1px);
+	background: var(--background-light-1);
+}
 
-	button {
-		width: var(--navbar-outer-height);
-		height: var(--navbar-outer-height);
-		background-color: transparent;
-		border-radius: 0;
-		border: none;
-		color: black;
+li button {
+	width: var(--navbar-outer-height);
+	height: var(--navbar-outer-height);
+	background-color: transparent;
+	border-radius: 0;
+	border: none;
+	color: black;
+}
 
-		&.is-greyscale {
-			img,
-			i {
-				filter: grayscale(100%);
-			}
-		}
+li button .counter-badge {
+	display: inline-block;
+	padding: 3px 7px;
+	font-size: var(--font-size-small);
+	font-weight: bold;
+	color: white;
+	line-height: 1;
+	vertical-align: middle;
+	background-color: #545353;
+	border-radius: 10px;
+	position: absolute;
+	left: calc(var(--navbar-outer-height) / 2);
+	bottom: calc(var(--navbar-outer-height) / 2);
+	top: auto;
+}
 
-		.counter-badge {
-			display: inline-block;
-			padding: 3px 7px;
-			font-size: var(--font-size-small);
-			font-weight: bold;
-			color: white;
-			line-height: 1;
-			vertical-align: middle;
-			background-color: #545353;
-			border-radius: 10px;
-			position: absolute;
-			left: calc(var(--navbar-outer-height) / 2);
-			bottom: calc(var(--navbar-outer-height) / 2);
-			top: auto;
-		}
-	}
+li img {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 40%;
+	height: 40%;
+}
 
-	img {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 40%;
-		height: 40%;
-	}
+li:not(.active):hover {
+	background-color: var(--background-light-1);
+	color: #000;
+}
 
-	&:not(.active):hover {
-		background-color: var(--background-light-1);
-		color: #000;
-	}
+li.active {
+	transform: translateX(0);
+	background-color: var(--background-light-1);
+	color: var(--selected-dark);
+}
 
-	&.active {
-		transform: translateX(0);
-		background-color: var(--background-light-1);
-		color: var(--selected-dark);
-	}
-
-	&:hover {
-		transform: translateX(5px);
-	}
+li:hover {
+	transform: translateX(5px);
 }
 </style>

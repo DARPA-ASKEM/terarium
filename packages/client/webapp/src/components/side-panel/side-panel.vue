@@ -80,7 +80,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @import '@/styles/variables';
 
 .side-panel-container {
@@ -92,14 +92,15 @@ export default defineComponent({
 	filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.12));
 }
 
-/* .side-panel-body.slide-fade-enter-from,
-.side-panel-body.slide-fade-leave-to {
-	width: 0;
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+	opacity: 0;
+}
 
-	.side-panel-content .side-panel-header {
-		opacity: 0;
-	}
-} */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+	transition: opacity 0.1s ease;
+}
 
 .side-panel-container.large .side-panel-header,
 .side-panel-container.large .side-panel-body,
@@ -152,16 +153,6 @@ export default defineComponent({
 	flex-direction: column;
 	height: 100%;
 }
-
-/* .slide-fade-enter-active,
-.slide-fade-leave-active {
-	transition: all var(--layout-transition);
-
-	.side-panel-content,
-	.side-panel-header {
-		transition: opacity 0.1s ease;
-	}
-} */
 
 .side-panel-content {
 	position: relative;
