@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { Renderer } from '../core';
 import { INode } from '../types';
 import { flattenGraph } from '../core/traverse';

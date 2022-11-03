@@ -9405,15 +9405,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shared@workspace:packages/client/shared":
-  version: 0.0.0-use.local
-  resolution: "shared@workspace:packages/client/shared"
-  dependencies:
-    "@vitest/coverage-c8": 0.24.4
-    vitest: 0.24.4
-  languageName: unknown
-  linkType: soft
-
 "shebang-command@npm:^1.2.0":
   version: 1.2.0
   resolution: "shebang-command@npm:1.2.0"
