@@ -153,160 +153,137 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 @import '@/styles/variables';
 
 .search-listview-container {
 	background: var(--background-light-2);
 	color: black;
 	width: 100%;
+}
 
-	table {
-		border-collapse: collapse;
-		width: 100%;
-		vertical-align: top;
-	}
+table {
+	border-collapse: collapse;
+	width: 100%;
+	vertical-align: top;
+}
 
-	th,
-	td {
-		padding: 8px 16px;
-	}
+th {
+	padding: 8px 16px;
+}
 
-	tr {
-		border: 2px solid var(--separator);
-		cursor: pointer;
-	}
+tr {
+	border: 2px solid var(--separator);
+	cursor: pointer;
+}
 
-	thead {
-		tr {
-			border: none;
-		}
+thead tr,
+thead th {
+	border: none;
+}
 
-		th {
-			border: none;
-		}
-	}
+td {
+	background: var(--background-light-1);
+	vertical-align: top;
+	padding: 8px 16px;
+}
 
-	td {
-		background: var(--background-light-1);
-		vertical-align: top;
-	}
+tr th {
+	font-size: var(--font-size-small);
+	font-weight: normal;
+}
 
-	tr th {
-		font-size: var(--font-size-small);
-		font-weight: normal;
-	}
+.table-fixed-head {
+	overflow-y: auto;
+	overflow-x: hidden;
+	height: 100%;
+	width: 100%;
+}
 
-	.table-fixed-head {
-		overflow-y: auto;
-		overflow-x: hidden;
-		height: 100%;
-		width: 100%;
-	}
+.table-fixed-head thead th {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	background-color: aliceblue;
+}
 
-	.table-fixed-head thead th {
-		position: sticky;
-		top: -1px;
-		z-index: 1;
-		background-color: aliceblue;
-	}
+.left-cover,
+.right-cover {
+	/* Cover left and right gap in the fixed table header */
+	position: absolute;
+	height: 100%;
+	width: 2px;
+	left: -2px;
+	background: var(--background-light-2);
+	top: 0;
+}
 
-	.left-cover,
-	.right-cover {
-		// Cover left and right gap in the fixed table header
-		position: absolute;
-		height: 100%;
-		width: 2px;
-		left: -2px;
-		background: var(--background-light-2);
-		top: 0;
-	}
+.right-cover {
+	left: unset;
+	right: -2px;
+}
 
-	.right-cover {
-		left: unset;
-		right: -2px;
-	}
+.tr-item {
+	height: 50px;
+}
 
-	.tr-item {
-		height: 50px;
-	}
+.tr-item.selected {
+	border: 2px double var(--selected);
+}
 
-	.tr-item.selected {
-		border: 2px double var(--selected);
+.tr-item.selected .name-col {
+	border-left: 4px solid var(--selected);
+}
 
-		.name-col {
-			border-left: 4px solid var(--selected);
-		}
+.tr-item.selected td {
+	background-color: var(--tinted-background);
+}
 
-		td {
-			background-color: var(--tinted-background);
-		}
-	}
+.text-bold {
+	font-weight: 500;
+	margin-bottom: 5px;
+}
 
-	.text-bold {
-		font-weight: 500;
-		margin-bottom: 5px;
-	}
+.name-col {
+	width: 20%;
+}
 
-	.name-col {
-		width: 20%;
+.name-layout {
+	display: flex;
+	align-content: stretch;
+	align-items: stretch;
+}
 
-		.name-layout {
-			display: flex;
-			align-content: stretch;
-			align-items: stretch;
+.name-layout .radio {
+	flex: 0 0 auto;
+	align-self: flex-start;
+	margin: 3px 5px 0 0;
+}
 
-			.radio {
-				flex: 0 0 auto;
-				align-self: flex-start;
-				margin: 3px 5px 0 0;
+.name-layout .content {
+	flex: 1 1 auto;
+	overflow-wrap: anywhere;
+}
 
-				.disabled {
-					color: var(--background-light-3);
-				}
-			}
+.desc-col {
+	width: 33%;
+	overflow-wrap: anywhere;
+}
 
-			.content {
-				flex: 1 1 auto;
-				overflow-wrap: anywhere;
+.source-col {
+	width: 20%;
+}
 
-				.not-ready-label {
-					font-weight: 600;
-					border: none;
-					border-radius: 5px;
-					background-color: var(--background-light-3);
-					color: darkgray;
-					padding: 6px;
-					float: right;
-				}
+/* time series hidden until actually put into use */
+.preview-col {
+	padding-left: 5px;
+	padding-right: 10px;
+	width: 20%;
+}
 
-				.knobs {
-					margin-top: 10px;
-				}
-			}
-		}
-	}
-
-	.desc-col {
-		width: 33%;
-		overflow-wrap: anywhere;
-	}
-
-	.source-col {
-		width: 20%;
-	}
-
-	// time series hidden until actually put into use
-	.preview-col {
-		padding-left: 5px;
-		padding-right: 10px;
-		width: 20%;
-	}
-
-	.preview-container {
-		background-color: #f1f1f1;
-		width: 100%;
-		height: 50px;
-	}
+.preview-container {
+	background-color: #f1f1f1;
+	width: 100%;
+	height: 50px;
 }
 </style>
