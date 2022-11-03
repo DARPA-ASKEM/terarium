@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
 import { defineComponent } from 'vue';
+import { fetchStratificationResult } from '@/services/models/stratification-service';
 
 const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	const g = new dagre.graphlib.Graph({ compound: true });
@@ -451,6 +452,114 @@ export default defineComponent({
 			});
 			this.jsonOutput();
 		},
+		// provide node details and a flag
+		// createFlag: True = create new + draw, False = just draw
+		async addNode(
+			id: string,
+			label: string,
+			x: number,
+			y: number,
+			height: number,
+			width: number,
+			type: string,
+			createFlag: boolean
+		) {
+			let nodeType = 'D'; // Default
+			if (type === 'transition') {
+				nodeType = 'T';
+			} else if (type === 'species') {
+				nodeType = 'S';
+			}
+			g.nodes.push({
+				id,
+				label,
+				x,
+				y,
+				height,
+				width,
+				data: { type },
+				nodes: []
+			});
+
+			if (createFlag === true) {
+				await fetch(`http://localhost:8888/api/models/${modelId}`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						nodes: [
+							{
+								name: label,
+								type: nodeType
+							}
+						]
+					})
+				});
+			}
+			this.jsonOutput();
+		}, // end addNode
+		// Not sure how to overload functions so here we are
+		// createFlag: True - Create and draw, false - just draw
+		async addEdgeID(sourceID: string, targetID: string, createFlag: boolean) {
+			let sourceX;
+			let sourceY;
+			let targetX;
+			let targetY;
+			let sourceLabel;
+			let targetLabel;
+			// Find source and target's locations
+			// there has to be a better way to get the source and target locations
+			for (let i = 0; i < g.nodes.length; i++) {
+				if (sourceLabel && targetLabel) {
+					break;
+				}
+				if (g.nodes[i].id === sourceID) {
+					sourceLabel = g.nodes[i].label;
+					sourceX = g.nodes[i].x + g.nodes[i].width * 0.5;
+					sourceY = g.nodes[i].y + g.nodes[i].height * 0.5;
+				}
+				if (g.nodes[i].id === targetID) {
+					targetLabel = g.nodes[i].label;
+					targetX = g.nodes[i].x + g.nodes[i].width * 0.5;
+					targetY = g.nodes[i].y + g.nodes[i].height * 0.5;
+				}
+			}
+			g.edges.push({
+				source: sourceLabel,
+				target: targetLabel,
+				points: [
+					{
+						x: sourceX, // + source.datum().width * 0.5,
+						y: sourceY // + source.datum().height * 0.5
+					},
+					{
+						x: targetX, // + target.datum().width * 0.5,
+						y: targetY // + target.datum().height * 0.5
+					}
+				]
+			});
+
+			if (createFlag === true) {
+				await fetch(`http://localhost:8888/api/models/${modelId}`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						edges: [
+							{
+								source: sourceLabel,
+								target: targetLabel
+							}
+						]
+					})
+				});
+			}
+		}, // end addEdge
+
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
 			numRabbits = +(Math.random() * 100).toFixed();
@@ -519,6 +628,155 @@ export default defineComponent({
 					.style('stroke', null)
 					.style('fill', 'blue');
 			}
+		},
+		// Pulls model ID from form and sends model to createModel function for the actual work
+		async drawModel() {
+			const providedModel = (document.getElementById('loadModelID') as HTMLInputElement).value;
+			modelId = providedModel;
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
+				method: 'GET'
+			});
+			const model = await resp.json();
+			this.createModel(model, false);
+		},
+		// Expects a JSON of a model with labels T, S, I, O.
+		// populates g + depending on provided flag POST changes to model ID
+		// This is mostly done for stratification testing. Will require a deeper look in future
+		async createModel(model, createFlag = false) {
+			// Flag is true so we need to call API PUT new model ID
+			if (createFlag === true) {
+				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
+				const modelData = await newModel.json();
+				modelId = modelData.id;
+				console.log(`Model ID: ${modelId}`); // currently required for testing
+			}
+
+			// Reset current nodes and edges
+			g.nodes = [];
+			g.edges = [];
+
+			const nodeHeight = 20;
+			const nodeWidth = 20;
+			let nodeX = 0;
+			let nodeY = 0;
+			// Nodes
+			for (let i = 0; i < model.S.length; i++) {
+				const aNode = model.S[i];
+				nodeX += 30;
+				nodeY += 30;
+				this.addNode(
+					`s-${i + 1}`,
+					aNode.sname,
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					'species',
+					createFlag
+				);
+			}
+			// Move Transitions 100 to the right of S
+			nodeX = 100;
+			nodeY = 0;
+			for (let i = 0; i < model.T.length; i++) {
+				const aTransition = model.T[i];
+				nodeX += 30;
+				nodeY += 30;
+				this.addNode(
+					`t-${i + 1}`,
+					aTransition.tname,
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					'transition',
+					createFlag
+				);
+			} // end T
+
+			// Edges
+			for (let i = 0; i < model.I.length; i++) {
+				const iEdges = model.I[i];
+				const sourceID = `s-${iEdges.is}`;
+				const transitionID = `t-${iEdges.it}`;
+				this.addEdgeID(sourceID, transitionID, createFlag);
+			}
+			for (let i = 0; i < model.O.length; i++) {
+				const iEdges = model.O[i];
+				const sourceID = `s-${iEdges.os}`;
+				const transitionID = `t-${iEdges.ot}`;
+				this.addEdgeID(transitionID, sourceID, createFlag);
+			}
+
+			// g = runLayout(_.cloneDeep(g));
+			this.refresh();
+			this.jsonOutput();
+		}, // end createModel
+		async stratify() {
+			const modelA = (document.getElementById('stratifyModelA') as HTMLInputElement).value;
+			const modelB = (document.getElementById('stratifyModelB') as HTMLInputElement).value;
+			const typeModel = (document.getElementById('stratifyTypeModel') as HTMLInputElement).value;
+			try {
+				const outputModel = await fetchStratificationResult(modelA, modelB, typeModel);
+				this.createModel(outputModel, true);
+			} catch (e: any) {
+				if (e instanceof Error) {
+					console.log(e.message);
+				}
+			}
+		},
+		// Used to create sample models for stratifying tests
+		// Will not be requried in the long run as we will be moving to storing these in DB
+		async createSampleModels() {
+			const SIRDModel: JSON = <JSON>(<unknown>{
+				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 2 },
+					{ it: 2, is: 2 },
+					{ it: 3, is: 2 }
+				],
+				O: [
+					{ ot: 1, os: 2 },
+					{ ot: 1, os: 2 },
+					{ ot: 2, os: 3 },
+					{ ot: 3, os: 4 }
+				]
+			});
+			this.createModel(SIRDModel, true);
+
+			const QNotQModel: JSON = <JSON>(<unknown>{
+				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
+				S: [{ sname: 'Q' }, { sname: 'NQ' }],
+				I: [
+					{ it: 1, is: 2 },
+					{ it: 2, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 2 }
+				]
+			});
+			this.createModel(QNotQModel, true);
+
+			const typeModel: JSON = <JSON>(<unknown>{
+				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
+				S: [{ sname: 'Pop' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 1 },
+					{ it: 2, is: 1 },
+					{ it: 3, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 1 },
+					{ ot: 3, os: 1 }
+				]
+			});
+			this.createModel(typeModel, true);
 		}
 	}
 });
@@ -529,10 +787,24 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
+		<button type="button" @click="createSampleModels">Create Models</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
-
+		<form>
+			<label for="loadModel">
+				<input type="text" id="loadModelID" placeholder="Model ID" />
+			</label>
+			<button type="button" @click="drawModel">Load Model</button>
+		</form>
+		<form>
+			<label for="stratify">
+				<input type="text" id="stratifyModelA" placeholder="Model A ID" />
+				<input type="text" id="stratifyModelB" placeholder="Model B" />
+				<input type="text" id="stratifyTypeModel" placeholder="Type Model" />
+			</label>
+			<button type="button" @click="stratify">Stratify</button>
+		</form>
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
