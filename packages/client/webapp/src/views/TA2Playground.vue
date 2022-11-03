@@ -618,6 +618,11 @@ export default defineComponent({
 			const modelB = (document.getElementById('stratifyModelB') as HTMLInputElement).value;
 			const typeModel = (document.getElementById('stratifyTypeModel') as HTMLInputElement).value;
 
+			if (!modelA || !modelB || !typeModel) {
+				console.log('An ID must be provided for each model');
+				return;
+			}
+			console.log(`Stratifying: ${modelA} ${modelB} ${typeModel}`);
 			const resp = await fetch(
 				`http://localhost:8888/api/models/stratify/${modelA}/${modelB}/${typeModel}`,
 				{
@@ -630,7 +635,6 @@ export default defineComponent({
 		}, // end stratify
 		// Expects a JSON of a model with labels T, S, I, O.
 		// This is mostly done for stratification testing. Will require a deeper look in future
-		// I dont expect this to stick around. It has a lot of reused code from drawModel.
 		async createModel(model, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
@@ -717,7 +721,7 @@ export default defineComponent({
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async createSampleModels() {
 			const SIRDModel: JSON = <JSON>(<unknown>{
-				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }], // [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
 				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
 				I: [
 					{ it: 1, is: 1 },
