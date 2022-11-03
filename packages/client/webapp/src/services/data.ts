@@ -9,8 +9,6 @@ import {
 import { Model, ModelFilterAttributes } from '../types/Model';
 import { XDDArticle, XDDDictionary, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const XDD_API_KEY = '';
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
 const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
 const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
@@ -43,7 +41,7 @@ const getXDDDictionaries = async () => {
 };
 
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => {
+const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) => {
 	const finalModels: Model[] = [];
 
 	//
@@ -241,16 +239,16 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 		try {
 			resolve(searchXDDArticles(term, searchParam?.xdd));
 		} catch (err: any) {
-			reject(new Error('Error fetching XDD results', err));
+			reject(new Error(`Error fetching XDD results: ${err}`));
 		}
 	});
 
 	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getModels(term, searchParam?.models));
+			resolve(getModels(term, searchParam?.model));
 		} catch (err: any) {
-			reject(new Error('Error fetching models results', err));
+			reject(new Error(`Error fetching models results: ${err}`));
 		}
 	});
 

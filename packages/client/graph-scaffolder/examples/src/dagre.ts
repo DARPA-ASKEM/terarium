@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import dagre from 'dagre';
 import { IGraph } from '../../src/types';
 import { traverseGraph } from '../../src/core/traverse';

@@ -2645,6 +2645,16 @@ data:
               "name" : "admin"
             } ],
             "icon_uri" : ""
+          }, {
+            "name" : "projects",
+            "ownerManagedAccess" : false,
+            "attributes" : { },
+            "_id" : "0da0f481-bb42-4d2b-9387-0411b7da8239",
+            "uris" : [ "/api/projects", "/api/projects/*" ],
+            "scopes" : [ {
+              "name" : "user"
+            } ],
+            "icon_uri" : ""
           } ],
           "policies" : [ {
             "id" : "7ac0c879-d676-457c-86e3-1d0e952f548d",
@@ -2674,7 +2684,7 @@ data:
             "logic" : "POSITIVE",
             "decisionStrategy" : "UNANIMOUS",
             "config" : {
-              "resources" : "[\"api\"]",
+              "resources" : "[\"api\", \"projects\"]",
               "applyPolicies" : "[\"user-role-policy\"]"
             }
           }, {

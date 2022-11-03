@@ -1,5 +1,5 @@
 <script lang="ts">
-import { BasicRenderer, IGraph, INode, IEdge, traverseGraph } from 'graph-scaffolder';
+import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
@@ -11,7 +11,7 @@ const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
 
-	traverseGraph(graphData, (node: INode<V>) => {
+	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
 		if (node.width && node.height) {
 			g.setNode(node.id, {
 				label: node.id,
@@ -43,7 +43,7 @@ const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 		node.y -= node.height * 0.5;
 	});
 
-	traverseGraph(graphData, (node) => {
+	graphScaffolder.traverseGraph(graphData, (node) => {
 		const n = g.node(node.id);
 		node.width = n.width;
 		node.height = n.height;
@@ -90,7 +90,8 @@ export const pathFn = d3
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
-class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
+
+class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 
@@ -171,14 +172,14 @@ export default defineComponent({
 	async mounted() {
 		console.log('TA2 Playground initialized');
 
-		const playground = document.getElementById('playground');
+		const playground = document.getElementById('playground') as HTMLDivElement;
 		renderer = new SampleRenderer({
-			el: playground,
+			el: playground ?? undefined,
 			useAStarRouting: true,
 			runLayout
 		});
 
-		renderer.on('node-click', (evtName, evt, d) => {
+		renderer.on('node-click', (_evtName, evt, d) => {
 			if (evt.shiftKey) {
 				if (source) {
 					target = d;
@@ -280,12 +281,30 @@ export default defineComponent({
 				data: { type: 'transition' }
 			});
 
-			g.edges.push({ source: 'wolves', target: 'death', points: [] });
-			g.edges.push({ source: 'predation', target: 'wolves', points: [] });
-			g.edges.push({ source: 'wolves', target: 'predation', points: [] });
-			g.edges.push({ source: 'rabbits', target: 'predation', points: [] });
-			g.edges.push({ source: 'rabbits', target: 'birth', points: [] });
-			g.edges.push({ source: 'birth', target: 'rabbits', points: [] });
+			g.edges.push({ id: '1', source: 'wolves', target: 'death', points: [], data: { val: 1 } });
+			g.edges.push({
+				id: '2',
+				source: 'predation',
+				target: 'wolves',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({
+				id: '3',
+				source: 'wolves',
+				target: 'predation',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({
+				id: '4',
+				source: 'rabbits',
+				target: 'predation',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
+			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
 
 			g = runLayout(_.cloneDeep(g));
 
@@ -329,6 +348,7 @@ export default defineComponent({
 		// eslint-disable-next-line
 		async addEdge(source: any, target: any) {
 			g.edges.push({
+				id: `${source.datum().id}_${target.datum().id}`,
 				source: source.datum().id,
 				target: target.datum().id,
 				points: [
@@ -340,7 +360,8 @@ export default defineComponent({
 						x: target.datum().x + target.datum().width * 0.5,
 						y: target.datum().y + target.datum().height * 0.5
 					}
-				]
+				],
+				data: { val: 1 }
 			});
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
