@@ -470,7 +470,7 @@ export default defineComponent({
 					body: JSON.stringify({
 						nodes: [
 							{
-								name: id,
+								name: label,
 								type: nodeType
 							}
 						]
@@ -530,8 +530,8 @@ export default defineComponent({
 					body: JSON.stringify({
 						edges: [
 							{
-								source: sourceID,
-								target: targetID
+								source: sourceLabel,
+								target: targetLabel
 							}
 						]
 					})
