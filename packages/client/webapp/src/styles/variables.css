@@ -79,7 +79,4 @@
 
     /* Transitions */
     --layout-transition: .3s ease;
-
-    --toggle-on: #4e4e54;
-    --toggle-size: 40px;
 }

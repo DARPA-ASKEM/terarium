@@ -51,11 +51,6 @@ export default defineComponent({
 <style scoped>
 @import '@/styles/variables';
 
-:root {
-	--toggle-on: #4e4e54;
-	--toggle-size: 40px;
-}
-
 .switcher {
 	display: flex;
 	align-items: center;
@@ -86,6 +81,7 @@ input {
 }
 
 input + span {
+	--toggle-size: 40px;
 	content: '';
 	position: relative;
 	display: inline-block;
@@ -109,6 +105,7 @@ input + span small {
 }
 
 input:checked + span {
+	--toggle-on: #4e4e54;
 	background: var(--toggle-on);
 	border-color: var(--toggle-on);
 }
