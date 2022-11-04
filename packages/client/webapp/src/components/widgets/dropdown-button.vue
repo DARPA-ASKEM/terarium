@@ -182,16 +182,16 @@ export default defineComponent({
 	top: 90%; // Overlap the button slightly
 	max-height: 400px;
 	overflow-y: auto;
+}
 
-	&.left-aligned {
-		left: 0;
-		right: auto;
-	}
+.dropdown-control.left-aligned {
+	left: 0;
+	right: auto;
+}
 
-	&.above {
-		bottom: 90%;
-		top: auto;
-	}
+.dropdown-control.above {
+	bottom: 90%;
+	top: auto;
 }
 
 .dropdown-option {
