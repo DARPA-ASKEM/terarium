@@ -60,14 +60,6 @@
     --font-size-large: 1.6rem;
     --font-size-extra-large: 1.8rem;
 
-    /* @mixin header-secondary() {
-        font-size: $font-size-medium;
-        text-transform: uppercase;
-        letter-spacing: .066rem;
-        color: $label-color;
-        font-weight: 600;
-    } */
-
     /* Color used for borders and separators */
     --separator: #e5e5e5;
 
@@ -88,4 +80,6 @@
     /* Transitions */
     --layout-transition: .3s ease;
 
+    --toggle-on: #4e4e54;
+    --toggle-size: 40px;
 }

@@ -21,7 +21,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style>
 @import '@/styles/variables';
 
 .dropdown-container {
@@ -40,12 +40,12 @@ export default defineComponent({
 .dropdown-option {
 	cursor: pointer;
 	padding: 8px 12px;
-	// Stop button text from being selected when menu is opened
+	/* Stop button text from being selected when menu is opened */
 	user-select: none;
+}
 
-	&:hover {
-		background: #eaebec;
-	}
+.dropdown-option:hover {
+	background: #eaebec;
 }
 
 .dropdown-title {

@@ -48,42 +48,32 @@ export default defineComponent({
 	align-items: center;
 	min-height: 48px;
 	position: relative;
+}
 
-	& > * {
-		margin: 0 15px;
+.centered-slot {
+	flex-grow: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: #ffffff;
+	margin: 0 15px;
+}
 
-		&:first-child {
-			margin-left: 10;
-		}
+.navBack {
+	font-weight: 600;
+	font-size: var(--font-size-large);
+	display: inline-flex;
+	align-items: center;
+	color: #ffffff;
+	cursor: pointer;
+	margin: 0 15px;
+}
 
-		&:last-child {
-			margin-right: 0;
-		}
-	}
+.navBack span {
+	box-sizing: border-box;
+}
 
-	.centered-slot {
-		flex-grow: 1;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		color: #ffffff;
-	}
-
-	.navBack {
-		font-weight: 600;
-		font-size: var(--font-size-large);
-		display: inline-flex;
-		align-items: center;
-		color: #ffffff;
-		cursor: pointer;
-
-		span {
-			box-sizing: border-box;
-		}
-	}
-
-	.navBack:hover {
-		text-decoration: underline;
-	}
+.navBack:hover {
+	text-decoration: underline;
 }
 </style>
