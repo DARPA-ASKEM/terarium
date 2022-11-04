@@ -72,6 +72,10 @@ interface NodeData {
 interface EdgeData {
 	val: number;
 }
+enum NodeType {
+	species = 'S',
+	transition = 'T'
+}
 
 type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
@@ -119,8 +123,10 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === 'species');
-		const transitions = selection.filter((d) => d.data.type === 'transition');
+		const species = selection.filter((d) => d.data.type === 'species' || d.data.type === 'S');
+		const transitions = selection.filter(
+			(d) => d.data.type === 'transition' || d.data.type === 'T'
+		);
 
 		transitions
 			.append('rect')
@@ -461,15 +467,9 @@ export default defineComponent({
 			y: number,
 			height: number,
 			width: number,
-			type: string,
+			type: NodeType,
 			createFlag: boolean
 		) {
-			let nodeType = 'D'; // Default
-			if (type === 'transition') {
-				nodeType = 'T';
-			} else if (type === 'species') {
-				nodeType = 'S';
-			}
 			g.nodes.push({
 				id,
 				label,
@@ -492,7 +492,7 @@ export default defineComponent({
 						nodes: [
 							{
 								name: label,
-								type: nodeType
+								type
 							}
 						]
 					})
@@ -671,7 +671,7 @@ export default defineComponent({
 					nodeY,
 					nodeHeight,
 					nodeWidth,
-					'species',
+					NodeType.species,
 					createFlag
 				);
 			}
@@ -689,7 +689,7 @@ export default defineComponent({
 					nodeY,
 					nodeHeight,
 					nodeWidth,
-					'transition',
+					NodeType.transition,
 					createFlag
 				);
 			} // end T
@@ -720,9 +720,7 @@ export default defineComponent({
 				const outputModel = await fetchStratificationResult(modelA, modelB, typeModel);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
-				if (e instanceof Error) {
-					console.log(e.message);
-				}
+				console.error(e.message);
 			}
 		},
 		// Used to create sample models for stratifying tests
