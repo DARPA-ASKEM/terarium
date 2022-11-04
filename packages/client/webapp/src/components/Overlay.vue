@@ -5,7 +5,7 @@
 			{{ messageSecondary }}
 		</div>
 		<div v-if="cancelFn" style="font-size: 2rem">
-			<button type="button" class="btn" @click="cancelFn">Cancel</button>
+			<button type="button" class="btn" @click="cancel">Cancel</button>
 		</div>
 	</div>
 </template>
@@ -29,6 +29,11 @@ export default defineComponent({
 		cancelFn: {
 			type: Function as PropType<Function | null>,
 			default: null
+		}
+	},
+	methods: {
+		cancel() {
+			if (this.cancelFn) this.cancelFn();
 		}
 	}
 });

@@ -28,12 +28,12 @@ export interface INode<T> {
 }
 
 export interface IEdge<T> {
-	id: string;
+	id?: string;
 	source: string;
 	target: string;
 	points: IPoint[];
 	state?: string;
-	data: T;
+	data?: T;
 }
 
 export interface IGraph<V, E> {
