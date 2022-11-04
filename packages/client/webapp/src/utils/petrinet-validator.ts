@@ -30,11 +30,7 @@ export const petrinetValidator = (
 	isBoundedPetrinet: boolean = true
 ): boolean => {
 	const { S, T, I, O } = petrinet;
-
-	console.log(petrinet);
-	// console.log(graph);
-	// console.table(nodes);
-	// console.table(edges);
+	// console.log(petrinet);
 
 	/* ----- 1. Requires at least one edge ----- */
 	if (I.length < 1 && O.length < 1) {
@@ -62,7 +58,7 @@ export const petrinetValidator = (
 		)
 			return false;
 	} else {
-	/* ----- 2b. If petrinet is unbounded check that every transition node is at least either a source OR a target ----- */
+		/* ----- 2b. If petrinet is unbounded check that every transition node is at least either a source OR a target ----- */
 		const linkedTransitionIDs: number[] = [
 			...new Set([...I.map((input) => input.it), ...O.map((output) => output.ot)])
 		];
