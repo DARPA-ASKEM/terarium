@@ -48,7 +48,7 @@ const falsePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// More than one petrinet - caught by check #5
+	// More than one petrinet - caught by check #4
 	{
 		T: [
 			{
@@ -188,7 +188,7 @@ const truePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// More complex petrinet - Must not be stopped by check #5
+	// More complex petrinet - Must not be stopped by check #4
 	{
 		T: [
 			{
@@ -281,7 +281,7 @@ const truePetrinets: Petrinet[] = [
 	}
 ];
 
-// Caught by check #4 (or not if unbounded graphs are set to be accepted)
+// Caught by check #2 (or not if unbounded graphs are set to be accepted)
 const unboundedPetrinet: Petrinet = {
 	T: [
 		{
