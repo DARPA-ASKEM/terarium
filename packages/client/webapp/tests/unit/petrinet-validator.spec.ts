@@ -320,12 +320,8 @@ describe('test the petrinet validator with a variety of graphs', () => {
 		expect(petrinetValidator(falsePetrinets[1])).eq(false);
 	});
 
-	it('should be invalid as this doesnt follow the bipartite pattern', () => {
-		expect(petrinetValidator(falsePetrinets[2])).eq(false);
-	});
-
 	it('should be invalid as this has more than one petrinet body', () => {
-		expect(petrinetValidator(falsePetrinets[3])).eq(false);
+		expect(petrinetValidator(falsePetrinets[2])).eq(false);
 	});
 
 	// Returns true
