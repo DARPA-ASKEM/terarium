@@ -37,7 +37,7 @@ export const flattenGraph = <V, E>(
 /**
  * AStar path find
  */
-interface IGrid {
+export interface IGrid {
 	w: number;
 	h: number;
 }
@@ -81,7 +81,7 @@ export const getAStarPath = (
 		return [start, goal];
 	}
 
-	const cameFrom = [];
+	const cameFrom: number[] = [];
 	const gScore: { [key: string]: number } = {};
 	const fScore: { [key: string]: number } = {};
 	const heap = new BinaryHeap<number>(9999, (e) => fScore[e]);

@@ -7,11 +7,12 @@ import { translate } from '../utils/svg-util';
 import { INode, IEdge, IGraph, IRect, IPoint, D3Selection, D3SelectionINode } from '../types';
 
 type AsyncFunction<A, O> = (args: A) => Promise<O>;
-type LayoutFuncion<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
+type AsyncLayoutFunction<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
+type LayoutFunction<V, E> = (args: IGraph<V, E>) => IGraph<V, E>;
 
 interface Options {
-	el?: HTMLDivElement;
-	runLayout: LayoutFuncion<any, any>;
+	el?: HTMLDivElement | null;
+	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
 
 	useZoom?: boolean;
 	useStableLayout?: boolean;
@@ -142,7 +143,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			};
 
 			const saveEdgeMap = (d: IEdge<E>) => {
-				this.oldEdgeMap.set(d.id, {
+				this.oldEdgeMap.set(d.id ?? '', {
 					points: d.points
 				});
 			};

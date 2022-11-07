@@ -1,4 +1,5 @@
 **/.eslintrc.cjs
+**/build
 **/dist
 **/assets
 **/node_modules
