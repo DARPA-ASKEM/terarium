@@ -11,10 +11,15 @@ install and link dependencies are [yarn](https://yarnpkg.com/getting-started) an
 To develop and test the core application:
 
 1. Stand up the TERArium services by running the `deploy-terarium.sh up` script from within the
-	 [Orchestration](https://github.com/DARPA-ASKEM/orchestration) repository
-2. Stop the `hmi-server` and `webapp` pods
+   [Orchestration](https://github.com/DARPA-ASKEM/orchestration) repository
+2. Stop the `hmi-server` and `webapp` pods by running the following commands from the orchestration
+   repo's `kubernetes/local` directory.
+
+- `kubectl scale --replicas=0 -f hmi-server-deployment.yaml`
+- `kubectl scale --replicas=0 -f webapp-deployment.yaml`
+
 3. Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
-4. Start the front end by doing `yarn install` followed by `yarn workspaces webapp dev`
+4. Start the front end by doing `yarn install` followed by `yarn && yarn dev`
 5. Navigate your browser to `localhost:8078`
 
 ## Container Registry Setup
@@ -26,33 +31,33 @@ access to the repository you will have access to the registry after login ing.
 ### Login To Registry
 
 1. Create a new personal access token (classic) with the appropriate scopes for the tasks you want to accomplish. If
-	 your organization requires SSO, you must enable SSO for your new token.
+   your organization requires SSO, you must enable SSO for your new token.
 
-	 > Note: By default, when you select the write:packages scope for your personal access token (classic) in the user
-	 interface, the repo scope will also be selected. The repo scope offers unnecessary and broad access. As a workaround,
-	 you can select just the write:packages scope for your personal access token (classic) in the user interface with this
-	 url: https://github.com/settings/tokens/new?scopes=write:packages.
+   > Note: By default, when you select the write:packages scope for your personal access token (classic) in the user
+   interface, the repo scope will also be selected. The repo scope offers unnecessary and broad access. As a workaround,
+   you can select just the write:packages scope for your personal access token (classic) in the user interface with this
+   url: https://github.com/settings/tokens/new?scopes=write:packages.
 
-	- Select the read:packages scope to download container images and read their metadata.
-	- Select the write:packages scope to download and upload container images and read and write their metadata.
-	- Select the delete:packages scope to delete container images.
+- Select the read:packages scope to download container images and read their metadata.
+- Select the write:packages scope to download and upload container images and read and write their metadata.
+- Select the delete:packages scope to delete container images.
 
-	 For more information,
-	 see [Creating a personal access token for the command line](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)
-	 .
+For more information,
+see [Creating a personal access token for the command line](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)
+.
 
 2. Save your personal access token (classic). We recommend saving your token as an environment variable.
 
-	  	```sh
-	 	 $ export CR_PAT=YOUR_TOKEN
-	 	 ```
+```sh
+export CR_PAT=YOUR_TOKEN
+```
 
 3. Using the CLI for your container type, sign in to the Container registry service at ghcr.io.
 
-	  	```sh
-	 	 $ echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
-	 	 > Login Succeeded
-	 	 ```
+```sh
+echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+Login Succeeded
+```
 
 ### Kubernetes
 
@@ -115,7 +120,7 @@ To debug the front end you need:
 1. Add a `debugger` statement where you want to stop the code execution.
 
 2. Click the "Run and Debug" icon in the activity bar of the editor, which opens the [_Run and Debug
-	 view_](https://code.visualstudio.com/docs/editor/debugging#_run-and-debug-view).
+   view_](https://code.visualstudio.com/docs/editor/debugging#_run-and-debug-view).
 
 3. Click the "JavaScript Debug Termimal" button in the _Run and Debug view_, which opens a terminal in VS Code.
 
@@ -155,7 +160,7 @@ that has already navigated to the served main page. So, writing a test is as sim
 import {test, expect} from '@playwright/test';
 
 test('should work', async (page) => {
-	expect(await page.textContent('.foo')).toMatch('foo')
+  expect(await page.textContent('.foo')).toMatch('foo')
 })
 ```
 
@@ -176,9 +181,9 @@ are familiar with that this should be simple:
 import {assert, describe, expect, it} from 'vitest';
 
 describe('basic tests', () => {
-	it('should have the correct square root', () => {
-		assert.equal(Math.sqrt(4), 2);
-	});
+  it('should have the correct square root', () => {
+    assert.equal(Math.sqrt(4), 2);
+  });
 });
 ```
 
@@ -187,15 +192,15 @@ describe('basic tests', () => {
 - Checkout a branch from a base branch (`main`), and merge back against that branch.
 
 - If adding a new feature:
-	- Add accompanying test case.
-	- Provide a convincing reason to add this feature. Ideally, you should open a suggestion issue first, and have it
-		approved before working on it.
-	- Reference the feature ticket if applicable
+  - Add accompanying test case.
+  - Provide a convincing reason to add this feature. Ideally, you should open a suggestion issue first, and have it
+    approved before working on it.
+  - Reference the feature ticket if applicable
 
 - If fixing a bug:
-	- Reference the issue being resolved by adding (resolves #123)
-	- Provide a detailed description of the bug in the PR. Live demo preferred.
-	- Add appropriate test coverage if applicable.
+  - Reference the issue being resolved by adding (resolves #123)
+  - Provide a detailed description of the bug in the PR. Live demo preferred.
+  - Add appropriate test coverage if applicable.
 
 - It's OK to have multiple small commits as you work on the PR. GitHub will automatically squash them before merging.
 
@@ -204,12 +209,12 @@ describe('basic tests', () => {
 - Follow the PR template guide to submit your PR with the appropriate required information for review.
 
 - PR title must follow the [commit message convention](../Conventional%20Commits%20Cheat%20Sheet.pdf) so that changelogs
-	can be automatically generated. PR messages are automatically validated before being able to be merged by the use of
-	GitHub Workflows.
+  can be automatically generated. PR messages are automatically validated before being able to be merged by the use of
+  GitHub Workflows.
 
 - No need to worry about code style as long as you have installed the dev dependencies. Modified files are automatically
-	formatted with Prettier on commit (by invoking [Git Hooks](https://git-scm.com/docs/githooks)
-	via [Husky](https://typicode.github.io/husky/#/)).
+  formatted with Prettier on commit (by invoking [Git Hooks](https://git-scm.com/docs/githooks)
+  via [Husky](https://typicode.github.io/husky/#/)).
 
 ## Maintenance Guidelines
 
