@@ -49,7 +49,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .switcher {
 	display: flex;

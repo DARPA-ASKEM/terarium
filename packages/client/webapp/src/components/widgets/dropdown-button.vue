@@ -170,7 +170,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .dropdown-button-container {
 	position: relative;
@@ -203,7 +203,7 @@ export default defineComponent({
 }
 
 .dropdown-option-selected {
-	color: var(--selected-dark);
+	color: var(--un-color-accent-dark);
 }
 
 .dropdown-btn {

@@ -154,7 +154,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .search-listview-container {
 	background: var(--background-light-2);

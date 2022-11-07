@@ -137,7 +137,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .autocomplete-container {
 	position: relative;

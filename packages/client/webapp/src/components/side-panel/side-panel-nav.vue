@@ -63,7 +63,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .side-panel-nav-container {
 	margin: 0;
@@ -143,7 +143,7 @@ li:not(.active):hover {
 li.active {
 	transform: translateX(0);
 	background-color: var(--background-light-1);
-	color: var(--selected-dark);
+	color: var(--un-color-accent-dark);
 }
 
 li:hover {

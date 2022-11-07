@@ -326,9 +326,7 @@ watch(resultType, () => {
 	</div>
 </template>
 
-<style lang="css" scoped>
-@import '@/styles/util.css';
-
+<style scoped>
 .data-explorer-container {
 	position: absolute;
 	left: 0px;
@@ -378,5 +376,58 @@ watch(resultType, () => {
 	background-color: darkcyan;
 	padding-left: 8px;
 	padding-right: 8px;
+}
+
+.unstyled-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.unstyled-list li {
+	display: inline-block;
+}
+
+.disabled {
+	pointer-events: none;
+	color: #cccccc !important;
+}
+
+.hidden {
+	display: none;
+}
+
+.overflow-ellipsis {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* often used with flex-grow-1 to create height that fits remaining space */
+.h-0 {
+	height: 0;
+}
+
+.h-100 {
+	height: 100%;
+}
+
+.w-0 {
+	width: 0;
+}
+
+/* Flex box utility classes */
+.flex {
+	display: flex;
+	flex-direction: row;
+}
+
+.flex-col {
+	display: flex;
+	flex-direction: column;
+}
+
+.flex-grow-1 {
+	flex-grow: 1;
 }
 </style>

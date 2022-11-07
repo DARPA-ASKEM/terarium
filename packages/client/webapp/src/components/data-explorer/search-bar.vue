@@ -144,7 +144,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .search-bar-container {
 	display: flex;

@@ -22,7 +22,7 @@ export default defineComponent({
 </script>
 
 <style>
-@import '@/styles/variables';
+@import '@/assets/css/style';
 
 .dropdown-container {
 	position: relative;
