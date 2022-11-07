@@ -1450,10 +1450,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.187":
-  version: 4.14.187
-  resolution: "@types/lodash@npm:4.14.187"
-  checksum: 5f8a4fe6d8a6785b8ecbd9efdc8b7d3341b873f63c5390ad0f269a517508e92c1b1d7d43e97bdfb6bba5bba9a8501b30a54f791ef4c30b854382745c75c607d4
+"@types/lodash@npm:4.14.188":
+  version: 4.14.188
+  resolution: "@types/lodash@npm:4.14.188"
+  checksum: 89c32f0a18e0da6ae914b430e76b3d0451c4c85b9c838b440c0c9a8d4966c8e2a76dbb30964c7126402856b2997ec56a8c36d8d6461ec14387689ec37594f09f
   languageName: node
   linkType: hard
 
@@ -6024,7 +6024,7 @@ __metadata:
   dependencies:
     "@types/d3": 7.4.0
     "@types/jest": 29.2.2
-    "@types/lodash": 4.14.187
+    "@types/lodash": 4.14.188
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
     copy: 0.3.2
@@ -11115,7 +11115,7 @@ __metadata:
     "@playwright/test": 1.27.1
     "@rushstack/eslint-patch": 1.2.0
     "@types/d3": 7.4.0
-    "@types/lodash": 4.14.187
+    "@types/lodash": 4.14.188
     "@uncharted.software/design-tokens": 1.1.0
     "@uncharted.software/facets-core": 3.2.6
     "@uncharted.software/facets-plugins": 3.2.5
