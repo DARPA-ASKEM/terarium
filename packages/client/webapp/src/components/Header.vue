@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
-import IconLogin16 from '@carbon/icons-vue/es/login/16';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useRouter } from 'vue-router';
-import useAuthStore from '../stores/auth';
 
 const emit = defineEmits(['show-data-explorer']);
 
-const auth = useAuthStore();
 const router = useRouter();
-
-const login = () => window.location.assign('http://localhost:8078');
 
 const goToHomepage = () => router.push('/');
 const goToDataExplorer = () => emit('show-data-explorer');
@@ -22,13 +17,13 @@ const projectName = 'Name of the project that can be long for clarity and precis
 	<header>
 		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
 		<p>
-			<a @click="goToHomepage">Projects</a>
+			<a @onclick="goToHomepage">Projects</a>
 			<span>{{ projectName }}</span>
 		</p>
-
 		<aside>
-			<Button class="data-explorer" @click="goToDataExplorer"><IconSearchLocate16 /></Button>
-			<Button v-if="!auth.isAuthenticated" @click="login">Login <IconLogin16 /></Button>
+			<Button class="data-explorer" @click="goToDataExplorer">
+				<IconSearchLocate16 />
+			</Button>
 		</aside>
 	</header>
 </template>
@@ -65,7 +60,8 @@ p a:focus {
 
 aside {
 	display: flex;
-	margin-left: auto; /* Push it to the far side */
+	margin-left: auto;
+	/* Push it to the far side */
 	gap: 1rem;
 }
 
