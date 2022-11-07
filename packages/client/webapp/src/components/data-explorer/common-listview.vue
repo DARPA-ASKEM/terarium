@@ -227,18 +227,6 @@ tr th {
 	height: 50px;
 }
 
-.tr-item.selected {
-	border: 2px double var(--selected);
-}
-
-.tr-item.selected .name-col {
-	border-left: 4px solid var(--selected);
-}
-
-.tr-item.selected td {
-	background-color: var(--tinted-background);
-}
-
 .text-bold {
 	font-weight: 500;
 	margin-bottom: 5px;

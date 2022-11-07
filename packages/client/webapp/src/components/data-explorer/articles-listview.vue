@@ -238,7 +238,7 @@ tr th {
 
 .left-cover,
 .right-cover {
-	// Cover left and right gap in the fixed table header
+	/* Cover left and right gap in the fixed table header */
 	position: absolute;
 	height: 100%;
 	width: 2px;
@@ -257,15 +257,15 @@ tr th {
 }
 
 .tr-item.selected {
-	border: 2px double var(--selected);
+	border: 2px double var(--un-color-accent-light);
 }
 
 .tr-item.selected .title-and-abstract-col {
-	border-left: 4px solid var(--selected);
+	border-left: 2px solid var(--un-color-accent-light);
 }
 
 .tr-item.selected td {
-	background-color: var(--tinted-background);
+	background-color: var(--un-color-accent-light);
 }
 
 .text-bold {
@@ -311,7 +311,7 @@ tr th {
 	width: 120px;
 }
 
-// time series hidden until actually put into use
+/* time series hidden until actually put into use */
 .preview-col {
 	padding-left: 5px;
 	padding-right: 10px;

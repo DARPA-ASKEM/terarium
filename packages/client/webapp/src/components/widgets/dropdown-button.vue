@@ -169,7 +169,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 @import '@/styles/variables';
 
 .dropdown-button-container {
@@ -178,8 +178,9 @@ export default defineComponent({
 
 .dropdown-control {
 	position: absolute;
+	top: 90%;
+	/* Overlap the button slightly */
 	right: 0;
-	top: 90%; // Overlap the button slightly
 	max-height: 400px;
 	overflow-y: auto;
 }
@@ -209,6 +210,5 @@ export default defineComponent({
 	display: flex;
 	align-items: center;
 	font-weight: normal;
-	// padding: 5px;
 }
 </style>

@@ -262,15 +262,15 @@ tr th {
 }
 
 .tr-item.selected {
-	border: 2px double var(--selected);
+	border: 2px double var(--un-color-accent-light);
 }
 
 .tr-item.selected .name-and-desc-col {
-	border-left: 4px solid var(--selected);
+	border-left: 2px solid var(--un-color-accent-light);
 }
 
 .tr-item.selected td {
-	background-color: var(--tinted-background);
+	background-color: var(--un-color-accent-light);
 }
 
 .text-bold {
