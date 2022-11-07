@@ -161,10 +161,6 @@ export default defineComponent({
 	cursor: pointer;
 }
 
-.clear-button {
-	color: white;
-}
-
 .search-button {
 	background-color: var(--un-color-accent);
 }
@@ -172,6 +168,7 @@ export default defineComponent({
 .search-button-disabled {
 	background-color: var(--un-color-accent-dark);
 	cursor: not-allowed;
+	color: gray;
 }
 
 .clear-button-disabled {
