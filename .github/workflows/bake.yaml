@@ -40,6 +40,10 @@ jobs:
     outputs:
       matrix: ${{ steps.targets.outputs.matrix }}
     steps:
+      - name: debug
+        run: |
+          echo "${{ github.event.workflow_run.head_branch }}"
+          
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
         uses: ahmadnassri/action-workflow-run-wait@v1.4.2
