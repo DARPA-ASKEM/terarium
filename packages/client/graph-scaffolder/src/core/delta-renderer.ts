@@ -30,11 +30,7 @@ export default abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
 				d.state = 'updated';
 			});
 
-			// D3 binding does not like arrow-functions
-			// eslint-disable-next-line
-			[newNodes, nodesGroup].forEach(function (g) {
-				// D3 binding does not like arrow-functions
-				// eslint-disable-next-lin
+			[newNodes, nodesGroup].forEach((g) => {
 				g.each(function (d) {
 					// @ts-ignore: D3 needs "this" to bind to selection context
 					const selection2 = d3.select(this as any);
