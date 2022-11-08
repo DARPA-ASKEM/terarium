@@ -40,8 +40,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .full-screen-modal-header-container {
 	background-color: var(--un-color-accent-dark);
 	display: flex;

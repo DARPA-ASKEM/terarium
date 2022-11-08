@@ -63,8 +63,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .side-panel-nav-container {
 	margin: 0;
 	padding: 0;

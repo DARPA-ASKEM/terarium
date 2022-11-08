@@ -144,8 +144,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .search-bar-container {
 	display: flex;
 	background-color: darkgray;

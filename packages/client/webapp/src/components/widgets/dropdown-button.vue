@@ -170,8 +170,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .dropdown-button-container {
 	position: relative;
 }

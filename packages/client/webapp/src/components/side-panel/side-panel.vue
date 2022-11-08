@@ -81,8 +81,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .side-panel-container {
 	flex-grow: 0;
 	flex-shrink: 0;

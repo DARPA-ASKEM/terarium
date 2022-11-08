@@ -137,8 +137,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .autocomplete-container {
 	position: relative;
 	flex-grow: 1;

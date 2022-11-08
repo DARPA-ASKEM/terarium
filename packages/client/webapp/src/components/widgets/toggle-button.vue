@@ -49,8 +49,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '@/assets/css/style';
-
 .switcher {
 	display: flex;
 	align-items: center;

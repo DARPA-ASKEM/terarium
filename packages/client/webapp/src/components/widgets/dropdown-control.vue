@@ -22,8 +22,6 @@ export default defineComponent({
 </script>
 
 <style>
-@import '@/assets/css/style';
-
 .dropdown-container {
 	position: relative;
 	display: block;
