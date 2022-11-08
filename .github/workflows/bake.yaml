@@ -28,7 +28,7 @@ env:
   OWNER: ${{ github.repository_owner }}
   BAKE_FILE: docker-bake.hcl
   BAKE_GROUP: prod
-  CURRENT_TAG: ${{ github.ref_name }}
+  CURRENT_TAG: latest #${{ github.ref_name }}
 
 jobs:
   # Generate a matrix based on all the targets defined in the
@@ -83,7 +83,7 @@ jobs:
       - name: debug
         run: |
           echo "${{ github.event.workflow_run.head_branch }}"
-          
+
       # 2.1 - Checkout the repository
       - name: Checkout the repository
         uses: actions/checkout@v3
@@ -91,21 +91,22 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
 
       # 2.2 - Install the appropriate tool based on target
-      - name: Use Node v18.8.0
-        if: ${{ matrix.target }} == 'hmi-client'
+      - name: Setup Node v18.8.0
+        if: matrix.target == 'hmi-client'
         uses: actions/setup-node@v3
         with:
           node-version: 18.8.0
           cache: 'yarn'
 
-      - uses: actions/setup-java@v3
-        if: ${{ matrix.target }} != 'hmi-client'
+      - name: Setup Java v17
+        if: matrix.target != 'hmi-client'
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
       # 2.3 - Build all packages and move them to required location for Docker
-      - name: build images
+      - name: Build
         run: |
           make image-${{ matrix.target }}
 
