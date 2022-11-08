@@ -4,10 +4,15 @@
 
 name: Playwright Tests
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
+  workflow_run:
+    workflows: ['Lint & Test']
+    # branches: ['main', 'releases/**']
+    types:
+      - completed
 jobs:
   e2e-tests:
     timeout-minutes: 30
@@ -20,6 +25,10 @@ jobs:
         shardIndex: [1]
         shardTotal: [1]
     steps:
+      # 1.0 - only run if the dependant workflows were successful
+      - name: Workflow Run Wait
+        uses: ahmadnassri/action-workflow-run-wait@v1.4.2
+
       - uses: actions/checkout@v3
 
       - name: Use Node v18.8.0
@@ -69,6 +78,10 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
+      # 1.0 - only run if the dependant workflows were successful
+      - name: Workflow Run Wait
+        uses: ahmadnassri/action-workflow-run-wait@v1.4.2
+
       - uses: actions/checkout@v3
 
       - name: Use Node v18.8.0
