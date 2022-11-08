@@ -35,7 +35,7 @@ jobs:
   # bake file.
   targets:
     name: Generate targets list from provided bake file
-    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
+    # if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.targets.outputs.matrix }}
@@ -65,7 +65,7 @@ jobs:
     # NOTE: this name is used for waiting on in the retag workflow
     name: build-bake-push
     runs-on: ubuntu-22.04
-    if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
+    # if: github.event_name == 'push' && contains(github.event.ref, '/tags/')
     permissions:
       packages: write
       contents: read
