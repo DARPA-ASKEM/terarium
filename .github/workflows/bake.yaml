@@ -110,7 +110,7 @@ jobs:
       # 2.5 - Build all packages and move them to required location for Docker
       - name: build images
         run: |
-          make images
+          make image-${{ matrix.target }}
 
       # 2.6 - Setup Docker BuildX for multi platform building
       - name: Set up Docker Buildx
