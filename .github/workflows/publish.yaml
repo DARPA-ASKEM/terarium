@@ -8,7 +8,7 @@
 # something is pushed to main. A separate workflow is then triggered on tag pushes
 # to automatically re-tag the built image and deploy.
 
-name: Build Docker Images from Bake file
+name: Build and Publish
 
 on:
   workflow_run:
