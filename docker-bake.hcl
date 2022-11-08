@@ -69,5 +69,5 @@ target "hmi-server" {
 target "hmi-server-native" {
   inherits = ["hmi-server-base"]
   dockerfile = "docker/Dockerfile.native"
-  tags = tag("hmi-server")
+  tags = tag("hmi-server-native")
 }
