@@ -12,15 +12,21 @@ To develop and test the core application:
 
 1. Stand up the TERArium services by running the `deploy-terarium.sh up` script from within the
    [Orchestration](https://github.com/DARPA-ASKEM/orchestration) repository
-2. Stop the `hmi-server` and `webapp` pods by running the following commands from the orchestration
-   repo's `kubernetes/local` directory.
+2. To stop a pod from running in kubernetes so that you can run locally to debug, run the following commands from the
+   orchestration repo's `kubernetes/local` directory. Replace `[NAME]` with the name of the service you would like to
+   stop (e.g. `webapp` or `hmi-server`).
 
-- `kubectl scale --replicas=0 -f hmi-server-deployment.yaml`
-- `kubectl scale --replicas=0 -f webapp-deployment.yaml`
+- `kubectl delete -f [NAME]-deployment.yaml -f [NAME]-service.yaml`
 
-3. Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
-4. Start the front end by doing `yarn install` followed by `yarn && yarn dev`
-5. Navigate your browser to `localhost:8078`
+3. Start a service locally to replace the services you shut down
+  - Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
+  - Start the front end by doing `yarn install` followed by `yarn && yarn dev`
+4. Navigate your browser to `localhost:8078`
+5. You can start services back up in kubernetes by running the following commands from the
+   orchestration repo's `kubernetes/local` directory. Replace `[NAME]` with the name of the service you would like to
+   stop (e.g. `webapp` or `hmi-server`).
+
+- `kubectl apply -f [NAME]-deployment.yaml -f [NAME]-service.yaml`
 
 ## Container Registry Setup
 

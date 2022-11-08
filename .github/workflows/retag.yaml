@@ -14,8 +14,6 @@ on:
   push:
     # only trigger on version tags
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-[a-z]+'
 
 # default environment variables
 env:
@@ -29,7 +27,7 @@ env:
 jobs:
   images:
     name: Retrieve all image names from bake file
-    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    # if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.images.outputs.matrix }}
@@ -59,7 +57,7 @@ jobs:
   retag:
     name: Retag images and push
     # skip this job if taggin not on the main branch
-    if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
+    # if: ${{ endsWith('${{ github.event.base_ref }}', '${{ env.PROTECTED_BRANCH }}') }}
     runs-on: ubuntu-22.04
     permissions:
       packages: write
@@ -89,7 +87,7 @@ jobs:
       # Push the image back up
       - name: Pull latest image with tag ${{ env.CURRENT_TAG }}, and retag with ${{ github.ref_name }}
         run: |
-          VERSION=$( echo ${{ github.ref_name }} | sed "s/^.//")
+          VERSION=$( echo ${{ github.ref_name }} )
           DOCKER_IMAGE=${{env.REGISTRY}}/${OWNER,,}/${{matrix.target}}
           docker pull ${DOCKER_IMAGE}:${{env.CURRENT_TAG}}
           declare -a shaVals="($(docker manifest inspect ${DOCKER_IMAGE}:${{env.CURRENT_TAG}} | jq '.manifests | .[].digest' | jq -csr '. | @sh'))"

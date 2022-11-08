@@ -12,14 +12,15 @@ name: Build Docker Images from Bake file
 
 on:
   push:
-    branches: ['main']
+    branches: [ 'main' ]
+    tags:
 
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
   BAKE_FILE: docker-bake.hcl
   BAKE_GROUP: prod
-  CURRENT_TAG: latest
+  CURRENT_TAG: ${{ github.ref_name }}
 
 jobs:
   # Generate a matrix based on all the targets defined in the
@@ -87,6 +88,10 @@ jobs:
       # 2.4 - Setup QEMU for platform emulation
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
+
+      - name: build images
+        run: |
+          make images
 
       # 2.5 - Setup Docker BuildX for multi platform building
       - name: Set up Docker Buildx
