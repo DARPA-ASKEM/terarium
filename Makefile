@@ -46,14 +46,14 @@ image-hmi-server-native: clean-hmi-server-native
 
 
 
-TARGETS += webapp
-clean-webapp:
+TARGETS += hmi-client
+clean-hmi-client:
 	rm -rf $(PROJECT_DIR)/packages/client/graph-scaffolder/build
 	rm -rf $(PROJECT_DIR)/packages/client/graph-scaffolder/dist
 	rm -rf $(PROJECT_DIR)/packages/client/webapp/dist
 	rm -rf $(PROJECT_DIR)/packages/client/webapp/docker/dist
 
-image-webapp: clean-webapp yarn-install
+image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace graph-scaffolder tsc --build
 	yarn workspace webapp build
 	mv $(PROJECT_DIR)/packages/client/webapp/dist $(PROJECT_DIR)/packages/client/webapp/docker/dist

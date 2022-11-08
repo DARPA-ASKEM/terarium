@@ -26,11 +26,11 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["webapp", "hmi-server", "hmi-server-native"]
+  targets = ["hmi-client", "hmi-server", "hmi-server-native"]
 }
 
 group "default" {
-  targets = ["webapp-base", "hmi-server-base"]
+  targets = ["hmi-client-base", "hmi-server-base"]
 }
 
 # ---------------------------------
@@ -38,14 +38,14 @@ target "_platforms" {
   platforms = ["linux/amd64", "linux/arm64"]
 }
 
-target "webapp-base" {
+target "hmi-client-base" {
 	context = "packages/client/webapp"
-	tags = tag("webapp", "", "")
+	tags = tag("hmi-client", "", "")
 	dockerfile = "docker/Dockerfile"
 }
 
-target "webapp" {
-  inherits = ["_platforms", "webapp-base"]
+target "hmi-client" {
+  inherits = ["_platforms", "hmi-client-base"]
 }
 
 target "hmi-server-base" {

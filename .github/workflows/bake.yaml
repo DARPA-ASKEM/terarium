@@ -94,6 +94,7 @@ jobs:
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
           # Lowercase the owner for docker image naming conventions
           echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
+          echo java --version
 
       # 2.3 - Login against the docker registry
       - name: Login to registry ${{ env.REGISTRY }}
