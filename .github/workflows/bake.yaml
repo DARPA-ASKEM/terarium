@@ -80,13 +80,36 @@ jobs:
         target: ${{ fromJson(needs.targets.outputs.matrix) }}
 
     steps:
+      - name: debug
+        run: |
+          echo "${{ github.event.workflow_run.head_branch }}"
+          
       # 2.1 - Checkout the repository
       - name: Checkout the repository
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
 
-      # 2.2 - Set environment variables to be used within the bake file
+      # 2.2 - Install the appropriate tool based on target
+      - name: Use Node v18.8.0
+        if: ${{ matrix.target }} == 'hmi-client'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
+
+      - uses: actions/setup-java@v3
+        if: ${{ matrix.target }} != 'hmi-client'
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 2.3 - Build all packages and move them to required location for Docker
+      - name: build images
+        run: |
+          make image-${{ matrix.target }}
+
+      # 2.4 - Set environment variables to be used within the bake file
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
@@ -94,9 +117,9 @@ jobs:
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
           # Lowercase the owner for docker image naming conventions
           echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
-          echo java --version
+          java --version
 
-      # 2.3 - Login against the docker registry
+      # 2.5 - Login against the docker registry
       - name: Login to registry ${{ env.REGISTRY }}
         uses: docker/login-action@v2
         with:
@@ -104,30 +127,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Use Node v18.8.0
-        if: ${{ matrix.target }} == 'webapp'
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.8.0
-          cache: 'yarn'
-
-      # - name: Install dependencies
-      #   run: yarn install --immutable
-
-      # 2.4 - Build all packages and move them to required location for Docker
-      - name: build images
-        run: |
-          make image-${{ matrix.target }}
-
-      # 2.5 - Setup QEMU for platform emulation
+      # 2.6 - Setup QEMU for platform emulation
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
-      # 2.6 - Setup Docker BuildX for multi platform building
+      # 2.7 - Setup Docker BuildX for multi platform building
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # 2.6 - Build and push Docker Images
+      # 2.8 - Build and push Docker Images
       - name: Build Images using BuildX Bake
         uses: docker/bake-action@v2
         with:
