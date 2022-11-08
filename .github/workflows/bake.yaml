@@ -103,14 +103,24 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2.4 - Setup QEMU for platform emulation
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+      - name: Use Node v18.8.0
+        if: ${{ matrix.target }} == 'webapp'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
 
-      # 2.5 - Build all packages and move them to required location for Docker
+      # - name: Install dependencies
+      #   run: yarn install --immutable
+
+      # 2.4 - Build all packages and move them to required location for Docker
       - name: build images
         run: |
           make image-${{ matrix.target }}
+
+      # 2.5 - Setup QEMU for platform emulation
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
 
       # 2.6 - Setup Docker BuildX for multi platform building
       - name: Set up Docker Buildx

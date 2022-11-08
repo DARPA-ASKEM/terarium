@@ -45,9 +45,7 @@ target "webapp-base" {
 }
 
 target "webapp" {
-  inherits = ["_platforms"]
-	context = "webapp"
-	tags = tag("webapp", "", "")
+  inherits = ["_platforms", "webapp-base"]
 }
 
 target "hmi-server-base" {
