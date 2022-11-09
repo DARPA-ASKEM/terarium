@@ -27,7 +27,7 @@ jobs:
     steps:
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
-        uses: ahmadnassri/action-workflow-run-wait@v1.4.2
+        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
 
       - uses: actions/checkout@v3
         with:
@@ -82,7 +82,7 @@ jobs:
     steps:
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
-        uses: ahmadnassri/action-workflow-run-wait@v1.4.2
+        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
 
       - uses: actions/checkout@v3
         with:

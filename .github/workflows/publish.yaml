@@ -13,22 +13,22 @@ name: Build and Publish
 on:
   workflow_run:
     workflows: ['Playwright Tests', 'Lint & Test']
-    branches: ['main', 'release/**']
+    branches:
+      ['main', 'release/**', 203-bug-fix-building-the-terarium-applications]
     types:
       - completed
   # push:
   #   branches: ['main']
   #   tags: ['*']
   # # TODO: temporary for testing
-  pull_request:
-    branches: ['main']
+  # pull_request:
+  #   branches: ['main']
 
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
   BAKE_FILE: docker-bake.hcl
   BAKE_GROUP: prod
-  CURRENT_TAG: ${{ github.ref_name }}
 
 jobs:
   # Generate a matrix based on all the targets defined in the
@@ -43,11 +43,16 @@ jobs:
       - name: debug
         run: |
           echo "HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}"
-          echo "TAG: ${{ github.ref_name }}"
+          echo "REF: ${{ github.ref_name }}"
+          if [[ '${{ github.ref_type' == 'branch' ]]; then
+            TAG=latest
+          else
+            TAG=${{ github.ref_name}}
+          echo $TAG
 
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
-        uses: ahmadnassri/action-workflow-run-wait@v1.4.2
+        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
 
       # 1.1 - checkout the files
       - name: Checkout
@@ -85,6 +90,10 @@ jobs:
         target: ${{ fromJson(needs.targets.outputs.matrix) }}
 
     steps:
+      # 2.0 - only run if the dependant workflows were successful
+      - name: Workflow Run Wait
+        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
+
       # 2.1 - Checkout the repository
       - name: Checkout the repository
         uses: actions/checkout@v3
@@ -120,7 +129,11 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          echo "VERSION=${{ env.CURRENT_TAG }}" >> ${GITHUB_ENV}
+          if [[ '${{ github.ref_type' == 'branch' ]]; then
+            TAG=latest
+          else
+            TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG,,}" >> ${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
           # Lowercase the owner for docker image naming conventions
           echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
@@ -148,7 +161,7 @@ jobs:
         with:
           files: ./${{ env.BAKE_FILE }}
           targets: ${{ matrix.target }}
-          push: false
+          push: true
           set: |
             *.cache-from=type=gha,scope=build-${{ matrix.target }}
             *.cache-to=type=gha,scope=build-${{ matrix.target }},mode=max
