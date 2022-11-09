@@ -17,9 +17,9 @@ on:
       ['main', 'release/**', '203-bug-fix-building-the-terarium-applications']
     types:
       - completed
-  push:
-    branches: ['203-bug-fix-building-the-terarium-applications']
-    tags: ['*']
+  # push:
+  #   branches: ['203-bug-fix-building-the-terarium-applications']
+  #   tags: ['*']
   # # TODO: temporary for testing
   # pull_request:
   #   branches: ['main']
@@ -162,7 +162,7 @@ jobs:
         with:
           files: ./${{ env.BAKE_FILE }}
           targets: ${{ matrix.target }}
-          push: false
+          push: true
           set: |
             *.cache-from=type=gha,scope=build-${{ matrix.target }}
             *.cache-to=type=gha,scope=build-${{ matrix.target }},mode=max
