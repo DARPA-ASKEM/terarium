@@ -21,6 +21,7 @@ develop TERArium, you will need these as a prerequisite:
 ### macOS
 
 Installing/Using [Homebrew](https://brew.sh/) to install the following:
+
 * [Temurin](https://adoptium.net/temurin) OR OpenJDK
 * [Gradle](https://gradle.org)
 * [Quarkus](https://quarkus.io/guides/cli-tooling).
@@ -35,7 +36,7 @@ brew install quarkusio/tap/quarkus
 ## Running the server in dev mode
 
 First, launch the authentication service before running the server (see
-documentation [here](kubernetes/local/README.md)).
+documentation [here](https://github.com/DARPA-ASKEM/orchestration)).
 
 Then, you can run your application in dev mode that enables live coding using:
 
