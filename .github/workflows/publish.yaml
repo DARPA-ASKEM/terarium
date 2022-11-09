@@ -14,7 +14,7 @@ on:
   workflow_run:
     workflows: ['Playwright Tests', 'Lint & Test']
     branches:
-      ['main', 'release/**', 203-bug-fix-building-the-terarium-applications]
+      ['main', 'release/**', '203-bug-fix-building-the-terarium-applications']
     types:
       - completed
   # push:
