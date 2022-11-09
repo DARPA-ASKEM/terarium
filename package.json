@@ -27,7 +27,7 @@
 	},
 	"devDependencies": {
 		"@vue/eslint-config-airbnb-with-typescript": "7.0.0",
-		"eslint": "8.26.0",
+		"eslint": "8.27.0",
 		"eslint-config-prettier": "8.5.0",
 		"eslint-plugin-vue": "9.7.0",
 		"husky": "8.0.1",
