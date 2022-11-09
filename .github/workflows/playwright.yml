@@ -62,8 +62,7 @@ jobs:
         if: failure()
         with:
           name: playwright-e2e-report
-          # TODO: how to make this a dynamic path?
-          path: packages/client/tests/e2e/test-report/
+          path: packages/client/**/tests/e2e/test-report/
           retention-days: 10
 
   ct-tests:
@@ -112,6 +111,5 @@ jobs:
         if: failure()
         with:
           name: playwright-ct-report
-          # TODO: how to make this a dynamic path?
-          path: packages/client/tests/component/test-report/
+          path: packages/client/**/tests/component/test-report/
           retention-days: 10
