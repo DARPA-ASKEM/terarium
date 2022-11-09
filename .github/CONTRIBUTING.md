@@ -14,17 +14,19 @@ To develop and test the core application:
    [Orchestration](https://github.com/DARPA-ASKEM/orchestration) repository
 2. To stop a pod from running in kubernetes so that you can run locally to debug, run the following commands from the
    orchestration repo's `kubernetes/local` directory. Replace `[NAME]` with the name of the service you would like to
-   stop (e.g. `webapp` or `hmi-server`).
+   stop (e.g. `hmi-client` or `hmi-server`).
 
 - `kubectl delete -f [NAME]-deployment.yaml -f [NAME]-service.yaml`
 
 3. Start a service locally to replace the services you shut down
-  - Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
-  - Start the front end by doing `yarn install` followed by `yarn && yarn dev`
+
+- Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
+- Start the front end by doing `yarn install` followed by `yarn && yarn dev`
+
 4. Navigate your browser to `localhost:8078`
 5. You can start services back up in kubernetes by running the following commands from the
    orchestration repo's `kubernetes/local` directory. Replace `[NAME]` with the name of the service you would like to
-   stop (e.g. `webapp` or `hmi-server`).
+   stop (e.g. `hmi-client` or `hmi-server`).
 
 - `kubectl apply -f [NAME]-deployment.yaml -f [NAME]-service.yaml`
 
