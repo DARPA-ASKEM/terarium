@@ -9,7 +9,7 @@ on:
   # pull_request:
   #   branches: [main]
   workflow_run:
-    workflows: [Lint & Test]
+    workflows: ['Lint & Test']
     # branches: ['main', 'releases/**']
     types:
       - completed
