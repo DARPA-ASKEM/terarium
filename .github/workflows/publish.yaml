@@ -20,8 +20,8 @@ on:
   #   branches: ['main']
   #   tags: ['*']
   # # TODO: temporary for testing
-  # pull_request:
-  #   branches: ['main']
+  pull_request:
+    branches: ['main']
 
 env:
   REGISTRY: ghcr.io
@@ -98,6 +98,10 @@ jobs:
         with:
           node-version: 18.8.0
           cache: 'yarn'
+
+      - name: Validate GradleW JAR
+        if: matrix.target != 'hmi-client'
+        uses: gradle/wrapper-validation-action@55e685c48d84285a5b0418cd094606e199cca3b6
 
       - name: Setup Java v17
         if: matrix.target != 'hmi-client'
