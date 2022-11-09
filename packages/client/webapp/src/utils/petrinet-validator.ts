@@ -25,7 +25,7 @@ interface Output {
 /* Validates petrinet - check #2 must come before check #5 to avoid an infinite loop */
 export const petrinetValidator = (petrinet: Petrinet): boolean => {
 	const { S, T, I, O } = petrinet;
-	console.log(petrinet);
+	// console.log(petrinet);
 
 	/* ----- 1. Requires at least one edge ----- */
 	if (I.length < 1 && O.length < 1) {
@@ -36,7 +36,6 @@ export const petrinetValidator = (petrinet: Petrinet): boolean => {
 	/* ----- 2. Check that every node is at least either a source or a target ----- */
 	const checkIfSourceOrTarget = (linkedIDs: number[], lastNodeID: number): boolean => {
 		for (let id = 1; id < lastNodeID; id++) {
-			console.log(id);
 			if (!linkedIDs.includes(id)) {
 				console.log('#2');
 				return false;
@@ -44,22 +43,14 @@ export const petrinetValidator = (petrinet: Petrinet): boolean => {
 		}
 		return true;
 	};
-	// linked transition IDs
-	if (
-		!checkIfSourceOrTarget(
-			[...new Set([...I.map((input) => input.it), ...O.map((output) => output.ot)])],
-			T.length + 1
-		)
-	)
-		return false;
-	// linked state/place IDs
-	if (
-		!checkIfSourceOrTarget(
-			[...new Set([...I.map((input) => input.is), ...O.map((output) => output.os)])],
-			S.length + 1
-		)
-	)
-		return false;
+	const linkedTransitionIDs: number[] = [
+		...new Set([...I.map((input) => input.it), ...O.map((output) => output.ot)])
+	];
+	if (!checkIfSourceOrTarget(linkedTransitionIDs, T.length + 1)) return false;
+	const linkedStateIDs: number[] = [
+		...new Set([...I.map((input) => input.is), ...O.map((output) => output.os)])
+	];
+	if (!checkIfSourceOrTarget(linkedStateIDs, S.length + 1)) return false;
 
 	/* ----- 3. Make sure there aren't multiple petrinet bodies ----- */
 	const statesSurroundingTransitions: number[][] = [];
