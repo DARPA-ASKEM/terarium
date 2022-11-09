@@ -22,15 +22,10 @@ interface Output {
 	os: number; // State ID which is the target
 }
 
-/*
-	Validates petrinet - check #2 must come before check #5 to avoid an infinite loop
-*/
-export const petrinetValidator = (
-	petrinet: Petrinet,
-	isBoundedPetrinet: boolean = true
-): boolean => {
+/* Validates petrinet - check #2 must come before check #5 to avoid an infinite loop */
+export const petrinetValidator = (petrinet: Petrinet): boolean => {
 	const { S, T, I, O } = petrinet;
-	// console.log(petrinet);
+	console.log(petrinet);
 
 	/* ----- 1. Requires at least one edge ----- */
 	if (I.length < 1 && O.length < 1) {
@@ -38,8 +33,10 @@ export const petrinetValidator = (
 		return false;
 	}
 
+	/* ----- 2. Check that every node is at least either a source or a target ----- */
 	const checkIfSourceOrTarget = (linkedIDs: number[], lastNodeID: number): boolean => {
 		for (let id = 1; id < lastNodeID; id++) {
+			console.log(id);
 			if (!linkedIDs.includes(id)) {
 				console.log('#2');
 				return false;
@@ -47,31 +44,24 @@ export const petrinetValidator = (
 		}
 		return true;
 	};
-
-	/* ----- 2a. Check if every transition node is bounded by state nodes (a source AND a target) ----- */
-	if (isBoundedPetrinet) {
-		const sourceTransitionIDs: number[] = [...new Set(O.map((output) => output.ot))];
-		const targetTransitionIDs: number[] = [...new Set(I.map((input) => input.it))];
-		if (
-			!checkIfSourceOrTarget(sourceTransitionIDs, T.length + 1) ||
-			!checkIfSourceOrTarget(targetTransitionIDs, T.length + 1)
+	// linked transition IDs
+	if (
+		!checkIfSourceOrTarget(
+			[...new Set([...I.map((input) => input.it), ...O.map((output) => output.ot)])],
+			T.length + 1
 		)
-			return false;
-	} else {
-		/* ----- 2b. If petrinet is unbounded check that every transition node is at least either a source OR a target ----- */
-		const linkedTransitionIDs: number[] = [
-			...new Set([...I.map((input) => input.it), ...O.map((output) => output.ot)])
-		];
-		if (!checkIfSourceOrTarget(linkedTransitionIDs, T.length + 1)) return false;
-	}
+	)
+		return false;
+	// linked state/place IDs
+	if (
+		!checkIfSourceOrTarget(
+			[...new Set([...I.map((input) => input.is), ...O.map((output) => output.os)])],
+			S.length + 1
+		)
+	)
+		return false;
 
-	/* ----- 3. Check that every state node is at least either a source OR a target ----- */
-	const linkedStateIDs: number[] = [
-		...new Set([...I.map((input) => input.is), ...O.map((output) => output.os)])
-	];
-	if (!checkIfSourceOrTarget(linkedStateIDs, S.length + 1)) return false;
-
-	/* ----- 4. Make sure there aren't multiple petrinet bodies ----- */
+	/* ----- 3. Make sure there aren't multiple petrinet bodies ----- */
 	const statesSurroundingTransitions: number[][] = [];
 	for (let id = 1; id < T.length + 1; id++) {
 		// Save all the states where the current transition is a source or a target

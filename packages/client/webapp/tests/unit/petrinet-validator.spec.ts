@@ -48,7 +48,7 @@ const falsePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// More than one petrinet - caught by check #4
+	// More than one petrinet - caught by check #3
 	{
 		T: [
 			{
@@ -96,7 +96,7 @@ const falsePetrinets: Petrinet[] = [
 ];
 
 const truePetrinets: Petrinet[] = [
-	// Small petrinet
+	// Place -> <- Transition
 	{
 		T: [
 			{
@@ -121,7 +121,35 @@ const truePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// Medium petrinet
+	// Transition -> Place -> Transition
+	{
+		T: [
+			{
+				tname: 't-1'
+			},
+			{
+				tname: 't-2'
+			}
+		],
+		S: [
+			{
+				sname: 'p-1'
+			}
+		],
+		I: [
+			{
+				it: 2,
+				is: 1
+			}
+		],
+		O: [
+			{
+				ot: 1,
+				os: 1
+			}
+		]
+	},
+	// Slightly larger petrinet
 	{
 		T: [
 			{
@@ -188,7 +216,7 @@ const truePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// More complex petrinet - Must not be stopped by check #4
+	// "More complex" petrinet - Must not be stopped by check #3
 	{
 		T: [
 			{
@@ -281,42 +309,13 @@ const truePetrinets: Petrinet[] = [
 	}
 ];
 
-// Caught by check #2 (or not if unbounded graphs are set to be accepted)
-const unboundedPetrinet: Petrinet = {
-	T: [
-		{
-			tname: 't-1'
-		},
-		{
-			tname: 't-2'
-		}
-	],
-	S: [
-		{
-			sname: 'p-1'
-		}
-	],
-	I: [
-		{
-			it: 2,
-			is: 1
-		}
-	],
-	O: [
-		{
-			ot: 1,
-			os: 1
-		}
-	]
-};
-
 describe('test the petrinet validator with a variety of graphs', () => {
 	// Returns false
 	it('should be invalid as there are no edges', () => {
 		expect(petrinetValidator(falsePetrinets[0])).eq(false);
 	});
 
-	it('should be invalid as a nodeis not recognized as a source or a target', () => {
+	it('should be invalid as a node is not recognized as a source or a target', () => {
 		expect(petrinetValidator(falsePetrinets[1])).eq(false);
 	});
 
@@ -325,24 +324,19 @@ describe('test the petrinet validator with a variety of graphs', () => {
 	});
 
 	// Returns true
-	it('should be valid (small petrinet)', () => {
+	it('should be valid (small petrinet -  Place -> <- Transition)', () => {
 		expect(petrinetValidator(truePetrinets[0])).eq(true);
 	});
 
-	it('should be valid (medium petrinet)', () => {
+	it('should be valid (small petrinet - Transition -> Place -> Transition)', () => {
 		expect(petrinetValidator(truePetrinets[1])).eq(true);
 	});
 
-	it('should be valid (complex petrinet - should not be stopped by check #5)', () => {
+	it('should be valid (slightly larger)', () => {
 		expect(petrinetValidator(truePetrinets[2])).eq(true);
 	});
 
-	// Bounded/unbounded checks
-	it('should be invalid by default as petrinets are recognized as bounded by default', () => {
-		expect(petrinetValidator(unboundedPetrinet)).eq(false);
-	});
-
-	it('should be valid as petrinet is set to unbounded', () => {
-		expect(petrinetValidator(unboundedPetrinet, false)).eq(true);
+	it('should be valid ("complex" petrinet - should not be stopped by check #3)', () => {
+		expect(petrinetValidator(truePetrinets[3])).eq(true);
 	});
 });
