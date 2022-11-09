@@ -41,7 +41,7 @@ clean-hmi-server-native: clean-hmi-server-base
 	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
 
 image-hmi-server-native: clean-hmi-server-native
-	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
+	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native
 	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
 
 

@@ -44,7 +44,7 @@ jobs:
         run: |
           echo "HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}"
           echo "REF: ${{ github.ref_name }}"
-          if [[ '${{ github.ref_type' == 'branch' ]]; then
+          if [[ '${{ github.ref_name' == 'main' ]]; then
             TAG=latest
           else
             TAG=${{ github.ref_name}}
@@ -129,10 +129,11 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          if [[ '${{ github.ref_type' == 'branch' ]]; then
+          if [[ '${{ github.ref_name' == 'main' ]]; then
             TAG=latest
           else
-            TAG=${{ github.ref_name }}
+            TAG=${{ github.ref_name}}
+
           echo "VERSION=${TAG,,}" >> ${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
           # Lowercase the owner for docker image naming conventions
