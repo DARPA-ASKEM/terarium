@@ -104,7 +104,8 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: 17
+          cache: gradle
 
       # 2.3 - Build all packages and move them to required location for Docker
       - name: Build
