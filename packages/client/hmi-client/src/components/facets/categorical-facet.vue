@@ -232,7 +232,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .facet-pointer {
 	cursor: pointer;
 }
@@ -254,39 +254,39 @@ export default defineComponent({
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 16px;
+}
 
-	.facet-footer-more {
-		margin-bottom: 4px;
+.facet-footer-more {
+	margin-bottom: 4px;
+}
 
-		.facet-footer-more-section {
-			display: flex;
-			flex-direction: row;
-			flex-wrap: nowrap;
-			justify-content: flex-start;
-			align-content: stretch;
-			align-items: flex-start;
+.facet-footer-more-section {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+	align-content: stretch;
+	align-items: flex-start;
+}
 
-			.facet-footer-more-count {
-				order: 0;
-				flex: 1 1 auto;
-				align-self: auto;
-			}
+.facet-footer-more-count {
+	order: 0;
+	flex: 1 1 auto;
+	align-self: auto;
+}
 
-			.facet-footer-more-controls {
-				order: 0;
-				flex: 0 1 auto;
-				align-self: auto;
+.facet-footer-more-controls {
+	order: 0;
+	flex: 0 1 auto;
+	align-self: auto;
+}
 
-				.more,
-				.less {
-					display: inline-flex;
-				}
-			}
+.more,
+.less {
+	display: inline-flex;
+}
 
-			.facet-footer-more-controls > span {
-				cursor: pointer;
-			}
-		}
-	}
+.facet-footer-more-controls > span {
+	cursor: pointer;
 }
 </style>

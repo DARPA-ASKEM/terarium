@@ -29,6 +29,9 @@ export default defineConfig({
 	preview: {
 		port: 8080
 	},
+	build: {
+		target: 'esnext'
+	},
 	plugins: [
 		vue({
 			template: {

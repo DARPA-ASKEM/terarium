@@ -1,0 +1,177 @@
+---
+# Automatically build Docker images on changes to main and push them to a
+# Container Registry using HCL Bake file.
+
+name: Build and Publish
+
+on:
+  workflow_run:
+    workflows: ['Playwright Tests', 'Lint & Test']
+    branches: ['main']
+    types:
+      - completed
+  push:
+    tags: ['*']
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  BAKE_FILE: docker-bake.hcl
+  BAKE_GROUP: prod
+
+jobs:
+  test:
+    if: contains(github.event.ref, '/tags/')
+    uses: ./.github/workflows/lint_test.yml
+
+  e2e-tests:
+    if: contains(github.event.ref, '/tags/')
+    uses: ./.github/workflows/playwright.yml
+
+  # Generate a matrix based on all the targets defined in the
+  # bake file.
+  targets:
+    name: Generate targets list from provided bake file
+    if: github.ref_name == 'main' || contains(github.event.ref, '/tags/')
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - name: debug
+        run: |
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
+            TAG=latest
+          else
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
+          fi
+
+          echo "${{ github.event }}"
+          echo "$TAG"
+
+      # 1.0 - only run if the dependant workflows were successful
+      - name: Workflow Run Wait
+        if: contains(github.event.ref, '/tags/') == false
+        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
+
+      # 1.1 - checkout the files
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      # 1.2 - Generate a matrix output of all the targets for the specified group
+      - name: Create matrix
+        id: targets
+        run: |
+          echo "matrix=$(docker buildx bake ${{ env.BAKE_GROUP }} -f ${{ env.BAKE_FILE }} --print | jq -cr '.group.default.targets')" >> $GITHUB_OUTPUT
+
+      # 1.3 (optional) - output the generated target list for verification
+      - name: Show matrix
+        run: |
+          echo ${{ steps.targets.outputs.matrix }}
+
+  build-push:
+    # NOTE: this name is used for waiting on in the retag workflow
+    name: build-bake-push
+    runs-on: ubuntu-22.04
+    if: github.ref_name == 'main' || contains(github.event.ref, '/tags/')
+    permissions:
+      packages: write
+      contents: read
+    # this job depends on the 'targets' job
+    needs:
+      - targets
+      - test
+
+    # 2.0 - Build a matrix strategy from the retrieved target list
+    strategy:
+      fail-fast: true
+      matrix:
+        target: ${{ fromJson(needs.targets.outputs.matrix) }}
+
+    steps:
+      # 2.1 - Checkout the repository
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      # 2.2 - Install the appropriate tool based on target
+      - name: Setup Node v18.8.0
+        if: matrix.target == 'hmi-client'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
+
+      - name: Validate GradleW JAR
+        if: matrix.target != 'hmi-client'
+        uses: gradle/wrapper-validation-action@9aa31f26bc8e536d1faf4b332bb8365350743a18
+
+      - name: Setup Java v17
+        if: matrix.target != 'hmi-client'
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: gradle
+
+      # 2.3 - Build all packages and move them to required location for Docker
+      - name: Build
+        run: |
+          make image-${{ matrix.target }}
+
+      # 2.4 - Set environment variables to be used within the bake file
+      # NOTE: this overrides the defaults and should be specific to this deployment
+      - name: set env variables for bakefile
+        run: |
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
+            TAG=latest
+          else
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
+          fi
+
+          echo "$TAG"
+
+          echo "VERSION=${TAG,,}" >> ${GITHUB_ENV}
+          echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
+          # Lowercase the owner for docker image naming conventions
+          echo "DOCKER_ORG=${OWNER,,}" >> ${GITHUB_ENV}
+          java --version
+
+      # 2.5 - Login against the docker registry
+      - name: Login to registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2.6 - Setup QEMU for platform emulation
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # 2.7 - Setup Docker BuildX for multi platform building
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 2.8 - Build and push Docker Images
+      - name: Build Images using BuildX Bake
+        uses: docker/bake-action@v2
+        with:
+          files: ./${{ env.BAKE_FILE }}
+          targets: ${{ matrix.target }}
+          push: true
+          set: |
+            *.cache-from=type=gha,scope=build-${{ matrix.target }}
+            *.cache-to=type=gha,scope=build-${{ matrix.target }},mode=max

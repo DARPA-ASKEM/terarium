@@ -140,10 +140,11 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .search-bar-container {
 	display: flex;
-	align-items: center;
+	background-color: darkgray;
+	align-items: baseline;
 	justify-content: center;
 }
 
@@ -155,70 +156,52 @@ export default defineComponent({
 	cursor: pointer;
 }
 
-button {
-	border-width: thin;
-	border-color: white;
-	border-radius: 6px;
-}
-
-.search-and-clear-buttons {
-	color: var(--un-color-white);
-}
-
 .search-button {
-	background-color: #2d8e2dff;
+	background-color: var(--un-color-accent);
 }
 
-.search-button-disabled,
-.button-disabled {
-	background-color: darken($color: #92e192ff, $amount: 50%);
+.search-button-disabled {
+	background-color: var(--un-color-accent-dark);
 	cursor: not-allowed;
+	color: gray;
 }
 
 .clear-button-disabled {
-	background-color: darken($color: white, $amount: 50%);
+	background-color: gray;
 	cursor: not-allowed;
 }
 
 .flex-aligned {
 	display: flex;
-	align-items: center;
+	align-items: baseline;
 }
 
 .flex-aligned-item {
 	display: flex;
 	align-items: center;
-	color: var(--un-color-white);
+	color: var(--un-color-accent-darker);
+}
 
-	.flex-aligned-item-delete-btn {
-		color: red;
-	}
+.flex-aligned-item-delete-btn {
+	color: red;
+}
 
-	.flex-aligned-item-delete-btn:hover {
-		cursor: pointer;
-	}
+.flex-aligned-item-delete-btn:hover {
+	cursor: pointer;
 }
 
 .search-label {
-	color: white;
+	color: black;
 	font-weight: bold;
 	padding: 8px;
 }
 
 input[type='text'] {
 	padding: 6px;
+	border: none;
+	margin-top: 8px;
 	margin-right: 16px;
-	margin-left: 16px;
 	font-size: 17px;
 	min-width: 300px;
-	border-color: white;
-	border-width: 1px;
-	border-style: solid;
-	background-color: transparent;
-	color: white;
-}
-
-input[type='text']:focus {
-	outline: none;
 }
 </style>

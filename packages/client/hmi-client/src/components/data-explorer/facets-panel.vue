@@ -34,11 +34,11 @@ import { defineComponent, PropType } from 'vue';
 
 import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
-import SidePanel from '@/components/side-panel/side-panel.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
 import IconFilterRemove32 from '@carbon/icons-vue/es/filter--remove/32';
+import SidePanel from '@/components/side-panel/side-panel.vue';
 
 const TAB_NAME = 'Data Facets';
 
@@ -116,9 +116,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables';
-
+<style scoped>
 .facet-panel-container {
 	margin-top: 5px;
 }
