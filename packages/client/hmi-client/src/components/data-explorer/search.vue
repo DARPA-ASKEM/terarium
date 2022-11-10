@@ -132,7 +132,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .search-container {
 	min-height: 0px;
 	width: 100%;
@@ -140,59 +140,59 @@ export default defineComponent({
 	flex-direction: column;
 	padding-right: 10px;
 	gap: 1px;
+}
 
-	.list-view {
-		flex: 1;
-		min-height: 0;
-	}
+.list-view {
+	flex: 1;
+	min-height: 0;
+}
 
-	.nav-bar {
-		display: flex;
-		align-items: center;
-		background-color: #f3f3f3;
+.nav-bar {
+	display: flex;
+	align-items: center;
+	background-color: #f3f3f3;
+}
 
-		.nav {
-			list-style-type: none;
-			margin: 0;
-			padding: 0;
-			overflow: hidden;
-			border: 1px solid #e7e7e7;
-			background-color: #f3f3f3;
-			margin-right: 2rem;
-			margin-left: 5rem;
+.nav {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid #e7e7e7;
+	background-color: #f3f3f3;
+	margin-right: 2rem;
+	margin-left: 5rem;
+}
 
-			li {
-				float: left;
-			}
+.nav li {
+	float: left;
+}
 
-			li button {
-				display: block;
-				color: #666;
-				text-align: center;
-				padding: 14px 16px;
-				text-decoration: none;
-				border-radius: 0;
-				background: darkgray;
-				border: none;
-				padding: 4px 8px;
-			}
+.nav li button {
+	display: block;
+	color: #666;
+	text-align: center;
+	padding: 14px 16px;
+	text-decoration: none;
+	border-radius: 0;
+	background: darkgray;
+	border: none;
+	padding: 4px 8px;
+}
 
-			li button:hover:not(.active) {
-				background-color: #ddd;
-				border: none;
-			}
+.nav li button:hover:not(.active) {
+	background-color: #ddd;
+	border: none;
+}
 
-			li button.active {
-				color: white;
-				background-color: #04aa6d;
-				border: none;
-			}
-		}
+.nav li button.active {
+	color: white;
+	background-color: var(--un-color-accent);
+	border: none;
+}
 
-		.results-count {
-			color: #1c5a1cff;
-			margin-right: 2rem;
-		}
-	}
+.results-count {
+	color: var(--un-color-accent);
+	margin-right: 2rem;
 }
 </style>
