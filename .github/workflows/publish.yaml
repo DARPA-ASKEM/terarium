@@ -11,9 +11,6 @@ on:
       - completed
   push:
     tags: ['*']
-  # # TODO: temporary for testing
-  # pull_request:
-  #   branches: ['main']
 
 env:
   REGISTRY: ghcr.io
@@ -33,14 +30,18 @@ jobs:
     steps:
       - name: debug
         run: |
-          echo "HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}"
-          echo "REF: ${{ github.ref_name }}"
-          if [[ '${{ github.ref_name }}' == 'main' ]]; then
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
           else
-            TAG=${{ github.ref_name}}
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
           fi
-          echo $TAG
+
+          echo "$TAG"
 
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
@@ -121,10 +122,18 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          if [[ '${{ github.ref_name }}' == 'main' ]]; then
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
           else
-            TAG=${{ github.ref_name}}
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
+          fi
+
+          echo "$TAG"
 
           echo "VERSION=${TAG,,}" >> ${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
