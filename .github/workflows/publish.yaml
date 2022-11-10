@@ -1,28 +1,17 @@
-# Automatically build Docker images on changes to main and push them to the GitHub
+---
+# Automatically build Docker images on changes to main and push them to a
 # Container Registry using HCL Bake file.
-#
-# NOTE: Ideally this workflow would be triggered only on pushes to the tag and not
-# to main. However due to a current limitation, the caching does not work properly
-# when trigged on a tag (https://github.com/docker/build-push-action/issues/433). So
-# until such time as that is fixed this workflow will build a new image every time
-# something is pushed to main. A separate workflow is then triggered on tag pushes
-# to automatically re-tag the built image and deploy.
 
 name: Build and Publish
 
 on:
   workflow_run:
     workflows: ['Playwright Tests', 'Lint & Test']
-    branches:
-      ['main', 'release/**', '203-bug-fix-building-the-terarium-applications']
+    branches: ['main']
     types:
       - completed
-  # push:
-  #   branches: ['203-bug-fix-building-the-terarium-applications']
-  #   tags: ['*']
-  # # TODO: temporary for testing
-  # pull_request:
-  #   branches: ['main']
+  push:
+    tags: ['*']
 
 env:
   REGISTRY: ghcr.io
@@ -31,6 +20,14 @@ env:
   BAKE_GROUP: prod
 
 jobs:
+  test:
+    if: contains(github.event.ref, '/tags/')
+    uses: ./.github/workflows/lint_test.yml
+
+  e2e-tests:
+    if: contains(github.event.ref, '/tags/')
+    uses: ./.github/workflows/playwright.yml
+
   # Generate a matrix based on all the targets defined in the
   # bake file.
   targets:
@@ -42,16 +39,23 @@ jobs:
     steps:
       - name: debug
         run: |
-          echo "HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}"
-          echo "REF: ${{ github.ref_name }}"
-          if [[ '${{ github.ref_name' == 'main' ]]; then
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
           else
-            TAG=${{ github.ref_name}}
-          echo $TAG
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
+          fi
+
+          echo "${{ github.event }}"
+          echo "$TAG"
 
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
+        if: contains(github.event.ref, '/tags/') == false
         uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
 
       # 1.1 - checkout the files
@@ -82,6 +86,7 @@ jobs:
     # this job depends on the 'targets' job
     needs:
       - targets
+      - test
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:
@@ -90,10 +95,6 @@ jobs:
         target: ${{ fromJson(needs.targets.outputs.matrix) }}
 
     steps:
-      # 2.0 - only run if the dependant workflows were successful
-      - name: Workflow Run Wait
-        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-
       # 2.1 - Checkout the repository
       - name: Checkout the repository
         uses: actions/checkout@v3
@@ -129,10 +130,18 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          if [[ '${{ github.ref_name' == 'main' ]]; then
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
           else
-            TAG=${{ github.ref_name}}
+            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
+            if [[ -n $SEMVER ]]; then
+              TAG=${SEMVER}
+            else
+              TAG=${{ github.ref_name }}
+            fi
+          fi
+
+          echo "$TAG"
 
           echo "VERSION=${TAG,,}" >> ${GITHUB_ENV}
           echo "DOCKER_REGISTRY=${{ env.REGISTRY }}" >> ${GITHUB_ENV}
