@@ -136,42 +136,43 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables';
-
-$input-element-height: 37px;
-
+<style scoped>
 .autocomplete-container {
 	position: relative;
 	flex-grow: 1;
 	height: auto;
+}
 
-	.autocomplete-results-container {
-		overflow-y: scroll;
-		flex-grow: 1;
-		width: 100%;
-		padding-right: 10px;
-		top: 85%; // Overlap the button slightly
-		max-height: 220px;
-		z-index: 2; // suggestion list on top of the other UI
-	}
-	.autocomplete-results {
-		padding: 0;
-		margin-left: 1rem;
-		background-color: $background-light-1;
-		.is-active {
-			background-color: $background-light-3;
-		}
-	}
-	:deep(.autocomplete-result) {
-		list-style: none;
-		text-align: left;
-		word-break: break-all;
-	}
+.autocomplete-container .autocomplete-results-container {
+	overflow-y: scroll;
+	flex-grow: 1;
+	width: 100%;
+	padding-right: 10px;
+	/* Overlap the button slightly */
+	top: 85%;
+	max-height: 220px;
+	/* suggestion list on top of the other UI */
+	z-index: 2;
+}
+
+.autocomplete-container .autocomplete-results {
+	padding: 0;
+	margin-left: 1rem;
+	background-color: var(--background-light-1);
+}
+
+.autocomplete-results .is-active {
+	background-color: var(--background-light-3);
+}
+
+.autocomplete-container :deep(.autocomplete-result) {
+	list-style: none;
+	text-align: left;
+	word-break: break-all;
 }
 
 .form-control {
-	width: calc(100% - 20px); // 20px = 2*margin
+	width: calc(100% - 20px);
 	margin-left: 10px;
 	margin-right: 10px;
 	padding: 0 10px;

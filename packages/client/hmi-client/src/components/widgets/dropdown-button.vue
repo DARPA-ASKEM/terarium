@@ -169,29 +169,28 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables';
-
+<style scoped>
 .dropdown-button-container {
 	position: relative;
 }
 
 .dropdown-control {
 	position: absolute;
+	top: 90%;
+	/* Overlap the button slightly */
 	right: 0;
-	top: 90%; // Overlap the button slightly
 	max-height: 400px;
 	overflow-y: auto;
+}
 
-	&.left-aligned {
-		left: 0;
-		right: auto;
-	}
+.dropdown-control.left-aligned {
+	left: 0;
+	right: auto;
+}
 
-	&.above {
-		bottom: 90%;
-		top: auto;
-	}
+.dropdown-control.above {
+	bottom: 90%;
+	top: auto;
 }
 
 .dropdown-option {
@@ -202,13 +201,12 @@ export default defineComponent({
 }
 
 .dropdown-option-selected {
-	color: $selected-dark;
+	color: var(--un-color-accent-dark);
 }
 
 .dropdown-btn {
 	display: flex;
 	align-items: center;
 	font-weight: normal;
-	// padding: 5px;
 }
 </style>

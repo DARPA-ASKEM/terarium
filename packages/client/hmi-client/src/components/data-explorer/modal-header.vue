@@ -56,7 +56,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .selected {
 	font-weight: bold;
 	margin: 12px;

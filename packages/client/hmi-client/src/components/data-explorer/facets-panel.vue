@@ -116,9 +116,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables';
-
+<style scoped>
 .facet-panel-container {
 	margin-top: 5px;
 }

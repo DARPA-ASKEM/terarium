@@ -1,3 +1,99 @@
+<script setup lang="ts">
+import { PropType, watch, toRefs, ref } from 'vue';
+import { XDDArticle } from '@/types/XDD';
+import { getResourceTypeIcon } from '@/utils/data-util';
+import { ResourceType } from '@/types/common';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
+import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
+import MultilineDescription from '@/components/widgets/multiline-description.vue';
+
+const props = defineProps({
+	articles: {
+		type: Array as PropType<XDDArticle[]>,
+		default: () => []
+	},
+	selectedSearchItems: {
+		type: Array as PropType<string[]>,
+		required: true
+	},
+	enableMultipleSelection: {
+		type: Boolean,
+		default: false
+	}
+});
+
+const { articles } = toRefs(props);
+const expandedRowId = ref('');
+
+const emit = defineEmits(['toggle-article-selected', 'set-article-selected']);
+
+function formatArticleAuthors(article: XDDArticle) {
+	return article.author.map((author) => author.name).join('\n');
+}
+
+function isExpanded(article: XDDArticle) {
+	return expandedRowId.value === article.title;
+}
+
+function formatDescription(article: XDDArticle) {
+	if (!article.abstract) {
+		return '';
+	}
+	return isExpanded(article) || article.abstract.length < 140
+		? article.abstract
+		: `${article.abstract.substring(0, 140)}...`;
+}
+
+function formatKnownTerms(article: XDDArticle) {
+	let knownTerms = '';
+	if (article.known_terms) {
+		article.known_terms.forEach((term) => {
+			knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
+			knownTerms += '<br />';
+			knownTerms += Object.values(term).flat().join(' ');
+			knownTerms += '<br />';
+		});
+	}
+	return knownTerms;
+}
+
+function formatTitle(article: XDDArticle) {
+	return article.title ? article.title : article.title;
+}
+
+function isSelected(article: XDDArticle) {
+	return props.selectedSearchItems.find((item) => item === article.title) !== undefined;
+}
+
+function updateExpandedRow(article: XDDArticle) {
+	expandedRowId.value = expandedRowId.value === article.title ? '' : article.title;
+}
+
+function updateSelection(article: XDDArticle) {
+	const item = article.title;
+	if (props.enableMultipleSelection) {
+		// if the article is not in the list add it, otherwise remove it
+		emit('toggle-article-selected', item);
+	} else {
+		// only one selection is allowed, so replace the entire array
+		emit('set-article-selected', item);
+	}
+}
+
+watch(
+	articles,
+	() => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elem: any = document.getElementsByClassName('table-fixed-head');
+		if (elem.length === 0) return;
+		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+</script>
+
 <template>
 	<div class="search-listview-container">
 		<div class="table-fixed-head">
@@ -76,269 +172,142 @@
 	</div>
 </template>
 
-<script lang="ts">
-// import moment from 'moment';
-import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { XDDArticle } from '@/types/XDD';
-import { ResourceType } from '@/types/common';
-import { getResourceTypeIcon } from '@/utils/data-util';
-import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
-import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
-import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
-
-export default defineComponent({
-	name: 'ArticlesListview',
-	components: {
-		MultilineDescription,
-		IconCheckbox20,
-		IconCheckboxChecked20,
-		IconRadioButton20,
-		IconCloseOutline20
-	},
-	props: {
-		articles: {
-			type: Array as PropType<XDDArticle[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<string[]>,
-			required: true
-		},
-		enableMultipleSelection: {
-			type: Boolean,
-			default: false
-		}
-	},
-	emits: ['toggle-article-selected', 'set-article-selected'],
-	setup(props) {
-		const expandedRowId = ref('');
-
-		const { articles } = toRefs(props);
-
-		watch(
-			articles,
-			() => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const elem: any = document.getElementsByClassName('table-fixed-head');
-				if (elem.length === 0) return;
-				elem[0].scrollTop = 0;
-			},
-			{ immediate: true }
-		);
-
-		return {
-			expandedRowId,
-			ResourceType,
-			getResourceTypeIcon
-		};
-	},
-	methods: {
-		isExpanded(article: XDDArticle) {
-			return this.expandedRowId === article.title;
-		},
-		updateExpandedRow(article: XDDArticle) {
-			this.expandedRowId = this.expandedRowId === article.title ? '' : article.title;
-		},
-		formatTitle(d: XDDArticle) {
-			return d.title ? d.title : d.title;
-		},
-		formatArticleAuthors(d: XDDArticle) {
-			return d.author.map((a) => a.name).join('\n');
-		},
-		isSelected(article: XDDArticle) {
-			return this.selectedSearchItems.find((item) => item === article.title) !== undefined;
-		},
-		updateSelection(article: XDDArticle) {
-			const item = article.title;
-			if (this.enableMultipleSelection) {
-				// if the article is not in the list add it, otherwise remove it
-				this.$emit('toggle-article-selected', item);
-			} else {
-				// only one selection is allowed, so replace the entire array
-				this.$emit('set-article-selected', item);
-			}
-		},
-		formatDescription(d: XDDArticle) {
-			if (!d.abstract) return '';
-			return this.isExpanded(d) || d.abstract.length < 140
-				? d.abstract
-				: `${d.abstract.substring(0, 140)}...`;
-		},
-		formatKnownTerms(d: XDDArticle) {
-			let knownTerms = '';
-			if (d.known_terms) {
-				d.known_terms.forEach((term) => {
-					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
-					knownTerms += '<br />';
-					knownTerms += Object.values(term).flat().join(' ');
-					knownTerms += '<br />';
-				});
-			}
-			return knownTerms;
-		}
-	}
-});
-</script>
-
-<style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
+<style scoped>
 .search-listview-container {
-	background: $background-light-2;
+	background: var(--background-light-2);
 	color: black;
 	width: 100%;
+}
 
-	table {
-		border-collapse: collapse;
-		width: 100%;
-		vertical-align: top;
-	}
+table {
+	border-collapse: collapse;
+	width: 100%;
+	vertical-align: top;
+}
 
-	th,
-	td {
-		padding: 8px 16px;
-	}
+th {
+	padding: 8px 16px;
+}
 
-	tr {
-		border: 2px solid $separator;
-		cursor: pointer;
-	}
+td {
+	padding: 8px 16px;
+	background: var(--background-light-1);
+	vertical-align: top;
+}
 
-	thead {
-		tr {
-			border: none;
-		}
+tr {
+	border: 2px solid var(--separator);
+	cursor: pointer;
+}
 
-		th {
-			border: none;
-		}
-	}
+thead tr,
+thead td {
+	border: none;
+}
 
-	td {
-		background: $background-light-1;
-		vertical-align: top;
-	}
+tr th {
+	font-size: var(--font-size-small);
+	font-weight: normal;
+}
 
-	tr th {
-		font-size: $font-size-small;
-		font-weight: normal;
-	}
+.table-fixed-head {
+	overflow-y: auto;
+	overflow-x: hidden;
+	height: 100%;
+	width: 100%;
+}
 
-	.table-fixed-head {
-		overflow-y: auto;
-		overflow-x: hidden;
-		height: 100%;
-		width: 100%;
-	}
+.table-fixed-head thead th {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	background-color: aliceblue;
+}
 
-	.table-fixed-head thead th {
-		position: sticky;
-		top: -1px;
-		z-index: 1;
-		background-color: aliceblue;
-	}
+.left-cover,
+.right-cover {
+	/* Cover left and right gap in the fixed table header */
+	position: absolute;
+	height: 100%;
+	width: 2px;
+	left: -2px;
+	background: var(--background-light-2);
+	top: 0;
+}
 
-	.left-cover,
-	.right-cover {
-		// Cover left and right gap in the fixed table header
-		position: absolute;
-		height: 100%;
-		width: 2px;
-		left: -2px;
-		background: $background-light-2;
-		top: 0;
-	}
+.right-cover {
+	left: unset;
+	right: -2px;
+}
 
-	.right-cover {
-		left: unset;
-		right: -2px;
-	}
+.tr-item {
+	height: 50px;
+}
 
-	.tr-item {
-		height: 50px;
-	}
+.tr-item.selected {
+	border: 2px double var(--un-color-accent-light);
+}
 
-	.tr-item.selected {
-		border: 2px double $selected;
+.tr-item.selected .title-and-abstract-col {
+	border-left: 2px solid var(--un-color-accent-light);
+}
 
-		.title-and-abstract-col {
-			border-left: 4px solid $selected;
-		}
+.tr-item.selected td {
+	background-color: var(--un-color-accent-light);
+}
 
-		td {
-			background-color: $tinted-background;
-		}
-	}
+.text-bold {
+	font-weight: 500;
+	margin-bottom: 5px;
+}
 
-	.text-bold {
-		font-weight: 500;
-		margin-bottom: 5px;
-	}
+.title-and-abstract-col {
+	width: 40%;
+}
 
-	.title-and-abstract-col {
-		width: 40%;
+.title-and-abstract-layout {
+	display: flex;
+	align-content: stretch;
+	align-items: stretch;
+}
 
-		.title-and-abstract-layout {
-			display: flex;
-			align-content: stretch;
-			align-items: stretch;
+.title-and-abstract-layout .radio {
+	flex: 0 0 auto;
+	align-self: flex-start;
+	margin: 3px 5px 0 0;
+}
 
-			.radio {
-				flex: 0 0 auto;
-				align-self: flex-start;
-				margin: 3px 5px 0 0;
+.title-and-abstract-layout .content {
+	flex: 1 1 auto;
+	overflow-wrap: anywhere;
+}
 
-				.disabled {
-					color: $background-light-3;
-				}
-			}
+.title-and-abstract-layout .content .knobs {
+	margin-top: 10px;
+}
 
-			.content {
-				flex: 1 1 auto;
-				overflow-wrap: anywhere;
+.publisher-and-author-col {
+	width: 33%;
+	overflow-wrap: anywhere;
+}
 
-				.not-ready-label {
-					font-weight: 600;
-					border: none;
-					border-radius: 5px;
-					background-color: $background-light-3;
-					color: darkgray;
-					padding: 6px;
-					float: right;
-				}
+.known-terms-col {
+	width: 20%;
+}
 
-				.knobs {
-					margin-top: 10px;
-				}
-			}
-		}
-	}
+.journal-col {
+	width: 120px;
+}
 
-	.publisher-and-author-col {
-		width: 33%;
-		overflow-wrap: anywhere;
-	}
+/* time series hidden until actually put into use */
+.preview-col {
+	padding-left: 5px;
+	padding-right: 10px;
+}
 
-	.known-terms-col {
-		width: 20%;
-	}
-
-	.journal-col {
-		width: 120px;
-	}
-
-	// time series hidden until actually put into use
-	.preview-col {
-		padding-left: 5px;
-		padding-right: 10px;
-	}
-
-	.preview-container {
-		background-color: #f1f1f1;
-		width: 100px;
-		height: 50px;
-	}
+.preview-container {
+	background-color: #f1f1f1;
+	width: 100px;
+	height: 50px;
 }
 </style>

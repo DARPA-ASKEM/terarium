@@ -143,7 +143,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .search-bar-container {
 	display: flex;
 	background-color: darkgray;
@@ -159,21 +159,18 @@ export default defineComponent({
 	cursor: pointer;
 }
 
-.clear-button {
-	color: white;
-}
-
 .search-button {
-	background-color: #2d8e2dff;
+	background-color: var(--un-color-accent);
 }
 
 .search-button-disabled {
-	background-color: darken($color: #92e192ff, $amount: 50%);
+	background-color: var(--un-color-accent-dark);
 	cursor: not-allowed;
+	color: gray;
 }
 
 .clear-button-disabled {
-	background-color: darken($color: white, $amount: 50%);
+	background-color: gray;
 	cursor: not-allowed;
 }
 
@@ -186,14 +183,14 @@ export default defineComponent({
 	display: flex;
 	align-items: center;
 	color: var(--un-color-accent-darker);
+}
 
-	.flex-aligned-item-delete-btn {
-		color: red;
-	}
+.flex-aligned-item-delete-btn {
+	color: red;
+}
 
-	.flex-aligned-item-delete-btn:hover {
-		cursor: pointer;
-	}
+.flex-aligned-item-delete-btn:hover {
+	cursor: pointer;
 }
 
 .search-label {
