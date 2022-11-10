@@ -1,25 +1,16 @@
-# Automatically build Docker images on changes to main and push them to the GitHub
+# Automatically build Docker images on changes to main and push them to a
 # Container Registry using HCL Bake file.
-#
-# NOTE: Ideally this workflow would be triggered only on pushes to the tag and not
-# to main. However due to a current limitation, the caching does not work properly
-# when trigged on a tag (https://github.com/docker/build-push-action/issues/433). So
-# until such time as that is fixed this workflow will build a new image every time
-# something is pushed to main. A separate workflow is then triggered on tag pushes
-# to automatically re-tag the built image and deploy.
 
 name: Build and Publish
 
 on:
   workflow_run:
     workflows: ['Playwright Tests', 'Lint & Test']
-    branches:
-      ['main', 'release/**', '203-bug-fix-building-the-terarium-applications']
+    branches: ['main']
     types:
       - completed
-  # push:
-  #   branches: ['203-bug-fix-building-the-terarium-applications']
-  #   tags: ['*']
+  push:
+    tags: ['*']
   # # TODO: temporary for testing
   # pull_request:
   #   branches: ['main']
@@ -44,7 +35,7 @@ jobs:
         run: |
           echo "HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}"
           echo "REF: ${{ github.ref_name }}"
-          if [[ '${{ github.ref_name' == 'main' ]]; then
+          if [[ '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
           else
             TAG=${{ github.ref_name}}
@@ -129,7 +120,7 @@ jobs:
       # NOTE: this overrides the defaults and should be specific to this deployment
       - name: set env variables for bakefile
         run: |
-          if [[ '${{ github.ref_name' == 'main' ]]; then
+          if [[ '${{ github.ref_name }}' == 'main' ]]; then
             TAG=latest
           else
             TAG=${{ github.ref_name}}
@@ -162,7 +153,7 @@ jobs:
         with:
           files: ./${{ env.BAKE_FILE }}
           targets: ${{ matrix.target }}
-          push: true
+          push: false
           set: |
             *.cache-from=type=gha,scope=build-${{ matrix.target }}
             *.cache-to=type=gha,scope=build-${{ matrix.target }},mode=max
