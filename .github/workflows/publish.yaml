@@ -57,6 +57,8 @@ jobs:
       - name: Workflow Run Wait
         if: contains(github.event.ref, '/tags/') == false
         uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
+        with:
+          timeout: 600000
 
       # 1.1 - checkout the files
       - name: Checkout
