@@ -39,6 +39,7 @@ jobs:
             TAG=latest
           else
             TAG=${{ github.ref_name}}
+          fi
           echo $TAG
 
       # 1.0 - only run if the dependant workflows were successful
