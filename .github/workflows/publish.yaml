@@ -171,7 +171,7 @@ jobs:
         with:
           files: ./${{ env.BAKE_FILE }}
           targets: ${{ matrix.target }}
-          push: false
+          push: true
           set: |
             *.cache-from=type=gha,scope=build-${{ matrix.target }}
             *.cache-to=type=gha,scope=build-${{ matrix.target }},mode=max
