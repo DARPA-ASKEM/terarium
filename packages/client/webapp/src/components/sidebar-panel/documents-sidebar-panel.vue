@@ -75,8 +75,6 @@ main {
 	gap: 1rem;
 	padding: 1rem;
 	height: calc(100vh - 50px);
-	overflow: hidden;
-	width: 100%;
 }
 
 header {
