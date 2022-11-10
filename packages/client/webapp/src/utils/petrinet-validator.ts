@@ -1,4 +1,4 @@
-export interface Petrinet {
+export interface PetriNet {
 	S: State[]; // List of state names
 	T: Transition[]; // List of transition names
 	I: Input[]; // List of inputs
@@ -23,34 +23,29 @@ interface Output {
 }
 
 /* Validates petrinet - check #2 must come before check #5 to avoid an infinite loop */
-export const petrinetValidator = (petrinet: Petrinet): boolean => {
+export const petriNetValidator = (petrinet: PetriNet): string => {
 	const { S, T, I, O } = petrinet;
 	// console.log(petrinet);
 
 	/* ----- 1. Requires at least one edge ----- */
-	if (I.length < 1 && O.length < 1) {
-		console.log('#1');
-		return false;
-	}
+	if (I.length < 1 && O.length < 1) return 'Invalid petri net: #1. Requires at least one edge';
 
 	/* ----- 2. Check that every node is at least either a source or a target ----- */
 	const checkIfSourceOrTarget = (linkedIDs: number[], lastNodeID: number): boolean => {
-		for (let id = 1; id < lastNodeID; id++) {
-			if (!linkedIDs.includes(id)) {
-				console.log('#2');
-				return false;
-			}
-		}
+		for (let id = 1; id < lastNodeID; id++) if (!linkedIDs.includes(id)) return false;
 		return true;
 	};
 	const linkedTransitionIDs: number[] = [
 		...new Set([...I.map((input) => input.it), ...O.map((output) => output.ot)])
 	];
-	if (!checkIfSourceOrTarget(linkedTransitionIDs, T.length + 1)) return false;
 	const linkedStateIDs: number[] = [
 		...new Set([...I.map((input) => input.is), ...O.map((output) => output.os)])
 	];
-	if (!checkIfSourceOrTarget(linkedStateIDs, S.length + 1)) return false;
+	if (
+		!checkIfSourceOrTarget(linkedTransitionIDs, T.length + 1) ||
+		!checkIfSourceOrTarget(linkedStateIDs, S.length + 1)
+	)
+		return 'Invalid petri net: #2. Every transition node should be at least either a source or a target';
 
 	/* ----- 3. Make sure there aren't multiple petrinet bodies ----- */
 	const statesSurroundingTransitions: number[][] = [];
@@ -82,11 +77,9 @@ export const petrinetValidator = (petrinet: Petrinet): boolean => {
 		// console.log(potentialConnections);
 
 		// If the potential connections from the last iteration are the exact same then there is more than one petrinet body
-		if (statesToMerge.length === potentialConnections.length) {
-			console.log('#5');
-			return false;
-		}
+		if (statesToMerge.length === potentialConnections.length)
+			return 'Invalid petri net: #3. There are multiple petri net bodies';
 	} while (potentialConnections.length > 0);
 
-	return true; // All checks have been successfully passed
+	return 'Valid petri net'; // All checks have been successfully passed
 };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { petrinetValidator, Petrinet } from '@/utils/petrinet-validator';
+import { petriNetValidator, PetriNet } from '@/utils/petrinet-validator';
 
-const falsePetrinets: Petrinet[] = [
+const falsePetriNets: PetriNet[] = [
 	// No edges - caught by check #1.
 	{
 		T: [
@@ -48,7 +48,7 @@ const falsePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// More than one petrinet - caught by check #3
+	// More than one petri net - caught by check #3
 	{
 		T: [
 			{
@@ -95,7 +95,7 @@ const falsePetrinets: Petrinet[] = [
 	}
 ];
 
-const truePetrinets: Petrinet[] = [
+const truePetriNets: PetriNet[] = [
 	// Place -> <- Transition
 	{
 		T: [
@@ -149,7 +149,7 @@ const truePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// Slightly larger petrinet
+	// Slightly larger petri net
 	{
 		T: [
 			{
@@ -216,7 +216,7 @@ const truePetrinets: Petrinet[] = [
 			}
 		]
 	},
-	// "More complex" petrinet - Must not be stopped by check #3
+	// "More complex" petri net - Must not be stopped by check #3
 	{
 		T: [
 			{
@@ -309,34 +309,40 @@ const truePetrinets: Petrinet[] = [
 	}
 ];
 
-describe('test the petrinet validator with a variety of graphs', () => {
+describe('test the petri net validator with a variety of graphs', () => {
 	// Returns false
 	it('should be invalid as there are no edges', () => {
-		expect(petrinetValidator(falsePetrinets[0])).eq(false);
+		expect(petriNetValidator(falsePetriNets[0])).eq(
+			'Invalid petri net: #1. Requires at least one edge'
+		);
 	});
 
 	it('should be invalid as a node is not recognized as a source or a target', () => {
-		expect(petrinetValidator(falsePetrinets[1])).eq(false);
+		expect(petriNetValidator(falsePetriNets[1])).eq(
+			'Invalid petri net: #2. Every transition node should be at least either a source or a target'
+		);
 	});
 
-	it('should be invalid as this has more than one petrinet body', () => {
-		expect(petrinetValidator(falsePetrinets[2])).eq(false);
+	it('should be invalid as this has more than one petri net body', () => {
+		expect(petriNetValidator(falsePetriNets[2])).eq(
+			'Invalid petri net: #3. There are multiple petri net bodies'
+		);
 	});
 
 	// Returns true
-	it('should be valid (small petrinet -  Place -> <- Transition)', () => {
-		expect(petrinetValidator(truePetrinets[0])).eq(true);
+	it('should be valid (small petri net -  Place -> <- Transition)', () => {
+		expect(petriNetValidator(truePetriNets[0])).eq('Valid petri net');
 	});
 
-	it('should be valid (small petrinet - Transition -> Place -> Transition)', () => {
-		expect(petrinetValidator(truePetrinets[1])).eq(true);
+	it('should be valid (small petri net - Transition -> Place -> Transition)', () => {
+		expect(petriNetValidator(truePetriNets[1])).eq('Valid petri net');
 	});
 
 	it('should be valid (slightly larger)', () => {
-		expect(petrinetValidator(truePetrinets[2])).eq(true);
+		expect(petriNetValidator(truePetriNets[2])).eq('Valid petri net');
 	});
 
-	it('should be valid ("complex" petrinet - should not be stopped by check #3)', () => {
-		expect(petrinetValidator(truePetrinets[3])).eq(true);
+	it('should be valid ("complex" petri net - should not be stopped by check #3)', () => {
+		expect(petriNetValidator(truePetriNets[3])).eq('Valid petri net');
 	});
 });
