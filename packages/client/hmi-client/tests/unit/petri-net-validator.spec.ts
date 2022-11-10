@@ -310,7 +310,7 @@ const truePetriNets: PetriNet[] = [
 ];
 
 describe('test the petri net validator with a variety of graphs', () => {
-	// Returns false
+	// Invalid petri nets
 	it('should be invalid as there are no edges', () => {
 		expect(petriNetValidator(falsePetriNets[0])).eq(
 			'Invalid petri net: #1. Requires at least one edge'
@@ -329,7 +329,7 @@ describe('test the petri net validator with a variety of graphs', () => {
 		);
 	});
 
-	// Returns true
+	// Valid petri nets
 	it('should be valid (small petri net -  Place -> <- Transition)', () => {
 		expect(petriNetValidator(truePetriNets[0])).eq('Valid petri net');
 	});
