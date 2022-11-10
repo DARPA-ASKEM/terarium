@@ -1,5 +1,5 @@
 <script lang="ts">
-import { BasicRenderer, IGraph, INode, IEdge, traverseGraph } from 'graph-scaffolder';
+import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
@@ -10,7 +10,7 @@ const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
 
-	traverseGraph(graphData, (node: INode<V>) => {
+	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
 		if (node.width && node.height) {
 			g.setNode(node.id, {
 				label: node.id,
@@ -42,7 +42,7 @@ const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 		node.y -= node.height * 0.5;
 	});
 
-	traverseGraph(graphData, (node) => {
+	graphScaffolder.traverseGraph(graphData, (node) => {
 		const n = g.node(node.id);
 		node.width = n.width;
 		node.height = n.height;
@@ -89,7 +89,8 @@ export const pathFn = d3
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
-class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
+
+class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 
@@ -162,19 +163,22 @@ let modelId = ''; // The session model
 let source: any = null;
 let target: any = null;
 
+let numRabbits = 100;
+let numWolves = 10;
+
 export default defineComponent({
 	name: 'TA2Playground',
 	async mounted() {
 		console.log('TA2 Playground initialized');
 
-		const playground = document.getElementById('playground');
+		const playground = document.getElementById('playground') as HTMLDivElement;
 		renderer = new SampleRenderer({
-			el: playground,
+			el: playground ?? undefined,
 			useAStarRouting: true,
 			runLayout
 		});
 
-		renderer.on('node-click', (evtName, evt, d) => {
+		renderer.on('node-click', (_evtName, evt, d) => {
 			if (evt.shiftKey) {
 				if (source) {
 					target = d;
@@ -211,8 +215,127 @@ export default defineComponent({
 	},
 	methods: {
 		async refresh() {
-			await renderer.setData(g);
-			await renderer.render();
+			await renderer?.setData(g);
+			await renderer?.render();
+		},
+		async LotkaVolterra() {
+			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
+			const testData = await test.json();
+			modelId = testData.id;
+
+			console.log('modle id is', modelId);
+
+			// Reset
+			g.nodes = [];
+			g.edges = [];
+
+			g.nodes.push({
+				id: 'rabbits',
+				label: 'rabbits',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'species' }
+			});
+			g.nodes.push({
+				id: 'wolves',
+				label: 'wolves',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'species' }
+			});
+			g.nodes.push({
+				id: 'death',
+				label: 'death',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'transition' }
+			});
+			g.nodes.push({
+				id: 'birth',
+				label: 'birth',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'transition' }
+			});
+			g.nodes.push({
+				id: 'predation',
+				label: 'predation',
+				x: 0,
+				y: 0,
+				height: 50,
+				width: 50,
+				nodes: [],
+				data: { type: 'transition' }
+			});
+
+			g.edges.push({ id: '1', source: 'wolves', target: 'death', points: [], data: { val: 1 } });
+			g.edges.push({
+				id: '2',
+				source: 'predation',
+				target: 'wolves',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({
+				id: '3',
+				source: 'wolves',
+				target: 'predation',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({
+				id: '4',
+				source: 'rabbits',
+				target: 'predation',
+				points: [],
+				data: { val: 1 }
+			});
+			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
+			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
+
+			g = runLayout(_.cloneDeep(g));
+
+			await fetch(`http://localhost:8888/api/models/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					nodes: [
+						{ name: 'rabbits', type: 'S' },
+						{ name: 'wolves', type: 'S' },
+						{ name: 'birth', type: 'T' },
+						{ name: 'death', type: 'T' },
+						{ name: 'predation', type: 'T' }
+					],
+					edges: [
+						{ source: 'wolves', target: 'death' },
+						{ source: 'predation', target: 'wolves' },
+						{ source: 'predation', target: 'wolves' },
+						{ source: 'wolves', target: 'predation' },
+						{ source: 'rabbits', target: 'predation' },
+						{ source: 'rabbits', target: 'birth' },
+						{ source: 'birth', target: 'rabbits' },
+						{ source: 'birth', target: 'rabbits' }
+					]
+				})
+			});
+
+			this.refresh();
+			this.jsonOutput();
 		},
 		async jsonOutput() {
 			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
@@ -224,6 +347,7 @@ export default defineComponent({
 		// eslint-disable-next-line
 		async addEdge(source: any, target: any) {
 			g.edges.push({
+				id: `${source.datum().id}_${target.datum().id}`,
 				source: source.datum().id,
 				target: target.datum().id,
 				points: [
@@ -235,7 +359,8 @@ export default defineComponent({
 						x: target.datum().x + target.datum().width * 0.5,
 						y: target.datum().y + target.datum().height * 0.5
 					}
-				]
+				],
+				data: { val: 1 }
 			});
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
@@ -325,6 +450,75 @@ export default defineComponent({
 				})
 			});
 			this.jsonOutput();
+		},
+		async simulate() {
+			numWolves = +(Math.random() * 100).toFixed();
+			numRabbits = +(Math.random() * 100).toFixed();
+
+			// Run a simulation on LotkaVolterra with random values
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/simulate`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					variables: {
+						rabbits: numRabbits,
+						wolves: numWolves
+					},
+					parameters: {
+						birth: 0.3,
+						predation: 0.015,
+						death: 0.7
+					}
+				})
+			});
+			const output = await resp.json();
+			this.renderResult(output);
+		},
+		renderResult(result: any) {
+			const el = d3.select('#solution');
+			el.selectAll('*').remove();
+			console.log(result);
+
+			const svg = el.append('svg').style('width', '100%').style('height', '100%');
+
+			svg
+				.append('text')
+				.attr('x', 20)
+				.attr('y', 35)
+				.style('stroke', null)
+				.style('fill', 'red')
+				.text(`rabbits: ${numRabbits}`);
+
+			svg
+				.append('text')
+				.attr('x', 120)
+				.attr('y', 35)
+				.style('stroke', null)
+				.style('fill', 'blue')
+				.text(`wolves: ${numWolves}`);
+
+			for (let idx = 0; idx < result.u.length; idx++) {
+				const bars = result.u[idx];
+
+				svg
+					.append('circle')
+					.attr('cx', 6 * idx)
+					.attr('cy', 200 - bars[0])
+					.attr('r', 3)
+					.style('stroke', null)
+					.style('fill', 'red');
+
+				svg
+					.append('circle')
+					.attr('cx', 6 * idx)
+					.attr('cy', 200 - bars[1])
+					.attr('r', 3)
+					.style('stroke', null)
+					.style('fill', 'blue');
+			}
 		}
 	}
 });
@@ -335,8 +529,13 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
+		&nbsp;
+		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
+		<button type="button" @click="simulate">Simulate</button>
+
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
+			<div id="solution" class="playground-panel"></div>
 			<div id="output" class="playground-panel"></div>
 		</div>
 	</section>

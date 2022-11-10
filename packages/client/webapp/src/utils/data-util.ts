@@ -3,6 +3,10 @@ import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
+import IconDocument20 from '@carbon/icons-vue/es/document/20';
+import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
+import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
+import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
 
 const applyFiltersToArticles = (articles: XDDArticle[], filters: Filters) => {
 	const { clauses } = filters;
@@ -60,16 +64,16 @@ export const applyFacetFiltersToData = (
 };
 
 export const getResourceTypeIcon = (type: string) => {
-	if (type === ResourceType.MODEL) {
-		return 'fa-regular fa-brands fa-connectdevelop';
+	switch (type) {
+		case ResourceType.MODEL:
+			return IconMachineLearningModel20;
+		case ResourceType.DATASET:
+			return IconTableSplit20;
+		case ResourceType.XDD:
+			return IconDocumentBlank20;
+		default:
+			return IconDocument20;
 	}
-	if (type === ResourceType.DATASET) {
-		return 'fa-regular fa-solid fa-table-cells';
-	}
-	if (type === ResourceType.XDD) {
-		return 'fa-solid fa-file';
-	}
-	return 'fa-regular fa-solid fa-file-lines';
 };
 
 export function isModel(item: ResultType): item is Model {

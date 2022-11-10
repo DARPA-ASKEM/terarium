@@ -43,7 +43,7 @@ const getXDDDictionaries = async () => {
 };
 
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => {
+const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) => {
 	const finalModels: Model[] = [];
 
 	//
@@ -278,16 +278,16 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 		try {
 			resolve(searchXDDArticles(term, searchParam?.xdd));
 		} catch (err: any) {
-			reject(new Error('Error fetching XDD results', err));
+			reject(new Error(`Error fetching XDD results: ${err}`));
 		}
 	});
 
 	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getModels(term, searchParam?.models));
+			resolve(getModels(term, searchParam?.model));
 		} catch (err: any) {
-			reject(new Error('Error fetching models results', err));
+			reject(new Error(`Error fetching models results: ${err}`));
 		}
 	});
 

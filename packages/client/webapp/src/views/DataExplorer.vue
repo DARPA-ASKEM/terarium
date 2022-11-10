@@ -68,7 +68,7 @@
 							<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
 								{{ term }}
 								<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
-									<i class="fa fa-fw fa-close" />
+									<IconClose16 />
 								</span>
 							</div>
 						</div>
@@ -77,7 +77,7 @@
 							class="co-occurrence-matrix-btn"
 							:disabled="dictNames.length !== 2"
 						>
-							<i class="fa-solid fa-table-cells-large" />&nbsp;co-occurrence matrix
+							<IconScatterMatrix16 />&nbsp;co-occurrence matrix
 						</button>
 					</template>
 				</div>
@@ -204,6 +204,9 @@ import DrilldownPanel from '@/components/drilldown-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import useResourcesStore from '@/stores/resources';
 
+import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
+
 // FIXME: page count is not taken into consideration
 // FIXME: remove SASS
 
@@ -227,6 +230,8 @@ export default defineComponent({
 		ToggleButton,
 		FacetsPanel,
 		AutoComplete,
+		IconScatterMatrix16,
+		IconClose16,
 		DrilldownPanel,
 		SelectedResourcesOptionsPane
 	},
@@ -610,6 +615,7 @@ export default defineComponent({
 			.flex-aligned-item-delete-btn {
 				color: red;
 			}
+
 			.flex-aligned-item-delete-btn:hover {
 				cursor: pointer;
 			}

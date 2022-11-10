@@ -14,9 +14,14 @@ test.describe('main landing page test', () => {
 		await expect(page).toHaveTitle(/TERArium/);
 
 		// create a locator
-		const header = page.locator('text=Test API calls/Home placeholder');
+		const header = page.locator('text=Recents');
 
 		// Expect an attribute "to be strictly equal" to the value.
 		await expect(header).toBeVisible();
+	});
+
+	test('should not display sidebar on home page', async ({ page }) => {
+		const sidebar = page.locator('data-test-id=sidebar');
+		await expect(sidebar).not.toBeVisible();
 	});
 });
