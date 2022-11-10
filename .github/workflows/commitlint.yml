@@ -1,3 +1,4 @@
+---
 # This action makes PRs require conventional commits in both
 #   the pull request title, and commit message.
 #
