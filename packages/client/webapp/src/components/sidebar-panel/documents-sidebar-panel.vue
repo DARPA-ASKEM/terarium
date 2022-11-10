@@ -13,7 +13,7 @@
 				>
 					<span>{{ formatTitle(doc) }}</span>
 					<span class="doc-delete-btn" @click.stop="removeDoc(doc)">
-						<i class="fa fa-fw fa-close" />
+						<IconClose32 />
 					</span>
 				</div>
 			</div>
@@ -32,6 +32,7 @@ import { getResourceID } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import IconClose32 from '@carbon/icons-vue/es/close/32';
 
 const router = useRouter();
 

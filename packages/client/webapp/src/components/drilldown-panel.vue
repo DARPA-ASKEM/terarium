@@ -10,7 +10,7 @@
 			<div class="overlay-pane" :class="{ open: isOverlayOpen }">
 				<div class="panel-header">
 					<div class="navigation-button back-button" @click="onOverlayBack">
-						<i class="fa fa-fw fa-angle-left" />
+						<IconArrowLeft32 />
 					</div>
 					<h5>{{ overlayPaneTitle }}</h5>
 				</div>
@@ -24,6 +24,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
+import IconArrowLeft32 from '@carbon/icons-vue/es/arrow--left/32';
 
 interface DrilldownPanelTab {
 	id: string;
@@ -66,7 +67,9 @@ export default defineComponent({
 		}
 	},
 	emits: ['close', 'tab-click', 'overlay-back'],
-	data: () => ({}),
+	data: () => ({
+		IconArrowLeft32
+	}),
 	computed: {
 		paneTitle(): string {
 			const activeTab = this.tabs.find((tab) => tab.id === this.activeTabId);
