@@ -23,6 +23,10 @@ jobs:
     if: contains(github.event.ref, '/tags/')
     uses: ./.github/workflows/lint_test.yml
 
+  e2e-tests:
+    if: contains(github.event.ref, '/tags/')
+    uses: ./.github/workflows/playwright.yml
+
   # Generate a matrix based on all the targets defined in the
   # bake file.
   targets:
@@ -90,10 +94,6 @@ jobs:
         target: ${{ fromJson(needs.targets.outputs.matrix) }}
 
     steps:
-      # # 2.0 - only run if the dependant workflows were successful
-      # - name: Workflow Run Wait
-      #   uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-
       # 2.1 - Checkout the repository
       - name: Checkout the repository
         uses: actions/checkout@v3

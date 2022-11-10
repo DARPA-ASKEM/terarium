@@ -30,3 +30,13 @@ jobs:
 
       - name: Run Unit Tests
         run: yarn test
+
+  lintYaml:
+    name: Lint YAML Files
+    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yml@6d07413d0708f944cb145ac4748a4fa6f948d83b
+    with:
+      strict: false
+
+  lintDocker:
+    name: Lint Docker Files
+    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yml@6d07413d0708f944cb145ac4748a4fa6f948d83b
