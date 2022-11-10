@@ -33,10 +33,10 @@ jobs:
 
   lintYaml:
     name: Lint YAML Files
-    uses: DARPA-ASKEM/orchestration/.github/workflows/lint-yaml.yml@6d07413d0708f944cb145ac4748a4fa6f948d83b
+    uses: DARPA-ASKEM/orchestration/.github/workflows/lint-yaml.yml@80334cf4e4a217d9ce5776b91f6d44219b218302
     with:
       strict: false
 
   lintDocker:
     name: Lint Docker Files
-    uses: DARPA-ASKEM/orchestration/.github/workflows/lint-docker.yml@6d07413d0708f944cb145ac4748a4fa6f948d83b
+    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yml@80334cf4e4a217d9ce5776b91f6d44219b218302
