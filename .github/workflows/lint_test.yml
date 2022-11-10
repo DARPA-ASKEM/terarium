@@ -40,7 +40,7 @@ jobs:
 
   lintDocker:
     name: Lint Docker Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yml@80334cf4e4a217d9ce5776b91f6d44219b218302
+    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yml@d34cc635c0729edc12fc6bf0f2bffd07e585316b
     with:
       failure-threshold: 'error'
 
