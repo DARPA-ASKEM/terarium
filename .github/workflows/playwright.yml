@@ -24,6 +24,7 @@ jobs:
     steps:
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
+        if: contains(github.event.ref, '/tags/') == false
         uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
 
       - uses: actions/checkout@v3
@@ -79,6 +80,7 @@ jobs:
     steps:
       # 1.0 - only run if the dependant workflows were successful
       - name: Workflow Run Wait
+        if: contains(github.event.ref, '/tags/') == false
         uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
 
       - uses: actions/checkout@v3
