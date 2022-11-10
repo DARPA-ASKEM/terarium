@@ -25,10 +25,6 @@ dependencies {
 	implementation "io.quarkus:quarkus-oidc"
 	implementation "io.quarkus:quarkus-keycloak-authorization"
 
-	// Docker dependencies
-	implementation "io.quarkus:quarkus-container-image-docker"
-	implementation "io.quarkus:quarkus-kubernetes"
-
 	// Test
 	testImplementation "io.rest-assured:rest-assured"
 	testImplementation "io.quarkus:quarkus-test-oidc-server"
