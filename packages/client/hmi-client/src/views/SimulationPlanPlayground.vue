@@ -92,6 +92,7 @@ const plan = {
 
 interface NodeData {
 	boxType: string;
+	label: string;
 }
 interface EdgeData {}
 
@@ -135,18 +136,13 @@ class SimulationPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, Edg
 			.classed('shape', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
-			.style('fill', (d) => {
-				if (d.label === 'P') {
-					return '#345';
-				}
-				return '#DDD';
-			})
+			.style('fill', '#DDD')
 			.style('stroke', '#888');
 
 		selection
 			.append('text')
 			.attr('y', -5)
-			.text((d) => d.label);
+			.text((d) => d.data.label);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -174,21 +170,24 @@ export default defineComponent({
 
 		// Initialize
 		graph.nodes.forEach((d) => {
+			console.log('node >>', d);
 			g.nodes.push({
 				id: d.id,
-				label: d.name,
+				label: d.id, // simulation plan currently allows duplicate labels which create tracking problems in the renderer
 				x: 0,
 				y: 0,
 				width: 40,
 				height: 40,
 				nodes: [],
 				data: {
-					boxType: d.boxType
+					boxType: d.boxType,
+					label: d.name
 				}
 			});
 		});
 
 		graph.edges.forEach((d, i) => {
+			console.log('edge >>', d);
 			g.edges.push({
 				id: `${i}`,
 				source: d.source,

@@ -37,8 +37,8 @@ export const parseSimulationPlan = (plan: SimulationPlan) => {
 	// eslint-disable-next-line
 	const edges = plan.Wire.map((d) => {
 		return {
-			source: nodes[outPortIndex[d.src - 1].out_port_box - 1].id,
-			target: nodes[inPortIndex[d.tgt - 1].in_port_box - 1].id
+			source: `${outPortIndex[d.src - 1].out_port_box - 1}`,
+			target: `${inPortIndex[d.tgt - 1].in_port_box - 1}`
 		};
 	});
 	return { nodes, edges };

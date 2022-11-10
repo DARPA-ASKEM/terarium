@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import dagre from 'dagre';
-import graphScaffolder, { IGraph, INode } from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
