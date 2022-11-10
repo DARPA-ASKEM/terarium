@@ -33,9 +33,9 @@ describe('basic tests to make sure it all works', () => {
 		console.log(graph);
 		expect(graph).deep.eq({
 			nodes: [
-				{ id: '0', name: 'box1' },
-				{ id: '1', name: 'box2' },
-				{ id: '2', name: 'box3' }
+				{ id: '0', name: 'box1', boxType: '123' },
+				{ id: '1', name: 'box2', boxType: '123' },
+				{ id: '2', name: 'box3', boxType: '123' }
 			],
 			edges: [
 				{ source: '0', target: '1' },
