@@ -1,6 +1,6 @@
 <script lang="ts">
 import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
-import { petriNetValidator } from '@/utils/petrinet-validator';
+import { petriNetValidator } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';

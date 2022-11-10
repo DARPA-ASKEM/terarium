@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { petriNetValidator, PetriNet } from '@/utils/petrinet-validator';
+import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 
 const falsePetriNets: PetriNet[] = [
 	// No edges - caught by check #1.
