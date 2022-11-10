@@ -1,11 +1,11 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import * as d3 from 'd3';
 import BasicRenderer from '../../src/core/basic-renderer';
 // import { panGraph } from '../../src/actions/pan-graph';
 // import { moveTo } from '../../src/fn/move-to';
 // import { highlight } from '../../src/fn/highlight';
-import { group, ungroup } from '../../src/fn/group';
-import { IGraph, INode, IEdge } from '../../src/types';
+import { group } from '../../src/fn/group';
+import { IEdge, IGraph, INode } from '../../src/types';
 
 import { runLayout } from './dagre';
 

@@ -32,7 +32,8 @@ export default abstract class DeltaRenderer<V, E> extends Renderer<V, E> {
 
 			[newNodes, nodesGroup].forEach((g) => {
 				g.each(function (d) {
-					const selection2 = d3.select(this);
+					// @ts-ignore: D3 needs "this" to bind to selection context
+					const selection2 = d3.select(this as any);
 
 					// Allocate for the node itself
 					if (selection2.select('.node-ui').size() === 0) {
