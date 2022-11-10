@@ -12,7 +12,7 @@
 					@click="openDocumentPage(doc)"
 				>
 					<span>{{ formatTitle(doc) }}</span>
-					<span class="doc-delete-btn" @click.stop="removeDoc(doc)">
+					<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
 						<IconClose32 />
 					</span>
 				</div>
@@ -53,7 +53,7 @@ const openDocumentPage = (doc: XDDArticle) => {
 	router.push({ path: `/docs/${docID.value}` });
 };
 
-const removeDoc = (doc: XDDArticle) => {
+const removeDocument = (doc: XDDArticle) => {
 	resourcesStore.removeResource(doc);
 	router.push('/docs'); // clear the doc ID as a URL param
 };
@@ -108,8 +108,8 @@ section {
 
 .active {
 	text-decoration: underline;
-	font-size: medium;
-	background-color: lightgreen;
+	font-size: var(--un-font-body);
+	background-color: var(--un-color-accent-light);
 }
 
 .doc-delete-btn {

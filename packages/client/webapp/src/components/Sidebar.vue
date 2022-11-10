@@ -82,7 +82,7 @@ function moveSidebar() {
 		</nav>
 		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
 			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
-			<DocumentsSidebarPanel v-if="selectedMode === Mode.Documents" />
+			<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
 			<template v-else>
 				<header>{{ selectedMode }}</header>
 				<div v-if="selectedMode === Mode.Profile">

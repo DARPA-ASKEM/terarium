@@ -1,5 +1,5 @@
 <template>
-	<div class="doc-view-container">
+	<section class="doc-view-container">
 		<div v-if="doc">
 			<div class="title">{{ doc.title }}</div>
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
@@ -45,7 +45,7 @@
 			</div>
 		</div>
 		<div v-else class="invalid-doc"></div>
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">

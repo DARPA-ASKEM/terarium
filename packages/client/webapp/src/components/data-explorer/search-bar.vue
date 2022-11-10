@@ -162,7 +162,7 @@ button {
 }
 
 .search-and-clear-buttons {
-	color: white;
+	color: var(--un-color-white);
 }
 
 .search-button {
@@ -188,7 +188,7 @@ button {
 .flex-aligned-item {
 	display: flex;
 	align-items: center;
-	color: white;
+	color: var(--un-color-white);
 
 	.flex-aligned-item-delete-btn {
 		color: red;
