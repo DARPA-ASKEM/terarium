@@ -1,9 +1,6 @@
 version=3.81
 
 PROJECT_DIR ?= .
-DOCKER_IMAGE_TAG ?= dev
-DOCKER_REGISTRY := ghcr.io
-DOCKER_ORG := darpa-askem
 
 
 
@@ -17,53 +14,45 @@ all:
 	@echo "  clean                    - remove bin, dist and node_modules directories"
 	@echo "  images                   - build docker images of all targets"
 	@echo "  image-<target>           - build docker image of a specific target - see below for list of targets"
-	@echo "  publish                  - build and push dock images for deployment"
-	@echo "  publish-<target>         - build and push dock image for a specific target - see below for list of targets"
-	@echo "  lint                     - lint the source code"
-	@echo "  test                     - test the source code"
-	@echo "Targets building (but not pushing) docker images of separately:"
-	@echo "  $(TARGETS)"
-	@echo ""
-	@echo "Variables:"
-	@echo "  DOCKER_IMAGE_TAG=<tag>         - tag to append to each pushed docker image (default: dev)"
 
 
 
 ## Targets
 TARGETS :=
 
+
+
 TARGETS += hmi-server
-clean-hmi-server:
-	./gradlew :packages:services:hmi-server:clean
+clean-hmi-server: clean-hmi-server-base
+	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
 
 image-hmi-server: clean-hmi-server
-	./gradlew :packages:services:hmi-server:build -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
-
-publish-hmi-server: clean-hmi-server
-	./gradlew :packages:services:hmi-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)
-
-publish-native-hmi-server: clean-hmi-server
-	./gradlew :packages:services:hmi-server:build -Dquarkus.container-image.push=true -Dquarkus.container-image.tag=$(DOCKER_IMAGE_TAG)-native -Dquarkus.package.type=native
+	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=jar
+	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
 
 
 
-TARGETS += webapp
-clean-webapp:
+TARGETS += hmi-server-native
+clean-hmi-server-native: clean-hmi-server-base
+	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
+
+image-hmi-server-native: clean-hmi-server-native
+	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native
+	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
+
+
+
+TARGETS += hmi-client
+clean-hmi-client:
+	rm -rf $(PROJECT_DIR)/packages/client/graph-scaffolder/build
 	rm -rf $(PROJECT_DIR)/packages/client/graph-scaffolder/dist
-	rm -rf $(PROJECT_DIR)/packages/client/webapp/dist
-	rm -rf $(PROJECT_DIR)/packages/client/webapp/docker/dist
+	rm -rf $(PROJECT_DIR)/packages/client/hmi-client/dist
+	rm -rf $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-image-webapp: clean-webapp yarn-install
+image-hmi-client: clean-hmi-client yarn-install
 	yarn workspace graph-scaffolder tsc --build
-	yarn workspace webapp build
-	mv $(PROJECT_DIR)/packages/client/webapp/dist $(PROJECT_DIR)/packages/client/webapp/docker
-	docker build -t $(DOCKER_REGISTRY)/$(DOCKER_ORG)/webapp:$(DOCKER_IMAGE_TAG) $(PROJECT_DIR)/packages/client/webapp/docker
-
-publish-webapp: image-webapp
-	docker push $(DOCKER_REGISTRY)/$(DOCKER_ORG)/webapp:$(DOCKER_IMAGE_TAG)
-
-publish-native-webapp:
-	# Do nothing
+	yarn workspace hmi-client build
+	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
 
 
@@ -72,23 +61,15 @@ publish-native-webapp:
 clean: $(TARGETS:%=clean-%)
 	rm -rf $(PROJECT_DIR)/node_modules
 
+.PHONY: clean-hmi-server-base
+clean-hmi-server-base:
+	./gradlew :packages:services:hmi-server:clean
+
 
 
 ## Images
 .PHONY: images
 images: $(TARGETS:%=image-%)
-
-
-
-## Publish
-.PHONY: publish
-publish: $(TARGETS:%=publish-%)
-
-
-
-## Publish Native
-.PHONY: publish-native
-publish-native: $(TARGETS:%=publish-native-%)
 
 
 
