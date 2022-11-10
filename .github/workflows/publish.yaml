@@ -5,12 +5,8 @@
 name: Build and Publish
 
 on:
-  workflow_run:
-    workflows: ['Playwright Tests', 'Lint & Test']
-    branches: ['main']
-    types:
-      - completed
   push:
+    branches: ['main']
     tags: ['*']
 
 env:
@@ -20,46 +16,22 @@ env:
   BAKE_GROUP: prod
 
 jobs:
+  # Run Lint and Unit Tests
   test:
-    if: contains(github.event.ref, '/tags/')
     uses: ./.github/workflows/lint_test.yml
 
+  # Run E2E Tests
   e2e-tests:
-    if: contains(github.event.ref, '/tags/')
     uses: ./.github/workflows/playwright.yml
 
   # Generate a matrix based on all the targets defined in the
   # bake file.
   targets:
     name: Generate targets list from provided bake file
-    if: github.ref_name == 'main' || contains(github.event.ref, '/tags/')
     runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.targets.outputs.matrix }}
     steps:
-      - name: debug
-        run: |
-          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
-            TAG=latest
-          else
-            SEMVER=$( echo ${{ github.ref_name }} | sed -nre 's/^v[^0-9]*(([0-9]+\.)*[0-9]+(-[a-z]+)?).*/\1/p')
-            if [[ -n $SEMVER ]]; then
-              TAG=${SEMVER}
-            else
-              TAG=${{ github.ref_name }}
-            fi
-          fi
-
-          echo "${{ github.event }}"
-          echo "$TAG"
-
-      # 1.0 - only run if the dependant workflows were successful
-      - name: Workflow Run Wait
-        if: contains(github.event.ref, '/tags/') == false
-        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-        with:
-          timeout: 600000
-
       # 1.1 - checkout the files
       - name: Checkout
         uses: actions/checkout@v3
@@ -85,10 +57,11 @@ jobs:
     permissions:
       packages: write
       contents: read
-    # this job depends on the 'targets' job
+    # this job depends on the 'targets' job and tests
     needs:
       - targets
       - test
+      - e2e-tests
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:

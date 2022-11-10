@@ -6,10 +6,10 @@
 name: Playwright Tests
 on:
   workflow_call:
-  workflow_run:
-    workflows: ['Lint & Test']
-    types:
-      - completed
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
 jobs:
   e2e-tests:
     timeout-minutes: 30
@@ -22,13 +22,6 @@ jobs:
         shardIndex: [1]
         shardTotal: [1]
     steps:
-      # 1.0 - only run if the dependant workflows were successful
-      - name: Workflow Run Wait
-        if: contains(github.event.ref, '/tags/') == false
-        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-        with:
-          timeout: 180000
-
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
@@ -80,13 +73,6 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
-      # 1.0 - only run if the dependant workflows were successful
-      - name: Workflow Run Wait
-        if: contains(github.event.ref, '/tags/') == false
-        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-        with:
-          timeout: 180000
-
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
