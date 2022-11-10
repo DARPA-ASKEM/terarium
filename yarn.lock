@@ -11104,9 +11104,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webapp@workspace:packages/client/webapp":
+"webapp@workspace:packages/client/hmi-client":
   version: 0.0.0-use.local
-  resolution: "webapp@workspace:packages/client/webapp"
+  resolution: "webapp@workspace:packages/client/hmi-client"
   dependencies:
     "@carbon/icons-vue": 10.49.1
     "@ibm/plex": 6.1.1
