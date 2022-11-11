@@ -67,7 +67,7 @@
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Model } from '@/types/Model';
-import { ResourceType } from '@/types/common';
+import { ResourceType, ResultType } from '@/types/common';
 import { getResourceTypeIcon, isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
