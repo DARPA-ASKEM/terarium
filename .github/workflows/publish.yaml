@@ -16,13 +16,17 @@ env:
   BAKE_GROUP: prod
 
 jobs:
-  # Run Lint and Unit Tests
-  test:
-    uses: ./.github/workflows/lint_test.yml
+  # Run Lint Global
+  lint:
+    uses: ./.github/workflows/lint.yml
 
-  # Run E2E Tests
-  e2e-tests:
-    uses: ./.github/workflows/playwright.yml
+  # Run Lint Global
+  lint-client:
+    uses: ./.github/workflows/lint-client.yml
+
+  # Run Client Tests
+  test-client:
+    uses: ./.github/workflows/test-client.yml
 
   # Generate a matrix based on all the targets defined in the
   # bake file.
@@ -50,18 +54,18 @@ jobs:
           echo ${{ steps.targets.outputs.matrix }}
 
   build-push:
-    # NOTE: this name is used for waiting on in the retag workflow
     name: build-bake-push
     runs-on: ubuntu-22.04
     if: github.ref_name == 'main' || contains(github.event.ref, '/tags/')
     permissions:
       packages: write
       contents: read
-    # this job depends on the 'targets' job and tests
+    # this job depends on the following jobs before beginning
     needs:
       - targets
-      - test
-      - e2e-tests
+      - lint
+      - lint-client
+      - test-client
 
     # 2.0 - Build a matrix strategy from the retrieved target list
     strategy:

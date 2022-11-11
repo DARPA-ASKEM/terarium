@@ -1,17 +1,15 @@
 ---
-# This workflow runs E2E tests using Playwright
+# This workflow runs client E2E tests using Playwright
 #
-#   See: https://playwright.dev/
+# See: https://playwright.dev/
 
-name: Playwright Tests
+name: Client E2E Tests
 on:
   workflow_call:
-  push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+
 jobs:
   e2e-tests:
+    name: Playwright E2E Tests
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     # Shard the tests across multiple machines to improve performance
@@ -23,8 +21,6 @@ jobs:
         shardTotal: [1]
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.workflow_run.head_branch }}
 
       - name: Use Node v18.8.0
         uses: actions/setup-node@v3
@@ -70,12 +66,11 @@ jobs:
           retention-days: 10
 
   ct-tests:
+    name: Playwright Component Tests
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.workflow_run.head_branch }}
 
       - name: Use Node v18.8.0
         uses: actions/setup-node@v3
