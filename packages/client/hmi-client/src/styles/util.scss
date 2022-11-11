@@ -1,0 +1,69 @@
+/*
+  This file contains small, atomic groups of utility styles that are
+  useful for a variety of different elements across the app.
+  
+  These styles are applied globally. Adding one of these classes to
+  an element's class list will apply the styles automatically, no
+  import required.
+
+  If you want to adjust the appearance of all occurences of a specific
+  type of native element, consider adding rules to
+  `@/styles/overrides.scss` instead.
+  If your new utility class is becoming complex, or requires JS,
+  consider making a new component in `@/components/widgets/`
+  with scoped styles instead.
+*/
+
+.unstyled-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: inline-block;
+  }
+}
+
+.disabled {
+  pointer-events: none;
+  color: #CCCCCC !important;
+}
+
+.hidden {
+  display: none;
+}
+
+.overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// often used with flex-grow-1 to create height that fits remaining space
+.h-0 {
+  height: 0;
+}
+
+.h-100 {
+    height: 100%;
+}
+
+.w-0 {
+  width: 0
+}
+
+
+// Flex box utility classes
+.flex {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
