@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # Debugging purposes to verify branch being worked on
+      - run: git branch
+
       - name: Use Node.js 18.8.0
         uses: actions/setup-node@v3
         with:

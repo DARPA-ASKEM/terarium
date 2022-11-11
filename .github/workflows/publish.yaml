@@ -16,11 +16,11 @@ env:
   BAKE_GROUP: prod
 
 jobs:
-  # Run Lint Global
+  # Run Global Lint
   lint:
     uses: ./.github/workflows/lint.yml
 
-  # Run Lint Global
+  # Lint Client Code
   lint-client:
     uses: ./.github/workflows/lint-client.yml
 
