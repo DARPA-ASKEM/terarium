@@ -1,2 +1,4 @@
-package software.uncharted.terarium.hmiserver.services;public class UserService {
+package software.uncharted.terarium.hmiserver.services;
+
+public class UserService {
 }
