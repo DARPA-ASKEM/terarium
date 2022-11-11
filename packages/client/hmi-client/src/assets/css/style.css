@@ -1,0 +1,60 @@
+@import '@node_modules/@ibm/plex/css/ibm-plex.css';
+@import '@node_modules/@uncharted.software/design-tokens/build/css/uncharted-tokens.css';
+@import '@assets/css/reset.css';
+
+:root {
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+
+	/* Overwriting Uncharted design-tokens for TERArium */
+	--un-color-accent-darker: #133013ff;
+	--un-color-accent-dark: #1C5A1Cff;
+	--un-color-accent: #2D8E2Dff;
+	--un-color-accent-light: #92E192ff;
+	--un-color-accent-lighter: #E4FAE4ff;
+
+	--label-color: #707070;
+	--text-color-light: #C2C2C4;
+	--text-color-medium: #9C9D9E;
+	--text-color-dark: #16161C;
+
+	--label-color: #707070;
+	--text-color-light: #C2C2C4;
+	--text-color-medium: #9C9D9E;
+	--text-color-dark: #16161C;
+	--font-size-small: 1.2rem;
+	--font-size-medium: 1.4rem;
+	--font-size-large: 1.6rem;
+	--navbar-outer-height: 51px;
+	--separator: #e5e5e5;
+	--background-light-1: #FFFFFF;
+	--background-light-2: #F2F2F2;
+	--background-light-3: #E6E6E6;
+	--background-light-1-faded: #FAFAFA;
+}
+
+:root {
+	background-color: var(--un-color-body-surface-background);
+	color: var(--un-color-body-text-primary);
+	color-scheme: light dark;
+	font: var(--un-font-body);
+}
+
+body {
+	background-color: inherit;
+	color: inherit;
+	display: flex;
+	flex-direction: column;
+	font: inherit;
+	isolation: isolate;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		/*  background-color: var(--un-color-black-70);
+		color: var(--un-color-black-5); */
+	}
+}
