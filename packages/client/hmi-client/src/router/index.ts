@@ -15,7 +15,7 @@ export enum RoutePath {
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
 	Theia = '/theia',
 	DocView = '/docs/:id?',
-	SimulationView = '/:projectId/simulation'
+	SimulationView = '/simulation'
 }
 
 const routes = [
@@ -25,7 +25,7 @@ const routes = [
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
-	{ path: RoutePath.SimulationView, component: Simulation, props: true }
+	{ path: RoutePath.SimulationView, component: Simulation }
 ];
 
 const router = createRouter({
