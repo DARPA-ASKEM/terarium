@@ -15,5 +15,5 @@ jobs:
     uses: ./.github/workflows/test-client-unit.yml
 
   e2e-tests:
-    name: E2E Unit Tests
+    name: E2E Tests
     uses: ./.github/workflows/test-client-e2e.yml
