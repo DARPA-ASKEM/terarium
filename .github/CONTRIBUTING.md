@@ -78,7 +78,7 @@ as before.
 To create the secret for kubernetes use the following command:
 
 ```sh
-kubectl create secret docker-registry ghrc_cred \ 
+kubectl create secret docker-registry ghrc-cred \ 
 	--docker-server=<your-registry-server> \
 	--docker-username=<your-name> \
 	--docker-password=<your-pword> \
@@ -99,7 +99,7 @@ You have successfully set your credentials in the cluster as a Secret called `gh
 To verify that the secret was generated use:
 
 ```sh
-kubectl get secret ghrc_cred --output=yaml
+kubectl get secret ghrc-cred --output=yaml
 ```
 
 #### Use Secret In Pod
@@ -118,7 +118,7 @@ spec:
     - name: private-reg-container
       image: <your-private-image>
   imagePullSecrets:
-    - name: regcred
+    - name: ghcr-cred
 ```
 
 ## Debugging Front End
