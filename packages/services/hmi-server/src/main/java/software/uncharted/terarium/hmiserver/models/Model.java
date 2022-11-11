@@ -1,12 +1,12 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import javax.json.bind.annotation.JsonbProperty;
-import java.util.UUID;
+// import java.util.UUID;
 
 public class Model {
 
 	@JsonbProperty("id")
-	public UUID id;
+	public String id; // UUID
 
 	@JsonbProperty("name")
   public String name;
