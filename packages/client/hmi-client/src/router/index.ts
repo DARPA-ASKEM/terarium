@@ -1,9 +1,9 @@
+import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '@/views/Home.vue';
 import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
-import { computed } from 'vue';
 import DocumentView from '@/views/document.vue';
 
 export enum RoutePath {

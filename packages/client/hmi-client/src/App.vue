@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Header from '@/components/Header.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 import Sidebar from '@/components/Sidebar.vue';
+
+import { useCurrentRouter } from './router/index';
+
+const { isCurrentRouteHome } = useCurrentRouter();
+const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
 const overlayActivated = ref(false);
 const overlayMessage = ref('Loading...');
@@ -33,7 +38,7 @@ const dataExplorerActivated = ref(false);
 	/>
 	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
 	<main>
-		<Sidebar class="sidebar" />
+		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" />
 		<router-view class="page" />
 	</main>
 </template>
