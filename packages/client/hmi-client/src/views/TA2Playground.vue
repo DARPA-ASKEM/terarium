@@ -4,6 +4,7 @@ import { petriNetValidator } from '@/utils/petri-net-validator';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import * as d3 from 'd3';
+import _ from 'lodash';
 import { defineComponent } from 'vue';
 
 interface NodeData {
