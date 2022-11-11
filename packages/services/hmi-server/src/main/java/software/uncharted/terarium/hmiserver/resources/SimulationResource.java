@@ -17,7 +17,7 @@ import java.util.List;
 @Path("/api/simulation")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "Project REST Endpoints")
+@Tag(name = "Simulation REST Endpoints")
 public class SimulationResource {
 
 	@Inject
