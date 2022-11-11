@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
+import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 
 interface NodeData {
 	type: string;
@@ -264,7 +265,7 @@ export default defineComponent({
 			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
 			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
 
-			g = runLayout(_.cloneDeep(g));
+			g = runDagreLayout(_.cloneDeep(g));
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
 				method: 'POST',
