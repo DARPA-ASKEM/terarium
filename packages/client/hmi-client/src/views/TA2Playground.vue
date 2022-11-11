@@ -1,7 +1,7 @@
 <script lang="ts">
 // @ts-ignore
 import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
-import { petriNetValidator } from '@/utils/petri-net-validator';
+import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
@@ -75,8 +75,8 @@ interface EdgeData {
 	val: number;
 }
 enum NodeType {
-	species = 'S',
-	transition = 'T'
+	Species = 'S',
+	Transition = 'T'
 }
 
 type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
@@ -126,9 +126,11 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === 'species' || d.data.type === 'S');
+		const species = selection.filter(
+			(d) => d.data.type === 'species' || d.data.type === NodeType.Species
+		);
 		const transitions = selection.filter(
-			(d) => d.data.type === 'transition' || d.data.type === 'T'
+			(d) => d.data.type === 'transition' || d.data.type === NodeType.Transition
 		);
 
 		transitions
@@ -646,14 +648,14 @@ export default defineComponent({
 			const resp = await fetch(`http://localhost:8888/api/models/${this.loadModelID}/json`, {
 				method: 'GET'
 			});
-			const model = await resp.json();
+			const model: PetriNet = await resp.json();
 			this.createModel(model, false);
 		},
 		// Expects a JSON of a model with labels T, S, I, O.
 		// populates g + depending on provided flag POST changes to model ID
 		// This is mostly done for stratification testing. Will require a deeper look in future
 		// TODO: We know there are race errors here. We intend to make this service stateless so we wont need to add Edges and Nodes individually
-		async createModel(model, createFlag = false) {
+		async createModel(model: PetriNet, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
 				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
@@ -682,7 +684,7 @@ export default defineComponent({
 					nodeY,
 					nodeHeight,
 					nodeWidth,
-					NodeType.species,
+					NodeType.Species,
 					createFlag
 				);
 			}
@@ -700,7 +702,7 @@ export default defineComponent({
 					nodeY,
 					nodeHeight,
 					nodeWidth,
-					NodeType.transition,
+					NodeType.Transition,
 					createFlag
 				);
 			} // end T
@@ -739,7 +741,7 @@ export default defineComponent({
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async createSampleModels() {
 			// TODO: Add Petri Net type to this when merged with other PR
-			const SIRDModel = {
+			const SIRDModel: PetriNet = {
 				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
 				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
 				I: [
@@ -757,7 +759,7 @@ export default defineComponent({
 			};
 			await this.createModel(SIRDModel, true);
 
-			const QNotQModel = {
+			const QNotQModel: PetriNet = {
 				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
 				S: [{ sname: 'Q' }, { sname: 'NQ' }],
 				I: [
@@ -771,7 +773,7 @@ export default defineComponent({
 			};
 			await this.createModel(QNotQModel, true);
 
-			const typeModel = {
+			const typeModel: PetriNet = {
 				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
 				S: [{ sname: 'Pop' }],
 				I: [
@@ -803,20 +805,15 @@ export default defineComponent({
 		<button type="button" @click="simulate">Simulate</button>
 		<form>
 			<label for="loadModel">
-				<input v-model="loadModelID" type="text" id="loadModelID" placeholder="Model ID" />
+				<input v-model="loadModelID" type="text" placeholder="Model ID" />
 			</label>
 			<button type="button" @click="drawModel">Load Model</button>
 		</form>
 		<form>
 			<label for="stratify">
-				<input v-model="stratifyModelA" type="text" id="stratifyModelA" placeholder="Model A ID" />
-				<input v-model="stratifyModelB" type="text" id="stratifyModelB" placeholder="Model B" />
-				<input
-					v-model="stratifyTypeModel"
-					type="text"
-					id="stratifyTypeModel"
-					placeholder="Type Model"
-				/>
+				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
+				<input v-model="stratifyModelB" type="text" placeholder="Model B" />
+				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
 		</form>
