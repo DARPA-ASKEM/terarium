@@ -739,7 +739,6 @@ export default defineComponent({
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async createSampleModels() {
-			// TODO: Add Petri Net type to this when merged with other PR
 			const SIRDModel: PetriNet = {
 				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
 				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
