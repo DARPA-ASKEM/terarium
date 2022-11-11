@@ -1,71 +1,10 @@
 <script lang="ts">
-// @ts-ignore
-import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
-import dagre from 'dagre';
 import { defineComponent, ref } from 'vue';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
-
-const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
-	const g = new dagre.graphlib.Graph({ compound: true });
-	g.setGraph({});
-	g.setDefaultEdgeLabel(() => ({}));
-
-	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
-		if (node.width && node.height) {
-			g.setNode(node.id, {
-				label: node.id,
-				width: node.width,
-				height: node.height,
-				x: node.x,
-				y: node.y
-			});
-		} else {
-			g.setNode(node.id, { label: node.id, x: node.x, y: node.y });
-		}
-		if (!_.isEmpty(node.nodes)) {
-			// eslint-disable-next-line
-			for (const child of node.nodes) {
-				g.setParent(child.id, node.id);
-			}
-		}
-	});
-
-	// eslint-disable-next-line
-	for (const edge of graphData.edges) {
-		g.setEdge(edge.source, edge.target);
-	}
-	dagre.layout(g);
-
-	g.nodes().forEach((n) => {
-		const node = g.node(n);
-		node.x -= node.width * 0.5;
-		node.y -= node.height * 0.5;
-	});
-
-	graphScaffolder.traverseGraph(graphData, (node) => {
-		const n = g.node(node.id);
-		node.width = n.width;
-		node.height = n.height;
-		node.x = n.x;
-		node.y = n.y;
-
-		const pid = g.parent(node.id);
-		if (pid) {
-			node.x -= g.node(pid).x;
-			node.y -= g.node(pid).y;
-		}
-	});
-
-	// eslint-disable-next-line
-	for (const edge of graphData.edges) {
-		const e = g.edge(edge.source, edge.target);
-		edge.points = e.points;
-	}
-	return graphData;
-};
 
 interface NodeData {
 	type: string;
@@ -78,9 +17,6 @@ enum NodeType {
 	Species = 'S',
 	Transition = 'T'
 }
-
-type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
-type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
 
 let g: IGraph<NodeData, EdgeData> = {
 	width: 500,
@@ -167,7 +103,7 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 }
 
 let renderer: SampleRenderer | null = null;
-g = runLayout(_.cloneDeep(g));
+g = runDagreLayout(_.cloneDeep(g));
 
 let placeCounter = 0;
 let transitionCounter = 0;
@@ -188,7 +124,7 @@ export default defineComponent({
 		renderer = new SampleRenderer({
 			el: playground ?? undefined,
 			useAStarRouting: true,
-			runLayout
+			runLayout: runDagreLayout
 		});
 
 		// @ts-ignore
