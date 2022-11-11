@@ -660,9 +660,9 @@ export default defineComponent({
 				const aNode = model.S[i];
 				nodeX += 30;
 				nodeY += 30;
-				this.addNode(
+				ßthis.addNode(
 					`s-${i + 1}`,
-					aNode.sname,
+					aNode.sname.toString(),
 					nodeX,
 					nodeY,
 					nodeHeight,
@@ -680,7 +680,7 @@ export default defineComponent({
 				nodeY += 30;
 				this.addNode(
 					`t-${i + 1}`,
-					aTransition.tname,
+					aTransition.tname.toString(),
 					nodeX,
 					nodeY,
 					nodeHeight,
@@ -698,9 +698,9 @@ export default defineComponent({
 				this.addEdgeID(sourceID, transitionID, createFlag);
 			}
 			for (let i = 0; i < model.O.length; i++) {
-				const iEdges = model.O[i];
-				const sourceID = `s-${iEdges.os}`;
-				const transitionID = `t-${iEdges.ot}`;
+				const oEdges = model.O[i];
+				const sourceID = `s-${oEdges.os}`;
+				const transitionID = `t-${oEdges.ot}`;
 				this.addEdgeID(transitionID, sourceID, createFlag);
 			}
 
@@ -738,7 +738,7 @@ export default defineComponent({
 					{ ot: 3, os: 4 }
 				]
 			});
-			this.createModel(SIRDModel, true);
+			await this.createModel(SIRDModel, true);
 
 			const QNotQModel: JSON = <JSON>(<unknown>{
 				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
@@ -752,7 +752,7 @@ export default defineComponent({
 					{ ot: 2, os: 2 }
 				]
 			});
-			this.createModel(QNotQModel, true);
+			await this.createModel(QNotQModel, true);
 
 			const typeModel: JSON = <JSON>(<unknown>{
 				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
@@ -770,7 +770,7 @@ export default defineComponent({
 					{ ot: 3, os: 1 }
 				]
 			});
-			this.createModel(typeModel, true);
+			await this.createModel(typeModel, true);
 		}
 	}
 });
