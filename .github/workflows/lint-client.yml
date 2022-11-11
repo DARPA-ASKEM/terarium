@@ -8,6 +8,8 @@ name: Lint & Format Client
 on:
   workflow_call:
   pull_request:
+    paths:
+      - 'packages/client/**'
     branches: ['main']
 
 jobs:
