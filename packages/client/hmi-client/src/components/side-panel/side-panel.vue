@@ -44,7 +44,7 @@ export default defineComponent({
 		 * }
 		 * e.g. {
 		 *  name: 'Cube Information',
-		 *  icon: useIcon ? 'fa fa-fw fa-cube' : null, // USE IBM ICON INSTEAD
+		 *  icon: useIcon ? 'svg-icon' : null, // USE IBM ICON INSTEAD
 		 *  imgSrc: useIcon ? null : 'imageOfCube.png',
 		 *  isGreyscale: !useIcon,
 		 *  badgeCount: 12

@@ -57,9 +57,7 @@ export default defineComponent({
 .title {
 	padding: 5px;
 	text-align: center;
-	font-weight: normal;
 	color: black;
-	font-weight: 500;
 }
 
 label {

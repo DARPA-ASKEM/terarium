@@ -38,7 +38,6 @@
 			v-if="resultType === ResourceType.MODEL"
 			class="list-view"
 			:models="filteredModels"
-			:enable-multiple-selection="enableMultipleSelection"
 			:selected-search-items="selectedSearchItems"
 			@toggle-model-selected="toggleDataItemSelected"
 			@set-model-selected="setDataItemSelected"
@@ -47,7 +46,6 @@
 			v-if="resultType === ResourceType.XDD"
 			class="list-view"
 			:articles="filteredArticles"
-			:enable-multiple-selection="enableMultipleSelection"
 			:selected-search-items="selectedSearchItems"
 			@toggle-article-selected="toggleDataItemSelected"
 			@set-article-selected="setDataItemSelected"
@@ -62,12 +60,12 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
-import ModelsListview from '@/components/data-explorer/models-listview.vue';
-import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
-import CommonListview from '@/components/data-explorer/common-listview.vue';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType } from '@/types/common';
+import ModelsListview from '@/components/data-explorer/models-listview.vue';
+import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
+import CommonListview from '@/components/data-explorer/common-listview.vue';
 
 export default defineComponent({
 	name: 'Search',
@@ -80,10 +78,6 @@ export default defineComponent({
 		dataItems: {
 			type: Array as PropType<SearchResults[]>,
 			default: () => []
-		},
-		enableMultipleSelection: {
-			type: Boolean,
-			default: false
 		},
 		selectedSearchItems: {
 			type: Array as PropType<string[]>,

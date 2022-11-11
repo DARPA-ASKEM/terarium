@@ -68,7 +68,7 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 	if (isArray(objValue)) {
 		return objValue.concat(srcValue);
 	}
-	return null;
+	// return null;
 }
 
 export const getFacets = (results: SearchResults[], resultType: string) => {
