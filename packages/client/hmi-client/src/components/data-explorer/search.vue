@@ -38,7 +38,6 @@
 			v-if="resultType === ResourceType.MODEL"
 			class="list-view"
 			:models="filteredModels"
-			:enable-multiple-selection="enableMultipleSelection"
 			:selected-search-items="selectedSearchItems"
 			@toggle-model-selected="toggleDataItemSelected"
 			@set-model-selected="setDataItemSelected"
@@ -47,7 +46,6 @@
 			v-if="resultType === ResourceType.XDD"
 			class="list-view"
 			:articles="filteredArticles"
-			:enable-multiple-selection="enableMultipleSelection"
 			:selected-search-items="selectedSearchItems"
 			@toggle-article-selected="toggleDataItemSelected"
 			@set-article-selected="setDataItemSelected"
@@ -80,10 +78,6 @@ export default defineComponent({
 		dataItems: {
 			type: Array as PropType<SearchResults[]>,
 			default: () => []
-		},
-		enableMultipleSelection: {
-			type: Boolean,
-			default: false
 		},
 		selectedSearchItems: {
 			type: Array as PropType<string[]>,

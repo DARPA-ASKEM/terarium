@@ -156,6 +156,32 @@ export default defineComponent({
 	cursor: pointer;
 }
 
+button {
+	border-width: thin;
+	border-color: white;
+	border-radius: 6px;
+}
+
+.search-and-clear-buttons {
+	color: var(--un-color-white);
+}
+
+.search-button {
+	background-color: var(--un-color-accent);
+}
+
+.search-button-disabled,
+.button-disabled {
+	background-color: var(--un-color-accent-dark);
+	cursor: not-allowed;
+	color: gray;
+}
+
+.clear-button-disabled {
+	background-color: gray;
+	cursor: not-allowed;
+}
+
 .flex-aligned {
 	display: flex;
 	align-items: baseline;

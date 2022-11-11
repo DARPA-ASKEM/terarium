@@ -199,10 +199,10 @@ import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types
 import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
-import { applyFacetFiltersToData, isModel, isXDDArticle } from '@/utils/data-util';
-import DrilldownPanel from '@/components/drilldown-panel.vue';
-import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import useResourcesStore from '@/stores/resources';
+import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
+import DrilldownPanel from '@/components/drilldown-panel.vue';
+import { applyFacetFiltersToData, isModel, isXDDArticle } from '@/utils/data-util';
 
 import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
 import IconClose16 from '@carbon/icons-vue/es/close/16';

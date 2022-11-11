@@ -208,5 +208,10 @@ export default defineComponent({
 	display: flex;
 	align-items: center;
 	font-weight: normal;
+	padding: 5px;
+}
+.dropdown-btn span {
+	padding-left: 6px;
+	padding-right: 4px;
 }
 </style>
