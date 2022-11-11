@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Header from '@/components/Header.vue';
-import Sidebar from '@/components/Sidebar.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
+import Sidebar from '@/components/Sidebar.vue';
 
 const overlayActivated = ref(false);
 const overlayMessage = ref('Loading...');

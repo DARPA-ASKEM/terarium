@@ -1,5 +1,3 @@
-export const ModelFilterAttributes = ['name', 'description'];
-
 export type Model = {
 	id: string;
 	name: string;
@@ -10,11 +8,15 @@ export type Model = {
 	type: string;
 };
 
+export type ModelSearchParams = {
+	category?: string;
+};
+
 //
 // Model Field names
 //
 export const TYPE = 'type'; // Type of model (model, dataset, etc)
-export const SOURCE = 'source'; // Article title
+export const SOURCE = 'source'; // model source
 export const STATUS = 'status'; // Status of the model, e.g., ready, deprecated, ...
 export const CATEGORY = 'category'; // category
 

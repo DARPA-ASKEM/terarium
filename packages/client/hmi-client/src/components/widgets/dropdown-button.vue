@@ -3,7 +3,7 @@
 		<button type="button" class="btn dropdown-btn" @click="isDropdownOpen = !isDropdownOpen">
 			<span>
 				{{ innerButtonLabel ? `${innerButtonLabel}: ` : '' }}
-				<strong>{{ selectedItemDisplayName }}</strong>
+				<b>{{ selectedItemDisplayName }}</b>
 			</span>
 			<IconChevronDown16 />
 		</button>
@@ -208,5 +208,10 @@ export default defineComponent({
 	display: flex;
 	align-items: center;
 	font-weight: normal;
+	padding: 5px;
+}
+.dropdown-btn span {
+	padding-left: 6px;
+	padding-right: 4px;
 }
 </style>
