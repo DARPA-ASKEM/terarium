@@ -208,7 +208,6 @@ import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 // FIXME: page count is not taken into consideration
-// FIXME: remove SASS
 
 const DRILLDOWN_TABS = [
 	{
