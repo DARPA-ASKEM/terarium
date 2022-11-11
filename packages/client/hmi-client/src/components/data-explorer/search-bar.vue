@@ -143,7 +143,7 @@ export default defineComponent({
 <style scoped>
 .search-bar-container {
 	display: flex;
-	background-color: darkgray;
+	background-color: transparent;
 	align-items: baseline;
 	justify-content: center;
 }
@@ -154,21 +154,6 @@ export default defineComponent({
 	padding-right: 8px;
 	margin: 4px;
 	cursor: pointer;
-}
-
-.search-button {
-	background-color: var(--un-color-accent);
-}
-
-.search-button-disabled {
-	background-color: var(--un-color-accent-dark);
-	cursor: not-allowed;
-	color: gray;
-}
-
-.clear-button-disabled {
-	background-color: gray;
-	cursor: not-allowed;
 }
 
 .flex-aligned {
@@ -191,7 +176,7 @@ export default defineComponent({
 }
 
 .search-label {
-	color: black;
+	color: white;
 	font-weight: bold;
 	padding: 8px;
 }
@@ -203,5 +188,9 @@ input[type='text'] {
 	margin-right: 16px;
 	font-size: 17px;
 	min-width: 300px;
+}
+
+.search-and-clear-buttons {
+	color: white;
 }
 </style>

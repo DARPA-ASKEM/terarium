@@ -496,6 +496,7 @@ export default defineComponent({
 	right: 0px;
 	display: flex;
 	width: 100vw;
+	height: 100%;
 }
 
 .data-explorer-container .left-content {
@@ -593,6 +594,7 @@ export default defineComponent({
 	background-color: var(--un-color-body-surface-background);
 	height: calc(100vh - var(--footer-height) - var(--nav-bar-height));
 	display: flex;
+	flex-grow: 1;
 	overflow: auto;
 }
 
@@ -631,5 +633,20 @@ export default defineComponent({
 	margin: 4px;
 	padding: 4px;
 	min-width: 100px;
+}
+
+.data-explorer-container :deep(.search-button) {
+	background-color: var(--un-color-accent);
+}
+
+.data-explorer-container :deep(.search-button-disabled) {
+	background-color: var(--un-color-accent);
+	cursor: not-allowed;
+	color: gray;
+}
+
+.data-explorer-container :deep(.clear-button-disabled) {
+	background-color: gray;
+	cursor: not-allowed;
 }
 </style>

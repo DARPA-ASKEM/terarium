@@ -239,15 +239,15 @@ tr th {
 }
 
 .tr-item.selected {
-	border: 2px double var(--un-color-accent-light);
+	border: 2px double var(--un-color-accent-lighter);
 }
 
 .tr-item.selected .title-and-abstract-col {
-	border-left: 2px solid var(--un-color-accent-light);
+	border-left: 2px solid var(--un-color-accent-lighter);
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-accent-lighter);
 }
 
 .text-bold {
