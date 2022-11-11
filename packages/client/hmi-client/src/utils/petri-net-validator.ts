@@ -22,13 +22,16 @@ interface Output {
 	os: number; // State ID which is the target
 }
 
-/* Validates petrinet - check #2 must come before check #3 to avoid an infinite loop */
-export const petriNetValidator = (petrinet: PetriNet): string => {
+/* 
+Validates petrinet - check #2 must come before check #3 to avoid an infinite loop 
+Returns an string explaining the invalidity or a true boolean if it's valid
+*/
+export const petriNetValidator = (petrinet: PetriNet): string | true => {
 	const { S, T, I, O } = petrinet;
 	// console.log(petrinet);
 
 	/* ----- 1. Requires at least one edge ----- */
-	if (I.length < 1 && O.length < 1) return 'Invalid petri net: #1. Requires at least one edge';
+	if (I.length < 1 && O.length < 1) return 'Invalid petri net: Requires at least one edge';
 
 	/* ----- 2. Check that every node is at least either a source or a target ----- */
 	const checkIfSourceOrTarget = (linkedIDs: number[], lastNodeID: number): boolean => {
@@ -45,7 +48,7 @@ export const petriNetValidator = (petrinet: PetriNet): string => {
 		!checkIfSourceOrTarget(linkedTransitionIDs, T.length + 1) ||
 		!checkIfSourceOrTarget(linkedStateIDs, S.length + 1)
 	)
-		return 'Invalid petri net: #2. Every transition node should be at least either a source or a target';
+		return 'Invalid petri net: Every transition node should be at least either a source or a target';
 
 	/* ----- 3. Make sure there aren't multiple petrinet bodies ----- */
 	const statesSurroundingTransitions: number[][] = [];
@@ -78,8 +81,8 @@ export const petriNetValidator = (petrinet: PetriNet): string => {
 
 		// If the potential connections from the last iteration are the exact same then there is more than one petrinet body
 		if (statesToMerge.length === potentialConnections.length)
-			return 'Invalid petri net: #3. There are multiple petri net bodies';
+			return 'Invalid petri net: There are multiple petri net bodies';
 	} while (potentialConnections.length > 0);
 
-	return 'Valid petri net'; // All checks have been successfully passed
+	return true; // All checks have been successfully passed
 };
