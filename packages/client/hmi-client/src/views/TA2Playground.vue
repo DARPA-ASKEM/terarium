@@ -644,7 +644,6 @@ export default defineComponent({
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
-			console.log(this.loadModelID);
 			const resp = await fetch(`http://localhost:8888/api/models/${this.loadModelID}/json`, {
 				method: 'GET'
 			});
