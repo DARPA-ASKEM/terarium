@@ -260,7 +260,7 @@ export default defineComponent({
 			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
 			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
 
-			g = runLayout(_.cloneDeep(g));
+			g = runDagreLayout(_.cloneDeep(g));
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
 				method: 'POST',
