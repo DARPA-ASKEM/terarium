@@ -34,6 +34,9 @@ interface DrilldownPanelTab {
 
 export default defineComponent({
 	name: 'DrilldownPanel',
+	components: {
+		IconArrowLeft32
+	},
 	props: {
 		// If isOpen isn't passed, no close button
 		//  is shown.
@@ -67,9 +70,7 @@ export default defineComponent({
 		}
 	},
 	emits: ['close', 'tab-click', 'overlay-back'],
-	data: () => ({
-		IconArrowLeft32
-	}),
+	data: () => ({}),
 	computed: {
 		paneTitle(): string {
 			const activeTab = this.tabs.find((tab) => tab.id === this.activeTabId);
