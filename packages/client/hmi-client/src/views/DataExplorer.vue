@@ -421,7 +421,7 @@ export default defineComponent({
 			this.pageCount = 0;
 			await this.fetchDataItemList();
 		},
-		filterData(filterTerms: string) {
+		filterData(filterTerms: string[]) {
 			this.filter = cloneDeep(filterTerms);
 		},
 		onClose() {
@@ -483,9 +483,12 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/util.scss';
+<style scoped>
+:root {
+	--header-height: 50px;
+	--footer-height: 50px;
+	--nav-bar-height: 50px;
+}
 
 .data-explorer-container {
 	position: absolute;
@@ -494,149 +497,140 @@ export default defineComponent({
 	right: 0px;
 	display: flex;
 	width: 100vw;
+}
 
-	--header-height: 50px;
-	--footer-height: 50px;
-	--nav-bar-height: 50px;
+.data-explorer-container .left-content {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	overflow: auto;
+}
 
-	.left-content {
-		display: flex;
-		flex-direction: column;
-		flex-grow: 1;
-		overflow: auto;
+.data-explorer-container .nav-bar {
+	display: flex;
+	justify-content: space-between;
+	background-color: lightgray;
+	padding: 0.5rem;
+	align-items: center;
+	height: var(--nav-bar-height);
+}
 
-		.header {
-			height: var(--header-height);
-		}
+.data-explorer-container .header {
+	height: var(--header-height);
+}
 
-		.nav-bar {
-			display: flex;
-			justify-content: space-between;
-			background-color: lightgray;
-			padding: 0.5rem;
-			align-items: center;
-			height: var(--nav-bar-height);
+.data-explorer-container .nav-left-container {
+	display: flex;
+	align-items: center;
+}
 
-			.nav-left-container {
-				display: flex;
-				align-items: center;
+.data-explorer-container .nav-left {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	margin-right: 2rem;
+	margin-left: 5rem;
+}
 
-				.nav-left {
-					list-style-type: none;
-					margin: 0;
-					padding: 0;
-					overflow: hidden;
-					margin-right: 2rem;
-					margin-left: 5rem;
+.data-explorer-container .nav-left li {
+	float: left;
+}
 
-					li {
-						float: left;
-					}
+.data-explorer-container .nav-left li button {
+	display: block;
+	color: black;
+	text-align: center;
+	padding: 8px 12px;
+	text-decoration: none;
+	border: none;
+	background-color: transparent;
+	font-size: larger;
+}
 
-					li button {
-						display: block;
-						color: black;
-						text-align: center;
-						padding: 8px 12px;
-						text-decoration: none;
-						border: none;
-						background-color: transparent;
-						font-size: larger;
-					}
+.data-explorer-container .nav-left li button:hover:not(.active) {
+	text-decoration: underline;
+	border: none;
+	cursor: pointer;
+}
 
-					li button:hover:not(.active) {
-						text-decoration: underline;
-						border: none;
-						cursor: pointer;
-					}
+.data-explorer-container .nav-left li button.active {
+	text-decoration: underline;
+	font-weight: bold;
+	border: none;
+}
 
-					li button.active {
-						text-decoration: underline;
-						font-weight: bold;
-						border: none;
-					}
-				}
-			}
+.data-explorer-container .nav-right {
+	list-style-type: none;
+	margin-right: 2rem;
+	margin-left: 5rem;
+}
 
-			.nav-right {
-				list-style-type: none;
-				margin-right: 2rem;
-				margin-left: 5rem;
+.data-explorer-container .nav-right li {
+	float: left;
+}
 
-				li {
-					float: left;
-				}
+.data-explorer-container .nav-right li button {
+	display: block;
+	color: black;
+	text-align: center;
+	text-decoration: none;
+	background: transparent;
+	padding: 8px 12px;
+	border: 1px solid black;
+}
 
-				li button {
-					display: block;
-					color: black;
-					text-align: center;
-					text-decoration: none;
-					background: transparent;
-					padding: 8px 12px;
-					border: 1px solid black;
-				}
+.data-explorer-container .nav-right li button:hover {
+	background: var(--un-color-black-5);
+	cursor: pointer;
+}
 
-				li button:hover {
-					background: var(--un-color-black-5);
-					cursor: pointer;
-				}
+.data-explorer-container .nav-right li button.active {
+	background: white;
+	font-weight: bold;
+}
 
-				li button.active {
-					background: white;
-					font-weight: bold;
-				}
-			}
-		}
-	}
+.data-explorer-container .facets-and-results-container {
+	background-color: var(--un-color-body-surface-background);
+	height: calc(100vh - var(--footer-height) - var(--nav-bar-height));
+	display: flex;
+	overflow: auto;
+}
 
-	.facets-and-results-container {
-		background-color: $background-light-2;
-		height: calc(100vh - var(--footer-height) - var(--nav-bar-height));
-		display: flex;
-		overflow: auto;
-	}
+.data-explorer-container .results-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
 
-	.results-content {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-	}
+.co-occurrence-matrix-btn {
+	background-color: darkcyan;
+	padding-left: 8px;
+	padding-right: 8px;
+}
 
-	.xdd-known-terms {
-		margin-left: 1rem;
-		display: flex;
+.data-explorer-container :deep(.dropdown-btn) {
+	max-width: 200px;
+	width: 200px;
+}
 
-		.flex-aligned-item {
-			display: flex;
-			align-items: center;
-			color: var(--un-color-accent-darker);
+.xdd-known-terms .flex-aligned-item {
+	display: flex;
+	align-items: center;
+	color: var(--un-color-accent-darker);
+}
 
-			.flex-aligned-item-delete-btn {
-				color: red;
-			}
+.xdd-known-terms .flex-aligned-item-delete-btn {
+	color: red;
+}
 
-			.flex-aligned-item-delete-btn:hover {
-				cursor: pointer;
-			}
-		}
+.xdd-known-terms .flex-aligned-item-delete-btn:hover {
+	cursor: pointer;
+}
 
-		:deep(.search-bar-container input) {
-			margin: 4px;
-			padding: 4px;
-			min-width: 100px;
-		}
-	}
-
-	.co-occurrence-matrix-btn {
-		background-color: darkcyan;
-		padding-left: 8px;
-		padding-right: 8px;
-	}
-
-	:deep(.dropdown-btn) {
-		max-width: 200px;
-		width: 200px;
-	}
+.xdd-known-terms :deep(.search-bar-container input) {
+	margin: 4px;
+	padding: 4px;
+	min-width: 100px;
 }
 </style>
