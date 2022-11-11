@@ -35,7 +35,7 @@ header {
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
 	gap: 2rem;
-	height: var(--header-height);
+	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
 }
 

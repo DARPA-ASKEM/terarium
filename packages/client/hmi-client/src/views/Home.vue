@@ -47,12 +47,11 @@ section {
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
-	padding-bottom: 10rem;
 }
 
 header {
 	align-items: center;
-	display: flex;
+	display: none; /* flex; */
 	z-index: -1;
 }
 
@@ -133,5 +132,9 @@ li:hover > .project-card {
 
 li > * {
 	position: absolute;
+}
+
+.project-carousel:last-of-type {
+	margin-bottom: 3rem;
 }
 </style>
