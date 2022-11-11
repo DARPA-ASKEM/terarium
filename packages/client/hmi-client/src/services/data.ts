@@ -11,7 +11,7 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 
-const HMI_SERVER_BASE_API_URL = 'http://localhost:8078/api';
+const HMI_SERVER_BASE_API_URL = '/api';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const XDD_API_KEY = ''; // COSMOS_API_KEY
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
