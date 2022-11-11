@@ -1,5 +1,6 @@
 <script lang="ts">
 import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
+import { petriNetValidator } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
@@ -342,6 +343,7 @@ export default defineComponent({
 				method: 'GET'
 			});
 			const output = await resp.json();
+			console.log(petriNetValidator(output));
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
 		// eslint-disable-next-line
@@ -523,7 +525,6 @@ export default defineComponent({
 	}
 });
 </script>
-
 <template>
 	<section class="playground">
 		<p>A playground for testing TA2 API integrations.</p>
@@ -532,7 +533,6 @@ export default defineComponent({
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
-
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
