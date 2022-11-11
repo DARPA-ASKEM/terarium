@@ -9,6 +9,9 @@ public class SimulationPlan {
 	@JsonbProperty("id")
 	public Long id;
 
+	@JsonbProperty("model_id")
+	public Long modelId;
+
 	@JsonbProperty("name")
 	public String name;
 
@@ -23,7 +26,4 @@ public class SimulationPlan {
 
 	@JsonbProperty("content")
 	public String content;
-
-	@JsonbProperty("parameters")
-	public Map<String, String> parameters;
 }

@@ -5,6 +5,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Project;
 import software.uncharted.terarium.hmiserver.proxies.ProjectProxy;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -14,21 +15,18 @@ import java.util.List;
 @Path("/api/projects")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "Project REST Endpoint")
+@Tag(name = "Project REST Endpoints")
 public class ProjectResource {
 
+	@Inject
 	@RestClient
 	ProjectProxy proxy;
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all projects for a given user")
-	public Response getProjects(
-		@QueryParam("sort") @DefaultValue("") final String sortQuery,
-		@QueryParam("page") @DefaultValue("0") final int pageIndex,
-		@QueryParam("size") @DefaultValue("100") final int pageSize
-	) {
-		final List<Project> projects = proxy.getProjects(sortQuery, pageIndex, pageSize);
+	public Response getProjects() {
+		final List<Project> projects = proxy.getProjects();
 		if (projects.isEmpty()) {
 			return Response.noContent().build();
 		}
@@ -52,7 +50,7 @@ public class ProjectResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createProject(final Project newProject) {
 		final Project entity = proxy.createProject(newProject);
-		return Response.created(URI.create("/projects/" + entity.id)).build();
+		return Response.created(URI.create("/api/projects/" + entity.id)).build();
 	}
 
 	@PUT
@@ -79,12 +77,5 @@ public class ProjectResource {
 		}
 
 		return Response.ok().build();
-	}
-
-	@GET
-	@Path("/count")
-	public Response getNumProjects() {
-		final Long numProjects = proxy.getNumProjects();
-		return Response.ok(numProjects).build();
 	}
 }
