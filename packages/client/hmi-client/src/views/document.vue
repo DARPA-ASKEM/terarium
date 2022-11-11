@@ -104,6 +104,7 @@ const extractions = computed(() => {
 
 const groupedExtractions = computed(() => groupBy(extractions.value, 'cls'));
 
+// @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 watch(extractions, (currentValue, oldValue) => {
 	if (extractions.value.length > 0) {
