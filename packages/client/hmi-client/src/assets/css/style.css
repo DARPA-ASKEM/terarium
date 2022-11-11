@@ -34,6 +34,9 @@
 	--background-light-2: #F2F2F2;
 	--background-light-3: #E6E6E6;
 	--background-light-1-faded: #FAFAFA;
+
+	/* Layout */
+	--header-height: 4rem;
 }
 
 :root {

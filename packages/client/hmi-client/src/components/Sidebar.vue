@@ -99,6 +99,7 @@ function moveSidebar() {
 
 <style scoped>
 section {
+	background-color: var(--un-color-accent);
 	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	height: 100%;
@@ -113,20 +114,11 @@ section.right {
 nav {
 	display: flex;
 	flex-direction: column;
-	background-color: var(--un-color-accent-light);
 	z-index: 2;
-}
-
-ul {
-	list-style: none;
-}
-
-nav {
-	background-color: var(--un-color-accent);
-	box-shadow: var(--un-box-shadow-small);
 	justify-content: space-between;
-	padding: 0.33rem 0;
+	padding-top: 0.33rem;
 	width: 4rem;
+	height: calc(100vh - var(--header-height));
 }
 
 nav ul {
@@ -134,6 +126,7 @@ nav ul {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	list-style: none;
 	gap: 0.5rem;
 }
 
