@@ -63,6 +63,7 @@ export const getModelFacets = (articles: Model[]) => {
 // Merging facets who share the same key requires custom logic, e.g.,
 //  XDD documents of "type" [fulltext] and Models of "type": [model, dataset]
 //  should be merged into one facet representing the overall "type" of result
+// @ts-ignore
 // eslint-disable-next-line consistent-return
 function mergeCustomizer(objValue: any, srcValue: any) {
 	if (isArray(objValue)) {
