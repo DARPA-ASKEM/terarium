@@ -68,7 +68,7 @@ import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Model } from '@/types/Model';
 import { ResourceType } from '@/types/common';
-import { getResourceTypeIcon } from '@/utils/data-util';
+import { getResourceTypeIcon, isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
@@ -245,15 +245,15 @@ tr th {
 }
 
 .tr-item.selected {
-	border: 2px double var(--un-color-accent-light);
+	border: 2px double var(--un-color-accent-lighter);
 }
 
 .tr-item.selected .name-and-desc-col {
-	border-left: 2px solid var(--un-color-accent-light);
+	border-left: 2px solid var(--un-color-accent-lighter);
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-accent-lighter);
 }
 
 .text-bold {
