@@ -51,7 +51,7 @@ section {
 
 header {
 	align-items: center;
-	display: none; /* flex; */
+	display: flex;
 	z-index: -1;
 }
 
