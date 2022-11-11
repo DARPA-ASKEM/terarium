@@ -1,6 +1,6 @@
 <script lang="ts">
 import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
-import { petriNetValidator } from '@/utils/petri-net-validator';
+import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import dagre from 'dagre';
@@ -521,6 +521,184 @@ export default defineComponent({
 					.style('stroke', null)
 					.style('fill', 'blue');
 			}
+		},
+		async mergePetrinets() {
+			const modelA: PetriNet = {
+				T: [
+					{
+						tname: 't-1'
+					},
+					{
+						tname: 't-2'
+					}
+				],
+				S: [
+					{
+						sname: 'p-1'
+					},
+					{
+						sname: 'p-2'
+					},
+					{
+						sname: 'p-3'
+					}
+				],
+				I: [
+					{
+						it: 1,
+						is: 1
+					},
+					{
+						it: 2,
+						is: 2
+					}
+				],
+				O: [
+					{
+						ot: 1,
+						os: 2
+					},
+					{
+						ot: 2,
+						os: 1
+					},
+					{
+						ot: 2,
+						os: 3
+					}
+				]
+			};
+			const modelB: PetriNet = {
+				T: [
+					{
+						tname: 't-1'
+					},
+					{
+						tname: 't-2'
+					}
+				],
+				S: [
+					{
+						sname: 'p-1'
+					},
+					{
+						sname: 'p-2'
+					},
+					{
+						sname: 'p-3'
+					}
+				],
+				I: [
+					{
+						it: 1,
+						is: 1
+					},
+					{
+						it: 2,
+						is: 1
+					}
+				],
+				O: [
+					{
+						ot: 1,
+						os: 2
+					},
+					{
+						ot: 2,
+						os: 3
+					}
+				]
+			};
+			const modelC: PetriNet = {
+				T: [
+					{
+						tname: 't-1'
+					},
+					{
+						tname: 't-2'
+					},
+					{
+						tname: 't-1' // 3
+					},
+					{
+						tname: 't-2' // 4
+					}
+				],
+				S: [
+					{
+						sname: 'p-1'
+					},
+					{
+						sname: 'p-2'
+					},
+					{
+						sname: 'p-3p-3'
+					},
+					{
+						sname: 'p-1' // 4
+					},
+					{
+						sname: 'p-2' // 5
+					}
+				],
+				I: [
+					{
+						it: 1,
+						is: 1
+					},
+					{
+						it: 2,
+						is: 2
+					},
+					{
+						it: 3,
+						is: 4
+					},
+					{
+						it: 4,
+						is: 4
+					}
+				],
+				O: [
+					{
+						ot: 1,
+						os: 2
+					},
+					{
+						ot: 2,
+						os: 1
+					},
+					{
+						ot: 2,
+						os: 3
+					},
+					{
+						ot: 4,
+						os: 3
+					},
+					{
+						ot: 3,
+						os: 4
+					}
+				]
+			};
+			const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
+			console.log(modelC);
+
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/model-composition`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					modelA,
+					modelB,
+					commonStates
+				})
+			});
+			const output = await resp.json();
+			console.log(output);
 		}
 	}
 });
@@ -530,6 +708,7 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
+		<button type="button" @click="mergePetrinets">Merge</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
