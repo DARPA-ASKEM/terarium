@@ -7,6 +7,10 @@
 name: Lint & Format Client
 on:
   workflow_call:
+  push:
+    paths:
+      - 'packages/client/**'
+    branches: ['main']
   pull_request:
     paths:
       - 'packages/client/**'
