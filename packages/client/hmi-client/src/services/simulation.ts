@@ -1,3 +1,5 @@
+import { IGraph } from '@graph-scaffolder/types';
+
 interface SimulationPlan {
 	// Ports, indexed by Box
 	InPort: { in_port_box: number; in_port_type: string }[];
@@ -42,4 +44,43 @@ export const parseSimulationPlan = (plan: SimulationPlan) => {
 		};
 	});
 	return { nodes, edges };
+};
+
+/**
+ * Given a simulation plan wiring diagram, convert to an IGraph representation
+ * for the renderer
+ */
+export const parseSimulationPlan2IGraph = (plan: SimulationPlan) => {
+	const graph = parseSimulationPlan(plan);
+	const g: IGraph<any, any> = { nodes: [], edges: [] };
+
+	// Initialize
+	graph.nodes.forEach((d) => {
+		g.nodes.push({
+			id: d.id,
+			label: d.id, // simulation plan currently allows duplicate labels which create tracking problems in the renderer
+			x: 0,
+			y: 0,
+			width: 40,
+			height: 40,
+			nodes: [],
+			data: {
+				boxType: d.boxType,
+				label: d.name
+			}
+		});
+	});
+
+	graph.edges.forEach((d, i) => {
+		console.log('edge >>', d);
+		g.edges.push({
+			id: `${i}`,
+			source: d.source,
+			target: d.target,
+			points: [],
+			data: {}
+		});
+	});
+
+	return g;
 };
