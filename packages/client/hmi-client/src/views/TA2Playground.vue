@@ -344,6 +344,7 @@ export default defineComponent({
 			});
 			const output = await resp.json();
 			console.log(petriNetValidator(output));
+			console.log(output);
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
 		// eslint-disable-next-line
@@ -678,11 +679,15 @@ export default defineComponent({
 					},
 					{
 						ot: 3,
-						os: 4
+						os: 5
 					}
 				]
 			};
-			const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
+			const commonStates = [
+				{ modelA: 'p-3', modelB: 'p-3' },
+				{ modelA: 'p-2', modelB: 'p-1' }
+			];
+			// const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }, { modelA: 'p-2', modelB: 'p-1' }, { modelA: 'p-3', modelB: 'p-1' },];
 			console.log(modelC);
 
 			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/model-composition`, {
@@ -698,7 +703,7 @@ export default defineComponent({
 				})
 			});
 			const output = await resp.json();
-			console.log(output);
+			console.log('To match', output);
 		}
 	}
 });
