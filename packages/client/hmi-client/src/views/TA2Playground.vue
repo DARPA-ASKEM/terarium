@@ -232,7 +232,16 @@ export default defineComponent({
 		const stratifyModelA = ref('');
 		const stratifyModelB = ref('');
 		const stratifyTypeModel = ref('');
-		return { loadModelID, stratifyModelA, stratifyModelB, stratifyTypeModel };
+		const renameTransitions = ref('');
+		const renameStates = ref('');
+		return {
+			loadModelID,
+			stratifyModelA,
+			stratifyModelB,
+			stratifyTypeModel,
+			renameTransitions,
+			renameStates
+		};
 	},
 	methods: {
 		async refresh() {
@@ -366,7 +375,11 @@ export default defineComponent({
 			});
 			const output = await resp.json();
 			console.log(petriNetValidator(output));
-			d3.select('#output').text(JSON.stringify(output, null, 2));
+			// d3.select('#output').text(JSON.stringify(output, null, 2));
+			d3.select('#IOutput').text(JSON.stringify(output.I));
+			d3.select('#OOutput').text(JSON.stringify(output.I));
+			this.renameTransitions = JSON.stringify(output.T);
+			this.renameStates = JSON.stringify(output.S);
 		},
 		// eslint-disable-next-line
 		async addEdge(source: any, target: any) {
@@ -789,6 +802,29 @@ export default defineComponent({
 				]
 			};
 			await this.createModel(typeModel, true);
+		},
+		// Using label "Renaming" form variables
+		async renameNodes() {
+			const stateJSON = JSON.parse(this.renameStates);
+			const transitionJSON = JSON.parse(this.renameTransitions);
+			// Update model
+			await fetch(`http://localhost:8888/api/models/rename/${modelId}`, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					states: stateJSON,
+					transitions: transitionJSON
+				})
+			});
+			// Redraw result
+			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
+				method: 'GET'
+			});
+			const output = await resp.json();
+			this.createModel(output, false);
 		}
 	}
 });
@@ -819,7 +855,24 @@ export default defineComponent({
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
-			<div id="output" class="playground-panel"></div>
+			<!-- <div id="output" class="playground-panel"></div> -->
+			<form>
+				<label for="Renaming">
+					<label for="Transitions">T:</label>
+					<textarea v-model="renameTransitions" type="text" class="output-panel"></textarea>
+					<div></div>
+					<label for="States">S:</label>
+					<textarea v-model="renameStates" type="text" class="output-panel"></textarea>
+					<div></div>
+					<label for="States">I: </label>
+					<textarea id="IOutput" type="text" readonly class="output-panel"></textarea>
+					<div></div>
+					<label for="States">O:</label>
+					<textarea id="OOutput" type="text" readonly class="output-panel"></textarea>
+				</label>
+				<div></div>
+				<button type="button" @click="renameNodes">Save Edit</button>
+			</form>
 		</div>
 	</section>
 </template>
@@ -832,6 +885,12 @@ export default defineComponent({
 .playground-panel {
 	width: 500px;
 	height: 500px;
+	border: 1px solid #888;
+}
+
+.output-panel {
+	width: 300px;
+	height: 150px;
 	border: 1px solid #888;
 }
 </style>
