@@ -30,8 +30,7 @@ function createNewProject() {
 
 <template>
 	<div class="new-project-card">
-		<Button @click="isModalVisible = true"
-			>Create New Project
+		<Button @click="isModalVisible = true">Create New Project
 			<IconAddFilled32 />
 		</Button>
 		<Teleport to="body">
