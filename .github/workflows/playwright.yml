@@ -1,18 +1,15 @@
+---
 # This workflow runs E2E tests using Playwright
 #
 #   See: https://playwright.dev/
 
 name: Playwright Tests
 on:
-  # push:
-  #   branches: [main]
-  # pull_request:
-  #   branches: [main]
-  workflow_run:
-    workflows: ['Lint & Test']
-    # branches: ['main', 'releases/**']
-    types:
-      - completed
+  workflow_call:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
 jobs:
   e2e-tests:
     timeout-minutes: 30
@@ -25,10 +22,6 @@ jobs:
         shardIndex: [1]
         shardTotal: [1]
     steps:
-      # 1.0 - only run if the dependant workflows were successful
-      - name: Workflow Run Wait
-        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
@@ -80,10 +73,6 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
-      # 1.0 - only run if the dependant workflows were successful
-      - name: Workflow Run Wait
-        uses: ahmadnassri/action-workflow-run-wait@2aa3d9e1a12ecaaa9908e368eaf2123bb084323e
-
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.workflow_run.head_branch }}

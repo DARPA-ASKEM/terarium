@@ -1,4 +1,4 @@
-import { ResourceType, SearchResults } from '@/types/common';
+import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
@@ -75,3 +75,19 @@ export const getResourceTypeIcon = (type: string) => {
 			return IconDocument20;
 	}
 };
+
+export function isModel(item: ResultType): item is Model {
+	return (<Model>item).status !== undefined;
+}
+
+export function isXDDArticle(item: ResultType): item is XDDArticle {
+	return (<XDDArticle>item).publisher !== undefined;
+}
+
+export function getResourceID(item: ResultType) {
+	if (isXDDArticle(item)) {
+		// eslint-disable-next-line no-underscore-dangle
+		return (item as XDDArticle)._gddid;
+	}
+	return item.id;
+}

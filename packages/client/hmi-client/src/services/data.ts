@@ -1,23 +1,25 @@
 import { uniqBy } from 'lodash';
+import { ResourceType, SearchParameters, SearchResults } from '@/types/common';
+import { Model, ModelSearchParams } from '../types/Model';
 import {
-	ModelSearchParams,
-	ResourceType,
-	SearchParameters,
-	SearchResults,
-	XDDSearchParams
-} from '@/types/common';
-import { Model, ModelFilterAttributes } from '../types/Model';
-import { XDDArticle, XDDDictionary, XDDResult, XDD_RESULT_DEFAULT_PAGE_SIZE } from '../types/XDD';
+	XDDArticle,
+	XDDArtifact,
+	XDDDictionary,
+	XDDResult,
+	XDDSearchParams,
+	XDD_RESULT_DEFAULT_PAGE_SIZE
+} from '../types/XDD';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const XDD_API_KEY = ''; // COSMOS_API_KEY
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
-const DATASET_API_URL = 'https://xdd.wisc.edu/sets/';
+const DATASET_API_URL = 'https://xdd.wisc.edu/sets';
 const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
 
 // A unified method to execute an XDD fetch passing the API key and other header params as needed
 const fetchXDD = async (url: string) => {
 	const headers = new Headers();
 	headers.append('Content-Type', 'application/json');
-	// headers.append('x-api-key', XDD_API_KEY);
 	return fetch(url, {
 		// mode: 'no-cors',
 		headers
@@ -147,6 +149,10 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 		}
 	];
 
+	//
+	// simulate applying filters to the model query
+	//
+	const ModelFilterAttributes = ['name', 'description'];
 	if (term.length > 0) {
 		ModelFilterAttributes.forEach((modelAttr) => {
 			const resultsAsModels = allModels;
@@ -161,6 +167,39 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 		results: term.length > 0 ? uniqBy(finalModels, 'id') : allModels,
 		searchSubsystem: ResourceType.MODEL
 	};
+};
+
+const getXDDArtifacts = async (doc_doi?: string, xddSearchParam?: XDDSearchParams) => {
+	// COSMOS API URL starts similarly to the DATASET base URL
+	let url = `${DATASET_API_URL}`;
+	if (xddSearchParam?.dataset) {
+		url += `/${xddSearchParam.dataset}/`;
+	}
+	// COSMOS API part
+	url += 'cosmos/api/v3_beta/search?';
+	// since COSMOS is a protected API, we MUST specify the api key
+	url += `api_key=${XDD_API_KEY}`;
+
+	// restrict the type of object to search for
+	if (xddSearchParam?.type) {
+		url += `&type=${xddSearchParam?.type}`;
+	}
+
+	// by default ignore including artifact bytes (e.g., figures base64 bytes)
+	if (xddSearchParam?.ignore_bytes) {
+		url += '&ignore_bytes';
+	}
+
+	// search against a specific document doi
+	if (doc_doi) {
+		url += `&doi=${doc_doi}`;
+	}
+
+	const response = await fetchXDD(url);
+	const rawdata = await response.json();
+
+	const { objects } = rawdata as { objects: XDDArtifact[] };
+	return objects || ([] as XDDArtifact[]);
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
@@ -178,8 +217,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
-	if (xddSearchParam?.known_terms && xddSearchParam?.known_terms.length > 0) {
-		url += `&dict=${xddSearchParam.known_terms.join(',')}`;
+	if (xddSearchParam?.dict_names && xddSearchParam?.dict_names.length > 0) {
+		url += `&dict=${xddSearchParam.dict_names.join(',')}`;
 	}
 	if (enablePagination) {
 		url += '&full_results';
@@ -257,4 +296,4 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-export { fetchData, getXDDSets, getXDDDictionaries };
+export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts };
