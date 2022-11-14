@@ -8,7 +8,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 @RegisterRestClient(configKey = "data-service")
-@Path("/model")
+@Path("/models")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ModelProxy {
 

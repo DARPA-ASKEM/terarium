@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
 
-@Path("/api/model")
+@Path("/api/models")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")

@@ -28,7 +28,7 @@ public class SimulationResource {
 	SimulationResultProxy resultsProxy;
 
 	@GET
-	@Path("/plan")
+	@Path("/plans")
 	@Tag(name = "Get all projects for a given user")
 	public Response getSimulationPlan() {
 		final List<SimulationPlan> plans = planProxy.getSimulationPlans();
@@ -39,7 +39,7 @@ public class SimulationResource {
 	}
 
 	@GET
-	@Path("/plan/{id}")
+	@Path("/plans/{id}")
 	public Response getSimulationPlan(
 		@QueryParam("id") final Long id
 	) {
@@ -52,6 +52,7 @@ public class SimulationResource {
 	}
 
 	@POST
+	@Path("/plans")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createSimulationPlan(
 		final SimulationPlan newPlan
@@ -61,7 +62,7 @@ public class SimulationResource {
 	}
 
 	@PUT
-	@Path("/plan/{id}")
+	@Path("/plans/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateSimulationPlan(
 		@PathParam("id") final Long id,
@@ -80,7 +81,7 @@ public class SimulationResource {
 	}
 
 	@DELETE
-	@Path("/plan/{id}")
+	@Path("/plans/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	public Response deleteSimulationPlan(
 		@PathParam("id") final Long id
@@ -93,7 +94,7 @@ public class SimulationResource {
 	}
 
 	@GET
-	@Path("/result")
+	@Path("/results")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all projects for a given user")
 	public Response getSimulationResults() {
@@ -105,7 +106,7 @@ public class SimulationResource {
 	}
 
 	@GET
-	@Path("/result/{id}")
+	@Path("/results/{id}")
 	public Response getSimulationResult(
 		@PathParam("id") final Long id
 	) {
@@ -118,7 +119,7 @@ public class SimulationResource {
 	}
 
 	@DELETE
-	@Path("/result/{id}")
+	@Path("/results/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	public Response deleteSimulationResult(
 		@PathParam("id") final Long id
