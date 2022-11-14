@@ -1,16 +1,49 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
 import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
+import Modal from '@/components/Modal.vue';
+import { ref } from 'vue';
 
-function createNewProject() {}
+const isModalVisible = ref(false);
+const newProjectTitle = ref('New Project');
+
+function postProject(name: string) {
+	// Placeholder implementation
+	return new Promise((resolve) => {
+		resolve({
+			id: '2247b94c-61e5-11ed-9b6a-0242ac120002',
+			name,
+			description: 'This is a mock project',
+			createdAt: '1668187323',
+			updatedAt: '1668187323'
+		});
+	});
+}
+
+function createNewProject() {
+	isModalVisible.value = false;
+	postProject(newProjectTitle.value).then();
+}
 </script>
 
 <template>
 	<div class="new-project-card">
-		<Button @onclick="createNewProject"
+		<Button @click="isModalVisible = true"
 			>Create New Project
 			<IconAddFilled32 />
 		</Button>
+		<Teleport to="body">
+			<modal :isVisible="isModalVisible">
+				<template #header>
+					<h3>Create a new project</h3>
+				</template>
+				<template #body>
+					<label for="input">Project title</label>
+					<input v-model="newProjectTitle" placeHolder="New Project" />
+					<button class="modal-button" type="submit" @click="createNewProject">OK</button>
+				</template>
+			</modal>
+		</Teleport>
 	</div>
 </template>
 
@@ -53,5 +86,19 @@ function createNewProject() {}
 
 .new-project-card button:hover svg {
 	color: var(--un-color-body-text-secondary);
+}
+
+h3 {
+	font: var(--un-font-h3);
+}
+
+label {
+	display: block;
+}
+
+input {
+	margin: 0.5rem;
+	margin-left: 0;
+	width: 50vh;
 }
 </style>
