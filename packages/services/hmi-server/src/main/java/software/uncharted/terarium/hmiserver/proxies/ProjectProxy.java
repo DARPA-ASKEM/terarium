@@ -7,7 +7,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@RegisterRestClient
+
+@RegisterRestClient(configKey = "data-service")
 @Path("/projects")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ProjectProxy {
@@ -18,7 +19,7 @@ public interface ProjectProxy {
 	@GET
 	@Path("/{id}")
 	Project getProject(
-		@QueryParam("id") Long id
+		@PathParam("id") Long id
 	);
 
 	@POST
@@ -31,7 +32,7 @@ public interface ProjectProxy {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Project updateProject(
-		Long id,
+		@PathParam("id") Long id,
 		Project updatedProject
 	);
 
@@ -39,6 +40,6 @@ public interface ProjectProxy {
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	Boolean deleteProject(
-		Long id
+		@PathParam("id") Long id
 	);
 }

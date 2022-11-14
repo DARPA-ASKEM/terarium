@@ -75,7 +75,7 @@ clean: $(TARGETS:%=clean-%)
 clean-hmi-server-base:
 	./gradlew :packages:services:hmi-server:clean
 
-.PHONY: clean-hmi-server-base
+.PHONY: clean-mock-data-service-base
 clean-mock-data-service-base:
 	./gradlew :packages:services:mock-data-service:clean
 

@@ -7,7 +7,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@RegisterRestClient
+@RegisterRestClient(configKey = "data-service")
 @Path("/results")
 @Produces(MediaType.APPLICATION_JSON)
 public interface SimulationResultProxy {

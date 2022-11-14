@@ -16,7 +16,6 @@ import java.util.List;
 
 @Path("/api/simulation")
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation REST Endpoints")
 public class SimulationResource {
 
@@ -30,7 +29,6 @@ public class SimulationResource {
 
 	@GET
 	@Path("/plan")
-	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all projects for a given user")
 	public Response getSimulationPlan() {
 		final List<SimulationPlan> plans = planProxy.getSimulationPlans();
@@ -55,7 +53,9 @@ public class SimulationResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createSimulationPlan(final SimulationPlan newPlan) {
+	public Response createSimulationPlan(
+		final SimulationPlan newPlan
+	) {
 		final SimulationPlan entity = planProxy.createSimulationPlan(newPlan);
 		return Response.created(URI.create("api/simulation/plan/" + entity.id)).build();
 	}
@@ -63,7 +63,10 @@ public class SimulationResource {
 	@PUT
 	@Path("/plan/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateSimulationPlan(@PathParam("id") final Long id, final SimulationPlan updatedPlan) {
+	public Response updateSimulationPlan(
+		@PathParam("id") final Long id,
+		final SimulationPlan updatedPlan
+	) {
 		if (planProxy.getSimulationPlan(id) == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -78,7 +81,10 @@ public class SimulationResource {
 
 	@DELETE
 	@Path("/plan/{id}")
-	public Response deleteSimulationPlan(@PathParam("id") final Long id) {
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response deleteSimulationPlan(
+		@PathParam("id") final Long id
+	) {
 		if (!planProxy.deleteSimulationPlan(id)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -113,7 +119,10 @@ public class SimulationResource {
 
 	@DELETE
 	@Path("/result/{id}")
-	public Response deleteSimulationResult(@PathParam("id") final Long id) {
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response deleteSimulationResult(
+		@PathParam("id") final Long id
+	) {
 		if (!resultsProxy.deleteSimulationResult(id)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}

@@ -2,12 +2,10 @@ package software.uncharted.terarium.hmiserver.resources;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.jboss.resteasy.annotations.Query;
 import software.uncharted.terarium.hmiserver.models.Model;
 import software.uncharted.terarium.hmiserver.proxies.ModelProxy;
 
 import javax.inject.Inject;
-import javax.print.attribute.standard.Media;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

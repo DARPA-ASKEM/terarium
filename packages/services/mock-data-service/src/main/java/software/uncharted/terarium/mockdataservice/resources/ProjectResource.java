@@ -27,7 +27,7 @@ public class ProjectResource {
 	@GET
 	@Path("/{id}")
 	public Project getProject(
-		@QueryParam("id") final Long id
+		@PathParam("id") final Long id
 	) {
 		final Project pA = new Project(1L, "Project A", "Test Project A");
 		final Project pB = new Project(2L, "Project B", "Test Project B");
@@ -42,20 +42,27 @@ public class ProjectResource {
 	}
 
 	@POST
-	public Project createProject(final Project newProject) {
+	public Project createProject(
+		final Project newProject
+	) {
 		return newProject;
 	}
 
 	@PUT
 	@Path("/{id}")
-	public Project updateProject(final Long id, final Project updatedProject) {
+	public Project updateProject(
+		@PathParam("id") final Long id,
+		final Project updatedProject
+	) {
 		return updatedProject;
 	}
 
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
-	public Boolean deleteProject(final Long id) {
+	public Boolean deleteProject(
+		@PathParam("id") final Long id
+	) {
 		return true;
 	}
 }

@@ -14,7 +14,6 @@ import java.util.List;
 
 @Path("/api/projects")
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Project REST Endpoints")
 public class ProjectResource {
 
@@ -23,7 +22,6 @@ public class ProjectResource {
 	ProjectProxy proxy;
 
 	@GET
-	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all projects for a given user")
 	public Response getProjects() {
 		final List<Project> projects = proxy.getProjects();
@@ -36,7 +34,7 @@ public class ProjectResource {
 	@GET
 	@Path("/{id}")
 	public Response getProject(
-		@QueryParam("id") final Long id
+		@PathParam("id") final Long id
 	) {
 		final Project entity = proxy.getProject(id);
 
@@ -48,7 +46,9 @@ public class ProjectResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createProject(final Project newProject) {
+	public Response createProject(
+		final Project newProject
+	) {
 		final Project entity = proxy.createProject(newProject);
 		return Response.created(URI.create("/api/projects/" + entity.id)).build();
 	}
@@ -56,7 +56,10 @@ public class ProjectResource {
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateProject(final Long id, final Project updatedProject) {
+	public Response updateProject(
+		@PathParam("id") final Long id,
+		final Project updatedProject
+	) {
 		if (proxy.getProject(id) == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -71,8 +74,11 @@ public class ProjectResource {
 
 	@DELETE
 	@Path("/{id}")
-	public Response deleteProject(final Long id) {
-		if (!proxy.deleteProject(id)) {
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response deleteProject(
+		@PathParam("id") final Long id
+	) {
+		if (Boolean.FALSE.equals(proxy.deleteProject(id))) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
 
