@@ -18,13 +18,13 @@ public interface SimulationResultProxy {
 	@GET
 	@Path("/{id}")
 	SimulationRun getSimulationResult(
-		@QueryParam("id") Long id
+		@PathParam("id") Long id
 	);
 
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	Boolean deleteSimulationResult(
-		Long id
+		@PathParam("id") Long id
 	);
 }

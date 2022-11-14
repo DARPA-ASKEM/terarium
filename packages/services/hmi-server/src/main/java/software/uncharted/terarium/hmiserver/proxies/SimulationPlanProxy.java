@@ -18,7 +18,7 @@ public interface SimulationPlanProxy {
 	@GET
 	@Path("/{id}")
 	SimulationPlan getSimulationPlan(
-		@QueryParam("id") Long id
+		@PathParam("id") Long id
 	);
 
 	@POST
@@ -31,7 +31,7 @@ public interface SimulationPlanProxy {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	SimulationPlan updateSimulationPlan(
-		Long id,
+		@PathParam("id") Long id,
 		SimulationPlan plan
 	);
 
@@ -39,6 +39,6 @@ public interface SimulationPlanProxy {
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	Boolean deleteSimulationPlan(
-		Long id
+		@PathParam("id") Long id
 	);
 }

@@ -63,7 +63,7 @@ public class SimulationResource {
 	@PUT
 	@Path("/plan/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateSimulationPlan(final Long id, final SimulationPlan updatedPlan) {
+	public Response updateSimulationPlan(@PathParam("id") final Long id, final SimulationPlan updatedPlan) {
 		if (planProxy.getSimulationPlan(id) == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -78,7 +78,7 @@ public class SimulationResource {
 
 	@DELETE
 	@Path("/plan/{id}")
-	public Response deleteSimulationPlan(final Long id) {
+	public Response deleteSimulationPlan(@PathParam("id") final Long id) {
 		if (!planProxy.deleteSimulationPlan(id)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -101,7 +101,7 @@ public class SimulationResource {
 	@GET
 	@Path("/result/{id}")
 	public Response getSimulationResult(
-		@QueryParam("id") final Long id
+		@PathParam("id") final Long id
 	) {
 		final SimulationRun entity = resultsProxy.getSimulationResult(id);
 
@@ -113,7 +113,7 @@ public class SimulationResource {
 
 	@DELETE
 	@Path("/result/{id}")
-	public Response deleteSimulationResult(final Long id) {
+	public Response deleteSimulationResult(@PathParam("id") final Long id) {
 		if (!resultsProxy.deleteSimulationResult(id)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}

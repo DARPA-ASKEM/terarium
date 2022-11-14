@@ -27,7 +27,7 @@ public class SimulationResultResource {
 	@GET
 	@Path("/{id}")
 	public SimulationRun getSimulationResult(
-		@QueryParam("id") final Long id
+		@PathParam("id") final Long id
 	) {
 		final SimulationRun srA = new SimulationRun(1L, 1L, true, "{data: \"This was a successful simulation run\"}");
 		final SimulationRun srB = new SimulationRun(2L, 2L, false, "{data: \"This was a failed simulation run\"}");
@@ -44,7 +44,7 @@ public class SimulationResultResource {
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
-	public Boolean deleteSimulationResult(final Long id) {
+	public Boolean deleteSimulationResult(@PathParam("id") final Long id) {
 		return true;
 	}
 }

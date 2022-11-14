@@ -18,7 +18,7 @@ public interface ModelProxy {
 	@GET
 	@Path("/{id}")
 	Model getModel(
-		@QueryParam("id") Long id
+		@PathParam("id") Long id
 	);
 
 	@POST
@@ -31,7 +31,7 @@ public interface ModelProxy {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Model updateModel(
-		Long id,
+		@PathParam("id") Long id,
 		Model plan
 	);
 
@@ -39,6 +39,6 @@ public interface ModelProxy {
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
 	Boolean deleteModel(
-		Long id
+		@PathParam("id") Long id
 	);
 }

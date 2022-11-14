@@ -37,7 +37,7 @@ public class ModelResource {
 
 	@GET
 	@Path("/{id}")
-	public Response getModel(@QueryParam("id") final Long id) {
+	public Response getModel(@PathParam("id") final Long id) {
 		final Model model = modelProxy.getModel(id);
 
 		if (model == null)
@@ -56,7 +56,7 @@ public class ModelResource {
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateModel(final Long id, final Model updatedModel) {
+	public Response updateModel(@PathParam("id") final Long id, final Model updatedModel) {
 		if (modelProxy.getModel(id) == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
@@ -71,7 +71,7 @@ public class ModelResource {
 
 	@DELETE
 	@Path("/{id}")
-	public Response deleteModel(final Long id) {
+	public Response deleteModel(@PathParam("id") final Long id) {
 		if (!modelProxy.deleteModel(id)) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}

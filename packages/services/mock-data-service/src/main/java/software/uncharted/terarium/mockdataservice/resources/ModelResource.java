@@ -56,7 +56,7 @@ public class ModelResource {
 
 	@GET
 	@Path("/{id}")
-	public Model getModel(@QueryParam("id") final Long id) {
+	public Model getModel(@PathParam("id") final Long id) {
 		for (Model model : getMockedModels()) {
 			if (model.id == id) {
 				return model;
@@ -67,13 +67,13 @@ public class ModelResource {
 
 	@PUT
 	@Path("/{id}")
-	public Model updateModel(final Long id, final Model updatedModel) {
+	public Model updateModel(@PathParam("id") final Long id, final Model updatedModel) {
 		return updatedModel;
 	}
 
 	@DELETE
 	@Path("/{id}")
-	public Boolean deleteProject(final Long id) {
+	public Boolean deleteProject(@PathParam("id") final Long id) {
 		return true;
 	}
 
