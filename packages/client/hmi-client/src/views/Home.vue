@@ -4,6 +4,7 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
+import { projects } from '@/components/projects/mocks';
 
 const enum Categories {
 	Recents = 'Recents',
