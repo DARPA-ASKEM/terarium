@@ -745,9 +745,9 @@ export default defineComponent({
 			];
 			// const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
 			// const commonStates = []
-			console.log(modelA);
-			console.log(modelB);
-			console.log('To match', modelC);
+			// console.log(modelA);
+			// console.log(modelB);
+			console.log('Should match', modelC);
 
 			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/model-composition`, {
 				method: 'POST',
@@ -923,7 +923,7 @@ export default defineComponent({
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
-		<button type="button" @click="mergePetrinets"></button>
+		<button type="button" @click="mergePetrinets">Merge petrinets</button>
 		<form>
 			<label for="loadModel">
 				<input v-model="loadModelID" type="text" placeholder="Model ID" />
