@@ -36,7 +36,6 @@ const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 
 class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
-		// @ts-ignore
 		const svg = d3.select(this.svgEl);
 
 		// Clean up
@@ -121,14 +120,12 @@ export default defineComponent({
 		console.log('TA2 Playground initialized');
 
 		const playground = document.getElementById('playground') as HTMLDivElement;
-		// @ts-ignore
 		renderer = new SampleRenderer({
 			el: playground ?? undefined,
 			useAStarRouting: true,
 			runLayout: runDagreLayout
 		});
 
-		// @ts-ignore
 		renderer.on('node-click', (_evtName, evt, d) => {
 			if (evt.shiftKey) {
 				if (source) {
@@ -173,9 +170,7 @@ export default defineComponent({
 	},
 	methods: {
 		async refresh() {
-			// @ts-ignore
 			await renderer?.setData(g);
-			// @ts-ignore
 			await renderer?.render();
 		},
 		async LotkaVolterra() {
