@@ -7,8 +7,8 @@ test.describe('test Home component', () => {
 		await expect(component).toContainText('Create New Project');
 	});
 
-	test('there should be at least one dummy project', async ({ mount }) => {
+	test('there should be at least one mock project', async ({ mount }) => {
 		const component = await mount(Home);
-		await expect(component).toContainText('Project 0');
+		await expect(component).toContainText('Mocked Project');
 	});
 });
