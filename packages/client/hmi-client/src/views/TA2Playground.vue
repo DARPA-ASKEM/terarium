@@ -739,15 +739,84 @@ export default defineComponent({
 					}
 				]
 			};
-			const commonStates = [
-				{ modelA: 'p-3', modelB: 'p-3' },
-				{ modelA: 'p-2', modelB: 'p-1' }
-			];
-			// const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
-			// const commonStates = []
-			// console.log(modelA);
-			// console.log(modelB);
+			// const modelC2: PetriNet = {
+			// 	"S": [
+			// 		{
+			// 			"sname": "p-1"
+			// 		},
+			// 		{
+			// 			"sname": "p-2p-1"
+			// 		},
+			// 		{
+			// 			"sname": "p-3p-3"
+			// 		},
+			// 		{
+			// 			"sname": "p-2"
+			// 		}
+			// 	],
+			// 	"I": [
+			// 		{
+			// 			"is": 1,
+			// 			"it": 1
+			// 		},
+			// 		{
+			// 			"is": 2,
+			// 			"it": 2
+			// 		},
+			// 		{
+			// 			"is": 2,
+			// 			"it": 3
+			// 		},
+			// 		{
+			// 			"is": 2,
+			// 			"it": 4
+			// 		}
+			// 	],
+			// 	"T": [
+			// 		{
+			// 			"tname": "t-1"
+			// 		},
+			// 		{
+			// 			"tname": "t-2"
+			// 		},
+			// 		{
+			// 			"tname": "t-1"
+			// 		},
+			// 		{
+			// 			"tname": "t-2"
+			// 		}
+			// 	],
+			// 	"O": [
+			// 		{
+			// 			"ot": 1,
+			// 			"os": 2
+			// 		},
+			// 		{
+			// 			"ot": 2,
+			// 			"os": 1
+			// 		},
+			// 		{
+			// 			"ot": 2,
+			// 			"os": 3
+			// 		},
+			// 		{
+			// 			"ot": 3,
+			// 			"os": 4
+			// 		},
+			// 		{
+			// 			"ot": 4,
+			// 			"os": 3
+			// 		}
+			// 	]
+			// }
+			const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
 			console.log('Should match', modelC);
+
+			// const commonStates2 = [
+			// 	{ modelA: 'p-3', modelB: 'p-3' },
+			// 	{ modelA: 'p-2', modelB: 'p-1' }
+			// ];
+			// console.log('Should match', modelC2);
 
 			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/model-composition`, {
 				method: 'POST',
@@ -758,11 +827,11 @@ export default defineComponent({
 				body: JSON.stringify({
 					modelA,
 					modelB,
-					commonStates
+					commonStates // or commonStates2
 				})
 			});
 			const output = await resp.json();
-			console.log(output);
+			console.log('Merged petrinet', output);
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
