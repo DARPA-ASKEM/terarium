@@ -687,8 +687,11 @@ export default defineComponent({
 				{ modelA: 'p-3', modelB: 'p-3' },
 				{ modelA: 'p-2', modelB: 'p-1' }
 			];
-			// const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }, { modelA: 'p-2', modelB: 'p-1' }, { modelA: 'p-3', modelB: 'p-1' },];
-			console.log(modelC);
+			// const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
+			// const commonStates = []
+			console.log(modelA);
+			console.log(modelB);
+			console.log('To match', modelC);
 
 			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/model-composition`, {
 				method: 'POST',
@@ -703,7 +706,7 @@ export default defineComponent({
 				})
 			});
 			const output = await resp.json();
-			console.log('To match', output);
+			console.log(output);
 		}
 	}
 });
