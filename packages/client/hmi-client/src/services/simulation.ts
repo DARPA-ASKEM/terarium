@@ -11,7 +11,7 @@ interface SimulationPlan {
 	// Nodes data
 	Box: { value: string; box_type: string }[];
 
-	// Not currently parsed - Nov 2022
+	// Not currently parsed/used - Nov 2022
 	PassWire: any;
 	InWire: { in_src: number; in_tgt: number; in_wire_value: any }[];
 	OutWire: { out_src: number; out_tgt: number; out_wire_value: any }[];
@@ -72,7 +72,6 @@ export const parseSimulationPlan2IGraph = (plan: SimulationPlan) => {
 	});
 
 	graph.edges.forEach((d, i) => {
-		console.log('edge >>', d);
 		g.edges.push({
 			id: `${i}`,
 			source: d.source,

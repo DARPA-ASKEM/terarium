@@ -6,7 +6,7 @@ import TA2Playground from '@/views/TA2Playground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
 import DocumentView from '@/views/document.vue';
-import Simulation from '@/views/simulation.vue';
+import Simulation from '@/views/Simulation.vue';
 
 export enum RoutePath {
 	Home = '/',
