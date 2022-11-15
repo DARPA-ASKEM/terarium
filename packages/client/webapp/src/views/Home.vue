@@ -6,6 +6,7 @@ import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconFire32 from '@carbon/icons-vue/es/fire/32';
 import IconCoronavirus32 from '@carbon/icons-vue/es/coronavirus/32';
+import { projects } from '@/components/projects/mocks';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -18,17 +19,13 @@ const categories = new Map<string, { icon: object }>([
 	[Categories.Trending, { icon: IconFire32 }],
 	[Categories.Epidemiology, { icon: IconCoronavirus32 }]
 ]);
-
-const dummyProjects: string[] = Array(8)
-	.fill('Project')
-	.map((project, index) => `${project} ${index}`);
 </script>
 
 <template>
 	<section>
 		<h2>Projects</h2>
 		<template v-for="[key, value] in categories" :key="key">
-			<template v-if="dummyProjects.length > 0 || key === Categories.Recents">
+			<template v-if="projects.length > 0 || key === Categories.Recents">
 				<header>
 					<component :is="value.icon" />
 					<h3>{{ key }}</h3>
@@ -39,8 +36,15 @@ const dummyProjects: string[] = Array(8)
 						<li v-if="key === Categories.Recents">
 							<NewProjectCard />
 						</li>
-						<li v-for="(project, index) in dummyProjects" :key="index">
-							<ProjectCard :name="project" />
+						<li v-for="(project, index) in projects" :key="index">
+							<router-link
+								style="text-decoration: none; color: inherit"
+								:to="'/' + project.id"
+								:id="project.id"
+								target="_blank"
+							>
+								<ProjectCard :name="project.name" />
+							</router-link>
 						</li>
 					</ul>
 					<IconChevronRight32 class="chevron-right" />
