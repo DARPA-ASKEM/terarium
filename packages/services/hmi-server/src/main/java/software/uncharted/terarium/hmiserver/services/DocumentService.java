@@ -9,7 +9,9 @@ import software.uncharted.terarium.hmiserver.models.XDD.XDDSearchPayload;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
@@ -19,7 +21,6 @@ import javax.enterprise.context.ApplicationScoped;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,6 +29,7 @@ public class DocumentService {
 	// XDD API URLs
 	private String DOCUMENTS_BASE_URL = "https://xdd.wisc.edu/api/articles?";
 	private String EXTRACTIONS_BASE_URL = "https://xdddev.chtc.io/askem/object?";
+	private String QueryParametersEncoder = "UTF-8";
 
 	// create a client
 	HttpClient client = HttpClient.newHttpClient();
@@ -41,10 +43,25 @@ public class DocumentService {
 			try {
 				XDDSearchPayload payload = new ObjectMapper()
 					.readValue(jsonPayload, XDDSearchPayload.class);
-				url += "doi=" + payload.doi;
+				if (payload.doi != null) {
+					// if doi or title is provided, all other params are ignored
+					url += "doi=" + URLEncoder.encode(payload.doi, QueryParametersEncoder);
+				} else if (payload.title != null) {
+					url += "title=" + URLEncoder.encode(payload.title, QueryParametersEncoder);
+				} else {
+					// doi/title are not given, then apply search parameters
+					if (payload.term != null) {
+						url += "term=" + URLEncoder.encode(payload.term, QueryParametersEncoder);
+						url += "&";
+					}
+				}
+				// continue with the XDD endpoint call
 			} catch (JsonMappingException e) {
 				e.printStackTrace();
 			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+			catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
 		}
@@ -68,7 +85,7 @@ public class DocumentService {
 			String responseBodyStr = response.body();
 			try {
 				XDDResponse<XDDArticlesResponseOK> typedResponse = new ObjectMapper()
-					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+					// .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 					.readValue(responseBodyStr, new TypeReference<XDDResponse<XDDArticlesResponseOK>>() {});
 
 				// NOTE that if no params are provided in the search payload,
@@ -102,53 +119,52 @@ public class DocumentService {
 			try {
 				XDDSearchPayload payload = new ObjectMapper()
 					.readValue(jsonPayload, XDDSearchPayload.class);
-				url += "doi=" + payload.doi;
-			} catch (JsonMappingException e) {
-				e.printStackTrace();
-			} catch (JsonProcessingException e) {
-				e.printStackTrace();
-			}
-		}
+				// @TODO: validate that a proper doi is given
+				if (payload.doi != null) {
+					// add the doi to the query
+					url += "doi=" + payload.doi;
 
-		// create a request
-		var request = HttpRequest.newBuilder(
-					URI.create(url))
-			.header("accept", "application/json")
-			.build();
+					// continue with the requsting the extractions
 
-		// use the client to send the request
-		// @NOTE: we may as well use send the request sync, but this initial implementation uses async
-		var responseFuture = client.sendAsync(request, BodyHandlers.ofString());
+					// create a request
+					var request = HttpRequest.newBuilder(
+								URI.create(url))
+						.header("accept", "application/json")
+						.build();
 
-		// We can do other things here while the request is in-flight
+					// use the client to send the request
+					// @NOTE: we may as well use send the request sync,
+					//        but this initial implementation uses async
+					var responseFuture = client.sendAsync(request, BodyHandlers.ofString());
 
-		// This blocks until the request is complete
-		try {
-			var response = responseFuture.get();
+					// We can do other things here while the request is in-flight
 
-			String responseBodyStr = response.body();
-			try {
-				XDDResponse<XDDExtractionsResponseOK> typedResponse = new ObjectMapper()
-					// .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-					.readValue(responseBodyStr, new TypeReference<XDDResponse<XDDExtractionsResponseOK>>() {});
+					// This blocks until the request is complete
+					var response = responseFuture.get();
 
-				// NOTE that if no params are provided in the search payload,
-				//  then the XDD API results will not be valid (and the mapping will not fail)
-				if (typedResponse.success != null && typedResponse.success.data != null) {
-					for (Extraction ext : typedResponse.success.data) {
-						list.add(ext);
+					String responseBodyStr = response.body();
+						XDDResponse<XDDExtractionsResponseOK> typedResponse = new ObjectMapper()
+							// .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+							.readValue(responseBodyStr, new TypeReference<XDDResponse<XDDExtractionsResponseOK>>() {});
+
+					// NOTE that if no params are provided in the search payload,
+					//  then the XDD API results will not be valid (and the mapping will not fail)
+					if (typedResponse.success != null && typedResponse.success.data != null) {
+						for (Extraction ext : typedResponse.success.data) {
+							list.add(ext);
+						}
 					}
 				}
+
 			} catch (JsonMappingException e) {
 				e.printStackTrace();
 			} catch (JsonProcessingException e) {
 				e.printStackTrace();
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			} catch (ExecutionException e1) {
+				e1.printStackTrace();
 			}
-
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		} catch (ExecutionException e1) {
-			e1.printStackTrace();
 		}
 
 		return list;
