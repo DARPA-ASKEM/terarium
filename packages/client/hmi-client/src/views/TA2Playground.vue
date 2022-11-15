@@ -812,7 +812,7 @@ export default defineComponent({
 			const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
 			console.log('Should match', modelC);
 
-			// const commonStates2 = [
+			// const commonStates = [
 			// 	{ modelA: 'p-3', modelB: 'p-3' },
 			// 	{ modelA: 'p-2', modelB: 'p-1' }
 			// ];
