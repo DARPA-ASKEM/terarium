@@ -3,26 +3,28 @@ import Button from '@/components/Button.vue';
 import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
 import Modal from '@/components/Modal.vue';
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const isModalVisible = ref(false);
 const newProjectTitle = ref('New Project');
+const router = useRouter();
 
 function postProject(name: string) {
-	// Placeholder implementation
-	return new Promise((resolve) => {
-		resolve({
-			id: '2247b94c-61e5-11ed-9b6a-0242ac120002',
-			name,
-			description: 'This is a mock project',
-			createdAt: '1668187323',
-			updatedAt: '1668187323'
-		});
-	});
+	// Placeholder implementation - replace with api call
+	return {
+		id: '2247b94c-61e5-11ed-9b6a-0242ac120002',
+		name,
+		description: 'This is a mock project',
+		createdAt: '1668187323',
+		updatedAt: '1668187323'
+	};
 }
 
 function createNewProject() {
 	isModalVisible.value = false;
-	postProject(newProjectTitle.value).then();
+	const { id } = postProject(newProjectTitle.value);
+	const routeLocation = router.resolve({ path: `/${id}` });
+	window.open(routeLocation.href, '_blank');
 }
 </script>
 
@@ -90,6 +92,7 @@ function createNewProject() {
 
 h3 {
 	font: var(--un-font-h3);
+	color: var(--un-color-body-text-secondary);
 }
 
 label {
