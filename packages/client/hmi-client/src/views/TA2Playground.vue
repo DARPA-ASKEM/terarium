@@ -377,7 +377,7 @@ export default defineComponent({
 			console.log(petriNetValidator(output));
 			// d3.select('#output').text(JSON.stringify(output, null, 2));
 			d3.select('#IOutput').text(JSON.stringify(output.I));
-			d3.select('#OOutput').text(JSON.stringify(output.I));
+			d3.select('#OOutput').text(JSON.stringify(output.O));
 			this.renameTransitions = JSON.stringify(output.T);
 			this.renameStates = JSON.stringify(output.S);
 		},
