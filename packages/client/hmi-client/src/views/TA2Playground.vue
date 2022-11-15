@@ -1,69 +1,11 @@
 <script lang="ts">
-import graphScaffolder, { IEdge, IGraph, INode } from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
-import dagre from 'dagre';
-import { defineComponent } from 'vue';
-
-const runLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
-	const g = new dagre.graphlib.Graph({ compound: true });
-	g.setGraph({});
-	g.setDefaultEdgeLabel(() => ({}));
-
-	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
-		if (node.width && node.height) {
-			g.setNode(node.id, {
-				label: node.id,
-				width: node.width,
-				height: node.height,
-				x: node.x,
-				y: node.y
-			});
-		} else {
-			g.setNode(node.id, { label: node.id, x: node.x, y: node.y });
-		}
-		if (!_.isEmpty(node.nodes)) {
-			// eslint-disable-next-line
-			for (const child of node.nodes) {
-				g.setParent(child.id, node.id);
-			}
-		}
-	});
-
-	// eslint-disable-next-line
-	for (const edge of graphData.edges) {
-		g.setEdge(edge.source, edge.target);
-	}
-	dagre.layout(g);
-
-	g.nodes().forEach((n) => {
-		const node = g.node(n);
-		node.x -= node.width * 0.5;
-		node.y -= node.height * 0.5;
-	});
-
-	graphScaffolder.traverseGraph(graphData, (node) => {
-		const n = g.node(node.id);
-		node.width = n.width;
-		node.height = n.height;
-		node.x = n.x;
-		node.y = n.y;
-
-		const pid = g.parent(node.id);
-		if (pid) {
-			node.x -= g.node(pid).x;
-			node.y -= g.node(pid).y;
-		}
-	});
-
-	// eslint-disable-next-line
-	for (const edge of graphData.edges) {
-		const e = g.edge(edge.source, edge.target);
-		edge.points = e.points;
-	}
-	return graphData;
-};
+import { defineComponent, ref } from 'vue';
+import { fetchStratificationResult } from '@/services/models/stratification-service';
+import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 
 interface NodeData {
 	type: string;
@@ -72,9 +14,10 @@ interface NodeData {
 interface EdgeData {
 	val: number;
 }
-
-type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
-type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
+enum NodeType {
+	Species = 'S',
+	Transition = 'T'
+}
 
 let g: IGraph<NodeData, EdgeData> = {
 	width: 500,
@@ -93,6 +36,7 @@ const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 
 class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
+		// @ts-ignore
 		const svg = d3.select(this.svgEl);
 
 		// Clean up
@@ -119,8 +63,12 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === 'species');
-		const transitions = selection.filter((d) => d.data.type === 'transition');
+		const species = selection.filter(
+			(d) => d.data.type === 'species' || d.data.type === NodeType.Species
+		);
+		const transitions = selection.filter(
+			(d) => d.data.type === 'transition' || d.data.type === NodeType.Transition
+		);
 
 		transitions
 			.append('rect')
@@ -156,7 +104,7 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 }
 
 let renderer: SampleRenderer | null = null;
-g = runLayout(_.cloneDeep(g));
+g = runDagreLayout(_.cloneDeep(g));
 
 let placeCounter = 0;
 let transitionCounter = 0;
@@ -173,12 +121,14 @@ export default defineComponent({
 		console.log('TA2 Playground initialized');
 
 		const playground = document.getElementById('playground') as HTMLDivElement;
+		// @ts-ignore
 		renderer = new SampleRenderer({
 			el: playground ?? undefined,
 			useAStarRouting: true,
-			runLayout
+			runLayout: runDagreLayout
 		});
 
+		// @ts-ignore
 		renderer.on('node-click', (_evtName, evt, d) => {
 			if (evt.shiftKey) {
 				if (source) {
@@ -214,9 +164,18 @@ export default defineComponent({
 		this.refresh();
 		this.jsonOutput();
 	},
+	setup() {
+		const loadModelID = ref('');
+		const stratifyModelA = ref('');
+		const stratifyModelB = ref('');
+		const stratifyTypeModel = ref('');
+		return { loadModelID, stratifyModelA, stratifyModelB, stratifyTypeModel };
+	},
 	methods: {
 		async refresh() {
+			// @ts-ignore
 			await renderer?.setData(g);
+			// @ts-ignore
 			await renderer?.render();
 		},
 		async LotkaVolterra() {
@@ -306,7 +265,7 @@ export default defineComponent({
 			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
 			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
 
-			g = runLayout(_.cloneDeep(g));
+			g = runDagreLayout(_.cloneDeep(g));
 
 			await fetch(`http://localhost:8888/api/models/${modelId}`, {
 				method: 'POST',
@@ -344,7 +303,6 @@ export default defineComponent({
 			});
 			const output = await resp.json();
 			console.log(petriNetValidator(output));
-			console.log(output);
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
 		// eslint-disable-next-line
@@ -381,10 +339,6 @@ export default defineComponent({
 					]
 				})
 			});
-
-			// g = runLayout(_.cloneDeep(g));
-			this.refresh();
-			this.jsonOutput();
 		},
 		async addPlace() {
 			console.log('add place');
@@ -454,6 +408,108 @@ export default defineComponent({
 			});
 			this.jsonOutput();
 		},
+		// provide node details and a flag
+		// createFlag: True = create new + draw, False = just draw
+		async addNode(
+			id: string,
+			label: string,
+			x: number,
+			y: number,
+			height: number,
+			width: number,
+			type: NodeType,
+			createFlag: boolean
+		) {
+			g.nodes.push({
+				id,
+				label,
+				x,
+				y,
+				height,
+				width,
+				data: { type },
+				nodes: []
+			});
+
+			if (createFlag === true) {
+				await fetch(`http://localhost:8888/api/models/${modelId}`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						nodes: [
+							{
+								name: label,
+								type
+							}
+						]
+					})
+				});
+			}
+			this.jsonOutput();
+		}, // end addNode
+		// Not sure how to overload functions so here we are
+		// createFlag: True - Create and draw, false - just draw
+		async addEdgeID(sourceID: string, targetID: string, createFlag: boolean) {
+			let sourceX;
+			let sourceY;
+			let targetX;
+			let targetY;
+			let sourceLabel;
+			let targetLabel;
+			// Find source and target's locations
+			// there has to be a better way to get the source and target locations
+			for (let i = 0; i < g.nodes.length; i++) {
+				if (sourceLabel && targetLabel) {
+					break;
+				}
+				if (g.nodes[i].id === sourceID) {
+					sourceLabel = g.nodes[i].label;
+					sourceX = g.nodes[i].x + g.nodes[i].width * 0.5;
+					sourceY = g.nodes[i].y + g.nodes[i].height * 0.5;
+				}
+				if (g.nodes[i].id === targetID) {
+					targetLabel = g.nodes[i].label;
+					targetX = g.nodes[i].x + g.nodes[i].width * 0.5;
+					targetY = g.nodes[i].y + g.nodes[i].height * 0.5;
+				}
+			}
+			g.edges.push({
+				source: sourceLabel,
+				target: targetLabel,
+				points: [
+					{
+						x: sourceX, // + source.datum().width * 0.5,
+						y: sourceY // + source.datum().height * 0.5
+					},
+					{
+						x: targetX, // + target.datum().width * 0.5,
+						y: targetY // + target.datum().height * 0.5
+					}
+				]
+			});
+
+			if (createFlag === true) {
+				await fetch(`http://localhost:8888/api/models/${modelId}`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						edges: [
+							{
+								source: sourceLabel,
+								target: targetLabel
+							}
+						]
+					})
+				});
+			}
+		}, // end addEdge
+
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
 			numRabbits = +(Math.random() * 100).toFixed();
@@ -707,6 +763,153 @@ export default defineComponent({
 			});
 			const output = await resp.json();
 			console.log(output);
+		},
+		// Pulls model ID from form and sends model to createModel function for the actual work
+		async drawModel() {
+			const resp = await fetch(`http://localhost:8888/api/models/${this.loadModelID}/json`, {
+				method: 'GET'
+			});
+			const model: PetriNet = await resp.json();
+			this.createModel(model, false);
+		},
+		// Expects a JSON of a model with labels T, S, I, O.
+		// populates g + depending on provided flag POST changes to model ID
+		// This is mostly done for stratification testing. Will require a deeper look in future
+		// TODO: We know there are race errors here. We intend to make this service stateless so we wont need to add Edges and Nodes individually
+		async createModel(model: PetriNet, createFlag = false) {
+			// Flag is true so we need to call API PUT new model ID
+			if (createFlag === true) {
+				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
+				const modelData = await newModel.json();
+				modelId = modelData.id;
+				console.log(`Model ID: ${modelId}`); // currently required for testing
+			}
+
+			// Reset current nodes and edges
+			g.nodes = [];
+			g.edges = [];
+
+			const nodeHeight = 20;
+			const nodeWidth = 20;
+			let nodeX = 0;
+			let nodeY = 0;
+			// Nodes
+			for (let i = 0; i < model.S.length; i++) {
+				const aNode = model.S[i];
+				nodeX += 30;
+				nodeY += 30;
+				this.addNode(
+					`s-${i + 1}`,
+					aNode.sname.toString(),
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					NodeType.Species,
+					createFlag
+				);
+			}
+			// Move Transitions 100 to the right of S
+			nodeX = 100;
+			nodeY = 0;
+			for (let i = 0; i < model.T.length; i++) {
+				const aTransition = model.T[i];
+				nodeX += 30;
+				nodeY += 30;
+				this.addNode(
+					`t-${i + 1}`,
+					aTransition.tname.toString(),
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					NodeType.Transition,
+					createFlag
+				);
+			} // end T
+
+			// Edges
+			for (let i = 0; i < model.I.length; i++) {
+				const iEdges = model.I[i];
+				const sourceID = `s-${iEdges.is}`;
+				const transitionID = `t-${iEdges.it}`;
+				this.addEdgeID(sourceID, transitionID, createFlag);
+			}
+			for (let i = 0; i < model.O.length; i++) {
+				const oEdges = model.O[i];
+				const sourceID = `s-${oEdges.os}`;
+				const transitionID = `t-${oEdges.ot}`;
+				this.addEdgeID(transitionID, sourceID, createFlag);
+			}
+
+			// g = runLayout(_.cloneDeep(g));
+			this.refresh();
+			this.jsonOutput();
+		}, // end createModel
+		async stratify() {
+			try {
+				const outputModel = await fetchStratificationResult(
+					this.stratifyModelA,
+					this.stratifyModelB,
+					this.stratifyTypeModel
+				);
+				this.createModel(outputModel, true);
+			} catch (e: any) {
+				console.error(e.message);
+			}
+		},
+		// Used to create sample models for stratifying tests
+		// Will not be requried in the long run as we will be moving to storing these in DB
+		async createSampleModels() {
+			const SIRDModel: PetriNet = {
+				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 2 },
+					{ it: 2, is: 2 },
+					{ it: 3, is: 2 }
+				],
+				O: [
+					{ ot: 1, os: 2 },
+					{ ot: 1, os: 2 },
+					{ ot: 2, os: 3 },
+					{ ot: 3, os: 4 }
+				]
+			};
+			await this.createModel(SIRDModel, true);
+
+			const QNotQModel: PetriNet = {
+				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
+				S: [{ sname: 'Q' }, { sname: 'NQ' }],
+				I: [
+					{ it: 1, is: 2 },
+					{ it: 2, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 2 }
+				]
+			};
+			await this.createModel(QNotQModel, true);
+
+			const typeModel: PetriNet = {
+				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
+				S: [{ sname: 'Pop' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 1 },
+					{ it: 2, is: 1 },
+					{ it: 3, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 1 },
+					{ ot: 3, os: 1 }
+				]
+			};
+			await this.createModel(typeModel, true);
 		}
 	}
 });
@@ -716,10 +919,25 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
-		<button type="button" @click="mergePetrinets">Merge</button>
+		<button type="button" @click="createSampleModels">Create Models</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
+		<button type="button" @click="mergePetrinets"></button>
+		<form>
+			<label for="loadModel">
+				<input v-model="loadModelID" type="text" placeholder="Model ID" />
+			</label>
+			<button type="button" @click="drawModel">Load Model</button>
+		</form>
+		<form>
+			<label for="stratify">
+				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
+				<input v-model="stratifyModelB" type="text" placeholder="Model B" />
+				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model" />
+			</label>
+			<button type="button" @click="stratify">Stratify</button>
+		</form>
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>

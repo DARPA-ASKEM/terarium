@@ -1,3 +1,4 @@
+---
 # Automatically adds or removes labels from issues. Can be expanded to
 # auto label cards and PRs as well. Issue templates are present
 # however not always used. This will label issues that are missing them.

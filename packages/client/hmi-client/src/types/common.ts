@@ -1,5 +1,11 @@
-import { Model } from './Model';
-import { XDDArticle } from './XDD';
+import { Model, ModelSearchParams } from './Model';
+import { XDDArticle, XDDSearchParams } from './XDD';
+
+export enum ViewType {
+	LIST = 'list',
+	MATRIX = 'matrix',
+	GRAPH = 'graph'
+}
 
 export enum ResourceType {
 	XDD = 'xdd',
@@ -7,17 +13,6 @@ export enum ResourceType {
 	DATASET = 'dataset',
 	ALL = 'all'
 }
-
-export type XDDSearchParams = {
-	known_terms?: string[];
-	dataset?: string | null;
-	enablePagination: boolean;
-	pageSize?: number;
-};
-
-export type ModelSearchParams = {
-	country?: string;
-};
 
 export type SearchParameters = {
 	[ResourceType.XDD]?: XDDSearchParams;
