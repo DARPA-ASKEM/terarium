@@ -13,6 +13,23 @@ const pathFn = d3
 	.x((d) => d.x)
 	.y((d) => d.y);
 
+// This model can be deleted in future. Just used for init graph
+const model: PetriNet = {
+	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+	I: [
+		{ it: 1, is: 1 },
+		{ it: 1, is: 2 },
+		{ it: 2, is: 2 },
+		{ it: 3, is: 2 }
+	],
+	O: [
+		{ ot: 1, os: 2 },
+		{ ot: 1, os: 2 },
+		{ ot: 2, os: 3 },
+		{ ot: 3, os: 4 }
+	]
+};
 class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
 		// @ts-ignore
@@ -78,28 +95,11 @@ class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData
 	}
 }
 
-const model: PetriNet = {
-	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
-	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
-	I: [
-		{ it: 1, is: 1 },
-		{ it: 1, is: 2 },
-		{ it: 2, is: 2 },
-		{ it: 3, is: 2 }
-	],
-	O: [
-		{ ot: 1, os: 2 },
-		{ ot: 1, os: 2 },
-		{ ot: 2, os: 3 },
-		{ ot: 3, os: 4 }
-	]
-};
-
 onMounted(async () => {
 	let renderer: ModelPlanRenderer | null = null;
 	const modelDrawnElement = document.getElementById('model-drawn') as HTMLDivElement;
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model); // get graph from petri net representation
-
+	console.log(g);
 	// @ts-ignore
 	renderer = new ModelPlanRenderer({
 		el: modelDrawnElement,

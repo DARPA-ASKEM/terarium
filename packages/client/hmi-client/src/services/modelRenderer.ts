@@ -21,15 +21,16 @@ const g: IGraph<NodeData, EdgeData> = {
 };
 
 /**
- * Given a simulation plan wiring diagram, convert to an IGraph representation
+ * Given a petrinet model convert to an IGraph representation g
  * for the renderer
+ * First add each node found in S and T, then add each edge found in I and O
  */
 export const parsePetriNet2IGraph = (model: PetriNet) => {
 	const nodeHeight = 20;
 	const nodeWidth = 20;
 	let nodeX = 0;
 	let nodeY = 10;
-	// Nodes
+	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
 		const aNode = model.S[i];
 		nodeX += 30;
@@ -45,9 +46,9 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			nodes: []
 		});
 	}
-	// Move Transitions 100 to the right of S
-	nodeX = 100;
+	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
 	nodeY = 0;
+	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
 		nodeX += 30;
@@ -64,7 +65,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	} // end T
 
-	// Edges
+	// Edges found in I
 	for (let i = 0; i < model.I.length; i++) {
 		const iEdges = model.I[i];
 		const sourceID = `s-${iEdges.is}`;
@@ -75,6 +76,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			points: []
 		});
 	}
+	// Edges found in O
 	for (let i = 0; i < model.O.length; i++) {
 		const oEdges = model.O[i];
 		const sourceID = `t-${oEdges.ot}`;
