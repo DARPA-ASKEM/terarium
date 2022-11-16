@@ -1,11 +1,10 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import javax.json.bind.annotation.JsonbProperty;
-import java.util.List;
 import java.util.Map;
 
 
-public class Project {
+public class Model {
 
 	@JsonbProperty("id")
 	public Long id;
@@ -16,9 +15,9 @@ public class Project {
 	@JsonbProperty("description")
 	public String description;
 
-	@JsonbProperty("assets")
-	public Map<String, List<Long>> assets;
+	@JsonbProperty("content")
+	public String content;
 
-	@JsonbProperty("status")
-	public String status;
+	@JsonbProperty("parameters")
+	public Map<String, String> parameters;
 }
