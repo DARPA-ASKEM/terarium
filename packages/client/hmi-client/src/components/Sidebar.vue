@@ -28,7 +28,6 @@ const auth = useAuthStore();
 const selectedMode = ref('');
 const isCollapsed = computed(() => selectedMode.value.length === 0);
 
-// Later move mode specific features into their own components
 const logout = () => {
 	auth.logout();
 	window.location.assign('/logout');
@@ -74,7 +73,6 @@ function updateMode(mode: string) {
 			<template v-else>
 				<header>{{ selectedMode }}</header>
 				<div v-if="selectedMode === Mode.Profile">
-					<Button @click="moveSidebar"> Move sidebar </Button>
 					<Button @click="logout"
 						>Logout
 						<IconLogout16 />
