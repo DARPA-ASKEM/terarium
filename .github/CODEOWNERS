@@ -16,7 +16,7 @@
 /packages/services/ @mwdchang @dgauldie @dvince2 @bigglesandginger
 
 # Documentation owners
-docs/*  @dgauldie @pascaleproulx @YohannParis
+docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2
 
 # CODEOWNERS prevent renovate automerge since it will automatically ask for review
 # See documentation for more details: https://docs.renovatebot.com/key-concepts/automerge/#codeowners
