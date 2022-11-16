@@ -11,6 +11,9 @@ import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import IconLogout16 from '@carbon/icons-vue/es/logout/16';
+import IconRun32 from '@carbon/icons-vue/es/run/32';
+import IconModel32 from '@carbon/icons-vue/es/model/32';
+
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import useAuthStore from '../stores/auth';
@@ -21,7 +24,9 @@ const enum Mode {
 	Datasets = 'Datasets',
 	Documents = 'Documents',
 	ProvenanceGraph = 'Provenance Graph',
-	Profile = 'Profile'
+	Profile = 'Profile',
+	Model = 'Model',
+	Simulation = 'Simulation'
 }
 
 const auth = useAuthStore();
@@ -66,6 +71,12 @@ function moveSidebar() {
 				</li>
 				<li :active="selectedMode === Mode.Documents" @click="updateMode(Mode.Documents)">
 					<DocumentPdf32 />
+				</li>
+				<li :active="selectedMode === Mode.Model" @click="updateMode(Mode.Model)">
+					<IconModel32 />
+				</li>
+				<li :active="selectedMode === Mode.Simulation" @click="updateMode(Mode.Simulation)">
+					<IconRun32 />
 				</li>
 			</ul>
 			<ul>

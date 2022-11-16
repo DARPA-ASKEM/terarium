@@ -46,8 +46,12 @@ export function useCurrentRouter() {
 		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home),
 		routerState: computed(() => {
 			const path = router.currentRoute.value.path;
-			const [view, , viewId, subView, subViewId] = path.split('/');
-			console.log(path);
+
+			// This maps into the navigation hierarchy :view/:viewId/:subView/:subViewId, eg
+			// - /projects/123/simulations/232
+			// - /projects/222/models/456
+			// - /docs/d123
+			const [, view, viewId, subView, subViewId] = path.split('/');
 			return { view, viewId, subView, subViewId };
 		})
 	};
