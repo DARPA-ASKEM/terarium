@@ -1,13 +1,8 @@
 <template>
-	<main>
-		<header>Profile</header>
-		<section>
-			<Button @click="logout"
-				>Logout
-				<IconLogout16 />
-			</Button>
-		</section>
-	</main>
+	<Button @click="logout"
+		>Logout
+		<IconLogout16 />
+	</Button>
 </template>
 
 <script setup lang="ts">
@@ -27,19 +22,3 @@ const logout = () => {
 	window.location.assign('/logout');
 };
 </script>
-
-<style scoped>
-main {
-	background-color: var(--un-color-body-surface-primary);
-	display: flex;
-	flex-grow: 1;
-	flex-direction: column;
-	gap: 1rem;
-	padding: 1rem;
-}
-
-header {
-	color: var(--un-color-body-text-secondary);
-	font: var(--un-font-h5);
-}
-</style>

@@ -60,12 +60,13 @@ function updateMode(mode: string) {
 			</ul>
 		</nav>
 		<aside v-if="!isCollapsed">
-			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
-			<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
-			<ProfileSidebarPanel v-else-if="selectedMode === Mode.Profile" />
-			<template v-else>
-				<header>{{ selectedMode }}</header>
-			</template>
+			<header>{{ selectedMode }}</header>
+			<main>
+				<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
+				<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
+				<ProfileSidebarPanel v-else-if="selectedMode === Mode.Profile" />
+				<template v-else> Create a sidebar-panel component </template>
+			</main>
 		</aside>
 	</section>
 </template>
@@ -125,11 +126,21 @@ nav li:hover svg {
 }
 
 aside {
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	padding: 1rem;
 	width: max(15rem, 20vw);
 	z-index: 1;
+}
+
+aside header {
+	color: var(--un-color-body-text-secondary);
+	font: var(--un-font-h5);
+}
+
+aside main {
+	flex-grow: 1;
 }
 </style>
