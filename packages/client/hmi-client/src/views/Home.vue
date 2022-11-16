@@ -4,6 +4,7 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
+import { useRouter } from 'vue-router';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -25,6 +26,13 @@ const mockProjects = [
 		description: 'Test Project B'
 	}
 ];
+
+const router = useRouter();
+
+function openProject(id) {
+	const routeLocation = router.resolve({ path: `/${id}` });
+	window.open(routeLocation.href, '_blank');
+}
 </script>
 
 <template>
@@ -42,14 +50,7 @@ const mockProjects = [
 						<NewProjectCard />
 					</li>
 					<li v-for="(project, index) in mockProjects" :key="index">
-						<router-link
-							style="text-decoration: none; color: inherit"
-							:to="'/' + project.id"
-							:id="project.id"
-							target="_blank"
-						>
-							<ProjectCard :name="project.name" />
-						</router-link>
+						<ProjectCard :name="project.name" @click="openProject(project.id)" />
 					</li>
 				</ul>
 				<IconChevronRight32 class="chevron-right" />
