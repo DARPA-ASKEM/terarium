@@ -66,7 +66,8 @@ function createNewProject() {
 	font-size: 1.25rem;
 	font-weight: 500;
 	border-radius: 0.5rem;
-	width: 85%;
+	width: 100%;
+	height: 100%;
 	margin: auto;
 	justify-content: center;
 	cursor: pointer;
