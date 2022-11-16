@@ -97,9 +97,9 @@ class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData
 
 onMounted(async () => {
 	let renderer: ModelPlanRenderer | null = null;
-	const modelDrawnElement = document.getElementById('model-drawn') as HTMLDivElement;
+	const modelDrawnElement = document.getElementById('model-panel') as HTMLDivElement;
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model); // get graph from petri net representation
-	console.log(g);
+
 	// @ts-ignore
 	renderer = new ModelPlanRenderer({
 		el: modelDrawnElement,
@@ -107,6 +107,7 @@ onMounted(async () => {
 		runLayout: runDagreLayout
 	});
 
+	// Test on click
 	// @ts-ignore
 	renderer.on('node-click', (_eventName: string, _event, selection: D3SelectionINode<NodeData>) => {
 		console.log(selection.datum());
@@ -123,7 +124,7 @@ onMounted(async () => {
 	<section class="model">
 		<p>Model Renderer</p>
 		<div style="display: flex">
-			<div id="model-drawn" class="model-panel"></div>
+			<div id="model-panel" class="model-panel"></div>
 			<div id="model-json" class="model-panel"></div>
 		</div>
 	</section>
