@@ -3,19 +3,8 @@ import { onMounted } from 'vue';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { parsePetriNet2IGraph } from '@/services/modelRenderer';
+import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/modelRenderer';
 import * as d3 from 'd3';
-
-interface NodeData {
-	type: string;
-}
-interface EdgeData {
-	val: number;
-}
-enum NodeType {
-	State = 'S',
-	Transition = 'T'
-}
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
@@ -107,7 +96,6 @@ const model: PetriNet = {
 };
 
 onMounted(async () => {
-	console.log('Init');
 	let renderer: ModelPlanRenderer | null = null;
 	const modelDrawnElement = document.getElementById('model-drawn') as HTMLDivElement;
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model); // get graph from petri net representation
@@ -124,8 +112,7 @@ onMounted(async () => {
 		console.log(selection.datum());
 	});
 
-	// write all output:
-	// const graphData = runDagreLayout<NodeData, EdgeData>(g);
+	// write json to model-json and draw model to model-drawn:
 	d3.select('#model-json').text(JSON.stringify(model));
 	await renderer?.setData(g);
 	await renderer?.render();
