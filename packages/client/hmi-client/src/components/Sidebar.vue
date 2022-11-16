@@ -25,13 +25,6 @@ const enum Mode {
 }
 
 const auth = useAuthStore();
-
-// Get sidebar position if saved in local storage
-const isSidebarPositionRight = ref(
-	localStorage.getItem('isSidebarPositionRight')
-		? localStorage.getItem('isSidebarPositionRight') === 'true'
-		: false
-);
 const selectedMode = ref('');
 const isCollapsed = computed(() => selectedMode.value.length === 0);
 
@@ -44,15 +37,10 @@ const logout = () => {
 function updateMode(mode: string) {
 	selectedMode.value = mode === selectedMode.value ? '' : mode;
 }
-
-function moveSidebar() {
-	localStorage.setItem('isSidebarPositionRight', (!isSidebarPositionRight.value).toString());
-	isSidebarPositionRight.value = localStorage.getItem('isSidebarPositionRight') === 'true';
-}
 </script>
 
 <template>
-	<section :class="{ right: isSidebarPositionRight }">
+	<section>
 		<nav>
 			<ul>
 				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
@@ -80,7 +68,7 @@ function moveSidebar() {
 				</li>
 			</ul>
 		</nav>
-		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
+		<aside v-if="!isCollapsed">
 			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
 			<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
 			<template v-else>
@@ -104,11 +92,6 @@ section {
 	display: flex;
 	height: 100%;
 	isolation: isolate;
-}
-
-section.right {
-	order: 1;
-	flex-direction: row-reverse;
 }
 
 nav {
