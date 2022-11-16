@@ -5,7 +5,6 @@ import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
-import ProjectView from '@/components/projects/Project.vue';
 import DocumentView from '@/views/document.vue';
 import Simulation from '@/views/Simulation.vue';
 import ProjectView from '@/components/projects/Project.vue';
@@ -16,7 +15,6 @@ export enum RoutePath {
 	Ta2Playground = '/ta2-playground',
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
 	Theia = '/theia',
-	Project = '/:id',
 	DocView = '/docs/:id?',
 	SimulationView = '/simulation',
 	Project = '/:id'
