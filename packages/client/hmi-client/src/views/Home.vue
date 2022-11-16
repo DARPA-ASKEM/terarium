@@ -4,7 +4,6 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
-import { projects } from '@/components/projects/mocks';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -13,6 +12,19 @@ const enum Categories {
 }
 
 const categories = new Map<string, { icon: object }>([[Categories.Recents, { icon: IconTime32 }]]);
+
+const mockProjects = [
+	{
+		id: '1',
+		name: 'Project A',
+		description: 'Test Project A'
+	},
+	{
+		id: '2',
+		name: 'Project B',
+		description: 'Test Project B'
+	}
+];
 </script>
 
 <template>
@@ -29,7 +41,7 @@ const categories = new Map<string, { icon: object }>([[Categories.Recents, { ico
 					<li v-if="key === Categories.Recents">
 						<NewProjectCard />
 					</li>
-					<li v-for="(project, index) in projects" :key="index">
+					<li v-for="(project, index) in mockProjects" :key="index">
 						<router-link
 							style="text-decoration: none; color: inherit"
 							:to="'/' + project.id"

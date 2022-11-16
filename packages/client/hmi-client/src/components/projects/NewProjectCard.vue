@@ -12,11 +12,9 @@ const router = useRouter();
 function postProject(name: string) {
 	// Placeholder implementation - replace with api call
 	return {
-		id: '2247b94c-61e5-11ed-9b6a-0242ac120002',
+		id: '3',
 		name,
-		description: 'This is a mock project',
-		createdAt: '1668187323',
-		updatedAt: '1668187323'
+		description: 'This is a new project'
 	};
 }
 
