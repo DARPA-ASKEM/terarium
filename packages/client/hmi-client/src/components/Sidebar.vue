@@ -3,12 +3,14 @@
  * Sidebar component for navigating modes
  * */
 import { computed, ref } from 'vue';
+import IconSidePanelClose16 from '@carbon/icons-vue/es/side-panel--close/16';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
-import DocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
+import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
+import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
@@ -44,7 +46,7 @@ function updateMode(mode: string) {
 					<IconTableSplit32 />
 				</li>
 				<li :active="selectedMode === Mode.Documents" @click="updateMode(Mode.Documents)">
-					<DocumentPdf32 />
+					<IconDocumentPdf32 />
 				</li>
 			</ul>
 			<ul>
@@ -59,8 +61,12 @@ function updateMode(mode: string) {
 				</li>
 			</ul>
 		</nav>
+
 		<aside v-if="!isCollapsed">
-			<header>{{ selectedMode }}</header>
+			<header>
+				{{ selectedMode }}
+				<Button clear><IconSidePanelClose16 /></Button>
+			</header>
 			<main>
 				<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
 				<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
@@ -138,6 +144,13 @@ aside {
 aside header {
 	color: var(--un-color-body-text-secondary);
 	font: var(--un-font-h5);
+	position: relative;
+}
+
+aside header button {
+	position: absolute;
+	right: 0;
+	top: 0;
 }
 
 aside main {
