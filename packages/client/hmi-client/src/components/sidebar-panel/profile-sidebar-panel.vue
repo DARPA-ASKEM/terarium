@@ -1,10 +1,10 @@
 <template>
 	<main>
-		<header>Model Space</header>
+		<header>Profile</header>
 		<section>
-			<Button action @click="goToTheia">
-				<IconScript16 />
-				New model from code
+			<Button @click="logout"
+				>Logout
+				<IconLogout16 />
 			</Button>
 		</section>
 	</main>
@@ -12,16 +12,20 @@
 
 <script setup lang="ts">
 /**
- * Model Sidebar Panel
- * Display a file tree like structure of models available in the current Project.
+ * Profile Sidebar Panel
+ * Display option specific to the user.
  */
 
-import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import IconScript16 from '@carbon/icons-vue/es/script/16';
+import IconLogout16 from '@carbon/icons-vue/es/logout/16';
+import useAuthStore from '@/stores/auth';
 
-const router = useRouter();
-const goToTheia = () => router.push('/theia');
+const auth = useAuthStore();
+
+const logout = () => {
+	auth.logout();
+	window.location.assign('/logout');
+};
 </script>
 
 <style scoped>

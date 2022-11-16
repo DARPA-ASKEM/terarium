@@ -79,7 +79,7 @@ main {
 
 header {
 	color: var(--un-color-body-text-secondary);
-	font: var(--un-font-h6);
+	font: var(--un-font-h5);
 }
 
 section {

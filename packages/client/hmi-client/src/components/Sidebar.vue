@@ -2,18 +2,16 @@
 /**
  * Sidebar component for navigating modes
  * */
-import { ref, computed } from 'vue';
-import Button from '@/components/Button.vue';
+import { computed, ref } from 'vue';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import DocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
-import IconLogout16 from '@carbon/icons-vue/es/logout/16';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
-import useAuthStore from '../stores/auth';
+import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 
 const enum Mode {
 	SimulationPlan = 'Simulation Plan',
@@ -24,14 +22,8 @@ const enum Mode {
 	Profile = 'Profile'
 }
 
-const auth = useAuthStore();
 const selectedMode = ref('');
 const isCollapsed = computed(() => selectedMode.value.length === 0);
-
-const logout = () => {
-	auth.logout();
-	window.location.assign('/logout');
-};
 
 function updateMode(mode: string) {
 	selectedMode.value = mode === selectedMode.value ? '' : mode;
@@ -70,14 +62,9 @@ function updateMode(mode: string) {
 		<aside v-if="!isCollapsed">
 			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
 			<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
+			<ProfileSidebarPanel v-else-if="selectedMode === Mode.Profile" />
 			<template v-else>
 				<header>{{ selectedMode }}</header>
-				<div v-if="selectedMode === Mode.Profile">
-					<Button @click="logout"
-						>Logout
-						<IconLogout16 />
-					</Button>
-				</div>
 			</template>
 		</aside>
 	</section>
@@ -141,7 +128,7 @@ aside {
 	background-color: var(--un-color-accent-light);
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
+	gap: 1rem;
 	width: max(15rem, 20vw);
 	z-index: 1;
 }
