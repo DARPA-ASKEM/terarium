@@ -1,7 +1,8 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import javax.json.bind.annotation.JsonbProperty;
-import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 
 public class Project {
@@ -15,9 +16,9 @@ public class Project {
 	@JsonbProperty("description")
 	public String description;
 
-	@JsonbProperty("created_at")
-	public Instant createdAt;
+	@JsonbProperty("assets")
+	public Map<String, List<Long>> assets;
 
-	@JsonbProperty("updated_at")
-	public Instant updatedAt;
+	@JsonbProperty("status")
+	public String status;
 }

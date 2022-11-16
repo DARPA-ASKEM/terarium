@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import javax.json.bind.annotation.JsonbProperty;
-import java.time.Instant;
+import java.util.Map;
 
 
 public class Model {
@@ -15,13 +15,9 @@ public class Model {
 	@JsonbProperty("description")
 	public String description;
 
-	@JsonbProperty("framework")
-	public String framework;
-
-	@JsonbProperty("timestamp")
-	public Instant timestamp;
-
 	@JsonbProperty("content")
 	public String content;
 
+	@JsonbProperty("parameters")
+	public Map<String, String> parameters;
 }
