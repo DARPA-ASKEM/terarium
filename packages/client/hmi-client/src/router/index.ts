@@ -10,22 +10,27 @@ import Simulation from '@/views/Simulation.vue';
 
 export enum RoutePath {
 	Home = '/',
-	Results = '/results',
-	Ta2Playground = '/ta2-playground',
-	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
-	Theia = '/theia',
+
 	DocView = '/docs/:id?',
-	SimulationView = '/simulation'
+	SimulationView = '/projects/:projectId/simulation',
+	Results = '/projects/:projectId/results',
+
+	// Playground and experiments, these components are testing-only
+	Theia = '/theia',
+	Ta2Playground = '/ta2-playground',
+	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
 }
 
 const routes = [
 	{ path: RoutePath.Home, component: HomeView },
 	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
-	{ path: RoutePath.Ta2Playground, component: TA2Playground },
-	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
-	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
-	{ path: RoutePath.SimulationView, component: Simulation }
+	{ path: RoutePath.SimulationView, component: Simulation },
+
+	// Playground and experiments, these components are testing-only
+	{ path: RoutePath.Theia, component: TheiaView },
+	{ path: RoutePath.Ta2Playground, component: TA2Playground },
+	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground }
 ];
 
 const router = createRouter({
@@ -38,7 +43,13 @@ const router = createRouter({
 
 export function useCurrentRouter() {
 	return {
-		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home)
+		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home),
+		routerState: computed(() => {
+			const path = router.currentRoute.value.path;
+			const [view, , viewId, subView, subViewId] = path.split('/');
+			console.log(path);
+			return { view, viewId, subView, subViewId };
+		})
 	};
 }
 
