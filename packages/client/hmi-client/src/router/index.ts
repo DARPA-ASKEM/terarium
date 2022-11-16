@@ -26,7 +26,6 @@ const routes = [
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.Theia, component: TheiaView },
-	{ path: RoutePath.Project, component: ProjectView, props: true },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
 	{ path: RoutePath.SimulationView, component: Simulation },
 	{ path: RoutePath.Project, component: ProjectView, props: true }
