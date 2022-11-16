@@ -2,7 +2,9 @@ package software.uncharted.terarium.hmiserver.services;
 
 import software.uncharted.terarium.hmiserver.models.Model;
 import java.util.List;
+import java.util.Properties;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 
@@ -18,13 +20,32 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 @ApplicationScoped
 public class ModelService {
-	private String MODELS_BASE_URL = "http://localhost:8001/models";
+	private String DATA_SERVICE_BASE_URL = "";
+
+	public ModelService() {
+		loadServiceConfigParams();
+	}
+
+	private void loadServiceConfigParams() {
+		if (DATA_SERVICE_BASE_URL.isEmpty()) {
+			Properties properties = new Properties();
+			ClassLoader loader = Thread.currentThread().getContextClassLoader();
+			try (InputStream inputStream = loader.getResourceAsStream("application.properties")) {
+					properties.load(inputStream);
+					DATA_SERVICE_BASE_URL = properties.getProperty("software.uncharted.terarium.hmiserver.data-service.base-url");
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	public List<Model> getModels() {
 		List<Model> list = new ArrayList<Model>();
 		HttpClient client = HttpClient.newHttpClient();
 		// create a request
-		var request = HttpRequest.newBuilder(URI.create(MODELS_BASE_URL))
+		String url = DATA_SERVICE_BASE_URL + "/models";
+		var request = HttpRequest.newBuilder(URI.create(url))
 			.header("accept", "application/json")
 			.build();
 		try {

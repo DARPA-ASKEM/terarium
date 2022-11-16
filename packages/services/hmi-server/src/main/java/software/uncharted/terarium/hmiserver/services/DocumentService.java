@@ -8,7 +8,10 @@ import software.uncharted.terarium.hmiserver.models.XDD.XDDResponse;
 import software.uncharted.terarium.hmiserver.models.XDD.XDDSearchPayload;
 
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -26,13 +29,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ApplicationScoped
 public class DocumentService {
-	// XDD API URLs
-	private String DOCUMENTS_BASE_URL = "https://xdd.wisc.edu/api/articles?";
-	private String EXTRACTIONS_BASE_URL = "https://xdddev.chtc.io/askem/object?";
+
+	// to-be-loaded from application.properties
+	private String DOCUMENTS_BASE_URL = "";
+	private String EXTRACTIONS_BASE_URL = "";
 	private String QueryParametersEncoder = "UTF-8";
 
 	// create a client
 	HttpClient client = HttpClient.newHttpClient();
+
+	public DocumentService() {
+		loadServiceConfigParams();
+	}
+
+	private void loadServiceConfigParams() {
+		// check if any of the XDD API URLs is empty
+		if (DOCUMENTS_BASE_URL.isEmpty()) {
+			Properties properties = new Properties();
+			ClassLoader loader = Thread.currentThread().getContextClassLoader();
+			try (InputStream inputStream = loader.getResourceAsStream("application.properties")) {
+					properties.load(inputStream);
+
+					DOCUMENTS_BASE_URL = properties.getProperty("xdd.document.base.url");
+					EXTRACTIONS_BASE_URL = properties.getProperty("xdd.extraction.base.url");
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	public List<Document> getDocuments(String jsonPayload) {
 		List<Document> list = new ArrayList<>();
