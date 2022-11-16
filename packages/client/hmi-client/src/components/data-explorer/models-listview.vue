@@ -4,9 +4,10 @@
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />NAME and DESCRIPTION</th>
-						<th>SOURCE</th>
-						<th>CATEGORY</th>
+						<th><span class="left-cover" />NAME</th>
+						<th>DESCRIPTION</th>
+						<th>Parameters</th>
+						<th>FRAMEWORK</th>
 						<th>PREVIEW<span class="right-cover" /></th>
 					</tr>
 				</thead>
@@ -22,34 +23,27 @@
 							<div class="name-and-desc-layout">
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
-									<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }">
+									<span v-show="isSelected(d)">
 										<IconCheckboxChecked20 />
 									</span>
-									<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }">
+									<span v-show="!isSelected(d)">
 										<IconCheckbox20 />
 									</span>
 									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
-									<button v-if="isNotPublished(d)" type="button" class="not-ready-label">
-										Not Published
-									</button>
-									<button v-if="isDeprecated(d)" type="button" class="not-ready-label">
-										Deprecated
-									</button>
-									<button v-if="isProcessing(d)" type="button" class="not-ready-label">
-										Processing
-									</button>
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
-									<multiline-description :text="formatDescription(d)" />
 								</div>
 							</div>
 						</td>
-						<td class="source-col">
-							<div class="text-bold">{{ d.source }}</div>
+						<td class="desc-col">
+							<p class="max-content">{{ formatDescription(d) }}</p>
 						</td>
-						<td class="category-col">
-							<div class="text-bold">{{ d.category }}</div>
+						<td class="parameters-col">
+							<p class="max-content">{{ formatParameters(d) }}</p>
+						</td>
+						<td class="framework-col">
+							<div class="text-bold">{{ d.framework }}</div>
 						</td>
 						<td class="preview-col">
 							<div class="preview-container">
@@ -65,7 +59,6 @@
 
 <script lang="ts">
 import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { Model } from '@/types/Model';
 import { ResourceType, ResultType } from '@/types/common';
 import { getResourceTypeIcon, isModel } from '@/utils/data-util';
@@ -73,18 +66,10 @@ import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
 import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
-/**
- * name: string;
-	description: string;
-	source: string; // author and affailiation
-	status: string;
-	category: string;
- */
 
 export default defineComponent({
 	name: 'ModelsListview',
 	components: {
-		MultilineDescription,
 		IconCheckbox20,
 		IconCheckboxChecked20,
 		IconRadioButton20,
@@ -124,18 +109,6 @@ export default defineComponent({
 		};
 	},
 	methods: {
-		isDisabled(model: Model) {
-			return model.status === 'deprecated';
-		},
-		isProcessing(model: Model) {
-			return model.status === 'processing';
-		},
-		isNotPublished(model: Model) {
-			return model.status === 'registered';
-		},
-		isDeprecated(model: Model) {
-			return model.status === 'deprecated';
-		},
 		isExpanded(model: Model) {
 			return this.expandedRowId === model.id;
 		},
@@ -158,15 +131,19 @@ export default defineComponent({
 			});
 		},
 		updateSelection(model: Model) {
-			if (!this.isDisabled(model)) {
-				this.$emit('toggle-model-selected', model);
-			}
+			this.$emit('toggle-model-selected', model);
 		},
 		formatDescription(d: Model) {
 			if (!d.description) return '';
 			return this.isExpanded(d) || d.description.length < 140
 				? d.description
 				: `${d.description.substring(0, 140)}...`;
+		},
+		formatParameters(d: Model) {
+			const paramList = Object.keys(d.parameters).join('\n');
+			return this.isExpanded(d) || paramList.length < 4
+				? paramList
+				: `${paramList.substring(0, 50)}...`;
 		}
 	}
 });
@@ -262,7 +239,8 @@ tr th {
 }
 
 .name-and-desc-col {
-	width: 45%;
+	width: 25%;
+	overflow-wrap: break-word;
 }
 
 .name-and-desc-layout {
@@ -283,7 +261,7 @@ tr th {
 
 .name-and-desc-layout .content {
 	flex: 1 1 auto;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
 }
 
 .name-and-desc-layout .content .not-ready-label {
@@ -296,13 +274,23 @@ tr th {
 	float: right;
 }
 
-.source-col {
-	width: 33%;
+.desc-col {
+	width: 35%;
+}
+
+.framework-col {
+	width: 10%;
+	overflow-wrap: break-word;
+}
+
+.parameters-col {
+	width: 20%;
 	overflow-wrap: anywhere;
 }
 
-.category-col {
-	width: 10%;
+.max-content {
+	max-height: 200px;
+	overflow-y: auto;
 }
 
 /* time series hidden until actually put into use */

@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash';
 import { ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import { uncloak } from '@/utils/uncloak';
-import { Model, ModelSearchParams } from '../types/Model';
+import { Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
 	XDDArticle,
 	XDDArtifact,
@@ -11,7 +11,6 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 
-const HMI_SERVER_BASE_API_URL = '/api';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const XDD_API_KEY = ''; // COSMOS_API_KEY
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
@@ -51,12 +50,15 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 	//
 	// fetch list of models data from the HMI server
 	//
-	const allModels: Model[] = await uncloak(`${HMI_SERVER_BASE_API_URL}/model`);
+	const modelsList: Model[] = await uncloak('/api/model');
+
+	// TEMP: add "type" field because it is needed to mark these resources as models
+	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));
 
 	//
 	// simulate applying filters to the model query
 	//
-	const ModelFilterAttributes = ['name', 'description'];
+	const ModelFilterAttributes = MODEL_FILTER_FIELDS;
 	if (term.length > 0) {
 		ModelFilterAttributes.forEach((modelAttr) => {
 			const resultsAsModels = allModels;
@@ -73,6 +75,8 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 	};
 };
 
+// get extractions
+// FIXME: old API usage
 const getXDDArtifacts = async (doc_doi?: string, xddSearchParam?: XDDSearchParams) => {
 	// COSMOS API URL starts similarly to the DATASET base URL
 	let url = `${DATASET_API_URL}`;
@@ -154,8 +158,15 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (rawdata.success) {
 		// eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
 		const { data, hits, scrollId, next_page } = rawdata.success;
+		const dataArticles = data as XDDArticle[];
+
+		// TEMP: map field name from _abstract to abstract beause of server mapping limitation
+		//       where abstract is a reserved keyword
+		// eslint-disable-next-line no-underscore-dangle
+		const articles = dataArticles.map((a) => ({ ...a, abstract: a._abstract }));
+
 		return {
-			results: data as XDDArticle[],
+			results: articles,
 			searchSubsystem: ResourceType.XDD,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',

@@ -18,22 +18,6 @@ public class Model {
 	@JsonbProperty("description")
 	public String description;
 
-	//
-
-	@JsonbProperty("source")
-  public String source;
-
-	@JsonbProperty("status")
-  public String status;
-
-	@JsonbProperty("category")
-  public String category;
-
-	@JsonbProperty("type")
-  public String type;
-
-	//
-
 	@JsonbProperty("framework")
   public String framework;
 

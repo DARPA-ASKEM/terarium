@@ -116,7 +116,7 @@ export default defineComponent({
 								id: model.id,
 								name: model.name,
 								desc: model.description,
-								source: model.source,
+								source: model.framework,
 								type: model.type
 							});
 						});

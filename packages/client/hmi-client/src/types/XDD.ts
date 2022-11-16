@@ -26,7 +26,10 @@ export type XDDArticleKnownTerms = {
 export const ArticleFilterAttributes = ['title', 'publisher'];
 
 export type XDDArticle = {
+	// REVIEW: FIXME: server should provide proper field names
+	//         also, reove the temp workaround in the client data service
 	abstract: string; // description
+	_abstract: string; // description
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string;

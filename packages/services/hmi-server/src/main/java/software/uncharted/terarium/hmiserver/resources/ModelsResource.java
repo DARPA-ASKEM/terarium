@@ -30,16 +30,10 @@ public class ModelsResource {
 
     @GET
 		@Produces(MediaType.APPLICATION_JSON)
-		@Tag(name = "Get all models") // TODO: for a given user or for a given project
+		@Tag(name = "Get all models")
 		public Response getModels() {
-			// TEMP CODE:
-			//  models are not returned to client yet since the client expects a different data structure
-			// FIXME: return the list of models obtained through getModels and remove getMockModels
 			final List<Model> models = modelService.getModels();
-			System.out.println("Received " + models.size() + " from the DB!");
-
-			final List<Model> mockModels = modelService.getMockModels();
-			return Response.ok(mockModels).build();
+			return Response.ok(models).build();
 		}
 
 }

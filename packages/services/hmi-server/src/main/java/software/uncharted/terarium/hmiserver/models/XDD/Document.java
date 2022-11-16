@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import javax.json.bind.annotation.JsonbProperty;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * XDD Document representation
@@ -17,15 +18,10 @@ public class Document {
 	@JsonbProperty("title")
   public String title;
 
+	// FIXME: can we have the field name without the "_" prefix?
 	@JsonbProperty("_abstract")
 	@JsonAlias("abstract")
 	public String _abstract;
-
-	@JsonbProperty("author")
-  public XDDArticleAuthor[] author;
-
-	@JsonbProperty("identifier")
-  public XDDArticleIdentifier[] identifier;
 
 	@JsonbProperty("journal")
   public String journal;
@@ -48,8 +44,18 @@ public class Document {
 	@JsonbProperty("year")
   public String year;
 
+	// FIXME: cannot use actual type or the rest-client would throw an error during the mapping
 	@JsonbProperty("link")
-  public XDDArticleLink[] link;
+  public Object link; // XDDArticleLink[]
+
+	// FIXME: cannot use actual type or the rest-client would throw an error during the mapping
+	@JsonbProperty("author")
+	@JsonIgnore
+  public Object author; // XDDArticleAuthor[]
+
+	// FIXME: cannot use actual type or the rest-client would throw an error during the mapping
+	@JsonbProperty("identifier")
+  public Object identifier; // XDDArticleIdentifier[]
 
 	@JsonbProperty("known_terms")
   public Hashtable<String, String[]> known_terms;
