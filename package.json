@@ -11,6 +11,7 @@
 		"serve": "yarn workspace hmi-client run build",
 		"lint": "eslint . --ext .ts,.vue --fix",
 		"lint:ci": "eslint . --ext .ts,.vue",
+		"typecheck": "yarn workspaces foreach --parallel --interlaced --verbose --topological run typecheck",
 		"test": "yarn workspaces foreach --parallel --verbose run test:ci",
 		"test:e2e": "yarn workspaces foreach --parallel --verbose run test:e2e",
 		"test:ct": "yarn workspaces foreach --parallel --verbose run test:ct",
