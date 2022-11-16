@@ -115,9 +115,12 @@ onMounted(async () => {
 	});
 
 	// Test interaction
-	renderer.on('node-click', (_eventName: string, _event, selection: D3SelectionINode<NodeData>) => {
-		console.log(selection.datum());
-	});
+	renderer.on(
+		'node-click',
+		(_eventName: string | symbol, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log(selection.datum());
+		}
+	);
 
 	const g = parseSimulationPlan2IGraph(plan);
 	// FIXME: Figure out boundary programmatically
