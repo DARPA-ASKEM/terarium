@@ -17,7 +17,7 @@ export enum RoutePath {
 	Theia = '/theia',
 	DocView = '/docs/:id?',
 	SimulationView = '/simulation',
-	Project = '/:id'
+	Project = '/projects'
 }
 
 const routes = [
@@ -29,7 +29,7 @@ const routes = [
 	{ path: RoutePath.Project, component: ProjectView, props: true },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
 	{ path: RoutePath.SimulationView, component: Simulation },
-	{ path: RoutePath.Project, component: ProjectView, props: true }
+	{ path: `${RoutePath.Project}/:id`, component: ProjectView, props: true }
 ];
 
 const router = createRouter({

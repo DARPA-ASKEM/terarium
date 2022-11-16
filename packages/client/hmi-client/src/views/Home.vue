@@ -30,7 +30,7 @@ const mockProjects = [
 const router = useRouter();
 
 function openProject(id) {
-	const routeLocation = router.resolve({ path: `/${id}` });
+	const routeLocation = router.resolve({ path: `/projects/${id}` });
 	window.open(routeLocation.href, '_blank');
 }
 </script>

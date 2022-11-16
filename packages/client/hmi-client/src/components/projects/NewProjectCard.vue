@@ -21,14 +21,15 @@ function postProject(name: string) {
 function createNewProject() {
 	isModalVisible.value = false;
 	const { id } = postProject(newProjectTitle.value);
-	const routeLocation = router.resolve({ path: `/${id}` });
+	const routeLocation = router.resolve({ path: `/projects/${id}` });
 	window.open(routeLocation.href, '_blank');
 }
 </script>
 
 <template>
 	<div class="new-project-card">
-		<Button @click="isModalVisible = true">Create New Project
+		<Button @click="isModalVisible = true"
+			>Create New Project
 			<IconAddFilled32 />
 		</Button>
 		<Teleport to="body">
