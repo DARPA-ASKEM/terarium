@@ -13,8 +13,6 @@ const enum Categories {
 }
 
 const categories = new Map<string, { icon: object }>([[Categories.Recents, { icon: IconTime32 }]]);
-
-const mockProjects: string[] = ['Mocked Project'];
 </script>
 
 <template>
@@ -31,8 +29,15 @@ const mockProjects: string[] = ['Mocked Project'];
 					<li v-if="key === Categories.Recents">
 						<NewProjectCard />
 					</li>
-					<li v-for="(project, index) in mockProjects" :key="index">
-						<ProjectCard :name="project" />
+					<li v-for="(project, index) in projects" :key="index">
+						<router-link
+							style="text-decoration: none; color: inherit"
+							:to="'/' + project.id"
+							:id="project.id"
+							target="_blank"
+						>
+							<ProjectCard :name="project.name" />
+						</router-link>
 					</li>
 				</ul>
 				<IconChevronRight32 class="chevron-right" />
