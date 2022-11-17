@@ -32,7 +32,6 @@ const model: PetriNet = {
 };
 class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
-		// @ts-ignore
 		const svg = d3.select(this.svgEl);
 
 		// Clean up
@@ -100,7 +99,6 @@ onMounted(async () => {
 	const modelDrawnElement = document.getElementById('model-panel') as HTMLDivElement;
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model); // get graph from petri net representation
 
-	// @ts-ignore
 	renderer = new ModelPlanRenderer({
 		el: modelDrawnElement,
 		useAStarRouting: true,
@@ -108,7 +106,6 @@ onMounted(async () => {
 	});
 
 	// Test on click
-	// @ts-ignore
 	renderer.on('node-click', (_eventName: string, _event, selection: D3SelectionINode<NodeData>) => {
 		console.log(selection.datum());
 	});
