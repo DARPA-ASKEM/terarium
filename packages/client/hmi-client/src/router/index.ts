@@ -24,11 +24,11 @@ export enum RoutePath {
 }
 
 const routes = [
-	{ path: RoutePath.Home, component: HomeView },
+	{ name: 'home', path: RoutePath.Home, component: HomeView },
 	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
-	{ path: RoutePath.SimulationView, component: Simulation },
-	{ path: RoutePath.ModelView, component: Model },
+	{ name: 'simulation', path: RoutePath.SimulationView, component: Simulation },
+	{ name: 'model', path: RoutePath.ModelView, component: Model },
 
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },

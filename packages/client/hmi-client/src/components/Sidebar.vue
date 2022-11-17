@@ -11,12 +11,13 @@ import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-mo
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
-import IconRun32 from '@carbon/icons-vue/es/run/32';
-import IconModel32 from '@carbon/icons-vue/es/model/32';
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 // Manage Side Panel
 const isSidePanelOpen = ref(false);
@@ -33,9 +34,7 @@ const enum View {
 	Datasets = 'Datasets',
 	Documents = 'Documents',
 	ProvenanceGraph = 'Provenance Graph',
-	Profile = 'Profile',
-	Model = 'Model',
-	Simulation = 'Simulation'
+	Profile = 'Profile'
 }
 
 const selectedView = ref('');
@@ -50,6 +49,13 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 	if (isSidePanelOpen.value) {
 		if (!openViewSidePanel) closeSidePanel();
 	} else if (openViewSidePanel) openSidePanel();
+
+	if (view === View.SimulationPlan) {
+		router.push({ name: 'simulation' });
+	} else if (view === View.Models) {
+		console.log('hihi');
+		router.push({ name: 'model' });
+	}
 }
 </script>
 
@@ -71,12 +77,6 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 				</li>
 				<li :active="selectedView === View.Documents" @click="openView(View.Documents)">
 					<IconDocumentPdf32 />
-				</li>
-				<li :active="selectedView === View.Model" @click="openView(View.Model)">
-					<IconModel32 />
-				</li>
-				<li :active="selectedView === View.Simulation" @click="openView(View.Simulation)">
-					<IconRun32 />
 				</li>
 			</ul>
 			<ul>
