@@ -33,7 +33,7 @@ function createNewProject() {
 			<IconAddFilled32 />
 		</Button>
 		<Teleport to="body">
-			<modal v-if="isModalVisible" @close-modal="isModalVisible = false">
+			<modal v-if="isModalVisible" @modal-mask-clicked="isModalVisible = false">
 				<template #header>
 					<h3>Create a new project</h3>
 				</template>

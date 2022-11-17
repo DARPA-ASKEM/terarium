@@ -1,8 +1,22 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+/**
+ * A modal with content slots for a header, body, and footer. Use v-if to control visiblity.
+ * @example
+ * <modal v-if="isModalVisible">
+ * 		<template #header>Header content</template>
+ * 		<template #default>Body content</template>
+ * 		<template #footer>Footer content</template>
+ * </modal>
+ *
+ * Clicking outside the modal will emit the event modalMaskClicked.
+ * @example
+ * <modal @modal-mask-clicked="closeModal"></modal>
+ */
+</script>
 
 <template>
 	<Transition name="modal">
-		<div class="modal-mask" @click.self="$emit('closeModal')">
+		<div class="modal-mask" @click.self="$emit('modalMaskClicked')">
 			<div class="modal-container">
 				<header>
 					<slot name="header"></slot>
