@@ -42,4 +42,6 @@ jobs:
         run: yarn prettier:ci
 
       - name: Run Typechecks
-        run: yarn typecheck
+        run: |
+          yarn workspace graph-scaffolder tsc --build
+          yarn typecheck
