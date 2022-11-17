@@ -804,16 +804,16 @@ export default defineComponent({
 			// 		}
 			// 	]
 			// }
-			const commonStates = [{ modelA: 'p-3', modelB: 'p-3' }];
+			const statesToMerge = [{ modelA: 'p-3', modelB: 'p-3' }];
 			console.log('Should match', modelC);
 
-			// const commonStates = [
+			// const statesToMerge = [
 			// 	{ modelA: 'p-3', modelB: 'p-3' },
 			// 	{ modelA: 'p-2', modelB: 'p-1' }
 			// ];
 			// console.log('Should match', modelC2);
 
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/model-composition`, {
+			const resp = await fetch(`http://localhost:8888/api/models/model-composition`, {
 				method: 'POST',
 				headers: {
 					Accept: 'application/json',
@@ -822,7 +822,7 @@ export default defineComponent({
 				body: JSON.stringify({
 					modelA,
 					modelB,
-					commonStates // or commonStates2
+					statesToMerge // or statesToMerge2
 				})
 			});
 			const output = await resp.json();
