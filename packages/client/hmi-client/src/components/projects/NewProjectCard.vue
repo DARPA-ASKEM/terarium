@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router';
 
 const isModalVisible = ref(false);
 const newProjectTitle = ref('New Project');
+const projectDescription = ref('');
 const router = useRouter();
 
 function postProject(name: string) {
@@ -39,7 +40,12 @@ function createNewProject() {
 				<template #default>
 					<label for="input">Project title</label>
 					<input v-model="newProjectTitle" placeHolder="New Project" />
-					<button class="modal-button" type="submit" @click="createNewProject">OK</button>
+					<label for="input">Description</label>
+					<input v-model="projectDescription" />
+					<!-- <button class="modal-button" type="submit" @click="createNewProject">OK</button> -->
+				</template>
+				<template #footer>
+					<Button class="modal-button" @click="createNewProject">OK</Button>
 				</template>
 			</modal>
 		</Teleport>
@@ -101,5 +107,10 @@ input {
 	margin: 0.5rem;
 	margin-left: 0;
 	width: 50vh;
+}
+
+.modal-button {
+	width: 25%;
+	background-color: var(--un-color-accent);
 }
 </style>

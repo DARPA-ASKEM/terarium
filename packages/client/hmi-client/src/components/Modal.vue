@@ -64,10 +64,11 @@ main {
 	margin: 20px 0 0;
 }
 
-.modal-enter-from {
-	opacity: 0;
+footer {
+	margin: 20px 0 0;
 }
 
+.modal-enter-from,
 .modal-leave-to {
 	opacity: 0;
 }
