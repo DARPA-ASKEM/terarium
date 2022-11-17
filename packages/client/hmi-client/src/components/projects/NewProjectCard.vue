@@ -42,7 +42,6 @@ function createNewProject() {
 					<input v-model="newProjectTitle" placeHolder="New Project" />
 					<label for="input">Description</label>
 					<input v-model="projectDescription" />
-					<!-- <button class="modal-button" type="submit" @click="createNewProject">OK</button> -->
 				</template>
 				<template #footer>
 					<Button class="modal-button" @click="createNewProject">OK</Button>
