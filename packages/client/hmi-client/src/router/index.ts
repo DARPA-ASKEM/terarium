@@ -7,6 +7,7 @@ import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
 import DocumentView from '@/views/document.vue';
 import Simulation from '@/views/Simulation.vue';
+import Model from '@/views/Model.vue';
 
 export enum RoutePath {
 	Home = '/',
@@ -15,7 +16,8 @@ export enum RoutePath {
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
 	Theia = '/theia',
 	DocView = '/docs/:id?',
-	SimulationView = '/simulation'
+	SimulationView = '/simulation',
+	ModelView = '/Model'
 }
 
 const routes = [
@@ -25,7 +27,8 @@ const routes = [
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
-	{ path: RoutePath.SimulationView, component: Simulation }
+	{ path: RoutePath.SimulationView, component: Simulation },
+	{ path: RoutePath.ModelView, component: Model }
 ];
 
 const router = createRouter({
