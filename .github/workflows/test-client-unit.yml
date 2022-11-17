@@ -1,0 +1,28 @@
+---
+# This workflow runs client Unit Tests
+
+name: Client Unit Tests
+on:
+  workflow_call:
+
+jobs:
+  unit-tests:
+    name: Vitest Unit Tests
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      # Debugging purposes to verify branch being worked on
+      - run: git branch
+
+      - name: Use Node.js 18.8.0
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.8.0
+          cache: 'yarn'
+
+      - name: Install packages
+        run: yarn install --immutable
+
+      - name: Run Unit Tests
+        run: yarn test

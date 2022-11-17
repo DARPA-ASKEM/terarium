@@ -1,45 +1,44 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.Project;
+import software.uncharted.terarium.hmiserver.models.Model;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-
 @RegisterRestClient(configKey = "data-service")
-@Path("/projects")
+@Path("/models")
 @Produces(MediaType.APPLICATION_JSON)
-public interface ProjectProxy {
+public interface ModelProxy {
 
 	@GET
-	List<Project> getProjects();
+	List<Model> getModels();
 
 	@GET
 	@Path("/{id}")
-	Project getProject(
+	Model getModel(
 		@PathParam("id") Long id
 	);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Project createProject(
-		Project newProject
+	Model createModel(
+		Model model
 	);
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Project updateProject(
+	Model updateModel(
 		@PathParam("id") Long id,
-		Project updatedProject
+		Model plan
 	);
 
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
-	Boolean deleteProject(
+	Boolean deleteModel(
 		@PathParam("id") Long id
 	);
 }
