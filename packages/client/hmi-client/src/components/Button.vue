@@ -7,13 +7,15 @@ button {
 	--btn-color: var(--un-color-black-5);
 	--btn-background: var(--un-color-black-50);
 	--btn-border: var(--un-color-black-60);
+	--btn-box-shadow: var(--un-box-shadow-small);
 
 	align-items: center;
 	background: var(--btn-background);
-	box-shadow: var(--un-box-shadow-small);
+	box-shadow: var(--btn-box-shadow);
 	border: 0;
 	border-radius: 4px;
 	color: var(--btn-color);
+	cursor: pointer;
 	display: flex;
 	font: var(--un-font-body);
 	justify-content: center;
@@ -26,6 +28,14 @@ button {
 }
 
 /* Types */
+
+button[clear] {
+	--btn-background: none;
+	--btn-border: none;
+	--btn-box-shadow: none;
+	--btn-color: var(--un-color-body-text-disabled);
+	padding: 0;
+}
 
 button[action] {
 	--btn-background: var(--un-color-accent);

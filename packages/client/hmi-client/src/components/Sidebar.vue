@@ -2,23 +2,32 @@
 /**
  * Sidebar component for navigating modes
  * */
-import { ref, computed } from 'vue';
-import Button from '@/components/Button.vue';
+import { ref } from 'vue';
+import IconOpenPanelRight16 from '@carbon/icons-vue/es/open-panel--filled--right/16';
+import IconSidePanelClose16 from '@carbon/icons-vue/es/side-panel--close/16';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
-import DocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
+import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
-import IconLogout16 from '@carbon/icons-vue/es/logout/16';
 import IconRun32 from '@carbon/icons-vue/es/run/32';
 import IconModel32 from '@carbon/icons-vue/es/model/32';
-
+import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
-import useAuthStore from '../stores/auth';
+import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 
-const enum Mode {
+// Manage Side Panel
+const isSidePanelOpen = ref(false);
+function closeSidePanel() {
+	isSidePanelOpen.value = false;
+}
+function openSidePanel() {
+	isSidePanelOpen.value = true;
+}
+
+const enum View {
 	SimulationPlan = 'Simulation Plan',
 	Models = 'Models',
 	Datasets = 'Datasets',
@@ -29,81 +38,71 @@ const enum Mode {
 	Simulation = 'Simulation'
 }
 
-const auth = useAuthStore();
+const selectedView = ref('');
 
-// Get sidebar position if saved in local storage
-const isSidebarPositionRight = ref(
-	localStorage.getItem('isSidebarPositionRight')
-		? localStorage.getItem('isSidebarPositionRight') === 'true'
-		: false
-);
-const selectedMode = ref('');
-const isCollapsed = computed(() => selectedMode.value.length === 0);
-
-// Later move mode specific features into their own components
-const logout = () => {
-	auth.logout();
-	window.location.assign('/logout');
-};
-
-function updateMode(mode: string) {
-	selectedMode.value = mode === selectedMode.value ? '' : mode;
-}
-
-function moveSidebar() {
-	localStorage.setItem('isSidebarPositionRight', (!isSidebarPositionRight.value).toString());
-	isSidebarPositionRight.value = localStorage.getItem('isSidebarPositionRight') === 'true';
+/**
+ * Open a View
+ * @param {string} view - The view to be open.
+ * @param {boolean} [openViewSidePanel=true] - Should the side-panel be open when opening the view.
+ */
+function openView(view: string, openViewSidePanel: boolean = true): void {
+	selectedView.value = view;
+	if (isSidePanelOpen.value) {
+		if (!openViewSidePanel) closeSidePanel();
+	} else if (openViewSidePanel) openSidePanel();
 }
 </script>
 
 <template>
-	<section :class="{ right: isSidebarPositionRight }">
+	<section>
 		<nav>
 			<ul>
-				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
+				<li
+					:active="selectedView === View.SimulationPlan"
+					@click="openView(View.SimulationPlan, false)"
+				>
 					<IconDataPlayer32 />
 				</li>
-				<li :active="selectedMode === Mode.Models" @click="updateMode(Mode.Models)">
+				<li :active="selectedView === View.Models" @click="openView(View.Models)">
 					<IconMachineLearningModel32 />
 				</li>
-				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
+				<li :active="selectedView === View.Datasets" @click="openView(View.Datasets, false)">
 					<IconTableSplit32 />
 				</li>
-				<li :active="selectedMode === Mode.Documents" @click="updateMode(Mode.Documents)">
-					<DocumentPdf32 />
+				<li :active="selectedView === View.Documents" @click="openView(View.Documents)">
+					<IconDocumentPdf32 />
 				</li>
-				<li :active="selectedMode === Mode.Model" @click="updateMode(Mode.Model)">
+				<li :active="selectedView === View.Model" @click="openView(View.Model)">
 					<IconModel32 />
 				</li>
-				<li :active="selectedMode === Mode.Simulation" @click="updateMode(Mode.Simulation)">
+				<li :active="selectedView === View.Simulation" @click="openView(View.Simulation)">
 					<IconRun32 />
 				</li>
 			</ul>
 			<ul>
 				<li
-					:active="selectedMode === Mode.ProvenanceGraph"
-					@click="updateMode(Mode.ProvenanceGraph)"
+					:active="selectedView === View.ProvenanceGraph"
+					@click="openView(View.ProvenanceGraph, false)"
 				>
 					<IconProvenanceGraph32 />
 				</li>
-				<li :active="selectedMode === Mode.Profile" @click="updateMode(Mode.Profile)">
+				<li :active="selectedView === View.Profile" @click="openView(View.Profile)">
 					<IconUser32 />
 				</li>
 			</ul>
 		</nav>
-		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
-			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
-			<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
-			<template v-else>
-				<header>{{ selectedMode }}</header>
-				<div v-if="selectedMode === Mode.Profile">
-					<Button @click="moveSidebar"> Move sidebar </Button>
-					<Button @click="logout"
-						>Logout
-						<IconLogout16 />
-					</Button>
-				</div>
-			</template>
+		<aside v-if="isSidePanelOpen">
+			<header>
+				{{ selectedView }}
+				<Button @click="closeSidePanel"><IconSidePanelClose16 /></Button>
+				<Button danger @click="openSidePanel"><IconOpenPanelRight16 /></Button>
+			</header>
+			<main>
+				<ModelSidebarPanel v-if="selectedView === View.Models" />
+				<DocumentsSidebarPanel v-else-if="selectedView === View.Documents" />
+				<ProfileSidebarPanel v-else-if="selectedView === View.Profile" />
+				<template v-else> Create a sidebar-panel component </template>
+			</main>
 		</aside>
 	</section>
 </template>
@@ -117,19 +116,14 @@ section {
 	isolation: isolate;
 }
 
-section.right {
-	order: 1;
-	flex-direction: row-reverse;
-}
-
 nav {
 	display: flex;
 	flex-direction: column;
-	z-index: 2;
+	height: calc(100vh - var(--header-height));
 	justify-content: space-between;
 	padding-top: 0.33rem;
 	width: 4rem;
-	height: calc(100vh - var(--header-height));
+	z-index: 2;
 }
 
 nav ul {
@@ -168,11 +162,29 @@ nav li:hover svg {
 }
 
 aside {
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem;
 	width: max(15rem, 20vw);
 	z-index: 1;
+}
+
+aside header {
+	color: var(--un-color-body-text-secondary);
+	font: var(--un-font-h5);
+	position: relative;
+}
+
+aside header button {
+	display: none;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+aside main {
+	flex-grow: 1;
 }
 </style>
