@@ -1,11 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.XDD;
 
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.json.bind.annotation.JsonbProperty;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * XDD Document representation
@@ -44,41 +45,16 @@ public class Document {
 	@JsonbProperty("year")
   public String year;
 
-	// FIXME: cannot use actual type or the rest-client would throw an error during the mapping
 	@JsonbProperty("link")
-  public Object link; // XDDArticleLink[]
+  public List<HashMap<String, String>> link;
 
-	// FIXME: cannot use actual type or the rest-client would throw an error during the mapping
 	@JsonbProperty("author")
-	@JsonIgnore
-  public Object author; // XDDArticleAuthor[]
+  public List<HashMap<String, String>> author;
 
-	// FIXME: cannot use actual type or the rest-client would throw an error during the mapping
 	@JsonbProperty("identifier")
-  public Object identifier; // XDDArticleIdentifier[]
+  public List<HashMap<String, String>> identifier;
 
 	@JsonbProperty("known_terms")
   public Hashtable<String, String[]> known_terms;
 
 }
-
-class XDDArticleAuthor {
-	@JsonbProperty("name")
-	public String name;
-};
-
-class XDDArticleIdentifier {
-	@JsonbProperty("type")
-	public String type;
-
-	@JsonbProperty("id")
-	public String id;
-};
-
-class XDDArticleLink {
-	@JsonbProperty("type")
-	public String type;
-
-	@JsonbProperty("url")
-	public String url;
-};
