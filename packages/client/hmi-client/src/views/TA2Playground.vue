@@ -2,7 +2,6 @@
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
-import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
@@ -576,48 +575,16 @@ export default defineComponent({
 		},
 		async mergePetrinets() {
 			const modelA: PetriNet = {
-				T: [
-					{
-						tname: 't-1'
-					},
-					{
-						tname: 't-2'
-					}
-				],
-				S: [
-					{
-						sname: 'p-1'
-					},
-					{
-						sname: 'p-2'
-					},
-					{
-						sname: 'p-3'
-					}
-				],
+				T: [{ tname: 't-1' }, { tname: 't-2' }],
+				S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
 				I: [
-					{
-						it: 1,
-						is: 1
-					},
-					{
-						it: 2,
-						is: 2
-					}
+					{ it: 1, is: 1 },
+					{ it: 2, is: 2 }
 				],
 				O: [
-					{
-						ot: 1,
-						os: 2
-					},
-					{
-						ot: 2,
-						os: 1
-					},
-					{
-						ot: 2,
-						os: 3
-					}
+					{ ot: 1, os: 2 },
+					{ ot: 2, os: 1 },
+					{ ot: 2, os: 3 }
 				]
 			};
 			const modelB: PetriNet = {
@@ -827,6 +794,8 @@ export default defineComponent({
 			});
 			const output = await resp.json();
 			console.log('Merged petrinet', output);
+
+			this.createModel(output, true);
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
@@ -974,6 +943,9 @@ export default defineComponent({
 				]
 			};
 			await this.createModel(typeModel, true);
+		},
+		showGraph() {
+			console.log(g);
 		}
 	}
 });
@@ -987,7 +959,9 @@ export default defineComponent({
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
+		&nbsp;
 		<button type="button" @click="mergePetrinets">Merge petrinets</button>
+		<button type="button" @click="showGraph">Save</button>
 		<form>
 			<label for="loadModel">
 				<input v-model="loadModelID" type="text" placeholder="Model ID" />
