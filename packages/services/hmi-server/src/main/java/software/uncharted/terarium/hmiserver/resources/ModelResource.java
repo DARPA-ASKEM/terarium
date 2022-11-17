@@ -2,6 +2,11 @@ package software.uncharted.terarium.hmiserver.resources;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+
 import software.uncharted.terarium.hmiserver.models.Model;
 import software.uncharted.terarium.hmiserver.proxies.ModelProxy;
 import software.uncharted.terarium.hmiserver.services.ModelService;
@@ -34,12 +39,15 @@ public class ModelResource {
 		final List<Model> models = new ArrayList<>();
 		try {
 			// old implementtion based on http-client service works fine
-			final List<Model> rawModels = modelService.getModels();
+			// final List<Model> rawModelsConverted = modelService.getModels();
 
 			// FIXME: rest-client utilizing proxy causes a problem when using typed objects
-			// Object rawModels = modelProxy.getModels();
+			Object rawModels = modelProxy.getModels();
+			var rawModelsConverted = new ObjectMapper()
+				.registerModule(new Jdk8Module())
+				.convertValue(rawModels, new TypeReference<List<Model>>() {});
 
-			for (Model model : (List<Model>)rawModels) {
+			for (Model model : (List<Model>)rawModelsConverted) {
 				models.add(model);
 			}
 		} catch (Exception e) {
