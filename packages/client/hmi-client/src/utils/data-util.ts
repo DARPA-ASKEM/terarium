@@ -77,7 +77,7 @@ export const getResourceTypeIcon = (type: string) => {
 };
 
 export function isModel(item: ResultType): item is Model {
-	return (<Model>item).status !== undefined;
+	return (<Model>item).content !== undefined;
 }
 
 export function isXDDArticle(item: ResultType): item is XDDArticle {

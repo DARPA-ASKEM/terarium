@@ -63,7 +63,7 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 		ModelFilterAttributes.forEach((modelAttr) => {
 			const resultsAsModels = allModels;
 			const items = resultsAsModels.filter((d) =>
-				d[modelAttr as keyof Model].toLowerCase().includes(term)
+				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term)
 			);
 			finalModels.push(...items);
 		});
