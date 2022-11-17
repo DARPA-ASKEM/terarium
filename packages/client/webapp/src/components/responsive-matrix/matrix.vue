@@ -1,73 +1,58 @@
 <template>
-	<div class="matrix" ref="matrix">
-		<!-- <component
-			:is="'ResponsiveCellFill'"
-			v-for="dataCell in dataCellList" :key="dataCell.__idx__"
-			:style="getCellStyle(dataCell)"
-			@mousedown="cellMouseDown(dataCell.__row__, dataCell.__col__)"
-			@mouseup="cellMouseUp(dataCell.__row__, dataCell.__col__)"
-			:cellData="dataCell"
-			:parameters="dataParametersArray"
-			:parametersMin="dataParametersMin"
-			:parametersMax="dataParametersMax"
-			:colorFn="fillColorFn"
-		/>
-		<component
-			v-for="(selectedCell, idx) in selectedCellList" :key="idx"
-			:is="getSelectGraphType(selectedCell)"
-			:update="update"
-			:selectedCell="selectedCell"
-			:dataRowList="dataRowList"
-			:dataColList="dataColList"
-			:labelRowList="labelRowList"
-			:labelColList="labelColList"
-			:parameters="dataParametersArray"
-			:parametersMin="dataParametersMin"
-			:parametersMax="dataParametersMax"
-			:colorFn="getSelectedGraphColorFn(selectedCell)"
-			@click="selectedCellClick(idx)"
-		/> -->
+	<div class="matrix-container" ref="matrix_container">
+		<div class="matrix" ref="matrix">
+			<!-- <component
+				v-for="(selectedCell, idx) in selectedCellList" :key="idx"
+				:is="getSelectedDrilldownType(selectedCell)"
+				:getSelectedCellStyle="getSelectedCellStyle"
+				:update="update"
+				:move="move"
+				:selectedCell="selectedCell"
+				:dataRowList="dataRowList"
+				:dataColList="dataColList"
+				:labelRowList="labelRowList"
+				:labelColList="labelColList"
+				:parameters="dataParametersArray"
+				:parametersMin="dataParametersMin"
+				:parametersMax="dataParametersMax"
+				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				@click="selectedCellClick(idx)"
+			/> -->
+		</div>
 	</div>
 </template>
 
 <script lang="ts">
-	import { nextTick } from 'vue';
-
-	import ResponsiveCellFill from './cell-fill.vue';
-	import ResponsiveCellBarContainer from './cell-bar-container.vue';
-	import ResponsiveCellLineContainer from './cell-line-container.vue';
+	import { nextTick, PropType } from 'vue';
 
 	import chroma from 'chroma-js';
-	import * as PIXI from 'pixi.js';
 	import { Viewport } from 'pixi-viewport';
+	import {
+		Application,
+		DisplayObject,
+		Geometry,
+		Texture,
+		Shader,
+		Mesh,
+		FederatedPointerEvent,
+	} from 'pixi.js';
+	import {
+		SelectedCell,
+		SelectedCellValue,
+		CellStatus,
+		CellType,
+		Uniforms,
+	} from '@/types/ResponsiveMatrix';
 	import { uint32ArrayToRedIntTex } from './pixi-utils';
 
-	PIXI.settings.PREFER_ENV = PIXI.ENV.WEBGL2;
+	// import ResponsiveCellBarContainer from './cell-bar-container.vue';
+	// import ResponsiveCellLineContainer from './cell-line-container.vue';
 
-	export enum SelectedCellValue {
-		START_ROW,
-		START_COL,
-		END_ROW,
-		END_COL,
-	}
+	import matrixVS from './matrix.vs.glsl';
+	import matrixFS from './matrix.fs.glsl';
+	import matrixGridFS from './matrix-grid.fs.glsl';
 
-	export enum CellType {
-		FILL = 'ResponsiveCellFill',
-		BAR = 'ResponsiveCellBarContainer',
-		LINE = 'ResponsiveCellLineContainer',
-	}
 
-	// ///////////////////////////////////////////////////////////////////////////////
-	// exported style methods
-
-	export function getSelectedCellStyle(selectedCell: any) {
-		return {
-			gridRow: `${selectedCell[SelectedCellValue.START_ROW] * 2 + 1}`
-				+ ` / span ${(selectedCell[SelectedCellValue.END_ROW] - selectedCell[SelectedCellValue.START_ROW]) * 2 + 1}`,
-			gridColumn: `${selectedCell[SelectedCellValue.START_COL] * 2 + 1}`
-				+ ` / span ${(selectedCell[SelectedCellValue.END_COL] - selectedCell[SelectedCellValue.START_COL]) * 2 + 1}`,
-		};
-	}
 
 	export default {
 
@@ -78,9 +63,8 @@
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		components: {
-			ResponsiveCellFill,
-			ResponsiveCellBarContainer,
-			ResponsiveCellLineContainer,
+			// ResponsiveCellBarContainer,
+			// ResponsiveCellLineContainer,
 		},
 
 
@@ -101,21 +85,17 @@
 			// 	default: [[], []],
 			// },
 			cellLabelRow: {
-				type: Array,
+				type: Array as PropType< number[] | string[]>,
 				default() {
 					return [];
 				},
 			},
 			cellLabelCol: {
-				type: Array,
+				type: Array as PropType< number[] | string[]>,
 				default() {
 					return [];
 				},
 			},
-			// cellType: {
-			// 	type: Number,
-			// 	default: CellTypes.DISCRETE
-			// },
 			fillColorFn: {
 				type: Function,
 				default() {
@@ -158,21 +138,36 @@
 
 		data() {
 			return {
-				update: 0,
-				dataCellList: [],
-				dataRowList: [], // e.g. [[row1col1, row1col2]]
-				dataColList: [], // e.g. [[row1col1, row2col1]]
-				dataParameters: new Set(), // e.g. ["age", "height", "weight"]
+				dataCellList: [] as object[],
+				dataRowList: [] as object[][], // e.g. [[row1col1Obj, row1col2Obj]]
+				dataColList: [] as object[][], // e.g. [[row1col1Obj, row2col1Obj]]
+				dataParameters: new Set() as Set<string>, // e.g. ["age", "height", "weight"]
 				dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 				dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
-				labelRowList: [],
-				labelColList: [],
+				labelRowList: [] as number[] | string[],
+				labelColList: [] as number[] | string[],
 				numRows: 0,
 				numCols: 0,
-				selectedCellList: [], // e.g. [[startrow, startcol, endrow, endcol]]
-				selectedRows: [], // e.g. [false, true, true, false]
-				selectedCols: [], // e.g. [false, true, true, false]
-				selectedCells: Array(4), // e.g. [startrow, startcol, endrow, endcol]
+
+				microRowArray: new Uint32Array(0) as Uint32Array,
+				microColArray: new Uint32Array(0) as Uint32Array,
+				
+				uniforms: {} as Uniforms,
+				worldWidth: 0,
+				worldHeight: 0,
+
+				screenHeight: 0,
+				screenWidth: 0,
+
+				selectedCellList: [] as SelectedCell[], // e.g. [[startrow, startcol, endrow, endcol]]
+				selectedRows: [] as CellStatus[], // e.g. [0, 0, 1, 0]
+				selectedCols: [] as CellStatus[], // e.g. [0, 0, 1, 0]
+				selectedCell: Array(4) as SelectedCell, // e.g. [startrow, startcol, endrow, endcol]
+
+				update: 0,
+				move: 0,
+				enableDrag: false,
+				resizeObserver: null as unknown as ResizeObserver,
 			};
 		},
 
@@ -185,56 +180,63 @@
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		computed: {
-			// SelectedCellValue(): typeof SelectedCellValue {
-			// 	return SelectedCellValue;
-			// },
+			screenAspectRatio(): number {
+				return this.screenHeight / this.screenWidth;
+			},
 
 			dataParametersArray(): string[] {
 				return [...this.dataParameters];
 			},
 
 			numSelectedRows(): number {
-				return this.selectedRows.reduce((acc: number, val: boolean) => acc + Number(val), 0);
+				return this.selectedRows.reduce((acc: number, val: CellStatus) =>
+					acc + Number(val !== CellStatus.NONE), 0);
 			},
 
 			numSelectedCols(): number {
-				return this.selectedCols.reduce((acc: number, val: boolean) => acc + Number(val), 0);
+				return this.selectedCols.reduce((acc: number, val: CellStatus) =>
+					acc + Number(val !== CellStatus.NONE), 0);
 			},
 
-			// refactor?
-			responsiveGridStyle(): any {
-				let gridTemplateRows = '';
-				const selectedRowsSpace = this.numSelectedRows
-					? (60 + this.numSelectedRows / this.numRows * 40) / this.numSelectedRows
+			microRowSettings(): number[] {
+				const percentageSelectedRows = this.numSelectedRows
+					? 0.5 + (this.numSelectedRows / this.numRows * 0.5)
 					: 0;
-				this.selectedRows.forEach((isActiveRow: boolean, rowIdx: number) => {
-					const notLastRow = rowIdx !== this.numRows - 1;
-					const rowMargin = this.getRowMargin(rowIdx);
-					gridTemplateRows += `[row${rowIdx}] ${isActiveRow ? `calc(${selectedRowsSpace}% - ${notLastRow ? rowMargin : '0px'})` : 'auto'} `;
-					if(notLastRow) {
-						gridTemplateRows += `[rowspace${rowIdx}] ${rowMargin} `;
+				const microRowSettings = Array(2).fill(0);
+				microRowSettings[CellStatus.NONE] = percentageSelectedRows
+					? (1 - percentageSelectedRows) * this.numRows / (this.numRows - this.numSelectedRows)
+					: 1;
+				microRowSettings[CellStatus.SELECTED] = percentageSelectedRows
+					? percentageSelectedRows * this.numRows / this.numSelectedRows
+					: 1;
+				const microRowSettingsMin =  Math.min(...microRowSettings);
+				if(microRowSettingsMin < 1) {
+					for(let i = 0; i < microRowSettings.length; i++) {
+						microRowSettings[i] /= microRowSettingsMin;
 					}
-				});
-				gridTemplateRows += '[end]';
-
-				let gridTemplateColumns = '';
-				const selectedColsSpace = this.numSelectedCols
-					? (60 + this.numSelectedCols / this.numCols * 40) / this.numSelectedCols
-					: 0;
-				this.selectedCols.forEach((isActiveCol: boolean, colIdx: number) => {
-					const notLastCol = colIdx !== this.numCols - 1;
-					const colMargin = this.getColMargin(colIdx);
-					gridTemplateColumns += `[col${colIdx}] ${isActiveCol ? `calc(${selectedColsSpace}% - ${notLastCol ? colMargin : '0px'})` : 'auto'} `;
-					if(notLastCol) {
-						gridTemplateColumns += `[colspace${colIdx}] ${colMargin} `;
-					}
-				});
-				gridTemplateColumns += '[end]';
-
-				return {
-					gridTemplateRows,
-					gridTemplateColumns,
 				}
+
+				return microRowSettings;
+			},
+			microColSettings(): number[] {
+				const percentageSelectedCols = this.numSelectedCols
+					? 0.5 + (this.numSelectedCols / this.numCols * 0.5)
+					: 0;
+				const microColSettings = Array(2).fill(0);
+				microColSettings[CellStatus.NONE] = percentageSelectedCols
+					? (1 - percentageSelectedCols) * this.numCols / (this.numCols - this.numSelectedCols)
+					: 1;
+				microColSettings[CellStatus.SELECTED] = percentageSelectedCols
+					? percentageSelectedCols * this.numCols / this.numSelectedCols
+					: 1;
+				const microColSettingsMin =  Math.min(...microColSettings);
+				if(microColSettingsMin < 1) {
+					for(let i = 0; i < microColSettings.length; i++) {
+						microColSettings[i] /= microColSettingsMin;
+					}
+				}
+
+				return microColSettings;
 			},
 		},
 
@@ -247,7 +249,7 @@
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		async beforeMount() {
-			this.processData(this.data);
+			this.processData();
 			this.processLabels();
 			this.processActiveCells();
 		},
@@ -261,29 +263,295 @@
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		async mounted() {
-			// create pixi inputs
-			const numRow = this.numRows;
-			const numCol = this.numCols;
-			const numMicroRowPerFill = 10;
-			const numMicroColPerFill = 10;
-			const createMicroArray = (numEl: number, microPerEl: number): Uint32Array => {
-				const microArrayLen = numEl * microPerEl;
-				const microArray = new Uint32Array(microArrayLen);
-				let i = 0;
+			const matrix = this.$refs.matrix as HTMLElement;
+			const matrixContainer = this.$refs.matrix_container as HTMLElement;
 
-				for(let elIdx = 0; elIdx < numEl; elIdx++) {
-					for(let fillIdx = 0; fillIdx < microPerEl; fillIdx++) {
-						microArray[i++] = elIdx;
-					}
+			// ///////////////////////////////////////////////////////////////////////////////
+
+			// initialize screen height/width
+			this.screenHeight = matrix.offsetHeight;
+			this.screenWidth = matrix.offsetWidth;
+
+			// start the resize observer
+			this.resizeObserver = new ResizeObserver(entries => {
+				this.screenHeight = entries[0].contentRect.height;
+				this.screenWidth = entries[0].contentRect.width;
+			});
+			this.resizeObserver.observe(matrixContainer);
+
+			// start event listeners
+			window.addEventListener("keydown", this.handleKey);
+			window.addEventListener("keyup", this.handleKey);
+			matrixContainer.addEventListener('wheel', this.handleScroll);
+
+			// ///////////////////////////////////////////////////////////////////////////////
+
+			// initialize pixi.js
+			const app = new Application({
+				resizeTo: matrixContainer,
+				backgroundColor: this.backgroundColor,
+			});
+			matrix.appendChild(app.view as unknown as Node);
+
+			// create viewport
+			const screenHeight = this.screenHeight;
+			const screenWidth = this.screenWidth;
+			const cellAspectRatio = 1 || this.microRowArray.length / this.microColArray.length;
+			const quadAspectRatio = this.screenAspectRatio * cellAspectRatio; // height / width
+			const vertexPosition = quadAspectRatio > 1 // is height long?
+				? [-1 / quadAspectRatio, -1, // height long
+					1 / quadAspectRatio, -1, // x, y
+					1 / quadAspectRatio, 1,
+					-1 / quadAspectRatio, 1]
+				: [-1, -1 * quadAspectRatio, // width long
+					1, -1 * quadAspectRatio, // x, y
+					1, 1 * quadAspectRatio,
+					-1, 1 * quadAspectRatio];
+			this.worldHeight = vertexPosition[5] - vertexPosition[3];
+			this.worldWidth = vertexPosition[2] - vertexPosition[0];
+			(this as any).$viewport = new Viewport({
+				screenWidth: this.screenWidth,
+				screenHeight: this.screenHeight,
+				worldWidth: this.worldWidth,
+				worldHeight: this.worldHeight,
+				divWheel: matrix as HTMLElement,
+				interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
+			});
+
+			// add the viewport to the stage
+			app.stage.addChild((this as any).$viewport as unknown as DisplayObject);
+
+			// activate camera interaction plugins
+			(this as any).$viewport
+				.drag()
+				.pinch()
+				.wheel();
+			(this as any).$viewport.pause = true;
+
+			// clamp camera
+			(this as any).$viewport.clampZoom({
+				maxWidth: this.worldWidth * 2,
+				maxHeight: this.worldHeight * 2,
+			});
+
+			// build quad
+			const geometry = new Geometry()
+				.addAttribute('aVertexPosition',
+					vertexPosition,
+					2) // the size of the attribute
+				.addAttribute('aUvs',
+					[0, 0, // u, v
+						1, 0,
+						1, 1,
+						0, 1], // u, v
+					2) // the size of the attribute
+				.addIndex([0, 1, 2, 0, 2, 3]);
+
+			// build color array
+			const color = this.createColorArray();
+
+			// build uniforms
+			this.uniforms = {
+				// screen data
+				uScreenWidth: screenWidth,
+				uScreenHeight: screenHeight,
+
+				// geometry/viewport data
+				uWorldWidth: (this as any).$viewport.worldWidth,
+				uWorldHeight: (this as any).$viewport.worldHeight,
+				uViewportWorldWidth: (this as any).$viewport.worldWidth,
+				uViewportWorldHeight: (this as any).$viewport.worldHeight,
+
+				// grid settings
+				uGridDisplayBorder: false,
+				uGridRowDisplayLim: 60,
+				uGridRowDisplayTransition: 12,
+				uGridColDisplayLim: 60,
+				uGridColDisplayTransition: 12,
+
+				// row/col data
+				uNumRow: this.numRows,
+				uNumCol: this.numCols,
+				uMicroRow: this.uniforms.uMicroRow,
+				uMicroCol: this.uniforms.uMicroCol,
+
+				// cell element color data
+				uColor: Texture.fromBuffer(color, this.numCols, this.numRows),
+
+				uTime: 0,
+			};
+
+			// set callback to update uniforms every render call
+			app.ticker.add(this.handleTick);
+
+			// run shader on quad
+			const quadShader = Shader.from(matrixVS, matrixFS, this.uniforms);
+			const quad = new Mesh(geometry, quadShader);
+
+			// center quad in world
+			quad.position.set((this as any).$viewport.worldWidth / 2, (this as any).$viewport.worldHeight / 2);
+
+			// add quad to viewport
+			(this as any).$viewport.addChild(quad as any);
+
+			// run shader on grid
+			const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
+			const grid = new Mesh(geometry, gridShader);
+
+			// center grid in world
+			grid.position.set((this as any).$viewport.worldWidth / 2, (this as any).$viewport.worldHeight / 2);
+
+			// add grid to viewport
+			(this as any).$viewport.addChild(grid as any);
+
+			// center and zoom camera to world
+			this.centerGraph();
+
+			// add pixi interaction handlers
+			(this as any).$viewport.on('pointerdown', this.handleMouseDown);
+			(this as any).$viewport.on('pointerup', this.handleMouseUp);
+			(this as any).$viewport.on('moved' as any, this.incrementMove);
+			(this as any).$viewport.on('zoomed-end' as any, this.incrementUpdate);
+		},
+
+
+
+		// ---------------------------------------------------------------------------- //
+		// watch                                                                        //
+		// ---------------------------------------------------------------------------- //
+
+		// ///////////////////////////////////////////////////////////////////////////////
+
+		watch: {
+			data() {
+				this.processData();
+				this.processLabels();
+				this.processActiveCells();
+			},
+			cellLabelRow() {
+				this.processLabels();
+			},
+			cellLabelCol() {
+				this.processLabels();
+			},
+		},
+
+
+
+		// ---------------------------------------------------------------------------- //
+		// unmounted                                                                    //
+		// ---------------------------------------------------------------------------- //
+
+		// ///////////////////////////////////////////////////////////////////////////////
+
+		unmounted() {
+			this.resizeObserver.disconnect();
+			window.removeEventListener("keydown", this.handleKey);
+			window.removeEventListener("keyup", this.handleKey);
+		},
+
+
+
+		// ---------------------------------------------------------------------------- //
+		// methods                                                                      //
+		// ---------------------------------------------------------------------------- //
+
+		// ///////////////////////////////////////////////////////////////////////////////
+
+		methods: {
+
+			// ///////////////////////////////////////////////////////////////////////////////
+			// data methods
+
+			/**
+			 * Determines if data object array provided is structured correctly (as a 2D matrix).
+			 * @param {object[][]} data
+			 */
+			isDataValid(data: object[][]) {
+				if (data?.constructor !== Array || data[0]?.constructor !== Array) {
+					return false;
 				}
 
-				return microArray;
-			}
-			const microRowArray = createMicroArray(numRow, numMicroRowPerFill);
-			const microColArray = createMicroArray(numCol, numMicroColPerFill);
-			const cellAspectRatio = 25;
-			const quadAspectRatio = microRowArray.length / microColArray.length * cellAspectRatio; // height / width
-			const createColorArray = (data: any): Uint8Array => { // assume datacelllist is an array with cells left-to-right top-to-bottom
+				return !data.some((row: any) => row.constructor !== Array || row.length !== data[0].length);
+			},
+
+			/**
+			 * Ingests data, process and stores it in internal component state stores.
+			 * @param {object[][]} data
+			 */
+			processData() {
+				if(this.isDataValid(this.data)) {
+					this.numRows = this.data.length;
+					this.numCols = this.data[0]?.length;
+
+					// find more efficient way to initialize 2D array?
+					this.dataRowList = Array(this.numRows).fill(0).map(() => []);
+					this.dataColList = Array(this.numCols).fill(0).map(() => []);
+
+					// iterate through all the data and push the cell objects to 
+					this.data.forEach((row: any, indexRow: number) => row.forEach((cell: any, indexCol: number) => {
+						if(cell) {
+							this.extractParams(cell);
+							// find better solution than using reserved properties
+							// for cell identification
+							const cellData = {
+								...cell,
+								_row: indexRow,
+								_col: indexCol,
+								_idx: this.dataCellList.length,
+							};
+
+							this.dataCellList.push(cellData);
+							this.dataRowList[indexRow].push(cellData);
+							this.dataColList[indexCol].push(cellData);
+						}
+					}));
+				} else {
+					console.error('Data Invalid');
+				}
+			},
+
+			/**
+			 * Ingests labels data, process and stores it in internal component state stores.
+			 * Assumes that processData has already been called.
+			 */
+			processLabels() {
+				if(this.cellLabelRow.length) {
+					this.labelRowList = this.cellLabelRow;
+				} else { 
+					this.labelRowList = Array(this.numRows).fill(0).map((v, i) => i);
+				}
+
+				if(this.cellLabelCol.length) {
+					this.labelColList = this.cellLabelCol;
+				} else { 
+					this.labelColList = Array(this.numCols).fill(0).map((v, i) => i);
+				}
+			},
+
+			/**
+			 * Processes a single cell object and extract the parameters from it.
+			 * As well update the parameters min and max state objects.
+			* @param {object} cellObject
+			 */
+			extractParams(cellObject: object) {
+				Object.keys(cellObject).forEach(param => {
+					if(!this.dataParameters.has(param)) {
+						this.dataParametersMin[param] = cellObject[param];
+						this.dataParametersMax[param] = cellObject[param];
+					} else {
+						this.dataParametersMin[param] = Math.min(this.dataParametersMin[param], cellObject[param]);
+						this.dataParametersMax[param] = Math.max(this.dataParametersMax[param], cellObject[param]);
+					}
+					this.dataParameters.add(param);
+				});
+			},
+
+			/**
+			 * Processes the dataCellList to generate the color array.
+			 */
+			createColorArray(): Uint8Array {
+				const data = this.dataCellList;
 				const colorArray = new Uint8Array(data.length * 4);
 				let i = 0; // colorArrayIdx
 				
@@ -304,283 +572,35 @@
 				}
 
 				return colorArray;
-			}
-
-			const color = createColorArray(this.dataCellList);
-			// const color = new Uint8Array(Array(numRow * numCol * 4).fill(0).map((v, i) => i % 4 === 3 ? 255 : 255 * Math.floor(i / 4) / (numRow * numCol)));
-
-			// ///////////////////////////////////////////////////////////////////////////////
-
-			const { matrix } = this.$refs;
-
-			// initialize pixi.js
-			const app = new PIXI.Application({
-				resizeTo: matrix,
-				// width: 900,
-				// height: 1200,
-				backgroundColor: 0x2c3e50
-			});
-			matrix.appendChild(app.view);
-
-			// create viewport
-			const worldWidth = 2;
-			const worldHeight = 2;
-			const viewport = new Viewport({
-				screenWidth: 1736,
-				screenHeight: 882,
-				worldWidth,
-				worldHeight,
-				passiveWheel: false,
-				interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
-			});
-
-			// add the viewport to the stage
-			app.stage.addChild(viewport);
-
-			// activate plugins
-			viewport
-				.drag()
-				.pinch()
-				.wheel();
-
-			// build quad
-			const vertexPosition = quadAspectRatio > 1 // is height long?
-				? [-1 / quadAspectRatio, -1, // height long
-					1 / quadAspectRatio, -1, // x, y
-					1 / quadAspectRatio, 1,
-					-1 / quadAspectRatio, 1]
-				: [-1, -1 / quadAspectRatio, // width long
-					1, -1 / quadAspectRatio, // x, y
-					1, 1 / quadAspectRatio,
-					-1, 1 / quadAspectRatio];
-			const geometry = new PIXI.Geometry()
-				.addAttribute('aVertexPosition',
-					vertexPosition,
-					2) // the size of the attribute
-				.addAttribute('aUvs',
-					[0, 0, // u, v
-						1, 0, // u, v
-						1, 1,
-						0, 1], // u, v
-					2) // the size of the attribute
-				.addIndex([0, 1, 2, 0, 2, 3]);
-
-			const vertexSrc = `
-				#version 300 es
-
-				precision lowp sampler2D;
-				precision highp float;
-
-				in vec2 aVertexPosition;
-				in vec2 aUvs;
-
-				uniform mat3 translationMatrix;
-				uniform mat3 projectionMatrix;
-
-				out vec2 vUvs;
-
-				void main() {
-
-					vUvs = aUvs;
-					gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
-
-				}`;
-
-			const fragmentSrc = `
-				#version 300 es
-
-				precision highp usampler2D;
-				precision mediump sampler2D;
-				precision highp float;
-
-				in vec2 vUvs;
-
-				uniform sampler2D uColor;
-				uniform usampler2D uMicroRow;
-				uniform usampler2D uMicroCol;
-
-				out vec4 fragColor;
-
-				vec4 getColorFromRowCol(sampler2D tex, int index) {
-					int texWidth = textureSize(tex, 0).x;
-					int col = index % texWidth;
-					int row = index / texWidth;
-					return texelFetch(tex, ivec2(col, row), 0);
-				}
-
-				void main() {
-					float microColLen = float(textureSize(uMicroCol, 0).x);
-					float microRowLen = float(textureSize(uMicroRow, 0).x);
-					uint colIndex = texelFetch(uMicroCol, ivec2(int(vUvs.x * microColLen), 0), 0).r;
-					uint rowIndex = texelFetch(uMicroRow, ivec2(int(vUvs.y * microRowLen), 0), 0).r;
-
-					fragColor = texelFetch(uColor, ivec2(colIndex, rowIndex), 0);
-					// fragColor = vec4(1., 1., 1., 1.);
-				}`;
-
-			// build uniforms
-			const uniforms = new PIXI.UniformGroup({
-				uMicroRow: uint32ArrayToRedIntTex(microRowArray, microRowArray.length, 1),
-				uMicroCol: uint32ArrayToRedIntTex(microColArray, microColArray.length, 1),
-				uColor: PIXI.Texture.fromBuffer(color, numCol, numRow),
-			});
-
-			// run shader on quad
-			const shader = PIXI.Shader.from(vertexSrc, fragmentSrc, uniforms);
-			const quad = new PIXI.Mesh(geometry, shader);
-
-			// center quad in world
-			quad.position.set(1, 1);
-
-			// add quad to viewport
-			viewport.addChild(quad);
-
-			// draw border around world
-			// const line = viewport.addChild(new PIXI.Graphics())
-			// line.lineStyle(0.01, 0xff0000).drawRect(0, 0, viewport.worldWidth, viewport.worldHeight)
-
-			// center and zoom camera to world
-			viewport.fit();
-			viewport.moveCenter(worldWidth / 2, worldHeight / 2);
-		},
-
-
-
-		// ---------------------------------------------------------------------------- //
-		// watch                                                                        //
-		// ---------------------------------------------------------------------------- //
-
-		// ///////////////////////////////////////////////////////////////////////////////
-
-		watch: {
-			data(newData: any) {
-				this.processData(newData);
-				this.processLabels();
-				this.processActiveCells();
-			},
-			cellLabelRow() {
-				this.processLabels();
-			},
-			cellLabelCol() {
-				this.processLabels();
-			},
-		},
-
-
-
-		// ---------------------------------------------------------------------------- //
-		// methods                                                                      //
-		// ---------------------------------------------------------------------------- //
-
-		// ///////////////////////////////////////////////////////////////////////////////
-
-		methods: {
-			
-			// ///////////////////////////////////////////////////////////////////////////////
-			// style methods
-
-			getCellStyle(dataCell: any) {
-				return {
-					gridRow: dataCell.__row__ * 2 + 1,
-					gridColumn: dataCell.__col__ * 2 + 1,
-				};
 			},
 
-			getSelectedCellStyle(selectedCell: any) {
-				return getSelectedCellStyle(selectedCell);
-			},
+			/**
+			 * Creates a Uint32Array representing the row or column asignments for each micro row or column,
+			 * using the status of each row or column and the number of micro rows or columns associated with
+			 * each status.
+			* @param {CellStatus[]} elStatusArray
+			* @param {number[]} elStatusArray
+			 */
+			createMicroArray(elStatusArray: CellStatus[], statusSettingsArray: number[]): Uint32Array {
+				const microArray: number[] = [];
+				let i = 0;
 
-			// ///////////////////////////////////////////////////////////////////////////////
-			// cell margin methods
-
-			getRowMargin(row: number): String {
-				if(this.cellMarginRow.constructor === Array) {
-					return this.cellMarginRow[row % this.cellMarginRow.length] || '0px';
-				}
-
-				return this.cellMarginRow;
-			},
-
-			getColMargin(col: number): String {
-				if(this.cellMarginCol.constructor === Array) {
-					return this.cellMarginCol[col % this.cellMarginCol.length] || '0px';
-				}
-				
-				return this.cellMarginCol;
-			},
-
-			// ///////////////////////////////////////////////////////////////////////////////
-			// data methods
-
-			isDataValid(data: any) {
-				if (data?.constructor !== Array || data[0]?.constructor !== Array) {
-					return false;
-				}
-
-				return !data.some((row: any) => row.constructor !== Array || row.length !== data[0].length);
-			},
-
-			processData(newData: any) {
-				if(this.isDataValid(newData)) {
-					this.numRows = newData.length;
-					this.numCols = newData[0]?.length;
-
-					// find more efficient way to initialize 2D array?
-					this.dataRowList = Array(this.numRows).fill().map(() => []);
-					this.dataColList = Array(this.numCols).fill().map(() => []);
-
-					newData.forEach((row: any, indexRow: number) => row.forEach((cell: any, indexCol: number) => {
-						if(cell) {
-							this.extractParams(cell);
-							const cellData = {
-								...cell,
-								__row__: indexRow,
-								__col__: indexCol,
-								__idx__: this.dataCellList.length,
-							};
-
-							this.dataCellList.push(cellData);
-							this.dataRowList[indexRow].push(cellData);
-							this.dataColList[indexCol].push(cellData);
-						}
-					}));
-				} else {
-					console.error('data invalid');
-				}
-			},
-
-			// assume processData called previously
-			processLabels() {
-				if(this.cellLabelRow.length) {
-					this.labelRowList = this.cellLabelRow;
-				} else { 
-					this.labelRowList = Array(this.numRows).fill().map((v, i) => i);
-				}
-
-				if(this.cellLabelCol.length) {
-					this.labelColList = this.cellLabelCol;
-				} else { 
-					this.labelColList = Array(this.numCols).fill().map((v, i) => i);
-				}
-			},
-
-			extractParams(cellObject: any) {
-				Object.keys(cellObject).forEach(param => {
-					if(!this.dataParameters.has(param)) {
-						this.dataParametersMin[param] = cellObject[param];
-						this.dataParametersMax[param] = cellObject[param];
-					} else {
-						this.dataParametersMin[param] = Math.min(this.dataParametersMin[param], cellObject[param]);
-						this.dataParametersMax[param] = Math.max(this.dataParametersMax[param], cellObject[param]);
+				for(let elIdx = 0; elIdx < elStatusArray.length; elIdx++) {
+					for(let fillIdx = 0; fillIdx < statusSettingsArray[elStatusArray[elIdx]]; fillIdx++) {
+						microArray[i++] = elIdx;
 					}
-					this.dataParameters.add(param);
-				});
+				}
+
+				return new Uint32Array(microArray);
 			},
 
 			// ///////////////////////////////////////////////////////////////////////////////
 			// selected data methods
 
-			// for loop instead of while?
+			/**
+			 * Process selectedCellList to generate selected rows and column status arrays as well as
+			 * row and column micro arrays for the renderer.
+			 */
 			async processActiveCells() {
 				const {
 					START_ROW,
@@ -589,46 +609,147 @@
 					END_COL
 				} = SelectedCellValue;
 
-				this.selectedRows = Array(this.numRows).fill(false);
-				this.selectedCols = Array(this.numCols).fill(false);
+				this.selectedRows = Array(this.numRows).fill(CellStatus.NONE);
+				this.selectedCols = Array(this.numCols).fill(CellStatus.NONE);
 
 				this.selectedCellList.forEach(selectedCell => {
 					let row = selectedCell[START_ROW];
 					do {
-						this.selectedRows[row++] = true;
+						this.selectedRows[row++] = CellStatus.SELECTED;
 					} while (row <= selectedCell[END_ROW]);
 
 					let col = selectedCell[START_COL];
 					do {
-						this.selectedCols[col++] = true;
+						this.selectedCols[col++] = CellStatus.SELECTED;
 					} while (col <= selectedCell[END_COL]);
 				});
+
+				this.microRowArray = this.createMicroArray(this.selectedRows, this.microRowSettings);
+				// TODO: switch microRows to use 2D textures to avoid running into texture size limits
+				this.uniforms.uMicroRow = uint32ArrayToRedIntTex(this.microRowArray, this.microRowArray.length, 1);
+
+				this.microColArray = this.createMicroArray(this.selectedCols, this.microColSettings);
+				// TODO: switch microRows to use 2D textures to avoid running into texture size limits
+				this.uniforms.uMicroCol = uint32ArrayToRedIntTex(this.microColArray, this.microColArray.length, 1);
 
 				// wait for the grid recalculation to complete before triggering children update
 				await nextTick();
 				this.incrementUpdate();
 			},
 
-			// function can be cleaned up if the enum is abandoned...
-			// getCellsForSelected(selectedCellsArray: any[]): any {
-			// 	const startRow = selectedCellsArray[SelectedCellValue.START_ROW];
-			// 	const endRow = selectedCellsArray[SelectedCellValue.END_ROW];
-			// 	const startCol = selectedCellsArray[SelectedCellValue.START_COL];
-			// 	const endCol = selectedCellsArray[SelectedCellValue.END_COL];
+			/**
+			 * Given a selected cell array, determines if selection only consists of cells which
+			 * have already been selected.
+			 */
+			isSelectionAlreadySelected(): boolean {
+				const {
+					START_COL,
+					END_COL,
+					START_ROW,
+					END_ROW,
+				} = SelectedCellValue;
+				const { selectedCell } = this;
+				const startCol = selectedCell[START_COL];
+				const endCol = selectedCell[END_COL];
+				const startRow = selectedCell[START_ROW];
+				const endRow = selectedCell[END_ROW];
 
-			// 	const selectedArr: any[] = [];
-			// 	for(let row = startRow; row <= endRow; row++) {
-			// 		this.dataRowList[row].forEach((cell: any) => {
-			// 			if(cell.__col__ <= endCol && cell.__col__ >= startCol) {
-			// 				selectedArr.push(cell);
-			// 			}
-			// 		});
-			// 	}
+				for(let i = startRow; i <= endRow; i++) {
+					if(this.selectedRows[i] === CellStatus.NONE) {
+						return false;
+					}
+				}
+				for(let i = startCol; i <= endCol; i++) {
+					if(this.selectedCols[i] === CellStatus.NONE) {
+						return false;
+					}
+				}
+				return true;
+			},
 
-			// 	return selectedArr;
-			// },
+			/**
+			 * Remove all selected cells in the selected cell list where the selection
+			 * is completely enclosed in the selected cell.
+			 */
+			removeSelected(): void {
+				const {
+					START_COL,
+					END_COL,
+					START_ROW,
+					END_ROW,
+				} = SelectedCellValue;
+				this.selectedCellList = this.selectedCellList.filter(selectedCell =>
+					!(this.selectedCell[START_ROW] >= selectedCell[START_ROW]
+						&& this.selectedCell[END_ROW] <= selectedCell[END_ROW]
+						&& this.selectedCell[START_COL] >= selectedCell[START_COL]
+						&& this.selectedCell[END_COL] <= selectedCell[END_COL])
+				);
+				this.processActiveCells();
+			},
 
-			getSelectGraphType(selectedCell: any): string {
+			/**
+			 * Add selection to the selected cell list and then initiate processing.
+			 */
+			addSelected(): void {
+				this.selectedCellList.push(this.selectedCell);
+				this.processActiveCells();
+			},
+
+			/**
+			 * Get a style object to place an absolutely positioned element over the selection.
+			 * @param {SelectedCell} selectedCell
+			 */
+			getSelectedCellStyle(selectedCell: SelectedCell): object {
+				const {
+					START_ROW,
+					END_ROW,
+					START_COL,
+					END_COL
+				} = SelectedCellValue;
+
+				let top = 0;
+				let bottom = 0;
+				let left = 0;
+				let right = 0;
+
+				for(let i = 0; this.microRowArray[i] <= selectedCell[END_ROW]; i++) {
+					if(this.microRowArray[i] < selectedCell[START_ROW]) {
+						top = i + 1;
+					} else {
+						bottom = i;
+					}
+				}
+
+				for(let i = 0; this.microColArray[i] <= selectedCell[END_COL]; i++) {
+					if(this.microColArray[i] < selectedCell[START_COL]) {
+						left = i + 1;
+					} else {
+						right = i;
+					}
+				}
+
+				const topLeft = (this as any).$viewport.toScreen(
+					left / this.microColArray.length * (this as any).$viewport.worldWidth,
+					top / this.microRowArray.length * (this as any).$viewport.worldHeight,
+				);
+				const bottomRight = (this as any).$viewport.toScreen(
+					(right + 1) / this.microColArray.length * (this as any).$viewport.worldWidth,
+					(bottom + 1) / this.microRowArray.length  * (this as any).$viewport.worldHeight,
+				);
+
+				return {
+					left: `${topLeft.x}px`,
+					top: `${topLeft.y}px`,
+					right: `${this.screenWidth - bottomRight.x}px`,
+					bottom: `${this.screenHeight - bottomRight.y}px`,
+				};
+			},
+
+			/**
+			 * Return the type of drilldown to use given a selection.
+			 * @param {SelectedCell} selectedCell
+			 */
+			getSelectedDrilldownType(selectedCell: SelectedCell): CellType {
 				const {
 					START_COL,
 					END_COL
@@ -639,8 +760,12 @@
 				return startCol === endCol ? CellType.BAR : CellType.LINE;
 			},
 
-			getSelectedGraphColorFn(selectedCell: any): any {
-				switch(this.getSelectGraphType(selectedCell)) {
+			/**
+			 * Return the color function required given a selection.
+			 * @param {SelectedCell} selectedCell
+			 */
+			getSelectedGraphColorFn(selectedCell: SelectedCell): any {
+				switch(this.getSelectedDrilldownType(selectedCell)) {
 					case CellType.BAR:
 						return this.barColorFn;
 					case CellType.LINE:
@@ -650,22 +775,58 @@
 				}
 			},
 
-			// ///////////////////////////////////////////////////////////////////////////////
-			// interaction event handlers
+			centerGraph(): any {
+				(this as any).$viewport.fit();
+				(this as any).$viewport.moveCenter((this as any).$viewport.worldWidth / 2, (this as any).$viewport.worldHeight / 2);
+			},
 
-			cellMouseDown(selectedRow, selectedCol) {
+			// ///////////////////////////////////////////////////////////////////////////////
+			// event handlers
+
+			handleTick(delta) {
+				const visibleBounds = (this as any).$viewport.getVisibleBounds();
+				this.uniforms.uViewportWorldWidth = visibleBounds.width;
+				this.uniforms.uViewportWorldHeight = visibleBounds.height;
+
+				this.uniforms.uTime += delta;
+			},
+
+			handleKey({shiftKey}: KeyboardEvent) {
+				this.enableDrag = shiftKey;
+				(this as any).$viewport.pause = !shiftKey;
+			},
+
+			handleScroll(e) {
+				if(this.enableDrag) {
+					e.preventDefault();
+				}
+			},
+
+			handleMouseDown(e: FederatedPointerEvent) {
+				if(this.enableDrag) {
+					return;
+				}
+
 				const {
 					START_ROW,
 					START_COL,
 				} = SelectedCellValue;
 
-				this.selectedCells = Array(4);
-				this.selectedCells[START_ROW] = selectedRow;
-				this.selectedCells[START_COL] = selectedCol;
+				const world = (this as any).$viewport.toWorld(e.screen.x, e.screen.y);
+				const matrixUv = { x: world.x / this.worldWidth, y: world.y / this.worldHeight };
+				const selectedColId = this.microColArray[Math.floor(matrixUv.x * this.microColArray.length)];
+				const selectedRowId = this.microRowArray[Math.floor(matrixUv.y * this.microRowArray.length)];
+
+				this.selectedCell = Array(4) as SelectedCell;
+				this.selectedCell[START_ROW] = selectedRowId;
+				this.selectedCell[START_COL] = selectedColId;
 			},
 
-			// function can be cleaned up if the enum is abandoned...
-			cellMouseUp(selectedRow, selectedCol) {
+			handleMouseUp(e: FederatedPointerEvent) {
+				if(this.enableDrag) {
+					return;
+				}
+
 				const {
 					START_ROW,
 					END_ROW,
@@ -673,30 +834,44 @@
 					END_COL
 				} = SelectedCellValue;
 
+				// get selected cell row and column ids
+				const world = (this as any).$viewport.toWorld(e.screen.x, e.screen.y);
+				const matrixUv = { x: world.x / this.worldWidth, y: world.y / this.worldHeight };
+				const selectedColId = this.microColArray[Math.floor(matrixUv.x * this.microColArray.length)];
+				const selectedRowId = this.microRowArray[Math.floor(matrixUv.y * this.microRowArray.length)];
+
+				// complete selected cell
 				const startRow = Math.min(
-					this.selectedCells[START_ROW],
-					selectedRow
+					this.selectedCell[START_ROW],
+					selectedRowId
 				);
 				const endRow = Math.max(
-					this.selectedCells[START_ROW],
-					selectedRow
+					this.selectedCell[START_ROW],
+					selectedRowId
 				);
 				const startCol = Math.min(
-					this.selectedCells[START_COL],
-					selectedCol,
+					this.selectedCell[START_COL],
+					selectedColId,
 				);
 				const endCol = Math.max(
-					this.selectedCells[START_COL],
-					selectedCol,
+					this.selectedCell[START_COL],
+					selectedColId,
 				);
 
-				this.selectedCells[START_ROW] = startRow;
-				this.selectedCells[START_COL] = startCol;
-				this.selectedCells[END_ROW] = endRow;
-				this.selectedCells[END_COL] = endCol;
+				this.selectedCell[START_ROW] = startRow;
+				this.selectedCell[START_COL] = startCol;
+				this.selectedCell[END_ROW] = endRow;
+				this.selectedCell[END_COL] = endCol;
 
-				this.selectedCellList.push(this.selectedCells);
-				this.processActiveCells();
+				// trigger an action
+				if(this.selectedCell.some(x => Number.isNaN(x))) { // selection is out-of-bounds
+					this.centerGraph();
+					this.incrementUpdate();
+				} else if(this.isSelectionAlreadySelected()) {
+					this.removeSelected();
+				} else {
+					this.addSelected();
+				}
 			},
 
 			selectedCellClick(selectedCellIndex) {
@@ -709,16 +884,24 @@
 
 			incrementUpdate() {
 				this.update++;
+			},
+
+			incrementMove() {
+				this.move++;
 			}
 		},
 	};
 </script>
 
 <style scoped>
+	.matrix-container {
+		position: relative;
+	}
 	.matrix {
 		display: grid;
-		/* height: 900px;
-		width: 900px; */
-		/* transition: all 1s ease; */
+		position: absolute;
+		overflow: hidden;
+		height: 100%;
+		width: 100%;
 	}
 </style>
