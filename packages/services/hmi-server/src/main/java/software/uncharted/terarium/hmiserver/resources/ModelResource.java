@@ -4,12 +4,14 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Model;
 import software.uncharted.terarium.hmiserver.proxies.ModelProxy;
+import software.uncharted.terarium.hmiserver.services.ModelService;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @Path("/api/models")
@@ -22,13 +24,26 @@ public class ModelResource {
 	@RestClient
 	ModelProxy modelProxy;
 
+	@Inject
+	ModelService modelService;
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all models")
 	public Response getModels() {
-		final List<Model> models = modelProxy.getModels();
-		if (models.isEmpty()) {
-			return Response.noContent().build();
+		final List<Model> models = new ArrayList<>();
+		try {
+			// old implementtion based on http-client service works fine
+			final List<Model> rawModels = modelService.getModels();
+
+			// FIXME: rest-client utilizing proxy causes a problem when using typed objects
+			// Object rawModels = modelProxy.getModels();
+
+			for (Model model : (List<Model>)rawModels) {
+				models.add(model);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return Response.ok(models).build();
 	}

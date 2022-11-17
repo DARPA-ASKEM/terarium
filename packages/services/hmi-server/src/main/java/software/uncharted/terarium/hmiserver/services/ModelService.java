@@ -32,7 +32,7 @@ public class ModelService {
 			ClassLoader loader = Thread.currentThread().getContextClassLoader();
 			try (InputStream inputStream = loader.getResourceAsStream("application.properties")) {
 					properties.load(inputStream);
-					DATA_SERVICE_BASE_URL = properties.getProperty("software.uncharted.terarium.hmiserver.data-service.base-url");
+					DATA_SERVICE_BASE_URL = properties.getProperty("data-service/mp-rest/url");
 			}
 			catch (IOException e) {
 				e.printStackTrace();

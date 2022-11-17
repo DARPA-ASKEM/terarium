@@ -50,7 +50,7 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 	//
 	// fetch list of models data from the HMI server
 	//
-	const modelsList: Model[] = await uncloak('/api/model');
+	const modelsList: Model[] = await uncloak('/api/models');
 
 	// TEMP: add "type" field because it is needed to mark these resources as models
 	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));

@@ -12,8 +12,9 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface ModelProxy {
 
+	// FIXME: why using a proper type does not work with the rest client proxy?
 	@GET
-	List<Model> getModels();
+	Object getModels(); // List<Model>
 
 	@GET
 	@Path("/{id}")
