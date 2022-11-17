@@ -21,13 +21,17 @@ jobs:
     steps:
       - name: Determine Label
         run: |
-          if [[ '${{ github.event.issue.title }}' =~ ^\[FEAT\]: ]]; then
+          TITLE="${{ github.event.issue.title }}"
+          if [[ $TITLE =~ ^\[?[Ff][Ee][Aa][Tt]\]?: ]]; then
             echo "LABEL=feature" >> $GITHUB_ENV
-          elif [[ '${{ github.event.issue.title }}' =~ ^\[TASK\]: ]]; then
+          elif [[ $TITLE =~ ^\[?[Tt][Aa][Ss][Kk]\]?: ]]; then
             echo "LABEL=task" >> $GITHUB_ENV
+          elif [[ $TITLE =~ ^\[?[Bb][Uu][Gg]\]?: ]]; then
+            echo "LABEL=bug" >> $GITHUB_ENV
           else
             echo "LABEL=" >> $GITHUB_ENV
           fi
+
       - name: Label issues
         uses: andymckay/labeler@3a4296e9dcdf9576b0456050db78cfd34853f260
         with:
