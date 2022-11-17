@@ -138,6 +138,6 @@ onMounted(async () => {
 .model-panel {
 	width: 500px;
 	height: 500px;
-	border: 1px solid #888;
+	border: 1px solid var(--un-color-black-40);
 }
 </style>
