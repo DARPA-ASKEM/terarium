@@ -4,11 +4,13 @@
 </template>
 
 <script lang="ts">
+	import { PropType } from 'vue';
+
 	import { select } from 'd3-selection';
 	import { scaleLinear } from 'd3-scale';
 	import { axisBottom, axisLeft } from 'd3-axis';
 
-	import { SelectedCellValue } from './matrix.vue';
+	import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
 
 	export default {
 
@@ -26,7 +28,7 @@
 				},
 			},
 			selectedCell: {
-				type: Array,
+				type: Array as unknown as PropType<SelectedCell>,
 				default() {
 					return [0, 0, 0, 0];
 				},
@@ -44,19 +46,19 @@
 				}
 			},
 			labelRowList: {
-				type: Array,
+				type: Array as PropType<number[]>,
 				default() {
 					return [];
 				},
 			},
 			labelColList: {
-				type: Array,
+				type: Array as PropType<number[]>,
 				default() {
 					return [];
 				},
 			},
 			parameters: {
-				type: Array,
+				type: Array as PropType<string[]>,
 				default() {
 					return [];
 				},
@@ -95,8 +97,8 @@
 				bottomMargin: 20,
 				leftMargin: 30,
 				rightMargin: 20,
-				containerBoundingBox: {},
-				svg: null,
+				containerBoundingBox: {} as DOMRect,
+				svg: null as any,
 			};
 		},
 
@@ -123,7 +125,7 @@
 
 				for(let row = startRow, i = 0; row <= endRow; row++, i++) {
 					this.dataRowList[row].forEach((cell: any) => {
-						if(cell.__col__ <= endCol && cell.__col__ >= startCol) {
+						if(cell._col <= endCol && cell._col >= startCol) {
 							this.parameters.forEach(param => selectedCells[param].push(cell[param]));
 						}
 					});
@@ -132,7 +134,7 @@
 				return selectedCells;
 			},
 
-			labelColSelected(): [] {
+			labelColSelected(): number[] {
 				const startCol = this.selectedCell[SelectedCellValue.START_COL];
 				const endCol = this.selectedCell[SelectedCellValue.END_COL];
 				return this.labelColList.slice(startCol, endCol + 1);
@@ -211,11 +213,13 @@
 
 		methods: {
 			getContainerBoundingBox() {
-				this.containerBoundingBox = this.$refs.container.getBoundingClientRect();
+				const container = this.$refs.container as HTMLElement;
+				this.containerBoundingBox = container.getBoundingClientRect();
 			},
 
 			renderGraph() {
-				const { height } = this.containerBoundingBox;
+				const container = this.$refs.container as HTMLElement;
+				const { width, height } = this.containerBoundingBox;
 				const {leftMargin, bottomMargin, topMargin} = this;
 
 				// remove old svg if present
@@ -223,22 +227,21 @@
 					this.svg.remove();
 				}
 
-				this.svg = select(this.$refs.container)
+				this.svg = select(container)
 					.append("svg")
 					.attr('class', "cell-selected-line-graph")
-					.attr("height", '100%')
-					.attr("width", '100%')
-					.style('background', 'white');
+					.attr("height", "100%")
+					.attr("width", "100%")
+					.attr("viewBox", `0 0 ${width} ${height}`)
+					.style("background", "white");
 
-				const xAxis = axisBottom()
-					.scale(this.xScale);
+				const xAxis = axisBottom(this.xScale);
 
 				this.svg.append("g")
 					.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
 					.call(xAxis);
 
-				const yAxis = axisLeft()
-					.scale(this.yScale);
+				const yAxis = axisLeft(this.yScale);
 
 				this.svg.append("g")
 					.attr('transform', `translate(${leftMargin},${topMargin})`)

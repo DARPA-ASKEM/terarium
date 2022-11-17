@@ -18,7 +18,9 @@
 </template>
 
 <script lang="ts">
-	import { SelectedCellValue, getSelectedCellStyle } from './matrix.vue';
+	import { PropType } from 'vue';
+
+	import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
 	import ResponsiveCellLineGraph from './cell-line-graph.vue';
 
 	export default {
@@ -52,14 +54,26 @@
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		props: {
+			getSelectedCellStyle: {
+				type: null,
+				default() {
+					return {top: '0px', left: '0px', bottom: '0px', right: '0px'};
+				}
+			},
 			update: {
 				type: Number,
 				default() {
 					return 0;
 				},
 			},
+			move: {
+				type: Number,
+				default() {
+					return 0;
+				},
+			},
 			selectedCell: {
-				type: Array,
+				type: Array as unknown as PropType<SelectedCell>,
 				default() {
 					return [0, 0, 0, 0];
 				},
@@ -77,19 +91,19 @@
 				},
 			},
 			labelRowList: {
-				type: Array,
+				type: Array as PropType<number[]>,
 				default() {
 					return [];
 				},
 			},
 			labelColList: {
-				type: Array,
+				type: Array as PropType<number[]>,
 				default() {
 					return [];
 				},
 			},
 			parameters: {
-				type: Array,
+				type: Array as PropType<string[]>,
 				default() {
 					return [];
 				},
@@ -112,20 +126,6 @@
 					return '#000000';
 				},
 			},
-		},
-
-
-
-		// ---------------------------------------------------------------------------- //
-		// data                                                                         //
-		// ---------------------------------------------------------------------------- //
-
-		// ///////////////////////////////////////////////////////////////////////////////
-
-		data() {
-			return {
-
-			};
 		},
 
 
@@ -157,52 +157,12 @@
 
 				return selectedRowArray;
 			},
-
-			// parametersMinAll(): number {
-			// 	return Math.min(...Object.values(this.parametersMin) as number[]);
-			// },
-
-			// parametersMaxAll(): number {
-			// 	return Math.max(...Object.values(this.parametersMax) as number[]);
-			// },
-		},
-
-
-
-		// ---------------------------------------------------------------------------- //
-		// mounted                                                                      //
-		// ---------------------------------------------------------------------------- //
-
-		// ///////////////////////////////////////////////////////////////////////////////
-
-		mounted() {
-
-		},
-
-
-
-		// ---------------------------------------------------------------------------- //
-		// watch                                                                        //
-		// ---------------------------------------------------------------------------- //
-
-		// ///////////////////////////////////////////////////////////////////////////////
-
-		watch: {
-
-		},
-
-
-
-		// ---------------------------------------------------------------------------- //
-		// methods                                                                      //
-		// ---------------------------------------------------------------------------- //
-
-		// ///////////////////////////////////////////////////////////////////////////////
-
-		methods: {
-			getSelectedCellStyle(selectedCell: any): any {
-				return getSelectedCellStyle(selectedCell);
-			},
 		},
 	}
 </script>
+
+<style scoped>
+	.cell {
+		position: absolute;
+	}
+</style>

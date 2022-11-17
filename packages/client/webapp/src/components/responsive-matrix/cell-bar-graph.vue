@@ -4,11 +4,12 @@
 </template>
 
 <script lang="ts">
+	import { PropType } from 'vue';
 	import { select } from 'd3-selection';
 	import { scaleLinear, scaleBand } from 'd3-scale';
 	import { axisBottom, axisLeft } from 'd3-axis';
 
-	import { SelectedCellValue } from './matrix.vue';
+	import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
 
 	export default {
 
@@ -26,7 +27,7 @@
 				},
 			},
 			selectedCell: {
-				type: Array,
+				type: Array as unknown as PropType<SelectedCell>,
 				default() {
 					return [0, 0, 0, 0];
 				},
@@ -44,19 +45,19 @@
 				}
 			},
 			labelRowList: {
-				type: Array,
+				type: Array as PropType<number[]>,
 				default() {
 					return [];
 				},
 			},
 			labelColList: {
-				type: Array,
+				type: Array as PropType<number[]>,
 				default() {
 					return [];
 				},
 			},
 			parameters: {
-				type: Array,
+				type: Array as PropType<string[]>,
 				default() {
 					return [];
 				},
@@ -95,8 +96,8 @@
 				bottomMargin: 20,
 				leftMargin: 30,
 				rightMargin: 20,
-				containerBoundingBox: {},
-				svg: null,
+				containerBoundingBox: {} as DOMRect,
+				svg: null as any,
 			};
 		},
 
@@ -123,7 +124,7 @@
 
 				for(let row = startRow, i = 0; row <= endRow; row++, i++) {
 					this.dataRowList[row].forEach((cell: any) => {
-						if(cell.__col__ <= endCol && cell.__col__ >= startCol) {
+						if(cell._col <= endCol && cell._col >= startCol) {
 							this.parameters.forEach(param => selectedCells[param].push(cell[param]));
 						}
 					});
@@ -132,17 +133,17 @@
 				return selectedCells;
 			},
 
-			labelRowSelected(): [] {
+			labelRowSelected(): number[] {
 				const startRow = this.selectedCell[SelectedCellValue.START_ROW];
 				const endRow = this.selectedCell[SelectedCellValue.END_ROW];
 				return this.labelRowList.slice(startRow, endRow + 1);
 			},
 
-			labelRowSelectedIndexMap(): [] {
+			labelRowSelectedIndexMap(): number[] {
 				return this.labelRowSelected;
 			},
 
-			labelColSelected(): [] {
+			labelColSelected(): number[] {
 				const startCol = this.selectedCell[SelectedCellValue.START_COL];
 				const endCol = this.selectedCell[SelectedCellValue.END_COL];
 				return this.labelColList.slice(startCol, endCol + 1);
@@ -180,14 +181,14 @@
 				return scaleBand()
 					.range(this.xRange)
 					.domain(this.parameters)
-					.padding([0.15]);
+					.padding(0.15);
 			},
 
 			xSubgroup(): any {
 				return scaleBand()
-					.domain(this.labelRowSelected)
+					.domain(this.labelRowSelected as any)
 					.range([0, this.xScaleBand.bandwidth()])
-					.padding([0.1]);
+					.padding(0.1);
 			},
 
 			yScale(): any {
@@ -239,34 +240,34 @@
 
 		methods: {
 			updateContainerBoundingBox() {
-				this.containerBoundingBox = this.$refs.container.getBoundingClientRect();
+				const container = this.$refs.container as HTMLElement;
+				this.containerBoundingBox = container.getBoundingClientRect();
 			},
 
 			renderGraph() {
+				const container = this.$refs.container as HTMLElement;
 				const { height } = this.containerBoundingBox;
 				const {leftMargin, bottomMargin, topMargin} = this;
 
 				// remove old svg if present
 				if(this.svg) {
-					this.svg.remove();
+					(this.svg as any).remove();
 				}
 
-				this.svg = select(this.$refs.container)
+				this.svg = select(container)
 					.append("svg")
 					.attr('class', "cell-selected-line-graph")
 					.attr("height", '100%')
 					.attr("width", '100%')
 					.style('background', 'white');
 
-				const xAxis = axisBottom()
-					.scale(this.xScaleBand);
+				const xAxis = axisBottom(this.xScaleBand);
 
 				this.svg.append("g")
 					.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
 					.call(xAxis);
 
-				const yAxis = axisLeft()
-					.scale(this.yScale);
+				const yAxis = axisLeft(this.yScale);
 
 				this.svg.append("g")
 					.attr('transform', `translate(${leftMargin},${topMargin})`)
@@ -290,7 +291,7 @@
 						.attr("y", d => this.yScale(d.y) + topMargin)
 						.attr("width", this.xSubgroup.bandwidth())
 						.attr("height", d => height - bottomMargin - topMargin - this.yScale(d.y))
-						.attr("fill", d => this.colorFn(parameter));
+						.attr("fill", () => this.colorFn(parameter));
 			},
 		},
 	}
