@@ -11,8 +11,6 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const XDD_API_KEY = ''; // COSMOS_API_KEY
 const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
 const DATASET_API_URL = 'https://xdd.wisc.edu/sets';
 const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
