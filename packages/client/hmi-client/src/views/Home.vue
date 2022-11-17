@@ -30,6 +30,10 @@ const mockProjects = [
 const router = useRouter();
 
 function openProject(id) {
+	router.push(`/projects/${id}`);
+}
+
+function openProjectNewTab(id) {
 	const routeLocation = router.resolve({ path: `/projects/${id}` });
 	window.open(routeLocation.href, '_blank');
 }
@@ -50,7 +54,12 @@ function openProject(id) {
 						<NewProjectCard />
 					</li>
 					<li v-for="(project, index) in mockProjects" :key="index">
-						<ProjectCard :name="project.name" @click="openProject(project.id)" />
+						<ProjectCard
+							:name="project.name"
+							@click.exact="openProject(project.id)"
+							@click.meta="openProjectNewTab(project.id)"
+							@click.ctrl="openProjectNewTab(project.id)"
+						/>
 					</li>
 				</ul>
 				<IconChevronRight32 class="chevron-right" />

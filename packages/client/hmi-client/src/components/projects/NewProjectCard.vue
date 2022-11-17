@@ -21,8 +21,7 @@ function postProject(name: string) {
 function createNewProject() {
 	isModalVisible.value = false;
 	const { id } = postProject(newProjectTitle.value);
-	const routeLocation = router.resolve({ path: `/projects/${id}` });
-	window.open(routeLocation.href, '_blank');
+	router.push(`/projects/${id}`);
 }
 </script>
 
