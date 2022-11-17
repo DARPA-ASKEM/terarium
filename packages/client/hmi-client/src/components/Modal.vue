@@ -1,33 +1,24 @@
-<script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const props = defineProps({
-	isVisible: Boolean
-});
-</script>
+<script setup lang="ts"></script>
 
 <template>
 	<Transition name="modal">
-		<div v-if="isVisible" class="modal-mask">
-			<div class="modal-wrapper">
-				<div class="modal-container">
-					<div class="modal-header">
-						<slot name="header"></slot>
-					</div>
-
-					<div class="modal-body">
-						<slot name="body"></slot>
-					</div>
-
-					<div class="modal-footer">
-						<slot name="footer"> </slot>
-					</div>
-				</div>
+		<div class="modal-mask" @click.self="$emit('closeModal')">
+			<div class="modal-container">
+				<header>
+					<slot name="header"></slot>
+				</header>
+				<main>
+					<slot></slot>
+				</main>
+				<footer>
+					<slot name="footer"> </slot>
+				</footer>
 			</div>
 		</div>
 	</Transition>
 </template>
 
-<style>
+<style scoped>
 .modal-mask {
 	position: fixed;
 	z-index: 9998;
@@ -36,13 +27,9 @@ const props = defineProps({
 	width: 100%;
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0.5);
-	display: table;
+	display: flex;
+	align-items: center;
 	transition: opacity 0.1s ease;
-}
-
-.modal-wrapper {
-	display: table-cell;
-	vertical-align: middle;
 }
 
 .modal-container {
@@ -55,11 +42,11 @@ const props = defineProps({
 	transition: all 0.1s ease;
 }
 
-.modal-header h3 {
+header h3 {
 	margin-top: 0;
 }
 
-.modal-body {
+main {
 	margin: 20px 0 0;
 }
 

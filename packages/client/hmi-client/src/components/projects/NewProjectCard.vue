@@ -33,11 +33,11 @@ function createNewProject() {
 			<IconAddFilled32 />
 		</Button>
 		<Teleport to="body">
-			<modal :isVisible="isModalVisible">
+			<modal v-if="isModalVisible" @close-modal="isModalVisible = false">
 				<template #header>
 					<h3>Create a new project</h3>
 				</template>
-				<template #body>
+				<template #default>
 					<label for="input">Project title</label>
 					<input v-model="newProjectTitle" placeHolder="New Project" />
 					<button class="modal-button" type="submit" @click="createNewProject">OK</button>
