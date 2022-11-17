@@ -1,5 +1,5 @@
 <template>
-	<Button @click="logout"
+	<Button action @click="logout"
 		>Logout
 		<IconLogout16 />
 	</Button>

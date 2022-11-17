@@ -2,7 +2,8 @@
 /**
  * Sidebar component for navigating modes
  * */
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
+import IconOpenPanelRight16 from '@carbon/icons-vue/es/open-panel--filled--right/16';
 import IconSidePanelClose16 from '@carbon/icons-vue/es/side-panel--close/16';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
@@ -15,7 +16,16 @@ import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vu
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 
-const enum Mode {
+// Manage Side Panel
+const isSidePanelOpen = ref(false);
+function closeSidePanel() {
+	isSidePanelOpen.value = false;
+}
+function openSidePanel() {
+	isSidePanelOpen.value = true;
+}
+
+const enum View {
 	SimulationPlan = 'Simulation Plan',
 	Models = 'Models',
 	Datasets = 'Datasets',
@@ -24,11 +34,18 @@ const enum Mode {
 	Profile = 'Profile'
 }
 
-const selectedMode = ref('');
-const isCollapsed = computed(() => selectedMode.value.length === 0);
+const selectedView = ref('');
 
-function updateMode(mode: string) {
-	selectedMode.value = mode === selectedMode.value ? '' : mode;
+/**
+ * Open a View
+ * @param {string} view - The view to be open.
+ * @param {boolean} [openViewSidePanel=true] - Should the side-panel be open when opening the view.
+ */
+function openView(view: string, openViewSidePanel: boolean = true): void {
+	selectedView.value = view;
+	if (isSidePanelOpen.value) {
+		if (!openViewSidePanel) closeSidePanel();
+	} else if (openViewSidePanel) openSidePanel();
 }
 </script>
 
@@ -36,41 +53,44 @@ function updateMode(mode: string) {
 	<section>
 		<nav>
 			<ul>
-				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
+				<li
+					:active="selectedView === View.SimulationPlan"
+					@click="openView(View.SimulationPlan, false)"
+				>
 					<IconDataPlayer32 />
 				</li>
-				<li :active="selectedMode === Mode.Models" @click="updateMode(Mode.Models)">
+				<li :active="selectedView === View.Models" @click="openView(View.Models)">
 					<IconMachineLearningModel32 />
 				</li>
-				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
+				<li :active="selectedView === View.Datasets" @click="openView(View.Datasets, false)">
 					<IconTableSplit32 />
 				</li>
-				<li :active="selectedMode === Mode.Documents" @click="updateMode(Mode.Documents)">
+				<li :active="selectedView === View.Documents" @click="openView(View.Documents)">
 					<IconDocumentPdf32 />
 				</li>
 			</ul>
 			<ul>
 				<li
-					:active="selectedMode === Mode.ProvenanceGraph"
-					@click="updateMode(Mode.ProvenanceGraph)"
+					:active="selectedView === View.ProvenanceGraph"
+					@click="openView(View.ProvenanceGraph, false)"
 				>
 					<IconProvenanceGraph32 />
 				</li>
-				<li :active="selectedMode === Mode.Profile" @click="updateMode(Mode.Profile)">
+				<li :active="selectedView === View.Profile" @click="openView(View.Profile)">
 					<IconUser32 />
 				</li>
 			</ul>
 		</nav>
-
-		<aside v-if="!isCollapsed">
+		<aside v-if="isSidePanelOpen">
 			<header>
-				{{ selectedMode }}
-				<Button clear><IconSidePanelClose16 /></Button>
+				{{ selectedView }}
+				<Button @click="closeSidePanel"><IconSidePanelClose16 /></Button>
+				<Button danger @click="openSidePanel"><IconOpenPanelRight16 /></Button>
 			</header>
 			<main>
-				<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
-				<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
-				<ProfileSidebarPanel v-else-if="selectedMode === Mode.Profile" />
+				<ModelSidebarPanel v-if="selectedView === View.Models" />
+				<DocumentsSidebarPanel v-else-if="selectedView === View.Documents" />
+				<ProfileSidebarPanel v-else-if="selectedView === View.Profile" />
 				<template v-else> Create a sidebar-panel component </template>
 			</main>
 		</aside>
@@ -89,11 +109,11 @@ section {
 nav {
 	display: flex;
 	flex-direction: column;
-	z-index: 2;
+	height: calc(100vh - var(--header-height));
 	justify-content: space-between;
 	padding-top: 0.33rem;
 	width: 4rem;
-	height: calc(100vh - var(--header-height));
+	z-index: 2;
 }
 
 nav ul {
@@ -148,6 +168,7 @@ aside header {
 }
 
 aside header button {
+	display: none;
 	position: absolute;
 	right: 0;
 	top: 0;
