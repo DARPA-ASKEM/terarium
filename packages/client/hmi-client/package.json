@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "vite --host",
 		"build": "vue-tsc --noEmit && vite build",
-		"typecheck": "vue-tsc --noEmit",
+		"typecheck": "yarn workspace graph-scaffolder tsc --build && vue-tsc --noEmit",
 		"preview": "vite preview",
 		"test": "vitest",
 		"test:ci": "vitest run",
