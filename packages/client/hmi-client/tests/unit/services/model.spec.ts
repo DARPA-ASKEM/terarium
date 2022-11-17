@@ -1,5 +1,5 @@
 import { assert, it, test } from 'vitest';
-import { parsePetriNet2IGraph } from '@/services/modelRenderer';
+import { parsePetriNet2IGraph } from '@/services/model';
 import { PetriNet } from '@/utils/petri-net-validator';
 
 const SIRD: PetriNet = {

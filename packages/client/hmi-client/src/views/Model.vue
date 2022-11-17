@@ -3,7 +3,7 @@ import { onMounted } from 'vue';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/modelRenderer';
+import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
 import * as d3 from 'd3';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
