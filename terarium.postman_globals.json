@@ -1,0 +1,44 @@
+{
+	"id": "146e52f0-fd32-4814-8e58-8a3c0f4d5eb7",
+	"values": [
+		{
+			"key": "Token Name",
+			"value": "keycloak",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "Auth URL",
+			"value": "http://localhost:8079/realms/Uncharted/protocol/openid-connect/auth",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "Access Token URL",
+			"value": "http://localhost:8079/realms/Uncharted/protocol/openid-connect/token",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "Client ID",
+			"value": "app",
+			"type": "secret",
+			"enabled": true
+		},
+		{
+			"key": "Client Secret",
+			"value": "jtbQhs6SlfynqJaygVpwav2kLzAme2b4",
+			"type": "secret",
+			"enabled": true
+		},
+		{
+			"key": "Scope",
+			"value": "openid email profile",
+			"enabled": true
+		}
+	],
+	"name": "TERArium Local",
+	"_postman_variable_scope": "TERArium Local",
+	"_postman_exported_at": "2022-11-15T18:16:39.989Z",
+	"_postman_exported_using": "Postman/10.1.2"
+}
