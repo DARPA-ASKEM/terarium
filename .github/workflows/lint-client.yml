@@ -43,5 +43,5 @@ jobs:
 
       - name: Run Typechecks
         run: |
-          yarn workspace graph-scaffolder tsc --build
+          # yarn workspace graph-scaffolder tsc --build
           yarn typecheck
