@@ -5,10 +5,7 @@
 
 <script lang="ts">
 	import { PropType } from 'vue';
-
-	import { select } from 'd3-selection';
-	import { scaleLinear } from 'd3-scale';
-	import { axisBottom, axisLeft } from 'd3-axis';
+	import { select, scaleLinear, axisBottom, axisLeft } from 'd3';
 
 	import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
 
