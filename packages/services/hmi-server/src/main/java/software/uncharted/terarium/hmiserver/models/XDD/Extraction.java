@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.XDD;
+package software.uncharted.terarium.hmiserver.models.xdd;
 
 import java.util.Date;
 import java.util.Hashtable;

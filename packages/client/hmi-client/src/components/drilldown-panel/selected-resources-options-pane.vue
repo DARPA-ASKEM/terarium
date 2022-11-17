@@ -63,7 +63,7 @@ export default defineComponent({
 			return (item as Model).name || (item as XDDArticle).title;
 		},
 		formatTitle(item: ResultType) {
-			const maxSize = 15;
+			const maxSize = 36;
 			const itemTitle = this.getTitle(item);
 			return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
 		},
@@ -79,6 +79,7 @@ export default defineComponent({
 						? (item as XDDArticle).abstract
 						: false) ||
 					(item as XDDArticle).journal ||
+					(item as XDDArticle).publisher ||
 					itemDesc;
 			}
 			return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;

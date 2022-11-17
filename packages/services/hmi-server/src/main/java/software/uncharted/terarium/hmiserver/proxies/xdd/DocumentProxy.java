@@ -1,13 +1,14 @@
-package software.uncharted.terarium.hmiserver.proxies;
+package software.uncharted.terarium.hmiserver.proxies.xdd;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDArticlesResponseOK;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDResponse;
+
+import software.uncharted.terarium.hmiserver.models.xdd.XDDArticlesResponseOK;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDResponse;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
-@RegisterRestClient
+@RegisterRestClient(configKey = "xdd-document-service")
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocumentProxy {
 	@GET

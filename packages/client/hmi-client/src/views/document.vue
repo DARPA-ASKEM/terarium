@@ -51,13 +51,7 @@
 <script setup lang="ts">
 import { getXDDArtifacts } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
-import {
-	XDDArticle,
-	XDDArtifact,
-	XDDSearchParams,
-	XDDExtractionType,
-	XDDArtifactExtraction
-} from '@/types/XDD';
+import { XDDArticle, XDDArtifact, XDDExtractionType, XDDArtifactExtraction } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -72,7 +66,6 @@ const props = defineProps({
 const resourcesStore = useResourcesStore();
 
 const doc = computed(() => resourcesStore.documents[props.id] || null);
-const xddDataset = computed(() => resourcesStore.xddDataset);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
@@ -115,11 +108,7 @@ watch(extractions, (currentValue, oldValue) => {
 const fetchArtifacts = async () => {
 	if (doc.value !== null && doi.value !== '') {
 		// a 'type' may be used to filter the extractions to a given artifact types, e.g. Figure
-		// Note: the dataset MUST be specified for the COSMOS API to work
-		const searchParams: XDDSearchParams = {
-			dataset: xddDataset.value
-		};
-		artifacts.value = await getXDDArtifacts(doi.value, searchParams);
+		artifacts.value = await getXDDArtifacts(doi.value);
 	}
 };
 

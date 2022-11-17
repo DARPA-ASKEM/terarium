@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.XDD;
+package software.uncharted.terarium.hmiserver.models.xdd;
 
 import javax.json.bind.annotation.JsonbProperty;
 

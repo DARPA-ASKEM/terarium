@@ -75,39 +75,24 @@ const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) =>
 	};
 };
 
-// get extractions
-// FIXME: old API usage
-const getXDDArtifacts = async (doc_doi?: string, xddSearchParam?: XDDSearchParams) => {
-	// COSMOS API URL starts similarly to the DATASET base URL
-	let url = `${DATASET_API_URL}`;
-	if (xddSearchParam?.dataset) {
-		url += `/${xddSearchParam.dataset}/`;
-	}
-	// COSMOS API part
-	url += 'cosmos/api/v3_beta/search?';
-	// since COSMOS is a protected API, we MUST specify the api key
-	url += `api_key=${XDD_API_KEY}`;
+//
+// fetch list of extractions data from the HMI server
+//
+const getXDDArtifacts = async (doc_doi: string) => {
+	const url = `/api/xdd/extractions?doi=${doc_doi}`;
 
-	// restrict the type of object to search for
-	if (xddSearchParam?.type) {
-		url += `&type=${xddSearchParam?.type}`;
-	}
+	// NOT SUPPORTED
+	// if (xddSearchParam?.type) {
+	// 	// restrict the type of object to search for
+	// 	url += `&type=${xddSearchParam.type}`;
+	// }
+	// if (xddSearchParam?.ignore_bytes) {
+	// 	// by default ignore including artifact bytes (e.g., figures base64 bytes)
+	// 	url += `&ignore_bytes=${xddSearchParam.ignore_bytes}`;
+	// }
 
-	// by default ignore including artifact bytes (e.g., figures base64 bytes)
-	if (xddSearchParam?.ignore_bytes) {
-		url += '&ignore_bytes';
-	}
-
-	// search against a specific document doi
-	if (doc_doi) {
-		url += `&doi=${doc_doi}`;
-	}
-
-	const response = await fetchXDD(url);
-	const rawdata = await response.json();
-
-	const { objects } = rawdata as { objects: XDDArtifact[] };
-	return objects || ([] as XDDArtifact[]);
+	const extractionsList: XDDArtifact[] = await uncloak(url);
+	return extractionsList || ([] as XDDArtifact[]);
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {

@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources;
+package software.uncharted.terarium.hmiserver.resources.xdd;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -16,23 +16,17 @@ import java.util.List;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import software.uncharted.terarium.hmiserver.models.XDD.Document;
-import software.uncharted.terarium.hmiserver.models.XDD.Extraction;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDArticlesResponseOK;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDResponse;
-import software.uncharted.terarium.hmiserver.proxies.DocumentProxy;
-import software.uncharted.terarium.hmiserver.services.DocumentService;
+import software.uncharted.terarium.hmiserver.models.xdd.Document;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDArticlesResponseOK;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDResponse;
+import software.uncharted.terarium.hmiserver.proxies.xdd.DocumentProxy;
+import software.uncharted.terarium.hmiserver.services.xdd.DocumentService;
 
-import io.quarkus.security.identity.SecurityIdentity;
-
-@Path("/api/document")
+@Path("/api/xdd/documents")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "XDD Documents REST Endpoint")
-public class DocumentsResource {
-
-    @Inject
-    SecurityIdentity identity;
+public class DocumentResource {
 
 		@Inject
 		DocumentService documentService;
@@ -82,13 +76,4 @@ public class DocumentsResource {
 			return Response.ok(documents).build();
 		}
 
-		@Path("/extractions")
-		@POST
-		@Consumes(MediaType.TEXT_PLAIN)
-		@Produces(MediaType.APPLICATION_JSON)
-		@Tag(name = "Search XDD for extractions related to the document identified in the payload")
-		public Response searchExtractions(final String jsonPayload) {
-			final List<Extraction> documents = documentService.getExtractions(jsonPayload);
-			return Response.ok(documents).build();
-		}
 }

@@ -1,11 +1,4 @@
-package software.uncharted.terarium.hmiserver.services;
-
-import software.uncharted.terarium.hmiserver.models.XDD.Document;
-import software.uncharted.terarium.hmiserver.models.XDD.Extraction;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDArticlesResponseOK;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDExtractionsResponseOK;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDResponse;
-import software.uncharted.terarium.hmiserver.models.XDD.XDDSearchPayload;
+package software.uncharted.terarium.hmiserver.services.xdd;
 
 import java.util.List;
 import java.util.Properties;
@@ -26,6 +19,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import software.uncharted.terarium.hmiserver.models.xdd.Document;
+import software.uncharted.terarium.hmiserver.models.xdd.Extraction;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDArticlesResponseOK;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDExtractionsResponseOK;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDResponse;
+import software.uncharted.terarium.hmiserver.models.xdd.XDDSearchPayload;
 
 @ApplicationScoped
 public class DocumentService {
@@ -50,8 +50,8 @@ public class DocumentService {
 			try (InputStream inputStream = loader.getResourceAsStream("application.properties")) {
 					properties.load(inputStream);
 
-					DOCUMENTS_BASE_URL = properties.getProperty("xdd.document.base.url");
-					EXTRACTIONS_BASE_URL = properties.getProperty("xdd.extraction.base.url");
+					DOCUMENTS_BASE_URL = properties.getProperty("xdd-document-service/mp-rest/url");
+					EXTRACTIONS_BASE_URL = properties.getProperty("xdd-extraction-service/mp-rest/url");
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -62,7 +62,7 @@ public class DocumentService {
 	public List<Document> getDocuments(String jsonPayload) {
 		List<Document> list = new ArrayList<>();
 
-		String url = DOCUMENTS_BASE_URL;
+		String url = DOCUMENTS_BASE_URL + "/articles?";
 
 		if (!jsonPayload.isEmpty()) {
 			try {
@@ -135,59 +135,42 @@ public class DocumentService {
 		return list;
 	}
 
-	public List<Extraction> getExtractions(String jsonPayload) {
+	public List<Extraction> getExtractions(String doi) {
 		List<Extraction> list = new ArrayList<>();
 
-		String url = EXTRACTIONS_BASE_URL;
+		String url = EXTRACTIONS_BASE_URL + "/object?";
 
-		if (!jsonPayload.isEmpty()) {
+		if (doi != null) {
 			try {
-				XDDSearchPayload payload = new ObjectMapper()
-					.readValue(jsonPayload, XDDSearchPayload.class);
-				// @TODO: validate that a proper doi is given
-				if (payload.doi != null) {
-					// add the doi to the query
-					url += "doi=" + payload.doi;
+				// add the doi to the query
+				url += "doi=" + doi;
 
-					// continue with the requsting the extractions
+				// continue with the requsting the extractions
 
-					// create a request
-					var request = HttpRequest.newBuilder(
-								URI.create(url))
-						.header("accept", "application/json")
-						.build();
+				// create a request
+				var request = HttpRequest.newBuilder(
+							URI.create(url))
+					.header("accept", "application/json")
+					.build();
 
-					// use the client to send the request
-					// @NOTE: we may as well use send the request sync,
-					//        but this initial implementation uses async
-					var responseFuture = client.sendAsync(request, BodyHandlers.ofString());
+				// use the client to send the request
+				// @NOTE: we may as well use send the request sync,
+				//        but this initial implementation uses async
+				var response = client.send(request, BodyHandlers.ofString());
 
-					// We can do other things here while the request is in-flight
+				String responseBodyStr = response.body();
+					XDDResponse<XDDExtractionsResponseOK> typedResponse = new ObjectMapper()
+						// .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+						.readValue(responseBodyStr, new TypeReference<XDDResponse<XDDExtractionsResponseOK>>() {});
 
-					// This blocks until the request is complete
-					var response = responseFuture.get();
-
-					String responseBodyStr = response.body();
-						XDDResponse<XDDExtractionsResponseOK> typedResponse = new ObjectMapper()
-							// .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-							.readValue(responseBodyStr, new TypeReference<XDDResponse<XDDExtractionsResponseOK>>() {});
-
-					// NOTE that if no params are provided in the search payload,
-					//  then the XDD API results will not be valid (and the mapping will not fail)
-					if (typedResponse.success != null && typedResponse.success.data != null) {
-						for (Extraction ext : typedResponse.success.data) {
-							list.add(ext);
-						}
+				// NOTE that if no params are provided in the search payload,
+				//  then the XDD API results will not be valid (and the mapping will not fail)
+				if (typedResponse.success != null && typedResponse.success.data != null) {
+					for (Extraction ext : typedResponse.success.data) {
+						list.add(ext);
 					}
 				}
-
-			} catch (JsonMappingException e) {
-				e.printStackTrace();
-			} catch (JsonProcessingException e) {
-				e.printStackTrace();
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			} catch (ExecutionException e1) {
+			} catch (Exception e1) {
 				e1.printStackTrace();
 			}
 		}
