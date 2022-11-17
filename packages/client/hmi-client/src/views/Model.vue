@@ -106,9 +106,12 @@ onMounted(async () => {
 	});
 
 	// Test on click
-	renderer.on('node-click', (_eventName: string, _event, selection: D3SelectionINode<NodeData>) => {
-		console.log(selection.datum());
-	});
+	renderer.on(
+		'node-click',
+		(_eventName: string | symbol, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log(selection.datum());
+		}
+	);
 
 	// write json to model-json and draw model to model-drawn:
 	d3.select('#model-json').text(JSON.stringify(model));
