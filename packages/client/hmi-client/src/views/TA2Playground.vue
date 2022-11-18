@@ -982,6 +982,15 @@ export default defineComponent({
 			<div id="solution" class="playground-panel"></div>
 			<div id="output" class="playground-panel"></div>
 		</div>
+		<div style="display: flex">
+			<!---
+				two windows for selected graphs
+				choose states you want to merge
+				click merge
+				and see merged petrinet in third window
+			
+			-->
+		</div>
 	</section>
 </template>
 
