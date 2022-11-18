@@ -1,9 +1,8 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { devices, type PlaywrightTestConfig } from '@playwright/experimental-ct-vue';
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import vue from '@vitejs/plugin-vue';
-import { resolve } from 'path';
+// eslint-disable-next-line import/extensions
+import { defineConfig as viteConfig } from './vite.config.ts';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -33,16 +32,7 @@ const config: PlaywrightTestConfig = {
 		ctPort: 3100,
 
 		/* Vite specific config */
-		ctViteConfig: {
-			// @ts-ignore
-			plugins: [vue()],
-			resolve: {
-				alias: {
-					'@': resolve(__dirname, './src'),
-					'@assets': resolve(__dirname, './src/assets')
-				}
-			}
-		}
+		ctViteConfig: { ...viteConfig }
 	},
 
 	/* Folder for test artifacts such as screenshots, videos, traces, etc. */
