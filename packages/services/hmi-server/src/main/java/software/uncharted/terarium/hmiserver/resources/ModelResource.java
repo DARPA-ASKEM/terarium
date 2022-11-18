@@ -1,18 +1,18 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.proxies.ModelProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.List;
 
 @Path("/api/models")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")
@@ -26,55 +26,75 @@ public class ModelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all models")
 	public Response getModels() {
-		final List<Model> models = modelProxy.getModels();
-		if (models.isEmpty()) {
-			return Response.noContent().build();
-		}
-		return Response.ok(models).build();
+		return modelProxy.getModels();
 	}
 
 	@GET
 	@Path("/{id}")
-	public Response getModel(@PathParam("id") final Long id) {
-		final Model model = modelProxy.getModel(id);
-
-		if (model == null)
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-
-		return Response.ok(model).build();
+	public Response getModel(@PathParam("id") final String id) {
+		return modelProxy.getModel(id);
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModel(final Model newModel) {
-		final Model model = modelProxy.createModel(newModel);
-		return Response.created(URI.create("/api/models/" + model.id)).build();
+		return modelProxy.createModel(newModel);
 	}
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateModel(@PathParam("id") final Long id, final Model updatedModel) {
-		if (modelProxy.getModel(id) == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
+	public Response updateModel(@PathParam("id") final String id, final Model updatedModel) {
+		return modelProxy.updateModel(id, updatedModel);
+	}
 
-		final Model model = modelProxy.updateModel(id, updatedModel);
+	@GET
+	@Path("/intermediates/{id}")
+	public Response getIntermediate(
+		@PathParam("id") final String id
+	) {
+		return modelProxy.getIntermediate(id);
+	}
 
-		if (model == null) {
-			return Response.noContent().build();
-		}
-		return Response.ok(model).build();
+	@POST
+	@Path("/intermediates")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response createIntermediate(
+		final Model model
+	) {
+		return modelProxy.createIntermediate(model);
 	}
 
 	@DELETE
-	@Path("/{id}")
-	public Response deleteModel(@PathParam("id") final Long id) {
-		if (!modelProxy.deleteModel(id)) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-
-		return Response.ok().build();
+	@Path("/intermediates/{id}")
+	public Response deleteIntermediate(
+		@PathParam("id") final String id
+	) {
+		return modelProxy.deleteIntermediate(id);
 	}
 
+	@GET
+	@Path("/frameworks/{id}")
+	public Response getFramework(
+		@PathParam("id") final String id
+	) {
+		return modelProxy.getFramework(id);
+	}
+
+	@POST
+	@Path("/frameworks")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response createFramework(
+		final Model model
+	) {
+		return modelProxy.createFramework(model);
+	}
+
+	@DELETE
+	@Path("/frameworks/{id}")
+	public Response deleteFramework(
+		@PathParam("id") final String id
+	) {
+		return modelProxy.deleteFramework(id);
+	}
 }

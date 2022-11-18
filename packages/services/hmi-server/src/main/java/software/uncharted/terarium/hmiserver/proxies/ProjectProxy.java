@@ -1,10 +1,12 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 
@@ -14,32 +16,53 @@ import java.util.List;
 public interface ProjectProxy {
 
 	@GET
-	List<Project> getProjects();
+	Response getProjects(
+		@QueryParam("page_size") Integer pageSize,
+		@QueryParam("page") Integer page
+	);
 
 	@GET
 	@Path("/{id}")
-	Project getProject(
-		@PathParam("id") Long id
+	Response getProject(
+		@PathParam("id") String id
 	);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Project createProject(
+	Response createProject(
 		Project newProject
 	);
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Project updateProject(
-		@PathParam("id") Long id,
+	Response updateProject(
+		@PathParam("id") String id,
 		Project updatedProject
 	);
 
 	@DELETE
 	@Path("/{id}")
 	@Produces(MediaType.TEXT_PLAIN)
-	Boolean deleteProject(
-		@PathParam("id") Long id
+	Response deleteProject(
+		@PathParam("id") String id
+	);
+
+	@GET
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	Response getAsset(
+		@PathParam("project_id") String projectId,
+		@PathParam("resource_type") ResourceType type,
+		@PathParam("resource_id") String resourceId
+	);
+
+	@POST
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response createAsset(
+		@PathParam("project_id") String projectId,
+		@PathParam("resource_type") ResourceType type,
+		@PathParam("resource_id") String resourceId,
+		List<String> asset
 	);
 }

@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.SimulationPlan;
-import software.uncharted.terarium.hmiserver.models.SimulationRun;
+import software.uncharted.terarium.hmiserver.models.simulation.SimulationPlan;
 import software.uncharted.terarium.hmiserver.proxies.SimulationPlanProxy;
 import software.uncharted.terarium.hmiserver.proxies.SimulationResultProxy;
 
@@ -11,10 +11,9 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.List;
 
-@Path("/api/simulation")
+@Path("/api/simulations")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation REST Endpoints")
 public class SimulationResource {
@@ -29,26 +28,16 @@ public class SimulationResource {
 
 	@GET
 	@Path("/plans")
-	@Tag(name = "Get all projects for a given user")
-	public Response getSimulationPlan() {
-		final List<SimulationPlan> plans = planProxy.getSimulationPlans();
-		if (plans.isEmpty()) {
-			return Response.noContent().build();
-		}
-		return Response.ok(plans).build();
+	public Response getSimulationPlans() {
+		return planProxy.getSimulationPlans();
 	}
 
 	@GET
 	@Path("/plans/{id}")
 	public Response getSimulationPlan(
-		@QueryParam("id") final Long id
+		@QueryParam("id") final String id
 	) {
-		final SimulationPlan entity = planProxy.getSimulationPlan(id);
-
-		if (entity == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-		return Response.ok(entity).build();
+		return planProxy.getSimulationPlan(id);
 	}
 
 	@POST
@@ -57,77 +46,28 @@ public class SimulationResource {
 	public Response createSimulationPlan(
 		final SimulationPlan newPlan
 	) {
-		final SimulationPlan entity = planProxy.createSimulationPlan(newPlan);
-		return Response.created(URI.create("api/simulation/plan/" + entity.id)).build();
-	}
-
-	@PUT
-	@Path("/plans/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateSimulationPlan(
-		@PathParam("id") final Long id,
-		final SimulationPlan updatedPlan
-	) {
-		if (planProxy.getSimulationPlan(id) == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-
-		final SimulationPlan entity = planProxy.updateSimulationPlan(id, updatedPlan);
-
-		if (entity == null) {
-			return Response.noContent().build();
-		}
-		return Response.ok(entity).build();
-	}
-
-	@DELETE
-	@Path("/plans/{id}")
-	@Produces(MediaType.TEXT_PLAIN)
-	public Response deleteSimulationPlan(
-		@PathParam("id") final Long id
-	) {
-		if (!planProxy.deleteSimulationPlan(id)) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-
-		return Response.ok().build();
+		return planProxy.createSimulationPlan(newPlan);
 	}
 
 	@GET
 	@Path("/results")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Tag(name = "Get all projects for a given user")
 	public Response getSimulationResults() {
-		final List<SimulationRun> plans = resultsProxy.getSimulationResults();
-		if (plans.isEmpty()) {
-			return Response.noContent().build();
-		}
-		return Response.ok(plans).build();
+		return resultsProxy.getSimulationResults();
 	}
 
 	@GET
 	@Path("/results/{id}")
 	public Response getSimulationResult(
-		@PathParam("id") final Long id
+		@PathParam("id") final String id
 	) {
-		final SimulationRun entity = resultsProxy.getSimulationResult(id);
-
-		if (entity == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-		return Response.ok(entity).build();
+		return resultsProxy.getSimulationResult(id);
 	}
 
 	@DELETE
 	@Path("/results/{id}")
-	@Produces(MediaType.TEXT_PLAIN)
 	public Response deleteSimulationResult(
-		@PathParam("id") final Long id
+		@PathParam("id") final String id
 	) {
-		if (!resultsProxy.deleteSimulationResult(id)) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-
-		return Response.ok().build();
+		return resultsProxy.deleteSimulationResult(id);
 	}
 }

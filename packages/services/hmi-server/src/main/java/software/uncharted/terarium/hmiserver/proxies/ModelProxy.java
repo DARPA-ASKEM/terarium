@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
+import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/models")
@@ -13,32 +13,63 @@ import java.util.List;
 public interface ModelProxy {
 
 	@GET
-	List<Model> getModels();
+	Response getModels();
 
 	@GET
 	@Path("/{id}")
-	Model getModel(
-		@PathParam("id") Long id
+	Response getModel(
+		@PathParam("id") String id
 	);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Model createModel(
+	Response createModel(
 		Model model
 	);
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Model updateModel(
-		@PathParam("id") Long id,
+	Response updateModel(
+		@PathParam("id") String id,
 		Model plan
 	);
 
+	@GET
+	@Path("/intermediates/{id}")
+	Response getIntermediate(
+		@PathParam("id") String id
+	);
+
+	@POST
+	@Path("/intermediates")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response createIntermediate(
+		Model model
+	);
+
 	@DELETE
-	@Path("/{id}")
-	@Produces(MediaType.TEXT_PLAIN)
-	Boolean deleteModel(
-		@PathParam("id") Long id
+	@Path("/intermediates/{id}")
+	Response deleteIntermediate(
+		@PathParam("id") String id
+	);
+
+	@GET
+	@Path("/frameworks/{name}")
+	Response getFramework(
+		@PathParam("name") String id
+	);
+
+	@POST
+	@Path("/frameworks")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response createFramework(
+		Model model
+	);
+
+	@DELETE
+	@Path("/frameworks/{name}")
+	Response deleteFramework(
+		@PathParam("name") String id
 	);
 }

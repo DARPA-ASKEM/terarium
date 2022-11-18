@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models;
+package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import javax.json.bind.annotation.JsonbProperty;
 import java.time.Instant;
@@ -7,7 +7,7 @@ import java.time.Instant;
 public class SimulationRun {
 
 	@JsonbProperty("id")
-	public Long id;
+	public Long id = null;
 
 	@JsonbProperty("simulator_id")
 	public Long modelId;

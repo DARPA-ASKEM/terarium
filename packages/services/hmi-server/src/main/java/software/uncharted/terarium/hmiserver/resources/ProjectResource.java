@@ -1,18 +1,20 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.ProjectProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.util.List;
 
 @Path("/api/projects")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Project REST Endpoints")
 public class ProjectResource {
@@ -22,26 +24,19 @@ public class ProjectResource {
 	ProjectProxy proxy;
 
 	@GET
-	@Tag(name = "Get all projects for a given user")
-	public Response getProjects() {
-		final List<Project> projects = proxy.getProjects();
-		if (projects.isEmpty()) {
-			return Response.noContent().build();
-		}
-		return Response.ok(projects).build();
+	public Response getProjects(
+		@QueryParam("page_size") final Integer pageSize,
+		@QueryParam("page") final Integer page
+	) {
+		return proxy.getProjects(pageSize, page);
 	}
 
 	@GET
 	@Path("/{id}")
 	public Response getProject(
-		@PathParam("id") final Long id
+		@PathParam("id") final String id
 	) {
-		final Project entity = proxy.getProject(id);
-
-		if (entity == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-		return Response.ok(entity).build();
+		return proxy.getProject(id);
 	}
 
 	@POST
@@ -49,39 +44,38 @@ public class ProjectResource {
 	public Response createProject(
 		final Project newProject
 	) {
-		final Project entity = proxy.createProject(newProject);
-		return Response.created(URI.create("/api/projects/" + entity.id)).build();
+		return proxy.createProject(newProject);
 	}
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateProject(
-		@PathParam("id") final Long id,
+		@PathParam("id") final String id,
 		final Project updatedProject
 	) {
-		if (proxy.getProject(id) == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-
-		final Project entity = proxy.updateProject(id, updatedProject);
-
-		if (entity == null) {
-			return Response.noContent().build();
-		}
-		return Response.ok(entity).build();
+		return proxy.updateProject(id, updatedProject);
 	}
 
-	@DELETE
-	@Path("/{id}")
-	@Produces(MediaType.TEXT_PLAIN)
-	public Response deleteProject(
-		@PathParam("id") final Long id
+	@GET
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	public Response getAsset(
+		@PathParam("project_id") final String projectId,
+		@PathParam("resource_type") final ResourceType type,
+		@PathParam("resource_id") final String resourceId
 	) {
-		if (Boolean.FALSE.equals(proxy.deleteProject(id))) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
+		return proxy.getAsset(projectId, type, resourceId);
+	}
 
-		return Response.ok().build();
+	@POST
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response createAsset(
+		@PathParam("project_id") final String projectId,
+		@PathParam("resource_type") final ResourceType type,
+		@PathParam("resource_id") final String resourceId,
+		final List<String> asset
+	) {
+		return proxy.createAsset(projectId, type, resourceId, asset);
 	}
 }
