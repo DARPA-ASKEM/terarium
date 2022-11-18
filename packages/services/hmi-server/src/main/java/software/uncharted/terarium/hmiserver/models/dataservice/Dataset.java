@@ -1,42 +1,39 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 import java.time.Instant;
 
-public class Dataset {
-	@JsonbProperty("id")
-	public String id;
+@Data
+@Accessors(chain = true)
+public class Dataset implements Serializable {
 
-	@JsonbProperty("name")
-	public String name;
+	private String id;
 
-	@JsonbProperty("url")
-	public String url;
+	private String name;
 
-	@JsonbProperty("description")
-	public String description;
+	private String url;
 
-	@JsonbProperty("timestamp")
-	public Instant timestamp;
+	private String description;
 
-	@JsonbProperty("deprecated")
-	public Boolean deprecated;
+	private Instant timestamp;
 
-	@JsonbProperty("sensitivity")
-	public String sensitivity;
+	private Boolean deprecated;
 
-	@JsonbProperty("quality")
-	public String quality;
+	private String sensitivity;
+
+	private String quality;
 
 	@JsonbProperty("temporal_resolution")
-	public String temporalResolution;
+	private String temporalResolution;
 
 	@JsonbProperty("geospatial_resolution")
-	public String geospatialResolution;
+	private String geospatialResolution;
 
-	@JsonbProperty("annotations")
-	public String annotations;
+	private String annotations;
 
-	@JsonbProperty("maintainer")
-	public String maintainer;
+	private String maintainer;
 }

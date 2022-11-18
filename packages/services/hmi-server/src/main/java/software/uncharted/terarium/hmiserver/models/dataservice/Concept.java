@@ -1,16 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 
-public class Concept {
+@Data
+@Accessors(chain = true)
+public class Concept implements Serializable {
 	@JsonbProperty("term_id")
-	public String termId;
+	private String termId;
 
-	@JsonbProperty("status")
-	public OntologicalField status;
-
-	public Concept(final String termId, final OntologicalField status) {
-		this.termId = termId;
-		this.status = status;
-	}
+	private OntologicalField status;
 }

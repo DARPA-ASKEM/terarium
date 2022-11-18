@@ -1,39 +1,28 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import javax.json.bind.annotation.JsonbProperty;
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+@Data
+@Accessors(chain = true)
+public class Project implements Serializable {
 
-public class Project {
+	private String id;
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String name;
 
-	@JsonbProperty("name")
-	public String name;
+	private String description;
 
-	@JsonbProperty("description")
-	public String description;
+	private Instant timestamp;
 
-	@JsonbProperty("timestamp")
-	public Instant timestamp = Instant.now();
+	private String status;
 
-	@JsonbProperty("status")
-	public String status;
+	private Concept concept;
 
-	@JsonbProperty("concept")
-	public Concept concept;
-
-	@JsonbProperty("assets")
-	public Map<String, List<Long>> assets;
-
-	public Project(final String name, final String description, final String status, final Concept concept, final Map<String, List<Long>> assets) {
-		this.name = name;
-		this.description = description;
-		this.status = status;
-		this.concept = concept;
-		this.assets = assets;
-	}
+	private Map<String, List<Long>> assets;
 }

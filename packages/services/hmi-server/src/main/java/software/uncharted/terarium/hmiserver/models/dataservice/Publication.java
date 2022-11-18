@@ -1,16 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 
-public class Publication {
+@Data
+@Accessors(chain = true)
+public class Publication implements Serializable {
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String id;
 
 	@JsonbProperty("xdd_uri")
-	public String xddUri;
-
-	public Publication(final String xddUri) {
-		this.xddUri = xddUri;
-	}
+	private String xddUri;
 }

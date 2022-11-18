@@ -1,29 +1,22 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import javax.json.bind.annotation.JsonbProperty;
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 import java.time.Instant;
 
-public class Intermediate {
+@Data
+@Accessors(chain = true)
+public class Intermediate implements Serializable {
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String id;
 
-	@JsonbProperty("timestamp")
-	public Instant timestamp;
+	private Instant timestamp;
 
-	@JsonbProperty("source")
-	public IntermediateSource source;
+	private IntermediateSource source;
 
-	@JsonbProperty("type")
-	public IntermediateFormat type;
+	private IntermediateFormat type;
 
-	@JsonbProperty("content")
-	public String content;
-
-	public Intermediate(final Instant timestamp, final IntermediateSource source, final IntermediateFormat type, final String content) {
-		this.timestamp = timestamp;
-		this.source = source;
-		this.type = type;
-		this.content = content;
-	}
+	private String content;
 }

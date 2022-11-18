@@ -1,21 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import javax.json.bind.annotation.JsonbProperty;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
-public class ModelFramework {
+import java.io.Serializable;
 
-	@JsonbProperty("name")
-	public String name;
+@Data
+@Accessors(chain = true)
+public class ModelFramework implements Serializable {
 
-	@JsonbProperty("version")
-	public String version;
+	private String name;
 
-	@JsonbProperty("semantics")
-	public String semantics;
+	private String version;
 
-	public ModelFramework(final String name, final String version, final String semantics) {
-		this.name = name;
-		this.version = version;
-		this.semantics = semantics;
-	}
+	private String semantics;
 }

@@ -1,28 +1,25 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 
-public class Association {
+@Data
+@Accessors(chain = true)
+public class Association implements Serializable {
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String id;
 
 	@JsonbProperty("person_id")
-	public String personId;
+	private String personId;
 
 	@JsonbProperty("resource_id")
-	public String resourceId;
+	private String resourceId;
 
 	@JsonbProperty("resource_type")
-	public ResourceType resourceType;
+	private ResourceType resourceType;
 
-	@JsonbProperty("role")
-	public Role role;
-
-	public Association(final String personId, final String resourceId, final ResourceType resourceType, final Role role) {
-		this.personId = personId;
-		this.resourceId = resourceId;
-		this.resourceType = resourceType;
-		this.role = role;
-	}
+	private Role role;
 }

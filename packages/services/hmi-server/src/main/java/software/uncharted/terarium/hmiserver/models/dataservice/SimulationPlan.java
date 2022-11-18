@@ -1,38 +1,28 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
-import java.util.HashMap;
+import java.io.Serializable;
 import java.util.Map;
 
-public class SimulationPlan {
+@Data
+@Accessors(chain = true)
+public class SimulationPlan implements Serializable {
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String id;
 
 	@JsonbProperty("model_id")
-	public String modelId;
+	private String modelId;
 
-	@JsonbProperty("simulator")
-	public String simulator;
+	private String simulator;
 
-	@JsonbProperty("query")
-	public String query;
+	private String query;
 
-	@JsonbProperty("content")
-	public String content;
+	private String content;
 
-	@JsonbProperty("concept")
-	public Concept concept;
+	private Concept concept;
 
-	@JsonbProperty("parameters")
-	public Map<String, String> parameters = new HashMap<>();
-
-	public SimulationPlan(final String modelId, final String simulator, final String query, final String content, final Concept concept, final Map<String, String> parameters) {
-		this.modelId = modelId;
-		this.simulator = simulator;
-		this.query = query;
-		this.content = content;
-		this.concept = concept;
-		this.parameters = parameters;
-	}
+	private Map<String, String> parameters;
 }

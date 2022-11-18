@@ -1,28 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 
-public class Qualifier {
+@Data
+@Accessors(chain = true)
+public class Qualifier implements Serializable {
 
-	@JsonbProperty("id")
-	public String id;
+	private String id;
 
 	@JsonbProperty("dataset_id")
-	public String datasetId;
+	private String datasetId;
 
-	@JsonbProperty("description")
-	public String description;
+	private String description;
 
-	@JsonbProperty("name")
-	public String name;
+	private String name;
 
 	@JsonbProperty("value_type")
-	public ValueType valueType;
-
-	public Qualifier(final String datasetId, final String description, final String name, final ValueType valueType) {
-		this.datasetId = datasetId;
-		this.description = description;
-		this.name = name;
-		this.valueType = valueType;
-	}
+	private ValueType valueType;
 }

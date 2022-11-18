@@ -1,28 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 
-public class OntologyConcept {
+@Data
+@Accessors(chain = true)
+public class OntologyConcept implements Serializable {
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String id;
 
 	@JsonbProperty("term_id")
-	public String termId;
+	private String termId;
 
-	@JsonbProperty("type")
-	public TaggableType type;
+	private TaggableType type;
 
 	@JsonbProperty("obj_id")
-	public Long objId;
+	private Long objId;
 
-	@JsonbProperty("status")
-	public OntologicalField status;
-
-	public OntologyConcept(final String termId, final TaggableType type, final Long objId, final OntologicalField status) {
-		this.termId = termId;
-		this.type = type;
-		this.objId = objId;
-		this.status = status;
-	}
+	private OntologicalField status;
 }

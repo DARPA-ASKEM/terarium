@@ -1,32 +1,26 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 
-public class Person {
+@Data
+@Accessors(chain = true)
+public class Person implements Serializable {
 
-	@JsonbProperty("id")
-	public String id;
+	private String id;
 
-	@JsonbProperty("name")
-	public String name;
+	private String name;
 
-	@JsonbProperty("email")
-	public String email;
+	private String email;
 
 	@JsonbProperty("org")
-	public String organization;
+	private String organization;
 
-	@JsonbProperty("website")
-	public String website;
+	private String website;
 
 	@JsonbProperty("is_registered")
-	public Boolean isRegistered;
-
-	public Person(final String name, final String email, final String organization, final String website, final Boolean isRegistered) {
-		this.name = name;
-		this.email = email;
-		this.organization = organization;
-		this.website = website;
-		this.isRegistered = isRegistered;
-	}
+	private Boolean isRegistered;
 }

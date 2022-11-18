@@ -1,25 +1,22 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import javax.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 import java.time.Instant;
 
-public class Software {
+@Data
+@Accessors(chain = true)
+public class Software implements Serializable {
 
-	@JsonbProperty("id")
-	public String id = null;
+	private String id;
 
-	@JsonbProperty("timestamp")
-	public Instant timestamp;
+	private Instant timestamp;
 
-	@JsonbProperty("source")
-	public String source;
+	private String source;
 
 	@JsonbProperty("storage_uri")
-	public String storageUri;
-
-	public Software(final Instant timestamp, final String source, final String storageUri) {
-		this.timestamp = timestamp;
-		this.source = source;
-		this.storageUri = storageUri;
-	}
+	private String storageUri;
 }
