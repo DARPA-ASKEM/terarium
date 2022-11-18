@@ -1,0 +1,39 @@
+// This is the TypeScript configuration file for the `src` folder, which runs in
+//  the browser.
+// `tsconfig.node.json` configures TypeScript for Vite, which runs in Node.
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"composite": true,
+		"jsx": "preserve",
+		"lib": [
+			"ESNext",
+			"DOM"
+		],
+		"module": "ESNext",
+		"target": "ESNext",
+		"outDir": "dist",
+		"paths": {
+			"@/*": [
+				"src/*"
+			],
+			"@graph-scaffolder/*": [
+				"../graph-scaffolder/src/*"
+			]
+		}
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.vue",
+		"tests/**/*.ts"
+	],
+	"exclude": [
+		"node_modules"
+	],
+	"references": [
+		{
+			"path": "../graph-scaffolder"
+		}
+	]
+}
