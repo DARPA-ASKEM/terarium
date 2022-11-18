@@ -75,8 +75,9 @@ export default defineComponent({
 			}
 			if (isXDDArticle(item)) {
 				itemDesc =
-					((item as XDDArticle).abstract && typeof (item as XDDArticle).abstract === 'string'
-						? (item as XDDArticle).abstract
+					((item as XDDArticle).abstractText &&
+					typeof (item as XDDArticle).abstractText === 'string'
+						? (item as XDDArticle).abstractText
 						: false) ||
 					(item as XDDArticle).journal ||
 					(item as XDDArticle).publisher ||

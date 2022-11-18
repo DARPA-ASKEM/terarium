@@ -1,12 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.json.bind.annotation.JsonbProperty;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 /**
  * XDD Document extraction representation
@@ -15,19 +15,19 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class Extraction {
 
 	@JsonbProperty("ASKEM_CLASS")
-	public String ASKEM_CLASS;
+	public String askemClass;
 
 	@JsonbProperty("properties")
   public ExtractionProperties properties;
 
 	@JsonbProperty("askem_id")
-	public String askem_id;
+	public String askemId;
 
 	@JsonbProperty("_xdd_created")
-  public Date _xdd_created;
+  public Date xddCreated;
 
 	@JsonbProperty("_xdd_registrant")
-  public Number _xdd_registrant;
+  public Number xddRegistrant;
 }
 
 class ExtractionProperties {
@@ -42,38 +42,28 @@ class ExtractionProperties {
 
 	@JsonbProperty("_abstract")
 	@JsonAlias("abstract")
-	public String _abstract;
+	public String abstractText;
 
-	@JsonbProperty("XDDID")
 	public String XDDID;
 
-	@JsonbProperty("documentID")
 	public String documentID;
 
-	@JsonbProperty("documentTitle")
 	public String documentTitle;
 
-	@JsonbProperty("contentText")
 	public String contentText;
 
-	@JsonbProperty("indexInDocument")
 	public Number indexInDocument;
 
-	@JsonbProperty("contentJSON")
-	public Hashtable<String, Hashtable<String, String>> contentJSON;
+	public Map<String, Map<String, String>> contentJSON;
 
 	@JsonbProperty("image")
 	public String image;
 
-	@JsonbProperty("relevantSentences")
 	public String relevantSentences;
 
-	@JsonbProperty("sectionID")
 	public String sectionID;
 
-	@JsonbProperty("sectionTitle")
 	public String sectionTitle;
 
-	@JsonbProperty("caption")
 	public String caption;
 };

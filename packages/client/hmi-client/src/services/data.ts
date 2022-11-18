@@ -1,7 +1,7 @@
 import { uniqBy } from 'lodash';
 import { ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import { uncloak } from '@/utils/uncloak';
-import { Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
+import { Model, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
 	XDDArticle,
 	XDDArtifact,
@@ -42,7 +42,7 @@ const getXDDDictionaries = async () => {
 };
 
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const getModels = async (term: string, _modelSearchParam?: ModelSearchParams) => {
+const getModels = async (term: string) => {
 	const finalModels: Model[] = [];
 
 	//
@@ -84,13 +84,21 @@ const getXDDArtifacts = async (doc_doi: string) => {
 	// 	// restrict the type of object to search for
 	// 	url += `&type=${xddSearchParam.type}`;
 	// }
-	// if (xddSearchParam?.ignore_bytes) {
+	// if (xddSearchParam?.ignoreBytes) {
 	// 	// by default ignore including artifact bytes (e.g., figures base64 bytes)
-	// 	url += `&ignore_bytes=${xddSearchParam.ignore_bytes}`;
+	// 	url += `&ignore_bytes=${xddSearchParam.ignoreBytes}`;
 	// }
 
-	const extractionsList: XDDArtifact[] = await uncloak(url);
-	return extractionsList || ([] as XDDArtifact[]);
+	const rawdata: XDDResult = await await uncloak(url);
+
+	if (rawdata.success) {
+		const { data } = rawdata.success;
+		const artifacts = data as XDDArtifact[];
+		// TEMP: the following mapping is needed because the backend is returning raw xdd response
+		return artifacts.map((a) => ({ ...a, askemClass: a.ASKEM_CLASS }));
+	}
+
+	return [] as XDDArtifact[];
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
@@ -140,21 +148,15 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	if (rawdata.success) {
 		// eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
-		const { data, hits, scrollId, next_page } = rawdata.success;
-		const dataArticles = data as XDDArticle[];
-
-		// TEMP: map field name from _abstract to abstract beause of server mapping limitation
-		//       where abstract is a reserved keyword
-		// eslint-disable-next-line no-underscore-dangle
-		const articles = dataArticles.map((a) => ({ ...a, abstract: a._abstract }));
+		const { data, hits, scrollId, nextPage } = rawdata.success;
+		const articles = data as XDDArticle[];
 
 		return {
 			results: articles,
 			searchSubsystem: ResourceType.XDD,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',
-			// eslint-disable-next-line camelcase
-			nextPage: next_page
+			nextPage
 		};
 	}
 
@@ -183,7 +185,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getModels(term, searchParam?.model));
+			resolve(getModels(term));
 		} catch (err: any) {
 			reject(new Error(`Error fetching models results: ${err}`));
 		}

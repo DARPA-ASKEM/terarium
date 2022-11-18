@@ -29,12 +29,12 @@ export const ArticleFilterAttributes = ['title', 'publisher'];
 export type XDDArticle = {
 	// REVIEW: FIXME: server should provide proper field names
 	//         also, reove the temp workaround in the client data service
-	abstract: string; // description
-	_abstract: string; // description
+	abstractText: string; // mapped from abstract
+	abstract: string;
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string;
-	known_terms?: XDDArticleKnownTerms[];
+	knownTerms?: XDDArticleKnownTerms[];
 	link: XDDArticleLink[];
 	number: string;
 	pages: string;
@@ -43,14 +43,15 @@ export type XDDArticle = {
 	type: string;
 	volume: string;
 	year: string;
-	gddid: string;
+	gddid: string; // mapped from _gddid
+	_gddid: string;
 };
 
 export type XDDArtifactProperties = {
 	title: string;
 	DOI: string;
 	trustScore: string;
-	abstract: string; // FIXME _abstract
+	abstractText: string;
 	XDDID: string;
 	documentID: string;
 	documentTitle: string;
@@ -66,11 +67,12 @@ export type XDDArtifactProperties = {
 
 // XDD extraction object, which should match Extraction.java at the backend
 export type XDDArtifact = {
-	ASKEM_CLASS: string;
+	ASKEM_CLASS: string; // mapped from askemClass
+	askemClass: string;
 	properties: XDDArtifactProperties;
-	askem_id: string;
-	_xdd_created: Date;
-	_xdd_registrant: number;
+	askemId: string;
+	xddCreated: Date;
+	xddRegistrant: number;
 };
 
 export type XDDDictionary = {
@@ -82,11 +84,11 @@ export type XDDDictionary = {
 
 export type XDDResult = {
 	success?: {
-		data: XDDArticle[] | XDDDictionary[];
+		data: XDDArticle[] | XDDDictionary[] | XDDArtifact[];
 		// URL to fetch next page results
 		// https://xdd.wisc.edu/api/articles?&include_score=true&per_page=100&term=abbott&publisher=USGS&full_results
 		// "https://xdd.wisc.edu/api/articles?scroll_id=a5e403ac-76b9-4400-94bb-59c9e3e030d6"
-		next_page?: string;
+		nextPage?: string;
 		scrollId?: string;
 		hits?: number;
 	};
@@ -101,7 +103,7 @@ export type XDDSearchParams = {
 	enablePagination?: boolean;
 	pageSize?: number;
 	type?: XDDExtractionType;
-	ignore_bytes?: boolean;
+	ignoreBytes?: boolean;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;

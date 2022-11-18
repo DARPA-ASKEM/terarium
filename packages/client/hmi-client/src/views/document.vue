@@ -24,13 +24,13 @@
 						</li>
 					</ul>
 				</div>
-				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askem_id">
+				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askemId">
 					<template
 						v-if="
 							ex.properties.image &&
-							(ex.ASKEM_CLASS === XDDExtractionType.Figure ||
-								ex.ASKEM_CLASS === XDDExtractionType.Table ||
-								ex.ASKEM_CLASS === XDDExtractionType.Equation)
+							(ex.askemClass === XDDExtractionType.Figure ||
+								ex.askemClass === XDDExtractionType.Table ||
+								ex.askemClass === XDDExtractionType.Equation)
 						"
 					>
 						<!-- render figure -->
@@ -46,7 +46,7 @@
 						<!-- render textual content -->
 						<b>{{ ex.properties.title }}</b>
 						{{ ex.properties.caption }}
-						{{ ex.properties.abstract }}
+						{{ ex.properties.abstractText }}
 						{{ ex.properties.contentText }}
 					</template>
 				</div>
@@ -78,7 +78,8 @@ const doc = computed(() => resourcesStore.documents[props.id] || null);
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
 const formatDescription = (d: XDDArticle) =>
-	(d.abstract && typeof d.abstract === 'string' ? d.abstract : false) || '[no abstract]';
+	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
+	'[no abstract]';
 
 const doi = computed(() => {
 	let docIdentifier = '';
@@ -95,13 +96,13 @@ const extractionType = ref('');
 
 const artifacts = ref<XDDArtifact[]>([]);
 
-const groupedExtractions = computed(() => groupBy(artifacts.value, 'ASKEM_CLASS'));
+const groupedExtractions = computed(() => groupBy(artifacts.value, 'askemClass'));
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 watch(artifacts, (currentValue, oldValue) => {
 	if (artifacts.value.length > 0) {
-		extractionType.value = artifacts.value[0].ASKEM_CLASS;
+		extractionType.value = artifacts.value[0].askemClass;
 	}
 });
 

@@ -1,17 +1,16 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
+import java.util.List;
+
 import javax.json.bind.annotation.JsonbProperty;
 
 public class XDDArticlesResponseOK extends XDDResponseOK {
-	@JsonbProperty("data")
-	public Document[] data;
+	public List<Document> data;
 
 	@JsonbProperty("next_page")
-	public String next_page;
+	public String nextPage;
 
-	@JsonbProperty("scrollId")
 	public String scrollId;
 
-	@JsonbProperty("hits")
 	public Number hits;
 };

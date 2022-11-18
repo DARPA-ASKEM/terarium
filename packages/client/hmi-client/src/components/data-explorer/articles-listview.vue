@@ -146,15 +146,15 @@ export default defineComponent({
 			this.$emit('toggle-article-selected', article);
 		},
 		formatDescription(d: XDDArticle) {
-			if (!d.abstract || typeof d.abstract !== 'string') return '';
-			return this.isExpanded(d) || d.abstract.length < 140
-				? d.abstract
-				: `${d.abstract.substring(0, 140)}...`;
+			if (!d.abstractText || typeof d.abstractText !== 'string') return '';
+			return this.isExpanded(d) || d.abstractText.length < 140
+				? d.abstractText
+				: `${d.abstractText.substring(0, 140)}...`;
 		},
 		formatKnownTerms(d: XDDArticle) {
 			let knownTerms = '';
-			if (d.known_terms) {
-				d.known_terms.forEach((term) => {
+			if (d.knownTerms) {
+				d.knownTerms.forEach((term) => {
 					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
 					knownTerms += '<br />';
 					knownTerms += Object.values(term).flat().join(' ');

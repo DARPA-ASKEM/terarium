@@ -103,7 +103,7 @@ export default defineComponent({
 								// eslint-disable-next-line no-underscore-dangle
 								id: article.gddid,
 								name: article.title,
-								desc: article.journal ?? article.abstract ?? '', // FIXME: XDD should always return valid abstract
+								desc: article.journal ?? article.abstractText ?? '', // FIXME: XDD should always return valid abstract
 								source: article.publisher ?? article.author.map((a) => a.name).join('\n'),
 								type: ResourceType.XDD
 							});

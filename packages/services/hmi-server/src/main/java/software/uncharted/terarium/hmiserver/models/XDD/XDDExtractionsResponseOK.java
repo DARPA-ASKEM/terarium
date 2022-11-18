@@ -1,14 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-import javax.json.bind.annotation.JsonbProperty;
+import java.util.List;
 
 public class XDDExtractionsResponseOK extends XDDResponseOK {
-	@JsonbProperty("data")
-	public Extraction[] data;
+	public List<Extraction> data;
 
-	@JsonbProperty("total")
 	public Number total;
 
-	@JsonbProperty("page")
 	public Number page;
 };

@@ -5,16 +5,15 @@ import software.uncharted.terarium.hmiserver.models.Model;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
+import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/models")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ModelProxy {
 
-	// FIXME: why using a proper type does not work with the rest client proxy?
 	@GET
-	Object getModels(); // List<Model>
+	Response getModels();
 
 	@GET
 	@Path("/{id}")

@@ -136,8 +136,8 @@ export default defineComponent({
 					articlesToCluster = this.filteredArticles.map((ar) => ({
 						...ar,
 						[clusterVariable]:
-							ar.known_terms && ar.known_terms.length > 0
-								? ar.known_terms[dicNamesIndex][clusterVariable]
+							ar.knownTerms && ar.knownTerms.length > 0
+								? ar.knownTerms[dicNamesIndex][clusterVariable]
 								: []
 					}));
 
@@ -149,10 +149,10 @@ export default defineComponent({
 						//  since the cluster field (or key), e.g., known_terms, is an array
 						// and also because each cluster may include items included in other clusters
 						clusteredArticles = articlesToCluster.reduce((carry, element) => {
-							if (element.known_terms !== undefined) {
-								if (element.known_terms.length > 0) {
+							if (element.knownTerms !== undefined) {
+								if (element.knownTerms.length > 0) {
 									// check current known terms and add them to the relevant cluster
-									element.known_terms[dicNamesIndex][clusterVariable].forEach((tag) => {
+									element.knownTerms[dicNamesIndex][clusterVariable].forEach((tag) => {
 										carry[tag] = carry[tag] || [];
 										carry[tag].push({ ...element });
 									});
