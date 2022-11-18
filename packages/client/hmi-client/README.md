@@ -17,7 +17,7 @@ You can import and use the singleton [axios](https://axios-http.com/) instance t
 import API from '@/api/api';
 
 // ... in an async function:
-const response = await API.get(`models`);
+const response = await API.get('models');
 ```
 
 This will be routed through the gateway layer to avoid CORS issues.
