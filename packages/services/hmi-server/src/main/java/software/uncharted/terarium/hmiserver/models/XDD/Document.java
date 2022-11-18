@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 public class Document {
 
 	@JsonbProperty("_gddid")
-	public String _gddid;
+	public String gddid;
 
 	@JsonbProperty("title")
   public String title;

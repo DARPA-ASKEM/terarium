@@ -43,7 +43,7 @@ export type XDDArticle = {
 	type: string;
 	volume: string;
 	year: string;
-	_gddid: string;
+	gddid: string;
 };
 
 export type XDDArtifactProperties = {

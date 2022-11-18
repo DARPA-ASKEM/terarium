@@ -6,9 +6,9 @@
 			<div class="document-list-container">
 				<div
 					v-for="doc in documents"
-					:key="doc._gddid"
+					:key="doc.gddid"
 					class="doc-link"
-					:class="{ active: doc._gddid === docID }"
+					:class="{ active: doc.gddid === docID }"
 					@click="openDocumentPage(doc)"
 				>
 					<span>{{ formatTitle(doc) }}</span>

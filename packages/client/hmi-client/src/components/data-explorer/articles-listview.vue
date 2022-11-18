@@ -14,7 +14,7 @@
 				<tbody>
 					<tr
 						v-for="d in articles"
-						:key="d._gddid"
+						:key="d.gddid"
 						class="tr-item"
 						:class="{ selected: isSelected(d) }"
 						@click="updateExpandedRow(d)"
