@@ -508,8 +508,8 @@ export default {
 							// for cell identification
 							const cellData = {
 								...cell,
-								_row: indexRow,
-								_col: indexCol,
+								row: indexRow,
+								col: indexCol,
 								_idx: this.dataCellList.length
 							};
 
