@@ -1,6 +1,9 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
+import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,7 +23,9 @@ public interface DatasetProxy {
 	@POST
 	@Path("/features")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createFeatures();
+	Response createFeatures(
+		Feature feature
+	);
 
 	@GET
 	@Path("/features/{id}")
@@ -33,9 +38,12 @@ public interface DatasetProxy {
 	Response deleteFeature();
 
 	@PATCH
-	@Path("/features")
+	@Path("/features/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response updateFeature();
+	Response updateFeature(
+		@PathParam("id") String id,
+		Feature feature
+	);
 
 	@GET
 	@Path("/qualifiers")
@@ -47,7 +55,9 @@ public interface DatasetProxy {
 	@POST
 	@Path("/qualifiers")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createQualifiers();
+	Response createQualifiers(
+		Qualifier qualifier
+	);
 
 	@GET
 	@Path("/qualifiers/{id}")
@@ -65,7 +75,8 @@ public interface DatasetProxy {
 	@Path("/qualifiers/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateQualifier(
-		@PathParam("id") String id
+		@PathParam("id") String id,
+		Qualifier qualifier
 	);
 
 	@GET
@@ -76,7 +87,9 @@ public interface DatasetProxy {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createDatasets();
+	Response createDatasets(
+		Dataset dataset
+	);
 
 	@GET
 	@Path("/{id}")
@@ -94,14 +107,16 @@ public interface DatasetProxy {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateDataset(
-		@PathParam("id") String id
+		@PathParam("id") String id,
+		Dataset dataset
 	);
 
 	@POST
 	@Path("/deprecate/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response deprecateDataset(
-		@PathParam("id") String id
+		@PathParam("id") String id,
+		Dataset dataset
 	);
 
 	@GET

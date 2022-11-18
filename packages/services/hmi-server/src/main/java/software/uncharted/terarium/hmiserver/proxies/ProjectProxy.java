@@ -30,7 +30,7 @@ public interface ProjectProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createProject(
-		Project newProject
+		Project project
 	);
 
 	@PUT
@@ -38,7 +38,7 @@ public interface ProjectProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateProject(
 		@PathParam("id") String id,
-		Project updatedProject
+		Project project
 	);
 
 	@DELETE

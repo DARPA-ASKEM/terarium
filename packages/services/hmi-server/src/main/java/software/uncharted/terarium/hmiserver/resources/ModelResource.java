@@ -20,32 +20,32 @@ public class ModelResource {
 
 	@Inject
 	@RestClient
-	ModelProxy modelProxy;
+	ModelProxy proxy;
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all models")
 	public Response getModels() {
-		return modelProxy.getModels();
+		return proxy.getModels();
 	}
 
 	@GET
 	@Path("/{id}")
 	public Response getModel(@PathParam("id") final String id) {
-		return modelProxy.getModel(id);
+		return proxy.getModel(id);
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModel(final Model newModel) {
-		return modelProxy.createModel(newModel);
+		return proxy.createModel(newModel);
 	}
 
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateModel(@PathParam("id") final String id, final Model updatedModel) {
-		return modelProxy.updateModel(id, updatedModel);
+		return proxy.updateModel(id, updatedModel);
 	}
 
 	@GET
@@ -53,7 +53,7 @@ public class ModelResource {
 	public Response getIntermediate(
 		@PathParam("id") final String id
 	) {
-		return modelProxy.getIntermediate(id);
+		return proxy.getIntermediate(id);
 	}
 
 	@POST
@@ -62,7 +62,7 @@ public class ModelResource {
 	public Response createIntermediate(
 		final Model model
 	) {
-		return modelProxy.createIntermediate(model);
+		return proxy.createIntermediate(model);
 	}
 
 	@DELETE
@@ -70,7 +70,7 @@ public class ModelResource {
 	public Response deleteIntermediate(
 		@PathParam("id") final String id
 	) {
-		return modelProxy.deleteIntermediate(id);
+		return proxy.deleteIntermediate(id);
 	}
 
 	@GET
@@ -78,7 +78,7 @@ public class ModelResource {
 	public Response getFramework(
 		@PathParam("id") final String id
 	) {
-		return modelProxy.getFramework(id);
+		return proxy.getFramework(id);
 	}
 
 	@POST
@@ -87,7 +87,7 @@ public class ModelResource {
 	public Response createFramework(
 		final Model model
 	) {
-		return modelProxy.createFramework(model);
+		return proxy.createFramework(model);
 	}
 
 	@DELETE
@@ -95,6 +95,6 @@ public class ModelResource {
 	public Response deleteFramework(
 		@PathParam("id") final String id
 	) {
-		return modelProxy.deleteFramework(id);
+		return proxy.deleteFramework(id);
 	}
 }

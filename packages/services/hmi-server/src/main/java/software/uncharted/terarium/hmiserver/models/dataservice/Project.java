@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import javax.json.bind.annotation.JsonbProperty;
-import java.util.HashMap;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +17,23 @@ public class Project {
 	@JsonbProperty("description")
 	public String description;
 
-	@JsonbProperty("assets")
-	public Map<String, List<Long>> assets = new HashMap<>();
+	@JsonbProperty("timestamp")
+	public Instant timestamp = Instant.now();
 
 	@JsonbProperty("status")
 	public String status;
 
-	public Project(final String name, final String description) {
+	@JsonbProperty("concept")
+	public Concept concept;
+
+	@JsonbProperty("assets")
+	public Map<String, List<Long>> assets;
+
+	public Project(final String name, final String description, final String status, final Concept concept, final Map<String, List<Long>> assets) {
 		this.name = name;
 		this.description = description;
+		this.status = status;
+		this.concept = concept;
+		this.assets = assets;
 	}
 }

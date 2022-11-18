@@ -3,9 +3,9 @@ package software.uncharted.terarium.hmiserver.resources;
 import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.simulation.SimulationPlan;
-import software.uncharted.terarium.hmiserver.proxies.SimulationPlanProxy;
-import software.uncharted.terarium.hmiserver.proxies.SimulationResultProxy;
+import software.uncharted.terarium.hmiserver.models.dataservice.SimulationPlan;
+import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRun;
+import software.uncharted.terarium.hmiserver.proxies.SimulationProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -20,39 +20,35 @@ public class SimulationResource {
 
 	@Inject
 	@RestClient
-	SimulationPlanProxy planProxy;
-
-	@Inject
-	@RestClient
-	SimulationResultProxy resultsProxy;
+	SimulationProxy proxy;
 
 	@GET
 	@Path("/plans")
 	public Response getSimulationPlans() {
-		return planProxy.getSimulationPlans();
+		return proxy.getSimulationPlans();
 	}
 
 	@GET
 	@Path("/plans/{id}")
 	public Response getSimulationPlan(
-		@QueryParam("id") final String id
+		@PathParam("id") final String id
 	) {
-		return planProxy.getSimulationPlan(id);
+		return proxy.getSimulationPlan(id);
 	}
 
 	@POST
 	@Path("/plans")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createSimulationPlan(
-		final SimulationPlan newPlan
+		final SimulationPlan plan
 	) {
-		return planProxy.createSimulationPlan(newPlan);
+		return proxy.createSimulationPlan(plan);
 	}
 
 	@GET
 	@Path("/results")
 	public Response getSimulationResults() {
-		return resultsProxy.getSimulationResults();
+		return proxy.getSimulationResults();
 	}
 
 	@GET
@@ -60,7 +56,16 @@ public class SimulationResource {
 	public Response getSimulationResult(
 		@PathParam("id") final String id
 	) {
-		return resultsProxy.getSimulationResult(id);
+		return proxy.getSimulationResult(id);
+	}
+
+	@POST
+	@Path("/results")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response createSimulationResult(
+		final SimulationRun run
+	) {
+		return proxy.createSimulationResult(run);
 	}
 
 	@DELETE
@@ -68,6 +73,6 @@ public class SimulationResource {
 	public Response deleteSimulationResult(
 		@PathParam("id") final String id
 	) {
-		return resultsProxy.deleteSimulationResult(id);
+		return proxy.deleteSimulationResult(id);
 	}
 }

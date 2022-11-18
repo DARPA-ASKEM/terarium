@@ -3,6 +3,9 @@ package software.uncharted.terarium.hmiserver.resources;
 import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
+import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.proxies.DatasetProxy;
 
 import javax.inject.Inject;
@@ -13,7 +16,7 @@ import javax.ws.rs.core.Response;
 @Path("/api/datasets")
 @Authenticated
 @Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "Project REST Endpoints")
+@Tag(name = "Dataset REST Endpoints")
 public class DatasetResource {
 
 	@Inject
@@ -22,15 +25,20 @@ public class DatasetResource {
 
 	@GET
 	@Path("/features")
-	public Response getFeatures() {
-		return proxy.getFeatures();
+	public Response getFeatures(
+		@QueryParam("page_size") final Integer pageSize,
+		@QueryParam("page") final Integer page
+	) {
+		return proxy.getFeatures(pageSize, page);
 	}
 
 	@POST
 	@Path("/features")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createFeatures() {
-		return proxy.createFeatures();
+	public Response createFeatures(
+		final Feature feature
+	) {
+		return proxy.createFeatures(feature);
 	}
 
 	@GET
@@ -48,23 +56,31 @@ public class DatasetResource {
 	}
 
 	@PATCH
-	@Path("/features")
+	@Path("/features/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateFeature() {
-		return proxy.updateFeature();
+	public Response updateFeature(
+		@PathParam("id") final String id,
+		final Feature feature
+	) {
+		return proxy.updateFeature(id, feature);
 	}
 
 	@GET
 	@Path("/qualifiers")
-	public Response getQualifiers() {
-		return proxy.getQualifiers();
+	public Response getQualifiers(
+		@QueryParam("page_size") final Integer pageSize,
+		@QueryParam("page") final Integer page
+	) {
+		return proxy.getQualifiers(pageSize, page);
 	}
 
 	@POST
 	@Path("/qualifiers")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createQualifiers() {
-		return proxy.createQualifiers();
+	public Response createQualifiers(
+		final Qualifier qualifier
+	) {
+		return proxy.createQualifiers(qualifier);
 	}
 
 	@GET
@@ -87,20 +103,26 @@ public class DatasetResource {
 	@Path("/qualifiers/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateQualifier(
-		@PathParam("id") final String id
+		@PathParam("id") final String id,
+		final Qualifier qualifier
 	) {
-		return proxy.updateQualifier(id);
+		return proxy.updateQualifier(id, qualifier);
 	}
 
 	@GET
-	public Response getDatasets() {
-		return proxy.getDatasets();
+	public Response getDatasets(
+		@QueryParam("page_size") final Integer pageSize,
+		@QueryParam("page") final Integer page
+	) {
+		return proxy.getDatasets(pageSize, page);
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createDatasets() {
-		return proxy.createDatasets();
+	public Response createDatasets(
+		final Dataset dataset
+	) {
+		return proxy.createDatasets(dataset);
 	}
 
 	@GET
@@ -123,18 +145,20 @@ public class DatasetResource {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateDataset(
-		@PathParam("id") final String id
+		@PathParam("id") final String id,
+		final Dataset dataset
 	) {
-		return proxy.updateDataset(id);
+		return proxy.updateDataset(id, dataset);
 	}
 
 	@POST
 	@Path("/deprecate/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response deprecateDataset(
-		@PathParam("id") final String id
+		@PathParam("id") final String id,
+		final Dataset dataset
 	) {
-		return proxy.deprecateDataset(id);
+		return proxy.deprecateDataset(id, dataset);
 	}
 
 	@GET

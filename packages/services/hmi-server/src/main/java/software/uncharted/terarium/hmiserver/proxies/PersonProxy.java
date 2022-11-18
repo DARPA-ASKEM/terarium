@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Association;
+import software.uncharted.terarium.hmiserver.models.dataservice.Person;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -26,13 +28,16 @@ public interface PersonProxy {
 	@Path("/associations/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateAssociation(
-		@PathParam("id") String id
+		@PathParam("id") String id,
+		Association association
 	);
 
 	@POST
 	@Path("/associations")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createAssociation();
+	Response createAssociation(
+		Association association
+	);
 
 	@GET
 	Response getPersons(
@@ -42,7 +47,9 @@ public interface PersonProxy {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createPerson();
+	Response createPerson(
+		Person person
+	);
 
 	@GET
 	@Path("/{id}")
@@ -60,6 +67,7 @@ public interface PersonProxy {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updatePerson(
-		@PathParam("id") String id
+		@PathParam("id") String id,
+		Person person
 	);
 }

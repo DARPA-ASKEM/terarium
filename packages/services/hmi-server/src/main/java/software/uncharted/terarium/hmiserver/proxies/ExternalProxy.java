@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
+import software.uncharted.terarium.hmiserver.models.dataservice.Software;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -26,7 +28,9 @@ public interface ExternalProxy {
 	@POST
 	@Path("/software")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createSoftware();
+	Response createSoftware(
+		Software software
+	);
 
 	@GET
 	@Path("/publications/{id}")
@@ -43,5 +47,7 @@ public interface ExternalProxy {
 	@POST
 	@Path("/publications")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createPublication();
+	Response createPublication(
+		Publication publication
+	);
 }

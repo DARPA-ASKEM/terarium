@@ -7,10 +7,10 @@ import java.time.Instant;
 public class SimulationRun {
 
 	@JsonbProperty("id")
-	public Long id = null;
+	public String id = null;
 
 	@JsonbProperty("simulator_id")
-	public Long modelId;
+	public String simulatorId;
 
 	@JsonbProperty("timestamp")
 	public Instant startTimestamp;
@@ -23,4 +23,12 @@ public class SimulationRun {
 
 	@JsonbProperty("response")
 	public String response;
+
+	public SimulationRun(final String simulatorId, final Instant startTimestamp, final Instant endTimestamp, final Boolean success, final String response) {
+		this.simulatorId = simulatorId;
+		this.startTimestamp = startTimestamp;
+		this.endTimestamp = endTimestamp;
+		this.success = success;
+		this.response = response;
+	}
 }
