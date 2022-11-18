@@ -29,6 +29,11 @@ button {
 
 /* Types */
 
+button[round] {
+	border-radius: 100%;
+	padding: 0.5rem;
+}
+
 button[clear] {
 	--btn-background: none;
 	--btn-border: none;
