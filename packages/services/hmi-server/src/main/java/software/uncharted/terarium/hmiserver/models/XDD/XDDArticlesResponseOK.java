@@ -4,13 +4,20 @@ import java.util.List;
 
 import javax.json.bind.annotation.JsonbProperty;
 
-public class XDDArticlesResponseOK extends XDDResponseOK {
-	public List<Document> data;
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+
+@Data
+@Accessors(chain = true)
+public class XDDArticlesResponseOK extends XDDResponseOK implements Serializable {
+	private List<Document> data;
 
 	@JsonbProperty("next_page")
-	public String nextPage;
+	private String nextPage;
 
-	public String scrollId;
+	private String scrollId;
 
-	public Number hits;
+	private Number hits;
 };

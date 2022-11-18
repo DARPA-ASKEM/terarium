@@ -1,7 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-public class XDDResponseOK {
-	public Number v;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
-	public String license;
+import java.io.Serializable;
+
+@Data
+@Accessors(chain = true)
+public class XDDResponseOK implements Serializable {
+	private Number v;
+
+	private String license;
 };

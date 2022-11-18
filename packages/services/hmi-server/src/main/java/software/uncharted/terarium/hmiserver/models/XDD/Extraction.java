@@ -8,62 +8,67 @@ import javax.json.bind.annotation.JsonbProperty;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+
 /**
  * XDD Document extraction representation
  */
+@Data
+@Accessors(chain = true)
 @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
-public class Extraction {
+public class Extraction implements Serializable {
 
 	@JsonbProperty("ASKEM_CLASS")
-	public String askemClass;
+	private String askemClass;
 
 	@JsonbProperty("properties")
-  public ExtractionProperties properties;
+  private ExtractionProperties properties;
 
 	@JsonbProperty("askem_id")
-	public String askemId;
+	private String askemId;
 
 	@JsonbProperty("_xdd_created")
-  public Date xddCreated;
+  private Date xddCreated;
 
 	@JsonbProperty("_xdd_registrant")
-  public Number xddRegistrant;
+  private Number xddRegistrant;
 }
 
-class ExtractionProperties {
-	@JsonbProperty("title")
-	public String title;
+@Data
+@Accessors(chain = true)
+class ExtractionProperties implements Serializable {
+	private String title;
 
-	@JsonbProperty("DOI")
-	public String DOI;
+	private String DOI;
 
-	@JsonbProperty("trustScore")
-	public String trustScore;
+	private String trustScore;
 
 	@JsonbProperty("_abstract")
 	@JsonAlias("abstract")
-	public String abstractText;
+	private String abstractText;
 
-	public String XDDID;
+	private String XDDID;
 
-	public String documentID;
+	private String documentID;
 
-	public String documentTitle;
+	private String documentTitle;
 
-	public String contentText;
+	private String contentText;
 
-	public Number indexInDocument;
+	private Number indexInDocument;
 
-	public Map<String, Map<String, String>> contentJSON;
+	private Map<String, Map<String, String>> contentJSON;
 
-	@JsonbProperty("image")
-	public String image;
+	private String image;
 
-	public String relevantSentences;
+	private String relevantSentences;
 
-	public String sectionID;
+	private String sectionID;
 
-	public String sectionTitle;
+	private String sectionTitle;
 
-	public String caption;
+	private String caption;
 };

@@ -6,41 +6,48 @@ import java.util.Map;
 import javax.json.bind.annotation.JsonbProperty;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+
 /**
  * XDD Document representation
  */
-public class Document {
+@Data
+@Accessors(chain = true)
+public class Document implements Serializable {
 
 	@JsonbProperty("_gddid")
-	public String gddid;
+	private String gddid;
 
-  public String title;
+  private String title;
 
 	@JsonbProperty("_abstract")
 	@JsonAlias("abstract")
-	public String abstractText;
+	private String abstractText;
 
-  public String journal;
+  private String journal;
 
-  public String type;
+  private String type;
 
-  public String number;
+  private String number;
 
-  public String pages;
+  private String pages;
 
-  public String publisher;
+  private String publisher;
 
-  public String volume;
+  private String volume;
 
-  public String year;
+  private String year;
 
-  public List<Map<String, String>> link;
+  private List<Map<String, String>> link;
 
-  public List<Map<String, String>> author;
+  private List<Map<String, String>> author;
 
-  public List<Map<String, String>> identifier;
+  private List<Map<String, String>> identifier;
 
 	@JsonbProperty("known_terms")
-  public Map<String, List<String>> knownTerms;
+  private Map<String, List<String>> knownTerms;
 
 }

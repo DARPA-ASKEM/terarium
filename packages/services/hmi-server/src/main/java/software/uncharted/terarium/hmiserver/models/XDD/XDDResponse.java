@@ -1,11 +1,20 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-class XDDResponseError {
-	public String message;
+import lombok.Data;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+
+@Data
+@Accessors(chain = true)
+class XDDResponseError implements Serializable {
+	private String message;
 };
 
-public class XDDResponse<T> {
-  public T success;
+@Data
+@Accessors(chain = true)
+public class XDDResponse<T> implements Serializable {
+  private T success;
 
-  public XDDResponseError error;
+  private XDDResponseError error;
 };
