@@ -27,8 +27,8 @@
 		"graph-scaffolder": "*",
 		"lodash": "4.17.21",
 		"pinia": "2.0.23",
-		"pixi.js": "7.0.4",
 		"pixi-viewport": "4.37.0",
+		"pixi.js": "7.0.4",
 		"sass": "^1.56.1",
 		"vue": "3.2.41",
 		"vue-router": "4.1.6"

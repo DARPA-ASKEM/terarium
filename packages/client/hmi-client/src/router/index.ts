@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '@/views/Home.vue';
-import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
+import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
@@ -22,7 +22,7 @@ export enum RoutePath {
 
 const routes = [
 	{ path: RoutePath.Home, component: HomeView },
-	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
+	{ path: RoutePath.Results, component: ResponsivePlayground },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.Theia, component: TheiaView },
