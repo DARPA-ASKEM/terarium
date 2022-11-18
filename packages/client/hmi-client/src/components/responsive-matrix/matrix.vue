@@ -1,7 +1,7 @@
 <template>
 	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix">
-			<!-- <component
+			<component
 				v-for="(selectedCell, idx) in selectedCellList"
 				:key="idx"
 				:is="getSelectedDrilldownType(selectedCell)"
@@ -18,7 +18,7 @@
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
 				@click="selectedCellClick(idx)"
-			/> -->
+			/>
 		</div>
 	</main>
 </template>
@@ -59,8 +59,8 @@ import {
 } from '@/types/ResponsiveMatrix';
 import { uint32ArrayToRedIntTex } from './pixi-utils';
 
-// import ResponsiveCellBarContainer from './cell-bar-container.vue';
-// import ResponsiveCellLineContainer from './cell-line-container.vue';
+import ResponsiveCellBarContainer from './cell-bar-container.vue';
+import ResponsiveCellLineContainer from './cell-line-container.vue';
 
 import matrixVS from './matrix.vs.glsl';
 import matrixFS from './matrix.fs.glsl';
@@ -75,8 +75,8 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	components: {
-		// ResponsiveCellBarContainer,
-		// ResponsiveCellLineContainer
+		ResponsiveCellBarContainer,
+		ResponsiveCellLineContainer
 	},
 
 	// ---------------------------------------------------------------------------- //
