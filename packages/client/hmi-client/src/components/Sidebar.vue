@@ -53,7 +53,6 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 	if (view === View.SimulationPlan) {
 		router.push({ name: 'simulation' });
 	} else if (view === View.Models) {
-		console.log('hihi');
 		router.push({ name: 'model' });
 	}
 }
