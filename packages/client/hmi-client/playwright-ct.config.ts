@@ -1,5 +1,6 @@
 import { devices, type PlaywrightTestConfig } from '@playwright/experimental-ct-vue';
-import { defineConfig as viteConfig } from './vite.config.ts';
+import vue from '@vitejs/plugin-vue';
+import { resolve } from 'path';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -29,7 +30,18 @@ const config: PlaywrightTestConfig = {
 		ctPort: 3100,
 
 		/* Vite specific config */
-		ctViteConfig: { ...viteConfig }
+		ctViteConfig: {
+			// @ts-ignore
+			plugins: [vue()],
+			resolve: {
+				alias: {
+					'@': resolve(__dirname, './src'),
+					'@assets': resolve(__dirname, './src/assets'),
+					'@node_modules': resolve(__dirname, '../../../node_modules'),
+					'@graph-scaffolder': resolve(__dirname, '../graph-scaffolder/src')
+				}
+			}
+		}
 	},
 
 	/* Folder for test artifacts such as screenshots, videos, traces, etc. */
