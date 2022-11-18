@@ -1,7 +1,4 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { devices, type PlaywrightTestConfig } from '@playwright/experimental-ct-vue';
-
-// eslint-disable-next-line import/extensions
 import { defineConfig as viteConfig } from './vite.config.ts';
 
 /**
