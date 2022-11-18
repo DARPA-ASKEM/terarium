@@ -9,7 +9,7 @@ import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
+import IconFlow32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
@@ -74,7 +74,7 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 					:active="selectedView === View.ProvenanceGraph"
 					@click="openView(View.ProvenanceGraph, false)"
 				>
-					<IconProvenanceGraph32 />
+					<IconFlow32 />
 				</li>
 				<li :active="selectedView === View.Profile" @click="openView(View.Profile)">
 					<IconUser32 />

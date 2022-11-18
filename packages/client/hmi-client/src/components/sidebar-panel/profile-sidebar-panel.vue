@@ -17,8 +17,5 @@ import useAuthStore from '@/stores/auth';
 
 const auth = useAuthStore();
 
-const logout = () => {
-	auth.logout();
-	window.location.assign('/logout');
-};
+const logout = () => auth.logout();
 </script>
