@@ -3,6 +3,12 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import * as path from 'path';
 
+/**
+ * Vite Configuration
+ *
+ * Please update any changes in `playwright-ct.config.ts` under `config.use.ctViteConfig`.
+ */
+
 // See: https://vitejs.dev/config/
 // See: https://vitejs.dev/config/server-options.html#server-proxy
 export default defineConfig({

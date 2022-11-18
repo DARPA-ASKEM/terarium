@@ -1,15 +1,15 @@
 <script setup lang="ts">
 /**
- * Sidebar component for navigating modes
+ * Sidebar component for navigating view.
  * */
 import { ref } from 'vue';
-import IconOpenPanelRight16 from '@carbon/icons-vue/es/open-panel--filled--right/16';
-import IconSidePanelClose16 from '@carbon/icons-vue/es/side-panel--close/16';
+import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
+import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
 import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
+import IconFlow32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
@@ -20,12 +20,12 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 // Manage Side Panel
-const isSidePanelOpen = ref(false);
+const isSidePanelClose = ref(false);
 function closeSidePanel() {
-	isSidePanelOpen.value = false;
+	isSidePanelClose.value = true;
 }
 function openSidePanel() {
-	isSidePanelOpen.value = true;
+	isSidePanelClose.value = false;
 }
 
 const enum View {
@@ -46,9 +46,9 @@ const selectedView = ref('');
  */
 function openView(view: string, openViewSidePanel: boolean = true): void {
 	selectedView.value = view;
-	if (isSidePanelOpen.value) {
-		if (!openViewSidePanel) closeSidePanel();
-	} else if (openViewSidePanel) openSidePanel();
+	if (isSidePanelClose.value) {
+		if (openViewSidePanel) openSidePanel();
+	} else if (!openViewSidePanel) closeSidePanel();
 
 	if (view === View.SimulationPlan) {
 		router.push({ name: 'simulation' });
@@ -83,39 +83,55 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 					:active="selectedView === View.ProvenanceGraph"
 					@click="openView(View.ProvenanceGraph, false)"
 				>
-					<IconProvenanceGraph32 />
+					<IconFlow32 />
 				</li>
 				<li :active="selectedView === View.Profile" @click="openView(View.Profile)">
 					<IconUser32 />
 				</li>
 			</ul>
+			<Button round class="side-panel-control" v-if="isSidePanelClose" @click="openSidePanel">
+				<IconArrowRight16 />
+			</Button>
 		</nav>
-		<aside v-if="isSidePanelOpen">
-			<header>
-				{{ selectedView }}
-				<Button @click="closeSidePanel"><IconSidePanelClose16 /></Button>
-				<Button danger @click="openSidePanel"><IconOpenPanelRight16 /></Button>
-			</header>
+		<aside :class="{ 'side-panel-close': isSidePanelClose }">
+			<header>{{ selectedView }}</header>
 			<main>
 				<ModelSidebarPanel v-if="selectedView === View.Models" />
 				<DocumentsSidebarPanel v-else-if="selectedView === View.Documents" />
 				<ProfileSidebarPanel v-else-if="selectedView === View.Profile" />
 				<template v-else> Create a sidebar-panel component </template>
 			</main>
+			<Button round class="side-panel-control" @click="closeSidePanel">
+				<IconArrowLeft16 />
+			</Button>
 		</aside>
 	</section>
 </template>
 
 <style scoped>
 section {
-	background-color: var(--un-color-accent);
-	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	height: 100%;
 	isolation: isolate;
 }
 
+section nav,
+section aside {
+	position: relative;
+}
+
+section .side-panel-control {
+	--btn-background: var(--un-color-accent-mono);
+	--btn-box-shadow: none;
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateX(50%);
+}
+
 nav {
+	background-color: var(--un-color-accent);
+	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - var(--header-height));
@@ -144,7 +160,7 @@ nav ul li {
 	width: 3rem;
 }
 
-nav svg {
+nav li svg {
 	fill: var(--un-color-accent-light);
 }
 
@@ -162,28 +178,31 @@ nav li:hover svg {
 
 aside {
 	background-color: var(--un-color-body-surface-primary);
+	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 	padding: 1rem;
+	position: relative;
+	transition-property: padding, width;
+	transition-duration: 0s;
 	width: max(15rem, 20vw);
 	z-index: 1;
+}
+
+aside.side-panel-close {
+	padding: 0;
+	width: 0;
 }
 
 aside header {
 	color: var(--un-color-body-text-secondary);
 	font: var(--un-font-h5);
-	position: relative;
-}
-
-aside header button {
-	display: none;
-	position: absolute;
-	right: 0;
-	top: 0;
+	overflow: hidden;
 }
 
 aside main {
 	flex-grow: 1;
+	overflow: hidden;
 }
 </style>
