@@ -1,4 +1,5 @@
 export enum XDDExtractionType {
+	Document = 'Document',
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
@@ -45,22 +46,31 @@ export type XDDArticle = {
 	_gddid: string;
 };
 
-export type XDDArtifactExtraction = {
-	id: string; // Internal COSMOS id of object
-	bytes?: string | null; // base64 ASCII-decoded image bytes of the object
-	content?: string; // Text content within the object
-	page_number?: string; // Source page number within the document
-	/* cls in the results sometimes is mapped, e.g., specifying "Body Text" => "Section" */
-	cls: XDDExtractionType | string; // COSMOS-computed class of the object.
-	base_confidence?: number; // Confidence score (logit) of the initial COSMOS classification
-	postprocessing_confidence?: number; // Confidence score of the COSMOS post-processing model
-	header_content?: string; // Content field
+export type XDDArtifactProperties = {
+	title: string;
+	DOI: string;
+	trustScore: string;
+	abstract: string; // FIXME _abstract
+	XDDID: string;
+	documentID: string;
+	documentTitle: string;
+	contentText: string;
+	indexInDocument: number;
+	contentJSON: { [key: string]: { [key: string]: string } };
+	image: string;
+	relevantSentences: string;
+	sectionID: string;
+	sectionTitle: string;
+	caption: string;
 };
 
+// XDD extraction object, which should match Extraction.java at the backend
 export type XDDArtifact = {
-	pdf_name: string; // Filename of document
-	children: XDDArtifactExtraction[]; // array of extractions from this artifact
-	bibjson: XDDArticle; // Bibliographical JSON of document (looked up within xDD)
+	ASKEM_CLASS: string;
+	properties: XDDArtifactProperties;
+	askem_id: string;
+	_xdd_created: Date;
+	_xdd_registrant: number;
 };
 
 export type XDDDictionary = {

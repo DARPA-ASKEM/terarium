@@ -24,22 +24,30 @@
 						</li>
 					</ul>
 				</div>
-				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.id">
+				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askem_id">
 					<template
 						v-if="
-							ex.bytes &&
-							(ex.cls === XDDExtractionType.Figure ||
-								ex.cls === XDDExtractionType.Table ||
-								ex.cls === XDDExtractionType.Equation)
+							ex.properties.image &&
+							(ex.ASKEM_CLASS === XDDExtractionType.Figure ||
+								ex.ASKEM_CLASS === XDDExtractionType.Table ||
+								ex.ASKEM_CLASS === XDDExtractionType.Equation)
 						"
 					>
 						<!-- render figure -->
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.bytes" :alt="ex.content" />
+						<b>{{ ex.properties.title }}</b>
+						{{ ex.properties.contentText }}
+						<img
+							id="img"
+							:src="'data:image/jpeg;base64,' + ex.properties.image"
+							:alt="ex.properties.contentText"
+						/>
 					</template>
 					<template v-else>
 						<!-- render textual content -->
-						{{ ex.content }}
-						{{ ex.header_content }}
+						<b>{{ ex.properties.title }}</b>
+						{{ ex.properties.caption }}
+						{{ ex.properties.abstract }}
+						{{ ex.properties.contentText }}
 					</template>
 				</div>
 			</div>
@@ -51,7 +59,7 @@
 <script setup lang="ts">
 import { getXDDArtifacts } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
-import { XDDArticle, XDDArtifact, XDDExtractionType, XDDArtifactExtraction } from '@/types/XDD';
+import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -87,32 +95,27 @@ const extractionType = ref('');
 
 const artifacts = ref<XDDArtifact[]>([]);
 
-const extractions = computed(() => {
-	const allExtractions: XDDArtifactExtraction[] = [];
-	artifacts.value.forEach((e) => {
-		allExtractions.push(...e.children);
-	});
-	return allExtractions;
-});
-
-const groupedExtractions = computed(() => groupBy(extractions.value, 'cls'));
+const groupedExtractions = computed(() => groupBy(artifacts.value, 'ASKEM_CLASS'));
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-watch(extractions, (currentValue, oldValue) => {
-	if (extractions.value.length > 0) {
-		extractionType.value = extractions.value[0].cls;
+watch(artifacts, (currentValue, oldValue) => {
+	if (artifacts.value.length > 0) {
+		extractionType.value = artifacts.value[0].ASKEM_CLASS;
 	}
 });
 
 const fetchArtifacts = async () => {
-	if (doc.value !== null && doi.value !== '') {
+	if (doi.value !== '') {
 		// a 'type' may be used to filter the extractions to a given artifact types, e.g. Figure
 		artifacts.value = await getXDDArtifacts(doi.value);
+	} else {
+		// note that some XDD documents do not have a valid doi
+		artifacts.value = [];
 	}
 };
 
-watch(doc, (currentValue, oldValue) => {
+watch(doi, (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchArtifacts();
 	}
