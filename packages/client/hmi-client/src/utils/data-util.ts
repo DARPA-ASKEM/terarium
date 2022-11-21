@@ -8,6 +8,9 @@ import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
 
+// source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
+
 const applyFiltersToArticles = (articles: XDDArticle[], filters: Filters) => {
 	const { clauses } = filters;
 	clauses.forEach((c: any) => {
@@ -89,4 +92,17 @@ export function getResourceID(item: ResultType) {
 		return (item as XDDArticle).gddid;
 	}
 	return item.id;
+}
+
+/**
+ * Validate that the input string is valid.
+ *
+ * Uses DOI pattern described here: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
+ *
+ * @param possibleDOI
+ * @returns true if DOI is valid
+ */
+export function validate(possibleDOI?: string): boolean {
+	if (!possibleDOI) return false;
+	return possibleDOI.match(DOI_VALIDATION_PATTERN) !== null;
 }

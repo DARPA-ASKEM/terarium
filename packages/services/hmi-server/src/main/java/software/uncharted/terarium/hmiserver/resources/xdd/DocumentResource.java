@@ -40,10 +40,22 @@ public class DocumentResource {
 			if (doi != null) {
 				title = null;
 				term = null;
+				dataset = null;
+				include_score = null;
+				full_results = null;
+				max = null;
+				per_page = null;
+				dict = null;
 			}
 			if (title != null) {
 				doi = null;
 				term = null;
+				dataset = null;
+				include_score = null;
+				full_results = null;
+				max = null;
+				per_page = null;
+				dict = null;
 			}
 			return proxy.getDocuments(doi, title, term, dataset, include_score, full_results, max, per_page, dict);
 		}

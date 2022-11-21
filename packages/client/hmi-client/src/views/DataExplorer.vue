@@ -10,15 +10,24 @@
 								:is-dropdown-left-aligned="true"
 								:items="xddDatasets"
 								:selected-item="xddDataset"
-								class="dataset-container"
 								@item-selected="xddDatasetSelectionChanged"
 							/>
 						</template>
 						<template #sort>
+							<!--
+								KEEP this code because we may need to add pagination later on!
 							<toggle-button
 								:value="rankedResults"
 								:label="'Ranked Results'"
 								@change="toggleRankedResults"
+							/>
+							-->
+						</template>
+						<template #params>
+							<toggle-button
+								:value="isSearchTitle"
+								:label="'Title'"
+								@change="toggleIsSearchTitle"
 							/>
 						</template>
 					</search-bar>
@@ -202,7 +211,7 @@ import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import DrilldownPanel from '@/components/drilldown-panel.vue';
-import { applyFacetFiltersToData, isModel, isXDDArticle } from '@/utils/data-util';
+import { applyFacetFiltersToData, isModel, isXDDArticle, validate } from '@/utils/data-util';
 
 import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
@@ -261,6 +270,7 @@ export default defineComponent({
 		xddDatasets: [] as string[],
 		dictNames: [] as string[],
 		rankedResults: true, // disable sorted/ranked results to enable pagination
+		isSearchTitle: false, // is the input search term represents a document identifier such as title or DOI
 		xddDictionaries: [] as XDDDictionary[],
 		// facets
 		facets: {} as Facets,
@@ -356,6 +366,9 @@ export default defineComponent({
 		toggleRankedResults() {
 			this.rankedResults = !this.rankedResults;
 		},
+		toggleIsSearchTitle() {
+			this.isSearchTitle = !this.isSearchTitle;
+		},
 		prevPage() {
 			// this won't work with XDD since apparently there is no way to navigate results backward
 			this.pageCount -= 1;
@@ -394,13 +407,16 @@ export default defineComponent({
 
 			this.$emit('show-overlay');
 
+			const isValidDOI = validate(this.searchTerm);
 			const searchParams: SearchParameters = {
 				xdd: {
 					dict: this.dictNames,
 					dataset: this.xddDataset === ResourceType.ALL ? null : this.xddDataset,
 					max: this.pageSize,
 					perPage: this.pageSize,
-					fullResults: !this.rankedResults
+					fullResults: !this.rankedResults,
+					doi: isValidDOI ? this.searchTerm : undefined,
+					title: this.isSearchTitle && !isValidDOI ? this.searchTerm : undefined
 				}
 			};
 

@@ -114,6 +114,12 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  NOTE: results may not be ranked in this mode
 	let url = `/api/xdd/documents?term=${term}`;
 
+	if (xddSearchParam?.doi) {
+		url += `&doi=${xddSearchParam.doi}`;
+	}
+	if (xddSearchParam?.title) {
+		url += `&title=${xddSearchParam.title}`;
+	}
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}

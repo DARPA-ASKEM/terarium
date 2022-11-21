@@ -16,6 +16,7 @@
 			<IconClose16 class="clear-icon" @click="clearText" />
 		</div>
 		<slot name="sort"></slot>
+		<slot name="params"></slot>
 	</div>
 </template>
 
@@ -41,7 +42,7 @@ export default defineComponent({
 		},
 		searchPlaceholder: {
 			type: String,
-			default: 'search term here...'
+			default: 'enter search term or doi here...'
 		}
 	},
 	emits: ['search-text-changed'],

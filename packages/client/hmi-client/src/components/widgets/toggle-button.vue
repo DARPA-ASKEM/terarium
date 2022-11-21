@@ -57,7 +57,7 @@ export default defineComponent({
 .title {
 	padding: 5px;
 	text-align: center;
-	color: black;
+	color: white;
 }
 
 label {
