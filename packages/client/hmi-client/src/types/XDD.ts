@@ -98,12 +98,17 @@ export type XDDResult = {
 };
 
 export type XDDSearchParams = {
-	dict_names?: string[];
+	doi?: string;
+	title?: string;
+	term?: string;
+	dict?: string[];
 	dataset?: string | null;
-	enablePagination?: boolean;
-	pageSize?: number;
 	type?: XDDExtractionType;
 	ignoreBytes?: boolean;
+	fullResults?: boolean;
+	includeScore?: boolean;
+	max?: number;
+	perPage?: number;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
