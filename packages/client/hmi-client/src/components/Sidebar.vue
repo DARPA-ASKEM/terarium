@@ -48,7 +48,9 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 	selectedView.value = view;
 	if (isSidePanelClose.value) {
 		if (openViewSidePanel) openSidePanel();
-	} else if (!openViewSidePanel) closeSidePanel();
+	} else if (!openViewSidePanel) {
+		closeSidePanel();
+	}
 
 	if (view === View.SimulationPlan) {
 		router.push({ name: 'simulation' });
