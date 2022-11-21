@@ -196,4 +196,25 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts };
+const getModel = async (modelId: string) => {
+	// http://localhost:8078/api/models/1
+
+	// TODO: REMOVE
+	const json = { id: modelId };
+
+	// No auth -- 401(unauthorized)
+	// const response = await fetch(`/api/models/${modelId}`);
+	// const json = await response.json();
+
+	// Uncloak -- 401(unauthorized) then 403(forbidden)
+	// const json = await uncloak(`/api/models/${modelId}`);
+
+	// Axios (no auth) -- 401(unauthorized) and may be overkill
+	// const response = await API.get(`models/${modelId}`);
+	// const json = response.data;
+	console.log(json); // TODO: REMOVE
+	// return response.data as Model;
+	return json as Model;
+};
+
+export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts, getModel };
