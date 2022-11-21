@@ -1,23 +1,33 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import javax.json.bind.annotation.JsonbProperty;
+import java.util.Date;
 import java.util.Map;
-
+import java.util.Optional;
 
 public class Model {
+	public String id;
 
-	@JsonbProperty("id")
-	public Long id;
+  public String name;
 
-	@JsonbProperty("name")
-	public String name;
-
-	@JsonbProperty("description")
 	public String description;
 
-	@JsonbProperty("content")
-	public String content;
+  public String framework;
 
-	@JsonbProperty("parameters")
-	public Map<String, String> parameters;
+  public Date timestamp;
+
+  public Map<String, String> parameters;
+
+  public String concept;
+
+  public ModelContent content;
+}
+
+class ModelContent {
+  public Map<String, String>[] S;
+
+  public Map<String, Optional<String>>[] T;
+
+  public Map<String, Number>[] I;
+
+  public Map<String, Number>[] O;
 }
