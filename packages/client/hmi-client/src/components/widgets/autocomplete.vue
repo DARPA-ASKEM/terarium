@@ -6,6 +6,7 @@
 			id="autocomplete"
 			v-model="searchTerm"
 			type="text"
+			autocomplete="off"
 			class="form-control"
 			:style="inputStyle"
 			:placeholder="placeholderMessage"
@@ -153,6 +154,7 @@ export default defineComponent({
 	max-height: 220px;
 	/* suggestion list on top of the other UI */
 	z-index: 2;
+	top: 100%;
 }
 
 .autocomplete-container .autocomplete-results {

@@ -627,6 +627,10 @@ export default defineComponent({
 	width: 200px;
 }
 
+.xdd-known-terms {
+	display: flex;
+}
+
 .xdd-known-terms .flex-aligned-item {
 	display: flex;
 	align-items: center;
