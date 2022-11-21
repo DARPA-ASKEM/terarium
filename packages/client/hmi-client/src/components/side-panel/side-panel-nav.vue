@@ -16,7 +16,7 @@
 					:src="getImgUrl(tab.imgSrc)"
 					alt=""
 				/>
-				<component :is="tab.icon" />
+				<component :is="toRaw(tab.icon)" />
 				<span v-if="tab.badgeCount !== undefined && tab.badgeCount > 0" class="counter-badge">
 					{{ tab.badgeCount }}
 				</span>
@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, PropType, toRaw } from 'vue';
 import { SidePanelTab } from '@/types/common';
 
 export default defineComponent({
@@ -47,6 +47,9 @@ export default defineComponent({
 			return this.tabs.find((tab) => tab.name === this.currentTabName) === undefined;
 		}
 	},
+	data: () => ({
+		toRaw
+	}),
 	methods: {
 		toggleActive(tabName: string) {
 			// If the tab is currently selected, pass '' to signify it should be
