@@ -3,7 +3,7 @@
 		<div class="left-content">
 			<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
 				<template #content>
-					<search-bar :enable-multi-term-search="false" @search-text-changed="filterData">
+					<search-bar @search-text-changed="filterData">
 						<template #dataset>
 							<dropdown-button
 								:inner-button-label="'Dataset'"
@@ -239,12 +239,12 @@ export default defineComponent({
 		const dataItems = ref<SearchResults[]>([]);
 		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
 		const selectedSearchItems = ref<ResultType[]>([]);
-		const filter = ref<string[]>([]);
+		const searchTerm = ref('');
 		const query = useQueryStore();
 		const activeDrilldownTab = ref<string | null>('selected-resources');
 		const resources = useResourcesStore();
 		return {
-			filter,
+			searchTerm,
 			dataItems,
 			filteredDataItems,
 			selectedSearchItems,
@@ -300,7 +300,7 @@ export default defineComponent({
 		}
 	},
 	watch: {
-		filter() {
+		searchTerm() {
 			// re-fetch data from the server, apply filters, and re-calculate the facets
 			this.refresh();
 		},
@@ -404,10 +404,7 @@ export default defineComponent({
 				}
 			};
 
-			// FIXME: should we allow multiple search terms?
-			const searchTerm = this.filter.length > 0 ? this.filter[0] : '';
-
-			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
+			const allData: SearchResults[] = await fetchData(this.searchTerm, searchParams);
 			this.dataItems = allData;
 
 			this.$emit('hide-overlay');
@@ -421,8 +418,8 @@ export default defineComponent({
 			this.pageCount = 0;
 			await this.fetchDataItemList();
 		},
-		filterData(filterTerms: string[]) {
-			this.filter = cloneDeep(filterTerms);
+		filterData(filterTerm: string) {
+			this.searchTerm = filterTerm;
 		},
 		onClose() {
 			this.$emit('hide');

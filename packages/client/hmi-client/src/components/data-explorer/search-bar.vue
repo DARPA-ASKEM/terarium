@@ -13,14 +13,6 @@
 				@input="searchTextHandler"
 			/>
 		</div>
-		<div v-if="!realtime" class="flex-aligned">
-			<div v-for="searchTerm in searchTerms" :key="searchTerm" class="flex-aligned-item">
-				{{ searchTerm }}
-				<span class="flex-aligned-item-delete-btn" @click.stop="removeSearchTerm(searchTerm)">
-					<IconClose16 />
-				</span>
-			</div>
-		</div>
 		<button
 			v-if="enableClearButton"
 			type="button"
@@ -61,10 +53,6 @@ export default defineComponent({
 			type: Boolean,
 			default: false
 		},
-		enableMultiTermSearch: {
-			type: Boolean,
-			default: false
-		},
 		searchLabel: {
 			type: String,
 			default: ''
@@ -85,7 +73,7 @@ export default defineComponent({
 	emits: ['search-text-changed'],
 	setup() {
 		const searchText = ref('');
-		const searchTerms = ref<string[]>([]);
+		const searchTerms = ref('');
 		return {
 			searchText,
 			searchTerms
@@ -93,10 +81,10 @@ export default defineComponent({
 	},
 	computed: {
 		isClearButtonDisabled() {
-			return this.searchText === '' && this.searchTerms.length === 0;
+			return this.searchText === '' && this.searchTerms === '';
 		},
 		isSearchButtonDisabled() {
-			return this.searchText === '' && this.searchTerms.length === 0;
+			return this.searchText === '' && this.searchTerms === '';
 		}
 	},
 	watch: {
@@ -107,31 +95,23 @@ export default defineComponent({
 	methods: {
 		clearText() {
 			this.searchText = '';
-			if (this.searchTerms.length > 0) {
-				this.searchTerms = [];
-			}
+			this.searchTerms = '';
 		},
 		searchTextHandler(event: Event) {
 			if (this.realtime) {
-				this.searchTerms = [(event.target as HTMLInputElement).value];
+				this.searchTerms = (event.target as HTMLInputElement).value;
 			}
-		},
-		removeSearchTerm(term: string) {
-			this.searchTerms = this.searchTerms.filter((t) => t !== term);
-			this.searchText = '';
 		},
 		addSearchTerm(event: Event) {
 			if (!this.realtime) {
 				const term = (event.target as HTMLInputElement).value;
-				this.searchTerms = this.enableMultiTermSearch ? [...this.searchTerms, term] : [term];
+				this.searchTerms = term;
+				this.execSearch();
 			}
 		},
 		searchBtnHandler() {
-			if (this.searchTerms.length === 0) {
-				this.searchTerms = [this.searchText];
-			} else {
-				this.execSearch();
-			}
+			this.searchTerms = this.searchText;
+			this.execSearch();
 		},
 		execSearch() {
 			this.$emit('search-text-changed', this.searchTerms);
