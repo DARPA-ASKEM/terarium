@@ -13,14 +13,14 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
 		if (node.width && node.height) {
 			g.setNode(node.id, {
-				label: node.id,
+				label: node.label,
 				width: node.width,
 				height: node.height,
 				x: node.x,
 				y: node.y
 			});
 		} else {
-			g.setNode(node.id, { label: node.id, x: node.x, y: node.y });
+			g.setNode(node.id, { label: node.label, x: node.x, y: node.y });
 		}
 		if (!_.isEmpty(node.nodes)) {
 			// eslint-disable-next-line

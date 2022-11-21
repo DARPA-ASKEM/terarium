@@ -26,9 +26,12 @@ const g: IGraph<NodeData, EdgeData> = {
  * First add each node found in S and T, then add each edge found in I and O
  */
 export const parsePetriNet2IGraph = (model: PetriNet) => {
+	// Reset current Graph.
+	g.nodes = [];
+	g.edges = [];
 	const nodeHeight = 20;
 	const nodeWidth = 20;
-	let nodeX = 0;
+	let nodeX = 10;
 	let nodeY = 10;
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
@@ -47,7 +50,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
-	nodeY = 0;
+	nodeY = 10;
 	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
