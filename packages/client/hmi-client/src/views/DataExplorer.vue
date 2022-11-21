@@ -81,13 +81,6 @@
 								</span>
 							</div>
 						</div>
-						<button
-							type="button"
-							class="co-occurrence-matrix-btn"
-							:disabled="dictNames.length !== 2"
-						>
-							<IconScatterMatrix16 />&nbsp;co-occurrence matrix
-						</button>
 					</template>
 				</div>
 				<div>
@@ -213,7 +206,6 @@ import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-
 import DrilldownPanel from '@/components/drilldown-panel.vue';
 import { applyFacetFiltersToData, isModel, isXDDArticle, validate } from '@/utils/data-util';
 
-import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 // FIXME: page count is not taken into consideration
@@ -238,7 +230,6 @@ export default defineComponent({
 		ToggleButton,
 		FacetsPanel,
 		AutoComplete,
-		IconScatterMatrix16,
 		IconClose16,
 		DrilldownPanel,
 		SelectedResourcesOptionsPane
@@ -614,12 +605,6 @@ export default defineComponent({
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-}
-
-.co-occurrence-matrix-btn {
-	background-color: darkcyan;
-	padding-left: 8px;
-	padding-right: 8px;
 }
 
 .data-explorer-container :deep(.dropdown-btn) {

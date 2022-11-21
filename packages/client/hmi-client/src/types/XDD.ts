@@ -34,7 +34,9 @@ export type XDDArticle = {
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string;
-	knownTerms?: XDDArticleKnownTerms[];
+	// eslint-disable-next-line no-underscore-dangle
+	known_terms?: XDDArticleKnownTerms[]; // TEMP
+	knownTerms?: XDDArticleKnownTerms[]; // mapped from known_terms
 	link: XDDArticleLink[];
 	number: string;
 	pages: string;
@@ -44,7 +46,8 @@ export type XDDArticle = {
 	volume: string;
 	year: string;
 	gddid: string; // mapped from _gddid
-	_gddid: string;
+	// eslint-disable-next-line no-underscore-dangle
+	_gddid: string; // TEMP
 };
 
 export type XDDArtifactProperties = {

@@ -162,7 +162,12 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		//       is not populated and instead the raw field name, abstract, is the one with data
 		//       similarly, re-map the gddid field
 		// eslint-disable-next-line no-underscore-dangle
-		const articles = articlesRaw.map((a) => ({ ...a, abstractText: a.abstract, gddid: a._gddid }));
+		const articles = articlesRaw.map((a) => ({
+			...a,
+			abstractText: a.abstract,
+			gddid: a._gddid,
+			knownTerms: a.known_terms
+		}));
 
 		return {
 			results: articles,
