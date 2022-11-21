@@ -52,8 +52,8 @@ export type XDDArtifactProperties = {
 	DOI: string;
 	trustScore: string;
 	abstractText: string;
-	XDDID: string;
-	documentID: string;
+	XddId: string;
+	documentId: string;
 	documentTitle: string;
 	contentText: string;
 	indexInDocument: number;
