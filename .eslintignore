@@ -5,4 +5,4 @@
 **/node_modules
 **/examples
 **/playwright
-
+**/hmi-client/*.config.ts

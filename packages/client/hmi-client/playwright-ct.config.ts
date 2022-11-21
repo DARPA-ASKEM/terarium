@@ -1,7 +1,4 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { devices, type PlaywrightTestConfig } from '@playwright/experimental-ct-vue';
-
-// eslint-disable-next-line import/no-extraneous-dependencies
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 
@@ -39,7 +36,9 @@ const config: PlaywrightTestConfig = {
 			resolve: {
 				alias: {
 					'@': resolve(__dirname, './src'),
-					'@assets': resolve(__dirname, './src/assets')
+					'@assets': resolve(__dirname, './src/assets'),
+					'@node_modules': resolve(__dirname, '../../../node_modules'),
+					'@graph-scaffolder': resolve(__dirname, '../graph-scaffolder/src')
 				}
 			}
 		}

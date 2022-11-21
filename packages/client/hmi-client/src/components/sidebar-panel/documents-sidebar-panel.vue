@@ -1,24 +1,18 @@
 <template>
-	<main>
-		<header>Documents space</header>
-		<section>
-			Project Documents:
-			<div class="document-list-container">
-				<div
-					v-for="doc in documents"
-					:key="doc.gddid"
-					class="doc-link"
-					:class="{ active: doc.gddid === docID }"
-					@click="openDocumentPage(doc)"
-				>
-					<span>{{ formatTitle(doc) }}</span>
-					<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
-						<IconClose32 />
-					</span>
-				</div>
-			</div>
-		</section>
-	</main>
+	<div class="document-list-container">
+		<div
+			v-for="doc in documents"
+			:key="doc.gddid"
+			class="doc-link"
+			:class="{ active: doc.gddid === docID }"
+			@click="openDocumentPage(doc)"
+		>
+			<span>{{ formatTitle(doc) }}</span>
+			<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
+				<IconClose32 />
+			</span>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -67,29 +61,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-main {
-	background-color: var(--un-color-body-surface-primary);
-	display: flex;
-	flex-grow: 1;
-	flex-direction: column;
-	gap: 1rem;
-	padding: 1rem;
-	height: calc(100vh - 50px);
-}
-
-header {
-	color: var(--un-color-body-text-secondary);
-	font: var(--un-font-h6);
-}
-
-section {
-	height: 100%;
-}
-
 .document-list-container {
 	overflow-y: auto;
-	height: 100%;
-	margin-top: 8px;
+	margin-top: 1rem;
 }
 
 .doc-link {

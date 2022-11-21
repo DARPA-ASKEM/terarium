@@ -440,19 +440,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@carbon/icon-helpers@npm:^10.29.0":
+"@carbon/icon-helpers@npm:^10.34.0":
   version: 10.34.0
   resolution: "@carbon/icon-helpers@npm:10.34.0"
   checksum: ed06c8c098e3bcb5b31d83e59794c1079a3a0bf379cb1088c7523f48aad0ad3704b274644214720d78b863809882884c361690a59f327749dab70cb918d61db0
   languageName: node
   linkType: hard
 
-"@carbon/icons-vue@npm:10.49.1":
-  version: 10.49.1
-  resolution: "@carbon/icons-vue@npm:10.49.1"
+"@carbon/icons-vue@npm:10.60.0":
+  version: 10.60.0
+  resolution: "@carbon/icons-vue@npm:10.60.0"
   dependencies:
-    "@carbon/icon-helpers": ^10.29.0
-  checksum: 063dd316bbcaca1a1b6ffa400744643be1467810398672a19682a8aa0a2958ea30e504a6d91cfbe7340044f705fa6c43e599472ac174548a94113b8098afe2a0
+    "@carbon/icon-helpers": ^10.34.0
+  checksum: d5e2a946fee2bd39f7c182494925d92700826a6f64fd206e4fa81db4c5433c0fe2aa874972680728656b89a967dca79be2f3b6db19a08192236c7cceb8089864
   languageName: node
   linkType: hard
 
@@ -5924,7 +5924,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "hmi-client@workspace:packages/client/hmi-client"
   dependencies:
-    "@carbon/icons-vue": 10.49.1
+    "@carbon/icons-vue": 10.60.0
     "@ibm/plex": 6.1.1
     "@pinia/testing": 0.0.14
     "@playwright/experimental-ct-vue": 1.27.1
@@ -5944,7 +5944,7 @@ __metadata:
     graph-scaffolder: "*"
     lodash: 4.17.21
     pinia: 2.0.23
-    sass: ^1.56.1
+    sass: 1.56.1
     typescript: 4.8.4
     vite: 3.2.3
     vitest: 0.24.5
@@ -9415,7 +9415,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.56.1":
+"sass@npm:1.56.1":
   version: 1.56.1
   resolution: "sass@npm:1.56.1"
   dependencies:
