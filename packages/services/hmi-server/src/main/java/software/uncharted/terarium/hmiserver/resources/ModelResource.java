@@ -1,8 +1,8 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-
 import software.uncharted.terarium.hmiserver.models.Model;
 import software.uncharted.terarium.hmiserver.proxies.ModelProxy;
 
@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 
 @Path("/api/models")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")
