@@ -7,7 +7,7 @@ import { useCurrentRouter } from '@/router/index';
 
 const emit = defineEmits(['show-data-explorer']);
 const router = useRouter();
-const { isCurrentRouteHome, routerState } = useCurrentRouter();
+const { isCurrentRouteHome } = useCurrentRouter();
 const isHome = computed(() => isCurrentRouteHome.value);
 
 const goToHomepage = () => {
@@ -27,8 +27,7 @@ const projectName = 'Name of the project that can be long for clarity and precis
 			<span> {{ projectName }}</span>
 			<!-- Debug -->
 			<span>
-				({{ routerState.view }} : {{ routerState.viewId }} ) ( {{ routerState.subView }} :
-				{{ routerState.subViewId }})
+				{{ $route.params }}
 			</span>
 		</p>
 		<aside>

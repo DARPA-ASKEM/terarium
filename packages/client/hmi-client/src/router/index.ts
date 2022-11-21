@@ -60,17 +60,7 @@ const router = createRouter({
 
 export function useCurrentRouter() {
 	return {
-		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home),
-		routerState: computed(() => {
-			const path = router.currentRoute.value.path;
-
-			// This maps into the navigation hierarchy :view/:viewId/:subView/:subViewId, eg
-			// - /projects/123/simulations/232
-			// - /projects/222/models/456
-			// - /docs/d123
-			const [, view, viewId, subView, subViewId] = path.split('/');
-			return { view, viewId, subView, subViewId };
-		})
+		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home)
 	};
 }
 
