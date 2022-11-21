@@ -11,7 +11,6 @@ const { isCurrentRouteHome, routerState } = useCurrentRouter();
 const isHome = computed(() => isCurrentRouteHome.value);
 
 const goToHomepage = () => {
-	console.log('goto home');
 	router.push('/');
 };
 const goToDataExplorer = () => emit('show-data-explorer');

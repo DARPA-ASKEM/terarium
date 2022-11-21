@@ -16,6 +16,7 @@ import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vu
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/index';
 
 const router = useRouter();
 
@@ -26,15 +27,6 @@ function closeSidePanel() {
 }
 function openSidePanel() {
 	isSidePanelClose.value = false;
-}
-
-const enum View {
-	SimulationPlan = 'Simulation Plan',
-	Models = 'Models',
-	Datasets = 'Datasets',
-	Documents = 'Documents',
-	ProvenanceGraph = 'Provenance Graph',
-	Profile = 'Profile'
 }
 
 const selectedView = ref('');
@@ -52,10 +44,8 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 		closeSidePanel();
 	}
 
-	if (view === View.SimulationPlan) {
-		router.push({ name: 'simulation' });
-	} else if (view === View.Models) {
-		router.push({ name: 'model' });
+	if ([RouteName.ModelRoute, RouteName.SimulationRoute].includes(view)) {
+		router.push({ name: view });
 	}
 }
 </script>
@@ -65,29 +55,38 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 		<nav>
 			<ul>
 				<li
-					:active="selectedView === View.SimulationPlan"
-					@click="openView(View.SimulationPlan, false)"
+					:active="selectedView === RouteName.SimulationRoute"
+					@click="openView(RouteName.SimulationRoute, false)"
 				>
 					<IconDataPlayer32 />
 				</li>
-				<li :active="selectedView === View.Models" @click="openView(View.Models)">
+				<li :active="selectedView === RouteName.ModelRoute" @click="openView(RouteName.ModelRoute)">
 					<IconMachineLearningModel32 />
 				</li>
-				<li :active="selectedView === View.Datasets" @click="openView(View.Datasets, false)">
+				<li
+					:active="selectedView === RouteName.DatasetRoute"
+					@click="openView(RouteName.DatasetRoute, false)"
+				>
 					<IconTableSplit32 />
 				</li>
-				<li :active="selectedView === View.Documents" @click="openView(View.Documents)">
+				<li
+					:active="selectedView === RouteName.DocumentRoute"
+					@click="openView(RouteName.DocumentRoute)"
+				>
 					<IconDocumentPdf32 />
 				</li>
 			</ul>
 			<ul>
 				<li
-					:active="selectedView === View.ProvenanceGraph"
-					@click="openView(View.ProvenanceGraph, false)"
+					:active="selectedView === RouteName.ProvenanceRoute"
+					@click="openView(RouteName.ProvenanceRoute, false)"
 				>
 					<IconFlow32 />
 				</li>
-				<li :active="selectedView === View.Profile" @click="openView(View.Profile)">
+				<li
+					:active="selectedView === RouteName.ProfileRoute"
+					@click="openView(RouteName.ProfileRoute)"
+				>
 					<IconUser32 />
 				</li>
 			</ul>
@@ -98,9 +97,9 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 		<aside :class="{ 'side-panel-close': isSidePanelClose }">
 			<header>{{ selectedView }}</header>
 			<main>
-				<ModelSidebarPanel v-if="selectedView === View.Models" />
-				<DocumentsSidebarPanel v-else-if="selectedView === View.Documents" />
-				<ProfileSidebarPanel v-else-if="selectedView === View.Profile" />
+				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
+				<DocumentsSidebarPanel v-else-if="selectedView === RouteName.DocumentRoute" />
+				<ProfileSidebarPanel v-else-if="selectedView === RouteName.ProfileRoute" />
 				<template v-else> Create a sidebar-panel component </template>
 			</main>
 			<Button round class="side-panel-control" @click="closeSidePanel">

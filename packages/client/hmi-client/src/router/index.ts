@@ -23,12 +23,26 @@ export enum RoutePath {
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
 }
 
+// Named routes
+export enum RouteName {
+	HomeRoute = 'home',
+	SimulationRoute = 'simulation',
+	ModelRoute = 'model',
+
+	DatasetRoute = 'dataset',
+	DocumentRoute = 'document',
+	ProvenanceRoute = 'provenance',
+	ProfileRoute = 'profile'
+}
+
 const routes = [
-	{ name: 'home', path: RoutePath.Home, component: HomeView },
+	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
+	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
+	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model },
+
+	// TODO
 	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
-	{ name: 'simulation', path: RoutePath.SimulationView, component: Simulation },
-	{ name: 'model', path: RoutePath.ModelView, component: Model },
 
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
