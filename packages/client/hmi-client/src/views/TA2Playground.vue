@@ -166,7 +166,18 @@ export default defineComponent({
 		const stratifyModelA = ref('');
 		const stratifyModelB = ref('');
 		const stratifyTypeModel = ref('');
-		return { loadModelID, stratifyModelA, stratifyModelB, stratifyTypeModel };
+		const typeModelA = ref('');
+		const typeTypeModel = ref('');
+		const typeMapping = ref('');
+		return {
+			loadModelID,
+			stratifyModelA,
+			stratifyModelB,
+			stratifyTypeModel,
+			typeModelA,
+			typeTypeModel,
+			typeMapping
+		};
 	},
 	methods: {
 		async refresh() {
@@ -668,6 +679,24 @@ export default defineComponent({
 				console.error(e.message);
 			}
 		},
+		async typePetrinet() {
+			console.log('Starting type');
+			console.log('provided:');
+			console.log(this.typeModelA);
+			console.log(this.typeTypeModel);
+			console.log(this.typeMapping);
+
+			const resp = await fetch(
+				`http://localhost:8888/api/models/type/${this.typeModelA}/${this.typeTypeModel}/${this.typeMapping}`,
+				{
+					method: 'GET'
+				}
+			);
+			const output = await resp.json();
+			console.log('Output:');
+			console.log(output);
+			// this.createModel(output, true);
+		},
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async createSampleModels() {
@@ -746,6 +775,14 @@ export default defineComponent({
 				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
+		</form>
+		<form>
+			<label for="type">
+				<input v-model="typeModelA" type="text" placeholder="Model A ID" />
+				<input v-model="typeTypeModel" type="text" placeholder="Type Model" />
+				<input v-model="typeMapping" type="text" placeholder="Mapping Vector" />
+			</label>
+			<button type="button" @click="typePetrinet">Type</button>
 		</form>
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
