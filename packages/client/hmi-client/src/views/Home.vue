@@ -4,7 +4,6 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
-import { useRouter } from 'vue-router';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -15,12 +14,6 @@ const enum Categories {
 const categories = new Map<string, { icon: object }>([[Categories.Recents, { icon: IconTime32 }]]);
 
 const mockProjects: string[] = ['Mocked Project'];
-
-const router = useRouter();
-const gotoModel = () => {
-	// FIXME: Stubbing data
-	router.push({ name: 'model', params: { projectId: '123' } });
-};
 </script>
 
 <template>
@@ -37,7 +30,7 @@ const gotoModel = () => {
 					<li v-if="key === Categories.Recents">
 						<NewProjectCard />
 					</li>
-					<li v-for="(project, index) in mockProjects" :key="index" @click="gotoModel()">
+					<li v-for="(project, index) in mockProjects" :key="index">
 						<ProjectCard :name="project" />
 					</li>
 				</ul>
