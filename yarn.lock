@@ -5944,7 +5944,7 @@ __metadata:
     graph-scaffolder: "*"
     lodash: 4.17.21
     pinia: 2.0.23
-    sass: ^1.56.1
+    sass: 1.56.1
     typescript: 4.8.4
     vite: 3.2.3
     vitest: 0.24.5
@@ -9415,7 +9415,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.56.1":
+"sass@npm:1.56.1":
   version: 1.56.1
   resolution: "sass@npm:1.56.1"
   dependencies:
