@@ -1,7 +1,8 @@
 <template>
 	<div class="search-bar-container">
 		<slot name="dataset"></slot>
-		<div>
+		<div class="input-container">
+			<IconSearch16 class="search-icon" />
 			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
 			<input
 				id="search"
@@ -12,27 +13,8 @@
 				@keyup.enter="addSearchTerm"
 				@input="searchTextHandler"
 			/>
+			<IconClose16 class="clear-icon" @click="clearText" />
 		</div>
-		<button
-			v-if="enableClearButton"
-			type="button"
-			class="search-and-clear-buttons button-padding"
-			:class="{ 'button-disabled': isClearButtonDisabled }"
-			:disabled="isClearButtonDisabled"
-			@click="clearText"
-		>
-			<IconClose16 />Clear
-		</button>
-		<button
-			v-if="enableSearchButton"
-			type="button"
-			class="search-and-clear-buttons button-padding"
-			:class="{ 'button-disabled': isSearchButtonDisabled }"
-			:disabled="isSearchButtonDisabled"
-			@click="searchBtnHandler"
-		>
-			<IconSearch16 />Search
-		</button>
 		<slot name="sort"></slot>
 	</div>
 </template>
@@ -60,14 +42,6 @@ export default defineComponent({
 		searchPlaceholder: {
 			type: String,
 			default: 'search term here...'
-		},
-		enableClearButton: {
-			type: Boolean,
-			default: true
-		},
-		enableSearchButton: {
-			type: Boolean,
-			default: true
 		}
 	},
 	emits: ['search-text-changed'],
@@ -81,9 +55,6 @@ export default defineComponent({
 	},
 	computed: {
 		isClearButtonDisabled() {
-			return this.searchText === '' && this.searchTerms === '';
-		},
-		isSearchButtonDisabled() {
 			return this.searchText === '' && this.searchTerms === '';
 		}
 	},
@@ -109,10 +80,6 @@ export default defineComponent({
 				this.execSearch();
 			}
 		},
-		searchBtnHandler() {
-			this.searchTerms = this.searchText;
-			this.execSearch();
-		},
 		execSearch() {
 			this.$emit('search-text-changed', this.searchTerms);
 		}
@@ -124,79 +91,57 @@ export default defineComponent({
 .search-bar-container {
 	display: flex;
 	background-color: transparent;
-	align-items: baseline;
 	justify-content: center;
-}
-
-.button-padding {
-	padding: 4px;
-	padding-left: 8px;
-	padding-right: 8px;
-	margin: 4px;
-	cursor: pointer;
-}
-
-button {
-	border-width: thin;
-	border-color: white;
-	border-radius: 6px;
-}
-
-.search-and-clear-buttons {
-	color: var(--un-color-white);
-}
-
-.search-button {
-	background-color: var(--un-color-accent);
-}
-
-.search-button-disabled,
-.button-disabled {
-	background-color: var(--un-color-accent-dark);
-	cursor: not-allowed;
-	color: gray;
-}
-
-.clear-button-disabled {
-	background-color: gray;
-	cursor: not-allowed;
-}
-
-.flex-aligned {
-	display: flex;
-	align-items: baseline;
-}
-
-.flex-aligned-item {
-	display: flex;
-	align-items: center;
-	color: var(--un-color-accent-darker);
-}
-
-.flex-aligned-item-delete-btn {
-	color: red;
-}
-
-.flex-aligned-item-delete-btn:hover {
-	cursor: pointer;
+	color: white;
+	flex: 1;
 }
 
 .search-label {
-	color: white;
 	font-weight: bold;
 	padding: 8px;
+}
+
+.input-container {
+	position: relative;
+	margin-left: 1rem;
+	margin-right: 1rem;
+	flex: 1;
+}
+
+.input-container .search-icon {
+	height: 100%;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	color: white;
+	margin-left: 4px;
+}
+
+.input-container .clear-icon {
+	height: 100%;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	color: red;
+	cursor: pointer;
+	margin-right: 4px;
 }
 
 input[type='text'] {
 	padding: 6px;
 	border: none;
-	margin-top: 8px;
-	margin-right: 16px;
-	font-size: 17px;
-	min-width: 300px;
+	font-size: 18px;
+	padding-left: 2rem;
+	padding-right: 2rem;
+	outline: none;
+	width: 100%;
 }
 
-.search-and-clear-buttons {
-	color: white;
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+	transition: background-color 5000s ease-in-out 0s;
 }
 </style>
