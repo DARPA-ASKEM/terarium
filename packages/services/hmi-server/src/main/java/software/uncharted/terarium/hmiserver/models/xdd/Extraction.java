@@ -1,17 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-import java.util.Date;
-import java.util.Map;
-
-import javax.json.bind.annotation.JsonbProperty;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonAlias;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * XDD Document extraction representation
@@ -25,16 +22,16 @@ public class Extraction implements Serializable {
 	private String askemClass;
 
 	@JsonbProperty("properties")
-  private ExtractionProperties properties;
+	private ExtractionProperties properties;
 
 	@JsonbProperty("askem_id")
 	private String askemId;
 
 	@JsonbProperty("_xdd_created")
-  private Date xddCreated;
+	private Date xddCreated;
 
 	@JsonbProperty("_xdd_registrant")
-  private Number xddRegistrant;
+	private Number xddRegistrant;
 }
 
 @Data
@@ -50,9 +47,9 @@ class ExtractionProperties implements Serializable {
 	@JsonAlias("abstract")
 	private String abstractText;
 
-	private String XDDID;
+	private String xddId;
 
-	private String documentID;
+	private String documentId;
 
 	private String documentTitle;
 
@@ -71,4 +68,4 @@ class ExtractionProperties implements Serializable {
 	private String sectionTitle;
 
 	private String caption;
-};
+}

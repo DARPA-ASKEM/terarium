@@ -9,12 +9,12 @@ import java.io.Serializable;
 @Accessors(chain = true)
 class XDDResponseError implements Serializable {
 	private String message;
-};
+}
 
 @Data
 @Accessors(chain = true)
 public class XDDResponse<T> implements Serializable {
-  private T success;
+	private T success;
 
-  private XDDResponseError error;
-};
+	private XDDResponseError error;
+}

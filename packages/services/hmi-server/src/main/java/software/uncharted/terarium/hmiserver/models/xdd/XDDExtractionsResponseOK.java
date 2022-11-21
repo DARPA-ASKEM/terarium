@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-import java.util.List;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
+
+import java.util.List;
 
 @Data
 @Accessors(chain = true)
@@ -13,4 +13,4 @@ public class XDDExtractionsResponseOK extends XDDResponseOK {
 	private Number total;
 
 	private Number page;
-};
+}

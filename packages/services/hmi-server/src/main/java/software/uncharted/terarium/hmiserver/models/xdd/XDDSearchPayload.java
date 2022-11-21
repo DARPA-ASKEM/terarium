@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-import javax.json.bind.annotation.JsonbProperty;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
@@ -23,4 +22,4 @@ public class XDDSearchPayload implements Serializable {
 
 	@JsonbProperty("ignore_bytes")
 	private Boolean ignoreBytes;
-};
+}

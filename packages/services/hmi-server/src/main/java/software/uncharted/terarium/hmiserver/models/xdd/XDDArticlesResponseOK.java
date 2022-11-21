@@ -1,13 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.xdd;
 
-import java.util.List;
-
-import javax.json.bind.annotation.JsonbProperty;
-
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Accessors(chain = true)
@@ -20,4 +18,4 @@ public class XDDArticlesResponseOK extends XDDResponseOK implements Serializable
 	private String scrollId;
 
 	private Number hits;
-};
+}

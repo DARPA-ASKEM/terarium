@@ -11,4 +11,4 @@ public class XDDResponseOK implements Serializable {
 	private Number v;
 
 	private String license;
-};
+}
