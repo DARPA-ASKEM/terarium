@@ -26,7 +26,13 @@ public class DocumentResource {
 	public Response getDocuments(
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
-		@QueryParam("term") String term
+		@QueryParam("term") String term,
+		@QueryParam("dataset") String dataset,
+		@QueryParam("include_score") String include_score,
+		@QueryParam("full_results") String full_results,
+		@QueryParam("max") String max,
+		@QueryParam("per_page") String per_page,
+		@QueryParam("dict") String dict
 	) {
 		// only go ahead with the query if at least one param is present
 		if (doi != null || title != null || term != null) {
@@ -39,7 +45,7 @@ public class DocumentResource {
 				doi = null;
 				term = null;
 			}
-			return proxy.getDocuments(doi, title, term);
+			return proxy.getDocuments(doi, title, term, dataset, include_score, full_results, max, per_page, dict);
 		}
 		return Response.noContent().build();
 	}
