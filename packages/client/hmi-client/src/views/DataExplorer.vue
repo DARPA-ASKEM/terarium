@@ -396,10 +396,11 @@ export default defineComponent({
 
 			const searchParams: SearchParameters = {
 				xdd: {
-					dict_names: this.dictNames,
+					dict: this.dictNames,
 					dataset: this.xddDataset === ResourceType.ALL ? null : this.xddDataset,
-					pageSize: this.pageSize,
-					enablePagination: !this.rankedResults
+					max: this.pageSize,
+					perPage: this.pageSize,
+					fullResults: !this.rankedResults
 				}
 			};
 

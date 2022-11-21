@@ -11,7 +11,6 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 
-const ARTICLES_API_BASE = 'https://xdd.wisc.edu/api/articles';
 const DATASET_API_URL = 'https://xdd.wisc.edu/sets';
 const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
 
@@ -41,7 +40,6 @@ const getXDDDictionaries = async () => {
 	return [] as XDDDictionary[];
 };
 
-// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 const getModels = async (term: string) => {
 	const finalModels: Model[] = [];
 
@@ -51,6 +49,8 @@ const getModels = async (term: string) => {
 	const modelsList: Model[] = await uncloak('/api/models');
 
 	// TEMP: add "type" field because it is needed to mark these resources as models
+	// FIXME: dependecy on type model should be removed and another "sub-system" or "result-type"
+	//        should be added for datasets and other resource types
 	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));
 
 	//
@@ -102,22 +102,23 @@ const getXDDArtifacts = async (doc_doi: string) => {
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	const limitResultsCount = xddSearchParam?.pageSize ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
+	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
 	// NOTE when true it disables ranking of results
-	const enablePagination = xddSearchParam?.enablePagination ?? false;
+	const enablePagination = xddSearchParam?.fullResults ?? false;
 
 	// "full_results": "Optional. When this parameter is included (no value required),
 	//  an overview of total number of matching articles is returned,
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	let url = `${ARTICLES_API_BASE}?term=${term}`;
+	let url = `/api/xdd/documents?term=${term}`;
+
 	if (xddSearchParam?.dataset) {
 		url += `&dataset=${xddSearchParam.dataset}`;
 	}
-	if (xddSearchParam?.dict_names && xddSearchParam?.dict_names.length > 0) {
-		url += `&dict=${xddSearchParam.dict_names.join(',')}`;
+	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
+		url += `&dict=${xddSearchParam.dict.join(',')}`;
 	}
 	if (enablePagination) {
 		url += '&full_results';
@@ -125,6 +126,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		// request results to be ranked
 		url += '&include_score=true';
 	}
+
+	// what about doi and title
 
 	// "max": "Maximum number of articles to return (default is all)",
 	url += `&max=${limitResultsCount}`;
@@ -143,13 +146,17 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
 	// full_results
-	const response = await fetchXDD(url);
-	const rawdata: XDDResult = await response.json();
+	const rawdata: XDDResult = await uncloak(url);
 
 	if (rawdata.success) {
-		// eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
 		const { data, hits, scrollId, nextPage } = rawdata.success;
-		const articles = data as XDDArticle[];
+		const articlesRaw = data as XDDArticle[];
+
+		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
+		//       is not populated and instead the raw field name, abstract, is the one with data
+		//       similarly, re-map the gddid field
+		// eslint-disable-next-line no-underscore-dangle
+		const articles = articlesRaw.map((a) => ({ ...a, abstractText: a.abstract, gddid: a._gddid }));
 
 		return {
 			results: articles,
