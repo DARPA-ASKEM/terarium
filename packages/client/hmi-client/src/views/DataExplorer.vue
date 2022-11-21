@@ -310,10 +310,6 @@ export default defineComponent({
 		}
 	},
 	watch: {
-		searchTerm() {
-			// re-fetch data from the server, apply filters, and re-calculate the facets
-			this.refresh();
-		},
 		clientFilters(n, o) {
 			if (filtersUtil.isEqual(n, o)) return;
 			// data has not changed; the user just changed one of the facet filters
@@ -436,6 +432,8 @@ export default defineComponent({
 		},
 		filterData(filterTerm: string) {
 			this.searchTerm = filterTerm;
+			// re-fetch data from the server, apply filters, and re-calculate the facets
+			this.refresh();
 		},
 		onClose() {
 			this.$emit('hide');

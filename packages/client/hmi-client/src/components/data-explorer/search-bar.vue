@@ -54,11 +54,6 @@ export default defineComponent({
 			searchTerms
 		};
 	},
-	computed: {
-		isClearButtonDisabled() {
-			return this.searchText === '' && this.searchTerms === '';
-		}
-	},
 	watch: {
 		searchTerms() {
 			this.execSearch();
