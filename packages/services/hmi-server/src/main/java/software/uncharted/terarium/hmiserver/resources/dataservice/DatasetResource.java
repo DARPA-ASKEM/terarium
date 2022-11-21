@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.resources;
+package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -6,7 +6,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
-import software.uncharted.terarium.hmiserver.proxies.DatasetProxy;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;

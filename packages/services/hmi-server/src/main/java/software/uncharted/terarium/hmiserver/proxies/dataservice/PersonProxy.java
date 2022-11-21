@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.proxies;
+package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Association;

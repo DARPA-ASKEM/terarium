@@ -1,11 +1,11 @@
-package software.uncharted.terarium.hmiserver.resources;
+package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Association;
 import software.uncharted.terarium.hmiserver.models.dataservice.Person;
-import software.uncharted.terarium.hmiserver.proxies.PersonProxy;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.PersonProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
