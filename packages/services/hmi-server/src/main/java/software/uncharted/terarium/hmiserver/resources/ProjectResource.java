@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Project;
@@ -13,6 +14,7 @@ import java.net.URI;
 import java.util.List;
 
 @Path("/api/projects")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Project REST Endpoints")
 public class ProjectResource {

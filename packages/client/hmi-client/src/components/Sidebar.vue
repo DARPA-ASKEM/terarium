@@ -1,124 +1,146 @@
 <script setup lang="ts">
 /**
- * Sidebar component for navigating modes
+ * Sidebar component for navigating view.
  * */
-import { ref, computed } from 'vue';
-import Button from '@/components/Button.vue';
+import { ref } from 'vue';
+import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
+import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
-import DocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
+import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconProvenanceGraph32 from '@carbon/icons-vue/es/flow/32';
+import IconFlow32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
-import IconLogout16 from '@carbon/icons-vue/es/logout/16';
+import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
-import useAuthStore from '../stores/auth';
+import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/index';
 
-const enum Mode {
-	SimulationPlan = 'Simulation Plan',
-	Models = 'Models',
-	Datasets = 'Datasets',
-	Documents = 'Documents',
-	ProvenanceGraph = 'Provenance Graph',
-	Profile = 'Profile'
+const router = useRouter();
+
+// Manage Side Panel
+const isSidePanelClose = ref(false);
+function closeSidePanel() {
+	isSidePanelClose.value = true;
+}
+function openSidePanel() {
+	isSidePanelClose.value = false;
 }
 
-const auth = useAuthStore();
+const selectedView = ref('');
 
-// Get sidebar position if saved in local storage
-const isSidebarPositionRight = ref(
-	localStorage.getItem('isSidebarPositionRight')
-		? localStorage.getItem('isSidebarPositionRight') === 'true'
-		: false
-);
-const selectedMode = ref('');
-const isCollapsed = computed(() => selectedMode.value.length === 0);
+/**
+ * Open a View
+ * @param {string} view - The view to be open.
+ * @param {boolean} [openViewSidePanel=true] - Should the side-panel be open when opening the view.
+ */
+function openView(view: string, openViewSidePanel: boolean = true): void {
+	selectedView.value = view;
+	if (isSidePanelClose.value) {
+		if (openViewSidePanel) openSidePanel();
+	} else if (!openViewSidePanel) {
+		closeSidePanel();
+	}
 
-// Later move mode specific features into their own components
-const logout = () => {
-	auth.logout();
-	window.location.assign('/logout');
-};
-
-function updateMode(mode: string) {
-	selectedMode.value = mode === selectedMode.value ? '' : mode;
-}
-
-function moveSidebar() {
-	localStorage.setItem('isSidebarPositionRight', (!isSidebarPositionRight.value).toString());
-	isSidebarPositionRight.value = localStorage.getItem('isSidebarPositionRight') === 'true';
+	// FIXME: sort out the difference between routing to a page and opening the side-panel
+	if ([RouteName.ModelRoute, RouteName.SimulationRoute].includes(view as RouteName)) {
+		router.push({ name: view });
+	}
 }
 </script>
 
 <template>
-	<section :class="{ right: isSidebarPositionRight }">
+	<section>
 		<nav>
 			<ul>
-				<li :active="selectedMode === Mode.SimulationPlan" @click="updateMode(Mode.SimulationPlan)">
+				<li
+					:active="selectedView === RouteName.SimulationRoute"
+					@click="openView(RouteName.SimulationRoute, false)"
+				>
 					<IconDataPlayer32 />
 				</li>
-				<li :active="selectedMode === Mode.Models" @click="updateMode(Mode.Models)">
+				<li :active="selectedView === RouteName.ModelRoute" @click="openView(RouteName.ModelRoute)">
 					<IconMachineLearningModel32 />
 				</li>
-				<li :active="selectedMode === Mode.Datasets" @click="updateMode(Mode.Datasets)">
+				<li
+					:active="selectedView === RouteName.DatasetRoute"
+					@click="openView(RouteName.DatasetRoute, false)"
+				>
 					<IconTableSplit32 />
 				</li>
-				<li :active="selectedMode === Mode.Documents" @click="updateMode(Mode.Documents)">
-					<DocumentPdf32 />
+				<li
+					:active="selectedView === RouteName.DocumentRoute"
+					@click="openView(RouteName.DocumentRoute)"
+				>
+					<IconDocumentPdf32 />
 				</li>
 			</ul>
 			<ul>
 				<li
-					:active="selectedMode === Mode.ProvenanceGraph"
-					@click="updateMode(Mode.ProvenanceGraph)"
+					:active="selectedView === RouteName.ProvenanceRoute"
+					@click="openView(RouteName.ProvenanceRoute, false)"
 				>
-					<IconProvenanceGraph32 />
+					<IconFlow32 />
 				</li>
-				<li :active="selectedMode === Mode.Profile" @click="updateMode(Mode.Profile)">
+				<li
+					:active="selectedView === RouteName.ProfileRoute"
+					@click="openView(RouteName.ProfileRoute)"
+				>
 					<IconUser32 />
 				</li>
 			</ul>
+			<Button round class="side-panel-control" v-if="isSidePanelClose" @click="openSidePanel">
+				<IconArrowRight16 />
+			</Button>
 		</nav>
-		<aside v-if="!isCollapsed" :class="{ right: isSidebarPositionRight }">
-			<ModelSidebarPanel v-if="selectedMode === Mode.Models" />
-			<DocumentsSidebarPanel v-else-if="selectedMode === Mode.Documents" />
-			<template v-else>
-				<header>{{ selectedMode }}</header>
-				<div v-if="selectedMode === Mode.Profile">
-					<Button @click="moveSidebar"> Move sidebar </Button>
-					<Button @click="logout"
-						>Logout
-						<IconLogout16 />
-					</Button>
-				</div>
-			</template>
+		<aside :class="{ 'side-panel-close': isSidePanelClose }">
+			<header>{{ selectedView }}</header>
+			<main>
+				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
+				<DocumentsSidebarPanel v-else-if="selectedView === RouteName.DocumentRoute" />
+				<ProfileSidebarPanel v-else-if="selectedView === RouteName.ProfileRoute" />
+				<template v-else> Create a sidebar-panel component </template>
+			</main>
+			<Button round class="side-panel-control" @click="closeSidePanel">
+				<IconArrowLeft16 />
+			</Button>
 		</aside>
 	</section>
 </template>
 
 <style scoped>
 section {
-	background-color: var(--un-color-accent);
-	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	height: 100%;
 	isolation: isolate;
 }
 
-section.right {
-	order: 1;
-	flex-direction: row-reverse;
+section nav,
+section aside {
+	position: relative;
+}
+
+section .side-panel-control {
+	--btn-background: var(--un-color-accent-mono);
+	--btn-box-shadow: none;
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateX(50%);
 }
 
 nav {
+	background-color: var(--un-color-accent);
+	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
-	z-index: 2;
+	height: calc(100vh - var(--header-height));
 	justify-content: space-between;
 	padding-top: 0.33rem;
 	width: 4rem;
-	height: calc(100vh - var(--header-height));
+	z-index: 2;
 }
 
 nav ul {
@@ -140,7 +162,7 @@ nav ul li {
 	width: 3rem;
 }
 
-nav svg {
+nav li svg {
 	fill: var(--un-color-accent-light);
 }
 
@@ -157,11 +179,32 @@ nav li:hover svg {
 }
 
 aside {
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-body-surface-primary);
+	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem;
+	position: relative;
+	transition-property: padding, width;
+	transition-duration: 0s;
 	width: max(15rem, 20vw);
 	z-index: 1;
+}
+
+aside.side-panel-close {
+	padding: 0;
+	width: 0;
+}
+
+aside header {
+	color: var(--un-color-body-text-secondary);
+	font: var(--un-font-h5);
+	overflow: hidden;
+}
+
+aside main {
+	flex-grow: 1;
+	overflow: hidden;
 }
 </style>
