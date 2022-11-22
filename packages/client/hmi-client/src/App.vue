@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import Header from '@/components/Header.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 import Sidebar from '@/components/Sidebar.vue';
-import API from '@/api/api';
 
 import { useCurrentRouter } from './router/index';
 
@@ -26,12 +25,6 @@ const disableOverlay = () => {
 };
 
 const dataExplorerActivated = ref(false);
-
-onMounted(() => {
-	API.get('/projects').then((r) => {
-		console.log(r.data);
-	});
-});
 </script>
 
 <template>
