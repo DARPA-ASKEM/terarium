@@ -141,7 +141,7 @@ watchEffect(async () => {
 			</div>
 		</div>
 		<aside>
-			<p>{{ model?.description ?? '' }}</p>
+			<p class="description">{{ model?.description ?? '' }}</p>
 			<h4>Parameters</h4>
 			<ul v-if="model !== null">
 				<li v-for="parameterName in Object.keys(model.parameters)" :key="parameterName">
@@ -187,6 +187,12 @@ h4 {
 	font: var(--un-font-h4);
 	margin-top: 30px;
 	margin-bottom: 10px;
+}
+
+.description,
+ul {
+	max-height: 400px;
+	overflow-y: auto;
 }
 
 li {
