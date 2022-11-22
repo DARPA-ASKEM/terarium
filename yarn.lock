@@ -618,7 +618,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/core@npm:^29.2.2, @jest/core@npm:^29.3.1":
+"@jest/core@npm:^29.3.1":
   version: 29.3.1
   resolution: "@jest/core@npm:29.3.1"
   dependencies:
@@ -856,7 +856,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jest/types@npm:^29.2.1, @jest/types@npm:^29.3.1":
+"@jest/types@npm:^29.3.1":
   version: 29.3.1
   resolution: "@jest/types@npm:29.3.1"
   dependencies:
@@ -1426,13 +1426,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.2.2":
-  version: 29.2.2
-  resolution: "@types/jest@npm:29.2.2"
+"@types/jest@npm:29.2.3":
+  version: 29.2.3
+  resolution: "@types/jest@npm:29.2.3"
   dependencies:
     expect: ^29.0.0
     pretty-format: ^29.0.0
-  checksum: 13b1a48858c8c451109c2838205fdcee6f41d672674d2f0e3cada35e94f133370aba4f4b5c3f5b174f3e16244d76d7d718afa7cc67d4d6f90d1b87951f4c87c3
+  checksum: 55370906711b600a05b9e497c22aa74d80d8adcdbe4ac2f1bc9311f6f6ca0dd192862b6f38df6ac0d45e92396bcd796e377b1d8058c10bdfd584aeee580c3ce1
   languageName: node
   linkType: hard
 
@@ -5992,7 +5992,7 @@ __metadata:
   resolution: "graph-scaffolder@workspace:packages/client/graph-scaffolder"
   dependencies:
     "@types/d3": 7.4.0
-    "@types/jest": 29.2.2
+    "@types/jest": 29.2.3
     "@types/lodash": 4.14.189
     "@typescript-eslint/eslint-plugin": 5.42.1
     "@typescript-eslint/parser": 5.42.1
@@ -6005,7 +6005,7 @@ __metadata:
     eslint-config-esnext: 4.1.0
     eslint-plugin-import: 2.26.0
     globby: 13.1.2
-    jest: 29.2.2
+    jest: 29.3.1
     live-server: 1.2.2
     lodash: 4.17.21
     npm-run-all: 4.1.5
@@ -7091,7 +7091,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-cli@npm:^29.2.2":
+"jest-cli@npm:^29.3.1":
   version: 29.3.1
   resolution: "jest-cli@npm:29.3.1"
   dependencies:
@@ -7544,14 +7544,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:29.2.2":
-  version: 29.2.2
-  resolution: "jest@npm:29.2.2"
+"jest@npm:29.3.1":
+  version: 29.3.1
+  resolution: "jest@npm:29.3.1"
   dependencies:
-    "@jest/core": ^29.2.2
-    "@jest/types": ^29.2.1
+    "@jest/core": ^29.3.1
+    "@jest/types": ^29.3.1
     import-local: ^3.0.2
-    jest-cli: ^29.2.2
+    jest-cli: ^29.3.1
   peerDependencies:
     node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
   peerDependenciesMeta:
@@ -7559,7 +7559,7 @@ __metadata:
       optional: true
   bin:
     jest: bin/jest.js
-  checksum: 6b4c0af3b5a0fddee46e26c9a539d70a3945700c20444ad3568e14faba27e89671f972dfaa8a02225c4e02b6d422171535660f5e167b1eb765a0922aea82533b
+  checksum: 613f4ec657b14dd84c0056b2fef1468502927fd551bef0b19d4a91576a609678fb316c6a5b5fc6120dd30dd4ff4569070ffef3cb507db9bb0260b28ddaa18d7a
   languageName: node
   linkType: hard
 
