@@ -11,28 +11,13 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 
-const DATASET_API_URL = 'https://xdd.wisc.edu/sets';
-const DICTIONARY_API_URL = 'https://xdd.wisc.edu/api/dictionaries?all';
-
-// A unified method to execute an XDD fetch passing the API key and other header params as needed
-const fetchXDD = async (url: string) => {
-	const headers = new Headers();
-	headers.append('Content-Type', 'application/json');
-	return fetch(url, {
-		// mode: 'no-cors',
-		headers
-	});
-};
-
 const getXDDSets = async () => {
-	const response = await fetchXDD(DATASET_API_URL);
-	const rawdata = await response.json();
-	return rawdata.available_sets;
+	const response: XDDResult = await uncloak('/api/xdd/sets');
+	return response.available_sets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
-	const response = await fetchXDD(DICTIONARY_API_URL);
-	const rawdata: XDDResult = await response.json();
+	const rawdata: XDDResult = await uncloak('/api/xdd/dictionaries');
 	if (rawdata.success) {
 		const { data } = rawdata.success;
 		return data;
@@ -161,10 +146,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
 		//       is not populated and instead the raw field name, abstract, is the one with data
 		//       similarly, re-map the gddid field
-		// eslint-disable-next-line no-underscore-dangle
 		const articles = articlesRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract,
+			// eslint-disable-next-line no-underscore-dangle
 			gddid: a._gddid,
 			knownTerms: a.known_terms
 		}));

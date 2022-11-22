@@ -98,6 +98,9 @@ export type XDDResult = {
 	error?: {
 		message: string;
 	};
+	// XDD Sets
+	description?: string;
+	available_sets?: string[];
 };
 
 export type XDDSearchParams = {

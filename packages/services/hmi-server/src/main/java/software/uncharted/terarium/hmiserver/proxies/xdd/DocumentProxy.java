@@ -10,7 +10,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocumentProxy {
 	@GET
-	@Path("articles")
+	@Path("api/articles")
 	Response getDocuments(
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
@@ -22,4 +22,12 @@ public interface DocumentProxy {
 		@QueryParam("per_page") String per_page,
 		@QueryParam("dict") String dict
 	);
+
+	@GET
+	@Path("sets")
+	Response getAvailableSets();
+
+	@GET
+	@Path("api/dictionaries")
+	Response getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
 }
