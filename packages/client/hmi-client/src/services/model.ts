@@ -19,7 +19,6 @@ const g: IGraph<NodeData, EdgeData> = {
 	nodes: [],
 	edges: []
 };
-
 /**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
