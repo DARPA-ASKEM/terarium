@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
+import { IGraph } from '@graph-scaffolder/index';
 import { PetriNet } from '@/utils/petri-net-validator';
-import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import {
+	runDagreLayout,
+	D3SelectionINode,
+	D3SelectionIEdge,
+	BaseComputionGraph,
+	pathFn
+} from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
 import * as d3 from 'd3';
-
-const MARKER_VIEWBOX = '-5 -5 10 10';
-const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
-const pathFn = d3
-	.line<{ x: number; y: number }>()
-	.x((d) => d.x)
-	.y((d) => d.y);
 
 // This model can be deleted in future. Just used for init graph
 const model: PetriNet = {
@@ -30,33 +29,7 @@ const model: PetriNet = {
 		{ ot: 3, os: 4 }
 	]
 };
-class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
-	setupDefs() {
-		const svg = d3.select(this.svgEl);
-
-		// Clean up
-		svg.select('defs').selectAll('.edge-marker-end').remove();
-
-		// Arrow defs
-		svg
-			.select('defs')
-			.append('marker')
-			.classed('edge-marker-end', true)
-			.attr('id', 'arrowhead')
-			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 2)
-			.attr('refY', 0)
-			.attr('orient', 'auto')
-			.attr('markerWidth', 15)
-			.attr('markerHeight', 15)
-			.attr('markerUnits', 'userSpaceOnUse')
-			.attr('xoverflow', 'visible')
-			.append('svg:path')
-			.attr('d', ARROW)
-			.style('fill', '#000')
-			.style('stroke', 'none');
-	}
-
+class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const state = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
@@ -90,7 +63,7 @@ class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData
 			.style('fill', 'none')
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
-			.attr('marker-end', 'url(#arrowhead)');
+			.attr('marker-end', `url(#${this.EDGE_ARROW_ID})`);
 	}
 }
 
