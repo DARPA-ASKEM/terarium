@@ -50,30 +50,42 @@ const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 
 let modelA: PetriNet = {
-	T: [{ tname: 't-1' }, { tname: 't-2' }],
-	S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
-	I: [
-		{ it: 1, is: 1 },
-		{ it: 2, is: 2 }
-	],
-	O: [
-		{ ot: 1, os: 2 },
-		{ ot: 2, os: 1 },
-		{ ot: 2, os: 3 }
-	]
+	T: [],
+	S: [],
+	I: [],
+	O: []
 };
 let modelB: PetriNet = {
-	T: [{ tname: 't-1' }, { tname: 't-2' }],
-	S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
-	I: [
-		{ it: 1, is: 1 },
-		{ it: 2, is: 1 }
-	],
-	O: [
-		{ ot: 1, os: 2 },
-		{ ot: 2, os: 3 }
-	]
+	T: [],
+	S: [],
+	I: [],
+	O: []
 };
+// let modelA: PetriNet = {
+// 	T: [{ tname: 't-1' }, { tname: 't-2' }],
+// 	S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
+// 	I: [
+// 		{ it: 1, is: 1 },
+// 		{ it: 2, is: 2 }
+// 	],
+// 	O: [
+// 		{ ot: 1, os: 2 },
+// 		{ ot: 2, os: 1 },
+// 		{ ot: 2, os: 3 }
+// 	]
+// };
+// let modelB: PetriNet = {
+// 	T: [{ tname: 't-1' }, { tname: 't-2' }],
+// 	S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
+// 	I: [
+// 		{ it: 1, is: 1 },
+// 		{ it: 2, is: 1 }
+// 	],
+// 	O: [
+// 		{ ot: 1, os: 2 },
+// 		{ ot: 2, os: 3 }
+// 	]
+// };
 let mergedModel;
 
 class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
@@ -147,6 +159,9 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 let renderer: SampleRenderer | null = null;
 let rendererB: SampleRenderer | null = null;
 let rendererC: SampleRenderer | null = null;
+g = runDagreLayout(_.cloneDeep(g));
+g2 = runDagreLayout(_.cloneDeep(g2));
+g3 = runDagreLayout(_.cloneDeep(g3));
 
 let placeCounter = 0;
 let transitionCounter = 0;
@@ -223,9 +238,16 @@ export default defineComponent({
 		const stratifyModelA = ref('');
 		const stratifyModelB = ref('');
 		const stratifyTypeModel = ref('');
-		const nameA = ref('');
-		const nameB = ref('');
-		return { loadModelID, stratifyModelA, stratifyModelB, stratifyTypeModel, nameA, nameB };
+		const stateNamesA = ref('');
+		const stateNamesB = ref('');
+		return {
+			loadModelID,
+			stratifyModelA,
+			stratifyModelB,
+			stratifyTypeModel,
+			stateNamesA,
+			stateNamesB
+		};
 	},
 	methods: {
 		async refresh() {
@@ -237,6 +259,7 @@ export default defineComponent({
 			await rendererC?.render();
 
 			console.log(g, g2, g3);
+			console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
 			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
@@ -364,7 +387,12 @@ export default defineComponent({
 			const output = await resp.json();
 			console.log(petriNetValidator(output));
 
-			if (petriNetValidator(output)) modelA = output;
+			if (petriNetValidator(output)) {
+				modelA = output;
+				g = await parsePetriNet2IGraph(modelA);
+				g = runDagreLayout(_.cloneDeep(g));
+				this.refresh();
+			}
 
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
@@ -786,7 +814,28 @@ export default defineComponent({
 			// 		}
 			// 	]
 			// }
-			const statesToMerge = [{ modelA: this.nameA, modelB: this.nameB }];
+			if (
+				this.stateNamesA.length !== this.stateNamesB.length ||
+				this.stateNamesA.length < 1 ||
+				this.stateNamesB.length < 1
+			) {
+				console.log('Not enough states');
+				return;
+			}
+			const stateNamesArrayA = this.stateNamesA.split(',');
+			const stateNamesArrayB = this.stateNamesB.split(',');
+
+			console.log(stateNamesArrayA, stateNamesArrayB);
+
+			const statesToMerge: { modelA: string; modelB: string }[] = [];
+
+			for (let i = 0; i < stateNamesArrayA.length; i++) {
+				statesToMerge.push({
+					modelA: stateNamesArrayA[i].trim(),
+					modelB: stateNamesArrayB[i].trim()
+				});
+			}
+
 			// console.log('Should match', modelC);
 
 			// const statesToMerge = [
@@ -794,6 +843,7 @@ export default defineComponent({
 			// 	{ modelA: 'p-2', modelB: 'p-1' }
 			// ];
 			// console.log('Should match', modelC2);
+			console.log(statesToMerge);
 
 			const resp = await fetch(`http://localhost:8888/api/models/model-composition`, {
 				method: 'POST',
@@ -912,7 +962,7 @@ export default defineComponent({
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
 		async spawnModelA() {
-			const SIRDModel: PetriNet = {
+			modelA = {
 				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
 				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
 				I: [
@@ -928,9 +978,10 @@ export default defineComponent({
 					{ ot: 3, os: 4 }
 				]
 			};
-			g = parsePetriNet2IGraph(SIRDModel);
+			g = await parsePetriNet2IGraph(modelA);
 			g = runDagreLayout(_.cloneDeep(g));
 			this.refresh();
+			this.jsonOutput();
 			// const QNotQModel: PetriNet = {
 			// 	T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
 			// 	S: [{ sname: 'Q' }, { sname: 'NQ' }],
@@ -963,30 +1014,24 @@ export default defineComponent({
 			// };
 			// await this.createModel(typeModel, true);
 		},
-		spawnModelB() {
+		async spawnModelB() {
 			modelB = {
-				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
-				S: [{ sname: 'Pop' }],
+				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
+				S: [{ sname: 'Q' }, { sname: 'NQ' }],
 				I: [
-					{ it: 1, is: 1 },
-					{ it: 1, is: 1 },
-					{ it: 2, is: 1 },
-					{ it: 3, is: 1 }
+					{ it: 1, is: 2 },
+					{ it: 2, is: 1 }
 				],
 				O: [
 					{ ot: 1, os: 1 },
-					{ ot: 1, os: 1 },
-					{ ot: 2, os: 1 },
-					{ ot: 3, os: 1 }
+					{ ot: 2, os: 2 }
 				]
 			};
 
-			g2 = parsePetriNet2IGraph(modelB);
+			g2 = await parsePetriNet2IGraph(modelB);
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
-			// this.jsonOutput();
-
-			console.log(modelA, modelB);
+			this.jsonOutput();
 		}
 	}
 });
@@ -996,10 +1041,11 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
-		<button type="button" @click="spawnModelA">Spawn Model A</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
+		&nbsp;
+		<button type="button" @click="spawnModelA">Spawn Model A</button>
 		<form>
 			<label for="loadModel">
 				<input v-model="loadModelID" type="text" placeholder="Model ID" />
@@ -1024,9 +1070,12 @@ export default defineComponent({
 		<br />
 		<br />
 		<form>
+			List states you want to merge eg: | p-1, p-2 | | s-1, s-2 | means p-1 will merge with s-1 and
+			p-2 will merge with s-2
+			<br />
 			<label for="loadModel">
-				<input type="text" placeholder="State to merge A" v-model="nameA" />
-				<input type="text" placeholder="State to merge B" v-model="nameB" />
+				<input type="text" placeholder="States to merge A" v-model="stateNamesA" />
+				<input type="text" placeholder="States to merge B" v-model="stateNamesB" />
 			</label>
 		</form>
 		<br />
