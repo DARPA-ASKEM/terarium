@@ -124,8 +124,8 @@ onMounted(async () => {
 const selectedModelId = ref('1');
 
 const model = ref<Model | null>(null);
+// Whenever selectedModelId changes, fetch model with that ID
 watchEffect(async () => {
-	// Fetch model with ID selectedModelId
 	const result = await getModel(selectedModelId.value);
 	model.value = result as Model;
 });
