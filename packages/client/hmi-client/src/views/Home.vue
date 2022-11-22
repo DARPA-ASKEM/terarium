@@ -4,7 +4,6 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
-import { useRouter } from 'vue-router';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -26,17 +25,6 @@ const mockProjects = [
 		description: 'Test Project B'
 	}
 ];
-
-const router = useRouter();
-
-function openProject(id) {
-	router.push(`/projects/${id}`);
-}
-
-function openProjectNewTab(id) {
-	const routeLocation = router.resolve({ path: `/projects/${id}` });
-	window.open(routeLocation.href, '_blank');
-}
 </script>
 
 <template>
@@ -54,12 +42,15 @@ function openProjectNewTab(id) {
 						<NewProjectCard />
 					</li>
 					<li v-for="(project, index) in mockProjects" :key="index">
-						<ProjectCard
-							:name="project.name"
-							@click.exact="openProject(project.id)"
-							@click.meta="openProjectNewTab(project.id)"
-							@click.ctrl="openProjectNewTab(project.id)"
-						/>
+						<!-- <a :href="getProjectRouteLocation(project.id)" style="text-decoration:none;"> -->
+						<router-link
+							style="text-decoration: none; color: inherit"
+							:to="'/projects/' + project.id"
+							:id="project.id"
+						>
+							<ProjectCard :name="project.name" />
+						</router-link>
+						<!-- </a> -->
 					</li>
 				</ul>
 				<IconChevronRight32 class="chevron-right" />
@@ -143,7 +134,6 @@ ul {
 	display: flex;
 	gap: 0.5rem;
 	margin: 0.5rem 4rem;
-	transition: 0.2s;
 }
 
 li {
@@ -153,9 +143,10 @@ li {
 	position: relative;
 }
 
-li:hover > .project-card {
+a:hover {
 	transform: scale(1.2);
 	z-index: 2;
+	transition: 0.2s;
 }
 
 li > * {
