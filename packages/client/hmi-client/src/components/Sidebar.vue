@@ -187,7 +187,6 @@ aside.side-panel-close {
 }
 
 aside header {
-	color: var(--un-color-body-text-secondary);
 	font: var(--un-font-h5);
 	overflow: hidden;
 }
