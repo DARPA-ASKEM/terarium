@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models;
 
 import javax.json.bind.annotation.JsonbProperty;
-import java.util.Map;
 
 
 public class SimulationPlan {

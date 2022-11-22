@@ -63,7 +63,7 @@ export default defineComponent({
 			return (item as Model).name || (item as XDDArticle).title;
 		},
 		formatTitle(item: ResultType) {
-			const maxSize = 15;
+			const maxSize = 36;
 			const itemTitle = this.getTitle(item);
 			return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
 		},
@@ -75,10 +75,12 @@ export default defineComponent({
 			}
 			if (isXDDArticle(item)) {
 				itemDesc =
-					((item as XDDArticle).abstract && typeof (item as XDDArticle).abstract === 'string'
-						? (item as XDDArticle).abstract
+					((item as XDDArticle).abstractText &&
+					typeof (item as XDDArticle).abstractText === 'string'
+						? (item as XDDArticle).abstractText
 						: false) ||
 					(item as XDDArticle).journal ||
+					(item as XDDArticle).publisher ||
 					itemDesc;
 			}
 			return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
