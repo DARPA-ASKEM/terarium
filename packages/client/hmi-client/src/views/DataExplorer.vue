@@ -403,7 +403,8 @@ export default defineComponent({
 					perPage: this.pageSize,
 					fullResults: !this.rankedResults,
 					doi: isValidDOI ? this.searchTerm : undefined,
-					title: this.isSearchTitle && !isValidDOI ? this.searchTerm : undefined
+					title: this.isSearchTitle && !isValidDOI ? this.searchTerm : undefined,
+					facets: true // include facets aggregation data in the search results
 				}
 			};
 

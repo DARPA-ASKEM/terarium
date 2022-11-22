@@ -85,9 +85,20 @@ export type XDDDictionary = {
 	case_sensitive: boolean;
 };
 
+export type XDDFacetsItemResponse = {
+	doc_count_error_upper_bound: number;
+	sum_other_doc_count: number;
+	buckets: { key: string; doc_count: number }[];
+};
+
+export type XDDFacetsResponse = {
+	[key: string]: XDDFacetsItemResponse;
+};
+
 export type XDDResult = {
 	success?: {
 		data: XDDArticle[] | XDDDictionary[] | XDDArtifact[];
+		facets: XDDFacetsResponse | null;
 		// URL to fetch next page results
 		// https://xdd.wisc.edu/api/articles?&include_score=true&per_page=100&term=abbott&publisher=USGS&full_results
 		// "https://xdd.wisc.edu/api/articles?scroll_id=a5e403ac-76b9-4400-94bb-59c9e3e030d6"
@@ -113,6 +124,7 @@ export type XDDSearchParams = {
 	ignoreBytes?: boolean;
 	fullResults?: boolean;
 	includeScore?: boolean;
+	facets?: boolean;
 	max?: number;
 	perPage?: number;
 };
@@ -130,6 +142,7 @@ export const VOL = 'vol'; // Volume
 export const NUMBER = 'number'; // Issue
 export const AUTHORS = 'authors'; // An array of objects, each containing a key 'name' and a value equal to the name of one author
 export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the article (e.g. Elsevier, USGS)
+export const PUBLICATION_NAME = 'pubname';
 export const PAGES = 'pages'; // Articles' page numbers within the issue
 export const YEAR = 'year'; // Year of publication
 
@@ -141,6 +154,7 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[NUMBER]: 'Journal Issue Number',
 	[AUTHORS]: 'Authors',
 	[PUBLISHER]: 'Publisher',
+	[PUBLICATION_NAME]: 'Publication Name',
 	[PAGES]: 'Number of Pages',
 	[YEAR]: 'Publication Year'
 };

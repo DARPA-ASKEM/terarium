@@ -32,7 +32,8 @@ public class DocumentResource {
 		@QueryParam("full_results") String full_results,
 		@QueryParam("max") String max,
 		@QueryParam("per_page") String per_page,
-		@QueryParam("dict") String dict
+		@QueryParam("dict") String dict,
+		@QueryParam("facets") String facets
 	) {
 		// only go ahead with the query if at least one param is present
 		if (doi != null || title != null || term != null) {
@@ -57,7 +58,7 @@ public class DocumentResource {
 				per_page = null;
 				dict = null;
 			}
-			return proxy.getDocuments(doi, title, term, dataset, include_score, full_results, max, per_page, dict);
+			return proxy.getDocuments(doi, title, term, dataset, include_score, full_results, max, per_page, dict, facets);
 		}
 		return Response.noContent().build();
 	}

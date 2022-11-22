@@ -1,5 +1,5 @@
 import { uniqBy } from 'lodash';
-import { ResourceType, SearchParameters, SearchResults } from '@/types/common';
+import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import { uncloak } from '@/utils/uncloak';
 import { Model, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
@@ -117,8 +117,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		// request results to be ranked
 		url += '&include_score=true';
 	}
-
-	// what about doi and title
+	if (xddSearchParam?.facets) {
+		url += '&facets=true';
+	}
 
 	// "max": "Maximum number of articles to return (default is all)",
 	url += `&max=${limitResultsCount}`;
@@ -140,7 +141,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	const rawdata: XDDResult = await uncloak(url);
 
 	if (rawdata.success) {
-		const { data, hits, scrollId, nextPage } = rawdata.success;
+		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
 		const articlesRaw = data as XDDArticle[];
 
 		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
@@ -154,8 +155,21 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			knownTerms: a.known_terms
 		}));
 
+		const formattedFacets: Facets = {};
+		if (facets) {
+			// we receive facets data, so make sure it is in the proper format
+			const facetKeys = Object.keys(facets);
+			facetKeys.forEach((facetKey) => {
+				formattedFacets[facetKey] = facets[facetKey].buckets.map((e) => ({
+					key: e.key,
+					value: e.doc_count
+				}));
+			});
+		}
+
 		return {
 			results: articles,
+			facets: formattedFacets,
 			searchSubsystem: ResourceType.XDD,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',

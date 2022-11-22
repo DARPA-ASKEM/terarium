@@ -82,7 +82,7 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 				// e.g., XDD will have facets that leverage the XDD fields and stats
 				if (resultsObj.searchSubsystem === ResourceType.XDD) {
 					const xddResults = resultsObj.results as XDDArticle[];
-					const xddFacets = getXDDFacets(xddResults);
+					const xddFacets = resultsObj.facets || getXDDFacets(xddResults);
 					facets = mergeWith(facets, xddFacets, mergeCustomizer);
 				}
 				if (resultsObj.searchSubsystem === ResourceType.MODEL) {

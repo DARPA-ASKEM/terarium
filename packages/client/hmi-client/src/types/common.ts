@@ -23,6 +23,7 @@ export type ResultType = Model | XDDArticle;
 
 export type SearchResults = {
 	results: ResultType[];
+	facets?: Facets;
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;
