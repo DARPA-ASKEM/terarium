@@ -101,9 +101,9 @@ export default defineComponent({
 						results.forEach((article) => {
 							list.push({
 								// eslint-disable-next-line no-underscore-dangle
-								id: article._gddid,
+								id: article.gddid,
 								name: article.title,
-								desc: article.journal ?? article.abstract ?? '', // FIXME: XDD should always return valid abstract
+								desc: article.journal ?? article.abstractText ?? '', // FIXME: XDD should always return valid abstract
 								source: article.publisher ?? article.author.map((a) => a.name).join('\n'),
 								type: ResourceType.XDD
 							});
@@ -116,7 +116,7 @@ export default defineComponent({
 								id: model.id,
 								name: model.name,
 								desc: model.description,
-								source: model.source,
+								source: model.framework,
 								type: model.type
 							});
 						});
@@ -164,7 +164,7 @@ export default defineComponent({
 			// FIXME: make this func computed
 			const originalResults = this.inputItems.find((items) => items.searchSubsystem === item.type);
 			if (originalResults) {
-				const idField = item.type === ResourceType.XDD ? '_gddid' : 'id'; // FIXME
+				const idField = item.type === ResourceType.XDD ? 'gddid' : 'id'; // FIXME
 				const originalItem = originalResults.results.find(
 					(resItem) => resItem[idField] === item.id
 				);
@@ -191,7 +191,7 @@ export default defineComponent({
 					if (isXDDArticle(originalItem)) {
 						const itemAsArticle = originalItem as XDDArticle;
 						const searchItemAsArticle = searchItem as XDDArticle;
-						return searchItemAsArticle.title === itemAsArticle.title; // FIXME: should this be _gddid
+						return searchItemAsArticle.title === itemAsArticle.title; // FIXME: should this be gddid
 					}
 					return false;
 				});

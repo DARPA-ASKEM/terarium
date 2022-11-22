@@ -5,7 +5,7 @@ import software.uncharted.terarium.hmiserver.models.Model;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
+import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/models")
@@ -13,7 +13,7 @@ import java.util.List;
 public interface ModelProxy {
 
 	@GET
-	List<Model> getModels();
+	Response getModels();
 
 	@GET
 	@Path("/{id}")

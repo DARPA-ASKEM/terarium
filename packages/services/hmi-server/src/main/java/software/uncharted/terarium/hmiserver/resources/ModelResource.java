@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.Model;
@@ -10,9 +11,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
 
 @Path("/api/models")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")
@@ -26,11 +27,7 @@ public class ModelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all models")
 	public Response getModels() {
-		final List<Model> models = modelProxy.getModels();
-		if (models.isEmpty()) {
-			return Response.noContent().build();
-		}
-		return Response.ok(models).build();
+		return modelProxy.getModels();
 	}
 
 	@GET

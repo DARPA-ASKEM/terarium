@@ -77,7 +77,7 @@ export const getResourceTypeIcon = (type: string) => {
 };
 
 export function isModel(item: ResultType): item is Model {
-	return (<Model>item).status !== undefined;
+	return (<Model>item).content !== undefined;
 }
 
 export function isXDDArticle(item: ResultType): item is XDDArticle {
@@ -86,8 +86,7 @@ export function isXDDArticle(item: ResultType): item is XDDArticle {
 
 export function getResourceID(item: ResultType) {
 	if (isXDDArticle(item)) {
-		// eslint-disable-next-line no-underscore-dangle
-		return (item as XDDArticle)._gddid;
+		return (item as XDDArticle).gddid;
 	}
 	return item.id;
 }

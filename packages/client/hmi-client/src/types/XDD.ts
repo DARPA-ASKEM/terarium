@@ -1,4 +1,5 @@
 export enum XDDExtractionType {
+	Document = 'Document',
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
@@ -26,11 +27,14 @@ export type XDDArticleKnownTerms = {
 export const ArticleFilterAttributes = ['title', 'publisher'];
 
 export type XDDArticle = {
-	abstract: string; // description
+	// REVIEW: FIXME: server should provide proper field names
+	//         also, reove the temp workaround in the client data service
+	abstractText: string; // mapped from abstract
+	abstract: string;
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string;
-	known_terms?: XDDArticleKnownTerms[];
+	knownTerms?: XDDArticleKnownTerms[];
 	link: XDDArticleLink[];
 	number: string;
 	pages: string;
@@ -39,25 +43,36 @@ export type XDDArticle = {
 	type: string;
 	volume: string;
 	year: string;
+	gddid: string; // mapped from _gddid
 	_gddid: string;
 };
 
-export type XDDArtifactExtraction = {
-	id: string; // Internal COSMOS id of object
-	bytes?: string | null; // base64 ASCII-decoded image bytes of the object
-	content?: string; // Text content within the object
-	page_number?: string; // Source page number within the document
-	/* cls in the results sometimes is mapped, e.g., specifying "Body Text" => "Section" */
-	cls: XDDExtractionType | string; // COSMOS-computed class of the object.
-	base_confidence?: number; // Confidence score (logit) of the initial COSMOS classification
-	postprocessing_confidence?: number; // Confidence score of the COSMOS post-processing model
-	header_content?: string; // Content field
+export type XDDArtifactProperties = {
+	title: string;
+	DOI: string;
+	trustScore: string;
+	abstractText: string;
+	xddId: string;
+	documentId: string;
+	documentTitle: string;
+	contentText: string;
+	indexInDocument: number;
+	contentJSON: { [key: string]: { [key: string]: string } };
+	image: string;
+	relevantSentences: string;
+	sectionID: string;
+	sectionTitle: string;
+	caption: string;
 };
 
+// XDD extraction object, which should match Extraction.java at the backend
 export type XDDArtifact = {
-	pdf_name: string; // Filename of document
-	children: XDDArtifactExtraction[]; // array of extractions from this artifact
-	bibjson: XDDArticle; // Bibliographical JSON of document (looked up within xDD)
+	ASKEM_CLASS: string; // mapped from askemClass
+	askemClass: string;
+	properties: XDDArtifactProperties;
+	askemId: string;
+	xddCreated: Date;
+	xddRegistrant: number;
 };
 
 export type XDDDictionary = {
@@ -69,11 +84,11 @@ export type XDDDictionary = {
 
 export type XDDResult = {
 	success?: {
-		data: XDDArticle[] | XDDDictionary[];
+		data: XDDArticle[] | XDDDictionary[] | XDDArtifact[];
 		// URL to fetch next page results
 		// https://xdd.wisc.edu/api/articles?&include_score=true&per_page=100&term=abbott&publisher=USGS&full_results
 		// "https://xdd.wisc.edu/api/articles?scroll_id=a5e403ac-76b9-4400-94bb-59c9e3e030d6"
-		next_page?: string;
+		nextPage?: string;
 		scrollId?: string;
 		hits?: number;
 	};
@@ -88,7 +103,7 @@ export type XDDSearchParams = {
 	enablePagination?: boolean;
 	pageSize?: number;
 	type?: XDDExtractionType;
-	ignore_bytes?: boolean;
+	ignoreBytes?: boolean;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
