@@ -147,9 +147,6 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 let renderer: SampleRenderer | null = null;
 let rendererB: SampleRenderer | null = null;
 let rendererC: SampleRenderer | null = null;
-g = runDagreLayout(_.cloneDeep(g));
-g2 = runDagreLayout(_.cloneDeep(g2));
-g3 = runDagreLayout(_.cloneDeep(g3));
 
 let placeCounter = 0;
 let transitionCounter = 0;
@@ -232,14 +229,14 @@ export default defineComponent({
 	},
 	methods: {
 		async refresh() {
-			console.log(g2, g3);
-
 			await renderer?.setData(g);
 			await renderer?.render();
 			await rendererB?.setData(g2);
 			await rendererB?.render();
 			await rendererC?.setData(g3);
 			await rendererC?.render();
+
+			console.log(g, g2, g3);
 		},
 		async LotkaVolterra() {
 			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
@@ -814,7 +811,8 @@ export default defineComponent({
 			console.log('Merged petrinet', output);
 
 			mergedModel = output;
-			g3 = { ...parsePetriNet2IGraph(mergedModel) };
+			g3 = parsePetriNet2IGraph(mergedModel);
+			g3 = runDagreLayout(_.cloneDeep(g3));
 			this.refresh();
 			this.jsonOutput();
 			// this.createModel(output, true);
@@ -930,9 +928,8 @@ export default defineComponent({
 					{ ot: 3, os: 4 }
 				]
 			};
-			// g = parsePetriNet2IGraph(SIRDModel);
-
-			await this.createModel(SIRDModel, true);
+			g = parsePetriNet2IGraph(SIRDModel);
+			g = runDagreLayout(_.cloneDeep(g));
 			this.refresh();
 			// const QNotQModel: PetriNet = {
 			// 	T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
@@ -984,7 +981,8 @@ export default defineComponent({
 				]
 			};
 
-			g2 = { ...parsePetriNet2IGraph(modelB) };
+			g2 = parsePetriNet2IGraph(modelB);
+			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
 			// this.jsonOutput();
 

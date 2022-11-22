@@ -90,5 +90,5 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 
-	return g;
+	return { ...g };
 };
