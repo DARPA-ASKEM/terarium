@@ -10,7 +10,9 @@ const router = useRouter();
 const { isCurrentRouteHome } = useCurrentRouter();
 const isHome = computed(() => isCurrentRouteHome.value);
 
-const goToHomepage = () => router.push('/');
+const goToHomepage = () => {
+	router.push('/');
+};
 const goToDataExplorer = () => emit('show-data-explorer');
 
 const projectName = 'Name of the project that can be long for clarity and precision';
@@ -20,9 +22,13 @@ const projectName = 'Name of the project that can be long for clarity and precis
 	<header>
 		<img v-if="isHome" src="@assets/images/logo.png" height="32" width="128" alt="logo" />
 		<img v-else src="@assets/images/icon.png" height="32" width="32" alt="TERArium icon" />
-		<p>
-			<a @onclick="goToHomepage">Projects</a>
-			<span>{{ projectName }}</span>
+		<p v-if="!isHome">
+			<a @click="goToHomepage">Projects</a>
+			<span> {{ projectName }}</span>
+			<!-- Debug -->
+			<span>
+				{{ $route.params }}
+			</span>
 		</p>
 		<aside>
 			<Button class="data-explorer" @click="goToDataExplorer">

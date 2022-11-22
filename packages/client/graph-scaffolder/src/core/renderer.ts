@@ -351,7 +351,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
 			const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
-			nodeDraggingIds = [node.datum().label, ...childrenNodes.data().map((d) => d.label)];
+			nodeDraggingIds = [node.datum().id, ...childrenNodes.data().map((d) => d.id)];
 
 			sufficientlyMoved = false;
 			emitWrapper('node-drag-start', evt, node, renderer);
