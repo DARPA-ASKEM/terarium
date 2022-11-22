@@ -377,10 +377,12 @@ export default defineComponent({
 			//
 			// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
 			//
+			// this requires hitting the backend twice to grab filtered and filtered data (and facets)
+			//
 
 			const isValidDOI = validate(this.searchTerm);
 
-			// start with current search parameters
+			// start with initial search parameters
 			const searchParams: SearchParameters = {
 				xdd: {
 					dict: this.dictNames,
@@ -418,15 +420,15 @@ export default defineComponent({
 					}
 				}
 			});
-			// update search parameters object
-			searchParams.xdd = xddSearchParams;
-
 			const modelSearchParams = searchParams?.model || {
 				filters: this.clientFilters
 			};
+
 			// update search parameters object
+			searchParams.xdd = xddSearchParams;
 			searchParams.model = modelSearchParams;
 
+			// fetch second time with facet filtered applied
 			const allDataFilteredWithFacets: SearchResults[] = await fetchData(
 				this.searchTerm,
 				searchParams
@@ -488,9 +490,6 @@ export default defineComponent({
 				}
 				this.selectedSearchItems = [...this.selectedSearchItems, item];
 			}
-		},
-		onSelection() {
-			console.log(`selected ${this.selectedSearchItems.length.toString()} items!`);
 		},
 		removeDictName(term: string) {
 			this.dictNames = this.dictNames.filter((t) => t !== term);
