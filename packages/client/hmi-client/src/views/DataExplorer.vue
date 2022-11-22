@@ -39,10 +39,10 @@
 						<li>
 							<button
 								type="button"
-								:class="{ active: resultType === ResourceType.ALL }"
-								@click="onResultTypeChanged(ResourceType.ALL)"
+								:class="{ active: resultType === ResourceType.XDD }"
+								@click="onResultTypeChanged(ResourceType.XDD)"
 							>
-								All
+								Papers
 							</button>
 						</li>
 						<li>
@@ -52,15 +52,6 @@
 								@click="onResultTypeChanged(ResourceType.MODEL)"
 							>
 								Models
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.XDD }"
-								@click="onResultTypeChanged(ResourceType.XDD)"
-							>
-								Articles
 							</button>
 						</li>
 					</ul>
@@ -124,7 +115,7 @@
 					/>
 					<div class="results-content">
 						<search-results-list
-							:data-items="filteredDataItems"
+							:data-items="dataItems"
 							:result-type="resultType"
 							:selected-search-items="selectedSearchItems"
 							@toggle-data-item-selected="toggleDataItemSelected"
@@ -141,7 +132,7 @@
 				<template v-if="viewType === ViewType.MATRIX">
 					<div class="results-content">
 						<search-results-matrix
-							:data-items="filteredDataItems"
+							:data-items="dataItems"
 							:result-type="resultType"
 							:selected-search-items="selectedSearchItems"
 							:dict-names="dictNames"
@@ -176,7 +167,6 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 
-import { cloneDeep } from 'lodash';
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
@@ -197,14 +187,20 @@ import {
 	ViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
-import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types/XDD';
+import {
+	XDD_RESULT_DEFAULT_PAGE_SIZE,
+	XDDArticle,
+	XDDDictionary,
+	FACET_FIELDS as XDD_FACET_FIELDS,
+	YEAR
+} from '@/types/XDD';
 import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import DrilldownPanel from '@/components/drilldown-panel.vue';
-import { applyFacetFiltersToData, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { isModel, isXDDArticle, validate } from '@/utils/data-util';
 
 import IconClose16 from '@carbon/icons-vue/es/close/16';
 
@@ -237,7 +233,6 @@ export default defineComponent({
 	emits: ['hide', 'show-overlay', 'hide-overlay'],
 	setup() {
 		const dataItems = ref<SearchResults[]>([]);
-		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
 		const selectedSearchItems = ref<ResultType[]>([]);
 		const searchTerm = ref('');
 		const query = useQueryStore();
@@ -246,7 +241,6 @@ export default defineComponent({
 		return {
 			searchTerm,
 			dataItems,
-			filteredDataItems,
 			selectedSearchItems,
 			query,
 			drilldownTabs: DRILLDOWN_TABS,
@@ -267,7 +261,7 @@ export default defineComponent({
 		facets: {} as Facets,
 		filteredFacets: {} as Facets,
 		//
-		resultType: ResourceType.ALL as string,
+		resultType: ResourceType.XDD as string,
 		viewType: ViewType.LIST as string,
 		ResourceType,
 		ViewType
@@ -280,15 +274,13 @@ export default defineComponent({
 			let total = 0;
 			if (this.resultType === ResourceType.ALL) {
 				// count the results from all subsystems
-				this.filteredDataItems.forEach((res) => {
+				this.dataItems.forEach((res) => {
 					const count = res?.hits ?? res?.results.length;
 					total += count;
 				});
 			} else {
 				// only return the results count for the selected subsystems
-				const resList = this.filteredDataItems.find(
-					(res) => res.searchSubsystem === this.resultType
-				);
+				const resList = this.dataItems.find((res) => res.searchSubsystem === this.resultType);
 				if (resList) {
 					// eslint-disable-next-line no-unsafe-optional-chaining
 					total += resList?.hits ?? resList?.results.length;
@@ -304,7 +296,7 @@ export default defineComponent({
 		clientFilters(n, o) {
 			if (filtersUtil.isEqual(n, o)) return;
 			// data has not changed; the user just changed one of the facet filters
-			this.applyFiltersToData(); // this will trigger facet re-calculation
+			this.refresh(); // this will trigger facet re-calculation
 		},
 		dictNames() {
 			// re-fetch data from the server, apply filters, and re-calculate the facets
@@ -317,14 +309,8 @@ export default defineComponent({
 		resultType() {
 			// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
 			// re-calculate the facets
-			this.calculateFacets();
-		},
-		dataItems() {
-			// new data has arrived, apply filters, if any
-			this.applyFiltersToData(); // this will trigger facet re-calculation
-		},
-		filteredDataItems() {
-			this.calculateFacets();
+			// REVIEW
+			this.refresh();
 		}
 	},
 	async mounted() {
@@ -374,19 +360,13 @@ export default defineComponent({
 				this.resources.setXDDDataset(newDataset);
 			}
 		},
-		calculateFacets() {
+		calculateFacets(unfilteredData: SearchResults[], filteredData: SearchResults[]) {
 			// retrieves filtered & unfiltered facet data
 			// const defaultFilters = { clauses: [] };
-			this.facets = getFacets(this.dataItems, this.resultType /* , defaultFilters */);
-			this.filteredFacets = getFacets(
-				this.filteredDataItems,
-				this.resultType /* , this.clientFilters */
-			);
+			this.facets = getFacets(unfilteredData, this.resultType /* , defaultFilters */);
+			this.filteredFacets = getFacets(filteredData, this.resultType /* , this.clientFilters */);
 		},
-		// retrieves filtered data items list
 		async fetchDataItemList() {
-			// get the filtered data
-
 			// const options = {
 			//   from: this.pageCount * this.pageSize,
 			//   size: this.pageSize
@@ -394,7 +374,13 @@ export default defineComponent({
 
 			this.$emit('show-overlay');
 
+			//
+			// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
+			//
+
 			const isValidDOI = validate(this.searchTerm);
+
+			// start with current search parameters
 			const searchParams: SearchParameters = {
 				xdd: {
 					dict: this.dictNames,
@@ -408,15 +394,51 @@ export default defineComponent({
 				}
 			};
 
+			// first: fetch the data unfiltered by facets
 			const allData: SearchResults[] = await fetchData(this.searchTerm, searchParams);
-			this.dataItems = allData;
+
+			//
+			// extend search parameters by converting facet filters into proper search parameters
+			//
+
+			const xddSearchParams = searchParams?.xdd || {};
+			// transform facet filters into xdd search parameters
+			this.clientFilters.clauses.forEach((clause) => {
+				if (XDD_FACET_FIELDS.includes(clause.field)) {
+					// NOTE: special case
+					if (clause.field === YEAR) {
+						// FIXME: handle the case when multiple years are selected
+						const val = (clause.values as string[]).join(',');
+						const formattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
+						xddSearchParams.min_published = formattedVal;
+						xddSearchParams.max_published = formattedVal;
+					} else {
+						const val = (clause.values as string[]).join(',');
+						xddSearchParams[clause.field] = val;
+					}
+				}
+			});
+			// update search parameters object
+			searchParams.xdd = xddSearchParams;
+
+			const modelSearchParams = searchParams?.model || {
+				filters: this.clientFilters
+			};
+			// update search parameters object
+			searchParams.model = modelSearchParams;
+
+			const allDataFilteredWithFacets: SearchResults[] = await fetchData(
+				this.searchTerm,
+				searchParams
+			);
+
+			// the list of results displayed in the data explorer is always the final filtered data
+			this.dataItems = allDataFilteredWithFacets;
+
+			// final step: cache the facets and filteredFacets objects
+			this.calculateFacets(allData, allDataFilteredWithFacets);
 
 			this.$emit('hide-overlay');
-		},
-		applyFiltersToData() {
-			const allDataCloned = cloneDeep(this.dataItems);
-			applyFacetFiltersToData(allDataCloned, this.resultType, this.clientFilters);
-			this.filteredDataItems = allDataCloned;
 		},
 		async refresh() {
 			this.pageCount = 0;
@@ -454,7 +476,7 @@ export default defineComponent({
 						(searchItem as Model).id !== itemID && (searchItem as XDDArticle).title !== itemID
 				);
 			} else {
-				const dataitem = this.filteredDataItems
+				const dataitem = this.dataItems
 					.map((res) => res.results)
 					.flat()
 					.find(

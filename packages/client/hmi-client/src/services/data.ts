@@ -1,7 +1,9 @@
 import { uniqBy } from 'lodash';
 import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import { uncloak } from '@/utils/uncloak';
-import { Model, MODEL_FILTER_FIELDS } from '../types/Model';
+import { getModelFacets } from '@/utils/facets';
+import { applyFacetFiltersToModels } from '@/utils/data-util';
+import { Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
 	XDDArticle,
 	XDDArtifact,
@@ -25,7 +27,7 @@ const getXDDDictionaries = async () => {
 	return [] as XDDDictionary[];
 };
 
-const getModels = async (term: string) => {
+const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => {
 	const finalModels: Model[] = [];
 
 	//
@@ -52,9 +54,22 @@ const getModels = async (term: string) => {
 		});
 	}
 
+	const modelResults = term.length > 0 ? uniqBy(finalModels, 'id') : allModels;
+
+	if (modelSearchParam && modelSearchParam.filters) {
+		// modelSearchParam currently represent facets filters that can be applied
+		//  to further refine the list of models
+		applyFacetFiltersToModels(modelResults, modelSearchParam.filters);
+	}
+
+	// FIXME: this client-side computation of facets from "models" data should be done
+	//        at the HMI server
+	const modelFacets = getModelFacets(modelResults);
+
 	return {
-		results: term.length > 0 ? uniqBy(finalModels, 'id') : allModels,
-		searchSubsystem: ResourceType.MODEL
+		results: modelResults,
+		searchSubsystem: ResourceType.MODEL,
+		facets: modelFacets
 	};
 };
 
@@ -111,6 +126,18 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
 		url += `&dict=${xddSearchParam.dict.join(',')}`;
 	}
+	if (xddSearchParam?.min_published) {
+		url += `&min_published=${xddSearchParam.min_published}`;
+	}
+	if (xddSearchParam?.max_published) {
+		url += `&max_published=${xddSearchParam.max_published}`;
+	}
+	if (xddSearchParam?.pubname) {
+		url += `&pubname=${xddSearchParam.pubname}`;
+	}
+	if (xddSearchParam?.publisher) {
+		url += `&publisher=${xddSearchParam.publisher}`;
+	}
 	if (enablePagination) {
 		url += '&full_results';
 	} else {
@@ -137,7 +164,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
-	// full_results
 	const rawdata: XDDResult = await uncloak(url);
 
 	if (rawdata.success) {
@@ -202,7 +228,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	// models (e.g., for models)
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getModels(term));
+			resolve(getModels(term, searchParam?.model));
 		} catch (err: any) {
 			reject(new Error(`Error fetching models results: ${err}`));
 		}
@@ -213,4 +239,4 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts };
+export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts, searchXDDArticles };

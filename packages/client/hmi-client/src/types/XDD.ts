@@ -127,6 +127,10 @@ export type XDDSearchParams = {
 	facets?: boolean;
 	max?: number;
 	perPage?: number;
+	min_published?: string; // Must be ISO date string e.g., "2020-01-01"
+	max_published?: string; // Must be ISO date string e.g., "2020-01-01"
+	pubname?: string;
+	publisher?: string;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
@@ -159,4 +163,5 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[YEAR]: 'Publication Year'
 };
 
-export const FACET_FIELDS: string[] = [TYPE, JOURNAL, PUBLISHER, YEAR];
+// Initail implementation of facets by XDD team only supports the following fields
+export const FACET_FIELDS: string[] = [PUBLISHER, YEAR, PUBLICATION_NAME];

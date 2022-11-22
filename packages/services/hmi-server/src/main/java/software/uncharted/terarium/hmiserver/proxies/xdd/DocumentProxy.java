@@ -21,7 +21,11 @@ public interface DocumentProxy {
 		@QueryParam("max") String max,
 		@QueryParam("per_page") String per_page,
 		@QueryParam("dict") String dict,
-		@QueryParam("facets") String facets
+		@QueryParam("facets") String facets,
+		@QueryParam("min_published") String min_published,
+		@QueryParam("max_published") String max_published,
+		@QueryParam("pubname") String pubname,
+		@QueryParam("publisher") String publisher
 	);
 
 	@GET

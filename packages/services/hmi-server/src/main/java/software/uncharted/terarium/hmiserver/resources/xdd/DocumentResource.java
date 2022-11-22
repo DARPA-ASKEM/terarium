@@ -33,7 +33,11 @@ public class DocumentResource {
 		@QueryParam("max") String max,
 		@QueryParam("per_page") String per_page,
 		@QueryParam("dict") String dict,
-		@QueryParam("facets") String facets
+		@QueryParam("facets") String facets,
+		@QueryParam("min_published") String min_published,
+		@QueryParam("max_published") String max_published,
+		@QueryParam("pubname") String pubname,
+		@QueryParam("publisher") String publisher
 	) {
 		// only go ahead with the query if at least one param is present
 		if (doi != null || title != null || term != null) {
@@ -47,6 +51,10 @@ public class DocumentResource {
 				max = null;
 				per_page = null;
 				dict = null;
+				min_published = null;
+				max_published = null;
+				pubname = null;
+				publisher = null;
 			}
 			if (title != null) {
 				doi = null;
@@ -57,8 +65,14 @@ public class DocumentResource {
 				max = null;
 				per_page = null;
 				dict = null;
+				min_published = null;
+				max_published = null;
+				pubname = null;
+				publisher = null;
 			}
-			return proxy.getDocuments(doi, title, term, dataset, include_score, full_results, max, per_page, dict, facets);
+			return proxy.getDocuments(
+				doi, title, term, dataset, include_score, full_results, max, per_page, dict, facets,
+				min_published, max_published, pubname, publisher);
 		}
 		return Response.noContent().build();
 	}
