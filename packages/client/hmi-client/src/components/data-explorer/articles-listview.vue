@@ -66,105 +66,85 @@
 	</div>
 </template>
 
-<script lang="ts">
-// import moment from 'moment';
-import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
 import { ResourceType, ResultType } from '@/types/common';
 import { getResourceTypeIcon, isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
-import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
 
-export default defineComponent({
-	name: 'ArticlesListview',
-	components: {
-		MultilineDescription,
-		IconCheckbox20,
-		IconCheckboxChecked20,
-		IconRadioButton20,
-		IconCloseOutline20
+const props = defineProps({
+	articles: {
+		type: Array as PropType<XDDArticle[]>,
+		default: () => []
 	},
-	props: {
-		articles: {
-			type: Array as PropType<XDDArticle[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		}
-	},
-	emits: ['toggle-article-selected'],
-	setup(props) {
-		const expandedRowId = ref('');
-
-		const { articles } = toRefs(props);
-
-		watch(
-			articles,
-			() => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const elem: any = document.getElementsByClassName('table-fixed-head');
-				if (elem.length === 0) return;
-				elem[0].scrollTop = 0;
-			},
-			{ immediate: true }
-		);
-
-		return {
-			expandedRowId,
-			ResourceType,
-			getResourceTypeIcon
-		};
-	},
-	methods: {
-		isExpanded(article: XDDArticle) {
-			return this.expandedRowId === article.title;
-		},
-		updateExpandedRow(article: XDDArticle) {
-			this.expandedRowId = this.expandedRowId === article.title ? '' : article.title;
-		},
-		formatTitle(d: XDDArticle) {
-			return d.title ? d.title : d.title;
-		},
-		formatArticleAuthors(d: XDDArticle) {
-			return d.author.map((a) => a.name).join('\n');
-		},
-		isSelected(article: XDDArticle) {
-			return this.selectedSearchItems.find((item) => {
-				if (isXDDArticle(item)) {
-					const itemAsArticle = item as XDDArticle;
-					return itemAsArticle.title === article.title;
-				}
-				return false;
-			});
-		},
-		updateSelection(article: XDDArticle) {
-			this.$emit('toggle-article-selected', article);
-		},
-		formatDescription(d: XDDArticle) {
-			if (!d.abstractText || typeof d.abstractText !== 'string') return '';
-			return this.isExpanded(d) || d.abstractText.length < 140
-				? d.abstractText
-				: `${d.abstractText.substring(0, 140)}...`;
-		},
-		formatKnownTerms(d: XDDArticle) {
-			let knownTerms = '';
-			if (d.knownTerms) {
-				d.knownTerms.forEach((term) => {
-					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
-					knownTerms += '<br />';
-					knownTerms += Object.values(term).flat().join(' ');
-					knownTerms += '<br />';
-				});
-			}
-			return knownTerms;
-		}
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	}
 });
+
+const emit = defineEmits(['toggle-article-selected']);
+
+const expandedRowId = ref('');
+
+const { articles, selectedSearchItems } = toRefs(props);
+
+watch(
+	articles,
+	() => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elem: any = document.getElementsByClassName('table-fixed-head');
+		if (elem.length === 0) return;
+		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+
+const isExpanded = (article: XDDArticle) => expandedRowId.value === article.title;
+
+const updateExpandedRow = (article: XDDArticle) => {
+	expandedRowId.value = expandedRowId.value === article.title ? '' : article.title;
+};
+
+const formatTitle = (d: XDDArticle) => (d.title ? d.title : d.title);
+
+const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join('\n');
+
+const isSelected = (article: XDDArticle) =>
+	selectedSearchItems.value.find((item) => {
+		if (isXDDArticle(item)) {
+			const itemAsArticle = item as XDDArticle;
+			return itemAsArticle.title === article.title;
+		}
+		return false;
+	});
+
+const updateSelection = (article: XDDArticle) => {
+	emit('toggle-article-selected', article);
+};
+
+const formatDescription = (d: XDDArticle) => {
+	if (!d.abstractText || typeof d.abstractText !== 'string') return '';
+	return isExpanded(d) || d.abstractText.length < 140
+		? d.abstractText
+		: `${d.abstractText.substring(0, 140)}...`;
+};
+
+const formatKnownTerms = (d: XDDArticle) => {
+	let knownTerms = '';
+	if (d.knownTerms) {
+		d.knownTerms.forEach((term) => {
+			knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
+			knownTerms += '<br />';
+			knownTerms += Object.values(term).flat().join(' ');
+			knownTerms += '<br />';
+		});
+	}
+	return knownTerms;
+};
 </script>
 
 <style scoped>
