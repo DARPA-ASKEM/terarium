@@ -3,7 +3,7 @@
 		<div class="left-content">
 			<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
 				<template #content>
-					<search-bar @search-text-changed="filterData">
+					<search-bar :focus-input="true" @search-text-changed="filterData">
 						<template #dataset>
 							<dropdown-button
 								:inner-button-label="'Dataset'"
@@ -58,7 +58,7 @@
 					<template v-if="resultType === ResourceType.XDD">
 						<div class="xdd-known-terms">
 							<auto-complete
-								:focus-input="true"
+								:focus-input="false"
 								:style-results="true"
 								:placeholder-color="'gray'"
 								:placeholder-message="'dictionary name...'"

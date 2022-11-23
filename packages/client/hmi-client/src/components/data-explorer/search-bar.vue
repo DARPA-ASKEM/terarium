@@ -7,6 +7,7 @@
 			<input
 				id="search"
 				v-model="searchText"
+				ref="inputElement"
 				type="text"
 				name="search"
 				:placeholder="searchPlaceholder"
@@ -21,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
 import IconSearch16 from '@carbon/icons-vue/es/search/16';
 
@@ -37,10 +38,16 @@ const props = defineProps({
 	searchPlaceholder: {
 		type: String,
 		default: 'enter search term or doi here...'
+	},
+	focusInput: {
+		type: Boolean,
+		default: true
 	}
 });
 
 const emit = defineEmits(['search-text-changed']);
+
+const inputElement = ref<HTMLInputElement | null>(null);
 
 const searchText = ref('');
 const searchTerms = ref('');
@@ -67,6 +74,12 @@ const addSearchTerm = (event: Event) => {
 		execSearch();
 	}
 };
+
+onMounted(() => {
+	if (props.focusInput) {
+		inputElement.value?.focus();
+	}
+});
 
 watch(searchTerms, () => {
 	execSearch();
