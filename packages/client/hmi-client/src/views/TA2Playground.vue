@@ -4,8 +4,12 @@ import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
-import { fetchStratificationResult } from '@/services/models/stratification-service';
+import {
+	fetchStratificationResult,
+	fetchStratificationWithTypeResult
+} from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { parsePetriNet2IGraph } from '@/services/model';
 
 interface NodeData {
 	type: string;
@@ -169,6 +173,9 @@ export default defineComponent({
 		const typeModelA = ref('');
 		const typeTypeModel = ref('');
 		const typeMapping = ref('');
+		const modelAVector = ref('');
+		const modelBVector = ref('');
+
 		return {
 			loadModelID,
 			stratifyModelA,
@@ -176,7 +183,9 @@ export default defineComponent({
 			stratifyTypeModel,
 			typeModelA,
 			typeTypeModel,
-			typeMapping
+			typeMapping,
+			modelAVector,
+			modelBVector
 		};
 	},
 	methods: {
@@ -591,7 +600,12 @@ export default defineComponent({
 				method: 'GET'
 			});
 			const model: PetriNet = await resp.json();
-			this.createModel(model, false);
+			modelId = this.loadModelID;
+			g = parsePetriNet2IGraph(model);
+			g = runDagreLayout(_.cloneDeep(g));
+			this.refresh();
+			this.jsonOutput();
+			// this.createModel(model, false);
 		},
 		// Expects a JSON of a model with labels T, S, I, O.
 		// populates g + depending on provided flag POST changes to model ID
@@ -679,13 +693,21 @@ export default defineComponent({
 				console.error(e.message);
 			}
 		},
+		async stratifyWithType() {
+			try {
+				const outputModel = await fetchStratificationWithTypeResult(
+					this.stratifyModelA,
+					this.modelAVector,
+					this.stratifyModelB,
+					this.modelBVector,
+					this.stratifyTypeModel
+				);
+				this.createModel(outputModel, true);
+			} catch (e: any) {
+				console.error(e.message);
+			}
+		},
 		async typePetrinet() {
-			console.log('Starting type');
-			console.log('provided:');
-			console.log(this.typeModelA);
-			console.log(this.typeTypeModel);
-			console.log(this.typeMapping);
-
 			const resp = await fetch(
 				`http://localhost:8888/api/models/type/${this.typeModelA}/${this.typeTypeModel}/${this.typeMapping}`,
 				{
@@ -693,7 +715,6 @@ export default defineComponent({
 				}
 			);
 			const output = await resp.json();
-			console.log('Output:');
 			console.log(output);
 			// this.createModel(output, true);
 		},
@@ -771,10 +792,13 @@ export default defineComponent({
 		<form>
 			<label for="stratify">
 				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
-				<input v-model="stratifyModelB" type="text" placeholder="Model B" />
-				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model" />
+				<input v-model="modelAVector" type="text" placeholder="Model A Vector" />
+				<input v-model="stratifyModelB" type="text" placeholder="Model B ID" />
+				<input v-model="modelBVector" type="text" placeholder="Model B Vector" />
+				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model ID" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
+			<button type="button" @click="stratifyWithType">Stratify With Type</button>
 		</form>
 		<form>
 			<label for="type">

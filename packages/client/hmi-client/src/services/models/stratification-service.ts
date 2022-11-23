@@ -14,5 +14,24 @@ export async function fetchStratificationResult(modelA: string, modelB: string, 
 	);
 	const output = await resp.json();
 	return output;
-	// this.createModel(output, true);
+}
+
+export async function fetchStratificationWithTypeResult(
+	modelA: string,
+	modelAVector,
+	modelB: string,
+	modelBVector,
+	typeModel: string
+) {
+	if (!modelA || !modelB || !typeModel) {
+		throw new Error('An ID must be provided for each model');
+	}
+	const resp = await fetch(
+		`http://localhost:8888/api/models/stratify/${modelA}/${modelAVector}/${modelB}/${modelBVector}/${typeModel}`,
+		{
+			method: 'GET'
+		}
+	);
+	const output = await resp.json();
+	return output;
 }
