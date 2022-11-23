@@ -57,11 +57,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
 import { getXDDArtifacts } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
 	// this id is received as the document id mapped from the route param

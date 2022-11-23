@@ -10,33 +10,30 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { PropType } from 'vue';
 /**
  * Simple overlay for loading things
  */
-export default defineComponent({
-	name: 'Overlay',
-	props: {
-		message: {
-			type: String,
-			default: 'Loading...'
-		},
-		messageSecondary: {
-			type: String,
-			default: ''
-		},
-		cancelFn: {
-			type: Function as PropType<Function | null>,
-			default: null
-		}
+
+const props = defineProps({
+	message: {
+		type: String,
+		default: 'Loading...'
 	},
-	methods: {
-		cancel() {
-			if (this.cancelFn) this.cancelFn();
-		}
+	messageSecondary: {
+		type: String,
+		default: ''
+	},
+	cancelFn: {
+		type: Function as PropType<Function | null>,
+		default: null
 	}
 });
+
+const cancel = () => {
+	if (props.cancelFn) props.cancelFn();
+};
 </script>
 
 <style scoped>

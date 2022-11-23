@@ -20,66 +20,56 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
 import IconSearch16 from '@carbon/icons-vue/es/search/16';
 
-export default defineComponent({
-	name: 'SearchBar',
-	components: {
-		IconClose16,
-		IconSearch16
+const props = defineProps({
+	realtime: {
+		type: Boolean,
+		default: false
 	},
-	props: {
-		realtime: {
-			type: Boolean,
-			default: false
-		},
-		searchLabel: {
-			type: String,
-			default: ''
-		},
-		searchPlaceholder: {
-			type: String,
-			default: 'enter search term or doi here...'
-		}
+	searchLabel: {
+		type: String,
+		default: ''
 	},
-	emits: ['search-text-changed'],
-	setup() {
-		const searchText = ref('');
-		const searchTerms = ref('');
-		return {
-			searchText,
-			searchTerms
-		};
-	},
-	watch: {
-		searchTerms() {
-			this.execSearch();
-		}
-	},
-	methods: {
-		clearText() {
-			this.searchText = '';
-			this.searchTerms = '';
-		},
-		searchTextHandler(event: Event) {
-			if (this.realtime) {
-				this.searchTerms = (event.target as HTMLInputElement).value;
-			}
-		},
-		addSearchTerm(event: Event) {
-			if (!this.realtime) {
-				const term = (event.target as HTMLInputElement).value;
-				this.searchTerms = term;
-				this.execSearch();
-			}
-		},
-		execSearch() {
-			this.$emit('search-text-changed', this.searchTerms);
-		}
+	searchPlaceholder: {
+		type: String,
+		default: 'enter search term or doi here...'
 	}
+});
+
+const emit = defineEmits(['search-text-changed']);
+
+const searchText = ref('');
+const searchTerms = ref('');
+
+const clearText = () => {
+	searchText.value = '';
+	searchTerms.value = '';
+};
+
+const searchTextHandler = (event: Event) => {
+	if (props.realtime) {
+		searchTerms.value = (event.target as HTMLInputElement).value;
+	}
+};
+
+const execSearch = () => {
+	emit('search-text-changed', searchTerms.value);
+};
+
+const addSearchTerm = (event: Event) => {
+	if (!props.realtime) {
+		const term = (event.target as HTMLInputElement).value;
+		searchTerms.value = term;
+		execSearch();
+	}
+};
+
+watch(searchTerms, () => {
+	execSearch();
 });
 </script>
 
