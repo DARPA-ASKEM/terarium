@@ -387,7 +387,7 @@ export default defineComponent({
 			const output = await resp.json();
 			console.log(petriNetValidator(output));
 
-			if (petriNetValidator(output)) {
+			if (petriNetValidator(output) === true) {
 				modelA = output;
 				g = await parsePetriNet2IGraph(modelA);
 				g = runDagreLayout(_.cloneDeep(g));
@@ -671,159 +671,17 @@ export default defineComponent({
 			}
 		},
 		async mergePetrinets() {
-			// const modelC: PetriNet = {
-			// 	T: [
-			// 		{
-			// 			tname: 't-1'
-			// 		},
-			// 		{
-			// 			tname: 't-2'
-			// 		},
-			// 		{
-			// 			tname: 't-1' // 3
-			// 		},
-			// 		{
-			// 			tname: 't-2' // 4
-			// 		}
-			// 	],
-			// 	S: [
-			// 		{
-			// 			sname: 'p-1'
-			// 		},
-			// 		{
-			// 			sname: 'p-2'
-			// 		},
-			// 		{
-			// 			sname: 'p-3p-3'
-			// 		},
-			// 		{
-			// 			sname: 'p-1' // 4
-			// 		},
-			// 		{
-			// 			sname: 'p-2' // 5
-			// 		}
-			// 	],
-			// 	I: [
-			// 		{
-			// 			it: 1,
-			// 			is: 1
-			// 		},
-			// 		{
-			// 			it: 2,
-			// 			is: 2
-			// 		},
-			// 		{
-			// 			it: 3,
-			// 			is: 4
-			// 		},
-			// 		{
-			// 			it: 4,
-			// 			is: 4
-			// 		}
-			// 	],
-			// 	O: [
-			// 		{
-			// 			ot: 1,
-			// 			os: 2
-			// 		},
-			// 		{
-			// 			ot: 2,
-			// 			os: 1
-			// 		},
-			// 		{
-			// 			ot: 2,
-			// 			os: 3
-			// 		},
-			// 		{
-			// 			ot: 4,
-			// 			os: 3
-			// 		},
-			// 		{
-			// 			ot: 3,
-			// 			os: 5
-			// 		}
-			// 	]
-			// };
-			// const modelC2: PetriNet = {
-			// 	"S": [
-			// 		{
-			// 			"sname": "p-1"
-			// 		},
-			// 		{
-			// 			"sname": "p-2p-1"
-			// 		},
-			// 		{
-			// 			"sname": "p-3p-3"
-			// 		},
-			// 		{
-			// 			"sname": "p-2"
-			// 		}
-			// 	],
-			// 	"I": [
-			// 		{
-			// 			"is": 1,
-			// 			"it": 1
-			// 		},
-			// 		{
-			// 			"is": 2,
-			// 			"it": 2
-			// 		},
-			// 		{
-			// 			"is": 2,
-			// 			"it": 3
-			// 		},
-			// 		{
-			// 			"is": 2,
-			// 			"it": 4
-			// 		}
-			// 	],
-			// 	"T": [
-			// 		{
-			// 			"tname": "t-1"
-			// 		},
-			// 		{
-			// 			"tname": "t-2"
-			// 		},
-			// 		{
-			// 			"tname": "t-1"
-			// 		},
-			// 		{
-			// 			"tname": "t-2"
-			// 		}
-			// 	],
-			// 	"O": [
-			// 		{
-			// 			"ot": 1,
-			// 			"os": 2
-			// 		},
-			// 		{
-			// 			"ot": 2,
-			// 			"os": 1
-			// 		},
-			// 		{
-			// 			"ot": 2,
-			// 			"os": 3
-			// 		},
-			// 		{
-			// 			"ot": 3,
-			// 			"os": 4
-			// 		},
-			// 		{
-			// 			"ot": 4,
-			// 			"os": 3
-			// 		}
-			// 	]
-			// }
+			const stateNamesArrayA = this.stateNamesA.split(',');
+			const stateNamesArrayB = this.stateNamesB.split(',');
+
 			if (
-				this.stateNamesA.length !== this.stateNamesB.length ||
+				stateNamesArrayA.length !== stateNamesArrayB.length ||
 				this.stateNamesA.length < 1 ||
 				this.stateNamesB.length < 1
 			) {
 				console.log('Not enough states');
 				return;
 			}
-			const stateNamesArrayA = this.stateNamesA.split(',');
-			const stateNamesArrayB = this.stateNamesB.split(',');
 
 			console.log(stateNamesArrayA, stateNamesArrayB);
 
