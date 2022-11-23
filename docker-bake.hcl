@@ -59,8 +59,8 @@ target "hmi-server" {
 }
 
 target "hmi-server-native" {
-	context = "packages/services/hmi-server/docker/native"
-  dockerfile = "Dockerfile.native"
+	context = "."
+  dockerfile = "packages/services/hmi-server/docker/native/Dockerfile.native"
   tags = tag("hmi-server", "", "native")
 }
 
