@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, watchEffect } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
-import { getModel } from '@/services/data';
+import API from '@/api/api';
 import * as d3 from 'd3';
 import { Model } from '@/types/Model';
 
@@ -120,15 +120,21 @@ onMounted(async () => {
 	await renderer?.render();
 });
 
+const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
+
 // TODO: let the user choose the model to display
 const selectedModelId = ref('1');
 
 const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
-watchEffect(async () => {
-	const result = await getModel(selectedModelId.value);
-	model.value = result as Model;
-});
+watch(
+	() => [selectedModelId.value],
+	async () => {
+		const result = await getModel(selectedModelId.value);
+		model.value = result.data as Model;
+	},
+	{ immediate: true }
+);
 </script>
 
 <template>

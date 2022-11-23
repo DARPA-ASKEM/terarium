@@ -196,6 +196,4 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-const getModel = async (modelId: string) => uncloak(`/api/models/${modelId}`);
-
-export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts, getModel };
+export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts };
