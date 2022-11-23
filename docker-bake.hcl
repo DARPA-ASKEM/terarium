@@ -49,8 +49,8 @@ target "hmi-client" {
 }
 
 target "hmi-server-base" {
-	context = "packages/services/hmi-server/docker/jvm"
-	dockerfile = "Dockerfile.jvm"
+	context = "."
+	dockerfile = "packages/services/hmi-server/docker/jvm/Dockerfile.jvm"
 	tags = tag("hmi-server", "", "")
 }
 

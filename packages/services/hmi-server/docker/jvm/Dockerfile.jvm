@@ -1,11 +1,7 @@
 ####
 # This Dockerfile is used in order to build a container that runs the Quarkus application in JVM mode
 #
-# Before building the container image run:
-#
-# ./gradlew build
-#
-# Then, build the image with:
+# Build the image with:
 #
 # docker build -f src/main/docker/Dockerfile.jvm -t quarkus/server-scaffold-jvm .
 #
@@ -75,16 +71,27 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.14-4.1666624568 as build
+USER root
+COPY gradlew /code/gradlew
+COPY gradle /code/gradle
+COPY packages/services/hmi-server/build.gradle /code/
+COPY settings.gradle /code/
+COPY gradle.properties /code/
+COPY packages/services/hmi-server/src /code/src
+RUN chown 1001 /code \
+	&& chmod "g+rwX" /code \
+	&& chown 1001:root /code
+WORKDIR /code
+RUN ./gradlew build -Dquarkus.package.type=jar
+
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.14-4.1666624568
-
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
-
-
 # We make four distinct layers so if there are application changes the library layers can be re-used
-COPY --chown=185 build/quarkus-app/lib/ /deployments/lib/
-COPY --chown=185 build/quarkus-app/*.jar /deployments/
-COPY --chown=185 build/quarkus-app/app/ /deployments/app/
-COPY --chown=185 build/quarkus-app/quarkus/ /deployments/quarkus/
+COPY --from=build --chown=185 code/build/quarkus-app/lib/ /deployments/lib/
+COPY --from=build --chown=185 code/build/quarkus-app/*.jar /deployments/
+COPY --from=build --chown=185 code/build/quarkus-app/app/ /deployments/app/
+COPY --from=build --chown=185 code/build/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
 USER 185
