@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
+import API from '@/api/api';
 import * as d3 from 'd3';
+import { Model } from '@/types/Model';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
@@ -13,8 +15,8 @@ const pathFn = d3
 	.x((d) => d.x)
 	.y((d) => d.y);
 
-// This model can be deleted in future. Just used for init graph
-const model: PetriNet = {
+// TODO: replace this mock petri net with the model fetched from the backend
+const modelPetriNet: PetriNet = {
 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
 	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
 	I: [
@@ -97,7 +99,7 @@ class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData
 onMounted(async () => {
 	let renderer: ModelPlanRenderer | null = null;
 	const modelDrawnElement = document.getElementById('model-panel') as HTMLDivElement;
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model); // get graph from petri net representation
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(modelPetriNet); // get graph from petri net representation
 
 	renderer = new ModelPlanRenderer({
 		el: modelDrawnElement,
@@ -114,30 +116,96 @@ onMounted(async () => {
 	);
 
 	// write json to model-json and draw model to model-drawn:
-	d3.select('#model-json').text(JSON.stringify(model));
 	await renderer?.setData(g);
 	await renderer?.render();
 });
+
+const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
+
+// TODO: let the user choose the model to display
+const selectedModelId = ref('1');
+
+const model = ref<Model | null>(null);
+// Whenever selectedModelId changes, fetch model with that ID
+watch(
+	() => [selectedModelId.value],
+	async () => {
+		const result = await getModel(selectedModelId.value);
+		model.value = result.data as Model;
+	},
+	{ immediate: true }
+);
 </script>
 
 <template>
 	<section class="model">
-		<p>Model Renderer</p>
-		<div style="display: flex">
-			<div id="model-panel" class="model-panel"></div>
-			<div id="model-json" class="model-panel"></div>
+		<div>
+			<h3>{{ model?.name ?? '' }}</h3>
+			<div class="model-panels">
+				<div id="model-panel" class="model-panel"></div>
+				<div class="model-panel">{{ JSON.stringify(modelPetriNet) }}</div>
+			</div>
 		</div>
+		<aside>
+			<p class="description">{{ model?.description ?? '' }}</p>
+			<h4>Parameters</h4>
+			<ul v-if="model !== null">
+				<li v-for="parameterName in Object.keys(model.parameters)" :key="parameterName">
+					<strong>{{ parameterName }}</strong
+					>: {{ model.parameters[parameterName] }}
+				</li>
+			</ul>
+		</aside>
 	</section>
 </template>
 
 <style scoped>
 .model {
 	margin: 10px;
+	display: flex;
+}
+
+.model-panels {
+	display: flex;
+	flex: 1;
+	min-width: 0;
 }
 
 .model-panel {
 	width: 500px;
 	height: 500px;
 	border: 1px solid var(--un-color-black-40);
+}
+
+aside {
+	width: 400px;
+	margin-left: 10px;
+	background: var(--un-color-black-5);
+	padding: 10px;
+}
+
+h3 {
+	font: var(--un-font-h3);
+	margin-bottom: 10px;
+}
+
+h4 {
+	font: var(--un-font-h4);
+	margin-top: 30px;
+	margin-bottom: 10px;
+}
+
+.description,
+ul {
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+li {
+	display: block;
+}
+
+strong {
+	font-weight: bold;
 }
 </style>
