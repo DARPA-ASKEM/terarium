@@ -20,6 +20,7 @@
 		"@uncharted.software/design-tokens": "1.1.0",
 		"@uncharted.software/facets-core": "3.2.6",
 		"@uncharted.software/facets-plugins": "3.2.5",
+		"axios": "1.1.3",
 		"d3": "7.6.1",
 		"dagre": "0.8.5",
 		"eslint-import-resolver-typescript": "3.5.2",
