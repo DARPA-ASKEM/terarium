@@ -4,25 +4,30 @@ import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
 import Modal from '@/components/Modal.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import API from '@/api/api';
 
 const isModalVisible = ref(false);
-const newProjectTitle = ref('New Project');
-const projectDescription = ref('');
+const name = ref('New Project');
+const description = ref('');
 const router = useRouter();
 
-function postProject(name: string) {
-	// Placeholder implementation - replace with api call
-	return {
-		id: '3',
+// refacator as a composable?
+// eslint-disable-next-line @typescript-eslint/no-shadow
+async function postProject(name: string, description: string) {
+	return API.post('/projects', {
 		name,
-		description: 'This is a new project'
-	};
+		description
+	});
 }
 
 function createNewProject() {
-	isModalVisible.value = false;
-	const { id } = postProject(newProjectTitle.value);
-	router.push(`/projects/${id}`);
+	postProject(name.value, description.value).then((response) => {
+		const { status, data } = response;
+		if (status === 201) {
+			router.push(`/projects/${data.id}`);
+			isModalVisible.value = false;
+		}
+	});
 }
 </script>
 
@@ -39,9 +44,9 @@ function createNewProject() {
 				</template>
 				<template #default>
 					<label for="input">Project title</label>
-					<input v-model="newProjectTitle" placeHolder="New Project" />
+					<input v-model="name" placeHolder="New Project" />
 					<label for="input">Description</label>
-					<input v-model="projectDescription" />
+					<input v-model="description" />
 				</template>
 				<template #footer>
 					<Button class="modal-button" @click="createNewProject">OK</Button>
@@ -105,7 +110,7 @@ label {
 input {
 	margin: 0.5rem;
 	margin-left: 0;
-	width: 50vh;
+	width: 25vw;
 }
 
 .modal-button {
