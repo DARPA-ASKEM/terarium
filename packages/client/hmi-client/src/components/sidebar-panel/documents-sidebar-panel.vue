@@ -7,7 +7,12 @@
 			:class="{ active: doc.gddid === docID }"
 			@click="openDocumentPage(doc)"
 		>
-			<span>{{ formatTitle(doc) }}</span>
+			<span class="doc-view-icon">
+				<DocumentView />
+			</span>
+			<span class="doc-title">
+				{{ doc.title }}
+			</span>
 			<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
 				<IconClose32 />
 			</span>
@@ -27,17 +32,12 @@ import { isEmpty } from 'lodash';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
+import DocumentView from '@carbon/icons-vue/es/document--view/32';
 
 const router = useRouter();
 
 const resourcesStore = useResourcesStore();
 const documents = computed(() => resourcesStore.documents);
-
-const formatTitle = (doc: XDDArticle) => {
-	const maxSize = 32;
-	const itemTitle = doc.title;
-	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-};
 
 const docID = ref('');
 
@@ -67,25 +67,45 @@ onMounted(() => {
 }
 
 .doc-link {
-	padding: 2px 4px;
-	color: blue;
+	padding: 0.5rem;
 	cursor: pointer;
 	display: flex;
 	flex-direction: row;
+	align-items: center;
 	justify-content: space-between;
 }
-.doc-link:hover {
-	text-decoration: underline;
+
+.doc-link:hover:not(.active) {
+	background-color: var(--un-color-body-surface-secondary);
 }
 
 .active {
-	text-decoration: underline;
 	font-size: var(--un-font-body);
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-body-surface-background);
+}
+
+.doc-view-icon {
+	padding-right: 0.5rem;
 }
 
 .doc-delete-btn {
+	color: var(--un-color-body-text-disabled);
+}
+
+.doc-delete-btn:hover {
+	/* color: var(--un-color-body-text-primary); */
 	color: red;
-	padding-right: 1rem;
+}
+
+span {
+	display: inline-flex;
+	align-items: center;
+}
+
+.doc-title {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	display: inline;
 }
 </style>
