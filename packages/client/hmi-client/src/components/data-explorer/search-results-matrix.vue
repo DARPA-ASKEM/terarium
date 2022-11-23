@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { computed, PropType, ref } from 'vue';
-import { Model } from '@/types/Model';
+import { FRAMEWORK, Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import { groupBy, omit, uniq } from 'lodash';
@@ -128,7 +128,7 @@ const clustersInfo = computed(() => {
 	const vars = [] as string[];
 
 	if (props.resultType === ResourceType.MODEL) {
-		const clusterVariable = 'status';
+		const clusterVariable = FRAMEWORK;
 		const clusteredModels = groupBy(filteredModels.value, clusterVariable);
 		const names = Object.keys(clusteredModels);
 		vars.push(...names);

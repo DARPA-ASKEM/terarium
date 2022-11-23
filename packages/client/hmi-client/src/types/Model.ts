@@ -30,7 +30,7 @@ export type ModelSearchParams = {
 //
 export const NAME = 'name';
 export const DESCRIPTION = 'description';
-export const FRAMEWORK = 'type';
+export const FRAMEWORK = 'framework';
 export const CONCEPT = 'source';
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
