@@ -43,7 +43,7 @@ import IconCheckmark16 from '@carbon/icons-vue/es/checkmark/24';
 export type DropdownItem = {
 	displayName: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	value: any;
+	value: string;
 	selected?: boolean;
 };
 
@@ -52,10 +52,9 @@ const props = defineProps({
 		type: Array as PropType<(string | DropdownItem)[]>,
 		default: () => []
 	},
-	// eslint-disable-next-line vue/require-prop-types
 	selectedItem: {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		default: null as any
+		type: String as PropType<string | DropdownItem | null>,
+		default: null
 	},
 	innerButtonLabel: {
 		type: String as PropType<string | null>,
@@ -128,8 +127,7 @@ const selectedItemDisplayName = computed(() =>
 		  selectedItem.value
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const emitItemSelection = (item: any) => {
+const emitItemSelection = (item: string | DropdownItem) => {
 	if (!isMultiSelect.value) {
 		isDropdownOpen.value = false;
 		emit('item-selected', item);
@@ -147,9 +145,15 @@ const emitItemSelection = (item: any) => {
 	}
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isSelectedItem = (item: any) =>
-	isMultiSelect.value ? selectedItems.value.includes(item) : selectedItem.value === item;
+const isSelectedItem = (item: string) => {
+	if (isMultiSelect.value) {
+		return selectedItems.value.includes(item);
+	}
+	if (selectedItem.value && selectedItem.value === item) {
+		return true;
+	}
+	return false;
+};
 </script>
 
 <style scoped>
