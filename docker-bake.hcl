@@ -65,8 +65,8 @@ target "hmi-server-native" {
 }
 
 target "mock-data-service-base" {
-	context = "packages/services/mock-data-service/docker/jvm"
-	dockerfile = "Dockerfile.jvm"
+	context = "."
+	dockerfile = "packages/services/mock-data-service/docker/jvm/Dockerfile.jvm"
 	tags = tag("mock-data-service", "", "")
 }
 

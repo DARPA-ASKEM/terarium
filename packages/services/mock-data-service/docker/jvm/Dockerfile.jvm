@@ -1,11 +1,7 @@
 ####
 # This Dockerfile is used in order to build a container that runs the Quarkus application in JVM mode
 #
-# Before building the container image run:
-#
-# ./gradlew build
-#
-# Then, build the image with:
+# Build the image with:
 #
 # docker build -f src/main/docker/Dockerfile.jvm -t quarkus/server-scaffold-jvm .
 #
@@ -75,19 +71,37 @@
 #   accessed directly. (example: "foo.example.com,bar.example.com")
 #
 ###
-FROM registry.access.redhat.com/ubi8/openjdk-17:1.14-4.1666624568
+## Stage 1 : build with gradle builder image with native capabilities
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.14-4.1666624568 as builder
+USER root
 
+# Copy over necessary gradle pieces
+COPY gradlew /code/gradlew
+COPY gradle /code/gradle
+COPY settings.gradle /code/
+COPY gradle.properties /code/
+COPY packages/services/mock-data-service/build.gradle /code/
+
+# Copy over the source files for building
+COPY packages/services/mock-data-service/src /code/src
+
+RUN chown 1001 /code \
+	&& chmod "g+rwX" /code \
+	&& chown 1001:root /code
+WORKDIR /code
+RUN ./gradlew build -Dquarkus.package.type=jar
+
+## Stage 2 : create the docker final image
+FROM registry.access.redhat.com/ubi8/openjdk-17:1.14-4.1666624568
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-
 # We make four distinct layers so if there are application changes the library layers can be re-used
-COPY --chown=185 build/quarkus-app/lib/ /deployments/lib/
-COPY --chown=185 build/quarkus-app/*.jar /deployments/
-COPY --chown=185 build/quarkus-app/app/ /deployments/app/
-COPY --chown=185 build/quarkus-app/quarkus/ /deployments/quarkus/
+COPY --from=builder --chown=185 code/build/quarkus-app/lib/ /deployments/lib/
+COPY --from=builder --chown=185 code/build/quarkus-app/*.jar /deployments/
+COPY --from=builder --chown=185 code/build/quarkus-app/app/ /deployments/app/
+COPY --from=builder --chown=185 code/build/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
 USER 185
 ENV JAVA_OPTS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
-
