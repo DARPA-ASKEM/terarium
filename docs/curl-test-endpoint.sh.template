@@ -72,11 +72,11 @@ $0
     exit 0
 }
 
+checkParameters "$@"
+
 if [[ ! -n ${URL:-} ]]; then
     help
 fi
-
-checkParameters "$@"
 
 # Get an access token
 ACCESS_TOKEN=$(curl -d "client_id=${CLIENT_ID}" -d "client_secret=${CLIENT_SECRET}" -d "username=${USERNAME}" -d "password=${PASSWORD}" -d "grant_type=password" "${ACCESS_TOKEN_URL}" 2>/dev/null | jq -r '.access_token')
