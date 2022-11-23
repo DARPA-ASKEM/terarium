@@ -46,7 +46,7 @@ getProjects().then((response) => {
 						<router-link
 							style="text-decoration: none; color: inherit"
 							:to="'/projects/' + project.id"
-							:id="project.id"
+							:projectId="project.id"
 						>
 							<ProjectCard :name="project.name" />
 						</router-link>

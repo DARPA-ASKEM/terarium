@@ -3,7 +3,7 @@ import API from '@/api/api';
 import { ref } from 'vue';
 
 const props = defineProps({
-	id: {
+	projectId: {
 		type: String,
 		required: true
 	}
@@ -15,7 +15,7 @@ const timestamp = ref('');
 
 // refactor as a composable?
 async function getProject() {
-	return API.get(`/projects/${props.id}`);
+	return API.get(`/projects/${props.projectId}`);
 }
 
 getProject().then((response) => {
