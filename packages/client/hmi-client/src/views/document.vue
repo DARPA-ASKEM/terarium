@@ -24,22 +24,30 @@
 						</li>
 					</ul>
 				</div>
-				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.id">
+				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askemId">
 					<template
 						v-if="
-							ex.bytes &&
-							(ex.cls === XDDExtractionType.Figure ||
-								ex.cls === XDDExtractionType.Table ||
-								ex.cls === XDDExtractionType.Equation)
+							ex.properties.image &&
+							(ex.askemClass === XDDExtractionType.Figure ||
+								ex.askemClass === XDDExtractionType.Table ||
+								ex.askemClass === XDDExtractionType.Equation)
 						"
 					>
 						<!-- render figure -->
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.bytes" :alt="ex.content" />
+						<b>{{ ex.properties.title }}</b>
+						{{ ex.properties.contentText }}
+						<img
+							id="img"
+							:src="'data:image/jpeg;base64,' + ex.properties.image"
+							:alt="ex.properties.contentText"
+						/>
 					</template>
 					<template v-else>
 						<!-- render textual content -->
-						{{ ex.content }}
-						{{ ex.header_content }}
+						<b>{{ ex.properties.title }}</b>
+						{{ ex.properties.caption }}
+						{{ ex.properties.abstractText }}
+						{{ ex.properties.contentText }}
 					</template>
 				</div>
 			</div>
@@ -51,13 +59,7 @@
 <script setup lang="ts">
 import { getXDDArtifacts } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
-import {
-	XDDArticle,
-	XDDArtifact,
-	XDDSearchParams,
-	XDDExtractionType,
-	XDDArtifactExtraction
-} from '@/types/XDD';
+import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -72,12 +74,12 @@ const props = defineProps({
 const resourcesStore = useResourcesStore();
 
 const doc = computed(() => resourcesStore.documents[props.id] || null);
-const xddDataset = computed(() => resourcesStore.xddDataset);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
 const formatDescription = (d: XDDArticle) =>
-	(d.abstract && typeof d.abstract === 'string' ? d.abstract : false) || '[no abstract]';
+	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
+	'[no abstract]';
 
 const doi = computed(() => {
 	let docIdentifier = '';
@@ -94,36 +96,27 @@ const extractionType = ref('');
 
 const artifacts = ref<XDDArtifact[]>([]);
 
-const extractions = computed(() => {
-	const allExtractions: XDDArtifactExtraction[] = [];
-	artifacts.value.forEach((e) => {
-		allExtractions.push(...e.children);
-	});
-	return allExtractions;
-});
-
-const groupedExtractions = computed(() => groupBy(extractions.value, 'cls'));
+const groupedExtractions = computed(() => groupBy(artifacts.value, 'askemClass'));
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-watch(extractions, (currentValue, oldValue) => {
-	if (extractions.value.length > 0) {
-		extractionType.value = extractions.value[0].cls;
+watch(artifacts, (currentValue, oldValue) => {
+	if (artifacts.value.length > 0) {
+		extractionType.value = artifacts.value[0].askemClass;
 	}
 });
 
 const fetchArtifacts = async () => {
-	if (doc.value !== null && doi.value !== '') {
+	if (doi.value !== '') {
 		// a 'type' may be used to filter the extractions to a given artifact types, e.g. Figure
-		// Note: the dataset MUST be specified for the COSMOS API to work
-		const searchParams: XDDSearchParams = {
-			dataset: xddDataset.value
-		};
-		artifacts.value = await getXDDArtifacts(doi.value, searchParams);
+		artifacts.value = await getXDDArtifacts(doi.value);
+	} else {
+		// note that some XDD documents do not have a valid doi
+		artifacts.value = [];
 	}
 };
 
-watch(doc, (currentValue, oldValue) => {
+watch(doi, (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchArtifacts();
 	}

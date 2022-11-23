@@ -1,24 +1,23 @@
 <template>
-	<main>
-		<header>Documents space</header>
-		<section>
-			Project Documents:
-			<div class="document-list-container">
-				<div
-					v-for="doc in documents"
-					:key="doc._gddid"
-					class="doc-link"
-					:class="{ active: doc._gddid === docID }"
-					@click="openDocumentPage(doc)"
-				>
-					<span>{{ formatTitle(doc) }}</span>
-					<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
-						<IconClose32 />
-					</span>
-				</div>
-			</div>
-		</section>
-	</main>
+	<div class="document-list-container">
+		<div
+			v-for="doc in documents"
+			:key="doc.gddid"
+			class="doc-link"
+			:class="{ active: doc.gddid === docID }"
+			@click="openDocumentPage(doc)"
+		>
+			<span class="doc-view-icon">
+				<DocumentView />
+			</span>
+			<span class="doc-title">
+				{{ doc.title }}
+			</span>
+			<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
+				<IconClose32 />
+			</span>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -33,17 +32,12 @@ import { isEmpty } from 'lodash';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
+import DocumentView from '@carbon/icons-vue/es/document--view/32';
 
 const router = useRouter();
 
 const resourcesStore = useResourcesStore();
 const documents = computed(() => resourcesStore.documents);
-
-const formatTitle = (doc: XDDArticle) => {
-	const maxSize = 32;
-	const itemTitle = doc.title;
-	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-};
 
 const docID = ref('');
 
@@ -67,51 +61,51 @@ onMounted(() => {
 </script>
 
 <style scoped>
-main {
-	background-color: var(--un-color-body-surface-primary);
-	display: flex;
-	flex-grow: 1;
-	flex-direction: column;
-	gap: 1rem;
-	padding: 1rem;
-	height: calc(100vh - 50px);
-}
-
-header {
-	color: var(--un-color-body-text-secondary);
-	font: var(--un-font-h6);
-}
-
-section {
-	height: 100%;
-}
-
 .document-list-container {
 	overflow-y: auto;
-	height: 100%;
-	margin-top: 8px;
+	margin-top: 1rem;
 }
 
 .doc-link {
-	padding: 2px 4px;
-	color: blue;
+	padding: 0.5rem;
 	cursor: pointer;
 	display: flex;
 	flex-direction: row;
+	align-items: center;
 	justify-content: space-between;
 }
-.doc-link:hover {
-	text-decoration: underline;
+
+.doc-link:hover:not(.active) {
+	background-color: var(--un-color-body-surface-secondary);
 }
 
 .active {
-	text-decoration: underline;
 	font-size: var(--un-font-body);
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-body-surface-background);
+}
+
+.doc-view-icon {
+	padding-right: 0.5rem;
 }
 
 .doc-delete-btn {
+	color: var(--un-color-body-text-disabled);
+}
+
+.doc-delete-btn:hover {
+	/* color: var(--un-color-body-text-primary); */
 	color: red;
-	padding-right: 1rem;
+}
+
+span {
+	display: inline-flex;
+	align-items: center;
+}
+
+.doc-title {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	display: inline;
 }
 </style>
