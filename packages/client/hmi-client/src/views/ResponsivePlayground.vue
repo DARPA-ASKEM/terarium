@@ -41,11 +41,11 @@ export default {
 	methods: {
 		fillColorFn(datum: any, paramsMin: any, paramsMax: any): String {
 			// get value as fraction of min clamped to 0
-			const x = Math.max(datum.I / paramsMax.I, 0);
-			// apply gamma
-			// x **= 0.1;
+			const v = Math.max(datum.I / paramsMax.I, 0);
+			// apply gamma: https://en.wikipedia.org/wiki/Gamma_correction
+			// v **= 0.1;
 
-			return `#${Math.round(x * 255)
+			return `#${Math.round(v * 255)
 				.toString(16)
 				.padStart(2, '0')}0000`;
 		}
@@ -54,7 +54,7 @@ export default {
 </script>
 
 <style scoped>
-.responsive-matrix-demo {
+section {
 	flex: 1;
 	display: flex;
 	flex-direction: column;

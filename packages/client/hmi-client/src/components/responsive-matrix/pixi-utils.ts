@@ -2,6 +2,14 @@ import { Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.
 
 // taken from https://github.com/pixijs/pixijs/issues/6436#issuecomment-591695313
 export class CustomBufferResource extends Resource {
+	data: any;
+
+	internalFormat: string;
+
+	format: string;
+
+	type: string;
+
 	constructor(source, options) {
 		const { width, height, internalFormat, format, type } = options || {};
 
@@ -13,10 +21,10 @@ export class CustomBufferResource extends Resource {
 
 		super(width, height);
 
-		(this as any).data = source;
-		(this as any).internalFormat = internalFormat;
-		(this as any).format = format;
-		(this as any).type = type;
+		this.data = source;
+		this.internalFormat = internalFormat;
+		this.format = format;
+		this.type = type;
 	}
 
 	upload(renderer, baseTexture, glTexture) {
@@ -33,13 +41,13 @@ export class CustomBufferResource extends Resource {
 		gl.texImage2D(
 			baseTexture.target,
 			0,
-			gl[(this as any).internalFormat],
+			gl[this.internalFormat],
 			baseTexture.width,
 			baseTexture.height,
 			0,
-			gl[(this as any).format],
-			gl[(this as any).type],
-			(this as any).data
+			gl[this.format],
+			gl[this.type],
+			this.data
 		);
 
 		return true;

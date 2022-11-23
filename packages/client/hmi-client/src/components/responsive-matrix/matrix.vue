@@ -1,5 +1,5 @@
 <template>
-	<div class="matrix-container" ref="matrix_container">
+	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix">
 			<!-- <component
 				v-for="(selectedCell, idx) in selectedCellList"
@@ -20,10 +20,22 @@
 				@click="selectedCellClick(idx)"
 			/> -->
 		</div>
-	</div>
+	</main>
 </template>
 
 <script lang="ts">
+/*
+ * Matrix
+ *
+ * The main entry point for the responsive matrix component. Creates a heatmap
+ * using WebGL in order to visualize a 2D data matrix provided. Also serves as the
+ * controller for other components associated with the responsive matrix.
+ * Uses:
+ * - chroma-js: https://gka.github.io/chroma.js/
+ * - pixi.js: https://pixijs.com/
+ * - pixi-viewport: https://davidfig.github.io/pixi-viewport/jsdoc/index.html
+ */
+
 import { nextTick, PropType } from 'vue';
 
 import chroma from 'chroma-js';
@@ -35,7 +47,8 @@ import {
 	Texture,
 	Shader,
 	Mesh,
-	FederatedPointerEvent
+	FederatedPointerEvent,
+	Point
 } from 'pixi.js';
 import {
 	SelectedCell,
@@ -53,12 +66,13 @@ import matrixVS from './matrix.vs.glsl';
 import matrixFS from './matrix.fs.glsl';
 // import matrixGridFS from './matrix-grid.fs.glsl';
 
+// EMPTY_POINT used as a fallback value
+const EMPTY_POINT = new Point();
+
 export default {
 	// ---------------------------------------------------------------------------- //
 	// components                                                                   //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	components: {
 		// ResponsiveCellBarContainer,
@@ -69,12 +83,12 @@ export default {
 	// props                                                                        //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	props: {
 		data: {
-			type: null,
-			default: [[], []] // e.g. [[{}, {}, {}], [{}, {}, {}]]
+			type: Array as PropType<object[][]>,
+			default() {
+				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
+			}
 		},
 		// labels: {
 		// 	type: null,
@@ -128,8 +142,6 @@ export default {
 	// data                                                                         //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	data() {
 		return {
 			dataCellList: [] as object[],
@@ -143,6 +155,9 @@ export default {
 			numRows: 0,
 			numCols: 0,
 
+			// break down real rows and columns (with arbitrarily different dimensions)
+			// into uniformly sized "micro" rows and columns using a process analogous
+			// to grid supersampling
 			microRowArray: new Uint32Array(0) as Uint32Array,
 			microColArray: new Uint32Array(0) as Uint32Array,
 
@@ -158,8 +173,10 @@ export default {
 			selectedCols: [] as CellStatus[], // e.g. [0, 0, 1, 0]
 			selectedCell: Array(4) as SelectedCell, // e.g. [startrow, startcol, endrow, endcol]
 
+			// properties which are updated to trigger functions in children
 			update: 0,
 			move: 0,
+
 			enableDrag: false,
 			resizeObserver: null as unknown as ResizeObserver
 		};
@@ -168,8 +185,6 @@ export default {
 	// ---------------------------------------------------------------------------- //
 	// computed                                                                     //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	computed: {
 		screenAspectRatio(): number {
@@ -181,23 +196,22 @@ export default {
 		},
 
 		numSelectedRows(): number {
-			return this.selectedRows.reduce(
-				(acc: number, val: CellStatus) => acc + Number(val !== CellStatus.NONE),
-				0
-			);
+			return this.selectedRows.filter((d) => d !== CellStatus.NONE).length;
 		},
 
 		numSelectedCols(): number {
-			return this.selectedCols.reduce(
-				(acc: number, val: CellStatus) => acc + Number(val !== CellStatus.NONE),
-				0
-			);
+			return this.selectedCols.filter((d) => d !== CellStatus.NONE).length;
 		},
 
 		microRowSettings(): number[] {
+			// work out the percentage of the total row length taken by all selected rows
+			// as a value between 0 and 1
 			const percentageSelectedRows = this.numSelectedRows
 				? 0.5 + (this.numSelectedRows / this.numRows) * 0.5
 				: 0;
+
+			// find the number of micro rows assigned to rows of every status using the equation:
+			// micro_rows_per_row_of_status = percentage_row_len_of_status * total_num_rows / total_num_rows_with_status
 			const microRowSettings = Array(2).fill(0);
 			microRowSettings[CellStatus.NONE] = percentageSelectedRows
 				? ((1 - percentageSelectedRows) * this.numRows) / (this.numRows - this.numSelectedRows)
@@ -205,6 +219,8 @@ export default {
 			microRowSettings[CellStatus.SELECTED] = percentageSelectedRows
 				? (percentageSelectedRows * this.numRows) / this.numSelectedRows
 				: 1;
+
+			// normalise all micro row settings to have a minimum value of 1
 			const microRowSettingsMin = Math.min(...microRowSettings);
 			if (microRowSettingsMin < 1) {
 				for (let i = 0; i < microRowSettings.length; i++) {
@@ -215,9 +231,14 @@ export default {
 			return microRowSettings;
 		},
 		microColSettings(): number[] {
+			// work out the percentage of the total col length taken by all selected cols
+			// as a value between 0 and 1
 			const percentageSelectedCols = this.numSelectedCols
 				? 0.5 + (this.numSelectedCols / this.numCols) * 0.5
 				: 0;
+
+			// find the number of micro cols assigned to cols of every status using the equation:
+			// micro_cols_per_col_of_status = percentage_col_len_of_status * total_num_cols / total_num_cols_with_status
 			const microColSettings = Array(2).fill(0);
 			microColSettings[CellStatus.NONE] = percentageSelectedCols
 				? ((1 - percentageSelectedCols) * this.numCols) / (this.numCols - this.numSelectedCols)
@@ -225,6 +246,8 @@ export default {
 			microColSettings[CellStatus.SELECTED] = percentageSelectedCols
 				? (percentageSelectedCols * this.numCols) / this.numSelectedCols
 				: 1;
+
+			// normalise all micro col settings to have a minimum value of 1
 			const microColSettingsMin = Math.min(...microColSettings);
 			if (microColSettingsMin < 1) {
 				for (let i = 0; i < microColSettings.length; i++) {
@@ -237,10 +260,19 @@ export default {
 	},
 
 	// ---------------------------------------------------------------------------- //
-	// beforeMount                                                                  //
+	// setup                                                                        //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
+	setup() {
+		return {
+			app: undefined as undefined | Application,
+			viewport: undefined as undefined | Viewport
+		};
+	},
+
+	// ---------------------------------------------------------------------------- //
+	// beforeMount                                                                  //
+	// ---------------------------------------------------------------------------- //
 
 	async beforeMount() {
 		this.processData();
@@ -252,11 +284,9 @@ export default {
 	// mounted                                                                      //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	async mounted() {
 		const matrix = this.$refs.matrix as HTMLElement;
-		const matrixContainer = this.$refs.matrix_container as HTMLElement;
+		const matrixContainer = this.$refs.matrixContainer as HTMLElement;
 
 		// ///////////////////////////////////////////////////////////////////////////////
 
@@ -279,11 +309,11 @@ export default {
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		// initialize pixi.js
-		const app = new Application({
+		this.app = new Application({
 			resizeTo: matrixContainer,
 			backgroundColor: this.backgroundColor
 		});
-		matrix.appendChild(app.view as unknown as Node);
+		matrix.appendChild(this.app.view as unknown as Node);
 
 		// create viewport
 		const screenHeight = this.screenHeight;
@@ -293,20 +323,20 @@ export default {
 		const vertexPosition =
 			quadAspectRatio > 1 // is height long?
 				? [
-						-1 / quadAspectRatio,
-						-1, // height long
+						-1 / quadAspectRatio, // x, y
+						-1,
 						1 / quadAspectRatio,
-						-1, // x, y
+						-1,
 						1 / quadAspectRatio,
 						1,
 						-1 / quadAspectRatio,
 						1
 				  ]
 				: [
-						-1,
-						-1 * quadAspectRatio, // width long
+						-1, // x, y
+						-1 * quadAspectRatio,
 						1,
-						-1 * quadAspectRatio, // x, y
+						-1 * quadAspectRatio,
 						1,
 						1 * quadAspectRatio,
 						-1,
@@ -314,45 +344,45 @@ export default {
 				  ];
 		this.worldHeight = vertexPosition[5] - vertexPosition[3];
 		this.worldWidth = vertexPosition[2] - vertexPosition[0];
-		(this as any).$viewport = new Viewport({
+		this.viewport = new Viewport({
 			screenWidth: this.screenWidth,
 			screenHeight: this.screenHeight,
 			worldWidth: this.worldWidth,
 			worldHeight: this.worldHeight,
-			divWheel: matrix as HTMLElement,
-			interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
+			divWheel: matrix,
+			interaction: this.app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
 		});
 
 		// add the viewport to the stage
-		app.stage.addChild((this as any).$viewport as unknown as DisplayObject);
+		this.app.stage.addChild(this.viewport as unknown as DisplayObject);
 
 		// activate camera interaction plugins
-		(this as any).$viewport.drag().pinch().wheel();
-		(this as any).$viewport.pause = true;
+		this.viewport.drag().pinch().wheel();
+		this.viewport.pause = true;
 
 		// clamp camera
-		(this as any).$viewport.clampZoom({
+		this.viewport.clampZoom({
 			maxWidth: this.worldWidth * 2,
 			maxHeight: this.worldHeight * 2
 		});
 
 		// build quad
 		const geometry = new Geometry()
-			.addAttribute('aVertexPosition', vertexPosition, 2) // the size of the attribute
+			.addAttribute('aVertexPosition', vertexPosition, 2)
 			.addAttribute(
 				'aUvs',
 				[
-					0,
 					0, // u, v
+					0,
 					1,
 					0,
 					1,
 					1,
 					0,
 					1
-				], // u, v
+				],
 				2
-			) // the size of the attribute
+			)
 			.addIndex([0, 1, 2, 0, 2, 3]);
 
 		// build color array
@@ -365,10 +395,10 @@ export default {
 			uScreenHeight: screenHeight,
 
 			// geometry/viewport data
-			uWorldWidth: (this as any).$viewport.worldWidth,
-			uWorldHeight: (this as any).$viewport.worldHeight,
-			uViewportWorldWidth: (this as any).$viewport.worldWidth,
-			uViewportWorldHeight: (this as any).$viewport.worldHeight,
+			uWorldWidth: this.viewport.worldWidth,
+			uWorldHeight: this.viewport.worldHeight,
+			uViewportWorldWidth: this.viewport.worldWidth,
+			uViewportWorldHeight: this.viewport.worldHeight,
 
 			// grid settings
 			uGridDisplayBorder: false,
@@ -384,26 +414,21 @@ export default {
 			uMicroCol: this.uniforms.uMicroCol,
 
 			// cell element color data
-			uColor: Texture.fromBuffer(color, this.numCols, this.numRows),
-
-			uTime: 0
+			uColor: Texture.fromBuffer(color, this.numCols, this.numRows)
 		};
 
 		// set callback to update uniforms every render call
-		app.ticker.add(this.handleTick);
+		this.app.ticker.add(this.handleTick);
 
 		// run shader on quad
 		const quadShader = Shader.from(matrixVS, matrixFS, this.uniforms);
 		const quad = new Mesh(geometry, quadShader);
 
 		// center quad in world
-		quad.position.set(
-			(this as any).$viewport.worldWidth / 2,
-			(this as any).$viewport.worldHeight / 2
-		);
+		quad.position.set(this.viewport.worldWidth / 2, this.viewport.worldHeight / 2);
 
 		// add quad to viewport
-		(this as any).$viewport.addChild(quad as any);
+		this.viewport.addChild(quad as any);
 
 		// run shader on grid
 		// const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
@@ -422,17 +447,15 @@ export default {
 		this.centerGraph();
 
 		// add pixi interaction handlers
-		(this as any).$viewport.on('pointerdown', this.handleMouseDown);
-		(this as any).$viewport.on('pointerup', this.handleMouseUp);
-		(this as any).$viewport.on('moved' as any, this.incrementMove);
-		(this as any).$viewport.on('zoomed-end' as any, this.incrementUpdate);
+		this.viewport.on('pointerdown', this.handleMouseDown);
+		this.viewport.on('pointerup', this.handleMouseUp);
+		this.viewport.on('moved' as any, this.incrementMove);
+		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
 	},
 
 	// ---------------------------------------------------------------------------- //
 	// watch                                                                        //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	watch: {
 		data() {
@@ -452,10 +475,9 @@ export default {
 	// unmounted                                                                    //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	unmounted() {
 		this.resizeObserver.disconnect();
+		this.app?.destroy(false, true);
 		window.removeEventListener('keydown', this.handleKey);
 		window.removeEventListener('keyup', this.handleKey);
 	},
@@ -463,8 +485,6 @@ export default {
 	// ---------------------------------------------------------------------------- //
 	// methods                                                                      //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	methods: {
 		// ///////////////////////////////////////////////////////////////////////////////
@@ -499,7 +519,7 @@ export default {
 					.fill(0)
 					.map(() => []);
 
-				// iterate through all the data and push the cell objects to
+				// iterate through all the data and push the cell objects into data lists
 				this.data.forEach((row: any, indexRow: number) =>
 					row.forEach((cell: any, indexCol: number) => {
 						if (cell) {
@@ -602,7 +622,7 @@ export default {
 		 * using the status of each row or column and the number of micro rows or columns associated with
 		 * each status.
 		 * @param {CellStatus[]} elStatusArray
-		 * @param {number[]} elStatusArray
+		 * @param {number[]} statusSettingsArray
 		 */
 		createMicroArray(elStatusArray: CellStatus[], statusSettingsArray: number[]): Uint32Array {
 			const microArray: number[] = [];
@@ -742,14 +762,16 @@ export default {
 				}
 			}
 
-			const topLeft = (this as any).$viewport.toScreen(
-				(left / this.microColArray.length) * (this as any).$viewport.worldWidth,
-				(top / this.microRowArray.length) * (this as any).$viewport.worldHeight
-			);
-			const bottomRight = (this as any).$viewport.toScreen(
-				((right + 1) / this.microColArray.length) * (this as any).$viewport.worldWidth,
-				((bottom + 1) / this.microRowArray.length) * (this as any).$viewport.worldHeight
-			);
+			const topLeft =
+				this.viewport?.toScreen(
+					(left / this.microColArray.length) * this.viewport.worldWidth,
+					(top / this.microRowArray.length) * this.viewport.worldHeight
+				) || EMPTY_POINT;
+			const bottomRight =
+				this.viewport?.toScreen(
+					((right + 1) / this.microColArray.length) * this.viewport.worldWidth,
+					((bottom + 1) / this.microRowArray.length) * this.viewport.worldHeight
+				) || EMPTY_POINT;
 
 			return {
 				left: `${topLeft.x}px`,
@@ -787,27 +809,24 @@ export default {
 		},
 
 		centerGraph(): any {
-			(this as any).$viewport.fit();
-			(this as any).$viewport.moveCenter(
-				(this as any).$viewport.worldWidth / 2,
-				(this as any).$viewport.worldHeight / 2
-			);
+			this.viewport?.fit();
+			this.viewport?.moveCenter(this.viewport.worldWidth / 2, this.viewport.worldHeight / 2);
 		},
 
 		// ///////////////////////////////////////////////////////////////////////////////
 		// event handlers
 
-		handleTick(delta) {
-			const visibleBounds = (this as any).$viewport.getVisibleBounds();
-			this.uniforms.uViewportWorldWidth = visibleBounds.width;
-			this.uniforms.uViewportWorldHeight = visibleBounds.height;
-
-			this.uniforms.uTime += delta;
+		handleTick() {
+			const visibleBounds = this.viewport?.getVisibleBounds();
+			this.uniforms.uViewportWorldWidth = visibleBounds?.width || 0;
+			this.uniforms.uViewportWorldHeight = visibleBounds?.height || 0;
 		},
 
 		handleKey({ shiftKey }: KeyboardEvent) {
 			this.enableDrag = shiftKey;
-			(this as any).$viewport.pause = !shiftKey;
+			if (this.viewport) {
+				this.viewport.pause = !shiftKey;
+			}
 		},
 
 		handleScroll(e) {
@@ -823,7 +842,7 @@ export default {
 
 			const { START_ROW, START_COL } = SelectedCellValue;
 
-			const world = (this as any).$viewport.toWorld(e.screen.x, e.screen.y);
+			const world = this.viewport?.toWorld(e.screen.x, e.screen.y) || EMPTY_POINT;
 			const matrixUv = { x: world.x / this.worldWidth, y: world.y / this.worldHeight };
 			const selectedColId = this.microColArray[Math.floor(matrixUv.x * this.microColArray.length)];
 			const selectedRowId = this.microRowArray[Math.floor(matrixUv.y * this.microRowArray.length)];
@@ -841,7 +860,7 @@ export default {
 			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
 
 			// get selected cell row and column ids
-			const world = (this as any).$viewport.toWorld(e.screen.x, e.screen.y);
+			const world = this.viewport?.toWorld(e.screen.x, e.screen.y) || EMPTY_POINT;
 			const matrixUv = { x: world.x / this.worldWidth, y: world.y / this.worldHeight };
 			const selectedColId = this.microColArray[Math.floor(matrixUv.x * this.microColArray.length)];
 			const selectedRowId = this.microRowArray[Math.floor(matrixUv.y * this.microRowArray.length)];
@@ -858,7 +877,7 @@ export default {
 			this.selectedCell[END_COL] = endCol;
 
 			// trigger an action
-			if (this.selectedCell.some((x) => Number.isNaN(x))) {
+			if (this.selectedCell.some((v) => Number.isNaN(v))) {
 				// selection is out-of-bounds
 				this.centerGraph();
 				this.incrementUpdate();
@@ -889,9 +908,10 @@ export default {
 </script>
 
 <style scoped>
-.matrix-container {
+main {
 	position: relative;
 }
+
 .matrix {
 	display: grid;
 	position: absolute;

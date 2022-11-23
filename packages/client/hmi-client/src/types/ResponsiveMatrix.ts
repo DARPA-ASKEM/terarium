@@ -45,6 +45,4 @@ export type Uniforms = {
 
 	// cell element color data
 	uColor: Texture;
-
-	uTime: number;
 };
