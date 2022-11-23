@@ -8,6 +8,8 @@ import { select, scaleLinear, axisBottom, axisLeft } from 'd3';
 
 import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
 
+type ParamMinMax = { [key: string]: number };
+
 export default {
 	// ---------------------------------------------------------------------------- //
 	// props                                                                        //
@@ -23,19 +25,19 @@ export default {
 			}
 		},
 		selectedCell: {
-			type: Array as unknown as PropType<SelectedCell>,
+			type: Array as PropType<SelectedCell[]>,
 			default() {
 				return [0, 0, 0, 0];
 			}
 		},
 		dataRowList: {
-			type: null,
+			type: Array,
 			default() {
 				return [];
 			}
 		},
 		dataColList: {
-			type: null,
+			type: Array,
 			default() {
 				return [];
 			}
@@ -59,13 +61,13 @@ export default {
 			}
 		},
 		parametersMin: {
-			type: Object,
+			type: Object as PropType<ParamMinMax>,
 			default() {
 				return {};
 			}
 		},
 		parametersMax: {
-			type: Object,
+			type: Object as PropType<ParamMinMax>,
 			default() {
 				return {};
 			}
