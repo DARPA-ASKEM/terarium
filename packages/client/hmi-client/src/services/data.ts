@@ -1,6 +1,6 @@
 import { uniqBy } from 'lodash';
 import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/common';
-import { uncloak } from '@/utils/uncloak';
+import API from '@/api/api';
 import { getModelFacets } from '@/utils/facets';
 import { applyFacetFiltersToModels } from '@/utils/data-util';
 import { Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
@@ -14,12 +14,14 @@ import {
 } from '../types/XDD';
 
 const getXDDSets = async () => {
-	const response: XDDResult = await uncloak('/api/xdd/sets');
+	const res = await API.get('/xdd/sets');
+	const response: XDDResult = res.data;
 	return response.available_sets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
-	const rawdata: XDDResult = await uncloak('/api/xdd/dictionaries');
+	const res = await API.get('/xdd/dictionaries');
+	const rawdata: XDDResult = res.data;
 	if (rawdata.success) {
 		const { data } = rawdata.success;
 		return data;
@@ -33,7 +35,8 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	//
 	// fetch list of models data from the HMI server
 	//
-	const modelsList: Model[] = await uncloak('/api/models');
+	const res = await API.get('/models');
+	const modelsList: Model[] = res.data;
 
 	// TEMP: add "type" field because it is needed to mark these resources as models
 	// FIXME: dependecy on type model should be removed and another "sub-system" or "result-type"
@@ -77,7 +80,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 // fetch list of extractions data from the HMI server
 //
 const getXDDArtifacts = async (doc_doi: string) => {
-	const url = `/api/xdd/extractions?doi=${doc_doi}`;
+	const url = `/xdd/extractions?doi=${doc_doi}`;
 
 	// NOT SUPPORTED
 	// if (xddSearchParam?.type) {
@@ -89,7 +92,8 @@ const getXDDArtifacts = async (doc_doi: string) => {
 	// 	url += `&ignore_bytes=${xddSearchParam.ignoreBytes}`;
 	// }
 
-	const rawdata: XDDResult = await await uncloak(url);
+	const res = await await API.get(url);
+	const rawdata: XDDResult = res.data;
 
 	if (rawdata.success) {
 		const { data } = rawdata.success;
@@ -112,7 +116,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	let url = `/api/xdd/documents?term=${term}`;
+	let url = `/xdd/documents?term=${term}`;
 
 	if (xddSearchParam?.doi) {
 		url += `&doi=${xddSearchParam.doi}`;
@@ -164,7 +168,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
-	const rawdata: XDDResult = await uncloak(url);
+	const res = await API.get(url);
+	const rawdata: XDDResult = res.data;
 
 	if (rawdata.success) {
 		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
