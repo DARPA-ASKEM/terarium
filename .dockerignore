@@ -5,3 +5,9 @@
 !gradle
 !gradle.properties
 !settings.gradle
+!lombok.config
+
+!tsconfig.json
+!tsconfig.base.json
+!yarn.lock
+!package.json

@@ -39,9 +39,9 @@ target "_platforms" {
 }
 
 target "hmi-client-base" {
-	context = "packages/client/hmi-client/docker"
+	context = "."
 	tags = tag("hmi-client", "", "")
-	dockerfile = "Dockerfile"
+	dockerfile = "packages/client/hmi-client/docker/Dockerfile"
 }
 
 target "hmi-client" {
