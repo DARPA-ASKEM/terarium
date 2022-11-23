@@ -17,8 +17,8 @@ public interface ProjectProxy {
 
 	@GET
 	Response getProjects(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("50") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@GET
