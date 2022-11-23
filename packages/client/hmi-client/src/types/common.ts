@@ -26,7 +26,7 @@ export type SearchResults = {
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;
-	next_page?: string;
+	nextPage?: string;
 };
 
 //

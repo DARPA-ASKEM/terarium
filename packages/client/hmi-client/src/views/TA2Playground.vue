@@ -472,8 +472,8 @@ export default defineComponent({
 				}
 			}
 			g.edges.push({
-				source: sourceLabel,
-				target: targetLabel,
+				source: sourceID,
+				target: targetID,
 				points: [
 					{
 						x: sourceX, // + source.datum().width * 0.5,

@@ -67,59 +67,6 @@ echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 Login Succeeded
 ```
 
-### Kubernetes
-
-To have Kubernetes access a private container image or repository it needs to have a generated secret available to do
-so. For use with the GitHub Container Registry you will again need a `Personal Access Token`(PAT), or reuse the same one
-as before.
-
-#### Create Secret
-
-To create the secret for kubernetes use the following command:
-
-```sh
-kubectl create secret docker-registry ghrc_cred \ 
-	--docker-server=<your-registry-server> \
-	--docker-username=<your-name> \
-	--docker-password=<your-pword> \
-	--docker-email=<your-email>
-```
-
-where:
-
-- `<your-registry-server>` is `ghcr.io` for the GitHub Registry
-- `<your-name>` is your GitHub username.
-- `<your-pword>` is your GitHub PAT.
-- `<your-email>` is your email (optional)
-
-You have successfully set your credentials in the cluster as a Secret called `ghrc_cred`.
-
-#### Verify Secret
-
-To verify that the secret was generated use:
-
-```sh
-kubectl get secret ghrc_cred --output=yaml
-```
-
-#### Use Secret In Pod
-
-To apply the secret to a `pod` simply reference it within the spec using the `imagePullSecrets` property.
-
-Here is an example POD that accesses the secret credentials generated above.
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: private-reg
-spec:
-  containers:
-    - name: private-reg-container
-      image: <your-private-image>
-  imagePullSecrets:
-    - name: regcred
-```
 
 ## Debugging Front End
 
