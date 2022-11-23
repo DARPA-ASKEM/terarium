@@ -6,9 +6,4 @@ test.describe('test Home component', () => {
 		const component = await mount(Home);
 		await expect(component).toContainText('Create New Project');
 	});
-
-	test('there should be at least one mock project', async ({ mount }) => {
-		const component = await mount(Home);
-		await expect(component).toContainText('Mocked Project');
-	});
 });

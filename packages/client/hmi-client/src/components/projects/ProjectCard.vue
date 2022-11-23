@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IconNoImage32 from '@carbon/icons-vue/es/no-image/32';
 
-interface Props {
+export interface Props {
 	name: string;
 }
 const props = withDefaults(defineProps<Props>(), {
