@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import API from '@/api/api';
-import { ref } from 'vue';
+import { Project } from '@/types/Project';
+import { ref, onMounted } from 'vue';
 
 const props = defineProps({
 	projectId: {
@@ -9,28 +10,29 @@ const props = defineProps({
 	}
 });
 
-const name = ref('');
-const description = ref('');
-const timestamp = ref('');
+const project = ref<Project>({
+	id: '',
+	name: '',
+	description: '',
+	timestamp: ''
+});
 
 // refactor as a composable?
-async function getProject() {
-	return API.get(`/projects/${props.projectId}`);
+async function getProject(): Promise<Project> {
+	const response = await API.get(`/projects/${props.projectId}`);
+	return response.data;
 }
 
-getProject().then((response) => {
-	const data = response.data;
-	name.value = data.name;
-	description.value = data.description;
-	timestamp.value = data.timestamp;
+onMounted(async () => {
+	project.value = await getProject();
 });
 </script>
 
 <template>
 	<div class="flex-container">
 		<header>
-			<h2>{{ name }}</h2>
-			<p class="secondary-text">Last updated: {{ timestamp }}</p>
+			<h2>{{ project.name }}</h2>
+			<p class="secondary-text">Last updated: {{ project.timestamp }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
@@ -40,11 +42,7 @@ getProject().then((response) => {
 						<!-- Author -->
 						<section class="author">Edwin Lai, Yohann Paris</section>
 						<p>
-							{{ description }}
-
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis iaculis dapibus sodales.
-							In venenatis orci commodo quam lacinia pellentesque at at quam. Aliquam ac suscipit
-							neque.
+							{{ project.description }}
 						</p>
 					</section>
 					<section class="related-projects">
