@@ -154,6 +154,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  NOTE: results may not be ranked in this mode
 	let url = `/xdd/documents?term=${term}`;
 
+	if (xddSearchParam?.docid) {
+		url += `&docid=${xddSearchParam.docid}`;
+	}
 	if (xddSearchParam?.doi) {
 		url += `&doi=${xddSearchParam.doi}`;
 	}
