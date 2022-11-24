@@ -1,4 +1,4 @@
-// earch construct
+// search construct
 export type ClauseField = string;
 export type ClauseValue = string | number | Array<number>;
 export type ClauseOperand = 'and' | 'or';
