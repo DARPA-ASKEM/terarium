@@ -1,16 +1,58 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
 import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
+import Modal from '@/components/Modal.vue';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import API from '@/api/api';
 
-function createNewProject() {}
+const isModalVisible = ref(false);
+const name = ref('New Project');
+const description = ref('');
+const router = useRouter();
+
+// refacator as a composable?
+// eslint-disable-next-line @typescript-eslint/no-shadow
+async function postProject(name: string, description: string) {
+	return API.post('/projects', {
+		name,
+		description
+	});
+}
+
+function createNewProject() {
+	postProject(name.value, description.value).then((response) => {
+		const { status, data } = response;
+		if (status === 201) {
+			router.push(`/projects/${data.id}`);
+			isModalVisible.value = false;
+		}
+	});
+}
 </script>
 
 <template>
 	<div class="new-project-card">
-		<Button @onclick="createNewProject"
+		<Button @click="isModalVisible = true"
 			>Create New Project
 			<IconAddFilled32 />
 		</Button>
+		<Teleport to="body">
+			<modal v-if="isModalVisible" @modal-mask-clicked="isModalVisible = false">
+				<template #header>
+					<h3>Create a new project</h3>
+				</template>
+				<template #default>
+					<label for="input">Project title</label>
+					<input v-model="name" placeHolder="New Project" />
+					<label for="input">Description</label>
+					<input v-model="description" />
+				</template>
+				<template #footer>
+					<Button class="modal-button" @click="createNewProject">OK</Button>
+				</template>
+			</modal>
+		</Teleport>
 	</div>
 </template>
 
@@ -33,7 +75,8 @@ function createNewProject() {}
 	font-size: 1.25rem;
 	font-weight: 500;
 	border-radius: 0.5rem;
-	width: 85%;
+	width: 100%;
+	height: 100%;
 	margin: auto;
 	justify-content: center;
 	cursor: pointer;
@@ -53,5 +96,25 @@ function createNewProject() {}
 
 .new-project-card button:hover svg {
 	color: var(--un-color-body-text-secondary);
+}
+
+h3 {
+	font: var(--un-font-h3);
+	color: var(--un-color-body-text-secondary);
+}
+
+label {
+	display: block;
+}
+
+input {
+	margin: 0.5rem;
+	margin-left: 0;
+	width: 25vw;
+}
+
+.modal-button {
+	width: 25%;
+	background-color: var(--un-color-accent);
 }
 </style>
