@@ -64,7 +64,7 @@ import { uint32ArrayToRedIntTex } from './pixi-utils';
 
 import matrixVS from './matrix.vs.glsl';
 import matrixFS from './matrix.fs.glsl';
-// import matrixGridFS from './matrix-grid.fs.glsl';
+import matrixGridFS from './matrix-grid.fs.glsl';
 
 // EMPTY_POINT used as a fallback value
 const EMPTY_POINT = new Point();
@@ -431,17 +431,14 @@ export default {
 		this.viewport.addChild(quad);
 
 		// run shader on grid
-		// const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
-		// const grid = new Mesh(geometry, gridShader);
+		const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
+		const grid = new Mesh(geometry, gridShader);
 
 		// center grid in world
-		// grid.position.set(
-		// 	(this as any).$viewport.worldWidth / 2,
-		// 	(this as any).$viewport.worldHeight / 2
-		// );
+		grid.position.set(this.viewport.worldWidth / 2, this.viewport.worldHeight / 2);
 
 		// add grid to viewport
-		// (this as any).$viewport.addChild(grid as any);
+		this.viewport.addChild(grid as any);
 
 		// center and zoom camera to world
 		this.centerGraph();

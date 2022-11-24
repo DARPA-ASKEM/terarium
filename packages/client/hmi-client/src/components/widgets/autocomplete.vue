@@ -6,6 +6,7 @@
 			id="autocomplete"
 			v-model="searchTerm"
 			type="text"
+			autocomplete="off"
 			class="form-control"
 			:style="inputStyle"
 			:placeholder="placeholderMessage"
@@ -36,103 +37,104 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-export default defineComponent({
-	name: 'AutoComplete',
-	props: {
-		placeholderMessage: {
-			type: String,
-			required: false,
-			default: () => ''
-		},
-		focusInput: {
-			type: Boolean,
-			default: false
-		},
-		styleResults: {
-			type: Boolean,
-			default: false
-		},
-		placeholderColor: {
-			type: String,
-			default: 'black'
-		},
-		searchFn: {
-			type: Function,
-			required: true
-		},
-		selectedFn: {
-			type: Function,
-			default: () => false
-		}
+const props = defineProps({
+	placeholderMessage: {
+		type: String,
+		required: false,
+		default: () => ''
 	},
-	emits: ['item-selected'],
-	computed: {
-		inputStyle(): string {
-			return `--placeholder-color:${this.placeholderColor}`;
-		},
-		suggestionsResultStyle(): string {
-			return `position: ${this.styleResults ? 'absolute' : 'relative'}`;
-		}
+	focusInput: {
+		type: Boolean,
+		default: false
 	},
-	data: () => ({
-		searchTerm: '',
-		suggestions: [],
-		selectedIndex: -1,
-		showSuggestions: false
-	}),
-	mounted() {
-		this.onChange();
-		document.addEventListener('click', this.onClickOutside);
-
-		if (this.focusInput) {
-			(this.$refs.inputElement as HTMLInputElement).focus();
-		}
+	styleResults: {
+		type: Boolean,
+		default: false
 	},
-	unmounted() {
-		document.removeEventListener('click', this.onClickOutside);
+	placeholderColor: {
+		type: String,
+		default: 'black'
 	},
-	methods: {
-		onArrowDown() {
-			if (this.selectedIndex < this.suggestions.length - 1) {
-				this.selectedIndex += 1;
-			}
-		},
-		onArrowUp() {
-			if (this.selectedIndex > 0) {
-				this.selectedIndex -= 1;
-			}
-		},
-		async onChange() {
-			this.suggestions = await this.searchFn(this.searchTerm);
-			if (this.suggestions.length > 0 && this.searchTerm !== '') {
-				this.showSuggestions = true;
-			}
-		},
-		onEnter() {
-			const suggestion = this.suggestions[this.selectedIndex];
-			this.selectedIndex = -1;
-			this.$emit('item-selected', suggestion);
-			this.showSuggestions = false;
-			this.searchTerm = '';
-		},
-		onClickOutside(event: MouseEvent) {
-			const containerElement = this.$refs.containerElement as HTMLElement;
-			// input just lost focus, but was that because the user clicked on one of the suggestions?
-			if (event.target instanceof Element && containerElement.contains(event.target)) {
-				// Click was within this element, so do nothing
-				return;
-			}
-			this.showSuggestions = false;
-		},
-		setSearchTerm(suggestion: string) {
-			this.searchTerm = '';
-			this.$emit('item-selected', suggestion);
-			this.showSuggestions = false;
-		}
+	searchFn: {
+		type: Function,
+		required: true
+	},
+	selectedFn: {
+		type: Function,
+		default: () => false
 	}
+});
+
+const emit = defineEmits(['item-selected']);
+const inputStyle = computed(() => `--placeholder-color:${props.placeholderColor}`);
+const suggestionsResultStyle = computed(
+	() => `position: ${props.styleResults ? 'absolute' : 'relative'}`
+);
+
+const containerElement = ref<HTMLElement | null>(null);
+const inputElement = ref<HTMLInputElement | null>(null);
+
+const searchTerm = ref('');
+const suggestions = ref([]);
+const selectedIndex = ref(-1);
+const showSuggestions = ref(false);
+
+const onArrowDown = () => {
+	if (selectedIndex.value < suggestions.value.length - 1) {
+		selectedIndex.value += 1;
+	}
+};
+
+const onArrowUp = () => {
+	if (selectedIndex.value > 0) {
+		selectedIndex.value -= 1;
+	}
+};
+
+const onChange = async () => {
+	suggestions.value = await props.searchFn(searchTerm.value);
+	if (suggestions.value.length > 0 && searchTerm.value !== '') {
+		showSuggestions.value = true;
+	}
+};
+
+const onEnter = () => {
+	const suggestion = suggestions.value[selectedIndex.value];
+	selectedIndex.value = -1;
+	emit('item-selected', suggestion);
+	showSuggestions.value = false;
+	searchTerm.value = '';
+};
+
+const onClickOutside = (event: MouseEvent) => {
+	// input just lost focus, but was that because the user clicked on one of the suggestions?
+	if (event.target instanceof Element && containerElement.value?.contains(event.target)) {
+		// Click was within this element, so do nothing
+		return;
+	}
+	showSuggestions.value = false;
+};
+
+const setSearchTerm = (suggestion: string) => {
+	searchTerm.value = '';
+	emit('item-selected', suggestion);
+	showSuggestions.value = false;
+};
+
+onMounted(() => {
+	onChange();
+	document.addEventListener('click', onClickOutside);
+
+	if (props.focusInput) {
+		inputElement.value?.focus();
+	}
+});
+
+onUnmounted(() => {
+	document.removeEventListener('click', onClickOutside);
 });
 </script>
 
@@ -153,6 +155,7 @@ export default defineComponent({
 	max-height: 220px;
 	/* suggestion list on top of the other UI */
 	z-index: 2;
+	top: 100%;
 }
 
 .autocomplete-container .autocomplete-results {

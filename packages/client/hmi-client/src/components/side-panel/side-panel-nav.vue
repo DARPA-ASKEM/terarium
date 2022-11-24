@@ -16,7 +16,7 @@
 					:src="getImgUrl(tab.imgSrc)"
 					alt=""
 				/>
-				<component :is="tab.icon" />
+				<component :is="toRaw(tab.icon)" />
 				<span v-if="tab.badgeCount !== undefined && tab.badgeCount > 0" class="counter-badge">
 					{{ tab.badgeCount }}
 				</span>
@@ -25,41 +25,38 @@
 	</ul>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed, PropType, toRaw } from 'vue';
 import { SidePanelTab } from '@/types/common';
 
-export default defineComponent({
-	name: 'SidePanelNav',
-	props: {
-		tabs: {
-			type: Array as PropType<SidePanelTab[]>,
-			default: () => []
-		},
-		currentTabName: {
-			type: String,
-			default: () => ''
-		}
+const props = defineProps({
+	tabs: {
+		type: Array as PropType<SidePanelTab[]>,
+		default: () => []
 	},
-	emits: ['set-active'],
-	computed: {
-		allTabsAreClosed(): boolean {
-			return this.tabs.find((tab) => tab.name === this.currentTabName) === undefined;
-		}
-	},
-	methods: {
-		toggleActive(tabName: string) {
-			// If the tab is currently selected, pass '' to signify it should be
-			//  unselected. Otherwise, pass the tab's name to select it
-			this.$emit('set-active', tabName === this.currentTabName ? '' : tabName);
-		},
-		getImgUrl(imgSrc: string) {
-			// @ts-ignore: Unreachable code error
-			const assetFolder = require.context('@/assets/');
-			return assetFolder(`./${imgSrc}`);
-		}
+	currentTabName: {
+		type: String,
+		default: () => ''
 	}
 });
+
+const emit = defineEmits(['set-active']);
+
+const allTabsAreClosed = computed(
+	() => props.tabs.find((tab) => tab.name === props.currentTabName) === undefined
+);
+
+const toggleActive = (tabName: string) => {
+	// If the tab is currently selected, pass '' to signify it should be
+	//  unselected. Otherwise, pass the tab's name to select it
+	emit('set-active', tabName === props.currentTabName ? '' : tabName);
+};
+
+const getImgUrl = (imgSrc: string) => {
+	// @ts-ignore: Unreachable code error
+	const assetFolder = require.context('@/assets/');
+	return assetFolder(`./${imgSrc}`);
+};
 </script>
 
 <style scoped>

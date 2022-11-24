@@ -57,11 +57,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
 import { getXDDArtifacts } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import { getDocumentDoi } from '@/utils/data-util';
 
 const props = defineProps({
 	// this id is received as the document id mapped from the route param
@@ -81,16 +82,7 @@ const formatDescription = (d: XDDArticle) =>
 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
 	'[no abstract]';
 
-const doi = computed(() => {
-	let docIdentifier = '';
-	if (doc.value && doc.value.identifier.length > 0) {
-		const defaultDOI = doc.value.identifier.find((i) => i.type === 'doi');
-		if (defaultDOI) {
-			docIdentifier = defaultDOI.id;
-		}
-	}
-	return docIdentifier;
-});
+const doi = computed(() => getDocumentDoi(doc.value));
 
 const extractionType = ref('');
 
