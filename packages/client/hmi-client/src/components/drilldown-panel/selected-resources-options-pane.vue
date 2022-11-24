@@ -38,8 +38,6 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { useRoute } from 'vue-router';
-import { isEmpty } from 'lodash';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -50,9 +48,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 const resources = useResourcesStore();
-const route = useRoute();
 
-const validProject = computed(() => !isEmpty(route.params) && route.params.projectId);
+const validProject = computed(() => resources.activeProject);
 
 const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
 

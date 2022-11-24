@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import API from '@/api/api';
 import { Project } from '@/types/Project';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps({
 	projectId: {
@@ -10,12 +11,9 @@ const props = defineProps({
 	}
 });
 
-const project = ref<Project>({
-	id: '',
-	name: '',
-	description: '',
-	timestamp: ''
-});
+const resources = useResourcesStore();
+
+const project = ref<Project | null>(null);
 
 // refactor as a composable?
 async function getProject(): Promise<Project> {
@@ -25,14 +23,19 @@ async function getProject(): Promise<Project> {
 
 onMounted(async () => {
 	project.value = await getProject();
+	resources.setActiveProject(project.value);
+});
+
+onUnmounted(() => {
+	resources.setActiveProject(null);
 });
 </script>
 
 <template>
 	<div class="flex-container">
 		<header>
-			<h2>{{ project.name }}</h2>
-			<p class="secondary-text">Last updated: {{ project.timestamp }}</p>
+			<h2>{{ project?.name }}</h2>
+			<p class="secondary-text">Last updated: {{ project?.timestamp }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
@@ -42,7 +45,7 @@ onMounted(async () => {
 						<!-- Author -->
 						<section class="author">Edwin Lai, Yohann Paris</section>
 						<p>
-							{{ project.description }}
+							{{ project?.description }}
 						</p>
 					</section>
 					<section class="related-projects">
