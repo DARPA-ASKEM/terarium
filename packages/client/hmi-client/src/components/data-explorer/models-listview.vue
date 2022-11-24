@@ -122,6 +122,8 @@ const formatDescription = (d: Model) => {
 };
 
 const formatParameters = (d: Model) => {
+	// FIXME: current API return model descriptions that do not contain parameters
+	if (!d.parameters) return '';
 	const paramList = Object.keys(d.parameters).join('\n');
 	return isExpanded(d) || paramList.length < 4 ? paramList : `${paramList.substring(0, 50)}...`;
 };
