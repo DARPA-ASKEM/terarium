@@ -1,19 +1,19 @@
 <template>
 	<div class="document-list-container">
 		<div
-			v-for="doc in documents"
-			:key="doc.gddid"
+			v-for="docId in documents"
+			:key="docId"
 			class="doc-link"
-			:class="{ active: doc.gddid === docID }"
-			@click="openDocumentPage(doc)"
+			:class="{ active: docId === docID }"
+			@click="openDocumentPage(docId)"
 		>
 			<span class="doc-view-icon">
 				<DocumentView />
 			</span>
 			<span class="doc-title">
-				{{ doc.title }}
+				{{ docId }}
 			</span>
-			<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
+			<span class="doc-delete-btn" @click.stop="removeDocument(docId)">
 				<IconClose32 />
 			</span>
 		</div>
@@ -26,29 +26,31 @@
  * Display a list of documents available in the current Project.
  */
 import useResourcesStore from '@/stores/resources';
-import { XDDArticle } from '@/types/XDD';
-import { getResourceID } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 import DocumentView from '@carbon/icons-vue/es/document--view/32';
+import API from '@/api/api';
 
 const router = useRouter();
 
 const resourcesStore = useResourcesStore();
-const documents = computed(() => resourcesStore.documents);
 
 const docID = ref('');
+const documents = ref<string[]>([]);
 
-const openDocumentPage = (doc: XDDArticle) => {
+const openDocumentPage = async (docId: string) => {
+	// TODO: refactor as part of a project data service
+	const publicationDetails = await API.get(`/external/publications/${docId}`);
 	// pass this doc id as param
-	docID.value = getResourceID(doc);
+	docID.value = publicationDetails.data.xdd_uri;
 	router.push({ path: `/docs/${docID.value}` });
 };
 
-const removeDocument = (doc: XDDArticle) => {
-	resourcesStore.removeResource(doc);
+const removeDocument = async (docId: string) => {
+	// TODO: remove this document from the project assets
+	console.log('remove from project assets', docId);
 	router.push('/docs'); // clear the doc ID as a URL param
 };
 
@@ -56,6 +58,12 @@ onMounted(() => {
 	const routeParams = router.currentRoute.value.params;
 	if (!isEmpty(routeParams) && routeParams.id !== '' && docID.value === '') {
 		docID.value = routeParams.id as string;
+	}
+
+	// get the list of publications associated with this project and display them
+	const documentsInCurrentProject = resourcesStore.activeProject?.assets.publications;
+	if (documentsInCurrentProject) {
+		documents.value = documentsInCurrentProject;
 	}
 });
 </script>
