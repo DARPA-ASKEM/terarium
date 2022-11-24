@@ -428,7 +428,7 @@ export default {
 		quad.position.set(this.viewport.worldWidth / 2, this.viewport.worldHeight / 2);
 
 		// add quad to viewport
-		this.viewport.addChild(quad as any);
+		this.viewport.addChild(quad);
 
 		// run shader on grid
 		// const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
@@ -450,7 +450,7 @@ export default {
 		this.viewport.on('pointerdown', this.handleMouseDown);
 		this.viewport.on('pointerup', this.handleMouseUp);
 		this.viewport.on('moved' as any, this.incrementMove);
-		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
+		this.viewport.on('zoomed-end', this.incrementUpdate);
 	},
 
 	// ---------------------------------------------------------------------------- //
