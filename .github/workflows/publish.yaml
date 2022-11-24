@@ -9,12 +9,6 @@ on:
     branches: ['main']
     tags: ['*']
 
-env:
-  REGISTRY: ghcr.io
-  ORG: ${{ github.repository_owner }}
-  BAKE_FILE: docker-bake.hcl
-  BAKE_GROUP: prod
-
 jobs:
   # Run Global Lint
   lint:
@@ -64,10 +58,10 @@ jobs:
       - tag-generator
     uses: darpa-askem/.github/.github/workflows/bake-publish.yml@main
     with:
-      file: '${BAKE_FILE}'
-      group: '${BAKE_GROUP}'
-      registry: '${REGISTRY}'
-      organization: '${ORG}'
+      file: 'docker-bake.hcl'
+      group: 'prod'
+      registry: 'ghcr.io'
+      organization: ${{ github.repository_owner }}
       tag: ${{ needs.tag-generator.outputs.image-tag }}
     secrets:
       username: ${{ github.repository_owner }}
