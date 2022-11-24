@@ -5,7 +5,7 @@
 				class="side-panel-nav"
 				:tabs="tabs"
 				:current-tab-name="currentTabName"
-				@set-active="(tabName) => $emit('set-active', tabName)"
+				@set-active="(tabName) => emit('set-active', tabName)"
 			/>
 			<slot name="below-tabs" />
 		</div>
@@ -22,61 +22,55 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed, PropType } from 'vue';
 import SidePanelNav from '@/components/side-panel/side-panel-nav.vue';
 import { SidePanelTab } from '@/types/common';
 
-export default defineComponent({
-	name: 'SidePanel',
-	components: {
-		SidePanelNav
+const props = defineProps({
+	/**
+	 * `tabs` prop structure
+	 * {
+	 *  name: string,
+	 *  icon: string (optional) - only include one of [icon, imgSrc], // USE IBM ICON INSTEAD (WON'T BE A STRING)
+	 *  imgSrc: string (optional) - relative to assets folder,
+	 *  isGreyscale: boolean (optional),
+	 *  badgeCount: number (optional)
+	 * }
+	 * e.g. {
+	 *  name: 'Cube Information',
+	 *  icon: useIcon ? 'svg-icon' : null, // USE IBM ICON INSTEAD
+	 *  imgSrc: useIcon ? null : 'imageOfCube.png',
+	 *  isGreyscale: !useIcon,
+	 *  badgeCount: 12
+	 * }
+	 */
+	tabs: {
+		type: Array as PropType<SidePanelTab[]>,
+		default: () => []
 	},
-	props: {
-		/**
-		 * `tabs` prop structure
-		 * {
-		 *  name: string,
-		 *  icon: string (optional) - only include one of [icon, imgSrc], // USE IBM ICON INSTEAD (WON'T BE A STRING)
-		 *  imgSrc: string (optional) - relative to assets folder,
-		 *  isGreyscale: boolean (optional),
-		 *  badgeCount: number (optional)
-		 * }
-		 * e.g. {
-		 *  name: 'Cube Information',
-		 *  icon: useIcon ? 'svg-icon' : null, // USE IBM ICON INSTEAD
-		 *  imgSrc: useIcon ? null : 'imageOfCube.png',
-		 *  isGreyscale: !useIcon,
-		 *  badgeCount: 12
-		 * }
-		 */
-		tabs: {
-			type: Array as PropType<SidePanelTab[]>,
-			default: () => []
-		},
-		currentTabName: {
-			type: String,
-			default: () => ''
-		},
-		addPadding: {
-			type: Boolean,
-			default: false
-		},
-		isLarge: {
-			type: Boolean,
-			default: false
-		}
+	currentTabName: {
+		type: String,
+		default: () => ''
 	},
-	emits: ['set-active'],
-	computed: {
-		isPanelOpen() {
-			// eslint-disable-next-line no-plusplus
-			for (let i = 0; i < this.tabs.length; i++) {
-				if (this.tabs[i].name === this.currentTabName) return true;
-			}
-			return false;
-		}
+	addPadding: {
+		type: Boolean,
+		default: false
+	},
+	isLarge: {
+		type: Boolean,
+		default: false
 	}
+});
+
+const emit = defineEmits(['set-active']);
+
+const isPanelOpen = computed(() => {
+	// eslint-disable-next-line no-plusplus
+	for (let i = 0; i < props.tabs.length; i++) {
+		if (props.tabs[i].name === props.currentTabName) return true;
+	}
+	return false;
 });
 </script>
 

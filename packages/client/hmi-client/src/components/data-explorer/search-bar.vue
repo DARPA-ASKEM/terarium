@@ -1,142 +1,88 @@
 <template>
 	<div class="search-bar-container">
 		<slot name="dataset"></slot>
-		<div>
+		<div class="input-container">
+			<IconSearch16 class="search-icon" />
 			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
 			<input
 				id="search"
 				v-model="searchText"
+				ref="inputElement"
 				type="text"
 				name="search"
 				:placeholder="searchPlaceholder"
 				@keyup.enter="addSearchTerm"
 				@input="searchTextHandler"
 			/>
+			<IconClose16 class="clear-icon" @click="clearText" />
 		</div>
-		<div v-if="!realtime" class="flex-aligned">
-			<div v-for="searchTerm in searchTerms" :key="searchTerm" class="flex-aligned-item">
-				{{ searchTerm }}
-				<span class="flex-aligned-item-delete-btn" @click.stop="removeSearchTerm(searchTerm)">
-					<IconClose16 />
-				</span>
-			</div>
-		</div>
-		<button
-			v-if="enableClearButton"
-			type="button"
-			class="search-and-clear-buttons button-padding"
-			:class="{ 'button-disabled': isClearButtonDisabled }"
-			:disabled="isClearButtonDisabled"
-			@click="clearText"
-		>
-			<IconClose16 />Clear
-		</button>
-		<button
-			v-if="enableSearchButton"
-			type="button"
-			class="search-and-clear-buttons button-padding"
-			:class="{ 'button-disabled': isSearchButtonDisabled }"
-			:disabled="isSearchButtonDisabled"
-			@click="searchBtnHandler"
-		>
-			<IconSearch16 />Search
-		</button>
 		<slot name="sort"></slot>
+		<slot name="params"></slot>
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref, watch } from 'vue';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
 import IconSearch16 from '@carbon/icons-vue/es/search/16';
 
-export default defineComponent({
-	name: 'SearchBar',
-	components: {
-		IconClose16,
-		IconSearch16
+const props = defineProps({
+	realtime: {
+		type: Boolean,
+		default: false
 	},
-	props: {
-		realtime: {
-			type: Boolean,
-			default: false
-		},
-		enableMultiTermSearch: {
-			type: Boolean,
-			default: false
-		},
-		searchLabel: {
-			type: String,
-			default: ''
-		},
-		searchPlaceholder: {
-			type: String,
-			default: 'search term here...'
-		},
-		enableClearButton: {
-			type: Boolean,
-			default: true
-		},
-		enableSearchButton: {
-			type: Boolean,
-			default: true
-		}
+	searchLabel: {
+		type: String,
+		default: ''
 	},
-	emits: ['search-text-changed'],
-	setup() {
-		const searchText = ref('');
-		const searchTerms = ref<string[]>([]);
-		return {
-			searchText,
-			searchTerms
-		};
+	searchPlaceholder: {
+		type: String,
+		default: 'enter search term or doi here...'
 	},
-	computed: {
-		isClearButtonDisabled() {
-			return this.searchText === '' && this.searchTerms.length === 0;
-		},
-		isSearchButtonDisabled() {
-			return this.searchText === '' && this.searchTerms.length === 0;
-		}
-	},
-	watch: {
-		searchTerms() {
-			this.execSearch();
-		}
-	},
-	methods: {
-		clearText() {
-			this.searchText = '';
-			if (this.searchTerms.length > 0) {
-				this.searchTerms = [];
-			}
-		},
-		searchTextHandler(event: Event) {
-			if (this.realtime) {
-				this.searchTerms = [(event.target as HTMLInputElement).value];
-			}
-		},
-		removeSearchTerm(term: string) {
-			this.searchTerms = this.searchTerms.filter((t) => t !== term);
-			this.searchText = '';
-		},
-		addSearchTerm(event: Event) {
-			if (!this.realtime) {
-				const term = (event.target as HTMLInputElement).value;
-				this.searchTerms = this.enableMultiTermSearch ? [...this.searchTerms, term] : [term];
-			}
-		},
-		searchBtnHandler() {
-			if (this.searchTerms.length === 0) {
-				this.searchTerms = [this.searchText];
-			} else {
-				this.execSearch();
-			}
-		},
-		execSearch() {
-			this.$emit('search-text-changed', this.searchTerms);
-		}
+	focusInput: {
+		type: Boolean,
+		default: true
 	}
+});
+
+const emit = defineEmits(['search-text-changed']);
+
+const inputElement = ref<HTMLInputElement | null>(null);
+
+const searchText = ref('');
+const searchTerms = ref('');
+
+const clearText = () => {
+	searchText.value = '';
+	searchTerms.value = '';
+};
+
+const searchTextHandler = (event: Event) => {
+	if (props.realtime) {
+		searchTerms.value = (event.target as HTMLInputElement).value;
+	}
+};
+
+const execSearch = () => {
+	emit('search-text-changed', searchTerms.value);
+};
+
+const addSearchTerm = (event: Event) => {
+	if (!props.realtime) {
+		const term = (event.target as HTMLInputElement).value;
+		searchTerms.value = term;
+		execSearch();
+	}
+};
+
+onMounted(() => {
+	if (props.focusInput) {
+		inputElement.value?.focus();
+	}
+});
+
+watch(searchTerms, () => {
+	execSearch();
 });
 </script>
 
@@ -144,79 +90,57 @@ export default defineComponent({
 .search-bar-container {
 	display: flex;
 	background-color: transparent;
-	align-items: baseline;
 	justify-content: center;
-}
-
-.button-padding {
-	padding: 4px;
-	padding-left: 8px;
-	padding-right: 8px;
-	margin: 4px;
-	cursor: pointer;
-}
-
-button {
-	border-width: thin;
-	border-color: white;
-	border-radius: 6px;
-}
-
-.search-and-clear-buttons {
-	color: var(--un-color-white);
-}
-
-.search-button {
-	background-color: var(--un-color-accent);
-}
-
-.search-button-disabled,
-.button-disabled {
-	background-color: var(--un-color-accent-dark);
-	cursor: not-allowed;
-	color: gray;
-}
-
-.clear-button-disabled {
-	background-color: gray;
-	cursor: not-allowed;
-}
-
-.flex-aligned {
-	display: flex;
-	align-items: baseline;
-}
-
-.flex-aligned-item {
-	display: flex;
-	align-items: center;
-	color: var(--un-color-accent-darker);
-}
-
-.flex-aligned-item-delete-btn {
-	color: red;
-}
-
-.flex-aligned-item-delete-btn:hover {
-	cursor: pointer;
+	color: white;
+	flex: 1;
 }
 
 .search-label {
-	color: white;
 	font-weight: bold;
 	padding: 8px;
+}
+
+.input-container {
+	position: relative;
+	margin-left: 1rem;
+	margin-right: 1rem;
+	flex: 1;
+}
+
+.input-container .search-icon {
+	height: 100%;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	color: white;
+	margin-left: 4px;
+}
+
+.input-container .clear-icon {
+	height: 100%;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	color: red;
+	cursor: pointer;
+	margin-right: 4px;
 }
 
 input[type='text'] {
 	padding: 6px;
 	border: none;
-	margin-top: 8px;
-	margin-right: 16px;
-	font-size: 17px;
-	min-width: 300px;
+	font-size: 18px;
+	padding-left: 2rem;
+	padding-right: 2rem;
+	outline: none;
+	width: 100%;
 }
 
-.search-and-clear-buttons {
-	color: white;
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+	transition: background-color 5000s ease-in-out 0s;
 }
 </style>

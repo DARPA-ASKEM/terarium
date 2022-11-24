@@ -4,39 +4,11 @@ import {
 	FACET_FIELDS as MODEL_FACET_FIELDS,
 	DISPLAY_NAMES as MODEL_DISPLAY_NAMES
 } from '@/types/Model';
-import {
-	XDDArticle,
-	FACET_FIELDS as XDD_FACET_FIELDS,
-	DISPLAY_NAMES as XDD_DISPLAY_NAMES
-} from '@/types/XDD';
+import { DISPLAY_NAMES as XDD_DISPLAY_NAMES } from '@/types/XDD';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
-// FIXME:
-// XDD does not support Facets natively, so we will perform aggregations on the fly to build facets from XDD data
-// ideally, this should be done by the server side or at least cached as a hook or composoable
-export const getXDDFacets = (articles: XDDArticle[]) => {
-	const facets = {} as Facets;
-	const aggField = (fieldName: string) => {
-		const aggs: FacetBucket[] = [];
-		const articlesMap = articles.map((art) => art[fieldName as keyof XDDArticle]);
-		const grouped = groupBy(articlesMap);
-		Object.keys(grouped).forEach((gKey) => {
-			if (gKey !== '') {
-				aggs.push({ key: gKey, value: grouped[gKey].length });
-			}
-		});
-		return aggs;
-	};
-
-	XDD_FACET_FIELDS.forEach((field) => {
-		const facetForField = aggField(field);
-		if (facetForField.length > 0) {
-			facets[field] = facetForField;
-		}
-	});
-	return facets;
-};
-
+// FIXME: this client-side computation of facets from "models" data should be done
+//        at the HMI server
 export const getModelFacets = (articles: Model[]) => {
 	const facets = {} as Facets;
 	const aggField = (fieldName: string) => {
@@ -81,13 +53,11 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 				// because we would have different facets for different result types
 				// e.g., XDD will have facets that leverage the XDD fields and stats
 				if (resultsObj.searchSubsystem === ResourceType.XDD) {
-					const xddResults = resultsObj.results as XDDArticle[];
-					const xddFacets = getXDDFacets(xddResults);
+					const xddFacets = resultsObj.facets;
 					facets = mergeWith(facets, xddFacets, mergeCustomizer);
 				}
 				if (resultsObj.searchSubsystem === ResourceType.MODEL) {
-					const modelResults = resultsObj.results as Model[];
-					const modelFacets = getModelFacets(modelResults);
+					const modelFacets = resultsObj.facets;
 					facets = mergeWith(facets, modelFacets, mergeCustomizer);
 				}
 			}

@@ -27,8 +27,8 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { PropType } from 'vue';
 import Button from '@/components/Button.vue';
 import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
@@ -37,87 +37,75 @@ import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
 
-export default defineComponent({
-	name: 'SelectedResourcesOptionsPane',
-	components: {
-		// eslint-disable-next-line vue/no-reserved-component-names
-		Button,
-		MultilineDescription
-	},
-	props: {
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		}
-	},
-	emits: ['close'],
-	setup() {
-		const resources = useResourcesStore();
-		return {
-			resources,
-			getResourceTypeIcon
-		};
-	},
-	methods: {
-		getTitle(item: ResultType) {
-			return (item as Model).name || (item as XDDArticle).title;
-		},
-		formatTitle(item: ResultType) {
-			const maxSize = 36;
-			const itemTitle = this.getTitle(item);
-			return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-		},
-		formatDescription(item: ResultType) {
-			const maxSize = 120;
-			let itemDesc = '[No Desc]';
-			if (isModel(item)) {
-				itemDesc = (item as Model).description || itemDesc;
-			}
-			if (isXDDArticle(item)) {
-				itemDesc =
-					((item as XDDArticle).abstractText &&
-					typeof (item as XDDArticle).abstractText === 'string'
-						? (item as XDDArticle).abstractText
-						: false) ||
-					(item as XDDArticle).journal ||
-					(item as XDDArticle).publisher ||
-					itemDesc;
-			}
-			return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
-		},
-		isSelected(item: ResultType) {
-			return this.selectedSearchItems.find((searchItem) => {
-				if (isModel(item)) {
-					const itemAsModel = item as Model;
-					const searchItemAsModel = searchItem as Model;
-					return searchItemAsModel.id === itemAsModel.id;
-				}
-				if (isXDDArticle(item)) {
-					const itemAsArticle = item as XDDArticle;
-					const searchItemAsArticle = searchItem as XDDArticle;
-					return searchItemAsArticle.title === itemAsArticle.title;
-				}
-				return false;
-			});
-		},
-		getType(item: ResultType) {
-			if (isModel(item)) {
-				return (item as Model).type;
-			}
-			if (isXDDArticle(item)) {
-				return ResourceType.XDD;
-			}
-			return ResourceType.ALL;
-		},
-		addToCurrentProject() {
-			// send selected items to the store
-			this.selectedSearchItems.forEach((selectedItem) => {
-				this.resources.addResource(selectedItem);
-			});
-			this.$emit('close');
-		}
+const props = defineProps({
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	}
 });
+
+const emit = defineEmits(['close']);
+const resources = useResourcesStore();
+
+const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
+
+const formatTitle = (item: ResultType) => {
+	const maxSize = 36;
+	const itemTitle = getTitle(item);
+	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
+};
+
+const formatDescription = (item: ResultType) => {
+	const maxSize = 120;
+	let itemDesc = '[No Desc]';
+	if (isModel(item)) {
+		itemDesc = (item as Model).description || itemDesc;
+	}
+	if (isXDDArticle(item)) {
+		itemDesc =
+			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
+				? (item as XDDArticle).abstractText
+				: false) ||
+			(item as XDDArticle).journal ||
+			(item as XDDArticle).publisher ||
+			itemDesc;
+	}
+	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
+};
+
+// FIXME: consiuder refactoring as a util function
+const isSelected = (item: ResultType) =>
+	props.selectedSearchItems.find((searchItem) => {
+		if (isModel(item)) {
+			const itemAsModel = item as Model;
+			const searchItemAsModel = searchItem as Model;
+			return searchItemAsModel.id === itemAsModel.id;
+		}
+		if (isXDDArticle(item)) {
+			const itemAsArticle = item as XDDArticle;
+			const searchItemAsArticle = searchItem as XDDArticle;
+			return searchItemAsArticle.title === itemAsArticle.title;
+		}
+		return false;
+	});
+
+const getType = (item: ResultType) => {
+	if (isModel(item)) {
+		return (item as Model).type;
+	}
+	if (isXDDArticle(item)) {
+		return ResourceType.XDD;
+	}
+	return ResourceType.ALL;
+};
+
+const addToCurrentProject = () => {
+	// send selected items to the store
+	props.selectedSearchItems.forEach((selectedItem) => {
+		resources.addResource(selectedItem);
+	});
+	emit('close');
+};
 </script>
 
 <style lang="scss" scoped>

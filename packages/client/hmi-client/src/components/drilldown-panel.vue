@@ -7,91 +7,48 @@
 			<div class="panel-content" id="panel-content-container">
 				<slot name="content" />
 			</div>
-			<div class="overlay-pane" :class="{ open: isOverlayOpen }">
-				<div class="panel-header">
-					<div class="navigation-button back-button" @click="onOverlayBack">
-						<IconArrowLeft32 />
-					</div>
-					<h5>{{ overlayPaneTitle }}</h5>
-				</div>
-				<div class="panel-content">
-					<slot name="overlay-pane" />
-				</div>
-			</div>
 		</div>
 	</transition>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import IconArrowLeft32 from '@carbon/icons-vue/es/arrow--left/32';
+<script setup lang="ts">
+import { computed, PropType } from 'vue';
 
-interface DrilldownPanelTab {
+export interface DrilldownPanelTab {
 	id: string;
 	name: string;
 	icon?: string;
 }
 
-export default defineComponent({
-	name: 'DrilldownPanel',
-	components: {
-		IconArrowLeft32
+const props = defineProps({
+	// If isOpen isn't passed, no close button
+	//  is shown.
+	isOpen: {
+		type: Boolean,
+		default: null
 	},
-	props: {
-		// If isOpen isn't passed, no close button
-		//  is shown.
-		isOpen: {
-			type: Boolean,
-			default: null
-		},
-		tabs: {
-			type: Array as PropType<DrilldownPanelTab[]>,
-			default: () => []
-		},
-		activeTabId: {
-			type: String as PropType<String | null>,
-			default: null
-		},
-		overlayPaneTitle: {
-			type: String,
-			default: '[Overlay Header]'
-		},
-		isOverlayOpen: {
-			type: Boolean,
-			default: false
-		},
-		hasTransition: {
-			type: Boolean,
-			default: true
-		},
-		hideClose: {
-			type: Boolean,
-			default: false
-		}
+	tabs: {
+		type: Array as PropType<DrilldownPanelTab[]>,
+		default: () => []
 	},
-	emits: ['close', 'tab-click', 'overlay-back'],
-	data: () => ({}),
-	computed: {
-		paneTitle(): string {
-			const activeTab = this.tabs.find((tab) => tab.id === this.activeTabId);
-			return activeTab === undefined ? '[Panel Title]' : activeTab.name;
-		},
-		transitionName(): string {
-			return this.hasTransition ? 'slide-fade' : '';
-		}
+	activeTabId: {
+		type: String as PropType<String | null>,
+		default: null
 	},
-	mounted() {},
-	methods: {
-		onClose() {
-			this.$emit('close');
-		},
-		onTabClick(tabID: string) {
-			this.$emit('tab-click', tabID);
-		},
-		onOverlayBack() {
-			this.$emit('overlay-back');
-		}
+	hasTransition: {
+		type: Boolean,
+		default: true
+	},
+	hideClose: {
+		type: Boolean,
+		default: false
 	}
+});
+
+const transitionName = computed(() => (props.hasTransition ? 'slide-fade' : ''));
+const paneTitle = computed(() => {
+	const activeTab = props.tabs.find((tab) => tab.id === props.activeTabId);
+	return activeTab === undefined ? '[Panel Title]' : activeTab.name;
 });
 </script>
 

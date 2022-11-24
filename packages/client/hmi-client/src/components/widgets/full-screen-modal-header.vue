@@ -11,32 +11,25 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 
-export default defineComponent({
-	name: 'FullScreenModalHeader',
-	components: {
-		IconChevronLeft32
+defineProps({
+	showIcon: {
+		type: Boolean,
+		default: false
 	},
-	props: {
-		showIcon: {
-			type: Boolean,
-			default: false
-		},
-		navBackLabel: {
-			type: String,
-			default: ''
-		}
-	},
-	emits: ['close'],
-	methods: {
-		close() {
-			this.$emit('close');
-		}
+	navBackLabel: {
+		type: String,
+		default: ''
 	}
 });
+
+const emit = defineEmits(['close']);
+
+const close = () => {
+	emit('close');
+};
 </script>
 
 <style scoped>
