@@ -1,18 +1,20 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '@/views/Home.vue';
-import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
 import DocumentView from '@/views/document.vue';
 import Simulation from '@/views/Simulation.vue';
+import ProjectView from '@/views/Project.vue';
 import Model from '@/views/Model.vue';
+import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 
 export enum RoutePath {
 	Home = '/',
 
 	DocView = '/docs/:id?',
+	Project = '/projects/:projectId',
 	ModelView = '/projects/:projectId/model',
 	SimulationView = '/projects/:projectId/simulation',
 	Results = '/projects/:projectId/results',
@@ -20,6 +22,7 @@ export enum RoutePath {
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
+	ResponsivePlaygroundPath = '/responsive-playground',
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
 }
 
@@ -39,14 +42,16 @@ const routes = [
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
 	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model },
+	{ path: RoutePath.Project, component: ProjectView, props: true },
 
 	// TODO
-	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
+	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.DocView, component: DocumentView, props: true },
 
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
+	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground }
 ];
 

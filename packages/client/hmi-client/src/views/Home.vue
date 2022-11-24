@@ -4,6 +4,9 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
+import API from '@/api/api';
+import { ref } from 'vue';
+import { Project } from '@/types/Project';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -13,7 +16,16 @@ const enum Categories {
 
 const categories = new Map<string, { icon: object }>([[Categories.Recents, { icon: IconTime32 }]]);
 
-const mockProjects: string[] = ['Mocked Project'];
+const projects = ref<Project[]>([]);
+
+// refactor as a composable?
+async function getProjects() {
+	return API.get('/projects');
+}
+
+getProjects().then((response) => {
+	projects.value = response.data;
+});
 </script>
 
 <template>
@@ -30,8 +42,14 @@ const mockProjects: string[] = ['Mocked Project'];
 					<li v-if="key === Categories.Recents">
 						<NewProjectCard />
 					</li>
-					<li v-for="(project, index) in mockProjects" :key="index">
-						<ProjectCard :name="project" />
+					<li v-for="(project, index) in projects" :key="index">
+						<router-link
+							style="text-decoration: none; color: inherit"
+							:to="'/projects/' + project.id"
+							:projectId="project.id"
+						>
+							<ProjectCard :name="project.name" />
+						</router-link>
 					</li>
 				</ul>
 				<IconChevronRight32 class="chevron-right" />
@@ -115,7 +133,6 @@ ul {
 	display: flex;
 	gap: 0.5rem;
 	margin: 0.5rem 4rem;
-	transition: 0.2s;
 }
 
 li {
@@ -125,9 +142,10 @@ li {
 	position: relative;
 }
 
-li:hover > .project-card {
+a:hover {
 	transform: scale(1.2);
 	z-index: 2;
+	transition: 0.2s;
 }
 
 li > * {
