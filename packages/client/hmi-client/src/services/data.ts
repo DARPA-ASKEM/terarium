@@ -105,6 +105,42 @@ const getXDDArtifacts = async (doc_doi: string) => {
 	return [] as XDDArtifact[];
 };
 
+//
+// fetch list of related documented utilizing
+//  semantic similarity (i.e., document embedding) from XDD via the HMI server
+//
+const getRelatedDocuments = async (doc_doi: string, dataset: string | null) => {
+	if (doc_doi === '' || dataset === null) {
+		return [] as XDDArticle[];
+	}
+
+	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
+	// dataset=xdd-covid-19
+	// doi=10.1002/pbc.28600
+	const url = `/xdd/related/document?doi=${doc_doi}&set=${dataset}`;
+
+	const res = await await API.get(url);
+	const rawdata: XDDResult = res.data;
+
+	if (rawdata.data) {
+		const articlesRaw = rawdata.data.map((a) => a.bibjson);
+
+		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
+		//       is not populated and instead the raw field name, abstract, is the one with data
+		//       similarly, re-map the gddid field
+		const articles = articlesRaw.map((a) => ({
+			...a,
+			abstractText: a.abstract,
+			// eslint-disable-next-line no-underscore-dangle
+			gddid: a._gddid,
+			knownTerms: a.known_terms
+		}));
+
+		return articles;
+	}
+	return [] as XDDArticle[];
+};
+
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
@@ -244,4 +280,11 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	return responses as SearchResults[];
 };
 
-export { fetchData, getXDDSets, getXDDDictionaries, getXDDArtifacts, searchXDDArticles };
+export {
+	fetchData,
+	getXDDSets,
+	getXDDDictionaries,
+	getXDDArtifacts,
+	searchXDDArticles,
+	getRelatedDocuments
+};

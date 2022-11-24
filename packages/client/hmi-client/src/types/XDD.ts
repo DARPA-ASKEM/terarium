@@ -24,8 +24,6 @@ export type XDDArticleKnownTerms = {
 	[term: string]: string[];
 };
 
-export const ArticleFilterAttributes = ['title', 'publisher'];
-
 export type XDDArticle = {
 	// REVIEW: FIXME: server should provide proper field names
 	//         also, reove the temp workaround in the client data service
@@ -48,6 +46,8 @@ export type XDDArticle = {
 	gddid: string; // mapped from _gddid
 	// eslint-disable-next-line no-underscore-dangle
 	_gddid: string; // TEMP
+	// additional-client-side fields
+	relatedDocuments?: XDDArticle[];
 };
 
 export type XDDArtifactProperties = {
@@ -112,6 +112,8 @@ export type XDDResult = {
 	// XDD Sets
 	description?: string;
 	available_sets?: string[];
+	// related docs
+	data?: { bibjson: XDDArticle; score: number }[];
 };
 
 export type XDDSearchParams = {

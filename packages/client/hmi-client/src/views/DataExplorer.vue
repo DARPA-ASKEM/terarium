@@ -425,16 +425,6 @@ const toggleDataItemSelected = (item: ResultType) => {
 				(searchItem as Model).id !== itemID && (searchItem as XDDArticle).title !== itemID
 		);
 	} else {
-		const dataitem = dataItems.value
-			.map((res) => res.results)
-			.flat()
-			.find(
-				(searchItem) =>
-					(searchItem as Model).id === itemID || (searchItem as XDDArticle).title === itemID
-			);
-		if (dataitem === undefined) {
-			return;
-		}
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };

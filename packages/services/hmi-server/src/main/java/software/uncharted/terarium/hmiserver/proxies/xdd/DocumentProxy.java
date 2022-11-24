@@ -35,4 +35,11 @@ public interface DocumentProxy {
 	@GET
 	@Path("api/dictionaries")
 	Response getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
+
+	@GET
+	@Path("sets/{set}/doc2vec/api/similar")
+	Response getRelatedDocuments(
+		@PathParam("set") String set,
+		@QueryParam("doi") String doi
+	);
 }

@@ -6,7 +6,6 @@
 					<tr>
 						<th><span class="left-cover" />NAME</th>
 						<th>DESCRIPTION</th>
-						<th>Parameters</th>
 						<th>FRAMEWORK</th>
 						<th>PREVIEW<span class="right-cover" /></th>
 					</tr>
@@ -38,9 +37,6 @@
 						</td>
 						<td class="desc-col">
 							<p class="max-content">{{ formatDescription(d) }}</p>
-						</td>
-						<td class="parameters-col">
-							<p class="max-content">{{ formatParameters(d) }}</p>
 						</td>
 						<td class="framework-col">
 							<div class="text-bold">{{ d.framework }}</div>
@@ -119,13 +115,6 @@ const formatDescription = (d: Model) => {
 	return isExpanded(d) || d.description.length < 140
 		? d.description
 		: `${d.description.substring(0, 140)}...`;
-};
-
-const formatParameters = (d: Model) => {
-	// FIXME: current API return model descriptions that do not contain parameters
-	if (!d.parameters) return '';
-	const paramList = Object.keys(d.parameters).join('\n');
-	return isExpanded(d) || paramList.length < 4 ? paramList : `${paramList.substring(0, 50)}...`;
 };
 </script>
 
@@ -255,7 +244,7 @@ tr th {
 }
 
 .desc-col {
-	width: 35%;
+	width: 45%;
 }
 
 .framework-col {
@@ -263,13 +252,8 @@ tr th {
 	overflow-wrap: break-word;
 }
 
-.parameters-col {
-	width: 20%;
-	overflow-wrap: anywhere;
-}
-
 .max-content {
-	max-height: 200px;
+	max-height: 250px;
 	overflow-y: auto;
 }
 

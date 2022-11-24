@@ -75,3 +75,14 @@ export function validate(possibleDOI?: string): boolean {
 	if (!possibleDOI) return false;
 	return possibleDOI.match(DOI_VALIDATION_PATTERN) !== null;
 }
+
+export function getDocumentDoi(doc: XDDArticle) {
+	let docIdentifier = '';
+	if (doc && doc.identifier.length > 0) {
+		const defaultDOI = doc.identifier.find((i) => i.type === 'doi');
+		if (defaultDOI) {
+			docIdentifier = defaultDOI.id;
+		}
+	}
+	return docIdentifier;
+}
