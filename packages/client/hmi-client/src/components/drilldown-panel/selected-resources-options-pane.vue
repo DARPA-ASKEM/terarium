@@ -3,7 +3,9 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-to-title">Add to:</div>
 		<div class="add-selected-buttons">
-			<Button action @click="addToCurrentProject">Current Project</Button>
+			<Button action @click="addToCurrentProject" :class="{ 'invalid-project': !validProject }"
+				>Current Project</Button
+			>
 			<Button action>Other Project</Button>
 		</div>
 		<div class="selected-items-container">
@@ -28,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType } from 'vue';
+import { computed, PropType } from 'vue';
 import Button from '@/components/Button.vue';
 import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
@@ -36,6 +38,8 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
+import { useRoute } from 'vue-router';
+import { isEmpty } from 'lodash';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -46,6 +50,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 const resources = useResourcesStore();
+const route = useRoute();
+
+const validProject = computed(() => !isEmpty(route.params) && route.params.projectId);
 
 const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
 
@@ -100,6 +107,7 @@ const getType = (item: ResultType) => {
 };
 
 const addToCurrentProject = () => {
+	if (!validProject.value) return;
 	// send selected items to the store
 	props.selectedSearchItems.forEach((selectedItem) => {
 		resources.addResource(selectedItem);
@@ -110,6 +118,11 @@ const addToCurrentProject = () => {
 
 <style lang="scss" scoped>
 @import '@/styles/variables';
+
+.invalid-project {
+	background-color: gray;
+	cursor: not-allowed;
+}
 
 .selected-title {
 	margin-bottom: 5px;
@@ -126,12 +139,12 @@ const addToCurrentProject = () => {
 .add-selected-buttons {
 	display: flex;
 	flex-direction: column;
+}
 
-	button {
-		margin-bottom: 5px;
-		padding-top: 4px;
-		padding-bottom: 4px;
-	}
+.add-selected-buttons button {
+	margin-bottom: 5px;
+	padding-top: 4px;
+	padding-bottom: 4px;
 }
 
 .breakdown-pane-container {
