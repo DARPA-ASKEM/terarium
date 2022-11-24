@@ -42,7 +42,6 @@ import IconCheckmark16 from '@carbon/icons-vue/es/checkmark/24';
 
 export type DropdownItem = {
 	displayName: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: string;
 	selected?: boolean;
 };

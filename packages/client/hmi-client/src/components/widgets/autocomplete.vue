@@ -1,5 +1,3 @@
-import { computed } from "vue"; import { computed } from "vue";
-
 <template>
 	<div class="autocomplete-container" ref="containerElement">
 		<label for="autocomplete"></label>

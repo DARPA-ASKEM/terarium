@@ -1,5 +1,3 @@
-import { computed } from "vue";
-
 <template>
 	<div class="data-pagination">
 		<button type="button" class="btn btn-primary" :disabled="hasPrev" @click="prevPage">
