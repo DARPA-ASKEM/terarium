@@ -229,9 +229,6 @@ export default defineComponent({
 		const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
 		const testData = await test.json();
 		modelId = testData.id;
-
-		this.refresh();
-		this.jsonOutput();
 	},
 	setup() {
 		const loadModelID = ref('');
@@ -258,8 +255,8 @@ export default defineComponent({
 			await rendererC?.setData(g3);
 			await rendererC?.render();
 
-			console.log(g, g2, g3);
-			console.log(modelA, modelB);
+			// console.log(g, g2, g3);
+			// console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
 			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
@@ -387,12 +384,12 @@ export default defineComponent({
 			const output = await resp.json();
 			console.log(petriNetValidator(output));
 
-			if (petriNetValidator(output) === true) {
-				modelA = output;
-				g = await parsePetriNet2IGraph(modelA);
-				g = runDagreLayout(_.cloneDeep(g));
-				this.refresh();
-			}
+			// if (petriNetValidator(output) === true) {
+			// 	modelA = output;
+			// 	g = await parsePetriNet2IGraph(modelA);
+			// 	g = runDagreLayout(_.cloneDeep(g));
+			// 	this.refresh();
+			// }
 
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
@@ -430,6 +427,9 @@ export default defineComponent({
 					]
 				})
 			});
+
+			this.refresh();
+			this.jsonOutput();
 		},
 		async addPlace() {
 			console.log('add place');
