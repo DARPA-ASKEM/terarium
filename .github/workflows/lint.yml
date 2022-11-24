@@ -4,8 +4,16 @@ name: Global File Linting
 on:
   workflow_call:
   push:
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**/Dockerfile*'
     branches: ['main']
   pull_request:
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**/Dockerfile*'
     branches: ['main']
 
 jobs:

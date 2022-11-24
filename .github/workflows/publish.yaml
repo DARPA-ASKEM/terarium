@@ -64,10 +64,10 @@ jobs:
       - tag-generator
     uses: darpa-askem/.github/.github/workflows/bake-publish.yml@main
     with:
-      file: ${{ env.BAKE_FILE }}
-      group: ${{ env.BAKE_GROUP }}
-      registry: ${{ env.REGISTRY }}
-      organization: ${{ env.ORG }}
+      file: '${BAKE_FILE}'
+      group: '${BAKE_GROUP}'
+      registry: '${REGISTRY}'
+      organization: '${ORG}'
       tag: ${{ needs.tag-generator.outputs.image-tag }}
     secrets:
       username: ${{ github.repository_owner }}
