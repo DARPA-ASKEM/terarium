@@ -450,7 +450,7 @@ export default {
 		this.viewport.on('pointerdown', this.handleMouseDown);
 		this.viewport.on('pointerup', this.handleMouseUp);
 		this.viewport.on('moved' as any, this.incrementMove);
-		this.viewport.on('zoomed-end', this.incrementUpdate);
+		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
 	},
 
 	// ---------------------------------------------------------------------------- //

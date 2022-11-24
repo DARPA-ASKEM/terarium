@@ -39,7 +39,7 @@ export default {
 	},
 
 	methods: {
-		fillColorFn(datum: any, paramsMin: any, paramsMax: any): String {
+		fillColorFn(datum: any, _paramsMin: any, paramsMax: any): String {
 			// get value as fraction of min clamped to 0
 			const v = Math.max(datum.I / paramsMax.I, 0);
 			// apply gamma: https://en.wikipedia.org/wiki/Gamma_correction
