@@ -49,16 +49,15 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType, SearchResults } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
-import IconDocument20 from '@carbon/icons-vue/es/document/20';
 
-type GenericResult = {
+export type GenericResult = {
 	id: string;
 	name: string;
 	desc: string;
@@ -66,140 +65,117 @@ type GenericResult = {
 	type: string;
 };
 
-export default defineComponent({
-	name: 'CommonListview',
-	components: {
-		MultilineDescription,
-		IconDocument20
+const props = defineProps({
+	inputItems: {
+		type: Array as PropType<SearchResults[]>,
+		default: () => []
 	},
-	props: {
-		inputItems: {
-			type: Array as PropType<SearchResults[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		}
-	},
-	emits: ['toggle-item-selected'],
-	setup(props) {
-		const expandedRowId = ref('');
-
-		const { inputItems } = toRefs(props);
-
-		const items = ref<GenericResult[]>([]);
-
-		watch(
-			inputItems,
-			() => {
-				// transform incoming results of differnt types into a generic one
-				const list: GenericResult[] = [];
-				inputItems.value.forEach((item) => {
-					if (item.searchSubsystem === ResourceType.XDD) {
-						const results = item.results as XDDArticle[];
-						results.forEach((article) => {
-							list.push({
-								// eslint-disable-next-line no-underscore-dangle
-								id: article.gddid,
-								name: article.title,
-								desc: article.journal ?? article.abstractText ?? '', // FIXME: XDD should always return valid abstract
-								source: article.publisher ?? article.author.map((a) => a.name).join('\n'),
-								type: ResourceType.XDD
-							});
-						});
-					}
-					if (item.searchSubsystem === ResourceType.MODEL) {
-						const results = item.results as Model[];
-						results.forEach((model) => {
-							list.push({
-								id: model.id,
-								name: model.name,
-								desc: model.description,
-								source: model.framework,
-								type: model.type
-							});
-						});
-					}
-				});
-				items.value = list;
-
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const elem: any = document.getElementsByClassName('table-fixed-head');
-				if (elem.length === 0) return;
-				elem[0].scrollTop = 0;
-			},
-			{ immediate: true }
-		);
-
-		return {
-			expandedRowId,
-			items,
-			getResourceTypeIcon
-		};
-	},
-	methods: {
-		isExpanded(item: GenericResult) {
-			return this.expandedRowId === item.id;
-		},
-		updateExpandedRow(article: GenericResult) {
-			this.expandedRowId = this.expandedRowId === article.id ? '' : article.id;
-		},
-		formatName(item: GenericResult) {
-			return item.name;
-		},
-		formatDescription(item: GenericResult) {
-			const maxSize = 120;
-			return this.isExpanded(item) || item.desc.length < maxSize
-				? item.desc
-				: `${item.desc.substring(0, maxSize)}...`;
-		},
-		formatSource(item: GenericResult) {
-			const maxSize = 40;
-			return this.isExpanded(item) || item.source.length < maxSize
-				? item.source
-				: `${item.source.substring(0, maxSize)}...`;
-		},
-		getOriginalItem(item: GenericResult) {
-			// FIXME: make this func computed
-			const originalResults = this.inputItems.find((items) => items.searchSubsystem === item.type);
-			if (originalResults) {
-				const idField = item.type === ResourceType.XDD ? 'gddid' : 'id'; // FIXME
-				const originalItem = originalResults.results.find(
-					(resItem) => resItem[idField] === item.id
-				);
-				return originalItem;
-			}
-			return undefined;
-		},
-		updateSelection(item: GenericResult) {
-			// get the original item that corresponds to this "transformed" item
-			const originalItem = this.getOriginalItem(item);
-			if (originalItem) {
-				this.$emit('toggle-item-selected', originalItem);
-			}
-		},
-		isSelected(item: GenericResult) {
-			const originalItem: ResultType | undefined = this.getOriginalItem(item);
-			if (originalItem) {
-				return this.selectedSearchItems.find((searchItem) => {
-					if (isModel(originalItem)) {
-						const itemAsModel = originalItem as Model;
-						const searchItemAsModel = searchItem as Model;
-						return searchItemAsModel.id === itemAsModel.id;
-					}
-					if (isXDDArticle(originalItem)) {
-						const itemAsArticle = originalItem as XDDArticle;
-						const searchItemAsArticle = searchItem as XDDArticle;
-						return searchItemAsArticle.title === itemAsArticle.title; // FIXME: should this be gddid
-					}
-					return false;
-				});
-			}
-			return false;
-		}
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	}
 });
+
+const expandedRowId = ref('');
+
+const { inputItems } = toRefs(props);
+
+const items = ref<GenericResult[]>([]);
+
+watch(
+	inputItems,
+	() => {
+		// transform incoming results of differnt types into a generic one
+		const list: GenericResult[] = [];
+		inputItems.value.forEach((item) => {
+			if (item.searchSubsystem === ResourceType.XDD) {
+				const results = item.results as XDDArticle[];
+				results.forEach((article) => {
+					list.push({
+						// eslint-disable-next-line no-underscore-dangle
+						id: article.gddid,
+						name: article.title,
+						desc: article.journal ?? article.abstractText ?? '', // FIXME: XDD should always return valid abstract
+						source: article.publisher ?? article.author.map((a) => a.name).join('\n'),
+						type: ResourceType.XDD
+					});
+				});
+			}
+			if (item.searchSubsystem === ResourceType.MODEL) {
+				const results = item.results as Model[];
+				results.forEach((model) => {
+					list.push({
+						id: model.id,
+						name: model.name,
+						desc: model.description,
+						source: model.framework,
+						type: model.type
+					});
+				});
+			}
+		});
+		items.value = list;
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elem: any = document.getElementsByClassName('table-fixed-head');
+		if (elem.length === 0) return;
+		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+
+const isExpanded = (item: GenericResult) => expandedRowId.value === item.id;
+
+const updateExpandedRow = (article: GenericResult) => {
+	expandedRowId.value = expandedRowId.value === article.id ? '' : article.id;
+};
+
+const formatName = (item: GenericResult) => item.name;
+
+const formatDescription = (item: GenericResult) => {
+	const maxSize = 120;
+	return isExpanded(item) || item.desc.length < maxSize
+		? item.desc
+		: `${item.desc.substring(0, maxSize)}...`;
+};
+
+const formatSource = (item: GenericResult) => {
+	const maxSize = 40;
+	return isExpanded(item) || item.source.length < maxSize
+		? item.source
+		: `${item.source.substring(0, maxSize)}...`;
+};
+
+const getOriginalItem = (item: GenericResult) => {
+	// FIXME: make this func computed
+	const originalResults = props.inputItems.find((itm) => itm.searchSubsystem === item.type);
+	if (originalResults) {
+		const idField = item.type === ResourceType.XDD ? 'gddid' : 'id'; // FIXME
+		const originalItem = originalResults.results.find((resItem) => resItem[idField] === item.id);
+		return originalItem;
+	}
+	return undefined;
+};
+
+const isSelected = (item: GenericResult) => {
+	const originalItem: ResultType | undefined = getOriginalItem(item);
+	if (originalItem) {
+		return props.selectedSearchItems.find((searchItem) => {
+			if (isModel(originalItem)) {
+				const itemAsModel = originalItem as Model;
+				const searchItemAsModel = searchItem as Model;
+				return searchItemAsModel.id === itemAsModel.id;
+			}
+			if (isXDDArticle(originalItem)) {
+				const itemAsArticle = originalItem as XDDArticle;
+				const searchItemAsArticle = searchItem as XDDArticle;
+				return searchItemAsArticle.title === itemAsArticle.title; // FIXME: should this be gddid
+			}
+			return false;
+		});
+	}
+	return false;
+};
 </script>
 
 <style scoped>

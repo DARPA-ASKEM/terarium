@@ -1,4 +1,4 @@
-// WM search construct
+// search construct
 export type ClauseField = string;
 export type ClauseValue = string | number | Array<number>;
 export type ClauseOperand = 'and' | 'or';
@@ -15,7 +15,7 @@ export interface Filters {
 	clauses: Clause[];
 }
 
-// WM search options
+// search options
 export interface FiltersOptions {
 	from?: number;
 	size?: number;

@@ -24,8 +24,8 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed, PropType } from 'vue';
 import ModelsListview from '@/components/data-explorer/models-listview.vue';
 import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import CommonListview from '@/components/data-explorer/common-listview.vue';
@@ -33,52 +33,40 @@ import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 
-export default defineComponent({
-	name: 'SearchResultsList',
-	components: {
-		ModelsListview,
-		ArticlesListview,
-		CommonListview
+const props = defineProps({
+	dataItems: {
+		type: Array as PropType<SearchResults[]>,
+		default: () => []
 	},
-	props: {
-		dataItems: {
-			type: Array as PropType<SearchResults[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		},
-		resultType: {
-			type: String,
-			default: ResourceType.ALL
-		}
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	},
-	emits: ['toggle-data-item-selected'],
-	data: () => ({
-		ResourceType
-	}),
-	computed: {
-		filteredModels() {
-			const resList = this.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
-			if (resList) {
-				return resList.results as Model[];
-			}
-			return [];
-		},
-		filteredArticles() {
-			const resList = this.dataItems.find((res) => res.searchSubsystem === ResourceType.XDD);
-			if (resList) {
-				return resList.results as XDDArticle[];
-			}
-			return [];
-		}
-	},
-	methods: {
-		toggleDataItemSelected(item: ResultType) {
-			this.$emit('toggle-data-item-selected', item);
-		}
+	resultType: {
+		type: String,
+		default: ResourceType.ALL
 	}
+});
+
+const emit = defineEmits(['toggle-data-item-selected']);
+
+const toggleDataItemSelected = (item: ResultType) => {
+	emit('toggle-data-item-selected', item);
+};
+
+const filteredModels = computed(() => {
+	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
+	if (resList) {
+		return resList.results as Model[];
+	}
+	return [];
+});
+const filteredArticles = computed(() => {
+	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.XDD);
+	if (resList) {
+		return resList.results as XDDArticle[];
+	}
+	return [];
 });
 </script>
 

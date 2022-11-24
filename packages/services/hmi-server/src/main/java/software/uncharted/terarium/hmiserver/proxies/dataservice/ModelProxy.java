@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 public interface ModelProxy {
 
 	@GET
+	@Path("/descriptions")
 	Response getModels();
 
 	@GET

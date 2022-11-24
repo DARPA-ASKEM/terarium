@@ -5,7 +5,7 @@
 	</div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 /**
  * A menu dropdown wrapper for corrections that allows the injection of one external
  * fragments into the template slot.
@@ -13,12 +13,6 @@
  * - content: elements to be displayed
  *
  */
-
-import { defineComponent } from 'vue';
-
-export default defineComponent({
-	name: 'DropdownControl'
-});
 </script>
 
 <style>

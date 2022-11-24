@@ -2,15 +2,6 @@
 	<div class="search-listview-container">
 		<div class="table-fixed-head">
 			<table>
-				<thead>
-					<tr>
-						<th><span class="left-cover" />TITLE and ABSTRACT</th>
-						<th>PUBLISHER and AUTHOR</th>
-						<th>JOURNAL</th>
-						<th>KNOWN TERMS</th>
-						<th>PREVIEW<span class="right-cover" /></th>
-					</tr>
-				</thead>
 				<tbody>
 					<tr
 						v-for="d in articles"
@@ -35,25 +26,28 @@
 								<div class="content">
 									<div class="text-bold">{{ formatTitle(d) }}</div>
 									<multiline-description :text="formatDescription(d)" />
+									<div>{{ d.publisher }}, {{ d.journal }}</div>
+									<div v-if="isExpanded(d)" class="knobs">
+										<multiline-description :text="formatArticleAuthors(d)" />
+									</div>
+									<div v-html="formatKnownTerms(d)"></div>
+									<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
+										Related Documents
+									</div>
+									<div v-if="isExpanded(d) && d.relatedDocuments" class="related-docs-container">
+										<div v-for="a in d.relatedDocuments" :key="a.gddid">
+											{{ a.title }}
+											<span class="item-select" @click.stop="updateSelection(a)"
+												>{{ isSelected(a) ? 'Unselect' : 'Select' }}
+											</span>
+										</div>
+									</div>
+									<div
+										v-if="isExpanded(d) && d.relatedDocuments && d.relatedDocuments.length === 0"
+									>
+										No related documents found!
+									</div>
 								</div>
-							</div>
-						</td>
-						<td class="publisher-and-author-col">
-							<div class="text-bold">{{ d.publisher }}</div>
-							<div v-if="isExpanded(d)" class="knobs">
-								<multiline-description :text="formatArticleAuthors(d)" />
-							</div>
-						</td>
-						<td class="journal-col">
-							<div class="text-bold">{{ d.journal }}</div>
-							<div>{{ d.type ?? '' }}</div>
-						</td>
-						<td class="known-terms-col">
-							<div v-html="formatKnownTerms(d)"></div>
-						</td>
-						<td class="preview-col">
-							<div class="preview-container">
-								<!-- preview renderer -->
 							</div>
 						</td>
 					</tr>
@@ -66,105 +60,99 @@
 	</div>
 </template>
 
-<script lang="ts">
-// import moment from 'moment';
-import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
 import { ResourceType, ResultType } from '@/types/common';
-import { getResourceTypeIcon, isXDDArticle } from '@/utils/data-util';
+import { getDocumentDoi, getResourceTypeIcon, isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
-import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
+import { getRelatedDocuments } from '@/services/data';
+import useResourcesStore from '@/stores/resources';
 
-export default defineComponent({
-	name: 'ArticlesListview',
-	components: {
-		MultilineDescription,
-		IconCheckbox20,
-		IconCheckboxChecked20,
-		IconRadioButton20,
-		IconCloseOutline20
+const props = defineProps({
+	articles: {
+		type: Array as PropType<XDDArticle[]>,
+		default: () => []
 	},
-	props: {
-		articles: {
-			type: Array as PropType<XDDArticle[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		}
-	},
-	emits: ['toggle-article-selected'],
-	setup(props) {
-		const expandedRowId = ref('');
-
-		const { articles } = toRefs(props);
-
-		watch(
-			articles,
-			() => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const elem: any = document.getElementsByClassName('table-fixed-head');
-				if (elem.length === 0) return;
-				elem[0].scrollTop = 0;
-			},
-			{ immediate: true }
-		);
-
-		return {
-			expandedRowId,
-			ResourceType,
-			getResourceTypeIcon
-		};
-	},
-	methods: {
-		isExpanded(article: XDDArticle) {
-			return this.expandedRowId === article.title;
-		},
-		updateExpandedRow(article: XDDArticle) {
-			this.expandedRowId = this.expandedRowId === article.title ? '' : article.title;
-		},
-		formatTitle(d: XDDArticle) {
-			return d.title ? d.title : d.title;
-		},
-		formatArticleAuthors(d: XDDArticle) {
-			return d.author.map((a) => a.name).join('\n');
-		},
-		isSelected(article: XDDArticle) {
-			return this.selectedSearchItems.find((item) => {
-				if (isXDDArticle(item)) {
-					const itemAsArticle = item as XDDArticle;
-					return itemAsArticle.title === article.title;
-				}
-				return false;
-			});
-		},
-		updateSelection(article: XDDArticle) {
-			this.$emit('toggle-article-selected', article);
-		},
-		formatDescription(d: XDDArticle) {
-			if (!d.abstractText || typeof d.abstractText !== 'string') return '';
-			return this.isExpanded(d) || d.abstractText.length < 140
-				? d.abstractText
-				: `${d.abstractText.substring(0, 140)}...`;
-		},
-		formatKnownTerms(d: XDDArticle) {
-			let knownTerms = '';
-			if (d.knownTerms) {
-				d.knownTerms.forEach((term) => {
-					knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
-					knownTerms += '<br />';
-					knownTerms += Object.values(term).flat().join(' ');
-					knownTerms += '<br />';
-				});
-			}
-			return knownTerms;
-		}
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	}
 });
+
+const emit = defineEmits(['toggle-article-selected']);
+
+const expandedRowId = ref('');
+
+const resources = useResourcesStore();
+
+const { articles, selectedSearchItems } = toRefs(props);
+
+watch(
+	articles,
+	() => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elem: any = document.getElementsByClassName('table-fixed-head');
+		if (elem.length === 0) return;
+		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+
+const isExpanded = (article: XDDArticle) => expandedRowId.value === article.title;
+
+const updateExpandedRow = (article: XDDArticle) => {
+	expandedRowId.value = expandedRowId.value === article.title ? '' : article.title;
+};
+
+const formatTitle = (d: XDDArticle) => (d.title ? d.title : d.title);
+
+const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join('\n');
+
+const isSelected = (article: XDDArticle) =>
+	selectedSearchItems.value.find((item) => {
+		if (isXDDArticle(item)) {
+			const itemAsArticle = item as XDDArticle;
+			return itemAsArticle.title === article.title;
+		}
+		return false;
+	});
+
+const updateSelection = (article: XDDArticle) => {
+	emit('toggle-article-selected', article);
+};
+
+const fetchRelatedDocument = async (article: XDDArticle) => {
+	if (!isExpanded(article)) {
+		updateExpandedRow(article);
+	}
+	if (!article.relatedDocuments) {
+		const doi = getDocumentDoi(article);
+		article.relatedDocuments = await getRelatedDocuments(doi, resources.xddDataset);
+	}
+};
+
+const formatDescription = (d: XDDArticle) => {
+	if (!d.abstractText || typeof d.abstractText !== 'string') return '';
+	return isExpanded(d) || d.abstractText.length < 140
+		? d.abstractText
+		: `${d.abstractText.substring(0, 140)}...`;
+};
+
+const formatKnownTerms = (d: XDDArticle) => {
+	let knownTerms = '';
+	if (d.knownTerms) {
+		d.knownTerms.forEach((term) => {
+			knownTerms += `<b>${Object.keys(term).flat().join(' ')}</b>`;
+			knownTerms += '<br />';
+			knownTerms += Object.values(term).flat().join(' ');
+			knownTerms += '<br />';
+		});
+	}
+	return knownTerms;
+};
 </script>
 
 <style scoped>
@@ -178,10 +166,6 @@ table {
 	border-collapse: collapse;
 	width: 100%;
 	vertical-align: top;
-}
-
-th {
-	padding: 8px 16px;
 }
 
 td {
@@ -200,11 +184,6 @@ thead td {
 	border: none;
 }
 
-tr th {
-	font-size: var(--font-size-small);
-	font-weight: normal;
-}
-
 .table-fixed-head {
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -217,22 +196,6 @@ tr th {
 	top: -1px;
 	z-index: 1;
 	background-color: aliceblue;
-}
-
-.left-cover,
-.right-cover {
-	/* Cover left and right gap in the fixed table header */
-	position: absolute;
-	height: 100%;
-	width: 2px;
-	left: -2px;
-	background: var(--background-light-2);
-	top: 0;
-}
-
-.right-cover {
-	left: unset;
-	right: -2px;
 }
 
 .tr-item {
@@ -281,28 +244,25 @@ tr th {
 	margin-top: 10px;
 }
 
-.publisher-and-author-col {
-	width: 33%;
-	overflow-wrap: anywhere;
+.title-and-abstract-layout .content .related-docs {
+	color: blue;
+}
+.title-and-abstract-layout .content .related-docs:hover {
+	text-decoration: underline;
 }
 
-.known-terms-col {
-	width: 20%;
+.title-and-abstract-layout .content .related-docs-container {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-left: 1rem;
 }
 
-.journal-col {
-	width: 120px;
+.title-and-abstract-layout .content .related-docs-container .item-select {
+	color: green;
+	font-weight: bold;
 }
-
-/* time series hidden until actually put into use */
-.preview-col {
-	padding-left: 5px;
-	padding-right: 10px;
-}
-
-.preview-container {
-	background-color: #f1f1f1;
-	width: 100px;
-	height: 50px;
+.title-and-abstract-layout .content .related-docs-container .item-select:hover {
+	text-decoration: underline;
 }
 </style>
