@@ -143,5 +143,7 @@ export default {
 <style scoped>
 .cell {
 	position: absolute;
+	pointer-events: none;
+	user-select: none;
 }
 </style>
