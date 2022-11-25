@@ -79,7 +79,6 @@ defineProps<{
 			</section>
 		</section>
 	</div>
-	<!-- </body> -->
 </template>
 
 <style scoped>
