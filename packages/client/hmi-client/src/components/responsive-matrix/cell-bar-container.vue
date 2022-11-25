@@ -118,19 +118,21 @@ export default {
 
 	computed: {
 		selectedRows(): SelectedCell[] {
-			const startRow = this.selectedCell[SelectedCellValue.START_ROW];
-			const endRow = this.selectedCell[SelectedCellValue.END_ROW];
-			const startCol = this.selectedCell[SelectedCellValue.START_COL];
-			const endCol = this.selectedCell[SelectedCellValue.END_COL];
+			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
 
-			const selectedRowArray: any[] = [];
+			const startRow = this.selectedCell[START_ROW];
+			const endRow = this.selectedCell[END_ROW];
+			const startCol = this.selectedCell[START_COL];
+			const endCol = this.selectedCell[END_COL];
+
+			const selectedRowArray: SelectedCell[] = [];
 
 			for (let row = startRow; row <= endRow; row++) {
-				const selectedRow = Array(4);
-				selectedRow[SelectedCellValue.START_ROW] = row;
-				selectedRow[SelectedCellValue.END_ROW] = row;
-				selectedRow[SelectedCellValue.START_COL] = startCol;
-				selectedRow[SelectedCellValue.END_COL] = endCol;
+				const selectedRow = Array(4) as SelectedCell;
+				selectedRow[START_ROW] = row;
+				selectedRow[END_ROW] = row;
+				selectedRow[START_COL] = startCol;
+				selectedRow[END_COL] = endCol;
 				selectedRowArray.push(selectedRow);
 			}
 
