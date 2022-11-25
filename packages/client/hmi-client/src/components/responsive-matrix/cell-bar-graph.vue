@@ -6,14 +6,19 @@
 import { PropType } from 'vue';
 import { select, scaleLinear, scaleBand, axisBottom, axisLeft } from 'd3';
 
-import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
+import {
+	D3SvgSelection,
+	CellData,
+	ParamMinMax,
+	SelectedCellValue,
+	SelectedCell,
+	SelectedCellData
+} from '@/types/ResponsiveMatrix';
 
 export default {
 	// ---------------------------------------------------------------------------- //
 	// props                                                                        //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	props: {
 		update: {
@@ -29,13 +34,13 @@ export default {
 			}
 		},
 		dataRowList: {
-			type: null,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [];
 			}
 		},
 		dataColList: {
-			type: null,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [];
 			}
@@ -59,13 +64,13 @@ export default {
 			}
 		},
 		parametersMin: {
-			type: Object,
+			type: Object as PropType<ParamMinMax>,
 			default() {
 				return {};
 			}
 		},
 		parametersMax: {
-			type: Object,
+			type: Object as PropType<ParamMinMax>,
 			default() {
 				return {};
 			}
@@ -82,8 +87,6 @@ export default {
 	// data                                                                         //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	data() {
 		return {
 			topMargin: 10,
@@ -91,7 +94,7 @@ export default {
 			leftMargin: 30,
 			rightMargin: 20,
 			containerBoundingBox: {} as DOMRect,
-			svg: null as any
+			svg: null as unknown as D3SvgSelection
 		};
 	},
 
@@ -99,10 +102,8 @@ export default {
 	// computed                                                                     //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	computed: {
-		selectedCells(): any {
+		selectedCells(): SelectedCellData {
 			const startRow = this.selectedCell[SelectedCellValue.START_ROW];
 			const endRow = this.selectedCell[SelectedCellValue.END_ROW];
 			const startCol = this.selectedCell[SelectedCellValue.START_COL];
@@ -125,62 +126,52 @@ export default {
 			return selectedCells;
 		},
 
-		labelRowSelected(): number[] {
+		labelRowSelected() {
 			const startRow = this.selectedCell[SelectedCellValue.START_ROW];
 			const endRow = this.selectedCell[SelectedCellValue.END_ROW];
 			return this.labelRowList.slice(startRow, endRow + 1);
 		},
 
-		labelRowSelectedIndexMap(): number[] {
-			return this.labelRowSelected;
-		},
-
-		labelColSelected(): number[] {
+		labelColSelected() {
 			const startCol = this.selectedCell[SelectedCellValue.START_COL];
 			const endCol = this.selectedCell[SelectedCellValue.END_COL];
 			return this.labelColList.slice(startCol, endCol + 1);
 		},
 
 		// assume that timestep for all cells in same column are equal
-		labelColSelectedMin(): number {
+		labelColSelectedMin() {
 			return Math.min(...this.labelColSelected);
 		},
 
 		// assume that timestep for all cells in same column are equal
-		labelColSelectedMax(): number {
+		labelColSelectedMax() {
 			return Math.max(...this.labelColSelected);
 		},
 
-		parametersMinAll(): number {
+		parametersMinAll() {
 			return Math.min(...(Object.values(this.parametersMin) as number[]));
 		},
 
-		parametersMaxAll(): number {
+		parametersMaxAll() {
 			return Math.max(...(Object.values(this.parametersMax) as number[]));
 		},
 
-		xRange(): any {
+		xRange() {
 			return [0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin];
 		},
 
-		xScaleLinear(): any {
-			return scaleLinear()
-				.domain([this.labelColSelectedMin, this.labelColSelectedMax])
-				.range(this.xRange);
-		},
-
-		xScaleBand(): any {
+		xScaleBand() {
 			return scaleBand().range(this.xRange).domain(this.parameters).padding(0.15);
 		},
 
-		xSubgroup(): any {
+		xSubgroup() {
 			return scaleBand()
 				.domain(this.labelRowSelected as any)
 				.range([0, this.xScaleBand.bandwidth()])
 				.padding(0.1);
 		},
 
-		yScale(): any {
+		yScale() {
 			return scaleLinear()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
@@ -271,7 +262,7 @@ export default {
 				.data(colValueArray.map((v, i) => ({ x: rowValueArray[i], y: v })))
 				.enter()
 				.append('rect')
-				.attr('x', (d) => this.xSubgroup(d.x) + leftMargin)
+				.attr('x', (d) => (this.xSubgroup ? this.xSubgroup(d.x) : 0 + leftMargin))
 				.attr('y', (d) => this.yScale(d.y) + topMargin)
 				.attr('width', this.xSubgroup.bandwidth())
 				.attr('height', (d) => height - bottomMargin - topMargin - this.yScale(d.y))

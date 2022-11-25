@@ -4,18 +4,21 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, scaleLinear, axisBottom, axisLeft } from 'd3';
+import { select, extent, scaleLinear, axisBottom, axisLeft } from 'd3';
 
-import { SelectedCellValue, SelectedCell } from '@/types/ResponsiveMatrix';
-
-type ParamMinMax = { [key: string]: number };
+import {
+	D3SvgSelection,
+	CellData,
+	ParamMinMax,
+	SelectedCellValue,
+	SelectedCell,
+	SelectedCellData
+} from '@/types/ResponsiveMatrix';
 
 export default {
 	// ---------------------------------------------------------------------------- //
 	// props                                                                        //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	props: {
 		update: {
@@ -25,19 +28,19 @@ export default {
 			}
 		},
 		selectedCell: {
-			type: Array as PropType<SelectedCell[]>,
+			type: Array as unknown as PropType<SelectedCell>,
 			default() {
 				return [0, 0, 0, 0];
 			}
 		},
 		dataRowList: {
-			type: Array,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [];
 			}
 		},
 		dataColList: {
-			type: Array,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [];
 			}
@@ -84,8 +87,6 @@ export default {
 	// data                                                                         //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	data() {
 		return {
 			topMargin: 10,
@@ -93,7 +94,7 @@ export default {
 			leftMargin: 30,
 			rightMargin: 20,
 			containerBoundingBox: {} as DOMRect,
-			svg: null as any
+			svg: null as unknown as D3SvgSelection
 		};
 	},
 
@@ -101,23 +102,20 @@ export default {
 	// computed                                                                     //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	computed: {
-		selectedCells(): any {
+		selectedCells(): SelectedCellData {
 			const startRow = this.selectedCell[SelectedCellValue.START_ROW];
 			const endRow = this.selectedCell[SelectedCellValue.END_ROW];
 			const startCol = this.selectedCell[SelectedCellValue.START_COL];
 			const endCol = this.selectedCell[SelectedCellValue.END_COL];
 
-			// const selectedCells: any[] = [];
 			const selectedCells = this.parameters.reduce((acc, param) => {
 				acc[param] = [];
 				return acc;
 			}, {});
 
 			for (let row = startRow, i = 0; row <= endRow; row++, i++) {
-				this.dataRowList[row].forEach((cell: any) => {
+				this.dataRowList[row].forEach((cell) => {
 					if (cell.col <= endCol && cell.col >= startCol) {
 						this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
 					}
@@ -127,37 +125,27 @@ export default {
 			return selectedCells;
 		},
 
-		labelColSelected(): number[] {
-			const startCol = this.selectedCell[SelectedCellValue.START_COL];
+		labelColSelected() {
+			const startCol: number = this.selectedCell[SelectedCellValue.START_COL];
 			const endCol = this.selectedCell[SelectedCellValue.END_COL];
 			return this.labelColList.slice(startCol, endCol + 1);
 		},
 
-		// assume that timestep for all cells in same column are equal
-		timeMin(): number {
-			return Math.min(...this.labelColSelected);
-		},
-
-		// assume that timestep for all cells in same column are equal
-		timeMax(): number {
-			return Math.max(...this.labelColSelected);
-		},
-
-		parametersMinAll(): number {
+		parametersMinAll() {
 			return Math.min(...(Object.values(this.parametersMin) as number[]));
 		},
 
-		parametersMaxAll(): number {
+		parametersMaxAll() {
 			return Math.max(...(Object.values(this.parametersMax) as number[]));
 		},
 
-		xScale(): any {
+		xScale() {
 			return scaleLinear()
-				.domain([this.timeMin, this.timeMax])
+				.domain(extent(this.labelColSelected) as [number, number])
 				.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
 		},
 
-		yScale(): any {
+		yScale() {
 			return scaleLinear()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
@@ -168,8 +156,6 @@ export default {
 	// mounted                                                                      //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	mounted() {
 		this.getContainerBoundingBox();
 		// this.renderGraph();
@@ -178,8 +164,6 @@ export default {
 	// ---------------------------------------------------------------------------- //
 	// watch                                                                        //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	watch: {
 		data() {
@@ -195,8 +179,6 @@ export default {
 	// ---------------------------------------------------------------------------- //
 	// methods                                                                      //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	methods: {
 		getContainerBoundingBox() {
@@ -238,7 +220,12 @@ export default {
 			});
 		},
 
-		renderLine(svg: any, parameter: string, yValueArray: any, xValueArray: any) {
+		renderLine(
+			svg: D3SvgSelection,
+			parameter: string,
+			yValueArray: number[],
+			xValueArray: number[]
+		) {
 			const dataLength = yValueArray.length;
 
 			let path = 'M';

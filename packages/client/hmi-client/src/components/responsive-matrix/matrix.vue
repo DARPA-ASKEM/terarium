@@ -50,9 +50,11 @@ import {
 	FederatedPointerEvent,
 	Point
 } from 'pixi.js';
+
 import {
 	SelectedCell,
 	SelectedCellValue,
+	CellData,
 	CellStatus,
 	CellType,
 	Uniforms
@@ -85,7 +87,7 @@ export default {
 
 	props: {
 		data: {
-			type: Array as PropType<object[][]>,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
@@ -144,9 +146,9 @@ export default {
 
 	data() {
 		return {
-			dataCellList: [] as object[],
-			dataRowList: [] as object[][], // e.g. [[row1col1Obj, row1col2Obj]]
-			dataColList: [] as object[][], // e.g. [[row1col1Obj, row2col1Obj]]
+			dataCellList: [] as CellData[],
+			dataRowList: [] as CellData[][], // e.g. [[row1col1Obj, row1col2Obj]]
+			dataColList: [] as CellData[][], // e.g. [[row1col1Obj, row2col1Obj]]
 			dataParameters: new Set() as Set<string>, // e.g. ["age", "height", "weight"]
 			dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 			dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
@@ -492,9 +494,9 @@ export default {
 
 		/**
 		 * Determines if data object array provided is structured correctly (as a 2D matrix).
-		 * @param {object[][]} data
+		 * @param {CellData[][]} data
 		 */
-		isDataValid(data: object[][]) {
+		isDataValid(data: CellData[][]) {
 			if (data?.constructor !== Array || data[0]?.constructor !== Array) {
 				return false;
 			}
@@ -504,7 +506,6 @@ export default {
 
 		/**
 		 * Ingests data, process and stores it in internal component state stores.
-		 * @param {object[][]} data
 		 */
 		processData() {
 			if (this.isDataValid(this.data)) {
@@ -569,9 +570,9 @@ export default {
 		/**
 		 * Processes a single cell object and extract the parameters from it.
 		 * As well update the parameters min and max state objects.
-		 * @param {object} cellObject
+		 * @param {CellData} cellObject
 		 */
-		extractParams(cellObject: object) {
+		extractParams(cellObject: CellData) {
 			Object.keys(cellObject).forEach((param) => {
 				if (!this.dataParameters.has(param)) {
 					this.dataParametersMin[param] = cellObject[param];
@@ -738,7 +739,7 @@ export default {
 		 * Get a style object to place an absolutely positioned element over the selection.
 		 * @param {SelectedCell} selectedCell
 		 */
-		getSelectedCellStyle(selectedCell: SelectedCell): object {
+		getSelectedCellStyle(selectedCell: SelectedCell) {
 			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
 
 			let top = 0;

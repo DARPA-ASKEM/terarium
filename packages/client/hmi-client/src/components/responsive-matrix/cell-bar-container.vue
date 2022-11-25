@@ -19,7 +19,7 @@
 <script lang="ts">
 import { PropType } from 'vue';
 
-import { SelectedCell, SelectedCellValue } from '@/types/ResponsiveMatrix';
+import { CellData, ParamMinMax, SelectedCell, SelectedCellValue } from '@/types/ResponsiveMatrix';
 import ResponsiveCellBarGraph from './cell-bar-graph.vue';
 
 export default {
@@ -27,15 +27,11 @@ export default {
 	// emits                                                                        //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	emits: ['click'],
 
 	// ---------------------------------------------------------------------------- //
 	// components                                                                   //
 	// ---------------------------------------------------------------------------- //
-
-	// ///////////////////////////////////////////////////////////////////////////////
 
 	components: {
 		ResponsiveCellBarGraph
@@ -45,11 +41,9 @@ export default {
 	// props                                                                        //
 	// ---------------------------------------------------------------------------- //
 
-	// ///////////////////////////////////////////////////////////////////////////////
-
 	props: {
 		getSelectedCellStyle: {
-			type: null,
+			type: Function,
 			default() {
 				return { top: '0px', left: '0px', bottom: '0px', right: '0px' };
 			}
@@ -67,13 +61,13 @@ export default {
 			}
 		},
 		dataRowList: {
-			type: null,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [];
 			}
 		},
 		dataColList: {
-			type: null,
+			type: Array as PropType<CellData[][]>,
 			default() {
 				return [];
 			}
@@ -97,13 +91,13 @@ export default {
 			}
 		},
 		parametersMin: {
-			type: Object,
+			type: Object as PropType<ParamMinMax>,
 			default() {
 				return {};
 			}
 		},
 		parametersMax: {
-			type: Object,
+			type: Object as PropType<ParamMinMax>,
 			default() {
 				return {};
 			}
@@ -123,7 +117,7 @@ export default {
 	// ///////////////////////////////////////////////////////////////////////////////
 
 	computed: {
-		selectedRows(): any {
+		selectedRows(): SelectedCell[] {
 			const startRow = this.selectedCell[SelectedCellValue.START_ROW];
 			const endRow = this.selectedCell[SelectedCellValue.END_ROW];
 			const startCol = this.selectedCell[SelectedCellValue.START_COL];
