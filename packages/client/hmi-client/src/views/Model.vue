@@ -77,7 +77,7 @@ watch([model, graphElement], async () => {
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content);
 	// Create renderer
 	const renderer = new ModelPlanRenderer({
-		el: graphElement.value,
+		el: graphElement.value as HTMLDivElement,
 		useAStarRouting: true,
 		runLayout: runDagreLayout
 	});
