@@ -1,4 +1,4 @@
-## Stage 1 : build with gradle builder image with native capabilities
+## Stage 1 : build all the necessary packages
 FROM node:18.12.1-alpine as builder
 WORKDIR /code
 COPY package.json /code
@@ -17,7 +17,7 @@ FROM nginx:1.23-alpine
 
 # update packages and add some basics
 RUN apk update
-RUN apk add --no-cache curl && apk add --no-cache bash && apk add --no-cache vim
+RUN apk add --no-cache curl=7.83.1 && apk add --no-cache bash=5.1.16 && apk add --no-cache vim=8.2.5
 
 # remove default and add configuration
 COPY --from=builder /code/packages/client/hmi-client/docker/default.conf /etc/nginx/conf.d/
