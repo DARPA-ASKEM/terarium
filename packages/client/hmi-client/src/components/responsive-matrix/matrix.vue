@@ -87,7 +87,7 @@ export default {
 
 	props: {
 		data: {
-			type: Array as PropType<CellData[][]>,
+			type: Array as PropType<object[][]>,
 			default() {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
@@ -496,7 +496,7 @@ export default {
 		 * Determines if data object array provided is structured correctly (as a 2D matrix).
 		 * @param {CellData[][]} data
 		 */
-		isDataValid(data: CellData[][]) {
+		isDataValid(data: object[][]) {
 			if (data?.constructor !== Array || data[0]?.constructor !== Array) {
 				return false;
 			}
@@ -521,8 +521,8 @@ export default {
 					.map(() => []);
 
 				// iterate through all the data and push the cell objects into data lists
-				this.data.forEach((row: any, indexRow: number) =>
-					row.forEach((cell: any, indexCol: number) => {
+				this.data.forEach((row, indexRow) =>
+					row.forEach((cell, indexCol) => {
 						if (cell) {
 							this.extractParams(cell);
 							// find better solution than using reserved properties
@@ -570,9 +570,9 @@ export default {
 		/**
 		 * Processes a single cell object and extract the parameters from it.
 		 * As well update the parameters min and max state objects.
-		 * @param {CellData} cellObject
+		 * @param {object} cellObject
 		 */
-		extractParams(cellObject: CellData) {
+		extractParams(cellObject: object) {
 			Object.keys(cellObject).forEach((param) => {
 				if (!this.dataParameters.has(param)) {
 					this.dataParametersMin[param] = cellObject[param];
