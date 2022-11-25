@@ -848,6 +848,18 @@ export default defineComponent({
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
 			this.jsonOutput();
+		},
+		clearA() {
+			modelA = { T: [], S: [], I: [], O: [] };
+			g = { width: 500, height: 500, nodes: [], edges: [] };
+			g = runDagreLayout(_.cloneDeep(g));
+			this.refresh();
+		},
+		clearB() {
+			modelB = { T: [], S: [], I: [], O: [] };
+			g2 = { width: 500, height: 500, nodes: [], edges: [] };
+			g2 = runDagreLayout(_.cloneDeep(g2));
+			this.refresh();
 		}
 	}
 });
@@ -889,8 +901,11 @@ export default defineComponent({
 						<option :value="4">SIRD</option>
 					</select>
 				</label>
+				&nbsp;
+				<button type="button" @click="clearA">Clear Model A</button>
 			</div>
 		</div>
+
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
@@ -923,6 +938,8 @@ export default defineComponent({
 						<option :value="4">SIRD</option>
 					</select>
 				</label>
+				&nbsp;
+				<button type="button" @click="clearB">Clear Model B</button>
 			</div>
 			<div>Merged Model</div>
 		</div>
