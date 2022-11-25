@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import Header from '@/components/Header.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 import Sidebar from '@/components/Sidebar.vue';
+import { Project } from '@/types/Project';
+import * as ProjectService from '@/services/project';
 
 import { useCurrentRouter } from './router/index';
 
+const route = useRoute();
 const { isCurrentRouteHome } = useCurrentRouter();
 const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
+/**
+ * Data Explorer
+ */
 const overlayActivated = ref(false);
 const overlayMessage = ref('Loading...');
 
@@ -25,6 +32,26 @@ const disableOverlay = () => {
 };
 
 const dataExplorerActivated = ref(false);
+
+/**
+ * Project
+ *
+ * As we use only one Project per application instance.
+ * It is loaded at the root and passed to all views as prop.
+ */
+const project = ref<Project>(ProjectService.empty);
+
+watch(
+	() => route.params.projectId,
+	async (projectId) => {
+		if (!projectId) {
+			project.value = ProjectService.empty;
+		} else {
+			const id = projectId as string;
+			project.value = await ProjectService.get(id);
+		}
+	}
+);
 </script>
 
 <template>
@@ -36,10 +63,14 @@ const dataExplorerActivated = ref(false);
 		@show-overlay="enableOverlay"
 		@hide-overlay="disableOverlay"
 	/>
-	<Header class="header" @show-data-explorer="dataExplorerActivated = true" />
+	<Header
+		class="header"
+		:projectName="project?.name"
+		@show-data-explorer="dataExplorerActivated = true"
+	/>
 	<main>
 		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" />
-		<router-view class="page" />
+		<router-view class="page" :project="project" />
 	</main>
 </template>
 
