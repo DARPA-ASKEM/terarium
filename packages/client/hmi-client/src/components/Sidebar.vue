@@ -16,8 +16,12 @@ import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
+import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/index';
+import { Project } from '@/types/Project';
+
+defineProps<{ project: Project }>();
 
 const router = useRouter();
 
@@ -46,7 +50,11 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 	}
 
 	// FIXME: sort out the difference between routing to a page and opening the side-panel
-	if ([RouteName.ModelRoute, RouteName.SimulationRoute].includes(view as RouteName)) {
+	if (
+		[RouteName.ModelRoute, RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(
+			view as RouteName
+		)
+	) {
 		router.push({ name: view });
 	}
 }
@@ -109,6 +117,10 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
 				<DocumentsSidebarPanel v-else-if="selectedView === RouteName.DocumentRoute" />
 				<ProfileSidebarPanel v-else-if="selectedView === RouteName.ProfileRoute" />
+				<SimulationResultSidebarPanel
+					v-if="selectedView === RouteName.SimulationResultRoute"
+					:project="project"
+				/>
 				<template v-else> Create a sidebar-panel component </template>
 			</main>
 			<Button round class="side-panel-control" @click="closeSidePanel">

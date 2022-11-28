@@ -25,7 +25,6 @@ const fillColorFn = (datum: any, _paramsMin: any, paramsMax: any): String => {
 	const v = Math.max(datum.I / paramsMax.I, 0);
 	// apply gamma: https://en.wikipedia.org/wiki/Gamma_correction
 	// v **= 0.1;
-
 	return `#${Math.round(v * 255)
 		.toString(16)
 		.padStart(2, '0')}0000`;
@@ -33,15 +32,24 @@ const fillColorFn = (datum: any, _paramsMin: any, paramsMax: any): String => {
 </script>
 
 <template>
-	<div>hello</div>
-	<div class="result-container">
-		<ResponsiveMatrix :data="data" :fillColorFn="fillColorFn" :style="{ flex: '1' }" />
-	</div>
+	<section>
+		<h3>Simulation Results</h3>
+		<div class="result-container">
+			<ResponsiveMatrix :data="data" :fillColorFn="fillColorFn" :style="{ flex: '1' }" />
+		</div>
+	</section>
 </template>
 
 <style scoped>
 .result-container {
+	width: 25rem;
+	height: 25rem;
 	display: flex;
 	flex-direction: row;
+}
+
+h3 {
+	font: var(--un-font-h3);
+	margin-bottom: 10px;
 }
 </style>
