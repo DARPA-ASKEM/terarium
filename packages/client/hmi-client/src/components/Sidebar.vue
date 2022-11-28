@@ -21,7 +21,7 @@ import { RouteName } from '@/router/index';
 const router = useRouter();
 
 // Manage Side Panel
-const isSidePanelClose = ref(false);
+const isSidePanelClose = ref(true);
 function closeSidePanel() {
 	isSidePanelClose.value = true;
 }

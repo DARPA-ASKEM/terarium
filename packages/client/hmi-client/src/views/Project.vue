@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import API from '@/api/api';
 import { Project } from '@/types/Project';
 import { ref, onMounted } from 'vue';
 import useResourcesStore from '@/stores/resources';
@@ -100,7 +99,6 @@ onMounted(async () => {
 			</section>
 		</section>
 	</div>
-	<!-- </body> -->
 </template>
 
 <style scoped>

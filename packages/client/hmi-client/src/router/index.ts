@@ -15,7 +15,7 @@ export enum RoutePath {
 
 	DocView = '/docs/:id?',
 	Project = '/projects/:projectId',
-	ModelView = '/projects/:projectId/model',
+	ModelView = '/projects/:projectId/model/:modelId',
 	SimulationView = '/projects/:projectId/simulation',
 	Results = '/projects/:projectId/results',
 
@@ -41,7 +41,7 @@ export enum RouteName {
 const routes = [
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
-	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model },
+	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model, props: true },
 	{ path: RoutePath.Project, component: ProjectView, props: true },
 
 	// TODO

@@ -48,7 +48,7 @@ export const petriNetValidator = (petrinet: PetriNet): string | true => {
 		!checkIfSourceOrTarget(linkedTransitionIDs, T.length + 1) ||
 		!checkIfSourceOrTarget(linkedStateIDs, S.length + 1)
 	)
-		return 'Invalid petri net: Every transition node should be at least either a source or a target';
+		return 'Invalid petri net: Every node should be at least either a source or a target';
 
 	/* ----- 3. Make sure there aren't multiple petrinet bodies ----- */
 	const statesSurroundingTransitions: number[][] = [];

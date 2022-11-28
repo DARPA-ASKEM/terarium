@@ -1,7 +1,7 @@
 <template>
 	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix">
-			<!-- <component
+			<component
 				v-for="(selectedCell, idx) in selectedCellList"
 				:key="idx"
 				:is="getSelectedDrilldownType(selectedCell)"
@@ -18,7 +18,7 @@
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
 				@click="selectedCellClick(idx)"
-			/> -->
+			/>
 		</div>
 	</main>
 </template>
@@ -50,21 +50,23 @@ import {
 	FederatedPointerEvent,
 	Point
 } from 'pixi.js';
+
 import {
 	SelectedCell,
 	SelectedCellValue,
+	CellData,
 	CellStatus,
 	CellType,
 	Uniforms
 } from '@/types/ResponsiveMatrix';
 import { uint32ArrayToRedIntTex } from './pixi-utils';
 
-// import ResponsiveCellBarContainer from './cell-bar-container.vue';
-// import ResponsiveCellLineContainer from './cell-line-container.vue';
+import ResponsiveCellBarContainer from './cell-bar-container.vue';
+import ResponsiveCellLineContainer from './cell-line-container.vue';
 
 import matrixVS from './matrix.vs.glsl';
 import matrixFS from './matrix.fs.glsl';
-// import matrixGridFS from './matrix-grid.fs.glsl';
+import matrixGridFS from './matrix-grid.fs.glsl';
 
 // EMPTY_POINT used as a fallback value
 const EMPTY_POINT = new Point();
@@ -75,8 +77,8 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	components: {
-		// ResponsiveCellBarContainer,
-		// ResponsiveCellLineContainer
+		ResponsiveCellBarContainer,
+		ResponsiveCellLineContainer
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -144,9 +146,9 @@ export default {
 
 	data() {
 		return {
-			dataCellList: [] as object[],
-			dataRowList: [] as object[][], // e.g. [[row1col1Obj, row1col2Obj]]
-			dataColList: [] as object[][], // e.g. [[row1col1Obj, row2col1Obj]]
+			dataCellList: [] as CellData[],
+			dataRowList: [] as CellData[][], // e.g. [[row1col1Obj, row1col2Obj]]
+			dataColList: [] as CellData[][], // e.g. [[row1col1Obj, row2col1Obj]]
 			dataParameters: new Set() as Set<string>, // e.g. ["age", "height", "weight"]
 			dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 			dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
@@ -431,17 +433,14 @@ export default {
 		this.viewport.addChild(quad);
 
 		// run shader on grid
-		// const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
-		// const grid = new Mesh(geometry, gridShader);
+		const gridShader = Shader.from(matrixVS, matrixGridFS, this.uniforms);
+		const grid = new Mesh(geometry, gridShader);
 
 		// center grid in world
-		// grid.position.set(
-		// 	(this as any).$viewport.worldWidth / 2,
-		// 	(this as any).$viewport.worldHeight / 2
-		// );
+		grid.position.set(this.viewport.worldWidth / 2, this.viewport.worldHeight / 2);
 
 		// add grid to viewport
-		// (this as any).$viewport.addChild(grid as any);
+		this.viewport.addChild(grid as any);
 
 		// center and zoom camera to world
 		this.centerGraph();
@@ -492,7 +491,7 @@ export default {
 
 		/**
 		 * Determines if data object array provided is structured correctly (as a 2D matrix).
-		 * @param {object[][]} data
+		 * @param {CellData[][]} data
 		 */
 		isDataValid(data: object[][]) {
 			if (data?.constructor !== Array || data[0]?.constructor !== Array) {
@@ -504,7 +503,6 @@ export default {
 
 		/**
 		 * Ingests data, process and stores it in internal component state stores.
-		 * @param {object[][]} data
 		 */
 		processData() {
 			if (this.isDataValid(this.data)) {
@@ -520,8 +518,8 @@ export default {
 					.map(() => []);
 
 				// iterate through all the data and push the cell objects into data lists
-				this.data.forEach((row: any, indexRow: number) =>
-					row.forEach((cell: any, indexCol: number) => {
+				this.data.forEach((row, indexRow) =>
+					row.forEach((cell, indexCol) => {
 						if (cell) {
 							this.extractParams(cell);
 							// find better solution than using reserved properties
@@ -738,7 +736,7 @@ export default {
 		 * Get a style object to place an absolutely positioned element over the selection.
 		 * @param {SelectedCell} selectedCell
 		 */
-		getSelectedCellStyle(selectedCell: SelectedCell): object {
+		getSelectedCellStyle(selectedCell: SelectedCell) {
 			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
 
 			let top = 0;
