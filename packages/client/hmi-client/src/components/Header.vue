@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useCurrentRouter } from '@/router/index';
+import { Project } from '@/types/Project';
 
 const emit = defineEmits(['show-data-explorer']);
 const router = useRouter();
@@ -15,7 +16,9 @@ const goToHomepage = () => {
 };
 const goToDataExplorer = () => emit('show-data-explorer');
 
-const projectName = 'Name of the project that can be long for clarity and precision';
+defineProps<{
+	projectName?: Project['name'];
+}>();
 </script>
 
 <template>
@@ -25,10 +28,6 @@ const projectName = 'Name of the project that can be long for clarity and precis
 		<p v-if="!isHome">
 			<a @click="goToHomepage">Projects</a>
 			<span> {{ projectName }}</span>
-			<!-- Debug -->
-			<span>
-				{{ $route.params }}
-			</span>
 		</p>
 		<aside>
 			<Button class="data-explorer" @click="goToDataExplorer">

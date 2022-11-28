@@ -1,31 +1,9 @@
 <script setup lang="ts">
-import API from '@/api/api';
 import { Project } from '@/types/Project';
-import { ref, onMounted } from 'vue';
 
-const props = defineProps({
-	projectId: {
-		type: String,
-		required: true
-	}
-});
-
-const project = ref<Project>({
-	id: '',
-	name: '',
-	description: '',
-	timestamp: ''
-});
-
-// refactor as a composable?
-async function getProject(): Promise<Project> {
-	const response = await API.get(`/projects/${props.projectId}`);
-	return response.data;
-}
-
-onMounted(async () => {
-	project.value = await getProject();
-});
+defineProps<{
+	project: Project;
+}>();
 </script>
 
 <template>
@@ -101,7 +79,6 @@ onMounted(async () => {
 			</section>
 		</section>
 	</div>
-	<!-- </body> -->
 </template>
 
 <style scoped>

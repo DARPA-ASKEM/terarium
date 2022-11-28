@@ -19,7 +19,6 @@ const g: IGraph<NodeData, EdgeData> = {
 	nodes: [],
 	edges: []
 };
-
 /**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
@@ -91,5 +90,5 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 
-	return g;
+	return { ...g };
 };
