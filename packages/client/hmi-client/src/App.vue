@@ -45,21 +45,27 @@ const dataExplorerActivated = ref(false);
  */
 const project = ref<Project | null>(null);
 
+async function setProject(id: Project['id']) {
+	// If the Id or the Project are null,
+	// set the Project to null, and send the user to the homepage.
+	if (!id) {
+		project.value = null;
+		goToHomepage();
+	} else {
+		project.value = await ProjectService.get(id);
+		if (!project.value) {
+			goToHomepage();
+		}
+	}
+}
+
+setProject(route.params.projectId as string);
+
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
-		if (!projectId) {
-			// Set the Project to null,
-			// and send the user to the homepage.
-			project.value = null;
-			goToHomepage();
-		} else {
-			const id = projectId as string;
-			project.value = await ProjectService.get(id);
-			if (!project.value) {
-				goToHomepage();
-			}
-		}
+		const id = projectId as string;
+		setProject(id);
 	}
 );
 </script>
