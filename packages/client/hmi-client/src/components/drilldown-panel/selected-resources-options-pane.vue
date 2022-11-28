@@ -169,9 +169,7 @@ onMounted(async () => {
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables';
-
+<style scoped>
 .invalid-project {
 	background-color: gray;
 	cursor: not-allowed;
@@ -212,28 +210,29 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+}
 
-	.selected-item {
-		border-style: solid;
-		border-width: 2px;
-		border-color: lightgray;
-		padding: 3px;
-	}
+.selected-items-container .selected-item {
+	border-style: solid;
+	border-width: 2px;
+	border-color: lightgray;
+	padding: 3px;
+}
 
-	.item-header {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
+.selected-items-container .item-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
 
-		.title-and-checkbox {
-			display: flex;
-			.item-title {
-				font-weight: 500;
-				margin-bottom: 5px;
-				margin-left: 4px;
-			}
-		}
-	}
+.selected-items-container .item-header .title-and-checkbox {
+	display: flex;
+}
+
+.selected-items-container .item-header .title-and-checkbox .item-title {
+	font-weight: 500;
+	margin-bottom: 5px;
+	margin-left: 4px;
 }
 
 :deep(.dropdown-btn) {
