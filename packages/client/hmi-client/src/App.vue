@@ -43,7 +43,7 @@ const dataExplorerActivated = ref(false);
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const project = ref<Project | null>();
+const project = ref<Project | null>(null);
 
 watch(
 	() => route.params.projectId,
