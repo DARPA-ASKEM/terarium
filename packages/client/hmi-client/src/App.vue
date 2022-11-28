@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Header from '@/components/Header.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
@@ -11,6 +11,8 @@ import * as ProjectService from '@/services/project';
 import { useCurrentRouter } from './router/index';
 
 const route = useRoute();
+const router = useRouter();
+
 const { isCurrentRouteHome } = useCurrentRouter();
 const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
@@ -39,13 +41,16 @@ const dataExplorerActivated = ref(false);
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const project = ref<Project>(ProjectService.empty);
+const project = ref<Project | null>();
 
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
 		if (!projectId) {
-			project.value = ProjectService.empty;
+			// Set the Project to null,
+			// and send the user to the homepage.
+			project.value = null;
+			router.push('/');
 		} else {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
