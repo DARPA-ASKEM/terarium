@@ -16,18 +16,12 @@ export async function fetchStratificationResult(modelA: string, modelB: string, 
 	return output;
 }
 
-export async function fetchStratificationWithTypeResult(
-	modelA: string,
-	modelAVector,
-	modelB: string,
-	modelBVector,
-	typeModel: string
-) {
-	if (!modelA || !modelB || !typeModel) {
+export async function fetchStratificationWithTypedModels(modelA: string, modelB: string) {
+	if (!modelA || !modelB) {
 		throw new Error('An ID must be provided for each model');
 	}
 	const resp = await fetch(
-		`http://localhost:8888/api/models/stratify/${modelA}/${modelAVector}/${modelB}/${modelBVector}/${typeModel}`,
+		`http://localhost:8888/api/models/stratifyWithTypedModels/${modelA}/${modelB}`,
 		{
 			method: 'GET'
 		}

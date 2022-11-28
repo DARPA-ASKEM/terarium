@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
 import {
 	fetchStratificationResult,
-	fetchStratificationWithTypeResult
+	fetchStratificationWithTypedModels
 } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { parsePetriNet2IGraph } from '@/services/model';
@@ -173,8 +173,6 @@ export default defineComponent({
 		const typeModelA = ref('');
 		const typeTypeModel = ref('');
 		const typeMapping = ref('');
-		const modelAVector = ref('');
-		const modelBVector = ref('');
 
 		return {
 			loadModelID,
@@ -183,9 +181,7 @@ export default defineComponent({
 			stratifyTypeModel,
 			typeModelA,
 			typeTypeModel,
-			typeMapping,
-			modelAVector,
-			modelBVector
+			typeMapping
 		};
 	},
 	methods: {
@@ -693,14 +689,11 @@ export default defineComponent({
 				console.error(e.message);
 			}
 		},
-		async stratifyWithType() {
+		async stratifyWithTypedModels() {
 			try {
-				const outputModel = await fetchStratificationWithTypeResult(
+				const outputModel = await fetchStratificationWithTypedModels(
 					this.stratifyModelA,
-					this.modelAVector,
-					this.stratifyModelB,
-					this.modelBVector,
-					this.stratifyTypeModel
+					this.stratifyModelB
 				);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
@@ -792,13 +785,11 @@ export default defineComponent({
 		<form>
 			<label for="stratify">
 				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
-				<input v-model="modelAVector" type="text" placeholder="Model A Vector" />
 				<input v-model="stratifyModelB" type="text" placeholder="Model B ID" />
-				<input v-model="modelBVector" type="text" placeholder="Model B Vector" />
+				<button type="button" @click="stratifyWithTypedModels">Stratify With Typed Models</button>
 				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model ID" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
-			<button type="button" @click="stratifyWithType">Stratify With Type</button>
 		</form>
 		<form>
 			<label for="type">

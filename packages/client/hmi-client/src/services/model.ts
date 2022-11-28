@@ -26,6 +26,9 @@ const g: IGraph<NodeData, EdgeData> = {
  * First add each node found in S and T, then add each edge found in I and O
  */
 export const parsePetriNet2IGraph = (model: PetriNet) => {
+	g.nodes = [];
+	g.edges = [];
+
 	const nodeHeight = 20;
 	const nodeWidth = 20;
 	let nodeX = 0;
