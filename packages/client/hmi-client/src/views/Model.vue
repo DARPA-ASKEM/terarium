@@ -13,6 +13,13 @@ import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/m
 import API from '@/api/api';
 import { Model } from '@/types/Model';
 
+const props = defineProps({
+	modelId: {
+		type: String,
+		required: true
+	}
+});
+
 // This model can be deleted in future. Just used for init graph
 // TODO: replace this mock petri net with the model fetched from the backend
 const modelPetriNet: PetriNet = {
@@ -96,7 +103,7 @@ onMounted(async () => {
 const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
 
 // TODO: let the user choose the model to display
-const selectedModelId = ref('1');
+const selectedModelId = ref(props.modelId);
 
 const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID

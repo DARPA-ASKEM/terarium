@@ -7,7 +7,7 @@ import TheiaView from '@/views/theia.vue';
 import DocumentView from '@/views/document.vue';
 import Simulation from '@/views/Simulation.vue';
 import ProjectView from '@/views/Project.vue';
-import Model from '@/views/Model.vue';
+import ModelView from '@/views/ModelView.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 
 export enum RoutePath {
@@ -15,7 +15,7 @@ export enum RoutePath {
 
 	DocView = '/docs/:id?',
 	Project = '/projects/:projectId',
-	ModelView = '/projects/:projectId/model',
+	Model = '/projects/:projectId/model',
 	SimulationView = '/projects/:projectId/simulation',
 	Results = '/projects/:projectId/results',
 
@@ -41,7 +41,7 @@ export enum RouteName {
 const routes = [
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
-	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model },
+	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView },
 	{ path: RoutePath.Project, component: ProjectView, props: true },
 
 	// TODO
