@@ -6,7 +6,7 @@ import API from '@/api/api';
 import { Project } from '@/types/Project';
 
 // Define an empty Project
-const emptyProject = {
+const empty = {
 	id: '',
 	name: 'Empty project',
 	description: 'This is an empty project, used as placeholder',
@@ -17,9 +17,9 @@ const emptyProject = {
  * Get a project per id
  * @return Project - the appropriate project, or an empty one if none returned by API
  */
-async function getProject(projectId: string): Promise<Project> {
+async function get(projectId: string): Promise<Project> {
 	const response = await API.get(`/projects/${projectId}`);
-	return response?.data ?? emptyProject;
+	return response?.data ?? empty;
 }
 
-export { getProject as get, emptyProject as empty };
+export { empty, get };
