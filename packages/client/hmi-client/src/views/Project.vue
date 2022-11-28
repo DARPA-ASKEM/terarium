@@ -2,6 +2,7 @@
 import { Project } from '@/types/Project';
 import { ref, onMounted } from 'vue';
 import useResourcesStore from '@/stores/resources';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps({
 	projectId: {
@@ -14,14 +15,8 @@ const resources = useResourcesStore();
 
 const project = ref<Project | null>(null);
 
-// refactor as a composable?
-async function getProject(): Promise<Project> {
-	const response = await API.get(`/projects/${props.projectId}`);
-	return response.data;
-}
-
 onMounted(async () => {
-	project.value = await getProject();
+	project.value = await ProjectService.get(props.projectId);
 	resources.setActiveProject(project.value);
 });
 </script>

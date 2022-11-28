@@ -151,7 +151,7 @@ const addAssetsToProject = async (projectName?: string) => {
 	if (props.selectedSearchItems.length === 0) return;
 
 	let projectId = '';
-	if (projectName !== undefined) {
+	if (projectName !== undefined && typeof projectName === 'string') {
 		const project = projectsList.value.find((p) => p.name === projectName);
 		projectId = project?.id as string;
 	} else {

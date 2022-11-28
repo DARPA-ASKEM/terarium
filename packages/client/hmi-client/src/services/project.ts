@@ -14,4 +14,9 @@ async function get(projectId: string): Promise<Project> {
 	return response?.data ?? null;
 }
 
-export { get };
+async function getAll() {
+	const response = await API.get('/projects');
+	return response?.data ?? null;
+}
+
+export { get, getAll };
