@@ -709,8 +709,6 @@ export default defineComponent({
 				return;
 			}
 
-			console.log(stateNamesArrayA, stateNamesArrayB);
-
 			const statesToMerge: { modelA: string; modelB: string }[] = [];
 
 			for (let i = 0; i < stateNamesArrayA.length; i++) {
@@ -731,15 +729,13 @@ export default defineComponent({
 					statesToMerge
 				})
 			});
-			const output = await resp.json();
-			console.log('Merged petrinet', output);
+			mergedModel = await resp.json();
+			console.log('Merged petrinet', mergedModel);
 
-			mergedModel = output;
 			g3 = parsePetriNet2IGraph(mergedModel);
 			g3 = runDagreLayout(_.cloneDeep(g3));
 			this.refresh();
 			this.jsonOutput();
-			// this.createModel(output, true);
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
@@ -820,7 +816,7 @@ export default defineComponent({
 			}
 			this.refresh();
 			this.jsonOutput();
-		}, // end createModel
+		},
 		async stratify() {
 			try {
 				const outputModel = await fetchStratificationResult(
