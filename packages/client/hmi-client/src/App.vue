@@ -7,12 +7,14 @@ import DataExplorer from '@/views/DataExplorer.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { Project } from '@/types/Project';
 import * as ProjectService from '@/services/project';
-
 import { useCurrentRouter } from './router/index';
 
+/**
+ * Router
+ */
 const route = useRoute();
 const router = useRouter();
-
+const goToHomepage = () => router.push('/');
 const { isCurrentRouteHome } = useCurrentRouter();
 const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
@@ -50,10 +52,13 @@ watch(
 			// Set the Project to null,
 			// and send the user to the homepage.
 			project.value = null;
-			router.push('/');
+			goToHomepage();
 		} else {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
+			if (!project.value) {
+				goToHomepage();
+			}
 		}
 	}
 );
