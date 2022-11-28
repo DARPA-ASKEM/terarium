@@ -319,7 +319,7 @@ describe('test the petri net validator with a variety of graphs', () => {
 
 	it('should be invalid as a node is not recognized as a source or a target', () => {
 		expect(petriNetValidator(falsePetriNets[1])).eq(
-			'Invalid petri net: Every transition node should be at least either a source or a target'
+			'Invalid petri net: Every node should be at least either a source or a target'
 		);
 	});
 
