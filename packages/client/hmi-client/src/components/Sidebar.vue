@@ -11,6 +11,7 @@ import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-mo
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
+import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
@@ -75,6 +76,13 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocumentPdf32 />
+				</li>
+				<li
+					:active="selectedView === RouteName.SimulationResultRoute"
+					@click="openView(RouteName.SimulationResultRoute)"
+				>
+					<!-- TODO -->
+					<IconChartCombo32 />
 				</li>
 			</ul>
 			<ul>
