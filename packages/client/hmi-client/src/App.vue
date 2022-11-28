@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import Header from '@/components/Header.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
@@ -13,8 +13,6 @@ import { useCurrentRouter } from './router/index';
  * Router
  */
 const route = useRoute();
-const router = useRouter();
-const goToHomepage = () => router.push('/');
 const { isCurrentRouteHome } = useCurrentRouter();
 const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
 
@@ -48,19 +46,15 @@ const project = ref<Project | null>(null);
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
+		// If the projectId or the Project are null, set the Project to null.
 		if (!projectId) {
-			// Set the Project to null,
-			// and send the user to the homepage.
 			project.value = null;
-			goToHomepage();
 		} else {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
-			if (!project.value) {
-				goToHomepage();
-			}
 		}
-	}
+	},
+	{ immediate: true }
 );
 </script>
 
