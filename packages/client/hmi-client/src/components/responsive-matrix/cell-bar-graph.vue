@@ -262,7 +262,7 @@ export default {
 				.data(colValueArray.map((v, i) => ({ x: rowValueArray[i], y: v })))
 				.enter()
 				.append('rect')
-				.attr('x', (d) => (this.xSubgroup ? this.xSubgroup(d.x) : 0 + leftMargin))
+				.attr('x', (d) => (this.xSubgroup(d.x) || 0) + leftMargin)
 				.attr('y', (d) => this.yScale(d.y) + topMargin)
 				.attr('width', this.xSubgroup.bandwidth())
 				.attr('height', (d) => height - bottomMargin - topMargin - this.yScale(d.y))
