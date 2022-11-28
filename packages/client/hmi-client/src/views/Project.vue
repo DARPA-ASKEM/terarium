@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import API from '@/api/api';
 import { Project } from '@/types/Project';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import useResourcesStore from '@/stores/resources';
 
 const props = defineProps({
@@ -24,10 +24,6 @@ async function getProject(): Promise<Project> {
 onMounted(async () => {
 	project.value = await getProject();
 	resources.setActiveProject(project.value);
-});
-
-onUnmounted(() => {
-	resources.setActiveProject(null);
 });
 </script>
 

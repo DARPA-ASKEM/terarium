@@ -17,15 +17,6 @@ const useResourcesStore = defineStore('resources', {
 		activeProject: null as null | Project
 	}),
 	actions: {
-		addResource(resource: ResultType) {
-			const resId = getResourceID(resource);
-			if (isModel(resource)) {
-				this.models[resId] = resource as Model;
-			}
-			if (isXDDArticle(resource)) {
-				this.documents[resId] = resource as XDDArticle;
-			}
-		},
 		removeResource(resource: ResultType) {
 			const resId = getResourceID(resource);
 			if (isModel(resource)) {

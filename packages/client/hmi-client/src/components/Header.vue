@@ -4,13 +4,17 @@ import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useCurrentRouter } from '@/router/index';
+import useResourcesStore from '@/stores/resources';
 
 const emit = defineEmits(['show-data-explorer']);
 const router = useRouter();
 const { isCurrentRouteHome } = useCurrentRouter();
 const isHome = computed(() => isCurrentRouteHome.value);
 
+const resources = useResourcesStore();
+
 const goToHomepage = () => {
+	resources.setActiveProject(null);
 	router.push('/');
 };
 const goToDataExplorer = () => emit('show-data-explorer');

@@ -73,23 +73,29 @@ const props = defineProps({
 
 const doc = ref<XDDArticle | null>(null);
 
-watch(props, async () => {
-	const id = props.id;
-	if (id !== '') {
-		// fetch doc from XDD
-		// FIXME: refactor into a utility function in the XDD data service to fetch a given doc by id
-		const searchParams: XDDSearchParams = {
-			docid: id
-		};
-		const xddRes = await searchXDDArticles('', searchParams);
-		if (xddRes) {
-			const articles = xddRes.results as XDDArticle[];
-			if (articles.length > 0) {
-				doc.value = articles[0];
+watch(
+	props,
+	async () => {
+		const id = props.id;
+		if (id !== '') {
+			// fetch doc from XDD
+			// FIXME: refactor into a utility function in the XDD data service to fetch a given doc by id
+			const searchParams: XDDSearchParams = {
+				docid: id
+			};
+			const xddRes = await searchXDDArticles('', searchParams);
+			if (xddRes) {
+				const articles = xddRes.results as XDDArticle[];
+				if (articles.length > 0) {
+					doc.value = articles[0];
+				}
 			}
 		}
+	},
+	{
+		immediate: true
 	}
-});
+);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 

@@ -3,10 +3,22 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-to-title">Add to:</div>
 		<div class="add-selected-buttons">
-			<Button action @click="addToCurrentProject" :class="{ 'invalid-project': !validProject }"
+			<Button
+				action
+				@click="addAssetsToProject"
+				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
 				>Current Project</Button
 			>
-			<Button action>Other Project</Button>
+			<dropdown-button
+				v-if="selectedSearchItems.length > 0"
+				:inner-button-label="'Other Project'"
+				:is-dropdown-left-aligned="false"
+				:items="projectsNames"
+				@item-selected="addAssetsToProject"
+			/>
+			<Button v-else action :class="{ 'invalid-project': selectedSearchItems.length === 0 }"
+				>Other Project</Button
+			>
 		</div>
 		<div class="selected-items-container">
 			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
@@ -30,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from 'vue';
+import { computed, onMounted, PropType, ref } from 'vue';
 import Button from '@/components/Button.vue';
 import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
@@ -38,6 +50,9 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
+import API from '@/api/api';
+import { Project } from '@/types/Project';
+import DropdownButton from '@/components/widgets/dropdown-button.vue';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -50,6 +65,9 @@ const emit = defineEmits(['close']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
+
+const projectsList = ref<Project[]>([]);
+const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
 
@@ -103,14 +121,52 @@ const getType = (item: ResultType) => {
 	return ResourceType.ALL;
 };
 
-const addToCurrentProject = () => {
-	if (!validProject.value) return;
+const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
-	props.selectedSearchItems.forEach((selectedItem) => {
-		resources.addResource(selectedItem);
+	props.selectedSearchItems.forEach(async (selectedItem) => {
+		if (isXDDArticle(selectedItem)) {
+			const body = {
+				xdd_uri: (selectedItem as XDDArticle).gddid
+			};
+
+			// FIXME: handle cases where assets is already added to the project
+
+			// first, insert into the proper table/collection
+			const res = await API.post('/external/publications', body);
+			const publicationId = res.data.id;
+
+			// then, link and store in the project assets
+			const assetsType = 'publications';
+			const url = `/projects/${projectId}/assets/${assetsType}/${publicationId}`;
+			await API.post(url);
+
+			// update local copy of project assets
+			validProject.value?.assets.publications.push(publicationId);
+		}
+		// FIXME: add similar code for inserting other types of resources
 	});
+};
+
+const addAssetsToProject = async (projectName?: string) => {
+	if (props.selectedSearchItems.length === 0) return;
+
+	let projectId = '';
+	if (projectName !== undefined) {
+		const project = projectsList.value.find((p) => p.name === projectName);
+		projectId = project?.id as string;
+	} else {
+		if (!validProject.value) return;
+		projectId = validProject.value.id;
+	}
+
+	addResourcesToProject(projectId);
+
 	emit('close');
 };
+
+onMounted(async () => {
+	projectsList.value = await (await API.get('/projects')).data;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -178,5 +234,14 @@ const addToCurrentProject = () => {
 			}
 		}
 	}
+}
+
+:deep(.dropdown-btn) {
+	cursor: pointer;
+	background-color: var(--un-color-accent);
+	border-color: var(--un-color-accent-dark);
+	border-width: 0px;
+	width: 100% !important;
+	max-width: 100% !important;
 }
 </style>
