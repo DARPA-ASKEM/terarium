@@ -59,8 +59,9 @@ async function setProject(id: Project['id']) {
 	}
 }
 
+// Set the project when creating the component,
+// and anytime the URL is updated.
 setProject(route.params.projectId as string);
-
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
