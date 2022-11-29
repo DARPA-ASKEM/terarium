@@ -31,7 +31,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 import DocumentView from '@carbon/icons-vue/es/document--view/32';
-import API from '@/api/api';
+import { getPublication } from '@/services/external';
 
 const router = useRouter();
 
@@ -41,11 +41,12 @@ const docID = ref('');
 const documents = ref<string[]>([]);
 
 const openDocumentPage = async (docId: string) => {
-	// TODO: refactor as part of a project data service
-	const publicationDetails = await API.get(`/external/publications/${docId}`);
+	const publicationDetails = await getPublication(docId);
 	// pass this doc id as param
-	docID.value = publicationDetails.data.xdd_uri;
-	router.push({ path: `/docs/${docID.value}` });
+	if (publicationDetails) {
+		docID.value = publicationDetails.xdd_uri;
+		router.push({ path: `/docs/${docID.value}` });
+	}
 };
 
 const removeDocument = async (docId: string) => {

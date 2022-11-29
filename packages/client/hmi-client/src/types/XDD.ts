@@ -50,6 +50,10 @@ export type XDDArticle = {
 	relatedDocuments?: XDDArticle[];
 };
 
+export type ExternalPublication = {
+	xdd_uri: string;
+};
+
 export type XDDArtifactProperties = {
 	title: string;
 	DOI: string;
