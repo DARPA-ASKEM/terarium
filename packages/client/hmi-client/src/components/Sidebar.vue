@@ -199,7 +199,6 @@ aside.side-panel-close {
 
 aside header {
 	font: var(--un-font-h5);
-	overflow: hidden;
 }
 
 aside main {

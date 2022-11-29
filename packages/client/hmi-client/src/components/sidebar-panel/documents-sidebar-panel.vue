@@ -73,6 +73,8 @@ onMounted(() => {
 .document-list-container {
 	overflow-y: auto;
 	margin-top: 1rem;
+	height: 100%;
+	overflow-y: auto;
 }
 
 .doc-link {

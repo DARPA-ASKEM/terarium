@@ -92,6 +92,8 @@ main {
 	flex-grow: 1;
 	isolation: isolate;
 	z-index: 1;
+	height: 100vh - var(--header-height);
+	overflow: hidden;
 }
 
 .sidebar {
