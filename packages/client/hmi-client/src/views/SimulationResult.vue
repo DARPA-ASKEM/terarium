@@ -1,6 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
+
+const route = useRoute();
+
+watch(
+	() => route.params.simulationRunId,
+	async (id) => {
+		if (!id) return;
+
+		// FIXME: siwtch to different simulation run result
+		console.log('simulation run id changed to', id);
+	},
+	{ immediate: true }
+);
 
 const data = ref<any>([
 	[

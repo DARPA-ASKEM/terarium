@@ -18,7 +18,7 @@ export enum RoutePath {
 	Project = '/projects/:projectId',
 	ModelView = '/projects/:projectId/model/:modelId',
 	SimulationView = '/projects/:projectId/simulations/:simulationId?',
-	SimulationResultView = '/projects/:projectId/simulation-results/:simulationId?',
+	SimulationResultView = '/projects/:projectId/simulation-results/:simulationRunId?',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
