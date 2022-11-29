@@ -51,7 +51,6 @@ const openDocumentPage = async (docId: string) => {
 
 const removeDocument = async (docId: string) => {
 	// TODO: remove this document from the project assets
-	console.log('remove from project assets', docId);
 	router.push('/docs'); // clear the doc ID as a URL param
 };
 
