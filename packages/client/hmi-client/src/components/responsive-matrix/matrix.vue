@@ -6,11 +6,11 @@
 				:key="idx"
 				:is="getSelectedDrilldownType(selectedCell)"
 				:getSelectedCellStyle="getSelectedCellStyle"
+				:iterateSelectionIndexes="iterateCellIndexes"
 				:update="update"
 				:move="move"
 				:selectedCell="selectedCell"
-				:dataRowList="dataRowList"
-				:dataColList="dataColList"
+				:dataCellList="dataCellList"
 				:labelRowList="labelRowList"
 				:labelColList="labelColList"
 				:parameters="dataParametersArray"
@@ -147,8 +147,6 @@ export default {
 	data() {
 		return {
 			dataCellList: [] as CellData[],
-			dataRowList: [] as CellData[][], // e.g. [[row1col1Obj, row1col2Obj]]
-			dataColList: [] as CellData[][], // e.g. [[row1col1Obj, row2col1Obj]]
 			dataParameters: new Set() as Set<string>, // e.g. ["age", "height", "weight"]
 			dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 			dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
@@ -510,13 +508,6 @@ export default {
 				this.numRows = this.data.length;
 				this.numCols = this.data[0]?.length;
 
-				// find more efficient way to initialize 2D array?
-				this.dataRowList = Array(this.numRows)
-					.fill(0)
-					.map(() => []);
-				this.dataColList = Array(this.numCols)
-					.fill(0)
-					.map(() => []);
 				this.selectedElements = Array(this.numRows * this.numCols).fill(CellStatus.NONE);
 
 				// iterate through all the data and push the cell objects into data lists
@@ -534,8 +525,6 @@ export default {
 							};
 
 							this.dataCellList.push(cellData);
-							this.dataRowList[indexRow].push(cellData);
-							this.dataColList[indexCol].push(cellData);
 						}
 					})
 				);
@@ -709,23 +698,30 @@ export default {
 		},
 
 		/**
-		 * Given a selected cell array, iterate over the indexes of all the cells in the selection.
-		 * A callback is executed with the index as a parameter for each index. If the callback
-		 * returns true then stop iterating (as a mechanism to support early termination). The function
-		 * returns a boolean indicating whether early termination was triggered.
+		 * Given a 1D cell array with cells pushed in from left-to-right and top-to-bottom, iterate over
+		 * the indexes of all the cells in the selection. A negative value in the selection instructs the
+		 * function to use the topmost/leftmost row/col in the case of a start value or the bottommost/rightmost
+		 * row/col in the case of end value. A callback is executed with the index as a parameter for each
+		 * index. If the callback returns true then stop iterating (as a mechanism to support early
+		 * termination). The function returns a boolean indicating whether early termination was triggered.
 		 * @param {SelectedCell} selectedCell
 		 * @param {(idx: number) => boolean | void} cb
 		 */
-		iterateSelectionIndexes(selectedCell: SelectedCell, cb: (idx: number) => boolean | void) {
+		iterateCellIndexes(selectedCell: SelectedCell, cb: (idx: number) => boolean | void) {
 			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
 
-			const numSelectedRows = selectedCell[END_ROW] - selectedCell[START_ROW] + 1;
-			const numSelectedCols = selectedCell[END_COL] - selectedCell[START_COL] + 1;
+			const startCol = selectedCell[START_COL] > -1 ? selectedCell[START_COL] : 0;
+			const endCol = selectedCell[END_COL] > -1 ? selectedCell[END_COL] : this.numRows - 1;
+			const startRow = selectedCell[START_ROW] > -1 ? selectedCell[START_ROW] : 0;
+			const endRow = selectedCell[END_ROW] > -1 ? selectedCell[END_ROW] : this.numRows - 1;
+
+			const numSelectedRows = endRow - startRow + 1;
+			const numSelectedCols = endCol - startCol + 1;
 			const numSelectedElements = numSelectedRows * numSelectedCols;
 
 			for (let i = 0; i < numSelectedElements; i++) {
-				const col = selectedCell[START_COL] + (i % numSelectedCols);
-				const row = selectedCell[START_ROW] + Math.floor(i / numSelectedCols);
+				const col = startCol + (i % numSelectedCols);
+				const row = startRow + Math.floor(i / numSelectedCols);
 				const idx = row * this.numRows + col;
 
 				// if cb returns true then exit early
@@ -741,7 +737,7 @@ export default {
 		 * @param {CellStatus} newVal
 		 */
 		setSelectedElementArea(selectedCell: SelectedCell, newVal: CellStatus) {
-			this.iterateSelectionIndexes(selectedCell, (idx) => {
+			this.iterateCellIndexes(selectedCell, (idx) => {
 				this.selectedElements[idx] = newVal;
 			});
 		},
@@ -752,7 +748,7 @@ export default {
 		 * @param {SelectedCell} selectedCell
 		 */
 		isSelectionSelected(selectedCell: SelectedCell): boolean {
-			return !this.iterateSelectionIndexes(selectedCell, (idx) => {
+			return !this.iterateCellIndexes(selectedCell, (idx) => {
 				if (this.selectedElements[idx] === CellStatus.NONE) {
 					return true;
 				}
