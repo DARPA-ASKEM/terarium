@@ -173,6 +173,7 @@ export default {
 			selectedCellList: [] as SelectedCell[], // e.g. [[startrow, startcol, endrow, endcol]]
 			selectedRows: [] as CellStatus[], // e.g. [0, 0, 1, 0]
 			selectedCols: [] as CellStatus[], // e.g. [0, 0, 1, 0]
+			selectedElements: [] as CellStatus[], // e.g. [0, 0, 1, 0]
 			selectedCell: Array(4) as SelectedCell, // e.g. [startrow, startcol, endrow, endcol]
 
 			// properties which are updated to trigger functions in children
@@ -516,6 +517,7 @@ export default {
 				this.dataColList = Array(this.numCols)
 					.fill(0)
 					.map(() => []);
+				this.selectedElements = Array(this.numRows * this.numCols).fill(CellStatus.NONE);
 
 				// iterate through all the data and push the cell objects into data lists
 				this.data.forEach((row, indexRow) =>
@@ -682,12 +684,12 @@ export default {
 		},
 
 		/**
-		 * Given a selected cell array, determines if selection only consists of cells which
-		 * have already been selected.
+		 * Given a selected cell array, determines if selection has a possibility of
+		 * containing cells which have already been selected.
+		 * @param {SelectedCell} selectedCell
 		 */
-		isSelectionAlreadySelected(): boolean {
+		isSelectionPossiblySelected(selectedCell: SelectedCell) {
 			const { START_COL, END_COL, START_ROW, END_ROW } = SelectedCellValue;
-			const { selectedCell } = this;
 			const startCol = selectedCell[START_COL];
 			const endCol = selectedCell[END_COL];
 			const startRow = selectedCell[START_ROW];
@@ -707,11 +709,65 @@ export default {
 		},
 
 		/**
+		 * Given a selected cell array, iterate over the indexes of all the cells in the selection.
+		 * A callback is executed with the index as a parameter for each index. If the callback
+		 * returns true then stop iterating (as a mechanism to support early termination). The function
+		 * returns a boolean indicating whether early termination was triggered.
+		 * @param {SelectedCell} selectedCell
+		 * @param {(idx: number) => boolean | void} cb
+		 */
+		iterateSelectionIndexes(selectedCell: SelectedCell, cb: (idx: number) => boolean | void) {
+			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
+
+			const numSelectedRows = selectedCell[END_ROW] - selectedCell[START_ROW] + 1;
+			const numSelectedCols = selectedCell[END_COL] - selectedCell[START_COL] + 1;
+			const numSelectedElements = numSelectedRows * numSelectedCols;
+
+			for (let i = 0; i < numSelectedElements; i++) {
+				const col = selectedCell[START_COL] + (i % numSelectedCols);
+				const row = selectedCell[START_ROW] + Math.floor(i / numSelectedCols);
+				const idx = row * this.numRows + col;
+
+				// if cb returns true then exit early
+				if (cb(idx)) return true;
+			}
+
+			return false;
+		},
+
+		/**
+		 * Set all values in a selected area to the given value in the selected elements array.
+		 * @param {SelectedCell} selectedCell
+		 * @param {CellStatus} newVal
+		 */
+		setSelectedElementArea(selectedCell: SelectedCell, newVal: CellStatus) {
+			this.iterateSelectionIndexes(selectedCell, (idx) => {
+				this.selectedElements[idx] = newVal;
+			});
+		},
+
+		/**
+		 * Given a selected cell array, determines if selection only consists of cells which
+		 * have already been selected.
+		 * @param {SelectedCell} selectedCell
+		 */
+		isSelectionSelected(selectedCell: SelectedCell): boolean {
+			return !this.iterateSelectionIndexes(selectedCell, (idx) => {
+				if (this.selectedElements[idx] === CellStatus.NONE) {
+					return true;
+				}
+				return false;
+			});
+		},
+
+		/**
 		 * Remove all selected cells in the selected cell list where the selection
 		 * is completely enclosed in the selected cell.
 		 */
 		removeSelected(): void {
 			const { START_COL, END_COL, START_ROW, END_ROW } = SelectedCellValue;
+
+			// set status of selected element area to none for all cells that fail the filter
 			this.selectedCellList = this.selectedCellList.filter(
 				(selectedCell) =>
 					!(
@@ -719,8 +775,17 @@ export default {
 						this.selectedCell[END_ROW] <= selectedCell[END_ROW] &&
 						this.selectedCell[START_COL] >= selectedCell[START_COL] &&
 						this.selectedCell[END_COL] <= selectedCell[END_COL]
-					)
+					) || this.setSelectedElementArea(selectedCell, CellStatus.NONE)
 			);
+
+			// rewrite selected cells to selected element area in all cells where they might be
+			// incorrectly removed in previous step
+			this.selectedCellList.forEach((selectedCells) => {
+				if (this.isSelectionPossiblySelected(selectedCells)) {
+					this.setSelectedElementArea(selectedCells, CellStatus.SELECTED);
+				}
+			});
+
 			this.processActiveCells();
 		},
 
@@ -729,6 +794,9 @@ export default {
 		 */
 		addSelected(): void {
 			this.selectedCellList.push(this.selectedCell);
+
+			this.setSelectedElementArea(this.selectedCell, CellStatus.SELECTED);
+
 			this.processActiveCells();
 		},
 
@@ -879,7 +947,7 @@ export default {
 				// selection is out-of-bounds
 				this.centerGraph();
 				this.incrementUpdate();
-			} else if (this.isSelectionAlreadySelected()) {
+			} else if (this.isSelectionSelected(this.selectedCell)) {
 				this.removeSelected();
 			} else {
 				this.addSelected();
