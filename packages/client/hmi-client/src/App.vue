@@ -52,7 +52,6 @@ watch(
 		// If the projectId or the Project are null, set the Project to null.
 		if (!projectId) {
 			project.value = null;
-			resources.setActiveProject(null);
 		} else {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
