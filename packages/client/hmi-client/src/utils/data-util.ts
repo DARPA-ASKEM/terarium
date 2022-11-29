@@ -76,7 +76,7 @@ export function validate(possibleDOI?: string): boolean {
 	return possibleDOI.match(DOI_VALIDATION_PATTERN) !== null;
 }
 
-export function getDocumentDoi(doc: XDDArticle) {
+export function getDocumentDoi(doc: XDDArticle | null) {
 	let docIdentifier = '';
 	if (doc && doc.identifier.length > 0) {
 		const defaultDOI = doc.identifier.find((i) => i.type === 'doi');
