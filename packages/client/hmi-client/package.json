@@ -40,7 +40,7 @@
 		"@playwright/test": "1.27.1",
 		"@rushstack/eslint-patch": "1.2.0",
 		"@types/d3": "7.4.0",
-		"@types/lodash": "4.14.189",
+		"@types/lodash": "4.14.190",
 		"@types/node": "18.11.9",
 		"@vitejs/plugin-vue": "3.2.0",
 		"@vitest/coverage-c8": "0.24.5",
