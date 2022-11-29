@@ -1,22 +1,21 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
-import HomeView from '@/views/Home.vue';
-import TA2Playground from '@/views/TA2Playground.vue';
-import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
-import TheiaView from '@/views/theia.vue';
 import DocumentView from '@/views/Document.vue';
-import Simulation from '@/views/Simulation.vue';
+import HomeView from '@/views/Home.vue';
+import ModelView from '@/views/Model.vue';
 import ProjectView from '@/views/Project.vue';
-import Model from '@/views/Model.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
+import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
+import SimulationView from '@/views/Simulation.vue';
+import TA2Playground from '@/views/TA2Playground.vue';
+import TheiaView from '@/views/theia.vue';
 
 export enum RoutePath {
 	Home = '/',
-
-	DocView = '/docs/:id?',
-	Project = '/projects/:projectId',
-	ModelView = '/projects/:projectId/model/:modelId',
-	SimulationView = '/projects/:projectId/simulation',
+	Document = '/docs/:id?',
+	Project = '/projects/:projectId?',
+	Model = '/projects/:projectId/model/:modelId?',
+	Simulation = '/projects/:projectId/simulation?',
 	Results = '/projects/:projectId/results',
 
 	// Playground and experiments, these components are testing-only
@@ -28,25 +27,22 @@ export enum RoutePath {
 
 // Named routes
 export enum RouteName {
-	HomeRoute = 'home',
-	SimulationRoute = 'simulation',
-	ModelRoute = 'model',
-
 	DatasetRoute = 'dataset',
 	DocumentRoute = 'document',
+	HomeRoute = 'home',
+	ModelRoute = 'model',
+	ProfileRoute = 'profile',
+	ProjectRoute = 'project',
 	ProvenanceRoute = 'provenance',
-	ProfileRoute = 'profile'
+	SimulationRoute = 'simulation'
 }
 
 const routes = [
+	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
-	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
-	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model, props: true },
-	{ path: RoutePath.Project, component: ProjectView, props: true },
-
-	// TODO
-	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
-	{ path: RoutePath.DocView, component: DocumentView, props: true },
+	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
+	{ name: RouteName.ProjectRoute, path: RoutePath.Project, component: ProjectView },
+	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
 
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },

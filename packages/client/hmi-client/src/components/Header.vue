@@ -31,7 +31,7 @@ defineProps<{
 		<img v-else src="@assets/images/icon.png" height="32" width="32" alt="TERArium icon" />
 		<p v-if="!isHome">
 			<a @click="goToHomepage">Projects</a>
-			<span> {{ projectName }}</span>
+			<span>{{ projectName }}</span>
 		</p>
 		<aside>
 			<Button class="data-explorer" @click="goToDataExplorer">
