@@ -95,7 +95,7 @@ const formatDescription = (item: ResultType) => {
 	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
 };
 
-// FIXME: consiuder refactoring as a util function
+// FIXME: consider refactoring as a util function
 const isSelected = (item: ResultType) =>
 	props.selectedSearchItems.find((searchItem) => {
 		if (isModel(item)) {

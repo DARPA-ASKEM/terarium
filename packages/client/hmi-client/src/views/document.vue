@@ -58,8 +58,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { getXDDArtifacts, searchXDDArticles } from '@/services/data';
-import { XDDArticle, XDDArtifact, XDDExtractionType, XDDSearchParams } from '@/types/XDD';
+import { getDocumentById, getXDDArtifacts } from '@/services/data';
+import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
 
@@ -79,16 +79,9 @@ watch(
 		const id = props.id;
 		if (id !== '') {
 			// fetch doc from XDD
-			// FIXME: refactor into a utility function in the XDD data service to fetch a given doc by id
-			const searchParams: XDDSearchParams = {
-				docid: id
-			};
-			const xddRes = await searchXDDArticles('', searchParams);
-			if (xddRes) {
-				const articles = xddRes.results as XDDArticle[];
-				if (articles.length > 0) {
-					doc.value = articles[0];
-				}
+			const d = await getDocumentById(id);
+			if (d) {
+				doc.value = d;
 			}
 		}
 	},

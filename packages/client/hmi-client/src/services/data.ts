@@ -254,6 +254,20 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	};
 };
 
+const getDocumentById = async (docid: string) => {
+	const searchParams: XDDSearchParams = {
+		docid
+	};
+	const xddRes = await searchXDDArticles('', searchParams);
+	if (xddRes) {
+		const articles = xddRes.results as XDDArticle[];
+		if (articles.length > 0) {
+			return articles[0];
+		}
+	}
+	return null;
+};
+
 const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	//
 	// call the different search sub-systems to retrieve results
@@ -289,5 +303,6 @@ export {
 	getXDDDictionaries,
 	getXDDArtifacts,
 	searchXDDArticles,
-	getRelatedDocuments
+	getRelatedDocuments,
+	getDocumentById
 };
