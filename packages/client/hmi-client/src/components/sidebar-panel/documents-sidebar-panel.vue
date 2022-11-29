@@ -4,7 +4,7 @@
 			v-for="docId in documents"
 			:key="docId"
 			class="doc-link"
-			:class="{ active: docId === docID }"
+			:class="{ active: docId === documentId }"
 			@click="openDocumentPage(docId)"
 		>
 			<span class="doc-view-icon">
@@ -37,27 +37,28 @@ const router = useRouter();
 
 const resourcesStore = useResourcesStore();
 
-const docID = ref('');
+const documentId = ref('');
 const documents = ref<string[]>([]);
 
 const openDocumentPage = async (docId: string) => {
 	const publicationDetails = await getPublication(docId);
 	// pass this doc id as param
 	if (publicationDetails) {
-		docID.value = publicationDetails.xdd_uri;
-		router.push({ path: `/docs/${docID.value}` });
+		documentId.value = publicationDetails.xdd_uri;
+		router.push({ path: `/docs/${documentId.value}` });
 	}
 };
 
 const removeDocument = async (docId: string) => {
 	// TODO: remove this document from the project assets
 	router.push('/docs'); // clear the doc ID as a URL param
+	console.log('removed doc', docId);
 };
 
 onMounted(() => {
 	const routeParams = router.currentRoute.value.params;
-	if (!isEmpty(routeParams) && routeParams.id !== '' && docID.value === '') {
-		docID.value = routeParams.id as string;
+	if (!isEmpty(routeParams) && routeParams.id !== '' && documentId.value === '') {
+		documentId.value = routeParams.id as string;
 	}
 
 	// get the list of publications associated with this project and display them
