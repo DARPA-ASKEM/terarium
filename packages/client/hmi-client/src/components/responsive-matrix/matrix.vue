@@ -698,7 +698,7 @@ export default {
 		},
 
 		/**
-		 * Given a 1D cell array with cells pushed in from left-to-right and top-to-bottom, iterate over
+		 * Given a 1D cell array with cells pushed in from left-to-right and top-to-bottom, iterate through
 		 * the indexes of all the cells in the selection. A negative value in the selection instructs the
 		 * function to use the topmost/leftmost row/col in the case of a start value or the bottommost/rightmost
 		 * row/col in the case of end value. A callback is executed with the index as a parameter for each
@@ -710,24 +710,32 @@ export default {
 		iterateCellIndexes(selectedCell: SelectedCell, cb: (idx: number) => boolean | void) {
 			const { START_ROW, END_ROW, START_COL, END_COL } = SelectedCellValue;
 
+			// process selectedCell to replace invalid values with row/col min/max values
 			const startCol = selectedCell[START_COL] > -1 ? selectedCell[START_COL] : 0;
-			const endCol = selectedCell[END_COL] > -1 ? selectedCell[END_COL] : this.numRows - 1;
+			const endCol = selectedCell[END_COL] > -1 ? selectedCell[END_COL] : this.numCols - 1;
 			const startRow = selectedCell[START_ROW] > -1 ? selectedCell[START_ROW] : 0;
 			const endRow = selectedCell[END_ROW] > -1 ? selectedCell[END_ROW] : this.numRows - 1;
 
+			// calculate the number of rows, cols, and cells contained in the selection
 			const numSelectedRows = endRow - startRow + 1;
 			const numSelectedCols = endCol - startCol + 1;
-			const numSelectedElements = numSelectedRows * numSelectedCols;
+			const numSelectedCells = numSelectedRows * numSelectedCols;
 
-			for (let i = 0; i < numSelectedElements; i++) {
+			// iterate through every selected cell from left-to-right and top-to-bottom
+			for (let i = 0; i < numSelectedCells; i++) {
+				// calculate the row and col each cell belongs to
 				const col = startCol + (i % numSelectedCols);
 				const row = startRow + Math.floor(i / numSelectedCols);
+
+				// use col and row to find the index of the cell in a 1-dim array
 				const idx = row * this.numRows + col;
 
-				// if cb returns true then exit early
+				// call callback with the index as a parameter
+				// if cb returns true, then exit early
 				if (cb(idx)) return true;
 			}
 
+			// since exit early not done, return false
 			return false;
 		},
 

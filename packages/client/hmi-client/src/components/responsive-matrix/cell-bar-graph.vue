@@ -115,12 +115,9 @@ export default {
 				return acc;
 			}, {});
 
-			this.iterateSelectionIndexes([startRow, -1, endRow, -1], (idx) => {
-				const cell = this.dataCellList[idx];
-				if (cell.col <= endCol && cell.col >= startCol) {
-					this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
-				}
-			});
+			this.iterateSelectionIndexes([startRow, -1, endRow, -1], (idx) =>
+				this.extractCellValuesByParam(idx, selectedCells, startCol, endCol)
+			);
 
 			return selectedCells;
 		},
@@ -215,6 +212,13 @@ export default {
 		updateContainerBoundingBox() {
 			const container = this.$refs.container as HTMLElement;
 			this.containerBoundingBox = container.getBoundingClientRect();
+		},
+
+		extractCellValuesByParam(idx, selectedCells, startCol, endCol) {
+			const cell = this.dataCellList[idx];
+			if (cell.col <= endCol && cell.col >= startCol) {
+				this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
+			}
 		},
 
 		renderGraph() {
