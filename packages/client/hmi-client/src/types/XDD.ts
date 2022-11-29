@@ -50,6 +50,10 @@ export type XDDArticle = {
 	relatedDocuments?: XDDArticle[];
 };
 
+export type ExternalPublication = {
+	xdd_uri: string;
+};
+
 export type XDDArtifactProperties = {
 	title: string;
 	DOI: string;
@@ -117,6 +121,7 @@ export type XDDResult = {
 };
 
 export type XDDSearchParams = {
+	docid?: string; // internal xdd document id
 	doi?: string;
 	title?: string;
 	term?: string;

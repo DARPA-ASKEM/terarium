@@ -9,8 +9,8 @@ defineProps<{
 <template>
 	<div class="flex-container">
 		<header>
-			<h2>{{ project.name }}</h2>
-			<p class="secondary-text">Last updated: {{ project.timestamp }}</p>
+			<h2>{{ project?.name }}</h2>
+			<p class="secondary-text">Last updated: {{ project?.timestamp }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
@@ -20,7 +20,7 @@ defineProps<{
 						<!-- Author -->
 						<section class="author">Edwin Lai, Yohann Paris</section>
 						<p>
-							{{ project.description }}
+							{{ project?.description }}
 						</p>
 					</section>
 					<section class="related-projects">
