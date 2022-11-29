@@ -84,6 +84,8 @@ watch(
 			if (d) {
 				doc.value = d;
 			}
+		} else {
+			doc.value = null;
 		}
 	},
 	{

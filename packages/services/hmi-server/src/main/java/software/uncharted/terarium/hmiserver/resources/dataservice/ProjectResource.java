@@ -56,16 +56,6 @@ public class ProjectResource {
 		return proxy.updateProject(id, updatedProject);
 	}
 
-	@GET
-	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
-	public Response getAsset(
-		@PathParam("project_id") final String projectId,
-		@PathParam("resource_type") final ResourceType type,
-		@PathParam("resource_id") final String resourceId
-	) {
-		return proxy.getAsset(projectId, type, resourceId);
-	}
-
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
 	public Response createAsset(
@@ -74,5 +64,15 @@ public class ProjectResource {
 		@PathParam("resource_id") final String resourceId
 	) {
 		return proxy.createAsset(projectId, type, resourceId);
+	}
+
+	@DELETE
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	public Response deleteAsset(
+		@PathParam("project_id") final String projectId,
+		@PathParam("resource_type") final String type, // ResourceType
+		@PathParam("resource_id") final String resourceId
+	) {
+		return proxy.deleteAsset(projectId, type, resourceId);
 	}
 }

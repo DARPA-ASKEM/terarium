@@ -26,12 +26,13 @@
  * Display a list of documents available in the current Project.
  */
 import useResourcesStore from '@/stores/resources';
-import { isEmpty } from 'lodash';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 import DocumentView from '@carbon/icons-vue/es/document--view/32';
 import { getPublication } from '@/services/external';
+import { deleteAsset } from '@/services/project';
+import { PUBLICATIONS } from '@/types/Project';
 
 const router = useRouter();
 
@@ -44,23 +45,30 @@ const openDocumentPage = async (docId: string) => {
 	const publicationDetails = await getPublication(docId);
 	// pass this doc id as param
 	if (publicationDetails) {
-		documentId.value = publicationDetails.xdd_uri;
-		router.push({ path: `/docs/${documentId.value}` });
+		documentId.value = docId; // track selection
+		router.push({ path: `/docs/${publicationDetails.xdd_uri}` });
 	}
 };
 
 const removeDocument = async (docId: string) => {
-	// TODO: remove this document from the project assets
-	router.push('/docs'); // clear the doc ID as a URL param
-	console.log('removed doc', docId);
+	// remove the document from the project assets
+	if (resourcesStore.activeProject) {
+		const assetsType = PUBLICATIONS;
+		deleteAsset(resourcesStore.activeProject.id, assetsType, docId);
+		// remove also from the local cache
+		resourcesStore.activeProject.assets[PUBLICATIONS] = resourcesStore.activeProject.assets[
+			PUBLICATIONS
+		].filter((a) => a !== docId);
+		documents.value = resourcesStore.activeProject.assets[PUBLICATIONS];
+	}
+
+	// if the user deleted the currently selected document, then clear its content from the view
+	if (docId === documentId.value) {
+		router.push('/docs'); // clear the doc ID as a URL param
+	}
 };
 
 onMounted(() => {
-	const routeParams = router.currentRoute.value.params;
-	if (!isEmpty(routeParams) && routeParams.id !== '' && documentId.value === '') {
-		documentId.value = routeParams.id as string;
-	}
-
 	// get the list of publications associated with this project and display them
 	const documentsInCurrentProject = resourcesStore.activeProject?.assets.publications;
 	if (documentsInCurrentProject) {

@@ -47,17 +47,17 @@ public interface ProjectProxy {
 		@PathParam("id") String id
 	);
 
-	@GET
-	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
-	Response getAsset(
-		@PathParam("project_id") String projectId,
-		@PathParam("resource_type") ResourceType type,
-		@PathParam("resource_id") String resourceId
-	);
-
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
 	Response createAsset(
+		@PathParam("project_id") String projectId,
+		@PathParam("resource_type") String type, // ResourceType
+		@PathParam("resource_id") String resourceId
+	);
+
+	@DELETE
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	Response deleteAsset(
 		@PathParam("project_id") String projectId,
 		@PathParam("resource_type") String type, // ResourceType
 		@PathParam("resource_id") String resourceId
