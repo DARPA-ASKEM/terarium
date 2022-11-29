@@ -1,24 +1,9 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
-import { ref, onMounted } from 'vue';
-import useResourcesStore from '@/stores/resources';
-import * as ProjectService from '@/services/project';
 
-const props = defineProps({
-	projectId: {
-		type: String,
-		required: true
-	}
-});
-
-const resources = useResourcesStore();
-
-const project = ref<Project | null>(null);
-
-onMounted(async () => {
-	project.value = await ProjectService.get(props.projectId);
-	resources.setActiveProject(project.value);
-});
+defineProps<{
+	project: Project;
+}>();
 </script>
 
 <template>
