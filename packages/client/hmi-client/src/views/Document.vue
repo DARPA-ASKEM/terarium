@@ -69,6 +69,7 @@ const props = defineProps({
 		type: String,
 		default: ''
 	}
+	// NOTE that project is automatically injected as prop as well
 });
 
 const doc = ref<XDDArticle | null>(null);

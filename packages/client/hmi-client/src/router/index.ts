@@ -4,11 +4,11 @@ import HomeView from '@/views/Home.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
+import DocumentView from '@/views/Document.vue';
 import Simulation from '@/views/Simulation.vue';
 import ProjectView from '@/views/Project.vue';
 import Model from '@/views/Model.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
-import DocumentView from '@/views/Document.vue';
 
 export enum RoutePath {
 	Home = '/',
