@@ -53,6 +53,7 @@ import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
 import { Project } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -165,7 +166,10 @@ const addAssetsToProject = async (projectName?: string) => {
 };
 
 onMounted(async () => {
-	projectsList.value = await (await API.get('/projects')).data;
+	const all = await ProjectService.getAll();
+	if (all !== null) {
+		projectsList.value = all;
+	}
 });
 </script>
 
