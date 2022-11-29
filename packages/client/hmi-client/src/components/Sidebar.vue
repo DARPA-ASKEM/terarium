@@ -5,7 +5,8 @@
 import { ref } from 'vue';
 import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
 import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
-import IconDataPlayer32 from '@carbon/icons-vue/es/data-player/32';
+import IconAccount32 from '@carbon/icons-vue/es/account/32';
+import IconAppConnectivity32 from '@carbon/icons-vue/es/app-connectivity/32';
 import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
@@ -29,24 +30,24 @@ function openSidePanel() {
 	isSidePanelClose.value = false;
 }
 
-const selectedView = ref('');
+// The Project page is the default
+const selectedView = ref<RouteName>(RouteName.ProjectRoute);
+
+function hasSidebar(view: RouteName): boolean {
+	return [RouteName.ModelRoute, RouteName.DocumentRoute, RouteName.ProfileRoute].includes(view);
+}
 
 /**
  * Open a View
  * @param {string} view - The view to be open.
  * @param {boolean} [openViewSidePanel=true] - Should the side-panel be open when opening the view.
  */
-function openView(view: string, openViewSidePanel: boolean = true): void {
-	selectedView.value = view;
-	if (isSidePanelClose.value) {
-		if (openViewSidePanel) openSidePanel();
-	} else if (!openViewSidePanel) {
-		closeSidePanel();
-	}
-
-	// FIXME: sort out the difference between routing to a page and opening the side-panel
-	if ([RouteName.ModelRoute, RouteName.SimulationRoute].includes(view as RouteName)) {
+function openView(view: RouteName): void {
+	// Open the appropriate view
+	if (selectedView.value !== view && Object.values(RouteName).includes(view)) {
 		router.push({ name: view });
+	} else if (hasSidebar(view) && !isSidePanelClose.value) {
+		openSidePanel();
 	}
 }
 </script>
@@ -56,22 +57,36 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 		<nav>
 			<ul>
 				<li
-					:active="selectedView === RouteName.SimulationRoute"
-					@click="openView(RouteName.SimulationRoute, false)"
+					:active="selectedView === RouteName.ProjectRoute"
+					:title="RouteName.ProjectRoute"
+					@click="openView(RouteName.ProjectRoute)"
 				>
-					<IconDataPlayer32 />
+					<IconAccount32 />
 				</li>
-				<li :active="selectedView === RouteName.ModelRoute" @click="openView(RouteName.ModelRoute)">
+				<li
+					:active="selectedView === RouteName.SimulationRoute"
+					:title="RouteName.SimulationRoute"
+					@click="openView(RouteName.SimulationRoute)"
+				>
+					<IconAppConnectivity32 />
+				</li>
+				<li
+					:active="selectedView === RouteName.ModelRoute"
+					:title="RouteName.ModelRoute"
+					@click="openView(RouteName.ModelRoute)"
+				>
 					<IconMachineLearningModel32 />
 				</li>
 				<li
 					:active="selectedView === RouteName.DatasetRoute"
-					@click="openView(RouteName.DatasetRoute, false)"
+					:title="RouteName.DatasetRoute"
+					@click="openView(RouteName.DatasetRoute)"
 				>
 					<IconTableSplit32 />
 				</li>
 				<li
 					:active="selectedView === RouteName.DocumentRoute"
+					:title="RouteName.DocumentRoute"
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocumentPdf32 />
@@ -80,12 +95,14 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 			<ul>
 				<li
 					:active="selectedView === RouteName.ProvenanceRoute"
-					@click="openView(RouteName.ProvenanceRoute, false)"
+					:title="RouteName.ProvenanceRoute"
+					@click="openView(RouteName.ProvenanceRoute)"
 				>
 					<IconFlow32 />
 				</li>
 				<li
 					:active="selectedView === RouteName.ProfileRoute"
+					:title="RouteName.ProfileRoute"
 					@click="openView(RouteName.ProfileRoute)"
 				>
 					<IconUser32 />
@@ -95,13 +112,12 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 				<IconArrowRight16 />
 			</Button>
 		</nav>
-		<aside :class="{ 'side-panel-close': isSidePanelClose }">
+		<aside v-if="hasSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
 			<header>{{ selectedView }}</header>
 			<main>
 				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
-				<DocumentsSidebarPanel v-else-if="selectedView === RouteName.DocumentRoute" />
-				<ProfileSidebarPanel v-else-if="selectedView === RouteName.ProfileRoute" />
-				<template v-else> Create a sidebar-panel component </template>
+				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
+				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
 			</main>
 			<Button round class="side-panel-control" @click="closeSidePanel">
 				<IconArrowLeft16 />
@@ -199,6 +215,7 @@ aside.side-panel-close {
 
 aside header {
 	font: var(--un-font-h5);
+	overflow: hidden;
 }
 
 aside main {
