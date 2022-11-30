@@ -15,7 +15,7 @@ export enum RoutePath {
 
 	DocView = '/docs/:id?',
 	Project = '/projects/:projectId',
-	ModelView = '/projects/:projectId/model/:modelId',
+	ModelView = '/projects/:projectId/model/:modelId?',
 	SimulationView = '/projects/:projectId/simulation',
 	Results = '/projects/:projectId/results',
 
