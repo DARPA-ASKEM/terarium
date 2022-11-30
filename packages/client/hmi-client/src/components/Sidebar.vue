@@ -119,11 +119,11 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 				<DocumentsSidebarPanel v-else-if="selectedView === RouteName.DocumentRoute" />
 				<ProfileSidebarPanel v-else-if="selectedView === RouteName.ProfileRoute" />
 				<SimulationResultSidebarPanel
-					v-if="selectedView === RouteName.SimulationResultRoute"
+					v-else-if="selectedView === RouteName.SimulationResultRoute"
 					:project="project"
 				/>
 				<SimulationPlanSidebarPanel
-					v-if="selectedView === RouteName.SimulationRoute"
+					v-else-if="selectedView === RouteName.SimulationRoute"
 					:project="project"
 				/>
 				<template v-else> Create a sidebar-panel component </template>
