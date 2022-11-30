@@ -34,7 +34,6 @@ const mockOpenModels = ref([
 		:meta-content="mockOpenModels"
 		:component-to-render="Model"
 		:icon="IconMachineLearningModel"
-		@close-tab="(tabIndex) => mockOpenModels.splice(tabIndex, 1)"
 	>
 	</TabContainer>
 </template>
