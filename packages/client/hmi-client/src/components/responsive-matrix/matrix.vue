@@ -728,7 +728,7 @@ export default {
 				const row = startRow + Math.floor(i / numSelectedCols);
 
 				// use col and row to find the index of the cell in a 1-dim array
-				const idx = row * this.numRows + col;
+				const idx = row * this.numCols + col;
 
 				// call callback with the index as a parameter
 				// if cb returns true, then exit early
