@@ -1,46 +1,36 @@
 <template>
-	<side-panel
-		class="facet-panel-container"
-		:tabs="facetTabs"
-		:current-tab-name="currentTab"
-		@set-active="setActive"
-	>
-		<div v-if="currentTab === tabName" class="facet-panel-list">
-			<div v-for="facet in formattedFacets" :key="facet.label">
-				<numerical-facet
-					v-if="facet.isNumerical"
-					:key="facet.label"
-					:facet="facet.id"
-					:label="facet.label"
-					:base-data="facet.baseData"
-					:selected-data="facet.filteredData"
-				/>
-				<categorical-facet
-					v-else
-					:key="facet.label"
-					:facet="facet.id"
-					:label="facet.label"
-					:base-data="facet.baseData"
-					:selected-data="facet.filteredData"
-					:rescale-after-select="true"
-				/>
-			</div>
+	<div class="facets-panel">
+		<h4>Facets</h4>
+		<div v-for="facet in formattedFacets" :key="facet.label">
+			<numerical-facet
+				v-if="facet.isNumerical"
+				:key="facet.label"
+				:facet="facet.id"
+				:label="facet.label"
+				:base-data="facet.baseData"
+				:selected-data="facet.filteredData"
+			/>
+			<categorical-facet
+				v-else
+				:key="facet.label"
+				:facet="facet.id"
+				:label="facet.label"
+				:base-data="facet.baseData"
+				:selected-data="facet.filteredData"
+				:rescale-after-select="true"
+			/>
 		</div>
-	</side-panel>
+	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref } from 'vue';
+import { computed, PropType } from 'vue';
 
 import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
-import IconFilterRemove32 from '@carbon/icons-vue/es/filter--remove/32';
-import SidePanel from '@/components/side-panel/side-panel.vue';
-
-const TAB_NAME = 'Data Facets';
 
 const props = defineProps({
 	facets: {
@@ -57,10 +47,7 @@ const props = defineProps({
 	}
 });
 
-const tabName = ref(TAB_NAME);
 // FIXME: add label for the facet tab that matches the current resultType
-const facetTabs = ref([{ name: TAB_NAME, icon: IconFilterRemove32 }]);
-const currentTab = ref(TAB_NAME);
 
 const formattedFacets = computed(() => {
 	const keys = Object.keys(props.facets);
@@ -99,18 +86,15 @@ const formattedFacets = computed(() => {
 	});
 	return facetList;
 });
-
-const setActive = (tab: string) => {
-	currentTab.value = tab;
-};
 </script>
 
 <style scoped>
-.facet-panel-container {
-	margin-top: 5px;
+.facets-panel {
+	padding-bottom: 10rem;
 }
 
-.facet-panel-list {
-	padding-bottom: 10rem;
+h4 {
+	/* Left align with the text in the facets themselves */
+	margin-left: 12px;
 }
 </style>

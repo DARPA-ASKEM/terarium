@@ -1,13 +1,13 @@
 <template>
-	<div class="search-listview-container">
+	<div>
 		<div class="table-fixed-head">
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />NAME</th>
-						<th>DESCRIPTION</th>
-						<th>FRAMEWORK</th>
-						<th>PREVIEW<span class="right-cover" /></th>
+						<th><span class="left-cover" />Name</th>
+						<th>Description</th>
+						<th>Framework</th>
+						<th>Preview<span class="right-cover" /></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -28,7 +28,6 @@
 									<span v-show="!isSelected(d)">
 										<IconCheckbox20 />
 									</span>
-									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
@@ -57,7 +56,7 @@
 import { PropType, ref, toRefs, watch } from 'vue';
 import { Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
-import { getResourceTypeIcon, isModel } from '@/utils/data-util';
+import { isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 
@@ -119,12 +118,6 @@ const formatDescription = (d: Model) => {
 </script>
 
 <style scoped>
-.search-listview-container {
-	background: var(--background-light-2);
-	color: black;
-	width: 100%;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -133,16 +126,16 @@ table {
 
 th {
 	padding: 8px 16px;
+	text-align: left;
 }
 
-tr {
-	border: 2px solid var(--separator);
+tbody tr {
+	border-top: 2px solid var(--separator);
 	cursor: pointer;
 }
 
-thead tr,
-thead th {
-	border: none;
+tbody tr:first-child {
+	border-top-width: 0;
 }
 
 td {
@@ -167,35 +160,12 @@ tr th {
 	position: sticky;
 	top: -1px;
 	z-index: 1;
-	background-color: aliceblue;
-}
-
-.left-cover,
-.right-cover {
-	/* Cover left and right gap in the fixed table header */
-	position: absolute;
-	height: 100%;
-	width: 2px;
-	left: -2px;
-	background: var(--background-light-2);
-	top: 0;
-}
-
-.right-cover {
-	left: unset;
-	right: -2px;
+	/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
+	background-color: var(--un-color-body-surface-background);
 }
 
 .tr-item {
 	height: 50px;
-}
-
-.tr-item.selected {
-	border: 2px double var(--un-color-accent-lighter);
-}
-
-.tr-item.selected .name-and-desc-col {
-	border-left: 2px solid var(--un-color-accent-lighter);
 }
 
 .tr-item.selected td {

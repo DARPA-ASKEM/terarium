@@ -14,20 +14,6 @@
 // Styles extracted from the uncharted-bootstrap library so that we could
 //  remove that dependency.
 
-.form-control {
-  width: 100%;
-  height: 37px;
-  padding: 8px 16px;
-  background-color: #f2f2f2;
-  background-image: none;
-  border-radius: 1px;
-  transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-}
-
-textarea.form-control {
-  height: auto;
-}
-
 .form-group {
   margin-bottom: 15px;
 }
@@ -243,22 +229,6 @@ body {
 h5 {
   font-size: 18px;
   margin: 0;
-}
-
-.form-control {
-  border: 1px solid lightgray;
-  box-shadow: none;
-
-  &:focus {
-    border: 1px solid $label-color;
-    outline: none;
-    box-shadow: none;
-    border-radius: 2px;
-  }
-
-  &::placeholder {
-    color: lightgray;
-  }
 }
 
 // Base styles
