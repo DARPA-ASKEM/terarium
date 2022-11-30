@@ -7,11 +7,11 @@ const route = useRoute();
 
 watch(
 	() => route.params.simulationRunId,
-	async (id) => {
-		if (!id) return;
+	async (simulationRunId) => {
+		if (!simulationRunId) return;
 
 		// FIXME: siwtch to different simulation run result
-		console.log('simulation run id changed to', id);
+		console.log('simulation run id changed to', simulationRunId);
 	},
 	{ immediate: true }
 );

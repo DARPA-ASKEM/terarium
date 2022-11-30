@@ -85,12 +85,12 @@ onMounted(async () => {
 	// Kick off watcher once the renderer is in place
 	watch(
 		() => route.params.simulationId,
-		async (id) => {
-			if (!id) return;
+		async (simulationId) => {
+			if (!simulationId) return;
 
 			// FIXME: siwtch to different simulation run result
-			console.log('simulation id changed to', id);
-			const response = await API.get(`/simulations/plans/${id}`);
+			console.log('simulation id changed to', simulationId);
+			const response = await API.get(`/simulations/plans/${simulationId}`);
 
 			const newPlan = parseSimulationPlan2IGraph(response.data.content);
 			newPlan.width = 500;
