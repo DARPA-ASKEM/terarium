@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
+import { CellData, ParamMinMax } from '@/types/ResponsiveMatrix';
 
 const route = useRoute();
 
@@ -34,7 +35,7 @@ const data = ref<any>([
 	]
 ]);
 
-const fillColorFn = (datum: any, _paramsMin: any, paramsMax: any): String => {
+const fillColorFn = (datum: CellData, _paramsMin: ParamMinMax, paramsMax: ParamMinMax): String => {
 	// get value as fraction of min clamped to 0
 	const v = Math.max(datum.I / paramsMax.I, 0);
 	// apply gamma: https://en.wikipedia.org/wiki/Gamma_correction
