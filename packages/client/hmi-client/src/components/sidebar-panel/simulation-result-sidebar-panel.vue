@@ -27,7 +27,7 @@ const openSimulationResult = (runId: string) => {
 
 <style>
 .selectable-item:hover {
-	background-color: #ddd;
+	background-color: var(--un-color-black-20);
 	cursor: pointer;
 }
 </style>
