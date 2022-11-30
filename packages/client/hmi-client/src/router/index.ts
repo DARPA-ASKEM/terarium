@@ -28,7 +28,7 @@ export enum RoutePath {
 
 // Named routes
 export enum RouteName {
-	// DatasetRoute = 'dataset',
+	DatasetRoute = 'dataset',
 	DocumentRoute = 'document',
 	HomeRoute = 'home',
 	ModelRoute = 'model',
