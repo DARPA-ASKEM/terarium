@@ -18,7 +18,7 @@ import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 import { RouteName } from '@/router/index';
-import { Project } from '@/types/Project';
+import { MODELS, Project } from '@/types/Project';
 
 const router = useRouter();
 
@@ -42,17 +42,9 @@ function hasSidebar(view: RouteName): boolean {
 	return [RouteName.ModelRoute, RouteName.DocumentRoute, RouteName.ProfileRoute].includes(view);
 }
 
-/**
- * Open a View
- * @param {string} view - The view to be open.
- * @param {boolean} [openViewSidePanel=true] - Should the side-panel be open when opening the view.
- */
 const openView = (view: RouteName) => {
 	// Open the appropriate view
 	if (selectedView.value !== view && Object.values(RouteName).includes(view)) {
-		// Change the view
-		selectedView.value = view;
-
 		// Set the Route parameters
 		const params: RouteParamsRaw = {};
 
@@ -61,7 +53,14 @@ const openView = (view: RouteName) => {
 			params.projectId = props.project.id;
 		}
 
+		// Set the modelId for the Model Route
+		if (view === RouteName.ModelRoute) {
+			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
+		}
+
+		// Change the view
 		router.push({ name: view, params });
+		selectedView.value = view;
 	} else if (hasSidebar(view) && !isSidePanelClose.value) {
 		openSidePanel();
 	}

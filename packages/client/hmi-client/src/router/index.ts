@@ -13,8 +13,8 @@ import TheiaView from '@/views/theia.vue';
 export enum RoutePath {
 	Home = '/',
 	Document = '/docs/:id?',
-	Model = '/projects/:projectId/model/:modelId?',
 	Project = '/projects/:projectId',
+	Model = '/projects/:projectId/model/:modelId',
 	Simulation = '/projects/:projectId/simulation?',
 	Results = '/projects/:projectId/results',
 
