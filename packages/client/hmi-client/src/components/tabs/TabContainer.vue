@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * A container to render a component in a tabbed view
- * @prop {Tab[]} tabMetaContent - array of metadata for rendering tabs
+ * @prop {Tab[]} tabs - array of tab data
  * @prop {Object} componentToRender - the component that you want to render as a tab
  * @prop {Object} icon - optional - an icon to display next to the name of each tab
  *
