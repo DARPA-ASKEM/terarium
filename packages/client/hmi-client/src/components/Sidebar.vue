@@ -9,7 +9,7 @@ import IconAccount32 from '@carbon/icons-vue/es/account/32';
 import IconAppConnectivity32 from '@carbon/icons-vue/es/app-connectivity/32';
 import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
-import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
+// import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
 import Button from '@/components/Button.vue';
@@ -77,13 +77,13 @@ function openView(view: RouteName): void {
 				>
 					<IconMachineLearningModel32 />
 				</li>
-				<li
+				<!-- <li
 					:active="selectedView === RouteName.DatasetRoute"
 					:title="RouteName.DatasetRoute"
 					@click="openView(RouteName.DatasetRoute)"
 				>
 					<IconTableSplit32 />
-				</li>
+				</li> -->
 				<li
 					:active="selectedView === RouteName.DocumentRoute"
 					:title="RouteName.DocumentRoute"
