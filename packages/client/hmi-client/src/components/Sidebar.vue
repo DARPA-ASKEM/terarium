@@ -17,6 +17,7 @@ import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vu
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
+import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/index';
 import { Project } from '@/types/Project';
@@ -66,7 +67,7 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 			<ul>
 				<li
 					:active="selectedView === RouteName.SimulationRoute"
-					@click="openView(RouteName.SimulationRoute, false)"
+					@click="openView(RouteName.SimulationRoute)"
 				>
 					<IconDataPlayer32 />
 				</li>
@@ -119,6 +120,10 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 				<ProfileSidebarPanel v-else-if="selectedView === RouteName.ProfileRoute" />
 				<SimulationResultSidebarPanel
 					v-if="selectedView === RouteName.SimulationResultRoute"
+					:project="project"
+				/>
+				<SimulationPlanSidebarPanel
+					v-if="selectedView === RouteName.SimulationRoute"
 					:project="project"
 				/>
 				<template v-else> Create a sidebar-panel component </template>
