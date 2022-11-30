@@ -87,7 +87,7 @@ const openView = (view: RouteName) => {
 		// Change the view
 		router.push({ name: view, params });
 		selectedView.value = view;
-	} else if (hasSidebar(view) && !isSidePanelClose.value) {
+	} else if (showSidebar(view) && !isSidePanelClose.value) {
 		openSidePanel();
 	}
 };
