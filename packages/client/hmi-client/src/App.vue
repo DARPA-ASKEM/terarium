@@ -50,9 +50,7 @@ watch(
 	() => route.params.projectId,
 	async (projectId) => {
 		// If the projectId or the Project are null, set the Project to null.
-		if (!projectId) {
-			project.value = null;
-		} else {
+		if (projectId && !!projectId) {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
 			resources.setActiveProject(project.value);

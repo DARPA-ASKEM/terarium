@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 // Manage Side Panel
-const isSidePanelClose = ref(true);
+const isSidePanelClose = ref(false);
 function closeSidePanel() {
 	isSidePanelClose.value = true;
 }
