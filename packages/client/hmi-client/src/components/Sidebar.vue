@@ -10,7 +10,7 @@ import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
 import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import IconAccount32 from '@carbon/icons-vue/es/account/32';
 import IconAppConnectivity32 from '@carbon/icons-vue/es/app-connectivity/32';
-import IconDocumentPdf32 from '@carbon/icons-vue/es/document--pdf/32';
+import IconDocument32 from '@carbon/icons-vue/es/document/32';
 import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 // import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
@@ -130,13 +130,12 @@ const openView = (view: RouteName) => {
 					:title="RouteName.DocumentRoute"
 					@click="openView(RouteName.DocumentRoute)"
 				>
-					<IconDocumentPdf32 />
+					<IconDocument32 />
 				</li>
 				<li
 					:active="selectedView === RouteName.SimulationResultRoute"
 					@click="openView(RouteName.SimulationResultRoute)"
 				>
-					<!-- TODO -->
 					<IconChartCombo32 />
 				</li>
 			</ul>
