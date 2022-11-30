@@ -50,7 +50,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { Project, PUBLICATIONS } from '@/types/Project';
+import { MODELS, Project, PUBLICATIONS } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
@@ -145,7 +145,16 @@ const addResourcesToProject = async (projectId: string) => {
 				validProject.value?.assets.publications.push(publicationId);
 			}
 		}
-		// FIXME: add similar code for inserting other types of resources
+		if (isModel(selectedItem)) {
+			// FIXME: handle cases where assets is already added to the project
+			const modelId = selectedItem.id;
+			// then, link and store in the project assets
+			const assetsType = MODELS;
+			await ProjectService.addAsset(projectId, assetsType, modelId);
+
+			// update local copy of project assets
+			validProject.value?.assets.models.push(modelId);
+		}
 	});
 };
 

@@ -51,11 +51,7 @@ function openView(view: string, openViewSidePanel: boolean = true): void {
 	}
 
 	// FIXME: sort out the difference between routing to a page and opening the side-panel
-	if (
-		[RouteName.ModelRoute, RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(
-			view as RouteName
-		)
-	) {
+	if ([RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(view as RouteName)) {
 		router.push({ name: view });
 	}
 }
