@@ -16,10 +16,15 @@ import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
-import { useRouter } from 'vue-router';
+import { RouteParamsRaw, useRouter } from 'vue-router';
 import { RouteName } from '@/router/index';
+import { Project } from '@/types/Project';
 
 const router = useRouter();
+
+const props = defineProps<{
+	project?: Project | null;
+}>();
 
 // Manage Side Panel
 const isSidePanelClose = ref(true);
@@ -42,14 +47,25 @@ function hasSidebar(view: RouteName): boolean {
  * @param {string} view - The view to be open.
  * @param {boolean} [openViewSidePanel=true] - Should the side-panel be open when opening the view.
  */
-function openView(view: RouteName): void {
+const openView = (view: RouteName) => {
 	// Open the appropriate view
 	if (selectedView.value !== view && Object.values(RouteName).includes(view)) {
-		router.push({ name: view });
+		// Change the view
+		selectedView.value = view;
+
+		// Set the Route parameters
+		const params: RouteParamsRaw = {};
+
+		// Set the projectId, except for the Document Route
+		if (view !== RouteName.DocumentRoute && props?.project?.id) {
+			params.projectId = props.project.id;
+		}
+
+		router.push({ name: view, params });
 	} else if (hasSidebar(view) && !isSidePanelClose.value) {
 		openSidePanel();
 	}
-}
+};
 </script>
 
 <template>
