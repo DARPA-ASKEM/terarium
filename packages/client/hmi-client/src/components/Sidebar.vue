@@ -26,12 +26,12 @@ import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
 import { RouteName } from '@/router/index';
-import { MODELS, Project } from '@/types/Project';
+import { MODELS, PLANS, SIMULATION_RUNS, Project } from '@/types/Project';
 
 const router = useRouter();
 
 const props = defineProps<{
-	project?: Project | null;
+	project: Project | null;
 }>();
 
 // Manage Side Panel
@@ -47,13 +47,20 @@ function openSidePanel() {
 const selectedView = ref<RouteName>(RouteName.ProjectRoute);
 
 function hasSidebar(view: RouteName): boolean {
-	return [
-		RouteName.ModelRoute,
-		RouteName.DocumentRoute,
-		RouteName.ProfileRoute,
-		RouteName.SimulationRoute,
-		RouteName.SimulationResultRoute
-	].includes(view);
+	// Test for Sidebar that doesn't need Project
+	if ([RouteName.ModelRoute, RouteName.DocumentRoute, RouteName.ProfileRoute].includes(view)) {
+		return true;
+	}
+
+	// Sidebars that needs a defined Project
+	if (
+		[RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(view) &&
+		!!props.project
+	) {
+		return true;
+	}
+
+	return false;
 }
 
 const openView = (view: RouteName) => {
@@ -67,9 +74,16 @@ const openView = (view: RouteName) => {
 			params.projectId = props.project.id;
 		}
 
-		// Set the modelId for the Model Route
 		if (view === RouteName.ModelRoute) {
 			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
+		}
+
+		if (view === RouteName.SimulationRoute) {
+			params.simulationId = props?.project?.assets[PLANS]?.[0] ?? 1;
+		}
+
+		if (view === RouteName.SimulationResultRoute) {
+			params.simulationRunId = props?.project?.assets[SIMULATION_RUNS]?.[0] ?? 1;
 		}
 
 		// Change the view
@@ -155,11 +169,11 @@ const openView = (view: RouteName) => {
 				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
 				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
 				<SimulationResultSidebarPanel
-					v-if="selectedView === RouteName.SimulationResultRoute"
+					v-if="project && selectedView === RouteName.SimulationResultRoute"
 					:project="project"
 				/>
 				<SimulationPlanSidebarPanel
-					v-if="selectedView === RouteName.SimulationRoute"
+					v-if="project && selectedView === RouteName.SimulationRoute"
 					:project="project"
 				/>
 			</main>
