@@ -77,7 +77,12 @@ watch(
 		@show-data-explorer="dataExplorerActivated = true"
 	/>
 	<main>
-		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
+		<Sidebar
+			v-if="isSidebarVisible && project"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
 		<router-view class="page" :project="project" />
 	</main>
 </template>

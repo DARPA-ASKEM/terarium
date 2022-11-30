@@ -7,7 +7,7 @@ defineProps<{
 }>();
 
 const router = useRouter();
-const openSimulationPlan = (runId: number) => {
+const openSimulationPlan = (runId: string) => {
 	router.push({ params: { simulationId: runId } });
 };
 </script>
