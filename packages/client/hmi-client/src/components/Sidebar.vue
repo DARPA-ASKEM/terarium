@@ -39,7 +39,12 @@ function openSidePanel() {
 const selectedView = ref<RouteName>(RouteName.ProjectRoute);
 
 function hasSidebar(view: RouteName): boolean {
-	return [RouteName.ModelRoute, RouteName.DocumentRoute, RouteName.ProfileRoute].includes(view);
+	return [
+		RouteName.ModelRoute,
+		RouteName.DocumentRoute,
+		RouteName.ProfileRoute,
+		RouteName.SimulationRoute
+	].includes(view);
 }
 
 const openView = (view: RouteName) => {

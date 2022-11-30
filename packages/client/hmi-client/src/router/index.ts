@@ -14,8 +14,8 @@ export enum RoutePath {
 	Home = '/',
 	Document = '/docs/:id?',
 	Project = '/projects/:projectId',
-	Model = '/projects/:projectId/model/:modelId',
-	Simulation = '/projects/:projectId/simulation?',
+	Model = '/projects/:projectId/model/:modelId?',
+	Simulation = '/projects/:projectId/simulation',
 	Results = '/projects/:projectId/results',
 
 	// Playground and experiments, these components are testing-only
