@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import {
 	runDagreLayout,
 	D3SelectionINode,
@@ -8,6 +9,8 @@ import {
 	pathFn
 } from '@/services/graph';
 import { parseSimulationPlan2IGraph } from '@/services/simulation';
+import API from '@/api/api';
+import { curveBasis } from 'd3';
 
 interface NodeData {
 	boxType: string;
@@ -26,24 +29,16 @@ class SimulationPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 			.style('stroke', '#888');
 
 		selection
-			.append('rect')
-			.classed('shape', true)
-			.attr('x', (d) => d.width)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
-			.style('fill', '#48B')
-			.style('stroke', '#888');
-
-		selection
 			.append('text')
 			.attr('y', -5)
 			.text((d) => d.data.label);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
+		const pFn = pathFn.curve(curveBasis);
 		selection
 			.append('path')
-			.attr('d', (d) => pathFn(d.points))
+			.attr('d', (d) => pFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
@@ -77,6 +72,8 @@ const plan = {
 	PassWire: null
 };
 
+const route = useRoute();
+
 onMounted(async () => {
 	const divElement = (document.querySelector('.simulation-plan') ?? [0]) as HTMLDivElement;
 	const renderer = new SimulationPlanRenderer({
@@ -84,6 +81,26 @@ onMounted(async () => {
 		useAStarRouting: true,
 		runLayout: runDagreLayout
 	});
+
+	// Kick off watcher once the renderer is in place
+	watch(
+		() => route.params.simulationId,
+		async (simulationId) => {
+			if (!simulationId) return;
+
+			// FIXME: siwtch to different simulation run result
+			console.log('simulation id changed to', simulationId);
+			const response = await API.get(`/simulations/plans/${simulationId}`);
+
+			const newPlan = parseSimulationPlan2IGraph(response.data.content);
+			newPlan.width = 500;
+			newPlan.height = 500;
+			const graphData = runDagreLayout<NodeData, EdgeData>(newPlan);
+			await renderer.setData(graphData);
+			await renderer.render();
+		},
+		{ immediate: true }
+	);
 
 	// Test interaction
 	renderer.on(

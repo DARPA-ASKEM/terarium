@@ -3,6 +3,9 @@
  * Sidebar component for navigating view.
  * */
 import { ref } from 'vue';
+import { RouteParamsRaw, useRouter } from 'vue-router';
+
+// Icons
 import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
 import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import IconAccount32 from '@carbon/icons-vue/es/account/32';
@@ -12,11 +15,16 @@ import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-mo
 // import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
 import IconUser32 from '@carbon/icons-vue/es/user/32';
+import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
+
+// Components
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
-import { RouteParamsRaw, useRouter } from 'vue-router';
+import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
+import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
+
 import { RouteName } from '@/router/index';
 import { MODELS, Project } from '@/types/Project';
 
@@ -43,7 +51,8 @@ function hasSidebar(view: RouteName): boolean {
 		RouteName.ModelRoute,
 		RouteName.DocumentRoute,
 		RouteName.ProfileRoute,
-		RouteName.SimulationRoute
+		RouteName.SimulationRoute,
+		RouteName.SimulationResultRoute
 	].includes(view);
 }
 
@@ -111,6 +120,13 @@ const openView = (view: RouteName) => {
 				>
 					<IconDocumentPdf32 />
 				</li>
+				<li
+					:active="selectedView === RouteName.SimulationResultRoute"
+					@click="openView(RouteName.SimulationResultRoute)"
+				>
+					<!-- TODO -->
+					<IconChartCombo32 />
+				</li>
 			</ul>
 			<ul>
 				<li
@@ -138,6 +154,14 @@ const openView = (view: RouteName) => {
 				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
 				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
 				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
+				<SimulationResultSidebarPanel
+					v-if="selectedView === RouteName.SimulationResultRoute"
+					:project="project"
+				/>
+				<SimulationPlanSidebarPanel
+					v-if="selectedView === RouteName.SimulationRoute"
+					:project="project"
+				/>
 			</main>
 			<Button round class="side-panel-control" @click="closeSidePanel">
 				<IconArrowLeft16 />
