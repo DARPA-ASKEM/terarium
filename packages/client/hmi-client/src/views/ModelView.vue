@@ -26,6 +26,10 @@ const mockOpenModels = ref<TabMetaContent[]>([
 		props: {
 			modelId: '3'
 		}
+	},
+	{
+		tabName: 'New model',
+		tabKey: 4
 	}
 ]);
 </script>

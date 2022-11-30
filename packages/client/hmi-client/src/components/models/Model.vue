@@ -16,11 +16,10 @@ import { Model } from '@/types/Model';
 const props = defineProps({
 	modelId: {
 		type: String,
-		required: true
+		required: false,
+		default: ''
 	}
 });
-
-// eslint-disable-next-line @typescript-eslint/no-shadow
 
 const model = ref<Model | null>(null);
 
@@ -105,8 +104,15 @@ onMounted(async () => {
 	await renderer?.setData(g);
 	await renderer?.render();
 
-	const result = await getModel(props.modelId);
-	model.value = result.data as Model;
+	if (props.modelId) {
+		const result = await getModel(props.modelId);
+		model.value = result.data as Model;
+	} else {
+		model.value = {
+			name: 'New model',
+			description: 'This is a new model'
+		} as Model;
+	}
 });
 </script>
 
