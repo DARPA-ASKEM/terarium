@@ -50,9 +50,7 @@ watch(
 	() => route.params.projectId,
 	async (projectId) => {
 		// If the projectId or the Project are null, set the Project to null.
-		if (!projectId) {
-			project.value = null;
-		} else {
+		if (projectId && !!projectId) {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
 			resources.setActiveProject(project.value);
@@ -77,12 +75,7 @@ watch(
 		@show-data-explorer="dataExplorerActivated = true"
 	/>
 	<main>
-		<Sidebar
-			v-if="isSidebarVisible && project"
-			class="sidebar"
-			data-test-id="sidebar"
-			:project="project"
-		/>
+		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
 		<router-view class="page" :project="project" />
 	</main>
 </template>
