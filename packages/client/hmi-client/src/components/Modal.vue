@@ -11,6 +11,10 @@
  * Clicking outside the modal will emit the event modalMaskClicked.
  * @example
  * <modal @modal-mask-clicked="closeModal"></modal>
+ *
+ * Event triggered when tab is closed
+ * @event closeTab
+ * @property {number} tabIndex - index (not key) of tab that was closed.
  */
 </script>
 

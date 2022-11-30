@@ -1,21 +1,27 @@
 <script setup lang="ts">
+/**
+ * A container that can render a component in a tabbed view
+ * @prop {TabMetaContent[]} tabMetaContent - array of metadata for rendering tabs
+ * @prop {Object} componentToRender - the component that you want to render as a tab
+ * @prop {Object} icon - optional - an icon to display next to the name of each tab
+ *
+ * @typedef {Object} TabMetaContent
+ * @property {string} tabName - name to display in tab header
+ * @property {number} tabKey - unique key for this tab
+ * @property {Object} props - optional - any props that should be passed into componentToRender
+ */
 import { ref, computed } from 'vue';
 import Tab from '@/components/tabs/Tab.vue';
+import { TabMetaContent } from '@/types/common';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
-	metaContent: [
-		{
-			tabName: string;
-			tabKey: number;
-			props?: Object;
-		}
-	];
+	tabMetaContent: TabMetaContent[];
 	componentToRender: Object;
 	icon?: Object;
 }>();
 
 const activeTab = ref(0);
-const tabContent = computed(() => props.metaContent);
+const tabContent = computed(() => props.tabMetaContent);
 
 const emit = defineEmits(['closeTab']);
 

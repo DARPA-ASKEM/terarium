@@ -3,8 +3,9 @@ import { ref } from 'vue';
 import Model from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import IconMachineLearningModel from '@carbon/icons-vue/es/machine-learning-model/16';
+import { TabMetaContent } from '@/types/common';
 
-const mockOpenModels = ref([
+const mockOpenModels = ref<TabMetaContent[]>([
 	{
 		tabName: 'Model one',
 		tabKey: 1,
@@ -31,7 +32,7 @@ const mockOpenModels = ref([
 
 <template>
 	<TabContainer
-		:meta-content="mockOpenModels"
+		:tab-meta-content="mockOpenModels"
 		:component-to-render="Model"
 		:icon="IconMachineLearningModel"
 	>

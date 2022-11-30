@@ -50,3 +50,9 @@ export type SidePanelTab = {
 	isGreyscale?: string;
 	badgeCount?: number;
 };
+
+export type TabMetaContent = {
+	tabName: string;
+	tabKey: number;
+	props?: Object;
+};
