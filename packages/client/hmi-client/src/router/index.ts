@@ -6,6 +6,7 @@ import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import TheiaView from '@/views/theia.vue';
 import DocumentView from '@/views/Document.vue';
 import Simulation from '@/views/Simulation.vue';
+import SimulationResult from '@/views/SimulationResult.vue';
 import ProjectView from '@/views/Project.vue';
 import Model from '@/views/Model.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
@@ -16,8 +17,8 @@ export enum RoutePath {
 	DocView = '/docs/:id?',
 	Project = '/projects/:projectId',
 	ModelView = '/projects/:projectId/model/:modelId?',
-	SimulationView = '/projects/:projectId/simulation',
-	Results = '/projects/:projectId/results',
+	SimulationView = '/projects/:projectId/simulations/:simulationId?',
+	SimulationResultView = '/projects/:projectId/simulation-results/:simulationRunId?',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
@@ -30,6 +31,7 @@ export enum RoutePath {
 export enum RouteName {
 	HomeRoute = 'home',
 	SimulationRoute = 'simulation',
+	SimulationResultRoute = 'simulationResult',
 	ModelRoute = 'model',
 
 	DatasetRoute = 'dataset',
@@ -41,6 +43,11 @@ export enum RouteName {
 const routes = [
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
+	{
+		name: RouteName.SimulationResultRoute,
+		path: RoutePath.SimulationResultView,
+		component: SimulationResult
+	},
 	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model, props: true },
 	{ path: RoutePath.Project, component: ProjectView, props: true },
 
