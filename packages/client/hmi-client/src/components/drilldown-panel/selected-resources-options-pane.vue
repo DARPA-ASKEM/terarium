@@ -3,8 +3,22 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-to-title">Add to:</div>
 		<div class="add-selected-buttons">
-			<Button action @click="addToCurrentProject">Current Project</Button>
-			<Button action>Other Project</Button>
+			<Button
+				action
+				@click="addAssetsToProject"
+				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
+				>Current Project</Button
+			>
+			<dropdown-button
+				v-if="selectedSearchItems.length > 0"
+				:inner-button-label="'Other Project'"
+				:is-dropdown-left-aligned="false"
+				:items="projectsNames"
+				@item-selected="addAssetsToProject"
+			/>
+			<Button v-else action :class="{ 'invalid-project': selectedSearchItems.length === 0 }"
+				>Other Project</Button
+			>
 		</div>
 		<div class="selected-items-container">
 			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
@@ -28,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType } from 'vue';
+import { computed, onMounted, PropType, ref } from 'vue';
 import Button from '@/components/Button.vue';
 import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
@@ -36,6 +50,10 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
+import { Project, PUBLICATIONS } from '@/types/Project';
+import DropdownButton from '@/components/widgets/dropdown-button.vue';
+import * as ProjectService from '@/services/project';
+import { addPublication } from '@/services/external';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -46,6 +64,11 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 const resources = useResourcesStore();
+
+const validProject = computed(() => resources.activeProject);
+
+const projectsList = ref<Project[]>([]);
+const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
 
@@ -73,7 +96,7 @@ const formatDescription = (item: ResultType) => {
 	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
 };
 
-// FIXME: consiuder refactoring as a util function
+// FIXME: consider refactoring as a util function
 const isSelected = (item: ResultType) =>
 	props.selectedSearchItems.find((searchItem) => {
 		if (isModel(item)) {
@@ -99,17 +122,63 @@ const getType = (item: ResultType) => {
 	return ResourceType.ALL;
 };
 
-const addToCurrentProject = () => {
+const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
-	props.selectedSearchItems.forEach((selectedItem) => {
-		resources.addResource(selectedItem);
+	props.selectedSearchItems.forEach(async (selectedItem) => {
+		if (isXDDArticle(selectedItem)) {
+			const body = {
+				xdd_uri: (selectedItem as XDDArticle).gddid
+			};
+
+			// FIXME: handle cases where assets is already added to the project
+
+			// first, insert into the proper table/collection
+			const res = await addPublication(body);
+			if (res) {
+				const publicationId = res.id;
+
+				// then, link and store in the project assets
+				const assetsType = PUBLICATIONS;
+				await ProjectService.addAsset(projectId, assetsType, publicationId);
+
+				// update local copy of project assets
+				validProject.value?.assets.publications.push(publicationId);
+			}
+		}
+		// FIXME: add similar code for inserting other types of resources
 	});
+};
+
+const addAssetsToProject = async (projectName?: string) => {
+	if (props.selectedSearchItems.length === 0) return;
+
+	let projectId = '';
+	if (projectName !== undefined && typeof projectName === 'string') {
+		const project = projectsList.value.find((p) => p.name === projectName);
+		projectId = project?.id as string;
+	} else {
+		if (!validProject.value) return;
+		projectId = validProject.value.id;
+	}
+
+	addResourcesToProject(projectId);
+
 	emit('close');
 };
+
+onMounted(async () => {
+	const all = await ProjectService.getAll();
+	if (all !== null) {
+		projectsList.value = all;
+	}
+});
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables';
+<style scoped>
+.invalid-project {
+	background-color: gray;
+	cursor: not-allowed;
+}
 
 .selected-title {
 	margin-bottom: 5px;
@@ -126,12 +195,12 @@ const addToCurrentProject = () => {
 .add-selected-buttons {
 	display: flex;
 	flex-direction: column;
+}
 
-	button {
-		margin-bottom: 5px;
-		padding-top: 4px;
-		padding-bottom: 4px;
-	}
+.add-selected-buttons button {
+	margin-bottom: 5px;
+	padding-top: 4px;
+	padding-bottom: 4px;
 }
 
 .breakdown-pane-container {
@@ -146,27 +215,37 @@ const addToCurrentProject = () => {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+}
 
-	.selected-item {
-		border-style: solid;
-		border-width: 2px;
-		border-color: lightgray;
-		padding: 3px;
-	}
+.selected-items-container .selected-item {
+	border-style: solid;
+	border-width: 2px;
+	border-color: lightgray;
+	padding: 3px;
+}
 
-	.item-header {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
+.selected-items-container .item-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
 
-		.title-and-checkbox {
-			display: flex;
-			.item-title {
-				font-weight: 500;
-				margin-bottom: 5px;
-				margin-left: 4px;
-			}
-		}
-	}
+.selected-items-container .item-header .title-and-checkbox {
+	display: flex;
+}
+
+.selected-items-container .item-header .title-and-checkbox .item-title {
+	font-weight: 500;
+	margin-bottom: 5px;
+	margin-left: 4px;
+}
+
+:deep(.dropdown-btn) {
+	cursor: pointer;
+	background-color: var(--un-color-accent);
+	border-color: var(--un-color-accent-dark);
+	border-width: 0px;
+	width: 100% !important;
+	max-width: 100% !important;
 }
 </style>

@@ -58,8 +58,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { getXDDArtifacts } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
+import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
@@ -70,11 +69,29 @@ const props = defineProps({
 		type: String,
 		default: ''
 	}
+	// NOTE that project is automatically injected as prop as well
 });
 
-const resourcesStore = useResourcesStore();
+const doc = ref<XDDArticle | null>(null);
 
-const doc = computed(() => resourcesStore.documents[props.id] || null);
+watch(
+	props,
+	async () => {
+		const id = props.id;
+		if (id !== '') {
+			// fetch doc from XDD
+			const d = await getDocumentById(id);
+			if (d) {
+				doc.value = d;
+			}
+		} else {
+			doc.value = null;
+		}
+	},
+	{
+		immediate: true
+	}
+);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
