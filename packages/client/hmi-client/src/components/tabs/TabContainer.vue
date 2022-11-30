@@ -6,6 +6,7 @@ const props = defineProps<{
 	metaContent: [
 		{
 			tabName: string;
+			tabKey: number;
 			props?: Object;
 		}
 	];
@@ -13,7 +14,25 @@ const props = defineProps<{
 	icon?: Object;
 }>();
 
-const activeTab = ref(1);
+const activeTab = ref(0);
+
+const emit = defineEmits(['closeTab']);
+
+function setActiveTab(tabIndex: number) {
+	activeTab.value = tabIndex;
+}
+
+function closeTab(tabIndexToClose: number) {
+	// If the tab that is closed is to the left of the active tab, decrement the active tab index by one, so that the active tab preserves its position.
+	// E.g. if the active tab is the last tab, it will remain the last tab. If the active tab is second last, it will remain second last.
+	// If the tab that is closed is to the right of the active tab, no special logic is needed to preserve the active tab's position.
+	// If the active tab is closed, the next tab to the right becomes the active tab.
+	// This replicates the tab behaviour in Chrome.
+	if (activeTab.value !== 0 && activeTab.value >= tabIndexToClose) {
+		activeTab.value--;
+	}
+	emit('closeTab', tabIndexToClose);
+}
 </script>
 
 <template>
@@ -23,9 +42,10 @@ const activeTab = ref(1);
 			v-for="(meta, index) in metaContent"
 			:name="meta.tabName"
 			:index="index"
-			:key="index"
+			:key="meta.tabKey"
 			:isActive="activeTab === index"
-			@clicked-tab-header="(tabIndex) => (activeTab = tabIndex)"
+			@click-tab-header="(tabIndex) => setActiveTab(tabIndex)"
+			@click-tab-close="(tabIndex) => closeTab(tabIndex)"
 		>
 			<template #tabIcon>
 				<component :is="icon"></component>

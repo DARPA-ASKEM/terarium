@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import {
 	runDagreLayout,
@@ -19,6 +19,12 @@ const props = defineProps({
 		required: true
 	}
 });
+
+// eslint-disable-next-line @typescript-eslint/no-shadow
+
+const model = ref<Model | null>(null);
+
+const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
 
 // This model can be deleted in future. Just used for init graph
 // TODO: replace this mock petri net with the model fetched from the backend
@@ -98,23 +104,10 @@ onMounted(async () => {
 	// write json to model-json and draw model to model-drawn:
 	await renderer?.setData(g);
 	await renderer?.render();
+
+	const result = await getModel(props.modelId);
+	model.value = result.data as Model;
 });
-
-const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
-
-// TODO: let the user choose the model to display
-const selectedModelId = ref(props.modelId);
-
-const model = ref<Model | null>(null);
-// Whenever selectedModelId changes, fetch model with that ID
-watch(
-	() => [selectedModelId.value],
-	async () => {
-		const result = await getModel(selectedModelId.value);
-		model.value = result.data as Model;
-	},
-	{ immediate: true }
-);
 </script>
 
 <template>
