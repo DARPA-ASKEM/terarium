@@ -46,21 +46,19 @@ function openSidePanel() {
 // The Project page is the default
 const selectedView = ref<RouteName>(RouteName.ProjectRoute);
 
-function hasSidebar(view: RouteName): boolean {
+function showSidebar(view: RouteName): boolean {
 	// Test for Sidebar that doesn't need Project
-	if ([RouteName.ModelRoute, RouteName.DocumentRoute, RouteName.ProfileRoute].includes(view)) {
-		return true;
-	}
+	const needProject = [
+		RouteName.ModelRoute,
+		RouteName.DocumentRoute,
+		RouteName.ProfileRoute
+	].includes(view);
 
 	// Sidebars that needs a defined Project
-	if (
-		[RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(view) &&
-		!!props.project
-	) {
-		return true;
-	}
+	const noNeedProject =
+		[RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(view) && !!props.project;
 
-	return false;
+	return needProject || noNeedProject;
 }
 
 const openView = (view: RouteName) => {
@@ -162,7 +160,7 @@ const openView = (view: RouteName) => {
 				<IconArrowRight16 />
 			</Button>
 		</nav>
-		<aside v-if="hasSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
+		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
 			<header>{{ selectedView }}</header>
 			<main>
 				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
