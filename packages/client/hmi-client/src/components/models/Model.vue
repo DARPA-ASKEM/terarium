@@ -13,17 +13,13 @@ import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/m
 import API from '@/api/api';
 import { Model } from '@/types/Model';
 
-const props = defineProps({
-	modelId: {
-		type: String,
-		required: false,
-		default: ''
-	}
-});
+const props = defineProps<{
+	modelId?: String;
+}>();
 
 const model = ref<Model | null>(null);
 
-const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
+const getModel = async (modelId: String) => API.get(`/models/${modelId}`);
 
 // This model can be deleted in future. Just used for init graph
 // TODO: replace this mock petri net with the model fetched from the backend
@@ -107,11 +103,6 @@ onMounted(async () => {
 	if (props.modelId) {
 		const result = await getModel(props.modelId);
 		model.value = result.data as Model;
-	} else {
-		model.value = {
-			name: 'New model',
-			description: 'This is a new model'
-		} as Model;
 	}
 });
 </script>

@@ -51,8 +51,8 @@ export type SidePanelTab = {
 	badgeCount?: number;
 };
 
-export type TabMetaContent = {
+// Tabs
+export type Tab = {
 	tabName: string;
-	tabKey: number;
 	props?: Object;
 };

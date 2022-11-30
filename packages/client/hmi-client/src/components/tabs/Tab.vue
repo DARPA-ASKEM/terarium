@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import IconClose from '@carbon/icons-vue/es/close/16';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 const props = defineProps({
 	name: {
 		type: String,
-		// required: true,
+		required: true,
 		default: 'New tab'
 	},
 	index: {
 		type: Number,
-		// required: true,
+		required: true,
 		default: 0
 	},
 	isActive: {
@@ -56,7 +56,6 @@ div {
 	border-top-left-radius: 0.5rem;
 	border-top-right-radius: 0.5rem;
 	background-color: transparent;
-	/* var(--un-color-body-surface-background); */
 	width: 100%;
 	position: relative;
 	justify-content: space-between;
@@ -99,6 +98,6 @@ span {
 }
 
 .close:hover {
-	background-color: var(--un-color-body-surface-80grey);
+	background-color: var(--un-color-black-20);
 }
 </style>
