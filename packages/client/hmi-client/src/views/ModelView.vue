@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Model from '@/views/Model.vue';
+import Model from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import IconMachineLearningModel from '@carbon/icons-vue/es/machine-learning-model/16';
 
