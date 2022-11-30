@@ -9,6 +9,10 @@
  * @property {string} tabName - name to display in tab header
  * @property {number} tabKey - unique key for this tab
  * @property {Object} props - optional - any props that should be passed into componentToRender
+ *
+ * Event triggered when tab is closed
+ * @event closeTab
+ * @property {number} tabIndex - index (not key) of tab that was closed.
  */
 import { ref, computed } from 'vue';
 import Tab from '@/components/tabs/Tab.vue';
