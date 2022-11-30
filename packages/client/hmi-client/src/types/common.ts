@@ -53,6 +53,6 @@ export type SidePanelTab = {
 
 // Tabs
 export type Tab = {
-	tabName: string;
+	name: string;
 	props?: Object;
 };

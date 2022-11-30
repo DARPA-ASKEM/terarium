@@ -7,25 +7,25 @@ import { Tab } from '@/types/common';
 
 const openModels = ref<Tab[]>([
 	{
-		tabName: 'Model one',
+		name: 'Model one',
 		props: {
 			modelId: '1'
 		}
 	},
 	{
-		tabName: 'Model two',
+		name: 'Model two',
 		props: {
 			modelId: '2'
 		}
 	},
 	{
-		tabName: 'Model three',
+		name: 'Model three',
 		props: {
 			modelId: '3'
 		}
 	},
 	{
-		tabName: 'New model'
+		name: 'New model'
 	}
 ]);
 </script>

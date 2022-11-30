@@ -24,7 +24,7 @@ const activeTab = ref(0);
 
 function addKeysToTabs(tabs: Tab[]) {
 	return tabs.map((tab, index) => ({
-		tabName: tab.tabName,
+		name: tab.name,
 		props: tab.props,
 		tabKey: index
 	}));
@@ -55,7 +55,7 @@ function closeTab(tabIndexToClose: number) {
 	<div>
 		<TabComponent
 			v-for="(tab, index) in keyedTabs"
-			:name="tab.tabName"
+			:name="tab.name"
 			:index="index"
 			:key="tab.tabKey"
 			:isActive="activeTab === index"
