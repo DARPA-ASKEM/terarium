@@ -2,8 +2,8 @@
 # This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests using node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 name: Global File Linting
+# yamllint disable-line rule:truthy
 on:
-  workflow_call:
   push:
     branches: ['main']
   pull_request:
@@ -12,12 +12,12 @@ on:
 jobs:
   lintYaml:
     name: Lint YAML Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yml@282c11505705ff017ab58514c951cdf3453159f4
+    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yaml@282c11505705ff017ab58514c951cdf3453159f4
     with:
       strict: false
 
   lintDocker:
     name: Lint Docker Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yml@282c11505705ff017ab58514c951cdf3453159f4
+    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yaml@282c11505705ff017ab58514c951cdf3453159f4
     with:
       failure-threshold: 'error'
