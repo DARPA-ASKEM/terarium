@@ -16,8 +16,8 @@ public interface DatasetProxy {
 	@GET
 	@Path("/features")
 	Response getFeatures(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@POST
@@ -34,8 +34,10 @@ public interface DatasetProxy {
 	);
 
 	@DELETE
-	@Path("/features")
-	Response deleteFeature();
+	@Path("/features/{id}")
+	Response deleteFeature(
+		@PathParam("id") String id
+	);
 
 	@PATCH
 	@Path("/features/{id}")
@@ -48,8 +50,8 @@ public interface DatasetProxy {
 	@GET
 	@Path("/qualifiers")
 	Response getQualifiers(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@POST
@@ -81,8 +83,8 @@ public interface DatasetProxy {
 
 	@GET
 	Response getDatasets(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@POST
@@ -115,13 +117,22 @@ public interface DatasetProxy {
 	@Path("/deprecate/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response deprecateDataset(
-		@PathParam("id") String id,
-		Dataset dataset
+		@PathParam("id") String id
 	);
 
 	@GET
-	@Path("/{id}/download/csv")
+	@Path("/{id}/download/rawfile")
 	Response getCsv(
-		@PathParam("id") String id
+		@PathParam("id") String id,
+		@DefaultValue("false") @QueryParam("data_annotation_flag") Boolean dataAnnotationFlag
+	);
+
+	@POST
+	@Path("/{id}/upload/file")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	Response uploadFile(
+		@PathParam("id") String id,
+		@QueryParam("filename") String filename,
+		Byte[] file
 	);
 }
