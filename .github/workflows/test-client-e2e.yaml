@@ -4,6 +4,7 @@
 # See: https://playwright.dev/
 
 name: Client E2E Tests
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
 

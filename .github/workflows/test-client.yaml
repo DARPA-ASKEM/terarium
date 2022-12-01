@@ -2,6 +2,7 @@
 # This workflow runs all client tests
 
 name: Client Tests
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
   push:
@@ -16,8 +17,8 @@ on:
 jobs:
   unit-tests:
     name: Client Unit Tests
-    uses: ./.github/workflows/test-client-unit.yml
+    uses: ./.github/workflows/test-client-unit.yaml
 
   e2e-tests:
     name: E2E Tests
-    uses: ./.github/workflows/test-client-e2e.yml
+    uses: ./.github/workflows/test-client-e2e.yaml
