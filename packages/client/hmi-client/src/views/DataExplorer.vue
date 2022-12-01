@@ -519,7 +519,6 @@ onMounted(async () => {
 	flex-direction: column;
 	flex: 1;
 	align-items: center;
-	justify-content: center;
 }
 
 .data-explorer-container .results-content .results-count-label {

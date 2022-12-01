@@ -42,6 +42,6 @@ public interface DocumentProxy {
 	@Path("sets/{set}/doc2vec/api/similar")
 	Response getRelatedDocuments(
 		@PathParam("set") String set,
-		@QueryParam("doi") String doi
+		@QueryParam("docid") String docid
 	);
 }

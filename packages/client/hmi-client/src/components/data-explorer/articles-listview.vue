@@ -28,8 +28,7 @@
 									<div v-if="isExpanded(d)" class="knobs">
 										<multiline-description :text="formatArticleAuthors(d)" />
 									</div>
-									<div v-if="isExpanded(d) && d.highlight" class="knobs">
-										<b>Highlights:</b>
+									<div v-if="d.highlight" class="knobs">
 										<div v-for="h in d.highlight" :key="h">
 											<span v-html="h"></span>
 										</div>
@@ -69,7 +68,7 @@ import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
 import { ResultType } from '@/types/common';
-import { getDocumentDoi, isXDDArticle } from '@/utils/data-util';
+import { isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { getRelatedDocuments } from '@/services/data';
@@ -133,8 +132,7 @@ const fetchRelatedDocument = async (article: XDDArticle) => {
 		updateExpandedRow(article);
 	}
 	if (!article.relatedDocuments) {
-		const doi = getDocumentDoi(article);
-		article.relatedDocuments = await getRelatedDocuments(doi, resources.xddDataset);
+		article.relatedDocuments = await getRelatedDocuments(article.gddid, resources.xddDataset);
 	}
 };
 

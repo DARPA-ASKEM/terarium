@@ -184,15 +184,16 @@ const getXDDArtifacts = async (doc_doi: string) => {
 // fetch list of related documented utilizing
 //  semantic similarity (i.e., document embedding) from XDD via the HMI server
 //
-const getRelatedDocuments = async (doc_doi: string, dataset: string | null) => {
-	if (doc_doi === '' || dataset === null) {
+const getRelatedDocuments = async (docid: string, dataset: string | null) => {
+	if (docid === '' || dataset === null) {
 		return [] as XDDArticle[];
 	}
 
 	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
 	// dataset=xdd-covid-19
 	// doi=10.1002/pbc.28600
-	const url = `/xdd/related/document?doi=${doc_doi}&set=${dataset}`;
+	// docid=5ebd1de8998e17af826e810e
+	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
 
 	const res = await await API.get(url);
 	const rawdata: XDDResult = res.data;
