@@ -98,6 +98,8 @@
 						:selected-search-items="selectedSearchItems"
 						@toggle-data-item-selected="toggleDataItemSelected"
 					/>
+					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
+					<!--
 					<simple-pagination
 						:current-page-length="resultsCount"
 						:page-count="pageCount"
@@ -105,6 +107,7 @@
 						@next-page="nextPage"
 						@prev-page="prevPage"
 					/>
+					-->
 				</div>
 			</template>
 			<template v-if="viewType === ViewType.MATRIX">
@@ -133,11 +136,11 @@ import { computed, onMounted, ref, watch } from 'vue';
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
-import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import ToggleButton from '@/components/widgets/toggle-button.vue';
 // import AutoComplete from '@/components/widgets/autocomplete.vue';
+// import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 
@@ -311,20 +314,20 @@ const fetchDataItemList = async () => {
 	emit('hide-overlay');
 };
 
-const prevPage = () => {
-	// this won't work with XDD since apparently there is no way to navigate results backward
-	pageCount.value -= 1;
-	// fetchDataItemList();
-};
+// const prevPage = () => {
+// 	// this won't work with XDD since apparently there is no way to navigate results backward
+// 	pageCount.value -= 1;
+// 	fetchDataItemList();
+// };
 
-const nextPage = () => {
-	pageCount.value += 1;
-	// check if previous results "hasMore" and continue fetching results
-	// note the next_page URL would need to be cached and passed down to the fetch service
-	//  but this is only valid for XDD,
-	//  and thus we need to cache both the original URL and the pagination one
-	// fetchDataItemList();
-};
+// const nextPage = () => {
+// 	pageCount.value += 1;
+// 	// check if previous results "hasMore" and continue fetching results
+// 	// note the next_page URL would need to be cached and passed down to the fetch service
+// 	//  but this is only valid for XDD,
+// 	//  and thus we need to cache both the original URL and the pagination one
+// 	fetchDataItemList();
+// };
 
 const refresh = async () => {
 	pageCount.value = 0;
@@ -515,6 +518,13 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.data-explorer-container .results-content .results-count-label {
+	font-weight: bold;
+	margin: 4px;
 }
 
 .xdd-known-terms {
