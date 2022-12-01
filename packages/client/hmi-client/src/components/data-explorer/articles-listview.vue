@@ -1,5 +1,5 @@
 <template>
-	<div class="search-listview-container">
+	<div>
 		<div class="table-fixed-head">
 			<table>
 				<tbody>
@@ -20,8 +20,6 @@
 									<span v-show="!isSelected(d)">
 										<IconCheckbox20 />
 									</span>
-									<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-									<!-- Not sure if I should just make this the icon, there might have been a reason this was dynamic before-->
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatTitle(d) }}</div>
@@ -64,8 +62,8 @@
 import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle } from '@/types/XDD';
-import { ResourceType, ResultType } from '@/types/common';
-import { getDocumentDoi, getResourceTypeIcon, isXDDArticle } from '@/utils/data-util';
+import { ResultType } from '@/types/common';
+import { getDocumentDoi, isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { getRelatedDocuments } from '@/services/data';
@@ -156,12 +154,6 @@ const formatKnownTerms = (d: XDDArticle) => {
 </script>
 
 <style scoped>
-.search-listview-container {
-	background: var(--background-light-2);
-	color: black;
-	width: 100%;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -174,14 +166,13 @@ td {
 	vertical-align: top;
 }
 
-tr {
-	border: 2px solid var(--separator);
+tbody tr {
+	border-top: 2px solid var(--separator);
 	cursor: pointer;
 }
 
-thead tr,
-thead td {
-	border: none;
+tbody tr:first-child {
+	border-top-width: 0;
 }
 
 .table-fixed-head {
@@ -200,14 +191,6 @@ thead td {
 
 .tr-item {
 	height: 50px;
-}
-
-.tr-item.selected {
-	border: 2px double var(--un-color-accent-lighter);
-}
-
-.tr-item.selected .title-and-abstract-col {
-	border-left: 2px solid var(--un-color-accent-lighter);
 }
 
 .tr-item.selected td {

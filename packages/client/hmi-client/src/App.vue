@@ -7,6 +7,7 @@ import DataExplorer from '@/views/DataExplorer.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { Project } from '@/types/Project';
 import * as ProjectService from '@/services/project';
+import useResourcesStore from '@/stores/resources';
 import { useCurrentRouter } from './router/index';
 
 /**
@@ -15,6 +16,8 @@ import { useCurrentRouter } from './router/index';
 const route = useRoute();
 const { isCurrentRouteHome } = useCurrentRouter();
 const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
+
+const resources = useResourcesStore();
 
 /**
  * Data Explorer
@@ -47,11 +50,10 @@ watch(
 	() => route.params.projectId,
 	async (projectId) => {
 		// If the projectId or the Project are null, set the Project to null.
-		if (!projectId) {
-			project.value = null;
-		} else {
+		if (projectId && !!projectId) {
 			const id = projectId as string;
 			project.value = await ProjectService.get(id);
+			resources.setActiveProject(project.value);
 		}
 	},
 	{ immediate: true }
@@ -73,7 +75,7 @@ watch(
 		@show-data-explorer="dataExplorerActivated = true"
 	/>
 	<main>
-		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" />
+		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
 		<router-view class="page" :project="project" />
 	</main>
 </template>
@@ -88,6 +90,8 @@ main {
 	flex-grow: 1;
 	isolation: isolate;
 	z-index: 1;
+	height: 100vh - var(--header-height);
+	overflow: hidden;
 }
 
 .sidebar {

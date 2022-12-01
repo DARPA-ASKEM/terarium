@@ -5,6 +5,7 @@
 #   See: https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional
 
 name: Lint PR Commit Messages
+# yamllint disable-line rule:truthy
 on:
   pull_request:
     types: ['opened', 'edited', 'reopened', 'synchronize']
@@ -23,10 +24,10 @@ jobs:
           node-version: 18.8.0
           cache: 'yarn'
       - name: Install CommitLint Dependency
-        run: yarn add @commitlint/config-conventional
+        run: yarn add -W @commitlint/config-conventional
       # Uncomment this if you want to validate all commits in this PR not just the PR comment
       # - uses: wagoid/commitlint-github-action@v5
       - name: Lint the PR message
         uses: JulienKode/pull-request-name-linter-action@v0.5.0
         with:
-          configuration-path: ./.commitlintrc.yml
+          configuration-path: ./.commitlintrc.yaml

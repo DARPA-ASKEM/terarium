@@ -14,13 +14,6 @@
 			:selected-search-items="selectedSearchItems"
 			@toggle-article-selected="toggleDataItemSelected"
 		/>
-		<common-listview
-			v-if="resultType === ResourceType.ALL"
-			class="list-view"
-			:input-items="dataItems"
-			:selected-search-items="selectedSearchItems"
-			@toggle-item-selected="toggleDataItemSelected"
-		/>
 	</div>
 </template>
 
@@ -28,7 +21,6 @@
 import { computed, PropType } from 'vue';
 import ModelsListview from '@/components/data-explorer/models-listview.vue';
 import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
-import CommonListview from '@/components/data-explorer/common-listview.vue';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
@@ -76,7 +68,6 @@ const filteredArticles = computed(() => {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	padding-right: 10px;
 	gap: 1px;
 
 	.list-view {

@@ -4,9 +4,9 @@ import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
-import API from '@/api/api';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { Project } from '@/types/Project';
+import * as ProjectService from '@/services/project';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -18,13 +18,11 @@ const categories = new Map<string, { icon: object }>([[Categories.Recents, { ico
 
 const projects = ref<Project[]>([]);
 
-// refactor as a composable?
-async function getProjects() {
-	return API.get('/projects');
-}
-
-getProjects().then((response) => {
-	projects.value = response.data;
+onMounted(async () => {
+	const allProjects = await ProjectService.getAll();
+	if (allProjects) {
+		projects.value = allProjects;
+	}
 });
 </script>
 

@@ -1,3 +1,4 @@
+import API from '@/api/api';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { IGraph } from '@graph-scaffolder/types';
 
@@ -92,3 +93,5 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 
 	return { ...g };
 };
+
+export const getModel = async (modelId: string) => API.get(`/models/${modelId}`);

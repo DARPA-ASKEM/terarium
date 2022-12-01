@@ -5,13 +5,17 @@ import Button from '@/components/Button.vue';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useCurrentRouter } from '@/router/index';
 import { Project } from '@/types/Project';
+import useResourcesStore from '@/stores/resources';
 
 const emit = defineEmits(['show-data-explorer']);
 const router = useRouter();
 const { isCurrentRouteHome } = useCurrentRouter();
 const isHome = computed(() => isCurrentRouteHome.value);
 
+const resources = useResourcesStore();
+
 const goToHomepage = () => {
+	resources.setActiveProject(null);
 	router.push('/');
 };
 const goToDataExplorer = () => emit('show-data-explorer');
@@ -27,7 +31,7 @@ defineProps<{
 		<img v-else src="@assets/images/icon.png" height="32" width="32" alt="TERArium icon" />
 		<p v-if="!isHome">
 			<a @click="goToHomepage">Projects</a>
-			<span> {{ projectName }}</span>
+			<span>{{ projectName }}</span>
 		</p>
 		<aside>
 			<Button class="data-explorer" @click="goToDataExplorer">

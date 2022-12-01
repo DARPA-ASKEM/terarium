@@ -8,8 +8,7 @@ import {
 	BaseComputionGraph,
 	pathFn
 } from '@/services/graph';
-import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
-import API from '@/api/api';
+import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
 import { Model } from '@/types/Model';
 
 const props = defineProps<{
@@ -55,15 +54,17 @@ class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	}
 }
 
-const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
-
 const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.modelId],
 	async () => {
-		const result = await getModel(props.modelId);
-		model.value = result.data as Model;
+		if (props.modelId !== '') {
+			const result = await getModel(props.modelId);
+			model.value = result.data as Model;
+		} else {
+			model.value = null;
+		}
 	},
 	{ immediate: true }
 );
@@ -126,12 +127,10 @@ aside {
 }
 
 h3 {
-	font: var(--un-font-h3);
 	margin-bottom: 10px;
 }
 
 h4 {
-	font: var(--un-font-h4);
 	margin-top: 30px;
 	margin-bottom: 10px;
 }
