@@ -18,12 +18,12 @@ export type ProjectAssets = {
 };
 
 export type SimpleProjectAssets = {
-	[PUBLICATIONS]: string[];
-	[INTERMEDIATES]: string[];
-	[MODELS]: string[];
-	[PLANS]: string[];
-	[SIMULATION_RUNS]: string[];
-	[DATASETS]: string[];
+	[PUBLICATIONS]: (string | number)[];
+	[INTERMEDIATES]: (string | number)[];
+	[MODELS]: (string | number)[];
+	[PLANS]: (string | number)[];
+	[SIMULATION_RUNS]: (string | number)[];
+	[DATASETS]: (string | number)[];
 };
 
 export type Project = {

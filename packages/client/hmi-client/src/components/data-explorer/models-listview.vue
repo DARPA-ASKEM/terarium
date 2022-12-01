@@ -73,7 +73,7 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-model-selected']);
 
-const expandedRowId = ref('');
+const expandedRowId = ref<string | number>('');
 
 const { models, selectedSearchItems } = toRefs(props);
 
