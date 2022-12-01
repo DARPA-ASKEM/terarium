@@ -20,3 +20,27 @@ public class Intermediate implements Serializable {
 
 	private String content;
 }
+
+enum IntermediateFormat {
+	BILAYER("bilayer"),
+	GROMET("gromet"),
+	OTHER("other"),
+	SBML("sbml");
+
+	public final String type;
+
+	IntermediateFormat(final String type) {
+		this.type = type;
+	}
+}
+
+enum IntermediateSource {
+	MREPRESENTATIONA("mrepresentationa"),
+	SKEMA("skema");
+
+	public final String type;
+
+	IntermediateSource(final String type) {
+		this.type = type;
+	}
+}

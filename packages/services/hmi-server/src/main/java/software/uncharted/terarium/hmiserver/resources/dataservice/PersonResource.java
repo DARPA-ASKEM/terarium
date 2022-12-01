@@ -59,8 +59,8 @@ public class PersonResource {
 
 	@GET
 	public Response getPersons(
-		@QueryParam("page_size") final Integer pageSize,
-		@QueryParam("page") final Integer page
+		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getPersons(pageSize, page);
 	}

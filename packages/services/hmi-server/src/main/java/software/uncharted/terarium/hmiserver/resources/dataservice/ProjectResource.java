@@ -24,8 +24,8 @@ public class ProjectResource {
 
 	@GET
 	public Response getProjects(
-		@QueryParam("page_size") final Integer pageSize,
-		@QueryParam("page") final Integer page
+		@DefaultValue("50") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getProjects(pageSize, page);
 	}
@@ -41,9 +41,9 @@ public class ProjectResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createProject(
-		final Project newProject
+		final Project project
 	) {
-		return proxy.createProject(newProject);
+		return proxy.createProject(project);
 	}
 
 	@PUT
@@ -51,9 +51,18 @@ public class ProjectResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateProject(
 		@PathParam("id") final String id,
-		final Project updatedProject
+		final Project project
 	) {
-		return proxy.updateProject(id, updatedProject);
+		return proxy.updateProject(id, project);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response deleteProject(
+		@PathParam("id") final String id
+	) {
+		return proxy.deleteProject(id);
 	}
 
 	@POST
