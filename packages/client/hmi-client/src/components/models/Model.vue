@@ -127,12 +127,10 @@ aside {
 }
 
 h3 {
-	font: var(--un-font-h3);
 	margin-bottom: 10px;
 }
 
 h4 {
-	font: var(--un-font-h4);
 	margin-top: 30px;
 	margin-bottom: 10px;
 }

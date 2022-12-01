@@ -7,7 +7,6 @@
 			v-model="searchTerm"
 			type="text"
 			autocomplete="off"
-			class="form-control"
 			:style="inputStyle"
 			:placeholder="placeholderMessage"
 			@input="onChange"
@@ -172,17 +171,5 @@ onUnmounted(() => {
 	list-style: none;
 	text-align: left;
 	word-break: break-all;
-}
-
-.form-control {
-	width: calc(100% - 20px);
-	margin-left: 10px;
-	margin-right: 10px;
-	padding: 0 10px;
-	--placeholder-color: black;
-}
-
-.form-control::placeholder {
-	color: var(--placeholder-color);
 }
 </style>
