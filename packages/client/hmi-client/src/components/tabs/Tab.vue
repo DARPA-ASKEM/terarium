@@ -5,13 +5,11 @@ import IconClose from '@carbon/icons-vue/es/close/16';
 const props = defineProps({
 	name: {
 		type: String,
-		required: true,
-		default: 'New tab'
+		required: true
 	},
 	index: {
 		type: Number,
-		required: true,
-		default: 0
+		required: true
 	},
 	isActive: {
 		type: Boolean,
@@ -28,10 +26,11 @@ const headerStyle = computed(() => `left: ${10 * props.index}%;}`);
 	<section class="outer-container">
 		<header :style="headerStyle">
 			<div @click="$emit('clickTabHeader', index)" :class="{ active: isActive }">
-				<span>
+				<span class="icon">
 					<slot name="tabIcon"></slot>
 				</span>
-				<span>{{ name }}</span>
+				<span class="name">{{ name }}</span>
+
 				<span>
 					<IconClose class="close" @click.stop="$emit('clickTabClose', index)" />
 				</span>
@@ -75,8 +74,9 @@ section {
 }
 
 .outer-container {
-	margin: 0.5rem;
+	padding: 0.5rem;
 	position: absolute;
+	width: 100%;
 }
 
 .content {
@@ -91,6 +91,17 @@ section {
 span {
 	display: inline-flex;
 	align-items: center;
+}
+
+.name {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	display: inline;
+}
+
+.icon {
+	margin-right: 0.5rem;
 }
 
 .close {

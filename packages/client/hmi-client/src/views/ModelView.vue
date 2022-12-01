@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import Model from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import IconMachineLearningModel from '@carbon/icons-vue/es/machine-learning-model/16';
-import { Tab } from '@/types/common';
 
-const openModels = ref<Tab[]>([
+const openModels = [
 	{
-		name: 'Model one',
+		name: 'A really, really long model name',
 		props: {
 			modelId: '1'
 		}
@@ -23,11 +21,8 @@ const openModels = ref<Tab[]>([
 		props: {
 			modelId: '3'
 		}
-	},
-	{
-		name: 'New model'
 	}
-]);
+];
 </script>
 
 <template>
