@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { onMounted, ref } from 'vue';
-import { PetriNet } from '@/utils/petri-net-validator';
+import { watch, ref } from 'vue';
 import {
 	runDagreLayout,
 	D3SelectionINode,
@@ -9,36 +8,14 @@ import {
 	BaseComputionGraph,
 	pathFn
 } from '@/services/graph';
-import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
-import API from '@/api/api';
+import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
 import { Model } from '@/types/Model';
 
 const props = defineProps<{
-	modelId?: String;
+	projectId: string; // FIXME: currently not used
+	modelId: string;
 }>();
 
-const model = ref<Model | null>(null);
-
-const getModel = async (modelId: String) => API.get(`/models/${modelId}`);
-
-// This model can be deleted in future. Just used for init graph
-// TODO: replace this mock petri net with the model fetched from the backend
-const modelPetriNet: PetriNet = {
-	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
-	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
-	I: [
-		{ it: 1, is: 1 },
-		{ it: 1, is: 2 },
-		{ it: 2, is: 2 },
-		{ it: 3, is: 2 }
-	],
-	O: [
-		{ ot: 1, os: 2 },
-		{ ot: 1, os: 2 },
-		{ ot: 2, os: 3 },
-		{ ot: 3, os: 4 }
-	]
-};
 class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const state = selection.filter((d) => d.data.type === NodeType.State);
@@ -77,33 +54,37 @@ class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	}
 }
 
-onMounted(async () => {
-	let renderer: ModelPlanRenderer | null = null;
-	const modelDrawnElement = document.getElementById('model-panel') as HTMLDivElement;
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(modelPetriNet); // get graph from petri net representation
+const model = ref<Model | null>(null);
+// Whenever selectedModelId changes, fetch model with that ID
+watch(
+	() => [props.modelId],
+	async () => {
+		if (props.modelId !== '') {
+			const result = await getModel(props.modelId);
+			model.value = result.data as Model;
+		} else {
+			model.value = null;
+		}
+	},
+	{ immediate: true }
+);
 
-	renderer = new ModelPlanRenderer({
-		el: modelDrawnElement,
+const graphElement = ref<HTMLDivElement | null>(null);
+// Render graph whenever a new model is fetched or whenever the HTML element
+//	that we render the graph to changes.
+watch([model, graphElement], async () => {
+	if (model.value === null || graphElement.value === null) return;
+	// Convert petri net into a graph
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content);
+	// Create renderer
+	const renderer = new ModelPlanRenderer({
+		el: graphElement.value as HTMLDivElement,
 		useAStarRouting: true,
 		runLayout: runDagreLayout
 	});
-
-	// Test on click
-	renderer.on(
-		'node-click',
-		(_eventName: string | symbol, _event, selection: D3SelectionINode<NodeData>) => {
-			console.log(selection.datum());
-		}
-	);
-
-	// write json to model-json and draw model to model-drawn:
+	// Render graph
 	await renderer?.setData(g);
 	await renderer?.render();
-
-	if (props.modelId) {
-		const result = await getModel(props.modelId);
-		model.value = result.data as Model;
-	}
 });
 </script>
 
@@ -111,10 +92,7 @@ onMounted(async () => {
 	<section class="model">
 		<div>
 			<h3>{{ model?.name ?? '' }}</h3>
-			<div class="model-panels">
-				<div id="model-panel" class="model-panel"></div>
-				<div class="model-panel">{{ JSON.stringify(modelPetriNet) }}</div>
-			</div>
+			<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 		</div>
 		<aside>
 			<p class="description">{{ model?.description ?? '' }}</p>
@@ -135,16 +113,10 @@ onMounted(async () => {
 	display: flex;
 }
 
-.model-panels {
-	display: flex;
-	flex: 1;
-	min-width: 0;
-}
-
-.model-panel {
-	width: 500px;
-	height: 500px;
-	border: 1px solid var(--un-color-black-40);
+.graph-element {
+	width: 1000px;
+	height: 1000px;
+	background: var(--un-color-black-5);
 }
 
 aside {

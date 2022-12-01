@@ -1,38 +1,16 @@
 <script setup lang="ts">
-import API from '@/api/api';
 import { Project } from '@/types/Project';
-import { ref, onMounted } from 'vue';
 
-const props = defineProps({
-	projectId: {
-		type: String,
-		required: true
-	}
-});
-
-const project = ref<Project>({
-	id: '',
-	name: '',
-	description: '',
-	timestamp: ''
-});
-
-// refactor as a composable?
-async function getProject(): Promise<Project> {
-	const response = await API.get(`/projects/${props.projectId}`);
-	return response.data;
-}
-
-onMounted(async () => {
-	project.value = await getProject();
-});
+defineProps<{
+	project: Project;
+}>();
 </script>
 
 <template>
 	<div class="flex-container">
 		<header>
-			<h2>{{ project.name }}</h2>
-			<p class="secondary-text">Last updated: {{ project.timestamp }}</p>
+			<h2>{{ project?.name }}</h2>
+			<p class="secondary-text">Last updated: {{ project?.timestamp }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
@@ -42,7 +20,7 @@ onMounted(async () => {
 						<!-- Author -->
 						<section class="author">Edwin Lai, Yohann Paris</section>
 						<p>
-							{{ project.description }}
+							{{ project?.description }}
 						</p>
 					</section>
 					<section class="related-projects">
@@ -101,7 +79,6 @@ onMounted(async () => {
 			</section>
 		</section>
 	</div>
-	<!-- </body> -->
 </template>
 
 <style scoped>

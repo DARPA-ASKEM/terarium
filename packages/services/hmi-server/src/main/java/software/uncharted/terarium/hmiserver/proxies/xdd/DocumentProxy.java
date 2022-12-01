@@ -12,6 +12,7 @@ public interface DocumentProxy {
 	@GET
 	@Path("api/articles")
 	Response getDocuments(
+		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
 		@QueryParam("term") String term,
