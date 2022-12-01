@@ -61,6 +61,7 @@
 				</button>
 			</div>
 
+			<!--
 			<span v-if="resultType === ResourceType.XDD" class="section-label">
 				Filter by XDD Dictionary
 			</span>
@@ -80,6 +81,7 @@
 					</span>
 				</div>
 			</div>
+			-->
 		</div>
 		<div class="facets-and-results-container">
 			<template v-if="viewType === ViewType.LIST">
@@ -135,7 +137,7 @@ import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import ToggleButton from '@/components/widgets/toggle-button.vue';
-import AutoComplete from '@/components/widgets/autocomplete.vue';
+// import AutoComplete from '@/components/widgets/autocomplete.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 
@@ -162,7 +164,7 @@ import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isModel, isXDDArticle, validate } from '@/utils/data-util';
 
-import IconClose16 from '@carbon/icons-vue/es/close/16';
+// import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 // FIXME: page count is not taken into consideration
 
@@ -209,15 +211,6 @@ const resultsCount = computed(() => {
 	}
 	return total;
 });
-
-const searchXDDDictionaries = (q: string) =>
-	new Promise((resolve) => {
-		const suggestionResults: string[] = [];
-		if (q.length < 1) resolve(suggestionResults); // early exit
-		resolve(
-			xddDictionaries.value.map((dic) => dic.name).filter((dictName) => dictName.includes(q))
-		);
-	});
 
 const updateResultType = (newResultType: string) => {
 	resultType.value = newResultType;
@@ -321,7 +314,7 @@ const fetchDataItemList = async () => {
 const prevPage = () => {
 	// this won't work with XDD since apparently there is no way to navigate results backward
 	pageCount.value -= 1;
-	fetchDataItemList();
+	// fetchDataItemList();
 };
 
 const nextPage = () => {
@@ -330,7 +323,7 @@ const nextPage = () => {
 	// note the next_page URL would need to be cached and passed down to the fetch service
 	//  but this is only valid for XDD,
 	//  and thus we need to cache both the original URL and the pagination one
-	fetchDataItemList();
+	// fetchDataItemList();
 };
 
 const refresh = async () => {
@@ -376,16 +369,25 @@ const toggleDataItemSelected = (item: ResultType) => {
 	}
 };
 
-const removeDictName = (term: string) => {
-	dictNames.value = dictNames.value.filter((t) => t !== term);
-};
+// const removeDictName = (term: string) => {
+// 	dictNames.value = dictNames.value.filter((t) => t !== term);
+// };
 
-const addDictName = (term: string) => {
-	if (term === undefined || term === '') return;
-	if (!dictNames.value.includes(term)) {
-		dictNames.value = [...dictNames.value, term]; // clone to trigger reactivity
-	}
-};
+// const addDictName = (term: string) => {
+// 	if (term === undefined || term === '') return;
+// 	if (!dictNames.value.includes(term)) {
+// 		dictNames.value = [...dictNames.value, term]; // clone to trigger reactivity
+// 	}
+// };
+
+// const searchXDDDictionaries = (q: string) =>
+// 	new Promise((resolve) => {
+// 		const suggestionResults: string[] = [];
+// 		if (q.length < 1) resolve(suggestionResults); // early exit
+// 		resolve(
+// 			xddDictionaries.value.map((dic) => dic.name).filter((dictName) => dictName.includes(q))
+// 		);
+// 	});
 
 const onResultTypeChanged = (newResultType: string) => {
 	updateResultType(newResultType);
