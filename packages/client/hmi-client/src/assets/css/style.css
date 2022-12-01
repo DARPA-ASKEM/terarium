@@ -43,7 +43,7 @@
 :root {
 	background-color: var(--un-color-body-surface-background);
 	color: var(--un-color-body-text-primary);
-	color-scheme: light dark;
+	color-scheme: light;
 	font: var(--un-font-body);
 }
 
@@ -54,13 +54,6 @@ body {
 	flex-direction: column;
 	font: inherit;
 	isolation: isolate;
-}
-
-@media (prefers-color-scheme: dark) {
-	:root {
-		/*  background-color: var(--un-color-black-70);
-		color: var(--un-color-black-5); */
-	}
 }
 
 h1 {
