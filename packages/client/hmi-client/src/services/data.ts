@@ -306,6 +306,17 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			highlight: a._highlight
 		}));
 
+		// process document highlights and style the search term differently in each highlight
+		// FIXME: this styling of highlights with search term should be done automatically by XDD
+		//        since the content is coming already styled and should not be done at the clinet side for performance reasons
+		if (term !== '') {
+			articles.forEach((article) => {
+				if (article.highlight) {
+					article.highlight = article.highlight.map((h) => h.replaceAll(term, `<b>${term}</b>`));
+				}
+			});
+		}
+
 		const formattedFacets: Facets = {};
 		if (facets) {
 			// we receive facets data, so make sure it is in the proper format
