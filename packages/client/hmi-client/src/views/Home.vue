@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import NewProjectCard from '@/components/projects/NewProjectCard.vue';
+import ArticlesCard from '@/components/articles/ArticlesCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import { onMounted, ref } from 'vue';
 import { Project } from '@/types/Project';
+import { XDDArticle } from '@/types/XDD';
 import * as ProjectService from '@/services/project';
+import { searchXDDArticles } from '@/services/data';
 
 const enum Categories {
 	Recents = 'Recents',
@@ -17,11 +20,21 @@ const enum Categories {
 const categories = new Map<string, { icon: object }>([[Categories.Recents, { icon: IconTime32 }]]);
 
 const projects = ref<Project[]>([]);
+const articles = ref<XDDArticle[]>([]);
+const relevantSearchTerm = 'Covid 19';
 
 onMounted(async () => {
 	const allProjects = await ProjectService.getAll();
 	if (allProjects) {
 		projects.value = allProjects;
+	}
+
+	// Get all relevant articles
+	// TODO: Add 2nd param so we can limit amount of results and maybe filter on just newest ect
+	const allArticles = await searchXDDArticles(relevantSearchTerm);
+	// console.log(allArticles);
+	if (allArticles) {
+		articles.value = allArticles.results;
 	}
 });
 </script>
@@ -52,6 +65,47 @@ onMounted(async () => {
 				</ul>
 				<IconChevronRight32 class="chevron-right" />
 			</div>
+			<!-- Hot Topics carousel -->
+			<header>
+				<h3>Latest on {{ relevantSearchTerm }}</h3>
+			</header>
+			<div class="project-carousel">
+				<IconChevronLeft32 class="chevron-left" />
+				<ul>
+					<li v-for="(paper, index) in articles" :key="index">
+						<!-- TODO: Rather than link to a separate page have a popup window for this -->
+						<router-link
+							style="text-decoration: none; color: inherit"
+							:to="'/docs/' + paper.gddid"
+							:paperId="paper.gddid"
+						>
+							<ArticlesCard :name="paper.title" />
+						</router-link>
+					</li>
+				</ul>
+			</div>
+
+			<!-- For each project show related articles -->
+			<!-- TODO: Only show this if there are related articles to begin with -->
+			<li v-for="(project, index) in projects" :key="index">
+				<header>
+					<h3>Related to: {{ project.name }}</h3>
+				</header>
+				<div class="project-carousel">
+					<IconChevronLeft32 class="chevron-left" />
+					<ul>
+						<li v-for="(paper, index) in project.relatedArticles" :key="index">
+							<router-link
+								style="text-decoration: none; color: inherit"
+								:to="'/docs/' + paper.gddid"
+								:paperId="paper.gddid"
+							>
+								<ArticlesCard :name="paper.title" />
+							</router-link>
+						</li>
+					</ul>
+				</div>
+			</li>
 		</template>
 	</section>
 </template>
