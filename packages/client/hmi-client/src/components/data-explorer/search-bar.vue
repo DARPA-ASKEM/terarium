@@ -37,7 +37,7 @@ const props = defineProps({
 	},
 	searchPlaceholder: {
 		type: String,
-		default: 'enter search term or doi here...'
+		default: 'Search for resources'
 	},
 	focusInput: {
 		type: Boolean,
@@ -90,7 +90,7 @@ watch(searchTerms, () => {
 .search-bar-container {
 	display: flex;
 	background-color: transparent;
-	justify-content: center;
+	align-items: center;
 	color: white;
 	flex: 1;
 }
@@ -112,7 +112,7 @@ watch(searchTerms, () => {
 	position: absolute;
 	top: 0;
 	bottom: 0;
-	color: white;
+	color: black;
 	margin-left: 4px;
 }
 
@@ -128,11 +128,10 @@ watch(searchTerms, () => {
 }
 
 input[type='text'] {
-	padding: 6px;
+	padding: 10px;
+	/* Leave space for the search icon */
+	padding-left: 25px;
 	border: none;
-	font-size: 18px;
-	padding-left: 2rem;
-	padding-right: 2rem;
 	outline: none;
 	width: 100%;
 }

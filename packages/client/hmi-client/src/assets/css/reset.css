@@ -46,3 +46,11 @@ a:hover, a:focus {
 	cursor: pointer;
 	text-decoration: underline;
 }
+
+table {
+	border-color: transparent;
+}
+
+thead {
+	border: none;
+}

@@ -68,7 +68,6 @@ const filteredArticles = computed(() => {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	padding-right: 10px;
 	gap: 1px;
 
 	.list-view {

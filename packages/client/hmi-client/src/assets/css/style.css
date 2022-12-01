@@ -62,3 +62,16 @@ body {
 		color: var(--un-color-black-5); */
 	}
 }
+
+h1 {
+	font: var(--un-font-h1)
+}
+h2 {
+	font: var(--un-font-h2)
+}
+h3 {
+	font: var(--un-font-h3)
+}
+h4 {
+	font: var(--un-font-h4)
+}
