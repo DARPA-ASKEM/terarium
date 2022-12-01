@@ -105,6 +105,13 @@ const openView = (view: RouteName) => {
 					<IconAccount32 />
 				</li>
 				<li
+					:active="selectedView === RouteName.ModelRoute"
+					:title="RouteName.ModelRoute"
+					@click="openView(RouteName.ModelRoute)"
+				>
+					<IconMachineLearningModel32 />
+				</li>
+				<li
 					:active="selectedView === RouteName.SimulationRoute"
 					:title="RouteName.SimulationRoute"
 					@click="openView(RouteName.SimulationRoute)"
@@ -112,11 +119,10 @@ const openView = (view: RouteName) => {
 					<IconAppConnectivity32 />
 				</li>
 				<li
-					:active="selectedView === RouteName.ModelRoute"
-					:title="RouteName.ModelRoute"
-					@click="openView(RouteName.ModelRoute)"
+					:active="selectedView === RouteName.SimulationResultRoute"
+					@click="openView(RouteName.SimulationResultRoute)"
 				>
-					<IconMachineLearningModel32 />
+					<IconChartCombo32 />
 				</li>
 				<li
 					disabled
@@ -132,12 +138,6 @@ const openView = (view: RouteName) => {
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocument32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.SimulationResultRoute"
-					@click="openView(RouteName.SimulationResultRoute)"
-				>
-					<IconChartCombo32 />
 				</li>
 			</ul>
 			<ul>
@@ -158,7 +158,12 @@ const openView = (view: RouteName) => {
 					<IconUser32 />
 				</li>
 			</ul>
-			<Button round class="side-panel-control" v-if="isSidePanelClose" @click="openSidePanel">
+			<Button
+				round
+				class="side-panel-control"
+				v-if="isSidePanelClose && selectedView !== RouteName.ProjectRoute"
+				@click="openSidePanel"
+			>
 				<IconArrowRight16 />
 			</Button>
 		</nav>
