@@ -14,16 +14,30 @@ const props = defineProps({
 	isActive: {
 		type: Boolean,
 		default: false
+	},
+	numTabs: {
+		type: Number,
+		required: true
 	}
 });
 
 defineEmits(['clickTabHeader', 'clickTabClose']);
 
-const headerStyle = computed(() => `left: ${10 * props.index}%;}`);
+function calcTabWidthPercentage() {
+	if (props.numTabs <= 10) {
+		return 10;
+	}
+	return 100 / props.numTabs;
+}
+
+const headerStyle = computed(
+	() => `left: ${calcTabWidthPercentage() * props.index}%; width: ${calcTabWidthPercentage()}%`
+);
+const outerContainerStyle = computed(() => `top: ${-100 * props.index}%;`);
 </script>
 
 <template>
-	<section class="outer-container">
+	<section class="outer-container" :style="outerContainerStyle">
 		<header :style="headerStyle">
 			<div @click="$emit('clickTabHeader', index)" :class="{ active: isActive }">
 				<span class="icon">
@@ -44,7 +58,6 @@ const headerStyle = computed(() => `left: ${10 * props.index}%;}`);
 
 <style scoped>
 header {
-	width: 10%;
 	position: relative;
 	z-index: 1;
 }
@@ -75,8 +88,9 @@ section {
 
 .outer-container {
 	padding: 0.5rem;
-	position: absolute;
+	position: relative;
 	width: 100%;
+	height: 100%;
 }
 
 .content {

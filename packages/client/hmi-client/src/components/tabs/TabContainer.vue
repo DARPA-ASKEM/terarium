@@ -59,6 +59,7 @@ function closeTab(tabIndexToClose: number) {
 			:index="index"
 			:key="tab.tabKey"
 			:isActive="activeTab === index"
+			:num-tabs="keyedTabs.length"
 			@click-tab-header="(tabIndex) => setActiveTab(tabIndex)"
 			@click-tab-close="(tabIndex) => closeTab(tabIndex)"
 		>
@@ -70,4 +71,8 @@ function closeTab(tabIndexToClose: number) {
 	</div>
 </template>
 
-<style scoped></style>
+<style scoped>
+div {
+	width: 100%;
+}
+</style>
