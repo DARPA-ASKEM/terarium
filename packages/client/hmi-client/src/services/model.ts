@@ -1,3 +1,4 @@
+import API from '@/api/api';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { IGraph } from '@graph-scaffolder/types';
 
@@ -19,7 +20,6 @@ const g: IGraph<NodeData, EdgeData> = {
 	nodes: [],
 	edges: []
 };
-
 /**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
@@ -91,5 +91,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 
-	return g;
+	return { ...g };
 };
+
+export const getModel = async (modelId: string) => API.get(`/models/${modelId}`);

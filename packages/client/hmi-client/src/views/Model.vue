@@ -1,64 +1,22 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { PetriNet } from '@/utils/petri-net-validator';
-import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
-import API from '@/api/api';
-import * as d3 from 'd3';
+import { IGraph } from '@graph-scaffolder/index';
+import { ref, watch } from 'vue';
+import {
+	runDagreLayout,
+	D3SelectionINode,
+	D3SelectionIEdge,
+	BaseComputionGraph,
+	pathFn
+} from '@/services/graph';
+import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
 import { Model } from '@/types/Model';
 
-const MARKER_VIEWBOX = '-5 -5 10 10';
-const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
-const pathFn = d3
-	.line<{ x: number; y: number }>()
-	.x((d) => d.x)
-	.y((d) => d.y);
+const props = defineProps<{
+	projectId: string; // FIXME: currently not used
+	modelId: string;
+}>();
 
-// TODO: replace this mock petri net with the model fetched from the backend
-const modelPetriNet: PetriNet = {
-	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
-	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
-	I: [
-		{ it: 1, is: 1 },
-		{ it: 1, is: 2 },
-		{ it: 2, is: 2 },
-		{ it: 3, is: 2 }
-	],
-	O: [
-		{ ot: 1, os: 2 },
-		{ ot: 1, os: 2 },
-		{ ot: 2, os: 3 },
-		{ ot: 3, os: 4 }
-	]
-};
-class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
-	setupDefs() {
-		const svg = d3.select(this.svgEl);
-
-		// Clean up
-		svg.select('defs').selectAll('.edge-marker-end').remove();
-
-		// Arrow defs
-		svg
-			.select('defs')
-			.append('marker')
-			.classed('edge-marker-end', true)
-			.attr('id', 'arrowhead')
-			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 2)
-			.attr('refY', 0)
-			.attr('orient', 'auto')
-			.attr('markerWidth', 15)
-			.attr('markerHeight', 15)
-			.attr('markerUnits', 'userSpaceOnUse')
-			.attr('xoverflow', 'visible')
-			.append('svg:path')
-			.attr('d', ARROW)
-			.style('fill', '#000')
-			.style('stroke', 'none');
-	}
-
+class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const state = selection.filter((d) => d.data.type === NodeType.State);
 		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
@@ -92,59 +50,49 @@ class ModelPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData
 			.style('fill', 'none')
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
-			.attr('marker-end', 'url(#arrowhead)');
+			.attr('marker-end', `url(#${this.EDGE_ARROW_ID})`);
 	}
 }
-
-onMounted(async () => {
-	let renderer: ModelPlanRenderer | null = null;
-	const modelDrawnElement = document.getElementById('model-panel') as HTMLDivElement;
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(modelPetriNet); // get graph from petri net representation
-
-	renderer = new ModelPlanRenderer({
-		el: modelDrawnElement,
-		useAStarRouting: true,
-		runLayout: runDagreLayout
-	});
-
-	// Test on click
-	renderer.on(
-		'node-click',
-		(_eventName: string | symbol, _event, selection: D3SelectionINode<NodeData>) => {
-			console.log(selection.datum());
-		}
-	);
-
-	// write json to model-json and draw model to model-drawn:
-	await renderer?.setData(g);
-	await renderer?.render();
-});
-
-const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
-
-// TODO: let the user choose the model to display
-const selectedModelId = ref('1');
 
 const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => [selectedModelId.value],
+	() => [props.modelId],
 	async () => {
-		const result = await getModel(selectedModelId.value);
-		model.value = result.data as Model;
+		if (props.modelId !== '') {
+			const result = await getModel(props.modelId);
+			model.value = result.data as Model;
+		} else {
+			model.value = null;
+		}
 	},
 	{ immediate: true }
 );
+
+const graphElement = ref<HTMLDivElement | null>(null);
+// Render graph whenever a new model is fetched or whenever the HTML element
+//	that we render the graph to changes.
+watch([model, graphElement], async () => {
+	if (model.value === null || graphElement.value === null) return;
+	// Convert petri net into a graph
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content);
+	// Create renderer
+	const renderer = new ModelPlanRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: true,
+		runLayout: runDagreLayout
+	});
+	// Render graph
+	await renderer?.setData(g);
+	await renderer?.render();
+});
 </script>
 
 <template>
 	<section class="model">
 		<div>
 			<h3>{{ model?.name ?? '' }}</h3>
-			<div class="model-panels">
-				<div id="model-panel" class="model-panel"></div>
-				<div class="model-panel">{{ JSON.stringify(modelPetriNet) }}</div>
-			</div>
+			<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 		</div>
 		<aside>
 			<p class="description">{{ model?.description ?? '' }}</p>
@@ -165,16 +113,10 @@ watch(
 	display: flex;
 }
 
-.model-panels {
-	display: flex;
-	flex: 1;
-	min-width: 0;
-}
-
-.model-panel {
-	width: 500px;
-	height: 500px;
-	border: 1px solid var(--un-color-black-40);
+.graph-element {
+	width: 1000px;
+	height: 1000px;
+	background: var(--un-color-black-5);
 }
 
 aside {
@@ -185,12 +127,10 @@ aside {
 }
 
 h3 {
-	font: var(--un-font-h3);
 	margin-bottom: 10px;
 }
 
 h4 {
-	font: var(--un-font-h4);
 	margin-top: 30px;
 	margin-bottom: 10px;
 }

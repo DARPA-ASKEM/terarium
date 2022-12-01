@@ -57,11 +57,11 @@
 </template>
 
 <script setup lang="ts">
-import { getXDDArtifacts } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
+import { computed, onMounted, ref, watch } from 'vue';
+import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import { getDocumentDoi } from '@/utils/data-util';
 
 const props = defineProps({
 	// this id is received as the document id mapped from the route param
@@ -69,11 +69,29 @@ const props = defineProps({
 		type: String,
 		default: ''
 	}
+	// NOTE that project is automatically injected as prop as well
 });
 
-const resourcesStore = useResourcesStore();
+const doc = ref<XDDArticle | null>(null);
 
-const doc = computed(() => resourcesStore.documents[props.id] || null);
+watch(
+	props,
+	async () => {
+		const id = props.id;
+		if (id !== '') {
+			// fetch doc from XDD
+			const d = await getDocumentById(id);
+			if (d) {
+				doc.value = d;
+			}
+		} else {
+			doc.value = null;
+		}
+	},
+	{
+		immediate: true
+	}
+);
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
@@ -81,16 +99,7 @@ const formatDescription = (d: XDDArticle) =>
 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
 	'[no abstract]';
 
-const doi = computed(() => {
-	let docIdentifier = '';
-	if (doc.value && doc.value.identifier.length > 0) {
-		const defaultDOI = doc.value.identifier.find((i) => i.type === 'doi');
-		if (defaultDOI) {
-			docIdentifier = defaultDOI.id;
-		}
-	}
-	return docIdentifier;
-});
+const doi = computed(() => getDocumentDoi(doc.value));
 
 const extractionType = ref('');
 

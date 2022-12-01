@@ -3,7 +3,7 @@
 # Container Registry using HCL Bake file.
 
 name: Build and Publish
-
+# yamllint disable-line rule:truthy
 on:
   push:
     branches: ['main']
@@ -18,15 +18,15 @@ env:
 jobs:
   # Run Global Lint
   lint:
-    uses: ./.github/workflows/lint.yml
+    uses: ./.github/workflows/lint.yaml
 
   # Lint Client Code
   lint-client:
-    uses: ./.github/workflows/lint-client.yml
+    uses: ./.github/workflows/lint-client.yaml
 
   # Run Client Tests
   test-client:
-    uses: ./.github/workflows/test-client.yml
+    uses: ./.github/workflows/test-client.yaml
 
   # Generate a matrix based on all the targets defined in the
   # bake file.

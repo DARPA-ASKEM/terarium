@@ -1,14 +1,13 @@
 <template>
-	<div class="search-listview-container">
+	<div>
 		<div class="table-fixed-head">
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />NAME</th>
-						<th>DESCRIPTION</th>
-						<th>Parameters</th>
-						<th>FRAMEWORK</th>
-						<th>PREVIEW<span class="right-cover" /></th>
+						<th><span class="left-cover" />Name</th>
+						<th>Description</th>
+						<th>Framework</th>
+						<th>Preview<span class="right-cover" /></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -29,7 +28,6 @@
 									<span v-show="!isSelected(d)">
 										<IconCheckbox20 />
 									</span>
-									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
@@ -38,9 +36,6 @@
 						</td>
 						<td class="desc-col">
 							<p class="max-content">{{ formatDescription(d) }}</p>
-						</td>
-						<td class="parameters-col">
-							<p class="max-content">{{ formatParameters(d) }}</p>
 						</td>
 						<td class="framework-col">
 							<div class="text-bold">{{ d.framework }}</div>
@@ -57,105 +52,72 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
+<script setup lang="ts">
+import { PropType, ref, toRefs, watch } from 'vue';
 import { Model } from '@/types/Model';
-import { ResourceType, ResultType } from '@/types/common';
-import { getResourceTypeIcon, isModel } from '@/utils/data-util';
+import { ResultType } from '@/types/common';
+import { isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
-import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
 
-export default defineComponent({
-	name: 'ModelsListview',
-	components: {
-		IconCheckbox20,
-		IconCheckboxChecked20,
-		IconRadioButton20,
-		IconCloseOutline20
+const props = defineProps({
+	models: {
+		type: Array as PropType<Model[]>,
+		default: () => []
 	},
-	props: {
-		models: {
-			type: Array as PropType<Model[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		}
-	},
-	emits: ['toggle-model-selected'],
-	setup(props) {
-		const expandedRowId = ref('');
-
-		const { models } = toRefs(props);
-
-		watch(
-			models,
-			() => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const elem: any = document.getElementsByClassName('table-fixed-head');
-				if (elem.length === 0) return;
-				elem[0].scrollTop = 0;
-			},
-			{ immediate: true }
-		);
-
-		return {
-			expandedRowId,
-			ResourceType,
-			getResourceTypeIcon
-		};
-	},
-	methods: {
-		isExpanded(model: Model) {
-			return this.expandedRowId === model.id;
-		},
-		updateExpandedRow(model: Model) {
-			this.expandedRowId = this.expandedRowId === model.id ? '' : model.id;
-		},
-		formatOutputName(d: Model) {
-			return d.name;
-		},
-		formatOutputDescription(d: Model) {
-			return d.description;
-		},
-		isSelected(model: Model) {
-			return this.selectedSearchItems.find((item) => {
-				if (isModel(item)) {
-					const itemAsModel = item as Model;
-					return itemAsModel.id === model.id;
-				}
-				return false;
-			});
-		},
-		updateSelection(model: Model) {
-			this.$emit('toggle-model-selected', model);
-		},
-		formatDescription(d: Model) {
-			if (!d.description) return '';
-			return this.isExpanded(d) || d.description.length < 140
-				? d.description
-				: `${d.description.substring(0, 140)}...`;
-		},
-		formatParameters(d: Model) {
-			const paramList = Object.keys(d.parameters).join('\n');
-			return this.isExpanded(d) || paramList.length < 4
-				? paramList
-				: `${paramList.substring(0, 50)}...`;
-		}
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	}
 });
+
+const emit = defineEmits(['toggle-model-selected']);
+
+const expandedRowId = ref('');
+
+const { models, selectedSearchItems } = toRefs(props);
+
+watch(
+	models,
+	() => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elem: any = document.getElementsByClassName('table-fixed-head');
+		if (elem.length === 0) return;
+		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+
+const isExpanded = (model: Model) => expandedRowId.value === model.id;
+
+const updateExpandedRow = (model: Model) => {
+	expandedRowId.value = expandedRowId.value === model.id ? '' : model.id;
+};
+
+const formatOutputName = (d: Model) => d.name;
+
+const isSelected = (model: Model) =>
+	selectedSearchItems.value.find((item) => {
+		if (isModel(item)) {
+			const itemAsModel = item as Model;
+			return itemAsModel.id === model.id;
+		}
+		return false;
+	});
+
+const updateSelection = (model: Model) => {
+	emit('toggle-model-selected', model);
+};
+
+const formatDescription = (d: Model) => {
+	if (!d.description) return '';
+	return isExpanded(d) || d.description.length < 140
+		? d.description
+		: `${d.description.substring(0, 140)}...`;
+};
 </script>
 
 <style scoped>
-.search-listview-container {
-	background: var(--background-light-2);
-	color: black;
-	width: 100%;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -164,16 +126,16 @@ table {
 
 th {
 	padding: 8px 16px;
+	text-align: left;
 }
 
-tr {
-	border: 2px solid var(--separator);
+tbody tr {
+	border-top: 2px solid var(--separator);
 	cursor: pointer;
 }
 
-thead tr,
-thead th {
-	border: none;
+tbody tr:first-child {
+	border-top-width: 0;
 }
 
 td {
@@ -198,35 +160,12 @@ tr th {
 	position: sticky;
 	top: -1px;
 	z-index: 1;
-	background-color: aliceblue;
-}
-
-.left-cover,
-.right-cover {
-	/* Cover left and right gap in the fixed table header */
-	position: absolute;
-	height: 100%;
-	width: 2px;
-	left: -2px;
-	background: var(--background-light-2);
-	top: 0;
-}
-
-.right-cover {
-	left: unset;
-	right: -2px;
+	/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
+	background-color: var(--un-color-body-surface-background);
 }
 
 .tr-item {
 	height: 50px;
-}
-
-.tr-item.selected {
-	border: 2px double var(--un-color-accent-lighter);
-}
-
-.tr-item.selected .name-and-desc-col {
-	border-left: 2px solid var(--un-color-accent-lighter);
 }
 
 .tr-item.selected td {
@@ -275,7 +214,7 @@ tr th {
 }
 
 .desc-col {
-	width: 35%;
+	width: 45%;
 }
 
 .framework-col {
@@ -283,13 +222,8 @@ tr th {
 	overflow-wrap: break-word;
 }
 
-.parameters-col {
-	width: 20%;
-	overflow-wrap: anywhere;
-}
-
 .max-content {
-	max-height: 200px;
+	max-height: 250px;
 	overflow-y: auto;
 }
 
