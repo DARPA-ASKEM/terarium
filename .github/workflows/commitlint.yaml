@@ -24,7 +24,7 @@ jobs:
           node-version: 18.8.0
           cache: 'yarn'
       - name: Install CommitLint Dependency
-        run: yarn add -W @commitlint/config-conventional
+        run: yarn add @commitlint/config-conventional
       # Uncomment this if you want to validate all commits in this PR not just the PR comment
       # - uses: wagoid/commitlint-github-action@v5
       - name: Lint the PR message
