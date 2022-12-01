@@ -28,6 +28,12 @@
 									<div v-if="isExpanded(d)" class="knobs">
 										<multiline-description :text="formatArticleAuthors(d)" />
 									</div>
+									<div v-if="isExpanded(d) && d.highlight" class="knobs">
+										<b>Highlights:</b>
+										<div v-for="h in d.highlight" :key="h">
+											<span v-html="h"></span>
+										</div>
+									</div>
 									<div v-html="formatKnownTerms(d)"></div>
 									<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
 										Related Documents
@@ -228,6 +234,7 @@ tbody tr:first-child {
 }
 
 .title-and-abstract-layout .content .related-docs {
+	margin-top: 1rem;
 	color: blue;
 }
 .title-and-abstract-layout .content .related-docs:hover {

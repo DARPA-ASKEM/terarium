@@ -266,6 +266,7 @@ const fetchDataItemList = async () => {
 			fullResults: !rankedResults.value,
 			doi: isValidDOI ? searchTerm.value : undefined,
 			title: isSearchTitle.value && !isValidDOI ? searchTerm.value : undefined,
+			includeHighlights: true,
 			facets: true // include facets aggregation data in the search results
 		}
 	};

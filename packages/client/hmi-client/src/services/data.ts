@@ -256,6 +256,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.publisher) {
 		url += `&publisher=${xddSearchParam.publisher}`;
 	}
+	if (xddSearchParam?.includeHighlights) {
+		url += '&include_highlights=true';
+	}
 	if (enablePagination) {
 		url += '&full_results';
 	} else {
@@ -297,7 +300,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			abstractText: a.abstract,
 			// eslint-disable-next-line no-underscore-dangle
 			gddid: a._gddid,
-			knownTerms: a.known_terms
+			knownTerms: a.known_terms,
+			// eslint-disable-next-line no-underscore-dangle
+			highlight: a._highlight
 		}));
 
 		const formattedFacets: Facets = {};
