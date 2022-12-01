@@ -3,6 +3,8 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 
+import java.util.List;
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -48,5 +50,12 @@ public interface ConceptProxy {
 	Response updateConcept(
 		@PathParam("id") String id,
 		Concept concept
+	);
+
+	@GET
+	@Path("/facets")
+	Response searchConceptsUsingFacets(
+		@QueryParam("types") List<String> types,
+		@QueryParam("curies") List<String> curies
 	);
 }

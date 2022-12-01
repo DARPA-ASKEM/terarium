@@ -1,9 +1,12 @@
-import { uniqBy } from 'lodash';
+import { cloneDeep, uniq, uniqBy } from 'lodash';
 import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/common';
 import API from '@/api/api';
 import { getModelFacets } from '@/utils/facets';
 import { applyFacetFiltersToModels } from '@/utils/data-util';
-import { Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
+import { MODELS } from '@/types/Project';
+import { CONCEPT_FACETS_FIELD } from '@/types/Concept';
+import { Clause, ClauseValue } from '@/types/Filter';
+import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
 	XDDArticle,
 	XDDArtifact,
@@ -12,6 +15,7 @@ import {
 	XDDSearchParams,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
+import { getFacets as getConceptFacets } from './concept';
 
 const getXDDSets = async () => {
 	const res = await API.get('/xdd/sets');
@@ -57,17 +61,88 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		});
 	}
 
-	const modelResults = term.length > 0 ? uniqBy(finalModels, 'id') : allModels;
+	const modelResults = term.length > 0 ? uniqBy(finalModels, ID) : allModels;
+
+	let conceptFacets = await getConceptFacets([MODELS]);
 
 	if (modelSearchParam && modelSearchParam.filters) {
 		// modelSearchParam currently represent facets filters that can be applied
 		//  to further refine the list of models
+
+		// a special facet related to ontology/DKG concepts needs to be transformed into
+		//  some form of filters that can filter the list of models.
+		// In this case, each concept has an associated list of model IDs that can be used to filter models
+		//  so, we need to map the facet filters from field "concepts" to "id"
+
+		// Each clause of 'concepts' should have another corresponding one with 'id'
+		const curies = [] as ClauseValue[];
+		const idClauses = [] as Clause[];
+		modelSearchParam.filters.clauses.forEach((clause) => {
+			if (clause.field === CONCEPT_FACETS_FIELD) {
+				const idClause = cloneDeep(clause);
+				idClause.field = 'id';
+				const clauseValues = [] as ClauseValue[];
+				idClause.values.forEach((conceptNameOrCurie) => {
+					// find the corresponding model IDs
+					if (conceptFacets !== null) {
+						const matching = conceptFacets.results.filter(
+							(conceptResult) =>
+								conceptResult.name === conceptNameOrCurie ||
+								conceptResult.curie === conceptNameOrCurie
+						);
+						// update the clause value by mapping concept/curie to model id
+						clauseValues.push(...matching.map((m) => m.id));
+						curies.push(...matching.map((m) => m.curie));
+					}
+				});
+				idClause.values = clauseValues;
+				idClauses.push(idClause);
+			}
+		});
+		// NOTE that we need to merge all concept filters into a single ID filter
+		if (idClauses.length > 0) {
+			const finalIdClause = cloneDeep(idClauses[0]);
+			const allIdValues = idClauses.map((c) => c.values).flat();
+			finalIdClause.values = uniq(allIdValues);
+			modelSearchParam.filters.clauses.push(finalIdClause);
+		}
+
 		applyFacetFiltersToModels(modelResults, modelSearchParam.filters);
+
+		// remove any previously added concept/id filters
+		modelSearchParam.filters.clauses = modelSearchParam.filters.clauses.filter(
+			(c) => c.field !== ID
+		);
+
+		// ensure that concepts are re-created following the current filtered list of model results
+		// e.g., if the user has applied other facet filters, e.g. selected some model by name
+		// then we need to find corresponding curies to filter the concepts accordingly
+		if (conceptFacets !== null) {
+			// FIXME:
+			// This step won't be needed if the concept facets API is able to receive filters as well
+			// to only provide concept aggregations based on a filtered set of models rather than the full list of models
+			// const matching = conceptFacets.results.filter(conceptResult => conceptResult.name === conceptNameOrCurie || conceptResult.curie === conceptNameOrCurie);
+			// curies.push(...matching.map(m => m.curie));
+			const finalModelIDs = modelResults.map((m) => m.id);
+			conceptFacets.results.forEach((conceptFacetResult) => {
+				if (finalModelIDs.includes(conceptFacetResult.id)) {
+					curies.push(conceptFacetResult.curie);
+				}
+			});
+		}
+
+		// re-create the concept facets if the user has applyied any concept filters
+		const uniqueCuries = uniq(curies);
+		if (uniqueCuries.length > 0) {
+			conceptFacets = await getConceptFacets([MODELS], uniqueCuries);
+		}
 	}
 
 	// FIXME: this client-side computation of facets from "models" data should be done
 	//        at the HMI server
-	const modelFacets = getModelFacets(modelResults);
+	//
+	// This is going to calculate facets aggregations from the list of results
+	const modelFacets = await getModelFacets(modelResults, conceptFacets);
 
 	return {
 		results: modelResults,

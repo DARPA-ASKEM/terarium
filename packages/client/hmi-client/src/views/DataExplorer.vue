@@ -402,11 +402,6 @@ watch(dictNames, () => {
 	refresh();
 });
 
-watch(dictNames, () => {
-	// re-fetch data from the server, apply filters, and re-calculate the facets
-	refresh();
-});
-
 watch(rankedResults, () => {
 	// re-fetch data from the server, apply filters, and re-calculate the facets
 	refresh();
