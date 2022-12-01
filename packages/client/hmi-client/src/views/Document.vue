@@ -38,13 +38,8 @@
 						"
 					>
 						<!-- render figure -->
-						<b>{{ ex.properties.title }}</b>
-						{{ ex.properties.contentText }}
-						<img
-							id="img"
-							:src="'data:image/jpeg;base64,' + ex.properties.image"
-							:alt="ex.properties.contentText"
-						/>
+						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 					</template>
 					<template v-else>
 						<!-- render textual content -->
@@ -125,8 +120,9 @@ watch(artifacts, (currentValue, oldValue) => {
 
 const fetchArtifacts = async () => {
 	if (doi.value !== '') {
-		// a 'type' may be used to filter the extractions to a given artifact types, e.g. Figure
-		artifacts.value = await getXDDArtifacts(doi.value);
+		const allArtifacts = await getXDDArtifacts(doi.value);
+		// filter out Document extraction type
+		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
 	} else {
 		// note that some XDD documents do not have a valid doi
 		artifacts.value = [];
