@@ -38,13 +38,17 @@ function setActiveTab(tabIndex: number) {
 }
 
 function closeTab(tabIndexToClose: number) {
+	const lastTabIndex = keyedTabs.value.length - 1;
 	keyedTabs.value.splice(tabIndexToClose, 1);
 	// If the tab that is closed is to the left of the active tab, decrement the active tab index by one, so that the active tab preserves its position.
 	// E.g. if the active tab is the last tab, it will remain the last tab. If the active tab is second last, it will remain second last.
 	// If the tab that is closed is to the right of the active tab, no special logic is needed to preserve the active tab's position.
 	// If the active tab is closed, the next tab to the right becomes the active tab.
 	// This replicates the tab behaviour in Chrome.
-	if (activeTab.value !== 0 && activeTab.value >= tabIndexToClose) {
+	if (
+		(activeTab.value !== 0 && activeTab.value > tabIndexToClose) ||
+		activeTab.value === lastTabIndex
+	) {
 		activeTab.value--;
 	}
 }
