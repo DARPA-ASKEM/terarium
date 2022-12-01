@@ -8,6 +8,7 @@
 # You can also reference a tag or branch, but the action may change without warning.
 
 name: Label Issues
+# yamllint disable-line rule:truthy
 on:
   issues:
     types:
