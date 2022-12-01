@@ -1,7 +1,11 @@
 <template>
 	<section class="doc-view-container">
 		<div v-if="doc">
-			<div class="title">{{ doc.title }}</div>
+			<div v-if="docLink" class="title">
+				<a :href="docLink" target="_blank" rel="noreferrer noopener">{{ doc.title }}</a>
+			</div>
+			<div v-else class="title">{{ doc.title }}</div>
+
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
 			<div class="journal">{{ doc.journal }}</div>
 			<div class="publisher">{{ doc.publisher }}</div>
@@ -94,6 +98,10 @@ watch(
 );
 
 const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
+
+const docLink = computed(() =>
+	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
+);
 
 const formatDescription = (d: XDDArticle) =>
 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
