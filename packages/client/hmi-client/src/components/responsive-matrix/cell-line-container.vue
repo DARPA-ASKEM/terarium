@@ -3,11 +3,11 @@
 		class="cell cell-selected"
 		v-for="(selectedRow, idx) in selectedRows"
 		:key="idx"
+		:iterateSelectionIndexes="iterateSelectionIndexes"
 		:style="getSelectedCellStyle(selectedRow)"
 		:update="update"
 		:selectedCell="selectedRow"
-		:dataRowList="dataRowList"
-		:dataColList="dataColList"
+		:dataCellList="dataCellList"
 		:labelRowList="labelRowList"
 		:labelColList="labelColList"
 		:parameters="parameters"
@@ -50,6 +50,12 @@ export default {
 				return { top: '0px', left: '0px', bottom: '0px', right: '0px' };
 			}
 		},
+		iterateSelectionIndexes: {
+			type: Function,
+			default() {
+				return () => {};
+			}
+		},
 		update: {
 			type: Number,
 			default() {
@@ -68,14 +74,8 @@ export default {
 				return [0, 0, 0, 0];
 			}
 		},
-		dataRowList: {
-			type: Array as PropType<CellData[][]>,
-			default() {
-				return [];
-			}
-		},
-		dataColList: {
-			type: Array as PropType<CellData[][]>,
+		dataCellList: {
+			type: Array as PropType<CellData[]>,
 			default() {
 				return [];
 			}

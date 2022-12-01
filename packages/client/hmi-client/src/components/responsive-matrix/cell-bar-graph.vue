@@ -21,6 +21,12 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		iterateSelectionIndexes: {
+			type: Function,
+			default() {
+				return () => {};
+			}
+		},
 		update: {
 			type: Number,
 			default() {
@@ -33,14 +39,8 @@ export default {
 				return [0, 0, 0, 0];
 			}
 		},
-		dataRowList: {
-			type: Array as PropType<CellData[][]>,
-			default() {
-				return [];
-			}
-		},
-		dataColList: {
-			type: Array as PropType<CellData[][]>,
+		dataCellList: {
+			type: Array as PropType<CellData[]>,
 			default() {
 				return [];
 			}
@@ -115,13 +115,9 @@ export default {
 				return acc;
 			}, {});
 
-			for (let row = startRow, i = 0; row <= endRow; row++, i++) {
-				this.dataRowList[row].forEach((cell: any) => {
-					if (cell.col <= endCol && cell.col >= startCol) {
-						this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
-					}
-				});
-			}
+			this.iterateSelectionIndexes([startRow, -1, endRow, -1], (idx) =>
+				this.extractCellValuesByParam(idx, selectedCells, startCol, endCol)
+			);
 
 			return selectedCells;
 		},
@@ -218,6 +214,13 @@ export default {
 			this.containerBoundingBox = container.getBoundingClientRect();
 		},
 
+		extractCellValuesByParam(idx, selectedCells, startCol, endCol) {
+			const cell = this.dataCellList[idx];
+			if (cell.col <= endCol && cell.col >= startCol) {
+				this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
+			}
+		},
+
 		renderGraph() {
 			const container = this.$refs.container as HTMLElement;
 			const { height } = this.containerBoundingBox;
@@ -262,7 +265,7 @@ export default {
 				.data(colValueArray.map((v, i) => ({ x: rowValueArray[i], y: v })))
 				.enter()
 				.append('rect')
-				.attr('x', (d) => (this.xSubgroup ? this.xSubgroup(d.x) : 0 + leftMargin))
+				.attr('x', (d) => (this.xSubgroup(d.x) || 0) + leftMargin)
 				.attr('y', (d) => this.yScale(d.y) + topMargin)
 				.attr('width', this.xSubgroup.bandwidth())
 				.attr('height', (d) => height - bottomMargin - topMargin - this.yScale(d.y))

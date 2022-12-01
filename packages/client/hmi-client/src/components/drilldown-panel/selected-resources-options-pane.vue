@@ -1,37 +1,26 @@
 <template>
 	<div class="breakdown-pane-container">
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
-		<div class="add-to-title">Add to:</div>
 		<div class="add-selected-buttons">
 			<Button
 				action
 				@click="addAssetsToProject"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				>Current Project</Button
+				>Add to current project</Button
 			>
 			<dropdown-button
 				v-if="selectedSearchItems.length > 0"
-				:inner-button-label="'Other Project'"
+				:inner-button-label="'Add to another project'"
 				:is-dropdown-left-aligned="false"
 				:items="projectsNames"
 				@item-selected="addAssetsToProject"
 			/>
-			<Button v-else action :class="{ 'invalid-project': selectedSearchItems.length === 0 }"
-				>Other Project</Button
-			>
 		</div>
 		<div class="selected-items-container">
 			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
 				<div class="item-header">
-					<div class="title-and-checkbox">
-						<span v-show="isSelected(item)"><i class="fa-lg fa-regular fa-square-check"></i></span>
-						<span v-show="!isSelected(item)"><i class="fa-lg fa-regular fa-square"></i></span>
-						<div class="item-title" :title="getTitle(item)">{{ formatTitle(item) }}</div>
-					</div>
-					<i
-						:class="getResourceTypeIcon(getType(item))"
-						style="margin-left: 4px; margin-right: 4px"
-					></i>
+					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
+					<div class="item-title" :title="getTitle(item)">{{ formatTitle(item) }}</div>
 				</div>
 				<div class="content">
 					<multiline-description :text="formatDescription(item)" />
@@ -48,7 +37,7 @@ import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
-import { XDDArticle } from '@/types/XDD';
+import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
 import { MODELS, Project, PUBLICATIONS } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
@@ -96,22 +85,6 @@ const formatDescription = (item: ResultType) => {
 	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
 };
 
-// FIXME: consider refactoring as a util function
-const isSelected = (item: ResultType) =>
-	props.selectedSearchItems.find((searchItem) => {
-		if (isModel(item)) {
-			const itemAsModel = item as Model;
-			const searchItemAsModel = searchItem as Model;
-			return searchItemAsModel.id === itemAsModel.id;
-		}
-		if (isXDDArticle(item)) {
-			const itemAsArticle = item as XDDArticle;
-			const searchItemAsArticle = searchItem as XDDArticle;
-			return searchItemAsArticle.title === itemAsArticle.title;
-		}
-		return false;
-	});
-
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
 		return (item as Model).type;
@@ -126,8 +99,9 @@ const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
-			const body = {
-				xdd_uri: (selectedItem as XDDArticle).gddid
+			const body: PublicationAsset = {
+				xdd_uri: (selectedItem as XDDArticle).gddid,
+				title: (selectedItem as XDDArticle).title
 			};
 
 			// FIXME: handle cases where assets is already added to the project
@@ -143,6 +117,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 				// update local copy of project assets
 				validProject.value?.assets.publications.push(publicationId);
+				resources.activeProjectAssets?.publications.push(body);
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -154,6 +129,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// update local copy of project assets
 			validProject.value?.assets.models.push(modelId);
+			resources.activeProjectAssets?.[MODELS].push(selectedItem);
 		}
 	});
 };
@@ -197,10 +173,6 @@ onMounted(async () => {
 	color: var(--un-color-accent);
 }
 
-.add-to-title {
-	font-weight: 500;
-}
-
 .add-selected-buttons {
 	display: flex;
 	flex-direction: column;
@@ -220,17 +192,16 @@ onMounted(async () => {
 }
 
 .selected-items-container {
-	margin: 2px;
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+	margin-top: 10px;
 }
 
 .selected-items-container .selected-item {
-	border-style: solid;
-	border-width: 2px;
-	border-color: lightgray;
-	padding: 3px;
+	padding: 5px;
+	background: var(--un-color-white);
+	margin-top: 1px;
 }
 
 .selected-items-container .item-header {
@@ -239,22 +210,11 @@ onMounted(async () => {
 	justify-content: space-between;
 }
 
-.selected-items-container .item-header .title-and-checkbox {
-	display: flex;
-}
-
-.selected-items-container .item-header .title-and-checkbox .item-title {
+.selected-items-container .item-header .item-title {
 	font-weight: 500;
-	margin-bottom: 5px;
-	margin-left: 4px;
 }
 
-:deep(.dropdown-btn) {
-	cursor: pointer;
-	background-color: var(--un-color-accent);
-	border-color: var(--un-color-accent-dark);
-	border-width: 0px;
-	width: 100% !important;
-	max-width: 100% !important;
+.selected-items-container .item-header .icon {
+	margin-right: 5px;
 }
 </style>

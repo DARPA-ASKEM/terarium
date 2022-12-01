@@ -56,6 +56,14 @@ public class ProjectResource {
 		return proxy.updateProject(id, updatedProject);
 	}
 
+	@GET
+	@Path("/{project_id}/assets")
+	public Response getAssets(
+		@PathParam("project_id") String projectId
+	) {
+		return proxy.getAssets(projectId);
+	}
+
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
 	public Response createAsset(

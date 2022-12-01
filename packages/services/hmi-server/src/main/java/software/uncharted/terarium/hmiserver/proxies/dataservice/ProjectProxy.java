@@ -47,6 +47,12 @@ public interface ProjectProxy {
 		@PathParam("id") String id
 	);
 
+	@GET
+	@Path("/{project_id}/assets")
+	Response getAssets(
+		@PathParam("project_id") String projectId
+	);
+
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
 	Response createAsset(
