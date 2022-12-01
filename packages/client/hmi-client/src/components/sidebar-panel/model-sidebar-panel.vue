@@ -5,19 +5,19 @@
 			New model from code
 		</Button>
 		<div
-			v-for="mId in models"
-			:key="mId"
+			v-for="model in models"
+			:key="model.id"
 			class="model-link"
-			:class="{ active: mId === modelId }"
-			@click="openModelPage(mId)"
+			:class="{ active: model.id === modelId }"
+			@click="openModelPage(model)"
 		>
 			<span class="model-view-icon">
 				<IconMachineLearningModel32 />
 			</span>
 			<span class="model-title">
-				{{ mId }}
+				{{ model.name }}
 			</span>
-			<span class="model-delete-btn" @click.stop="removeModel(mId)">
+			<span class="model-delete-btn" @click.stop="removeModel(model)">
 				<IconClose32 />
 			</span>
 		</div>
@@ -39,43 +39,43 @@ import { onMounted, ref } from 'vue';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 import { deleteAsset } from '@/services/project';
 import { MODELS } from '@/types/Project';
-import { getModel } from '@/services/model';
 import { RouteName } from '@/router';
+import { Model } from '@/types/Model';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
 
 const goToTheia = () => router.push('/theia');
 
-const modelId = ref('');
-const models = ref<string[]>([]);
+const modelId = ref<string | number>('');
+const models = ref<Model[]>([]);
 
-const openModelPage = async (mId: string) => {
-	const publicationDetails = await getModel(mId);
+const openModelPage = async (model: Model) => {
 	// pass this model id as param
-	if (publicationDetails) {
-		modelId.value = mId; // track selection
-		router.push({
-			name: RouteName.ModelRoute,
-			params: { projectId: resourcesStore.activeProject?.id, modelId: mId }
-		});
-	}
+	modelId.value = model.id; // track selection
+	router.push({
+		name: RouteName.ModelRoute,
+		params: { projectId: resourcesStore.activeProject?.id, modelId: model.id }
+	});
 };
 
-const removeModel = async (mId: string) => {
+const removeModel = async (model: Model) => {
 	// remove the model from the project assets
-	if (resourcesStore.activeProject) {
+	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
 		const assetsType = MODELS;
-		deleteAsset(resourcesStore.activeProject.id, assetsType, mId);
+		deleteAsset(resourcesStore.activeProject.id, assetsType, model.id);
 		// remove also from the local cache
 		resourcesStore.activeProject.assets[MODELS] = resourcesStore.activeProject.assets[
 			MODELS
-		].filter((a) => a !== mId);
-		models.value = resourcesStore.activeProject.assets[MODELS];
+		].filter((modId) => modId !== model.id);
+		resourcesStore.activeProjectAssets[MODELS] = resourcesStore.activeProjectAssets[MODELS].filter(
+			(a) => a.id !== model.id
+		);
+		models.value = resourcesStore.activeProjectAssets[MODELS];
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view
-	if (mId === modelId.value) {
+	if (model.id === modelId.value) {
 		// clear the model ID as a URL param
 		router.push({
 			name: RouteName.ModelRoute,
@@ -86,7 +86,7 @@ const removeModel = async (mId: string) => {
 
 onMounted(() => {
 	// get the list of models associated with this project and display them
-	const modelsInCurrentProject = resourcesStore.activeProject?.assets.models;
+	const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
 	if (modelsInCurrentProject) {
 		models.value = modelsInCurrentProject;
 	}

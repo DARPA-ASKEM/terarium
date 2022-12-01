@@ -1,3 +1,6 @@
+import { Model } from './Model';
+import { PublicationAsset } from './XDD';
+
 export const PUBLICATIONS = 'publications';
 export const INTERMEDIATES = 'intermediates';
 export const MODELS = 'models';
@@ -6,6 +9,15 @@ export const SIMULATION_RUNS = 'simulation_runs';
 export const DATASETS = 'datasets';
 
 export type ProjectAssets = {
+	[PUBLICATIONS]: PublicationAsset[];
+	[INTERMEDIATES]: any[]; // FIXME: add proper type
+	[MODELS]: Model[];
+	[PLANS]: any[]; // FIXME: add proper type
+	[SIMULATION_RUNS]: any[]; // FIXME: add proper type
+	[DATASETS]: any[]; // FIXME: add proper type
+};
+
+export type SimpleProjectAssets = {
 	[PUBLICATIONS]: string[];
 	[INTERMEDIATES]: string[];
 	[MODELS]: string[];
@@ -21,5 +33,5 @@ export type Project = {
 	timestamp: string;
 	active: boolean;
 	concept: string | null;
-	assets: ProjectAssets;
+	assets: SimpleProjectAssets;
 };
