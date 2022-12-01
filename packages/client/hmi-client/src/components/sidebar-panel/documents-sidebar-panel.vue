@@ -7,9 +7,6 @@
 			:class="{ active: docAsset.xdd_uri === documentId }"
 			@click="openDocumentPage(docAsset)"
 		>
-			<span class="doc-view-icon">
-				<DocumentView />
-			</span>
 			<span class="doc-title">
 				{{ docAsset.title }}
 			</span>
@@ -29,7 +26,6 @@ import useResourcesStore from '@/stores/resources';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
-import DocumentView from '@carbon/icons-vue/es/document--view/32';
 import { deleteAsset } from '@/services/project';
 import { PUBLICATIONS } from '@/types/Project';
 import { PublicationAsset } from '@/types/XDD';
@@ -82,11 +78,9 @@ onMounted(() => {
 	overflow-y: auto;
 	margin-top: 1rem;
 	height: 100%;
-	overflow-y: auto;
 }
 
 .doc-link {
-	padding: 0.5rem;
 	cursor: pointer;
 	display: flex;
 	flex-direction: row;
