@@ -5,6 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 import software.uncharted.terarium.hmiserver.models.modelservice.Graph;
+import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -40,7 +41,6 @@ public class ModelResource {
 		return proxy.addModelParts(modelId, graph);
 	}
 
-
 	@GET
 	@Path("/{modelId}/json")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -51,4 +51,16 @@ public class ModelResource {
 		return proxy.getModelJSON(modelId);
 	}
 
+
+	@POST
+	@Path("/{modelId}/simulate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Simulate the model")
+	public Response simulate(
+		@PathParam("modelId") final String modelId,
+		final SimulateParams params
+	) {
+		return proxy.simulate(modelId, params);
+	}
 }

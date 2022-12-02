@@ -427,20 +427,13 @@ export default defineComponent({
 				data: { val: 1 }
 			});
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					edges: [
-						{
-							source: source.datum().id,
-							target: target.datum().id
-						}
-					]
-				})
+			API.post(`/model-service/models/${modelId}`, {
+				edges: [
+					{
+						source: source.datum().id,
+						target: target.datum().id
+					}
+				]
 			});
 
 			this.refresh();
@@ -463,20 +456,13 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: 'S'
-						}
-					]
-				})
+			API.post(`/model-service/models/${modelId}`, {
+				nodes: [
+					{
+						name: id,
+						type: 'S'
+					}
+				]
 			});
 			this.jsonOutput();
 		},
@@ -497,20 +483,13 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: 'T'
-						}
-					]
-				})
+			API.post(`/model-service/models/${modelId}`, {
+				nodes: [
+					{
+						name: id,
+						type: 'T'
+					}
+				]
 			});
 			this.jsonOutput();
 		},
@@ -538,20 +517,13 @@ export default defineComponent({
 			});
 
 			if (createFlag === true) {
-				await fetch(`http://localhost:8888/api/models/${modelId}`, {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						nodes: [
-							{
-								name: label,
-								type
-							}
-						]
-					})
+				API.post(`/model-service/models/${modelId}`, {
+					nodes: [
+						{
+							name: label,
+							type
+						}
+					]
 				});
 			}
 			this.jsonOutput();
@@ -598,20 +570,13 @@ export default defineComponent({
 			});
 
 			if (createFlag === true) {
-				await fetch(`http://localhost:8888/api/models/${modelId}`, {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						edges: [
-							{
-								source: sourceLabel,
-								target: targetLabel
-							}
-						]
-					})
+				API.post(`/model-service/models/${modelId}`, {
+					edges: [
+						{
+							source: sourceLabel,
+							target: targetLabel
+						}
+					]
 				});
 			}
 		}, // end addEdge
@@ -620,25 +585,18 @@ export default defineComponent({
 			numRabbits = +(Math.random() * 100).toFixed();
 
 			// Run a simulation on LotkaVolterra with random values
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/simulate`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
+			const resp = await API.post(`model-service/models/${modelId}/simulate`, {
+				variables: {
+					rabbits: numRabbits,
+					wolves: numWolves
 				},
-				body: JSON.stringify({
-					variables: {
-						rabbits: numRabbits,
-						wolves: numWolves
-					},
-					parameters: {
-						birth: 0.3,
-						predation: 0.015,
-						death: 0.7
-					}
-				})
+				parameters: {
+					birth: 0.3,
+					predation: 0.015,
+					death: 0.7
+				}
 			});
-			const output = await resp.json();
+			const output = resp.data;
 			this.renderResult(output);
 		},
 		renderResult(result: any) {
@@ -727,10 +685,8 @@ export default defineComponent({
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
-			const resp = await fetch(`http://localhost:8888/api/models/${this.loadModelID}/json`, {
-				method: 'GET'
-			});
-			const model: PetriNet = await resp.json();
+			const resp = API.get(`model-service/models/${this.loadModelID}/json`);
+			const model: PetriNet = await resp.data;
 			this.createModel(model, false);
 		},
 		// Expects a JSON of a model with labels T, S, I, O.
@@ -740,8 +696,9 @@ export default defineComponent({
 		async createModel(model: PetriNet, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
-				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-				const modelData = await newModel.json();
+				const resp = await API.put('/model-service/models');
+
+				const modelData = await resp.data;
 				modelId = modelData.id;
 				console.log(`Model ID: ${modelId}`); // currently required for testing
 			}
