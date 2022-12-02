@@ -96,6 +96,8 @@ watch([model, graphElement], async () => {
 		</div>
 		<aside>
 			<p class="description">{{ model?.description ?? '' }}</p>
+			<h4>States</h4>
+
 			<h4>Parameters</h4>
 			<ul v-if="model !== null">
 				<li v-for="parameterName in Object.keys(model.parameters)" :key="parameterName">
