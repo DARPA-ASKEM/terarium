@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
+import java.util.Map;
 
 
 @Path("/api/models")
@@ -106,7 +106,7 @@ public class ModelResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateParameters(
 		@PathParam("id") final String id,
-		final List<Object> parameters
+		final Map<String, Object> parameters
 	) {
 		return proxy.updateParameters(id, parameters);
 	}
