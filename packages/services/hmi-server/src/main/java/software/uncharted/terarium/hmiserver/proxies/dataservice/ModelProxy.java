@@ -8,7 +8,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Map;
+import java.util.List;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/models")
@@ -77,7 +77,7 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateParameters(
 		@PathParam("id") String id,
-		Map<String, String> parameters
+		List<Object> parameters
 	);
 
 	@GET

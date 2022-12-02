@@ -5,8 +5,9 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Data
 @Accessors(chain = true)
@@ -26,6 +27,6 @@ public class Model implements Serializable {
 
 	private Concept concept;
 
-	private Map<String, String> parameters = new HashMap<>();
+	private List<Object> parameters = new ArrayList<>();
 }
 
