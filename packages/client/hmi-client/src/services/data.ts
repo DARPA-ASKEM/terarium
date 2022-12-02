@@ -39,7 +39,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	//
 	// fetch list of models data from the HMI server
 	//
-	const res = await API.get('/models');
+	const res = await API.get('/models/descriptions');
 	const modelsList: Model[] = res.data;
 
 	// TEMP: add "type" field because it is needed to mark these resources as models
