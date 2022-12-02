@@ -39,7 +39,7 @@ import { onMounted, ref } from 'vue';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 import { deleteAsset } from '@/services/project';
 import { MODELS } from '@/types/Project';
-import { getModel } from '@/services/model';
+// import { getModel } from '@/services/model';
 import { RouteName } from '@/router';
 
 const router = useRouter();
@@ -51,15 +51,15 @@ const modelId = ref('');
 const models = ref<string[]>([]);
 
 const openModelPage = async (mId: string) => {
-	const publicationDetails = await getModel(mId);
+	// const publicationDetails = await getModel(mId);
 	// pass this model id as param
-	if (publicationDetails) {
-		modelId.value = mId; // track selection
-		router.push({
-			name: RouteName.ModelRoute,
-			params: { projectId: resourcesStore.activeProject?.id, modelId: mId }
-		});
-	}
+	// if (publicationDetails) {
+	modelId.value = mId; // track selection
+	router.push({
+		name: RouteName.ModelRoute,
+		params: { projectId: resourcesStore.activeProject?.id, modelId: mId }
+	});
+	// }
 };
 
 const removeModel = async (mId: string) => {

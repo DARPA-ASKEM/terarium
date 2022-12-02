@@ -10,7 +10,7 @@
  * @property {Object} props - optional - any props that should be passed into componentToRender
  *
  */
-import { ref } from 'vue';
+import { ref, computed, onBeforeUpdate, watch } from 'vue';
 import TabComponent from '@/components/tabs/Tab.vue';
 import { Tab } from '@/types/common';
 
@@ -18,9 +18,13 @@ const props = defineProps<{
 	tabs: Tab[];
 	componentToRender: Object;
 	icon?: Object;
+	activeTabIndex: number;
 }>();
 
-const activeTab = ref(0);
+const emit = defineEmits(['closeTab']);
+
+const newActiveTab = computed(() => props.activeTabIndex);
+const currentActiveTab = ref(0);
 
 function addKeysToTabs(tabs: Tab[]) {
 	return tabs.map((tab, index) => ({
@@ -30,28 +34,39 @@ function addKeysToTabs(tabs: Tab[]) {
 	}));
 }
 
+const tabsRef = ref(props.tabs);
 // Add keys to each tab so that Vue can keep track of them
-const keyedTabs = ref(addKeysToTabs(props.tabs));
+const keyedTabs = computed(() => addKeysToTabs(tabsRef.value));
 
 function setActiveTab(tabIndex: number) {
-	activeTab.value = tabIndex;
+	currentActiveTab.value = tabIndex;
 }
 
 function closeTab(tabIndexToClose: number) {
-	const lastTabIndex = keyedTabs.value.length - 1;
-	keyedTabs.value.splice(tabIndexToClose, 1);
+	const tabToClose = tabsRef.value[tabIndexToClose];
+	const lastTabIndex = tabsRef.value.length - 1;
+	tabsRef.value.splice(tabIndexToClose, 1);
 	// If the tab that is closed is to the left of the active tab, decrement the active tab index by one, so that the active tab preserves its position.
 	// E.g. if the active tab is the last tab, it will remain the last tab. If the active tab is second last, it will remain second last.
 	// If the tab that is closed is to the right of the active tab, no special logic is needed to preserve the active tab's position.
 	// If the active tab is closed, the next tab to the right becomes the active tab.
 	// This replicates the tab behaviour in Chrome.
 	if (
-		(activeTab.value !== 0 && activeTab.value > tabIndexToClose) ||
-		activeTab.value === lastTabIndex
+		(currentActiveTab.value !== 0 && currentActiveTab.value > tabIndexToClose) ||
+		currentActiveTab.value === lastTabIndex
 	) {
-		activeTab.value--;
+		currentActiveTab.value--;
 	}
+	emit('closeTab', tabToClose);
 }
+
+onBeforeUpdate(() => {
+	tabsRef.value = props.tabs;
+});
+
+watch(newActiveTab, (index) => {
+	setActiveTab(index);
+});
 </script>
 
 <template>
@@ -62,7 +77,7 @@ function closeTab(tabIndexToClose: number) {
 			:name="tab.name"
 			:index="index"
 			:key="tab.tabKey"
-			:isActive="activeTab === index"
+			:isActive="currentActiveTab === index"
 			:num-tabs="keyedTabs.length"
 			@click-tab-header="(tabIndex) => setActiveTab(tabIndex)"
 			@click-tab-close="(tabIndex) => closeTab(tabIndex)"
