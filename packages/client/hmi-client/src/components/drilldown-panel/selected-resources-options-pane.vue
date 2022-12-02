@@ -37,7 +37,7 @@ import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
-import { XDDArticle } from '@/types/XDD';
+import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
 import { MODELS, Project, PUBLICATIONS } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
@@ -99,8 +99,9 @@ const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
-			const body = {
-				xdd_uri: (selectedItem as XDDArticle).gddid
+			const body: PublicationAsset = {
+				xdd_uri: (selectedItem as XDDArticle).gddid,
+				title: (selectedItem as XDDArticle).title
 			};
 
 			// FIXME: handle cases where assets is already added to the project
@@ -116,6 +117,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 				// update local copy of project assets
 				validProject.value?.assets.publications.push(publicationId);
+				resources.activeProjectAssets?.publications.push(body);
 			}
 		}
 		if (isModel(selectedItem)) {
@@ -127,6 +129,7 @@ const addResourcesToProject = async (projectId: string) => {
 
 			// update local copy of project assets
 			validProject.value?.assets.models.push(modelId);
+			resources.activeProjectAssets?.[MODELS].push(selectedItem);
 		}
 	});
 };

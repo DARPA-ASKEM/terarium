@@ -123,6 +123,14 @@ const filteredArticles = computed(() => {
 	return [] as XDDArticle[];
 });
 
+// const rawConceptFacets = computed(() => {
+// 	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	if (resList) {
+// 		return resList.rawConceptFacets;
+// 	}
+// 	return null;
+// });
+
 const clustersInfo = computed(() => {
 	const res = [] as ResultsCluster[];
 	const vars = [] as string[];
