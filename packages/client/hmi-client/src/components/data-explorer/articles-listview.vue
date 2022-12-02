@@ -73,11 +73,16 @@ import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
+import { ConceptFacets } from '@/types/Concept';
 
 const props = defineProps({
 	articles: {
 		type: Array as PropType<XDDArticle[]>,
 		default: () => []
+	},
+	rawConceptFacets: {
+		type: Object as PropType<ConceptFacets | null>,
+		default: () => null
 	},
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,

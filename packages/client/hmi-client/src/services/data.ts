@@ -147,7 +147,8 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	return {
 		results: modelResults,
 		searchSubsystem: ResourceType.MODEL,
-		facets: modelFacets
+		facets: modelFacets,
+		rawConceptFacets: conceptFacets
 	};
 };
 
