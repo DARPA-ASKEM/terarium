@@ -7,6 +7,7 @@ import { defineComponent, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import API from '@/api/api';
 
 interface NodeData {
 	type: string;
@@ -253,9 +254,8 @@ export default defineComponent({
 		});
 
 		// Test
-		const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-		const testData = await test.json();
-		modelId = testData.id;
+		const resp = await API.put('/model-service/models');
+		modelId = resp.data.id;
 	},
 	setup() {
 		const loadModelID = ref('');
@@ -286,11 +286,8 @@ export default defineComponent({
 			// console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
-			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-			const testData = await test.json();
-			modelId = testData.id;
-
-			console.log('modle id is', modelId);
+			const resp = await API.put('/model-service/models');
+			modelId = resp.data.id;
 
 			// Reset
 			g.nodes = [];
@@ -374,41 +371,32 @@ export default defineComponent({
 
 			g = runDagreLayout(_.cloneDeep(g));
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{ name: 'rabbits', type: 'S' },
-						{ name: 'wolves', type: 'S' },
-						{ name: 'birth', type: 'T' },
-						{ name: 'death', type: 'T' },
-						{ name: 'predation', type: 'T' }
-					],
-					edges: [
-						{ source: 'wolves', target: 'death' },
-						{ source: 'predation', target: 'wolves' },
-						{ source: 'predation', target: 'wolves' },
-						{ source: 'wolves', target: 'predation' },
-						{ source: 'rabbits', target: 'predation' },
-						{ source: 'rabbits', target: 'birth' },
-						{ source: 'birth', target: 'rabbits' },
-						{ source: 'birth', target: 'rabbits' }
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
+					{ name: 'rabbits', type: 'S' },
+					{ name: 'wolves', type: 'S' },
+					{ name: 'birth', type: 'T' },
+					{ name: 'death', type: 'T' },
+					{ name: 'predation', type: 'T' }
+				],
+				edges: [
+					{ source: 'wolves', target: 'death' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'wolves', target: 'predation' },
+					{ source: 'rabbits', target: 'predation' },
+					{ source: 'rabbits', target: 'birth' },
+					{ source: 'birth', target: 'rabbits' },
+					{ source: 'birth', target: 'rabbits' }
+				]
 			});
 
 			this.refresh();
 			this.jsonOutput();
 		},
 		async jsonOutput() {
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
-				method: 'GET'
-			});
-			const output = await resp.json();
+			const resp = await API.get(`/model-service/models/${modelId}/json`);
+			const output = await resp.data;
 			console.log(petriNetValidator(output));
 
 			console.log(output);
