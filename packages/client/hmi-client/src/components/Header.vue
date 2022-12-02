@@ -16,6 +16,7 @@ const resources = useResourcesStore();
 
 const goToHomepage = () => {
 	resources.setActiveProject(null);
+	resources.activeProjectAssets = null;
 	router.push('/');
 };
 const goToDataExplorer = () => emit('show-data-explorer');

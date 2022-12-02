@@ -4,6 +4,7 @@
 			v-if="resultType === ResourceType.MODEL"
 			class="list-view"
 			:models="filteredModels"
+			:raw-concept-facets="rawConceptFacets"
 			:selected-search-items="selectedSearchItems"
 			@toggle-model-selected="toggleDataItemSelected"
 		/>
@@ -11,6 +12,7 @@
 			v-if="resultType === ResourceType.XDD"
 			class="list-view"
 			:articles="filteredArticles"
+			:raw-concept-facets="rawConceptFacets"
 			:selected-search-items="selectedSearchItems"
 			@toggle-article-selected="toggleDataItemSelected"
 		/>
@@ -59,6 +61,13 @@ const filteredArticles = computed(() => {
 		return resList.results as XDDArticle[];
 	}
 	return [];
+});
+const rawConceptFacets = computed(() => {
+	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+	if (resList) {
+		return resList.rawConceptFacets;
+	}
+	return null;
 });
 </script>
 

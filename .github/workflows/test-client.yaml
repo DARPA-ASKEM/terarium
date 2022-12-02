@@ -6,13 +6,13 @@ name: Client Tests
 on:
   workflow_call:
   push:
+    branches: ['main']
     paths:
       - 'packages/client/**'
-    branches: ['main']
   pull_request:
+    branches: ['main']
     paths:
       - 'packages/client/**'
-    branches: ['main']
 
 jobs:
   unit-tests:

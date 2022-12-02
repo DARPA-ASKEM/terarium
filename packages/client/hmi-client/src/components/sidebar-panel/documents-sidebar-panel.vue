@@ -1,19 +1,16 @@
 <template>
 	<div class="document-list-container">
 		<div
-			v-for="docId in documents"
-			:key="docId"
+			v-for="docAsset in documents"
+			:key="docAsset.xdd_uri"
 			class="doc-link"
-			:class="{ active: docId === documentId }"
-			@click="openDocumentPage(docId)"
+			:class="{ active: docAsset.xdd_uri === documentId }"
+			@click="openDocumentPage(docAsset)"
 		>
-			<span class="doc-view-icon">
-				<DocumentView />
-			</span>
 			<span class="doc-title">
-				{{ docId }}
+				{{ docAsset.title }}
 			</span>
-			<span class="doc-delete-btn" @click.stop="removeDocument(docId)">
+			<span class="doc-delete-btn" @click.stop="removeDocument(docAsset)">
 				<IconClose32 />
 			</span>
 		</div>
@@ -29,48 +26,47 @@ import useResourcesStore from '@/stores/resources';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
-import DocumentView from '@carbon/icons-vue/es/document--view/32';
-import { getPublication } from '@/services/external';
 import { deleteAsset } from '@/services/project';
 import { PUBLICATIONS } from '@/types/Project';
+import { PublicationAsset } from '@/types/XDD';
 
 const router = useRouter();
 
 const resourcesStore = useResourcesStore();
 
 const documentId = ref('');
-const documents = ref<string[]>([]);
+const documents = ref<PublicationAsset[]>([]);
 
-const openDocumentPage = async (docId: string) => {
-	const publicationDetails = await getPublication(docId);
+const openDocumentPage = async (docAsset: PublicationAsset) => {
 	// pass this doc id as param
-	if (publicationDetails) {
-		documentId.value = docId; // track selection
-		router.push({ path: `/docs/${publicationDetails.xdd_uri}` });
-	}
+	documentId.value = docAsset.xdd_uri; // track selection
+	router.push({ path: `/docs/${docAsset.xdd_uri}` });
 };
 
-const removeDocument = async (docId: string) => {
+const removeDocument = async (docAsset: PublicationAsset) => {
 	// remove the document from the project assets
-	if (resourcesStore.activeProject) {
+	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
 		const assetsType = PUBLICATIONS;
-		deleteAsset(resourcesStore.activeProject.id, assetsType, docId);
+		deleteAsset(resourcesStore.activeProject.id, assetsType, docAsset.id);
 		// remove also from the local cache
 		resourcesStore.activeProject.assets[PUBLICATIONS] = resourcesStore.activeProject.assets[
 			PUBLICATIONS
-		].filter((a) => a !== docId);
-		documents.value = resourcesStore.activeProject.assets[PUBLICATIONS];
+		].filter((docId) => docId !== docAsset.id);
+		resourcesStore.activeProjectAssets[PUBLICATIONS] = resourcesStore.activeProjectAssets[
+			PUBLICATIONS
+		].filter((document) => document.id !== docAsset.id);
+		documents.value = resourcesStore.activeProjectAssets[PUBLICATIONS];
 	}
 
 	// if the user deleted the currently selected document, then clear its content from the view
-	if (docId === documentId.value) {
+	if (docAsset.xdd_uri === documentId.value) {
 		router.push('/docs'); // clear the doc ID as a URL param
 	}
 };
 
 onMounted(() => {
 	// get the list of publications associated with this project and display them
-	const documentsInCurrentProject = resourcesStore.activeProject?.assets.publications;
+	const documentsInCurrentProject = resourcesStore.activeProjectAssets?.publications;
 	if (documentsInCurrentProject) {
 		documents.value = documentsInCurrentProject;
 	}
@@ -82,11 +78,9 @@ onMounted(() => {
 	overflow-y: auto;
 	margin-top: 1rem;
 	height: 100%;
-	overflow-y: auto;
 }
 
 .doc-link {
-	padding: 0.5rem;
 	cursor: pointer;
 	display: flex;
 	flex-direction: row;
