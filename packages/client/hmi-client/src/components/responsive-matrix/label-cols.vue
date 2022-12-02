@@ -1,5 +1,5 @@
 <template>
-	<div class="label-container col" :style="labelStyle">
+	<div class="label-container col" :style="labelContainerStyle">
 		<div class="label" v-for="(value, idx) in labelValues" :key="idx" :style="getLabelStyle(idx)">
 			{{ value }}
 		</div>
@@ -10,6 +10,7 @@
 import { PropType } from 'vue';
 
 import { Point } from 'pixi.js';
+import { Viewport } from 'pixi-viewport';
 
 import { CellStatus } from '@/types/ResponsiveMatrix';
 
@@ -23,7 +24,7 @@ export default {
 
 	props: {
 		viewport: {
-			type: null,
+			type: null as unknown as PropType<Viewport>,
 			default() {
 				return null;
 			}
@@ -72,7 +73,7 @@ export default {
 
 	data() {
 		return {
-			labelStyle: {},
+			labelContainerStyle: {},
 			labelPositions: [] as number[],
 			labelValues: [] as any[]
 		};
@@ -83,7 +84,7 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	mounted() {
-		this.getColLabelStyle();
+		this.setLabelContainerStyle();
 		this.buildLabelData();
 	},
 
@@ -93,7 +94,7 @@ export default {
 
 	watch: {
 		move() {
-			this.getColLabelStyle();
+			this.setLabelContainerStyle();
 		},
 		update() {
 			this.buildLabelData();
@@ -115,19 +116,24 @@ export default {
 
 			this.labelPositions = [];
 			this.labelValues = [];
-			let pos = 0;
+			let labelPosition = 0;
 			for (let i = 0; i < this.selectedCols.length; i++) {
+				// get the number of micro-cols in this col
 				const len = this.microColSettings[this.selectedCols[i]];
 
 				if (!(i % labelStride)) {
-					this.labelPositions.push(pos + len / 2);
+					// use the position in the middle of the col
+					this.labelPositions.push(labelPosition + len / 2);
 					this.labelValues.push(this.labelColList[i]);
 				}
 
-				pos += len;
+				labelPosition += len;
 			}
 
-			this.labelPositions = this.labelPositions.map((v) => (v / pos) * 100);
+			// divide the label positions in the array by the sum of all the col lengths
+			// to normalize positions between 0 - 1. multiply by 100 to get a percentage
+			// value for use in css.
+			this.labelPositions = this.labelPositions.map((v) => v / labelPosition * 100);
 		},
 
 		getLabelStyle(idx) {
@@ -138,11 +144,11 @@ export default {
 			};
 		},
 
-		getColLabelStyle() {
+		setLabelContainerStyle() {
 			const topLeft = this.viewport?.toScreen(0, 0) || EMPTY_POINT;
 			const topRight = this.viewport?.toScreen(this.viewport.worldWidth, 0) || EMPTY_POINT;
 
-			this.labelStyle = {
+			this.labelContainerStyle = {
 				top: `${Math.max(topLeft.y, 0)}px`,
 				left: `${topLeft.x}px`,
 				right: `${topRight.x}px`,

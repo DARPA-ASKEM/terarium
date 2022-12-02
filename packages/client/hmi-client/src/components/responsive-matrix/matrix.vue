@@ -481,7 +481,7 @@ export default {
 		this.viewport.on('moved' as any, this.incrementMove);
 		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
 
-		// trigger update to re-render labels based on viewport
+		// force an update to update labels using viewport information
 		this.incrementMove();
 	},
 
