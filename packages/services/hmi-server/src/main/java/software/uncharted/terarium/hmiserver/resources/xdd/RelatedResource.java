@@ -23,10 +23,10 @@ public class RelatedResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/document")
-	@Tag(name = "Get related documents for a given doi")
+	@Tag(name = "Get related documents for a given XDD internal doc id")
 	public Response getRelatedDocuments(
 		@QueryParam("set") String set,
-		@QueryParam("doi") String doi) {
-		return proxy.getRelatedDocuments(set, doi);
+		@QueryParam("docid") String docid) {
+		return proxy.getRelatedDocuments(set, docid);
 	}
 }

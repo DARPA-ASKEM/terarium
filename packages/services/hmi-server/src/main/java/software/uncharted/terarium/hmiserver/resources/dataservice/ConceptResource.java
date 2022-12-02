@@ -6,6 +6,8 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ConceptProxy;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -78,5 +80,15 @@ public class ConceptResource {
 		final Concept concept
 	) {
 		return proxy.updateConcept(id, concept);
+	}
+
+	@GET
+	@Path("/facets")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response searchConceptsUsingFacets(
+		@QueryParam("types") final List<String> types,
+		@QueryParam("curies") final List<String> curies
+	) {
+		return proxy.searchConceptsUsingFacets(types, curies);
 	}
 }

@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { Project } from '@/types/Project';
+import { Project, ProjectAssets } from '@/types/Project';
 
 /**
  * Get a project per id
@@ -28,6 +28,22 @@ async function get(projectId: string): Promise<Project | null> {
 async function getAll(): Promise<Project[] | null> {
 	const response = await API.get('/projects');
 	return response?.data ?? null;
+}
+
+/**
+ * Get project assets for a given project per id
+ * @return ProjectAssets|null - the appropriate project, or null if none returned by API
+ */
+async function getAssets(projectId: string): Promise<ProjectAssets | null> {
+	try {
+		const response = await API.get(`/projects/${projectId}/assets`);
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
 }
 
 /**
@@ -58,4 +74,4 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { get, getAll, addAsset, deleteAsset };
+export { get, getAll, addAsset, deleteAsset, getAssets };
