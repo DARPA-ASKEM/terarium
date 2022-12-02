@@ -2,7 +2,7 @@
 /**
  * Sidebar component for navigating view.
  * */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
 // Icons
@@ -45,6 +45,7 @@ function openSidePanel() {
 
 // The Project page is the default
 const selectedView = ref<RouteName>(RouteName.ProjectRoute);
+const showSidePanel = computed(() => selectedView.value !== RouteName.ProjectRoute);
 
 function showSidebar(view: RouteName): boolean {
 	// Test for Sidebar that doesn't need Project
@@ -161,7 +162,7 @@ const openView = (view: RouteName) => {
 			<Button
 				round
 				class="side-panel-control"
-				v-if="isSidePanelClose && selectedView !== RouteName.ProjectRoute"
+				v-if="isSidePanelClose && showSidePanel"
 				@click="openSidePanel"
 			>
 				<IconArrowRight16 />
