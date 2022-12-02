@@ -166,7 +166,7 @@ import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isModel, isXDDArticle, validate } from '@/utils/data-util';
-import { isEmpty } from 'lodash';
+import { isEmpty, max, min } from 'lodash';
 
 // import IconClose16 from '@carbon/icons-vue/es/close/16';
 
@@ -293,11 +293,22 @@ const fetchDataItemList = async () => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
 			// NOTE: special case
 			if (clause.field === YEAR) {
-				// FIXME: handle the case when multiple years are selected
-				const val = (clause.values as string[]).join(',');
-				const formattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
-				xddSearchParams.min_published = formattedVal;
-				xddSearchParams.max_published = formattedVal;
+				if (clause.values.length === 1) {
+					// a single year is selected
+					const val = (clause.values as string[]).join(',');
+					const formattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
+					xddSearchParams.min_published = formattedVal;
+					xddSearchParams.max_published = formattedVal;
+				} else {
+					// multiple years are selected, so find their range
+					const years = clause.values.map((year) => +year);
+					const minYear = min(years);
+					const maxYear = max(years);
+					const formattedValMinYear = `${minYear}-01-01`; // must be in ISO format; 2020-01-01
+					const formattedValMaxYear = `${maxYear}-01-01`; // must be in ISO format; 2020-01-01
+					xddSearchParams.min_published = formattedValMinYear;
+					xddSearchParams.max_published = formattedValMaxYear;
+				}
 			} else {
 				const val = (clause.values as string[]).join(',');
 				xddSearchParams[clause.field] = val;
