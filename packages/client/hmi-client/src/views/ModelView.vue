@@ -36,6 +36,7 @@ watch(newModelId, (id) => {
 			modelId: id
 		}
 	} as Tab;
+	// Would have loved to use a Set here instead of an array, but equality was not working
 	const foundTabIndex = openTabs.value.findIndex((tab) => {
 		const tabProps = tab.props as ModelProps;
 		return tabProps.modelId === props.modelId;
