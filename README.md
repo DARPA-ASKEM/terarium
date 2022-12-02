@@ -1,3 +1,4 @@
+[![Build and Publish](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
 # TERArium
 
 TERArium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
