@@ -7,6 +7,7 @@
 name: Lint & Format Client
 # yamllint disable-line rule:truthy
 on:
+  workflow_call:
   push:
     paths:
       - 'packages/client/**'
