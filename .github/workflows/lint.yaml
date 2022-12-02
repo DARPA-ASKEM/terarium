@@ -4,6 +4,7 @@
 name: Global File Linting
 # yamllint disable-line rule:truthy
 on:
+  workflow_call:
   push:
     branches: ['main']
   pull_request:
