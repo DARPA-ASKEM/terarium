@@ -65,7 +65,7 @@ Using the [Playwright](https://marketplace.visualstudio.com/items?itemName=ms-pl
 
 For debugging simply set up a breakpoint in the test and run the test in debug mode and the test will pause at that location.
 
-> Note that the timeouts will continue so tests may fail just sitting on a breakdown
+> Note that the timeouts will continue so tests may fail just sitting on a breakpoint
 
 #### Creating Tests
 
