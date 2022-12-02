@@ -1,7 +1,7 @@
 <template>
 	<div class="label-container row" :style="labelContainerStyle">
-		<div class="label" v-for="(value, idx) in labelValues" :key="idx" :style="getLabelStyle(idx)">
-			{{ value }}
+		<div class="label" v-for="(label, idx) in labels" :key="idx" :style="getLabelStyle(idx)">
+			{{ label.value }}
 		</div>
 	</div>
 </template>
@@ -9,13 +9,11 @@
 <script lang="ts">
 import { PropType } from 'vue';
 
-import { Point } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 
 import { CellStatus } from '@/types/ResponsiveMatrix';
-
-// EMPTY_POINT used as a fallback value
-const EMPTY_POINT = new Point();
+import { viewport2Screen } from './pixi-utils';
+import { makeLabels } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -24,7 +22,7 @@ export default {
 
 	props: {
 		viewport: {
-			type: null as unknown as PropType<Viewport>,
+			type: null as nknown as PropType<Viewport>,
 			default() {
 				return null;
 			}
@@ -74,8 +72,7 @@ export default {
 	data() {
 		return {
 			labelContainerStyle: {},
-			labelPositions: [] as number[],
-			labelValues: [] as any[]
+			labels: [] as { value: string; position: number }[]
 		};
 	},
 
@@ -114,39 +111,25 @@ export default {
 			const thresholdLabelDensity = 8;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
 
-			this.labelPositions = [];
-			this.labelValues = [];
-			let labelPosition = 0;
-			for (let i = 0; i < this.selectedRows.length; i++) {
-				// get the number of micro-rows in this row
-				const len = this.microRowSettings[this.selectedRows[i]];
-
-				if (!(i % labelStride)) {
-					// use the position in the middle of the row
-					this.labelPositions.push(labelPosition + len / 2);
-					this.labelValues.push(this.labelRowList[i]);
-				}
-
-				labelPosition += len;
-			}
-
-			// divide the label positions in the array by the sum of all the row lengths
-			// to normalize positions between 0 - 1. multiply by 100 to get a percentage
-			// value for use in css.
-			this.labelPositions = this.labelPositions.map((v) => v / labelPosition * 100);
+			this.labels = makeLabels(
+				this.labelRowList,
+				this.selectedRows,
+				this.microRowSettings,
+				labelStride
+			);
 		},
 
 		getLabelStyle(idx) {
-			const position = this.labelPositions[idx];
+			const label = this.labels[idx];
 			return {
-				top: `${position}%`,
-				bottom: `${100 - position}%`
+				top: `${label.position}%`,
+				bottom: `${100 - label.position}%`
 			};
 		},
 
 		setLabelContainerStyle() {
-			const topLeft = this.viewport?.toScreen(0, 0) || EMPTY_POINT;
-			const bottomLeft = this.viewport?.toScreen(0, this.viewport.worldHeight) || EMPTY_POINT;
+			if (!this.viewport) return;
+			const { topLeft, bottomLeft } = viewport2Screen(this.viewport);
 
 			this.labelContainerStyle = {
 				left: `${Math.max(topLeft.x, 0)}px`,

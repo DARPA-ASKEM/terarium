@@ -1,7 +1,7 @@
 <template>
 	<div class="label-container col" :style="labelContainerStyle">
-		<div class="label" v-for="(value, idx) in labelValues" :key="idx" :style="getLabelStyle(idx)">
-			{{ value }}
+		<div class="label" v-for="(label, idx) in labels" :key="idx" :style="getLabelStyle(idx)">
+			{{ label.value }}
 		</div>
 	</div>
 </template>
@@ -9,13 +9,11 @@
 <script lang="ts">
 import { PropType } from 'vue';
 
-import { Point } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 
 import { CellStatus } from '@/types/ResponsiveMatrix';
-
-// EMPTY_POINT used as a fallback value
-const EMPTY_POINT = new Point();
+import { viewport2Screen } from './pixi-utils';
+import { makeLabels } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -74,8 +72,7 @@ export default {
 	data() {
 		return {
 			labelContainerStyle: {},
-			labelPositions: [] as number[],
-			labelValues: [] as any[]
+			labels: [] as { value: string; position: number }[]
 		};
 	},
 
@@ -114,39 +111,25 @@ export default {
 			const thresholdLabelDensity = 8;
 			const labelStride = Math.max(1, Math.ceil(viewportColDensity / thresholdLabelDensity));
 
-			this.labelPositions = [];
-			this.labelValues = [];
-			let labelPosition = 0;
-			for (let i = 0; i < this.selectedCols.length; i++) {
-				// get the number of micro-cols in this col
-				const len = this.microColSettings[this.selectedCols[i]];
-
-				if (!(i % labelStride)) {
-					// use the position in the middle of the col
-					this.labelPositions.push(labelPosition + len / 2);
-					this.labelValues.push(this.labelColList[i]);
-				}
-
-				labelPosition += len;
-			}
-
-			// divide the label positions in the array by the sum of all the col lengths
-			// to normalize positions between 0 - 1. multiply by 100 to get a percentage
-			// value for use in css.
-			this.labelPositions = this.labelPositions.map((v) => v / labelPosition * 100);
+			this.labels = makeLabels(
+				this.labelColList,
+				this.selectedCols,
+				this.microColSettings,
+				labelStride
+			);
 		},
 
 		getLabelStyle(idx) {
-			const position = this.labelPositions[idx];
+			const label = this.labels[idx];
 			return {
-				left: `${position}%`,
-				right: `${100 - position}%`
+				left: `${label.position}%`,
+				right: `${100 - label.position}%`
 			};
 		},
 
 		setLabelContainerStyle() {
-			const topLeft = this.viewport?.toScreen(0, 0) || EMPTY_POINT;
-			const topRight = this.viewport?.toScreen(this.viewport.worldWidth, 0) || EMPTY_POINT;
+			if (!this.viewport) return;
+			const { topLeft, topRight } = viewport2Screen(this.viewport);
 
 			this.labelContainerStyle = {
 				top: `${Math.max(topLeft.y, 0)}px`,
