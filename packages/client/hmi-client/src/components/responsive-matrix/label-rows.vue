@@ -128,8 +128,6 @@ export default {
 			}
 
 			this.labelPositions = this.labelPositions.map((v) => (v / pos) * 100);
-			// console.log(this.labelPositions);
-			// console.log(this.labelValues);
 		},
 
 		getLabelStyle(idx) {
