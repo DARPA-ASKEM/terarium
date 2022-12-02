@@ -12,12 +12,12 @@ on:
 jobs:
   lintYaml:
     name: Lint YAML Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yaml@282c11505705ff017ab58514c951cdf3453159f4
+    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yaml@1938a13230b6e45fc5ea546dcedcc5f2f873a124
     with:
       strict: false
 
   lintDocker:
     name: Lint Docker Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yaml@282c11505705ff017ab58514c951cdf3453159f4
+    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yaml@1938a13230b6e45fc5ea546dcedcc5f2f873a124
     with:
       failure-threshold: 'error'
