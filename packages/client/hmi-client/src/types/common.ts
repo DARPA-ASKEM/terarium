@@ -1,3 +1,4 @@
+import { ConceptFacets } from './Concept';
 import { Model, ModelSearchParams } from './Model';
 import { XDDArticle, XDDSearchParams } from './XDD';
 
@@ -24,6 +25,7 @@ export type ResultType = Model | XDDArticle;
 export type SearchResults = {
 	results: ResultType[];
 	facets?: Facets;
+	rawConceptFacets?: ConceptFacets | null;
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;

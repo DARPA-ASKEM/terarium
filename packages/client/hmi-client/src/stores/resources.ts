@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { Project } from '@/types/Project';
+import { Project, ProjectAssets } from '@/types/Project';
 
 /**
  * Mainly to store all data resources in this project, e.g. datasets, documents, models, etc.
@@ -7,7 +7,8 @@ import { Project } from '@/types/Project';
 const useResourcesStore = defineStore('resources', {
 	state: () => ({
 		xddDataset: null as string | null,
-		activeProject: null as null | Project
+		activeProject: null as null | Project,
+		activeProjectAssets: null as ProjectAssets | null
 	}),
 	actions: {
 		setXDDDataset(dataset: string | null) {

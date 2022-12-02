@@ -36,6 +36,9 @@ public class XDDSearchPayload implements Serializable {
 	@JsonbProperty("include_score")
 	private Boolean includeScore;
 
+	@JsonbProperty("include_highlights")
+	private Boolean includeHighlights;
+
 	@JsonbProperty("min_published")
 	private String minPublished; // Date
 
