@@ -135,6 +135,7 @@ export type XDDSearchParams = {
 	type?: XDDExtractionType;
 	ignoreBytes?: boolean;
 	fullResults?: boolean;
+	inclusive?: boolean;
 	includeScore?: boolean;
 	includeHighlights?: boolean;
 	facets?: boolean;

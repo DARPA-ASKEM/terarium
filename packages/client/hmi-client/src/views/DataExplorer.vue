@@ -166,6 +166,7 @@ import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { isEmpty } from 'lodash';
 
 // import IconClose16 from '@carbon/icons-vue/es/close/16';
 
@@ -250,7 +251,18 @@ const fetchDataItemList = async () => {
 	// this requires hitting the backend twice to grab filtered and filtered data (and facets)
 	//
 
-	const isValidDOI = validate(searchTerm.value);
+	let searchWords = searchTerm.value;
+
+	const isValidDOI = validate(searchWords);
+
+	const matchAll =
+		!isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
+	const allSearchTerms = searchWords.split(' ');
+	if (matchAll && allSearchTerms.length > 0) {
+		// multiple words are provided as search term and the user requested to match all of them
+		// the XDD api expects all search terms to be comma-separated if the user requested inclusive results
+		searchWords = allSearchTerms.join(',');
+	}
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
@@ -260,15 +272,16 @@ const fetchDataItemList = async () => {
 			max: pageSize.value,
 			perPage: pageSize.value,
 			fullResults: !rankedResults.value,
-			doi: isValidDOI ? searchTerm.value : undefined,
-			title: isSearchTitle.value && !isValidDOI ? searchTerm.value : undefined,
+			doi: isValidDOI ? searchWords : undefined,
+			title: isSearchTitle.value && !isValidDOI ? searchWords : undefined,
 			includeHighlights: true,
+			inclusive: matchAll,
 			facets: true // include facets aggregation data in the search results
 		}
 	};
 
 	// first: fetch the data unfiltered by facets
-	const allData: SearchResults[] = await fetchData(searchTerm.value, searchParams);
+	const allData: SearchResults[] = await fetchData(searchWords, searchParams);
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
@@ -300,10 +313,7 @@ const fetchDataItemList = async () => {
 	searchParams.model = modelSearchParams;
 
 	// fetch second time with facet filtered applied
-	const allDataFilteredWithFacets: SearchResults[] = await fetchData(
-		searchTerm.value,
-		searchParams
-	);
+	const allDataFilteredWithFacets: SearchResults[] = await fetchData(searchWords, searchParams);
 
 	// the list of results displayed in the data explorer is always the final filtered data
 	dataItems.value = allDataFilteredWithFacets;

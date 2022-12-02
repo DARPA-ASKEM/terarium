@@ -260,6 +260,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.includeHighlights) {
 		url += '&include_highlights=true';
 	}
+	if (xddSearchParam?.inclusive) {
+		url += '&inclusive=true';
+	}
 	if (enablePagination) {
 		url += '&full_results';
 	} else {
