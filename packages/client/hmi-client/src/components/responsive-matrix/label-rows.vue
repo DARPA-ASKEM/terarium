@@ -22,7 +22,7 @@ export default {
 
 	props: {
 		viewport: {
-			type: null as nknown as PropType<Viewport>,
+			type: null as unknown as PropType<Viewport>,
 			default() {
 				return null;
 			}
