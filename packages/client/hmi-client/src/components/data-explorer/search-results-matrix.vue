@@ -41,9 +41,9 @@
 <script setup lang="ts">
 import { computed, PropType, ref } from 'vue';
 import { Model } from '@/types/Model';
-import { XDDArticle } from '@/types/XDD';
+import { PUBLISHER, XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
-import { groupBy, omit, uniq } from 'lodash';
+import { groupBy, omit, orderBy, uniq } from 'lodash';
 import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { Dataset } from '@/types/Dataset';
 
@@ -173,6 +173,7 @@ const clustersInfo = computed(() => {
 	const vars = [] as string[];
 
 	if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		const clusters = [] as ResultsCluster[];
 		// concepts are columns or cluter variables
 		const concepts = rawConceptFacets.value?.facets.concepts ?? {};
 		const curies = Object.keys(concepts); // concept IDs
@@ -210,7 +211,7 @@ const clustersInfo = computed(() => {
 				// FIXME: currently many (datasets) items are duplicate so we need to filter them out
 				// only add if no similar cluster exist
 				// REVIEW: since the following line checks for similarity by name, while it should also check if cluster have the same items/concepts
-				const existingCluster = res.find((cluster) => cluster.name === item.name); // isEqual(cluster.items, clusterItemsRaw)
+				const existingCluster = clusters.find((cluster) => cluster.name === item.name); // isEqual(cluster.items, clusterItemsRaw)
 				if (!existingCluster) {
 					const cluster: ResultsCluster = {
 						name: item.name,
@@ -218,15 +219,30 @@ const clustersInfo = computed(() => {
 						items: clusterItemsRaw,
 						clusterVariables: conceptsForItem.map((c) => c.curie)
 					};
-					res.push(cluster);
+					clusters.push(cluster);
 				}
 			}
 		});
+
+		// sort by using the concepts of the first item in the cluster
+		// NOTE that the assumption here is that if the cluster has multiple items,
+		//      then they would share the same set of concepts
+		//
+		// first sort by the number of concepts, then by the actual concepts
+		const sortedClusters = orderBy(
+			clusters,
+			[
+				(c) => getConceptsForItem(c.items[0]).length,
+				(c) => getConceptsForItem(c.items[0]).map((n) => n.curie)
+			],
+			['desc']
+		);
+		res.push(...sortedClusters);
 	}
 
 	if (props.resultType === ResourceType.XDD) {
 		// cluster by known_terms, e.g., genes, and if not available then by some default field
-		let clusterVariable = 'publisher';
+		let clusterVariable = PUBLISHER;
 		let articlesToCluster = filteredArticles.value;
 		let clusteredArticles: { [clusterKey: string]: XDDArticle[] } = {};
 		const mutualExclusiveClutering = true;
