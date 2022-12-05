@@ -90,7 +90,6 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		System.out.println(ResourceType.findByType(type));
 		return proxy.deleteAsset(projectId, ResourceType.findByType(type), resourceId);
 	}
 }
