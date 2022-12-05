@@ -41,6 +41,14 @@
 					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
 					Models
 				</button>
+				<button
+					type="button"
+					:class="{ active: resultType === ResourceType.DATASET }"
+					@click="onResultTypeChanged(ResourceType.DATASET)"
+				>
+					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+					Datasets
+				</button>
 			</div>
 
 			<span class="section-label">View as</span>
@@ -124,6 +132,7 @@
 			<selected-resources-options-pane
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
+				@remove-item="toggleDataItemSelected"
 				@close="onClose"
 			/>
 		</div>
@@ -165,8 +174,9 @@ import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceTypeIcon, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { isEmpty, max, min } from 'lodash';
+import { Dataset } from '@/types/Dataset';
 
 // import IconClose16 from '@carbon/icons-vue/es/close/16';
 
@@ -175,6 +185,7 @@ import { isEmpty, max, min } from 'lodash';
 const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
 const dataItems = ref<SearchResults[]>([]);
+const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
 const searchTerm = ref('');
 const query = useQueryStore();
@@ -283,6 +294,9 @@ const fetchDataItemList = async () => {
 	// first: fetch the data unfiltered by facets
 	const allData: SearchResults[] = await fetchData(searchWords, searchParams);
 
+	// cache unfiltered data
+	dataItemsUnfiltered.value = allData;
+
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
@@ -318,10 +332,14 @@ const fetchDataItemList = async () => {
 	const modelSearchParams = searchParams?.model || {
 		filters: clientFilters.value
 	};
+	const datasetSearchParams = searchParams?.dataset || {
+		filters: clientFilters.value
+	};
 
 	// update search parameters object
 	searchParams.xdd = xddSearchParams;
 	searchParams.model = modelSearchParams;
+	searchParams.dataset = datasetSearchParams;
 
 	// fetch second time with facet filtered applied
 	const allDataFilteredWithFacets: SearchResults[] = await fetchData(searchWords, searchParams);
@@ -365,30 +383,30 @@ const onClose = () => {
 	emit('hide');
 };
 
-// FIXME: refactor as util func
-const isDataItemSelected = (item: ResultType) =>
-	selectedSearchItems.value.find((searchItem) => {
-		if (isModel(item)) {
+const toggleDataItemSelected = (item: ResultType) => {
+	let foundIndx = -1;
+	selectedSearchItems.value.forEach((searchItem, indx) => {
+		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
 			const searchItemAsModel = searchItem as Model;
-			return searchItemAsModel.id === itemAsModel.id;
+			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
 		}
-		if (isXDDArticle(item)) {
+		if (isDataset(item) && isDataset(searchItem)) {
+			const itemAsDataset = item as Dataset;
+			const searchItemAsDataset = searchItem as Dataset;
+			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
+		}
+		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
-			return searchItemAsArticle.title === itemAsArticle.title;
+			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
 		}
-		return false;
 	});
-
-const toggleDataItemSelected = (item: ResultType) => {
-	const itemID = (item as Model).id || (item as XDDArticle).title;
-	if (isDataItemSelected(item)) {
-		selectedSearchItems.value = selectedSearchItems.value.filter(
-			(searchItem) =>
-				(searchItem as Model).id !== itemID && (searchItem as XDDArticle).title !== itemID
-		);
+	if (foundIndx >= 0) {
+		// item was already in the list so remove it
+		selectedSearchItems.value.splice(foundIndx, 1);
 	} else {
+		// add it to the list
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
@@ -438,7 +456,7 @@ watch(resultType, () => {
 	// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
 	// re-calculate the facets
 	// REVIEW
-	refresh();
+	calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 });
 
 onMounted(async () => {

@@ -1,6 +1,26 @@
 <template>
 	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix">
+			<LabelCols
+				v-if="!disableLabelCol && rendererReady"
+				:selectedCols="selectedCols"
+				:labelColList="labelColList"
+				:microColSettings="microColSettings"
+				:numCols="numCols"
+				:viewport="viewport"
+				:update="update"
+				:move="move"
+			/>
+			<LabelRows
+				v-if="!disableLabelRow && rendererReady"
+				:selectedRows="selectedRows"
+				:labelRowList="labelRowList"
+				:microRowSettings="microRowSettings"
+				:numRows="numRows"
+				:viewport="viewport"
+				:update="update"
+				:move="move"
+			/>
 			<component
 				v-for="(selectedCell, idx) in selectedCellList"
 				:key="idx"
@@ -36,7 +56,7 @@
  * - pixi-viewport: https://davidfig.github.io/pixi-viewport/jsdoc/index.html
  */
 
-import { nextTick, PropType } from 'vue';
+import { ref, nextTick, PropType } from 'vue';
 
 import chroma from 'chroma-js';
 import { Viewport } from 'pixi-viewport';
@@ -61,6 +81,8 @@ import {
 } from '@/types/ResponsiveMatrix';
 import { uint32ArrayToRedIntTex } from './pixi-utils';
 
+import LabelCols from './label-cols.vue';
+import LabelRows from './label-rows.vue';
 import ResponsiveCellBarContainer from './cell-bar-container.vue';
 import ResponsiveCellLineContainer from './cell-line-container.vue';
 
@@ -77,6 +99,8 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	components: {
+		LabelCols,
+		LabelRows,
 		ResponsiveCellBarContainer,
 		ResponsiveCellLineContainer
 	},
@@ -92,14 +116,22 @@ export default {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
 		},
-		// labels: {
-		// 	type: null,
-		// 	default: [[], []],
-		// },
+		disableLabelRow: {
+			type: Boolean,
+			default() {
+				return false;
+			}
+		},
 		cellLabelRow: {
 			type: Array as PropType<number[] | string[]>,
 			default() {
 				return [];
+			}
+		},
+		disableLabelCol: {
+			type: Boolean,
+			default() {
+				return false;
 			}
 		},
 		cellLabelCol: {
@@ -162,9 +194,8 @@ export default {
 			microColArray: new Uint32Array(0) as Uint32Array,
 
 			uniforms: {} as Uniforms,
-			worldWidth: 0,
-			worldHeight: 0,
-
+			worldWidth: 1,
+			worldHeight: 1,
 			screenHeight: 0,
 			screenWidth: 0,
 
@@ -265,9 +296,13 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	setup() {
+		const rendererReady = ref(false);
+
 		return {
 			app: undefined as undefined | Application,
-			viewport: undefined as undefined | Viewport
+			viewport: undefined as undefined | Viewport,
+
+			rendererReady
 		};
 	},
 
@@ -449,6 +484,10 @@ export default {
 		this.viewport.on('pointerup', this.handleMouseUp);
 		this.viewport.on('moved' as any, this.incrementMove);
 		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
+		this.rendererReady = true;
+
+		// force an update to update labels using viewport information
+		this.incrementMove();
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -950,6 +989,7 @@ export default {
 			if (this.selectedCell.some((v) => Number.isNaN(v))) {
 				// selection is out-of-bounds
 				this.centerGraph();
+				this.incrementMove();
 				this.incrementUpdate();
 			} else if (this.isSelectionSelected(this.selectedCell)) {
 				this.removeSelected();

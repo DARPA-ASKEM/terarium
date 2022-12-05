@@ -68,3 +68,84 @@ h3 {
 h4 {
 	font: var(--un-font-h4)
 }
+
+
+/**
+* @section Forms
+* Styling for form elements.
+*/
+form,
+fieldset {
+	margin-bottom: 1rem;
+}
+ 
+fieldset {
+	border: 0;
+	padding: 0;
+}
+
+legend,
+label {
+	display: block;
+	margin: 0 0 0.3125em;
+	padding: 0;
+}
+
+/**
+* 1. Correct color not being inherited.
+*    Known issue: affects color of disabled elements.
+* 2. Correct font properties not being inherited.
+* 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
+*/
+button,
+input,
+optgroup,
+select,
+textarea {
+	color: var(--un-color-body-text-primary);
+	/* 1 */
+	font: inherit;
+	/* 2 */
+	margin: 0;
+	/* 3 */
+	padding: 0.3125em;
+}
+
+input,
+textarea,
+select {
+	border: 1px solid var(--un-color-black-40);
+	display: block;
+	line-height: 1.5;
+	margin-bottom: 1.1875em;
+	width: 100%;
+}
+@media (min-width: 40em) {
+	input,
+	textarea,
+	select {
+		line-height: 1.5625;
+	}
+}
+
+textarea {
+	height: 10em;
+	overflow: auto;
+	resize: vertical;
+}
+
+[type=image],
+[type=checkbox],
+[type=radio] {
+	cursor: pointer;
+	display: inline-block;
+	height: auto;
+	margin-bottom: 0.3125em;
+	padding: 0;
+	width: auto;
+}
+
+input:focus,
+textarea:focus {
+	border-color: var(--un-color-accent);
+}
