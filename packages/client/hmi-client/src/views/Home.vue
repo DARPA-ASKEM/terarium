@@ -29,10 +29,11 @@ const selectedPaper = ref<XDDArticle>();
 onMounted(async () => {
 	const allProjects = (await ProjectService.getAll()) as Project[];
 	if (allProjects) {
+		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
+		const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
+		const result = await Promise.all(promises);
 		for (let i = 0; i < allProjects.length; i++) {
-			// TODO: needs await but its in for loop so i cannot commit
-			// Not sure how else to go from promise<XDDArticles[]> to XDDArticles[]
-			allProjects[i].relatedArticles = ProjectService.getRelatedArticles(allProjects[i]);
+			allProjects[i].relatedArticles = result[i];
 		}
 		projects.value = await allProjects;
 	}
