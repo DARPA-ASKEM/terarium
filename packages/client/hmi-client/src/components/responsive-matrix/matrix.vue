@@ -10,6 +10,7 @@
 				:viewport="viewport"
 				:update="update"
 				:move="move"
+				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
 				v-if="!disableLabelRow && rendererReady"
@@ -20,6 +21,7 @@
 				:viewport="viewport"
 				:update="update"
 				:move="move"
+				:labelRowFormatFn="labelRowFormatFn"
 			/>
 			<component
 				v-for="(selectedCell, idx) in selectedCellList"
@@ -37,6 +39,8 @@
 				:parametersMin="dataParametersMin"
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				:labelRowFormatFn="labelRowFormatFn"
+				:labelColFormatFn="labelColFormatFn"
 				@click="selectedCellClick(idx)"
 			/>
 		</div>
@@ -71,6 +75,7 @@ import {
 	Point
 } from 'pixi.js';
 
+import { NumberValue } from 'd3';
 import {
 	SelectedCell,
 	SelectedCellValue,
@@ -156,6 +161,18 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		},
 		backgroundColor: {
