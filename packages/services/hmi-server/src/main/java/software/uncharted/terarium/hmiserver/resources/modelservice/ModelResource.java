@@ -6,6 +6,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 import software.uncharted.terarium.hmiserver.models.modelservice.Graph;
 import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
+import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositionParams;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -62,5 +63,16 @@ public class ModelResource {
 		final SimulateParams params
 	) {
 		return proxy.simulate(modelId, params);
+	}
+
+	@POST
+	@Path("/model-composition")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Compose two petri nets")
+	public Response modelComposition(
+		final ModelCompositionParams params
+	) {
+		return proxy.modelComposition(params);
 	}
 }

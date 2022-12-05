@@ -663,19 +663,13 @@ export default defineComponent({
 					modelB: stateNamesArrayB[i].trim()
 				});
 			}
-			const resp = await fetch(`http://localhost:8888/api/models/model-composition`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					modelA,
-					modelB,
-					statesToMerge
-				})
+			console.log(modelA);
+			const resp = await API.post(`model-service/models/model-composition`, {
+				modelA,
+				modelB,
+				statesToMerge
 			});
-			mergedModel = await resp.json();
+			mergedModel = await resp.data;
 			console.log('Merged petrinet', mergedModel);
 
 			g3 = parsePetriNet2IGraph(mergedModel);
