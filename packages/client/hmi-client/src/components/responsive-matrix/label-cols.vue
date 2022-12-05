@@ -22,7 +22,7 @@ export default {
 
 	props: {
 		viewport: {
-			type: null as unknown as PropType<Viewport>,
+			type: Viewport as PropType<Viewport>,
 			default() {
 				return null;
 			}
@@ -104,9 +104,9 @@ export default {
 
 	methods: {
 		buildLabelData() {
-			const visibleBounds = this.viewport?.getVisibleBounds();
+			const visibleBounds = this.viewport.getVisibleBounds();
 			const viewportColDensity =
-				((visibleBounds?.width || 0) / (this.viewport?.worldWidth || 1)) * this.numCols;
+				((visibleBounds?.width || 0) / (this.viewport.worldWidth || 1)) * this.numCols;
 
 			const thresholdLabelDensity = 8;
 			const labelStride = Math.max(1, Math.ceil(viewportColDensity / thresholdLabelDensity));

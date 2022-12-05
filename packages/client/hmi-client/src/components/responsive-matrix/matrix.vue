@@ -2,7 +2,7 @@
 	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix">
 			<LabelCols
-				v-if="!disableLabelCol"
+				v-if="!disableLabelCol && rendererReady"
 				:selectedCols="selectedCols"
 				:labelColList="labelColList"
 				:microColSettings="microColSettings"
@@ -12,7 +12,7 @@
 				:move="move"
 			/>
 			<LabelRows
-				v-if="!disableLabelRow"
+				v-if="!disableLabelRow && rendererReady"
 				:selectedRows="selectedRows"
 				:labelRowList="labelRowList"
 				:microRowSettings="microRowSettings"
@@ -56,7 +56,7 @@
  * - pixi-viewport: https://davidfig.github.io/pixi-viewport/jsdoc/index.html
  */
 
-import { nextTick, PropType } from 'vue';
+import { ref, nextTick, PropType } from 'vue';
 
 import chroma from 'chroma-js';
 import { Viewport } from 'pixi-viewport';
@@ -296,9 +296,13 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	setup() {
+		const rendererReady = ref(false);
+
 		return {
 			app: undefined as undefined | Application,
-			viewport: undefined as undefined | Viewport
+			viewport: undefined as undefined | Viewport,
+
+			rendererReady
 		};
 	},
 
@@ -480,6 +484,7 @@ export default {
 		this.viewport.on('pointerup', this.handleMouseUp);
 		this.viewport.on('moved' as any, this.incrementMove);
 		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
+		this.rendererReady = true;
 
 		// force an update to update labels using viewport information
 		this.incrementMove();
