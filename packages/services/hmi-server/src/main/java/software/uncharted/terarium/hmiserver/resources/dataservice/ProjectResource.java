@@ -79,6 +79,7 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
+		// String#toUpperCase is being used here to correct for Enum#valueOf usage, which we can't override
 		return proxy.createAsset(projectId, type.toUpperCase(), resourceId);
 	}
 
@@ -89,6 +90,7 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
+		// String#toUpperCase is being used here to correct for Enum#valueOf usage, which we can't override
 		return proxy.deleteAsset(projectId, type.toUpperCase(), resourceId);
 	}
 }
