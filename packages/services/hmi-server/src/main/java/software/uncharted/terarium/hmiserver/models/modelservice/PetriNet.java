@@ -8,16 +8,21 @@ import software.uncharted.terarium.hmiserver.models.modelservice.InputOutput;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import javax.json.bind.annotation.JsonbProperty;
 
 @Data
 @Accessors(chain = true)
 public class PetriNet implements Serializable {
-    // private List<StateTransition> S;
-	// private List<StateTransition> T;
-    // private List<InputOutput> I;
-	// private List<InputOutput> O;
-	private List<Map<String, String>> S;
-	private List<Map<String, String>> T;
-    private List<Map<String, Integer>> I;
-	private List<Map<String, Integer>> O;
+
+	@JsonbProperty("S")
+	private List<Map<String, String>> s;
+
+	@JsonbProperty("T")
+	private List<Map<String, String>> t;
+
+	@JsonbProperty("I")
+	private List<Map<String, Integer>> i;
+
+	@JsonbProperty("O")
+	private List<Map<String, Integer>> o;
 }
