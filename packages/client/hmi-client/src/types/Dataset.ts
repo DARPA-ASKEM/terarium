@@ -36,7 +36,7 @@ export type DatasetAnnotatedGeo = DatasetAnnotatedField & {
 export type DatasetAnnotations = {
 	data_paths: string[];
 	annotations: {
-		geo: DatasetAnnotatedGeo;
+		geo: DatasetAnnotatedGeo[];
 		date: DatasetAnnotatedDate[];
 		feature: DatasetAnnotatedFeature[];
 	};
@@ -57,6 +57,8 @@ export type Dataset = {
 	geospatial_resolution: string;
 	annotations: DatasetAnnotations;
 	maintainer: string | number;
+
+	type: string;
 };
 
 export type DatasetSearchParams = {

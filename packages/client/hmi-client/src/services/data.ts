@@ -163,7 +163,12 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 	// TEMP: add "type" field because it is needed to mark these resources as datasets
 	// FIXME: dependecy on type dataset should be removed and another "sub-system" or "result-type"
 	//        should be added for other resource types
-	const allDatasets = datasetsList.map((m) => ({ ...m, type: 'model' }));
+	const allDatasets = datasetsList.map((d) => ({
+		...d,
+		temporalResolution: d.temporal_resolution,
+		geospatialResolution: d.geospatial_resolution,
+		type: 'dataset'
+	}));
 
 	//
 	// simulate applying filters to the dataset query

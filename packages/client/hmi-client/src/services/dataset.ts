@@ -14,4 +14,6 @@ async function getAll(): Promise<Dataset[] | null> {
 	return response?.data ?? null;
 }
 
-export { getAll };
+const getDataset = async (datasetId: string) => API.get(`/datasets/${datasetId}`);
+
+export { getAll, getDataset };

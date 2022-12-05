@@ -33,16 +33,17 @@
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import Button from '@/components/Button.vue';
-import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { MODELS, Project, PUBLICATIONS } from '@/types/Project';
+import { DATASETS, MODELS, Project, PUBLICATIONS } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
+import { Dataset } from '@/types/Dataset';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -73,6 +74,9 @@ const formatDescription = (item: ResultType) => {
 	if (isModel(item)) {
 		itemDesc = (item as Model).description || itemDesc;
 	}
+	if (isDataset(item)) {
+		itemDesc = (item as Dataset).description || itemDesc;
+	}
 	if (isXDDArticle(item)) {
 		itemDesc =
 			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
@@ -88,6 +92,9 @@ const formatDescription = (item: ResultType) => {
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
 		return (item as Model).type;
+	}
+	if (isDataset(item)) {
+		return (item as Dataset).type;
 	}
 	if (isXDDArticle(item)) {
 		return ResourceType.XDD;
@@ -130,6 +137,17 @@ const addResourcesToProject = async (projectId: string) => {
 			// update local copy of project assets
 			validProject.value?.assets.models.push(modelId);
 			resources.activeProjectAssets?.[MODELS].push(selectedItem);
+		}
+		if (isDataset(selectedItem)) {
+			// FIXME: handle cases where assets is already added to the project
+			const datasetId = selectedItem.id;
+			// then, link and store in the project assets
+			const assetsType = DATASETS;
+			await ProjectService.addAsset(projectId, assetsType, datasetId);
+
+			// update local copy of project assets
+			validProject.value?.assets.datasets.push(datasetId);
+			resources.activeProjectAssets?.[DATASETS].push(selectedItem);
 		}
 	});
 };
