@@ -184,6 +184,7 @@ import { Dataset } from '@/types/Dataset';
 const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
 const dataItems = ref<SearchResults[]>([]);
+const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
 const searchTerm = ref('');
 const query = useQueryStore();
@@ -291,6 +292,9 @@ const fetchDataItemList = async () => {
 
 	// first: fetch the data unfiltered by facets
 	const allData: SearchResults[] = await fetchData(searchWords, searchParams);
+
+	// cache unfiltered data
+	dataItemsUnfiltered.value = allData;
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
@@ -458,7 +462,7 @@ watch(resultType, () => {
 	// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
 	// re-calculate the facets
 	// REVIEW
-	refresh();
+	calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 });
 
 onMounted(async () => {
