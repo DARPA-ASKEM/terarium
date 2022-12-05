@@ -67,7 +67,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 
 	let conceptFacets = await getConceptFacets([MODELS]);
 
-	if (modelSearchParam && modelSearchParam.filters) {
+	if (modelSearchParam && modelSearchParam.filters && modelSearchParam.filters.clauses.length > 0) {
 		// modelSearchParam currently represent facets filters that can be applied
 		//  to further refine the list of models
 
@@ -188,7 +188,11 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 
 	let conceptFacets = await getConceptFacets([DATASETS]);
 
-	if (datasetSearchParam && datasetSearchParam.filters) {
+	if (
+		datasetSearchParam &&
+		datasetSearchParam.filters &&
+		datasetSearchParam.filters.clauses.length > 0
+	) {
 		// datasetSearchParam currently represent facets filters that can be applied
 		//  to further refine the list of datasets
 

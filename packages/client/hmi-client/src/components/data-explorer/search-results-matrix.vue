@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { computed, PropType, ref } from 'vue';
-import { FRAMEWORK, Model } from '@/types/Model';
+import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import { groupBy, omit, uniq } from 'lodash';
@@ -48,8 +48,8 @@ import { Dataset } from '@/types/Dataset';
 export type ResultsCluster = {
 	name: string;
 	selected: boolean;
-	items: ResultType[];
-	clusterVariables: string[];
+	items: ResultType[]; // rows
+	clusterVariables: string[]; // columns
 };
 
 const props = defineProps({
@@ -113,12 +113,28 @@ const formatColumnName = (v: string) => {
 	return v.length < maxColumnNameChars ? v : `${v.substring(0, maxColumnNameChars)}...`;
 };
 
-const filteredModels = computed(() => {
+const modelsMap = computed(() => {
+	const modelMap: { [modelId: string]: Model } = {};
 	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
 	if (resList) {
-		return resList.results as Model[];
+		const models = resList.results as Model[];
+		models.forEach((model) => {
+			modelMap[model.id] = model;
+		});
 	}
-	return [] as Model[];
+	return modelMap;
+});
+
+const datasetsMap = computed(() => {
+	const datsetMap: { [datasetId: string]: Dataset } = {};
+	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.DATASET);
+	if (resList) {
+		const datasets = resList.results as Dataset[];
+		datasets.forEach((dataset) => {
+			datsetMap[dataset.id] = dataset;
+		});
+	}
+	return datsetMap;
 });
 
 const filteredArticles = computed(() => {
@@ -129,37 +145,60 @@ const filteredArticles = computed(() => {
 	return [] as XDDArticle[];
 });
 
-// const rawConceptFacets = computed(() => {
-// 	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
-// 	if (resList) {
-// 		return resList.rawConceptFacets;
-// 	}
-// 	return null;
-// });
+const rawConceptFacets = computed(() => {
+	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+	if (resList) {
+		return resList.rawConceptFacets;
+	}
+	return null;
+});
 
 const clustersInfo = computed(() => {
 	const res = [] as ResultsCluster[];
 	const vars = [] as string[];
 
-	if (props.resultType === ResourceType.MODEL) {
-		const clusterVariable = FRAMEWORK;
-		const clusteredModels = groupBy(filteredModels.value, clusterVariable);
-		const names = Object.keys(clusteredModels);
-		vars.push(...names);
-		names.forEach((name) => {
-			// are all the cluster items selected?
-			const clusterItems = clusteredModels[name];
-			// FIXME: this is not reflected in the facets panel
-			const isClusterSelected = clusterItems.every((clusterItem) =>
-				isDataItemSelected(clusterItem)
-			);
-			const c: ResultsCluster = {
-				name,
-				selected: isClusterSelected,
-				items: clusterItems,
-				clusterVariables: [name]
-			};
-			res.push(c);
+	if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		// concepts are columns or cluter variables
+		const concepts = rawConceptFacets.value?.facets.concepts ?? {};
+		const curies = Object.keys(concepts); // concept IDs
+
+		vars.push(...curies);
+
+		const getConceptsForItem = (item) =>
+			rawConceptFacets.value?.results.filter((c) => c.id === item.id) ?? [];
+
+		const rowItemsMap = props.resultType === ResourceType.MODEL ? modelsMap : datasetsMap;
+		const rowItems = Object.values(rowItemsMap.value);
+
+		// cluster models/datasets the share the same set of concepts
+		// const rowItemsWithEmbeddedConcepts = rowItems.map(item => ({...item, concepts: getConceptsForItem(item)}))
+		// const clusteredRowItems = groupBy(rowItemsWithEmbeddedConcepts, 'concepts');
+
+		// one row per model/dataset (cluster)
+		rowItems.forEach((item) => {
+			if (rawConceptFacets.value) {
+				// are all the cluster items selected?
+				const conceptsForItem = getConceptsForItem(item);
+
+				const clusterItemsRaw = [item];
+
+				// FIXME: this is not reflected in the facets panel
+				const isClusterSelected = clusterItemsRaw.every((clusterItem) =>
+					isDataItemSelected(
+						props.resultType === ResourceType.MODEL
+							? modelsMap[clusterItem.id]
+							: datasetsMap[clusterItem.id]
+					)
+				);
+
+				const cluster: ResultsCluster = {
+					name: item.name,
+					selected: isClusterSelected,
+					items: clusterItemsRaw,
+					clusterVariables: conceptsForItem.map((c) => c.curie)
+				};
+				res.push(cluster);
+			}
 		});
 	}
 
