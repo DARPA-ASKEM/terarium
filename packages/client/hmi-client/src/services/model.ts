@@ -1,4 +1,5 @@
 import API from '@/api/api';
+import { Model } from '@/types/Model';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { IGraph } from '@graph-scaffolder/types';
 
@@ -95,3 +96,12 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 };
 
 export const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
+
+/**
+ * Get all models
+ * @return Array<Model>|null - the list of all models, or null if none returned by API
+ */
+export async function getAllModelDescriptions(): Promise<Model[] | null> {
+	const response = await API.get('/models/descriptions');
+	return response?.data ?? null;
+}

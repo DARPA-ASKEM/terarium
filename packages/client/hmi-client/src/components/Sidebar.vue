@@ -20,13 +20,14 @@ import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
 // Components
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
+import DatasetSidebarPanel from '@/components/sidebar-panel/dataset-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
 import { RouteName } from '@/router/index';
-import { MODELS, PLANS, SIMULATION_RUNS, Project } from '@/types/Project';
+import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
 
 const router = useRouter();
 
@@ -51,6 +52,7 @@ function showSidebar(view: RouteName): boolean {
 	// Test for Sidebar that doesn't need Project
 	const needProject = [
 		RouteName.ModelRoute,
+		RouteName.DatasetRoute,
 		RouteName.DocumentRoute,
 		RouteName.ProfileRoute
 	].includes(view);
@@ -75,6 +77,10 @@ const openView = (view: RouteName) => {
 
 		if (view === RouteName.ModelRoute) {
 			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
+		}
+
+		if (view === RouteName.DatasetRoute) {
+			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? 1;
 		}
 
 		if (view === RouteName.SimulationRoute) {
@@ -126,7 +132,6 @@ const openView = (view: RouteName) => {
 					<IconChartCombo32 />
 				</li>
 				<li
-					disabled
 					:active="selectedView === RouteName.DatasetRoute"
 					:title="RouteName.DatasetRoute"
 					@click="openView(RouteName.DatasetRoute)"
@@ -172,6 +177,7 @@ const openView = (view: RouteName) => {
 			<header>{{ selectedView }}</header>
 			<main>
 				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
+				<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
 				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
 				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
 				<SimulationResultSidebarPanel

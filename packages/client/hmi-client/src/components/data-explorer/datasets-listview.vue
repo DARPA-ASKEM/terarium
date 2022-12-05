@@ -6,13 +6,13 @@
 					<tr>
 						<th><span class="left-cover" />Name</th>
 						<th>Description</th>
-						<th>Framework</th>
+						<th>Feature(s)</th>
 						<th>Preview<span class="right-cover" /></th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr
-						v-for="d in models"
+						v-for="d in datasets"
 						:key="d.id"
 						class="tr-item"
 						:class="{ selected: isSelected(d) }"
@@ -44,8 +44,10 @@
 						<td class="desc-col">
 							<p class="max-content">{{ formatDescription(d) }}</p>
 						</td>
-						<td class="framework-col">
-							<div class="text-bold">{{ d.framework }}</div>
+						<td class="maintainer-col">
+							<div v-for="feature in formatFeatures(d)" :key="feature">
+								{{ feature }}
+							</div>
 						</td>
 						<td class="preview-col">
 							<div class="preview-container">
@@ -61,16 +63,16 @@
 
 <script setup lang="ts">
 import { PropType, ref, toRefs, watch } from 'vue';
-import { Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
-import { isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { ConceptFacets } from '@/types/Concept';
+import { Dataset } from '@/types/Dataset';
+import { isDataset } from '@/utils/data-util';
 
 const props = defineProps({
-	models: {
-		type: Array as PropType<Model[]>,
+	datasets: {
+		type: Array as PropType<Dataset[]>,
 		default: () => []
 	},
 	rawConceptFacets: {
@@ -83,14 +85,14 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['toggle-model-selected']);
+const emit = defineEmits(['toggle-dataset-selected']);
 
 const expandedRowId = ref<string | number>('');
 
-const { models, selectedSearchItems } = toRefs(props);
+const { datasets, selectedSearchItems } = toRefs(props);
 
 watch(
-	models,
+	datasets,
 	() => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const elem: any = document.getElementsByClassName('table-fixed-head');
@@ -100,43 +102,51 @@ watch(
 	{ immediate: true }
 );
 
-const getConceptTags = (model: Model) => {
+const getConceptTags = (dataset: Dataset) => {
 	const tags = [] as string[];
 	if (props.rawConceptFacets) {
-		const modelConcepts = props.rawConceptFacets.results.filter(
-			(conceptResult) => conceptResult.id === model.id
+		const datasetConcepts = props.rawConceptFacets.results.filter(
+			(conceptResult) => conceptResult.id === dataset.id
 		);
-		tags.push(...modelConcepts.map((c) => c.name ?? c.curie));
+		tags.push(...datasetConcepts.map((c) => c.name ?? c.curie));
 	}
 	return tags;
 };
 
-const isExpanded = (model: Model) => expandedRowId.value === model.id;
+const isExpanded = (dataset: Dataset) => expandedRowId.value === dataset.id;
 
-const updateExpandedRow = (model: Model) => {
-	expandedRowId.value = expandedRowId.value === model.id ? '' : model.id;
+const updateExpandedRow = (dataset: Dataset) => {
+	expandedRowId.value = expandedRowId.value === dataset.id ? '' : dataset.id;
 };
 
-const formatOutputName = (d: Model) => d.name;
+const formatOutputName = (d: Dataset) => d.name;
 
-const isSelected = (model: Model) =>
+const isSelected = (dataset: Dataset) =>
 	selectedSearchItems.value.find((item) => {
-		if (isModel(item)) {
-			const itemAsModel = item as Model;
-			return itemAsModel.id === model.id;
+		if (isDataset(item)) {
+			const itemAsDataset = item as Dataset;
+			return itemAsDataset.id === dataset.id;
 		}
 		return false;
 	});
 
-const updateSelection = (model: Model) => {
-	emit('toggle-model-selected', model);
+const updateSelection = (dataset: Dataset) => {
+	emit('toggle-dataset-selected', dataset);
 };
 
-const formatDescription = (d: Model) => {
+const formatDescription = (d: Dataset) => {
 	if (!d.description) return '';
 	return isExpanded(d) || d.description.length < 140
 		? d.description
 		: `${d.description.substring(0, 140)}...`;
+};
+
+const formatFeatures = (d: Dataset) => {
+	const features = d.annotations.annotations.feature ?? [];
+	if (!features || features.length === 0) return [];
+	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
+	const max = 5;
+	return isExpanded(d) || featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
 };
 </script>
 
@@ -240,7 +250,7 @@ tr th {
 	width: 45%;
 }
 
-.framework-col {
+.maintainer-col {
 	width: 10%;
 	overflow-wrap: break-word;
 }
