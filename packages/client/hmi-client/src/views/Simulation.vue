@@ -141,11 +141,10 @@ const goToSimulationResultsPage = () => {
 <template>
 	<section>
 		<div class="dec-8-demo" v-if="IS_DEC_8_DEMO">
-			<!-- :src="`./assets/images/dec-8-slide-${slideIndex + 1}`" -->
 			<img
 				v-if="slideIndex === 0"
 				src="@assets/images/dec-8-slide-1.svg"
-				:alt="`slide ${slideIndex + 1}`"
+				alt="slide 1"
 				@click="nextSlide"
 			/>
 			<img
