@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class StateTransition {
+public class StateTransition implements Serializable {
     private String stname;
 	private String name;
 }

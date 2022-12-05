@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class InputOutput {
+public class InputOutput  implements Serializable {
     private String iost;
 	private Integer value;
 }

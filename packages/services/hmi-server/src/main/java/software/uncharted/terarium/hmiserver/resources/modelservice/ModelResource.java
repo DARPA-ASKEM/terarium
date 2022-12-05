@@ -73,6 +73,7 @@ public class ModelResource {
 	public Response modelComposition(
 		final ModelCompositionParams params
 	) {
+		System.out.println(params);
 		return proxy.modelComposition(params);
 	}
 }
