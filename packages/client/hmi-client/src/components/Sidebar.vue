@@ -106,41 +106,42 @@ const openView = (view: RouteName) => {
 			<ul>
 				<li
 					:active="selectedView === RouteName.ProjectRoute"
-					:title="RouteName.ProjectRoute"
+					title="Project summary"
 					@click="openView(RouteName.ProjectRoute)"
 				>
 					<IconAccount32 />
 				</li>
 				<li
-					:active="selectedView === RouteName.ModelRoute"
-					:title="RouteName.ModelRoute"
-					@click="openView(RouteName.ModelRoute)"
-				>
-					<IconMachineLearningModel32 />
-				</li>
-				<li
 					:active="selectedView === RouteName.SimulationRoute"
-					:title="RouteName.SimulationRoute"
+					title="Workflows"
 					@click="openView(RouteName.SimulationRoute)"
 				>
 					<IconAppConnectivity32 />
 				</li>
 				<li
-					:active="selectedView === RouteName.SimulationResultRoute"
-					@click="openView(RouteName.SimulationResultRoute)"
+					:active="selectedView === RouteName.ModelRoute"
+					title="Models"
+					@click="openView(RouteName.ModelRoute)"
 				>
-					<IconChartCombo32 />
+					<IconMachineLearningModel32 />
 				</li>
 				<li
 					:active="selectedView === RouteName.DatasetRoute"
-					:title="RouteName.DatasetRoute"
+					title="Data"
 					@click="openView(RouteName.DatasetRoute)"
 				>
 					<IconTableSplit32 />
 				</li>
 				<li
+					:active="selectedView === RouteName.SimulationResultRoute"
+					title="Analysis"
+					@click="openView(RouteName.SimulationResultRoute)"
+				>
+					<IconChartCombo32 />
+				</li>
+				<li
 					:active="selectedView === RouteName.DocumentRoute"
-					:title="RouteName.DocumentRoute"
+					title="Papers"
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocument32 />
