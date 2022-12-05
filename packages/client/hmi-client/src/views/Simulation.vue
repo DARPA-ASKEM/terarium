@@ -133,7 +133,7 @@ const nextSlide = () => {
 };
 const router = useRouter();
 const goToSimulationResultsPage = () => {
-	// FIXME: can't use RouteName.SimulationResultPage because it would result in a dependency cycle
+	// FIXME: can't use RouteName.SimulationResultRoute because it would result in a dependency cycle
 	router.push({ name: 'simulationResult' });
 };
 </script>
