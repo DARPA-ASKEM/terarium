@@ -14,12 +14,7 @@
 				<div class="content">
 					<div>Publisher: {{ item.publisher }}</div>
 					<div>Author: {{ item.author.map((a) => a.name).join(', ') }}</div>
-					<!-- TODO: May need more formatting than just replcing <p></p> in future -->
-					<div>
-						Abstract: {{item.abstract.replace( "
-						<p>","\n" ).replace("</p>
-						","\n") }}
-					</div>
+					<div>Abstract: {{ formatAbstract(item) }}</div>
 					<div>Journal: {{ item.journal }}</div>
 					<div>Doc ID:: {{ item.gddid }}</div>
 				</div>
@@ -77,6 +72,12 @@ const addResourcesToProject = async (projectId: string) => {
 			resources.activeProjectAssets?.publications.push(body);
 		}
 	});
+};
+
+// TODO: May need more formatting than just replcing <p></p> in future
+const formatAbstract = async (item: XDDArticle) => {
+	const abstract = item.abstract.replace('<p>', '\n').replace('</p>', '\n');
+	return abstract;
 };
 
 const addAssetsToProject = async (projectName?: string) => {
