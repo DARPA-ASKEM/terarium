@@ -1,3 +1,5 @@
+import { getMicroEl } from './matrix-utils.glsl';
+
 export default `
 #version 300 es
 
@@ -13,6 +15,7 @@ uniform usampler2D uMicroRow;
 
 uniform float uNumCol;
 uniform float uNumRow;
+uniform vec2 uMicroElDim;
 uniform float uScreenWidth;
 uniform float uScreenHeight;
 uniform float uWorldWidth;
@@ -27,10 +30,12 @@ uniform float uGridRowDisplayTransition;
 
 out vec4 fragColor;
 
+${getMicroEl}
+
 void main() {
 	// get the total number of micro cols and rows
-	float microColLen = float(textureSize(uMicroCol, 0).x);
-	float microRowLen = float(textureSize(uMicroRow, 0).x);
+	float microColLen = uMicroElDim.x;
+	float microRowLen = uMicroElDim.y;
 
 	// calculate micro border proximity value
 	vec2 microUvSize = 1. / vec2(microColLen, microRowLen);
@@ -38,14 +43,14 @@ void main() {
 	vec2 microBorderProximity = mix(microUv, 1. - microUv, lessThan(microUv, vec2(0.5)));
 
 	// get element neighbor indexes
-	uint colIndex = texelFetch(uMicroCol, ivec2(int(vUvs.x * microColLen), 0), 0).r;
-	uint rowIndex = texelFetch(uMicroRow, ivec2(int(vUvs.y * microRowLen), 0), 0).r;
+	uint colIndex = getMicroEl(uMicroCol, int(vUvs.x * microColLen)).r;
+	uint rowIndex = getMicroEl(uMicroRow, int(vUvs.y * microRowLen)).r;
 
 	// get the row/col index of the micro-row/col and that of its immediate neighbor
 	int colMicroNeighborIndex = microUv.x < 0.5 ? int(vUvs.x * microColLen) - 1 : int(vUvs.x * microColLen) + 1;
-	uint colNeighborIndex = texelFetch(uMicroCol, ivec2(colMicroNeighborIndex, 0), 0).r;
+	uint colNeighborIndex = getMicroEl(uMicroCol, colMicroNeighborIndex).r;
 	int rowMicroNeighborIndex = microUv.y < 0.5 ? int(vUvs.y * microRowLen) - 1 : int(vUvs.y * microRowLen) + 1;
-	uint rowNeighborIndex = texelFetch(uMicroRow, ivec2(rowMicroNeighborIndex, 0), 0).r;
+	uint rowNeighborIndex = getMicroEl(uMicroRow, rowMicroNeighborIndex).r;
 
 	// determine if border is at the external perimeter
 	bool isExternalColBorder = (vUvs.x * microColLen < 0.5) || (vUvs.x * microColLen > microColLen - 0.5);

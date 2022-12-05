@@ -59,7 +59,7 @@ import {
 	CellType,
 	Uniforms
 } from '@/types/ResponsiveMatrix';
-import { uint32ArrayToRedIntTex } from './pixi-utils';
+import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
 import ResponsiveCellBarContainer from './cell-bar-container.vue';
 import ResponsiveCellLineContainer from './cell-line-container.vue';
@@ -155,13 +155,17 @@ export default {
 			numRows: 0,
 			numCols: 0,
 
+			glMaxTextureSize: 4096,
+
 			// break down real rows and columns (with arbitrarily different dimensions)
 			// into uniformly sized "micro" rows and columns using a process analogous
 			// to grid supersampling
-			microRowArray: new Uint32Array(0) as Uint32Array,
-			microColArray: new Uint32Array(0) as Uint32Array,
+			microRowArray: [] as number[],
+			microColArray: [] as number[],
 
-			uniforms: {} as Uniforms,
+			uniforms: {
+				uMicroElDim: { x: 1, y: 1 },
+			} as Uniforms,
 			worldWidth: 0,
 			worldHeight: 0,
 
@@ -316,6 +320,9 @@ export default {
 		});
 		matrix.appendChild(this.app.view as unknown as Node);
 
+		// use the app webgl context to set the gl max texture size
+		this.glMaxTextureSize = getGlMaxTextureSize(this.app);
+
 		// create viewport
 		const screenHeight = this.screenHeight;
 		const screenWidth = this.screenWidth;
@@ -411,6 +418,7 @@ export default {
 			// row/col data
 			uNumRow: this.numRows,
 			uNumCol: this.numCols,
+			uMicroElDim: this.uniforms.uMicroElDim,
 			uMicroRow: this.uniforms.uMicroRow,
 			uMicroCol: this.uniforms.uMicroCol,
 
@@ -613,7 +621,7 @@ export default {
 		 * @param {CellStatus[]} elStatusArray
 		 * @param {number[]} statusSettingsArray
 		 */
-		createMicroArray(elStatusArray: CellStatus[], statusSettingsArray: number[]): Uint32Array {
+		createMicroArray(elStatusArray: CellStatus[], statusSettingsArray: number[]): number[] {
 			const microArray: number[] = [];
 			let i = 0;
 
@@ -623,7 +631,7 @@ export default {
 				}
 			}
 
-			return new Uint32Array(microArray);
+			return microArray;
 		},
 
 		// ///////////////////////////////////////////////////////////////////////////////
@@ -652,24 +660,32 @@ export default {
 			});
 
 			this.microRowArray = this.createMicroArray(this.selectedRows, this.microRowSettings);
-			// TODO: switch microRows to use 2D textures to avoid running into texture size limits
-			this.uniforms.uMicroRow = uint32ArrayToRedIntTex(
-				this.microRowArray,
-				this.microRowArray.length,
-				1
-			);
+			this.uniforms.uMicroElDim.y = this.microRowArray.length;
+			this.uniforms.uMicroRow = this.createMicroElTexture(this.microRowArray);
 
 			this.microColArray = this.createMicroArray(this.selectedCols, this.microColSettings);
-			// TODO: switch microRows to use 2D textures to avoid running into texture size limits
-			this.uniforms.uMicroCol = uint32ArrayToRedIntTex(
-				this.microColArray,
-				this.microColArray.length,
-				1
-			);
+			this.uniforms.uMicroElDim.x = this.microColArray.length;
+			this.uniforms.uMicroCol = this.createMicroElTexture(this.microColArray);
 
 			// wait for the grid recalculation to complete before triggering children update
 			await nextTick();
 			this.incrementUpdate();
+		},
+
+		/**
+		 * With a micro element array as input, produce a 2D texture of the minimum size required to
+		 * contain the input data.
+		 * @param {number[]} microElArray
+		 */
+		createMicroElTexture(microElArray: number[]) {
+			const microElArrayBufferDim = getTextureDim(microElArray.length, this.glMaxTextureSize);
+			const microElArrayBuffer = new Uint32Array(microElArrayBufferDim.n);
+			microElArrayBuffer.set(microElArray);
+			return uint32ArrayToRedIntTex(
+				microElArrayBuffer,
+				microElArrayBufferDim.x,
+				microElArrayBufferDim.y,
+			);
 		},
 
 		/**

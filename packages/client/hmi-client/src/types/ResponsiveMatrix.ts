@@ -58,6 +58,7 @@ export type Uniforms = {
 	// row/col data
 	uNumRow: number;
 	uNumCol: number;
+	uMicroElDim: { x: number, y: number },
 	uMicroRow: Texture<Resource>;
 	uMicroCol: Texture<Resource>;
 

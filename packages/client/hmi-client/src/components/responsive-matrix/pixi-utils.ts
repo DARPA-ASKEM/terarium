@@ -1,4 +1,4 @@
-import { Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
+import { Application, Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
 
 // taken from https://github.com/pixijs/pixijs/issues/6436#issuecomment-591695313
 export class CustomBufferResource extends Resource {
@@ -52,7 +52,33 @@ export class CustomBufferResource extends Resource {
 
 		return true;
 	}
-}
+};
+
+/**
+ * Get the WebGL max texture size limit using the pixi application gl instance.
+ * @param {Application} app
+ */
+export const getGlMaxTextureSize = (app: Application): number => {
+	const { gl } = (app.renderer as any).context;
+	return gl.getParameter(gl.MAX_TEXTURE_SIZE);
+};
+
+/**
+ * Given a data size and a max texture size, find the dimensions of the smallest 2D texture required
+ * to hold the data.
+ * @param {number} dataSize
+ * @param {number} maxTextureSize
+ */
+export const getTextureDim = (dataSize: number, maxTextureSize: number) => {
+	const dataSizeToMaxRatio = dataSize / maxTextureSize;
+	const x = dataSizeToMaxRatio >= 1 ? maxTextureSize : dataSize % maxTextureSize || 1;
+	const y = Math.ceil(dataSizeToMaxRatio) || 1
+	return {
+		x,
+		y,
+		n: x * y,
+	};
+};
 
 // see pg 124 of WebGL2 spec for valid internalFormat/format/type combinations
 // https://registry.khronos.org/OpenGL/specs/es/3.0/es_spec_3.0.pdf
