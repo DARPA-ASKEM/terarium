@@ -20,7 +20,12 @@
 			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
 				<div class="item-header">
 					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
-					<div class="item-title" :title="getTitle(item)">{{ formatTitle(item) }}</div>
+					<div class="item-title" :title="getTitle(item)">
+						{{ formatTitle(item) }}
+					</div>
+					<div class="item-delete-btn" @click.stop="removeItem(item)">
+						<IconClose16 />
+					</div>
 				</div>
 				<div class="content">
 					<multiline-description :text="formatDescription(item)" />
@@ -44,6 +49,7 @@ import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -52,7 +58,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'remove-item']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
@@ -169,6 +175,10 @@ const addAssetsToProject = async (projectName?: string) => {
 	emit('close');
 };
 
+const removeItem = (item: ResultType) => {
+	emit('remove-item', item);
+};
+
 onMounted(async () => {
 	const all = await ProjectService.getAll();
 	if (all !== null) {
@@ -238,5 +248,15 @@ onMounted(async () => {
 
 .selected-items-container .selected-item .content {
 	margin-left: 22px;
+}
+
+.item-delete-btn {
+	color: var(--un-color-body-text-disabled);
+	cursor: pointer;
+}
+
+.item-delete-btn:hover {
+	/* color: var(--un-color-body-text-primary); */
+	color: red;
 }
 </style>

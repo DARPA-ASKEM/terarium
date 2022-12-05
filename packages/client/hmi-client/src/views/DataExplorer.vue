@@ -132,6 +132,7 @@
 			<selected-resources-options-pane
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
+				@remove-item="toggleDataItemSelected"
 				@close="onClose"
 			/>
 		</div>

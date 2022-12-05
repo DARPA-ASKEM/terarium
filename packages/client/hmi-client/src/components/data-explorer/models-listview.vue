@@ -33,7 +33,7 @@
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
 									<template v-if="isExpanded(d)">
 										<br />
-										<div><b>Tags</b></div>
+										<div><b>Concepts</b></div>
 										<div v-for="tag in getConceptTags(d)" :key="tag">
 											{{ tag }}
 										</div>
