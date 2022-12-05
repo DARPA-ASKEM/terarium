@@ -5,7 +5,9 @@
 				<thead>
 					<tr>
 						<th></th>
-						<th v-for="v in clustersInfo.variables" :key="v">{{ formatColumnName(v) }}</th>
+						<th v-for="v in clustersInfo.variables" :key="v" :title="formatFullColumnName(v)">
+							{{ formatColumnName(v) }}
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -108,11 +110,6 @@ const isDataItemSelected = (item: ResultType) =>
 		return false;
 	});
 
-const formatColumnName = (v: string) => {
-	const maxColumnNameChars = 25;
-	return v.length < maxColumnNameChars ? v : `${v.substring(0, maxColumnNameChars)}...`;
-};
-
 const modelsMap = computed(() => {
 	const modelMap: { [modelId: string]: Model } = {};
 	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
@@ -152,6 +149,24 @@ const rawConceptFacets = computed(() => {
 	}
 	return null;
 });
+
+const getConceptNameFromCurie = (curie: string) =>
+	rawConceptFacets.value?.facets.concepts[curie].name ?? curie;
+
+const formatColumnName = (v: string) => {
+	if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		v = getConceptNameFromCurie(v);
+	}
+	const maxColumnNameChars = 24;
+	return v.length < maxColumnNameChars ? v : `${v.substring(0, maxColumnNameChars)}...`;
+};
+
+const formatFullColumnName = (v: string) => {
+	if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		v = getConceptNameFromCurie(v);
+	}
+	return v;
+};
 
 const clustersInfo = computed(() => {
 	const res = [] as ResultsCluster[];
