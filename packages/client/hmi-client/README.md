@@ -9,6 +9,19 @@
 
 - [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
 
+## HTTP Requests
+
+You can import and use the singleton [axios](https://axios-http.com/) instance to make requests to the `hmi-server` package like so:
+
+```ts
+import API from '@/api/api';
+
+// ... in an async function:
+const response = await API.get('models');
+```
+
+This will be routed through the gateway layer to avoid CORS issues.
+
 ## Type Support For `.vue` Imports in TS
 
 Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
@@ -52,7 +65,7 @@ Using the [Playwright](https://marketplace.visualstudio.com/items?itemName=ms-pl
 
 For debugging simply set up a breakpoint in the test and run the test in debug mode and the test will pause at that location.
 
-> Note that the timeouts will continue so tests may fail just sitting on a breakdown
+> Note that the timeouts will continue so tests may fail just sitting on a breakpoint
 
 #### Creating Tests
 

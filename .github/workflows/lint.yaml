@@ -1,0 +1,31 @@
+---
+# This workflow will do a lint all YAML and DOcker files
+name: Global File Linting
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+  push:
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**/Dockerfile*'
+    branches: ['main']
+  pull_request:
+    paths:
+      - '**.yaml'
+      - '**.yml'
+      - '**/Dockerfile*'
+    branches: ['main']
+
+jobs:
+  lintYaml:
+    name: Lint YAML Files
+    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yaml@1938a13230b6e45fc5ea546dcedcc5f2f873a124
+    with:
+      strict: false
+
+  lintDocker:
+    name: Lint Docker Files
+    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yaml@1938a13230b6e45fc5ea546dcedcc5f2f873a124
+    with:
+      failure-threshold: 'error'

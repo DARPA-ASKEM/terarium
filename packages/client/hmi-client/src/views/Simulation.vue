@@ -1,9 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import graphScaffolder from '@graph-scaffolder/index';
-import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import {
+	runDagreLayout,
+	D3SelectionINode,
+	D3SelectionIEdge,
+	BaseComputionGraph,
+	pathFn
+} from '@/services/graph';
 import { parseSimulationPlan2IGraph } from '@/services/simulation';
-import * as d3 from 'd3';
+import API from '@/api/api';
+import { curveBasis } from 'd3';
+
+// FIXME: remove after Dec 8 demo
+const IS_DEC_8_DEMO = true;
 
 interface NodeData {
 	boxType: string;
@@ -11,40 +21,7 @@ interface NodeData {
 }
 interface EdgeData {}
 
-const MARKER_VIEWBOX = '-5 -5 10 10';
-const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
-const pathFn = d3
-	.line<{ x: number; y: number }>()
-	.x((d) => d.x)
-	.y((d) => d.y);
-
-class SimulationPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
-	setupDefs() {
-		const svg = d3.select(this.svgEl);
-
-		// Clean up
-		svg.select('defs').selectAll('.edge-marker-end').remove();
-
-		// Arrow defs
-		svg
-			.select('defs')
-			.append('marker')
-			.classed('edge-marker-end', true)
-			.attr('id', 'arrowhead')
-			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 2)
-			.attr('refY', 0)
-			.attr('orient', 'auto')
-			.attr('markerWidth', 15)
-			.attr('markerHeight', 15)
-			.attr('markerUnits', 'userSpaceOnUse')
-			.attr('xoverflow', 'visible')
-			.append('svg:path')
-			.attr('d', ARROW)
-			.style('fill', '#000')
-			.style('stroke', 'none');
-	}
-
+class SimulationPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		selection
 			.append('rect')
@@ -55,28 +32,20 @@ class SimulationPlanRenderer extends graphScaffolder.BasicRenderer<NodeData, Edg
 			.style('stroke', '#888');
 
 		selection
-			.append('rect')
-			.classed('shape', true)
-			.attr('x', (d) => d.width)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
-			.style('fill', '#48B')
-			.style('stroke', '#888');
-
-		selection
 			.append('text')
 			.attr('y', -5)
 			.text((d) => d.data.label);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
+		const pFn = pathFn.curve(curveBasis);
 		selection
 			.append('path')
-			.attr('d', (d) => pathFn(d.points))
+			.attr('d', (d) => pFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
-			.attr('marker-end', 'url(#arrowhead)');
+			.attr('marker-end', `url(#${this.EDGE_ARROW_ID})`);
 	}
 }
 
@@ -106,13 +75,37 @@ const plan = {
 	PassWire: null
 };
 
+const route = useRoute();
+
 onMounted(async () => {
+	// FIXME: remove after Dec 8 Demo
+	if (IS_DEC_8_DEMO) return;
 	const divElement = (document.querySelector('.simulation-plan') ?? [0]) as HTMLDivElement;
 	const renderer = new SimulationPlanRenderer({
 		el: divElement,
 		useAStarRouting: true,
 		runLayout: runDagreLayout
 	});
+
+	// Kick off watcher once the renderer is in place
+	watch(
+		() => route.params.simulationId,
+		async (simulationId) => {
+			if (!simulationId) return;
+
+			// FIXME: siwtch to different simulation run result
+			console.log('simulation id changed to', simulationId);
+			const response = await API.get(`/simulations/plans/${simulationId}`);
+
+			const newPlan = parseSimulationPlan2IGraph(response.data.content);
+			newPlan.width = 500;
+			newPlan.height = 500;
+			const graphData = runDagreLayout<NodeData, EdgeData>(newPlan);
+			await renderer.setData(graphData);
+			await renderer.render();
+		},
+		{ immediate: true }
+	);
 
 	// Test interaction
 	renderer.on(
@@ -132,14 +125,83 @@ onMounted(async () => {
 	await renderer.setData(graphData);
 	await renderer.render();
 });
+
+// TODO: remove after Dec 8 demo
+const slideIndex = ref(0);
+const nextSlide = () => {
+	slideIndex.value += 1;
+};
+const router = useRouter();
+const goToSimulationResultsPage = () => {
+	// FIXME: can't use RouteName.SimulationResultRoute because it would result in a dependency cycle
+	router.push({ name: 'simulationResult' });
+};
 </script>
 
 <template>
 	<section>
-		<div>Simulation page</div>
-		<div>Question template</div>
-		<div>Simulation Plan: <button type="button">Run simulation</button></div>
-		<div class="simulation-plan"></div>
+		<div class="dec-8-demo" v-if="IS_DEC_8_DEMO">
+			<img
+				v-if="slideIndex === 0"
+				src="@assets/images/dec-8-slide-1.svg"
+				alt="slide 1"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 1"
+				src="@assets/images/dec-8-slide-2.svg"
+				alt="slide 2"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 2"
+				src="@assets/images/dec-8-slide-3.svg"
+				alt="slide 3"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 3"
+				src="@assets/images/dec-8-slide-4.svg"
+				alt="slide 4"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 4"
+				src="@assets/images/dec-8-slide-5.svg"
+				alt="slide 5"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 5"
+				src="@assets/images/dec-8-slide-6.svg"
+				alt="slide 6"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 6"
+				src="@assets/images/dec-8-slide-7.svg"
+				alt="slide 7"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 7"
+				src="@assets/images/dec-8-slide-8.svg"
+				alt="slide 8"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 8"
+				src="@assets/images/dec-8-slide-9.svg"
+				alt="slide 9"
+				@click="goToSimulationResultsPage"
+			/>
+		</div>
+		<template v-else>
+			<div>Simulation page</div>
+			<div>Question template</div>
+			<div>Simulation Plan: <button type="button">Run simulation</button></div>
+			<div class="simulation-plan"></div>
+		</template>
 	</section>
 </template>
 
@@ -149,5 +211,18 @@ onMounted(async () => {
 	height: 400px;
 	margin: 5px;
 	border: 1px solid #888;
+}
+
+/* FIXME: remove after dec 8 demo */
+.dec-8-demo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1400px;
+	height: 400px;
+}
+
+.dec-8-demo img {
+	cursor: pointer;
 }
 </style>

@@ -1,52 +1,63 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
+import DocumentView from '@/views/Document.vue';
 import HomeView from '@/views/Home.vue';
-import ResponsiveMatrixCells from '@/components/ResponsiveMatrixCells.vue';
-import TA2Playground from '@/views/TA2Playground.vue';
+import ModelView from '@/views/Model.vue';
+import DatasetView from '@/views/Dataset.vue';
+import ProjectView from '@/views/Project.vue';
+import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
+import SimulationView from '@/views/Simulation.vue';
+import SimulationResultView from '@/views/SimulationResult.vue';
+import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
-import DocumentView from '@/views/document.vue';
-import Simulation from '@/views/Simulation.vue';
-import Model from '@/views/Model.vue';
 
 export enum RoutePath {
 	Home = '/',
-
-	DocView = '/docs/:id?',
-	ModelView = '/projects/:projectId/model',
-	SimulationView = '/projects/:projectId/simulation',
-	Results = '/projects/:projectId/results',
+	Document = '/docs/:id?',
+	Project = '/projects/:projectId',
+	Model = '/projects/:projectId/model/:modelId?',
+	Dataset = '/projects/:projectId/dataset/:datasetId?',
+	Simulation = '/projects/:projectId/simulations/:simulationId?',
+	SimulationResult = '/projects/:projectId/simulation-results/:simulationRunId?',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
+	ResponsivePlaygroundPath = '/responsive-playground',
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
 }
 
 // Named routes
 export enum RouteName {
-	HomeRoute = 'home',
-	SimulationRoute = 'simulation',
-	ModelRoute = 'model',
-
 	DatasetRoute = 'dataset',
 	DocumentRoute = 'document',
+	HomeRoute = 'home',
+	ModelRoute = 'model',
+	ProfileRoute = 'profile',
+	ProjectRoute = 'project',
 	ProvenanceRoute = 'provenance',
-	ProfileRoute = 'profile'
+	SimulationRoute = 'simulation',
+	SimulationResultRoute = 'simulationResult'
 }
 
 const routes = [
+	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
-	{ name: RouteName.SimulationRoute, path: RoutePath.SimulationView, component: Simulation },
-	{ name: RouteName.ModelRoute, path: RoutePath.ModelView, component: Model },
-
-	// TODO
-	{ path: RoutePath.Results, component: ResponsiveMatrixCells },
-	{ path: RoutePath.DocView, component: DocumentView, props: true },
+	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
+	{ name: RouteName.DatasetRoute, path: RoutePath.Dataset, component: DatasetView, props: true },
+	{ name: RouteName.ProjectRoute, path: RoutePath.Project, component: ProjectView },
+	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
+	{
+		name: RouteName.SimulationResultRoute,
+		path: RoutePath.SimulationResult,
+		component: SimulationResultView
+	},
 
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
+	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground }
 ];
 

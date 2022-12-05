@@ -1,14 +1,16 @@
 <template>
 	<div class="document-list-container">
 		<div
-			v-for="doc in documents"
-			:key="doc.gddid"
+			v-for="docAsset in documents"
+			:key="docAsset.xdd_uri"
 			class="doc-link"
-			:class="{ active: doc.gddid === docID }"
-			@click="openDocumentPage(doc)"
+			:class="{ active: docAsset.xdd_uri === documentId }"
+			@click="openDocumentPage(docAsset)"
 		>
-			<span>{{ formatTitle(doc) }}</span>
-			<span class="doc-delete-btn" @click.stop="removeDocument(doc)">
+			<span class="doc-title">
+				{{ docAsset.title }}
+			</span>
+			<span class="doc-delete-btn" @click.stop="removeDocument(docAsset)">
 				<IconClose32 />
 			</span>
 		</div>
@@ -21,41 +23,52 @@
  * Display a list of documents available in the current Project.
  */
 import useResourcesStore from '@/stores/resources';
-import { XDDArticle } from '@/types/XDD';
-import { getResourceID } from '@/utils/data-util';
-import { isEmpty } from 'lodash';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
+import { deleteAsset } from '@/services/project';
+import { PUBLICATIONS } from '@/types/Project';
+import { PublicationAsset } from '@/types/XDD';
 
 const router = useRouter();
 
 const resourcesStore = useResourcesStore();
-const documents = computed(() => resourcesStore.documents);
 
-const formatTitle = (doc: XDDArticle) => {
-	const maxSize = 32;
-	const itemTitle = doc.title;
-	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-};
+const documentId = ref('');
+const documents = ref<PublicationAsset[]>([]);
 
-const docID = ref('');
-
-const openDocumentPage = (doc: XDDArticle) => {
+const openDocumentPage = async (docAsset: PublicationAsset) => {
 	// pass this doc id as param
-	docID.value = getResourceID(doc);
-	router.push({ path: `/docs/${docID.value}` });
+	documentId.value = docAsset.xdd_uri; // track selection
+	router.push({ path: `/docs/${docAsset.xdd_uri}` });
 };
 
-const removeDocument = (doc: XDDArticle) => {
-	resourcesStore.removeResource(doc);
-	router.push('/docs'); // clear the doc ID as a URL param
+const removeDocument = async (docAsset: PublicationAsset) => {
+	// remove the document from the project assets
+	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
+		const assetsType = PUBLICATIONS;
+		deleteAsset(resourcesStore.activeProject.id, assetsType, docAsset.id);
+		// remove also from the local cache
+		resourcesStore.activeProject.assets[PUBLICATIONS] = resourcesStore.activeProject.assets[
+			PUBLICATIONS
+		].filter((docId) => docId !== docAsset.id);
+		resourcesStore.activeProjectAssets[PUBLICATIONS] = resourcesStore.activeProjectAssets[
+			PUBLICATIONS
+		].filter((document) => document.id !== docAsset.id);
+		documents.value = resourcesStore.activeProjectAssets[PUBLICATIONS];
+	}
+
+	// if the user deleted the currently selected document, then clear its content from the view
+	if (docAsset.xdd_uri === documentId.value) {
+		router.push('/docs'); // clear the doc ID as a URL param
+	}
 };
 
 onMounted(() => {
-	const routeParams = router.currentRoute.value.params;
-	if (!isEmpty(routeParams) && routeParams.id !== '' && docID.value === '') {
-		docID.value = routeParams.id as string;
+	// get the list of publications associated with this project and display them
+	const documentsInCurrentProject = resourcesStore.activeProjectAssets?.publications;
+	if (documentsInCurrentProject) {
+		documents.value = documentsInCurrentProject;
 	}
 });
 </script>
@@ -64,28 +77,48 @@ onMounted(() => {
 .document-list-container {
 	overflow-y: auto;
 	margin-top: 1rem;
+	height: 100%;
 }
 
 .doc-link {
-	padding: 2px 4px;
-	color: blue;
 	cursor: pointer;
 	display: flex;
 	flex-direction: row;
+	align-items: center;
 	justify-content: space-between;
 }
-.doc-link:hover {
-	text-decoration: underline;
+
+.doc-link:hover:not(.active) {
+	background-color: var(--un-color-body-surface-secondary);
 }
 
 .active {
-	text-decoration: underline;
 	font-size: var(--un-font-body);
-	background-color: var(--un-color-accent-light);
+	background-color: var(--un-color-body-surface-background);
+}
+
+.doc-view-icon {
+	padding-right: 0.5rem;
 }
 
 .doc-delete-btn {
+	color: var(--un-color-body-text-disabled);
+}
+
+.doc-delete-btn:hover {
+	/* color: var(--un-color-body-text-primary); */
 	color: red;
-	padding-right: 1rem;
+}
+
+span {
+	display: inline-flex;
+	align-items: center;
+}
+
+.doc-title {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	display: inline;
 }
 </style>

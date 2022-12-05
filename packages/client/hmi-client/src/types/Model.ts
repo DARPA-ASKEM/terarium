@@ -1,12 +1,13 @@
-export type ModelContent = {
-	S: { [key: string]: string };
-	T: { [key: string]: string };
-	I: { [key: string]: number };
-	O: { [key: string]: number };
-};
+import { PetriNet } from '@/utils/petri-net-validator';
+import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
+import { Filters } from './Filter';
+
+// FIXME: other model content types will be supported depending on
+//	Model.framework
+export type ModelContent = PetriNet;
 
 export type Model = {
-	id: string;
+	id: string | number;
 	name: string;
 	description: string;
 
@@ -14,28 +15,28 @@ export type Model = {
 	concept: string;
 	timestamp: string | Date;
 	parameters: { [key: string]: string };
-	content: ModelContent;
+	content: PetriNet;
 
 	type: string;
 };
 
 export type ModelSearchParams = {
-	name?: string;
+	filters?: Filters;
 };
 
 //
 // Model Field names
 //
+export const ID = 'id';
 export const NAME = 'name';
 export const DESCRIPTION = 'description';
-
-export const FRAMEWORK = 'type';
-export const CONCEPT = 'source';
+export const FRAMEWORK = 'framework';
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
+	[NAME]: 'Model Name',
 	[FRAMEWORK]: 'Model Framework',
-	[CONCEPT]: 'Model Concept'
+	[CONCEPT_FACETS_FIELD]: CONCEPT_FACETS_DISPLAY_NAME
 };
 
-export const FACET_FIELDS: string[] = [FRAMEWORK];
-export const MODEL_FILTER_FIELDS: string[] = [NAME, DESCRIPTION];
+export const FACET_FIELDS: string[] = [ID, FRAMEWORK]; // fields to show facets for
+export const MODEL_FILTER_FIELDS: string[] = [NAME, DESCRIPTION]; // when applying non-facet filters, search these fields

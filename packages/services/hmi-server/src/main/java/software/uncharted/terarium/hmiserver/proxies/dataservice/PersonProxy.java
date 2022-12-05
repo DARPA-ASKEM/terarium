@@ -41,8 +41,8 @@ public interface PersonProxy {
 
 	@GET
 	Response getPersons(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@POST

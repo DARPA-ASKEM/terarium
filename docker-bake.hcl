@@ -26,11 +26,11 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "hmi-server-native", "mock-data-service"]
+  targets = ["hmi-client", "hmi-server", "hmi-server-native"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "mock-data-service-base"]
+  targets = ["hmi-client-base", "hmi-server-base"]
 }
 
 # ---------------------------------
@@ -62,14 +62,4 @@ target "hmi-server-native" {
 	context = "."
   dockerfile = "packages/services/hmi-server/docker/native/Dockerfile.native"
   tags = tag("hmi-server", "", "native")
-}
-
-target "mock-data-service-base" {
-	context = "."
-	dockerfile = "packages/services/mock-data-service/docker/jvm/Dockerfile.jvm"
-	tags = tag("mock-data-service", "", "")
-}
-
-target "mock-data-service" {
-  inherits = ["_platforms", "mock-data-service-base"]
 }

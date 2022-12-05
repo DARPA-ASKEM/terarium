@@ -10,50 +10,41 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
 
-export default defineComponent({
-	name: 'SimplePagination',
-	props: {
-		pageCount: {
-			type: Number,
-			default: 0
-		},
-		pageSize: {
-			type: Number,
-			default: 100
-		},
-		currentPageLength: {
-			type: Number,
-			default: 100
-		}
+const props = defineProps({
+	pageCount: {
+		type: Number,
+		default: 0
 	},
-	emits: ['next-page', 'prev-page'],
-	computed: {
-		hasPrev(): boolean {
-			return this.pageCount === 0;
-		},
-		hasNext(): boolean {
-			return this.pageSize > this.currentPageLength;
-		},
-		currentStart(): string {
-			const offset = this.currentPageLength > 0 ? 1 : 0;
-			return (this.pageCount * this.pageSize + offset).toLocaleString();
-		},
-		currentFinish(): string {
-			return (this.pageCount * this.pageSize + this.currentPageLength).toLocaleString();
-		}
+	pageSize: {
+		type: Number,
+		default: 100
 	},
-	methods: {
-		nextPage() {
-			this.$emit('next-page');
-		},
-		prevPage() {
-			this.$emit('prev-page');
-		}
+	currentPageLength: {
+		type: Number,
+		default: 100
 	}
 });
+const emit = defineEmits(['next-page', 'prev-page']);
+
+const hasPrev = computed(() => props.pageCount === 0);
+const hasNext = computed(() => props.pageSize > props.currentPageLength);
+const currentStart = computed(() => {
+	const offset = props.currentPageLength > 0 ? 1 : 0;
+	return (props.pageCount * props.pageSize + offset).toLocaleString();
+});
+const currentFinish = computed(() =>
+	(props.pageCount * props.pageSize + props.currentPageLength).toLocaleString()
+);
+
+const nextPage = () => {
+	emit('next-page');
+};
+const prevPage = () => {
+	emit('prev-page');
+};
 </script>
 
 <style>

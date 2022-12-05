@@ -11,7 +11,6 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/api/projects")
 @Authenticated
@@ -25,8 +24,8 @@ public class ProjectResource {
 
 	@GET
 	public Response getProjects(
-		@QueryParam("page_size") final Integer pageSize,
-		@QueryParam("page") final Integer page
+		@DefaultValue("50") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getProjects(pageSize, page);
 	}
@@ -42,9 +41,9 @@ public class ProjectResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createProject(
-		final Project newProject
+		final Project project
 	) {
-		return proxy.createProject(newProject);
+		return proxy.createProject(project);
 	}
 
 	@PUT
@@ -52,30 +51,45 @@ public class ProjectResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateProject(
 		@PathParam("id") final String id,
-		final Project updatedProject
+		final Project project
 	) {
-		return proxy.updateProject(id, updatedProject);
+		return proxy.updateProject(id, project);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response deleteProject(
+		@PathParam("id") final String id
+	) {
+		return proxy.deleteProject(id);
 	}
 
 	@GET
-	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
-	public Response getAsset(
-		@PathParam("project_id") final String projectId,
-		@PathParam("resource_type") final ResourceType type,
-		@PathParam("resource_id") final String resourceId
+	@Path("/{project_id}/assets")
+	public Response getAssets(
+		@PathParam("project_id") String projectId
 	) {
-		return proxy.getAsset(projectId, type, resourceId);
+		return proxy.getAssets(projectId);
 	}
 
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
-	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createAsset(
 		@PathParam("project_id") final String projectId,
-		@PathParam("resource_type") final ResourceType type,
-		@PathParam("resource_id") final String resourceId,
-		final List<String> asset
+		@PathParam("resource_type") final String type, // ResourceType
+		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.createAsset(projectId, type, resourceId, asset);
+		return proxy.createAsset(projectId, type, resourceId);
+	}
+
+	@DELETE
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	public Response deleteAsset(
+		@PathParam("project_id") final String projectId,
+		@PathParam("resource_type") final String type, // ResourceType
+		@PathParam("resource_id") final String resourceId
+	) {
+		return proxy.deleteAsset(projectId, type, resourceId);
 	}
 }

@@ -7,7 +7,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 
 
 @RegisterRestClient(configKey = "data-service")
@@ -17,8 +16,8 @@ public interface ProjectProxy {
 
 	@GET
 	Response getProjects(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("50") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@GET
@@ -49,20 +48,24 @@ public interface ProjectProxy {
 	);
 
 	@GET
-	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
-	Response getAsset(
-		@PathParam("project_id") String projectId,
-		@PathParam("resource_type") ResourceType type,
-		@PathParam("resource_id") String resourceId
+	@Path("/{project_id}/assets")
+	Response getAssets(
+		@PathParam("project_id") String projectId
 	);
 
 	@POST
 	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
-	@Consumes(MediaType.APPLICATION_JSON)
 	Response createAsset(
 		@PathParam("project_id") String projectId,
-		@PathParam("resource_type") ResourceType type,
-		@PathParam("resource_id") String resourceId,
-		List<String> asset
+		@PathParam("resource_type") String type, // ResourceType
+		@PathParam("resource_id") String resourceId
+	);
+
+	@DELETE
+	@Path("/{project_id}/assets/{resource_type}/{resource_id}")
+	Response deleteAsset(
+		@PathParam("project_id") String projectId,
+		@PathParam("resource_type") String type, // ResourceType
+		@PathParam("resource_id") String resourceId
 	);
 }

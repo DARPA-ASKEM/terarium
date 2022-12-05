@@ -12,13 +12,12 @@ public class OntologyConcept implements Serializable {
 
 	private String id;
 
-	@JsonbProperty("term_id")
-	private String termId;
+	private String curie;
 
 	private TaggableType type;
 
-	@JsonbProperty("obj_id")
-	private Long objId;
+	@JsonbProperty("object_id")
+	private Long objectId;
 
 	private OntologicalField status;
 }

@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Map;
 
 @Data
 @Accessors(chain = true)
@@ -25,4 +26,6 @@ public class SimulationRun implements Serializable {
 	private Boolean success;
 
 	private String response;
+
+	private Map<String, String> parameters;
 }
