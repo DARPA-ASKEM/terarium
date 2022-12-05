@@ -1,55 +1,50 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
-import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
+import IconAdd32 from '@carbon/icons-vue/es/add/32';
 import Modal from '@/components/Modal.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import API from '@/api/api';
+import * as ProjectService from '@/services/project';
 
-const isModalVisible = ref(false);
-const name = ref('New Project');
-const description = ref('');
 const router = useRouter();
 
-// refacator as a composable?
-// eslint-disable-next-line @typescript-eslint/no-shadow
-async function postProject(name: string, description: string) {
-	return API.post('/projects', {
-		name,
-		description
-	});
-}
+const isModalVisible = ref(false);
+const name = ref('');
+const description = ref('');
 
-function createNewProject() {
-	postProject(name.value, description.value).then((response) => {
-		const { status, data } = response;
-		if (status === 201) {
-			router.push(`/projects/${data.id}`);
-			isModalVisible.value = false;
-		}
-	});
+async function createNewProject() {
+	const project = await ProjectService.create(name.value, description.value);
+	if (project) {
+		router.push(`/projects/${project.id}`);
+		isModalVisible.value = false;
+	}
 }
 </script>
 
 <template>
 	<div class="new-project-card">
-		<Button @click="isModalVisible = true"
-			>Create New Project
-			<IconAddFilled32 />
+		<Button @click="isModalVisible = true">
+			<IconAdd32 />
+			New Project
 		</Button>
 		<Teleport to="body">
-			<modal v-if="isModalVisible" @modal-mask-clicked="isModalVisible = false">
+			<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 				<template #header>
-					<h3>Create a new project</h3>
+					<h3>New Project</h3>
 				</template>
 				<template #default>
-					<label for="input">Project title</label>
-					<input v-model="name" placeHolder="New Project" />
-					<label for="input">Description</label>
-					<input v-model="description" />
+					<form>
+						<label for="new-project-name">Project Name</label>
+						<input id="new-project-name" v-model="name" />
+						<label for="description">Project Purpose</label>
+						<textarea id="new-project-description" v-model="description" />
+					</form>
 				</template>
 				<template #footer>
-					<Button class="modal-button" @click="createNewProject">OK</Button>
+					<footer>
+						<Button action @click="createNewProject">Create Project</Button>
+						<Button @click="isModalVisible = false">Cancel</Button>
+					</footer>
 				</template>
 			</modal>
 		</Teleport>
@@ -71,7 +66,7 @@ function createNewProject() {
 	text-align: left;
 }
 
-.new-project-card button {
+.new-project-card > button {
 	font-size: 1.25rem;
 	font-weight: 500;
 	border-radius: 0.5rem;
@@ -98,23 +93,15 @@ function createNewProject() {
 	color: var(--un-color-body-text-secondary);
 }
 
-h3 {
-	font: var(--un-font-h3);
-	color: var(--un-color-body-text-secondary);
+.modal h3 {
+	margin-bottom: 1em;
 }
 
-label {
-	display: block;
-}
-
-input {
-	margin: 0.5rem;
-	margin-left: 0;
-	width: 25vw;
-}
-
-.modal-button {
-	width: 25%;
-	background-color: var(--un-color-accent);
+.modal footer {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
 }
 </style>

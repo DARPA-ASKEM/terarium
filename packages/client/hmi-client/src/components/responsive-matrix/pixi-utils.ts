@@ -1,4 +1,15 @@
-import { Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
+import { Viewport } from 'pixi-viewport';
+import { Point, Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
+
+// EMPTY_POINT used as a fallback value
+const EMPTY_POINT = new Point();
+export const viewport2Screen = (viewport: Viewport) => {
+	const topLeft = viewport.toScreen(0, 0) || EMPTY_POINT;
+	const topRight = viewport.toScreen(viewport.worldWidth, 0) || EMPTY_POINT;
+	const bottomLeft = viewport.toScreen(0, viewport.worldHeight) || EMPTY_POINT;
+	const bottomRight = viewport.toScreen(viewport.worldWidth, viewport.worldHeight) || EMPTY_POINT;
+	return { topLeft, topRight, bottomLeft, bottomRight };
+};
 
 // taken from https://github.com/pixijs/pixijs/issues/6436#issuecomment-591695313
 export class CustomBufferResource extends Resource {
