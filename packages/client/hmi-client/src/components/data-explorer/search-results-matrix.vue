@@ -206,13 +206,20 @@ const clustersInfo = computed(() => {
 					)
 				);
 
-				const cluster: ResultsCluster = {
-					name: item.name,
-					selected: isClusterSelected,
-					items: clusterItemsRaw,
-					clusterVariables: conceptsForItem.map((c) => c.curie)
-				};
-				res.push(cluster);
+				// TEMP
+				// FIXME: currently many (datasets) items are duplicate so we need to filter them out
+				// only add if no similar cluster exist
+				// REVIEW: since the following line checks for similarity by name, while it should also check if cluster have the same items/concepts
+				const existingCluster = res.find((cluster) => cluster.name === item.name); // isEqual(cluster.items, clusterItemsRaw)
+				if (!existingCluster) {
+					const cluster: ResultsCluster = {
+						name: item.name,
+						selected: isClusterSelected,
+						items: clusterItemsRaw,
+						clusterVariables: conceptsForItem.map((c) => c.curie)
+					};
+					res.push(cluster);
+				}
 			}
 		});
 	}
