@@ -4,7 +4,6 @@ import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 
 import javax.inject.Inject;
@@ -72,7 +71,7 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.createAsset(projectId, type, resourceId);
+		return proxy.createAsset(projectId, type.toUpperCase(), resourceId);
 	}
 
 	@DELETE
@@ -82,6 +81,6 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.deleteAsset(projectId, type, resourceId);
+		return proxy.deleteAsset(projectId, type.toUpperCase(), resourceId);
 	}
 }
