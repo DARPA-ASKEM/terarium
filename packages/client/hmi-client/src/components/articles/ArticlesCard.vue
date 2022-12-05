@@ -1,18 +1,48 @@
 <script setup lang="ts">
+import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import IconNoImage32 from '@carbon/icons-vue/es/no-image/32';
+import { onMounted, ref, computed } from 'vue';
+import { getXDDArtifacts } from '@/services/data';
+import { getDocumentDoi } from '@/utils/data-util';
 
 export interface Props {
-	name: string;
+	article: XDDArticle;
 }
-const props = withDefaults(defineProps<Props>(), {
-	name: 'Default Article Name'
+const props = defineProps<Props>();
+const articleName = computed(() => props.article.title);
+const extractionType = ref('');
+const artifacts = ref<XDDArtifact[]>([]);
+const images = computed(() => artifacts.value.map((a) => a.properties.image));
+const shownImage = computed(() => images.value.find((element) => element !== undefined));
+
+const fetchArtifacts = async (doi) => {
+	if (doi !== '') {
+		const allArtifacts = await getXDDArtifacts(doi);
+		// filter out Document extraction type
+		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
+	} else {
+		// note that some XDD documents do not have a valid doi
+		artifacts.value = [];
+	}
+};
+
+onMounted(async () => {
+	const doi = await getDocumentDoi(props.article);
+	await fetchArtifacts(doi);
+	if (artifacts.value.length > 0) {
+		extractionType.value = artifacts.value[0].askemClass;
+	}
 });
 </script>
-<!-- TODO: If image, use, else icon no image -->
 <template>
 	<div class="article-card">
-		<IconNoImage32 />
-		<footer>{{ props?.name }}</footer>
+		<div class="card-image" v-if="images.length > 0">
+			<img id="img" :src="'data:image/jpeg;base64,' + shownImage" :alt="''" />
+		</div>
+		<div class="card-image" v-else>
+			<IconNoImage32 />
+		</div>
+		<footer>{{ articleName }}</footer>
 	</div>
 </template>
 
@@ -41,5 +71,10 @@ svg {
 	color: var(--un-color-body-text-disabled);
 	cursor: pointer;
 	margin: auto;
+}
+.card-image {
+	height: inherit;
+	min-width: inherit;
+	display: inherit;
 }
 </style>

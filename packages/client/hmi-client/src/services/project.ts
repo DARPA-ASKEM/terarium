@@ -3,7 +3,9 @@
  */
 
 import API from '@/api/api';
-import { Project, ProjectAssets } from '@/types/Project';
+import { Project, ProjectAssets, PUBLICATIONS } from '@/types/Project';
+import { getRelatedDocuments } from '@/services/data';
+import { XDDArticle } from '@/types/XDD';
 
 /**
  * Get a project per id
@@ -74,4 +76,20 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { get, getAll, addAsset, deleteAsset, getAssets };
+// project id -> project assets -> publication list (Which will give you xdd id + url + title)  -> now you can use getRelatedDocuments given a xdd_uri (docid)
+// TODO: Remove hardcoded dataset
+async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
+	const resp = await getAssets(aProject.id);
+	try {
+		const listOfRelatedArticles = await getRelatedDocuments(
+			String(resp?.[PUBLICATIONS][0].xdd_uri),
+			'xdd-covid-19'
+		);
+		return listOfRelatedArticles;
+	} catch (error) {
+		// If resp = null (project has no assets or cannot be found)
+		return [];
+	}
+}
+
+export { get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };
