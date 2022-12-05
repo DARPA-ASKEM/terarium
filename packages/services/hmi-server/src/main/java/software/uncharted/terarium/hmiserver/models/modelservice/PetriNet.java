@@ -2,8 +2,6 @@ package software.uncharted.terarium.hmiserver.models.modelservice;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.models.modelservice.StateTransition;
-import software.uncharted.terarium.hmiserver.models.modelservice.InputOutput;
 
 import java.io.Serializable;
 import java.util.List;
@@ -13,7 +11,6 @@ import javax.json.bind.annotation.JsonbProperty;
 @Data
 @Accessors(chain = true)
 public class PetriNet implements Serializable {
-
 	@JsonbProperty("S")
 	private List<Map<String, String>> s;
 
