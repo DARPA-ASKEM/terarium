@@ -1,5 +1,5 @@
+import { XDDArticle, PublicationAsset } from '@/types/XDD';
 import { Model } from './Model';
-import { PublicationAsset } from './XDD';
 
 export const PUBLICATIONS = 'publications';
 export const INTERMEDIATES = 'intermediates';

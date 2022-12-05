@@ -16,9 +16,9 @@
 					<div>Author: {{ item.author.map((a) => a.name).join(', ') }}</div>
 					<!-- TODO: May need more formatting than just replcing <p></p> in future -->
 					<div>
-						Abstract: {{item.abstract.replace("
-						<p>","\n").replace("</p>
-						","\n")}}
+						Abstract: {{item.abstract.replace( "
+						<p>","\n" ).replace("</p>
+						","\n") }}
 					</div>
 					<div>Journal: {{ item.journal }}</div>
 					<div>Doc ID:: {{ item.gddid }}</div>
