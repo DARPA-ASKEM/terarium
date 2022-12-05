@@ -41,6 +41,14 @@
 					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
 					Models
 				</button>
+				<button
+					type="button"
+					:class="{ active: resultType === ResourceType.DATASET }"
+					@click="onResultTypeChanged(ResourceType.DATASET)"
+				>
+					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+					Datasets
+				</button>
 			</div>
 
 			<span class="section-label">View as</span>
@@ -165,8 +173,9 @@ import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceTypeIcon, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { isEmpty, max, min } from 'lodash';
+import { Dataset } from '@/types/Dataset';
 
 // import IconClose16 from '@carbon/icons-vue/es/close/16';
 
@@ -318,10 +327,14 @@ const fetchDataItemList = async () => {
 	const modelSearchParams = searchParams?.model || {
 		filters: clientFilters.value
 	};
+	const datasetSearchParams = searchParams?.dataset || {
+		filters: clientFilters.value
+	};
 
 	// update search parameters object
 	searchParams.xdd = xddSearchParams;
 	searchParams.model = modelSearchParams;
+	searchParams.dataset = datasetSearchParams;
 
 	// fetch second time with facet filtered applied
 	const allDataFilteredWithFacets: SearchResults[] = await fetchData(searchWords, searchParams);
@@ -373,6 +386,11 @@ const isDataItemSelected = (item: ResultType) =>
 			const searchItemAsModel = searchItem as Model;
 			return searchItemAsModel.id === itemAsModel.id;
 		}
+		if (isDataset(item)) {
+			const itemAsDataset = item as Dataset;
+			const searchItemAsDataset = searchItem as Dataset;
+			return searchItemAsDataset.id === itemAsDataset.id;
+		}
 		if (isXDDArticle(item)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
@@ -382,11 +400,13 @@ const isDataItemSelected = (item: ResultType) =>
 	});
 
 const toggleDataItemSelected = (item: ResultType) => {
-	const itemID = (item as Model).id || (item as XDDArticle).title;
+	const itemID = (item as Model).id || (item as Dataset).id || (item as XDDArticle).title;
 	if (isDataItemSelected(item)) {
 		selectedSearchItems.value = selectedSearchItems.value.filter(
 			(searchItem) =>
-				(searchItem as Model).id !== itemID && (searchItem as XDDArticle).title !== itemID
+				(searchItem as Model).id !== itemID &&
+				(searchItem as Dataset).id !== itemID &&
+				(searchItem as XDDArticle).title !== itemID
 		);
 	} else {
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
