@@ -2,7 +2,7 @@
 /**
  * Sidebar component for navigating view.
  * */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
 // Icons
@@ -45,6 +45,7 @@ function openSidePanel() {
 
 // The Project page is the default
 const selectedView = ref<RouteName>(RouteName.ProjectRoute);
+const showSidePanel = computed(() => selectedView.value !== RouteName.ProjectRoute);
 
 function showSidebar(view: RouteName): boolean {
 	// Test for Sidebar that doesn't need Project
@@ -105,6 +106,13 @@ const openView = (view: RouteName) => {
 					<IconAccount32 />
 				</li>
 				<li
+					:active="selectedView === RouteName.ModelRoute"
+					:title="RouteName.ModelRoute"
+					@click="openView(RouteName.ModelRoute)"
+				>
+					<IconMachineLearningModel32 />
+				</li>
+				<li
 					:active="selectedView === RouteName.SimulationRoute"
 					:title="RouteName.SimulationRoute"
 					@click="openView(RouteName.SimulationRoute)"
@@ -112,11 +120,10 @@ const openView = (view: RouteName) => {
 					<IconAppConnectivity32 />
 				</li>
 				<li
-					:active="selectedView === RouteName.ModelRoute"
-					:title="RouteName.ModelRoute"
-					@click="openView(RouteName.ModelRoute)"
+					:active="selectedView === RouteName.SimulationResultRoute"
+					@click="openView(RouteName.SimulationResultRoute)"
 				>
-					<IconMachineLearningModel32 />
+					<IconChartCombo32 />
 				</li>
 				<li
 					disabled
@@ -132,12 +139,6 @@ const openView = (view: RouteName) => {
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocument32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.SimulationResultRoute"
-					@click="openView(RouteName.SimulationResultRoute)"
-				>
-					<IconChartCombo32 />
 				</li>
 			</ul>
 			<ul>
@@ -158,7 +159,12 @@ const openView = (view: RouteName) => {
 					<IconUser32 />
 				</li>
 			</ul>
-			<Button round class="side-panel-control" v-if="isSidePanelClose" @click="openSidePanel">
+			<Button
+				round
+				class="side-panel-control"
+				v-if="isSidePanelClose && showSidePanel"
+				@click="openSidePanel"
+			>
 				<IconArrowRight16 />
 			</Button>
 		</nav>
