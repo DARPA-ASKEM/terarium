@@ -98,7 +98,7 @@ const goToSimulationPlanPage = () => {
 
 <template>
 	<section class="model">
-		<div>
+		<div class="graph-column">
 			<h3>{{ model?.name ?? '' }}</h3>
 			<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 		</div>
@@ -122,6 +122,11 @@ const goToSimulationPlanPage = () => {
 .model {
 	margin: 10px;
 	display: flex;
+}
+
+.graph-column {
+	flex: 1;
+	min-width: 0;
 }
 
 .graph-element {
