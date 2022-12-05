@@ -141,7 +141,7 @@ const openView = (view: RouteName) => {
 				</li>
 				<li
 					:active="selectedView === RouteName.DocumentRoute"
-					title="Resources"
+					title="Papers"
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocument32 />
