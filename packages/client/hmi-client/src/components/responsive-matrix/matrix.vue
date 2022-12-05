@@ -1,5 +1,6 @@
 <template>
 	<main class="matrix-container" ref="matrixContainer">
+		<div ref="legendContainer"></div>
 		<div class="matrix" ref="matrix">
 			<LabelCols
 				v-if="!disableLabelCol && rendererReady"
@@ -79,6 +80,7 @@ import {
 	CellType,
 	Uniforms
 } from '@/types/ResponsiveMatrix';
+import * as d3 from 'd3';
 import { uint32ArrayToRedIntTex } from './pixi-utils';
 
 import LabelCols from './label-cols.vue';
@@ -488,6 +490,34 @@ export default {
 
 		// force an update to update labels using viewport information
 		this.incrementMove();
+
+		// FIXME: Render legend test
+		const svg = d3
+			.select(this.$refs.legendContainer as any)
+			.append('svg')
+			.style('height', '20px')
+			.style('width', '400px');
+
+		const max = this.dataParametersMax.I;
+		const min = this.dataParametersMin.I;
+		const legendCellW = 15;
+		let cnt = 0;
+		svg.append('text').attr('x', 10).attr('y', 12).text(min);
+		for (let i = min; i <= max; i += (max - min) / 8) {
+			svg
+				.append('rect')
+				.attr('x', 20 + cnt * legendCellW)
+				.attr('y', 0)
+				.attr('width', legendCellW)
+				.attr('height', 15)
+				.style('fill', this.fillColorFn({ I: i }, { I: min }, { I: max }));
+			cnt++;
+		}
+		svg
+			.append('text')
+			.attr('x', 25 + legendCellW * cnt)
+			.attr('y', 12)
+			.text(max);
 	},
 
 	// ---------------------------------------------------------------------------- //
