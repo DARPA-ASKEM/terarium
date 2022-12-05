@@ -3,6 +3,7 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import DocumentView from '@/views/Document.vue';
 import HomeView from '@/views/Home.vue';
 import ModelView from '@/views/Model.vue';
+import DatasetView from '@/views/Dataset.vue';
 import ProjectView from '@/views/Project.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
@@ -16,6 +17,7 @@ export enum RoutePath {
 	Document = '/docs/:id?',
 	Project = '/projects/:projectId',
 	Model = '/projects/:projectId/model/:modelId?',
+	Dataset = '/projects/:projectId/dataset/:datasetId?',
 	Simulation = '/projects/:projectId/simulations/:simulationId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:simulationRunId?',
 
@@ -43,6 +45,7 @@ const routes = [
 	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
+	{ name: RouteName.DatasetRoute, path: RoutePath.Dataset, component: DatasetView, props: true },
 	{ name: RouteName.ProjectRoute, path: RoutePath.Project, component: ProjectView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
 	{

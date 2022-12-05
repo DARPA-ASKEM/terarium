@@ -12,7 +12,6 @@ import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/
 import { Model } from '@/types/Model';
 
 const props = defineProps<{
-	projectId: string; // FIXME: currently not used
 	modelId: string;
 }>();
 
