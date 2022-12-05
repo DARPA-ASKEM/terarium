@@ -29,7 +29,7 @@ import { onMounted, ref } from 'vue';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 import { deleteAsset } from '@/services/project';
 import { DATASETS } from '@/types/Project';
-import { RouteName } from '@/router';
+import { RouteName } from '@/router/routes';
 import { Dataset } from '@/types/Dataset';
 
 const router = useRouter();

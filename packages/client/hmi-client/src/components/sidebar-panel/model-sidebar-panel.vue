@@ -18,7 +18,7 @@ import useResourcesStore from '@/stores/resources';
 import { computed, onMounted, ref } from 'vue';
 import { deleteAsset } from '@/services/project';
 import { MODELS } from '@/types/Project';
-import { RouteName } from '@/router';
+import { RouteName } from '@/router/routes';
 import { Model } from '@/types/Model';
 import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
 
