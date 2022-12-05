@@ -11,6 +11,7 @@ import {
 import { parseSimulationPlan2IGraph } from '@/services/simulation';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
+import { RouteName } from '@/router/routes';
 
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;
@@ -133,8 +134,7 @@ const nextSlide = () => {
 };
 const router = useRouter();
 const goToSimulationResultsPage = () => {
-	// FIXME: can't use RouteName.SimulationResultRoute because it would result in a dependency cycle
-	router.push({ name: 'simulationResult' });
+	router.push({ name: RouteName.SimulationResultRoute });
 };
 </script>
 

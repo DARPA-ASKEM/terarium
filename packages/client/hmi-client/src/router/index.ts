@@ -11,6 +11,7 @@ import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
+import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
@@ -26,19 +27,6 @@ export enum RoutePath {
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
-}
-
-// Named routes
-export enum RouteName {
-	DatasetRoute = 'dataset',
-	DocumentRoute = 'document',
-	HomeRoute = 'home',
-	ModelRoute = 'model',
-	ProfileRoute = 'profile',
-	ProjectRoute = 'project',
-	ProvenanceRoute = 'provenance',
-	SimulationRoute = 'simulation',
-	SimulationResultRoute = 'simulationResult'
 }
 
 const routes = [

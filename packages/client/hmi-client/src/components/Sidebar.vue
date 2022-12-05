@@ -26,7 +26,7 @@ import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-pane
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
-import { RouteName } from '@/router/index';
+import { RouteName } from '@/router/routes';
 import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
 
 const router = useRouter();

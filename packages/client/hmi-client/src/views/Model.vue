@@ -12,6 +12,7 @@ import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/
 import { Model } from '@/types/Model';
 import Button from '@/components/Button.vue';
 import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	modelId: string;
@@ -91,8 +92,7 @@ watch([model, graphElement], async () => {
 // FIXME: update after Dec 8 demo
 const router = useRouter();
 const goToSimulationPlanPage = () => {
-	// FIXME: can't use RouteName.SimulationRoute because of dependency cycle.
-	router.push({ name: 'simulation' });
+	router.push({ name: RouteName.SimulationRoute });
 };
 </script>
 
