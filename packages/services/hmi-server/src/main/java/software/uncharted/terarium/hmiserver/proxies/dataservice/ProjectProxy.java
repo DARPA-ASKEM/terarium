@@ -16,8 +16,8 @@ public interface ProjectProxy {
 
 	@GET
 	Response getProjects(
-		@QueryParam("page_size") Integer pageSize,
-		@QueryParam("page") Integer page
+		@DefaultValue("50") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@GET
@@ -45,6 +45,12 @@ public interface ProjectProxy {
 	@Produces(MediaType.TEXT_PLAIN)
 	Response deleteProject(
 		@PathParam("id") String id
+	);
+
+	@GET
+	@Path("/{project_id}/assets")
+	Response getAssets(
+		@PathParam("project_id") String projectId
 	);
 
 	@POST

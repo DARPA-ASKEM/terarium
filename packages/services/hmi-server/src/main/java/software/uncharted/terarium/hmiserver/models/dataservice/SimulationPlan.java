@@ -5,7 +5,6 @@ import lombok.experimental.Accessors;
 
 import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
-import java.util.Map;
 
 @Data
 @Accessors(chain = true)
@@ -23,6 +22,4 @@ public class SimulationPlan implements Serializable {
 	private String content;
 
 	private Concept concept;
-
-	private Map<String, String> parameters;
 }

@@ -5,6 +5,7 @@
 # - typecheck
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 name: Lint & Format Client
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
   push:

@@ -20,7 +20,7 @@ public class Project implements Serializable {
 
 	private Instant timestamp;
 
-	private String status;
+	private Boolean active;
 
 	private Concept concept;
 

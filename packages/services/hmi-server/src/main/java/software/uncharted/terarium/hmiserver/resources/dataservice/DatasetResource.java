@@ -26,8 +26,8 @@ public class DatasetResource {
 	@GET
 	@Path("/features")
 	public Response getFeatures(
-		@QueryParam("page_size") final Integer pageSize,
-		@QueryParam("page") final Integer page
+		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getFeatures(pageSize, page);
 	}
@@ -50,9 +50,11 @@ public class DatasetResource {
 	}
 
 	@DELETE
-	@Path("/features")
-	public Response deleteFeature() {
-		return proxy.deleteFeature();
+	@Path("/features/{id}")
+	public Response deleteFeature(
+		@PathParam("id") final String id
+	) {
+		return proxy.deleteFeature(id);
 	}
 
 	@PATCH
@@ -68,8 +70,8 @@ public class DatasetResource {
 	@GET
 	@Path("/qualifiers")
 	public Response getQualifiers(
-		@QueryParam("page_size") final Integer pageSize,
-		@QueryParam("page") final Integer page
+		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getQualifiers(pageSize, page);
 	}
@@ -111,8 +113,8 @@ public class DatasetResource {
 
 	@GET
 	public Response getDatasets(
-		@QueryParam("page_size") final Integer pageSize,
-		@QueryParam("page") final Integer page
+		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
 		return proxy.getDatasets(pageSize, page);
 	}
@@ -155,17 +157,28 @@ public class DatasetResource {
 	@Path("/deprecate/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response deprecateDataset(
-		@PathParam("id") final String id,
-		final Dataset dataset
+		@PathParam("id") final String id
 	) {
-		return proxy.deprecateDataset(id, dataset);
+		return proxy.deprecateDataset(id);
 	}
 
 	@GET
-	@Path("/{id}/download/csv")
+	@Path("/{id}/download/rawfile")
 	public Response getCsv(
-		@PathParam("id") final String id
+		@PathParam("id") final String id,
+		@DefaultValue("false") @QueryParam("data_annotation_flag") final Boolean dataAnnotationFlag
 	) {
-		return proxy.getCsv(id);
+		return proxy.getCsv(id, dataAnnotationFlag);
+	}
+
+	@POST
+	@Path("/{id}/upload/file")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public Response uploadFile(
+		@PathParam("id") final String id,
+		@QueryParam("filename") final String filename,
+		final Byte[] file
+	) {
+		return proxy.uploadFile(id, filename, file);
 	}
 }
