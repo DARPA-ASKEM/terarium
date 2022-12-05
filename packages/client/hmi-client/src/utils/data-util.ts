@@ -7,7 +7,7 @@ import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
-import { Dataset, DATASET_FILTER_FIELDS } from '@/types/Dataset';
+import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
@@ -45,7 +45,7 @@ export const applyFacetFiltersToDatasets = (datasetResults: Dataset[], filters: 
 		const filterField: string = clause.field; // the field to filter on
 		// "filters" may include fields that belong to different types of artifacts
 		//  thus make sure to only filter datasets using Dataset fields
-		if (DATASET_FILTER_FIELDS.includes(filterField)) {
+		if (DATASET_FACET_FIELDS.includes(filterField)) {
 			const filterValues = clause.values; // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
 			const filteredDatasets = datasetResults.filter(
