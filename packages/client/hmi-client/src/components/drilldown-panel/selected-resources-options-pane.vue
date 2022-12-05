@@ -235,4 +235,8 @@ onMounted(async () => {
 .selected-items-container .item-header .icon {
 	margin-right: 5px;
 }
+
+.selected-items-container .selected-item .content {
+	margin-left: 22px;
+}
 </style>

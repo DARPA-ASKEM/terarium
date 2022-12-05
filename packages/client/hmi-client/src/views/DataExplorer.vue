@@ -382,37 +382,30 @@ const onClose = () => {
 	emit('hide');
 };
 
-// FIXME: refactor as util func
-const isDataItemSelected = (item: ResultType) =>
-	selectedSearchItems.value.find((searchItem) => {
-		if (isModel(item)) {
+const toggleDataItemSelected = (item: ResultType) => {
+	let foundIndx = -1;
+	selectedSearchItems.value.forEach((searchItem, indx) => {
+		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
 			const searchItemAsModel = searchItem as Model;
-			return searchItemAsModel.id === itemAsModel.id;
+			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
 		}
-		if (isDataset(item)) {
+		if (isDataset(item) && isDataset(searchItem)) {
 			const itemAsDataset = item as Dataset;
 			const searchItemAsDataset = searchItem as Dataset;
-			return searchItemAsDataset.id === itemAsDataset.id;
+			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
 		}
-		if (isXDDArticle(item)) {
+		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
-			return searchItemAsArticle.title === itemAsArticle.title;
+			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
 		}
-		return false;
 	});
-
-const toggleDataItemSelected = (item: ResultType) => {
-	const itemID = (item as Model).id || (item as Dataset).id || (item as XDDArticle).title;
-	if (isDataItemSelected(item)) {
-		selectedSearchItems.value = selectedSearchItems.value.filter(
-			(searchItem) =>
-				(searchItem as Model).id !== itemID &&
-				(searchItem as Dataset).id !== itemID &&
-				(searchItem as XDDArticle).title !== itemID
-		);
+	if (foundIndx >= 0) {
+		// item was already in the list so remove it
+		selectedSearchItems.value.splice(foundIndx, 1);
 	} else {
+		// add it to the list
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
