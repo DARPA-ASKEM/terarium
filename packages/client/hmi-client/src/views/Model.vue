@@ -111,9 +111,9 @@ const goToSimulationPlanPage = () => {
 					>: {{ model.parameters[parameterName] }}
 				</li>
 			</ul>
-			<h4>Simulation plans</h4>
-			<p>Not included in any simulation plans.</p>
-			<Button action @click="goToSimulationPlanPage">Add to new simulation plan</Button>
+			<h4>Workflows</h4>
+			<p>Not included in any workflows.</p>
+			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
 		</aside>
 	</section>
 </template>
