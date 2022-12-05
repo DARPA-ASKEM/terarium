@@ -39,7 +39,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	//
 	// fetch list of models data from the HMI server
 	//
-	const res = await API.get('/models');
+	const res = await API.get('/models/descriptions');
 	const modelsList: Model[] = res.data;
 
 	// TEMP: add "type" field because it is needed to mark these resources as models
@@ -147,7 +147,8 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	return {
 		results: modelResults,
 		searchSubsystem: ResourceType.MODEL,
-		facets: modelFacets
+		facets: modelFacets,
+		rawConceptFacets: conceptFacets
 	};
 };
 
@@ -260,6 +261,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.includeHighlights) {
 		url += '&include_highlights=true';
 	}
+	if (xddSearchParam?.inclusive) {
+		url += '&inclusive=true';
+	}
 	if (enablePagination) {
 		url += '&full_results';
 	} else {
@@ -305,6 +309,17 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			// eslint-disable-next-line no-underscore-dangle
 			highlight: a._highlight
 		}));
+
+		// process document highlights and style the search term differently in each highlight
+		// FIXME: this styling of highlights with search term should be done automatically by XDD
+		//        since the content is coming already styled and should not be done at the clinet side for performance reasons
+		if (term !== '') {
+			articles.forEach((article) => {
+				if (article.highlight) {
+					article.highlight = article.highlight.map((h) => h.replaceAll(term, `<b>${term}</b>`));
+				}
+			});
+		}
 
 		const formattedFacets: Facets = {};
 		if (facets) {

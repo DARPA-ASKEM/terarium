@@ -25,11 +25,9 @@ public class ConceptResource {
 
 	@GET
 	public Response searchConcept(
-		@QueryParam("term") final String term,
-		@QueryParam("limit") final Integer limit,
-		@QueryParam("offset") final Integer offset
+		@QueryParam("curie")final String curie
 	) {
-		return proxy.searchConcept(term, limit, offset);
+		return proxy.searchConcept(curie);
 	}
 
 	@POST
@@ -41,11 +39,21 @@ public class ConceptResource {
 	}
 
 	@GET
-	@Path("/definition/{curie}")
-	public Response getConceptDefinition(
-		@PathParam("curie") final String id
+	@Path("/definitions")
+	public Response searchConceptDefinitions(
+		@QueryParam("term") final String term,
+		@DefaultValue("100") @QueryParam("limit") final Integer limit,
+		@DefaultValue("0") @QueryParam("offset") final Integer offset
 	) {
-		return proxy.getConceptDefinition(id);
+		return proxy.searchConceptDefinitions(term, limit, offset);
+	}
+
+	@GET
+	@Path("/definitions/{curie}")
+	public Response getConceptDefinitions(
+		@PathParam("curie") final String curie
+	) {
+		return proxy.getConceptDefinitions(curie);
 	}
 
 	@GET

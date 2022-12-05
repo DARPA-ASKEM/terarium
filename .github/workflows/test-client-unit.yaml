@@ -2,6 +2,7 @@
 # This workflow runs client Unit Tests
 
 name: Client Unit Tests
+# yamllint disable-line rule:truthy
 on:
   workflow_call:
 

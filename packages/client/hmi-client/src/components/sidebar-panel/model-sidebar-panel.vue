@@ -11,9 +11,6 @@
 			:class="{ active: model.id === modelId }"
 			@click="openModelPage(model)"
 		>
-			<span class="model-view-icon">
-				<IconMachineLearningModel32 />
-			</span>
 			<span class="model-title">
 				{{ model.name }}
 			</span>
@@ -33,7 +30,6 @@
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconScript16 from '@carbon/icons-vue/es/script/16';
-import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
 import useResourcesStore from '@/stores/resources';
 import { onMounted, ref } from 'vue';
 import IconClose32 from '@carbon/icons-vue/es/close/32';
@@ -98,11 +94,9 @@ onMounted(() => {
 	overflow-y: auto;
 	margin-top: 1rem;
 	height: 100%;
-	overflow-y: auto;
 }
 
 .model-link {
-	padding: 0.5rem;
 	cursor: pointer;
 	display: flex;
 	flex-direction: row;

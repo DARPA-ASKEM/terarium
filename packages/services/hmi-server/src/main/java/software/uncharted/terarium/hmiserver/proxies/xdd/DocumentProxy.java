@@ -19,6 +19,7 @@ public interface DocumentProxy {
 		@QueryParam("dataset") String dataset,
 		@QueryParam("include_score") String include_score,
 		@QueryParam("include_highlights") String include_highlights,
+		@QueryParam("inclusive") String inclusive,
 		@QueryParam("full_results") String full_results,
 		@QueryParam("max") String max,
 		@QueryParam("per_page") String per_page,
