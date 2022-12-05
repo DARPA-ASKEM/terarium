@@ -14,6 +14,13 @@ async function getAll(): Promise<Dataset[] | null> {
 	return response?.data ?? null;
 }
 
-const getDataset = async (datasetId: string) => API.get(`/datasets/${datasetId}`);
+/**
+ * Get all datasets
+ * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
+ */
+async function getDataset(datasetId: string): Promise<Dataset | null> {
+	const response = await API.get(`/datasets/${datasetId}`);
+	return response?.data ?? null;
+}
 
 export { getAll, getDataset };

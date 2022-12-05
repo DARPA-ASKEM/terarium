@@ -4,7 +4,6 @@ import { Dataset } from '@/types/Dataset';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{
-	projectId: string; // FIXME: currently not used
 	datasetId: string;
 }>();
 
@@ -13,12 +12,7 @@ const dataset = ref<Dataset | null>(null);
 watch(
 	() => [props.datasetId],
 	async () => {
-		if (props.datasetId !== '') {
-			const result = await getDataset(props.datasetId);
-			dataset.value = result.data as Dataset;
-		} else {
-			dataset.value = null;
-		}
+		dataset.value = await getDataset(props.datasetId);
 	},
 	{ immediate: true }
 );

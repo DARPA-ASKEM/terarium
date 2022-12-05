@@ -17,7 +17,7 @@ import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 import { getFacets as getConceptFacets } from './concept';
-import { getAll } from './dataset';
+import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
 
 const getXDDSets = async () => {
@@ -158,7 +158,7 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 	//
 	// fetch list of datasets from the HMI server
 	//
-	const datasetsList = (await getAll()) || ([] as Dataset[]);
+	const datasetsList = (await DatasetService.getAll()) || ([] as Dataset[]);
 
 	// TEMP: add "type" field because it is needed to mark these resources as datasets
 	// FIXME: dependecy on type dataset should be removed and another "sub-system" or "result-type"
