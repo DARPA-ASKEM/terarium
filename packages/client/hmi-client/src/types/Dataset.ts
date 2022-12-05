@@ -77,5 +77,5 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[CONCEPT_FACETS_FIELD]: CONCEPT_FACETS_DISPLAY_NAME
 };
 
-export const FACET_FIELDS: string[] = [ID, NAME]; // fields to show facets for
+export const FACET_FIELDS: string[] = [ID]; // fields to show facets for
 export const DATASET_FILTER_FIELDS: string[] = [NAME, DESCRIPTION]; // when applying non-facet filters, search these fields
