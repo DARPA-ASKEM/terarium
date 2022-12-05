@@ -7,7 +7,7 @@ export const makeLabels = (
 	itemStatusList: CellStatus[],
 	microSettings: number[],
 	stride: number,
-	labelColFormatFn: (value: NumberValue, index: number) => string,
+	labelColFormatFn: (value: NumberValue, index: number) => string
 ) => {
 	let labelPosition = 0;
 	const results: { value: any; position: number }[] = [];

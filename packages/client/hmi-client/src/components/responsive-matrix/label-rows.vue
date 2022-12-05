@@ -68,7 +68,7 @@ export default {
 			default(v) {
 				return v;
 			}
-		},
+		}
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -122,7 +122,7 @@ export default {
 				this.selectedRows,
 				this.microRowSettings,
 				labelStride,
-				this.labelColFormatFn,
+				this.labelColFormatFn
 			);
 		},
 
