@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, extent, scaleLinear, axisBottom, axisLeft, schemeAccent, scaleOrdinal } from 'd3';
+import { select, extent, scaleLinear, axisBottom, axisLeft } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -212,21 +212,15 @@ export default {
 			this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
-				.call(xAxis);
+				.call(xAxis)
+				.selectAll('*');
 
 			const yAxis = axisLeft(this.yScale);
 
 			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
 
-			const scale = scaleOrdinal(schemeAccent);
-			Object.keys(this.selectedCells).forEach((parameter, i) => {
-				this.renderLine(
-					this.svg,
-					parameter,
-					this.selectedCells[parameter],
-					this.labelColSelected,
-					scale(i)
-				);
+			Object.keys(this.selectedCells).forEach((parameter) => {
+				this.renderLine(this.svg, parameter, this.selectedCells[parameter], this.labelColSelected);
 			});
 		},
 
@@ -234,8 +228,7 @@ export default {
 			svg: D3SvgSelection,
 			parameter: string,
 			yValueArray: number[],
-			xValueArray: number[],
-			color: string
+			xValueArray: number[]
 		) {
 			const dataLength = yValueArray.length;
 
@@ -253,8 +246,7 @@ export default {
 				.append('path')
 				.attr('d', path)
 				.style('fill', 'none')
-				// .style('stroke', this.colorFn(parameter))
-				.style('stroke', color)
+				.style('stroke', this.colorFn(parameter))
 				.style('stroke-width', 2);
 		}
 	}

@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData, ParamMinMax } from '@/types/ResponsiveMatrix';
+import * as d3 from 'd3';
 
 const route = useRoute();
 
@@ -44,13 +45,22 @@ const fillColorFn = (datum: CellData, _paramsMin: ParamMinMax, paramsMax: ParamM
 		.toString(16)
 		.padStart(2, '0')}0000`;
 };
+
+const scale = d3.scaleOrdinal(d3.schemeAccent).domain(Object.keys(data.value[0][0]));
+const drilldownColorFn = (parameter: string) => scale(parameter);
 </script>
 
 <template>
 	<section>
 		<h3>Simulation Results</h3>
 		<div class="result-container">
-			<ResponsiveMatrix :data="data" :fillColorFn="fillColorFn" :style="{ flex: '1' }" />
+			<ResponsiveMatrix
+				:data="data"
+				:fillColorFn="fillColorFn"
+				:style="{ flex: '1' }"
+				:lineColorFn="drilldownColorFn"
+				:barColorFn="drilldownColorFn"
+			/>
 		</div>
 	</section>
 </template>
