@@ -4,6 +4,7 @@ import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 
 import javax.inject.Inject;
@@ -79,8 +80,7 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		// String#toUpperCase is being used here to correct for Enum#valueOf usage, which we can't override
-		return proxy.createAsset(projectId, type.toUpperCase(), resourceId);
+		return proxy.createAsset(projectId, ResourceType.findByType(type), resourceId);
 	}
 
 	@DELETE
@@ -90,7 +90,7 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		// String#toUpperCase is being used here to correct for Enum#valueOf usage, which we can't override
-		return proxy.deleteAsset(projectId, type.toUpperCase(), resourceId);
+		System.out.println(ResourceType.findByType(type));
+		return proxy.deleteAsset(projectId, ResourceType.findByType(type), resourceId);
 	}
 }
