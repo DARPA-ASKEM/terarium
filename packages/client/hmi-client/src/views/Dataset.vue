@@ -71,6 +71,8 @@ const formatFeatures = (d: Dataset) => {
 .dataset {
 	margin: 10px;
 	display: flex;
+	padding-left: 2rem;
+	padding-top: 1rem;
 }
 
 .dataset-attributes-container {
