@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+
 @Data
 @Accessors(chain = true)
 public class Model implements Serializable {
@@ -26,6 +27,6 @@ public class Model implements Serializable {
 
 	private Concept concept;
 
-	private Map<String, String> parameters = new HashMap<>();
+	private Map<String, Object> parameters = new HashMap<>();
 }
 

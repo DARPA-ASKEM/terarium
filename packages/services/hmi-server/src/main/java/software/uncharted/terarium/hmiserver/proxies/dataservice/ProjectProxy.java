@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
