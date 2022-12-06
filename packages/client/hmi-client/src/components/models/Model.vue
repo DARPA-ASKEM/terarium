@@ -164,4 +164,10 @@ h3 {
 	min-height: 0;
 	overflow: hidden;
 }
+
+/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
+:deep(.graph-element svg) {
+	width: 100%;
+	height: 100%;
+}
 </style>
