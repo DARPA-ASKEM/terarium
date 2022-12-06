@@ -65,7 +65,11 @@ const close = () => {
 					<h4>{{ selectedPaper.title }}</h4>
 					<IconClose32 class="close-button" @click="close()" />
 				</div>
-				<selected-article-pane :selected-search-items="[selectedPaper]" @close="close()" />
+				<selected-article-pane
+					class="selected-article-pane"
+					:selected-article="selectedPaper"
+					@close="close()"
+				/>
 			</div>
 		</div>
 
@@ -258,8 +262,8 @@ li > * {
 .modal-header {
 	display: flex;
 	justify-content: space-between;
-	margin-bottom: 2rem;
 }
+
 .close-button {
 	width: 2rem;
 	height: 2rem;
@@ -269,5 +273,9 @@ li > * {
 
 .close-button:hover {
 	opacity: 100%;
+}
+
+.selected-article-pane {
+	margin: 2rem 0;
 }
 </style>
