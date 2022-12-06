@@ -175,21 +175,18 @@ const openView = (view: RouteName) => {
 			</Button>
 		</nav>
 		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
-			<header>{{ selectedView }}</header>
-			<main>
-				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
-				<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
-				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
-				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
-				<SimulationResultSidebarPanel
-					v-if="project && selectedView === RouteName.SimulationResultRoute"
-					:project="project"
-				/>
-				<SimulationPlanSidebarPanel
-					v-if="project && selectedView === RouteName.SimulationRoute"
-					:project="project"
-				/>
-			</main>
+			<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
+			<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
+			<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
+			<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
+			<SimulationResultSidebarPanel
+				v-if="project && selectedView === RouteName.SimulationResultRoute"
+				:project="project"
+			/>
+			<SimulationPlanSidebarPanel
+				v-if="project && selectedView === RouteName.SimulationRoute"
+				:project="project"
+			/>
 			<Button round class="side-panel-control" @click="closeSidePanel">
 				<IconArrowLeft16 />
 			</Button>
@@ -223,7 +220,6 @@ nav {
 	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - var(--header-height));
 	justify-content: space-between;
 	padding-top: 0.33rem;
 	width: 4rem;

@@ -1,20 +1,11 @@
 <template>
-	<div class="document-list-container">
-		<div
-			v-for="docAsset in documents"
-			:key="docAsset.xdd_uri"
-			class="doc-link"
-			:class="{ active: docAsset.xdd_uri === documentId }"
-			@click="openDocumentPage(docAsset)"
-		>
-			<span class="doc-title">
-				{{ docAsset.title }}
-			</span>
-			<span class="doc-delete-btn" @click.stop="removeDocument(docAsset)">
-				<IconClose32 />
-			</span>
-		</div>
-	</div>
+	<!-- It's safe to force id to be a string since we use XDD URIs (all strings) as artifact IDs for the purposes of this list -->
+	<ArtifactList
+		:artifacts="documentsAsArtifactList"
+		:selected-artifact-id="documentId"
+		@artifact-clicked="(id) => openDocumentPage(id as string)"
+		@remove-artifact="(id) => removeDocument(id as string)"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -23,12 +14,12 @@
  * Display a list of documents available in the current Project.
  */
 import useResourcesStore from '@/stores/resources';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import IconClose32 from '@carbon/icons-vue/es/close/32';
 import { deleteAsset } from '@/services/project';
 import { PUBLICATIONS } from '@/types/Project';
 import { PublicationAsset } from '@/types/XDD';
+import ArtifactList from './artifact-list.vue';
 
 const router = useRouter();
 
@@ -37,13 +28,22 @@ const resourcesStore = useResourcesStore();
 const documentId = ref('');
 const documents = ref<PublicationAsset[]>([]);
 
-const openDocumentPage = async (docAsset: PublicationAsset) => {
+const documentsAsArtifactList = computed(() =>
+	documents.value.map((document) => ({ id: document.xdd_uri, name: document.title }))
+);
+
+const openDocumentPage = async (xddUri: string) => {
 	// pass this doc id as param
-	documentId.value = docAsset.xdd_uri; // track selection
-	router.push({ path: `/docs/${docAsset.xdd_uri}` });
+	documentId.value = xddUri; // track selection
+	router.push({ path: `/docs/${xddUri}` });
 };
 
-const removeDocument = async (docAsset: PublicationAsset) => {
+const removeDocument = async (xddUri: string) => {
+	const docAsset = documents.value.find((document) => document.xdd_uri === xddUri);
+	if (docAsset === undefined) {
+		console.error('Failed to remove document with XDD uri', xddUri);
+		return;
+	}
 	// remove the document from the project assets
 	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
 		const assetsType = PUBLICATIONS;
@@ -72,53 +72,3 @@ onMounted(() => {
 	}
 });
 </script>
-
-<style scoped>
-.document-list-container {
-	overflow-y: auto;
-	margin-top: 1rem;
-	height: 100%;
-}
-
-.doc-link {
-	cursor: pointer;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.doc-link:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
-}
-
-.active {
-	font-size: var(--un-font-body);
-	background-color: var(--un-color-body-surface-background);
-}
-
-.doc-view-icon {
-	padding-right: 0.5rem;
-}
-
-.doc-delete-btn {
-	color: var(--un-color-body-text-disabled);
-}
-
-.doc-delete-btn:hover {
-	/* color: var(--un-color-body-text-primary); */
-	color: red;
-}
-
-span {
-	display: inline-flex;
-	align-items: center;
-}
-
-.doc-title {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-	display: inline;
-}
-</style>
