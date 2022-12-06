@@ -52,7 +52,7 @@ export default {
 			}
 		},
 		labelColList: {
-			type: Array as PropType<number[] | string[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}

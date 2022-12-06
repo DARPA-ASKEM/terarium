@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, extent, scaleLinear, axisBottom, axisLeft, NumberValue } from 'd3';
+import { select, extent, scaleLinear, scaleTime, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -52,7 +52,7 @@ export default {
 			}
 		},
 		labelColList: {
-			type: Array as PropType<number[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -148,8 +148,14 @@ export default {
 		},
 
 		xScale() {
+			if (this.labelColSelected[0]?.constructor === Date) {
+				return scaleTime()
+					.domain(extent(this.labelColSelected as unknown as Date[]) as [Date, Date])
+					.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
+			}
+
 			return scaleLinear()
-				.domain(extent(this.labelColSelected) as [number, number])
+				.domain(extent(this.labelColSelected as number[]) as [number, number])
 				.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
 		},
 
@@ -239,7 +245,7 @@ export default {
 			svg: D3SvgSelection,
 			parameter: string,
 			yValueArray: number[],
-			xValueArray: number[]
+			xValueArray: number[] | Date[]
 		) {
 			const dataLength = yValueArray.length;
 

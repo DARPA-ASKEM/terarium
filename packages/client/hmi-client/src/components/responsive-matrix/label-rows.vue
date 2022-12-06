@@ -63,7 +63,7 @@ export default {
 				return [];
 			}
 		},
-		labelColFormatFn: {
+		labelRowFormatFn: {
 			type: Function as PropType<(value: NumberValue, index: number) => string>,
 			default(v) {
 				return v;
@@ -122,7 +122,7 @@ export default {
 				this.selectedRows,
 				this.microRowSettings,
 				labelStride,
-				this.labelColFormatFn
+				this.labelRowFormatFn
 			);
 		},
 
