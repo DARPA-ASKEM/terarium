@@ -1,6 +1,6 @@
 <template>
 	<ArtifactList
-		:artifacts="datasetsAsArtifactList"
+		:artifacts="datasets"
 		:selected-artifact-id="datasetId"
 		@artifact-clicked="openDatasetPage"
 		@remove-artifact="removeDataset"
@@ -15,7 +15,7 @@
 
 import { useRouter } from 'vue-router';
 import useResourcesStore from '@/stores/resources';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { deleteAsset } from '@/services/project';
 import { DATASETS } from '@/types/Project';
 import { RouteName } from '@/router/routes';
@@ -27,9 +27,6 @@ const resourcesStore = useResourcesStore();
 
 const datasetId = ref<string | number>('');
 const datasets = ref<Dataset[]>([]);
-const datasetsAsArtifactList = computed(() =>
-	datasets.value.map((dataset) => ({ id: dataset.id, displayName: dataset.name }))
-);
 
 const openDatasetPage = async (id: string | number) => {
 	// pass this dataset id as param

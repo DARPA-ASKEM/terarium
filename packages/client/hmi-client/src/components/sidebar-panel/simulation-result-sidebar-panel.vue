@@ -15,7 +15,7 @@ const openSimulationResult = (runId: string | number) => {
 const simulationRunsAsArtifactList = computed(() =>
 	props.project.assets.simulation_runs.map((runId) => ({
 		id: runId,
-		displayName: runId.toString()
+		name: runId.toString()
 	}))
 );
 const route = useRoute();

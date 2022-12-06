@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import IconClose32 from '@carbon/icons-vue/es/close/32';
 
+export interface ArtifactListItem {
+	id: string | number;
+	name: string;
+}
+
 defineProps<{
-	artifacts: { id: string | number; displayName: string }[];
+	artifacts: ArtifactListItem[];
 	selectedArtifactId?: string | number;
 }>();
 
@@ -13,8 +18,8 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<div class="artifact-list-container">
-		<div
+	<ul class="artifact-list-container">
+		<li
 			v-for="artifact in artifacts"
 			:key="artifact.id"
 			class="row"
@@ -22,11 +27,11 @@ const emit = defineEmits<{
 			@click="emit('artifact-clicked', artifact.id)"
 		>
 			<span>
-				{{ artifact.displayName }}
+				{{ artifact.name }}
 			</span>
 			<IconClose32 class="remove-button" @click="emit('remove-artifact', artifact.id)" />
-		</div>
-	</div>
+		</li>
+	</ul>
 </template>
 
 <style scoped>

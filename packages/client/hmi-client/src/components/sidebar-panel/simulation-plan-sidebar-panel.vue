@@ -15,7 +15,7 @@ const openSimulationPlan = (runId: string | number) => {
 const simulationPlansAsArtifactList = computed(() =>
 	props.project.assets.plans.map((planId) => ({
 		id: planId,
-		displayName: planId.toString()
+		name: planId.toString()
 	}))
 );
 const route = useRoute();

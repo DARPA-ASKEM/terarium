@@ -1,6 +1,6 @@
 <template>
 	<ArtifactList
-		:artifacts="modelsAsArtifactList"
+		:artifacts="models"
 		:selected-artifact-id="modelId"
 		@artifact-clicked="openModelPage"
 		@remove-artifact="removeModel"
@@ -15,7 +15,7 @@
 
 import { useRouter } from 'vue-router';
 import useResourcesStore from '@/stores/resources';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { deleteAsset } from '@/services/project';
 import { MODELS } from '@/types/Project';
 import { RouteName } from '@/router/routes';
@@ -27,9 +27,6 @@ const resourcesStore = useResourcesStore();
 
 const modelId = ref<string | number>('');
 const models = ref<Model[]>([]);
-const modelsAsArtifactList = computed(() =>
-	models.value.map((model) => ({ id: model.id, displayName: model.name }))
-);
 
 const openModelPage = async (id: string | number) => {
 	// pass this model id as param

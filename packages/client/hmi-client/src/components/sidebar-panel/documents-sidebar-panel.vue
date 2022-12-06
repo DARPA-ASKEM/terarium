@@ -29,7 +29,7 @@ const documentId = ref('');
 const documents = ref<PublicationAsset[]>([]);
 
 const documentsAsArtifactList = computed(() =>
-	documents.value.map((document) => ({ id: document.xdd_uri, displayName: document.title }))
+	documents.value.map((document) => ({ id: document.xdd_uri, name: document.title }))
 );
 
 const openDocumentPage = async (xddUri: string) => {
