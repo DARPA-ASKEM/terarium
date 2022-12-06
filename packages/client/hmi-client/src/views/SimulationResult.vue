@@ -154,14 +154,10 @@ const { data, cellLabelRow, cellLabelCol, fillColorFn, lineColorFn, barColorFn, 
 const legendContainer = ref(null);
 // FIXME: Render legend test
 onMounted(() => {
-	console.log(legendContainer);
-	const svg = select(legendContainer.value as any)
-		.append('svg')
-		.style('height', '20px')
-		.style('width', '400px');
+	const svg = select(legendContainer.value as any);
 	const max = simData.divergingMaxMin;
 	const min = -simData.divergingMaxMin;
-	const legendCellW = 30;
+	const legendCellW = 50;
 	let cnt = 0;
 	svg.append('text').attr('x', 10).attr('y', 12).text(String(min).slice(0, 7));
 	const colorMap = ['#c51b7d', '#f1b6da', '#f7f7f7', '#b8e186', '#4d9221'];
@@ -184,10 +180,10 @@ onMounted(() => {
 </script>
 
 <template>
-	<section>
+	<section class="result-container">
 		<h3>Simulation Results</h3>
-		<div ref="legendContainer"></div>
-		<div class="result-container">
+		<svg ref="legendContainer" height="20px" width="400px"></svg>
+		<div class="result">
 			<ResponsiveMatrix
 				:data="data"
 				:fillColorFn="fillColorFn"
@@ -204,8 +200,14 @@ onMounted(() => {
 
 <style scoped>
 .result-container {
-	width: 25rem;
-	height: 25rem;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.result {
+	width: 100%;
+	height: 100%;
 	display: flex;
 	flex-direction: row;
 }
