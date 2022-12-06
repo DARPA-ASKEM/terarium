@@ -679,8 +679,8 @@ export default defineComponent({
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
-			const resp = API.get(`model-service/models/${this.loadModelID}/json`);
-			const model: PetriNet = await resp.data;
+			const resp = await API.get(`model-service/models/${this.loadModelID}/json`);
+			const model: PetriNet = resp.data;
 			this.createModel(model, false);
 		},
 		// Expects a JSON of a model with labels T, S, I, O.
