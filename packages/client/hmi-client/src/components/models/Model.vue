@@ -10,9 +10,9 @@ import {
 } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
 import { Model } from '@/types/Model';
-import Button from '@/components/Button.vue';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import Button from '@/components/Button.vue';
 
 const props = defineProps<{
 	modelId: string;
@@ -89,6 +89,8 @@ watch([model, graphElement], async () => {
 	await renderer?.render();
 });
 
+const isDescriptionExpanded = ref(false);
+
 // FIXME: update after Dec 8 demo
 const router = useRouter();
 const goToSimulationPlanPage = () => {
@@ -98,70 +100,68 @@ const goToSimulationPlanPage = () => {
 
 <template>
 	<section class="model">
-		<div class="graph-column">
+		<header>
 			<h3>{{ model?.name ?? '' }}</h3>
-			<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
-		</div>
-		<aside>
-			<p class="description">{{ model?.description ?? '' }}</p>
-			<h4>Parameters</h4>
-			<ul v-if="model !== null">
-				<li v-for="parameterName in Object.keys(model.parameters)" :key="parameterName">
-					<strong>{{ parameterName }}</strong
-					>: {{ model.parameters[parameterName] }}
-				</li>
-			</ul>
-			<h4>Workflows</h4>
-			<p>Not included in any workflows.</p>
 			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
-		</aside>
+		</header>
+
+		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
+			<p>{{ model?.description ?? '' }}</p>
+			<div class="less-more-button-container">
+				<Button @click="isDescriptionExpanded = !isDescriptionExpanded">
+					{{ isDescriptionExpanded ? 'Show less' : 'Show more' }}
+				</Button>
+			</div>
+		</div>
+		<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 	</section>
 </template>
 
 <style scoped>
 .model {
-	margin: 10px;
+	padding: 10px;
 	display: flex;
+	flex-direction: column;
 }
 
-.graph-column {
+header {
+	display: flex;
+	margin-bottom: 10px;
+	align-items: flex-start;
+}
+
+h3 {
 	flex: 1;
 	min-width: 0;
 }
 
+.description {
+	position: relative;
+}
+
+.description p {
+	max-width: 120ch;
+	max-height: 6rem;
+	overflow: hidden;
+}
+
+.description.is-expanded p {
+	max-height: none;
+}
+
+.description:not(.is-expanded) .less-more-button-container {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: linear-gradient(#ffffff00, #ffffff);
+	padding-top: 3rem;
+}
+
 .graph-element {
-	width: 1000px;
-	height: 1000px;
-	background: var(--un-color-black-5);
-}
-
-aside {
-	width: 400px;
-	margin-left: 10px;
-	background: var(--un-color-black-5);
-	padding: 10px;
-}
-
-h3 {
-	margin-bottom: 10px;
-}
-
-h4 {
-	margin-top: 30px;
-	margin-bottom: 10px;
-}
-
-.description,
-ul {
-	max-height: 400px;
-	overflow-y: auto;
-}
-
-li {
-	display: block;
-}
-
-strong {
-	font-weight: bold;
+	width: 100%;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
 }
 </style>
