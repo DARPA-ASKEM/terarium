@@ -20,13 +20,14 @@ import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
 // Components
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
+import DatasetSidebarPanel from '@/components/sidebar-panel/dataset-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
-import { RouteName } from '@/router/index';
-import { MODELS, PLANS, SIMULATION_RUNS, Project } from '@/types/Project';
+import { RouteName } from '@/router/routes';
+import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
 
 const router = useRouter();
 
@@ -51,6 +52,7 @@ function showSidebar(view: RouteName): boolean {
 	// Test for Sidebar that doesn't need Project
 	const needProject = [
 		RouteName.ModelRoute,
+		RouteName.DatasetRoute,
 		RouteName.DocumentRoute,
 		RouteName.ProfileRoute
 	].includes(view);
@@ -77,6 +79,10 @@ const openView = (view: RouteName) => {
 			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
 		}
 
+		if (view === RouteName.DatasetRoute) {
+			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? 1;
+		}
+
 		if (view === RouteName.SimulationRoute) {
 			params.simulationId = props?.project?.assets[PLANS]?.[0] ?? 1;
 		}
@@ -100,42 +106,42 @@ const openView = (view: RouteName) => {
 			<ul>
 				<li
 					:active="selectedView === RouteName.ProjectRoute"
-					:title="RouteName.ProjectRoute"
+					title="Project summary"
 					@click="openView(RouteName.ProjectRoute)"
 				>
 					<IconAccount32 />
 				</li>
 				<li
-					:active="selectedView === RouteName.ModelRoute"
-					:title="RouteName.ModelRoute"
-					@click="openView(RouteName.ModelRoute)"
-				>
-					<IconMachineLearningModel32 />
-				</li>
-				<li
 					:active="selectedView === RouteName.SimulationRoute"
-					:title="RouteName.SimulationRoute"
+					title="Workflows"
 					@click="openView(RouteName.SimulationRoute)"
 				>
 					<IconAppConnectivity32 />
 				</li>
 				<li
-					:active="selectedView === RouteName.SimulationResultRoute"
-					@click="openView(RouteName.SimulationResultRoute)"
+					:active="selectedView === RouteName.ModelRoute"
+					title="Models"
+					@click="openView(RouteName.ModelRoute)"
 				>
-					<IconChartCombo32 />
+					<IconMachineLearningModel32 />
 				</li>
 				<li
-					disabled
 					:active="selectedView === RouteName.DatasetRoute"
-					:title="RouteName.DatasetRoute"
+					title="Data"
 					@click="openView(RouteName.DatasetRoute)"
 				>
 					<IconTableSplit32 />
 				</li>
 				<li
+					:active="selectedView === RouteName.SimulationResultRoute"
+					title="Analysis"
+					@click="openView(RouteName.SimulationResultRoute)"
+				>
+					<IconChartCombo32 />
+				</li>
+				<li
 					:active="selectedView === RouteName.DocumentRoute"
-					:title="RouteName.DocumentRoute"
+					title="Papers"
 					@click="openView(RouteName.DocumentRoute)"
 				>
 					<IconDocument32 />
@@ -169,20 +175,18 @@ const openView = (view: RouteName) => {
 			</Button>
 		</nav>
 		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
-			<header>{{ selectedView }}</header>
-			<main>
-				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
-				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
-				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
-				<SimulationResultSidebarPanel
-					v-if="project && selectedView === RouteName.SimulationResultRoute"
-					:project="project"
-				/>
-				<SimulationPlanSidebarPanel
-					v-if="project && selectedView === RouteName.SimulationRoute"
-					:project="project"
-				/>
-			</main>
+			<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
+			<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
+			<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
+			<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
+			<SimulationResultSidebarPanel
+				v-if="project && selectedView === RouteName.SimulationResultRoute"
+				:project="project"
+			/>
+			<SimulationPlanSidebarPanel
+				v-if="project && selectedView === RouteName.SimulationRoute"
+				:project="project"
+			/>
 			<Button round class="side-panel-control" @click="closeSidePanel">
 				<IconArrowLeft16 />
 			</Button>
@@ -216,7 +220,6 @@ nav {
 	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - var(--header-height));
 	justify-content: space-between;
 	padding-top: 0.33rem;
 	width: 4rem;

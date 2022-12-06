@@ -2,7 +2,7 @@
 	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix">
 			<LabelCols
-				v-if="!disableLabelCol"
+				v-if="!disableLabelCol && rendererReady"
 				:selectedCols="selectedCols"
 				:labelColList="labelColList"
 				:microColSettings="microColSettings"
@@ -10,9 +10,10 @@
 				:viewport="viewport"
 				:update="update"
 				:move="move"
+				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
-				v-if="!disableLabelRow"
+				v-if="!disableLabelRow && rendererReady"
 				:selectedRows="selectedRows"
 				:labelRowList="labelRowList"
 				:microRowSettings="microRowSettings"
@@ -20,6 +21,7 @@
 				:viewport="viewport"
 				:update="update"
 				:move="move"
+				:labelRowFormatFn="labelRowFormatFn"
 			/>
 			<component
 				v-for="(selectedCell, idx) in selectedCellList"
@@ -37,6 +39,8 @@
 				:parametersMin="dataParametersMin"
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				:labelRowFormatFn="labelRowFormatFn"
+				:labelColFormatFn="labelColFormatFn"
 				@click="selectedCellClick(idx)"
 			/>
 		</div>
@@ -56,7 +60,7 @@
  * - pixi-viewport: https://davidfig.github.io/pixi-viewport/jsdoc/index.html
  */
 
-import { nextTick, PropType } from 'vue';
+import { ref, nextTick, PropType } from 'vue';
 
 import chroma from 'chroma-js';
 import { Viewport } from 'pixi-viewport';
@@ -70,6 +74,7 @@ import {
 	FederatedPointerEvent,
 	Point
 } from 'pixi.js';
+import { NumberValue } from 'd3';
 
 import {
 	SelectedCell,
@@ -135,7 +140,7 @@ export default {
 			}
 		},
 		cellLabelCol: {
-			type: Array as PropType<number[] | string[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -156,6 +161,18 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		},
 		backgroundColor: {
@@ -183,7 +200,7 @@ export default {
 			dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 			dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
 			labelRowList: [] as number[] | string[],
-			labelColList: [] as number[] | string[],
+			labelColList: [] as number[] | Date[],
 			numRows: 0,
 			numCols: 0,
 
@@ -296,9 +313,13 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	setup() {
+		const rendererReady = ref(false);
+
 		return {
 			app: undefined as undefined | Application,
-			viewport: undefined as undefined | Viewport
+			viewport: undefined as undefined | Viewport,
+
+			rendererReady
 		};
 	},
 
@@ -480,6 +501,7 @@ export default {
 		this.viewport.on('pointerup', this.handleMouseUp);
 		this.viewport.on('moved' as any, this.incrementMove);
 		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
+		this.rendererReady = true;
 
 		// force an update to update labels using viewport information
 		this.incrementMove();

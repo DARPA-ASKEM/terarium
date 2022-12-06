@@ -10,6 +10,9 @@ import {
 } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
 import { Model } from '@/types/Model';
+import Button from '@/components/Button.vue';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	modelId: string;
@@ -85,11 +88,17 @@ watch([model, graphElement], async () => {
 	await renderer?.setData(g);
 	await renderer?.render();
 });
+
+// FIXME: update after Dec 8 demo
+const router = useRouter();
+const goToSimulationPlanPage = () => {
+	router.push({ name: RouteName.SimulationRoute });
+};
 </script>
 
 <template>
 	<section class="model">
-		<div>
+		<div class="graph-column">
 			<h3>{{ model?.name ?? '' }}</h3>
 			<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 		</div>
@@ -102,6 +111,9 @@ watch([model, graphElement], async () => {
 					>: {{ model.parameters[parameterName] }}
 				</li>
 			</ul>
+			<h4>Workflows</h4>
+			<p>Not included in any workflows.</p>
+			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
 		</aside>
 	</section>
 </template>
@@ -110,6 +122,11 @@ watch([model, graphElement], async () => {
 .model {
 	margin: 10px;
 	display: flex;
+}
+
+.graph-column {
+	flex: 1;
+	min-width: 0;
 }
 
 .graph-element {
