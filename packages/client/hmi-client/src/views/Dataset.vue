@@ -78,14 +78,11 @@ const formatFeatures = (d: Dataset) => {
 					</thead>
 					<tbody>
 						<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
-							<td
-								v-for="(col, colIndex) in row"
-								:key="colIndex.toString()"
-								class="title-and-abstract-col"
-							>
-								<div class="title-and-abstract-layout">
-									<div class="content">
-										<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
+							<!-- eslint-disable-next-line vue/no-unused-vars @typescript-eslint/no-unused-vars -->
+							<td v-for="(col, colIndex) in row" :key="colIndex.toString()">
+								<div>
+									<div>
+										<div>{{ csvContent[rowIndex][colIndex] }}</div>
 									</div>
 								</div>
 							</td>
