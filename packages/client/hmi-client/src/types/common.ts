@@ -54,3 +54,9 @@ export type SidePanelTab = {
 	isGreyscale?: string;
 	badgeCount?: number;
 };
+
+// Tabs
+export type Tab = {
+	name: string;
+	props?: Object;
+};

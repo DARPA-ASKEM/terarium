@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { ref, watch } from 'vue';
+import { watch, ref } from 'vue';
 import {
 	runDagreLayout,
 	D3SelectionINode,

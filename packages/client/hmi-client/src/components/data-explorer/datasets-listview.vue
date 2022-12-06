@@ -34,9 +34,11 @@
 									<template v-if="isExpanded(d)">
 										<br />
 										<div><b>Concepts</b></div>
-										<div v-for="tag in getConceptTags(d)" :key="tag">
-											{{ tag }}
-										</div>
+										<ul>
+											<li v-for="tag in getConceptTags(d)" :key="tag">
+												{{ tag }}
+											</li>
+										</ul>
 									</template>
 								</div>
 							</div>
