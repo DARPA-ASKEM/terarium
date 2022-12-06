@@ -1,11 +1,13 @@
 import { CellStatus } from '@/types/ResponsiveMatrix';
+import { NumberValue } from 'd3';
 
 // FIXME: add test
 export const makeLabels = (
 	itemList: any[],
 	itemStatusList: CellStatus[],
 	microSettings: number[],
-	stride: number
+	stride: number,
+	labelColFormatFn: (value: NumberValue, index: number) => string
 ) => {
 	let labelPosition = 0;
 	const results: { value: any; position: number }[] = [];
@@ -16,7 +18,7 @@ export const makeLabels = (
 		if (!(i % stride)) {
 			// use the position in the middle
 			results.push({
-				value: itemList[i],
+				value: labelColFormatFn(itemList[i], i),
 				position: labelPosition + len / 2
 			});
 		}
