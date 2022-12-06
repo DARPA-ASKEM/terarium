@@ -5,6 +5,7 @@ import ArticlesCard from '@/components/articles/ArticlesCard.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
+import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { onMounted, ref } from 'vue';
 import { Project } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
@@ -57,26 +58,22 @@ const close = () => {
 
 <template>
 	<section>
-		<h2>Projects</h2>
 		<!-- modal window for showing selected paper -->
-		<div v-if="selectedPaper !== undefined" class="modal-mask-paper">
-			<div class="modal-wrapper-paper" @click.stop="selectedPaper ? {} : close()">
-				<div class="modal-container-paper">
-					<div class="modal-header">
-						<button type="button" class="close-button" @click="close()">Close</button>
-						{{ selectedPaper.title }}
-					</div>
-					<div class="modal-body-paper">
-						<selected-article-pane
-							class="selected-resources-pane"
-							:selected-search-items="[selectedPaper]"
-							@close="close()"
-						/>
-					</div>
+		<div v-if="selectedPaper !== undefined" class="selected-paper-modal-mask" @click="close()">
+			<div class="selected-paper-modal" @click.stop>
+				<div class="modal-header">
+					<h4>{{ selectedPaper.title }}</h4>
+					<IconClose32 class="close-button" @click="close()" />
 				</div>
+				<selected-article-pane
+					class="selected-article-pane"
+					:selected-article="selectedPaper"
+					@close="close()"
+				/>
 			</div>
 		</div>
 
+		<h2>Projects</h2>
 		<template v-for="[key, value] in categories" :key="key">
 			<div>
 				<header>
@@ -239,7 +236,7 @@ li > * {
 	margin-bottom: 3rem;
 }
 
-.modal-mask-paper {
+.selected-paper-modal-mask {
 	position: fixed;
 	z-index: 9998;
 	top: 0;
@@ -247,39 +244,38 @@ li > * {
 	width: 100%;
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0.5);
-	display: table;
-	transition: opacity 0.3s ease;
-	overflow-y: auto;
+	display: flex;
+	align-items: center;
 }
-.modal-wrapper-paper {
-	display: table-cell;
-	vertical-align: middle;
-	height: 100%;
-}
-.modal-container-paper {
+.selected-paper-modal {
 	position: relative;
 	width: 500px;
 	margin: 0px auto;
-	background-color: #fff;
+	background-color: var(--un-color-body-surface-primary);
 	border-radius: 2px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-	transition: all 0.3s ease;
 	overflow-y: auto;
-	height: 75%;
+	max-height: 75%;
+	padding: 1rem;
 }
 
-.modal-header-paper {
-	padding: 15px;
-}
 .modal-header {
-	max-width: 90%; /* Leave room for close button */
+	display: flex;
+	justify-content: space-between;
 }
 
-.modal-body-paper {
-	padding: 15px;
-}
 .close-button {
-	position: absolute;
-	right: 0;
+	width: 2rem;
+	height: 2rem;
+	cursor: pointer;
+	opacity: 50%;
+}
+
+.close-button:hover {
+	opacity: 100%;
+}
+
+.selected-article-pane {
+	margin: 2rem 0;
 }
 </style>

@@ -96,7 +96,8 @@ const BUTTON_ORDER = [
 	RouteName.SimulationRoute,
 	RouteName.ModelRoute,
 	RouteName.DatasetRoute,
-	RouteName.SimulationResultRoute
+	RouteName.SimulationResultRoute,
+	RouteName.DocumentRoute
 ];
 
 const DISABLED_BUTTONS = [RouteName.ProvenanceRoute, RouteName.ProfileRoute];
