@@ -57,7 +57,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		ModelFilterAttributes.forEach((modelAttr) => {
 			const resultsAsModels = allModels;
 			const items = resultsAsModels.filter((d) =>
-				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term)
+				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
 			);
 			finalModels.push(...items);
 		});
@@ -178,7 +178,7 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		DatasetFilterAttributes.forEach((datasetAttr) => {
 			const resultsAsDatasets = allDatasets;
 			const items = resultsAsDatasets.filter((d) =>
-				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term)
+				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
 			);
 			finalDatasets.push(...items);
 		});
