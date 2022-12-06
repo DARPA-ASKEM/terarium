@@ -301,3 +301,10 @@ export default {
 	}
 };
 </script>
+
+<style scoped>
+.cell-selected-line {
+	border: 2px solid var(--background-light-3);
+	border-radius: 5px;
+}
+</style>
