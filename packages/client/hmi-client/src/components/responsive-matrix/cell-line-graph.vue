@@ -14,6 +14,7 @@ import {
 	SelectedCell,
 	SelectedCellData
 } from '@/types/ResponsiveMatrix';
+import { formatAxis } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -225,16 +226,19 @@ export default {
 				.attr('viewBox', `0 0 ${width} ${height}`)
 				.style('background', 'white');
 
-			const xAxis = axisBottom(this.xScale).tickFormat(this.labelColFormatFn);
-
-			this.svg
+			const xAxisGen = axisBottom(this.xScale).tickFormat(this.labelColFormatFn);
+			const xAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
-				.call(xAxis);
+				.call(xAxisGen);
+			formatAxis(xAxis);
 
-			const yAxis = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
-
-			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
+			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
+			const yAxis = this.svg
+				.append('g')
+				.attr('transform', `translate(${leftMargin},${topMargin})`)
+				.call(yAxisGen);
+			formatAxis(yAxis);
 
 			Object.keys(this.selectedCells).forEach((parameter) => {
 				this.renderLine(this.svg, parameter, this.selectedCells[parameter], this.labelColSelected);

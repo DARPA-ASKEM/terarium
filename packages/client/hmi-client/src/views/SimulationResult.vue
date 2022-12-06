@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { NumberValue, scaleTime } from 'd3';
+import { select, NumberValue, scaleTime, scaleOrdinal, schemeAccent } from 'd3';
 import { mix } from 'chroma-js';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
@@ -33,6 +33,9 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// ///////////////////////////////////////////////////////////////////////////////
+// parse raw data into responsive matrix input
 
 function parseSimData(input) {
 	if (input.constructor !== Array) {
@@ -108,6 +111,9 @@ function parseSimData(input) {
 		return mix(colorMid, colorExtremeNeg, -diff / divergingMaxMin, 'lab');
 	};
 
+	const scale = scaleOrdinal(schemeAccent).domain(Object.keys(data[0][0]));
+	const drilldownColorFn = (parameter: string) => scale(parameter);
+
 	const labelColFormatFn = scaleTime().tickFormat() as (value: NumberValue) => string;
 
 	return {
@@ -115,7 +121,10 @@ function parseSimData(input) {
 		cellLabelCol,
 		cellLabelRow,
 		fillColorFn,
-		labelColFormatFn
+		lineColorFn: drilldownColorFn,
+		barColorFn: drilldownColorFn,
+		labelColFormatFn,
+		divergingMaxMin
 	};
 }
 
@@ -136,16 +145,54 @@ const simData = parseSimData([
 	run14
 ]);
 
-const { data, cellLabelRow, cellLabelCol, labelColFormatFn, fillColorFn } = simData;
+const { data, cellLabelRow, cellLabelCol, fillColorFn, lineColorFn, barColorFn, labelColFormatFn } =
+	simData;
+
+// ///////////////////////////////////////////////////////////////////////////////
+// generate legend
+
+const legendContainer = ref(null);
+// FIXME: Render legend test
+onMounted(() => {
+	console.log(legendContainer);
+	const svg = select(legendContainer.value as any)
+		.append('svg')
+		.style('height', '20px')
+		.style('width', '400px');
+	const max = simData.divergingMaxMin;
+	const min = -simData.divergingMaxMin;
+	const legendCellW = 30;
+	let cnt = 0;
+	svg.append('text').attr('x', 10).attr('y', 12).text(String(min).slice(0, 7));
+	const colorMap = ['#c51b7d', '#f1b6da', '#f7f7f7', '#b8e186', '#4d9221'];
+	for (let i = 0; i < 5; i++) {
+		svg
+			.append('rect')
+			.attr('x', 63 + cnt * legendCellW)
+			.attr('y', 0)
+			.attr('width', legendCellW)
+			.attr('height', 15)
+			.style('fill', colorMap[i]);
+		cnt++;
+	}
+	svg
+		.append('text')
+		.attr('x', 65 + legendCellW * cnt)
+		.attr('y', 12)
+		.text(String(max).slice(0, 6));
+});
 </script>
 
 <template>
 	<section>
 		<h3>Simulation Results</h3>
+		<div ref="legendContainer"></div>
 		<div class="result-container">
 			<ResponsiveMatrix
 				:data="data"
 				:fillColorFn="fillColorFn"
+				:lineColorFn="lineColorFn"
+				:barColorFn="barColorFn"
 				:labelColFormatFn="labelColFormatFn"
 				:cellLabelRow="cellLabelRow"
 				:cellLabelCol="cellLabelCol"
