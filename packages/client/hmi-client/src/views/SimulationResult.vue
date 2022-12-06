@@ -192,6 +192,7 @@ onMounted(() => {
 				:labelColFormatFn="labelColFormatFn"
 				:cellLabelRow="cellLabelRow"
 				:cellLabelCol="cellLabelCol"
+				:margin="40"
 				:style="{ flex: '1' }"
 			/>
 		</div>
@@ -210,6 +211,7 @@ onMounted(() => {
 	height: 100%;
 	display: flex;
 	flex-direction: row;
+	padding: 20px;
 }
 
 h3 {
