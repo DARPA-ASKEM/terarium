@@ -115,4 +115,4 @@ async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
 	}
 }
 
-export { get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };
+export { create, get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };
