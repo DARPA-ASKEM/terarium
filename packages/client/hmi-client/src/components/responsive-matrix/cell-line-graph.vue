@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, extent, scaleLinear, axisBottom, axisLeft } from 'd3';
+import { select, extent, scaleLinear, scaleTime, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -52,7 +52,7 @@ export default {
 			}
 		},
 		labelColList: {
-			type: Array as PropType<number[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -79,6 +79,18 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},
@@ -136,8 +148,14 @@ export default {
 		},
 
 		xScale() {
+			if (this.labelColSelected[0]?.constructor === Date) {
+				return scaleTime()
+					.domain(extent(this.labelColSelected as unknown as Date[]) as [Date, Date])
+					.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
+			}
+
 			return scaleLinear()
-				.domain(extent(this.labelColSelected) as [number, number])
+				.domain(extent(this.labelColSelected as number[]) as [number, number])
 				.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
 		},
 
@@ -207,14 +225,14 @@ export default {
 				.attr('viewBox', `0 0 ${width} ${height}`)
 				.style('background', 'white');
 
-			const xAxis = axisBottom(this.xScale);
+			const xAxis = axisBottom(this.xScale).tickFormat(this.labelColFormatFn);
 
 			this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
 				.call(xAxis);
 
-			const yAxis = axisLeft(this.yScale);
+			const yAxis = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
 
 			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
 
@@ -227,7 +245,7 @@ export default {
 			svg: D3SvgSelection,
 			parameter: string,
 			yValueArray: number[],
-			xValueArray: number[]
+			xValueArray: number[] | Date[]
 		) {
 			const dataLength = yValueArray.length;
 

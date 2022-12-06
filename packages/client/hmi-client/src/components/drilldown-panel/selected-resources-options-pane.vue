@@ -20,7 +20,12 @@
 			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
 				<div class="item-header">
 					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
-					<div class="item-title" :title="getTitle(item)">{{ formatTitle(item) }}</div>
+					<div class="item-title" :title="getTitle(item)">
+						{{ formatTitle(item) }}
+					</div>
+					<div class="item-delete-btn" @click.stop="removeItem(item)">
+						<IconClose16 />
+					</div>
 				</div>
 				<div class="content">
 					<multiline-description :text="formatDescription(item)" />
@@ -33,16 +38,18 @@
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import Button from '@/components/Button.vue';
-import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { MODELS, Project, PUBLICATIONS } from '@/types/Project';
+import { DATASETS, MODELS, Project, PUBLICATIONS } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
+import { Dataset } from '@/types/Dataset';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -51,7 +58,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'remove-item']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
@@ -73,6 +80,9 @@ const formatDescription = (item: ResultType) => {
 	if (isModel(item)) {
 		itemDesc = (item as Model).description || itemDesc;
 	}
+	if (isDataset(item)) {
+		itemDesc = (item as Dataset).description || itemDesc;
+	}
 	if (isXDDArticle(item)) {
 		itemDesc =
 			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
@@ -88,6 +98,9 @@ const formatDescription = (item: ResultType) => {
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
 		return (item as Model).type;
+	}
+	if (isDataset(item)) {
+		return (item as Dataset).type;
 	}
 	if (isXDDArticle(item)) {
 		return ResourceType.XDD;
@@ -131,6 +144,17 @@ const addResourcesToProject = async (projectId: string) => {
 			validProject.value?.assets.models.push(modelId);
 			resources.activeProjectAssets?.[MODELS].push(selectedItem);
 		}
+		if (isDataset(selectedItem)) {
+			// FIXME: handle cases where assets is already added to the project
+			const datasetId = selectedItem.id;
+			// then, link and store in the project assets
+			const assetsType = DATASETS;
+			await ProjectService.addAsset(projectId, assetsType, datasetId);
+
+			// update local copy of project assets
+			validProject.value?.assets.datasets.push(datasetId);
+			resources.activeProjectAssets?.[DATASETS].push(selectedItem);
+		}
 	});
 };
 
@@ -149,6 +173,10 @@ const addAssetsToProject = async (projectName?: string) => {
 	addResourcesToProject(projectId);
 
 	emit('close');
+};
+
+const removeItem = (item: ResultType) => {
+	emit('remove-item', item);
 };
 
 onMounted(async () => {
@@ -216,5 +244,19 @@ onMounted(async () => {
 
 .selected-items-container .item-header .icon {
 	margin-right: 5px;
+}
+
+.selected-items-container .selected-item .content {
+	margin-left: 22px;
+}
+
+.item-delete-btn {
+	color: var(--un-color-body-text-disabled);
+	cursor: pointer;
+}
+
+.item-delete-btn:hover {
+	/* color: var(--un-color-body-text-primary); */
+	color: red;
 }
 </style>

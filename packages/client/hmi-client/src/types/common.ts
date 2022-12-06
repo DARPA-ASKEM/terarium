@@ -1,4 +1,5 @@
 import { ConceptFacets } from './Concept';
+import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
 import { XDDArticle, XDDSearchParams } from './XDD';
 
@@ -18,9 +19,10 @@ export enum ResourceType {
 export type SearchParameters = {
 	[ResourceType.XDD]?: XDDSearchParams;
 	[ResourceType.MODEL]?: ModelSearchParams;
+	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | XDDArticle;
+export type ResultType = Model | Dataset | XDDArticle;
 
 export type SearchResults = {
 	results: ResultType[];
@@ -51,4 +53,10 @@ export type SidePanelTab = {
 	imgSrc?: string;
 	isGreyscale?: string;
 	badgeCount?: number;
+};
+
+// Tabs
+export type Tab = {
+	name: string;
+	props?: Object;
 };

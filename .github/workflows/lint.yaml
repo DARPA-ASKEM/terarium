@@ -10,15 +10,19 @@ on:
   pull_request:
     branches: ['main']
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   lintYaml:
     name: Lint YAML Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-yaml.yaml@1938a13230b6e45fc5ea546dcedcc5f2f873a124
+    uses: darpa-askem/.github/.github/workflows/lint-yaml.yaml@main
     with:
       strict: false
 
   lintDocker:
     name: Lint Docker Files
-    uses: darpa-askem/orchestration/.github/workflows/lint-docker.yaml@1938a13230b6e45fc5ea546dcedcc5f2f873a124
+    uses: darpa-askem/.github/.github/workflows/lint-docker.yaml@main
     with:
       failure-threshold: 'error'

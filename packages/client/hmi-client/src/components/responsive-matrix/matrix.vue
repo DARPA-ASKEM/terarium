@@ -10,6 +10,7 @@
 				:viewport="viewport"
 				:update="update"
 				:move="move"
+				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
 				v-if="!disableLabelRow && rendererReady"
@@ -20,6 +21,7 @@
 				:viewport="viewport"
 				:update="update"
 				:move="move"
+				:labelRowFormatFn="labelRowFormatFn"
 			/>
 			<component
 				v-for="(selectedCell, idx) in selectedCellList"
@@ -37,6 +39,8 @@
 				:parametersMin="dataParametersMin"
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				:labelRowFormatFn="labelRowFormatFn"
+				:labelColFormatFn="labelColFormatFn"
 				@click="selectedCellClick(idx)"
 			/>
 		</div>
@@ -70,6 +74,7 @@ import {
 	FederatedPointerEvent,
 	Point
 } from 'pixi.js';
+import { NumberValue } from 'd3';
 
 import {
 	SelectedCell,
@@ -135,7 +140,7 @@ export default {
 			}
 		},
 		cellLabelCol: {
-			type: Array as PropType<number[] | string[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -156,6 +161,18 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		},
 		backgroundColor: {
@@ -183,7 +200,7 @@ export default {
 			dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 			dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
 			labelRowList: [] as number[] | string[],
-			labelColList: [] as number[] | string[],
+			labelColList: [] as number[] | Date[],
 			numRows: 0,
 			numCols: 0,
 
