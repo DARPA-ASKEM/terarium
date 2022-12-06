@@ -6,8 +6,8 @@ import { ref, computed } from 'vue';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
 // Icons
-import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
-import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
+import IconCaretLeft16 from '@carbon/icons-vue/es/caret--left/16';
+import IconCaretRight16 from '@carbon/icons-vue/es/caret--right/16';
 import IconAccount32 from '@carbon/icons-vue/es/account/32';
 import IconAppConnectivity32 from '@carbon/icons-vue/es/app-connectivity/32';
 import IconDocument32 from '@carbon/icons-vue/es/document/32';
@@ -171,7 +171,7 @@ const openView = (view: RouteName) => {
 				v-if="isSidePanelClose && showSidePanel"
 				@click="openSidePanel"
 			>
-				<IconArrowRight16 />
+				<IconCaretRight16 />
 			</Button>
 		</nav>
 		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
@@ -188,7 +188,7 @@ const openView = (view: RouteName) => {
 				:project="project"
 			/>
 			<Button round class="side-panel-control" @click="closeSidePanel">
-				<IconArrowLeft16 />
+				<IconCaretLeft16 />
 			</Button>
 		</aside>
 	</section>
