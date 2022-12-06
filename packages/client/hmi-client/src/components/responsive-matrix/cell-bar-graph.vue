@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, scaleLinear, scaleBand, axisBottom, axisLeft } from 'd3';
+import { select, scaleLinear, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -79,6 +79,12 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},
@@ -245,7 +251,7 @@ export default {
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
 				.call(xAxis);
 
-			const yAxis = axisLeft(this.yScale);
+			const yAxis = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
 
 			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
 

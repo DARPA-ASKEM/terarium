@@ -8,7 +8,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-
+import { NumberValue } from 'd3';
 import { Viewport } from 'pixi-viewport';
 
 import { CellStatus } from '@/types/ResponsiveMatrix';
@@ -52,7 +52,7 @@ export default {
 			}
 		},
 		labelColList: {
-			type: Array as PropType<number[] | string[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -61,6 +61,12 @@ export default {
 			type: Array as PropType<number[]>,
 			default() {
 				return [];
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},
@@ -115,7 +121,8 @@ export default {
 				this.labelColList,
 				this.selectedCols,
 				this.microColSettings,
-				labelStride
+				labelStride,
+				this.labelColFormatFn
 			);
 		},
 
