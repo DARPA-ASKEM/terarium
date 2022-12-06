@@ -41,13 +41,13 @@ function getRandomImage() {
 </script>
 <template>
 	<div class="article-card">
-		<div class="card-image" v-if="images.length > 0">
-			<img id="img" :src="'data:image/jpeg;base64,' + shownImage" :alt="''" />
-		</div>
-		<div class="card-image" v-else>
-			<img id="img" :src="'data:image/jpeg;base64,' + getRandomImage()" :alt="''" />
-			<!-- <IconNoImage32 /> -->
-		</div>
+		<img
+			v-if="images.length > 0"
+			class="card-image"
+			:src="'data:image/jpeg;base64,' + shownImage"
+			alt="''"
+		/>
+		<img v-else class="card-image" :src="'data:image/jpeg;base64,' + getRandomImage()" alt="''" />
 		<footer>{{ articleName }}</footer>
 	</div>
 </template>
@@ -58,7 +58,7 @@ function getRandomImage() {
 	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-end;
+	align-items: center;
 	height: 15rem;
 	min-width: 20rem;
 	border-radius: 0.5rem;
@@ -73,14 +73,9 @@ footer {
 	padding: 0.5rem 1rem;
 }
 
-svg {
-	color: var(--un-color-body-text-disabled);
-	cursor: pointer;
-	margin: auto;
-}
 .card-image {
-	height: inherit;
-	min-width: inherit;
-	display: inherit;
+	flex: 1;
+	min-height: 0;
+	width: fit-content;
 }
 </style>
