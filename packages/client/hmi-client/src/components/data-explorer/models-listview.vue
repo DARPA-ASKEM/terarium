@@ -31,6 +31,13 @@
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
+									<template v-if="isExpanded(d)">
+										<br />
+										<div><b>Concepts</b></div>
+										<div v-for="tag in getConceptTags(d)" :key="tag">
+											{{ tag }}
+										</div>
+									</template>
 								</div>
 							</div>
 						</td>
@@ -59,11 +66,16 @@ import { ResultType } from '@/types/common';
 import { isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import { ConceptFacets } from '@/types/Concept';
 
 const props = defineProps({
 	models: {
 		type: Array as PropType<Model[]>,
 		default: () => []
+	},
+	rawConceptFacets: {
+		type: Object as PropType<ConceptFacets | null>,
+		default: () => null
 	},
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
@@ -73,7 +85,7 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-model-selected']);
 
-const expandedRowId = ref('');
+const expandedRowId = ref<string | number>('');
 
 const { models, selectedSearchItems } = toRefs(props);
 
@@ -87,6 +99,17 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const getConceptTags = (model: Model) => {
+	const tags = [] as string[];
+	if (props.rawConceptFacets) {
+		const modelConcepts = props.rawConceptFacets.results.filter(
+			(conceptResult) => conceptResult.id === model.id
+		);
+		tags.push(...modelConcepts.map((c) => c.name ?? c.curie));
+	}
+	return tags;
+};
 
 const isExpanded = (model: Model) => expandedRowId.value === model.id;
 

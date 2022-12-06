@@ -6,6 +6,8 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ConceptProxy;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -23,11 +25,9 @@ public class ConceptResource {
 
 	@GET
 	public Response searchConcept(
-		@QueryParam("term") final String term,
-		@QueryParam("limit") final Integer limit,
-		@QueryParam("offset") final Integer offset
+		@QueryParam("curie")final String curie
 	) {
-		return proxy.searchConcept(term, limit, offset);
+		return proxy.searchConcept(curie);
 	}
 
 	@POST
@@ -39,11 +39,21 @@ public class ConceptResource {
 	}
 
 	@GET
-	@Path("/definition/{curie}")
-	public Response getConceptDefinition(
-		@PathParam("curie") final String id
+	@Path("/definitions")
+	public Response searchConceptDefinitions(
+		@QueryParam("term") final String term,
+		@DefaultValue("100") @QueryParam("limit") final Integer limit,
+		@DefaultValue("0") @QueryParam("offset") final Integer offset
 	) {
-		return proxy.getConceptDefinition(id);
+		return proxy.searchConceptDefinitions(term, limit, offset);
+	}
+
+	@GET
+	@Path("/definitions/{curie}")
+	public Response getConceptDefinitions(
+		@PathParam("curie") final String curie
+	) {
+		return proxy.getConceptDefinitions(curie);
 	}
 
 	@GET
@@ -70,5 +80,15 @@ public class ConceptResource {
 		final Concept concept
 	) {
 		return proxy.updateConcept(id, concept);
+	}
+
+	@GET
+	@Path("/facets")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response searchConceptsUsingFacets(
+		@QueryParam("types") final List<String> types,
+		@QueryParam("curies") final List<String> curies
+	) {
+		return proxy.searchConceptsUsingFacets(types, curies);
 	}
 }

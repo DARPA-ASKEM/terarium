@@ -6,7 +6,8 @@ public enum ResourceType {
 	INTERMEDIATES("intermediates"),
 	MODELS("models"),
 	PLANS("plans"),
-	PUBLICATIONS("publications");
+	PUBLICATIONS("publications"),
+	SIMULATION_RUNS("simulation_runs");
 
 	public final String type;
 

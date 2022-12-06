@@ -42,7 +42,8 @@ import { FRAMEWORK, Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import { groupBy, omit, uniq } from 'lodash';
-import { isModel, isXDDArticle } from '@/utils/data-util';
+import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
+import { Dataset } from '@/types/Dataset';
 
 export type ResultsCluster = {
 	name: string;
@@ -94,6 +95,11 @@ const isDataItemSelected = (item: ResultType) =>
 			const searchItemAsModel = searchItem as Model;
 			return searchItemAsModel.id === itemAsModel.id;
 		}
+		if (isDataset(item)) {
+			const itemAsDataset = item as Dataset;
+			const searchItemAsDataset = searchItem as Dataset;
+			return searchItemAsDataset.id === itemAsDataset.id;
+		}
 		if (isXDDArticle(item)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
@@ -122,6 +128,14 @@ const filteredArticles = computed(() => {
 	}
 	return [] as XDDArticle[];
 });
+
+// const rawConceptFacets = computed(() => {
+// 	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	if (resList) {
+// 		return resList.rawConceptFacets;
+// 	}
+// 	return null;
+// });
 
 const clustersInfo = computed(() => {
 	const res = [] as ResultsCluster[];

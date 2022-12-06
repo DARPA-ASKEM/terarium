@@ -3,7 +3,28 @@
  */
 
 import API from '@/api/api';
-import { Project } from '@/types/Project';
+import { Project, ProjectAssets } from '@/types/Project';
+
+/**
+ * Create a project
+ * @param name Project['name']
+ * @param [description] Project['description']
+ * @return Project|null - the appropriate project, or null if none returned by API
+ */
+async function create(
+	name: Project['name'],
+	description: Project['description'] = ''
+): Promise<Project | null> {
+	try {
+		const response = await API.post(`/projects`, { name, description });
+		const { status, data } = response;
+		if (status !== 201) return null;
+		return data ?? null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+}
 
 /**
  * Get a project per id
@@ -28,6 +49,22 @@ async function get(projectId: string): Promise<Project | null> {
 async function getAll(): Promise<Project[] | null> {
 	const response = await API.get('/projects');
 	return response?.data ?? null;
+}
+
+/**
+ * Get project assets for a given project per id
+ * @return ProjectAssets|null - the appropriate project, or null if none returned by API
+ */
+async function getAssets(projectId: string): Promise<ProjectAssets | null> {
+	try {
+		const response = await API.get(`/projects/${projectId}/assets`);
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
 }
 
 /**
@@ -58,4 +95,4 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { get, getAll, addAsset, deleteAsset };
+export { addAsset, create, deleteAsset, get, getAll, getAssets };

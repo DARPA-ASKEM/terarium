@@ -15,9 +15,6 @@ const useQueryStore = defineStore('query', {
 		clientFilters: (state) => (isEmpty(state.filters) ? FiltersUtil.newFilters() : state.filters)
 	},
 	actions: {
-		setSearchFilters(filters: Filters) {
-			this.filters = filters;
-		},
 		setSearchClause({ field, values, operand, isNot }: Clause) {
 			const filters = cloneDeep(this.clientFilters);
 

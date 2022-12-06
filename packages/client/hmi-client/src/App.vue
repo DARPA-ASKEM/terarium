@@ -52,7 +52,10 @@ watch(
 		// If the projectId or the Project are null, set the Project to null.
 		if (projectId && !!projectId) {
 			const id = projectId as string;
+			// fetch project metadata
 			project.value = await ProjectService.get(id);
+			// fetch basic metadata about project assets and save them into a global store/cache
+			resources.activeProjectAssets = await ProjectService.getAssets(id);
 			resources.setActiveProject(project.value);
 		}
 	},
