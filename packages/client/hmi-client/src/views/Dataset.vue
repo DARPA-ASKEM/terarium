@@ -1,21 +1,40 @@
 <script setup lang="ts">
-import { getDataset } from '@/services/dataset';
+import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
-import { ref, watch } from 'vue';
+import { csvToRecords, getColumns, Record } from '@/utils/csv';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
 	datasetId: string;
 }>();
 
 const dataset = ref<Dataset | null>(null);
-// Whenever selectedModelId changes, fetch model with that ID
+const rawContent = ref<string | null>(null);
+
+// Whenever datasetId changes, fetch dataset with that ID
 watch(
 	() => [props.datasetId],
 	async () => {
 		dataset.value = await getDataset(props.datasetId);
+		rawContent.value = await downloadRawFile(props.datasetId);
 	},
 	{ immediate: true }
 );
+
+const csvContent = computed(() => {
+	if (rawContent.value !== null) {
+		const records = csvToRecords(rawContent.value);
+		return records;
+	}
+	return [] as Record[];
+});
+
+const rawColumnNames = computed(() => {
+	if (csvContent.value !== null) {
+		return getColumns(csvContent.value);
+	}
+	return [] as string[];
+});
 
 const formatFeatures = (d: Dataset) => {
 	const features = d.annotations.annotations.feature ?? [];
@@ -55,6 +74,32 @@ const formatFeatures = (d: Dataset) => {
 				{{ feature }}
 			</li>
 		</ul>
+		<!-- table preview of the data -->
+		Dataset Records: {{ csvContent.length }}
+		<div class="table-fixed-head">
+			<table>
+				<thead>
+					<tr class="tr-item">
+						<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
+						<td
+							v-for="(_, colIndex) in row"
+							:key="colIndex.toString()"
+							class="title-and-abstract-col"
+						>
+							<div class="title-and-abstract-layout">
+								<div class="content">
+									<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 	</section>
 </template>
 
@@ -76,8 +121,7 @@ h4 {
 	margin-top: 30px;
 }
 
-.description,
-ul {
+.description {
 	max-height: 400px;
 	overflow-y: auto;
 }
@@ -88,5 +132,44 @@ li {
 
 strong {
 	font-weight: bold;
+}
+
+table {
+	border-collapse: collapse;
+	width: 100%;
+	vertical-align: top;
+}
+
+td {
+	padding: 8px 16px;
+	background: var(--background-light-1);
+	vertical-align: top;
+}
+
+tbody tr {
+	border-top: 2px solid var(--separator);
+	cursor: pointer;
+}
+
+tbody tr:first-child {
+	border-top-width: 0;
+}
+
+.table-fixed-head thead th {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	background-color: aliceblue;
+}
+
+.tr-item {
+	height: 50px;
+}
+
+.table-fixed-head {
+	overflow-y: auto;
+	overflow-x: auto;
+	height: 100%;
+	width: 100%;
 }
 </style>
