@@ -77,7 +77,7 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateParameters(
 		@PathParam("id") String id,
-		Map<String, String> parameters
+		Map<String, Object> parameters
 	);
 
 	@GET

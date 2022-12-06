@@ -113,10 +113,11 @@ public class DatasetResource {
 
 	@GET
 	public Response getDatasets(
-		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page
+		@DefaultValue("1000") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page,
+		@DefaultValue("true") @QueryParam("is_simulation") final Boolean isSimulation
 	) {
-		return proxy.getDatasets(pageSize, page);
+		return proxy.getDatasets(pageSize, page, isSimulation);
 	}
 
 	@POST
@@ -166,9 +167,10 @@ public class DatasetResource {
 	@Path("/{id}/download/rawfile")
 	public Response getCsv(
 		@PathParam("id") final String id,
+		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
 		@DefaultValue("false") @QueryParam("data_annotation_flag") final Boolean dataAnnotationFlag
 	) {
-		return proxy.getCsv(id, dataAnnotationFlag);
+		return proxy.getCsv(id, wideFormat, dataAnnotationFlag);
 	}
 
 	@POST

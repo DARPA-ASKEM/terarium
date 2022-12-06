@@ -3,7 +3,9 @@
  */
 
 import API from '@/api/api';
-import { Project, ProjectAssets } from '@/types/Project';
+import { Project, ProjectAssets, PUBLICATIONS } from '@/types/Project';
+import { getRelatedDocuments } from '@/services/data';
+import { XDDArticle } from '@/types/XDD';
 
 /**
  * Create a project
@@ -95,4 +97,22 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { addAsset, create, deleteAsset, get, getAll, getAssets };
+// project id -> project assets -> publication list (Which will give you xdd id + url + title)  -> now you can use getRelatedDocuments given a xdd_uri (docid)
+// TODO: Remove hardcoded dataset
+async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
+	const resp = await getAssets(aProject.id);
+	try {
+		// TODO: Speak with XDD Team about broken doc: 5f6d0e20a58f1dfd52184931
+		// Grab the 2nd of publication for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
+		const listOfRelatedArticles = await getRelatedDocuments(
+			String(resp?.[PUBLICATIONS][1].xdd_uri),
+			'xdd-covid-19'
+		);
+		return listOfRelatedArticles;
+	} catch (error) {
+		// If resp = null (project has no assets or cannot be found)
+		return [] as XDDArticle[];
+	}
+}
+
+export { create, get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };

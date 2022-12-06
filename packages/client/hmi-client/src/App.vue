@@ -93,7 +93,6 @@ main {
 	flex-grow: 1;
 	isolation: isolate;
 	z-index: 1;
-	height: 100vh - var(--header-height);
 	overflow: hidden;
 }
 
@@ -103,6 +102,8 @@ main {
 
 .page {
 	z-index: 1;
+	flex: 1;
+	min-width: 0;
 }
 
 .data-explorer {
