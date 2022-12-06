@@ -5,7 +5,6 @@
 <script lang="ts">
 import { PropType } from 'vue';
 import { select, scaleLinear, scaleBand, axisBottom, axisLeft } from 'd3';
-
 import {
 	D3SvgSelection,
 	CellData,
@@ -14,6 +13,7 @@ import {
 	SelectedCell,
 	SelectedCellData
 } from '@/types/ResponsiveMatrix';
+import { formatAxis } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -238,16 +238,20 @@ export default {
 				.attr('width', '100%')
 				.style('background', 'white');
 
-			const xAxis = axisBottom(this.xScaleBand);
-
-			this.svg
+			const xAxisGen = axisBottom(this.xScaleBand);
+			const xAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
-				.call(xAxis);
+				.call(xAxisGen);
 
-			const yAxis = axisLeft(this.yScale);
+			const yAxisGen = axisLeft(this.yScale);
+			const yAxis = this.svg
+				.append('g')
+				.attr('transform', `translate(${leftMargin},${topMargin})`)
+				.call(yAxisGen);
 
-			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
+			formatAxis(xAxis);
+			formatAxis(yAxis);
 
 			Object.keys(this.selectedCells).forEach((parameter) => {
 				this.renderBars(this.svg, parameter, this.selectedCells[parameter], this.labelRowSelected);

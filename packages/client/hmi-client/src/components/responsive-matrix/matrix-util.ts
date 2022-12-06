@@ -1,4 +1,9 @@
 import { CellStatus } from '@/types/ResponsiveMatrix';
+import * as d3 from 'd3';
+
+export const formatAxis = (axisSelection: d3.Selection<any, any, any, any>) => {
+	axisSelection.selectAll('text').attr('stroke', 'none').attr('fill', '#555');
+};
 
 // FIXME: add test
 export const makeLabels = (
