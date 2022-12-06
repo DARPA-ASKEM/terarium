@@ -5,7 +5,7 @@
 				<search-bar :focus-input="true" @search-text-changed="filterData">
 					<template #dataset>
 						<dropdown-button
-							:inner-button-label="'Dataset'"
+							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
 							:is-dropdown-left-aligned="true"
 							:items="xddDatasets"
 							:selected-item="xddDataset"
@@ -206,7 +206,9 @@ const filteredFacets = ref<Facets>({});
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 
-const xddDataset = computed(() => resources.xddDataset);
+const xddDataset = computed(() =>
+	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+);
 const clientFilters = computed(() => query.clientFilters);
 const resultsCount = computed(() => {
 	let total = 0;
@@ -279,7 +281,10 @@ const fetchDataItemList = async () => {
 	const searchParams: SearchParameters = {
 		xdd: {
 			dict: dictNames.value,
-			dataset: xddDataset.value === ResourceType.ALL ? null : xddDataset.value,
+			dataset:
+				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
+					? null
+					: xddDataset.value,
 			max: pageSize.value,
 			perPage: pageSize.value,
 			fullResults: !rankedResults.value,
