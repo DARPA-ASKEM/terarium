@@ -45,4 +45,14 @@ public interface ModelServiceProxy {
 	Response modelComposition(
 		ModelCompositionParams params
 	);
+
+	@GET
+	@Path("api/models/stratify/{modelA}/{modelB}/{typeModel}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response stratify(
+		@PathParam("modelA") String modelA,
+		@PathParam("modelB") String modelB,
+		@PathParam("typeModel") String typeModel
+	);
+
 }
