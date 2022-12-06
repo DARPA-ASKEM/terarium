@@ -71,6 +71,7 @@ function getRandomImage() {
 footer {
 	border-top: 1px solid var(--un-color-body-stroke);
 	padding: 0.5rem 1rem;
+	align-self: stretch;
 }
 
 .card-image {
