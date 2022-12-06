@@ -161,23 +161,6 @@ a.btn {
   @include button-variant(white, #545353);
 }
 
-// Danger and error appear as red
-.btn-danger {
-  @include button-variant(rgba(0, 0, 0, 0.89), hsl(4.11, 89.62, 58.43));
-}
-
-.btn-call-to-action {
-  @include button-variant(white, $call-to-action-color)
-}
-
-.btn-sm {
-  // line-height: ensure proper height of button next to small input
-  padding: 4px 8px;
-  font-size: 12px;
-  line-height: 1.42857142857;
-  border-radius: 1px;
-}
-
 table {
   border-collapse: collapse;
   border-spacing: 0;
@@ -271,7 +254,7 @@ table,
   // Bottom align for column headings
   >thead>tr>th {
     vertical-align: bottom;
-    border-bottom: 2px solid $separator;
+    border-bottom: 2px solid var(--separator);
   }
 }
 

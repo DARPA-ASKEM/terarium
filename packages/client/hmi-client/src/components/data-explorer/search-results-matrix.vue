@@ -356,7 +356,7 @@ const clustersInfo = computed(() => {
 		padding: 2px 4px;
 	}
 	tr {
-		border: 2px solid $separator;
+		border: 2px solid var(--separator);
 	}
 	thead {
 		tr {
