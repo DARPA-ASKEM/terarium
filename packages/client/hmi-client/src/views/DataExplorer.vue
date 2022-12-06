@@ -104,6 +104,7 @@
 						:data-items="dataItems"
 						:result-type="resultType"
 						:selected-search-items="selectedSearchItems"
+						:search-term="searchTerm"
 						@toggle-data-item-selected="toggleDataItemSelected"
 					/>
 					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
