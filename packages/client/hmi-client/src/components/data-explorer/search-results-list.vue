@@ -8,6 +8,14 @@
 			:selected-search-items="selectedSearchItems"
 			@toggle-model-selected="toggleDataItemSelected"
 		/>
+		<datasets-listview
+			v-if="resultType === ResourceType.DATASET"
+			class="list-view"
+			:datasets="filteredDatasets"
+			:raw-concept-facets="rawConceptFacets"
+			:selected-search-items="selectedSearchItems"
+			@toggle-dataset-selected="toggleDataItemSelected"
+		/>
 		<articles-listview
 			v-if="resultType === ResourceType.XDD"
 			class="list-view"
@@ -22,9 +30,11 @@
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
 import ModelsListview from '@/components/data-explorer/models-listview.vue';
+import DatasetsListview from '@/components/data-explorer/datasets-listview.vue';
 import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
+import { Dataset } from '@/types/Dataset';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 
 const props = defineProps({
@@ -52,6 +62,13 @@ const filteredModels = computed(() => {
 	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
 	if (resList) {
 		return resList.results as Model[];
+	}
+	return [];
+});
+const filteredDatasets = computed(() => {
+	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.DATASET);
+	if (resList) {
+		return resList.results as Dataset[];
 	}
 	return [];
 });

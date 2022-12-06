@@ -68,7 +68,7 @@ public class ProjectResource {
 	@GET
 	@Path("/{project_id}/assets")
 	public Response getAssets(
-		@PathParam("project_id") String projectId
+		@PathParam("project_id") final String projectId
 	) {
 		return proxy.getAssets(projectId);
 	}
@@ -80,7 +80,7 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.createAsset(projectId, type, resourceId);
+		return proxy.createAsset(projectId, ResourceType.findByType(type).name(), resourceId);
 	}
 
 	@DELETE
@@ -90,6 +90,6 @@ public class ProjectResource {
 		@PathParam("resource_type") final String type, // ResourceType
 		@PathParam("resource_id") final String resourceId
 	) {
-		return proxy.deleteAsset(projectId, type, resourceId);
+		return proxy.deleteAsset(projectId, ResourceType.findByType(type).name(), resourceId);
 	}
 }
