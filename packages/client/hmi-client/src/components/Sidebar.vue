@@ -8,14 +8,6 @@ import { RouteParamsRaw, useRouter } from 'vue-router';
 // Icons
 import IconCaretLeft16 from '@carbon/icons-vue/es/caret--left/16';
 import IconCaretRight16 from '@carbon/icons-vue/es/caret--right/16';
-import IconAccount32 from '@carbon/icons-vue/es/account/32';
-import IconAppConnectivity32 from '@carbon/icons-vue/es/app-connectivity/32';
-import IconDocument32 from '@carbon/icons-vue/es/document/32';
-import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
-import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconFlow32 from '@carbon/icons-vue/es/flow/32';
-import IconUser32 from '@carbon/icons-vue/es/user/32';
-import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
 
 // Components
 import Button from '@/components/Button.vue';
@@ -26,7 +18,7 @@ import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-pane
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
-import { RouteName } from '@/router/routes';
+import { RouteName, RouteMetadata } from '@/router/routes';
 import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
 
 const router = useRouter();
@@ -98,6 +90,16 @@ const openView = (view: RouteName) => {
 		openSidePanel();
 	}
 };
+
+const BUTTON_ORDER = [
+	RouteName.ProjectRoute,
+	RouteName.SimulationRoute,
+	RouteName.ModelRoute,
+	RouteName.DatasetRoute,
+	RouteName.SimulationResultRoute
+];
+
+const DISABLED_BUTTONS = [RouteName.ProvenanceRoute, RouteName.ProfileRoute];
 </script>
 
 <template>
@@ -105,64 +107,25 @@ const openView = (view: RouteName) => {
 		<nav>
 			<ul>
 				<li
-					:active="selectedView === RouteName.ProjectRoute"
-					title="Project summary"
-					@click="openView(RouteName.ProjectRoute)"
+					v-for="routeName of BUTTON_ORDER"
+					:key="routeName"
+					:active="selectedView === routeName"
+					:title="RouteMetadata[routeName].displayName"
+					@click="openView(routeName)"
 				>
-					<IconAccount32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.SimulationRoute"
-					title="Workflows"
-					@click="openView(RouteName.SimulationRoute)"
-				>
-					<IconAppConnectivity32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.ModelRoute"
-					title="Models"
-					@click="openView(RouteName.ModelRoute)"
-				>
-					<IconMachineLearningModel32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.DatasetRoute"
-					title="Data"
-					@click="openView(RouteName.DatasetRoute)"
-				>
-					<IconTableSplit32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.SimulationResultRoute"
-					title="Analysis"
-					@click="openView(RouteName.SimulationResultRoute)"
-				>
-					<IconChartCombo32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.DocumentRoute"
-					title="Papers"
-					@click="openView(RouteName.DocumentRoute)"
-				>
-					<IconDocument32 />
+					<component :is="RouteMetadata[routeName].icon" />
 				</li>
 			</ul>
 			<ul>
 				<li
+					v-for="routeName of DISABLED_BUTTONS"
+					:key="routeName"
 					disabled
-					:active="selectedView === RouteName.ProvenanceRoute"
-					:title="RouteName.ProvenanceRoute"
-					@click="openView(RouteName.ProvenanceRoute)"
+					:active="selectedView === routeName"
+					:title="RouteMetadata[routeName].displayName"
+					@click="openView(routeName)"
 				>
-					<IconFlow32 />
-				</li>
-				<li
-					disabled
-					:active="selectedView === RouteName.ProfileRoute"
-					:title="RouteName.ProfileRoute"
-					@click="openView(RouteName.ProfileRoute)"
-				>
-					<IconUser32 />
+					<component :is="RouteMetadata[routeName].icon" />
 				</li>
 			</ul>
 			<Button
@@ -175,6 +138,7 @@ const openView = (view: RouteName) => {
 			</Button>
 		</nav>
 		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
+			<h4>{{ RouteMetadata[selectedView].displayName }}</h4>
 			<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
 			<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
 			<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
