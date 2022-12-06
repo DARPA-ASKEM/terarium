@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.modelservice;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 
 import java.io.Serializable;
 import java.util.List;
