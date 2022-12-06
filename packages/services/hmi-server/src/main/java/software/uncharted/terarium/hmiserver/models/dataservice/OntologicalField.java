@@ -9,18 +9,16 @@ public enum OntologicalField {
 	public final String type;
 
 	/**
-	 * Returns the enum name for a given value of OntologicalField
+	 * Returns the enum for a given string representation of a OntologicalField
 	 *
-	 * @param type the OntologicalField to attempt to find the name for.
-	 * @return a String representation of the OntologicalField name
+	 * @param type the string representation of a OntologicalField
+	 * @return a OntologicalField from the type string
 	 * @throws IllegalArgumentException if the OntologicalField is not found
 	 */
-	public static String findByType(final String type) {
-
+	public static OntologicalField findByType(final String type) {
 		return Arrays.stream(values()).filter(
 			value -> type.equalsIgnoreCase(value.type)).findFirst().orElseThrow(() -> new IllegalArgumentException("No OntologicalField with type: " + type)
-		).name();
-
+		);
 	}
 
 	OntologicalField(final String type) {

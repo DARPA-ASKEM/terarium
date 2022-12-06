@@ -12,18 +12,16 @@ public enum ValueType {
 	public final String type;
 
 	/**
-	 * Returns the enum name for a given value of ResourceType
+	 * Returns the enum for a given string representation of a ValueType
 	 *
-	 * @param type the ValueType to attempt to find the name for.
-	 * @return a String representation of the ValueType name
+	 * @param type the string representation of a ValueType
+	 * @return a ValueType from the type string
 	 * @throws IllegalArgumentException if the ValueType is not found
 	 */
-	public static String findByType(final String type) {
-
+	public static ValueType findByType(final String type) {
 		return Arrays.stream(values()).filter(
 			value -> type.equalsIgnoreCase(value.type)).findFirst().orElseThrow(() -> new IllegalArgumentException("No ValueType with type: " + type)
-		).name();
-
+		);
 	}
 
 	ValueType(final String type) {
