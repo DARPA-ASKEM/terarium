@@ -27,6 +27,12 @@ export default {
 				return null;
 			}
 		},
+		margin: {
+			type: Number,
+			default() {
+				return 0;
+			}
+		},
 		numCols: {
 			type: Number,
 			default() {
@@ -140,8 +146,8 @@ export default {
 
 			this.labelContainerStyle = {
 				top: `${Math.max(topLeft.y, 0)}px`,
-				left: `${topLeft.x}px`,
-				right: `${topRight.x}px`,
+				left: `${topLeft.x + this.margin}px`,
+				right: `${topRight.x - this.margin}px`,
 				width: `${topRight.x - topLeft.x}px`,
 				height: '30px'
 			};
@@ -163,7 +169,7 @@ export default {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	color: white;
-	text-shadow: 0px 0px 4px #000;
+	color: black;
+	/* text-shadow: 0px 0px 4px #000; */
 }
 </style>
