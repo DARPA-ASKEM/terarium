@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { select, NumberValue, scaleTime, scaleOrdinal, schemeAccent } from 'd3';
+import { select, NumberValue, scaleTime, scaleOrdinal } from 'd3';
 import { mix } from 'chroma-js';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
@@ -111,8 +111,19 @@ function parseSimData(input) {
 		return mix(colorMid, colorExtremeNeg, -diff / divergingMaxMin, 'lab');
 	};
 
-	const scale = scaleOrdinal(schemeAccent).domain(Object.keys(data[0][0]));
-	const drilldownColorFn = (parameter: string) => scale(parameter);
+	const variableColorScale = scaleOrdinal([
+		'#ascee3',
+		'#1f78b4',
+		'#b2df8a',
+		'#33a02c',
+		'#fb9a99',
+		'#e31a1c',
+		'#fdbf6f',
+		'#ff7f00'
+	]).domain(Object.keys(data[0][0]));
+
+	// const scale = scaleOrdinal(schemeAccent).domain(Object.keys(data[0][0]));
+	const drilldownColorFn = (parameter: string) => variableColorScale(parameter);
 
 	const labelColFormatFn = scaleTime().tickFormat() as (value: NumberValue) => string;
 
@@ -127,6 +138,8 @@ function parseSimData(input) {
 		divergingMaxMin
 	};
 }
+
+const runDescriptions = [run1, run2, run3].map((d) => (d as any).description);
 
 const simData = parseSimData([
 	run1,
@@ -182,6 +195,8 @@ onMounted(() => {
 <template>
 	<section class="result-container">
 		<h3>Simulation Results</h3>
+		<p v-for="(description, i) of runDescriptions" :key="i">Hi hi{{ description }}</p>
+
 		<svg ref="legendContainer" height="20px" width="400px"></svg>
 		<div class="result">
 			<ResponsiveMatrix
