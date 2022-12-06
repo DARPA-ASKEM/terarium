@@ -14,4 +14,7 @@ public class Publication implements Serializable {
 
 	@JsonbProperty("xdd_uri")
 	private String xddUri;
+
+	@JsonbProperty("title")
+	private String title;
 }
