@@ -85,7 +85,7 @@ watch(newActiveTab, (index) => {
 			<template #tabIcon>
 				<component :is="icon"></component>
 			</template>
-			<component :is="componentToRender" v-bind="tab.props"></component>
+			<component class="tab-content" :is="componentToRender" v-bind="tab.props"></component>
 		</TabComponent>
 	</div>
 </template>
@@ -93,5 +93,9 @@ watch(newActiveTab, (index) => {
 <style scoped>
 div {
 	width: 100%;
+}
+
+.tab-content {
+	height: 100%;
 }
 </style>

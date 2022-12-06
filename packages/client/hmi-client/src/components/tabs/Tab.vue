@@ -96,6 +96,8 @@ section {
 .content {
 	background-color: white;
 	visibility: hidden;
+	flex: 1;
+	min-height: 0;
 }
 
 .content.active {

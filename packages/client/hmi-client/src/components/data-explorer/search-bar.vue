@@ -134,6 +134,7 @@ input[type='text'] {
 	border: none;
 	outline: none;
 	width: 100%;
+	margin: 0;
 }
 
 input:-webkit-autofill,

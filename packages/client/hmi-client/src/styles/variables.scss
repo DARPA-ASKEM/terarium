@@ -14,11 +14,6 @@
     later.
 */
 
-// Positive values
-$positive: #0072b2;
-// Negative values
-$negative: #d55e00;
-
 // Accent colors
 $accent-lightest: hsl(265, 100%, 99%);
 $accent-light: hsl(262, 85%, 78%);
@@ -27,19 +22,9 @@ $accent-medium: hsl(250, 39%, 43%);
 $accent-dark: hsl(245, 40%, 24%);
 $accent-darkest: hsl(240, 32%, 15%);
 
-// Used for the most important buttons on each screen
-$call-to-action-color: $accent-medium;
-
 // Selection color
-// If you'rechanging these, you likely want to change their JavaScript
-//  equivalents in colors-util.ts
 $selected: $accent-main;
 $selected-dark: $accent-medium;
-
-
-$tinted-background: $accent-lightest;
-
-$vetted-state-dark: #009e74;
 
 // Main navbar height (includes margin and border height)
 $navbar-outer-height: 51px;
@@ -47,9 +32,6 @@ $navbar-outer-height: 51px;
 // 100% height - navbar
 $content-full-height: calc(100vh - #{$navbar-outer-height});
 
-$label-color: #707070;
-$text-color-light: #C2C2C4;
-$text-color-medium: #9C9D9E;
 $text-color-dark: #16161C;
 
 $font-size-small: 1.2rem;
@@ -61,12 +43,9 @@ $font-size-extra-large: 1.8rem;
   font-size: $font-size-medium;
   text-transform: uppercase;
   letter-spacing: .066rem;
-  color: $label-color;
+  color: #707070;
   font-weight: 600;
 }
-
-// Color used for borders and separators
-$separator: #e5e5e5;
 
 // Background Colors
 $background-light-1: #FFFFFF;
@@ -74,15 +53,6 @@ $background-light-2: #F2F2F2;
 $background-light-3: #E6E6E6;
 
 $background-light-1-faded: #FAFAFA;
-
-// Box Shadows
-$shadow-level-1:
-  0px 4px 8px 4px rgba(0, 0, 0, 0.05),
-  0px 0px 4px 2px rgba(0, 0, 0, 0.05);
-
-$shadow-level-2:
-  0px 0px 8px 4px rgba(0, 0, 0, 0.02),
-  0px 0px 4px 2px rgba(0, 0, 0, 0.02);
 
 // Transitions
 $layout-transition: .3s ease;
