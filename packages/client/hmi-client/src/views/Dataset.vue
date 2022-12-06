@@ -86,7 +86,7 @@ const formatFeatures = (d: Dataset) => {
 				<tbody>
 					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
 						<td
-							v-for="(col, colIndex) in row"
+							v-for="(_, colIndex) in row"
 							:key="colIndex.toString()"
 							class="title-and-abstract-col"
 						>
