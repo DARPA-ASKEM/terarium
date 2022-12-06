@@ -83,8 +83,9 @@ public interface DatasetProxy {
 
 	@GET
 	Response getDatasets(
-		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") Integer page
+		@DefaultValue("1000") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page,
+		@DefaultValue("true") @QueryParam("is_simulation") Boolean isSimulation
 	);
 
 	@POST
@@ -124,6 +125,7 @@ public interface DatasetProxy {
 	@Path("/{id}/download/rawfile")
 	Response getCsv(
 		@PathParam("id") String id,
+		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
 		@DefaultValue("false") @QueryParam("data_annotation_flag") Boolean dataAnnotationFlag
 	);
 

@@ -1,5 +1,5 @@
+import { XDDArticle, PublicationAsset } from '@/types/XDD';
 import { Model } from './Model';
-import { PublicationAsset } from './XDD';
 
 export const PUBLICATIONS = 'publications';
 export const INTERMEDIATES = 'intermediates';
@@ -34,4 +34,5 @@ export type Project = {
 	active: boolean;
 	concept: string | null;
 	assets: SimpleProjectAssets;
+	relatedArticles: XDDArticle[];
 };
