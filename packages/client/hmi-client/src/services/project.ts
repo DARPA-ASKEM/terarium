@@ -81,6 +81,8 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
 	const resp = await getAssets(aProject.id);
 	try {
+		// TODO: Speak with XDD Team about broken doc: 5f6d0e20a58f1dfd52184931
+		// Grab the 2nd of publication for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
 		const listOfRelatedArticles = await getRelatedDocuments(
 			String(resp?.[PUBLICATIONS][0].xdd_uri),
 			'xdd-covid-19'
@@ -88,7 +90,7 @@ async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
 		return listOfRelatedArticles;
 	} catch (error) {
 		// If resp = null (project has no assets or cannot be found)
-		return [];
+		return [] as XDDArticle[];
 	}
 }
 

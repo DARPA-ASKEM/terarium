@@ -22,8 +22,8 @@ const categories = new Map<string, { icon: object }>([[Categories.Recents, { ico
 
 const projects = ref<Project[]>([]);
 const relevantArticles = ref<XDDArticle[]>([]);
-const relevantSearchTerm = 'Covid 19';
-const relevantSearchParams: XDDSearchParams = { perPage: 15 };
+const relevantSearchTerm = 'COVID-19';
+const relevantSearchParams: XDDSearchParams = { perPage: 30 };
 const selectedPaper = ref<XDDArticle>();
 
 onMounted(async () => {
