@@ -499,7 +499,7 @@ export default {
 			.style('width', '400px');
 
 		const max = this.dataParametersMax.I;
-		const min = this.dataParametersMin.I;
+		const min = this.dataParametersMin.l;
 		const legendCellW = 15;
 		let cnt = 0;
 		svg.append('text').attr('x', 10).attr('y', 12).text(min);
