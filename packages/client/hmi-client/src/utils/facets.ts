@@ -1,6 +1,11 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import {
+	Dataset,
+	FACET_FIELDS as DATASET_FACET_FIELDS,
+	DISPLAY_NAMES as DATASET_DISPLAY_NAMES
+} from '@/types/Dataset';
+import {
 	Model,
 	FACET_FIELDS as MODEL_FACET_FIELDS,
 	DISPLAY_NAMES as MODEL_DISPLAY_NAMES,
@@ -54,6 +59,51 @@ export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | n
 	return facets;
 };
 
+// FIXME: this client-side computation of facets from "datasets" data should be done
+//        at the HMI server
+export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFacets | null) => {
+	// utility function for manually calculating facet aggregation from dataset results
+	const aggField = (fieldName: string) => {
+		const aggs: FacetBucket[] = [];
+		const datasetsMap = datasets.map((model) => model[fieldName as keyof Dataset]);
+		const grouped = groupBy(datasetsMap);
+		Object.keys(grouped).forEach((gKey) => {
+			if (gKey !== '') {
+				aggs.push({ key: gKey, value: grouped[gKey].length });
+			}
+		});
+		return aggs;
+	};
+
+	const facets = {} as Facets;
+
+	// create facet for concepts
+	if (conceptFacets) {
+		// Note that creating facets for concepts should ensure align with the list of dataset results
+		// Unfortunately, concept facets are always returned from the backend without taking into consideration any applied filters
+		// As a result, we need to check and update the aggregates as necessary
+		facets[CONCEPT_FACETS_FIELD] = [];
+		const conceptKeys = Object.keys(conceptFacets.facets.concepts);
+		conceptKeys.forEach((conceptKey) => {
+			const concept = conceptFacets?.facets.concepts[conceptKey];
+			facets[CONCEPT_FACETS_FIELD].push({ key: concept.name ?? conceptKey, value: concept.count });
+		});
+	}
+
+	// create facets from specific dataset fields
+	DATASET_FACET_FIELDS.forEach((field) => {
+		// exclude dataset ID as a facet since it is created from mapping concepts
+		if (field !== ID) {
+			const facetForField = aggField(field);
+			if (facetForField.length > 0) {
+				facets[field] = facetForField;
+			}
+		}
+	});
+
+	return facets;
+};
+
 // Merging facets who share the same key requires custom logic, e.g.,
 //  XDD documents of "type" [fulltext] and Models of "type": [model, dataset]
 //  should be merged into one facet representing the overall "type" of result
@@ -82,6 +132,10 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 					const modelFacets = resultsObj.facets;
 					facets = mergeWith(facets, modelFacets, mergeCustomizer);
 				}
+				if (resultsObj.searchSubsystem === ResourceType.DATASET) {
+					const datasetFacets = resultsObj.facets;
+					facets = mergeWith(facets, datasetFacets, mergeCustomizer);
+				}
 			}
 		});
 	}
@@ -95,6 +149,9 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 	if (resultType === ResourceType.MODEL) {
 		return MODEL_DISPLAY_NAMES[key];
 	}
+	if (resultType === ResourceType.DATASET) {
+		return DATASET_DISPLAY_NAMES[key];
+	}
 	if (resultType === ResourceType.ALL) {
 		// merge display names from all results types,
 		//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
@@ -105,7 +162,9 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 			if (d[key] !== undefined) hits += 1;
 		});
 		if (hits === 1) {
-			const displayName = { ...MODEL_DISPLAY_NAMES, ...XDD_DISPLAY_NAMES }[key];
+			const displayName = { ...MODEL_DISPLAY_NAMES, ...MODEL_DISPLAY_NAMES, ...XDD_DISPLAY_NAMES }[
+				key
+			];
 			return displayName;
 		}
 	}

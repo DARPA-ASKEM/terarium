@@ -8,7 +8,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-
+import { NumberValue } from 'd3';
 import { Viewport } from 'pixi-viewport';
 
 import { CellStatus } from '@/types/ResponsiveMatrix';
@@ -22,7 +22,7 @@ export default {
 
 	props: {
 		viewport: {
-			type: null as unknown as PropType<Viewport>,
+			type: Viewport as PropType<Viewport>,
 			default() {
 				return null;
 			}
@@ -61,6 +61,12 @@ export default {
 			type: Array as PropType<number[]>,
 			default() {
 				return [];
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},
@@ -104,9 +110,9 @@ export default {
 
 	methods: {
 		buildLabelData() {
-			const visibleBounds = this.viewport?.getVisibleBounds();
+			const visibleBounds = this.viewport.getVisibleBounds();
 			const viewportRowDensity =
-				((visibleBounds?.height || 0) / (this.viewport?.worldHeight || 1)) * this.numRows;
+				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.numRows;
 
 			const thresholdLabelDensity = 8;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
@@ -115,7 +121,8 @@ export default {
 				this.labelRowList,
 				this.selectedRows,
 				this.microRowSettings,
-				labelStride
+				labelStride,
+				this.labelRowFormatFn
 			);
 		},
 
