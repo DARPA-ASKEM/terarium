@@ -259,7 +259,7 @@ export default {
 					.append('text')
 					.attr('x', 60 + colSize * Math.floor(i / numRows))
 					.attr('y', 38 + (i % numRows) * rowSize)
-					.attr('font-size', '75%')
+					.attr('font-size', '80%')
 					.style('fill', '#333')
 					.text(parameter);
 			});
