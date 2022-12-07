@@ -304,6 +304,8 @@ const description = 'Description of scenarios';
 	flex-direction: column;
 	width: 100%;
 	padding: 10px;
+	background: var(--un-color-body-surface-primary);
+	margin: 10px;
 }
 
 .result {
