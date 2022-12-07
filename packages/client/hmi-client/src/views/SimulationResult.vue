@@ -10,17 +10,12 @@ import Button from '@/components/Button.vue';
 import run1 from './simulation-run-data/1/output.json';
 import run2 from './simulation-run-data/2/output.json';
 import run3 from './simulation-run-data/3/output.json';
-// import run4 from './simulation-run-data/4/output.json';
-// import run5 from './simulation-run-data/5/output.json';
-// import run6 from './simulation-run-data/6/output.json';
-// import run7 from './simulation-run-data/7/output.json';
-// import run8 from './simulation-run-data/8/output.json';
-// import run9 from './simulation-run-data/9/output.json';
-// import run10 from './simulation-run-data/10/output.json';
-// import run11 from './simulation-run-data/11/output.json';
-// import run12 from './simulation-run-data/12/output.json';
-// import run13 from './simulation-run-data/13/output.json';
-// import run14 from './simulation-run-data/14/output.json';
+import run4 from './simulation-run-data/4/output.json';
+import run5 from './simulation-run-data/5/output.json';
+import run6 from './simulation-run-data/6/output.json';
+import run7 from './simulation-run-data/7/output.json';
+import run8 from './simulation-run-data/8/output.json';
+import run9 from './simulation-run-data/9/output.json';
 
 const route = useRoute();
 
@@ -44,26 +39,10 @@ function parseSimData(input) {
 	}
 
 	// assume timesteps are identical in all runs
-	const maxTimesteps = 20;
 	// eslint-disable-next-line no-underscore-dangle
-	const cellLabelCol = input[0]._time.value.map((v) => new Date(v)).slice(0, maxTimesteps);
-	const cellLabelRow = [
-		'run1',
-		'run2',
-		'run3'
-		// 'run4',
-		// 'run5',
-		// 'run6',
-		// 'run7',
-		// 'run8',
-		// 'run9',
-		// 'run10',
-		// 'run11',
-		// 'run12',
-		// 'run13',
-		// 'run14'
-	];
-	const numTimesteps = maxTimesteps || cellLabelCol.length;
+	const cellLabelCol = input[0]._time.value.map((v) => new Date(v));
+	const cellLabelRow = ['Run1', 'Run2', 'Run3', 'Run4', 'Run5', 'Run6', 'Run7', 'Run8', 'Run9'];
+	const numTimesteps = cellLabelCol.length;
 
 	// assume _time exists and that the number of timesteps equals number of values
 	const data: object[][] = [];
@@ -166,22 +145,7 @@ function parseSimData(input) {
 	};
 }
 
-const simData = parseSimData([
-	run1,
-	run2,
-	run3
-	// run4,
-	// run5,
-	// run6,
-	// run7,
-	// run8,
-	// run9,
-	// run10,
-	// run11,
-	// run12,
-	// run13,
-	// run14
-]);
+const simData = parseSimData([run1, run2, run3, run4, run5, run6, run7, run8, run9]);
 
 const { data, cellLabelRow, cellLabelCol, fillColorFn, lineColorFn, barColorFn, labelColFormatFn } =
 	simData;
