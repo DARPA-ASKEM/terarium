@@ -19,6 +19,7 @@ import { useRouter } from 'vue-router';
 import { deleteAsset } from '@/services/project';
 import { PUBLICATIONS } from '@/types/Project';
 import { PublicationAsset } from '@/types/XDD';
+import { RouteName } from '@/router/routes';
 import ArtifactList from './artifact-list.vue';
 
 const router = useRouter();
@@ -35,7 +36,10 @@ const documentsAsArtifactList = computed(() =>
 const openDocumentPage = async (xddUri: string) => {
 	// pass this doc id as param
 	documentId.value = xddUri; // track selection
-	router.push({ path: `/docs/${xddUri}` });
+	router.push({
+		name: RouteName.DocumentRoute,
+		params: { projectId: resourcesStore.activeProject?.id, id: xddUri }
+	});
 };
 
 const removeDocument = async (xddUri: string) => {

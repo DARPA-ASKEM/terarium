@@ -64,7 +64,7 @@ const openView = (view: RouteName) => {
 		const params: RouteParamsRaw = {};
 
 		// Set the projectId, except for the Document Route
-		if (view !== RouteName.DocumentRoute && props?.project?.id) {
+		if (props?.project?.id) {
 			params.projectId = props.project.id;
 		}
 
