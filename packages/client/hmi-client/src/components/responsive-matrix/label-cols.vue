@@ -1,6 +1,12 @@
 <template>
 	<div class="label-container col" :style="labelContainerStyle">
-		<div class="label" v-for="(label, idx) in labels" :key="idx" :style="getLabelStyle(idx)">
+		<div
+			class="label"
+			v-for="(label, idx) in labels"
+			:key="idx"
+			:title="label.alt"
+			:style="getLabelStyle(idx)"
+		>
 			{{ label.value }}
 		</div>
 	</div>
@@ -63,6 +69,12 @@ export default {
 				return [];
 			}
 		},
+		labelColAltList: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
 		microColSettings: {
 			type: Array as PropType<number[]>,
 			default() {
@@ -84,7 +96,7 @@ export default {
 	data() {
 		return {
 			labelContainerStyle: {},
-			labels: [] as { value: string; position: number }[]
+			labels: [] as { value: string; alt: string; position: number }[]
 		};
 	},
 
@@ -125,6 +137,7 @@ export default {
 
 			this.labels = makeLabels(
 				this.labelColList,
+				this.labelColAltList,
 				this.selectedCols,
 				this.microColSettings,
 				labelStride,
@@ -159,7 +172,7 @@ export default {
 <style scoped>
 .label-container {
 	position: absolute;
-	pointer-events: none;
+	/* pointer-events: none; */
 	user-select: none;
 }
 

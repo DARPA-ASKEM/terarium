@@ -17,6 +17,16 @@ import run7 from './simulation-run-data/7/output.json';
 import run8 from './simulation-run-data/8/output.json';
 import run9 from './simulation-run-data/9/output.json';
 
+import run1Description from './simulation-run-data/1/description.json';
+import run2Description from './simulation-run-data/2/description.json';
+import run3Description from './simulation-run-data/3/description.json';
+import run4Description from './simulation-run-data/4/description.json';
+import run5Description from './simulation-run-data/5/description.json';
+import run6Description from './simulation-run-data/6/description.json';
+import run7Description from './simulation-run-data/7/description.json';
+import run8Description from './simulation-run-data/8/description.json';
+import run9Description from './simulation-run-data/9/description.json';
+
 const route = useRoute();
 
 watch(
@@ -41,6 +51,7 @@ function parseSimData(input) {
 	// assume timesteps are identical in all runs
 	// eslint-disable-next-line no-underscore-dangle
 	const cellLabelCol = input[0]._time.value.map((v) => new Date(v));
+	const cellLabelAltCol = cellLabelCol.map((d) => d.toLocaleDateString());
 	const cellLabelRow = ['Run1', 'Run2', 'Run3', 'Run4', 'Run5', 'Run6', 'Run7', 'Run8', 'Run9'];
 	const numTimesteps = cellLabelCol.length;
 
@@ -136,6 +147,7 @@ function parseSimData(input) {
 		dataParametersMax,
 		dataParametersMin,
 		cellLabelCol,
+		cellLabelAltCol,
 		cellLabelRow,
 		fillColorFn,
 		lineColorFn: drilldownColorFn,
@@ -146,9 +158,28 @@ function parseSimData(input) {
 }
 
 const simData = parseSimData([run1, run2, run3, run4, run5, run6, run7, run8, run9]);
+const scenarioDescriptionData = [
+	run1Description,
+	run2Description,
+	run3Description,
+	run4Description,
+	run5Description,
+	run6Description,
+	run7Description,
+	run8Description,
+	run9Description
+].map((o) => o.description);
 
-const { data, cellLabelRow, cellLabelCol, fillColorFn, lineColorFn, barColorFn, labelColFormatFn } =
-	simData;
+const {
+	data,
+	cellLabelRow,
+	cellLabelCol,
+	cellLabelAltCol,
+	fillColorFn,
+	lineColorFn,
+	barColorFn,
+	labelColFormatFn
+} = simData;
 
 // ///////////////////////////////////////////////////////////////////////////////
 // generate legend
@@ -246,7 +277,9 @@ const description = 'Description of scenarios';
 				:barColorFn="barColorFn"
 				:labelColFormatFn="labelColFormatFn"
 				:cellLabelRow="cellLabelRow"
+				:cellLabelAltRow="scenarioDescriptionData"
 				:cellLabelCol="cellLabelCol"
+				:cellLabelAltCol="cellLabelAltCol"
 				:margin="40"
 				:style="{ flex: '1' }"
 			/>

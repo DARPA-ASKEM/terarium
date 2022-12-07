@@ -5,6 +5,7 @@
 				v-if="!disableLabelCol && rendererReady"
 				:selectedCols="selectedCols"
 				:labelColList="labelColList"
+				:labelColAltList="cellLabelAltCol"
 				:microColSettings="microColSettings"
 				:numCols="numCols"
 				:viewport="viewport"
@@ -17,6 +18,7 @@
 				v-if="!disableLabelRow && rendererReady"
 				:selectedRows="selectedRows"
 				:labelRowList="labelRowList"
+				:labelRowAltList="cellLabelAltRow"
 				:microRowSettings="microRowSettings"
 				:numRows="numRows"
 				:viewport="viewport"
@@ -141,10 +143,22 @@ export default {
 				return [];
 			}
 		},
+		cellLabelAltRow: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
 		disableLabelCol: {
 			type: Boolean,
 			default() {
 				return false;
+			}
+		},
+		cellLabelAltCol: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
 			}
 		},
 		cellLabelCol: {
