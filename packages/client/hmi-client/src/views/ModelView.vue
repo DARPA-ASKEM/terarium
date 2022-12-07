@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Model from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 
@@ -53,14 +53,19 @@ watch(newModelId, (id) => {
 	}
 });
 
-const initialTab = {
-	name: getModelName(props.modelId),
-	props: {
-		modelId: props.modelId
-	}
-} as Tab;
+onMounted(async () => {
+	// If no model id provided in props, do not attempt to make inital tab
+	if (props.modelId !== '') {
+		const initialTab = {
+			name: getModelName(props.modelId),
+			props: {
+				modelId: props.modelId
+			}
+		} as Tab;
 
-openTabs.value.push(initialTab);
+		openTabs.value.push(initialTab);
+	} // end if
+});
 </script>
 
 <template>
