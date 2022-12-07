@@ -3,7 +3,7 @@
 		<div class="add-selected-buttons">
 			<dropdown-button
 				:inner-button-label="'Add to a project'"
-				:is-dropdown-left-aligned="false"
+				:is-dropdown-left-aligned="true"
 				:items="projectsNames"
 				@item-selected="addAssetsToProject"
 			/>
