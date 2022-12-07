@@ -64,12 +64,12 @@ const openView = (view: RouteName) => {
 		const params: RouteParamsRaw = {};
 
 		// Set the projectId, except for the Document Route
-		if (view !== RouteName.DocumentRoute && props?.project?.id) {
+		if (props?.project?.id) {
 			params.projectId = props.project.id;
 		}
 
 		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
+			params.modelId = props?.project?.assets[MODELS]?.[0] ?? '';
 		}
 
 		if (view === RouteName.DatasetRoute) {

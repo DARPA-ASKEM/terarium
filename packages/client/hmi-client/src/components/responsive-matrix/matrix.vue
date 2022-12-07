@@ -1,13 +1,15 @@
 <template>
 	<main class="matrix-container" ref="matrixContainer">
-		<div class="matrix" ref="matrix">
+		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
 				v-if="!disableLabelCol && rendererReady"
 				:selectedCols="selectedCols"
 				:labelColList="labelColList"
+				:labelColAltList="cellLabelAltCol"
 				:microColSettings="microColSettings"
 				:numCols="numCols"
 				:viewport="viewport"
+				:margin="margin"
 				:update="update"
 				:move="move"
 				:labelColFormatFn="labelColFormatFn"
@@ -16,9 +18,11 @@
 				v-if="!disableLabelRow && rendererReady"
 				:selectedRows="selectedRows"
 				:labelRowList="labelRowList"
+				:labelRowAltList="cellLabelAltRow"
 				:microRowSettings="microRowSettings"
 				:numRows="numRows"
 				:viewport="viewport"
+				:margin="margin"
 				:update="update"
 				:move="move"
 				:labelRowFormatFn="labelRowFormatFn"
@@ -115,6 +119,12 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		margin: {
+			type: Number,
+			default() {
+				return 0;
+			}
+		},
 		data: {
 			type: Array as PropType<object[][]>,
 			default() {
@@ -133,10 +143,22 @@ export default {
 				return [];
 			}
 		},
+		cellLabelAltRow: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
 		disableLabelCol: {
 			type: Boolean,
 			default() {
 				return false;
+			}
+		},
+		cellLabelAltCol: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
 			}
 		},
 		cellLabelCol: {
@@ -236,6 +258,13 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	computed: {
+		matrixStyle() {
+			return {
+				background: this.backgroundColor,
+				padding: `${this.margin}px`
+			};
+		},
+
 		screenAspectRatio(): number {
 			return this.screenHeight / this.screenWidth;
 		},
@@ -344,8 +373,8 @@ export default {
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		// initialize screen height/width
-		this.screenHeight = matrix.offsetHeight;
-		this.screenWidth = matrix.offsetWidth;
+		this.screenHeight = matrix.offsetHeight - this.margin * 2;
+		this.screenWidth = matrix.offsetWidth - this.margin * 2;
 
 		// start the resize observer
 		this.resizeObserver = new ResizeObserver((entries) => {
@@ -363,7 +392,8 @@ export default {
 
 		// initialize pixi.js
 		this.app = new Application({
-			resizeTo: matrixContainer,
+			width: this.screenWidth,
+			height: this.screenHeight,
 			backgroundColor: this.backgroundColor
 		});
 		matrix.appendChild(this.app.view as unknown as Node);
@@ -900,10 +930,10 @@ export default {
 				) || EMPTY_POINT;
 
 			return {
-				left: `${topLeft.x}px`,
-				top: `${topLeft.y}px`,
-				right: `${this.screenWidth - bottomRight.x}px`,
-				bottom: `${this.screenHeight - bottomRight.y}px`
+				left: `${topLeft.x + this.margin}px`,
+				top: `${topLeft.y + this.margin}px`,
+				right: `${this.screenWidth - bottomRight.x - this.margin}px`,
+				bottom: `${this.screenHeight - bottomRight.y - this.margin}px`
 			};
 		},
 

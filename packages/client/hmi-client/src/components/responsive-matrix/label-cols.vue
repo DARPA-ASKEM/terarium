@@ -1,6 +1,12 @@
 <template>
 	<div class="label-container col" :style="labelContainerStyle">
-		<div class="label" v-for="(label, idx) in labels" :key="idx" :style="getLabelStyle(idx)">
+		<div
+			class="label"
+			v-for="(label, idx) in labels"
+			:key="idx"
+			:title="label.alt"
+			:style="getLabelStyle(idx)"
+		>
 			{{ label.value }}
 		</div>
 	</div>
@@ -25,6 +31,12 @@ export default {
 			type: Viewport as PropType<Viewport>,
 			default() {
 				return null;
+			}
+		},
+		margin: {
+			type: Number,
+			default() {
+				return 0;
 			}
 		},
 		numCols: {
@@ -57,6 +69,12 @@ export default {
 				return [];
 			}
 		},
+		labelColAltList: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
 		microColSettings: {
 			type: Array as PropType<number[]>,
 			default() {
@@ -78,7 +96,7 @@ export default {
 	data() {
 		return {
 			labelContainerStyle: {},
-			labels: [] as { value: string; position: number }[]
+			labels: [] as { value: string; alt: string; position: number }[]
 		};
 	},
 
@@ -114,11 +132,12 @@ export default {
 			const viewportColDensity =
 				((visibleBounds?.width || 0) / (this.viewport.worldWidth || 1)) * this.numCols;
 
-			const thresholdLabelDensity = 8;
+			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportColDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(
 				this.labelColList,
+				this.labelColAltList,
 				this.selectedCols,
 				this.microColSettings,
 				labelStride,
@@ -140,8 +159,8 @@ export default {
 
 			this.labelContainerStyle = {
 				top: `${Math.max(topLeft.y, 0)}px`,
-				left: `${topLeft.x}px`,
-				right: `${topRight.x}px`,
+				left: `${topLeft.x + this.margin}px`,
+				right: `${topRight.x - this.margin}px`,
 				width: `${topRight.x - topLeft.x}px`,
 				height: '30px'
 			};
@@ -153,7 +172,7 @@ export default {
 <style scoped>
 .label-container {
 	position: absolute;
-	pointer-events: none;
+	/* pointer-events: none; */
 	user-select: none;
 }
 
@@ -163,7 +182,6 @@ export default {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	color: white;
-	text-shadow: 0px 0px 4px #000;
+	color: var(--un-color-black-100);
 }
 </style>
