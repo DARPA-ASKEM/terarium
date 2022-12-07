@@ -120,7 +120,7 @@ export default {
 			const viewportRowDensity =
 				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.numRows;
 
-			const thresholdLabelDensity = 8;
+			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(

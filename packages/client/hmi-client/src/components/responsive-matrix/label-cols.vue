@@ -120,7 +120,7 @@ export default {
 			const viewportColDensity =
 				((visibleBounds?.width || 0) / (this.viewport.worldWidth || 1)) * this.numCols;
 
-			const thresholdLabelDensity = 8;
+			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportColDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(
