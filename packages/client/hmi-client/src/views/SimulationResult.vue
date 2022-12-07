@@ -5,6 +5,7 @@ import { select, NumberValue, scaleTime, scaleOrdinal } from 'd3';
 import { mix } from 'chroma-js';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
+import Button from '@/components/Button.vue';
 
 import run1 from './simulation-run-data/1/output.json';
 import run2 from './simulation-run-data/2/output.json';
@@ -139,8 +140,6 @@ function parseSimData(input) {
 	};
 }
 
-const runDescriptions = [run1, run2, run3].map((d) => (d as any).description);
-
 const simData = parseSimData([
 	run1,
 	run2,
@@ -190,12 +189,24 @@ onMounted(() => {
 		.attr('y', 12)
 		.text(String(max).slice(0, 6));
 });
+
+const isDescriptionExpanded = ref(false);
+const description = 'Description of scenarios';
 </script>
 
 <template>
 	<section class="result-container">
 		<h3>Simulation Results</h3>
-		<p v-for="(description, i) of runDescriptions" :key="i">Hi hi{{ description }}</p>
+
+		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
+			<p>{{ description }}</p>
+			<div class="less-more-button-container" v-if="description.length > 360">
+				<Button @click="isDescriptionExpanded = !isDescriptionExpanded">
+					{{ isDescriptionExpanded ? 'Show less' : 'Show more' }}
+				</Button>
+			</div>
+			<p>&nbsp;</p>
+		</div>
 
 		<svg ref="legendContainer" height="20px" width="400px"></svg>
 		<div class="result">
@@ -219,6 +230,7 @@ onMounted(() => {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	padding: 10px;
 }
 
 .result {
@@ -232,5 +244,29 @@ onMounted(() => {
 h3 {
 	font: var(--un-font-h3);
 	margin-bottom: 10px;
+}
+
+/* FIXME: duplicate from Model.vue, refactor */
+.description {
+	position: relative;
+}
+
+.description p {
+	max-width: 120ch;
+	max-height: 6rem;
+	overflow: hidden;
+}
+
+.description.is-expanded p {
+	max-height: none;
+}
+
+.description:not(.is-expanded) .less-more-button-container {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: linear-gradient(#ffffff00, #ffffff);
+	padding-top: 3rem;
 }
 </style>
