@@ -11,13 +11,13 @@ import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositio
 
 @RegisterRestClient(configKey = "model-service")
 @Produces(MediaType.APPLICATION_JSON)
+@Path("api/models")
 public interface ModelServiceProxy {
 	@PUT
-	@Path("api/models")
 	Response createModel();
 
 	@POST
-	@Path("api/models/{modelId}")
+	@Path("/{modelId}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response addModelParts(
 		@PathParam("modelId") String modelId,
@@ -25,14 +25,14 @@ public interface ModelServiceProxy {
 	);
 
 	@GET
-	@Path("api/models/{modelId}/json")
+	@Path("/{modelId}/json")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response getModelJSON(
 		@PathParam("modelId") String modelId
 	);
 
 	@POST
-	@Path("api/models/{modelId}/simulate")
+	@Path("/{modelId}/simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response simulate(
 		@PathParam("modelId") String modelId,
@@ -40,14 +40,14 @@ public interface ModelServiceProxy {
 	);
 
 	@POST
-	@Path("api/models/model-composition")
+	@Path("/model-composition")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response modelComposition(
 		ModelCompositionParams params
 	);
 
 	@GET
-	@Path("api/models/stratify/{modelA}/{modelB}/{typeModel}")
+	@Path("/stratify/{modelA}/{modelB}/{typeModel}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response stratify(
 		@PathParam("modelA") String modelA,
