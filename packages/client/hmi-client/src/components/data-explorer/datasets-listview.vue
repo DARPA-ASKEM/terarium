@@ -53,7 +53,7 @@
 						</td>
 						<td class="maintainer-col">
 							<div v-for="feature in formatFeatures(d)" :key="feature">
-								{{ feature }}
+								{{ feature.replaceAll('_', ' ') }}
 							</div>
 						</td>
 						<td class="preview-col">
@@ -262,8 +262,10 @@ tr th {
 }
 
 .maintainer-col {
+	max-width: 16rem;
 	width: 10%;
-	overflow-wrap: break-word;
+	overflow-x: auto;
+	white-space: nowrap;
 }
 
 .max-content {
