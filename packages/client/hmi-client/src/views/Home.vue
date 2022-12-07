@@ -1,33 +1,39 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import ArticlesCard from '@/components/articles/ArticlesCard.vue';
+import SelectedArticlePane from '@/components/articles/selected-article-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
-import { onMounted, ref } from 'vue';
 import { Project } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
 import * as ProjectService from '@/services/project';
 import { searchXDDArticles } from '@/services/data';
-import selectedArticlePane from '@/components/articles/selected-article-pane.vue';
-
-const enum Categories {
-	Recents = 'Recents',
-	Trending = 'Trending',
-	Epidemiology = 'Epidemiology'
-}
-
-const categories = new Map<string, { icon: object }>([[Categories.Recents, { icon: IconTime32 }]]);
+import useResourcesStore from '@/stores/resources';
+import useQueryStore from '@/stores/query';
 
 const projects = ref<Project[]>([]);
+// Only display projects with at least one related article
+// Only display at most 5 projects
+const projectsToDisplay = computed(() =>
+	projects.value.filter((project) => project.relatedArticles.length > 0).slice(0, 5)
+);
 const relevantArticles = ref<XDDArticle[]>([]);
 const relevantSearchTerm = 'COVID-19';
 const relevantSearchParams: XDDSearchParams = { perPage: 30 };
 const selectedPaper = ref<XDDArticle>();
 
+const resourcesStore = useResourcesStore();
+const queryStore = useQueryStore();
+
 onMounted(async () => {
+	// Clear all...
+	resourcesStore.reset(); // Project related resources saved.
+	queryStore.reset(); // Facets queries.
+
 	const allProjects = (await ProjectService.getAll()) as Project[];
 	if (allProjects) {
 		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
@@ -54,6 +60,21 @@ const selectArticle = (item: XDDArticle) => {
 const close = () => {
 	selectedPaper.value = undefined;
 };
+
+const SCROLL_INCREMENT_IN_REM = 21;
+const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
+	const chevronElement = event.target as HTMLElement;
+	const cardListElement = chevronElement.parentElement?.querySelector('ul');
+	if (cardListElement === null || cardListElement === undefined) return;
+	const marginLeftString =
+		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
+	const currentMarginLeft = parseInt(marginLeftString, 10);
+	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
+	const newMarginLeft = currentMarginLeft + changeInRem;
+	// Don't let the list scroll far enough left that we see space before the
+	//	first card.
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
+};
 </script>
 
 <template>
@@ -74,63 +95,55 @@ const close = () => {
 		</div>
 
 		<h2>Projects</h2>
-		<template v-for="[key, value] in categories" :key="key">
-			<div>
-				<header>
-					<component :is="value.icon" />
-					<h3>{{ key }}</h3>
-				</header>
-				<div class="project-carousel">
-					<IconChevronLeft32 class="chevron-left" />
-					<ul>
-						<li v-if="key === Categories.Recents">
-							<NewProjectCard />
-						</li>
-						<li v-for="(project, index) in projects" :key="index">
-							<router-link
-								style="text-decoration: none; color: inherit"
-								:to="'/projects/' + project.id"
-								:projectId="project.id"
-							>
-								<ProjectCard :name="project.name" />
-							</router-link>
-						</li>
-					</ul>
-					<IconChevronRight32 class="chevron-right" />
-				</div>
-			</div>
-			<!-- Hot Topics carousel -->
-			<div>
-				<header>
-					<h3>Latest on {{ relevantSearchTerm }}</h3>
-				</header>
-				<div class="project-carousel">
-					<ul>
-						<li v-for="(paper, index) in relevantArticles" :key="index">
-							<div @click="selectArticle(paper)">
-								<ArticlesCard :article="paper" />
-							</div>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<!-- For the top 5 projects show related articles -->
-			<!-- TODO: Only show this if there are related articles to begin with -->
-			<div v-for="(project, index) in projects.slice(0, 5)" :key="index">
-				<header>
-					<h3>Related to: {{ project.name }}</h3>
-				</header>
-				<div class="project-carousel">
-					<ul>
-						<li v-for="(paper, j) in project.relatedArticles" :key="j">
-							<div @click="selectArticle(paper)">
-								<ArticlesCard :article="paper" />
-							</div>
-						</li>
-					</ul>
-				</div>
-			</div>
-		</template>
+		<div class="carousel">
+			<header>
+				<component :is="IconTime32" />
+				<h3>Recent</h3>
+			</header>
+			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
+			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+			<ul>
+				<li class="card">
+					<NewProjectCard />
+				</li>
+				<!-- .slice() to copy the array, .reverse() to put new projects at the left of the list instead of the right -->
+				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
+					<router-link
+						style="text-decoration: none; color: inherit"
+						:to="'/projects/' + project.id"
+						:projectId="project.id"
+					>
+						<ProjectCard :name="project.name" />
+					</router-link>
+				</li>
+			</ul>
+		</div>
+		<!-- Hot Topics carousel -->
+		<div class="carousel" v-if="relevantArticles.length > 0">
+			<header>
+				<h3>Latest on {{ relevantSearchTerm }}</h3>
+			</header>
+			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
+			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+			<ul>
+				<li v-for="(paper, index) in relevantArticles" :key="index" class="card">
+					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+				</li>
+			</ul>
+		</div>
+		<!-- Show related articles for the top 5 projects -->
+		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
+			<header>
+				<h3>Related to: {{ project.name }}</h3>
+			</header>
+			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
+			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+			<ul>
+				<li v-for="(paper, j) in project.relatedArticles" :key="j" class="card">
+					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+				</li>
+			</ul>
+		</div>
 	</section>
 </template>
 
@@ -153,6 +166,7 @@ header {
 
 h2 {
 	font: var(--un-font-h2);
+	margin-left: 4rem;
 }
 
 h3 {
@@ -161,7 +175,6 @@ h3 {
 
 h2,
 header {
-	margin-left: 4rem;
 	margin-top: 1rem;
 }
 
@@ -170,69 +183,66 @@ header svg {
 	margin-right: 0.5rem;
 }
 
-.project-carousel {
-	align-items: center;
-	display: flex;
-	z-index: -1;
-	overflow-x: auto;
-	overflow-y: hidden;
+.carousel {
+	position: relative;
+	margin-left: 4rem;
 }
 
-.project-carousel svg {
-	/* 	chevron arrows - see about making the right ones appear as required (by watching scrollbar position)
+.carousel ul {
+	align-items: center;
+	display: flex;
+	margin: 0.5rem 0;
+}
+
+.chevron {
+	/* 	see about making the right ones appear as required (by watching scrollbar position)
 		eg. if I am on the very left of the carousel don't show the left arrow
 	*/
 	cursor: pointer;
-	margin: 0 0.5rem 1rem 1rem;
+	margin: 0 1rem;
 	position: absolute;
+	top: 50%;
 	visibility: visible;
-	z-index: 2;
-}
-
-/* Hide the arrows for now */
-.project-carousel svg[class|='chevron'] {
-	display: none;
-}
-
-.chevron-right {
-	right: 0;
-}
-
-.project-carousel svg:hover {
-	background-color: var(--un-color-body-surface-background);
+	z-index: 3;
+	background: var(--un-color-body-surface-secondary);
 	border-radius: 10rem;
+}
+
+.chevron:hover {
+	background-color: var(--un-color-body-surface-background);
 	color: var(--un-color-accent);
 }
 
-.project-carousel:hover svg {
-	visibility: visible;
+.chevron-left {
+	left: -4rem;
+}
+
+.chevron-right {
+	right: 0rem;
 }
 
 ul {
 	align-items: center;
 	display: inline-flex;
 	gap: 0.5rem;
-	margin: 0.5rem 4rem;
+	transition: margin-left 0.2s;
 }
 
 li {
-	height: 15rem;
 	list-style: none;
-	min-width: 20rem;
-	position: relative;
 }
 
-a:hover {
-	transform: scale(1.2);
-	z-index: 2;
+.card {
+	z-index: 1;
 	transition: 0.2s;
 }
 
-li > * {
-	position: absolute;
+.card:hover {
+	transform: scale(1.2);
+	z-index: 2;
 }
 
-.project-carousel:last-of-type {
+.carousel:last-of-type {
 	margin-bottom: 3rem;
 }
 

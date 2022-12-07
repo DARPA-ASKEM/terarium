@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import Model from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
-import IconMachineLearningModel from '@carbon/icons-vue/es/machine-learning-model/16';
 import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
+import useResourcesStore from '@/stores/resources';
 
 interface ModelProps {
 	modelId: string;
@@ -13,25 +13,29 @@ const props = defineProps<{
 	modelId: string;
 }>();
 
-const initialTab = {
-	name: props.modelId,
-	props: {
-		modelId: props.modelId
-	}
-} as Tab;
+const resourcesStore = useResourcesStore();
 
 const newModelId = computed(() => props.modelId);
-const openTabs = ref<Tab[]>([initialTab]);
+const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
+const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
 
 function removeClosedTab(tab: Tab) {
 	const tabIndexToRemove = openTabs.value.indexOf(tab);
 	openTabs.value.splice(tabIndexToRemove, 1);
 }
 
+function getModelName(id: string): string | null {
+	const currentModel = modelsInCurrentProject?.find((model) => model.id.toString() === id);
+	if (currentModel) {
+		return currentModel.name;
+	}
+	return null;
+}
+
 watch(newModelId, (id) => {
 	const newTab = {
-		name: id,
+		name: getModelName(id),
 		props: {
 			modelId: id
 		}
@@ -48,6 +52,15 @@ watch(newModelId, (id) => {
 		activeTabIndex.value = foundTabIndex;
 	}
 });
+
+const initialTab = {
+	name: getModelName(props.modelId),
+	props: {
+		modelId: props.modelId
+	}
+} as Tab;
+
+openTabs.value.push(initialTab);
 </script>
 
 <template>
@@ -55,10 +68,9 @@ watch(newModelId, (id) => {
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"
-		:icon="IconMachineLearningModel"
 		:active-tab="props.modelId"
-		:active-tab-index="activeTabIndex"
 		@close-tab="(tab) => removeClosedTab(tab)"
+		:active-tab-index="activeTabIndex"
 	>
 	</TabContainer>
 </template>

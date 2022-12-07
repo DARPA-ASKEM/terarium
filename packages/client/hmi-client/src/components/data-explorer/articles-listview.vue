@@ -25,13 +25,14 @@
 									<div class="text-bold">{{ formatTitle(d) }}</div>
 									<multiline-description :text="formatDescription(d)" />
 									<div>{{ d.publisher }}, {{ d.journal }}</div>
+									<!--  -->
 									<div v-if="isExpanded(d)" class="knobs">
 										<multiline-description :text="formatArticleAuthors(d)" />
 									</div>
 									<div v-if="d.highlight" class="knobs">
-										<div v-for="h in d.highlight" :key="h">
+										<span v-for="h in d.highlight" :key="h">
 											<span v-html="h"></span>
-										</div>
+										</span>
 									</div>
 									<div v-html="formatKnownTerms(d)"></div>
 									<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
@@ -240,6 +241,7 @@ tbody tr:first-child {
 	margin-top: 1rem;
 	color: blue;
 }
+
 .title-and-abstract-layout .content .related-docs:hover {
 	text-decoration: underline;
 }
@@ -255,6 +257,7 @@ tbody tr:first-child {
 	color: green;
 	font-weight: bold;
 }
+
 .title-and-abstract-layout .content .related-docs-container .item-select:hover {
 	text-decoration: underline;
 }

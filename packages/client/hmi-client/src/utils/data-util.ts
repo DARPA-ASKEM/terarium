@@ -23,12 +23,12 @@ export const applyFacetFiltersToModels = (modelResults: Model[], filters: Filter
 		// "filters" may include fields that belong to different types of artifacts
 		//  thus make sure to only filter models using Model fields
 		if (MODEL_FACET_FIELDS.includes(filterField)) {
-			const filterValues = clause.values; // array of values to filter upon
+			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
 			const filteredModels = modelResults.filter(
 				(model) =>
 					// direct query against Model fields
-					filterValues.includes(model[filterField as keyof Model]) === isNot
+					filterValues.includes(model[filterField as keyof Model].toString()) === isNot
 			);
 			// use splice to filter in place
 			modelResults.splice(0, modelResults.length, ...filteredModels);
@@ -46,12 +46,12 @@ export const applyFacetFiltersToDatasets = (datasetResults: Dataset[], filters: 
 		// "filters" may include fields that belong to different types of artifacts
 		//  thus make sure to only filter datasets using Dataset fields
 		if (DATASET_FACET_FIELDS.includes(filterField)) {
-			const filterValues = clause.values; // array of values to filter upon
+			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
 			const filteredDatasets = datasetResults.filter(
 				(dataset) =>
 					// direct query against Dataset fields
-					filterValues.includes(dataset[filterField as keyof Dataset]) === isNot
+					filterValues.includes(dataset[filterField as keyof Dataset].toString()) === isNot
 			);
 			// use splice to filter in place
 			datasetResults.splice(0, datasetResults.length, ...filteredDatasets);
