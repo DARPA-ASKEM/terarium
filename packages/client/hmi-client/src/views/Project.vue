@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
 import ResourcesList, { Resource } from '@/components/resources-list.vue';
+import { RouteMetadata } from '@/router/routes';
 
 defineProps<{
 	project: Project;
 }>();
 
 const projectAssets = [] as Resource[];
+
+const routeMetadataArray = Object.entries(RouteMetadata);
+for (let i = 0; i < routeMetadataArray.length; i++) {
+	// Maybe there's a cleaner way to fill array
+	if (routeMetadataArray[0][1].projectAsset) {
+		projectAssets.push({
+			route: routeMetadataArray[0][0],
+			name: routeMetadataArray[0][1].displayName,
+			icon: routeMetadataArray[0][1].icon,
+			projectAsset: routeMetadataArray[0][1].projectAsset
+		});
+	}
+}
 </script>
 
 <template>
