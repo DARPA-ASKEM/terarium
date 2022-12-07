@@ -69,7 +69,7 @@ const openView = (view: RouteName) => {
 		}
 
 		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
+			params.modelId = props?.project?.assets[MODELS]?.[0] ?? '';
 		}
 
 		if (view === RouteName.DatasetRoute) {
