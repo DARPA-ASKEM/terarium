@@ -15,7 +15,7 @@ import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Document = '/docs/:id?',
+	Document = '/projects/:projectId/docs/:id?',
 	Project = '/projects/:projectId',
 	Model = '/projects/:projectId/model/:modelId?',
 	Dataset = '/projects/:projectId/dataset/:datasetId?',
