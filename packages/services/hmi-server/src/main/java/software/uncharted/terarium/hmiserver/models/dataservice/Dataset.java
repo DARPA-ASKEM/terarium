@@ -36,4 +36,7 @@ public class Dataset implements Serializable {
 	private String annotations;
 
 	private String maintainer;
+
+	@JsonbProperty("simulation_run")
+	private Boolean simulationRun;
 }
