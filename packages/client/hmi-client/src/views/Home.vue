@@ -1,17 +1,19 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import ArticlesCard from '@/components/articles/ArticlesCard.vue';
+import SelectedArticlePane from '@/components/articles/selected-article-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
-import { computed, onMounted, ref } from 'vue';
 import { Project } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
 import * as ProjectService from '@/services/project';
 import { searchXDDArticles } from '@/services/data';
-import selectedArticlePane from '@/components/articles/selected-article-pane.vue';
+import useResourcesStore from '@/stores/resources';
+import useQueryStore from '@/stores/query';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
@@ -24,7 +26,14 @@ const relevantSearchTerm = 'COVID-19';
 const relevantSearchParams: XDDSearchParams = { perPage: 30 };
 const selectedPaper = ref<XDDArticle>();
 
+const resourcesStore = useResourcesStore();
+const queryStore = useQueryStore();
+
 onMounted(async () => {
+	// Clear all...
+	resourcesStore.reset(); // Project related resources saved.
+	queryStore.reset(); // Facets queries.
+
 	const allProjects = (await ProjectService.getAll()) as Project[];
 	if (allProjects) {
 		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
