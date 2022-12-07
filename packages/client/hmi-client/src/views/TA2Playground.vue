@@ -286,7 +286,7 @@ export default defineComponent({
 			// console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
-			const resp = await API.put('/model-service/models');
+			const resp = await API.put('model-service/models');
 			modelId = resp.data.id;
 
 			// Reset
@@ -395,7 +395,7 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async jsonOutput() {
-			const resp = await API.get(`/model-service/models/${modelId}/json`);
+			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
 			console.log(petriNetValidator(output));
 
@@ -427,7 +427,7 @@ export default defineComponent({
 				data: { val: 1 }
 			});
 
-			API.post(`/model-service/models/${modelId}`, {
+			API.post(`model-service/models/${modelId}`, {
 				edges: [
 					{
 						source: source.datum().id,
@@ -456,7 +456,7 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			API.post(`/model-service/models/${modelId}`, {
+			API.post(`model-service/models/${modelId}`, {
 				nodes: [
 					{
 						name: id,
@@ -483,7 +483,7 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			API.post(`/model-service/models/${modelId}`, {
+			API.post(`model-service/models/${modelId}`, {
 				nodes: [
 					{
 						name: id,
@@ -517,7 +517,7 @@ export default defineComponent({
 			});
 
 			if (createFlag === true) {
-				API.post(`/model-service/models/${modelId}`, {
+				API.post(`model-service/models/${modelId}`, {
 					nodes: [
 						{
 							name: label,
@@ -570,7 +570,7 @@ export default defineComponent({
 			});
 
 			if (createFlag === true) {
-				API.post(`/model-service/models/${modelId}`, {
+				API.post(`model-service/models/${modelId}`, {
 					edges: [
 						{
 							source: sourceLabel,
