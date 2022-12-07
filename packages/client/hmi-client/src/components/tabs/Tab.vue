@@ -24,10 +24,10 @@ const props = defineProps({
 defineEmits(['clickTabHeader', 'clickTabClose']);
 
 function calcTabWidthPercentage() {
-	if (props.numTabs <= 10) {
-		return 10;
+	if (props.numTabs <= 5) {
+		return 20;
 	}
-	return 100 / props.numTabs;
+	return Math.floor(100 / props.numTabs);
 }
 
 const headerStyle = computed(
