@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import IconNoImage32 from '@carbon/icons-vue/es/no-image/32';
-
 export interface Props {
 	name: string;
 }
 const props = withDefaults(defineProps<Props>(), {
 	name: 'Default Project Name'
 });
+
+const placeholderRandomColorOpacity = Math.random();
 </script>
 
 <template>
 	<div class="project-card">
-		<IconNoImage32 />
+		<div class="placeholder-color">
+			<div class="placeholder-color-random" :style="{ opacity: placeholderRandomColorOpacity }" />
+		</div>
 		<footer>{{ props?.name }}</footer>
 	</div>
 </template>
@@ -28,6 +30,8 @@ const props = withDefaults(defineProps<Props>(), {
 	border-radius: 0.5rem;
 	text-align: left;
 	cursor: pointer;
+	/* Round the image corners by clipping them to fit the card */
+	overflow: hidden;
 }
 
 footer {
@@ -35,9 +39,19 @@ footer {
 	padding: 0.5rem 1rem;
 }
 
-svg {
-	color: var(--un-color-body-text-disabled);
-	cursor: pointer;
-	margin: auto;
+.placeholder-color {
+	flex: 1;
+	min-height: 0;
+	background: var(--un-color-accent-lighter);
+	position: relative;
+}
+
+.placeholder-color-random {
+	background: var(--un-color-accent-light);
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
 }
 </style>
