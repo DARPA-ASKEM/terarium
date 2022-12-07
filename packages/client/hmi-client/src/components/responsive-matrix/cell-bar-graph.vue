@@ -87,6 +87,12 @@ export default {
 			default(v) {
 				return v;
 			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
 		}
 	},
 
@@ -262,6 +268,12 @@ export default {
 			Object.keys(this.selectedCells).forEach((parameter) => {
 				this.renderBars(this.svg, parameter, this.selectedCells[parameter], this.labelRowSelected);
 			});
+
+			const rangeText = this.labelColFormatFn(
+				this.labelColList[this.selectedCell[SelectedCellValue.START_COL]],
+				1
+			);
+			this.svg.append('text').attr('x', 50).attr('y', 20).style('fill', '#333').text(rangeText);
 		},
 
 		renderBars(svg: any, parameter: string, colValueArray: any, rowValueArray: any) {

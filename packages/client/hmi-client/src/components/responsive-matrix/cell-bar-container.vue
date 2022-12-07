@@ -13,6 +13,7 @@
 		:parametersMax="parametersMax"
 		:colorFn="colorFn"
 		:labelRowFormatFn="labelRowFormatFn"
+		:labelColFormatFn="labelColFormatFn"
 		@click="$emit('click')"
 	/>
 </template>
@@ -111,6 +112,12 @@ export default {
 			}
 		},
 		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
 			type: Function as PropType<(value: NumberValue, index: number) => string>,
 			default(v) {
 				return v;
