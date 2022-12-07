@@ -26,8 +26,6 @@ const props = withDefaults(defineProps<Props>(), {
 	height: 15rem;
 	min-width: 20rem;
 	border-radius: 0.5rem;
-	margin: 0.5rem;
-	transition: 0.2s;
 	text-align: left;
 	cursor: pointer;
 }
