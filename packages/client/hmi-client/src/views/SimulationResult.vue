@@ -241,24 +241,11 @@ onMounted(() => {
 		.attr('y', 12)
 		.text(String(maxBase).slice(0, 6));
 });
-
-const isDescriptionExpanded = ref(false);
-const description = 'Description of scenarios';
 </script>
 
 <template>
 	<section class="result-container">
 		<h3>Simulation Results - Difference from Baseline Scenario</h3>
-
-		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
-			<p>{{ description }}</p>
-			<div class="less-more-button-container" v-if="description.length > 360">
-				<Button @click="isDescriptionExpanded = !isDescriptionExpanded">
-					{{ isDescriptionExpanded ? 'Show less' : 'Show more' }}
-				</Button>
-			</div>
-			<p>&nbsp;</p>
-		</div>
 
 		<div class="legend-container">
 			<div class="legend-label">Difference w.r.t. Base (% Total Population Infected)</div>
@@ -317,29 +304,5 @@ const description = 'Description of scenarios';
 h3 {
 	font: var(--un-font-h3);
 	margin-bottom: 10px;
-}
-
-/* FIXME: duplicate from Model.vue, refactor */
-.description {
-	position: relative;
-}
-
-.description p {
-	max-width: 120ch;
-	max-height: 6rem;
-	overflow: hidden;
-}
-
-.description.is-expanded p {
-	max-height: none;
-}
-
-.description:not(.is-expanded) .less-more-button-container {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	background: linear-gradient(#ffffff00, #ffffff);
-	padding-top: 3rem;
 }
 </style>
