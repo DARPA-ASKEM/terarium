@@ -97,7 +97,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 				<li class="card">
 					<NewProjectCard />
 				</li>
-				<li v-for="(project, index) in projects" class="card" :key="index">
+				<!-- .slice() to copy the array, .reverse() to put new projects at the left of the list instead of the right -->
+				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
 					<router-link
 						style="text-decoration: none; color: inherit"
 						:to="'/projects/' + project.id"
