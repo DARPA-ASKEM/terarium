@@ -19,8 +19,12 @@
 					<td class="name-col">
 						<div class="name-layout">
 							<div class="radio" @click.stop="updateSelection(c)">
-								<span v-show="c.selected"><i class="fa-lg fa-regular fa-square-check"></i></span>
-								<span v-show="!c.selected"><i class="fa-lg fa-regular fa-square"></i></span>
+								<span v-show="c.selected">
+									<IconCheckboxChecked20 />
+								</span>
+								<span v-show="!c.selected">
+									<IconCheckbox20 />
+								</span>
 							</div>
 							<div class="content">
 								<div>{{ c.name + ' (' + c.items.length + ')' }}</div>
@@ -44,6 +48,8 @@ import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import { groupBy, omit, orderBy, uniq } from 'lodash';
 import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { Dataset } from '@/types/Dataset';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 
 export type ResultsCluster = {
 	name: string;
@@ -90,17 +96,17 @@ const updateSelection = (cluster: ResultsCluster) => {
 // FIXME: refactor as util func
 const isDataItemSelected = (item: ResultType) =>
 	props.selectedSearchItems.find((searchItem) => {
-		if (isModel(item)) {
+		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
 			const searchItemAsModel = searchItem as Model;
 			return searchItemAsModel.id === itemAsModel.id;
 		}
-		if (isDataset(item)) {
+		if (isDataset(item) && isDataset(searchItem)) {
 			const itemAsDataset = item as Dataset;
 			const searchItemAsDataset = searchItem as Dataset;
 			return searchItemAsDataset.id === itemAsDataset.id;
 		}
-		if (isXDDArticle(item)) {
+		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
 			return searchItemAsArticle.title === itemAsArticle.title;
@@ -200,8 +206,8 @@ const clustersInfo = computed(() => {
 				const isClusterSelected = clusterItemsRaw.every((clusterItem) =>
 					isDataItemSelected(
 						props.resultType === ResourceType.MODEL
-							? modelsMap[clusterItem.id]
-							: datasetsMap[clusterItem.id]
+							? modelsMap.value[clusterItem.id]
+							: datasetsMap.value[clusterItem.id]
 					)
 				);
 
@@ -383,8 +389,8 @@ const clustersInfo = computed(() => {
 		height: 50px;
 		padding: 8px;
 	}
-	.tr-item.selected {
-		border: 2px double black;
+	.tr-item.selected td {
+		background-color: var(--un-color-accent-lighter);
 	}
 	.name-col {
 		width: 20%;
