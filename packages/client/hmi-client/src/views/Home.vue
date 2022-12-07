@@ -62,7 +62,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const currentMarginLeft = parseInt(marginLeftString, 10);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
-	// Don't let the list scroll far enough right that we see space before the
+	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
 };
