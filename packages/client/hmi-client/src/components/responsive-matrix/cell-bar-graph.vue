@@ -287,7 +287,7 @@ export default {
 
 <style scoped>
 .cell-selected-bar {
-	border: 2px solid var(--background-light-3);
+	border: 2px solid var(--un-color-black-10);
 	border-radius: 5px;
 }
 </style>
