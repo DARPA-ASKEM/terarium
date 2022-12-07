@@ -169,7 +169,6 @@ export default {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	color: black;
-	/* text-shadow: 0px 0px 4px #000; */
+	color: var(--un-color-black-100);
 }
 </style>
