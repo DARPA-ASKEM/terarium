@@ -189,6 +189,7 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		...d,
 		temporalResolution: d.temporal_resolution,
 		geospatialResolution: d.geospatial_resolution,
+		simulationRun: d.simulation_run,
 		type: 'dataset'
 	}));
 
@@ -560,7 +561,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	// datasets
 	const promise3 = new Promise<SearchResults>((resolve, reject) => {
 		try {
-			resolve(getDatasets(term, searchParam?.model));
+			resolve(getDatasets(term, searchParam?.dataset));
 		} catch (err: any) {
 			reject(new Error(`Error fetching dataset results: ${err}`));
 		}

@@ -10,8 +10,7 @@ import { Dataset } from '@/types/Dataset';
  * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
  */
 async function getAll(): Promise<Dataset[] | null> {
-	// FIXME: add flag to fetch simulation vs. non-simulation datasets
-	const response = await API.get('/datasets?is_simulation=true');
+	const response = await API.get('/datasets');
 	return response?.data ?? null;
 }
 

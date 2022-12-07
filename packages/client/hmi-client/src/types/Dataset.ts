@@ -57,6 +57,8 @@ export type Dataset = {
 	geospatial_resolution: string;
 	annotations: DatasetAnnotations;
 	maintainer: string | number;
+	simulation_run: boolean;
+	simulationRun: boolean; // TEMP: mapped from simulation_run
 
 	type: string;
 };
@@ -71,11 +73,13 @@ export type DatasetSearchParams = {
 export const ID = 'id';
 export const NAME = 'name';
 export const DESCRIPTION = 'description';
+export const SIMULATION_RUN = 'simulation_run';
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
 	[NAME]: 'Dataset Name',
+	[SIMULATION_RUN]: 'Simulation Run',
 	[CONCEPT_FACETS_FIELD]: CONCEPT_FACETS_DISPLAY_NAME
 };
 
-export const FACET_FIELDS: string[] = [ID]; // fields to show facets for
+export const FACET_FIELDS: string[] = [ID, SIMULATION_RUN]; // fields to show facets for
 export const DATASET_FILTER_FIELDS: string[] = [NAME, DESCRIPTION]; // when applying non-facet filters, search these fields

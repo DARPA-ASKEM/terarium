@@ -83,9 +83,8 @@ public interface DatasetProxy {
 
 	@GET
 	Response getDatasets(
-		@DefaultValue("1000") @QueryParam("page_size") Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") Integer page,
-		@DefaultValue("true") @QueryParam("is_simulation") Boolean isSimulation
+		@DefaultValue("500") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@POST

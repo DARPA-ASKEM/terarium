@@ -113,11 +113,10 @@ public class DatasetResource {
 
 	@GET
 	public Response getDatasets(
-		@DefaultValue("1000") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page,
-		@DefaultValue("true") @QueryParam("is_simulation") final Boolean isSimulation
+		@DefaultValue("500") @QueryParam("page_size") final Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
-		return proxy.getDatasets(pageSize, page, isSimulation);
+		return proxy.getDatasets(pageSize, page);
 	}
 
 	@POST
