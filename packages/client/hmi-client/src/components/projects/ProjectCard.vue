@@ -30,7 +30,7 @@ const placeholderRandomColorOpacity = Math.random();
 	border-radius: 0.5rem;
 	text-align: left;
 	cursor: pointer;
-	/* Round the image corners by clipping them to fit the card */
+	/* Round the image/placeholder color's corners by clipping them to fit the card */
 	overflow: hidden;
 }
 
