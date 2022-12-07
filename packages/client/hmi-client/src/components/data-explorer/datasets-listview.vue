@@ -52,7 +52,7 @@
 							<p class="max-content">{{ formatDescription(d) }}</p>
 						</td>
 						<td class="maintainer-col">
-							<div class="feature" v-for="feature in formatFeatures(d)" :key="feature">
+							<div v-for="feature in formatFeatures(d)" :key="feature">
 								{{ feature.replaceAll('_', ' ') }}
 							</div>
 						</td>
