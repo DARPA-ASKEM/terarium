@@ -56,8 +56,8 @@ public interface ModelProxy {
 	@GET
 	@Path("/descriptions")
 	Response getDescriptions(
-		@DefaultValue("0") @QueryParam("page_size") Integer pageSize,
-		@DefaultValue("100") @QueryParam("page") Integer page
+		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@GET
