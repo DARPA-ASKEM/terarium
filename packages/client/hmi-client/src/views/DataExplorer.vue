@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
@@ -474,6 +474,10 @@ onMounted(async () => {
 	}
 
 	refresh();
+});
+
+onUnmounted(() => {
+	query.reset();
 });
 </script>
 
