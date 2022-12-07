@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { select, NumberValue, scaleTime, scaleOrdinal } from 'd3';
+import { select, scaleOrdinal } from 'd3';
 import { mix } from 'chroma-js';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
-import Button from '@/components/Button.vue';
 
 import run1 from './simulation-run-data/1/output.json';
 import run2 from './simulation-run-data/2/output.json';
@@ -140,7 +139,12 @@ function parseSimData(input) {
 	// const scale = scaleOrdinal(schemeAccent).domain(Object.keys(data[0][0]));
 	const drilldownColorFn = (parameter: string) => variableColorScale(parameter);
 
-	const labelColFormatFn = scaleTime().tickFormat() as (value: NumberValue) => string;
+	const labelColFormatFn = (date) => {
+		const month = (1 + date.getMonth()).toString().padStart(2, '0');
+		const day = date.getDate().toString().padStart(2, '0');
+
+		return `${month}/${day}`;
+	};
 
 	return {
 		data,
