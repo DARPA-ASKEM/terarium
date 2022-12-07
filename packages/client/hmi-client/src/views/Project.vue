@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
-import RessourcesList, { Ressource } from '@/components/ressources-list.vue';
+import ResourcesList, { Resource } from '@/components/resources-list.vue';
 
 defineProps<{
 	project: Project;
 }>();
 
-const projectAssets = [] as Ressource[];
+const projectAssets = [] as Resource[];
 </script>
 
 <template>
@@ -26,13 +26,11 @@ const projectAssets = [] as Ressource[];
 							{{ project?.description }}
 						</p>
 					</section>
-					<section class="related-projects">
-						<h4>Related projects:</h4>
-					</section>
 				</div>
 			</section>
 			<section class="detail">
-				<ressources-list :ressources="projectAssets" />
+				<h3>Recent Resources</h3>
+				<resources-list :resources="projectAssets" />
 			</section>
 		</section>
 	</div>
