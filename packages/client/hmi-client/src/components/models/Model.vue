@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { ref, watch } from 'vue';
+import { watch, ref } from 'vue';
 import {
 	runDagreLayout,
 	D3SelectionINode,
@@ -10,6 +10,9 @@ import {
 } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
 import { Model } from '@/types/Model';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
+import Button from '@/components/Button.vue';
 
 const props = defineProps<{
 	modelId: string;
@@ -85,68 +88,86 @@ watch([model, graphElement], async () => {
 	await renderer?.setData(g);
 	await renderer?.render();
 });
+
+const isDescriptionExpanded = ref(false);
+
+// FIXME: update after Dec 8 demo
+const router = useRouter();
+const goToSimulationPlanPage = () => {
+	router.push({ name: RouteName.SimulationRoute });
+};
 </script>
 
 <template>
 	<section class="model">
-		<div>
+		<header>
 			<h3>{{ model?.name ?? '' }}</h3>
-			<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
-		</div>
-		<aside>
-			<p class="description">{{ model?.description ?? '' }}</p>
-			<h4>States</h4>
+			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
+		</header>
 
-			<h4>Parameters</h4>
-			<ul v-if="model !== null">
-				<li v-for="parameterName in Object.keys(model.parameters)" :key="parameterName">
-					<strong>{{ parameterName }}</strong
-					>: {{ model.parameters[parameterName] }}
-				</li>
-			</ul>
-		</aside>
+		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
+			<p>{{ model?.description ?? '' }}</p>
+			<div class="less-more-button-container">
+				<Button @click="isDescriptionExpanded = !isDescriptionExpanded">
+					{{ isDescriptionExpanded ? 'Show less' : 'Show more' }}
+				</Button>
+			</div>
+		</div>
+		<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 	</section>
 </template>
 
 <style scoped>
 .model {
-	margin: 10px;
-	display: flex;
-}
-
-.graph-element {
-	width: 1000px;
-	height: 1000px;
-	background: var(--un-color-black-5);
-}
-
-aside {
-	width: 400px;
-	margin-left: 10px;
-	background: var(--un-color-black-5);
 	padding: 10px;
+	display: flex;
+	flex-direction: column;
+}
+
+header {
+	display: flex;
+	margin-bottom: 10px;
+	align-items: flex-start;
 }
 
 h3 {
-	margin-bottom: 10px;
+	flex: 1;
+	min-width: 0;
 }
 
-h4 {
-	margin-top: 30px;
-	margin-bottom: 10px;
+.description {
+	position: relative;
 }
 
-.description,
-ul {
-	max-height: 400px;
-	overflow-y: auto;
+.description p {
+	max-width: 120ch;
+	max-height: 6rem;
+	overflow: hidden;
 }
 
-li {
-	display: block;
+.description.is-expanded p {
+	max-height: none;
 }
 
-strong {
-	font-weight: bold;
+.description:not(.is-expanded) .less-more-button-container {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: linear-gradient(#ffffff00, #ffffff);
+	padding-top: 3rem;
+}
+
+.graph-element {
+	width: 100%;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+/* Let svg dynamically resize when the sidebar opens/closes or page resizes */
+:deep(.graph-element svg) {
+	width: 100%;
+	height: 100%;
 }
 </style>

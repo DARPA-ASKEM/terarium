@@ -2,15 +2,16 @@ import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import DocumentView from '@/views/Document.vue';
 import HomeView from '@/views/Home.vue';
-import ModelView from '@/views/Model.vue';
 import DatasetView from '@/views/Dataset.vue';
 import ProjectView from '@/views/Project.vue';
+import ModelView from '@/views/ModelView.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
+import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
@@ -26,19 +27,6 @@ export enum RoutePath {
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
-}
-
-// Named routes
-export enum RouteName {
-	DatasetRoute = 'dataset',
-	DocumentRoute = 'document',
-	HomeRoute = 'home',
-	ModelRoute = 'model',
-	ProfileRoute = 'profile',
-	ProjectRoute = 'project',
-	ProvenanceRoute = 'provenance',
-	SimulationRoute = 'simulation',
-	SimulationResultRoute = 'simulationResult'
 }
 
 const routes = [

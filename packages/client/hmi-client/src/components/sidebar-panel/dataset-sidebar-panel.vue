@@ -1,20 +1,10 @@
 <template>
-	<div class="dataset-list-container">
-		<div
-			v-for="dataset in datasets"
-			:key="dataset.id"
-			class="dataset-link"
-			:class="{ active: dataset.id === datasetId }"
-			@click="openDatasetPage(dataset)"
-		>
-			<span class="dataset-title">
-				{{ dataset.name }}
-			</span>
-			<span class="dataset-delete-btn" @click.stop="removeDataset(dataset)">
-				<IconClose32 />
-			</span>
-		</div>
-	</div>
+	<ArtifactList
+		:artifacts="datasets"
+		:selected-artifact-id="datasetId"
+		@artifact-clicked="openDatasetPage"
+		@remove-artifact="removeDataset"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -26,11 +16,11 @@
 import { useRouter } from 'vue-router';
 import useResourcesStore from '@/stores/resources';
 import { onMounted, ref } from 'vue';
-import IconClose32 from '@carbon/icons-vue/es/close/32';
 import { deleteAsset } from '@/services/project';
 import { DATASETS } from '@/types/Project';
-import { RouteName } from '@/router';
+import { RouteName } from '@/router/routes';
 import { Dataset } from '@/types/Dataset';
+import ArtifactList from './artifact-list.vue';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
@@ -38,32 +28,32 @@ const resourcesStore = useResourcesStore();
 const datasetId = ref<string | number>('');
 const datasets = ref<Dataset[]>([]);
 
-const openDatasetPage = async (dataset: Dataset) => {
+const openDatasetPage = async (id: string | number) => {
 	// pass this dataset id as param
-	datasetId.value = dataset.id; // track selection
+	datasetId.value = id; // track selection
 	router.push({
 		name: RouteName.DatasetRoute,
-		params: { projectId: resourcesStore.activeProject?.id, datasetId: dataset.id }
+		params: { projectId: resourcesStore.activeProject?.id, datasetId: id }
 	});
 };
 
-const removeDataset = async (dataset: Dataset) => {
+const removeDataset = async (id: string | number) => {
 	// remove the dataset from the project assets
 	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
 		const assetsType = DATASETS;
-		deleteAsset(resourcesStore.activeProject.id, assetsType, dataset.id);
+		deleteAsset(resourcesStore.activeProject.id, assetsType, id);
 		// remove also from the local cache
 		resourcesStore.activeProject.assets[DATASETS] = resourcesStore.activeProject.assets[
 			DATASETS
-		].filter((modId) => modId !== dataset.id);
+		].filter((modId) => modId !== id);
 		resourcesStore.activeProjectAssets[DATASETS] = resourcesStore.activeProjectAssets[
 			DATASETS
-		].filter((a) => a.id !== dataset.id);
+		].filter((a) => a.id !== id);
 		datasets.value = resourcesStore.activeProjectAssets[DATASETS];
 	}
 
 	// if the user deleted the currently selected dataset, then clear its content from the view
-	if (dataset.id === datasetId.value) {
+	if (id === datasetId.value) {
 		// clear the dataset ID as a URL param
 		router.push({
 			name: RouteName.DatasetRoute,
@@ -80,53 +70,3 @@ onMounted(() => {
 	}
 });
 </script>
-
-<style scoped>
-.dataset-list-container {
-	overflow-y: auto;
-	margin-top: 1rem;
-	height: 100%;
-}
-
-.dataset-link {
-	cursor: pointer;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.dataset-link:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
-}
-
-.active {
-	font-size: var(--un-font-body);
-	background-color: var(--un-color-body-surface-background);
-}
-
-.dataset-view-icon {
-	padding-right: 0.5rem;
-}
-
-.dataset-delete-btn {
-	color: var(--un-color-body-text-disabled);
-}
-
-.dataset-delete-btn:hover {
-	/* color: var(--un-color-body-text-primary); */
-	color: red;
-}
-
-span {
-	display: inline-flex;
-	align-items: center;
-}
-
-.dataset-title {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-	display: inline;
-}
-</style>

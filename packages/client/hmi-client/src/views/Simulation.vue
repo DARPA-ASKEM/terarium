@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
 	runDagreLayout,
 	D3SelectionINode,
@@ -11,6 +11,10 @@ import {
 import { parseSimulationPlan2IGraph } from '@/services/simulation';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
+import { RouteName } from '@/router/routes';
+
+// FIXME: remove after Dec 8 demo
+const IS_DEC_8_DEMO = true;
 
 interface NodeData {
 	boxType: string;
@@ -75,6 +79,8 @@ const plan = {
 const route = useRoute();
 
 onMounted(async () => {
+	// FIXME: remove after Dec 8 Demo
+	if (IS_DEC_8_DEMO) return;
 	const divElement = (document.querySelector('.simulation-plan') ?? [0]) as HTMLDivElement;
 	const renderer = new SimulationPlanRenderer({
 		el: divElement,
@@ -120,14 +126,82 @@ onMounted(async () => {
 	await renderer.setData(graphData);
 	await renderer.render();
 });
+
+// TODO: remove after Dec 8 demo
+const slideIndex = ref(0);
+const nextSlide = () => {
+	slideIndex.value += 1;
+};
+const router = useRouter();
+const goToSimulationResultsPage = () => {
+	router.push({ name: RouteName.SimulationResultRoute });
+};
 </script>
 
 <template>
 	<section>
-		<div>Simulation page</div>
-		<div>Question template</div>
-		<div>Simulation Plan: <button type="button">Run simulation</button></div>
-		<div class="simulation-plan"></div>
+		<div class="dec-8-demo" v-if="IS_DEC_8_DEMO">
+			<img
+				v-if="slideIndex === 0"
+				src="@assets/images/dec-8-slide-1.svg"
+				alt="slide 1"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 1"
+				src="@assets/images/dec-8-slide-2.svg"
+				alt="slide 2"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 2"
+				src="@assets/images/dec-8-slide-3.svg"
+				alt="slide 3"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 3"
+				src="@assets/images/dec-8-slide-4.svg"
+				alt="slide 4"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 4"
+				src="@assets/images/dec-8-slide-5.svg"
+				alt="slide 5"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 5"
+				src="@assets/images/dec-8-slide-6.svg"
+				alt="slide 6"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 6"
+				src="@assets/images/dec-8-slide-7.svg"
+				alt="slide 7"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 7"
+				src="@assets/images/dec-8-slide-8.svg"
+				alt="slide 8"
+				@click="nextSlide"
+			/>
+			<img
+				v-if="slideIndex === 8"
+				src="@assets/images/dec-8-slide-9.svg"
+				alt="slide 9"
+				@click="goToSimulationResultsPage"
+			/>
+		</div>
+		<template v-else>
+			<div>Simulation page</div>
+			<div>Question template</div>
+			<div>Simulation Plan: <button type="button">Run simulation</button></div>
+			<div class="simulation-plan"></div>
+		</template>
 	</section>
 </template>
 
@@ -137,5 +211,18 @@ onMounted(async () => {
 	height: 400px;
 	margin: 5px;
 	border: 1px solid #888;
+}
+
+/* FIXME: remove after dec 8 demo */
+.dec-8-demo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1400px;
+	height: 400px;
+}
+
+.dec-8-demo img {
+	cursor: pointer;
 }
 </style>

@@ -49,6 +49,8 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	//        should be added for datasets and other resource types
 	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));
 
+	let conceptFacets = await getConceptFacets([MODELS]);
+
 	//
 	// simulate applying filters to the model query
 	//
@@ -57,17 +59,37 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		ModelFilterAttributes.forEach((modelAttr) => {
 			const resultsAsModels = allModels;
 			const items = resultsAsModels.filter((d) =>
-				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term)
+				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
 			);
 			finalModels.push(...items);
 		});
+
+		// if no models match keyword search considering the ModelFilterAttributes
+		// perhaps the keyword search match a concept name, so let's also search for that
+		if (conceptFacets) {
+			const matchingCuries = [] as string[];
+			Object.keys(conceptFacets.facets.concepts).forEach((curie) => {
+				const concept = conceptFacets?.facets.concepts[curie];
+				if (concept?.name?.toLowerCase() === term.toLowerCase()) {
+					matchingCuries.push(curie);
+				}
+			});
+			matchingCuries.forEach((curie) => {
+				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
+				const modelIDs = matchingResult?.map((mr) => mr.id);
+				modelIDs?.forEach((modelId) => {
+					const model = allModels.find((m) => m.id === modelId);
+					if (model) {
+						finalModels.push(model);
+					}
+				});
+			});
+		}
 	}
 
 	const modelResults = term.length > 0 ? uniqBy(finalModels, ID) : allModels;
 
-	let conceptFacets = await getConceptFacets([MODELS]);
-
-	if (modelSearchParam && modelSearchParam.filters) {
+	if (modelSearchParam && modelSearchParam.filters && modelSearchParam.filters.clauses.length > 0) {
 		// modelSearchParam currently represent facets filters that can be applied
 		//  to further refine the list of models
 
@@ -170,6 +192,8 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		type: 'dataset'
 	}));
 
+	let conceptFacets = await getConceptFacets([DATASETS]);
+
 	//
 	// simulate applying filters to the dataset query
 	//
@@ -178,17 +202,41 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		DatasetFilterAttributes.forEach((datasetAttr) => {
 			const resultsAsDatasets = allDatasets;
 			const items = resultsAsDatasets.filter((d) =>
-				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term)
+				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
 			);
 			finalDatasets.push(...items);
 		});
+
+		// if no datasets match keyword search considering the DatasetFilterAttributes
+		// perhaps the keyword search match a concept name, so let's also search for that
+		if (conceptFacets) {
+			const matchingCuries = [] as string[];
+			Object.keys(conceptFacets.facets.concepts).forEach((curie) => {
+				const concept = conceptFacets?.facets.concepts[curie];
+				if (concept?.name?.toLowerCase() === term.toLowerCase()) {
+					matchingCuries.push(curie);
+				}
+			});
+			matchingCuries.forEach((curie) => {
+				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
+				const datasetIDs = matchingResult?.map((dr) => dr.id);
+				datasetIDs?.forEach((datasetId) => {
+					const dataset = allDatasets.find((d) => d.id === datasetId);
+					if (dataset) {
+						finalDatasets.push(dataset);
+					}
+				});
+			});
+		}
 	}
 
 	const datasetResults = term.length > 0 ? uniqBy(finalDatasets, ID) : allDatasets;
 
-	let conceptFacets = await getConceptFacets([DATASETS]);
-
-	if (datasetSearchParam && datasetSearchParam.filters) {
+	if (
+		datasetSearchParam &&
+		datasetSearchParam.filters &&
+		datasetSearchParam.filters.clauses.length > 0
+	) {
 		// datasetSearchParam currently represent facets filters that can be applied
 		//  to further refine the list of datasets
 

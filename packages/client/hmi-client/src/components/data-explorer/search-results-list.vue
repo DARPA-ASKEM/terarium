@@ -6,6 +6,7 @@
 			:models="filteredModels"
 			:raw-concept-facets="rawConceptFacets"
 			:selected-search-items="selectedSearchItems"
+			:search-term="searchTerm"
 			@toggle-model-selected="toggleDataItemSelected"
 		/>
 		<datasets-listview
@@ -14,6 +15,7 @@
 			:datasets="filteredDatasets"
 			:raw-concept-facets="rawConceptFacets"
 			:selected-search-items="selectedSearchItems"
+			:search-term="searchTerm"
 			@toggle-dataset-selected="toggleDataItemSelected"
 		/>
 		<articles-listview
@@ -49,6 +51,10 @@ const props = defineProps({
 	resultType: {
 		type: String,
 		default: ResourceType.ALL
+	},
+	searchTerm: {
+		type: String,
+		default: ''
 	}
 });
 

@@ -14,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
+
 @Path("/api/models")
 @Authenticated
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,7 +38,7 @@ public class ModelResource {
 	@GET
 	@Path("/frameworks/{name}")
 	public Response getFramework(
-		@PathParam("name")final String name
+		@PathParam("name") final String name
 	) {
 		return proxy.getFramework(name);
 	}
@@ -45,7 +46,7 @@ public class ModelResource {
 	@DELETE
 	@Path("/frameworks/{name}")
 	public Response deleteFramework(
-		@PathParam("name")final String name
+		@PathParam("name") final String name
 	) {
 		return proxy.deleteFramework(name);
 	}
@@ -53,7 +54,7 @@ public class ModelResource {
 	@GET
 	@Path("/intermediates/{id}")
 	public Response getIntermediate(
-		@PathParam("id")final String id
+		@PathParam("id") final String id
 	) {
 		return proxy.getIntermediate(id);
 	}
@@ -61,7 +62,7 @@ public class ModelResource {
 	@DELETE
 	@Path("/intermediates/{id}")
 	public Response deleteIntermediate(
-		@PathParam("id")final String id
+		@PathParam("id") final String id
 	) {
 		return proxy.deleteIntermediate(id);
 	}
@@ -78,8 +79,10 @@ public class ModelResource {
 	@GET
 	@Path("/descriptions")
 	public Response getDescriptions(
+
 		@DefaultValue("0") @QueryParam("page_size")final Integer pageSize,
 		@DefaultValue("100") @QueryParam("page")final Integer page
+
 	) {
 		return proxy.getDescriptions(pageSize, page);
 	}
@@ -87,7 +90,7 @@ public class ModelResource {
 	@GET
 	@Path("/descriptions/{id}")
 	public Response getDescription(
-		@PathParam("id")final String id
+		@PathParam("id") final String id
 	) {
 		return proxy.getDescription(id);
 	}
@@ -95,7 +98,7 @@ public class ModelResource {
 	@GET
 	@Path("/parameters/{id}")
 	public Response getParameters(
-		@PathParam("id")final String id
+		@PathParam("id") final String id
 	) {
 		return proxy.getParameters(id);
 	}
@@ -104,8 +107,8 @@ public class ModelResource {
 	@Path("/parameters/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateParameters(
-		@PathParam("id")final String id,
-		final Map<String, String> parameters
+		@PathParam("id") final String id,
+		final Map<String, Object> parameters
 	) {
 		return proxy.updateParameters(id, parameters);
 	}
@@ -113,7 +116,7 @@ public class ModelResource {
 	@GET
 	@Path("/{id}")
 	public Response getModel(
-		@PathParam("id")final String id
+		@PathParam("id") final String id
 	) {
 		return proxy.getModel(id);
 	}
@@ -122,7 +125,7 @@ public class ModelResource {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateModel(
-		@PathParam("id")final String id,
+		@PathParam("id") final String id,
 		final Model model
 	) {
 		return proxy.updateModel(id, model);
