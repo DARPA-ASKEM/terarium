@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { select, NumberValue, scaleTime, scaleOrdinal } from 'd3';
+import { select, scaleOrdinal } from 'd3';
 import { mix } from 'chroma-js';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
-import Button from '@/components/Button.vue';
 
 import run1 from './simulation-run-data/1/output.json';
 import run2 from './simulation-run-data/2/output.json';
@@ -127,20 +126,25 @@ function parseSimData(input) {
 	};
 
 	const variableColorScale = scaleOrdinal([
-		'#ascee3',
-		'#1f78b4',
-		'#b2df8a',
-		'#33a02c',
-		'#fb9a99',
-		'#e31a1c',
-		'#fdbf6f',
-		'#ff7f00'
+		'#1f77b4',
+		'#ff7f0e',
+		'#d62728',
+		'#9467bd',
+		'#8c564b',
+		'#7f7f7f',
+		'#bcbd22',
+		'#17becf'
 	]).domain(Object.keys(data[0][0]));
 
 	// const scale = scaleOrdinal(schemeAccent).domain(Object.keys(data[0][0]));
 	const drilldownColorFn = (parameter: string) => variableColorScale(parameter);
 
-	const labelColFormatFn = scaleTime().tickFormat() as (value: NumberValue) => string;
+	const labelColFormatFn = (date) => {
+		const month = (1 + date.getMonth()).toString().padStart(2, '0');
+		const day = date.getDate().toString().padStart(2, '0');
+
+		return `${month}/${day}`;
+	};
 
 	return {
 		data,
@@ -241,24 +245,11 @@ onMounted(() => {
 		.attr('y', 12)
 		.text(String(maxBase).slice(0, 6));
 });
-
-const isDescriptionExpanded = ref(false);
-const description = 'Description of scenarios';
 </script>
 
 <template>
 	<section class="result-container">
 		<h3>Simulation Results - Difference from Baseline Scenario</h3>
-
-		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
-			<p>{{ description }}</p>
-			<div class="less-more-button-container" v-if="description.length > 360">
-				<Button @click="isDescriptionExpanded = !isDescriptionExpanded">
-					{{ isDescriptionExpanded ? 'Show less' : 'Show more' }}
-				</Button>
-			</div>
-			<p>&nbsp;</p>
-		</div>
 
 		<div class="legend-container">
 			<div class="legend-label">Difference w.r.t. Base (% Total Population Infected)</div>
@@ -319,29 +310,5 @@ const description = 'Description of scenarios';
 h3 {
 	font: var(--un-font-h3);
 	margin-bottom: 10px;
-}
-
-/* FIXME: duplicate from Model.vue, refactor */
-.description {
-	position: relative;
-}
-
-.description p {
-	max-width: 120ch;
-	max-height: 6rem;
-	overflow: hidden;
-}
-
-.description.is-expanded p {
-	max-height: none;
-}
-
-.description:not(.is-expanded) .less-more-button-container {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	background: linear-gradient(#ffffff00, #ffffff);
-	padding-top: 3rem;
 }
 </style>
