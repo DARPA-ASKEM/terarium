@@ -76,10 +76,9 @@ public class ModelResource {
 		return proxy.modelComposition(params);
 	}
 
-	@POST
+	@GET
 	@Path("/stratify/{modelA}/{modelB}/{typeModel}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Stratify two petri nets")
 	public Response stratify(
 		@PathParam("modelA") final String modelA,
