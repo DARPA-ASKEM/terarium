@@ -126,14 +126,14 @@ function parseSimData(input) {
 	};
 
 	const variableColorScale = scaleOrdinal([
-		'#ascee3',
-		'#1f78b4',
-		'#b2df8a',
-		'#33a02c',
-		'#fb9a99',
-		'#e31a1c',
-		'#fdbf6f',
-		'#ff7f00'
+		'#1f77b4',
+		'#ff7f0e',
+		'#d62728',
+		'#9467bd',
+		'#8c564b',
+		'#7f7f7f',
+		'#bcbd22',
+		'#17becf'
 	]).domain(Object.keys(data[0][0]));
 
 	// const scale = scaleOrdinal(schemeAccent).domain(Object.keys(data[0][0]));
