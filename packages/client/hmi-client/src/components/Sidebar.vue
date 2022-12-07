@@ -3,7 +3,7 @@
  * Sidebar component for navigating view.
  * */
 import { ref, computed } from 'vue';
-import { RouteParamsRaw, useRouter } from 'vue-router';
+import { RouteParamsRaw, useRoute, useRouter } from 'vue-router';
 
 // Icons
 import IconCaretLeft16 from '@carbon/icons-vue/es/caret--left/16';
@@ -36,8 +36,9 @@ function openSidePanel() {
 	isSidePanelClose.value = false;
 }
 
-// The Project page is the default
-const selectedView = ref<RouteName>(RouteName.ProjectRoute);
+const route = useRoute();
+// Assumes that the only routes we'll navigate to are represented in RouteName
+const selectedView = computed(() => (route.name as RouteName) ?? RouteName.ProjectRoute);
 const showSidePanel = computed(() => selectedView.value !== RouteName.ProjectRoute);
 
 function showSidebar(view: RouteName): boolean {
@@ -85,7 +86,6 @@ const openView = (view: RouteName) => {
 
 		// Change the view
 		router.push({ name: view, params });
-		selectedView.value = view;
 	} else if (showSidebar(view) && !isSidePanelClose.value) {
 		openSidePanel();
 	}
@@ -249,8 +249,7 @@ aside {
 }
 
 aside.side-panel-close {
-	padding: 0;
-	width: 0;
+	display: none;
 }
 
 aside header {
