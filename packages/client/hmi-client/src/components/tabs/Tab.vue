@@ -96,10 +96,12 @@ section {
 .content {
 	background-color: white;
 	visibility: hidden;
+	z-index: 0;
 }
 
 .content.active {
 	visibility: visible;
+	z-index: 1;
 }
 
 span {
