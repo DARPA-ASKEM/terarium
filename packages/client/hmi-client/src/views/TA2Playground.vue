@@ -1,6 +1,6 @@
 <script lang="ts">
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-// import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
+import { PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
