@@ -1,13 +1,14 @@
 # graph-scaffolder
-graph-scaffolder provides SVG/DOM scaffolding, basic boiler-plate functions, and utilities for working with compound-graphs in SVG.
+graph-scaffolder provides SVG/DOM scaffolding:
+- SVG/DOM hierarchies + data-binding via D3
+- Basic boiler-plate functions such as pan/zoom, highlighting
+- Hooks for building custom events
 
-
-
-Note: graph-scaffolder is _not_ a layout engine.
+Note: graph-scaffolder is _not_ a layout engine. It can leverage a layout function, provided that the algorithm produces output in the format below.
 
 
 ## Data format
-The graph data is specified in the format of `{nodes, edges}` and allows for nesting, for example:
+The graph data is specified in the format of `{nodes, edges}` and allows for nesting, nested nodes are expected to be positioend relative to their parent node.  For example:
 
 ```
 const graphData = {
@@ -57,8 +58,7 @@ const graphData = {
 ```
 
 ### Usage
-For example, with Typescript
-
+Simple renderer with Typescript
 
 ```
 interface NodeData {
@@ -94,7 +94,7 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 }
 ```
 
-Then
+Then to render the graph
 
 ```
 // Initialization
@@ -115,9 +115,13 @@ await renderer.setData(graphData);
 await renderer.render();
 ```
 
+### Renderers
+graph-scaffolder comes with 2 pre-canned renderer. 
+- BasicRenderer: this erases and rebuilds the graph everytime the graph topology changes.
+- DeltaRenderer: this renderer tries to detect new, modified, and removed graph elevents when data changes - this allows for different rendering semantics.  
 
 
-### Running examples
+### Run examples
 ```
 yarn install
 npm run develop
