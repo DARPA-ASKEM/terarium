@@ -5,7 +5,16 @@
 <script lang="ts">
 import _ from 'lodash';
 import { PropType } from 'vue';
-import { select, extent, scaleLinear, scaleTime, axisBottom, axisLeft, NumberValue } from 'd3';
+import {
+	select,
+	extent,
+	scaleLinear,
+	scaleLog,
+	scaleTime,
+	axisBottom,
+	axisLeft,
+	NumberValue
+} from 'd3';
 
 import {
 	D3SvgSelection,
@@ -162,7 +171,7 @@ export default {
 		},
 
 		yScale() {
-			return scaleLinear()
+			return scaleLog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -234,7 +243,7 @@ export default {
 				.call(xAxisGen);
 			formatAxis(xAxis);
 
-			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
+			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
 			const yAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${topMargin})`)

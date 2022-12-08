@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, scaleLinear, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
+import { select, scaleLog, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -181,7 +181,7 @@ export default {
 		},
 
 		yScale() {
-			return scaleLinear()
+			return scaleLog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -258,7 +258,7 @@ export default {
 				.call(xAxisGen);
 			formatAxis(xAxis);
 
-			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
+			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
 			const yAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${topMargin})`)
