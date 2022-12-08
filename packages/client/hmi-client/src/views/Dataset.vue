@@ -15,8 +15,10 @@ const rawContent = ref<string | null>(null);
 watch(
 	() => [props.datasetId],
 	async () => {
-		dataset.value = await getDataset(props.datasetId);
-		rawContent.value = await downloadRawFile(props.datasetId);
+		if (props.datasetId !== '') {
+			dataset.value = await getDataset(props.datasetId);
+			rawContent.value = await downloadRawFile(props.datasetId);
+		}
 	},
 	{ immediate: true }
 );

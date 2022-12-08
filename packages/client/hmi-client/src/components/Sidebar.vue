@@ -73,7 +73,7 @@ const openView = (view: RouteName) => {
 		}
 
 		if (view === RouteName.DatasetRoute) {
-			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? 1;
+			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? '';
 		}
 
 		if (view === RouteName.SimulationRoute) {
