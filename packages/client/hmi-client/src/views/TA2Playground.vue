@@ -1,6 +1,6 @@
 <script lang="ts">
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
+// import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
@@ -397,14 +397,14 @@ export default defineComponent({
 		async jsonOutput() {
 			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
-			console.log(petriNetValidator(output));
+			// console.log(petriNetValidator(output));
 
-			console.log(output);
+			// console.log(output);
 
-			if (petriNetValidator(output) === true) {
-				modelA = output;
-				this.refresh();
-			}
+			// if (petriNetValidator(output) === true) {
+			// modelA = output;
+			this.refresh();
+			// }
 
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
@@ -688,6 +688,7 @@ export default defineComponent({
 		// This is mostly done for stratification testing. Will require a deeper look in future
 		// TODO: We know there are race errors here. We intend to make this service stateless so we wont need to add Edges and Nodes individually
 		async createModel(model: PetriNet, createFlag = false) {
+			console.log('Starting create Model');
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
 				const resp = await API.put('/model-service/models');
@@ -700,7 +701,7 @@ export default defineComponent({
 			// Reset current nodes and edges
 			g.nodes = [];
 			g.edges = [];
-
+			const promises: Promise<void>[] = [];
 			const nodeHeight = 20;
 			const nodeWidth = 20;
 			let nodeX = 0;
@@ -710,17 +711,20 @@ export default defineComponent({
 				const aNode = model.S[i];
 				nodeX += 30;
 				nodeY += 30;
-				this.addNode(
-					`s-${i + 1}`,
-					aNode.sname.toString(),
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					NodeType.Species,
-					createFlag
+				promises.push(
+					this.addNode(
+						`s-${i + 1}`,
+						aNode.sname.toString(),
+						nodeX,
+						nodeY,
+						nodeHeight,
+						nodeWidth,
+						NodeType.Species,
+						createFlag
+					)
 				);
 			}
+			await Promise.all(promises);
 			// Move Transitions 100 to the right of S
 			nodeX = 100;
 			nodeY = 0;
@@ -728,31 +732,35 @@ export default defineComponent({
 				const aTransition = model.T[i];
 				nodeX += 30;
 				nodeY += 30;
-				this.addNode(
-					`t-${i + 1}`,
-					aTransition.tname.toString(),
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					NodeType.Transition,
-					createFlag
+				promises.push(
+					this.addNode(
+						`t-${i + 1}`,
+						aTransition.tname.toString(),
+						nodeX,
+						nodeY,
+						nodeHeight,
+						nodeWidth,
+						NodeType.Transition,
+						createFlag
+					)
 				);
 			} // end T
-
+			await Promise.all(promises);
 			// Edges
 			for (let i = 0; i < model.I.length; i++) {
 				const iEdges = model.I[i];
 				const sourceID = `s-${iEdges.is}`;
 				const transitionID = `t-${iEdges.it}`;
-				this.addEdgeID(sourceID, transitionID, createFlag);
+				promises.push(this.addEdgeID(sourceID, transitionID, createFlag));
 			}
+			await Promise.all(promises);
 			for (let i = 0; i < model.O.length; i++) {
 				const oEdges = model.O[i];
 				const sourceID = `s-${oEdges.os}`;
 				const transitionID = `t-${oEdges.ot}`;
-				this.addEdgeID(transitionID, sourceID, createFlag);
+				promises.push(this.addEdgeID(transitionID, sourceID, createFlag));
 			}
+			await Promise.all(promises);
 			this.refresh();
 			this.jsonOutput();
 		},
@@ -767,28 +775,6 @@ export default defineComponent({
 			} catch (e: any) {
 				console.error(e.message);
 			}
-		},
-		async stratifyWithTypedModels() {
-			try {
-				const outputModel = await fetchStratificationWithTypedModels(
-					this.stratifyModelA,
-					this.stratifyModelB
-				);
-				this.createModel(outputModel, true);
-			} catch (e: any) {
-				console.error(e.message);
-			}
-		},
-		async typePetrinet() {
-			const resp = await fetch(
-				`http://localhost:8888/api/models/type/${this.typeModelA}/${this.typeTypeModel}/${this.typeMapping}`,
-				{
-					method: 'GET'
-				}
-			);
-			const output = await resp.json();
-			console.log(output);
-			// this.createModel(output, true);
 		},
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
@@ -817,6 +803,56 @@ export default defineComponent({
 			g2 = { width: 500, height: 500, nodes: [], edges: [] };
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
+		},
+		async createSampleModels() {
+			// TODO: Add Petri Net type to this when merged with other PR
+			const SIRDModel: PetriNet = {
+				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 2 },
+					{ it: 2, is: 2 },
+					{ it: 3, is: 2 }
+				],
+				O: [
+					{ ot: 1, os: 2 },
+					{ ot: 1, os: 2 },
+					{ ot: 2, os: 3 },
+					{ ot: 3, os: 4 }
+				]
+			};
+			await this.createModel(SIRDModel, true);
+			const QNotQModel: PetriNet = {
+				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
+				S: [{ sname: 'Q' }, { sname: 'NQ' }],
+				I: [
+					{ it: 1, is: 2 },
+					{ it: 2, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 2 }
+				]
+			};
+			await this.createModel(QNotQModel, true);
+			const typeModel: PetriNet = {
+				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
+				S: [{ sname: 'Pop' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 1 },
+					{ it: 2, is: 1 },
+					{ it: 3, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 1 },
+					{ ot: 3, os: 1 }
+				]
+			};
+			await this.createModel(typeModel, true);
 		}
 	}
 });
@@ -829,6 +865,7 @@ export default defineComponent({
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
+		<button type="button" @click="createSampleModels">Create Sample Models</button>
 		&nbsp;
 		<form>
 			<label for="loadModel">
@@ -839,9 +876,8 @@ export default defineComponent({
 		<form>
 			<label for="stratify">
 				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
-				<input v-model="stratifyModelB" type="text" placeholder="Model B ID" />
-				<button type="button" @click="stratifyWithTypedModels">Stratify With Typed Models</button>
-				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model ID" />
+				<input v-model="stratifyModelB" type="text" placeholder="Model B" />
+				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
 		</form>
