@@ -4,26 +4,19 @@
 	</full-screen-modal-header>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import FullScreenModalHeader from '@/components/widgets/full-screen-modal-header.vue';
 
-export default defineComponent({
-	name: 'DataExplorerModalHeader',
-	components: {
-		FullScreenModalHeader
-	},
-	props: {
-		navBackLabel: {
-			type: String,
-			default: ''
-		}
-	},
-	emits: ['close'],
-	methods: {
-		onBack() {
-			this.$emit('close');
-		}
+defineProps({
+	navBackLabel: {
+		type: String,
+		default: ''
 	}
 });
+
+const emit = defineEmits(['close']);
+
+const onBack = () => {
+	emit('close');
+};
 </script>

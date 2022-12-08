@@ -1,23 +1,37 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
-import { useRouter } from 'vue-router';
+import { useCurrentRouter } from '@/router/index';
+import { Project } from '@/types/Project';
+import useResourcesStore from '@/stores/resources';
 
 const emit = defineEmits(['show-data-explorer']);
-
 const router = useRouter();
+const { isCurrentRouteHome } = useCurrentRouter();
+const isHome = computed(() => isCurrentRouteHome.value);
 
-const goToHomepage = () => router.push('/');
+const resources = useResourcesStore();
+
+const goToHomepage = () => {
+	resources.setActiveProject(null);
+	resources.activeProjectAssets = null;
+	router.push('/');
+};
 const goToDataExplorer = () => emit('show-data-explorer');
 
-const projectName = 'Name of the project that can be long for clarity and precision';
+defineProps<{
+	projectName?: Project['name'];
+}>();
 </script>
 
 <template>
 	<header>
-		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-		<p>
-			<a @onclick="goToHomepage">Projects</a>
+		<img v-if="isHome" src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+		<img v-else src="@assets/images/icon.png" height="32" width="32" alt="TERArium icon" />
+		<p v-if="!isHome">
+			<a @click="goToHomepage">Projects</a>
 			<span>{{ projectName }}</span>
 		</p>
 		<aside>

@@ -1,16 +1,53 @@
 <script setup lang="ts">
 import Button from '@/components/Button.vue';
-import IconAddFilled32 from '@carbon/icons-vue/es/add--filled/32';
+import IconAdd32 from '@carbon/icons-vue/es/add/32';
+import Modal from '@/components/Modal.vue';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import * as ProjectService from '@/services/project';
 
-function createNewProject() {}
+const router = useRouter();
+
+const isModalVisible = ref(false);
+const name = ref('');
+const description = ref('');
+
+async function createNewProject() {
+	const project = await ProjectService.create(name.value, description.value);
+	if (project) {
+		router.push(`/projects/${project.id}`);
+		isModalVisible.value = false;
+	}
+}
 </script>
 
 <template>
 	<div class="new-project-card">
-		<Button @onclick="createNewProject"
-			>Create New Project
-			<IconAddFilled32 />
+		<Button @click="isModalVisible = true">
+			<IconAdd32 />
+			New Project
 		</Button>
+		<Teleport to="body">
+			<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
+				<template #header>
+					<h3>New Project</h3>
+				</template>
+				<template #default>
+					<form>
+						<label for="new-project-name">Project Name</label>
+						<input id="new-project-name" v-model="name" />
+						<label for="description">Project Purpose</label>
+						<textarea id="new-project-description" v-model="description" />
+					</form>
+				</template>
+				<template #footer>
+					<footer>
+						<Button action @click="createNewProject">Create Project</Button>
+						<Button @click="isModalVisible = false">Cancel</Button>
+					</footer>
+				</template>
+			</modal>
+		</Teleport>
 	</div>
 </template>
 
@@ -24,16 +61,16 @@ function createNewProject() {}
 	height: 15rem;
 	min-width: 20rem;
 	border-radius: 0.5rem;
-	margin: 0.5rem;
 	transition: 0.2s;
 	text-align: left;
 }
 
-.new-project-card button {
+.new-project-card > button {
 	font-size: 1.25rem;
 	font-weight: 500;
 	border-radius: 0.5rem;
-	width: 85%;
+	width: 100%;
+	height: 100%;
 	margin: auto;
 	justify-content: center;
 	cursor: pointer;
@@ -53,5 +90,17 @@ function createNewProject() {}
 
 .new-project-card button:hover svg {
 	color: var(--un-color-body-text-secondary);
+}
+
+.modal h3 {
+	margin-bottom: 1em;
+}
+
+.modal footer {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
 }
 </style>

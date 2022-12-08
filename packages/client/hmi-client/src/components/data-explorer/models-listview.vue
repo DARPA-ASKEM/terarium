@@ -1,13 +1,13 @@
 <template>
-	<div class="search-listview-container">
+	<div>
 		<div class="table-fixed-head">
 			<table>
 				<thead>
 					<tr>
-						<th><span class="left-cover" />NAME and DESCRIPTION</th>
-						<th>SOURCE</th>
-						<th>CATEGORY</th>
-						<th>PREVIEW<span class="right-cover" /></th>
+						<th><span class="left-cover" />Name</th>
+						<th>Description</th>
+						<th>Framework</th>
+						<th>Preview<span class="right-cover" /></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -22,34 +22,37 @@
 							<div class="name-and-desc-layout">
 								<!-- in case of requesting multiple selection -->
 								<div class="radio" @click.stop="updateSelection(d)">
-									<span v-show="isSelected(d)" :class="{ disabled: isDisabled(d) }">
+									<span v-show="isSelected(d)">
 										<IconCheckboxChecked20 />
 									</span>
-									<span v-show="!isSelected(d)" :class="{ disabled: isDisabled(d) }">
+									<span v-show="!isSelected(d)">
 										<IconCheckbox20 />
 									</span>
-									<component :is="getResourceTypeIcon(d.type)" />
 								</div>
 								<div class="content">
-									<button v-if="isNotPublished(d)" type="button" class="not-ready-label">
-										Not Published
-									</button>
-									<button v-if="isDeprecated(d)" type="button" class="not-ready-label">
-										Deprecated
-									</button>
-									<button v-if="isProcessing(d)" type="button" class="not-ready-label">
-										Processing
-									</button>
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
-									<multiline-description :text="formatDescription(d)" />
+									<template v-if="isExpanded(d)">
+										<br />
+										<div><b>Concepts</b></div>
+										<ul>
+											<li v-for="tag in getConceptTags(d)" :key="tag">
+												<span
+													v-if="searchTerm.toLowerCase() === tag.toLowerCase()"
+													class="highlight-concept"
+													>{{ tag }}</span
+												>
+												<span v-else>{{ tag }}</span>
+											</li>
+										</ul>
+									</template>
 								</div>
 							</div>
 						</td>
-						<td class="source-col">
-							<div class="text-bold">{{ d.source }}</div>
+						<td class="desc-col">
+							<p class="max-content">{{ formatDescription(d) }}</p>
 						</td>
-						<td class="category-col">
-							<div class="text-bold">{{ d.category }}</div>
+						<td class="framework-col">
+							<div class="text-bold">{{ d.framework }}</div>
 						</td>
 						<td class="preview-col">
 							<div class="preview-container">
@@ -63,122 +66,92 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType, ref, toRefs, watch } from 'vue';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
+<script setup lang="ts">
+import { PropType, ref, toRefs, watch } from 'vue';
 import { Model } from '@/types/Model';
-import { ResourceType, ResultType } from '@/types/common';
-import { getResourceTypeIcon, isModel } from '@/utils/data-util';
+import { ResultType } from '@/types/common';
+import { isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import IconRadioButton20 from '@carbon/icons-vue/es/radio-button/20';
-import IconCloseOutline20 from '@carbon/icons-vue/es/close--outline/20';
-/**
- * name: string;
-	description: string;
-	source: string; // author and affailiation
-	status: string;
-	category: string;
- */
+import { ConceptFacets } from '@/types/Concept';
 
-export default defineComponent({
-	name: 'ModelsListview',
-	components: {
-		MultilineDescription,
-		IconCheckbox20,
-		IconCheckboxChecked20,
-		IconRadioButton20,
-		IconCloseOutline20
+const props = defineProps({
+	models: {
+		type: Array as PropType<Model[]>,
+		default: () => []
 	},
-	props: {
-		models: {
-			type: Array as PropType<Model[]>,
-			default: () => []
-		},
-		selectedSearchItems: {
-			type: Array as PropType<ResultType[]>,
-			required: true
-		}
+	rawConceptFacets: {
+		type: Object as PropType<ConceptFacets | null>,
+		default: () => null
 	},
-	emits: ['toggle-model-selected'],
-	setup(props) {
-		const expandedRowId = ref('');
-
-		const { models } = toRefs(props);
-
-		watch(
-			models,
-			() => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const elem: any = document.getElementsByClassName('table-fixed-head');
-				if (elem.length === 0) return;
-				elem[0].scrollTop = 0;
-			},
-			{ immediate: true }
-		);
-
-		return {
-			expandedRowId,
-			ResourceType,
-			getResourceTypeIcon
-		};
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		required: true
 	},
-	methods: {
-		isDisabled(model: Model) {
-			return model.status === 'deprecated';
-		},
-		isProcessing(model: Model) {
-			return model.status === 'processing';
-		},
-		isNotPublished(model: Model) {
-			return model.status === 'registered';
-		},
-		isDeprecated(model: Model) {
-			return model.status === 'deprecated';
-		},
-		isExpanded(model: Model) {
-			return this.expandedRowId === model.id;
-		},
-		updateExpandedRow(model: Model) {
-			this.expandedRowId = this.expandedRowId === model.id ? '' : model.id;
-		},
-		formatOutputName(d: Model) {
-			return d.name;
-		},
-		formatOutputDescription(d: Model) {
-			return d.description;
-		},
-		isSelected(model: Model) {
-			return this.selectedSearchItems.find((item) => {
-				if (isModel(item)) {
-					const itemAsModel = item as Model;
-					return itemAsModel.id === model.id;
-				}
-				return false;
-			});
-		},
-		updateSelection(model: Model) {
-			if (!this.isDisabled(model)) {
-				this.$emit('toggle-model-selected', model);
-			}
-		},
-		formatDescription(d: Model) {
-			if (!d.description) return '';
-			return this.isExpanded(d) || d.description.length < 140
-				? d.description
-				: `${d.description.substring(0, 140)}...`;
-		}
+	searchTerm: {
+		type: String,
+		default: ''
 	}
 });
+
+const emit = defineEmits(['toggle-model-selected']);
+
+const expandedRowId = ref<string | number>('');
+
+const { models, selectedSearchItems } = toRefs(props);
+
+watch(
+	models,
+	() => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elem: any = document.getElementsByClassName('table-fixed-head');
+		if (elem.length === 0) return;
+		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+
+const getConceptTags = (model: Model) => {
+	const tags = [] as string[];
+	if (props.rawConceptFacets) {
+		const modelConcepts = props.rawConceptFacets.results.filter(
+			(conceptResult) => conceptResult.id === model.id
+		);
+		tags.push(...modelConcepts.map((c) => c.name ?? c.curie));
+	}
+	return tags;
+};
+
+const isExpanded = (model: Model) => expandedRowId.value === model.id;
+
+const updateExpandedRow = (model: Model) => {
+	expandedRowId.value = expandedRowId.value === model.id ? '' : model.id;
+};
+
+const formatOutputName = (d: Model) => d.name;
+
+const isSelected = (model: Model) =>
+	selectedSearchItems.value.find((item) => {
+		if (isModel(item)) {
+			const itemAsModel = item as Model;
+			return itemAsModel.id === model.id;
+		}
+		return false;
+	});
+
+const updateSelection = (model: Model) => {
+	emit('toggle-model-selected', model);
+};
+
+const formatDescription = (d: Model) => {
+	if (!d.description) return '';
+	return isExpanded(d) || d.description.length < 140
+		? d.description
+		: `${d.description.substring(0, 140)}...`;
+};
 </script>
 
 <style scoped>
-.search-listview-container {
-	background: var(--background-light-2);
-	color: black;
-	width: 100%;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -187,16 +160,16 @@ table {
 
 th {
 	padding: 8px 16px;
+	text-align: left;
 }
 
-tr {
-	border: 2px solid var(--separator);
+tbody tr {
+	border-top: 2px solid var(--separator);
 	cursor: pointer;
 }
 
-thead tr,
-thead th {
-	border: none;
+tbody tr:first-child {
+	border-top-width: 0;
 }
 
 td {
@@ -221,35 +194,12 @@ tr th {
 	position: sticky;
 	top: -1px;
 	z-index: 1;
-	background-color: aliceblue;
-}
-
-.left-cover,
-.right-cover {
-	/* Cover left and right gap in the fixed table header */
-	position: absolute;
-	height: 100%;
-	width: 2px;
-	left: -2px;
-	background: var(--background-light-2);
-	top: 0;
-}
-
-.right-cover {
-	left: unset;
-	right: -2px;
+	/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
+	background-color: var(--un-color-body-surface-background);
 }
 
 .tr-item {
 	height: 50px;
-}
-
-.tr-item.selected {
-	border: 2px double var(--un-color-accent-lighter);
-}
-
-.tr-item.selected .name-and-desc-col {
-	border-left: 2px solid var(--un-color-accent-lighter);
 }
 
 .tr-item.selected td {
@@ -262,7 +212,8 @@ tr th {
 }
 
 .name-and-desc-col {
-	width: 45%;
+	width: 25%;
+	overflow-wrap: break-word;
 }
 
 .name-and-desc-layout {
@@ -283,7 +234,7 @@ tr th {
 
 .name-and-desc-layout .content {
 	flex: 1 1 auto;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
 }
 
 .name-and-desc-layout .content .not-ready-label {
@@ -296,13 +247,18 @@ tr th {
 	float: right;
 }
 
-.source-col {
-	width: 33%;
-	overflow-wrap: anywhere;
+.desc-col {
+	width: 45%;
 }
 
-.category-col {
+.framework-col {
 	width: 10%;
+	overflow-wrap: break-word;
+}
+
+.max-content {
+	max-height: 250px;
+	overflow-y: auto;
 }
 
 /* time series hidden until actually put into use */
@@ -315,5 +271,8 @@ tr th {
 	background-color: #f1f1f1;
 	width: 100%;
 	height: 50px;
+}
+.highlight-concept {
+	background-color: yellow;
 }
 </style>

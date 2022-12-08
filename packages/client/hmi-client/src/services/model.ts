@@ -1,3 +1,5 @@
+import API from '@/api/api';
+import { Model } from '@/types/Model';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { IGraph } from '@graph-scaffolder/types';
 
@@ -19,7 +21,6 @@ const g: IGraph<NodeData, EdgeData> = {
 	nodes: [],
 	edges: []
 };
-
 /**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
@@ -31,7 +32,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 
 	const nodeHeight = 20;
 	const nodeWidth = 20;
-	let nodeX = 0;
+	let nodeX = 10;
 	let nodeY = 10;
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
@@ -50,7 +51,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
-	nodeY = 0;
+	nodeY = 10;
 	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
@@ -91,5 +92,16 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 
-	return g;
+	return { ...g };
 };
+
+export const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
+
+/**
+ * Get all models
+ * @return Array<Model>|null - the list of all models, or null if none returned by API
+ */
+export async function getAllModelDescriptions(): Promise<Model[] | null> {
+	const response = await API.get('/models/descriptions');
+	return response?.data ?? null;
+}

@@ -4,17 +4,14 @@ import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
-import {
-	fetchStratificationResult,
-	fetchStratificationWithTypedModels
-} from '@/services/models/stratification-service';
-import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { parsePetriNet2IGraph } from '@/services/model';
+import { fetchStratificationResult } from '@/services/models/stratification-service';
+import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import API from '@/api/api';
 
 interface NodeData {
 	type: string;
 }
-
 interface EdgeData {
 	val: number;
 }
@@ -23,12 +20,10 @@ enum NodeType {
 	Transition = 'T'
 }
 
-let g: IGraph<NodeData, EdgeData> = {
-	width: 500,
-	height: 500,
-	nodes: [],
-	edges: []
-};
+// Graphs
+let g: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
+let g2: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
+let g3: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -37,6 +32,89 @@ export const pathFn = d3
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
+
+// Initialize petrinets
+let modelA: PetriNet = { T: [], S: [], I: [], O: [] };
+let modelB: PetriNet = { T: [], S: [], I: [], O: [] };
+let mergedModel: PetriNet = { T: [], S: [], I: [], O: [] };
+
+// Possible models to spawn
+const petrinets: PetriNet[] = [
+	// generic
+	{
+		T: [{ tname: 't-1' }, { tname: 't-2' }],
+		S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 2, is: 2 }
+		],
+		O: [
+			{ ot: 1, os: 2 },
+			{ ot: 2, os: 1 },
+			{ ot: 2, os: 3 }
+		]
+	},
+	// generic2
+	{
+		T: [{ tname: 't-1' }, { tname: 't-2' }],
+		S: [{ sname: 'p-1' }, { sname: 'p-2' }, { sname: 'p-3' }],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 2, is: 1 }
+		],
+		O: [
+			{ ot: 1, os: 2 },
+			{ ot: 2, os: 3 }
+		]
+	},
+	// QNotQModel
+	{
+		T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
+		S: [{ sname: 'Q' }, { sname: 'NQ' }],
+		I: [
+			{ it: 1, is: 2 },
+			{ it: 2, is: 1 }
+		],
+		O: [
+			{ ot: 1, os: 1 },
+			{ ot: 2, os: 2 }
+		]
+	},
+	// typeModel
+	{
+		T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
+		S: [{ sname: 'Pop' }],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 1, is: 1 },
+			{ it: 2, is: 1 },
+			{ it: 3, is: 1 }
+		],
+		O: [
+			{ ot: 1, os: 1 },
+			{ ot: 1, os: 1 },
+			{ ot: 2, os: 1 },
+			{ ot: 3, os: 1 }
+		]
+	},
+	// SIRD
+	{
+		T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+		S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 1, is: 2 },
+			{ it: 2, is: 2 },
+			{ it: 3, is: 2 }
+		],
+		O: [
+			{ ot: 1, os: 2 },
+			{ ot: 1, os: 2 },
+			{ ot: 2, os: 3 },
+			{ ot: 3, os: 4 }
+		]
+	}
+];
 
 class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
@@ -107,7 +185,11 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 }
 
 let renderer: SampleRenderer | null = null;
+let rendererB: SampleRenderer | null = null;
+let rendererC: SampleRenderer | null = null;
 g = runDagreLayout(_.cloneDeep(g));
+g2 = runDagreLayout(_.cloneDeep(g2));
+g3 = runDagreLayout(_.cloneDeep(g3));
 
 let placeCounter = 0;
 let transitionCounter = 0;
@@ -126,6 +208,20 @@ export default defineComponent({
 		const playground = document.getElementById('playground') as HTMLDivElement;
 		renderer = new SampleRenderer({
 			el: playground ?? undefined,
+			useAStarRouting: true,
+			runLayout: runDagreLayout
+		});
+
+		const playgroundB = document.getElementById('modelB') as HTMLDivElement;
+		rendererB = new SampleRenderer({
+			el: playgroundB ?? undefined,
+			useAStarRouting: true,
+			runLayout: runDagreLayout
+		});
+
+		const playgroundC = document.getElementById('merged-petrinets') as HTMLDivElement;
+		rendererC = new SampleRenderer({
+			el: playgroundC ?? undefined,
 			useAStarRouting: true,
 			runLayout: runDagreLayout
 		});
@@ -158,43 +254,40 @@ export default defineComponent({
 		});
 
 		// Test
-		const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-		const testData = await test.json();
-		modelId = testData.id;
-
-		this.refresh();
-		this.jsonOutput();
+		const resp = await API.put('/model-service/models');
+		modelId = resp.data.id;
 	},
 	setup() {
 		const loadModelID = ref('');
 		const stratifyModelA = ref('');
 		const stratifyModelB = ref('');
 		const stratifyTypeModel = ref('');
-		const typeModelA = ref('');
-		const typeTypeModel = ref('');
-		const typeMapping = ref('');
-
+		const stateNamesA = ref('');
+		const stateNamesB = ref('');
 		return {
 			loadModelID,
 			stratifyModelA,
 			stratifyModelB,
 			stratifyTypeModel,
-			typeModelA,
-			typeTypeModel,
-			typeMapping
+			stateNamesA,
+			stateNamesB
 		};
 	},
 	methods: {
 		async refresh() {
 			await renderer?.setData(g);
 			await renderer?.render();
+			await rendererB?.setData(g2);
+			await rendererB?.render();
+			await rendererC?.setData(g3);
+			await rendererC?.render();
+
+			// console.log(g, g2, g3);
+			// console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
-			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-			const testData = await test.json();
-			modelId = testData.id;
-
-			console.log('modle id is', modelId);
+			const resp = await API.put('model-service/models');
+			modelId = resp.data.id;
 
 			// Reset
 			g.nodes = [];
@@ -278,42 +371,41 @@ export default defineComponent({
 
 			g = runDagreLayout(_.cloneDeep(g));
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{ name: 'rabbits', type: 'S' },
-						{ name: 'wolves', type: 'S' },
-						{ name: 'birth', type: 'T' },
-						{ name: 'death', type: 'T' },
-						{ name: 'predation', type: 'T' }
-					],
-					edges: [
-						{ source: 'wolves', target: 'death' },
-						{ source: 'predation', target: 'wolves' },
-						{ source: 'predation', target: 'wolves' },
-						{ source: 'wolves', target: 'predation' },
-						{ source: 'rabbits', target: 'predation' },
-						{ source: 'rabbits', target: 'birth' },
-						{ source: 'birth', target: 'rabbits' },
-						{ source: 'birth', target: 'rabbits' }
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
+					{ name: 'rabbits', type: 'S' },
+					{ name: 'wolves', type: 'S' },
+					{ name: 'birth', type: 'T' },
+					{ name: 'death', type: 'T' },
+					{ name: 'predation', type: 'T' }
+				],
+				edges: [
+					{ source: 'wolves', target: 'death' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'wolves', target: 'predation' },
+					{ source: 'rabbits', target: 'predation' },
+					{ source: 'rabbits', target: 'birth' },
+					{ source: 'birth', target: 'rabbits' },
+					{ source: 'birth', target: 'rabbits' }
+				]
 			});
 
 			this.refresh();
 			this.jsonOutput();
 		},
 		async jsonOutput() {
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
-				method: 'GET'
-			});
-			const output = await resp.json();
+			const resp = await API.get(`model-service/models/${modelId}/json`);
+			const output = await resp.data;
 			console.log(petriNetValidator(output));
+
+			console.log(output);
+
+			if (petriNetValidator(output) === true) {
+				modelA = output;
+				this.refresh();
+			}
+
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
 		// eslint-disable-next-line
@@ -335,21 +427,17 @@ export default defineComponent({
 				data: { val: 1 }
 			});
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					edges: [
-						{
-							source: source.datum().id,
-							target: target.datum().id
-						}
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				edges: [
+					{
+						source: source.datum().id,
+						target: target.datum().id
+					}
+				]
 			});
+
+			this.refresh();
+			this.jsonOutput();
 		},
 		async addPlace() {
 			console.log('add place');
@@ -368,20 +456,13 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: 'S'
-						}
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
+					{
+						name: id,
+						type: 'S'
+					}
+				]
 			});
 			this.jsonOutput();
 		},
@@ -402,20 +483,13 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: 'T'
-						}
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
+					{
+						name: id,
+						type: 'T'
+					}
+				]
 			});
 			this.jsonOutput();
 		},
@@ -443,20 +517,13 @@ export default defineComponent({
 			});
 
 			if (createFlag === true) {
-				await fetch(`http://localhost:8888/api/models/${modelId}`, {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						nodes: [
-							{
-								name: label,
-								type
-							}
-						]
-					})
+				API.post(`model-service/models/${modelId}`, {
+					nodes: [
+						{
+							name: label,
+							type
+						}
+					]
 				});
 			}
 			this.jsonOutput();
@@ -488,8 +555,8 @@ export default defineComponent({
 				}
 			}
 			g.edges.push({
-				source: sourceLabel,
-				target: targetLabel,
+				source: sourceID,
+				target: targetID,
 				points: [
 					{
 						x: sourceX, // + source.datum().width * 0.5,
@@ -503,48 +570,33 @@ export default defineComponent({
 			});
 
 			if (createFlag === true) {
-				await fetch(`http://localhost:8888/api/models/${modelId}`, {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						edges: [
-							{
-								source: sourceLabel,
-								target: targetLabel
-							}
-						]
-					})
+				API.post(`model-service/models/${modelId}`, {
+					edges: [
+						{
+							source: sourceLabel,
+							target: targetLabel
+						}
+					]
 				});
 			}
 		}, // end addEdge
-
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
 			numRabbits = +(Math.random() * 100).toFixed();
 
 			// Run a simulation on LotkaVolterra with random values
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/simulate`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
+			const resp = await API.post(`model-service/models/${modelId}/simulate`, {
+				variables: {
+					rabbits: numRabbits,
+					wolves: numWolves
 				},
-				body: JSON.stringify({
-					variables: {
-						rabbits: numRabbits,
-						wolves: numWolves
-					},
-					parameters: {
-						birth: 0.3,
-						predation: 0.015,
-						death: 0.7
-					}
-				})
+				parameters: {
+					birth: 0.3,
+					predation: 0.015,
+					death: 0.7
+				}
 			});
-			const output = await resp.json();
+			const output = resp.data;
 			this.renderResult(output);
 		},
 		renderResult(result: any) {
@@ -590,18 +642,46 @@ export default defineComponent({
 					.style('fill', 'blue');
 			}
 		},
-		// Pulls model ID from form and sends model to createModel function for the actual work
-		async drawModel() {
-			const resp = await fetch(`http://localhost:8888/api/models/${this.loadModelID}/json`, {
-				method: 'GET'
+		async mergePetrinets() {
+			const stateNamesArrayA = this.stateNamesA.split(',');
+			const stateNamesArrayB = this.stateNamesB.split(',');
+
+			if (
+				stateNamesArrayA.length !== stateNamesArrayB.length ||
+				this.stateNamesA.length < 1 ||
+				this.stateNamesB.length < 1
+			) {
+				console.log('Not enough states');
+				return;
+			}
+
+			const statesToMerge: { modelA: string; modelB: string }[] = [];
+
+			for (let i = 0; i < stateNamesArrayA.length; i++) {
+				statesToMerge.push({
+					modelA: stateNamesArrayA[i].trim(),
+					modelB: stateNamesArrayB[i].trim()
+				});
+			}
+			console.log(modelA);
+			const resp = await API.post(`model-service/models/model-composition`, {
+				modelA,
+				modelB,
+				statesToMerge
 			});
-			const model: PetriNet = await resp.json();
-			modelId = this.loadModelID;
-			g = parsePetriNet2IGraph(model);
-			g = runDagreLayout(_.cloneDeep(g));
+			mergedModel = await resp.data;
+			console.log('Merged petrinet', mergedModel);
+
+			g3 = parsePetriNet2IGraph(mergedModel);
+			g3 = runDagreLayout(_.cloneDeep(g3));
 			this.refresh();
 			this.jsonOutput();
-			// this.createModel(model, false);
+		},
+		// Pulls model ID from form and sends model to createModel function for the actual work
+		async drawModel() {
+			const resp = await API.get(`model-service/models/${this.loadModelID}/json`);
+			const model: PetriNet = resp.data;
+			this.createModel(model, false);
 		},
 		// Expects a JSON of a model with labels T, S, I, O.
 		// populates g + depending on provided flag POST changes to model ID
@@ -610,8 +690,9 @@ export default defineComponent({
 		async createModel(model: PetriNet, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
-				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-				const modelData = await newModel.json();
+				const resp = await API.put('/model-service/models');
+
+				const modelData = await resp.data;
 				modelId = modelData.id;
 				console.log(`Model ID: ${modelId}`); // currently required for testing
 			}
@@ -672,11 +753,9 @@ export default defineComponent({
 				const transitionID = `t-${oEdges.ot}`;
 				this.addEdgeID(transitionID, sourceID, createFlag);
 			}
-
-			// g = runLayout(_.cloneDeep(g));
 			this.refresh();
 			this.jsonOutput();
-		}, // end createModel
+		},
 		async stratify() {
 			try {
 				const outputModel = await fetchStratificationResult(
@@ -713,56 +792,31 @@ export default defineComponent({
 		},
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
-		async createSampleModels() {
-			const SIRDModel: PetriNet = {
-				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
-				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
-				I: [
-					{ it: 1, is: 1 },
-					{ it: 1, is: 2 },
-					{ it: 2, is: 2 },
-					{ it: 3, is: 2 }
-				],
-				O: [
-					{ ot: 1, os: 2 },
-					{ ot: 1, os: 2 },
-					{ ot: 2, os: 3 },
-					{ ot: 3, os: 4 }
-				]
-			};
-			await this.createModel(SIRDModel, true);
-
-			const QNotQModel: PetriNet = {
-				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
-				S: [{ sname: 'Q' }, { sname: 'NQ' }],
-				I: [
-					{ it: 1, is: 2 },
-					{ it: 2, is: 1 }
-				],
-				O: [
-					{ ot: 1, os: 1 },
-					{ ot: 2, os: 2 }
-				]
-			};
-			await this.createModel(QNotQModel, true);
-
-			const typeModel: PetriNet = {
-				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
-				S: [{ sname: 'Pop' }],
-				I: [
-					{ it: 1, is: 1 },
-					{ it: 1, is: 1 },
-					{ it: 2, is: 1 },
-					{ it: 3, is: 1 }
-				],
-				O: [
-					{ ot: 1, os: 1 },
-					{ ot: 1, os: 1 },
-					{ ot: 2, os: 1 },
-					{ ot: 3, os: 1 }
-				]
-			};
-			await this.createModel(typeModel, true);
+		async spawnModelA(e) {
+			modelA = petrinets[e.target.value];
+			g = await parsePetriNet2IGraph(modelA);
+			g = runDagreLayout(_.cloneDeep(g));
+			this.refresh();
+			this.jsonOutput();
+		},
+		async spawnModelB(e) {
+			modelB = petrinets[e.target.value];
+			g2 = await parsePetriNet2IGraph(modelB);
+			g2 = runDagreLayout(_.cloneDeep(g2));
+			this.refresh();
+			this.jsonOutput();
+		},
+		clearA() {
+			modelA = { T: [], S: [], I: [], O: [] };
+			g = { width: 500, height: 500, nodes: [], edges: [] };
+			g = runDagreLayout(_.cloneDeep(g));
+			this.refresh();
+		},
+		clearB() {
+			modelB = { T: [], S: [], I: [], O: [] };
+			g2 = { width: 500, height: 500, nodes: [], edges: [] };
+			g2 = runDagreLayout(_.cloneDeep(g2));
+			this.refresh();
 		}
 	}
 });
@@ -772,10 +826,10 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
-		<button type="button" @click="createSampleModels">Create Models</button>
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
+		&nbsp;
 		<form>
 			<label for="loadModel">
 				<input v-model="loadModelID" type="text" placeholder="Model ID" />
@@ -791,18 +845,65 @@ export default defineComponent({
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
 		</form>
-		<form>
-			<label for="type">
-				<input v-model="typeModelA" type="text" placeholder="Model A ID" />
-				<input v-model="typeTypeModel" type="text" placeholder="Type Model" />
-				<input v-model="typeMapping" type="text" placeholder="Mapping Vector" />
-			</label>
-			<button type="button" @click="typePetrinet">Type</button>
-		</form>
+		<br />
+		<div class="model-titles">
+			<div>
+				<label
+					>Model A
+					<select @change="spawnModelA($event)">
+						<option :value="0">Choose model</option>
+						<option :value="0">generic</option>
+						<option :value="1">generic2</option>
+						<option :value="2">QNotQModel</option>
+						<option :value="3">typeModel</option>
+						<option :value="4">SIRD</option>
+					</select>
+				</label>
+				&nbsp;
+				<button type="button" @click="clearA">Clear Model A</button>
+			</div>
+		</div>
+
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
 			<div id="output" class="playground-panel"></div>
+		</div>
+		<br />
+		<br />
+		<form>
+			List states you want to merge eg: | p-1, p-2 | | s-1, s-2 | means p-1 will merge with s-1 and
+			p-2 will merge with s-2
+			<br />
+			<label for="loadModel">
+				<input type="text" placeholder="States to merge A" v-model="stateNamesA" />
+				<input type="text" placeholder="States to merge B" v-model="stateNamesB" />
+				<button type="button" @click="mergePetrinets">Merge petrinets</button>
+			</label>
+		</form>
+		<br />
+		<br />
+		<div class="model-titles">
+			<div>
+				<label
+					>Model B
+					<select @change="spawnModelB($event)">
+						<option :value="0">Choose model</option>
+						<option :value="0">generic</option>
+						<option :value="1">generic2</option>
+						<option :value="2">QNotQModel</option>
+						<option :value="3">typeModel</option>
+						<option :value="4">SIRD</option>
+					</select>
+				</label>
+				&nbsp;
+				<button type="button" @click="clearB">Clear Model B</button>
+			</div>
+			<div>Merged Model</div>
+		</div>
+		<div style="display: flex">
+			<div id="modelB" class="playground-panel"></div>
+			<div id="merged-petrinets" class="playground-panel"></div>
 		</div>
 	</section>
 </template>
@@ -816,5 +917,14 @@ export default defineComponent({
 	width: 500px;
 	height: 500px;
 	border: 1px solid #888;
+}
+
+.model-titles {
+	display: flex;
+	font-weight: bold;
+}
+
+.model-titles div {
+	width: 500px;
 }
 </style>

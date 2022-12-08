@@ -1,189 +1,158 @@
 <template>
 	<div class="data-explorer-container">
-		<div class="left-content">
-			<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
-				<template #content>
-					<search-bar :enable-multi-term-search="false" @search-text-changed="filterData">
-						<template #dataset>
-							<dropdown-button
-								:inner-button-label="'Dataset'"
-								:is-dropdown-left-aligned="true"
-								:items="xddDatasets"
-								:selected-item="xddDataset"
-								class="dataset-container"
-								@item-selected="xddDatasetSelectionChanged"
-							/>
-						</template>
-						<template #sort>
-							<toggle-button
-								:value="rankedResults"
-								:label="'Ranked Results'"
-								@change="toggleRankedResults"
-							/>
-						</template>
-					</search-bar>
-				</template>
-			</modal-header>
-			<div class="nav-bar">
-				<div class="nav-left-container">
-					<ul class="nav-left">
-						<li>
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.ALL }"
-								@click="onResultTypeChanged(ResourceType.ALL)"
-							>
-								All
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.MODEL }"
-								@click="onResultTypeChanged(ResourceType.MODEL)"
-							>
-								Models
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.XDD }"
-								@click="onResultTypeChanged(ResourceType.XDD)"
-							>
-								Articles
-							</button>
-						</li>
-					</ul>
-					<template v-if="resultType === ResourceType.XDD">
-						<div class="xdd-known-terms">
-							<auto-complete
-								:focus-input="true"
-								:style-results="true"
-								:placeholder-color="'gray'"
-								:placeholder-message="'dictionary name...'"
-								:search-fn="searchXDDDictionaries"
-								@item-selected="addDictName"
-							/>
-							<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
-								{{ term }}
-								<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
-									<IconClose16 />
-								</span>
-							</div>
-						</div>
-						<button
-							type="button"
-							class="co-occurrence-matrix-btn"
-							:disabled="dictNames.length !== 2"
-						>
-							<IconScatterMatrix16 />&nbsp;co-occurrence matrix
-						</button>
-					</template>
-				</div>
-				<div>
-					<ul class="nav-right">
-						<li>
-							<button
-								type="button"
-								:class="{ active: viewType === ViewType.LIST }"
-								@click="viewType = ViewType.LIST"
-							>
-								List
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								:class="{ active: viewType === ViewType.MATRIX }"
-								@click="viewType = ViewType.MATRIX"
-							>
-								Matrix
-							</button>
-						</li>
-						<li>
-							<button
-								type="button"
-								:class="{ active: viewType === ViewType.GRAPH }"
-								@click="viewType = ViewType.GRAPH"
-							>
-								Graph
-							</button>
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div class="facets-and-results-container">
-				<template v-if="viewType === ViewType.LIST">
-					<facets-panel
-						:facets="facets"
-						:filtered-facets="filteredFacets"
-						:result-type="resultType"
-					/>
-					<div class="results-content">
-						<search-results-list
-							:data-items="filteredDataItems"
-							:result-type="resultType"
-							:selected-search-items="selectedSearchItems"
-							@toggle-data-item-selected="toggleDataItemSelected"
-						/>
-						<simple-pagination
-							:current-page-length="resultsCount"
-							:page-count="pageCount"
-							:page-size="pageSize"
-							@next-page="nextPage"
-							@prev-page="prevPage"
-						/>
-					</div>
-				</template>
-				<template v-if="viewType === ViewType.MATRIX">
-					<div class="results-content">
-						<search-results-matrix
-							:data-items="filteredDataItems"
-							:result-type="resultType"
-							:selected-search-items="selectedSearchItems"
-							:dict-names="dictNames"
-							@toggle-data-item-selected="toggleDataItemSelected"
-						/>
-					</div>
-				</template>
-			</div>
-		</div>
-		<drilldown-panel
-			:active-tab-id="activeDrilldownTab"
-			:has-transition="false"
-			:hide-close="true"
-			:is-open="activeDrilldownTab !== null"
-			:tabs="drilldownTabs"
-			@close="
-				() => {
-					activeDrilldownTab = null;
-				}
-			"
-		>
+		<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
 			<template #content>
-				<selected-resources-options-pane
-					:selected-search-items="selectedSearchItems"
-					@close="onClose"
-				/>
+				<search-bar :focus-input="true" @search-text-changed="filterData">
+					<template #dataset>
+						<dropdown-button
+							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
+							:is-dropdown-left-aligned="true"
+							:items="xddDatasets"
+							:selected-item="xddDataset"
+							@item-selected="xddDatasetSelectionChanged"
+						/>
+					</template>
+					<template #params>
+						<toggle-button
+							:value="isSearchTitle"
+							:label="'Searching by document title'"
+							@change="toggleIsSearchTitle"
+						/>
+					</template>
+				</search-bar>
 			</template>
-		</drilldown-panel>
+		</modal-header>
+		<div class="secondary-header">
+			<span class="section-label">View only</span>
+			<div class="button-group">
+				<button
+					type="button"
+					:class="{ active: resultType === ResourceType.XDD }"
+					@click="onResultTypeChanged(ResourceType.XDD)"
+				>
+					<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+					Papers
+				</button>
+				<button
+					type="button"
+					:class="{ active: resultType === ResourceType.MODEL }"
+					@click="onResultTypeChanged(ResourceType.MODEL)"
+				>
+					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
+					Models
+				</button>
+				<button
+					type="button"
+					:class="{ active: resultType === ResourceType.DATASET }"
+					@click="onResultTypeChanged(ResourceType.DATASET)"
+				>
+					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+					Datasets
+				</button>
+			</div>
+
+			<span class="section-label">View as</span>
+			<div class="button-group">
+				<button
+					type="button"
+					:class="{ active: viewType === ViewType.LIST }"
+					@click="viewType = ViewType.LIST"
+				>
+					List
+				</button>
+				<button
+					type="button"
+					:class="{ active: viewType === ViewType.MATRIX }"
+					@click="viewType = ViewType.MATRIX"
+				>
+					Matrix
+				</button>
+			</div>
+
+			<!--
+			<span v-if="resultType === ResourceType.XDD" class="section-label">
+				Filter by XDD Dictionary
+			</span>
+			<div v-if="resultType === ResourceType.XDD" class="xdd-known-terms">
+				<auto-complete
+					:focus-input="false"
+					:style-results="true"
+					:placeholder-color="'gray'"
+					:placeholder-message="'Search XDD dictionaries'"
+					:search-fn="searchXDDDictionaries"
+					@item-selected="addDictName"
+				/>
+				<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
+					{{ term }}
+					<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
+						<IconClose16 />
+					</span>
+				</div>
+			</div>
+			-->
+		</div>
+		<div class="facets-and-results-container">
+			<template v-if="viewType === ViewType.LIST">
+				<facets-panel
+					class="facets-panel"
+					:facets="facets"
+					:filtered-facets="filteredFacets"
+					:result-type="resultType"
+				/>
+				<div class="results-content">
+					<search-results-list
+						:data-items="dataItems"
+						:result-type="resultType"
+						:selected-search-items="selectedSearchItems"
+						:search-term="searchTerm"
+						@toggle-data-item-selected="toggleDataItemSelected"
+					/>
+					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
+					<!--
+					<simple-pagination
+						:current-page-length="resultsCount"
+						:page-count="pageCount"
+						:page-size="pageSize"
+						@next-page="nextPage"
+						@prev-page="prevPage"
+					/>
+					-->
+				</div>
+			</template>
+			<template v-if="viewType === ViewType.MATRIX">
+				<div class="results-content">
+					<search-results-matrix
+						:data-items="dataItems"
+						:result-type="resultType"
+						:selected-search-items="selectedSearchItems"
+						:dict-names="dictNames"
+						@toggle-data-item-selected="toggleDataItemSelected"
+					/>
+				</div>
+			</template>
+			<selected-resources-options-pane
+				class="selected-resources-pane"
+				:selected-search-items="selectedSearchItems"
+				@remove-item="toggleDataItemSelected"
+				@close="onClose"
+			/>
+		</div>
 	</div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
-import { cloneDeep } from 'lodash';
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
-import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import ToggleButton from '@/components/widgets/toggle-button.vue';
-import AutoComplete from '@/components/widgets/autocomplete.vue';
+// import AutoComplete from '@/components/widgets/autocomplete.vue';
+// import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
+import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 
 import { fetchData, getXDDSets, getXDDDictionaries } from '@/services/data';
 import {
@@ -195,300 +164,324 @@ import {
 	ViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
-import { XDD_RESULT_DEFAULT_PAGE_SIZE, XDDArticle, XDDDictionary } from '@/types/XDD';
+import {
+	XDD_RESULT_DEFAULT_PAGE_SIZE,
+	XDDArticle,
+	XDDDictionary,
+	FACET_FIELDS as XDD_FACET_FIELDS,
+	YEAR
+} from '@/types/XDD';
 import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import DrilldownPanel from '@/components/drilldown-panel.vue';
-import { applyFacetFiltersToData, isModel, isXDDArticle } from '@/utils/data-util';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { isEmpty, max, min } from 'lodash';
+import { Dataset } from '@/types/Dataset';
 
-import IconScatterMatrix16 from '@carbon/icons-vue/es/scatter-matrix/16';
-import IconClose16 from '@carbon/icons-vue/es/close/16';
+// import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 // FIXME: page count is not taken into consideration
 
-const DRILLDOWN_TABS = [
-	{
-		name: 'Manage Resources',
-		id: 'selected-resources',
-		icon: 'fa-gear'
-	}
-];
+const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
-export default defineComponent({
-	name: 'DataExplorer',
-	components: {
-		SearchResultsList,
-		SearchResultsMatrix,
-		ModalHeader,
-		SimplePagination,
-		SearchBar,
-		DropdownButton,
-		ToggleButton,
-		FacetsPanel,
-		AutoComplete,
-		IconScatterMatrix16,
-		IconClose16,
-		DrilldownPanel,
-		SelectedResourcesOptionsPane
-	},
-	emits: ['hide', 'show-overlay', 'hide-overlay'],
-	setup() {
-		const dataItems = ref<SearchResults[]>([]);
-		const filteredDataItems = ref<SearchResults[]>([]); // after applying facet-based filters
-		const selectedSearchItems = ref<ResultType[]>([]);
-		const filter = ref<string[]>([]);
-		const query = useQueryStore();
-		const activeDrilldownTab = ref<string | null>('selected-resources');
-		const resources = useResourcesStore();
-		return {
-			filter,
-			dataItems,
-			filteredDataItems,
-			selectedSearchItems,
-			query,
-			drilldownTabs: DRILLDOWN_TABS,
-			activeDrilldownTab,
-			resources
-		};
-	},
-	data: () => ({
-		pageCount: 0,
-		pageSize: XDD_RESULT_DEFAULT_PAGE_SIZE,
-		// xdd
-		xddDatasets: [] as string[],
-		dictNames: [] as string[],
-		rankedResults: true, // disable sorted/ranked results to enable pagination
-		xddDictionaries: [] as XDDDictionary[],
-		// facets
-		facets: {} as Facets,
-		filteredFacets: {} as Facets,
-		//
-		resultType: ResourceType.ALL as string,
-		viewType: ViewType.LIST as string,
-		ResourceType,
-		ViewType
-	}),
-	computed: {
-		xddDataset() {
-			return this.resources.xddDataset;
-		},
-		resultsCount() {
-			let total = 0;
-			if (this.resultType === ResourceType.ALL) {
-				// count the results from all subsystems
-				this.filteredDataItems.forEach((res) => {
-					const count = res?.hits ?? res?.results.length;
-					total += count;
-				});
-			} else {
-				// only return the results count for the selected subsystems
-				const resList = this.filteredDataItems.find(
-					(res) => res.searchSubsystem === this.resultType
-				);
-				if (resList) {
-					// eslint-disable-next-line no-unsafe-optional-chaining
-					total += resList?.hits ?? resList?.results.length;
-				}
-			}
-			return total;
-		},
-		clientFilters() {
-			return this.query.clientFilters;
-		}
-	},
-	watch: {
-		filter() {
-			// re-fetch data from the server, apply filters, and re-calculate the facets
-			this.refresh();
-		},
-		clientFilters(n, o) {
-			if (filtersUtil.isEqual(n, o)) return;
-			// data has not changed; the user just changed one of the facet filters
-			this.applyFiltersToData(); // this will trigger facet re-calculation
-		},
-		dictNames() {
-			// re-fetch data from the server, apply filters, and re-calculate the facets
-			this.refresh();
-		},
-		rankedResults() {
-			// re-fetch data from the server, apply filters, and re-calculate the facets
-			this.refresh();
-		},
-		resultType() {
-			// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
-			// re-calculate the facets
-			this.calculateFacets();
-		},
-		dataItems() {
-			// new data has arrived, apply filters, if any
-			this.applyFiltersToData(); // this will trigger facet re-calculation
-		},
-		filteredDataItems() {
-			this.calculateFacets();
-		}
-	},
-	async mounted() {
-		this.xddDatasets = await getXDDSets();
-		this.xddDictionaries = (await getXDDDictionaries()) as XDDDictionary[];
-		if (this.xddDatasets.length > 0 && this.xddDataset === null) {
-			this.xddDatasetSelectionChanged(this.xddDatasets[this.xddDatasets.length - 1]);
-			this.xddDatasets.push(ResourceType.ALL);
-		}
+const dataItems = ref<SearchResults[]>([]);
+const dataItemsUnfiltered = ref<SearchResults[]>([]);
+const selectedSearchItems = ref<ResultType[]>([]);
+const searchTerm = ref('');
+const query = useQueryStore();
+const resources = useResourcesStore();
 
-		this.refresh();
-	},
-	methods: {
-		searchXDDDictionaries(query: string) {
-			return new Promise((resolve) => {
-				const suggestionResults: string[] = [];
-				if (query.length < 1) resolve(suggestionResults); // early exit
-				resolve(
-					this.xddDictionaries.map((dic) => dic.name).filter((dictName) => dictName.includes(query))
-				);
-			});
-		},
-		updateResultType(newResultType: string) {
-			this.resultType = newResultType;
-		},
-		toggleRankedResults() {
-			this.rankedResults = !this.rankedResults;
-		},
-		prevPage() {
-			// this won't work with XDD since apparently there is no way to navigate results backward
-			this.pageCount -= 1;
-			this.fetchDataItemList();
-		},
-		nextPage() {
-			this.pageCount += 1;
-			// check if previous results "hasMore" and continue fetching results
-			// note the next_page URL would need to be cached and passed down to the fetch service
-			//  but this is only valid for XDD,
-			//  and thus we need to cache both the original URL and the pagination one
-			this.fetchDataItemList();
-		},
-		xddDatasetSelectionChanged(newDataset: string) {
-			if (this.xddDataset !== newDataset) {
-				this.resources.setXDDDataset(newDataset);
-			}
-		},
-		calculateFacets() {
-			// retrieves filtered & unfiltered facet data
-			// const defaultFilters = { clauses: [] };
-			this.facets = getFacets(this.dataItems, this.resultType /* , defaultFilters */);
-			this.filteredFacets = getFacets(
-				this.filteredDataItems,
-				this.resultType /* , this.clientFilters */
-			);
-		},
-		// retrieves filtered data items list
-		async fetchDataItemList() {
-			// get the filtered data
+const pageCount = ref(0);
+const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
+// xdd
+const xddDatasets = ref<string[]>([]);
+const dictNames = ref<string[]>([]);
+const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
+const isSearchTitle = ref(false); // is the input search term represents a document identifier such as title or DOI
+const xddDictionaries = ref<XDDDictionary[]>([]);
+// facets
+const facets = ref<Facets>({});
+const filteredFacets = ref<Facets>({});
+//
+const resultType = ref<string>(ResourceType.XDD);
+const viewType = ref<string>(ViewType.LIST);
 
-			// const options = {
-			//   from: this.pageCount * this.pageSize,
-			//   size: this.pageSize
-			// };
-
-			this.$emit('show-overlay');
-
-			const searchParams: SearchParameters = {
-				xdd: {
-					dict_names: this.dictNames,
-					dataset: this.xddDataset === ResourceType.ALL ? null : this.xddDataset,
-					pageSize: this.pageSize,
-					enablePagination: !this.rankedResults
-				}
-			};
-
-			// FIXME: should we allow multiple search terms?
-			const searchTerm = this.filter.length > 0 ? this.filter[0] : '';
-
-			const allData: SearchResults[] = await fetchData(searchTerm, searchParams);
-			this.dataItems = allData;
-
-			this.$emit('hide-overlay');
-		},
-		applyFiltersToData() {
-			const allDataCloned = cloneDeep(this.dataItems);
-			applyFacetFiltersToData(allDataCloned, this.resultType, this.clientFilters);
-			this.filteredDataItems = allDataCloned;
-		},
-		async refresh() {
-			this.pageCount = 0;
-			await this.fetchDataItemList();
-		},
-		filterData(filterTerms: string[]) {
-			this.filter = cloneDeep(filterTerms);
-		},
-		onClose() {
-			this.$emit('hide');
-		},
-		isDataItemSelected(item: ResultType) {
-			// FIXME: refactor as util func
-			return this.selectedSearchItems.find((searchItem) => {
-				if (isModel(item)) {
-					const itemAsModel = item as Model;
-					const searchItemAsModel = searchItem as Model;
-					return searchItemAsModel.id === itemAsModel.id;
-				}
-				if (isXDDArticle(item)) {
-					const itemAsArticle = item as XDDArticle;
-					const searchItemAsArticle = searchItem as XDDArticle;
-					return searchItemAsArticle.title === itemAsArticle.title;
-				}
-				return false;
-			});
-		},
-		toggleDataItemSelected(item: ResultType) {
-			const itemID = (item as Model).id || (item as XDDArticle).title;
-			if (this.isDataItemSelected(item)) {
-				this.selectedSearchItems = this.selectedSearchItems.filter(
-					(searchItem) =>
-						(searchItem as Model).id !== itemID && (searchItem as XDDArticle).title !== itemID
-				);
-			} else {
-				const dataitem = this.filteredDataItems
-					.map((res) => res.results)
-					.flat()
-					.find(
-						(searchItem) =>
-							(searchItem as Model).id === itemID || (searchItem as XDDArticle).title === itemID
-					);
-				if (dataitem === undefined) {
-					return;
-				}
-				this.selectedSearchItems = [...this.selectedSearchItems, item];
-			}
-		},
-		onSelection() {
-			console.log(`selected ${this.selectedSearchItems.length.toString()} items!`);
-		},
-		removeDictName(term: string) {
-			this.dictNames = this.dictNames.filter((t) => t !== term);
-		},
-		addDictName(term: string) {
-			if (term === undefined || term === '') return;
-			if (!this.dictNames.includes(term)) {
-				this.dictNames = [...this.dictNames, term]; // clone to trigger reactivity
-			}
-		},
-		onResultTypeChanged(newResultType: string) {
-			this.updateResultType(newResultType);
+const xddDataset = computed(() =>
+	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+);
+const clientFilters = computed(() => query.clientFilters);
+const resultsCount = computed(() => {
+	let total = 0;
+	if (resultType.value === ResourceType.ALL) {
+		// count the results from all subsystems
+		dataItems.value.forEach((res) => {
+			const count = res?.hits ?? res?.results.length;
+			total += count;
+		});
+	} else {
+		// only return the results count for the selected subsystems
+		const resList = dataItems.value.find((res) => res.searchSubsystem === resultType.value);
+		if (resList) {
+			// eslint-disable-next-line no-unsafe-optional-chaining
+			total += resList?.hits ?? resList?.results.length;
 		}
 	}
+	return total;
+});
+
+const updateResultType = (newResultType: string) => {
+	resultType.value = newResultType;
+};
+
+const toggleIsSearchTitle = () => {
+	isSearchTitle.value = !isSearchTitle.value;
+};
+
+const xddDatasetSelectionChanged = (newDataset: string) => {
+	if (xddDataset.value !== newDataset) {
+		resources.setXDDDataset(newDataset);
+	}
+};
+
+const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
+	// retrieves filtered & unfiltered facet data
+	// const defaultFilters = { clauses: [] };
+	facets.value = getFacets(unfilteredData, resultType.value /* , defaultFilters */);
+	filteredFacets.value = getFacets(filteredData, resultType.value /* , this.clientFilters */);
+};
+
+const fetchDataItemList = async () => {
+	// const options = {
+	//   from: this.pageCount * this.pageSize,
+	//   size: this.pageSize
+	// };
+
+	emit('show-overlay');
+
+	//
+	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
+	//
+	// this requires hitting the backend twice to grab filtered and filtered data (and facets)
+	//
+
+	let searchWords = searchTerm.value;
+
+	const isValidDOI = validate(searchWords);
+
+	const matchAll =
+		!isEmpty(searchWords) && searchWords.startsWith('"') && searchWords.endsWith('"');
+	const allSearchTerms = searchWords.split(' ');
+	if (matchAll && allSearchTerms.length > 0) {
+		// multiple words are provided as search term and the user requested to match all of them
+		// the XDD api expects all search terms to be comma-separated if the user requested inclusive results
+		searchWords = allSearchTerms.join(',');
+	}
+
+	// start with initial search parameters
+	const searchParams: SearchParameters = {
+		xdd: {
+			dict: dictNames.value,
+			dataset:
+				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
+					? null
+					: xddDataset.value,
+			max: pageSize.value,
+			perPage: pageSize.value,
+			fullResults: !rankedResults.value,
+			doi: isValidDOI ? searchWords : undefined,
+			title: isSearchTitle.value && !isValidDOI ? searchWords : undefined,
+			includeHighlights: true,
+			inclusive: matchAll,
+			facets: true // include facets aggregation data in the search results
+		}
+	};
+
+	// first: fetch the data unfiltered by facets
+	const allData: SearchResults[] = await fetchData(searchWords, searchParams);
+
+	// cache unfiltered data
+	dataItemsUnfiltered.value = allData;
+
+	//
+	// extend search parameters by converting facet filters into proper search parameters
+	//
+
+	const xddSearchParams = searchParams?.xdd || {};
+	// transform facet filters into xdd search parameters
+	clientFilters.value.clauses.forEach((clause) => {
+		if (XDD_FACET_FIELDS.includes(clause.field)) {
+			// NOTE: special case
+			if (clause.field === YEAR) {
+				if (clause.values.length === 1) {
+					// a single year is selected
+					const val = (clause.values as string[]).join(',');
+					const formattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
+					xddSearchParams.min_published = formattedVal;
+					xddSearchParams.max_published = formattedVal;
+				} else {
+					// multiple years are selected, so find their range
+					const years = clause.values.map((year) => +year);
+					const minYear = min(years);
+					const maxYear = max(years);
+					const formattedValMinYear = `${minYear}-01-01`; // must be in ISO format; 2020-01-01
+					const formattedValMaxYear = `${maxYear}-01-01`; // must be in ISO format; 2020-01-01
+					xddSearchParams.min_published = formattedValMinYear;
+					xddSearchParams.max_published = formattedValMaxYear;
+				}
+			} else {
+				const val = (clause.values as string[]).join(',');
+				xddSearchParams[clause.field] = val;
+			}
+		}
+	});
+	const modelSearchParams = searchParams?.model || {
+		filters: clientFilters.value
+	};
+	const datasetSearchParams = searchParams?.dataset || {
+		filters: clientFilters.value
+	};
+
+	// update search parameters object
+	searchParams.xdd = xddSearchParams;
+	searchParams.model = modelSearchParams;
+	searchParams.dataset = datasetSearchParams;
+
+	// fetch second time with facet filtered applied
+	const allDataFilteredWithFacets: SearchResults[] = await fetchData(searchWords, searchParams);
+
+	// the list of results displayed in the data explorer is always the final filtered data
+	dataItems.value = allDataFilteredWithFacets;
+
+	// final step: cache the facets and filteredFacets objects
+	calculateFacets(allData, allDataFilteredWithFacets);
+
+	emit('hide-overlay');
+};
+
+// const prevPage = () => {
+// 	// this won't work with XDD since apparently there is no way to navigate results backward
+// 	pageCount.value -= 1;
+// 	fetchDataItemList();
+// };
+
+// const nextPage = () => {
+// 	pageCount.value += 1;
+// 	// check if previous results "hasMore" and continue fetching results
+// 	// note the next_page URL would need to be cached and passed down to the fetch service
+// 	//  but this is only valid for XDD,
+// 	//  and thus we need to cache both the original URL and the pagination one
+// 	fetchDataItemList();
+// };
+
+const refresh = async () => {
+	pageCount.value = 0;
+	await fetchDataItemList();
+};
+
+const filterData = (filterTerm: string) => {
+	searchTerm.value = filterTerm;
+	// re-fetch data from the server, apply filters, and re-calculate the facets
+	refresh();
+};
+
+const onClose = () => {
+	emit('hide');
+};
+
+const toggleDataItemSelected = (item: ResultType) => {
+	let foundIndx = -1;
+	selectedSearchItems.value.forEach((searchItem, indx) => {
+		if (isModel(item) && isModel(searchItem)) {
+			const itemAsModel = item as Model;
+			const searchItemAsModel = searchItem as Model;
+			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
+		}
+		if (isDataset(item) && isDataset(searchItem)) {
+			const itemAsDataset = item as Dataset;
+			const searchItemAsDataset = searchItem as Dataset;
+			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
+		}
+		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
+			const itemAsArticle = item as XDDArticle;
+			const searchItemAsArticle = searchItem as XDDArticle;
+			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
+		}
+	});
+	if (foundIndx >= 0) {
+		// item was already in the list so remove it
+		selectedSearchItems.value.splice(foundIndx, 1);
+	} else {
+		// add it to the list
+		selectedSearchItems.value = [...selectedSearchItems.value, item];
+	}
+};
+
+// const removeDictName = (term: string) => {
+// 	dictNames.value = dictNames.value.filter((t) => t !== term);
+// };
+
+// const addDictName = (term: string) => {
+// 	if (term === undefined || term === '') return;
+// 	if (!dictNames.value.includes(term)) {
+// 		dictNames.value = [...dictNames.value, term]; // clone to trigger reactivity
+// 	}
+// };
+
+// const searchXDDDictionaries = (q: string) =>
+// 	new Promise((resolve) => {
+// 		const suggestionResults: string[] = [];
+// 		if (q.length < 1) resolve(suggestionResults); // early exit
+// 		resolve(
+// 			xddDictionaries.value.map((dic) => dic.name).filter((dictName) => dictName.includes(q))
+// 		);
+// 	});
+
+const onResultTypeChanged = (newResultType: string) => {
+	updateResultType(newResultType);
+};
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+watch(clientFilters, (n, o) => {
+	if (filtersUtil.isEqual(n, o)) return;
+	// data has not changed; the user just changed one of the facet filters
+	refresh(); // this will trigger facet re-calculation
+});
+
+watch(dictNames, () => {
+	refresh();
+});
+
+watch(rankedResults, () => {
+	// re-fetch data from the server, apply filters, and re-calculate the facets
+	refresh();
+});
+
+watch(resultType, () => {
+	// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
+	// re-calculate the facets
+	// REVIEW
+	calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+});
+
+onMounted(async () => {
+	xddDatasets.value = await getXDDSets();
+	xddDictionaries.value = (await getXDDDictionaries()) as XDDDictionary[];
+	if (xddDatasets.value.length > 0 && xddDataset.value === null) {
+		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
+		xddDatasets.value.push(ResourceType.ALL);
+	}
+
+	refresh();
+});
+
+onUnmounted(() => {
+	query.reset();
 });
 </script>
 
 <style scoped>
-:root {
-	--header-height: 50px;
-	--footer-height: 50px;
-	--nav-bar-height: 50px;
-}
-
 .data-explorer-container {
 	position: absolute;
 	left: 0px;
@@ -497,122 +490,93 @@ export default defineComponent({
 	display: flex;
 	width: 100vw;
 	height: 100%;
-}
-
-.data-explorer-container .left-content {
 	display: flex;
 	flex-direction: column;
-	flex-grow: 1;
-	overflow: auto;
+	background-color: var(--un-color-body-surface-background);
 }
 
-.data-explorer-container .nav-bar {
+.secondary-header {
 	display: flex;
-	justify-content: space-between;
-	background-color: lightgray;
-	padding: 0.5rem;
+	padding: 10px;
 	align-items: center;
 	height: var(--nav-bar-height);
+}
+
+.secondary-header .section-label {
+	margin-right: 5px;
+	margin-left: 20px;
 }
 
 .data-explorer-container .header {
 	height: var(--header-height);
 }
 
-.data-explorer-container .nav-left-container {
+.button-group {
+	display: flex;
+}
+
+.button-group button {
 	display: flex;
 	align-items: center;
-}
-
-.data-explorer-container .nav-left {
-	list-style-type: none;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-	margin-right: 2rem;
-	margin-left: 5rem;
-}
-
-.data-explorer-container .nav-left li {
-	float: left;
-}
-
-.data-explorer-container .nav-left li button {
-	display: block;
-	color: black;
-	text-align: center;
-	padding: 8px 12px;
-	text-decoration: none;
-	border: none;
-	background-color: transparent;
-	font-size: larger;
-}
-
-.data-explorer-container .nav-left li button:hover:not(.active) {
-	text-decoration: underline;
-	border: none;
-	cursor: pointer;
-}
-
-.data-explorer-container .nav-left li button.active {
-	text-decoration: underline;
-	font-weight: bold;
-	border: none;
-}
-
-.data-explorer-container .nav-right {
-	list-style-type: none;
-	margin-right: 2rem;
-	margin-left: 5rem;
-}
-
-.data-explorer-container .nav-right li {
-	float: left;
-}
-
-.data-explorer-container .nav-right li button {
-	display: block;
-	color: black;
-	text-align: center;
 	text-decoration: none;
 	background: transparent;
-	padding: 8px 12px;
+	padding: 5px 10px;
 	border: 1px solid black;
-}
-
-.data-explorer-container .nav-right li button:hover {
-	background: var(--un-color-black-5);
 	cursor: pointer;
+	border-left-width: 0;
+	height: 40px;
 }
 
-.data-explorer-container .nav-right li button.active {
+.button-group button:first-child {
+	border-left-width: 1px;
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
+}
+
+.button-group button:last-child {
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
+}
+
+.button-group button:hover {
+	background: var(--un-color-black-5);
+}
+
+.button-group button.active {
 	background: white;
-	font-weight: bold;
+	cursor: default;
 }
 
 .data-explorer-container .facets-and-results-container {
-	background-color: var(--un-color-body-surface-background);
-	height: calc(100vh - var(--footer-height) - var(--nav-bar-height));
+	height: calc(100vh - 50px - var(--nav-bar-height));
 	display: flex;
 	flex-grow: 1;
-	overflow: auto;
+	min-height: 0;
+	gap: 10px;
+	/* Add space to the right of the selected assets column */
+	padding-right: 10px;
+}
+
+.facets-panel {
+	margin-top: 10px;
+	width: 250px;
+	overflow-y: auto;
 }
 
 .data-explorer-container .results-content {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	align-items: center;
 }
 
-.co-occurrence-matrix-btn {
-	background-color: darkcyan;
-	padding-left: 8px;
-	padding-right: 8px;
+.data-explorer-container .results-content .results-count-label {
+	font-weight: bold;
+	margin: 4px;
 }
 
-.data-explorer-container :deep(.dropdown-btn) {
-	max-width: 200px;
-	width: 200px;
+.xdd-known-terms {
+	display: flex;
 }
 
 .xdd-known-terms .flex-aligned-item {
@@ -635,18 +599,7 @@ export default defineComponent({
 	min-width: 100px;
 }
 
-.data-explorer-container :deep(.search-button) {
-	background-color: var(--un-color-accent);
-}
-
-.data-explorer-container :deep(.search-button-disabled) {
-	background-color: var(--un-color-accent);
-	cursor: not-allowed;
-	color: gray;
-}
-
-.data-explorer-container :deep(.clear-button-disabled) {
-	background-color: gray;
-	cursor: not-allowed;
+.selected-resources-pane {
+	width: 250px;
 }
 </style>

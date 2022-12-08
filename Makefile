@@ -42,16 +42,6 @@ image-hmi-server-native: clean-hmi-server-native
 
 
 
-TARGETS += mock-data-service
-clean-mock-data-service: clean-mock-data-service-base
-	rm -rf $(PROJECT_DIR)/packages/services/mock-data-service/docker/jvm/build
-
-image-mock-data-service: clean-mock-data-service
-	./gradlew :packages:services:mock-data-service:build -Dquarkus.package.type=jar
-	mv $(PROJECT_DIR)/packages/services/mock-data-service/build $(PROJECT_DIR)/packages/services/mock-data-service/docker/jvm/build
-
-
-
 TARGETS += hmi-client
 clean-hmi-client:
 	rm -rf $(PROJECT_DIR)/packages/client/graph-scaffolder/build
@@ -74,10 +64,6 @@ clean: $(TARGETS:%=clean-%)
 .PHONY: clean-hmi-server-base
 clean-hmi-server-base:
 	./gradlew :packages:services:hmi-server:clean
-
-.PHONY: clean-mock-data-service-base
-clean-mock-data-service-base:
-	./gradlew :packages:services:mock-data-service:clean
 
 
 

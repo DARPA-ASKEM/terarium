@@ -1,3 +1,4 @@
+[![Build and Publish](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
 # TERArium
 
 TERArium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
@@ -125,12 +126,12 @@ using [CommitLint](https://github.com/conventional-changelog/commitlint) to vali
 the message does not conform to the specification the PR will not be allowed to be merged.
 
 This automatic check is done through the use of CI workflows on GitHub defined
-in [commitlint.yml](.github/workflows/commitlint.yml). It uses the configuration from
-the [Commitlint Configuration File](.commitlintrc.yml).
+in [commitlint.yaml](.github/workflows/commitlint.yaml). It uses the configuration from
+the [Commitlint Configuration File](.commitlintrc.yaml).
 
 > Currently the CI configuration is set to check only the PR message as the commits are being squashed. If this ever
 > changes and all commits need to be validated then appropriate changes (as commented) in
-> the [commitlint.yml](..github/workflows/commitlint.yml) should be made.
+> the [commitlint.yaml](..github/workflows/commitlint.yaml) should be made.
 
 ## License
 

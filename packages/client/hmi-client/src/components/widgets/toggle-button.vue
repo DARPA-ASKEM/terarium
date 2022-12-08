@@ -8,44 +8,37 @@
 	</div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, toRefs, watch } from 'vue';
 import { uniqueId } from 'lodash';
-import { defineComponent } from 'vue';
 
-export default defineComponent({
-	name: 'ToggleButton',
-	props: {
-		value: {
-			type: Boolean,
-			default: true
-		},
-		name: {
-			type: String,
-			default: uniqueId()
-		},
-		label: {
-			type: String,
-			default: ''
-		}
+const props = defineProps({
+	value: {
+		type: Boolean,
+		default: true
 	},
-	emits: ['change'],
-	data: () => ({
-		checkboxModel: true
-	}),
-	watch: {
-		value() {
-			this.checkboxModel = this.value;
-		}
+	name: {
+		type: String,
+		default: uniqueId()
 	},
-	created() {
-		this.checkboxModel = this.value;
-	},
-	methods: {
-		handleToggle() {
-			this.$emit('change', this.checkboxModel);
-		}
+	label: {
+		type: String,
+		default: ''
 	}
 });
+
+const checkboxModel = ref(props.value);
+const { value } = toRefs(props);
+
+const emit = defineEmits(['change']);
+
+watch(value, () => {
+	checkboxModel.value = props.value;
+});
+
+const handleToggle = () => {
+	emit('change', checkboxModel.value);
+};
 </script>
 
 <style scoped>
@@ -57,7 +50,7 @@ export default defineComponent({
 .title {
 	padding: 5px;
 	text-align: center;
-	color: black;
+	color: white;
 }
 
 label {
