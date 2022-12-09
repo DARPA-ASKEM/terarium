@@ -1,56 +1,85 @@
 <template>
-	<ul v-if="store.activeProjectAssets !== null">
-		<template v-for="resource in resources">
-			<li v-for="(asset, index) in store.activeProjectAssets[resource.projectAsset]" :key="index">
-				<component :is="resource.icon" />
-				<header>{{ resource.name }}{{ asset.name }}</header>
-			</li>
-		</template>
+	<ul>
+		<li
+			v-for="(resource, index) in resources"
+			:key="index"
+			@click="openResource(resource.route, resource.params)"
+		>
+			<component :is="resource.icon" />
+			<div>
+				<header>
+					{{ resource.projectAsset.name }}
+					{{ resource.projectAsset.title }}
+				</header>
+				<footer>{{ resource.route }} - {{ resource.projectAsset.timestamp }}</footer>
+			</div>
+		</li>
 	</ul>
 </template>
 
 <script setup lang="ts">
-import useResourcesStore from '@/stores/resources';
+import { Project } from '@/types/Project';
+import { RouteName } from '@/router/routes';
+import { RouteParamsRaw, useRouter } from 'vue-router';
 
 export type Resource = {
-	route: string;
+	route: RouteName;
+	params: RouteParamsRaw;
 	name: string;
 	icon: any;
-	projectAsset: string;
+	projectAsset: Project | any;
 };
-
-const store = useResourcesStore();
 
 defineProps<{
 	resources: Resource[];
 }>();
+
+const router = useRouter();
+
+function openResource(view: RouteName, params: RouteParamsRaw) {
+	router.push({ name: view, params });
+}
 </script>
 
 <style scoped>
 ul {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
 	list-style: none;
 	gap: 1rem;
-	width: 20rem;
-	overflow-y: scroll;
-	height: 100vh;
+	margin: 1rem 0;
+	color: var(--un-color-body-text-secondary);
+	width: fit-content;
 }
 
 li {
+	width: 25rem;
 	display: flex;
 	border: 2px solid var(--un-color-black-100);
 	border-radius: 0.25rem;
 	cursor: pointer;
+	border: 1px solid var(--un-color-body-stroke);
 }
 
 svg {
-	width: 100%;
+	width: 20%;
 	margin: auto;
+	color: var(--un-color-accent);
+}
+
+div {
+	width: 80%;
+	border-left: 1px solid var(--un-color-body-stroke);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.5rem;
 }
 
 header {
 	font-weight: bold;
-	border-left: 1px solid var(--un-color-black-100);
+	font-size: 1.1rem;
+	color: var(--un-color-body-text-primary);
+	/* max-height: 3rem; */
 }
 </style>

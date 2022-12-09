@@ -61,7 +61,7 @@ const openView = (view: RouteName) => {
 	// Open the appropriate view
 	if (selectedView.value !== view && Object.values(RouteName).includes(view)) {
 		// Set the Route parameters
-		const params: RouteParamsRaw = {};
+		const params: RouteParamsRaw = {}; // Make a global function in routes.ts?
 
 		// Set the projectId, except for the Document Route
 		if (props?.project?.id) {
@@ -83,7 +83,6 @@ const openView = (view: RouteName) => {
 		if (view === RouteName.SimulationResultRoute) {
 			params.simulationRunId = props?.project?.assets[SIMULATION_RUNS]?.[0] ?? 1;
 		}
-
 		// Change the view
 		router.push({ name: view, params });
 	} else if (showSidebar(view) && !isSidePanelClose.value) {
