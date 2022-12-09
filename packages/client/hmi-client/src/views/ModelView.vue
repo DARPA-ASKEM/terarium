@@ -6,16 +6,16 @@ import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 
 interface ModelProps {
-	modelId: string;
+	assetId: string;
 }
 
 const props = defineProps<{
-	modelId: string;
+	assetId: string;
 }>();
 
 const resourcesStore = useResourcesStore();
 
-const newModelId = computed(() => props.modelId);
+const newModelId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
@@ -37,13 +37,13 @@ watch(newModelId, (id) => {
 	const newTab = {
 		name: getModelName(id),
 		props: {
-			modelId: id
+			assetId: id
 		}
 	} as Tab;
 	// Would have loved to use a Set here instead of an array, but equality was not working
 	const foundTabIndex = openTabs.value.findIndex((tab) => {
 		const tabProps = tab.props as ModelProps;
-		return tabProps.modelId === props.modelId;
+		return tabProps.assetId === props.assetId;
 	});
 	if (foundTabIndex === -1) {
 		openTabs.value.push(newTab);
@@ -55,11 +55,11 @@ watch(newModelId, (id) => {
 
 onMounted(async () => {
 	// If no model id provided in props, do not attempt to make inital tab
-	if (props.modelId !== '') {
+	if (props.assetId !== '') {
 		const initialTab = {
-			name: getModelName(props.modelId),
+			name: getModelName(props.assetId),
 			props: {
-				modelId: props.modelId
+				assetId: props.assetId
 			}
 		} as Tab;
 
@@ -73,7 +73,7 @@ onMounted(async () => {
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"
-		:active-tab="props.modelId"
+		:active-tab="props.assetId"
 		@close-tab="(tab) => removeClosedTab(tab)"
 		:active-tab-index="activeTabIndex"
 	>

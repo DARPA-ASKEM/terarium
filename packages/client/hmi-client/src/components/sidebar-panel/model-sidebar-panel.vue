@@ -1,7 +1,7 @@
 <template>
 	<ArtifactList
 		:artifacts="models"
-		:selected-artifact-id="modelId"
+		:selected-artifact-id="assetId"
 		@artifact-clicked="openModelPage"
 		@remove-artifact="removeModel"
 	/>
@@ -25,15 +25,15 @@ import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
 const router = useRouter();
 const resourcesStore = useResourcesStore();
 
-const modelId = ref<string | number>('');
+const assetId = ref<string | number>('');
 const models = ref<Model[]>([]);
 
 const openModelPage = async (id: string | number) => {
 	// pass this model id as param
-	modelId.value = id; // track selection
+	assetId.value = id; // track selection
 	router.push({
 		name: RouteName.ModelRoute,
-		params: { projectId: resourcesStore.activeProject?.id, modelId: id }
+		params: { projectId: resourcesStore.activeProject?.id, assetId: id }
 	});
 };
 
@@ -53,11 +53,11 @@ const removeModel = async (id: string | number) => {
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view
-	if (id === modelId.value) {
+	if (id === assetId.value) {
 		// clear the model ID as a URL param
 		router.push({
 			name: RouteName.ModelRoute,
-			params: { projectId: resourcesStore.activeProject?.id, modelId: '' }
+			params: { projectId: resourcesStore.activeProject?.id, assetId: '' }
 		});
 	}
 };

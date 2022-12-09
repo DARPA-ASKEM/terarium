@@ -23,7 +23,7 @@ for (let i = 0; i < routeMetadataArray.length; i++) {
 		for (let j = 0; j < assets.length; j++) {
 			projectAssets.push({
 				route: routeMetadataArray[i][0],
-				params: { projectId: props?.project?.id, modelId: assets[j].id ?? 1 }, // Second attribute is hardcoded for now
+				params: { projectId: props?.project?.id, assetId: assets[j].id },
 				name: routeMetadataArray[i][1].displayName,
 				icon: routeMetadataArray[i][1].icon,
 				projectAsset: assets[j]

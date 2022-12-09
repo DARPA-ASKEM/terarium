@@ -68,20 +68,22 @@ const openView = (view: RouteName) => {
 			params.projectId = props.project.id;
 		}
 
+		// modelId datasetId simulationId simulationRunId
+
 		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? '';
+			params.assetId = props?.project?.assets[MODELS]?.[0] ?? '';
 		}
 
 		if (view === RouteName.DatasetRoute) {
-			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? '';
+			params.assetId = props?.project?.assets[DATASETS]?.[0] ?? '';
 		}
 
 		if (view === RouteName.SimulationRoute) {
-			params.simulationId = props?.project?.assets[PLANS]?.[0] ?? 1;
+			params.assetId = props?.project?.assets[PLANS]?.[0] ?? 1;
 		}
 
 		if (view === RouteName.SimulationResultRoute) {
-			params.simulationRunId = props?.project?.assets[SIMULATION_RUNS]?.[0] ?? 1;
+			params.assetId = props?.project?.assets[SIMULATION_RUNS]?.[0] ?? 1;
 		}
 		// Change the view
 		router.push({ name: view, params });

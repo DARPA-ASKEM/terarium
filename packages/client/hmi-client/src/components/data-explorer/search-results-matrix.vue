@@ -115,7 +115,7 @@ const isDataItemSelected = (item: ResultType) =>
 	});
 
 const modelsMap = computed(() => {
-	const modelMap: { [modelId: string]: Model } = {};
+	const modelMap: { [modelId: string]: Model } = {}; // Maybe change this back
 	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
 	if (resList) {
 		const models = resList.results as Model[];
@@ -356,13 +356,16 @@ const clustersInfo = computed(() => {
 		width: 100%;
 		vertical-align: top;
 	}
+
 	th,
 	td {
 		padding: 2px 4px;
 	}
+
 	tr {
 		border: 2px solid var(--separator);
 	}
+
 	thead {
 		tr {
 			border: none;
@@ -381,6 +384,7 @@ const clustersInfo = computed(() => {
 			background-color: var(--un-color-body-surface-background);
 		}
 	}
+
 	td {
 		background: var(--un-color-body-surface-primary);
 	}
@@ -389,25 +393,31 @@ const clustersInfo = computed(() => {
 		height: 50px;
 		padding: 8px;
 	}
+
 	.tr-item.selected td {
 		background-color: var(--un-color-accent-lighter);
 	}
+
 	.name-col {
 		width: 20%;
+
 		.name-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
+
 			.radio {
 				flex: 0 0 auto;
 				align-self: flex-start;
 				margin: 0px 5px 0 0;
 			}
+
 			.content {
 				flex: 1 1 auto;
 			}
 		}
 	}
+
 	.preview-container {
 		background-color: gray;
 		height: 30px;

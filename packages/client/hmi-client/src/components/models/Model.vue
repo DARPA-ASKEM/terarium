@@ -15,7 +15,7 @@ import { RouteName } from '@/router/routes';
 import Button from '@/components/Button.vue';
 
 const props = defineProps<{
-	modelId: string;
+	assetId: string;
 }>();
 
 class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
@@ -59,10 +59,10 @@ class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => [props.modelId],
+	() => [props.assetId],
 	async () => {
-		if (props.modelId !== '') {
-			const result = await getModel(props.modelId);
+		if (props.assetId !== '') {
+			const result = await getModel(props.assetId);
 			model.value = result.data as Model;
 		} else {
 			model.value = null;

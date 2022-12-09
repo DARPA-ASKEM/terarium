@@ -15,12 +15,12 @@ import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Document = '/projects/:projectId/docs/:id?',
+	Document = '/projects/:projectId/docs/:assetId?',
 	Project = '/projects/:projectId',
-	Model = '/projects/:projectId/model/:modelId?',
-	Dataset = '/projects/:projectId/dataset/:datasetId?',
-	Simulation = '/projects/:projectId/simulations/:simulationId?',
-	SimulationResult = '/projects/:projectId/simulation-results/:simulationRunId?',
+	Model = '/projects/:projectId/model/:assetId?',
+	Dataset = '/projects/:projectId/dataset/:assetId?',
+	Simulation = '/projects/:projectId/simulations/:assetId?',
+	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
