@@ -29,7 +29,7 @@ const emit = defineEmits<{
 			<span>
 				{{ artifact.name }}
 			</span>
-			<IconClose32 class="remove-button" @click="emit('remove-artifact', artifact.id)" />
+			<IconClose32 class="remove-button" @click.stop="emit('remove-artifact', artifact.id)" />
 		</li>
 	</ul>
 </template>

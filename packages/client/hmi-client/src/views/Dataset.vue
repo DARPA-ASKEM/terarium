@@ -15,8 +15,10 @@ const rawContent = ref<string | null>(null);
 watch(
 	() => [props.datasetId],
 	async () => {
-		dataset.value = await getDataset(props.datasetId);
-		rawContent.value = await downloadRawFile(props.datasetId);
+		if (props.datasetId !== '') {
+			dataset.value = await getDataset(props.datasetId);
+			rawContent.value = await downloadRawFile(props.datasetId);
+		}
 	},
 	{ immediate: true }
 );
@@ -45,61 +47,63 @@ const formatFeatures = (d: Dataset) => {
 
 <template>
 	<section class="dataset">
-		<h3>{{ dataset?.name ?? '' }}</h3>
-		<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
-		<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
-		<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
-		<div><b>URL:</b> {{ dataset?.url ?? '' }}</div>
-		<div><b>Geospatial Resolution:</b> {{ dataset?.geospatialResolution ?? '' }}</div>
-		<div><b>Temporal Resolution:</b> {{ dataset?.temporalResolution ?? '' }}</div>
-		<ul v-if="dataset !== null">
-			Geo Annotations:
-			<li v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
-				<strong>{{ annotation.name }}</strong
-				>: <strong>Description: </strong> {{ annotation.description }}
-				<strong>GADM Level: </strong> {{ annotation.gadm_level }}
-			</li>
-		</ul>
-		<ul v-if="dataset !== null">
-			Temporal Annotations:
-			<li v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
-				<strong>{{ annotation.name }}</strong
-				>: <strong>Description: </strong> {{ annotation.description }}
-				<strong>Time Format: </strong> {{ annotation.time_format }}
-			</li>
-		</ul>
-		<h4>Features</h4>
-		<ul v-if="dataset !== null">
-			<li v-for="feature in formatFeatures(dataset)" :key="feature">
-				{{ feature }}
-			</li>
-		</ul>
-		<!-- table preview of the data -->
-		Dataset Records: {{ csvContent.length }}
-		<div class="table-fixed-head">
-			<table>
-				<thead>
-					<tr class="tr-item">
-						<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
-						<td
-							v-for="(_, colIndex) in row"
-							:key="colIndex.toString()"
-							class="title-and-abstract-col"
-						>
-							<div class="title-and-abstract-layout">
-								<div class="content">
-									<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
+		<template v-if="dataset !== null">
+			<h3>{{ dataset?.name ?? '' }}</h3>
+			<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
+			<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
+			<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
+			<div><b>URL:</b> {{ dataset?.url ?? '' }}</div>
+			<div><b>Geospatial Resolution:</b> {{ dataset?.geospatialResolution ?? '' }}</div>
+			<div><b>Temporal Resolution:</b> {{ dataset?.temporalResolution ?? '' }}</div>
+			<ul>
+				Geo Annotations:
+				<li v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
+					<strong>{{ annotation.name }}</strong
+					>: <strong>Description: </strong> {{ annotation.description }}
+					<strong>GADM Level: </strong> {{ annotation.gadm_level }}
+				</li>
+			</ul>
+			<ul>
+				Temporal Annotations:
+				<li v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
+					<strong>{{ annotation.name }}</strong
+					>: <strong>Description: </strong> {{ annotation.description }}
+					<strong>Time Format: </strong> {{ annotation.time_format }}
+				</li>
+			</ul>
+			<h4>Features</h4>
+			<ul>
+				<li v-for="feature in formatFeatures(dataset)" :key="feature">
+					{{ feature }}
+				</li>
+			</ul>
+			<!-- table preview of the data -->
+			Dataset Records: {{ csvContent.length }}
+			<div class="table-fixed-head">
+				<table>
+					<thead>
+						<tr class="tr-item">
+							<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
+							<td
+								v-for="(_, colIndex) in row"
+								:key="colIndex.toString()"
+								class="title-and-abstract-col"
+							>
+								<div class="title-and-abstract-layout">
+									<div class="content">
+										<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
+									</div>
 								</div>
-							</div>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</template>
 	</section>
 </template>
 
