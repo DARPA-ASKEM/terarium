@@ -4,7 +4,7 @@ import BasicRenderer from '../../src/core/basic-renderer';
 // import { panGraph } from '../../src/actions/pan-graph';
 // import { moveTo } from '../../src/fn/move-to';
 // import { highlight } from '../../src/fn/highlight';
-import { group } from '../../src/fn/group';
+import { group, ungroup } from '../../src/fn/group';
 import { IEdge, IGraph, INode } from '../../src/types';
 
 import { runLayout } from './dagre';
@@ -31,8 +31,18 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter((d) => d.data.type === 'species');
-		const transitions = selection.filter((d) => d.data.type === 'transition');
+		const species = selection.filter((d) => d.type !== 'custom' && d.data.type === 'species');
+		const transitions = selection.filter(
+			(d) => d.type !== 'custom' && d.data.type === 'transition'
+		);
+		const customs = selection.filter((d) => d.type === 'custom');
+
+		customs
+			.append('rect')
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.style('fill', '#eee')
+			.style('stroke', '#888');
 
 		transitions
 			.append('rect')
@@ -64,6 +74,17 @@ class SampleRenderer extends BasicRenderer<NodeData, EdgeData> {
 }
 
 // Render
+//
+const groupBtn = document.createElement('button');
+groupBtn.innerHTML = 'Group test';
+groupBtn.addEventListener('click', groupTest);
+document.body.append(groupBtn);
+
+const unGroupBtn = document.createElement('button');
+unGroupBtn.innerHTML = 'Ungroup test';
+unGroupBtn.addEventListener('click', ungroupTest);
+document.body.append(unGroupBtn);
+
 const div = document.createElement('div');
 div.style.height = '800px';
 div.style.width = '800px';
@@ -97,37 +118,6 @@ renderer.on('hello', (evtName: string, t: string) => {
 	console.log(evtName, t);
 });
 
-// Graph data
-// let g:IGraph<NodeData, EdgeData> = {
-//   width: 800,
-//   height: 400,
-//   nodes: [
-//     { id: '0', label: 'multinomial', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '1', label: 'multinomial', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '2', label: 'ptwisesum', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '3', label: 'P', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '4', label: 'solve', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '5', label: 'P', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '6', label: 'solve', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '7', label: 'measure', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '8', label: 'measure', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//     { id: '9', label: 'difference', x: 0, y: 0, height: 20, width: 20, data: null, nodes: [] },
-//   ],
-//   edges: [
-//     { source: '3', target: '4', id: 'a', data: null, points: [] },
-//     { source: '0', target: '2', id: 'b', data: null, points: [] },
-//     { source: '2', target: '4', id: 'c', data: null, points: [] },
-//     { source: '8', target: '9', id: 'd', data: null, points: [] },
-//     { source: '4', target: '7', id: 'e', data: null, points: [] },
-//     { source: '6', target: '8', id: 'f', data: null, points: [] },
-//     { source: '5', target: '6', id: 'g', data: null, points: [] },
-//     { source: '1', target: '2', id: 'h', data: null, points: [] },
-//     { source: '2', target: '6', id: 'i', data: null, points: [] },
-//     { source: '7', target: '9', id: 'j', data: null, points: [] }
-//   ]
-//
-// };
-
 let g: IGraph<NodeData, EdgeData> = {
 	width: 500,
 	height: 500,
@@ -139,6 +129,7 @@ let g: IGraph<NodeData, EdgeData> = {
 			y: 0,
 			height: 50,
 			width: 50,
+			type: 'normal',
 			data: { type: 'species' },
 			nodes: []
 		},
@@ -149,6 +140,7 @@ let g: IGraph<NodeData, EdgeData> = {
 			y: 0,
 			height: 50,
 			width: 50,
+			type: 'normal',
 			data: { type: 'species' },
 			nodes: []
 		},
@@ -159,6 +151,7 @@ let g: IGraph<NodeData, EdgeData> = {
 			y: 0,
 			height: 50,
 			width: 50,
+			type: 'normal',
 			data: { type: 'species' },
 			nodes: []
 		},
@@ -169,6 +162,7 @@ let g: IGraph<NodeData, EdgeData> = {
 			y: 0,
 			height: 40,
 			width: 40,
+			type: 'normal',
 			data: { type: 'transition' },
 			nodes: []
 		},
@@ -179,6 +173,7 @@ let g: IGraph<NodeData, EdgeData> = {
 			y: 0,
 			height: 40,
 			width: 40,
+			type: 'normal',
 			data: { type: 'transition' },
 			nodes: []
 		}
@@ -200,12 +195,28 @@ const run = async () => {
 	// highlight(renderer, ['789'], [], {});
 	// moveTo(renderer, '123', 2000);
 
-	group(renderer, 'xyz', ['123', '456']);
-	renderer.render();
+	// group(renderer, 'xyz', ['susceptible', 'infected', 'recovered']);
+	// renderer.render();
 
 	// ungroup(renderer, 'xyz');
 	// renderer.setData(runLayout(renderer.graph));
 	// renderer.render();
 };
+
+function groupTest() {
+	if (renderer) {
+		group(renderer, 'A', ['susceptible', 'infected', 'recovered']);
+		group(renderer, 'B', ['infection', 'recovery']);
+		renderer.render();
+	}
+}
+
+function ungroupTest() {
+	if (renderer) {
+		ungroup(renderer, 'A');
+		ungroup(renderer, 'B');
+		renderer.render();
+	}
+}
 
 run();
