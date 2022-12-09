@@ -115,7 +115,7 @@ const isDataItemSelected = (item: ResultType) =>
 	});
 
 const modelsMap = computed(() => {
-	const modelMap: { [modelId: string]: Model } = {}; // Maybe change this back
+	const modelMap: { [modelId: string]: Model } = {};
 	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
 	if (resList) {
 		const models = resList.results as Model[];

@@ -33,7 +33,7 @@ const openDatasetPage = async (id: string | number) => {
 	datasetId.value = id; // track selection
 	router.push({
 		name: RouteName.DatasetRoute,
-		params: { projectId: resourcesStore.activeProject?.id, datasetId: id }
+		params: { projectId: resourcesStore.activeProject?.id, assetId: id }
 	});
 };
 
@@ -57,7 +57,7 @@ const removeDataset = async (id: string | number) => {
 		// clear the dataset ID as a URL param
 		router.push({
 			name: RouteName.DatasetRoute,
-			params: { projectId: resourcesStore.activeProject?.id, datasetId: '' }
+			params: { projectId: resourcesStore.activeProject?.id, assetId: '' }
 		});
 	}
 };

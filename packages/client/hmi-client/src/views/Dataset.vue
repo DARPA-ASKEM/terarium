@@ -5,19 +5,19 @@ import { csvToRecords, getColumns, Record } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
-	datasetId: string;
+	assetId: string;
 }>();
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<string | null>(null);
 
-// Whenever datasetId changes, fetch dataset with that ID
+// Whenever assetId changes, fetch dataset with that ID
 watch(
-	() => [props.datasetId],
+	() => [props.assetId],
 	async () => {
-		if (props.datasetId !== '') {
-			dataset.value = await getDataset(props.datasetId);
-			rawContent.value = await downloadRawFile(props.datasetId);
+		if (props.assetId !== '') {
+			dataset.value = await getDataset(props.assetId);
+			rawContent.value = await downloadRawFile(props.assetId);
 		}
 	},
 	{ immediate: true }
