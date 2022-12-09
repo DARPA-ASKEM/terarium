@@ -4,6 +4,7 @@ import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
+import { useTabStore } from '@/stores/tabs';
 
 interface ModelProps {
 	modelId: string;
@@ -14,11 +15,14 @@ const props = defineProps<{
 }>();
 
 const resourcesStore = useResourcesStore();
+const tabStore = useTabStore();
 
 const newModelId = computed(() => props.modelId);
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
+const activeProject = resourcesStore.activeProject;
+const tabContext = `model${activeProject?.id}`;
 
 function removeClosedTab(tab: Tab) {
 	const tabIndexToRemove = openTabs.value.indexOf(tab);
@@ -53,14 +57,10 @@ watch(newModelId, (id) => {
 	}
 });
 
-const initialTab = {
-	name: getModelName(props.modelId),
-	props: {
-		modelId: props.modelId
-	}
-} as Tab;
-
-openTabs.value.push(initialTab);
+const previousOpenTabs = tabStore.get(tabContext);
+if (previousOpenTabs) {
+	openTabs.value = openTabs.value.concat(previousOpenTabs);
+}
 </script>
 
 <template>
@@ -70,6 +70,7 @@ openTabs.value.push(initialTab);
 		:active-tab="props.modelId"
 		@close-tab="(tab) => removeClosedTab(tab)"
 		:active-tab-index="activeTabIndex"
+		:context="tabContext"
 	>
 	</TabContainer>
 </template>

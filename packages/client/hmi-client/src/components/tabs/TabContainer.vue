@@ -5,33 +5,37 @@
  * @prop {Object} componentToRender - the component that you want to render as a tab
  * @prop {Object} icon - optional - an icon to display next to the name of each tab
  * @prop {number} activeTabIndex - tab to make active
+ * @prop {string} context -
  *
  * @typedef {Object} Tab
  * @property {string} tabName - name to display in tab header
  * @property {Object} props - optional - any props that should be passed into componentToRender
  *
  */
-import { ref, computed, onBeforeUpdate, watch } from 'vue';
+import { ref, computed, onBeforeUpdate, watch, onBeforeMount } from 'vue';
 import TabComponent from '@/components/tabs/Tab.vue';
 import { Tab } from '@/types/common';
+import { useTabStore } from '@/stores/tabs';
 
 const props = defineProps<{
 	tabs: Tab[];
 	componentToRender: Object;
 	icon?: Object;
 	activeTabIndex: number;
+	context: string;
 }>();
 
 const emit = defineEmits(['closeTab']);
 
 const newActiveTab = computed(() => props.activeTabIndex);
 const currentActiveTab = ref(0);
+const tabStore = useTabStore();
 
 function addKeysToTabs(tabs: Tab[]) {
-	return tabs.map((tab, index) => ({
+	return tabs.map((tab, key) => ({
 		name: tab.name,
 		props: tab.props,
-		tabKey: index
+		key
 	}));
 }
 
@@ -41,6 +45,7 @@ const keyedTabs = computed(() => addKeysToTabs(tabsRef.value));
 
 function setActiveTab(tabIndex: number) {
 	currentActiveTab.value = tabIndex;
+	tabStore.activeTabIndex = tabIndex;
 }
 
 function closeTab(tabIndexToClose: number) {
@@ -56,17 +61,34 @@ function closeTab(tabIndexToClose: number) {
 		(currentActiveTab.value !== 0 && currentActiveTab.value > tabIndexToClose) ||
 		currentActiveTab.value === lastTabIndex
 	) {
-		currentActiveTab.value--;
+		setActiveTab(currentActiveTab.value - 1);
 	}
 	emit('closeTab', tabToClose);
 }
 
+function loadTabs() {
+	const previousOpenTabs = tabStore.get(props.context);
+	if (previousOpenTabs) {
+		tabsRef.value = previousOpenTabs;
+	}
+}
+
 onBeforeUpdate(() => {
+	loadTabs();
 	tabsRef.value = props.tabs;
+});
+
+onBeforeMount(() => {
+	loadTabs();
+	setActiveTab(tabStore.activeTabIndex);
 });
 
 watch(newActiveTab, (index) => {
 	setActiveTab(index);
+});
+
+watch(keyedTabs, () => {
+	tabStore.set(props.context, tabsRef.value);
 });
 </script>
 
@@ -77,7 +99,7 @@ watch(newActiveTab, (index) => {
 			v-for="(tab, index) in keyedTabs"
 			:name="tab.name"
 			:index="index"
-			:key="tab.tabKey"
+			:key="tab.key"
 			:isActive="currentActiveTab === index"
 			:num-tabs="keyedTabs.length"
 			@click-tab-header="(tabIndex) => setActiveTab(tabIndex)"

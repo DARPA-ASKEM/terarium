@@ -27,7 +27,7 @@ import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
 import { RouteName } from '@/router/routes';
-import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
+import { PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
 
 const router = useRouter();
 
@@ -73,10 +73,6 @@ const openView = (view: RouteName) => {
 		// Set the projectId, except for the Document Route
 		if (view !== RouteName.DocumentRoute && props?.project?.id) {
 			params.projectId = props.project.id;
-		}
-
-		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
 		}
 
 		if (view === RouteName.DatasetRoute) {
