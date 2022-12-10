@@ -64,7 +64,7 @@ import { getDocumentDoi } from '@/utils/data-util';
 
 const props = defineProps({
 	// this id is received as the document id mapped from the route param
-	id: {
+	assetId: {
 		type: String,
 		default: ''
 	}
@@ -76,7 +76,7 @@ const doc = ref<XDDArticle | null>(null);
 watch(
 	props,
 	async () => {
-		const id = props.id;
+		const id = props.assetId;
 		if (id !== '') {
 			// fetch doc from XDD
 			const d = await getDocumentById(id);

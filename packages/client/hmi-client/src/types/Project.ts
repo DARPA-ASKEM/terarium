@@ -29,6 +29,7 @@ export type SimpleProjectAssets = {
 export type Project = {
 	id: string;
 	name: string;
+	title?: string;
 	description: string;
 	timestamp: string;
 	active: boolean;

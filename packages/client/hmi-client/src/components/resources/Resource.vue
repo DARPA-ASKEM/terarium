@@ -1,58 +1,45 @@
-<template>
-	<ul>
-		<li
-			v-for="(resource, index) in resources"
-			:key="index"
-			@click="openResource(resource.route, resource.params)"
-		>
-			<component :is="resource.icon" />
-			<div>
-				<header>
-					{{ resource.projectAsset.name }}
-					{{ resource.projectAsset.title }}
-				</header>
-				<footer>{{ resource.route }} - {{ resource.projectAsset.timestamp }}</footer>
-			</div>
-		</li>
-	</ul>
-</template>
-
 <script setup lang="ts">
 import { Project } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
-export type Resource = {
+export type ResourceType = {
+	// Thinks it's ambiguous if I just name it Resource
 	route: RouteName;
 	params: RouteParamsRaw;
 	name: string;
 	icon: any;
-	projectAsset: Project | any;
+	projectAsset: Project;
 };
 
 defineProps<{
-	resources: Resource[];
+	resource: ResourceType;
 }>();
 
 const router = useRouter();
 
-function openResource(view: RouteName, params: RouteParamsRaw) {
-	router.push({ name: view, params });
+function openResource(name: RouteName, params: RouteParamsRaw) {
+	router.push({ name, params });
 }
 </script>
 
-<style scoped>
-ul {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	list-style: none;
-	gap: 1rem;
-	margin: 1rem 0;
-	color: var(--un-color-body-text-secondary);
-	width: fit-content;
-}
+<template>
+	<div class="resource" @click="openResource(resource.route, resource.params)">
+		<component :is="resource.icon" />
+		<div class="resource-details">
+			<header>
+				{{ resource.projectAsset.name }}
+				{{ resource.projectAsset.title }}
+			</header>
+			<footer>
+				{{ resource.route.charAt(0).toUpperCase() + resource.route.slice(1) }} - Last date accessed
+			</footer>
+		</div>
+	</div>
+</template>
 
-li {
+<style scoped>
+.resource {
 	width: 25rem;
 	display: flex;
 	border: 2px solid var(--un-color-black-100);
@@ -67,7 +54,7 @@ svg {
 	color: var(--un-color-accent);
 }
 
-div {
+.resource-details {
 	width: 80%;
 	border-left: 1px solid var(--un-color-body-stroke);
 	display: flex;

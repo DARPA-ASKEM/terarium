@@ -38,7 +38,7 @@ const openDocumentPage = async (xddUri: string) => {
 	documentId.value = xddUri; // track selection
 	router.push({
 		name: RouteName.DocumentRoute,
-		params: { projectId: resourcesStore.activeProject?.id, id: xddUri }
+		params: { projectId: resourcesStore.activeProject?.id, assetId: xddUri }
 	});
 };
 
@@ -64,7 +64,7 @@ const removeDocument = async (xddUri: string) => {
 
 	// if the user deleted the currently selected document, then clear its content from the view
 	if (docAsset.xdd_uri === documentId.value) {
-		router.push('/docs'); // clear the doc ID as a URL param
+		router.push('/document'); // clear the doc ID as a URL param
 	}
 };
 

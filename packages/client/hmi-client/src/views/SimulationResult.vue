@@ -29,12 +29,12 @@ import run9Description from './simulation-run-data/9/description.json';
 const route = useRoute();
 
 watch(
-	() => route.params.simulationRunId,
-	async (simulationRunId) => {
-		if (!simulationRunId) return;
+	() => route.params.assetId,
+	async (assetId) => {
+		if (!assetId) return;
 
 		// FIXME: siwtch to different simulation run result
-		console.log('simulation run id changed to', simulationRunId);
+		console.log('simulation run id changed to', assetId);
 	},
 	{ immediate: true }
 );

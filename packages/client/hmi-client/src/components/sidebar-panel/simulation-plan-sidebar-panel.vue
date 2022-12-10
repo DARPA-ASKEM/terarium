@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const router = useRouter();
 const openSimulationPlan = (runId: string | number) => {
-	router.push({ params: { simulationId: runId } });
+	router.push({ params: { assetId: runId } });
 };
 const simulationPlansAsArtifactList = computed(() =>
 	props.project.assets.plans.map((planId) => ({
@@ -22,7 +22,7 @@ const route = useRoute();
 const selectedArtifactId = computed(() => {
 	// route.params values can be string or string[], safe to assume there is
 	//	only one value for this param.
-	const planId = route.params.simulationId as string;
+	const planId = route.params.assetId as string;
 	// Convert that string to a (decimal) number so it's comparable with the plan
 	//	IDs we display in the list.
 	return Number.parseInt(planId, 10);
