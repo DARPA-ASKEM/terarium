@@ -51,7 +51,11 @@
 				</div>
 			</div>
 		</div>
-		<div v-else class="invalid-doc"></div>
+		<resources-list-config
+			v-else
+			:project="props?.project"
+			:resourceRoute="RouteName.DocumentRoute"
+		/>
 	</section>
 </template>
 
@@ -61,15 +65,14 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
+import { RouteName } from '@/router/routes';
+import { Project } from '@/types/Project';
+import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
 
-const props = defineProps({
-	// this id is received as the document id mapped from the route param
-	assetId: {
-		type: String,
-		default: ''
-	}
-	// NOTE that project is automatically injected as prop as well
-});
+const props = defineProps<{
+	assetId: string;
+	project: Project;
+}>();
 
 const doc = ref<XDDArticle | null>(null);
 

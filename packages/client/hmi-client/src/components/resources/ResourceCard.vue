@@ -1,18 +1,10 @@
 <script setup lang="ts">
-import { Project } from '@/types/Project';
+import { Resource } from '@/types/Resource';
 import { RouteName } from '@/router/routes';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
-export type ResourceType = {
-	route: RouteName;
-	params: RouteParamsRaw;
-	name: string;
-	icon: any;
-	projectAsset: Project;
-};
-
 defineProps<{
-	resource: ResourceType;
+	resource: Resource;
 }>();
 
 const router = useRouter();
@@ -67,5 +59,9 @@ header {
 	font-size: 1.1rem;
 	color: var(--un-color-body-text-primary);
 	/* max-height: 3rem; */
+}
+
+footer {
+	font-size: 1rem;
 }
 </style>

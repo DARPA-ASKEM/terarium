@@ -3,9 +3,13 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
 import { csvToRecords, getColumns, Record } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
+import { RouteName } from '@/router/routes';
+import { Project } from '@/types/Project';
+import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
 
 const props = defineProps<{
 	assetId: string;
+	project: Project;
 }>();
 
 const dataset = ref<Dataset | null>(null);
@@ -104,6 +108,11 @@ const formatFeatures = (d: Dataset) => {
 				</table>
 			</div>
 		</template>
+		<resources-list-config
+			v-else
+			:project="props?.project"
+			:resourceRoute="RouteName.DatasetRoute"
+		/>
 	</section>
 </template>
 

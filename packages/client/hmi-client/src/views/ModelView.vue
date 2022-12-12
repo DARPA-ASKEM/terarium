@@ -4,6 +4,9 @@ import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed, onMounted } from 'vue';
 import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
+import { Project } from '@/types/Project';
+import { RouteName } from '@/router/routes';
+import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
 
 interface ModelProps {
 	assetId: string;
@@ -11,6 +14,7 @@ interface ModelProps {
 
 const props = defineProps<{
 	assetId: string;
+	project: Project;
 }>();
 
 const resourcesStore = useResourcesStore();
@@ -69,7 +73,14 @@ onMounted(async () => {
 </script>
 
 <template>
+	<resources-list-config
+		class="page"
+		v-if="openTabs.length < 1"
+		:project="props?.project"
+		:resource-route="RouteName.ModelRoute"
+	/>
 	<TabContainer
+		v-else
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"

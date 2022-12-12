@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import Resource, { ResourceType } from '@/components/resources/Resource.vue';
+import { Resource } from '@/types/Resource';
+import ResourceCard from '@/components/resources/ResourceCard.vue';
 
 defineProps<{
-	resources: ResourceType[];
+	resources: Resource[];
 }>();
 </script>
 
 <template>
 	<ul>
 		<li v-for="(resource, index) in resources" :key="index">
-			<Resource :resource="resource" />
+			<ResourceCard :resource="resource" />
 		</li>
 	</ul>
 </template>

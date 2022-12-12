@@ -1,50 +1,10 @@
 <script setup lang="ts">
-import { Project, ProjectAssetTypes } from '@/types/Project';
-import { RouteMetadata, RouteName } from '@/router/routes';
-import { ResourceType } from '@/components/resources/Resource.vue';
-import ResourcesList from '@/components/resources/resources-list.vue';
-import useResourcesStore from '@/stores/resources';
-
-const emit = defineEmits(['show-data-explorer']);
-const goToDataExplorer = () => emit('show-data-explorer');
+import { Project } from '@/types/Project';
+import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
 
 const props = defineProps<{
 	project: Project;
 }>();
-
-const store = useResourcesStore();
-const resources: ResourceType[] = [];
-
-// Not sure how to get types to work here
-const routeMetadataArray: [
-	RouteName,
-	{ displayName: string; icon: any; projectAsset?: ProjectAssetTypes }
-] = Object.entries(RouteMetadata);
-
-for (let i = 0; i < routeMetadataArray.length; i++) {
-	if (routeMetadataArray[i][1].projectAsset && store.activeProjectAssets !== null) {
-		const assets = store.activeProjectAssets[routeMetadataArray[i][1].projectAsset];
-		for (let j = 0; j < assets.length; j++) {
-			resources.push({
-				route: routeMetadataArray[i][0],
-				params: {
-					projectId: props?.project?.id,
-					assetId:
-						routeMetadataArray[i][0] === RouteName.DocumentRoute ? assets[j].xdd_uri : assets[j].id
-				},
-				name: routeMetadataArray[i][1].displayName,
-				icon: routeMetadataArray[i][1].icon,
-				projectAsset: assets[j]
-			});
-			if (resources.length === 10) break; // Limit amount of resources
-		}
-	}
-	if (resources.length === 10) break; // Limit amount of resources
-}
-
-console.log(routeMetadataArray);
-console.log(store.activeProjectAssets);
-console.log(resources);
 </script>
 
 <template>
@@ -67,12 +27,7 @@ console.log(resources);
 				</div>
 			</section>
 			<section class="detail">
-				<h3>Recent Resources</h3>
-				<resources-list v-if="resources.length > 0" :resources="resources" />
-				<p v-else>
-					Find Models, Datasets, or Papers with the
-					<a @click="goToDataExplorer"> Data Explorer </a>
-				</p>
+				<resources-list-config :project="props?.project" />
 			</section>
 		</section>
 	</div>
