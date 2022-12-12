@@ -4,14 +4,21 @@ import { defineStore } from 'pinia';
 export const useTabStore = defineStore('tabs', {
 	state: () => ({
 		tabMap: new Map<String, Tab[]>() as Map<String, Tab[]>,
-		activeTabIndex: 0 as number
+		activeTabIndexMap: new Map<String, Number>() as Map<String, Number>
 	}),
 	actions: {
-		get(context: string): Tab[] | undefined {
+		getTabs(context: string): Tab[] | undefined {
 			return this.tabMap.get(context);
 		},
-		set(context: string, newTabs: Tab[]) {
+		setTabs(context: string, newTabs: Tab[]) {
 			this.tabMap.set(context, newTabs);
+		},
+		getActiveTabIndex(context: string): number {
+			const activeTabIndex = this.activeTabIndexMap.get(context);
+			return activeTabIndex === undefined ? 0 : activeTabIndex.valueOf();
+		},
+		setActiveTabIndex(context: string, index: number) {
+			this.activeTabIndexMap.set(context, index);
 		}
 	}
 });

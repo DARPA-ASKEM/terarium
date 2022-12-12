@@ -6,15 +6,22 @@ export interface ArtifactListItem {
 	name: string;
 }
 
-defineProps<{
+const props = defineProps<{
 	artifacts: ArtifactListItem[];
-	selectedArtifactId?: string | number;
+	selectedArtifactIds?: string[];
 }>();
 
 const emit = defineEmits<{
 	(e: 'artifact-clicked', id: string | number): void;
 	(e: 'remove-artifact', id: string | number): void;
 }>();
+
+function isArtifactSelected(artifactId) {
+	if (props.selectedArtifactIds) {
+		return props.selectedArtifactIds.includes(artifactId.toString());
+	}
+	return false;
+}
 </script>
 
 <template>
@@ -23,7 +30,7 @@ const emit = defineEmits<{
 			v-for="artifact in artifacts"
 			:key="artifact.id"
 			class="row"
-			:class="{ active: artifact.id === selectedArtifactId }"
+			:class="{ active: isArtifactSelected(artifact.id) }"
 			@click="emit('artifact-clicked', artifact.id)"
 		>
 			<span>

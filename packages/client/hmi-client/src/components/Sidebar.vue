@@ -75,6 +75,10 @@ const openView = (view: RouteName) => {
 			params.projectId = props.project.id;
 		}
 
+		if (view === RouteName.ModelRoute) {
+			params.modelId = null; // in theory shouldn't even need to set this param as it's optional but vue warns about a missing prop otherwise
+		}
+
 		if (view === RouteName.DatasetRoute) {
 			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? 1;
 		}

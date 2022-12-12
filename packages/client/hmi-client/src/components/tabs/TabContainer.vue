@@ -45,7 +45,7 @@ const keyedTabs = computed(() => addKeysToTabs(tabsRef.value));
 
 function setActiveTab(tabIndex: number) {
 	currentActiveTab.value = tabIndex;
-	tabStore.activeTabIndex = tabIndex;
+	tabStore.setActiveTabIndex(props.context, tabIndex);
 }
 
 function closeTab(tabIndexToClose: number) {
@@ -58,8 +58,8 @@ function closeTab(tabIndexToClose: number) {
 	// If the active tab is closed, the next tab to the right becomes the active tab.
 	// This replicates the tab behaviour in Chrome.
 	if (
-		(currentActiveTab.value !== 0 && currentActiveTab.value > tabIndexToClose) ||
-		currentActiveTab.value === lastTabIndex
+		currentActiveTab.value !== 0 &&
+		(currentActiveTab.value > tabIndexToClose || currentActiveTab.value === lastTabIndex)
 	) {
 		setActiveTab(currentActiveTab.value - 1);
 	}
@@ -67,7 +67,7 @@ function closeTab(tabIndexToClose: number) {
 }
 
 function loadTabs() {
-	const previousOpenTabs = tabStore.get(props.context);
+	const previousOpenTabs = tabStore.getTabs(props.context);
 	if (previousOpenTabs) {
 		tabsRef.value = previousOpenTabs;
 	}
@@ -80,15 +80,16 @@ onBeforeUpdate(() => {
 
 onBeforeMount(() => {
 	loadTabs();
-	setActiveTab(tabStore.activeTabIndex);
+	setActiveTab(tabStore.getActiveTabIndex(props.context));
 });
 
 watch(newActiveTab, (index) => {
+	// console.log('set active tab');
 	setActiveTab(index);
 });
 
 watch(keyedTabs, () => {
-	tabStore.set(props.context, tabsRef.value);
+	tabStore.setTabs(props.context, tabsRef.value);
 });
 </script>
 

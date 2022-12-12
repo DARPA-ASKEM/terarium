@@ -1,7 +1,7 @@
 <template>
 	<ArtifactList
 		:artifacts="models"
-		:selected-artifact-id="modelId"
+		:selected-artifact-ids="modelIds"
 		@artifact-clicked="openModelPage"
 		@remove-artifact="removeModel"
 	/>
@@ -21,16 +21,31 @@ import { MODELS } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { Model } from '@/types/Model';
 import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
+import { useTabStore } from '@/stores/tabs';
+
+interface ModelProps {
+	modelId: string;
+}
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
+const tabStore = useTabStore();
 
-const modelId = ref<string | number>('');
+const modelIds = ref<string[] | undefined>([]);
 const models = ref<Model[]>([]);
+const tabContext = `model${resourcesStore.activeProject?.id}`;
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+tabStore.$subscribe((mutation, state) => {
+	modelIds.value = state.tabMap.get(tabContext)?.map((tab) => {
+		const tabProps = tab.props as ModelProps;
+		return tabProps.modelId;
+	});
+});
 
 const openModelPage = async (id: string | number) => {
 	// pass this model id as param
-	modelId.value = id; // track selection
 	router.push({
 		name: RouteName.ModelRoute,
 		params: { projectId: resourcesStore.activeProject?.id, modelId: id }
@@ -53,13 +68,13 @@ const removeModel = async (id: string | number) => {
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view
-	if (id === modelId.value) {
-		// clear the model ID as a URL param
-		router.push({
-			name: RouteName.ModelRoute,
-			params: { projectId: resourcesStore.activeProject?.id, modelId: '' }
-		});
-	}
+	// if (id === modelId.value) {
+	// 	// clear the model ID as a URL param
+	// 	router.push({
+	// 		name: RouteName.ModelRoute,
+	// 		params: { projectId: resourcesStore.activeProject?.id, modelId: '' }
+	// 	});
+	// }
 };
 
 onMounted(() => {

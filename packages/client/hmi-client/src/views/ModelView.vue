@@ -11,7 +11,7 @@ interface ModelProps {
 }
 
 const props = defineProps<{
-	modelId: string;
+	modelId?: string;
 }>();
 
 const resourcesStore = useResourcesStore();
@@ -38,26 +38,28 @@ function getModelName(id: string): string | null {
 }
 
 watch(newModelId, (id) => {
-	const newTab = {
-		name: getModelName(id),
-		props: {
-			modelId: id
+	if (id) {
+		const newTab = {
+			name: getModelName(id),
+			props: {
+				modelId: id
+			}
+		} as Tab;
+		// Would have loved to use a Set here instead of an array, but equality does not work as expected for objects
+		const foundTabIndex = openTabs.value.findIndex((tab) => {
+			const tabProps = tab.props as ModelProps;
+			return tabProps.modelId === props.modelId;
+		});
+		if (foundTabIndex === -1) {
+			openTabs.value.push(newTab);
+			activeTabIndex.value = openTabs.value.length - 1;
+		} else {
+			activeTabIndex.value = foundTabIndex;
 		}
-	} as Tab;
-	// Would have loved to use a Set here instead of an array, but equality was not working
-	const foundTabIndex = openTabs.value.findIndex((tab) => {
-		const tabProps = tab.props as ModelProps;
-		return tabProps.modelId === props.modelId;
-	});
-	if (foundTabIndex === -1) {
-		openTabs.value.push(newTab);
-		activeTabIndex.value = openTabs.value.length - 1;
-	} else {
-		activeTabIndex.value = foundTabIndex;
 	}
 });
 
-const previousOpenTabs = tabStore.get(tabContext);
+const previousOpenTabs = tabStore.getTabs(tabContext);
 if (previousOpenTabs) {
 	openTabs.value = openTabs.value.concat(previousOpenTabs);
 }
