@@ -12,7 +12,6 @@ all:
 	@echo ""
 	@echo "Commands:"
 	@echo "  clean                    - remove bin, dist and node_modules directories"
-	@echo "  build-all                - compile all sources"
 	@echo "  build-<target>           - compile sources for a specific target - see below for list of targets"
 	@echo "  images                   - build docker images of all targets (except native)"
 	@echo "  image-<target>           - build docker image of a specific target - see below for list of targets"
