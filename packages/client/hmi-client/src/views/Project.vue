@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Project } from '@/types/Project';
-import { ProjectAssetTypes, RouteMetadata, RouteName } from '@/router/routes';
+import { Project, ProjectAssetTypes } from '@/types/Project';
+import { RouteMetadata, RouteName } from '@/router/routes';
 import { ResourceType } from '@/components/resources/Resource.vue';
 import ResourcesList from '@/components/resources/resources-list.vue';
 import useResourcesStore from '@/stores/resources';

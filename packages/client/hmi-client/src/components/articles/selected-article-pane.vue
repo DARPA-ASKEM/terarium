@@ -20,7 +20,7 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { Project, PUBLICATIONS } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
@@ -55,7 +55,7 @@ const addResourcesToProject = async (projectId: string) => {
 		const publicationId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = PUBLICATIONS;
+		const assetsType = ProjectAssetTypes.PUBLICATIONS;
 		await ProjectService.addAsset(projectId, assetsType, publicationId);
 
 		// update local copy of project assets

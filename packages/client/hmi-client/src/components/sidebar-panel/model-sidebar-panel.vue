@@ -17,7 +17,7 @@ import { useRouter } from 'vue-router';
 import useResourcesStore from '@/stores/resources';
 import { onMounted, ref } from 'vue';
 import { deleteAsset } from '@/services/project';
-import { MODELS } from '@/types/Project';
+import { ProjectAssetTypes } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { Model } from '@/types/Model';
 import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
@@ -40,16 +40,14 @@ const openModelPage = async (id: string | number) => {
 const removeModel = async (id: string | number) => {
 	// remove the model from the project assets
 	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
-		const assetsType = MODELS;
+		const assetsType = ProjectAssetTypes.MODELS;
 		deleteAsset(resourcesStore.activeProject.id, assetsType, id);
 		// remove also from the local cache
-		resourcesStore.activeProject.assets[MODELS] = resourcesStore.activeProject.assets[
-			MODELS
-		].filter((modId) => modId !== id);
-		resourcesStore.activeProjectAssets[MODELS] = resourcesStore.activeProjectAssets[MODELS].filter(
-			(a) => a.id !== id
-		);
-		models.value = resourcesStore.activeProjectAssets[MODELS];
+		resourcesStore.activeProject.assets[ProjectAssetTypes.MODELS] =
+			resourcesStore.activeProject.assets[ProjectAssetTypes.MODELS].filter((modId) => modId !== id);
+		resourcesStore.activeProjectAssets[ProjectAssetTypes.MODELS] =
+			resourcesStore.activeProjectAssets[ProjectAssetTypes.MODELS].filter((a) => a.id !== id);
+		models.value = resourcesStore.activeProjectAssets[ProjectAssetTypes.MODELS];
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view

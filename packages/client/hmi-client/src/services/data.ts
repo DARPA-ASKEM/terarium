@@ -3,7 +3,7 @@ import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/c
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
 import { applyFacetFiltersToDatasets, applyFacetFiltersToModels } from '@/utils/data-util';
-import { DATASETS, MODELS } from '@/types/Project';
+import { ProjectAssetTypes } from '@/types/Project';
 import { CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
@@ -49,7 +49,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	//        should be added for datasets and other resource types
 	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));
 
-	let conceptFacets = await getConceptFacets([MODELS]);
+	let conceptFacets = await getConceptFacets([ProjectAssetTypes.MODELS]);
 
 	//
 	// simulate applying filters to the model query
@@ -156,7 +156,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		// re-create the concept facets if the user has applyied any concept filters
 		const uniqueCuries = uniq(curies);
 		if (uniqueCuries.length > 0) {
-			conceptFacets = await getConceptFacets([MODELS], uniqueCuries);
+			conceptFacets = await getConceptFacets([ProjectAssetTypes.MODELS], uniqueCuries);
 		}
 	}
 
@@ -193,7 +193,7 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		type: 'dataset'
 	}));
 
-	let conceptFacets = await getConceptFacets([DATASETS]);
+	let conceptFacets = await getConceptFacets([ProjectAssetTypes.DATASETS]);
 
 	//
 	// simulate applying filters to the dataset query
@@ -304,7 +304,7 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		// re-create the concept facets if the user has applyied any concept filters
 		const uniqueCuries = uniq(curies);
 		if (uniqueCuries.length > 0) {
-			conceptFacets = await getConceptFacets([DATASETS], uniqueCuries);
+			conceptFacets = await getConceptFacets([ProjectAssetTypes.DATASETS], uniqueCuries);
 		}
 	}
 

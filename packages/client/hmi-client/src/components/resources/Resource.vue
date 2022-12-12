@@ -4,7 +4,6 @@ import { RouteName } from '@/router/routes';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
 export type ResourceType = {
-	// Thinks it's ambiguous if I just name it Resource
 	route: RouteName;
 	params: RouteParamsRaw;
 	name: string;
