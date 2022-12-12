@@ -6,7 +6,6 @@ import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import { Project } from '@/types/Project';
 import { RouteName } from '@/router/routes';
-import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
 
 interface ModelProps {
 	assetId: string;
@@ -20,7 +19,9 @@ const props = defineProps<{
 const resourcesStore = useResourcesStore();
 
 const newModelId = computed(() => props.assetId);
-const openTabs = ref<Tab[]>([]);
+const openTabs = ref<Tab[]>([
+	{ name: 'Recents', props: { project: props.project, resourceRoute: RouteName.ModelRoute } }
+]); // These are props for resources-list-config
 const activeTabIndex = ref(0);
 const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
 
@@ -68,19 +69,12 @@ onMounted(async () => {
 		} as Tab;
 
 		openTabs.value.push(initialTab);
-	} // end if
+	} // end if:show-recents-props="{ project: props.project, resourceRoute: RouteName.ModelRoute }"
 });
 </script>
 
 <template>
-	<resources-list-config
-		class="page"
-		v-if="openTabs.length < 1"
-		:project="props?.project"
-		:resource-route="RouteName.ModelRoute"
-	/>
 	<TabContainer
-		v-else
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"

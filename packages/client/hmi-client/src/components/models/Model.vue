@@ -104,7 +104,6 @@ const goToSimulationPlanPage = () => {
 			<h3>{{ model?.name ?? '' }}</h3>
 			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
 		</header>
-
 		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
 			<p>{{ model?.description ?? '' }}</p>
 			<div class="less-more-button-container">

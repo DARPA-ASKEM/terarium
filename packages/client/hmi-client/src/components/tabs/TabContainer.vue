@@ -5,6 +5,7 @@
  * @prop {Object} componentToRender - the component that you want to render as a tab
  * @prop {Object} icon - optional - an icon to display next to the name of each tab
  * @prop {number} activeTabIndex - tab to make active
+ * @prop {boolean} showRecentsProps - optional - show recent resources of this asset
  *
  * @typedef {Object} Tab
  * @property {string} tabName - name to display in tab header
@@ -14,6 +15,7 @@
 import { ref, computed, onBeforeUpdate, watch } from 'vue';
 import TabComponent from '@/components/tabs/Tab.vue';
 import { Tab } from '@/types/common';
+import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
 
 const props = defineProps<{
 	tabs: Tab[];
@@ -21,6 +23,8 @@ const props = defineProps<{
 	icon?: Object;
 	activeTabIndex: number;
 }>();
+
+console.log(props.tabs); // Doesn't like the props.tabs.props here - I get extraneous non-props attribute warning from this
 
 const emit = defineEmits(['closeTab']);
 
@@ -86,7 +90,11 @@ watch(newActiveTab, (index) => {
 			<template #tabIcon>
 				<component :is="icon"></component>
 			</template>
-			<component class="tab-content" :is="componentToRender" v-bind="tab.props"></component>
+			<component
+				class="tab-content"
+				:is="tab.props?.resourceRoute ? ResourcesListConfig : componentToRender"
+				v-bind="tab.props"
+			></component>
 		</TabComponent>
 	</div>
 </template>
