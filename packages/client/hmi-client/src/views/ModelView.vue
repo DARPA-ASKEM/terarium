@@ -23,6 +23,7 @@ const tabContext = `model${activeProject?.id}`;
 function removeClosedTab(tab: Tab) {
 	const tabIndexToRemove = openTabs.value.indexOf(tab);
 	openTabs.value.splice(tabIndexToRemove, 1);
+	tabStore.setTabs(tabContext, openTabs.value);
 }
 
 function getModelName(id: string): string | null {
@@ -31,6 +32,11 @@ function getModelName(id: string): string | null {
 		return currentModel.name;
 	}
 	return null;
+}
+
+function setActiveTab(index: number) {
+	activeTabIndex.value = index;
+	tabStore.setActiveTabIndex(tabContext, index);
 }
 
 watch(newModelId, (id) => {
@@ -48,9 +54,12 @@ watch(newModelId, (id) => {
 		});
 		if (foundTabIndex === -1) {
 			openTabs.value.push(newTab);
+			tabStore.setTabs(tabContext, openTabs.value);
 			activeTabIndex.value = openTabs.value.length - 1;
+			tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
 		} else {
 			activeTabIndex.value = foundTabIndex;
+			tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
 		}
 	}
 });
@@ -58,6 +67,7 @@ watch(newModelId, (id) => {
 const previousOpenTabs = tabStore.getTabs(tabContext);
 if (previousOpenTabs) {
 	openTabs.value = openTabs.value.concat(previousOpenTabs);
+	setActiveTab(tabStore.getActiveTabIndex(tabContext));
 }
 </script>
 
@@ -66,9 +76,9 @@ if (previousOpenTabs) {
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"
 		:active-tab="props.modelId"
-		@close-tab="(tab) => removeClosedTab(tab)"
+		@tab-closed="(tab) => removeClosedTab(tab)"
+		@tab-selected="(index) => setActiveTab(index)"
 		:active-tab-index="activeTabIndex"
-		:context="tabContext"
 	>
 	</TabContainer>
 </template>

@@ -65,13 +65,16 @@ const removeModel = async (id: string | number) => {
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view
-	// if (id === modelId.value) {
-	// 	// clear the model ID as a URL param
-	// 	router.push({
-	// 		name: RouteName.ModelRoute,
-	// 		params: { projectId: resourcesStore.activeProject?.id, modelId: '' }
+	// const openTabs = tabStore.getTabs(tabContext);
+	// if (openTabs) {
+	// 	const unclosedTabs = openTabs.filter(tab => {
+	// 		const tabProps = tab.props as ModelProps;
+	// 		console.log(tabProps.modelId.toString() + ' ' + id.toString());
+	// 		return (tabProps.modelId.toString() === id.toString());
 	// 	});
-	// }
+	// 	console.log(unclosedTabs);
+	// 	tabStore.setTabs(tabContext, unclosedTabs);
+	// };
 };
 
 onMounted(() => {
@@ -80,7 +83,7 @@ onMounted(() => {
 	if (modelsInCurrentProject) {
 		models.value = modelsInCurrentProject;
 	}
-	// set active selecitons from tab store
+	// set active selections from tab store
 	modelIds.value = tabStore.getTabs(tabContext)?.map((tab) => {
 		const tabProps = tab.props as ModelProps;
 		return tabProps.modelId;

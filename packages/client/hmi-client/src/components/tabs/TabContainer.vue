@@ -5,7 +5,6 @@
  * @prop {Object} componentToRender - the component that you want to render as a tab
  * @prop {Object} icon - optional - an icon to display next to the name of each tab
  * @prop {number} activeTabIndex - tab to make active
- * @prop {string} context -
  *
  * @typedef {Object} Tab
  * @property {string} tabName - name to display in tab header
@@ -15,21 +14,21 @@
 import { ref, computed, onBeforeUpdate, watch, onBeforeMount } from 'vue';
 import TabComponent from '@/components/tabs/Tab.vue';
 import { Tab } from '@/types/common';
-import { useTabStore } from '@/stores/tabs';
 
 const props = defineProps<{
 	tabs: Tab[];
 	componentToRender: Object;
 	icon?: Object;
 	activeTabIndex: number;
-	context: string;
 }>();
 
-const emit = defineEmits(['closeTab']);
+const emit = defineEmits<{
+	(e: 'tabClosed', tab: Tab): void;
+	(e: 'tabSelected', index: number): void;
+}>();
 
 const newActiveTab = computed(() => props.activeTabIndex);
 const currentActiveTab = ref(0);
-const tabStore = useTabStore();
 
 function addKeysToTabs(tabs: Tab[]) {
 	return tabs.map((tab, key) => ({
@@ -45,7 +44,7 @@ const keyedTabs = computed(() => addKeysToTabs(tabsRef.value));
 
 function setActiveTab(tabIndex: number) {
 	currentActiveTab.value = tabIndex;
-	tabStore.setActiveTabIndex(props.context, tabIndex);
+	emit('tabSelected', tabIndex);
 }
 
 function closeTab(tabIndexToClose: number) {
@@ -63,33 +62,19 @@ function closeTab(tabIndexToClose: number) {
 	) {
 		setActiveTab(currentActiveTab.value - 1);
 	}
-	emit('closeTab', tabToClose);
-}
-
-function loadTabs() {
-	const previousOpenTabs = tabStore.getTabs(props.context);
-	if (previousOpenTabs) {
-		tabsRef.value = previousOpenTabs;
-	}
+	emit('tabClosed', tabToClose);
 }
 
 onBeforeUpdate(() => {
-	loadTabs();
 	tabsRef.value = props.tabs;
 });
 
 onBeforeMount(() => {
-	loadTabs();
-	setActiveTab(tabStore.getActiveTabIndex(props.context));
+	setActiveTab(props.activeTabIndex);
 });
 
 watch(newActiveTab, (index) => {
-	// console.log('set active tab');
 	setActiveTab(index);
-});
-
-watch(keyedTabs, () => {
-	tabStore.setTabs(props.context, tabsRef.value);
 });
 </script>
 
