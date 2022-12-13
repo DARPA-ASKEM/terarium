@@ -32,6 +32,7 @@ function openResource(name: RouteName, params: RouteParamsRaw) {
 <style scoped>
 .resource {
 	width: 25rem;
+	height: 6rem;
 	display: flex;
 	border: 2px solid var(--un-color-black-100);
 	border-radius: 0.25rem;
@@ -50,15 +51,19 @@ svg {
 	border-left: 1px solid var(--un-color-body-stroke);
 	display: flex;
 	flex-direction: column;
+	justify-content: space-between;
 	gap: 0.5rem;
 	padding: 0.5rem;
 }
 
 header {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
 	font-weight: bold;
 	font-size: 1.1rem;
 	color: var(--un-color-body-text-primary);
-	/* max-height: 3rem; */
 }
 
 footer {

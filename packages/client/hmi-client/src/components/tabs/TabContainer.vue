@@ -5,7 +5,6 @@
  * @prop {Object} componentToRender - the component that you want to render as a tab
  * @prop {Object} icon - optional - an icon to display next to the name of each tab
  * @prop {number} activeTabIndex - tab to make active
- * @prop {boolean} showRecentsProps - optional - show recent resources of this asset
  *
  * @typedef {Object} Tab
  * @property {string} tabName - name to display in tab header
