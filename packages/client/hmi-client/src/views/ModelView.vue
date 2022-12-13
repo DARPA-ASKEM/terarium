@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import Model from '@/components/models/Model.vue';
+import Model, { ModelProps } from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
-
-interface ModelProps {
-	modelId: string;
-}
 
 const props = defineProps<{
 	modelId?: string;

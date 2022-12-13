@@ -14,9 +14,11 @@ import Button from '@/components/Button.vue';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 
-const props = defineProps<{
+export interface ModelProps {
 	modelId: string;
-}>();
+}
+
+const props = defineProps<ModelProps>();
 
 class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {

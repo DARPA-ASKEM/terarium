@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import IconClose32 from '@carbon/icons-vue/es/close/32';
+import IconClose32 from '@carbon/icons-vue/es/close/16';
 
 export interface ArtifactListItem {
 	id: string | number;
@@ -36,7 +36,7 @@ function isArtifactSelected(artifactId) {
 			<span>
 				{{ artifact.name }}
 			</span>
-			<IconClose32 class="remove-button" @click="emit('remove-artifact', artifact.id)" />
+			<IconClose32 class="remove-button" @click.stop="emit('remove-artifact', artifact.id)" />
 		</li>
 	</ul>
 </template>
@@ -66,11 +66,14 @@ function isArtifactSelected(artifactId) {
 	background-color: var(--un-color-accent-lighter);
 }
 
+.active .remove-button {
+	display: block;
+}
+
 .remove-button {
-	color: var(--text-color-light);
 	display: none;
-	height: 2rem;
-	width: 2rem;
+	border-radius: 8px;
+	margin-right: 0.5rem;
 }
 
 .row:hover .remove-button {
@@ -78,7 +81,7 @@ function isArtifactSelected(artifactId) {
 }
 
 .remove-button:hover {
-	color: var(--un-font-body);
+	background-color: var(--un-color-black-20);
 }
 
 span {

@@ -22,10 +22,7 @@ import { RouteName } from '@/router/routes';
 import { Model } from '@/types/Model';
 import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
 import { useTabStore } from '@/stores/tabs';
-
-interface ModelProps {
-	modelId: string;
-}
+import { ModelProps } from '@/components/models/Model.vue';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
@@ -83,5 +80,10 @@ onMounted(() => {
 	if (modelsInCurrentProject) {
 		models.value = modelsInCurrentProject;
 	}
+	// set active selecitons from tab store
+	modelIds.value = tabStore.getTabs(tabContext)?.map((tab) => {
+		const tabProps = tab.props as ModelProps;
+		return tabProps.modelId;
+	});
 });
 </script>
