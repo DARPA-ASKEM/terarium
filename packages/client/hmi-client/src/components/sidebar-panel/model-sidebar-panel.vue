@@ -99,7 +99,7 @@ onMounted(() => {
 	// set active selections from tab store
 	modelIds.value = tabStore.getTabs(tabContext)?.map((tab) => {
 		const tabProps = tab.props as ModelProps;
-		return tabProps.modelId;
+		return tabProps.assetId;
 	});
 });
 </script>
