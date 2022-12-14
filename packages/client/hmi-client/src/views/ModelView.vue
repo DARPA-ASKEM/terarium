@@ -69,7 +69,7 @@ onMounted(async () => {
 		} as Tab;
 
 		openTabs.value.push(initialTab);
-	} // end if:show-recents-props="{ project: props.project, resourceRoute: RouteName.ModelRoute }"
+	}
 });
 </script>
 

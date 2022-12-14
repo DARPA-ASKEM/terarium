@@ -14,7 +14,7 @@
 import { ref, computed, onBeforeUpdate, watch } from 'vue';
 import TabComponent from '@/components/tabs/Tab.vue';
 import { Tab } from '@/types/common';
-import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	tabs: Tab[];
@@ -91,7 +91,7 @@ watch(newActiveTab, (index) => {
 			</template>
 			<component
 				class="tab-content"
-				:is="tab.props?.resourceRoute ? ResourcesListConfig : componentToRender"
+				:is="tab.props?.resourceRoute ? ResourcesList : componentToRender"
 				v-bind="tab.props"
 			></component>
 		</TabComponent>

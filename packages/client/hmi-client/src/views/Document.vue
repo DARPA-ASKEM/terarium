@@ -51,11 +51,7 @@
 				</div>
 			</div>
 		</div>
-		<resources-list-config
-			v-else
-			:project="props?.project"
-			:resourceRoute="RouteName.DocumentRoute"
-		/>
+		<resources-list v-else :project="props?.project" :resourceRoute="RouteName.DocumentRoute" />
 	</section>
 </template>
 
@@ -67,7 +63,7 @@ import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
 import { RouteName } from '@/router/routes';
 import { Project } from '@/types/Project';
-import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	assetId: string;

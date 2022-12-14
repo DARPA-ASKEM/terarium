@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
-import ResourcesListConfig from '@/components/resources/resources-list-config.vue';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	project: Project;
@@ -27,7 +27,7 @@ const props = defineProps<{
 				</div>
 			</section>
 			<section class="detail">
-				<resources-list-config :project="props?.project" />
+				<resources-list :project="props?.project" />
 			</section>
 		</section>
 	</div>

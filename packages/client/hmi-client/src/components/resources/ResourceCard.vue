@@ -1,30 +1,21 @@
 <script setup lang="ts">
 import { Resource } from '@/types/Resource';
-import { RouteName } from '@/router/routes';
-import { RouteParamsRaw, useRouter } from 'vue-router';
+import { RouteMetadata } from '@/router/routes';
 
 defineProps<{
 	resource: Resource;
 }>();
-
-const router = useRouter();
-
-function openResource(name: RouteName, params: RouteParamsRaw) {
-	router.push({ name, params });
-}
 </script>
 
 <template>
-	<div class="resource" @click="openResource(resource.route, resource.params)">
+	<div class="resource">
 		<component :is="resource.icon" />
 		<div class="resource-details">
 			<header>
 				{{ resource.projectAsset.name }}
 				{{ resource.projectAsset.title }}
 			</header>
-			<footer>
-				{{ resource.route.charAt(0).toUpperCase() + resource.route.slice(1) }} - Last date accessed
-			</footer>
+			<footer>{{ RouteMetadata[resource.route].displayName }} - Last date accessed</footer>
 		</div>
 	</div>
 </template>
