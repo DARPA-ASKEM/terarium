@@ -57,7 +57,7 @@ watch(newModelId, (id) => {
 		const newTab = {
 			name: getModelName(id),
 			props: {
-				modelId: id
+				assetId: id
 			}
 		} as Tab;
 		// Would have loved to use a Set here instead of an array, but equality does not work as expected for objects
