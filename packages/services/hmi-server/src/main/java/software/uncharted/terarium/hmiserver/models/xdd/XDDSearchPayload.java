@@ -13,8 +13,6 @@ public class XDDSearchPayload implements Serializable {
 
 	private String term;
 
-	private String title;
-
 	private String dataset; // dataset/collection name
 
 	// Comma-separated list of dictionary names
@@ -48,6 +46,11 @@ public class XDDSearchPayload implements Serializable {
 	private String pubname;
 
 	private String publisher;
+
+	@JsonbProperty("additional_fields")
+	private Boolean additionalFields;
+
+	private Boolean match;
 
 	// Extraction-specific field
 	private String type;
