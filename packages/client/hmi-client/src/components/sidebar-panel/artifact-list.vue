@@ -12,7 +12,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'artifact-clicked', id: string | number): void;
+	(e: 'artifact-clicked', id: string | number, name?: string): void;
 	(e: 'remove-artifact', id: string | number): void;
 }>();
 
@@ -31,7 +31,7 @@ function isArtifactSelected(artifactId) {
 			:key="artifact.id"
 			class="row"
 			:class="{ active: isArtifactSelected(artifact.id) }"
-			@click="emit('artifact-clicked', artifact.id)"
+			@click="emit('artifact-clicked', artifact.id, artifact.name)"
 		>
 			<span>
 				{{ artifact.name }}

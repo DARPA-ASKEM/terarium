@@ -23,6 +23,7 @@ import { Model } from '@/types/Model';
 import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
 import { useTabStore } from '@/stores/tabs';
 import { ModelProps } from '@/components/models/Model.vue';
+import { Tab } from '@/types/common';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
@@ -41,12 +42,28 @@ tabStore.$subscribe((mutation, state) => {
 	});
 });
 
-const openModelPage = async (id: string | number) => {
-	// pass this model id as param
-	router.push({
-		name: RouteName.ModelRoute,
-		params: { projectId: resourcesStore.activeProject?.id, modelId: id }
-	});
+const openModelPage = async (id: string | number, name: string) => {
+	// if the current route has the same model id as the one we want to open
+	// don't push a new route since the view would not re-render
+	// just open a new tab by adding it to the tab store instead
+	if (
+		router.currentRoute.value.params.modelId === id.toString() &&
+		!modelIds.value?.includes(id.toString())
+	) {
+		const newTab = {
+			name,
+			props: {
+				modelId: id.toString()
+			}
+		} as Tab;
+		tabStore.addTab(tabContext, newTab);
+	} else {
+		// pass this model id as param
+		router.push({
+			name: RouteName.ModelRoute,
+			params: { projectId: resourcesStore.activeProject?.id, modelId: id }
+		});
+	}
 };
 
 const removeModel = async (id: string | number) => {
