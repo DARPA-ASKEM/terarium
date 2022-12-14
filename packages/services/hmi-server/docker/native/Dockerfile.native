@@ -1,14 +1,7 @@
 ####
-# This Dockerfile is used in order to build a container that runs the Quarkus application in native (no JVM) mode.
-#
-# Then, build the image with:
-#
-# docker build -f src/main/docker/Dockerfile.native -t quarkus/server-scaffold .
-#
-# Then run the container using:
-#
-# docker run -i --rm -p 8080:8080 quarkus/server-scaffold
-#
+# This Dockerfile is used in order to compile and build a container that
+# runs the Quarkus application in native (no JVM) mode.
+####
 
 ## Stage 1 : build with gradle builder image with native capabilities
 FROM quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:22.3-java17 AS builder
