@@ -19,7 +19,7 @@ import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
 import { RouteName, RouteMetadata } from '@/router/routes';
-import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
+import { PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
 
 const router = useRouter();
 
@@ -69,7 +69,8 @@ const openView = (view: RouteName) => {
 		}
 
 		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? '';
+			// in theory shouldn't even need to set this param as it's optional but vue warns about a missing prop otherwise
+			params.modelId = null;
 		}
 
 		if (view === RouteName.DatasetRoute) {
