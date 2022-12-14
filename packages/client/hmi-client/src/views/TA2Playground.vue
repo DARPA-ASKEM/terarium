@@ -1,6 +1,6 @@
 <script lang="ts">
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { PetriNet } from '@/utils/petri-net-validator';
+import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
@@ -397,14 +397,14 @@ export default defineComponent({
 		async jsonOutput() {
 			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
-			// console.log(petriNetValidator(output));
+			console.log(petriNetValidator(output));
 
-			// console.log(output);
+			console.log(output);
 
-			// if (petriNetValidator(output) === true) {
-			// modelA = output;
-			this.refresh();
-			// }
+			if (petriNetValidator(output) === true) {
+				modelA = output;
+				this.refresh();
+			}
 
 			d3.select('#output').text(JSON.stringify(output, null, 2));
 		},
