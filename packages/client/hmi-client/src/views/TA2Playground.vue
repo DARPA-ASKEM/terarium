@@ -637,12 +637,13 @@ export default defineComponent({
 						target: juliaNodes[model.O[i].os - 1].name.toString()
 					});
 				}
-
+				// Create model in model-service
 				await API.post(`model-service/models/${modelId}`, {
 					nodes: juliaNodes,
 					edges: juliaEdges
 				});
 			}
+			// Draw model to window
 			g = await parsePetriNet2IGraph(model);
 			g = runDagreLayout(_.cloneDeep(g));
 			this.refresh();
