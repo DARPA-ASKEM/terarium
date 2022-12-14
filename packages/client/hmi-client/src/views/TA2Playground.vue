@@ -502,8 +502,7 @@ export default defineComponent({
 			y: number,
 			height: number,
 			width: number,
-			type: NodeType,
-			createFlag: boolean
+			type: NodeType
 		) {
 			g.nodes.push({
 				id,
@@ -515,22 +514,11 @@ export default defineComponent({
 				data: { type },
 				nodes: []
 			});
-
-			if (createFlag === true) {
-				API.post(`model-service/models/${modelId}`, {
-					nodes: [
-						{
-							name: label,
-							type
-						}
-					]
-				});
-			}
 			this.jsonOutput();
 		}, // end addNode
 		// Not sure how to overload functions so here we are
 		// createFlag: True - Create and draw, false - just draw
-		async addEdgeID(sourceID: string, targetID: string, createFlag: boolean) {
+		async addEdgeID(sourceID: string, targetID: string) {
 			let sourceX;
 			let sourceY;
 			let targetX;
@@ -568,17 +556,6 @@ export default defineComponent({
 					}
 				]
 			});
-
-			if (createFlag === true) {
-				API.post(`model-service/models/${modelId}`, {
-					edges: [
-						{
-							source: sourceLabel,
-							target: targetLabel
-						}
-					]
-				});
-			}
 		}, // end addEdge
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
@@ -688,7 +665,6 @@ export default defineComponent({
 		// This is mostly done for stratification testing. Will require a deeper look in future
 		// TODO: We know there are race errors here. We intend to make this service stateless so we wont need to add Edges and Nodes individually
 		async createModel(model: PetriNet, createFlag = false) {
-			console.log('Starting create Model');
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
 				const resp = await API.put('/model-service/models');
@@ -696,12 +672,39 @@ export default defineComponent({
 				const modelData = await resp.data;
 				modelId = modelData.id;
 				console.log(`Model ID: ${modelId}`); // currently required for testing
+
+				const juliaNodes: { name: string; type: string }[] = [];
+				const juliaEdges: { source: string; target: string }[] = [];
+
+				// TODO: probably can use map for all of these to make it more readable
+				for (let i = 0; i < model.S.length; i++) {
+					juliaNodes.push({ name: model.S[i].sname, type: NodeType.Species });
+				}
+				for (let i = 0; i < model.T.length; i++) {
+					juliaNodes.push({ name: model.T[i].tname, type: NodeType.Transition });
+				}
+				for (let i = 0; i < model.I.length; i++) {
+					juliaEdges.push({
+						source: juliaNodes[model.I[i].is - 1].name,
+						target: juliaNodes[model.I[i].it - 1 + model.S.length].name
+					});
+				}
+				for (let i = 0; i < model.O.length; i++) {
+					juliaEdges.push({
+						source: juliaNodes[model.O[i].ot - 1 + model.S.length].name,
+						target: juliaNodes[model.O[i].os - 1].name
+					});
+				}
+
+				await API.post(`model-service/models/${modelId}`, {
+					nodes: juliaNodes,
+					edges: juliaEdges
+				});
 			}
 
 			// Reset current nodes and edges
 			g.nodes = [];
 			g.edges = [];
-			const promises: Promise<void>[] = [];
 			const nodeHeight = 20;
 			const nodeWidth = 20;
 			let nodeX = 0;
@@ -711,20 +714,17 @@ export default defineComponent({
 				const aNode = model.S[i];
 				nodeX += 30;
 				nodeY += 30;
-				promises.push(
-					this.addNode(
-						`s-${i + 1}`,
-						aNode.sname.toString(),
-						nodeX,
-						nodeY,
-						nodeHeight,
-						nodeWidth,
-						NodeType.Species,
-						createFlag
-					)
+				this.addNode(
+					`s-${i + 1}`,
+					aNode.sname.toString(),
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					NodeType.Species
 				);
 			}
-			await Promise.all(promises);
+
 			// Move Transitions 100 to the right of S
 			nodeX = 100;
 			nodeY = 0;
@@ -732,35 +732,32 @@ export default defineComponent({
 				const aTransition = model.T[i];
 				nodeX += 30;
 				nodeY += 30;
-				promises.push(
-					this.addNode(
-						`t-${i + 1}`,
-						aTransition.tname.toString(),
-						nodeX,
-						nodeY,
-						nodeHeight,
-						nodeWidth,
-						NodeType.Transition,
-						createFlag
-					)
+				this.addNode(
+					`t-${i + 1}`,
+					aTransition.tname.toString(),
+					nodeX,
+					nodeY,
+					nodeHeight,
+					nodeWidth,
+					NodeType.Transition
 				);
 			} // end T
-			await Promise.all(promises);
+
 			// Edges
 			for (let i = 0; i < model.I.length; i++) {
 				const iEdges = model.I[i];
 				const sourceID = `s-${iEdges.is}`;
 				const transitionID = `t-${iEdges.it}`;
-				promises.push(this.addEdgeID(sourceID, transitionID, createFlag));
+				this.addEdgeID(sourceID, transitionID);
 			}
-			await Promise.all(promises);
+
 			for (let i = 0; i < model.O.length; i++) {
 				const oEdges = model.O[i];
 				const sourceID = `s-${oEdges.os}`;
 				const transitionID = `t-${oEdges.ot}`;
-				promises.push(this.addEdgeID(transitionID, sourceID, createFlag));
+				this.addEdgeID(transitionID, sourceID);
 			}
-			await Promise.all(promises);
+
 			this.refresh();
 			this.jsonOutput();
 		},
