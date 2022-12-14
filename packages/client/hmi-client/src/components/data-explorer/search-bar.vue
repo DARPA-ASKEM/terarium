@@ -17,7 +17,6 @@
 			<IconClose16 class="clear-icon" @click="clearText" />
 		</div>
 		<slot name="sort"></slot>
-		<slot name="params"></slot>
 	</div>
 </template>
 
