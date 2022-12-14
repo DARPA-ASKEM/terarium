@@ -65,7 +65,6 @@ public class DocumentResource {
 				additional_fields = null;
 				match = null;
 			}
-			System.out.println(term);
 			return proxy.getDocuments(
 				docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
 				min_published, max_published, pubname, publisher, additional_fields, match);
