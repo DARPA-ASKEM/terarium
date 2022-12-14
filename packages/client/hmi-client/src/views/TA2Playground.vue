@@ -600,7 +600,6 @@ export default defineComponent({
 		// Create a model provided if createFlag = True using model-service
 		// draw provided model on first layout
 		async createModel(model: PetriNet, createFlag = false) {
-			console.log('Starting Create Model');
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
 				const resp = await API.put('/model-service/models');
@@ -612,29 +611,33 @@ export default defineComponent({
 				const juliaNodes: { name: string; type: string }[] = [];
 				const juliaEdges: { source: string; target: string }[] = [];
 
-				// TODO: probably can use map for all of these to make it more readable
+				// add Nodes
 				for (let i = 0; i < model.S.length; i++) {
 					juliaNodes.push({ name: model.S[i].sname.toString(), type: NodeType.Species });
 				}
 				for (let i = 0; i < model.T.length; i++) {
 					juliaNodes.push({ name: model.T[i].tname.toString(), type: NodeType.Transition });
 				}
+				// Add Edges
+				// - 1 because julia indexing
+				// + S.length for all transitions as the S are added first to the juliaNodes
+				// toString because post stratification the name can be a list instead of a string
 				for (let i = 0; i < model.I.length; i++) {
 					juliaEdges.push({
 						source: juliaNodes[model.I[i].is - 1].name.toString(),
 						target: juliaNodes[model.I[i].it - 1 + model.S.length].name.toString()
 					});
 				}
+				// - 1 because julia indexing
+				// + S.length for all transitions as the S are added first to the juliaNodes
+				// toString because post stratification the name can be a list instead of a string
 				for (let i = 0; i < model.O.length; i++) {
 					juliaEdges.push({
 						source: juliaNodes[model.O[i].ot - 1 + model.S.length].name.toString(),
 						target: juliaNodes[model.O[i].os - 1].name.toString()
 					});
 				}
-				console.log('Adding Nodes:');
-				console.log(juliaNodes);
-				console.log('Adding Edges:');
-				console.log(juliaEdges);
+
 				await API.post(`model-service/models/${modelId}`, {
 					nodes: juliaNodes,
 					edges: juliaEdges
