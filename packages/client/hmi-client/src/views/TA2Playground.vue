@@ -608,39 +608,39 @@ export default defineComponent({
 				modelId = modelData.id;
 				console.log(`Model ID: ${modelId}`); // currently required for testing
 
-				const juliaNodes: { name: string; type: string }[] = [];
-				const juliaEdges: { source: string; target: string }[] = [];
+				const modelServiceNodes: { name: string; type: string }[] = [];
+				const modelServiceEdges: { source: string; target: string }[] = [];
 
 				// add Nodes
 				for (let i = 0; i < model.S.length; i++) {
-					juliaNodes.push({ name: model.S[i].sname.toString(), type: NodeType.Species });
+					modelServiceNodes.push({ name: model.S[i].sname.toString(), type: NodeType.Species });
 				}
 				for (let i = 0; i < model.T.length; i++) {
-					juliaNodes.push({ name: model.T[i].tname.toString(), type: NodeType.Transition });
+					modelServiceNodes.push({ name: model.T[i].tname.toString(), type: NodeType.Transition });
 				}
 				// Add Edges
-				// - 1 because julia indexing
-				// + S.length for all transitions as the S are added first to the juliaNodes
+				// - 1 because modelService indexing
+				// + S.length for all transitions as the S are added first to the modelServiceNodes
 				// toString because post stratification the name can be a list instead of a string
 				for (let i = 0; i < model.I.length; i++) {
-					juliaEdges.push({
-						source: juliaNodes[model.I[i].is - 1].name.toString(),
-						target: juliaNodes[model.I[i].it - 1 + model.S.length].name.toString()
+					modelServiceEdges.push({
+						source: modelServiceNodes[model.I[i].is - 1].name.toString(),
+						target: modelServiceNodes[model.I[i].it - 1 + model.S.length].name.toString()
 					});
 				}
-				// - 1 because julia indexing
-				// + S.length for all transitions as the S are added first to the juliaNodes
+				// - 1 because modelService indexing
+				// + S.length for all transitions as the S are added first to the modelServiceNodes
 				// toString because post stratification the name can be a list instead of a string
 				for (let i = 0; i < model.O.length; i++) {
-					juliaEdges.push({
-						source: juliaNodes[model.O[i].ot - 1 + model.S.length].name.toString(),
-						target: juliaNodes[model.O[i].os - 1].name.toString()
+					modelServiceEdges.push({
+						source: modelServiceNodes[model.O[i].ot - 1 + model.S.length].name.toString(),
+						target: modelServiceNodes[model.O[i].os - 1].name.toString()
 					});
 				}
 				// Create model in model-service
 				await API.post(`model-service/models/${modelId}`, {
-					nodes: juliaNodes,
-					edges: juliaEdges
+					nodes: modelServiceNodes,
+					edges: modelServiceEdges
 				});
 			}
 			// Draw model to window
