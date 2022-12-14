@@ -1,6 +1,12 @@
 <template>
 	<div class="label-container row" :style="labelContainerStyle">
-		<div class="label" v-for="(label, idx) in labels" :key="idx" :style="getLabelStyle(idx)">
+		<div
+			class="label"
+			v-for="(label, idx) in labels"
+			:key="idx"
+			:title="label.alt"
+			:style="getLabelStyle(idx)"
+		>
 			{{ label.value }}
 		</div>
 	</div>
@@ -25,6 +31,12 @@ export default {
 			type: Viewport as PropType<Viewport>,
 			default() {
 				return null;
+			}
+		},
+		margin: {
+			type: Number,
+			default() {
+				return 0;
 			}
 		},
 		numRows: {
@@ -57,6 +69,12 @@ export default {
 				return [];
 			}
 		},
+		labelRowAltList: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
 		microRowSettings: {
 			type: Array as PropType<number[]>,
 			default() {
@@ -78,7 +96,7 @@ export default {
 	data() {
 		return {
 			labelContainerStyle: {},
-			labels: [] as { value: string; position: number }[]
+			labels: [] as { value: string; alt: string; position: number }[]
 		};
 	},
 
@@ -114,11 +132,12 @@ export default {
 			const viewportRowDensity =
 				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.numRows;
 
-			const thresholdLabelDensity = 8;
+			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(
 				this.labelRowList,
+				this.labelRowAltList,
 				this.selectedRows,
 				this.microRowSettings,
 				labelStride,
@@ -140,8 +159,8 @@ export default {
 
 			this.labelContainerStyle = {
 				left: `${Math.max(topLeft.x, 0)}px`,
-				top: `${topLeft.y}px`,
-				bottom: `${bottomLeft.y}px`,
+				top: `${topLeft.y + this.margin}px`,
+				bottom: `${bottomLeft.y - this.margin}px`,
 				height: `${bottomLeft.y - topLeft.y}px`,
 				width: '30px'
 			};
@@ -153,7 +172,7 @@ export default {
 <style scoped>
 .label-container {
 	position: absolute;
-	pointer-events: none;
+	/* pointer-events: none; */
 	user-select: none;
 }
 
@@ -163,8 +182,7 @@ export default {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	color: white;
-	text-shadow: 0px 0px 4px #000;
+	color: var(--un-color-black-100);
 	transform: rotate(90deg);
 }
 </style>

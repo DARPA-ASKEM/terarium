@@ -26,6 +26,9 @@ const useQueryStore = defineStore('query', {
 			FiltersUtil.setClause(filters, field, values, operand, isNot);
 
 			this.filters = filters;
+		},
+		reset() {
+			this.filters = null;
 		}
 	}
 });

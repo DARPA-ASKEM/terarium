@@ -79,6 +79,7 @@ if (previousOpenTabs) {
 
 <template>
 	<TabContainer
+		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"
 		:active-tab="props.modelId"
@@ -89,4 +90,8 @@ if (previousOpenTabs) {
 	</TabContainer>
 </template>
 
-<style scoped></style>
+<style scoped>
+.tab-container {
+	height: 100%;
+}
+</style>

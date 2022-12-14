@@ -36,7 +36,12 @@
 										<div><b>Concepts</b></div>
 										<ul>
 											<li v-for="tag in getConceptTags(d)" :key="tag">
-												{{ tag }}
+												<span
+													v-if="searchTerm.toLowerCase() === tag.toLowerCase()"
+													class="highlight-concept"
+													>{{ tag }}</span
+												>
+												<span v-else>{{ tag }}</span>
 											</li>
 										</ul>
 									</template>
@@ -82,6 +87,10 @@ const props = defineProps({
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
 		required: true
+	},
+	searchTerm: {
+		type: String,
+		default: ''
 	}
 });
 
@@ -262,5 +271,8 @@ tr th {
 	background-color: #f1f1f1;
 	width: 100%;
 	height: 50px;
+}
+.highlight-concept {
+	background-color: yellow;
 }
 </style>

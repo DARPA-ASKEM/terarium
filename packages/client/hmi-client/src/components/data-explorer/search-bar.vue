@@ -17,7 +17,6 @@
 			<IconClose16 class="clear-icon" @click="clearText" />
 		</div>
 		<slot name="sort"></slot>
-		<slot name="params"></slot>
 	</div>
 </template>
 
@@ -134,6 +133,7 @@ input[type='text'] {
 	border: none;
 	outline: none;
 	width: 100%;
+	margin: 0;
 }
 
 input:-webkit-autofill,

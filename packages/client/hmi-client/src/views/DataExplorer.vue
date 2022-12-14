@@ -5,18 +5,11 @@
 				<search-bar :focus-input="true" @search-text-changed="filterData">
 					<template #dataset>
 						<dropdown-button
-							:inner-button-label="'Dataset'"
+							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
 							:is-dropdown-left-aligned="true"
 							:items="xddDatasets"
 							:selected-item="xddDataset"
 							@item-selected="xddDatasetSelectionChanged"
-						/>
-					</template>
-					<template #params>
-						<toggle-button
-							:value="isSearchTitle"
-							:label="'Searching by document title'"
-							@change="toggleIsSearchTitle"
 						/>
 					</template>
 				</search-bar>
@@ -104,6 +97,7 @@
 						:data-items="dataItems"
 						:result-type="resultType"
 						:selected-search-items="selectedSearchItems"
+						:search-term="searchTerm"
 						@toggle-data-item-selected="toggleDataItemSelected"
 					/>
 					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
@@ -140,14 +134,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
-import ToggleButton from '@/components/widgets/toggle-button.vue';
 // import AutoComplete from '@/components/widgets/autocomplete.vue';
 // import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
@@ -197,7 +190,6 @@ const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 const xddDatasets = ref<string[]>([]);
 const dictNames = ref<string[]>([]);
 const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
-const isSearchTitle = ref(false); // is the input search term represents a document identifier such as title or DOI
 const xddDictionaries = ref<XDDDictionary[]>([]);
 // facets
 const facets = ref<Facets>({});
@@ -206,7 +198,9 @@ const filteredFacets = ref<Facets>({});
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 
-const xddDataset = computed(() => resources.xddDataset);
+const xddDataset = computed(() =>
+	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+);
 const clientFilters = computed(() => query.clientFilters);
 const resultsCount = computed(() => {
 	let total = 0;
@@ -229,10 +223,6 @@ const resultsCount = computed(() => {
 
 const updateResultType = (newResultType: string) => {
 	resultType.value = newResultType;
-};
-
-const toggleIsSearchTitle = () => {
-	isSearchTitle.value = !isSearchTitle.value;
 };
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
@@ -279,15 +269,19 @@ const fetchDataItemList = async () => {
 	const searchParams: SearchParameters = {
 		xdd: {
 			dict: dictNames.value,
-			dataset: xddDataset.value === ResourceType.ALL ? null : xddDataset.value,
+			dataset:
+				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
+					? null
+					: xddDataset.value,
 			max: pageSize.value,
 			perPage: pageSize.value,
 			fullResults: !rankedResults.value,
 			doi: isValidDOI ? searchWords : undefined,
-			title: isSearchTitle.value && !isValidDOI ? searchWords : undefined,
 			includeHighlights: true,
 			inclusive: matchAll,
-			facets: true // include facets aggregation data in the search results
+			facets: true, // include facets aggregation data in the search results
+			match: true,
+			additional_fields: 'title,abstract'
 		}
 	};
 
@@ -468,6 +462,10 @@ onMounted(async () => {
 	}
 
 	refresh();
+});
+
+onUnmounted(() => {
+	query.reset();
 });
 </script>
 

@@ -3,8 +3,18 @@
 </template>
 
 <script lang="ts">
+import _ from 'lodash';
 import { PropType } from 'vue';
-import { select, extent, scaleLinear, scaleTime, axisBottom, axisLeft, NumberValue } from 'd3';
+import {
+	select,
+	extent,
+	scaleLinear,
+	scaleLog,
+	scaleTime,
+	axisBottom,
+	axisLeft,
+	NumberValue
+} from 'd3';
 
 import {
 	D3SvgSelection,
@@ -14,6 +24,7 @@ import {
 	SelectedCell,
 	SelectedCellData
 } from '@/types/ResponsiveMatrix';
+import { formatAxis } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -160,7 +171,7 @@ export default {
 		},
 
 		yScale() {
-			return scaleLinear()
+			return scaleLog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -225,20 +236,50 @@ export default {
 				.attr('viewBox', `0 0 ${width} ${height}`)
 				.style('background', 'white');
 
-			const xAxis = axisBottom(this.xScale).tickFormat(this.labelColFormatFn);
-
-			this.svg
+			const xAxisGen = axisBottom(this.xScale).tickFormat(this.labelColFormatFn);
+			const xAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
-				.call(xAxis);
+				.call(xAxisGen);
+			formatAxis(xAxis);
 
-			const yAxis = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
+			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
+			const yAxis = this.svg
+				.append('g')
+				.attr('transform', `translate(${leftMargin},${topMargin})`)
+				.call(yAxisGen);
+			formatAxis(yAxis);
 
-			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
-
-			Object.keys(this.selectedCells).forEach((parameter) => {
+			const numRows = 4;
+			const rowSize = 15;
+			const colSize = 95;
+			Object.keys(this.selectedCells).forEach((parameter, i) => {
 				this.renderLine(this.svg, parameter, this.selectedCells[parameter], this.labelColSelected);
+
+				this.svg
+					.append('rect')
+					.attr('x', 50 + colSize * Math.floor(i / numRows))
+					.attr('y', 30 + (i % numRows) * rowSize)
+					.attr('width', 8)
+					.attr('height', 8)
+					.attr('fill', this.colorFn(parameter));
+
+				this.svg
+					.append('text')
+					.attr('x', 60 + colSize * Math.floor(i / numRows))
+					.attr('y', 38 + (i % numRows) * rowSize)
+					.attr('font-size', '80%')
+					.style('fill', '#333')
+					.text(parameter);
 			});
+			const rangeText = `From ${this.labelColFormatFn(
+				_.first(this.labelColSelected as NumberValue[]) as NumberValue,
+				1
+			)} to ${this.labelColFormatFn(
+				_.last(this.labelColSelected as NumberValue[]) as NumberValue,
+				1
+			)}`;
+			this.svg.append('text').attr('x', 50).attr('y', 20).style('fill', '#333').text(rangeText);
 		},
 
 		renderLine(
@@ -264,8 +305,15 @@ export default {
 				.attr('d', path)
 				.style('fill', 'none')
 				.style('stroke', this.colorFn(parameter))
-				.style('stroke-width', 2);
+				.style('stroke-width', 1.5);
 		}
 	}
 };
 </script>
+
+<style scoped>
+.cell-selected-line {
+	border: 2px solid var(--un-color-black-10);
+	border-radius: 5px;
+}
+</style>

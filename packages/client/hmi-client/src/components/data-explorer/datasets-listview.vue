@@ -36,7 +36,12 @@
 										<div><b>Concepts</b></div>
 										<ul>
 											<li v-for="tag in getConceptTags(d)" :key="tag">
-												{{ tag }}
+												<span
+													v-if="searchTerm.toLowerCase() === tag.toLowerCase()"
+													class="highlight-concept"
+													>{{ tag }}</span
+												>
+												<span v-else>{{ tag }}</span>
 											</li>
 										</ul>
 									</template>
@@ -48,7 +53,7 @@
 						</td>
 						<td class="maintainer-col">
 							<div v-for="feature in formatFeatures(d)" :key="feature">
-								{{ feature }}
+								{{ feature.replaceAll('_', ' ') }}
 							</div>
 						</td>
 						<td class="preview-col">
@@ -84,6 +89,10 @@ const props = defineProps({
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
 		required: true
+	},
+	searchTerm: {
+		type: String,
+		default: ''
 	}
 });
 
@@ -253,8 +262,10 @@ tr th {
 }
 
 .maintainer-col {
+	max-width: 16rem;
 	width: 10%;
-	overflow-wrap: break-word;
+	overflow-x: auto;
+	white-space: nowrap;
 }
 
 .max-content {
@@ -272,5 +283,9 @@ tr th {
 	background-color: #f1f1f1;
 	width: 100%;
 	height: 50px;
+}
+
+.highlight-concept {
+	background-color: yellow;
 }
 </style>

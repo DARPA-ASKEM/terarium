@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, scaleLinear, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
+import { select, scaleLog, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -14,6 +14,7 @@ import {
 	SelectedCell,
 	SelectedCellData
 } from '@/types/ResponsiveMatrix';
+import { formatAxis } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -82,6 +83,12 @@ export default {
 			}
 		},
 		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
 			type: Function as PropType<(value: NumberValue, index: number) => string>,
 			default(v) {
 				return v;
@@ -174,7 +181,7 @@ export default {
 		},
 
 		yScale() {
-			return scaleLinear()
+			return scaleLog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -244,20 +251,29 @@ export default {
 				.attr('width', '100%')
 				.style('background', 'white');
 
-			const xAxis = axisBottom(this.xScaleBand);
-
-			this.svg
+			const xAxisGen = axisBottom(this.xScaleBand);
+			const xAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
-				.call(xAxis);
+				.call(xAxisGen);
+			formatAxis(xAxis);
 
-			const yAxis = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn);
-
-			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
+			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
+			const yAxis = this.svg
+				.append('g')
+				.attr('transform', `translate(${leftMargin},${topMargin})`)
+				.call(yAxisGen);
+			formatAxis(yAxis);
 
 			Object.keys(this.selectedCells).forEach((parameter) => {
 				this.renderBars(this.svg, parameter, this.selectedCells[parameter], this.labelRowSelected);
 			});
+
+			const rangeText = this.labelColFormatFn(
+				this.labelColList[this.selectedCell[SelectedCellValue.START_COL]],
+				1
+			);
+			this.svg.append('text').attr('x', 50).attr('y', 20).style('fill', '#333').text(rangeText);
 		},
 
 		renderBars(svg: any, parameter: string, colValueArray: any, rowValueArray: any) {
@@ -280,3 +296,10 @@ export default {
 	}
 };
 </script>
+
+<style scoped>
+.cell-selected-bar {
+	border: 2px solid var(--un-color-black-10);
+	border-radius: 5px;
+}
+</style>

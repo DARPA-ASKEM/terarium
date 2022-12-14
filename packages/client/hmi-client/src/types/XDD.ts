@@ -128,7 +128,6 @@ export type XDDResult = {
 export type XDDSearchParams = {
 	docid?: string; // internal xdd document id
 	doi?: string;
-	title?: string;
 	term?: string;
 	dict?: string[];
 	dataset?: string | null;
@@ -145,6 +144,8 @@ export type XDDSearchParams = {
 	max_published?: string; // Must be ISO date string e.g., "2020-01-01"
 	pubname?: string;
 	publisher?: string;
+	match?: boolean; // If true, utilizes a \"match\" instead of a \"match_phrase\" query within Elaticsearch. This has the effect of finding documents which most frequently use the individial terms in the query, rather than looking for the exact phrase.
+	additional_fields?: string; // Extend the query to include fields in addition to the full-text contents (example: abstract,title). The query logic is OR across the search fields.
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;

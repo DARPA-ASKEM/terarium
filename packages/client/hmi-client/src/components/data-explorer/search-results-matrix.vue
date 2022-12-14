@@ -1,40 +1,42 @@
 <template>
 	<div class="search-matrixview-container">
-		<div class="table-fixed-head">
-			<table>
-				<thead>
-					<tr>
-						<th></th>
-						<th v-for="v in clustersInfo.variables" :key="v" :title="formatFullColumnName(v)">
-							{{ formatColumnName(v) }}
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr
-						v-for="c in clustersInfo.clusters"
-						:key="c.name"
-						class="tr-item"
-						:class="{ selected: c.selected }"
-					>
-						<td class="name-col">
-							<div class="name-layout">
-								<div class="radio" @click.stop="updateSelection(c)">
-									<span v-show="c.selected"><i class="fa-lg fa-regular fa-square-check"></i></span>
-									<span v-show="!c.selected"><i class="fa-lg fa-regular fa-square"></i></span>
-								</div>
-								<div class="content">
-									<div>{{ c.name + ' (' + c.items.length + ')' }}</div>
-								</div>
+		<table>
+			<thead>
+				<tr>
+					<th></th>
+					<th v-for="v in clustersInfo.variables" :key="v" :title="formatFullColumnName(v)">
+						{{ formatColumnName(v) }}
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr
+					v-for="c in clustersInfo.clusters"
+					:key="c.name"
+					class="tr-item"
+					:class="{ selected: c.selected }"
+				>
+					<td class="name-col">
+						<div class="name-layout">
+							<div class="radio" @click.stop="updateSelection(c)">
+								<span v-show="c.selected">
+									<IconCheckboxChecked20 />
+								</span>
+								<span v-show="!c.selected">
+									<IconCheckbox20 />
+								</span>
 							</div>
-						</td>
-						<td v-for="v in clustersInfo.variables" :key="v">
-							<div v-if="isClusterIncludesVariable(c, v)" class="preview-container"></div>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+							<div class="content">
+								<div>{{ c.name + ' (' + c.items.length + ')' }}</div>
+							</div>
+						</div>
+					</td>
+					<td v-for="v in clustersInfo.variables" :key="v">
+						<div v-if="isClusterIncludesVariable(c, v)" class="preview-container"></div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 </template>
 
@@ -46,6 +48,8 @@ import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import { groupBy, omit, orderBy, uniq } from 'lodash';
 import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { Dataset } from '@/types/Dataset';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 
 export type ResultsCluster = {
 	name: string;
@@ -92,17 +96,17 @@ const updateSelection = (cluster: ResultsCluster) => {
 // FIXME: refactor as util func
 const isDataItemSelected = (item: ResultType) =>
 	props.selectedSearchItems.find((searchItem) => {
-		if (isModel(item)) {
+		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
 			const searchItemAsModel = searchItem as Model;
 			return searchItemAsModel.id === itemAsModel.id;
 		}
-		if (isDataset(item)) {
+		if (isDataset(item) && isDataset(searchItem)) {
 			const itemAsDataset = item as Dataset;
 			const searchItemAsDataset = searchItem as Dataset;
 			return searchItemAsDataset.id === itemAsDataset.id;
 		}
-		if (isXDDArticle(item)) {
+		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
 			return searchItemAsArticle.title === itemAsArticle.title;
@@ -202,8 +206,8 @@ const clustersInfo = computed(() => {
 				const isClusterSelected = clusterItemsRaw.every((clusterItem) =>
 					isDataItemSelected(
 						props.resultType === ResourceType.MODEL
-							? modelsMap[clusterItem.id]
-							: datasetsMap[clusterItem.id]
+							? modelsMap.value[clusterItem.id]
+							: datasetsMap.value[clusterItem.id]
 					)
 				);
 
@@ -335,16 +339,17 @@ const clustersInfo = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
 .search-matrixview-container {
-	background: $background-light-2;
 	color: black;
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	padding-right: 10px;
 	gap: 1px;
 	flex: 1;
+	overflow-y: auto;
+	overflow-x: auto;
+	height: 100%;
+	width: 100%;
 
 	table {
 		border-collapse: collapse;
@@ -356,7 +361,7 @@ const clustersInfo = computed(() => {
 		padding: 2px 4px;
 	}
 	tr {
-		border: 2px solid $separator;
+		border: 2px solid var(--separator);
 	}
 	thead {
 		tr {
@@ -366,36 +371,26 @@ const clustersInfo = computed(() => {
 		th {
 			border: none;
 			text-align: left;
+			transform: rotate(-180deg);
+			writing-mode: vertical-lr;
+			position: sticky;
+			top: -1px;
+			z-index: 1;
+			font-weight: normal;
+			/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
+			background-color: var(--un-color-body-surface-background);
 		}
 	}
 	td {
-		background: $background-light-1;
-	}
-	tr th {
-		font-size: $font-size-small;
-		font-weight: normal;
-	}
-	.table-fixed-head {
-		overflow-y: auto;
-		overflow-x: auto;
-		height: 100%;
-		width: 100%;
-	}
-	.table-fixed-head thead th {
-		transform: rotate(-180deg);
-		writing-mode: vertical-lr;
-		position: sticky;
-		top: -1px;
-		z-index: 1;
-		background-color: aliceblue;
+		background: var(--un-color-body-surface-primary);
 	}
 
 	.tr-item {
 		height: 50px;
 		padding: 8px;
 	}
-	.tr-item.selected {
-		border: 2px double black;
+	.tr-item.selected td {
+		background-color: var(--un-color-accent-lighter);
 	}
 	.name-col {
 		width: 20%;
