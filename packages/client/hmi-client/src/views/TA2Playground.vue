@@ -493,70 +493,6 @@ export default defineComponent({
 			});
 			this.jsonOutput();
 		},
-		// provide node details and a flag
-		// createFlag: True = create new + draw, False = just draw
-		async addNode(
-			id: string,
-			label: string,
-			x: number,
-			y: number,
-			height: number,
-			width: number,
-			type: NodeType
-		) {
-			g.nodes.push({
-				id,
-				label,
-				x,
-				y,
-				height,
-				width,
-				data: { type },
-				nodes: []
-			});
-			this.jsonOutput();
-		}, // end addNode
-		// Not sure how to overload functions so here we are
-		// createFlag: True - Create and draw, false - just draw
-		async addEdgeID(sourceID: string, targetID: string) {
-			let sourceX;
-			let sourceY;
-			let targetX;
-			let targetY;
-			let sourceLabel;
-			let targetLabel;
-			// Find source and target's locations
-			// there has to be a better way to get the source and target locations
-			for (let i = 0; i < g.nodes.length; i++) {
-				if (sourceLabel && targetLabel) {
-					break;
-				}
-				if (g.nodes[i].id === sourceID) {
-					sourceLabel = g.nodes[i].label;
-					sourceX = g.nodes[i].x + g.nodes[i].width * 0.5;
-					sourceY = g.nodes[i].y + g.nodes[i].height * 0.5;
-				}
-				if (g.nodes[i].id === targetID) {
-					targetLabel = g.nodes[i].label;
-					targetX = g.nodes[i].x + g.nodes[i].width * 0.5;
-					targetY = g.nodes[i].y + g.nodes[i].height * 0.5;
-				}
-			}
-			g.edges.push({
-				source: sourceID,
-				target: targetID,
-				points: [
-					{
-						x: sourceX, // + source.datum().width * 0.5,
-						y: sourceY // + source.datum().height * 0.5
-					},
-					{
-						x: targetX, // + target.datum().width * 0.5,
-						y: targetY // + target.datum().height * 0.5
-					}
-				]
-			});
-		}, // end addEdge
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
 			numRabbits = +(Math.random() * 100).toFixed();
@@ -660,10 +596,9 @@ export default defineComponent({
 			const model: PetriNet = resp.data;
 			this.createModel(model, false);
 		},
-		// Expects a JSON of a model with labels T, S, I, O.
-		// populates g + depending on provided flag POST changes to model ID
-		// This is mostly done for stratification testing. Will require a deeper look in future
-		// TODO: We know there are race errors here. We intend to make this service stateless so we wont need to add Edges and Nodes individually
+
+		// Create a model provided if createFlag = True using model-service
+		// draw provided model on first layout
 		async createModel(model: PetriNet, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
@@ -701,63 +636,8 @@ export default defineComponent({
 					edges: juliaEdges
 				});
 			}
-
-			// Reset current nodes and edges
-			g.nodes = [];
-			g.edges = [];
-			const nodeHeight = 20;
-			const nodeWidth = 20;
-			let nodeX = 0;
-			let nodeY = 0;
-			// Nodes
-			for (let i = 0; i < model.S.length; i++) {
-				const aNode = model.S[i];
-				nodeX += 30;
-				nodeY += 30;
-				this.addNode(
-					`s-${i + 1}`,
-					aNode.sname.toString(),
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					NodeType.Species
-				);
-			}
-
-			// Move Transitions 100 to the right of S
-			nodeX = 100;
-			nodeY = 0;
-			for (let i = 0; i < model.T.length; i++) {
-				const aTransition = model.T[i];
-				nodeX += 30;
-				nodeY += 30;
-				this.addNode(
-					`t-${i + 1}`,
-					aTransition.tname.toString(),
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					NodeType.Transition
-				);
-			} // end T
-
-			// Edges
-			for (let i = 0; i < model.I.length; i++) {
-				const iEdges = model.I[i];
-				const sourceID = `s-${iEdges.is}`;
-				const transitionID = `t-${iEdges.it}`;
-				this.addEdgeID(sourceID, transitionID);
-			}
-
-			for (let i = 0; i < model.O.length; i++) {
-				const oEdges = model.O[i];
-				const sourceID = `s-${oEdges.os}`;
-				const transitionID = `t-${oEdges.ot}`;
-				this.addEdgeID(transitionID, sourceID);
-			}
-
+			g = await parsePetriNet2IGraph(model);
+			g = runDagreLayout(_.cloneDeep(g));
 			this.refresh();
 			this.jsonOutput();
 		},
