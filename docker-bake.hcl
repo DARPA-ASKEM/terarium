@@ -39,9 +39,9 @@ target "_platforms" {
 }
 
 target "hmi-client-base" {
-	context = "packages/client/hmi-client/docker"
+	context = "."
 	tags = tag("hmi-client", "", "")
-	dockerfile = "Dockerfile"
+	dockerfile = "packages/client/hmi-client/docker/Dockerfile"
 }
 
 target "hmi-client" {
@@ -49,8 +49,8 @@ target "hmi-client" {
 }
 
 target "hmi-server-base" {
-	context = "packages/services/hmi-server/docker/jvm"
-	dockerfile = "Dockerfile.jvm"
+	context = "."
+	dockerfile = "packages/services/hmi-server/docker/jvm/Dockerfile.jvm"
 	tags = tag("hmi-server", "", "")
 }
 
@@ -59,7 +59,7 @@ target "hmi-server" {
 }
 
 target "hmi-server-native" {
-	context = "packages/services/hmi-server/docker/native"
-  dockerfile = "Dockerfile.native"
+	context = "."
+  dockerfile = "packages/services/hmi-server/docker/native/Dockerfile.native"
   tags = tag("hmi-server", "", "native")
 }

@@ -12,13 +12,6 @@
 							@item-selected="xddDatasetSelectionChanged"
 						/>
 					</template>
-					<template #params>
-						<toggle-button
-							:value="isSearchTitle"
-							:label="'Searching by document title'"
-							@change="toggleIsSearchTitle"
-						/>
-					</template>
 				</search-bar>
 			</template>
 		</modal-header>
@@ -148,7 +141,6 @@ import SearchResultsList from '@/components/data-explorer/search-results-list.vu
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
-import ToggleButton from '@/components/widgets/toggle-button.vue';
 // import AutoComplete from '@/components/widgets/autocomplete.vue';
 // import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
@@ -198,7 +190,6 @@ const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 const xddDatasets = ref<string[]>([]);
 const dictNames = ref<string[]>([]);
 const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
-const isSearchTitle = ref(false); // is the input search term represents a document identifier such as title or DOI
 const xddDictionaries = ref<XDDDictionary[]>([]);
 // facets
 const facets = ref<Facets>({});
@@ -232,10 +223,6 @@ const resultsCount = computed(() => {
 
 const updateResultType = (newResultType: string) => {
 	resultType.value = newResultType;
-};
-
-const toggleIsSearchTitle = () => {
-	isSearchTitle.value = !isSearchTitle.value;
 };
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
@@ -290,10 +277,11 @@ const fetchDataItemList = async () => {
 			perPage: pageSize.value,
 			fullResults: !rankedResults.value,
 			doi: isValidDOI ? searchWords : undefined,
-			title: isSearchTitle.value && !isValidDOI ? searchWords : undefined,
 			includeHighlights: true,
 			inclusive: matchAll,
-			facets: true // include facets aggregation data in the search results
+			facets: true, // include facets aggregation data in the search results
+			match: true,
+			additional_fields: 'title,abstract'
 		}
 	};
 
