@@ -20,10 +20,18 @@ const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
 const activeProject = resourcesStore.activeProject;
 const tabContext = `model${activeProject?.id}`;
 
-function removeClosedTab(tab: Tab) {
-	const tabIndexToRemove = openTabs.value.indexOf(tab);
-	openTabs.value.splice(tabIndexToRemove, 1);
-	tabStore.setTabs(tabContext, openTabs.value);
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+tabStore.$subscribe((mutation, state) => {
+	const savedTabs = state.tabMap.get(tabContext);
+	if (savedTabs) {
+		openTabs.value = savedTabs;
+	}
+	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
+});
+
+function removeClosedTab(tabIndexToRemove: number) {
+	tabStore.removeTab(tabContext, tabIndexToRemove);
 }
 
 function getModelName(id: string): string | null {
@@ -55,11 +63,9 @@ watch(newModelId, (id) => {
 		if (foundTabIndex === -1) {
 			openTabs.value.push(newTab);
 			tabStore.setTabs(tabContext, openTabs.value);
-			activeTabIndex.value = openTabs.value.length - 1;
-			tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
+			tabStore.setActiveTabIndex(tabContext, openTabs.value.length - 1);
 		} else {
-			activeTabIndex.value = foundTabIndex;
-			tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
+			tabStore.setActiveTabIndex(tabContext, foundTabIndex);
 		}
 	}
 });

@@ -65,16 +65,14 @@ const removeModel = async (id: string | number) => {
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view
-	// const openTabs = tabStore.getTabs(tabContext);
-	// if (openTabs) {
-	// 	const unclosedTabs = openTabs.filter(tab => {
-	// 		const tabProps = tab.props as ModelProps;
-	// 		console.log(tabProps.modelId.toString() + ' ' + id.toString());
-	// 		return (tabProps.modelId.toString() === id.toString());
-	// 	});
-	// 	console.log(unclosedTabs);
-	// 	tabStore.setTabs(tabContext, unclosedTabs);
-	// };
+	const openTabs = tabStore.getTabs(tabContext);
+	if (openTabs) {
+		const unclosedTabs = openTabs.filter((tab) => {
+			const tabProps = tab.props as ModelProps;
+			return tabProps.modelId.toString() !== id.toString();
+		});
+		tabStore.setTabs(tabContext, unclosedTabs);
+	}
 };
 
 onMounted(() => {

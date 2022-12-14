@@ -23,7 +23,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(e: 'tabClosed', tab: Tab): void;
+	(e: 'tabClosed', index: number): void;
 	(e: 'tabSelected', index: number): void;
 }>();
 
@@ -48,21 +48,7 @@ function setActiveTab(tabIndex: number) {
 }
 
 function closeTab(tabIndexToClose: number) {
-	const tabToClose = tabsRef.value[tabIndexToClose];
-	const lastTabIndex = tabsRef.value.length - 1;
-	tabsRef.value.splice(tabIndexToClose, 1);
-	// If the tab that is closed is to the left of the active tab, decrement the active tab index by one, so that the active tab preserves its position.
-	// E.g. if the active tab is the last tab, it will remain the last tab. If the active tab is second last, it will remain second last.
-	// If the tab that is closed is to the right of the active tab, no special logic is needed to preserve the active tab's position.
-	// If the active tab is closed, the next tab to the right becomes the active tab.
-	// This replicates the tab behaviour in Chrome.
-	if (
-		currentActiveTab.value !== 0 &&
-		(currentActiveTab.value > tabIndexToClose || currentActiveTab.value === lastTabIndex)
-	) {
-		setActiveTab(currentActiveTab.value - 1);
-	}
-	emit('tabClosed', tabToClose);
+	emit('tabClosed', tabIndexToClose);
 }
 
 onBeforeUpdate(() => {
