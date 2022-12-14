@@ -10,4 +10,6 @@
 !tsconfig.json
 !tsconfig.base.json
 !yarn.lock
+!.yarnrc.yml
+!.yarn/**
 !package.json

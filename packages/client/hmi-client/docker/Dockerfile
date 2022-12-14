@@ -1,13 +1,9 @@
 ## Stage 1 : build all the necessary packages
 FROM node:18.12.1-alpine as builder
 WORKDIR /code
-COPY package.json /code
-COPY yarn.lock /code
-COPY packages/client/graph-scaffolder/package.json /code/packages/client/graph-scaffolder/
-COPY packages/client/hmi-client/package.json /code/packages/client/hmi-client/
-RUN yarn install
-
 COPY . /code
+
+RUN yarn install
 RUN yarn workspace graph-scaffolder tsc --build
 RUN yarn workspace hmi-client build
 
