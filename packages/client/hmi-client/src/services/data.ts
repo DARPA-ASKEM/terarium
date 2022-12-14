@@ -500,7 +500,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		if (term !== '') {
 			articles.forEach((article) => {
 				if (article.highlight) {
-					article.highlight = article.highlight.map((h) => h.replaceAll(term, `<b>${term}</b>`));
+					article.highlight = article.highlight.map((h) =>
+						h.replaceAll(term, `<span style='background-color: yellow'>${term}</span>`)
+					);
 				}
 			});
 		}
