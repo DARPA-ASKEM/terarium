@@ -1,7 +1,7 @@
 <template>
 	<ArtifactList
 		:artifacts="datasets"
-		:selected-artifact-id="datasetId"
+		:selected-artifact-ids="[datasetId.toString()]"
 		@artifact-clicked="openDatasetPage"
 		@remove-artifact="removeDataset"
 	/>

@@ -42,7 +42,7 @@ tabStore.$subscribe((mutation, state) => {
 	});
 });
 
-const openModelPage = async (id: string | number, name: string) => {
+const openModelPage = async (id: string | number, name?: string) => {
 	// if the current route has the same model id as the one we want to open
 	// don't push a new route since the view would not re-render
 	// just open a new tab by adding it to the tab store instead
