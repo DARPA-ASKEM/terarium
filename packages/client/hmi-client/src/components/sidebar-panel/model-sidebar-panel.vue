@@ -47,13 +47,13 @@ const openModelPage = async (id: string | number, name?: string) => {
 	// don't push a new route since the view would not re-render
 	// just open a new tab by adding it to the tab store instead
 	if (
-		router.currentRoute.value.params.modelId === id.toString() &&
+		router.currentRoute.value.params.assetId === id.toString() &&
 		!modelIds.value?.includes(id.toString())
 	) {
 		const newTab = {
 			name,
 			props: {
-				modelId: id.toString()
+				assetId: id.toString()
 			}
 		} as Tab;
 		tabStore.addTab(tabContext, newTab);
@@ -61,7 +61,7 @@ const openModelPage = async (id: string | number, name?: string) => {
 		// pass this model id as param
 		router.push({
 			name: RouteName.ModelRoute,
-			params: { projectId: resourcesStore.activeProject?.id, modelId: id }
+			params: { projectId: resourcesStore.activeProject?.id, assetId: id }
 		});
 	}
 };
