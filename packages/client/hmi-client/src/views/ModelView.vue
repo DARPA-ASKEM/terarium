@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import Model from '@/components/models/Model.vue';
+import Model, { ModelProps } from '@/components/models/Model.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import { Project } from '@/types/Project';
 import { RouteName } from '@/router/routes';
-
-interface ModelProps {
-	assetId: string;
-}
+import { useTabStore } from '@/stores/tabs';
 
 const props = defineProps<{
-	assetId: string;
+	assetId?: string;
 	project: Project;
 }>();
 
 const resourcesStore = useResourcesStore();
+const tabStore = useTabStore();
 
 const newModelId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([
@@ -24,10 +22,21 @@ const openTabs = ref<Tab[]>([
 ]); // These are props for resources-list-config
 const activeTabIndex = ref(0);
 const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
+const activeProject = resourcesStore.activeProject;
+const tabContext = `model${activeProject?.id}`;
 
-function removeClosedTab(tab: Tab) {
-	const tabIndexToRemove = openTabs.value.indexOf(tab);
-	openTabs.value.splice(tabIndexToRemove, 1);
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+tabStore.$subscribe((mutation, state) => {
+	const savedTabs = state.tabMap.get(tabContext);
+	if (savedTabs) {
+		openTabs.value = savedTabs;
+	}
+	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
+});
+
+function removeClosedTab(tabIndexToRemove: number) {
+	tabStore.removeTab(tabContext, tabIndexToRemove);
 }
 
 function getModelName(id: string): string | null {
@@ -38,39 +47,39 @@ function getModelName(id: string): string | null {
 	return null;
 }
 
-watch(newModelId, (id) => {
-	const newTab = {
-		name: getModelName(id),
-		props: {
-			assetId: id
-		}
-	} as Tab;
-	// Would have loved to use a Set here instead of an array, but equality was not working
-	const foundTabIndex = openTabs.value.findIndex((tab) => {
-		const tabProps = tab.props as ModelProps;
-		return tabProps.assetId === props.assetId;
-	});
-	if (foundTabIndex === -1) {
-		openTabs.value.push(newTab);
-		activeTabIndex.value = openTabs.value.length - 1;
-	} else {
-		activeTabIndex.value = foundTabIndex;
-	}
-});
+function setActiveTab(index: number) {
+	activeTabIndex.value = index;
+	tabStore.setActiveTabIndex(tabContext, index);
+}
 
-onMounted(async () => {
-	// If no model id provided in props, do not attempt to make inital tab
-	if (props.assetId !== '') {
-		const initialTab = {
-			name: getModelName(props.assetId),
+watch(newModelId, (id) => {
+	if (id) {
+		const newTab = {
+			name: getModelName(id),
 			props: {
-				assetId: props.assetId
+				modelId: id
 			}
 		} as Tab;
-
-		openTabs.value.push(initialTab);
+		// Would have loved to use a Set here instead of an array, but equality does not work as expected for objects
+		const foundTabIndex = openTabs.value.findIndex((tab) => {
+			const tabProps = tab.props as ModelProps;
+			return tabProps.assetId === props.assetId;
+		});
+		if (foundTabIndex === -1) {
+			openTabs.value.push(newTab);
+			tabStore.setTabs(tabContext, openTabs.value);
+			tabStore.setActiveTabIndex(tabContext, openTabs.value.length - 1);
+		} else {
+			tabStore.setActiveTabIndex(tabContext, foundTabIndex);
+		}
 	}
 });
+
+const previousOpenTabs = tabStore.getTabs(tabContext);
+if (previousOpenTabs) {
+	openTabs.value = openTabs.value.concat(previousOpenTabs);
+	setActiveTab(tabStore.getActiveTabIndex(tabContext));
+}
 </script>
 
 <template>
@@ -79,7 +88,8 @@ onMounted(async () => {
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"
 		:active-tab="props.assetId"
-		@close-tab="(tab) => removeClosedTab(tab)"
+		@tab-closed="(tab) => removeClosedTab(tab)"
+		@tab-selected="(index) => setActiveTab(index)"
 		:active-tab-index="activeTabIndex"
 	>
 	</TabContainer>

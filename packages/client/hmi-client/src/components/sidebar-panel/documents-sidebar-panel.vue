@@ -2,7 +2,7 @@
 	<!-- It's safe to force id to be a string since we use XDD URIs (all strings) as artifact IDs for the purposes of this list -->
 	<ArtifactList
 		:artifacts="documentsAsArtifactList"
-		:selected-artifact-id="documentId"
+		:selected-artifact-ids="[documentId]"
 		@artifact-clicked="(id) => openDocumentPage(id as string)"
 		@remove-artifact="(id) => removeDocument(id as string)"
 	/>

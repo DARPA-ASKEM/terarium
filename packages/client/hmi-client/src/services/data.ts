@@ -338,7 +338,7 @@ const getXDDArtifacts = async (doc_doi: string) => {
 	// 	url += `&ignore_bytes=${xddSearchParam.ignoreBytes}`;
 	// }
 
-	const res = await await API.get(url);
+	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.success) {
@@ -399,59 +399,68 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	let url = `/xdd/documents?term=${term}`;
+	let searchParams = `term=${term}`;
+	const url = '/xdd/documents?';
 
 	if (xddSearchParam?.docid) {
-		url += `&docid=${xddSearchParam.docid}`;
+		searchParams += `&docid=${xddSearchParam.docid}`;
 	}
 	if (xddSearchParam?.doi) {
-		url += `&doi=${xddSearchParam.doi}`;
-	}
-	if (xddSearchParam?.title) {
-		url += `&title=${xddSearchParam.title}`;
+		searchParams += `&doi=${xddSearchParam.doi}`;
 	}
 	if (xddSearchParam?.dataset) {
-		url += `&dataset=${xddSearchParam.dataset}`;
+		searchParams += `&dataset=${xddSearchParam.dataset}`;
 	}
 	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
-		url += `&dict=${xddSearchParam.dict.join(',')}`;
+		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
 	}
 	if (xddSearchParam?.min_published) {
-		url += `&min_published=${xddSearchParam.min_published}`;
+		searchParams += `&min_published=${xddSearchParam.min_published}`;
 	}
 	if (xddSearchParam?.max_published) {
-		url += `&max_published=${xddSearchParam.max_published}`;
+		searchParams += `&max_published=${xddSearchParam.max_published}`;
 	}
 	if (xddSearchParam?.pubname) {
-		url += `&pubname=${xddSearchParam.pubname}`;
+		searchParams += `&pubname=${xddSearchParam.pubname}`;
 	}
 	if (xddSearchParam?.publisher) {
-		url += `&publisher=${xddSearchParam.publisher}`;
+		searchParams += `&publisher=${xddSearchParam.publisher}`;
 	}
 	if (xddSearchParam?.includeHighlights) {
-		url += '&include_highlights=true';
+		searchParams += '&include_highlights=true';
 	}
 	if (xddSearchParam?.inclusive) {
-		url += '&inclusive=true';
+		searchParams += '&inclusive=true';
 	}
 	if (enablePagination) {
-		url += '&full_results';
+		searchParams += '&full_results';
 	} else {
 		// request results to be ranked
-		url += '&include_score=true';
+		searchParams += '&include_score=true';
 	}
 	if (xddSearchParam?.facets) {
-		url += '&facets=true';
+		searchParams += '&facets=true';
 	}
 
+	// search title and abstract when performing term-based search if requested
+	if (term !== '' && xddSearchParam?.additional_fields) {
+		searchParams += `&additional_fields=${xddSearchParam?.additional_fields}`;
+	}
+
+	// utilize ES improved matching
+	if (term !== '' && xddSearchParam?.match) {
+		searchParams += '&match=true';
+	}
+
+	//
 	// "max": "Maximum number of articles to return (default is all)",
-	url += `&max=${limitResultsCount}`;
+	searchParams += `&max=${limitResultsCount}`;
 
 	// "per_page": "Maximum number of results to include in one response.
 	//  Applies to full_results pagination or single-page requests.
 	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter,
 	//        floor rounded to a multiple of 25."
-	url += `&per_page=${limitResultsCount}`;
+	searchParams += `&per_page=${limitResultsCount}`;
 
 	// url = 'https://xdd.wisc.edu/api/articles?&include_score=true&max=25&term=abbott&publisher=USGS&full_results';
 
@@ -460,7 +469,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
-	const res = await API.get(url);
+	const res = await API.get(url + searchParams);
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.success) {
