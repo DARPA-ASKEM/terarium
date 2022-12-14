@@ -12,7 +12,8 @@ all:
 	@echo ""
 	@echo "Commands:"
 	@echo "  clean                    - remove bin, dist and node_modules directories"
-	@echo "  images                   - build docker images of all targets"
+	@echo "  build-<target>           - compile sources for a specific target - see below for list of targets"
+	@echo "  images                   - build docker images of all targets (except native)"
 	@echo "  image-<target>           - build docker image of a specific target - see below for list of targets"
 
 
@@ -26,9 +27,11 @@ TARGETS += hmi-server
 clean-hmi-server: clean-hmi-server-base
 	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
 
-image-hmi-server: clean-hmi-server
+build-hmi-server: clean-hmi-server
 	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=jar
-	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
+
+image-hmi-server:
+	docker buildx bake hmi-server-base
 
 
 
@@ -36,10 +39,11 @@ TARGETS += hmi-server-native
 clean-hmi-server-native: clean-hmi-server-base
 	rm -rf $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
 
-image-hmi-server-native: clean-hmi-server-native
+build-hmi-server-native: clean-hmi-server-native
 	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native
-	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
 
+image-hmi-server-native:
+	docker buildx bake hmi-server-native
 
 
 TARGETS += hmi-client
@@ -49,12 +53,12 @@ clean-hmi-client:
 	rm -rf $(PROJECT_DIR)/packages/client/hmi-client/dist
 	rm -rf $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-image-hmi-client: clean-hmi-client yarn-install
+build-hmi-client: clean-hmi-client yarn-install
 	yarn workspace graph-scaffolder tsc --build
 	yarn workspace hmi-client build
-	mv $(PROJECT_DIR)/packages/client/hmi-client/dist $(PROJECT_DIR)/packages/client/hmi-client/docker/dist
 
-
+image-hmi-client:
+	docker buildx bake hmi-client-base
 
 ## Clean
 .PHONY: clean
@@ -69,8 +73,8 @@ clean-hmi-server-base:
 
 ## Images
 .PHONY: images
-images: $(TARGETS:%=image-%)
-
+images:
+	docker buildx bake
 
 
 ## Utilities
