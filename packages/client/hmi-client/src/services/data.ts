@@ -408,9 +408,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.doi) {
 		searchParams += `&doi=${xddSearchParam.doi}`;
 	}
-	if (xddSearchParam?.title) {
-		searchParams += `&title=${xddSearchParam.title}`;
-	}
 	if (xddSearchParam?.dataset) {
 		searchParams += `&dataset=${xddSearchParam.dataset}`;
 	}
