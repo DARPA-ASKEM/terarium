@@ -452,6 +452,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		searchParams += '&match=true';
 	}
 
+	if (xddSearchParam?.known_entities) {
+		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
+	}
+
 	//
 	// "max": "Maximum number of articles to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
@@ -485,6 +489,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			// eslint-disable-next-line no-underscore-dangle
 			gddid: a._gddid,
 			knownTerms: a.known_terms,
+			knownEntities: a.known_entities,
 			// eslint-disable-next-line no-underscore-dangle
 			highlight: a._highlight
 		}));
@@ -531,7 +536,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 const getDocumentById = async (docid: string) => {
 	const searchParams: XDDSearchParams = {
-		docid
+		docid,
+		known_entities: 'url_extractions'
 	};
 	const xddRes = await searchXDDArticles('', searchParams);
 	if (xddRes) {
