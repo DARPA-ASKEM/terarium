@@ -34,7 +34,7 @@ const selectedArtifactId = computed(() => {
 	<!-- @remove-artifact="deleteSimulationPlan" -->
 	<ArtifactList
 		:artifacts="simulationPlansAsArtifactList"
-		:selected-artifact-id="selectedArtifactId"
+		:selected-artifact-ids="[selectedArtifactId.toString()]"
 		@artifact-clicked="openSimulationPlan"
 	/>
 </template>
