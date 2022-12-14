@@ -17,7 +17,7 @@ FROM nginx:1.23-alpine
 
 # update packages and add some basics
 RUN apk update
-RUN apk add --no-cache curl=7.83.1 && apk add --no-cache bash=5.1.16 && apk add --no-cache vim=8.2.5
+RUN apk add --no-cache curl && apk add --no-cache bash && apk add --no-cache vim
 
 # remove default and add configuration
 COPY --from=builder /code/packages/client/hmi-client/docker/default.conf /etc/nginx/conf.d/
