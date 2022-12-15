@@ -53,6 +53,8 @@ public class XDDSearchPayload implements Serializable {
 	@JsonbProperty("known_entities")
 	private String knownEntities;
 
+	private Boolean fields;
+
 	private Boolean match;
 
 	// Extraction-specific field
