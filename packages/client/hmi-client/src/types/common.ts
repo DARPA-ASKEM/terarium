@@ -1,12 +1,17 @@
 import { ConceptFacets } from './Concept';
 import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
-import { XDDArticle, XDDSearchParams } from './XDD';
+import { XDDArticle, XDDArtifact, XDDSearchParams } from './XDD';
 
 export enum ViewType {
 	LIST = 'list',
 	MATRIX = 'matrix',
 	GRAPH = 'graph'
+}
+
+export enum XDDViewType {
+	PUBLICATIONS = 'publications',
+	EXTRACTIONS = 'extractions'
 }
 
 export enum ResourceType {
@@ -28,6 +33,7 @@ export type SearchResults = {
 	results: ResultType[];
 	facets?: Facets;
 	rawConceptFacets?: ConceptFacets | null;
+	xddExtractions?: XDDArtifact[]; // the result from searching XDD artifacts against a given search term
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;

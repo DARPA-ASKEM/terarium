@@ -160,6 +160,7 @@ export type XDDSearchParams = {
 	match?: boolean; // If true, utilizes a \"match\" instead of a \"match_phrase\" query within Elaticsearch. This has the effect of finding documents which most frequently use the individial terms in the query, rather than looking for the exact phrase.
 	additional_fields?: string; // Extend the query to include fields in addition to the full-text contents (example: abstract,title). The query logic is OR across the search fields.
 	known_entities?: string; // Include known entities extracted via external tools. Current options: [drugs, emmaa, stratname_candidates, url_extractions]
+	fields?: string; // return only fields of interest (passed as comma-separated string) instead of returing the full record in the xDD results
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;

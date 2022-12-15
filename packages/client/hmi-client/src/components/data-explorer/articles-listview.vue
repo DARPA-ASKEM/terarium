@@ -1,6 +1,30 @@
 <template>
 	<div>
-		<div class="table-fixed-head">
+		<div v-if="viewType === XDDViewType.EXTRACTIONS" class="extractions-container">
+			<!-- FIXME: the content of this div is copied and adapted from Document.vue -->
+			<div v-for="ex in extractions" :key="ex.askemId">
+				<template
+					v-if="
+						ex.properties.image &&
+						(ex.askemClass === XDDExtractionType.Figure ||
+							ex.askemClass === XDDExtractionType.Table ||
+							ex.askemClass === XDDExtractionType.Equation)
+					"
+				>
+					<!-- render figure -->
+					{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+					<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+				</template>
+				<template v-else>
+					<!-- render textual content -->
+					<b>{{ ex.properties.title }}</b>
+					{{ ex.properties.caption }}
+					{{ ex.properties.abstractText }}
+					{{ ex.properties.contentText }}
+				</template>
+			</div>
+		</div>
+		<div v-if="viewType === XDDViewType.PUBLICATIONS" class="table-fixed-head">
 			<table>
 				<tbody>
 					<tr
@@ -80,8 +104,8 @@
 <script setup lang="ts">
 import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { XDDArticle } from '@/types/XDD';
-import { ResultType } from '@/types/common';
+import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
+import { ResultType, XDDViewType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
@@ -94,6 +118,10 @@ const props = defineProps({
 		type: Array as PropType<XDDArticle[]>,
 		default: () => []
 	},
+	extractions: {
+		type: Array as PropType<XDDArtifact[]>,
+		default: () => []
+	},
 	rawConceptFacets: {
 		type: Object as PropType<ConceptFacets | null>,
 		default: () => null
@@ -101,6 +129,10 @@ const props = defineProps({
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
 		required: true
+	},
+	viewType: {
+		type: String,
+		default: XDDViewType.PUBLICATIONS
 	}
 });
 
@@ -110,7 +142,7 @@ const expandedRowId = ref('');
 
 const resources = useResourcesStore();
 
-const { articles, selectedSearchItems } = toRefs(props);
+const { articles, selectedSearchItems, extractions } = toRefs(props);
 
 watch(
 	articles,
@@ -119,6 +151,14 @@ watch(
 		const elem: any = document.getElementsByClassName('table-fixed-head');
 		if (elem.length === 0) return;
 		elem[0].scrollTop = 0;
+	},
+	{ immediate: true }
+);
+
+watch(
+	extractions,
+	() => {
+		// console.log(extractions.value);
 	},
 	{ immediate: true }
 );
@@ -278,5 +318,14 @@ tbody tr:first-child {
 
 .title-and-abstract-layout .content .related-docs-container .item-select:hover {
 	text-decoration: underline;
+}
+
+.extractions-container {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
 }
 </style>

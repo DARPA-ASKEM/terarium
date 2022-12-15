@@ -325,18 +325,14 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 //
 // fetch list of extractions data from the HMI server
 //
-const getXDDArtifacts = async (doc_doi: string) => {
-	const url = `/xdd/extractions?doi=${doc_doi}`;
-
-	// NOT SUPPORTED
-	// if (xddSearchParam?.type) {
-	// 	// restrict the type of object to search for
-	// 	url += `&type=${xddSearchParam.type}`;
-	// }
-	// if (xddSearchParam?.ignoreBytes) {
-	// 	// by default ignore including artifact bytes (e.g., figures base64 bytes)
-	// 	url += `&ignore_bytes=${xddSearchParam.ignoreBytes}`;
-	// }
+const getXDDArtifacts = async (doc_doi: string, term?: string) => {
+	let url = '/xdd/extractions?';
+	if (doc_doi !== '') {
+		url += `doi=${doc_doi}`;
+	}
+	if (term !== undefined) {
+		url += `query_all=${term}`;
+	}
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
@@ -410,6 +406,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	}
 	if (xddSearchParam?.dataset) {
 		searchParams += `&dataset=${xddSearchParam.dataset}`;
+	}
+	if (xddSearchParam?.fields) {
+		searchParams += `&fields=${xddSearchParam.fields}`;
 	}
 	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
 		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
@@ -519,9 +518,16 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			});
 		}
 
+		// also, perform search across extractions
+		let extractionsSearchResults = [] as XDDArtifact[];
+		if (term !== '') {
+			extractionsSearchResults = await getXDDArtifacts('', term);
+		}
+
 		return {
 			results: articles,
 			facets: formattedFacets,
+			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',
@@ -557,6 +563,8 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	// ideally, all such subsystems should be registered in an array, which will force refactoring of the following code
 	//
 
+	const promiseList = [] as Promise<SearchResults>[];
+
 	// xdd
 	const promise1 = new Promise<SearchResults>((resolve, reject) => {
 		try {
@@ -565,6 +573,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 			reject(new Error(`Error fetching XDD results: ${err}`));
 		}
 	});
+	promiseList.push(promise1);
 
 	// models
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
@@ -574,6 +583,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 			reject(new Error(`Error fetching model results: ${err}`));
 		}
 	});
+	promiseList.push(promise2);
 
 	// datasets
 	const promise3 = new Promise<SearchResults>((resolve, reject) => {
@@ -583,9 +593,10 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 			reject(new Error(`Error fetching dataset results: ${err}`));
 		}
 	});
+	promiseList.push(promise3);
 
 	// fetch results from all search subsystems in parallel
-	const responses = await Promise.all([promise1, promise2, promise3]);
+	const responses = await Promise.all(promiseList);
 	return responses as SearchResults[];
 };
 
