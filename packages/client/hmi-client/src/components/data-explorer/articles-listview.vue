@@ -1,6 +1,30 @@
 <template>
 	<div>
-		<div class="table-fixed-head">
+		<div v-if="viewType === XDDViewType.EXTRACTIONS" class="extractions-container">
+			<!-- FIXME: the content of this div is copied and adapted from Document.vue -->
+			<div v-for="ex in extractions" :key="ex.askemId">
+				<template
+					v-if="
+						ex.properties.image &&
+						(ex.askemClass === XDDExtractionType.Figure ||
+							ex.askemClass === XDDExtractionType.Table ||
+							ex.askemClass === XDDExtractionType.Equation)
+					"
+				>
+					<!-- render figure -->
+					{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+					<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+				</template>
+				<template v-else>
+					<!-- render textual content -->
+					<b>{{ ex.properties.title }}</b>
+					{{ ex.properties.caption }}
+					{{ ex.properties.abstractText }}
+					{{ ex.properties.contentText }}
+				</template>
+			</div>
+		</div>
+		<div v-if="viewType === XDDViewType.PUBLICATIONS" class="table-fixed-head">
 			<table>
 				<tbody>
 					<tr
@@ -25,9 +49,22 @@
 									<div class="text-bold">{{ formatTitle(d) }}</div>
 									<multiline-description :text="formatDescription(d)" />
 									<div>{{ d.publisher }}, {{ d.journal }}</div>
-									<!--  -->
 									<div v-if="isExpanded(d)" class="knobs">
-										<multiline-description :text="formatArticleAuthors(d)" />
+										<b>Author(s):</b>
+										<div>
+											{{ formatArticleAuthors(d) }}
+										</div>
+										<div
+											v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
+											class="url-extractions"
+										>
+											<b>URL Extractions(s):</b>
+											<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
+												<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
+													ex.resource_title
+												}}</a>
+											</div>
+										</div>
 									</div>
 									<div v-if="d.highlight" class="knobs">
 										<span v-for="h in d.highlight" :key="h">
@@ -67,8 +104,8 @@
 <script setup lang="ts">
 import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { XDDArticle } from '@/types/XDD';
-import { ResultType } from '@/types/common';
+import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
+import { ResultType, XDDViewType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
@@ -81,6 +118,10 @@ const props = defineProps({
 		type: Array as PropType<XDDArticle[]>,
 		default: () => []
 	},
+	extractions: {
+		type: Array as PropType<XDDArtifact[]>,
+		default: () => []
+	},
 	rawConceptFacets: {
 		type: Object as PropType<ConceptFacets | null>,
 		default: () => null
@@ -88,6 +129,10 @@ const props = defineProps({
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
 		required: true
+	},
+	viewType: {
+		type: String,
+		default: XDDViewType.PUBLICATIONS
 	}
 });
 
@@ -97,7 +142,7 @@ const expandedRowId = ref('');
 
 const resources = useResourcesStore();
 
-const { articles, selectedSearchItems } = toRefs(props);
+const { articles, selectedSearchItems, extractions } = toRefs(props);
 
 watch(
 	articles,
@@ -118,7 +163,7 @@ const updateExpandedRow = (article: XDDArticle) => {
 
 const formatTitle = (d: XDDArticle) => (d.title ? d.title : d.title);
 
-const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join('\n');
+const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
 const isSelected = (article: XDDArticle) =>
 	selectedSearchItems.value.find((item) => {
@@ -237,6 +282,11 @@ tbody tr:first-child {
 	margin-top: 10px;
 }
 
+.title-and-abstract-layout .content .knobs .url-extractions {
+	display: flex;
+	flex-direction: column;
+}
+
 .title-and-abstract-layout .content .related-docs {
 	margin-top: 1rem;
 	color: blue;
@@ -260,5 +310,14 @@ tbody tr:first-child {
 
 .title-and-abstract-layout .content .related-docs-container .item-select:hover {
 	text-decoration: underline;
+}
+
+.extractions-container {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	height: 100%;
+	overflow-y: auto;
 }
 </style>

@@ -98,8 +98,30 @@
 						:result-type="resultType"
 						:selected-search-items="selectedSearchItems"
 						:search-term="searchTerm"
+						:xdd-view-type="xddViewType"
 						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
+					>
+						<template #header>
+							<div class="button-group bottom-padding">
+								<button
+									type="button"
+									class="small-button"
+									:class="{ active: xddViewType === XDDViewType.PUBLICATIONS }"
+									@click="xddViewType = XDDViewType.PUBLICATIONS"
+								>
+									Publications
+								</button>
+								<button
+									type="button"
+									class="small-button"
+									:class="{ active: xddViewType === XDDViewType.EXTRACTIONS }"
+									@click="xddViewType = XDDViewType.EXTRACTIONS"
+								>
+									Figures/Tables
+								</button>
+							</div>
+						</template>
+					</search-results-list>
 					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 					<!--
 					<simple-pagination
@@ -153,7 +175,8 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType
+	ViewType,
+	XDDViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import {
@@ -197,6 +220,7 @@ const filteredFacets = ref<Facets>({});
 //
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
+const xddViewType = ref<string>(XDDViewType.PUBLICATIONS);
 
 const xddDataset = computed(() =>
 	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
@@ -214,8 +238,19 @@ const resultsCount = computed(() => {
 		// only return the results count for the selected subsystems
 		const resList = dataItems.value.find((res) => res.searchSubsystem === resultType.value);
 		if (resList) {
-			// eslint-disable-next-line no-unsafe-optional-chaining
-			total += resList?.hits ?? resList?.results.length;
+			if (resList.hits) {
+				total += resList.hits;
+			} else {
+				// eslint-disable-next-line no-lonely-if
+				if (resultType.value !== ResourceType.XDD) {
+					total += resList.results.length;
+				} else {
+					total +=
+						xddViewType.value === XDDViewType.PUBLICATIONS
+							? resList.results.length
+							: resList.xddExtractions?.length ?? 0;
+				}
+			}
 		}
 	}
 	return total;
@@ -281,7 +316,8 @@ const fetchDataItemList = async () => {
 			inclusive: matchAll,
 			facets: true, // include facets aggregation data in the search results
 			match: true,
-			additional_fields: 'title,abstract'
+			additional_fields: 'title,abstract',
+			known_entities: 'url_extractions'
 		}
 	};
 
@@ -503,6 +539,10 @@ onUnmounted(() => {
 	display: flex;
 }
 
+.bottom-padding {
+	padding-bottom: 2px;
+}
+
 .button-group button {
 	display: flex;
 	align-items: center;
@@ -513,6 +553,10 @@ onUnmounted(() => {
 	cursor: pointer;
 	border-left-width: 0;
 	height: 40px;
+}
+
+.button-group button.small-button {
+	height: 32px;
 }
 
 .button-group button:first-child {

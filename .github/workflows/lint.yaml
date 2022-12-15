@@ -1,5 +1,5 @@
 ---
-# This workflow will do a lint all YAML and Docker files
+# This workflow will lint all YAML and Docker files
 name: Global File Linting
 # yamllint disable-line rule:truthy
 on:
