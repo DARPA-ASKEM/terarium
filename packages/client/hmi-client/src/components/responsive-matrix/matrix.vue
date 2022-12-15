@@ -43,6 +43,7 @@
 				:parametersMin="dataParametersMin"
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				:selectorFn="selectorFn"
 				:labelRowFormatFn="labelRowFormatFn"
 				:labelColFormatFn="labelColFormatFn"
 				@click="selectedCellClick(idx)"
@@ -86,7 +87,8 @@ import {
 	CellData,
 	CellStatus,
 	CellType,
-	Uniforms
+	Uniforms,
+	ParamMinMax
 } from '@/types/ResponsiveMatrix';
 import { uint32ArrayToRedIntTex } from './pixi-utils';
 
@@ -123,6 +125,18 @@ export default {
 			type: Number,
 			default() {
 				return 0;
+			}
+		},
+		parametersMin: {
+			type: Object as PropType<ParamMinMax | undefined>,
+			default() {
+				return undefined;
+			}
+		},
+		parametersMax: {
+			type: Object as PropType<ParamMinMax | undefined>,
+			default() {
+				return undefined;
 			}
 		},
 		data: {
@@ -171,6 +185,12 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
 			}
 		},
 		barColorFn: {
@@ -600,7 +620,6 @@ export default {
 				this.data.forEach((row, indexRow) =>
 					row.forEach((cell, indexCol) => {
 						if (cell) {
-							this.extractParams(cell);
 							// find better solution than using reserved properties
 							// for cell identification
 							const cellData = {
@@ -614,6 +633,16 @@ export default {
 						}
 					})
 				);
+
+				if (!this.parametersMin && !this.parametersMax) {
+					this.extractParams();
+				} else {
+					this.dataParametersMin = this.parametersMin as ParamMinMax;
+					this.dataParametersMax = this.parametersMax as ParamMinMax;
+
+					Object.keys(this.parametersMin as object).map((k) => this.dataParameters.add(k));
+					Object.keys(this.parametersMax as object).map((k) => this.dataParameters.add(k));
+				}
 			} else {
 				console.error('Data Invalid');
 			}
@@ -644,25 +673,22 @@ export default {
 		/**
 		 * Processes a single cell object and extract the parameters from it.
 		 * As well update the parameters min and max state objects.
-		 * @param {object} cellObject
 		 */
-		extractParams(cellObject: object) {
-			Object.keys(cellObject).forEach((param) => {
-				if (!this.dataParameters.has(param)) {
-					this.dataParametersMin[param] = cellObject[param];
-					this.dataParametersMax[param] = cellObject[param];
-				} else {
-					this.dataParametersMin[param] = Math.min(
-						this.dataParametersMin[param],
-						cellObject[param]
-					);
-					this.dataParametersMax[param] = Math.max(
-						this.dataParametersMax[param],
-						cellObject[param]
-					);
-				}
-				this.dataParameters.add(param);
-			});
+		extractParams() {
+			this.data.forEach((row) =>
+				row.forEach((cell) => {
+					Object.keys(cell).forEach((param) => {
+						if (!this.dataParameters.has(param)) {
+							this.dataParametersMin[param] = cell[param];
+							this.dataParametersMax[param] = cell[param];
+						} else {
+							this.dataParametersMin[param] = Math.min(this.dataParametersMin[param], cell[param]);
+							this.dataParametersMax[param] = Math.max(this.dataParametersMax[param], cell[param]);
+						}
+						this.dataParameters.add(param);
+					});
+				})
+			);
 		},
 
 		/**
