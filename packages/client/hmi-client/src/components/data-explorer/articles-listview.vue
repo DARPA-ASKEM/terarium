@@ -155,14 +155,6 @@ watch(
 	{ immediate: true }
 );
 
-watch(
-	extractions,
-	() => {
-		// console.log(extractions.value);
-	},
-	{ immediate: true }
-);
-
 const isExpanded = (article: XDDArticle) => expandedRowId.value === article.title;
 
 const updateExpandedRow = (article: XDDArticle) => {
