@@ -25,9 +25,22 @@
 									<div class="text-bold">{{ formatTitle(d) }}</div>
 									<multiline-description :text="formatDescription(d)" />
 									<div>{{ d.publisher }}, {{ d.journal }}</div>
-									<!--  -->
 									<div v-if="isExpanded(d)" class="knobs">
-										<multiline-description :text="formatArticleAuthors(d)" />
+										<b>Author(s):</b>
+										<div>
+											{{ formatArticleAuthors(d) }}
+										</div>
+										<div
+											v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
+											class="url-extractions"
+										>
+											<b>URL Extractions(s):</b>
+											<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
+												<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
+													ex.resource_title
+												}}</a>
+											</div>
+										</div>
 									</div>
 									<div v-if="d.highlight" class="knobs">
 										<span v-for="h in d.highlight" :key="h">
@@ -118,7 +131,7 @@ const updateExpandedRow = (article: XDDArticle) => {
 
 const formatTitle = (d: XDDArticle) => (d.title ? d.title : d.title);
 
-const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join('\n');
+const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
 
 const isSelected = (article: XDDArticle) =>
 	selectedSearchItems.value.find((item) => {
@@ -235,6 +248,11 @@ tbody tr:first-child {
 
 .title-and-abstract-layout .content .knobs {
 	margin-top: 10px;
+}
+
+.title-and-abstract-layout .content .knobs .url-extractions {
+	display: flex;
+	flex-direction: column;
 }
 
 .title-and-abstract-layout .content .related-docs {

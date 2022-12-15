@@ -281,7 +281,8 @@ const fetchDataItemList = async () => {
 			inclusive: matchAll,
 			facets: true, // include facets aggregation data in the search results
 			match: true,
-			additional_fields: 'title,abstract'
+			additional_fields: 'title,abstract',
+			known_entities: 'url_extractions'
 		}
 	};
 
