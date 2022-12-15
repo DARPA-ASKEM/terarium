@@ -15,6 +15,7 @@ public interface ExtractionProxy {
 	@GET
 	@Path("object")
 	Response getExtractions(
-		@QueryParam("doi") String doi
+		@QueryParam("doi") String doi,
+		@QueryParam("query_all") String query_all
 	);
 }

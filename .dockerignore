@@ -1,13 +1,7 @@
 *
-**/node_modules
-!packages/**
-!gradlew
-!gradle
-!gradle.properties
-!settings.gradle
-!lombok.config
+!build/*-runner
+!build/*-runner.jar
+!build/lib/*
+!build/quarkus-app/*
 
-!tsconfig.json
-!tsconfig.base.json
-!yarn.lock
-!package.json
+**/node_modules

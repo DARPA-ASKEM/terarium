@@ -42,7 +42,9 @@ public class DocumentResource {
 		@QueryParam("pubname") String pubname,
 		@QueryParam("publisher") String publisher,
 		@QueryParam("additional_fields") String additional_fields,
-		@QueryParam("match") String match
+		@QueryParam("match") String match,
+		@QueryParam("known_entities") String known_entities,
+		@QueryParam("fields") String fields
 	) {
 		// only go ahead with the query if at least one param is present
 		if (docid != null || doi != null || term != null) {
@@ -67,7 +69,7 @@ public class DocumentResource {
 			}
 			return proxy.getDocuments(
 				docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-				min_published, max_published, pubname, publisher, additional_fields, match);
+				min_published, max_published, pubname, publisher, additional_fields, match, known_entities, fields);
 		}
 		return Response.noContent().build();
 	}

@@ -10,7 +10,9 @@ import { Dataset } from '@/types/Dataset';
  * @return Array<Dataset>|null - the list of all datasets, or null if none returned by API
  */
 async function getAll(): Promise<Dataset[] | null> {
-	const response = await API.get('/datasets');
+	const response = await API.get('/datasets').catch((error) => {
+		console.log('Error: ', error);
+	});
 	return response?.data ?? null;
 }
 

@@ -325,18 +325,14 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 //
 // fetch list of extractions data from the HMI server
 //
-const getXDDArtifacts = async (doc_doi: string) => {
-	const url = `/xdd/extractions?doi=${doc_doi}`;
-
-	// NOT SUPPORTED
-	// if (xddSearchParam?.type) {
-	// 	// restrict the type of object to search for
-	// 	url += `&type=${xddSearchParam.type}`;
-	// }
-	// if (xddSearchParam?.ignoreBytes) {
-	// 	// by default ignore including artifact bytes (e.g., figures base64 bytes)
-	// 	url += `&ignore_bytes=${xddSearchParam.ignoreBytes}`;
-	// }
+const getXDDArtifacts = async (doc_doi: string, term?: string) => {
+	let url = '/xdd/extractions?';
+	if (doc_doi !== '') {
+		url += `doi=${doc_doi}`;
+	}
+	if (term !== undefined) {
+		url += `query_all=${term}`;
+	}
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
@@ -411,6 +407,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	if (xddSearchParam?.dataset) {
 		searchParams += `&dataset=${xddSearchParam.dataset}`;
 	}
+	if (xddSearchParam?.fields) {
+		searchParams += `&fields=${xddSearchParam.fields}`;
+	}
 	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
 		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
 	}
@@ -452,6 +451,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		searchParams += '&match=true';
 	}
 
+	if (xddSearchParam?.known_entities) {
+		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
+	}
+
 	//
 	// "max": "Maximum number of articles to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
@@ -474,17 +477,23 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	if (rawdata.success) {
 		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
-		const articlesRaw = data as XDDArticle[];
+		const articlesRaw =
+			xddSearchParam?.fields === undefined
+				? (data as XDDArticle[])
+				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent resposne object
 
 		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
 		//       is not populated and instead the raw field name, abstract, is the one with data
 		//       similarly, re-map the gddid field
+		// FIXME: setting the following mapping ignores the fact that the user may have specifically
+		//        requested certain fields, and thus other mapped fields will be set to undefined
 		const articles = articlesRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract,
 			// eslint-disable-next-line no-underscore-dangle
 			gddid: a._gddid,
 			knownTerms: a.known_terms,
+			knownEntities: a.known_entities,
 			// eslint-disable-next-line no-underscore-dangle
 			highlight: a._highlight
 		}));
@@ -495,7 +504,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		if (term !== '') {
 			articles.forEach((article) => {
 				if (article.highlight) {
-					article.highlight = article.highlight.map((h) => h.replaceAll(term, `<b>${term}</b>`));
+					article.highlight = article.highlight.map((h) =>
+						h.replaceAll(term, `<span style='background-color: yellow'>${term}</span>`)
+					);
 				}
 			});
 		}
@@ -512,9 +523,16 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			});
 		}
 
+		// also, perform search across extractions
+		let extractionsSearchResults = [] as XDDArtifact[];
+		if (term !== '') {
+			extractionsSearchResults = await getXDDArtifacts('', term);
+		}
+
 		return {
 			results: articles,
 			facets: formattedFacets,
+			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',
@@ -531,7 +549,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 const getDocumentById = async (docid: string) => {
 	const searchParams: XDDSearchParams = {
-		docid
+		docid,
+		known_entities: 'url_extractions'
 	};
 	const xddRes = await searchXDDArticles('', searchParams);
 	if (xddRes) {
@@ -549,6 +568,8 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 	// ideally, all such subsystems should be registered in an array, which will force refactoring of the following code
 	//
 
+	const promiseList = [] as Promise<SearchResults>[];
+
 	// xdd
 	const promise1 = new Promise<SearchResults>((resolve, reject) => {
 		try {
@@ -557,6 +578,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 			reject(new Error(`Error fetching XDD results: ${err}`));
 		}
 	});
+	promiseList.push(promise1);
 
 	// models
 	const promise2 = new Promise<SearchResults>((resolve, reject) => {
@@ -566,6 +588,7 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 			reject(new Error(`Error fetching model results: ${err}`));
 		}
 	});
+	promiseList.push(promise2);
 
 	// datasets
 	const promise3 = new Promise<SearchResults>((resolve, reject) => {
@@ -575,9 +598,10 @@ const fetchData = async (term: string, searchParam?: SearchParameters) => {
 			reject(new Error(`Error fetching dataset results: ${err}`));
 		}
 	});
+	promiseList.push(promise3);
 
 	// fetch results from all search subsystems in parallel
-	const responses = await Promise.all([promise1, promise2, promise3]);
+	const responses = await Promise.all(promiseList);
 	return responses as SearchResults[];
 };
 

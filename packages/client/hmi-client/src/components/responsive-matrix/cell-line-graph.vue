@@ -9,7 +9,7 @@ import {
 	select,
 	extent,
 	scaleLinear,
-	scaleLog,
+	scaleSymlog,
 	scaleTime,
 	axisBottom,
 	axisLeft,
@@ -92,6 +92,12 @@ export default {
 				return '#000000';
 			}
 		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
+			}
+		},
 		labelRowFormatFn: {
 			type: Function as PropType<(value: NumberValue, index: number) => string>,
 			default(v) {
@@ -171,7 +177,7 @@ export default {
 		},
 
 		yScale() {
-			return scaleLog()
+			return scaleSymlog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -214,7 +220,7 @@ export default {
 		extractCellValuesByParam(idx, selectedCells, startCol, endCol) {
 			const cell = this.dataCellList[idx];
 			if (cell.col <= endCol && cell.col >= startCol) {
-				this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
+				this.parameters.forEach((param) => selectedCells[param].push(this.selectorFn(cell, param)));
 			}
 		},
 
