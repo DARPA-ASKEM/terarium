@@ -12,8 +12,11 @@ defineProps<{
 		<component :is="resource.icon" />
 		<div class="resource-details">
 			<header>
-				{{ resource.projectAsset.name }}
-				{{ resource.projectAsset.title }}
+				<template v-if="resource.projectAsset.title || resource.projectAsset.name">
+					{{ resource.projectAsset.title }}
+					{{ resource.projectAsset.name }}
+				</template>
+				<template v-else> {{ resource.projectAsset.id }}</template>
 			</header>
 			<footer>{{ RouteMetadata[resource.route].displayName }} - Last date accessed</footer>
 		</div>

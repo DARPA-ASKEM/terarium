@@ -2,7 +2,7 @@
 import { Project } from '@/types/Project';
 import ResourcesList from '@/components/resources/resources-list.vue';
 
-const props = defineProps<{
+defineProps<{
 	project: Project;
 }>();
 
@@ -29,10 +29,7 @@ const emit = defineEmits(['show-data-explorer']);
 				</div>
 			</section>
 			<section class="detail">
-				<resources-list
-					:project="props?.project"
-					@show-data-explorer="emit('show-data-explorer')"
-				/>
+				<resources-list :project="project" @show-data-explorer="emit('show-data-explorer')" />
 			</section>
 		</section>
 	</div>

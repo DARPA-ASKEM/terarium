@@ -18,7 +18,6 @@ const goToHomepage = () => {
 	resources.activeProjectAssets = null;
 	router.push('/');
 };
-const goToDataExplorer = () => emit('show-data-explorer');
 
 defineProps<{
 	projectName?: Project['name'];
@@ -34,7 +33,12 @@ defineProps<{
 			<span>{{ projectName }}</span>
 		</p>
 		<aside>
-			<v-btn variant="flat" color="primary" class="data-explorer" @click="goToDataExplorer">
+			<v-btn
+				variant="flat"
+				color="primary"
+				class="data-explorer"
+				@click="emit('show-data-explorer')"
+			>
 				<IconSearchLocate16 />
 			</v-btn>
 		</aside>

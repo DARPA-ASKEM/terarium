@@ -21,7 +21,7 @@ const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
 
 const newModelId = computed(() => props.assetId);
-const openTabs = ref<Tab[]>([]); // These are props for resources-list
+const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
 const activeProject = resourcesStore.activeProject;

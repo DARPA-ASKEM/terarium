@@ -13,7 +13,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['show-data-explorer']);
-const goToDataExplorer = () => emit('show-data-explorer');
 
 const router = useRouter();
 const activeProjectAssets = useResourcesStore().activeProjectAssets;
@@ -22,34 +21,38 @@ const resources: Resource[] = [];
 
 const filteredRouteMetadata: {
 	route: RouteName;
-	metadata: { displayName: string; icon: any; projectAsset?: ProjectAssetTypes };
+	displayName: string;
+	icon: any;
+	projectAsset?: ProjectAssetTypes;
 }[] = props.resourceRoute
-	? [{ route: props.resourceRoute, metadata: RouteMetadata[props.resourceRoute] }]
+	? [{ route: props.resourceRoute, ...RouteMetadata[props.resourceRoute] }]
 	: Object.entries(RouteMetadata)
-			.map(([route, metadata]) => [{ route: route as RouteName, metadata }])
+			.map(([route, metadata]) => [{ route: route as RouteName, ...metadata }])
 			.flat();
 
-for (let i = 0; i < filteredRouteMetadata.length; i++) {
-	const route = filteredRouteMetadata[i].route;
-	const { displayName, icon, projectAsset } = filteredRouteMetadata[i].metadata;
+console.log(activeProjectAssets);
+
+const assetAmount = props.resourceRoute ? 10 : 2;
+
+filteredRouteMetadata.forEach((metadata) => {
+	const route = metadata.route;
+	const { displayName, icon, projectAsset } = metadata;
 	if (projectAsset && activeProjectAssets !== null) {
-		const assets = activeProjectAssets[projectAsset];
-		for (let j = 0; j < assets.length; j++) {
+		const assets = activeProjectAssets[projectAsset].slice(0, assetAmount);
+		assets.forEach((asset) => {
 			resources.push({
 				route,
 				params: {
 					projectId: props?.project.id,
-					assetId: route === RouteName.DocumentRoute ? assets[j].xdd_uri : assets[j].id
+					assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
 				},
 				name: displayName,
 				icon,
-				projectAsset: assets[j]
+				projectAsset: asset
 			});
-			if (resources.length === 10) break; // Limit amount of resources
-		}
-		if (resources.length === 10) break; // Limit amount of resources
+		});
 	}
-}
+});
 
 function openResource(name: RouteName, params: RouteParamsRaw) {
 	router.push({ name, params });
@@ -69,7 +72,7 @@ function openResource(name: RouteName, params: RouteParamsRaw) {
 	</ul>
 	<p v-else>
 		Find Models, Datasets, or Papers with the
-		<a @click="goToDataExplorer"> Data Explorer </a>
+		<a @click="emit('show-data-explorer')"> Data Explorer </a>
 	</p>
 </template>
 
