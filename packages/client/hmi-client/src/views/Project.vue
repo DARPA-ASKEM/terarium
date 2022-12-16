@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
 defineProps<{
 	project: Project;
 }>();
+
+const emit = defineEmits(['show-data-explorer']);
 </script>
 
 <template>
@@ -23,59 +26,10 @@ defineProps<{
 							{{ project?.description }}
 						</p>
 					</section>
-					<section class="related-projects">
-						<h4>Related projects:</h4>
-					</section>
 				</div>
 			</section>
 			<section class="detail">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<section>
-						<h4>Questions / Simulation Plans</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-					<section>
-						<h4>Models</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-					<section>
-						<h4>Scenarios</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-					<section>
-						<h4>Key Outcomes</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-				</div>
+				<resources-list :project="project" @show-data-explorer="emit('show-data-explorer')" />
 			</section>
 		</section>
 	</div>
@@ -88,6 +42,10 @@ defineProps<{
 	width: 100%;
 	margin: 0.5rem;
 	background: white;
+}
+
+a {
+	text-decoration: underline;
 }
 
 .content-container {
