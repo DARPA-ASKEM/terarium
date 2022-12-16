@@ -13,7 +13,6 @@ env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
   BAKE_FILE: docker-bake.hcl
-  BAKE_GROUP: prod
 
 jobs:
   # Run Global Lint
@@ -43,10 +42,16 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
 
       # 1.2 - Generate a matrix output of all the targets for the specified group
+      # if its not triggered by tag use `staging` bake group instead
       - name: Create matrix
         id: targets
         run: |
-          echo "matrix=$(docker buildx bake ${{ env.BAKE_GROUP }} -f ${{ env.BAKE_FILE }} --print | jq -cr '.group.default.targets')" >> $GITHUB_OUTPUT
+          if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
+            BAKE_GROUP=staging
+          else
+            BAKE_GROUP=prod
+          fi
+          echo "matrix=$(docker buildx bake $BAKE_GROUP -f ${{ env.BAKE_FILE }} --print | jq -cr '.group.default.targets')" >> $GITHUB_OUTPUT
 
       # 1.3 (optional) - output the generated target list for verification
       - name: Show matrix

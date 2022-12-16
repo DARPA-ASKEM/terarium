@@ -6,7 +6,9 @@
 name: Client E2E Tests
 # yamllint disable-line rule:truthy
 on:
-  workflow_call:
+  # schedule tests to run everyday at 5am
+  schedule:
+    - cron: '0 5 * * *'
 
 jobs:
   e2e-tests:
