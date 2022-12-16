@@ -30,8 +30,6 @@ const filteredRouteMetadata: {
 			.map(([route, metadata]) => [{ route: route as RouteName, ...metadata }])
 			.flat();
 
-console.log(activeProjectAssets);
-
 const assetAmount = props.resourceRoute ? 10 : 2;
 
 filteredRouteMetadata.forEach((metadata) => {
