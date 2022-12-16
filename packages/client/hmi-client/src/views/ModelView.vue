@@ -7,7 +7,7 @@ import useResourcesStore from '@/stores/resources';
 import { Project } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
-import * as _ from 'lodash';
+import { isEmpty } from 'lodash';
 import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
@@ -86,7 +86,7 @@ if (previousOpenTabs) {
 
 <template>
 	<TabContainer
-		v-if="!_.isEmpty(Array.from(openTabs))"
+		v-if="!isEmpty(Array.from(openTabs))"
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"

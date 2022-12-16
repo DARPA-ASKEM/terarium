@@ -8,7 +8,7 @@ import { RouteParamsRaw, useRouter } from 'vue-router';
 
 const props = defineProps<{
 	project: Project;
-	resourceRoute?: RouteName;
+	resourceRoute: RouteName;
 	// maybe add list size later
 }>();
 
@@ -16,9 +16,11 @@ const emit = defineEmits(['show-data-explorer']);
 const goToDataExplorer = () => emit('show-data-explorer');
 
 const router = useRouter();
-const store = useResourcesStore();
+const activeProjectAssets = useResourcesStore().activeProjectAssets;
 
 const resources: Resource[] = [];
+
+console.log(activeProjectAssets);
 
 const filteredRouteMetadata: {
 	route: RouteName;
@@ -26,14 +28,14 @@ const filteredRouteMetadata: {
 }[] = props.resourceRoute
 	? [{ route: props.resourceRoute, metadata: RouteMetadata[props.resourceRoute] }]
 	: Object.entries(RouteMetadata)
-			.map(([route, metadata]) => [{ route, metadata }])
+			.map(([route, metadata]) => [{ route: route as RouteName, metadata }])
 			.flat();
 
 for (let i = 0; i < filteredRouteMetadata.length; i++) {
 	const route = filteredRouteMetadata[i].route;
 	const { displayName, icon, projectAsset } = filteredRouteMetadata[i].metadata;
-	if (projectAsset && store.activeProjectAssets !== null) {
-		const assets = store.activeProjectAssets[projectAsset];
+	if (projectAsset && activeProjectAssets !== null) {
+		const assets = activeProjectAssets[projectAsset];
 		for (let j = 0; j < assets.length; j++) {
 			resources.push({
 				route,
