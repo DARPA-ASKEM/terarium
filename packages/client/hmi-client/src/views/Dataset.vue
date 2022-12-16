@@ -12,6 +12,8 @@ const props = defineProps<{
 	project: Project;
 }>();
 
+const emit = defineEmits(['show-data-explorer']);
+
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<string | null>(null);
 
@@ -108,7 +110,12 @@ const formatFeatures = (d: Dataset) => {
 				</table>
 			</div>
 		</template>
-		<resources-list v-else :project="props?.project" :resourceRoute="RouteName.DatasetRoute" />
+		<resources-list
+			v-else
+			:project="props?.project"
+			:resourceRoute="RouteName.DatasetRoute"
+			@show-data-explorer="emit('show-data-explorer')"
+		/>
 	</section>
 </template>
 

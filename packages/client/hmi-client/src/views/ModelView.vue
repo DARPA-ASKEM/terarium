@@ -7,19 +7,21 @@ import useResourcesStore from '@/stores/resources';
 import { Project } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
+import * as _ from 'lodash';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	assetId?: string;
 	project: Project;
 }>();
 
+const emit = defineEmits(['show-data-explorer']);
+
 const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
 
 const newModelId = computed(() => props.assetId);
-const openTabs = ref<Tab[]>([
-	{ name: 'Recents', props: { project: props.project, resourceRoute: RouteName.ModelRoute } }
-]); // These are props for resources-list-config
+const openTabs = ref<Tab[]>([]); // These are props for resources-list
 const activeTabIndex = ref(0);
 const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
 const activeProject = resourcesStore.activeProject;
@@ -84,6 +86,7 @@ if (previousOpenTabs) {
 
 <template>
 	<TabContainer
+		v-if="!_.isEmpty(Array.from(openTabs))"
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
 		:component-to-render="Model"
@@ -93,9 +96,25 @@ if (previousOpenTabs) {
 		:active-tab-index="activeTabIndex"
 	>
 	</TabContainer>
+	<section v-else class="recent-models-page">
+		<resources-list
+			:project="props.project"
+			:resource-route="RouteName.ModelRoute"
+			@show-data-explorer="emit('show-data-explorer')"
+		/>
+	</section>
 </template>
 
 <style scoped>
+.recent-models-page {
+	margin: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	background: var(--un-color-body-surface-primary);
+}
+
 .tab-container {
 	height: 100%;
 }

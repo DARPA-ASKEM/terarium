@@ -71,7 +71,12 @@
 				</template>
 			</div>
 		</div>
-		<resources-list v-else :project="props?.project" :resourceRoute="RouteName.DocumentRoute" />
+		<resources-list
+			v-else
+			:project="props?.project"
+			:resourceRoute="RouteName.DocumentRoute"
+			@show-data-explorer="emit('show-data-explorer')"
+		/>
 	</section>
 </template>
 
@@ -89,6 +94,8 @@ const props = defineProps<{
 	assetId: string;
 	project: Project;
 }>();
+
+const emit = defineEmits(['show-data-explorer']);
 
 const doc = ref<XDDArticle | null>(null);
 

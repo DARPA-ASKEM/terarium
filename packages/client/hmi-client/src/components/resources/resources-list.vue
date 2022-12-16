@@ -83,4 +83,8 @@ ul {
 	color: var(--un-color-body-text-secondary);
 	width: fit-content;
 }
+
+a {
+	text-decoration: underline;
+}
 </style>
