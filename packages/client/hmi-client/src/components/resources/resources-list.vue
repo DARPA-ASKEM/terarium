@@ -20,8 +20,6 @@ const activeProjectAssets = useResourcesStore().activeProjectAssets;
 
 const resources: Resource[] = [];
 
-console.log(activeProjectAssets);
-
 const filteredRouteMetadata: {
 	route: RouteName;
 	metadata: { displayName: string; icon: any; projectAsset?: ProjectAssetTypes };
