@@ -8,7 +8,7 @@ import { RouteParamsRaw, useRouter } from 'vue-router';
 
 const props = defineProps<{
 	project: Project;
-	resourceRoute: RouteName;
+	resourceRoute?: RouteName;
 	// maybe add list size later
 }>();
 
