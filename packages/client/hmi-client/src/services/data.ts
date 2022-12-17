@@ -98,7 +98,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));
 
 	// first get un-filtered concept facets
-	let conceptFacets = await getConceptFacets([MODELS]);
+	let conceptFacets = await getConceptFacets([ProjectAssetTypes.MODELS]);
 
 	const modelResults = filterModels(allModels, conceptFacets, term);
 
@@ -270,7 +270,7 @@ const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParam
 		type: 'dataset'
 	}));
 
-	let conceptFacets = await getConceptFacets([DATASETS]);
+	let conceptFacets = await getConceptFacets([ProjectAssetTypes.DATASETS]);
 
 	const datasetResults = filterDatasets(allDatasets, conceptFacets, term);
 
