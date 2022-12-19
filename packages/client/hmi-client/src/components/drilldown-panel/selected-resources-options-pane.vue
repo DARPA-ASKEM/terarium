@@ -44,7 +44,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { DATASETS, MODELS, Project, PUBLICATIONS } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
@@ -125,7 +125,7 @@ const addResourcesToProject = async (projectId: string) => {
 				const publicationId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = PUBLICATIONS;
+				const assetsType = ProjectAssetTypes.PUBLICATIONS;
 				await ProjectService.addAsset(projectId, assetsType, publicationId);
 
 				// update local copy of project assets
@@ -137,23 +137,23 @@ const addResourcesToProject = async (projectId: string) => {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = MODELS;
+			const assetsType = ProjectAssetTypes.MODELS;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 
 			// update local copy of project assets
 			validProject.value?.assets.models.push(modelId);
-			resources.activeProjectAssets?.[MODELS].push(selectedItem);
+			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = DATASETS;
+			const assetsType = ProjectAssetTypes.DATASETS;
 			await ProjectService.addAsset(projectId, assetsType, datasetId);
 
 			// update local copy of project assets
 			validProject.value?.assets.datasets.push(datasetId);
-			resources.activeProjectAssets?.[DATASETS].push(selectedItem);
+			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
 		}
 	});
 };
