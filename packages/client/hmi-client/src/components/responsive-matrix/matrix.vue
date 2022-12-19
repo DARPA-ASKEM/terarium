@@ -255,7 +255,7 @@ export default {
 			microColArray: [] as number[],
 
 			uniforms: {
-				uMicroElDim: { x: 1, y: 1 },
+				uMicroElDim: { x: 1, y: 1 }
 			} as Uniforms,
 			worldWidth: 1,
 			worldHeight: 1,
@@ -796,7 +796,7 @@ export default {
 			return uint32ArrayToRedIntTex(
 				microElArrayBuffer,
 				microElArrayBufferDim.x,
-				microElArrayBufferDim.y,
+				microElArrayBufferDim.y
 			);
 		},
 

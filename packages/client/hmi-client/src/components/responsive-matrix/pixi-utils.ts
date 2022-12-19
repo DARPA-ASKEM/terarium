@@ -1,5 +1,13 @@
 import { Viewport } from 'pixi-viewport';
-import { Application, Point, Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
+import {
+	Application,
+	Point,
+	Resource,
+	Texture,
+	BaseTexture,
+	SCALE_MODES,
+	MIPMAP_MODES
+} from 'pixi.js';
 
 // EMPTY_POINT used as a fallback value
 const EMPTY_POINT = new Point();
@@ -63,7 +71,7 @@ export class CustomBufferResource extends Resource {
 
 		return true;
 	}
-};
+}
 
 /**
  * Get the WebGL max texture size limit using the pixi application gl instance.
@@ -83,11 +91,11 @@ export const getGlMaxTextureSize = (app: Application): number => {
 export const getTextureDim = (dataSize: number, maxTextureSize: number) => {
 	const dataSizeToMaxRatio = dataSize / maxTextureSize;
 	const x = dataSizeToMaxRatio >= 1 ? maxTextureSize : dataSize % maxTextureSize || 1;
-	const y = Math.ceil(dataSizeToMaxRatio) || 1
+	const y = Math.ceil(dataSizeToMaxRatio) || 1;
 	return {
 		x,
 		y,
-		n: x * y,
+		n: x * y
 	};
 };
 
