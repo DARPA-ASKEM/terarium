@@ -28,7 +28,11 @@ public interface DocumentProxy {
 		@QueryParam("min_published") String min_published,
 		@QueryParam("max_published") String max_published,
 		@QueryParam("pubname") String pubname,
-		@QueryParam("publisher") String publisher
+		@QueryParam("publisher") String publisher,
+		@QueryParam("additional_fields") String additional_fields,
+		@QueryParam("match") String match,
+		@QueryParam("known_entities") String known_entities,
+		@QueryParam("fields") String fields
 	);
 
 	@GET

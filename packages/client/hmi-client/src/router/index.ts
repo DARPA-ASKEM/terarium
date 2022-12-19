@@ -2,22 +2,25 @@ import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import DocumentView from '@/views/Document.vue';
 import HomeView from '@/views/Home.vue';
-import ModelView from '@/views/Model.vue';
+import DatasetView from '@/views/Dataset.vue';
 import ProjectView from '@/views/Project.vue';
+import ModelView from '@/views/ModelView.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
+import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Document = '/docs/:id?',
 	Project = '/projects/:projectId',
-	Model = '/projects/:projectId/model/:modelId?',
-	Simulation = '/projects/:projectId/simulations/:simulationId?',
-	SimulationResult = '/projects/:projectId/simulation-results/:simulationRunId?',
+	Document = '/projects/:projectId/docs/:assetId?',
+	Model = '/projects/:projectId/model/:assetId?',
+	Dataset = '/projects/:projectId/dataset/:assetId?',
+	Simulation = '/projects/:projectId/simulations/:assetId?',
+	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
@@ -26,23 +29,11 @@ export enum RoutePath {
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
 }
 
-// Named routes
-export enum RouteName {
-	DatasetRoute = 'dataset',
-	DocumentRoute = 'document',
-	HomeRoute = 'home',
-	ModelRoute = 'model',
-	ProfileRoute = 'profile',
-	ProjectRoute = 'project',
-	ProvenanceRoute = 'provenance',
-	SimulationRoute = 'simulation',
-	SimulationResultRoute = 'simulationResult'
-}
-
 const routes = [
 	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
+	{ name: RouteName.DatasetRoute, path: RoutePath.Dataset, component: DatasetView, props: true },
 	{ name: RouteName.ProjectRoute, path: RoutePath.Project, component: ProjectView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
 	{

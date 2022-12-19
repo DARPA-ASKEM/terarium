@@ -3,30 +3,23 @@
  * Sidebar component for navigating view.
  * */
 import { ref, computed } from 'vue';
-import { RouteParamsRaw, useRouter } from 'vue-router';
+import { RouteParamsRaw, useRoute, useRouter } from 'vue-router';
 
 // Icons
-import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
-import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
-import IconAccount32 from '@carbon/icons-vue/es/account/32';
-import IconAppConnectivity32 from '@carbon/icons-vue/es/app-connectivity/32';
-import IconDocument32 from '@carbon/icons-vue/es/document/32';
-import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-model/32';
-import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
-import IconFlow32 from '@carbon/icons-vue/es/flow/32';
-import IconUser32 from '@carbon/icons-vue/es/user/32';
-import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
+import IconCaretLeft16 from '@carbon/icons-vue/es/caret--left/16';
+import IconCaretRight16 from '@carbon/icons-vue/es/caret--right/16';
 
 // Components
 import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
+import DatasetSidebarPanel from '@/components/sidebar-panel/dataset-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
 import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
-import { RouteName } from '@/router/index';
-import { MODELS, PLANS, SIMULATION_RUNS, Project } from '@/types/Project';
+import { RouteName, RouteMetadata } from '@/router/routes';
+import { Project } from '@/types/Project';
 
 const router = useRouter();
 
@@ -43,14 +36,16 @@ function openSidePanel() {
 	isSidePanelClose.value = false;
 }
 
-// The Project page is the default
-const selectedView = ref<RouteName>(RouteName.ProjectRoute);
+const route = useRoute();
+// Assumes that the only routes we'll navigate to are represented in RouteName
+const selectedView = computed(() => (route.name as RouteName) ?? RouteName.ProjectRoute);
 const showSidePanel = computed(() => selectedView.value !== RouteName.ProjectRoute);
 
 function showSidebar(view: RouteName): boolean {
 	// Test for Sidebar that doesn't need Project
 	const needProject = [
 		RouteName.ModelRoute,
+		RouteName.DatasetRoute,
 		RouteName.DocumentRoute,
 		RouteName.ProfileRoute
 	].includes(view);
@@ -65,33 +60,23 @@ function showSidebar(view: RouteName): boolean {
 const openView = (view: RouteName) => {
 	// Open the appropriate view
 	if (selectedView.value !== view && Object.values(RouteName).includes(view)) {
-		// Set the Route parameters
-		const params: RouteParamsRaw = {};
-
-		// Set the projectId, except for the Document Route
-		if (view !== RouteName.DocumentRoute && props?.project?.id) {
-			params.projectId = props.project.id;
-		}
-
-		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? 1;
-		}
-
-		if (view === RouteName.SimulationRoute) {
-			params.simulationId = props?.project?.assets[PLANS]?.[0] ?? 1;
-		}
-
-		if (view === RouteName.SimulationResultRoute) {
-			params.simulationRunId = props?.project?.assets[SIMULATION_RUNS]?.[0] ?? 1;
-		}
-
-		// Change the view
+		const params: RouteParamsRaw = { projectId: props?.project?.id, assetId: '' };
 		router.push({ name: view, params });
-		selectedView.value = view;
 	} else if (showSidebar(view) && !isSidePanelClose.value) {
 		openSidePanel();
 	}
 };
+
+const BUTTON_ORDER = [
+	RouteName.ProjectRoute,
+	RouteName.SimulationRoute,
+	RouteName.ModelRoute,
+	RouteName.DatasetRoute,
+	RouteName.SimulationResultRoute,
+	RouteName.DocumentRoute
+];
+
+const DISABLED_BUTTONS = [RouteName.ProvenanceRoute, RouteName.ProfileRoute];
 </script>
 
 <template>
@@ -99,64 +84,25 @@ const openView = (view: RouteName) => {
 		<nav>
 			<ul>
 				<li
-					:active="selectedView === RouteName.ProjectRoute"
-					:title="RouteName.ProjectRoute"
-					@click="openView(RouteName.ProjectRoute)"
+					v-for="routeName of BUTTON_ORDER"
+					:key="routeName"
+					:active="selectedView === routeName"
+					:title="RouteMetadata[routeName].displayName"
+					@click="openView(routeName)"
 				>
-					<IconAccount32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.ModelRoute"
-					:title="RouteName.ModelRoute"
-					@click="openView(RouteName.ModelRoute)"
-				>
-					<IconMachineLearningModel32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.SimulationRoute"
-					:title="RouteName.SimulationRoute"
-					@click="openView(RouteName.SimulationRoute)"
-				>
-					<IconAppConnectivity32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.SimulationResultRoute"
-					@click="openView(RouteName.SimulationResultRoute)"
-				>
-					<IconChartCombo32 />
-				</li>
-				<li
-					disabled
-					:active="selectedView === RouteName.DatasetRoute"
-					:title="RouteName.DatasetRoute"
-					@click="openView(RouteName.DatasetRoute)"
-				>
-					<IconTableSplit32 />
-				</li>
-				<li
-					:active="selectedView === RouteName.DocumentRoute"
-					:title="RouteName.DocumentRoute"
-					@click="openView(RouteName.DocumentRoute)"
-				>
-					<IconDocument32 />
+					<component :is="RouteMetadata[routeName].icon" />
 				</li>
 			</ul>
 			<ul>
 				<li
+					v-for="routeName of DISABLED_BUTTONS"
+					:key="routeName"
 					disabled
-					:active="selectedView === RouteName.ProvenanceRoute"
-					:title="RouteName.ProvenanceRoute"
-					@click="openView(RouteName.ProvenanceRoute)"
+					:active="selectedView === routeName"
+					:title="RouteMetadata[routeName].displayName"
+					@click="openView(routeName)"
 				>
-					<IconFlow32 />
-				</li>
-				<li
-					disabled
-					:active="selectedView === RouteName.ProfileRoute"
-					:title="RouteName.ProfileRoute"
-					@click="openView(RouteName.ProfileRoute)"
-				>
-					<IconUser32 />
+					<component :is="RouteMetadata[routeName].icon" />
 				</li>
 			</ul>
 			<Button
@@ -165,26 +111,25 @@ const openView = (view: RouteName) => {
 				v-if="isSidePanelClose && showSidePanel"
 				@click="openSidePanel"
 			>
-				<IconArrowRight16 />
+				<IconCaretRight16 />
 			</Button>
 		</nav>
 		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
-			<header>{{ selectedView }}</header>
-			<main>
-				<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
-				<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
-				<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
-				<SimulationResultSidebarPanel
-					v-if="project && selectedView === RouteName.SimulationResultRoute"
-					:project="project"
-				/>
-				<SimulationPlanSidebarPanel
-					v-if="project && selectedView === RouteName.SimulationRoute"
-					:project="project"
-				/>
-			</main>
+			<h4>{{ RouteMetadata[selectedView].displayName }}</h4>
+			<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
+			<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
+			<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
+			<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
+			<SimulationResultSidebarPanel
+				v-if="project && selectedView === RouteName.SimulationResultRoute"
+				:project="project"
+			/>
+			<SimulationPlanSidebarPanel
+				v-if="project && selectedView === RouteName.SimulationRoute"
+				:project="project"
+			/>
 			<Button round class="side-panel-control" @click="closeSidePanel">
-				<IconArrowLeft16 />
+				<IconCaretLeft16 />
 			</Button>
 		</aside>
 	</section>
@@ -216,7 +161,6 @@ nav {
 	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - var(--header-height));
 	justify-content: space-between;
 	padding-top: 0.33rem;
 	width: 4rem;
@@ -281,8 +225,7 @@ aside {
 }
 
 aside.side-panel-close {
-	padding: 0;
-	width: 0;
+	display: none;
 }
 
 aside header {

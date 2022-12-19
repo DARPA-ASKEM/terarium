@@ -79,7 +79,11 @@ watch(
 	/>
 	<main>
 		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
-		<router-view class="page" :project="project" />
+		<router-view
+			class="page"
+			:project="project"
+			@show-data-explorer="dataExplorerActivated = true"
+		/>
 	</main>
 </template>
 
@@ -93,7 +97,6 @@ main {
 	flex-grow: 1;
 	isolation: isolate;
 	z-index: 1;
-	height: 100vh - var(--header-height);
 	overflow: hidden;
 }
 
@@ -103,6 +106,8 @@ main {
 
 .page {
 	z-index: 1;
+	flex: 1;
+	min-width: 0;
 }
 
 .data-explorer {

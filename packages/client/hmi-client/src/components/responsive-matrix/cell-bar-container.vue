@@ -12,12 +12,16 @@
 		:parametersMin="parametersMin"
 		:parametersMax="parametersMax"
 		:colorFn="colorFn"
+		:selectorFn="selectorFn"
+		:labelRowFormatFn="labelRowFormatFn"
+		:labelColFormatFn="labelColFormatFn"
 		@click="$emit('click')"
 	/>
 </template>
 
 <script lang="ts">
 import { PropType } from 'vue';
+import { NumberValue } from 'd3';
 
 import { CellData, ParamMinMax, SelectedCell, SelectedCellValue } from '@/types/ResponsiveMatrix';
 import ResponsiveCellBarGraph from './cell-bar-graph.vue';
@@ -106,6 +110,24 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},

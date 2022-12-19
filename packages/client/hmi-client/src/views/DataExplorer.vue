@@ -5,18 +5,11 @@
 				<search-bar :focus-input="true" @search-text-changed="filterData">
 					<template #dataset>
 						<dropdown-button
-							:inner-button-label="'Dataset'"
+							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
 							:is-dropdown-left-aligned="true"
 							:items="xddDatasets"
 							:selected-item="xddDataset"
 							@item-selected="xddDatasetSelectionChanged"
-						/>
-					</template>
-					<template #params>
-						<toggle-button
-							:value="isSearchTitle"
-							:label="'Searching by document title'"
-							@change="toggleIsSearchTitle"
 						/>
 					</template>
 				</search-bar>
@@ -40,6 +33,14 @@
 				>
 					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
 					Models
+				</button>
+				<button
+					type="button"
+					:class="{ active: resultType === ResourceType.DATASET }"
+					@click="onResultTypeChanged(ResourceType.DATASET)"
+				>
+					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+					Datasets
 				</button>
 			</div>
 
@@ -96,8 +97,31 @@
 						:data-items="dataItems"
 						:result-type="resultType"
 						:selected-search-items="selectedSearchItems"
+						:search-term="searchTerm"
+						:xdd-view-type="xddViewType"
 						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
+					>
+						<template #header>
+							<div class="button-group bottom-padding">
+								<button
+									type="button"
+									class="small-button"
+									:class="{ active: xddViewType === XDDViewType.PUBLICATIONS }"
+									@click="xddViewType = XDDViewType.PUBLICATIONS"
+								>
+									Publications
+								</button>
+								<button
+									type="button"
+									class="small-button"
+									:class="{ active: xddViewType === XDDViewType.EXTRACTIONS }"
+									@click="xddViewType = XDDViewType.EXTRACTIONS"
+								>
+									Figures/Tables
+								</button>
+							</div>
+						</template>
+					</search-results-list>
 					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 					<!--
 					<simple-pagination
@@ -124,6 +148,7 @@
 			<selected-resources-options-pane
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
+				@remove-item="toggleDataItemSelected"
 				@close="onClose"
 			/>
 		</div>
@@ -131,14 +156,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
-import ToggleButton from '@/components/widgets/toggle-button.vue';
 // import AutoComplete from '@/components/widgets/autocomplete.vue';
 // import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
@@ -151,7 +175,8 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType
+	ViewType,
+	XDDViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import {
@@ -165,8 +190,9 @@ import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceTypeIcon, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { isEmpty, max, min } from 'lodash';
+import { Dataset } from '@/types/Dataset';
 
 // import IconClose16 from '@carbon/icons-vue/es/close/16';
 
@@ -175,6 +201,7 @@ import { isEmpty, max, min } from 'lodash';
 const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
 const dataItems = ref<SearchResults[]>([]);
+const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
 const searchTerm = ref('');
 const query = useQueryStore();
@@ -186,7 +213,6 @@ const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 const xddDatasets = ref<string[]>([]);
 const dictNames = ref<string[]>([]);
 const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
-const isSearchTitle = ref(false); // is the input search term represents a document identifier such as title or DOI
 const xddDictionaries = ref<XDDDictionary[]>([]);
 // facets
 const facets = ref<Facets>({});
@@ -194,8 +220,11 @@ const filteredFacets = ref<Facets>({});
 //
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
+const xddViewType = ref<string>(XDDViewType.PUBLICATIONS);
 
-const xddDataset = computed(() => resources.xddDataset);
+const xddDataset = computed(() =>
+	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+);
 const clientFilters = computed(() => query.clientFilters);
 const resultsCount = computed(() => {
 	let total = 0;
@@ -209,8 +238,19 @@ const resultsCount = computed(() => {
 		// only return the results count for the selected subsystems
 		const resList = dataItems.value.find((res) => res.searchSubsystem === resultType.value);
 		if (resList) {
-			// eslint-disable-next-line no-unsafe-optional-chaining
-			total += resList?.hits ?? resList?.results.length;
+			if (resList.hits) {
+				total += resList.hits;
+			} else {
+				// eslint-disable-next-line no-lonely-if
+				if (resultType.value !== ResourceType.XDD) {
+					total += resList.results.length;
+				} else {
+					total +=
+						xddViewType.value === XDDViewType.PUBLICATIONS
+							? resList.results.length
+							: resList.xddExtractions?.length ?? 0;
+				}
+			}
 		}
 	}
 	return total;
@@ -218,10 +258,6 @@ const resultsCount = computed(() => {
 
 const updateResultType = (newResultType: string) => {
 	resultType.value = newResultType;
-};
-
-const toggleIsSearchTitle = () => {
-	isSearchTitle.value = !isSearchTitle.value;
 };
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
@@ -268,20 +304,28 @@ const fetchDataItemList = async () => {
 	const searchParams: SearchParameters = {
 		xdd: {
 			dict: dictNames.value,
-			dataset: xddDataset.value === ResourceType.ALL ? null : xddDataset.value,
+			dataset:
+				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
+					? null
+					: xddDataset.value,
 			max: pageSize.value,
 			perPage: pageSize.value,
 			fullResults: !rankedResults.value,
 			doi: isValidDOI ? searchWords : undefined,
-			title: isSearchTitle.value && !isValidDOI ? searchWords : undefined,
 			includeHighlights: true,
 			inclusive: matchAll,
-			facets: true // include facets aggregation data in the search results
+			facets: true, // include facets aggregation data in the search results
+			match: true,
+			additional_fields: 'title,abstract',
+			known_entities: 'url_extractions'
 		}
 	};
 
 	// first: fetch the data unfiltered by facets
 	const allData: SearchResults[] = await fetchData(searchWords, searchParams);
+
+	// cache unfiltered data
+	dataItemsUnfiltered.value = allData;
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
@@ -318,10 +362,14 @@ const fetchDataItemList = async () => {
 	const modelSearchParams = searchParams?.model || {
 		filters: clientFilters.value
 	};
+	const datasetSearchParams = searchParams?.dataset || {
+		filters: clientFilters.value
+	};
 
 	// update search parameters object
 	searchParams.xdd = xddSearchParams;
 	searchParams.model = modelSearchParams;
+	searchParams.dataset = datasetSearchParams;
 
 	// fetch second time with facet filtered applied
 	const allDataFilteredWithFacets: SearchResults[] = await fetchData(searchWords, searchParams);
@@ -365,30 +413,30 @@ const onClose = () => {
 	emit('hide');
 };
 
-// FIXME: refactor as util func
-const isDataItemSelected = (item: ResultType) =>
-	selectedSearchItems.value.find((searchItem) => {
-		if (isModel(item)) {
+const toggleDataItemSelected = (item: ResultType) => {
+	let foundIndx = -1;
+	selectedSearchItems.value.forEach((searchItem, indx) => {
+		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
 			const searchItemAsModel = searchItem as Model;
-			return searchItemAsModel.id === itemAsModel.id;
+			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
 		}
-		if (isXDDArticle(item)) {
+		if (isDataset(item) && isDataset(searchItem)) {
+			const itemAsDataset = item as Dataset;
+			const searchItemAsDataset = searchItem as Dataset;
+			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
+		}
+		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
-			return searchItemAsArticle.title === itemAsArticle.title;
+			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
 		}
-		return false;
 	});
-
-const toggleDataItemSelected = (item: ResultType) => {
-	const itemID = (item as Model).id || (item as XDDArticle).title;
-	if (isDataItemSelected(item)) {
-		selectedSearchItems.value = selectedSearchItems.value.filter(
-			(searchItem) =>
-				(searchItem as Model).id !== itemID && (searchItem as XDDArticle).title !== itemID
-		);
+	if (foundIndx >= 0) {
+		// item was already in the list so remove it
+		selectedSearchItems.value.splice(foundIndx, 1);
 	} else {
+		// add it to the list
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
@@ -438,7 +486,7 @@ watch(resultType, () => {
 	// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
 	// re-calculate the facets
 	// REVIEW
-	refresh();
+	calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 });
 
 onMounted(async () => {
@@ -450,6 +498,10 @@ onMounted(async () => {
 	}
 
 	refresh();
+});
+
+onUnmounted(() => {
+	query.reset();
 });
 </script>
 
@@ -487,6 +539,10 @@ onMounted(async () => {
 	display: flex;
 }
 
+.bottom-padding {
+	padding-bottom: 2px;
+}
+
 .button-group button {
 	display: flex;
 	align-items: center;
@@ -497,6 +553,10 @@ onMounted(async () => {
 	cursor: pointer;
 	border-left-width: 0;
 	height: 40px;
+}
+
+.button-group button.small-button {
+	height: 32px;
 }
 
 .button-group button:first-child {

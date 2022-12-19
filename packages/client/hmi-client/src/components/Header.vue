@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import Button from '@/components/Button.vue';
 import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
 import { useCurrentRouter } from '@/router/index';
 import { Project } from '@/types/Project';
@@ -19,7 +18,6 @@ const goToHomepage = () => {
 	resources.activeProjectAssets = null;
 	router.push('/');
 };
-const goToDataExplorer = () => emit('show-data-explorer');
 
 defineProps<{
 	projectName?: Project['name'];
@@ -35,9 +33,14 @@ defineProps<{
 			<span>{{ projectName }}</span>
 		</p>
 		<aside>
-			<Button class="data-explorer" @click="goToDataExplorer">
+			<v-btn
+				variant="flat"
+				color="primary"
+				class="data-explorer"
+				@click="emit('show-data-explorer')"
+			>
 				<IconSearchLocate16 />
-			</Button>
+			</v-btn>
 		</aside>
 	</header>
 </template>
@@ -80,7 +83,7 @@ aside {
 	gap: 1rem;
 }
 
-button.data-explorer {
-	background-color: var(--un-color-accent);
+.data-explorer svg {
+	fill: var(--un-color-white);
 }
 </style>

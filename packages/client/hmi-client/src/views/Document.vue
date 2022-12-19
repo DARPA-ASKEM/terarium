@@ -12,7 +12,8 @@
 			<div class="desc">{{ formatDescription(doc) }}</div>
 			<div class="doi">DOI: {{ doi }}</div>
 			<div class="artifacts-header">
-				<b>Document Artifacts:</b> Found {{ artifacts.length }} Extractions
+				<b>Document Artifacts:</b> Found
+				{{ artifacts.length + (urlExtractions ? urlExtractions.length : 0) }} Extractions
 			</div>
 			<div class="extractions-container">
 				<div class="nav-container">
@@ -26,32 +27,56 @@
 								{{ exType }} ({{ groupedExtractions[exType].length }})
 							</button>
 						</li>
+						<li v-if="urlExtractions">
+							<button
+								type="button"
+								:class="{ active: extractionType === XDDExtractionType.URL }"
+								@click="extractionType = XDDExtractionType.URL"
+							>
+								URLs ({{ urlExtractions.length }})
+							</button>
+						</li>
 					</ul>
 				</div>
-				<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askemId">
-					<template
-						v-if="
-							ex.properties.image &&
-							(ex.askemClass === XDDExtractionType.Figure ||
-								ex.askemClass === XDDExtractionType.Table ||
-								ex.askemClass === XDDExtractionType.Equation)
-						"
-					>
-						<!-- render figure -->
-						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-					</template>
-					<template v-else>
-						<!-- render textual content -->
-						<b>{{ ex.properties.title }}</b>
-						{{ ex.properties.caption }}
-						{{ ex.properties.abstractText }}
-						{{ ex.properties.contentText }}
-					</template>
-				</div>
+				<template v-if="extractionType !== XDDExtractionType.URL">
+					<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askemId">
+						<template
+							v-if="
+								ex.properties.image &&
+								(ex.askemClass === XDDExtractionType.Figure ||
+									ex.askemClass === XDDExtractionType.Table ||
+									ex.askemClass === XDDExtractionType.Equation)
+							"
+						>
+							<!-- render figure -->
+							{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						</template>
+						<template v-else>
+							<!-- render textual content -->
+							<b>{{ ex.properties.title }}</b>
+							{{ ex.properties.caption }}
+							{{ ex.properties.abstractText }}
+							{{ ex.properties.contentText }}
+						</template>
+					</div>
+				</template>
+				<template v-else>
+					<div v-for="ex in urlExtractions" :key="ex.url">
+						<b>{{ ex.resource_title }}</b>
+						<div>
+							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
+						</div>
+					</div>
+				</template>
 			</div>
 		</div>
-		<div v-else class="invalid-doc"></div>
+		<resources-list
+			v-else
+			:project="props?.project"
+			:resourceRoute="RouteName.DocumentRoute"
+			@show-data-explorer="emit('show-data-explorer')"
+		/>
 	</section>
 </template>
 
@@ -61,22 +86,23 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
+import { RouteName } from '@/router/routes';
+import { Project } from '@/types/Project';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
-const props = defineProps({
-	// this id is received as the document id mapped from the route param
-	id: {
-		type: String,
-		default: ''
-	}
-	// NOTE that project is automatically injected as prop as well
-});
+const props = defineProps<{
+	assetId: string;
+	project: Project;
+}>();
+
+const emit = defineEmits(['show-data-explorer']);
 
 const doc = ref<XDDArticle | null>(null);
 
 watch(
 	props,
 	async () => {
-		const id = props.id;
+		const id = props.assetId;
 		if (id !== '') {
 			// fetch doc from XDD
 			const d = await getDocumentById(id);
@@ -96,6 +122,12 @@ const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join
 
 const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
+);
+
+const urlExtractions = computed(() =>
+	doc.value?.knownEntities && doc.value.knownEntities.url_extractions.length > 0
+		? doc.value.knownEntities.url_extractions
+		: null
 );
 
 const formatDescription = (d: XDDArticle) =>
@@ -143,17 +175,18 @@ onMounted(async () => {
 
 <style scoped>
 .doc-view-container {
-	padding: 1rem;
+	padding: 2rem;
 	font-size: large;
 	height: calc(100vh - 50px);
 	width: 100%;
 	overflow: auto;
+	background: var(--un-color-body-surface-primary);
+	margin: 1rem;
 }
 
 .title {
 	font-weight: bold;
 	font-size: x-large;
-	padding-top: 1rem;
 	line-height: 2rem;
 }
 

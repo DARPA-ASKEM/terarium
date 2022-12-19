@@ -1,6 +1,32 @@
 <template>
 	<main class="matrix-container" ref="matrixContainer">
-		<div class="matrix" ref="matrix">
+		<div class="matrix" ref="matrix" :style="matrixStyle">
+			<LabelCols
+				v-if="!disableLabelCol && rendererReady"
+				:selectedCols="selectedCols"
+				:labelColList="labelColList"
+				:labelColAltList="cellLabelAltCol"
+				:microColSettings="microColSettings"
+				:numCols="numCols"
+				:viewport="viewport"
+				:margin="margin"
+				:update="update"
+				:move="move"
+				:labelColFormatFn="labelColFormatFn"
+			/>
+			<LabelRows
+				v-if="!disableLabelRow && rendererReady"
+				:selectedRows="selectedRows"
+				:labelRowList="labelRowList"
+				:labelRowAltList="cellLabelAltRow"
+				:microRowSettings="microRowSettings"
+				:numRows="numRows"
+				:viewport="viewport"
+				:margin="margin"
+				:update="update"
+				:move="move"
+				:labelRowFormatFn="labelRowFormatFn"
+			/>
 			<component
 				v-for="(selectedCell, idx) in selectedCellList"
 				:key="idx"
@@ -17,6 +43,9 @@
 				:parametersMin="dataParametersMin"
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				:selectorFn="selectorFn"
+				:labelRowFormatFn="labelRowFormatFn"
+				:labelColFormatFn="labelColFormatFn"
 				@click="selectedCellClick(idx)"
 			/>
 		</div>
@@ -36,7 +65,7 @@
  * - pixi-viewport: https://davidfig.github.io/pixi-viewport/jsdoc/index.html
  */
 
-import { nextTick, PropType } from 'vue';
+import { ref, nextTick, PropType } from 'vue';
 
 import chroma from 'chroma-js';
 import { Viewport } from 'pixi-viewport';
@@ -50,6 +79,7 @@ import {
 	FederatedPointerEvent,
 	Point
 } from 'pixi.js';
+import { NumberValue } from 'd3';
 
 import {
 	SelectedCell,
@@ -57,10 +87,13 @@ import {
 	CellData,
 	CellStatus,
 	CellType,
-	Uniforms
+	Uniforms,
+	ParamMinMax
 } from '@/types/ResponsiveMatrix';
 import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
+import LabelCols from './label-cols.vue';
+import LabelRows from './label-rows.vue';
 import ResponsiveCellBarContainer from './cell-bar-container.vue';
 import ResponsiveCellLineContainer from './cell-line-container.vue';
 
@@ -77,6 +110,8 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	components: {
+		LabelCols,
+		LabelRows,
 		ResponsiveCellBarContainer,
 		ResponsiveCellLineContainer
 	},
@@ -86,24 +121,62 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		margin: {
+			type: Number,
+			default() {
+				return 0;
+			}
+		},
+		parametersMin: {
+			type: Object as PropType<ParamMinMax | undefined>,
+			default() {
+				return undefined;
+			}
+		},
+		parametersMax: {
+			type: Object as PropType<ParamMinMax | undefined>,
+			default() {
+				return undefined;
+			}
+		},
 		data: {
 			type: Array as PropType<object[][]>,
 			default() {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
 		},
-		// labels: {
-		// 	type: null,
-		// 	default: [[], []],
-		// },
+		disableLabelRow: {
+			type: Boolean,
+			default() {
+				return false;
+			}
+		},
 		cellLabelRow: {
 			type: Array as PropType<number[] | string[]>,
 			default() {
 				return [];
 			}
 		},
+		cellLabelAltRow: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
+		disableLabelCol: {
+			type: Boolean,
+			default() {
+				return false;
+			}
+		},
+		cellLabelAltCol: {
+			type: Array as PropType<string[]>,
+			default() {
+				return [];
+			}
+		},
 		cellLabelCol: {
-			type: Array as PropType<number[] | string[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -112,6 +185,12 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
 			}
 		},
 		barColorFn: {
@@ -124,6 +203,18 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		},
 		backgroundColor: {
@@ -151,7 +242,7 @@ export default {
 			dataParametersMin: {}, // e.g. {param1: 0, param2: 3}
 			dataParametersMax: {}, // e.g. {param1: 10, param2: 17}
 			labelRowList: [] as number[] | string[],
-			labelColList: [] as number[] | string[],
+			labelColList: [] as number[] | Date[],
 			numRows: 0,
 			numCols: 0,
 
@@ -166,9 +257,8 @@ export default {
 			uniforms: {
 				uMicroElDim: { x: 1, y: 1 },
 			} as Uniforms,
-			worldWidth: 0,
-			worldHeight: 0,
-
+			worldWidth: 1,
+			worldHeight: 1,
 			screenHeight: 0,
 			screenWidth: 0,
 
@@ -192,6 +282,13 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	computed: {
+		matrixStyle() {
+			return {
+				background: this.backgroundColor,
+				padding: `${this.margin}px`
+			};
+		},
+
 		screenAspectRatio(): number {
 			return this.screenHeight / this.screenWidth;
 		},
@@ -269,9 +366,13 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	setup() {
+		const rendererReady = ref(false);
+
 		return {
 			app: undefined as undefined | Application,
-			viewport: undefined as undefined | Viewport
+			viewport: undefined as undefined | Viewport,
+
+			rendererReady
 		};
 	},
 
@@ -296,8 +397,8 @@ export default {
 		// ///////////////////////////////////////////////////////////////////////////////
 
 		// initialize screen height/width
-		this.screenHeight = matrix.offsetHeight;
-		this.screenWidth = matrix.offsetWidth;
+		this.screenHeight = matrix.offsetHeight - this.margin * 2;
+		this.screenWidth = matrix.offsetWidth - this.margin * 2;
 
 		// start the resize observer
 		this.resizeObserver = new ResizeObserver((entries) => {
@@ -315,7 +416,8 @@ export default {
 
 		// initialize pixi.js
 		this.app = new Application({
-			resizeTo: matrixContainer,
+			width: this.screenWidth,
+			height: this.screenHeight,
 			backgroundColor: this.backgroundColor
 		});
 		matrix.appendChild(this.app.view as unknown as Node);
@@ -457,6 +559,10 @@ export default {
 		this.viewport.on('pointerup', this.handleMouseUp);
 		this.viewport.on('moved' as any, this.incrementMove);
 		this.viewport.on('zoomed-end' as any, this.incrementUpdate);
+		this.rendererReady = true;
+
+		// force an update to update labels using viewport information
+		this.incrementMove();
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -522,7 +628,6 @@ export default {
 				this.data.forEach((row, indexRow) =>
 					row.forEach((cell, indexCol) => {
 						if (cell) {
-							this.extractParams(cell);
 							// find better solution than using reserved properties
 							// for cell identification
 							const cellData = {
@@ -536,6 +641,16 @@ export default {
 						}
 					})
 				);
+
+				if (!this.parametersMin && !this.parametersMax) {
+					this.extractParams();
+				} else {
+					this.dataParametersMin = this.parametersMin as ParamMinMax;
+					this.dataParametersMax = this.parametersMax as ParamMinMax;
+
+					Object.keys(this.parametersMin as object).map((k) => this.dataParameters.add(k));
+					Object.keys(this.parametersMax as object).map((k) => this.dataParameters.add(k));
+				}
 			} else {
 				console.error('Data Invalid');
 			}
@@ -566,25 +681,22 @@ export default {
 		/**
 		 * Processes a single cell object and extract the parameters from it.
 		 * As well update the parameters min and max state objects.
-		 * @param {object} cellObject
 		 */
-		extractParams(cellObject: object) {
-			Object.keys(cellObject).forEach((param) => {
-				if (!this.dataParameters.has(param)) {
-					this.dataParametersMin[param] = cellObject[param];
-					this.dataParametersMax[param] = cellObject[param];
-				} else {
-					this.dataParametersMin[param] = Math.min(
-						this.dataParametersMin[param],
-						cellObject[param]
-					);
-					this.dataParametersMax[param] = Math.max(
-						this.dataParametersMax[param],
-						cellObject[param]
-					);
-				}
-				this.dataParameters.add(param);
-			});
+		extractParams() {
+			this.data.forEach((row) =>
+				row.forEach((cell) => {
+					Object.keys(cell).forEach((param) => {
+						if (!this.dataParameters.has(param)) {
+							this.dataParametersMin[param] = cell[param];
+							this.dataParametersMax[param] = cell[param];
+						} else {
+							this.dataParametersMin[param] = Math.min(this.dataParametersMin[param], cell[param]);
+							this.dataParametersMax[param] = Math.max(this.dataParametersMax[param], cell[param]);
+						}
+						this.dataParameters.add(param);
+					});
+				})
+			);
 		},
 
 		/**
@@ -860,10 +972,10 @@ export default {
 				) || EMPTY_POINT;
 
 			return {
-				left: `${topLeft.x}px`,
-				top: `${topLeft.y}px`,
-				right: `${this.screenWidth - bottomRight.x}px`,
-				bottom: `${this.screenHeight - bottomRight.y}px`
+				left: `${topLeft.x + this.margin}px`,
+				top: `${topLeft.y + this.margin}px`,
+				right: `${this.screenWidth - bottomRight.x - this.margin}px`,
+				bottom: `${this.screenHeight - bottomRight.y - this.margin}px`
 			};
 		},
 
@@ -966,6 +1078,7 @@ export default {
 			if (this.selectedCell.some((v) => Number.isNaN(v))) {
 				// selection is out-of-bounds
 				this.centerGraph();
+				this.incrementMove();
 				this.incrementUpdate();
 			} else if (this.isSelectionSelected(this.selectedCell)) {
 				this.removeSelected();

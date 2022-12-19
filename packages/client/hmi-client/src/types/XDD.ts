@@ -3,7 +3,8 @@ export enum XDDExtractionType {
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
-	Body = 'Body Text' // Section
+	Body = 'Body Text', // Section
+	URL = 'URL' // websites, URLs, links, etc.
 }
 
 export type XDDArticleAuthor = {
@@ -22,6 +23,16 @@ export type XDDArticleLink = {
 
 export type XDDArticleKnownTerms = {
 	[term: string]: string[];
+};
+
+export type XDDUrlExtraction = {
+	url: string;
+	resource_title: string;
+	extracted_from: string[];
+};
+
+export type XDDArticleKnownEntity = {
+	url_extractions: XDDUrlExtraction[];
 };
 
 export type XDDArticle = {
@@ -43,12 +54,14 @@ export type XDDArticle = {
 	type: string;
 	volume: string;
 	year: string;
-	gddid: string; // mapped from _gddid
+	gddid: string; // TEMP: mapped from _gddid
 	// eslint-disable-next-line no-underscore-dangle
 	_highlight: string[];
 	highlight: string[]; // TEMP: mapped from _highlight
 	// eslint-disable-next-line no-underscore-dangle
 	_gddid: string; // TEMP
+	known_entities?: XDDArticleKnownEntity;
+	knownEntities?: XDDArticleKnownEntity; // TEMP: mapped from known_entities
 	// additional-client-side fields
 	relatedDocuments?: XDDArticle[];
 };
@@ -128,7 +141,6 @@ export type XDDResult = {
 export type XDDSearchParams = {
 	docid?: string; // internal xdd document id
 	doi?: string;
-	title?: string;
 	term?: string;
 	dict?: string[];
 	dataset?: string | null;
@@ -145,6 +157,10 @@ export type XDDSearchParams = {
 	max_published?: string; // Must be ISO date string e.g., "2020-01-01"
 	pubname?: string;
 	publisher?: string;
+	match?: boolean; // If true, utilizes a \"match\" instead of a \"match_phrase\" query within Elaticsearch. This has the effect of finding documents which most frequently use the individial terms in the query, rather than looking for the exact phrase.
+	additional_fields?: string; // Extend the query to include fields in addition to the full-text contents (example: abstract,title). The query logic is OR across the search fields.
+	known_entities?: string; // Include known entities extracted via external tools. Current options: [drugs, emmaa, stratname_candidates, url_extractions]
+	fields?: string; // return only fields of interest (passed as comma-separated string) instead of returing the full record in the xDD results
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;

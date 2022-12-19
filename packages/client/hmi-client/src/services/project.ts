@@ -3,7 +3,30 @@
  */
 
 import API from '@/api/api';
-import { Project, ProjectAssets } from '@/types/Project';
+import { Project, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
+import { getRelatedDocuments } from '@/services/data';
+import { XDDArticle } from '@/types/XDD';
+
+/**
+ * Create a project
+ * @param name Project['name']
+ * @param [description] Project['description']
+ * @return Project|null - the appropriate project, or null if none returned by API
+ */
+async function create(
+	name: Project['name'],
+	description: Project['description'] = ''
+): Promise<Project | null> {
+	try {
+		const response = await API.post(`/projects`, { name, description });
+		const { status, data } = response;
+		if (status !== 201) return null;
+		return data ?? null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+}
 
 /**
  * Get a project per id
@@ -74,4 +97,22 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { get, getAll, addAsset, deleteAsset, getAssets };
+// project id -> project assets -> publication list (Which will give you xdd id + url + title)  -> now you can use getRelatedDocuments given a xdd_uri (docid)
+// TODO: Remove hardcoded dataset
+async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
+	const resp = await getAssets(aProject.id);
+	try {
+		// TODO: Speak with XDD Team about broken doc: 5f6d0e20a58f1dfd52184931
+		// Grab the 2nd of publication for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
+		const listOfRelatedArticles = await getRelatedDocuments(
+			String(resp?.[ProjectAssetTypes.PUBLICATIONS][1].xdd_uri),
+			'xdd-covid-19'
+		);
+		return listOfRelatedArticles;
+	} catch (error) {
+		// If resp = null (project has no assets or cannot be found)
+		return [] as XDDArticle[];
+	}
+}
+
+export { create, get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };
