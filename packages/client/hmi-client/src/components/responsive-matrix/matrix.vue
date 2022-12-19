@@ -5,8 +5,6 @@
 				v-if="visConfig.col.borderEnabled && rendererReady"
 				:items="dataConfig.dataCol"
 				:selectedCols="selectedCols"
-				:labelColList="labelColList"
-				:labelColAltList="cellLabelAltCol"
 				:microColSettings="microColSettings"
 				:viewport="viewport"
 				:margin="margin"
@@ -18,8 +16,6 @@
 				v-if="visConfig.row.borderEnabled && rendererReady"
 				:items="dataConfig.dataRow"
 				:selectedRows="selectedRows"
-				:labelRowList="labelRowList"
-				:labelRowAltList="cellLabelAltRow"
 				:microRowSettings="microRowSettings"
 				:viewport="viewport"
 				:margin="margin"
@@ -123,6 +119,7 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		// New properties
 		dataConfig: {
 			type: Object as PropType<DataConfig>,
 			required: true
@@ -131,6 +128,8 @@ export default {
 			type: Object as PropType<VisConfig>,
 			required: true
 		},
+
+		// To be deprecated
 		margin: {
 			type: Number,
 			default() {
@@ -155,32 +154,8 @@ export default {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
 		},
-		disableLabelRow: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
 		cellLabelRow: {
 			type: Array as PropType<number[] | string[]>,
-			default() {
-				return [];
-			}
-		},
-		cellLabelAltRow: {
-			type: Array as PropType<string[]>,
-			default() {
-				return [];
-			}
-		},
-		disableLabelCol: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
-		cellLabelAltCol: {
-			type: Array as PropType<string[]>,
 			default() {
 				return [];
 			}
