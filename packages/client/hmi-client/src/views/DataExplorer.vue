@@ -2,7 +2,7 @@
 	<div class="data-explorer-container">
 		<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
 			<template #content>
-				<search-bar :focus-input="true" @search-text-changed="filterData">
+				<search-bar :focus-input="true" @search-text-changed="onSearchTermChanged">
 					<template #dataset>
 						<dropdown-button
 							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
@@ -21,7 +21,7 @@
 				<button
 					type="button"
 					:class="{ active: resultType === ResourceType.XDD }"
-					@click="onResultTypeChanged(ResourceType.XDD)"
+					@click="updateResultType(ResourceType.XDD)"
 				>
 					<component :is="getResourceTypeIcon(ResourceType.XDD)" />
 					Papers
@@ -29,7 +29,7 @@
 				<button
 					type="button"
 					:class="{ active: resultType === ResourceType.MODEL }"
-					@click="onResultTypeChanged(ResourceType.MODEL)"
+					@click="updateResultType(ResourceType.MODEL)"
 				>
 					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
 					Models
@@ -37,7 +37,7 @@
 				<button
 					type="button"
 					:class="{ active: resultType === ResourceType.DATASET }"
-					@click="onResultTypeChanged(ResourceType.DATASET)"
+					@click="updateResultType(ResourceType.DATASET)"
 				>
 					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
 					Datasets
@@ -61,28 +61,6 @@
 					Matrix
 				</button>
 			</div>
-
-			<!--
-			<span v-if="resultType === ResourceType.XDD" class="section-label">
-				Filter by XDD Dictionary
-			</span>
-			<div v-if="resultType === ResourceType.XDD" class="xdd-known-terms">
-				<auto-complete
-					:focus-input="false"
-					:style-results="true"
-					:placeholder-color="'gray'"
-					:placeholder-message="'Search XDD dictionaries'"
-					:search-fn="searchXDDDictionaries"
-					@item-selected="addDictName"
-				/>
-				<div v-for="term in dictNames" :key="term" class="flex-aligned-item">
-					{{ term }}
-					<span class="flex-aligned-item-delete-btn" @click.stop="removeDictName(term)">
-						<IconClose16 />
-					</span>
-				</div>
-			</div>
-			-->
 		</div>
 		<div class="facets-and-results-container">
 			<template v-if="viewType === ViewType.LIST">
@@ -123,15 +101,6 @@
 						</template>
 					</search-results-list>
 					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
-					<!--
-					<simple-pagination
-						:current-page-length="resultsCount"
-						:page-count="pageCount"
-						:page-size="pageSize"
-						@next-page="nextPage"
-						@prev-page="prevPage"
-					/>
-					-->
 				</div>
 			</template>
 			<template v-if="viewType === ViewType.MATRIX">
@@ -163,12 +132,10 @@ import SearchResultsList from '@/components/data-explorer/search-results-list.vu
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
-// import AutoComplete from '@/components/widgets/autocomplete.vue';
-// import SimplePagination from '@/components/data-explorer/simple-pagination.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 
-import { fetchData, getXDDSets, getXDDDictionaries } from '@/services/data';
+import { fetchData, getXDDSets } from '@/services/data';
 import {
 	SearchParameters,
 	SearchResults,
@@ -182,7 +149,6 @@ import { getFacets } from '@/utils/facets';
 import {
 	XDD_RESULT_DEFAULT_PAGE_SIZE,
 	XDDArticle,
-	XDDDictionary,
 	FACET_FIELDS as XDD_FACET_FIELDS,
 	YEAR
 } from '@/types/XDD';
@@ -191,10 +157,8 @@ import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
-import { isEmpty, max, min } from 'lodash';
+import { cloneDeep, intersectionBy, isEmpty, max, min, unionBy } from 'lodash';
 import { Dataset } from '@/types/Dataset';
-
-// import IconClose16 from '@carbon/icons-vue/es/close/16';
 
 // FIXME: page count is not taken into consideration
 
@@ -207,13 +171,11 @@ const searchTerm = ref('');
 const query = useQueryStore();
 const resources = useResourcesStore();
 
-const pageCount = ref(0);
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
 const xddDatasets = ref<string[]>([]);
 const dictNames = ref<string[]>([]);
 const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
-const xddDictionaries = ref<XDDDictionary[]>([]);
 // facets
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
@@ -222,10 +184,14 @@ const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 const xddViewType = ref<string>(XDDViewType.PUBLICATIONS);
 
+// optimize search performance: only fetch as needed
+const dirtyResults = ref<{ [resultType: string]: boolean }>({});
+
 const xddDataset = computed(() =>
 	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
 const clientFilters = computed(() => query.clientFilters);
+
 const resultsCount = computed(() => {
 	let total = 0;
 	if (resultType.value === ResourceType.ALL) {
@@ -256,10 +222,6 @@ const resultsCount = computed(() => {
 	return total;
 });
 
-const updateResultType = (newResultType: string) => {
-	resultType.value = newResultType;
-};
-
 const xddDatasetSelectionChanged = (newDataset: string) => {
 	if (xddDataset.value !== newDataset) {
 		resources.setXDDDataset(newDataset);
@@ -268,16 +230,36 @@ const xddDatasetSelectionChanged = (newDataset: string) => {
 
 const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
 	// retrieves filtered & unfiltered facet data
-	// const defaultFilters = { clauses: [] };
-	facets.value = getFacets(unfilteredData, resultType.value /* , defaultFilters */);
-	filteredFacets.value = getFacets(filteredData, resultType.value /* , this.clientFilters */);
+	facets.value = getFacets(unfilteredData, resultType.value);
+	filteredFacets.value = getFacets(filteredData, resultType.value);
 };
 
-const fetchDataItemList = async () => {
-	// const options = {
-	//   from: this.pageCount * this.pageSize,
-	//   size: this.pageSize
-	// };
+const mergeResultsKeepRecentDuplicates = (
+	existingResults: SearchResults[],
+	newResults: SearchResults[]
+) => {
+	const mergeId = 'searchSubsystem';
+	const mergedResults = unionBy(existingResults, newResults, mergeId);
+	// replace existing old results with new ones, if any
+	const overlapping = intersectionBy(existingResults, newResults, mergeId);
+	overlapping.forEach((res) => {
+		const existingOldIndex = mergedResults.findIndex(
+			(u) => u.searchSubsystem === res.searchSubsystem
+		);
+		const newResult = newResults.find((u) => u.searchSubsystem === res.searchSubsystem);
+		// remove the old one and insert the new updated result
+		if (newResult) {
+			mergedResults.splice(existingOldIndex, 1, newResult);
+		}
+	});
+	return mergedResults;
+};
+
+const executeSearch = async () => {
+	// only execute search if current data is dirty and a refetch is needed
+	if (!dirtyResults.value[resultType.value]) return;
+
+	// TODO: only search (or fetch data) relevant to the currently selected tab
 
 	emit('show-overlay');
 
@@ -321,17 +303,12 @@ const fetchDataItemList = async () => {
 		}
 	};
 
-	// first: fetch the data unfiltered by facets
-	const allData: SearchResults[] = await fetchData(searchWords, searchParams);
-
-	// cache unfiltered data
-	dataItemsUnfiltered.value = allData;
+	const searchParamsWithFacetFilters = cloneDeep(searchParams);
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-
-	const xddSearchParams = searchParams?.xdd || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -359,54 +336,36 @@ const fetchDataItemList = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParams?.model || {
+	const modelSearchParams = searchParamsWithFacetFilters?.model || {
 		filters: clientFilters.value
 	};
-	const datasetSearchParams = searchParams?.dataset || {
+	const datasetSearchParams = searchParamsWithFacetFilters?.dataset || {
 		filters: clientFilters.value
 	};
 
 	// update search parameters object
-	searchParams.xdd = xddSearchParams;
-	searchParams.model = modelSearchParams;
-	searchParams.dataset = datasetSearchParams;
+	searchParamsWithFacetFilters.xdd = xddSearchParams;
+	searchParamsWithFacetFilters.model = modelSearchParams;
+	searchParamsWithFacetFilters.dataset = datasetSearchParams;
 
-	// fetch second time with facet filtered applied
-	const allDataFilteredWithFacets: SearchResults[] = await fetchData(searchWords, searchParams);
+	// fetch the data
+	const { allData, allDataFilteredWithFacets } = await fetchData(
+		searchWords,
+		searchParams,
+		searchParamsWithFacetFilters,
+		resultType.value
+	);
+
+	// cache unfiltered data
+	dataItemsUnfiltered.value = mergeResultsKeepRecentDuplicates(dataItemsUnfiltered.value, allData);
 
 	// the list of results displayed in the data explorer is always the final filtered data
-	dataItems.value = allDataFilteredWithFacets;
+	dataItems.value = mergeResultsKeepRecentDuplicates(dataItems.value, allDataFilteredWithFacets);
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
 
 	emit('hide-overlay');
-};
-
-// const prevPage = () => {
-// 	// this won't work with XDD since apparently there is no way to navigate results backward
-// 	pageCount.value -= 1;
-// 	fetchDataItemList();
-// };
-
-// const nextPage = () => {
-// 	pageCount.value += 1;
-// 	// check if previous results "hasMore" and continue fetching results
-// 	// note the next_page URL would need to be cached and passed down to the fetch service
-// 	//  but this is only valid for XDD,
-// 	//  and thus we need to cache both the original URL and the pagination one
-// 	fetchDataItemList();
-// };
-
-const refresh = async () => {
-	pageCount.value = 0;
-	await fetchDataItemList();
-};
-
-const filterData = (filterTerm: string) => {
-	searchTerm.value = filterTerm;
-	// re-fetch data from the server, apply filters, and re-calculate the facets
-	refresh();
 };
 
 const onClose = () => {
@@ -441,63 +400,71 @@ const toggleDataItemSelected = (item: ResultType) => {
 	}
 };
 
-// const removeDictName = (term: string) => {
-// 	dictNames.value = dictNames.value.filter((t) => t !== term);
-// };
+// this is called whenever the user apply some facet filter(s)
+watch(clientFilters, async (n, o) => {
+	if (filtersUtil.isEqual(n, o)) return;
 
-// const addDictName = (term: string) => {
-// 	if (term === undefined || term === '') return;
-// 	if (!dictNames.value.includes(term)) {
-// 		dictNames.value = [...dictNames.value, term]; // clone to trigger reactivity
-// 	}
-// };
+	// user has changed some of the facet filter, so re-fetch data
+	dirtyResults.value[resultType.value] = true;
 
-// const searchXDDDictionaries = (q: string) =>
-// 	new Promise((resolve) => {
-// 		const suggestionResults: string[] = [];
-// 		if (q.length < 1) resolve(suggestionResults); // early exit
-// 		resolve(
-// 			xddDictionaries.value.map((dic) => dic.name).filter((dictName) => dictName.includes(q))
-// 		);
-// 	});
+	await executeSearch();
 
-const onResultTypeChanged = (newResultType: string) => {
-	updateResultType(newResultType);
+	// since facet filters differ across tabs,
+	// there is no need to refetch the data on the next tab switch
+	dirtyResults.value[resultType.value] = false;
+});
+
+const onSearchTermChanged = async (filterTerm: string) => {
+	if (filterTerm !== searchTerm.value) {
+		searchTerm.value = filterTerm;
+
+		// search term has changed, so all search results are dirty; need re-fetch
+		Object.values(ResourceType).forEach((key) => {
+			dirtyResults.value[key as string] = true;
+		});
+
+		// re-fetch data from the server, apply filters, and re-calculate the facets
+		await executeSearch();
+		dirtyResults.value[resultType.value] = false;
+	}
 };
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-watch(clientFilters, (n, o) => {
-	if (filtersUtil.isEqual(n, o)) return;
-	// data has not changed; the user just changed one of the facet filters
-	refresh(); // this will trigger facet re-calculation
-});
+const updateResultType = async (newResultType: string) => {
+	if (resultType.value !== newResultType) {
+		resultType.value = newResultType;
 
-watch(dictNames, () => {
-	refresh();
-});
-
-watch(rankedResults, () => {
-	// re-fetch data from the server, apply filters, and re-calculate the facets
-	refresh();
-});
-
-watch(resultType, () => {
-	// data has not changed; the user has just switched the result tab, e.g., from ALL to Articles
-	// re-calculate the facets
-	// REVIEW
-	calculateFacets(dataItemsUnfiltered.value, dataItems.value);
-});
+		// if no data currently exist for the selected tab,
+		//  or if data exists but outdated then we should refetch
+		const resList = dataItemsUnfiltered.value.find(
+			(res) => res.searchSubsystem === resultType.value
+		);
+		if (!resList || dirtyResults.value[resultType.value]) {
+			await executeSearch();
+			dirtyResults.value[resultType.value] = false;
+		} else {
+			// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
+			// re-calculate the facets
+			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+		}
+	}
+};
 
 onMounted(async () => {
 	xddDatasets.value = await getXDDSets();
-	xddDictionaries.value = (await getXDDDictionaries()) as XDDDictionary[];
 	if (xddDatasets.value.length > 0 && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
 		xddDatasets.value.push(ResourceType.ALL);
 	}
 
-	refresh();
+	// initially, all search results are dirty; need re-fetch
+	Object.values(ResourceType).forEach((key) => {
+		dirtyResults.value[key as string] = true;
+	});
+
+	await executeSearch();
+
+	// done with initial fetch for the currently selected tab, so reset
+	dirtyResults.value[resultType.value] = false;
 });
 
 onUnmounted(() => {
