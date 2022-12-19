@@ -17,7 +17,7 @@ import { PropType } from 'vue';
 import { NumberValue } from 'd3';
 import { Viewport } from 'pixi-viewport';
 
-import { CellStatus } from '@/types/ResponsiveMatrix';
+import { CellStatus, LabelData } from '@/types/ResponsiveMatrix';
 import { viewport2Screen } from './pixi-utils';
 import { makeLabels } from './matrix-util';
 
@@ -27,6 +27,10 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		items: {
+			type: Array as PropType<LabelData[]>,
+			required: true
+		},
 		viewport: {
 			type: Viewport as PropType<Viewport>,
 			default() {
@@ -53,18 +57,6 @@ export default {
 		},
 		selectedRows: {
 			type: Array as PropType<CellStatus[]>,
-			default() {
-				return [];
-			}
-		},
-		labelRowList: {
-			type: Array as PropType<number[] | string[]>,
-			default() {
-				return [];
-			}
-		},
-		labelRowAltList: {
-			type: Array as PropType<string[]>,
 			default() {
 				return [];
 			}
@@ -124,15 +116,14 @@ export default {
 		buildLabelData() {
 			const visibleBounds = this.viewport.getVisibleBounds();
 			const viewportRowDensity =
-				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) *
-				this.labelRowList.length;
+				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.items.length;
 
 			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(
-				this.labelRowList,
-				this.labelRowAltList,
+				this.items.map((d) => d.value),
+				this.items.map((d) => d.altText),
 				this.selectedRows,
 				this.microRowSettings,
 				labelStride,

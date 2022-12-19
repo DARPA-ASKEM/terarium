@@ -2,7 +2,8 @@
 	<main class="matrix-container" ref="matrixContainer">
 		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
-				v-if="!disableLabelCol && rendererReady"
+				v-if="visConfig.col.borderEnabled && rendererReady"
+				:items="dataConfig.dataCol"
 				:selectedCols="selectedCols"
 				:labelColList="labelColList"
 				:labelColAltList="cellLabelAltCol"
@@ -14,7 +15,8 @@
 				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
-				v-if="!disableLabelRow && rendererReady"
+				v-if="visConfig.row.borderEnabled && rendererReady"
+				:items="dataConfig.dataRow"
 				:selectedRows="selectedRows"
 				:labelRowList="labelRowList"
 				:labelRowAltList="cellLabelAltRow"
@@ -86,7 +88,9 @@ import {
 	CellStatus,
 	CellType,
 	Uniforms,
-	ParamMinMax
+	ParamMinMax,
+	DataConfig,
+	VisConfig
 } from '@/types/ResponsiveMatrix';
 import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
@@ -119,6 +123,14 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		dataConfig: {
+			type: Object as PropType<DataConfig>,
+			required: true
+		},
+		visConfig: {
+			type: Object as PropType<VisConfig>,
+			required: true
+		},
 		margin: {
 			type: Number,
 			default() {
