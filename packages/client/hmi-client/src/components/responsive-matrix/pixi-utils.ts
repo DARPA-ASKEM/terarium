@@ -90,12 +90,17 @@ export const getGlMaxTextureSize = (app: Application): number => {
  */
 export const getTextureDim = (dataSize: number, maxTextureSize: number) => {
 	const dataSizeToMaxRatio = dataSize / maxTextureSize;
-	const x = dataSizeToMaxRatio >= 1 ? maxTextureSize : dataSize % maxTextureSize || 1;
+
+	// if multiple rows are required, set number of columns to max texture size
+	// otherwise set the number of columns to the data size with min of 1
+	const x = dataSizeToMaxRatio >= 1 ? maxTextureSize : dataSize || 1;
+	// set number of rows with a min of 1
 	const y = Math.ceil(dataSizeToMaxRatio) || 1;
+
 	return {
-		x,
-		y,
-		n: x * y
+		x, // number of columns in texture
+		y, // number of rows in texture
+		n: x * y // number of elements in texture
 	};
 };
 
