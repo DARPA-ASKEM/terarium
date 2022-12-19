@@ -39,12 +39,6 @@ export default {
 				return 0;
 			}
 		},
-		numRows: {
-			type: Number,
-			default() {
-				return 0;
-			}
-		},
 		update: {
 			type: Number,
 			default() {
@@ -130,7 +124,8 @@ export default {
 		buildLabelData() {
 			const visibleBounds = this.viewport.getVisibleBounds();
 			const viewportRowDensity =
-				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.numRows;
+				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) *
+				this.labelRowList.length;
 
 			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
