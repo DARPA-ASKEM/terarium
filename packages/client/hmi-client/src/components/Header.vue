@@ -33,14 +33,9 @@ defineProps<{
 			<span>{{ projectName }}</span>
 		</p>
 		<aside>
-			<v-btn
-				variant="flat"
-				color="primary"
-				class="data-explorer"
-				@click="emit('show-data-explorer')"
-			>
+			<button type="button" class="data-explorer" @click="emit('show-data-explorer')">
 				<IconSearchLocate16 />
-			</v-btn>
+			</button>
 		</aside>
 	</header>
 </template>
