@@ -65,3 +65,8 @@ export type Uniforms = {
 	// cell element color data
 	uColor: Texture;
 };
+
+export enum CursorModes {
+	Select,
+	Camera
+}

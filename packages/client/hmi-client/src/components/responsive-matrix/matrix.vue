@@ -88,7 +88,8 @@ import {
 	CellStatus,
 	CellType,
 	Uniforms,
-	ParamMinMax
+	ParamMinMax,
+	CursorModes
 } from '@/types/ResponsiveMatrix';
 import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
@@ -103,10 +104,6 @@ import matrixGridFS from './matrix-grid.fs.glsl';
 
 // EMPTY_POINT used as a fallback value
 const EMPTY_POINT = new Point();
-enum CursorModes {
-	Selection,
-	Camera
-}
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -276,7 +273,7 @@ export default {
 			update: 0,
 			move: 0,
 
-			cursorMode: CursorModes.Selection,
+			cursorMode: CursorModes.Select,
 			resizeObserver: null as unknown as ResizeObserver
 		};
 	},
@@ -1028,8 +1025,8 @@ export default {
 		handleKeyDown({ altKey }: KeyboardEvent) {
 			if (altKey && this.viewport) {
 				this.cursorMode =
-					this.cursorMode === CursorModes.Selection ? CursorModes.Camera : CursorModes.Selection;
-				this.viewport.pause = this.cursorMode === CursorModes.Selection;
+					this.cursorMode === CursorModes.Select ? CursorModes.Camera : CursorModes.Select;
+				this.viewport.pause = this.cursorMode === CursorModes.Select;
 			}
 		},
 
