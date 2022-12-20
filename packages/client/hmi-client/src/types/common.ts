@@ -40,6 +40,11 @@ export type SearchResults = {
 	nextPage?: string;
 };
 
+export type FullSearchResults = {
+	allData: SearchResults;
+	allDataFilteredWithFacets: SearchResults;
+};
+
 //
 // Facets
 //
