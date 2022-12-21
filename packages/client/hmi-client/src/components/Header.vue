@@ -81,4 +81,13 @@ aside {
 	/* Push it to the far side */
 	gap: 1rem;
 }
+
+.p-button {
+	background-color: var(--un-color-accent);
+}
+
+.p-button:enabled:hover,
+.p-button:enabled:focus {
+	background-color: var(--un-color-accent-light);
+}
 </style>
