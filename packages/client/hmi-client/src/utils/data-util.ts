@@ -12,7 +12,39 @@ import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
 
-// Apply filter to data in place
+// export const applyFacetFilters = (results: Model[] | Dataset[], filters: Filters) => {
+// 	if (isEmpty(filters) || isEmpty(results)) {
+// 		return;
+// 	}
+// 	const { clauses } = filters;
+
+// 	let ASSET_FACET_FIELDS: string[];
+
+// 	console.log(results as Model[], "kkk")
+// 	console.log(results as Dataset[])
+
+// 	if (results as Model[]) ASSET_FACET_FIELDS = MODEL_FACET_FIELDS;
+// 	if (results as Dataset[]) ASSET_FACET_FIELDS = DATASET_FACET_FIELDS;
+
+// 	clauses.forEach((clause: any) => {
+// 		const filterField: string = clause.field; // the field to filter on
+// 		// "filters" may include fields that belong to different types of artifacts
+// 		//  thus make sure to only filter models using Model fields
+// 		if (ASSET_FACET_FIELDS.includes(filterField)) {
+// 			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
+// 			const isNot = !clause.isNot; // is the filter reversed?
+// 			const filteredModels = results.filter(
+// 				(asset) =>
+// 					// direct query against Model fields
+// 					filterValues.includes(asset[filterField as keyof Model].toString()) === isNot
+// 			);
+// 			// use splice to filter in place
+// 			results.splice(0, results.length, ...filteredModels);
+// 		}
+// 	});
+// };
+
+// Apply filter to data in place //////////// refactor this
 export const applyFacetFiltersToModels = (modelResults: Model[], filters: Filters) => {
 	if (isEmpty(filters) || isEmpty(modelResults)) {
 		return;
@@ -72,6 +104,7 @@ export const getResourceTypeIcon = (type: string) => {
 	}
 };
 
+// TEMP FUNCTIONS
 export function isModel(item: ResultType): item is Model {
 	return (<Model>item).content !== undefined;
 }
@@ -90,6 +123,7 @@ export function getResourceID(item: ResultType) {
 	}
 	return item.id;
 }
+//
 
 /**
  * Validate that the input string is valid.
