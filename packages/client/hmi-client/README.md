@@ -2,7 +2,7 @@
 
 - TERArium uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 - [Uncharted Design Tokens](https://github.com/unchartedsoftware/design-tokens)
-- Components System is [Vuetify](https://next.vuetifyjs.com/en/).
+- Components System is [PrimeVue](https://primefaces.org/primevue).
 - We are using IBM Carbon Icons:
   - Check how to use them [within Vue](https://github.com/carbon-design-system/carbon/tree/v10/packages/icons-vue).
   - The reference [icons library](https://carbondesignsystem.com/guidelines/icons/library).
