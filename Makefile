@@ -30,6 +30,13 @@ image-hmi-server: clean-hmi-server
 	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=jar
 	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/jvm/build
 
+TARGETS += document-server
+clean-document-server: clean-document-server-base
+	rm -rf $(PROJECT_DIR)/packages/services/document-server/docker/jvm/build
+
+image-document-server: clean-document-server
+	./gradlew :packages:services:document-server:build -Dquarkus.package.type=jar
+	mv $(PROJECT_DIR)/packages/services/document-server/build $(PROJECT_DIR)/packages/services/document-server/docker/jvm/build
 
 
 TARGETS += hmi-server-native
@@ -39,6 +46,15 @@ clean-hmi-server-native: clean-hmi-server-base
 image-hmi-server-native: clean-hmi-server-native
 	./gradlew :packages:services:hmi-server:build -Dquarkus.package.type=native
 	mv $(PROJECT_DIR)/packages/services/hmi-server/build $(PROJECT_DIR)/packages/services/hmi-server/docker/native/build
+
+
+TARGETS += document-server-native
+clean-document-server-native: clean-document-server-base
+	rm -rf $(PROJECT_DIR)/packages/services/document-server/docker/native/build
+
+image-document-server-native: clean-document-server-native
+	./gradlew :packages:services:document-server:build -Dquarkus.package.type=native
+	mv $(PROJECT_DIR)/packages/services/document-server/build $(PROJECT_DIR)/packages/services/document-server/docker/native/build
 
 
 
@@ -65,7 +81,9 @@ clean: $(TARGETS:%=clean-%)
 clean-hmi-server-base:
 	./gradlew :packages:services:hmi-server:clean
 
-
+.PHONY: clean-document-server-base
+clean-document-server-base:
+	./gradlew :packages:services:document-server:clean
 
 ## Images
 .PHONY: images
