@@ -116,7 +116,7 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 	// return null;
 }
 
-export const getFacets = (results: SearchResults[], resultType: ResourceType) => {
+export const getFacets = (results: SearchResults[], resultType: ResourceType | string) => {
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
