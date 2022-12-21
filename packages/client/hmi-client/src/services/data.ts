@@ -8,7 +8,7 @@ import {
 } from '@/types/common';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFiltersToDatasets, applyFacetFiltersToModels } from '@/utils/data-util';
+import { applyFacetFilters } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
@@ -240,10 +240,10 @@ const getAssets = async (
 
 		switch (resourceType) {
 			case ResourceType.MODEL:
-				applyFacetFiltersToModels(assetResults as Model[], searchParam.filters);
+				applyFacetFilters(assetResults as Model[], searchParam.filters, resourceType);
 				break;
 			case ResourceType.DATASET:
-				applyFacetFiltersToDatasets(assetResults as Dataset[], searchParam.filters);
+				applyFacetFilters(assetResults as Dataset[], searchParam.filters, resourceType);
 				break;
 			default:
 				return results; // error or make new resource type compatible
