@@ -30,6 +30,8 @@
 		"pinia": "2.0.24",
 		"pixi-viewport": "4.37.0",
 		"pixi.js": "7.0.4",
+		"primeicons": "6.0.1",
+		"primevue": "3",
 		"sass": "1.56.1",
 		"vue": "3.2.41",
 		"vue-router": "4.1.6"

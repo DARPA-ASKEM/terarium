@@ -6468,6 +6468,8 @@ cors@latest:
     pinia: 2.0.24
     pixi-viewport: 4.37.0
     pixi.js: 7.0.4
+    primeicons: 6.0.1
+    primevue: 3
     sass: 1.56.1
     typescript: 4.8.4
     vite: 3.2.5
@@ -9438,6 +9440,23 @@ opn@latest:
     ansi-styles: ^5.0.0
     react-is: ^18.0.0
   checksum: 9917a0bb859cd7a24a343363f70d5222402c86d10eb45bcc2f77b23a4e67586257390e959061aec22762a782fe6bafb59bf34eb94527bc2e5d211afdb287eb4e
+  languageName: node
+  linkType: hard
+
+"primeicons@npm:6.0.1":
+  version: 6.0.1
+  resolution: "primeicons@npm:6.0.1"
+  checksum: a1412fee16ddbd24e06052a7e94b973cf6f68fadb5349192101388f2681f822b3bde077948e6d53e9949f87148b495e4bf2b149ad07242de068d2e7233f4446c
+  languageName: node
+  linkType: hard
+
+"primevue@npm:3":
+  version: 3.21.0
+  resolution: "primevue@npm:3.21.0"
+  peerDependencies:
+    primeicons: ^5.0.0 || ^6.0.0
+    vue: ^3.0.0
+  checksum: 89362edc741803256e9724434772e74563f93e46743c7d936c321c90b8fdbba551cc0928fec6c38cfa87c001dd32c2fffda9a441afe88f14025aef95173a9382
   languageName: node
   linkType: hard
 

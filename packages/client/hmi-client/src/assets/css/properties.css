@@ -1,5 +1,13 @@
 @import '@node_modules/@uncharted.software/design-tokens/build/css/uncharted-tokens.css';
 
+/** 
+ * PrimeVue
+ * https://primefaces.org/primevue/setup
+ */
+@import '@node_modules/primevue/resources/themes/md-light-indigo/theme.css';
+@import '@node_modules/primevue/resources/primevue.min.css';
+@import '@node_modules/primeicons/primeicons.css';
+
 :root {
     /* Overwriting Uncharted design-tokens for TERArium */
     --un-color-accent-darker: #133013ff;
