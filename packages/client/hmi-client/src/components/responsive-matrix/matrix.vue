@@ -2,12 +2,10 @@
 	<main class="matrix-container" ref="matrixContainer" :class="{ 'camera-cursor': isCameraMode }">
 		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
-				v-if="!disableLabelCol && rendererReady"
+				v-if="visConfig.col.borderEnabled && rendererReady"
+				:items="dataConfig.dataCol"
 				:selectedCols="selectedCols"
-				:labelColList="labelColList"
-				:labelColAltList="cellLabelAltCol"
 				:microColSettings="microColSettings"
-				:numCols="numCols"
 				:viewport="viewport"
 				:margin="margin"
 				:update="update"
@@ -15,12 +13,10 @@
 				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
-				v-if="!disableLabelRow && rendererReady"
+				v-if="visConfig.row.borderEnabled && rendererReady"
+				:items="dataConfig.dataRow"
 				:selectedRows="selectedRows"
-				:labelRowList="labelRowList"
-				:labelRowAltList="cellLabelAltRow"
 				:microRowSettings="microRowSettings"
-				:numRows="numRows"
 				:viewport="viewport"
 				:margin="margin"
 				:update="update"
@@ -89,6 +85,8 @@ import {
 	CellType,
 	Uniforms,
 	ParamMinMax,
+	DataConfig,
+	VisConfig,
 	CursorModes
 } from '@/types/ResponsiveMatrix';
 import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
@@ -122,6 +120,17 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		// New properties
+		dataConfig: {
+			type: Object as PropType<DataConfig>,
+			required: true
+		},
+		visConfig: {
+			type: Object as PropType<VisConfig>,
+			required: true
+		},
+
+		// To be deprecated
 		margin: {
 			type: Number,
 			default() {
@@ -146,32 +155,8 @@ export default {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
 		},
-		disableLabelRow: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
 		cellLabelRow: {
 			type: Array as PropType<number[] | string[]>,
-			default() {
-				return [];
-			}
-		},
-		cellLabelAltRow: {
-			type: Array as PropType<string[]>,
-			default() {
-				return [];
-			}
-		},
-		disableLabelCol: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
-		cellLabelAltCol: {
-			type: Array as PropType<string[]>,
 			default() {
 				return [];
 			}

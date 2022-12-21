@@ -208,6 +208,23 @@ const {
 	labelColFormatFn
 } = simData;
 
+const dataConfig = {
+	data,
+	dataCol: cellLabelCol.map((v, i) => ({ value: v, altText: cellLabelAltCol[i] })),
+	dataRow: cellLabelRow.map((v, i) => ({ value: v, altText: scenarioDescriptionData[i] }))
+};
+
+const visConfig = {
+	row: {
+		borderEnabled: true,
+		borderWidth: 1
+	},
+	col: {
+		borderEnabled: true,
+		borderWidth: 1
+	}
+};
+
 // ///////////////////////////////////////////////////////////////////////////////
 // generate legend
 
@@ -285,6 +302,8 @@ onMounted(() => {
 
 		<div class="result">
 			<ResponsiveMatrix
+				:dataConfig="dataConfig"
+				:visConfig="visConfig"
 				:data="data"
 				:selectorFn="selectorFn"
 				:parametersMax="parametersDiffMax"
@@ -294,9 +313,7 @@ onMounted(() => {
 				:barColorFn="barColorFn"
 				:labelColFormatFn="labelColFormatFn"
 				:cellLabelRow="cellLabelRow"
-				:cellLabelAltRow="scenarioDescriptionData"
 				:cellLabelCol="cellLabelCol"
-				:cellLabelAltCol="cellLabelAltCol"
 				:margin="40"
 				:style="{ flex: '1' }"
 			/>

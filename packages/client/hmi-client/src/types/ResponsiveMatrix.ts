@@ -37,6 +37,29 @@ export enum SelectedCellValue {
 	END_COL
 }
 
+export type LabelData = {
+	value: string | number;
+	altText?: string;
+};
+
+export type DataConfig = {
+	dataRow: LabelData[];
+	dataCol: LabelData[];
+};
+
+export type RowColConfig = {
+	borderEnabled: boolean;
+	borderWidth: number;
+	// TODO
+	// labelFormatterFn: (val :any, idx: number) => string
+	// labelAltFn?: (val: any, idx: number) => string,
+};
+
+export type VisConfig = {
+	row: RowColConfig;
+	col: RowColConfig;
+};
+
 export type Uniforms = {
 	// screen data
 	uScreenWidth: number;
