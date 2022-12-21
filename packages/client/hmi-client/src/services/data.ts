@@ -342,7 +342,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	// docid=5ebd1de8998e17af826e810e
 	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
 
-	const res = await await API.get(url);
+	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.data) {
@@ -560,16 +560,15 @@ const fetchData = async (
 			// eslint-disable-next-line no-async-promise-executor
 			const promise = new Promise<FullSearchResults>(async (resolve, reject) => {
 				try {
-					let allData; // type these
-					let allDataFilteredWithFacets;
 					switch (ResourceType[key]) {
 						case ResourceType.XDD: // XDD
-							allData = await searchXDDArticles(term, searchParam?.xdd);
-							allDataFilteredWithFacets = await searchXDDArticles(
-								term,
-								searchParamWithFacetFilters?.xdd
-							);
-							resolve({ allData, allDataFilteredWithFacets });
+							resolve({
+								allData: await searchXDDArticles(term, searchParam?.xdd),
+								allDataFilteredWithFacets: await searchXDDArticles(
+									term,
+									searchParamWithFacetFilters?.xdd
+								)
+							});
 							break;
 						case ResourceType.MODEL: // Models
 							resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
