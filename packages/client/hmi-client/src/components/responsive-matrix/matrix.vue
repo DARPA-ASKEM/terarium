@@ -1,13 +1,11 @@
 <template>
-	<main class="matrix-container" ref="matrixContainer">
+	<main class="matrix-container" ref="matrixContainer" :class="{ 'camera-cursor': isCameraMode }">
 		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
-				v-if="!disableLabelCol && rendererReady"
+				v-if="visConfig.col.borderEnabled && rendererReady"
+				:items="dataConfig.dataCol"
 				:selectedCols="selectedCols"
-				:labelColList="labelColList"
-				:labelColAltList="cellLabelAltCol"
 				:microColSettings="microColSettings"
-				:numCols="numCols"
 				:viewport="viewport"
 				:margin="margin"
 				:update="update"
@@ -15,12 +13,10 @@
 				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
-				v-if="!disableLabelRow && rendererReady"
+				v-if="visConfig.row.borderEnabled && rendererReady"
+				:items="dataConfig.dataRow"
 				:selectedRows="selectedRows"
-				:labelRowList="labelRowList"
-				:labelRowAltList="cellLabelAltRow"
 				:microRowSettings="microRowSettings"
-				:numRows="numRows"
 				:viewport="viewport"
 				:margin="margin"
 				:update="update"
@@ -88,7 +84,10 @@ import {
 	CellStatus,
 	CellType,
 	Uniforms,
-	ParamMinMax
+	ParamMinMax,
+	DataConfig,
+	VisConfig,
+	CursorModes
 } from '@/types/ResponsiveMatrix';
 import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
@@ -121,6 +120,17 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		// New properties
+		dataConfig: {
+			type: Object as PropType<DataConfig>,
+			required: true
+		},
+		visConfig: {
+			type: Object as PropType<VisConfig>,
+			required: true
+		},
+
+		// To be deprecated
 		margin: {
 			type: Number,
 			default() {
@@ -145,32 +155,8 @@ export default {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
 		},
-		disableLabelRow: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
 		cellLabelRow: {
 			type: Array as PropType<number[] | string[]>,
-			default() {
-				return [];
-			}
-		},
-		cellLabelAltRow: {
-			type: Array as PropType<string[]>,
-			default() {
-				return [];
-			}
-		},
-		disableLabelCol: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
-		cellLabelAltCol: {
-			type: Array as PropType<string[]>,
 			default() {
 				return [];
 			}
@@ -272,7 +258,7 @@ export default {
 			update: 0,
 			move: 0,
 
-			enableDrag: false,
+			cursorMode: CursorModes.SELECT,
 			resizeObserver: null as unknown as ResizeObserver
 		};
 	},
@@ -358,6 +344,9 @@ export default {
 			}
 
 			return microColSettings;
+		},
+		isCameraMode(): boolean {
+			return this.cursorMode === CursorModes.CAMERA;
 		}
 	},
 
@@ -408,8 +397,7 @@ export default {
 		this.resizeObserver.observe(matrixContainer);
 
 		// start event listeners
-		window.addEventListener('keydown', this.handleKey);
-		window.addEventListener('keyup', this.handleKey);
+		window.addEventListener('keydown', this.handleKeyDown);
 		matrixContainer.addEventListener('wheel', this.handleScroll);
 
 		// ///////////////////////////////////////////////////////////////////////////////
@@ -590,8 +578,7 @@ export default {
 	unmounted() {
 		this.resizeObserver.disconnect();
 		this.app?.destroy(false, true);
-		window.removeEventListener('keydown', this.handleKey);
-		window.removeEventListener('keyup', this.handleKey);
+		window.removeEventListener('keydown', this.handleKeyDown);
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -1020,21 +1007,22 @@ export default {
 			this.uniforms.uViewportWorldHeight = visibleBounds?.height || 0;
 		},
 
-		handleKey({ shiftKey }: KeyboardEvent) {
-			this.enableDrag = shiftKey;
-			if (this.viewport) {
-				this.viewport.pause = !shiftKey;
+		handleKeyDown({ altKey }: KeyboardEvent) {
+			if (altKey && this.viewport) {
+				this.cursorMode =
+					this.cursorMode === CursorModes.SELECT ? CursorModes.CAMERA : CursorModes.SELECT;
+				this.viewport.pause = this.cursorMode === CursorModes.SELECT;
 			}
 		},
 
 		handleScroll(e) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				e.preventDefault();
 			}
 		},
 
 		handleMouseDown(e: FederatedPointerEvent) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				return;
 			}
 
@@ -1051,7 +1039,7 @@ export default {
 		},
 
 		handleMouseUp(e: FederatedPointerEvent) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				return;
 			}
 
@@ -1109,6 +1097,11 @@ export default {
 <style scoped>
 main {
 	position: relative;
+	cursor: default;
+}
+
+.camera-cursor {
+	cursor: move;
 }
 
 .matrix {
