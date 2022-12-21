@@ -379,13 +379,11 @@ const toggleDataItemSelected = (item: ResultType) => {
 			const itemAsModel = item as Model;
 			const searchItemAsModel = searchItem as Model;
 			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
-		}
-		if (isDataset(item) && isDataset(searchItem)) {
+		} else if (isDataset(item) && isDataset(searchItem)) {
 			const itemAsDataset = item as Dataset;
 			const searchItemAsDataset = searchItem as Dataset;
 			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
-		}
-		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
+		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
 			const searchItemAsArticle = searchItem as XDDArticle;
 			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;

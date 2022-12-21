@@ -12,7 +12,7 @@
 			/>
 			<categorical-facet
 				v-else
-				:key="facet.label"
+				:key="facet.id"
 				:facet="facet.id"
 				:label="facet.label"
 				:base-data="facet.baseData"
