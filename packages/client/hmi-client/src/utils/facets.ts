@@ -120,7 +120,6 @@ export const getFacets = (results: SearchResults[], resultType: ResourceType | s
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
-			console.log(resultsObj, resultType);
 			if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
 				// extract facets based on the result type
 				// because we would have different facets for different result types

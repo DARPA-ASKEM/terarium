@@ -556,6 +556,7 @@ const fetchData = async (
 	const promiseList = [] as Promise<FullSearchResults>[];
 
 	Object.entries(ResourceType).forEach(([key]) => {
+		// Add this to the HMI_SERVER
 		if (resultType === ResourceType[key] || resultType === ResourceType.ALL) {
 			// eslint-disable-next-line no-async-promise-executor
 			const promise = new Promise<FullSearchResults>(async (resolve, reject) => {
@@ -606,8 +607,6 @@ export {
 	getXDDArtifacts,
 	searchXDDArticles,
 	getAssets,
-	// getModels,
-	// getDatasets,
 	getRelatedDocuments,
 	getDocumentById
 };
