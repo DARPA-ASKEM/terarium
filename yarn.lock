@@ -6468,6 +6468,8 @@ cors@latest:
     pinia: 2.0.24
     pixi-viewport: 4.37.0
     pixi.js: 7.0.4
+    primeicons: 6.0.1
+    primevue: 3
     sass: 1.56.1
     typescript: 4.8.4
     vite: 3.2.5
@@ -6475,7 +6477,6 @@ cors@latest:
     vue: 3.2.41
     vue-router: 4.1.6
     vue-tsc: 1.0.13
-    vuetify: 3.0.5
   languageName: unknown
   linkType: soft
 
@@ -9442,6 +9443,23 @@ opn@latest:
   languageName: node
   linkType: hard
 
+"primeicons@npm:6.0.1":
+  version: 6.0.1
+  resolution: "primeicons@npm:6.0.1"
+  checksum: a1412fee16ddbd24e06052a7e94b973cf6f68fadb5349192101388f2681f822b3bde077948e6d53e9949f87148b495e4bf2b149ad07242de068d2e7233f4446c
+  languageName: node
+  linkType: hard
+
+"primevue@npm:3":
+  version: 3.21.0
+  resolution: "primevue@npm:3.21.0"
+  peerDependencies:
+    primeicons: ^5.0.0 || ^6.0.0
+    vue: ^3.0.0
+  checksum: 89362edc741803256e9724434772e74563f93e46743c7d936c321c90b8fdbba551cc0928fec6c38cfa87c001dd32c2fffda9a441afe88f14025aef95173a9382
+  languageName: node
+  linkType: hard
+
 "process-nextick-args@npm:~2.0.0":
   version: 2.0.1
   resolution: "process-nextick-args@npm:2.0.1"
@@ -11475,25 +11493,6 @@ send@latest:
     "@vue/server-renderer": 3.2.41
     "@vue/shared": 3.2.41
   checksum: 5328bf14c672c29fcde6747cac05ea7ffa46522ea8198120cdd61ba2847a1692e316019b942deb93326235e60b5d19b6db443c2fd8a827bba4b90c6595a709cd
-  languageName: node
-  linkType: hard
-
-"vuetify@npm:3.0.5":
-  version: 3.0.5
-  resolution: "vuetify@npm:3.0.5"
-  peerDependencies:
-    vite-plugin-vuetify: ^1.0.0-alpha.12
-    vue: ^3.2.0
-    vue-i18n: ^9.0.0
-    webpack-plugin-vuetify: ^2.0.0-alpha.11
-  peerDependenciesMeta:
-    vite-plugin-vuetify:
-      optional: true
-    vue-i18n:
-      optional: true
-    webpack-plugin-vuetify:
-      optional: true
-  checksum: 3cc596e5bbd1d7604e283938b7a37844e9af7a909c7b8acf84c1291b563220f8386458b15701f2bcfb6d0982310e61b8dc20b7ed818c6b41341525ec7037c1af
   languageName: node
   linkType: hard
 

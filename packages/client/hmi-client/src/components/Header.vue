@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import IconSearchLocate16 from '@carbon/icons-vue/es/search--locate/16';
+import Button from 'primevue/button';
 import { useCurrentRouter } from '@/router/index';
 import { Project } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
@@ -33,14 +33,13 @@ defineProps<{
 			<span>{{ projectName }}</span>
 		</p>
 		<aside>
-			<v-btn
-				variant="flat"
-				color="primary"
-				class="data-explorer"
+			<Button
+				class="p-button p-button-icon-only p-button-rounded"
 				@click="emit('show-data-explorer')"
+				aria-label="Data Explorer"
 			>
-				<IconSearchLocate16 />
-			</v-btn>
+				<i class="pi pi-search" />
+			</Button>
 		</aside>
 	</header>
 </template>
@@ -81,9 +80,5 @@ aside {
 	margin-left: auto;
 	/* Push it to the far side */
 	gap: 1rem;
-}
-
-.data-explorer svg {
-	fill: var(--un-color-white);
 }
 </style>
