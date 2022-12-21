@@ -1,5 +1,5 @@
 <template>
-	<main class="matrix-container" ref="matrixContainer">
+	<main class="matrix-container" ref="matrixContainer" :class="{ 'camera-cursor': isCameraMode }">
 		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
 				v-if="visConfig.col.borderEnabled && rendererReady"
@@ -86,7 +86,8 @@ import {
 	Uniforms,
 	ParamMinMax,
 	DataConfig,
-	VisConfig
+	VisConfig,
+	CursorModes
 } from '@/types/ResponsiveMatrix';
 import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
@@ -257,7 +258,7 @@ export default {
 			update: 0,
 			move: 0,
 
-			enableDrag: false,
+			cursorMode: CursorModes.SELECT,
 			resizeObserver: null as unknown as ResizeObserver
 		};
 	},
@@ -343,6 +344,9 @@ export default {
 			}
 
 			return microColSettings;
+		},
+		isCameraMode(): boolean {
+			return this.cursorMode === CursorModes.CAMERA;
 		}
 	},
 
@@ -393,8 +397,7 @@ export default {
 		this.resizeObserver.observe(matrixContainer);
 
 		// start event listeners
-		window.addEventListener('keydown', this.handleKey);
-		window.addEventListener('keyup', this.handleKey);
+		window.addEventListener('keydown', this.handleKeyDown);
 		matrixContainer.addEventListener('wheel', this.handleScroll);
 
 		// ///////////////////////////////////////////////////////////////////////////////
@@ -575,8 +578,7 @@ export default {
 	unmounted() {
 		this.resizeObserver.disconnect();
 		this.app?.destroy(false, true);
-		window.removeEventListener('keydown', this.handleKey);
-		window.removeEventListener('keyup', this.handleKey);
+		window.removeEventListener('keydown', this.handleKeyDown);
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -1005,21 +1007,22 @@ export default {
 			this.uniforms.uViewportWorldHeight = visibleBounds?.height || 0;
 		},
 
-		handleKey({ shiftKey }: KeyboardEvent) {
-			this.enableDrag = shiftKey;
-			if (this.viewport) {
-				this.viewport.pause = !shiftKey;
+		handleKeyDown({ altKey }: KeyboardEvent) {
+			if (altKey && this.viewport) {
+				this.cursorMode =
+					this.cursorMode === CursorModes.SELECT ? CursorModes.CAMERA : CursorModes.SELECT;
+				this.viewport.pause = this.cursorMode === CursorModes.SELECT;
 			}
 		},
 
 		handleScroll(e) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				e.preventDefault();
 			}
 		},
 
 		handleMouseDown(e: FederatedPointerEvent) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				return;
 			}
 
@@ -1036,7 +1039,7 @@ export default {
 		},
 
 		handleMouseUp(e: FederatedPointerEvent) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				return;
 			}
 
@@ -1094,6 +1097,11 @@ export default {
 <style scoped>
 main {
 	position: relative;
+	cursor: default;
+}
+
+.camera-cursor {
+	cursor: move;
 }
 
 .matrix {
