@@ -378,6 +378,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	let searchParams = `term=${term}`;
 	const url = '/xdd/documents?';
 
+	const potentialXDDSearchParams = <XDDSearchParams>{};
+
+	console.log(potentialXDDSearchParams);
+
 	if (xddSearchParam?.docid) {
 		searchParams += `&docid=${xddSearchParam.docid}`;
 	}
