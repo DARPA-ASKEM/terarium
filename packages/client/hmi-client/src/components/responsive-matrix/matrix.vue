@@ -1,5 +1,5 @@
 <template>
-	<main class="matrix-container" ref="matrixContainer" :class="{ cameraCursor: isCameraMode }">
+	<main class="matrix-container" ref="matrixContainer" :class="{ 'camera-cursor': isCameraMode }">
 		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
 				v-if="!disableLabelCol && rendererReady"
@@ -1115,7 +1115,7 @@ main {
 	cursor: default;
 }
 
-.cameraCursor {
+.camera-cursor {
 	cursor: move;
 }
 
