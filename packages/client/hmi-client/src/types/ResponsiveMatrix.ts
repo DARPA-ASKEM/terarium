@@ -67,6 +67,6 @@ export type Uniforms = {
 };
 
 export enum CursorModes {
-	Select,
-	Camera
+	SELECT,
+	CAMERA
 }

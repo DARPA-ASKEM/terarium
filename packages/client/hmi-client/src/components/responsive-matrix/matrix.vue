@@ -273,7 +273,7 @@ export default {
 			update: 0,
 			move: 0,
 
-			cursorMode: CursorModes.Select,
+			cursorMode: CursorModes.SELECT,
 			resizeObserver: null as unknown as ResizeObserver
 		};
 	},
@@ -361,7 +361,7 @@ export default {
 			return microColSettings;
 		},
 		isCameraMode(): boolean {
-			return this.cursorMode === CursorModes.Camera;
+			return this.cursorMode === CursorModes.CAMERA;
 		}
 	},
 
@@ -1025,8 +1025,8 @@ export default {
 		handleKeyDown({ altKey }: KeyboardEvent) {
 			if (altKey && this.viewport) {
 				this.cursorMode =
-					this.cursorMode === CursorModes.Select ? CursorModes.Camera : CursorModes.Select;
-				this.viewport.pause = this.cursorMode === CursorModes.Select;
+					this.cursorMode === CursorModes.SELECT ? CursorModes.CAMERA : CursorModes.SELECT;
+				this.viewport.pause = this.cursorMode === CursorModes.SELECT;
 			}
 		},
 
