@@ -34,7 +34,7 @@ defineProps<{
 		</p>
 		<aside>
 			<Button
-				class="p-button p-button-icon-only p-button-rounded"
+				class="data-explorer p-button p-button-icon-only p-button-rounded"
 				@click="emit('show-data-explorer')"
 				aria-label="Data Explorer"
 			>
