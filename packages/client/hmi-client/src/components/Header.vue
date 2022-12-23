@@ -1,16 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 import { useCurrentRouter } from '@/router/index';
 import { Project } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
+import useAuthStore from '@/stores/auth';
+import Dialog from 'primevue/dialog';
 
-const emit = defineEmits(['show-data-explorer']);
+const emit = defineEmits(['show-data-explorer', 'show-user-dropdown']);
 const router = useRouter();
 const { isCurrentRouteHome } = useCurrentRouter();
+const auth = useAuthStore();
 const isHome = computed(() => isCurrentRouteHome.value);
-
+const userMenu = ref();
+const isLogoutConfirmationVisible = ref(false);
+const userMenuItems = ref([
+	{
+		label: 'Logout',
+		command: () => {
+			isLogoutConfirmationVisible.value = !isLogoutConfirmationVisible.value;
+		}
+	}
+]);
 const resources = useResourcesStore();
 
 const goToHomepage = () => {
@@ -22,6 +35,10 @@ const goToHomepage = () => {
 defineProps<{
 	projectName?: Project['name'];
 }>();
+
+const showUserMenu = (event) => {
+	userMenu.value.toggle(event);
+};
 </script>
 
 <template>
@@ -40,8 +57,27 @@ defineProps<{
 			>
 				<i class="pi pi-search" />
 			</Button>
+			<Button
+				class="p-button p-button-icon-only p-button-rounded p-button-sm"
+				id="user-button"
+				@click="showUserMenu"
+			>
+				EL
+			</Button>
 		</aside>
+		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
 	</header>
+	<Dialog header="Logout" :visible="isLogoutConfirmationVisible">
+		<span>You will be returned to the login screen.</span>
+		<template #footer>
+			<Button label="Ok" class="p-button-text" @click="auth.logout"></Button>
+			<Button
+				label="Cancel"
+				class="p-button-text"
+				@click="() => (isLogoutConfirmationVisible = false)"
+			></Button>
+		</template>
+	</Dialog>
 </template>
 
 <style scoped>
@@ -89,5 +125,14 @@ aside {
 .p-button:enabled:hover,
 .p-button:enabled:focus {
 	background-color: var(--un-color-accent-light);
+}
+
+#user-button {
+	color: var(--un-color-text-secondary);
+	background-color: var(--un-color-body-surface-background);
+}
+
+#user-button:hover {
+	background-color: var(--un-color-body-surface-secondary);
 }
 </style>
