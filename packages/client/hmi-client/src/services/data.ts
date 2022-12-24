@@ -56,8 +56,7 @@ const filterAssets = (
 
 	if (term.length > 0) {
 		AssetFilterAttributes.forEach((attribute) => {
-			const results = allAssets;
-			const items = results.filter((d) => {
+			const items = allAssets.filter((d) => {
 				const newKey =
 					resourceType === ResourceType.MODEL
 						? (attribute as keyof Model)
@@ -392,11 +391,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	const res = await API.get(url + searchParams);
 	const rawdata: XDDResult = res.data;
-
-	console.log(term);
-	console.log(xddSearchParam);
-	console.log(searchParams);
-	console.log(rawdata);
 
 	if (rawdata.success) {
 		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
