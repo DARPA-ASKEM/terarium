@@ -42,7 +42,7 @@ onMounted(async () => {
 		for (let i = 0; i < allProjects.length; i++) {
 			allProjects[i].relatedArticles = result[i];
 		}
-		projects.value = await allProjects;
+		projects.value = allProjects;
 	}
 
 	// Get all relevant articles (latest on section)
@@ -257,6 +257,7 @@ li {
 	display: flex;
 	align-items: center;
 }
+
 .selected-paper-modal {
 	position: relative;
 	width: 500px;

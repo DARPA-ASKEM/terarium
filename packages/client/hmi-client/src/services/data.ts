@@ -42,69 +42,32 @@ const getXDDDictionaries = async () => {
 	return [] as XDDDictionary[];
 };
 
-const filterModels = (allModels: Model[], conceptFacets: ConceptFacets | null, term: string) => {
-	const finalModels: Model[] = [];
-
-	//
-	// simulate applying filters to the model query
-	//
-	const ModelFilterAttributes = MODEL_FILTER_FIELDS;
-	if (term.length > 0) {
-		ModelFilterAttributes.forEach((modelAttr) => {
-			const resultsAsModels = allModels;
-			const items = resultsAsModels.filter((d) =>
-				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
-			);
-			finalModels.push(...items);
-		});
-
-		// if no models match keyword search considering the ModelFilterAttributes
-		// perhaps the keyword search match a concept name, so let's also search for that
-		if (conceptFacets) {
-			const matchingCuries = [] as string[];
-			Object.keys(conceptFacets.facets.concepts).forEach((curie) => {
-				const concept = conceptFacets?.facets.concepts[curie];
-				if (concept?.name?.toLowerCase() === term.toLowerCase()) {
-					matchingCuries.push(curie);
-				}
-			});
-			matchingCuries.forEach((curie) => {
-				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
-				const modelIDs = matchingResult?.map((mr) => mr.id);
-				modelIDs?.forEach((modelId) => {
-					const model = allModels.find((m) => m.id === modelId);
-					if (model) {
-						finalModels.push(model);
-					}
-				});
-			});
-		}
-	}
-
-	return term.length > 0 ? uniqBy(finalModels, ID) : allModels;
-};
-
-const filterDatasets = (
-	allDatasets: Dataset[],
+const filterAssets = (
+	allAssets: Model[] | Dataset[],
+	resourceType: ResourceType,
 	conceptFacets: ConceptFacets | null,
 	term: string
 ) => {
-	const finalDatasets: Dataset[] = [];
+	const finalAssets: Model[] | Dataset[] = [];
 
-	//
-	// simulate applying filters to the dataset query
-	//
-	const DatasetFilterAttributes = DATASET_FILTER_FIELDS;
+	// simulate applying filters
+	const AssetFilterAttributes: string[] =
+		resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
+
 	if (term.length > 0) {
-		DatasetFilterAttributes.forEach((datasetAttr) => {
-			const resultsAsDatasets = allDatasets;
-			const items = resultsAsDatasets.filter((d) =>
-				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
-			);
-			finalDatasets.push(...items);
+		AssetFilterAttributes.forEach((attribute) => {
+			const results = allAssets;
+			const items = results.filter((d) => {
+				const newKey =
+					resourceType === ResourceType.MODEL
+						? (attribute as keyof Model)
+						: (attribute as keyof Dataset);
+				return (d[newKey] as string).toLowerCase().includes(term.toLowerCase());
+			});
+			finalAssets.push(...items);
 		});
 
-		// if no datasets match keyword search considering the DatasetFilterAttributes
+		// if no assets match keyword search considering the AssetFilterAttributes
 		// perhaps the keyword search match a concept name, so let's also search for that
 		if (conceptFacets) {
 			const matchingCuries = [] as string[];
@@ -116,18 +79,18 @@ const filterDatasets = (
 			});
 			matchingCuries.forEach((curie) => {
 				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
-				const datasetIDs = matchingResult?.map((dr) => dr.id);
-				datasetIDs?.forEach((datasetId) => {
-					const dataset = allDatasets.find((d) => d.id === datasetId);
-					if (dataset) {
-						finalDatasets.push(dataset);
+				const assetIDs = matchingResult?.map((mr) => mr.id);
+				assetIDs?.forEach((assetId) => {
+					const asset = allAssets.find((m) => m.id === assetId);
+					if (asset) {
+						finalAssets.push(asset);
 					}
 				});
 			});
 		}
 	}
 
-	return term.length > 0 ? uniqBy(finalDatasets, ID) : allDatasets;
+	return term.length > 0 ? uniqBy(finalAssets, ID) : allAssets;
 };
 
 const getAssets = async (
@@ -172,17 +135,17 @@ const getAssets = async (
 	//        at the HMI server
 	//
 	// This is going to calculate facets aggregations from the list of results
-	let assetResults: Model[] | Dataset[];
+	let assetResults = filterAssets(allAssets, resourceType, conceptFacets, term);
 	let assetFacets: Facets;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
-			assetResults = filterModels(allAssets, conceptFacets, term);
-			assetFacets = await getModelFacets(assetResults, conceptFacets);
+			assetResults = assetResults as Model[];
+			assetFacets = await getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		case ResourceType.DATASET:
-			assetResults = filterDatasets(allAssets, conceptFacets, term);
-			assetFacets = await getDatasetFacets(assetResults, conceptFacets);
+			assetResults = assetResults as Dataset[];
+			assetFacets = await getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -365,92 +328,63 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
+	let searchParams = `term=${term}`;
+	const url = '/xdd/documents?';
 
-	// NOTE when true it disables ranking of results
-	const enablePagination = xddSearchParam?.fullResults ?? false;
+	if (xddSearchParam) {
+		Object.entries(xddSearchParam).forEach(([key]) => {
+			// Loop through searchParam attributes
+			if (xddSearchParam[key]) {
+				const urlKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`); // Later maybe make attributes have underscore format from the get go?
+				switch (key) {
+					case 'match':
+					case 'additional_fields':
+						if (term === '') break; // Won't be checked if term is empty (guard)
+					// eslint-disable-next-line no-fallthrough
+					case 'fullResults':
+					case 'includeScore':
+					case 'max':
+					case 'perPage':
+						break; // Are handled after loop (guard)
+					case 'dict':
+						if (xddSearchParam?.dict && xddSearchParam.dict.length > 0) {
+							searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
+						}
+						break;
+					case 'includeHighlights':
+					case 'inclusive':
+					case 'facets':
+					// eslint-disable-next-line no-duplicate-case, no-fallthrough
+					case 'match':
+						searchParams += `&${urlKey}=true`;
+						break;
+					default:
+						searchParams += `&${urlKey}=${xddSearchParam[key]}`;
+						break;
+				}
+			}
+		});
+	}
 
+	// The following searchParam concatenations aren't in the loop above due to their attributes being used whether or not we have the xddSearchParam argument
+
+	const enablePagination = xddSearchParam?.fullResults ?? false; // NOTE: when true it disables ranking of results
 	// "full_results": "Optional. When this parameter is included (no value required),
 	//  an overview of total number of matching articles is returned,
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	let searchParams = `term=${term}`;
-	const url = '/xdd/documents?';
+	searchParams += enablePagination ? '&full_results' : '&include_score=true'; // request results to be ranked
 
-	const potentialXDDSearchParams = <XDDSearchParams>{};
-
-	console.log(potentialXDDSearchParams);
-
-	if (xddSearchParam?.docid) {
-		searchParams += `&docid=${xddSearchParam.docid}`;
-	}
-	if (xddSearchParam?.doi) {
-		searchParams += `&doi=${xddSearchParam.doi}`;
-	}
-	if (xddSearchParam?.dataset) {
-		searchParams += `&dataset=${xddSearchParam.dataset}`;
-	}
-	if (xddSearchParam?.fields) {
-		searchParams += `&fields=${xddSearchParam.fields}`;
-	}
-	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
-		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
-	}
-	if (xddSearchParam?.min_published) {
-		searchParams += `&min_published=${xddSearchParam.min_published}`;
-	}
-	if (xddSearchParam?.max_published) {
-		searchParams += `&max_published=${xddSearchParam.max_published}`;
-	}
-	if (xddSearchParam?.pubname) {
-		searchParams += `&pubname=${xddSearchParam.pubname}`;
-	}
-	if (xddSearchParam?.publisher) {
-		searchParams += `&publisher=${xddSearchParam.publisher}`;
-	}
-	if (xddSearchParam?.includeHighlights) {
-		searchParams += '&include_highlights=true';
-	}
-	if (xddSearchParam?.inclusive) {
-		searchParams += '&inclusive=true';
-	}
-	if (enablePagination) {
-		searchParams += '&full_results';
-	} else {
-		// request results to be ranked
-		searchParams += '&include_score=true';
-	}
-	if (xddSearchParam?.facets) {
-		searchParams += '&facets=true';
-	}
-
-	// search title and abstract when performing term-based search if requested
-	if (term !== '' && xddSearchParam?.additional_fields) {
-		searchParams += `&additional_fields=${xddSearchParam?.additional_fields}`;
-	}
-
-	// utilize ES improved matching
-	if (term !== '' && xddSearchParam?.match) {
-		searchParams += '&match=true';
-	}
-
-	if (xddSearchParam?.known_entities) {
-		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
-	}
-
-	//
+	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 	// "max": "Maximum number of articles to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
-
 	// "per_page": "Maximum number of results to include in one response.
 	//  Applies to full_results pagination or single-page requests.
-	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter,
-	//        floor rounded to a multiple of 25."
+	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter, floor rounded to a multiple of 25."
 	searchParams += `&per_page=${limitResultsCount}`;
 
 	// url = 'https://xdd.wisc.edu/api/articles?&include_score=true&max=25&term=abbott&publisher=USGS&full_results';
-
 	// this will give error if "max" param is not included since the result is too large
 	//  either set "max"
 	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
@@ -458,6 +392,11 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	const res = await API.get(url + searchParams);
 	const rawdata: XDDResult = res.data;
+
+	console.log(term);
+	console.log(xddSearchParam);
+	console.log(searchParams);
+	console.log(rawdata);
 
 	if (rawdata.success) {
 		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
@@ -575,10 +514,10 @@ const fetchData = async (
 							});
 							break;
 						case ResourceType.MODEL: // Models
-							resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
+							resolve(getAssets(term, ResourceType[key], searchParamWithFacetFilters?.model));
 							break;
 						case ResourceType.DATASET: // Datasets
-							resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
+							resolve(getAssets(term, ResourceType[key], searchParamWithFacetFilters?.dataset));
 							break;
 						default:
 							break;
@@ -610,8 +549,6 @@ export {
 	getXDDArtifacts,
 	searchXDDArticles,
 	getAssets,
-	// getModels,
-	// getDatasets,
 	getRelatedDocuments,
 	getDocumentById
 };

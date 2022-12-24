@@ -16,7 +16,7 @@ import { groupBy, mergeWith, isArray } from 'lodash';
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | null) => {
+export const getModelFacets = async (models: Model[], conceptFacets: ConceptFacets | null) => {
 	// utility function for manually calculating facet aggregation from model results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -61,7 +61,10 @@ export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | n
 
 // FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFacets | null) => {
+export const getDatasetFacets = async (
+	datasets: Dataset[],
+	conceptFacets: ConceptFacets | null
+) => {
 	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -120,7 +123,6 @@ export const getFacets = (results: SearchResults[], resultType: ResourceType | s
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
-			console.log(resultsObj, resultType);
 			if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
 				// extract facets based on the result type
 				// because we would have different facets for different result types

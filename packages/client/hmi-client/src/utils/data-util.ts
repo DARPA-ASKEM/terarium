@@ -22,18 +22,8 @@ export const applyFacetFilters = (
 	}
 	const { clauses } = filters;
 
-	let ASSET_FACET_FIELDS: string[] = [];
-
-	switch (resourceType) {
-		case ResourceType.MODEL:
-			ASSET_FACET_FIELDS = MODEL_FACET_FIELDS;
-			break;
-		case ResourceType.DATASET:
-			ASSET_FACET_FIELDS = DATASET_FACET_FIELDS;
-			break;
-		default:
-			break;
-	}
+	const ASSET_FACET_FIELDS: string[] =
+		resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
 
 	clauses.forEach((clause: any) => {
 		const filterField: string = clause.field; // the field to filter on
@@ -42,11 +32,13 @@ export const applyFacetFilters = (
 		if (ASSET_FACET_FIELDS.includes(filterField)) {
 			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
-			const filteredAssets = results.filter(
-				(asset) =>
-					// direct query against Model fields
-					filterValues.includes(asset[filterField as keyof Model].toString()) === isNot
-			);
+			const filteredAssets = results.filter((asset) => {
+				const newKey =
+					resourceType === ResourceType.MODEL
+						? (filterField as keyof Model)
+						: (filterField as keyof Dataset);
+				return filterValues.includes(asset[newKey].toString()) === isNot;
+			});
 			// use splice to filter in place
 			results.splice(0, results.length, ...filteredAssets);
 		}
