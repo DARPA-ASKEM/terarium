@@ -6465,7 +6465,7 @@ cors@latest:
     eslint-import-resolver-typescript: 3.5.2
     graph-scaffolder: "*"
     lodash: 4.17.21
-    pinia: 2.0.24
+    pinia: 2.0.28
     pixi-viewport: 4.37.0
     pixi.js: 7.0.4
     primeicons: 6.0.1
@@ -9297,9 +9297,9 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"pinia@npm:2.0.24":
-  version: 2.0.24
-  resolution: "pinia@npm:2.0.24"
+"pinia@npm:2.0.28":
+  version: 2.0.28
+  resolution: "pinia@npm:2.0.28"
   dependencies:
     "@vue/devtools-api": ^6.4.5
     vue-demi: "*"
@@ -9312,7 +9312,7 @@ opn@latest:
       optional: true
     typescript:
       optional: true
-  checksum: b47fbb4e6fdac1aa5e2669291c9b5444c7d1a8a7bdc833700210b2a134dc38e22fdc7c05e6b72d80ae1ab06dfbaa6b50e248d6033461b42206fc64b83a6565ac
+  checksum: d515cd6220262560f1864855ab117bd16e4bf4ab3d6d279459281aa16960b5e84b6ddd4de3f1d863040a81539378451c1a14fddd32e7571b51e5d1c95911154d
   languageName: node
   linkType: hard
 
