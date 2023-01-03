@@ -1,4 +1,5 @@
 [![Build and Publish](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
+
 # TERArium
 
 TERArium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
@@ -51,18 +52,18 @@ or, if you have the Quarkus CLI
 quarkus dev
 ```
 
+When running in dev mode, you will need to run both the HMI server _and_ the Document server explicitly
 > NOTE: Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
 ## Running the client in dev mode
 
-To install package dependencies, run the command in the root diretory
+To install package dependencies, run the command in the root directory
 
 ```
 yarn install
 ```
 
-### Testing
----
+## Testing
 
 Start local dev server for Vue webapp, with Hot Module Replacement.
 
