@@ -64,7 +64,11 @@ const close = () => {
 const SCROLL_INCREMENT_IN_REM = 21;
 const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const chevronElement = event.target as HTMLElement;
-	const cardListElement = chevronElement.parentElement?.querySelector('ul');
+	const cardListElement =
+		chevronElement.nodeName === 'svg'
+			? chevronElement.parentElement?.querySelector('ul')
+			: chevronElement.parentElement?.parentElement?.querySelector('ul');
+
 	if (cardListElement === null || cardListElement === undefined) return;
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
