@@ -48,6 +48,7 @@ const filterAssets = (
 	conceptFacets: ConceptFacets | null,
 	term: string
 ) => {
+	console.log(890);
 	const finalAssets: Model[] | Dataset[] = [];
 
 	// simulate applying filters
@@ -87,9 +88,11 @@ const filterAssets = (
 				});
 			});
 		}
+		console.log(uniqBy(finalAssets, ID));
+		return uniqBy(finalAssets, ID);
 	}
-
-	return term.length > 0 ? uniqBy(finalAssets, ID) : allAssets;
+	console.log(allAssets);
+	return allAssets;
 };
 
 const getAssets = async (
