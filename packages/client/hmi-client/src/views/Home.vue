@@ -70,6 +70,16 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			: chevronElement.parentElement?.parentElement?.querySelector('ul');
 
 	if (cardListElement === null || cardListElement === undefined) return;
+
+	// Don't scroll if last element is already within viewport
+	if (direction === 'right' && cardListElement.lastElementChild) {
+		const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
+		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
+		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
+			return;
+		}
+	}
+
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseInt(marginLeftString, 10);
@@ -239,6 +249,7 @@ li {
 .card {
 	z-index: 1;
 	transition: 0.2s;
+	max-width: 21rem; /* See SCROLL_INCREMENT_IN_REM */
 }
 
 .card:hover {
