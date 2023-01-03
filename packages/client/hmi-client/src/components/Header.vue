@@ -67,7 +67,7 @@ const showUserMenu = (event) => {
 		</aside>
 		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
 	</header>
-	<Dialog header="Logout" :visible="isLogoutConfirmationVisible">
+	<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
 		<span>You will be returned to the login screen.</span>
 		<template #footer>
 			<Button label="Ok" class="p-button-text" @click="auth.logout"></Button>
