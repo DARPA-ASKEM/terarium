@@ -8,7 +8,6 @@ import { Project } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
 import useAuthStore from '@/stores/auth';
 import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
 
 const emit = defineEmits(['show-data-explorer']);
 const router = useRouter();
@@ -56,10 +55,6 @@ const userInitials = computed(() =>
 			<a @click="goToHomepage">Projects</a>
 			<span>{{ projectName }}</span>
 		</p>
-		<span class="p-input-icon-left">
-			<i class="pi pi-search" />
-			<InputText type="text" placeholder="Search" />
-		</span>
 		<aside>
 			<Button
 				class="p-button p-button-icon-only p-button-rounded"
@@ -69,8 +64,7 @@ const userInitials = computed(() =>
 				<i class="pi pi-search" />
 			</Button>
 			<Button
-				class="p-button p-button-icon-only p-button-rounded p-button-sm"
-				id="user-button"
+				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
 				@click="showUserMenu"
 			>
 				{{ userInitials }}
@@ -138,21 +132,13 @@ aside {
 	background-color: var(--un-color-accent-light);
 }
 
-#user-button {
+.user-button {
 	color: var(--un-color-text-secondary);
 	background-color: var(--un-color-body-surface-background);
 }
 
-#user-button:hover {
+.user-button:enabled:hover {
+	color: var(--un-color-text-secondary);
 	background-color: var(--un-color-body-surface-secondary);
-}
-
-.p-input-icon-left {
-	width: 50%;
-}
-
-.p-inputtext {
-	height: 3rem;
-	border-radius: 1.5rem;
 }
 </style>
