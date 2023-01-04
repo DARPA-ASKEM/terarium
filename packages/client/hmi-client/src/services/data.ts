@@ -42,8 +42,8 @@ const getXDDDictionaries = async () => {
 	return [] as XDDDictionary[];
 };
 
-const filterAssets = (
-	allAssets: Model[] | Dataset[],
+const filterAssets = <T extends Model | Dataset>(
+	allAssets: T[],
 	resourceType: ResourceType,
 	conceptFacets: ConceptFacets | null,
 	term: string
@@ -53,25 +53,12 @@ const filterAssets = (
 		const AssetFilterAttributes: string[] =
 			resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
 
-		let finalAssets: Model[] | Dataset[] = [];
+		let finalAssets: T[] = [];
 
 		AssetFilterAttributes.forEach((attribute) => {
-			switch (
-				resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
-			) {
-				case ResourceType.MODEL:
-					finalAssets = (allAssets as Model[]).filter((d) =>
-						(d[attribute as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
-					);
-					break;
-				case ResourceType.DATASET:
-					finalAssets = (allAssets as Dataset[]).filter((d) =>
-						(d[attribute as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
-					);
-					break;
-				default:
-					break;
-			}
+			finalAssets = allAssets.filter((d) =>
+				(d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase())
+			);
 		});
 
 		// if no assets match keyword search considering the AssetFilterAttributes
@@ -87,40 +74,14 @@ const filterAssets = (
 			matchingCuries.forEach((curie) => {
 				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
 				const assetIDs = matchingResult?.map((mr) => mr.id);
-				switch (
-					resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
-				) {
-					case ResourceType.MODEL:
-						assetIDs?.forEach((assetId) => {
-							const asset = (allAssets as Model[]).find((m) => m.id === assetId);
-							if (asset) {
-								(finalAssets as Model[]).push(asset);
-							}
-						});
-						break;
-					case ResourceType.DATASET:
-						assetIDs?.forEach((assetId) => {
-							const asset = (allAssets as Dataset[]).find((m) => m.id === assetId);
-							if (asset) {
-								(finalAssets as Dataset[]).push(asset);
-							}
-						});
-						break;
-					default:
-						break;
-				}
+
+				assetIDs?.forEach((assetId) => {
+					const asset = allAssets.find((m) => m.id === assetId);
+					if (asset) finalAssets.push(asset);
+				});
 			});
 		}
-		switch (
-			resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
-		) {
-			case ResourceType.MODEL:
-				return uniqBy(finalAssets as Model[], ID);
-			case ResourceType.DATASET:
-				return uniqBy(finalAssets as Dataset[], ID);
-			default:
-				break;
-		}
+		return uniqBy(finalAssets, ID);
 	}
 	return allAssets;
 };

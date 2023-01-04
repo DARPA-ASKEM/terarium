@@ -12,8 +12,8 @@ import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
 
-export const applyFacetFilters = (
-	results: Model[] | Dataset[],
+export const applyFacetFilters = <T extends Model | Dataset>(
+	results: T[],
 	filters: Filters,
 	resourceType: ResourceType
 ) => {
@@ -33,32 +33,13 @@ export const applyFacetFilters = (
 			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
 
-			switch (
-				resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
-			) {
-				case ResourceType.MODEL:
-					results.splice(
-						0,
-						results.length,
-						...(results as Model[]).filter(
-							(asset) =>
-								filterValues.includes(asset[filterField as keyof Model].toString()) === isNot
-						)
-					);
-					break;
-				case ResourceType.DATASET:
-					results.splice(
-						0,
-						results.length,
-						...(results as Dataset[]).filter(
-							(asset) =>
-								filterValues.includes(asset[filterField as keyof Dataset].toString()) === isNot
-						)
-					);
-					break;
-				default:
-					break;
-			}
+			results.splice(
+				0,
+				results.length,
+				...results.filter(
+					(asset) => filterValues.includes(`${asset[filterField as keyof T]}`) === isNot
+				)
+			);
 		}
 	});
 };
