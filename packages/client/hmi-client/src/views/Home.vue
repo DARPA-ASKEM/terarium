@@ -64,8 +64,22 @@ const close = () => {
 const SCROLL_INCREMENT_IN_REM = 21;
 const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const chevronElement = event.target as HTMLElement;
-	const cardListElement = chevronElement.parentElement?.querySelector('ul');
+	const cardListElement =
+		chevronElement.nodeName === 'svg'
+			? chevronElement.parentElement?.querySelector('ul')
+			: chevronElement.parentElement?.parentElement?.querySelector('ul');
+
 	if (cardListElement === null || cardListElement === undefined) return;
+
+	// Don't scroll if last element is already within viewport
+	if (direction === 'right' && cardListElement.lastElementChild) {
+		const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
+		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
+		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
+			return;
+		}
+	}
+
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseInt(marginLeftString, 10);
@@ -235,6 +249,7 @@ li {
 .card {
 	z-index: 1;
 	transition: 0.2s;
+	max-width: 21rem; /* See SCROLL_INCREMENT_IN_REM */
 }
 
 .card:hover {
