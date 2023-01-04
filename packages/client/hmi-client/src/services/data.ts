@@ -49,22 +49,31 @@ const filterAssets = (
 	term: string
 ) => {
 	console.log(890);
-	const finalAssets: Model[] | Dataset[] = [];
-
-	// simulate applying filters
-	const AssetFilterAttributes: string[] =
-		resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
 
 	if (term.length > 0) {
+		// simulate applying filters
+		const AssetFilterAttributes: string[] =
+			resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
+
+		let finalAssets: Model[] | Dataset[] = [];
+
 		AssetFilterAttributes.forEach((attribute) => {
-			const items = allAssets.filter((d) => {
-				const newKey =
-					resourceType === ResourceType.MODEL
-						? (attribute as keyof Model)
-						: (attribute as keyof Dataset);
-				return (d[newKey] as string).toLowerCase().includes(term.toLowerCase());
-			});
-			finalAssets.push(...items);
+			switch (
+				resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
+			) {
+				case ResourceType.MODEL:
+					finalAssets = (allAssets as Model[]).filter((d) =>
+						(d[attribute as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
+					);
+					break;
+				case ResourceType.DATASET:
+					finalAssets = (allAssets as Dataset[]).filter((d) =>
+						(d[attribute as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
+					);
+					break;
+				default:
+					break;
+			}
 		});
 
 		// if no assets match keyword search considering the AssetFilterAttributes
@@ -80,18 +89,41 @@ const filterAssets = (
 			matchingCuries.forEach((curie) => {
 				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
 				const assetIDs = matchingResult?.map((mr) => mr.id);
-				assetIDs?.forEach((assetId) => {
-					const asset = allAssets.find((m) => m.id === assetId);
-					if (asset) {
-						finalAssets.push(asset);
-					}
-				});
+				switch (
+					resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
+				) {
+					case ResourceType.MODEL:
+						assetIDs?.forEach((assetId) => {
+							const asset = (allAssets as Model[]).find((m) => m.id === assetId);
+							if (asset) {
+								(finalAssets as Model[]).push(asset);
+							}
+						});
+						break;
+					case ResourceType.DATASET:
+						assetIDs?.forEach((assetId) => {
+							const asset = (allAssets as Dataset[]).find((m) => m.id === assetId);
+							if (asset) {
+								(finalAssets as Dataset[]).push(asset);
+							}
+						});
+						break;
+					default:
+						break;
+				}
 			});
 		}
-		console.log(uniqBy(finalAssets, ID));
-		return uniqBy(finalAssets, ID);
+		switch (
+			resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
+		) {
+			case ResourceType.MODEL:
+				return uniqBy(finalAssets as Model[], ID);
+			case ResourceType.DATASET:
+				return uniqBy(finalAssets as Dataset[], ID);
+			default:
+				break;
+		}
 	}
-	console.log(allAssets);
 	return allAssets;
 };
 
@@ -339,7 +371,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			if (xddSearchParam[key]) {
 				const urlKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`); // Later maybe make attributes have underscore format from the get go?
 				switch (key) {
-					case 'match':
 					case 'additional_fields':
 						if (term === '') break; // Won't be checked if term is empty (guard)
 					// eslint-disable-next-line no-fallthrough
@@ -356,8 +387,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 					case 'includeHighlights':
 					case 'inclusive':
 					case 'facets':
-					// eslint-disable-next-line no-duplicate-case, no-fallthrough
 					case 'match':
+						if (term === '' && key === 'match') break;
 						searchParams += `&${urlKey}=true`;
 						break;
 					default:

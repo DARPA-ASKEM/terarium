@@ -20,27 +20,45 @@ export const applyFacetFilters = (
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
-	const { clauses } = filters;
 
+	const { clauses } = filters;
 	const ASSET_FACET_FIELDS: string[] =
 		resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
 
-	clauses.forEach((clause: any) => {
+	clauses.forEach((clause) => {
 		const filterField: string = clause.field; // the field to filter on
 		// "filters" may include fields that belong to different types of artifacts
 		//  thus make sure to only filter models using Model fields
 		if (ASSET_FACET_FIELDS.includes(filterField)) {
 			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
-			const filteredAssets = results.filter((asset) => {
-				const newKey =
-					resourceType === ResourceType.MODEL
-						? (filterField as keyof Model)
-						: (filterField as keyof Dataset);
-				return filterValues.includes(asset[newKey].toString()) === isNot;
-			});
-			// use splice to filter in place
-			results.splice(0, results.length, ...filteredAssets);
+
+			switch (
+				resourceType // These switch case statements avoid the typecheck issues, maybe there is a better solution?
+			) {
+				case ResourceType.MODEL:
+					results.splice(
+						0,
+						results.length,
+						...(results as Model[]).filter(
+							(asset) =>
+								filterValues.includes(asset[filterField as keyof Model].toString()) === isNot
+						)
+					);
+					break;
+				case ResourceType.DATASET:
+					results.splice(
+						0,
+						results.length,
+						...(results as Dataset[]).filter(
+							(asset) =>
+								filterValues.includes(asset[filterField as keyof Dataset].toString()) === isNot
+						)
+					);
+					break;
+				default:
+					break;
+			}
 		}
 	});
 };
