@@ -40,6 +40,12 @@ defineProps<{
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
+
+const userInitials = computed(() =>
+	auth.name
+		?.split(' ')
+		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
+);
 </script>
 
 <template>
@@ -67,6 +73,7 @@ const showUserMenu = (event) => {
 				id="user-button"
 				@click="showUserMenu"
 			>
+				{{ userInitials }}
 			</Button>
 		</aside>
 		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
