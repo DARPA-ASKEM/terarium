@@ -48,8 +48,6 @@ const filterAssets = (
 	conceptFacets: ConceptFacets | null,
 	term: string
 ) => {
-	console.log(890);
-
 	if (term.length > 0) {
 		// simulate applying filters
 		const AssetFilterAttributes: string[] =
@@ -371,9 +369,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			if (xddSearchParam[key]) {
 				const urlKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`); // Later maybe make attributes have underscore format from the get go?
 				switch (key) {
-					case 'additional_fields':
-						if (term === '') break; // Won't be checked if term is empty (guard)
-					// eslint-disable-next-line no-fallthrough
 					case 'fullResults':
 					case 'includeScore':
 					case 'max':
@@ -392,6 +387,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 						searchParams += `&${urlKey}=true`;
 						break;
 					default:
+						if (term === '' && key === 'additional_fields') break;
 						searchParams += `&${urlKey}=${xddSearchParam[key]}`;
 						break;
 				}
