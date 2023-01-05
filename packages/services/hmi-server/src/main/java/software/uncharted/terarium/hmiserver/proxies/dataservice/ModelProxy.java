@@ -61,13 +61,13 @@ public interface ModelProxy {
 	);
 
 	@GET
-	@Path("/descriptions/{id}")
+	@Path("/{id}/descriptions")
 	Response getDescription(
 		@PathParam("id") String id
 	);
 
 	@GET
-	@Path("/parameters/{id}")
+	@Path("/{id}/parameters")
 	Response getParameters(
 		@PathParam("id") String id
 	);
