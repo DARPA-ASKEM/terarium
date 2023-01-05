@@ -36,9 +36,10 @@ export const applyFacetFilters = <T extends Model | Dataset>(
 			results.splice(
 				0,
 				results.length,
-				...results.filter(
-					(asset) => filterValues.includes(`${asset[filterField as keyof T]}`) === isNot
-				)
+				...results.filter((asset) => {
+					const assetAttribute: any = asset[filterField as keyof T];
+					return filterValues.includes(assetAttribute.toString()) === isNot;
+				})
 			);
 		}
 	});
