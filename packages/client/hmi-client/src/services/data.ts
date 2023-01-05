@@ -205,8 +205,6 @@ const getAssets = async (
 				return results; // error or make new resource type compatible
 		}
 
-		console.log(results);
-
 		// remove any previously added concept/id filters
 		searchParam.filters.clauses = searchParam.filters.clauses.filter((c) => c.field !== ID);
 
