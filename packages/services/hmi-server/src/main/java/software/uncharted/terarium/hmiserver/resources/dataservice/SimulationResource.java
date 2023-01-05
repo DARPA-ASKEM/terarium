@@ -69,7 +69,7 @@ public class SimulationResource {
 	}
 
 	@GET
-	@Path("/runs/descriptions/{id}")
+	@Path("/runs/{id}/descriptions")
 	public Response getSimulationRunDescription(
 		@PathParam("id") final String id
 	) {
@@ -77,7 +77,7 @@ public class SimulationResource {
 	}
 
 	@GET
-	@Path("/runs/parameters/{id}")
+	@Path("/runs/{id}/parameters")
 	public Response getSimulationRunParameters(
 		@PathParam("id") final String id
 	) {
