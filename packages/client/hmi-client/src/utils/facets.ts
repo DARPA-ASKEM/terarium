@@ -16,7 +16,7 @@ import { groupBy, mergeWith, isArray } from 'lodash';
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getModelFacets = async (models: Model[], conceptFacets: ConceptFacets | null) => {
+export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | null) => {
 	// utility function for manually calculating facet aggregation from model results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
@@ -61,10 +61,7 @@ export const getModelFacets = async (models: Model[], conceptFacets: ConceptFace
 
 // FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getDatasetFacets = async (
-	datasets: Dataset[],
-	conceptFacets: ConceptFacets | null
-) => {
+export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFacets | null) => {
 	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];

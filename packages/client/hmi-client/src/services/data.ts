@@ -134,11 +134,11 @@ const getAssets = async (
 	switch (resourceType) {
 		case ResourceType.MODEL:
 			assetResults = assetResults as Model[];
-			assetFacets = await getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			assetFacets = getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		case ResourceType.DATASET:
 			assetResults = assetResults as Dataset[];
-			assetFacets = await getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -236,10 +236,10 @@ const getAssets = async (
 		let assetFacetsFiltered: Facets;
 		switch (resourceType) {
 			case ResourceType.MODEL:
-				assetFacetsFiltered = await getModelFacets(assetResults as Model[], conceptFacets);
+				assetFacetsFiltered = getModelFacets(assetResults as Model[], conceptFacets);
 				break;
 			case ResourceType.DATASET:
-				assetFacetsFiltered = await getDatasetFacets(assetResults as Dataset[], conceptFacets);
+				assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
 				break;
 			default:
 				return results; // error or make new resource type compatible
