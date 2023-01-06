@@ -194,16 +194,7 @@ const getAssets = async (
 			searchParam.filters.clauses.push(finalIdClause);
 		}
 
-		switch (resourceType) {
-			case ResourceType.MODEL:
-				applyFacetFilters(assetResults as Model[], searchParam.filters, resourceType);
-				break;
-			case ResourceType.DATASET:
-				applyFacetFilters(assetResults as Dataset[], searchParam.filters, resourceType);
-				break;
-			default:
-				return results; // error or make new resource type compatible
-		}
+		applyFacetFilters(assetResults, searchParam.filters, resourceType);
 
 		// remove any previously added concept/id filters
 		searchParam.filters.clauses = searchParam.filters.clauses.filter((c) => c.field !== ID);

@@ -12,7 +12,7 @@ import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
 
-export const applyFacetFilters = <T extends Model | Dataset>(
+export const applyFacetFilters = <T>(
 	results: T[],
 	filters: Filters,
 	resourceType: ResourceType
