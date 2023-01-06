@@ -475,11 +475,17 @@ const fetchData = async (
 	const promiseList = [] as Promise<FullSearchResults>[];
 
 	Object.entries(ResourceType).forEach(([key]) => {
-		if (resultType === ResourceType[key] || resultType === ResourceType.ALL) {
+		if (
+			ResourceType[key] !== ResourceType.ALL &&
+			(resultType === ResourceType[key] || resultType === ResourceType.ALL)
+		) {
 			// eslint-disable-next-line no-async-promise-executor
 			const promise = new Promise<FullSearchResults>(async (resolve, reject) => {
 				try {
-					switch (ResourceType[key]) {
+					const resourceTypeToCheck: ResourceType =
+						resultType === ResourceType.ALL ? ResourceType[key] : resultType;
+
+					switch (resourceTypeToCheck) {
 						case ResourceType.XDD: // XDD
 							resolve({
 								allData: await searchXDDArticles(term, searchParam?.xdd),
