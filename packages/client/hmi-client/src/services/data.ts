@@ -461,56 +461,62 @@ const getDocumentById = async (docid: string) => {
 	return null;
 };
 
+const fetchResource = async (
+	term: string,
+	searchParam?: SearchParameters,
+	searchParamWithFacetFilters?: SearchParameters,
+	resourceType?: ResourceType
+): Promise<FullSearchResults> =>
+	// eslint-disable-next-line no-async-promise-executor
+	new Promise<FullSearchResults>(async (resolve, reject) => {
+		try {
+			switch (resourceType) {
+				case ResourceType.XDD: // XDD
+					resolve({
+						allData: await searchXDDArticles(term, searchParam?.xdd),
+						allDataFilteredWithFacets: await searchXDDArticles(
+							term,
+							searchParamWithFacetFilters?.xdd
+						)
+					});
+					break;
+				case ResourceType.MODEL: // Models
+					resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
+					break;
+				case ResourceType.DATASET: // Datasets
+					resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
+					break;
+				default:
+					break;
+			}
+		} catch (err: any) {
+			reject(new Error(`Error fetching ${resourceType} results: ${err}`));
+		}
+	});
+
 const fetchData = async (
 	term: string,
 	searchParam?: SearchParameters,
 	searchParamWithFacetFilters?: SearchParameters,
-	resultType?: string
+	resourceType?: ResourceType
 ) => {
 	//
 	// call the different search sub-systems to retrieve results
 	// ideally, all such subsystems should be registered in an array, which will force refactoring of the following code
 	//
-
 	const promiseList = [] as Promise<FullSearchResults>[];
 
-	Object.entries(ResourceType).forEach(([key]) => {
-		if (
-			ResourceType[key] !== ResourceType.ALL &&
-			(resultType === ResourceType[key] || resultType === ResourceType.ALL)
-		) {
-			// eslint-disable-next-line no-async-promise-executor
-			const promise = new Promise<FullSearchResults>(async (resolve, reject) => {
-				try {
-					const resourceTypeToCheck: ResourceType =
-						resultType === ResourceType.ALL ? ResourceType[key] : resultType;
-
-					switch (resourceTypeToCheck) {
-						case ResourceType.XDD: // XDD
-							resolve({
-								allData: await searchXDDArticles(term, searchParam?.xdd),
-								allDataFilteredWithFacets: await searchXDDArticles(
-									term,
-									searchParamWithFacetFilters?.xdd
-								)
-							});
-							break;
-						case ResourceType.MODEL: // Models
-							resolve(getAssets(term, ResourceType[key], searchParamWithFacetFilters?.model));
-							break;
-						case ResourceType.DATASET: // Datasets
-							resolve(getAssets(term, ResourceType[key], searchParamWithFacetFilters?.dataset));
-							break;
-						default:
-							break;
-					}
-				} catch (err: any) {
-					reject(new Error(`Error fetching ${ResourceType[key]} results: ${err}`));
-				}
+	if (resourceType) {
+		if (resourceType === ResourceType.ALL) {
+			Object.entries(ResourceType).forEach(async ([key]) => {
+				promiseList.push(
+					fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
+				);
 			});
-			promiseList.push(promise);
+		} else {
+			promiseList.push(fetchResource(term, searchParam, searchParamWithFacetFilters, resourceType));
 		}
-	});
+	}
 
 	// fetch results from all search subsystems in parallel
 	const responses = await Promise.all(promiseList);
