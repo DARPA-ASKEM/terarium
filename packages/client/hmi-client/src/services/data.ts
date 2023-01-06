@@ -465,7 +465,7 @@ const fetchResource = async (
 	term: string,
 	searchParam?: SearchParameters,
 	searchParamWithFacetFilters?: SearchParameters,
-	resourceType?: ResourceType
+	resourceType?: string
 ): Promise<FullSearchResults> =>
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise<FullSearchResults>(async (resolve, reject) => {
@@ -498,7 +498,7 @@ const fetchData = async (
 	term: string,
 	searchParam?: SearchParameters,
 	searchParamWithFacetFilters?: SearchParameters,
-	resourceType?: ResourceType
+	resourceType?: string
 ) => {
 	//
 	// call the different search sub-systems to retrieve results
@@ -509,11 +509,13 @@ const fetchData = async (
 	if (resourceType) {
 		if (resourceType === ResourceType.ALL) {
 			Object.entries(ResourceType).forEach(async ([key]) => {
-				promiseList.push(
-					fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
-				);
+				if (ResourceType[key] !== ResourceType.ALL) {
+					promiseList.push(
+						fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
+					);
+				}
 			});
-		} else {
+		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
 			promiseList.push(fetchResource(term, searchParam, searchParamWithFacetFilters, resourceType));
 		}
 	}
