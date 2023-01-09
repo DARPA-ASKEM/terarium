@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import Header from '@/components/Header.vue';
+import Navbar from '@/components/Navbar.vue';
 import Overlay from '@/components/Overlay.vue';
 import DataExplorer from '@/views/DataExplorer.vue';
 import Sidebar from '@/components/Sidebar.vue';
@@ -72,7 +72,7 @@ watch(
 		@show-overlay="enableOverlay"
 		@hide-overlay="disableOverlay"
 	/>
-	<Header
+	<Navbar
 		class="header"
 		:projectName="project?.name"
 		@show-data-explorer="dataExplorerActivated = true"
