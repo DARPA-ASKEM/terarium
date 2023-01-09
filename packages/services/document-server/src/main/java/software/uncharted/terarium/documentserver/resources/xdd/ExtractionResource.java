@@ -24,7 +24,7 @@ public class ExtractionResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
-	public Response searchExtractions(@QueryParam("doi") final String doi) {
-		return proxy.getExtractions(doi);
+	public Response searchExtractions(@QueryParam("doi") final String doi, @QueryParam("query_all") final String query_all) {
+		return proxy.getExtractions(doi, query_all);
 	}
 }
