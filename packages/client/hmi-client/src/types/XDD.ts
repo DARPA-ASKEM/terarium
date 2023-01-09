@@ -64,6 +64,7 @@ export type XDDArticle = {
 	knownEntities?: XDDArticleKnownEntity; // TEMP: mapped from known_entities
 	// additional-client-side fields
 	relatedDocuments?: XDDArticle[];
+	relatedExtractions?: XDDArtifact[];
 };
 
 export type PublicationAsset = {
@@ -88,6 +89,7 @@ export type XDDArtifactProperties = {
 	sectionID: string;
 	sectionTitle: string;
 	caption: string;
+	documentBibjson: XDDArticle; // the embedded document metadata wherein this artifact is extracted
 };
 
 // XDD extraction object, which should match Extraction.java at the backend

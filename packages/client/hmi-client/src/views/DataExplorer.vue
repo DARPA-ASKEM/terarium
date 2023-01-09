@@ -76,30 +76,8 @@
 						:result-type="resultType"
 						:selected-search-items="selectedSearchItems"
 						:search-term="searchTerm"
-						:xdd-view-type="xddViewType"
 						@toggle-data-item-selected="toggleDataItemSelected"
-					>
-						<template #header>
-							<div class="button-group bottom-padding">
-								<button
-									type="button"
-									class="small-button"
-									:class="{ active: xddViewType === XDDViewType.PUBLICATIONS }"
-									@click="xddViewType = XDDViewType.PUBLICATIONS"
-								>
-									Publications
-								</button>
-								<button
-									type="button"
-									class="small-button"
-									:class="{ active: xddViewType === XDDViewType.EXTRACTIONS }"
-									@click="xddViewType = XDDViewType.EXTRACTIONS"
-								>
-									Figures/Tables
-								</button>
-							</div>
-						</template>
-					</search-results-list>
+					/>
 					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 				</div>
 			</template>
@@ -142,8 +120,7 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType,
-	XDDViewType
+	ViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import {
@@ -182,7 +159,6 @@ const filteredFacets = ref<Facets>({});
 //
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
-const xddViewType = ref<string>(XDDViewType.PUBLICATIONS);
 
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resultType: string]: boolean }>({});
@@ -211,10 +187,10 @@ const resultsCount = computed(() => {
 				if (resultType.value !== ResourceType.XDD) {
 					total += resList.results.length;
 				} else {
-					total +=
-						xddViewType.value === XDDViewType.PUBLICATIONS
-							? resList.results.length
-							: resList.xddExtractions?.length ?? 0;
+					total += resList.results.length;
+					// xddViewType.value === XDDViewType.PUBLICATIONS
+					// 	? resList.results.length
+					// 	: resList.xddExtractions?.length ?? 0;
 				}
 			}
 		}
@@ -518,10 +494,6 @@ onUnmounted(() => {
 	cursor: pointer;
 	border-left-width: 0;
 	height: 40px;
-}
-
-.button-group button.small-button {
-	height: 32px;
 }
 
 .button-group button:first-child {
