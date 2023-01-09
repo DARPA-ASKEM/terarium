@@ -108,6 +108,13 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 
 You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSHOT-runner`
 
+## Services and Ports
+
+* HMI Server - 3000
+* Model Service - 3010
+* Data Service - 3020
+* Document Server - 3030
+
 ## Packaging and running the client
 
 ## Working with Docker
