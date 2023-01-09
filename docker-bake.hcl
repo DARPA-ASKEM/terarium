@@ -70,7 +70,7 @@ target "hmi-server-native" {
 }
 
 target "document-server-base" {
-	context = "packages/services/document-server/docker"
+	context = "packages/services/document-server/docker/jvm"
 	dockerfile = "Dockerfile.jvm"
 	tags = tag("document-server", "", "")
 }
@@ -80,7 +80,7 @@ target "document-server" {
 }
 
 target "document-server-native" {
-	context = "packages/services/document-server/docker"
+	context = "packages/services/document-server/docker/native"
   dockerfile = "Dockerfile.native"
   tags = tag("document-server", "", "native")
 }
