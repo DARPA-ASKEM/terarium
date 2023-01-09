@@ -312,60 +312,88 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	let searchParams = `term=${term}`;
-	const url = '/xdd/documents?';
+	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
-	if (xddSearchParam) {
-		Object.entries(xddSearchParam).forEach(([key]) => {
-			// Loop through searchParam attributes
-			if (xddSearchParam[key]) {
-				const urlKey = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`); // Later maybe make attributes have underscore format from the get go?
-				switch (key) {
-					case 'fullResults':
-					case 'includeScore':
-					case 'max':
-					case 'perPage':
-						break; // Are handled after loop (guard)
-					case 'dict':
-						if (xddSearchParam?.dict && xddSearchParam.dict.length > 0) {
-							searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
-						}
-						break;
-					case 'includeHighlights':
-					case 'inclusive':
-					case 'facets':
-					case 'match':
-						if (term === '' && key === 'match') break;
-						searchParams += `&${urlKey}=true`;
-						break;
-					default:
-						if (term === '' && key === 'additional_fields') break;
-						searchParams += `&${urlKey}=${xddSearchParam[key]}`;
-						break;
-				}
-			}
-		});
-	}
+	// NOTE when true it disables ranking of results
+	const enablePagination = xddSearchParam?.fullResults ?? false;
 
-	// The following searchParam concatenations aren't in the loop above due to their attributes being used whether or not we have the xddSearchParam argument
-
-	const enablePagination = xddSearchParam?.fullResults ?? false; // NOTE: when true it disables ranking of results
 	// "full_results": "Optional. When this parameter is included (no value required),
 	//  an overview of total number of matching articles is returned,
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
-	searchParams += enablePagination ? '&full_results' : '&include_score=true'; // request results to be ranked
+	let searchParams = `term=${term}`;
+	const url = '/xdd/documents?';
 
-	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
+	if (xddSearchParam?.docid) {
+		searchParams += `&docid=${xddSearchParam.docid}`;
+	}
+	if (xddSearchParam?.doi) {
+		searchParams += `&doi=${xddSearchParam.doi}`;
+	}
+	if (xddSearchParam?.dataset) {
+		searchParams += `&dataset=${xddSearchParam.dataset}`;
+	}
+	if (xddSearchParam?.fields) {
+		searchParams += `&fields=${xddSearchParam.fields}`;
+	}
+	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
+		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
+	}
+	if (xddSearchParam?.min_published) {
+		searchParams += `&min_published=${xddSearchParam.min_published}`;
+	}
+	if (xddSearchParam?.max_published) {
+		searchParams += `&max_published=${xddSearchParam.max_published}`;
+	}
+	if (xddSearchParam?.pubname) {
+		searchParams += `&pubname=${xddSearchParam.pubname}`;
+	}
+	if (xddSearchParam?.publisher) {
+		searchParams += `&publisher=${xddSearchParam.publisher}`;
+	}
+	if (xddSearchParam?.includeHighlights) {
+		searchParams += '&include_highlights=true';
+	}
+	if (xddSearchParam?.inclusive) {
+		searchParams += '&inclusive=true';
+	}
+	if (enablePagination) {
+		searchParams += '&full_results';
+	} else {
+		// request results to be ranked
+		searchParams += '&include_score=true';
+	}
+	if (xddSearchParam?.facets) {
+		searchParams += '&facets=true';
+	}
+
+	// search title and abstract when performing term-based search if requested
+	if (term !== '' && xddSearchParam?.additional_fields) {
+		searchParams += `&additional_fields=${xddSearchParam?.additional_fields}`;
+	}
+
+	// utilize ES improved matching
+	if (term !== '' && xddSearchParam?.match) {
+		searchParams += '&match=true';
+	}
+
+	if (xddSearchParam?.known_entities) {
+		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
+	}
+
+	//
 	// "max": "Maximum number of articles to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
+
 	// "per_page": "Maximum number of results to include in one response.
 	//  Applies to full_results pagination or single-page requests.
-	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter, floor rounded to a multiple of 25."
+	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter,
+	//        floor rounded to a multiple of 25."
 	searchParams += `&per_page=${limitResultsCount}`;
 
 	// url = 'https://xdd.wisc.edu/api/articles?&include_score=true&max=25&term=abbott&publisher=USGS&full_results';
+
 	// this will give error if "max" param is not included since the result is too large
 	//  either set "max"
 	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
