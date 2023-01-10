@@ -80,7 +80,6 @@
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
 				@remove-item="toggleDataItemSelected"
-				@close="onClose"
 			/>
 		</div>
 	</div>
@@ -120,8 +119,6 @@ import { Dataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
 // FIXME: page count is not taken into consideration
-
-const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
 const props = defineProps<{
 	query?: LocationQuery;
@@ -192,8 +189,6 @@ const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resultType.value]) return;
 	// TODO: only search (or fetch data) relevant to the currently selected tab
-
-	emit('show-overlay');
 
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
@@ -296,12 +291,6 @@ const executeSearch = async () => {
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
-
-	emit('hide-overlay');
-};
-
-const onClose = () => {
-	emit('hide');
 };
 
 const toggleDataItemSelected = (item: ResultType) => {
