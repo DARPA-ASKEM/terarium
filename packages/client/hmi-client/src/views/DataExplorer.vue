@@ -78,7 +78,6 @@
 						:search-term="searchTerm"
 						@toggle-data-item-selected="toggleDataItemSelected"
 					/>
-					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 				</div>
 			</template>
 			<template v-if="viewType === ViewType.MATRIX">
@@ -167,36 +166,6 @@ const xddDataset = computed(() =>
 	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
 const clientFilters = computed(() => query.clientFilters);
-
-const resultsCount = computed(() => {
-	let total = 0;
-	if (resultType.value === ResourceType.ALL) {
-		// count the results from all subsystems
-		dataItems.value.forEach((res) => {
-			const count = res?.hits ?? res?.results.length;
-			total += count;
-		});
-	} else {
-		// only return the results count for the selected subsystems
-		const resList = dataItems.value.find((res) => res.searchSubsystem === resultType.value);
-		if (resList) {
-			if (resList.hits) {
-				total += resList.hits;
-			} else {
-				// eslint-disable-next-line no-lonely-if
-				if (resultType.value !== ResourceType.XDD) {
-					total += resList.results.length;
-				} else {
-					total += resList.results.length;
-					// xddViewType.value === XDDViewType.PUBLICATIONS
-					// 	? resList.results.length
-					// 	: resList.xddExtractions?.length ?? 0;
-				}
-			}
-		}
-	}
-	return total;
-});
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
 	if (xddDataset.value !== newDataset) {
@@ -537,11 +506,6 @@ onUnmounted(() => {
 	flex-direction: column;
 	flex: 1;
 	align-items: center;
-}
-
-.data-explorer-container .results-content .results-count-label {
-	font-weight: bold;
-	margin: 4px;
 }
 
 .xdd-known-terms {
