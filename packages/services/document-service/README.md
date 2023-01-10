@@ -1,6 +1,6 @@
-# Document-Server Project
+# Document-Service Project
 
-The document-server is a stand alone layer between the [HMI-Server](../hmi-server/README.md) and external document
+The document-service is a stand alone layer between the [HMI-Server](../hmi-server/README.md) and external document
 services like xDD.
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.

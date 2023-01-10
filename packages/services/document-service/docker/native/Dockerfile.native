@@ -6,7 +6,6 @@ RUN chown 1001 /work \
 COPY --chown=1001:root build/*-runner /work/application
 
 EXPOSE 3030
-EXPOSE 8080
 USER 1001
 
 CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]

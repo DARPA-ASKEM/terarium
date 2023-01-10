@@ -11,7 +11,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "XDD Related documents / words REST Endpoint")
@@ -28,6 +27,7 @@ public class RelatedResource {
 	public Response getRelatedDocuments(
 		@PathParam("set") String set,
 		@QueryParam("docid") String docid) {
+
 		return proxy.getRelatedDocuments(set, docid);
 	}
 }

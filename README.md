@@ -52,7 +52,7 @@ or, if you have the Quarkus CLI
 quarkus dev
 ```
 
-When running in dev mode, you will need to run both the HMI server _and_ the Document server explicitly
+When running in dev mode, you will need to run both the HMI server _and_ the Document service explicitly
 > NOTE: Quarkus has a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
 ## Running the client in dev mode
@@ -113,7 +113,7 @@ You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSH
 * HMI Server - 3000
 * Model Service - 3010
 * Data Service - 3020
-* Document Server - 3030
+* Document Service - 3030
 
 ## Packaging and running the client
 
