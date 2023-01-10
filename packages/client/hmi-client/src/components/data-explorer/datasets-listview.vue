@@ -21,7 +21,7 @@
 						<td class="name-and-desc-col">
 							<div class="name-and-desc-layout">
 								<!-- in case of requesting multiple selection -->
-								<div class="radio" @click.stop="updateSelection(d)">
+								<div class="radio" @click.stop="emit('toggle-dataset-selected', d)">
 									<span v-show="isSelected(d)">
 										<IconCheckboxChecked20 />
 									</span>
@@ -134,16 +134,13 @@ const formatOutputName = (d: Dataset) => d.name;
 
 const isSelected = (dataset: Dataset) =>
 	selectedSearchItems.value.find((item) => {
+		console.log(selectedSearchItems.value);
 		if (isDataset(item)) {
 			const itemAsDataset = item as Dataset;
 			return itemAsDataset.id === dataset.id;
 		}
 		return false;
 	});
-
-const updateSelection = (dataset: Dataset) => {
-	emit('toggle-dataset-selected', dataset);
-};
 
 const formatDescription = (d: Dataset) => {
 	if (!d.description) return '';
