@@ -65,17 +65,17 @@ watch(
 
 <template>
 	<overlay v-if="overlayActivated" :message="overlayMessage" />
+	<Navbar
+		class="header"
+		:projectName="project?.name"
+		@show-data-explorer="dataExplorerActivated = true"
+	/>
 	<data-explorer
 		v-if="dataExplorerActivated"
 		class="data-explorer"
 		@hide="dataExplorerActivated = false"
 		@show-overlay="enableOverlay"
 		@hide-overlay="disableOverlay"
-	/>
-	<Navbar
-		class="header"
-		:projectName="project?.name"
-		@show-data-explorer="dataExplorerActivated = true"
 	/>
 	<main>
 		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />

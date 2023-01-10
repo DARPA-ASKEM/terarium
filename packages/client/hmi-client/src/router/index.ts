@@ -11,6 +11,7 @@ import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
+import DataExplorerView from '@/views/DataExplorer.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -21,6 +22,7 @@ export enum RoutePath {
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
+	DataExplorer = '/data-explorer',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
@@ -41,7 +43,11 @@ const routes = [
 		path: RoutePath.SimulationResult,
 		component: SimulationResultView
 	},
-
+	{
+		path: RoutePath.DataExplorer,
+		component: DataExplorerView,
+		props: (route) => ({ query: route.query.q })
+	},
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
