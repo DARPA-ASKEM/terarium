@@ -8,7 +8,7 @@ import {
 } from '@/types/common';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFiltersToDatasets, applyFacetFiltersToModels } from '@/utils/data-util';
+import { applyFacetFilters } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
@@ -42,69 +42,26 @@ const getXDDDictionaries = async () => {
 	return [] as XDDDictionary[];
 };
 
-const filterModels = (allModels: Model[], conceptFacets: ConceptFacets | null, term: string) => {
-	const finalModels: Model[] = [];
-
-	//
-	// simulate applying filters to the model query
-	//
-	const ModelFilterAttributes = MODEL_FILTER_FIELDS;
-	if (term.length > 0) {
-		ModelFilterAttributes.forEach((modelAttr) => {
-			const resultsAsModels = allModels;
-			const items = resultsAsModels.filter((d) =>
-				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
-			);
-			finalModels.push(...items);
-		});
-
-		// if no models match keyword search considering the ModelFilterAttributes
-		// perhaps the keyword search match a concept name, so let's also search for that
-		if (conceptFacets) {
-			const matchingCuries = [] as string[];
-			Object.keys(conceptFacets.facets.concepts).forEach((curie) => {
-				const concept = conceptFacets?.facets.concepts[curie];
-				if (concept?.name?.toLowerCase() === term.toLowerCase()) {
-					matchingCuries.push(curie);
-				}
-			});
-			matchingCuries.forEach((curie) => {
-				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
-				const modelIDs = matchingResult?.map((mr) => mr.id);
-				modelIDs?.forEach((modelId) => {
-					const model = allModels.find((m) => m.id === modelId);
-					if (model) {
-						finalModels.push(model);
-					}
-				});
-			});
-		}
-	}
-
-	return term.length > 0 ? uniqBy(finalModels, ID) : allModels;
-};
-
-const filterDatasets = (
-	allDatasets: Dataset[],
+const filterAssets = <T extends Model | Dataset>(
+	allAssets: T[],
+	resourceType: ResourceType,
 	conceptFacets: ConceptFacets | null,
 	term: string
 ) => {
-	const finalDatasets: Dataset[] = [];
-
-	//
-	// simulate applying filters to the dataset query
-	//
-	const DatasetFilterAttributes = DATASET_FILTER_FIELDS;
 	if (term.length > 0) {
-		DatasetFilterAttributes.forEach((datasetAttr) => {
-			const resultsAsDatasets = allDatasets;
-			const items = resultsAsDatasets.filter((d) =>
-				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
+		// simulate applying filters
+		const AssetFilterAttributes: string[] =
+			resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
+
+		let finalAssets: T[] = [];
+
+		AssetFilterAttributes.forEach((attribute) => {
+			finalAssets = allAssets.filter((d) =>
+				(d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase())
 			);
-			finalDatasets.push(...items);
 		});
 
-		// if no datasets match keyword search considering the DatasetFilterAttributes
+		// if no assets match keyword search considering the AssetFilterAttributes
 		// perhaps the keyword search match a concept name, so let's also search for that
 		if (conceptFacets) {
 			const matchingCuries = [] as string[];
@@ -116,18 +73,17 @@ const filterDatasets = (
 			});
 			matchingCuries.forEach((curie) => {
 				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
-				const datasetIDs = matchingResult?.map((dr) => dr.id);
-				datasetIDs?.forEach((datasetId) => {
-					const dataset = allDatasets.find((d) => d.id === datasetId);
-					if (dataset) {
-						finalDatasets.push(dataset);
-					}
+				const assetIDs = matchingResult?.map((mr) => mr.id);
+
+				assetIDs?.forEach((assetId) => {
+					const asset = allAssets.find((m) => m.id === assetId);
+					if (asset) finalAssets.push(asset);
 				});
 			});
 		}
+		return uniqBy(finalAssets, ID);
 	}
-
-	return term.length > 0 ? uniqBy(finalDatasets, ID) : allDatasets;
+	return allAssets;
 };
 
 const getAssets = async (
@@ -172,17 +128,17 @@ const getAssets = async (
 	//        at the HMI server
 	//
 	// This is going to calculate facets aggregations from the list of results
-	let assetResults: Model[] | Dataset[];
+	let assetResults = filterAssets(allAssets, resourceType, conceptFacets, term);
 	let assetFacets: Facets;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
-			assetResults = filterModels(allAssets, conceptFacets, term);
-			assetFacets = await getModelFacets(assetResults, conceptFacets);
+			assetResults = assetResults as Model[];
+			assetFacets = getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		case ResourceType.DATASET:
-			assetResults = filterDatasets(allAssets, conceptFacets, term);
-			assetFacets = await getDatasetFacets(assetResults, conceptFacets);
+			assetResults = assetResults as Dataset[];
+			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -238,16 +194,7 @@ const getAssets = async (
 			searchParam.filters.clauses.push(finalIdClause);
 		}
 
-		switch (resourceType) {
-			case ResourceType.MODEL:
-				applyFacetFiltersToModels(assetResults as Model[], searchParam.filters);
-				break;
-			case ResourceType.DATASET:
-				applyFacetFiltersToDatasets(assetResults as Dataset[], searchParam.filters);
-				break;
-			default:
-				return results; // error or make new resource type compatible
-		}
+		applyFacetFilters(assetResults, searchParam.filters, resourceType);
 
 		// remove any previously added concept/id filters
 		searchParam.filters.clauses = searchParam.filters.clauses.filter((c) => c.field !== ID);
@@ -280,10 +227,10 @@ const getAssets = async (
 		let assetFacetsFiltered: Facets;
 		switch (resourceType) {
 			case ResourceType.MODEL:
-				assetFacetsFiltered = await getModelFacets(assetResults as Model[], conceptFacets);
+				assetFacetsFiltered = getModelFacets(assetResults as Model[], conceptFacets);
 				break;
 			case ResourceType.DATASET:
-				assetFacetsFiltered = await getDatasetFacets(assetResults as Dataset[], conceptFacets);
+				assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
 				break;
 			default:
 				return results; // error or make new resource type compatible
@@ -542,51 +489,64 @@ const getDocumentById = async (docid: string) => {
 	return null;
 };
 
+const fetchResource = async (
+	term: string,
+	searchParam?: SearchParameters,
+	searchParamWithFacetFilters?: SearchParameters,
+	resourceType?: string
+): Promise<FullSearchResults> =>
+	// eslint-disable-next-line no-async-promise-executor
+	new Promise<FullSearchResults>(async (resolve, reject) => {
+		try {
+			switch (resourceType) {
+				case ResourceType.XDD: // XDD
+					resolve({
+						allData: await searchXDDArticles(term, searchParam?.xdd),
+						allDataFilteredWithFacets: await searchXDDArticles(
+							term,
+							searchParamWithFacetFilters?.xdd
+						)
+					});
+					break;
+				case ResourceType.MODEL: // Models
+					resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
+					break;
+				case ResourceType.DATASET: // Datasets
+					resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
+					break;
+				default:
+					break;
+			}
+		} catch (err: any) {
+			reject(new Error(`Error fetching ${resourceType} results: ${err}`));
+		}
+	});
+
 const fetchData = async (
 	term: string,
 	searchParam?: SearchParameters,
 	searchParamWithFacetFilters?: SearchParameters,
-	resultType?: string
+	resourceType?: string
 ) => {
 	//
 	// call the different search sub-systems to retrieve results
 	// ideally, all such subsystems should be registered in an array, which will force refactoring of the following code
 	//
-
 	const promiseList = [] as Promise<FullSearchResults>[];
 
-	Object.entries(ResourceType).forEach(([key]) => {
-		// Add this to the HMI_SERVER
-		if (resultType === ResourceType[key] || resultType === ResourceType.ALL) {
-			// eslint-disable-next-line no-async-promise-executor
-			const promise = new Promise<FullSearchResults>(async (resolve, reject) => {
-				try {
-					switch (ResourceType[key]) {
-						case ResourceType.XDD: // XDD
-							resolve({
-								allData: await searchXDDArticles(term, searchParam?.xdd),
-								allDataFilteredWithFacets: await searchXDDArticles(
-									term,
-									searchParamWithFacetFilters?.xdd
-								)
-							});
-							break;
-						case ResourceType.MODEL: // Models
-							resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
-							break;
-						case ResourceType.DATASET: // Datasets
-							resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
-							break;
-						default:
-							break;
-					}
-				} catch (err: any) {
-					reject(new Error(`Error fetching ${ResourceType[key]} results: ${err}`));
+	if (resourceType) {
+		if (resourceType === ResourceType.ALL) {
+			Object.entries(ResourceType).forEach(async ([key]) => {
+				if (ResourceType[key] !== ResourceType.ALL) {
+					promiseList.push(
+						fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
+					);
 				}
 			});
-			promiseList.push(promise);
+		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
+			promiseList.push(fetchResource(term, searchParam, searchParamWithFacetFilters, resourceType));
 		}
-	});
+	}
 
 	// fetch results from all search subsystems in parallel
 	const responses = await Promise.all(promiseList);

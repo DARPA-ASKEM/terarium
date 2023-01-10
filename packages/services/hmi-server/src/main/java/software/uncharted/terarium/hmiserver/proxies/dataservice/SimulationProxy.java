@@ -50,13 +50,13 @@ public interface SimulationProxy {
 	);
 
 	@GET
-	@Path("/runs/descriptions/{id}")
+	@Path("/runs/{id}/descriptions")
 	Response getSimulationRunDescription(
 		@PathParam("id") String id
 	);
 
 	@GET
-	@Path("/runs/parameters/{id}")
+	@Path("/runs/{id}/parameters")
 	Response getSimulationRunParameters(
 		@PathParam("id") String id
 	);

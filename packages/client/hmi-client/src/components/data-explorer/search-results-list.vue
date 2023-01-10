@@ -18,18 +18,15 @@
 			:search-term="searchTerm"
 			@toggle-dataset-selected="toggleDataItemSelected"
 		/>
-		<template v-if="resultType === ResourceType.XDD">
-			<slot name="header"></slot>
-			<articles-listview
-				class="list-view"
-				:articles="filteredArticles"
-				:raw-concept-facets="rawConceptFacets"
-				:extractions="filteredXDDExtractions"
-				:selected-search-items="selectedSearchItems"
-				:view-type="xddViewType"
-				@toggle-article-selected="toggleDataItemSelected"
-			/>
-		</template>
+		<articles-listview
+			v-if="resultType === ResourceType.XDD"
+			class="list-view"
+			:articles="filteredArticles"
+			:raw-concept-facets="rawConceptFacets"
+			:selected-search-items="selectedSearchItems"
+			@toggle-article-selected="toggleDataItemSelected"
+		/>
+		<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 	</div>
 </template>
 
@@ -41,7 +38,7 @@ import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import { Model } from '@/types/Model';
 import { XDDArticle, XDDArtifact } from '@/types/XDD';
 import { Dataset } from '@/types/Dataset';
-import { SearchResults, ResourceType, ResultType, XDDViewType } from '@/types/common';
+import { SearchResults, ResourceType, ResultType } from '@/types/common';
 
 const props = defineProps({
 	dataItems: {
@@ -59,10 +56,6 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: ''
-	},
-	xddViewType: {
-		type: String,
-		default: XDDViewType.PUBLICATIONS
 	}
 });
 
@@ -94,17 +87,34 @@ const filteredXDDResults = computed(() => {
 	}
 	return null;
 });
-const filteredArticles = computed(() => {
-	if (filteredXDDResults.value) {
-		return filteredXDDResults.value.results as XDDArticle[];
-	}
-	return [];
-});
 const filteredXDDExtractions = computed(() => {
 	if (filteredXDDResults.value && filteredXDDResults.value.xddExtractions) {
 		return filteredXDDResults.value.xddExtractions;
 	}
 	return [] as XDDArtifact[];
+});
+const filteredArticles = computed(() => {
+	if (filteredXDDResults.value) {
+		let articlesFromExtractions: XDDArticle[] = [];
+		if (filteredXDDExtractions.value && filteredXDDExtractions.value.length > 0) {
+			const docMap: { [docid: string]: XDDArticle } = {};
+			filteredXDDExtractions.value.forEach((ex) => {
+				if (ex.properties.documentBibjson === undefined) return; // skip
+
+				// eslint-disable-next-line no-underscore-dangle
+				const docid = ex.properties.documentBibjson.gddid || ex.properties.documentBibjson._gddid; // FIXME: embedded doc metadata has no proper fields mapping
+				if (docMap[docid] === undefined) {
+					docMap[docid] = ex.properties.documentBibjson;
+					docMap[docid].relatedExtractions = [];
+				}
+				docMap[docid].relatedExtractions?.push(ex);
+			});
+			articlesFromExtractions = Object.values(docMap) as XDDArticle[];
+		}
+		const xDDArticlesSearchResults = filteredXDDResults.value.results as XDDArticle[];
+		return [...articlesFromExtractions, ...xDDArticlesSearchResults];
+	}
+	return [];
 });
 const rawConceptFacets = computed(() => {
 	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
@@ -113,19 +123,52 @@ const rawConceptFacets = computed(() => {
 	}
 	return null;
 });
+
+const resultsCount = computed(() => {
+	let total = 0;
+	if (props.resultType === ResourceType.ALL) {
+		// count the results from all subsystems
+		props.dataItems.forEach((res) => {
+			const count = res?.hits ?? res?.results.length;
+			total += count;
+		});
+	} else {
+		// only return the results count for the selected subsystems
+		switch (props.resultType) {
+			case ResourceType.MODEL:
+				total = filteredModels.value.length;
+				break;
+			case ResourceType.DATASET:
+				total = filteredDatasets.value.length;
+				break;
+			case ResourceType.XDD:
+				total = filteredArticles.value.length;
+				break;
+			default:
+				break;
+		}
+	}
+	return total;
+});
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .search-container {
 	min-height: 0px;
 	width: 100%;
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
+}
 
-	.list-view {
-		flex: 1;
-		min-height: 0px;
-	}
+.list-view {
+	flex: 1;
+	min-height: 0px;
+}
+
+.results-count-label {
+	font-weight: bold;
+	margin: 4px;
+	align-self: center;
 }
 </style>
