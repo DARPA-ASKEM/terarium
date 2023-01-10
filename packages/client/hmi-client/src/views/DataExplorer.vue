@@ -76,31 +76,8 @@
 						:result-type="resultType"
 						:selected-search-items="selectedSearchItems"
 						:search-term="searchTerm"
-						:xdd-view-type="xddViewType"
 						@toggle-data-item-selected="toggleDataItemSelected"
-					>
-						<template #header>
-							<div class="button-group bottom-padding">
-								<button
-									type="button"
-									class="small-button"
-									:class="{ active: xddViewType === XDDViewType.PUBLICATIONS }"
-									@click="xddViewType = XDDViewType.PUBLICATIONS"
-								>
-									Publications
-								</button>
-								<button
-									type="button"
-									class="small-button"
-									:class="{ active: xddViewType === XDDViewType.EXTRACTIONS }"
-									@click="xddViewType = XDDViewType.EXTRACTIONS"
-								>
-									Figures/Tables
-								</button>
-							</div>
-						</template>
-					</search-results-list>
-					<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
+					/>
 				</div>
 			</template>
 			<template v-if="viewType === ViewType.MATRIX">
@@ -142,8 +119,7 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType,
-	XDDViewType
+	ViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import {
@@ -182,7 +158,6 @@ const filteredFacets = ref<Facets>({});
 //
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
-const xddViewType = ref<string>(XDDViewType.PUBLICATIONS);
 
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resultType: string]: boolean }>({});
@@ -191,36 +166,6 @@ const xddDataset = computed(() =>
 	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
 const clientFilters = computed(() => query.clientFilters);
-
-const resultsCount = computed(() => {
-	let total = 0;
-	if (resultType.value === ResourceType.ALL) {
-		// count the results from all subsystems
-		dataItems.value.forEach((res) => {
-			const count = res?.hits ?? res?.results.length;
-			total += count;
-		});
-	} else {
-		// only return the results count for the selected subsystems
-		const resList = dataItems.value.find((res) => res.searchSubsystem === resultType.value);
-		if (resList) {
-			if (resList.hits) {
-				total += resList.hits;
-			} else {
-				// eslint-disable-next-line no-lonely-if
-				if (resultType.value !== ResourceType.XDD) {
-					total += resList.results.length;
-				} else {
-					total +=
-						xddViewType.value === XDDViewType.PUBLICATIONS
-							? resList.results.length
-							: resList.xddExtractions?.length ?? 0;
-				}
-			}
-		}
-	}
-	return total;
-});
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
 	if (xddDataset.value !== newDataset) {
@@ -520,10 +465,6 @@ onUnmounted(() => {
 	height: 40px;
 }
 
-.button-group button.small-button {
-	height: 32px;
-}
-
 .button-group button:first-child {
 	border-left-width: 1px;
 	border-top-left-radius: 3px;
@@ -565,11 +506,6 @@ onUnmounted(() => {
 	flex-direction: column;
 	flex: 1;
 	align-items: center;
-}
-
-.data-explorer-container .results-content .results-count-label {
-	font-weight: bold;
-	margin: 4px;
 }
 
 .xdd-known-terms {
