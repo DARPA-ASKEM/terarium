@@ -26,16 +26,16 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "hmi-server-native"]
+  targets = ["hmi-client", "hmi-server", "hmi-server-native", "document-service", "document-service-native"]
 }
 
 # Simplified build without the `native` version for quicker turnaround staging deployments
 group "staging" {
-  targets = ["hmi-client", "hmi-server"]
+  targets = ["hmi-client", "hmi-server", "document-service"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "document-service-base"]
 }
 
 # ---------------------------------
@@ -67,4 +67,20 @@ target "hmi-server-native" {
 	context = "packages/services/hmi-server/docker/native"
   dockerfile = "Dockerfile.native"
   tags = tag("hmi-server", "", "native")
+}
+
+target "document-service-base" {
+	context = "packages/services/document-service/docker/jvm"
+	dockerfile = "Dockerfile.jvm"
+	tags = tag("document-service", "", "")
+}
+
+target "document-service" {
+  inherits = ["_platforms", "document-service-base"]
+}
+
+target "document-service-native" {
+	context = "packages/services/document-service/docker/native"
+  dockerfile = "Dockerfile.native"
+  tags = tag("document-service", "", "native")
 }

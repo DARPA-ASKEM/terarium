@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.xdd;
+package software.uncharted.terarium.documentserver.models.xdd;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;

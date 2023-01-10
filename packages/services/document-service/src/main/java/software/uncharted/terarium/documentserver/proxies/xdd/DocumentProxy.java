@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.proxies.xdd;
+package software.uncharted.terarium.documentserver.proxies.xdd;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -6,11 +6,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "document-service")
+@RegisterRestClient(configKey = "xdd-document-service")
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocumentProxy {
 	@GET
-	@Path("api/articles")
+	@Path("/api/articles")
 	Response getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
@@ -30,21 +30,19 @@ public interface DocumentProxy {
 		@QueryParam("pubname") String pubname,
 		@QueryParam("publisher") String publisher,
 		@QueryParam("additional_fields") String additional_fields,
-		@QueryParam("match") String match,
-		@QueryParam("known_entities") String known_entities,
-		@QueryParam("fields") String fields
+		@QueryParam("match") String match
 	);
 
 	@GET
-	@Path("sets")
+	@Path("/sets")
 	Response getAvailableSets();
 
 	@GET
-	@Path("api/dictionaries")
+	@Path("/api/dictionaries")
 	Response getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
 
 	@GET
-	@Path("sets/{set}/doc2vec/api/similar")
+	@Path("/sets/{set}/doc2vec/api/similar")
 	Response getRelatedDocuments(
 		@PathParam("set") String set,
 		@QueryParam("docid") String docid
