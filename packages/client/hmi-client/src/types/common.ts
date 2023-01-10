@@ -9,11 +9,6 @@ export enum ViewType {
 	GRAPH = 'graph'
 }
 
-export enum XDDViewType {
-	PUBLICATIONS = 'publications',
-	EXTRACTIONS = 'extractions'
-}
-
 export enum ResourceType {
 	XDD = 'xdd',
 	MODEL = 'model',
@@ -38,6 +33,11 @@ export type SearchResults = {
 	hits?: number;
 	hasMore?: boolean;
 	nextPage?: string;
+};
+
+export type FullSearchResults = {
+	allData: SearchResults;
+	allDataFilteredWithFacets: SearchResults;
 };
 
 //

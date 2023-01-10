@@ -29,12 +29,12 @@ import run9Description from './simulation-run-data/9/description.json';
 const route = useRoute();
 
 watch(
-	() => route.params.simulationRunId,
-	async (simulationRunId) => {
-		if (!simulationRunId) return;
+	() => route.params.assetId,
+	async (assetId) => {
+		if (!assetId) return;
 
 		// FIXME: siwtch to different simulation run result
-		console.log('simulation run id changed to', simulationRunId);
+		console.log('simulation run id changed to', assetId);
 	},
 	{ immediate: true }
 );
@@ -208,6 +208,23 @@ const {
 	labelColFormatFn
 } = simData;
 
+const dataConfig = {
+	data,
+	dataCol: cellLabelCol.map((v, i) => ({ value: v, altText: cellLabelAltCol[i] })),
+	dataRow: cellLabelRow.map((v, i) => ({ value: v, altText: scenarioDescriptionData[i] }))
+};
+
+const visConfig = {
+	row: {
+		borderEnabled: true,
+		borderWidth: 1
+	},
+	col: {
+		borderEnabled: true,
+		borderWidth: 1
+	}
+};
+
 // ///////////////////////////////////////////////////////////////////////////////
 // generate legend
 
@@ -285,6 +302,8 @@ onMounted(() => {
 
 		<div class="result">
 			<ResponsiveMatrix
+				:dataConfig="dataConfig"
+				:visConfig="visConfig"
 				:data="data"
 				:selectorFn="selectorFn"
 				:parametersMax="parametersDiffMax"
@@ -294,9 +313,7 @@ onMounted(() => {
 				:barColorFn="barColorFn"
 				:labelColFormatFn="labelColFormatFn"
 				:cellLabelRow="cellLabelRow"
-				:cellLabelAltRow="scenarioDescriptionData"
 				:cellLabelCol="cellLabelCol"
-				:cellLabelAltCol="cellLabelAltCol"
 				:margin="40"
 				:style="{ flex: '1' }"
 			/>

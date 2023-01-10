@@ -19,7 +19,7 @@ import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
 import { RouteName, RouteMetadata } from '@/router/routes';
-import { MODELS, PLANS, SIMULATION_RUNS, Project, DATASETS } from '@/types/Project';
+import { Project } from '@/types/Project';
 
 const router = useRouter();
 
@@ -60,31 +60,7 @@ function showSidebar(view: RouteName): boolean {
 const openView = (view: RouteName) => {
 	// Open the appropriate view
 	if (selectedView.value !== view && Object.values(RouteName).includes(view)) {
-		// Set the Route parameters
-		const params: RouteParamsRaw = {};
-
-		// Set the projectId, except for the Document Route
-		if (props?.project?.id) {
-			params.projectId = props.project.id;
-		}
-
-		if (view === RouteName.ModelRoute) {
-			params.modelId = props?.project?.assets[MODELS]?.[0] ?? '';
-		}
-
-		if (view === RouteName.DatasetRoute) {
-			params.datasetId = props?.project?.assets[DATASETS]?.[0] ?? '';
-		}
-
-		if (view === RouteName.SimulationRoute) {
-			params.simulationId = props?.project?.assets[PLANS]?.[0] ?? 1;
-		}
-
-		if (view === RouteName.SimulationResultRoute) {
-			params.simulationRunId = props?.project?.assets[SIMULATION_RUNS]?.[0] ?? 1;
-		}
-
-		// Change the view
+		const params: RouteParamsRaw = { projectId: props?.project?.id, assetId: '' };
 		router.push({ name: view, params });
 	} else if (showSidebar(view) && !isSidePanelClose.value) {
 		openSidePanel();

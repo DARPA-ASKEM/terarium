@@ -71,7 +71,12 @@
 				</template>
 			</div>
 		</div>
-		<div v-else class="invalid-doc"></div>
+		<resources-list
+			v-else
+			:project="props?.project"
+			:resourceRoute="RouteName.DocumentRoute"
+			@show-data-explorer="emit('show-data-explorer')"
+		/>
 	</section>
 </template>
 
@@ -81,22 +86,23 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
+import { RouteName } from '@/router/routes';
+import { Project } from '@/types/Project';
+import ResourcesList from '@/components/resources/resources-list.vue';
 
-const props = defineProps({
-	// this id is received as the document id mapped from the route param
-	id: {
-		type: String,
-		default: ''
-	}
-	// NOTE that project is automatically injected as prop as well
-});
+const props = defineProps<{
+	assetId: string;
+	project: Project;
+}>();
+
+const emit = defineEmits(['show-data-explorer']);
 
 const doc = ref<XDDArticle | null>(null);
 
 watch(
 	props,
 	async () => {
-		const id = props.id;
+		const id = props.assetId;
 		if (id !== '') {
 			// fetch doc from XDD
 			const d = await getDocumentById(id);

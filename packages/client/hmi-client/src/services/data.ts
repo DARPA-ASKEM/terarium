@@ -1,10 +1,16 @@
 import { cloneDeep, uniq, uniqBy } from 'lodash';
-import { Facets, ResourceType, SearchParameters, SearchResults } from '@/types/common';
+import {
+	Facets,
+	FullSearchResults,
+	ResourceType,
+	SearchParameters,
+	SearchResults
+} from '@/types/common';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFiltersToDatasets, applyFacetFiltersToModels } from '@/utils/data-util';
-import { DATASETS, MODELS } from '@/types/Project';
-import { CONCEPT_FACETS_FIELD } from '@/types/Concept';
+import { applyFacetFilters } from '@/utils/data-util';
+import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
+import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
@@ -36,35 +42,26 @@ const getXDDDictionaries = async () => {
 	return [] as XDDDictionary[];
 };
 
-const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => {
-	const finalModels: Model[] = [];
-
-	//
-	// fetch list of models data from the HMI server
-	//
-	const modelsList = (await getAllModelDescriptions()) || ([] as Model[]);
-
-	// TEMP: add "type" field because it is needed to mark these resources as models
-	// FIXME: dependecy on type model should be removed and another "sub-system" or "result-type"
-	//        should be added for datasets and other resource types
-	const allModels = modelsList.map((m) => ({ ...m, type: 'model' }));
-
-	let conceptFacets = await getConceptFacets([MODELS]);
-
-	//
-	// simulate applying filters to the model query
-	//
-	const ModelFilterAttributes = MODEL_FILTER_FIELDS;
+const filterAssets = <T extends Model | Dataset>(
+	allAssets: T[],
+	resourceType: ResourceType,
+	conceptFacets: ConceptFacets | null,
+	term: string
+) => {
 	if (term.length > 0) {
-		ModelFilterAttributes.forEach((modelAttr) => {
-			const resultsAsModels = allModels;
-			const items = resultsAsModels.filter((d) =>
-				(d[modelAttr as keyof Model] as string).toLowerCase().includes(term.toLowerCase())
+		// simulate applying filters
+		const AssetFilterAttributes: string[] =
+			resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
+
+		let finalAssets: T[] = [];
+
+		AssetFilterAttributes.forEach((attribute) => {
+			finalAssets = allAssets.filter((d) =>
+				(d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase())
 			);
-			finalModels.push(...items);
 		});
 
-		// if no models match keyword search considering the ModelFilterAttributes
+		// if no assets match keyword search considering the AssetFilterAttributes
 		// perhaps the keyword search match a concept name, so let's also search for that
 		if (conceptFacets) {
 			const matchingCuries = [] as string[];
@@ -76,20 +73,86 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 			});
 			matchingCuries.forEach((curie) => {
 				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
-				const modelIDs = matchingResult?.map((mr) => mr.id);
-				modelIDs?.forEach((modelId) => {
-					const model = allModels.find((m) => m.id === modelId);
-					if (model) {
-						finalModels.push(model);
-					}
+				const assetIDs = matchingResult?.map((mr) => mr.id);
+
+				assetIDs?.forEach((assetId) => {
+					const asset = allAssets.find((m) => m.id === assetId);
+					if (asset) finalAssets.push(asset);
 				});
 			});
 		}
+		return uniqBy(finalAssets, ID);
+	}
+	return allAssets;
+};
+
+const getAssets = async (
+	term: string,
+	resourceType: ResourceType,
+	searchParam?: ModelSearchParams | DatasetSearchParams
+) => {
+	const results = {} as FullSearchResults;
+
+	// fetch list of model or datasets data from the HMI server
+	let assetList: Model[] | Dataset[] = [];
+	let projectAssetType: ProjectAssetTypes;
+
+	switch (resourceType) {
+		case ResourceType.MODEL:
+			assetList = (await getAllModelDescriptions()) || ([] as Model[]);
+			projectAssetType = ProjectAssetTypes.MODELS;
+			break;
+		case ResourceType.DATASET:
+			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
+			projectAssetType = ProjectAssetTypes.DATASETS;
+			break;
+		default:
+			return results; // error or make new resource type compatible
 	}
 
-	const modelResults = term.length > 0 ? uniqBy(finalModels, ID) : allModels;
+	// TEMP: add "type" field because it is needed to mark these resources as models or datasets
+	// FIXME: dependency on type model should be removed and another "sub-system" or "result-type"
+	//        should be added for datasets and other resource types
+	const allAssets = assetList.map((a) => ({
+		...a,
+		temporalResolution: a?.temporal_resolution, // Dataset attribute
+		geospatialResolution: a?.geospatial_resolution, // Dataset attribute
+		simulationRun: a?.simulation_run, // Dataset attribute
+		type: resourceType
+	}));
 
-	if (modelSearchParam && modelSearchParam.filters && modelSearchParam.filters.clauses.length > 0) {
+	// first get un-filtered concept facets
+	let conceptFacets = await getConceptFacets([projectAssetType]);
+
+	// FIXME: this client-side computation of facets from "models" data should be done
+	//        at the HMI server
+	//
+	// This is going to calculate facets aggregations from the list of results
+	let assetResults = filterAssets(allAssets, resourceType, conceptFacets, term);
+	let assetFacets: Facets;
+
+	switch (resourceType) {
+		case ResourceType.MODEL:
+			assetResults = assetResults as Model[];
+			assetFacets = getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			break;
+		case ResourceType.DATASET:
+			assetResults = assetResults as Dataset[];
+			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			break;
+		default:
+			return results; // error or make new resource type compatible
+	}
+
+	results.allData = {
+		results: assetResults,
+		searchSubsystem: resourceType,
+		facets: assetFacets,
+		rawConceptFacets: conceptFacets
+	};
+
+	// apply facet filters
+	if (searchParam && searchParam.filters && searchParam.filters.clauses.length > 0) {
 		// modelSearchParam currently represent facets filters that can be applied
 		//  to further refine the list of models
 
@@ -101,7 +164,7 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		// Each clause of 'concepts' should have another corresponding one with 'id'
 		const curies = [] as ClauseValue[];
 		const idClauses = [] as Clause[];
-		modelSearchParam.filters.clauses.forEach((clause) => {
+		searchParam.filters.clauses.forEach((clause) => {
 			if (clause.field === CONCEPT_FACETS_FIELD) {
 				const idClause = cloneDeep(clause);
 				idClause.field = 'id';
@@ -128,15 +191,13 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 			const finalIdClause = cloneDeep(idClauses[0]);
 			const allIdValues = idClauses.map((c) => c.values).flat();
 			finalIdClause.values = uniq(allIdValues);
-			modelSearchParam.filters.clauses.push(finalIdClause);
+			searchParam.filters.clauses.push(finalIdClause);
 		}
 
-		applyFacetFiltersToModels(modelResults, modelSearchParam.filters);
+		applyFacetFilters(assetResults, searchParam.filters, resourceType);
 
 		// remove any previously added concept/id filters
-		modelSearchParam.filters.clauses = modelSearchParam.filters.clauses.filter(
-			(c) => c.field !== ID
-		);
+		searchParam.filters.clauses = searchParam.filters.clauses.filter((c) => c.field !== ID);
 
 		// ensure that concepts are re-created following the current filtered list of model results
 		// e.g., if the user has applied other facet filters, e.g. selected some model by name
@@ -145,9 +206,9 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 			// FIXME:
 			// This step won't be needed if the concept facets API is able to receive filters as well
 			// to only provide concept aggregations based on a filtered set of models rather than the full list of models
-			const finalModelIDs = modelResults.map((m) => m.id);
+			const finalAssetIDs = assetResults.map((m) => m.id);
 			conceptFacets.results.forEach((conceptFacetResult) => {
-				if (finalModelIDs.includes(conceptFacetResult.id)) {
+				if (finalAssetIDs.includes(conceptFacetResult.id)) {
 					curies.push(conceptFacetResult.curie);
 				}
 			});
@@ -156,170 +217,36 @@ const getModels = async (term: string, modelSearchParam?: ModelSearchParams) => 
 		// re-create the concept facets if the user has applyied any concept filters
 		const uniqueCuries = uniq(curies);
 		if (uniqueCuries.length > 0) {
-			conceptFacets = await getConceptFacets([MODELS], uniqueCuries);
+			conceptFacets = await getConceptFacets([projectAssetType], uniqueCuries);
 		}
+
+		// FIXME: this client-side computation of facets from "models" data should be done
+		//        at the HMI server
+		//
+		// This is going to calculate facets aggregations from the list of results
+		let assetFacetsFiltered: Facets;
+		switch (resourceType) {
+			case ResourceType.MODEL:
+				assetFacetsFiltered = getModelFacets(assetResults as Model[], conceptFacets);
+				break;
+			case ResourceType.DATASET:
+				assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
+				break;
+			default:
+				return results; // error or make new resource type compatible
+		}
+
+		results.allDataFilteredWithFacets = {
+			results: assetResults,
+			searchSubsystem: resourceType,
+			facets: assetFacetsFiltered,
+			rawConceptFacets: conceptFacets
+		};
+	} else {
+		results.allDataFilteredWithFacets = results.allData;
 	}
 
-	// FIXME: this client-side computation of facets from "models" data should be done
-	//        at the HMI server
-	//
-	// This is going to calculate facets aggregations from the list of results
-	const modelFacets = await getModelFacets(modelResults, conceptFacets);
-
-	return {
-		results: modelResults,
-		searchSubsystem: ResourceType.MODEL,
-		facets: modelFacets,
-		rawConceptFacets: conceptFacets
-	};
-};
-
-const getDatasets = async (term: string, datasetSearchParam?: DatasetSearchParams) => {
-	const finalDatasets: Dataset[] = [];
-
-	//
-	// fetch list of datasets from the HMI server
-	//
-	const datasetsList = (await DatasetService.getAll()) || ([] as Dataset[]);
-
-	// TEMP: add "type" field because it is needed to mark these resources as datasets
-	// FIXME: dependecy on type dataset should be removed and another "sub-system" or "result-type"
-	//        should be added for other resource types
-	const allDatasets = datasetsList.map((d) => ({
-		...d,
-		temporalResolution: d.temporal_resolution,
-		geospatialResolution: d.geospatial_resolution,
-		simulationRun: d.simulation_run,
-		type: 'dataset'
-	}));
-
-	let conceptFacets = await getConceptFacets([DATASETS]);
-
-	//
-	// simulate applying filters to the dataset query
-	//
-	const DatasetFilterAttributes = DATASET_FILTER_FIELDS;
-	if (term.length > 0) {
-		DatasetFilterAttributes.forEach((datasetAttr) => {
-			const resultsAsDatasets = allDatasets;
-			const items = resultsAsDatasets.filter((d) =>
-				(d[datasetAttr as keyof Dataset] as string).toLowerCase().includes(term.toLowerCase())
-			);
-			finalDatasets.push(...items);
-		});
-
-		// if no datasets match keyword search considering the DatasetFilterAttributes
-		// perhaps the keyword search match a concept name, so let's also search for that
-		if (conceptFacets) {
-			const matchingCuries = [] as string[];
-			Object.keys(conceptFacets.facets.concepts).forEach((curie) => {
-				const concept = conceptFacets?.facets.concepts[curie];
-				if (concept?.name?.toLowerCase() === term.toLowerCase()) {
-					matchingCuries.push(curie);
-				}
-			});
-			matchingCuries.forEach((curie) => {
-				const matchingResult = conceptFacets?.results.filter((r) => r.curie === curie);
-				const datasetIDs = matchingResult?.map((dr) => dr.id);
-				datasetIDs?.forEach((datasetId) => {
-					const dataset = allDatasets.find((d) => d.id === datasetId);
-					if (dataset) {
-						finalDatasets.push(dataset);
-					}
-				});
-			});
-		}
-	}
-
-	const datasetResults = term.length > 0 ? uniqBy(finalDatasets, ID) : allDatasets;
-
-	if (
-		datasetSearchParam &&
-		datasetSearchParam.filters &&
-		datasetSearchParam.filters.clauses.length > 0
-	) {
-		// datasetSearchParam currently represent facets filters that can be applied
-		//  to further refine the list of datasets
-
-		// a special facet related to ontology/DKG concepts needs to be transformed into
-		//  some form of filters that can filter the list of datasets.
-		// In this case, each concept has an associated list of dataset IDs that can be used to filter datasets
-		//  so, we need to map the facet filters from field "concepts" to "id"
-
-		// Each clause of 'concepts' should have another corresponding one with 'id'
-		const curies = [] as ClauseValue[];
-		const idClauses = [] as Clause[];
-		datasetSearchParam.filters.clauses.forEach((clause) => {
-			if (clause.field === CONCEPT_FACETS_FIELD) {
-				const idClause = cloneDeep(clause);
-				idClause.field = 'id';
-				const clauseValues = [] as ClauseValue[];
-				idClause.values.forEach((conceptNameOrCurie) => {
-					// find the corresponding dataset IDs
-					if (conceptFacets !== null) {
-						const matching = conceptFacets.results.filter(
-							(conceptResult) =>
-								conceptResult.name === conceptNameOrCurie ||
-								conceptResult.curie === conceptNameOrCurie
-						);
-						// update the clause value by mapping concept/curie to dataset id
-						clauseValues.push(...matching.map((m) => m.id));
-						curies.push(...matching.map((m) => m.curie));
-					}
-				});
-				idClause.values = clauseValues;
-				idClauses.push(idClause);
-			}
-		});
-		// NOTE that we need to merge all concept filters into a single ID filter
-		if (idClauses.length > 0) {
-			const finalIdClause = cloneDeep(idClauses[0]);
-			const allIdValues = idClauses.map((c) => c.values).flat();
-			finalIdClause.values = uniq(allIdValues);
-			datasetSearchParam.filters.clauses.push(finalIdClause);
-		}
-
-		applyFacetFiltersToDatasets(datasetResults, datasetSearchParam.filters);
-
-		// remove any previously added concept/id filters
-		datasetSearchParam.filters.clauses = datasetSearchParam.filters.clauses.filter(
-			(c) => c.field !== ID
-		);
-
-		// ensure that concepts are re-created following the current filtered list of dataset results
-		// e.g., if the user has applied other facet filters, e.g. selected some dataset by name
-		// then we need to find corresponding curies to filter the concepts accordingly
-		if (conceptFacets !== null) {
-			// FIXME:
-			// This step won't be needed if the concept facets API is able to receive filters as well
-			// to only provide concept aggregations based on a filtered set of datasets rather than the full list of datasets
-			const finalDatasetIDs = datasetResults.map((m) => m.id);
-			conceptFacets.results.forEach((conceptFacetResult) => {
-				if (finalDatasetIDs.includes(conceptFacetResult.id)) {
-					curies.push(conceptFacetResult.curie);
-				}
-			});
-		}
-
-		// re-create the concept facets if the user has applyied any concept filters
-		const uniqueCuries = uniq(curies);
-		if (uniqueCuries.length > 0) {
-			conceptFacets = await getConceptFacets([DATASETS], uniqueCuries);
-		}
-	}
-
-	// FIXME: this client-side computation of facets from "dataset" data should be done
-	//        at the HMI server
-	//
-	// This is going to calculate facets aggregations from the list of results
-	const datasetFacets = await getDatasetFacets(datasetResults, conceptFacets);
-
-	return {
-		results: datasetResults,
-		searchSubsystem: ResourceType.DATASET,
-		facets: datasetFacets,
-		rawConceptFacets: conceptFacets
-	};
+	return results;
 };
 
 //
@@ -362,7 +289,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	// docid=5ebd1de8998e17af826e810e
 	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
 
-	const res = await await API.get(url);
+	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.data) {
@@ -477,15 +404,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	if (rawdata.success) {
 		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
-		// TODO Remove in cleanup
-		console.log('Data Recieved:');
-		console.log(data);
-		const articlesRaw =
-			xddSearchParam?.fields === undefined
-				? (data as XDDArticle[])
-				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent resposne object
-		console.log('Data post transformation:');
-		console.log(articlesRaw);
+		const articlesRaw = data as XDDArticle[];
+
 		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
 		//       is not populated and instead the raw field name, abstract, is the one with data
 		//       similarly, re-map the gddid field
@@ -566,47 +486,75 @@ const getDocumentById = async (docid: string) => {
 	return null;
 };
 
-const fetchData = async (term: string, searchParam?: SearchParameters) => {
+const fetchResource = async (
+	term: string,
+	searchParam?: SearchParameters,
+	searchParamWithFacetFilters?: SearchParameters,
+	resourceType?: string
+): Promise<FullSearchResults> =>
+	// eslint-disable-next-line no-async-promise-executor
+	new Promise<FullSearchResults>(async (resolve, reject) => {
+		try {
+			switch (resourceType) {
+				case ResourceType.XDD: // XDD
+					resolve({
+						allData: await searchXDDArticles(term, searchParam?.xdd),
+						allDataFilteredWithFacets: await searchXDDArticles(
+							term,
+							searchParamWithFacetFilters?.xdd
+						)
+					});
+					break;
+				case ResourceType.MODEL: // Models
+					resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
+					break;
+				case ResourceType.DATASET: // Datasets
+					resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
+					break;
+				default:
+					break;
+			}
+		} catch (err: any) {
+			reject(new Error(`Error fetching ${resourceType} results: ${err}`));
+		}
+	});
+
+const fetchData = async (
+	term: string,
+	searchParam?: SearchParameters,
+	searchParamWithFacetFilters?: SearchParameters,
+	resourceType?: string
+) => {
 	//
 	// call the different search sub-systems to retrieve results
 	// ideally, all such subsystems should be registered in an array, which will force refactoring of the following code
 	//
+	const promiseList = [] as Promise<FullSearchResults>[];
 
-	const promiseList = [] as Promise<SearchResults>[];
-
-	// xdd
-	const promise1 = new Promise<SearchResults>((resolve, reject) => {
-		try {
-			resolve(searchXDDArticles(term, searchParam?.xdd));
-		} catch (err: any) {
-			reject(new Error(`Error fetching XDD results: ${err}`));
+	if (resourceType) {
+		if (resourceType === ResourceType.ALL) {
+			Object.entries(ResourceType).forEach(async ([key]) => {
+				if (ResourceType[key] !== ResourceType.ALL) {
+					promiseList.push(
+						fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
+					);
+				}
+			});
+		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
+			promiseList.push(fetchResource(term, searchParam, searchParamWithFacetFilters, resourceType));
 		}
-	});
-	promiseList.push(promise1);
-
-	// models
-	const promise2 = new Promise<SearchResults>((resolve, reject) => {
-		try {
-			resolve(getModels(term, searchParam?.model));
-		} catch (err: any) {
-			reject(new Error(`Error fetching model results: ${err}`));
-		}
-	});
-	promiseList.push(promise2);
-
-	// datasets
-	const promise3 = new Promise<SearchResults>((resolve, reject) => {
-		try {
-			resolve(getDatasets(term, searchParam?.dataset));
-		} catch (err: any) {
-			reject(new Error(`Error fetching dataset results: ${err}`));
-		}
-	});
-	promiseList.push(promise3);
+	}
 
 	// fetch results from all search subsystems in parallel
 	const responses = await Promise.all(promiseList);
-	return responses as SearchResults[];
+
+	const finalResponse = {} as {
+		allData: SearchResults[];
+		allDataFilteredWithFacets: SearchResults[];
+	};
+	finalResponse.allData = responses.map((r) => r.allData);
+	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
+	return finalResponse;
 };
 
 export {
@@ -615,6 +563,7 @@ export {
 	getXDDDictionaries,
 	getXDDArtifacts,
 	searchXDDArticles,
+	getAssets,
 	getRelatedDocuments,
 	getDocumentById
 };

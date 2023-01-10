@@ -15,7 +15,7 @@ import { RouteName } from '@/router/routes';
 import Button from '@/components/Button.vue';
 
 export interface ModelProps {
-	modelId: string;
+	assetId: string;
 }
 
 const props = defineProps<ModelProps>();
@@ -61,10 +61,10 @@ class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => [props.modelId],
+	() => [props.assetId],
 	async () => {
-		if (props.modelId !== '') {
-			const result = await getModel(props.modelId);
+		if (props.assetId !== '') {
+			const result = await getModel(props.assetId);
 			model.value = result.data as Model;
 		} else {
 			model.value = null;
@@ -106,7 +106,6 @@ const goToSimulationPlanPage = () => {
 			<h3>{{ model?.name ?? '' }}</h3>
 			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
 		</header>
-
 		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
 			<p>{{ model?.description ?? '' }}</p>
 			<div class="less-more-button-container">

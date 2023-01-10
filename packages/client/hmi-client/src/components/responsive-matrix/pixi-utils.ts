@@ -1,5 +1,13 @@
 import { Viewport } from 'pixi-viewport';
-import { Point, Resource, Texture, BaseTexture, SCALE_MODES, MIPMAP_MODES } from 'pixi.js';
+import {
+	Application,
+	Point,
+	Resource,
+	Texture,
+	BaseTexture,
+	SCALE_MODES,
+	MIPMAP_MODES
+} from 'pixi.js';
 
 // EMPTY_POINT used as a fallback value
 const EMPTY_POINT = new Point();
@@ -64,6 +72,37 @@ export class CustomBufferResource extends Resource {
 		return true;
 	}
 }
+
+/**
+ * Get the WebGL max texture size limit using the pixi application gl instance.
+ * @param {Application} app
+ */
+export const getGlMaxTextureSize = (app: Application): number => {
+	const { gl } = (app.renderer as any).context;
+	return gl.getParameter(gl.MAX_TEXTURE_SIZE);
+};
+
+/**
+ * Given a data size and a max texture size, find the dimensions of the smallest 2D texture required
+ * to hold the data.
+ * @param {number} dataSize
+ * @param {number} maxTextureSize
+ */
+export const getTextureDim = (dataSize: number, maxTextureSize: number) => {
+	const dataSizeToMaxRatio = dataSize / maxTextureSize;
+
+	// if multiple rows are required, set number of columns to max texture size
+	// otherwise set the number of columns to the data size with min of 1
+	const x = dataSizeToMaxRatio >= 1 ? maxTextureSize : dataSize || 1;
+	// set number of rows with a min of 1
+	const y = Math.ceil(dataSizeToMaxRatio) || 1;
+
+	return {
+		x, // number of columns in texture
+		y, // number of rows in texture
+		n: x * y // number of elements in texture
+	};
+};
 
 // see pg 124 of WebGL2 spec for valid internalFormat/format/type combinations
 // https://registry.khronos.org/OpenGL/specs/es/3.0/es_spec_3.0.pdf

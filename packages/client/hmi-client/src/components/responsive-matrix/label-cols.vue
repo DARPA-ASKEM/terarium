@@ -17,7 +17,7 @@ import { PropType } from 'vue';
 import { NumberValue } from 'd3';
 import { Viewport } from 'pixi-viewport';
 
-import { CellStatus } from '@/types/ResponsiveMatrix';
+import { CellStatus, LabelData } from '@/types/ResponsiveMatrix';
 import { viewport2Screen } from './pixi-utils';
 import { makeLabels } from './matrix-util';
 
@@ -27,6 +27,10 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		items: {
+			type: Array as PropType<LabelData[]>,
+			required: true
+		},
 		viewport: {
 			type: Viewport as PropType<Viewport>,
 			default() {
@@ -34,12 +38,6 @@ export default {
 			}
 		},
 		margin: {
-			type: Number,
-			default() {
-				return 0;
-			}
-		},
-		numCols: {
 			type: Number,
 			default() {
 				return 0;
@@ -59,18 +57,6 @@ export default {
 		},
 		selectedCols: {
 			type: Array as PropType<CellStatus[]>,
-			default() {
-				return [];
-			}
-		},
-		labelColList: {
-			type: Array as PropType<number[] | Date[]>,
-			default() {
-				return [];
-			}
-		},
-		labelColAltList: {
-			type: Array as PropType<string[]>,
 			default() {
 				return [];
 			}
@@ -130,14 +116,14 @@ export default {
 		buildLabelData() {
 			const visibleBounds = this.viewport.getVisibleBounds();
 			const viewportColDensity =
-				((visibleBounds?.width || 0) / (this.viewport.worldWidth || 1)) * this.numCols;
+				((visibleBounds?.width || 0) / (this.viewport.worldWidth || 1)) * this.items.length;
 
 			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportColDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(
-				this.labelColList,
-				this.labelColAltList,
+				this.items.map((d) => d.value),
+				this.items.map((d) => d.altText),
 				this.selectedCols,
 				this.microColSettings,
 				labelStride,

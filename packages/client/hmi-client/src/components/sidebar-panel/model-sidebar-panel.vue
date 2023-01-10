@@ -17,7 +17,7 @@ import { useRouter } from 'vue-router';
 import useResourcesStore from '@/stores/resources';
 import { onMounted, ref } from 'vue';
 import { deleteAsset } from '@/services/project';
-import { MODELS } from '@/types/Project';
+import { ProjectAssetTypes } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { Model } from '@/types/Model';
 import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
@@ -38,7 +38,7 @@ const tabContext = `model${resourcesStore.activeProject?.id}`;
 tabStore.$subscribe((mutation, state) => {
 	modelIds.value = state.tabMap.get(tabContext)?.map((tab) => {
 		const tabProps = tab.props as ModelProps;
-		return tabProps.modelId;
+		return tabProps.assetId;
 	});
 });
 
@@ -47,13 +47,13 @@ const openModelPage = async (id: string | number, name?: string) => {
 	// don't push a new route since the view would not re-render
 	// just open a new tab by adding it to the tab store instead
 	if (
-		router.currentRoute.value.params.modelId === id.toString() &&
+		router.currentRoute.value.params.assetId === id.toString() &&
 		!modelIds.value?.includes(id.toString())
 	) {
 		const newTab = {
 			name,
 			props: {
-				modelId: id.toString()
+				assetId: id.toString()
 			}
 		} as Tab;
 		tabStore.addTab(tabContext, newTab);
@@ -61,7 +61,7 @@ const openModelPage = async (id: string | number, name?: string) => {
 		// pass this model id as param
 		router.push({
 			name: RouteName.ModelRoute,
-			params: { projectId: resourcesStore.activeProject?.id, modelId: id }
+			params: { projectId: resourcesStore.activeProject?.id, assetId: id }
 		});
 	}
 };
@@ -69,16 +69,14 @@ const openModelPage = async (id: string | number, name?: string) => {
 const removeModel = async (id: string | number) => {
 	// remove the model from the project assets
 	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
-		const assetsType = MODELS;
+		const assetsType = ProjectAssetTypes.MODELS;
 		deleteAsset(resourcesStore.activeProject.id, assetsType, id);
 		// remove also from the local cache
-		resourcesStore.activeProject.assets[MODELS] = resourcesStore.activeProject.assets[
-			MODELS
-		].filter((modId) => modId !== id);
-		resourcesStore.activeProjectAssets[MODELS] = resourcesStore.activeProjectAssets[MODELS].filter(
-			(a) => a.id !== id
-		);
-		models.value = resourcesStore.activeProjectAssets[MODELS];
+		resourcesStore.activeProject.assets[ProjectAssetTypes.MODELS] =
+			resourcesStore.activeProject.assets[ProjectAssetTypes.MODELS].filter((modId) => modId !== id);
+		resourcesStore.activeProjectAssets[ProjectAssetTypes.MODELS] =
+			resourcesStore.activeProjectAssets[ProjectAssetTypes.MODELS].filter((a) => a.id !== id);
+		models.value = resourcesStore.activeProjectAssets[ProjectAssetTypes.MODELS];
 	}
 
 	// if the user deleted the currently selected model, then clear its content from the view
@@ -86,7 +84,7 @@ const removeModel = async (id: string | number) => {
 	if (openTabs) {
 		const tabIndexToRemove = openTabs.findIndex((tab) => {
 			const tabProps = tab.props as ModelProps;
-			return tabProps.modelId.toString() === id.toString();
+			return tabProps.assetId.toString() === id.toString();
 		});
 		tabStore.removeTab(tabContext, tabIndexToRemove);
 	}
@@ -101,7 +99,7 @@ onMounted(() => {
 	// set active selections from tab store
 	modelIds.value = tabStore.getTabs(tabContext)?.map((tab) => {
 		const tabProps = tab.props as ModelProps;
-		return tabProps.modelId;
+		return tabProps.assetId;
 	});
 });
 </script>
