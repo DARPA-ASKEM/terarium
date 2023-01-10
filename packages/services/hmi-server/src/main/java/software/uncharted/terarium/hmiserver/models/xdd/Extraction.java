@@ -68,4 +68,6 @@ class ExtractionProperties implements Serializable {
 	private String sectionTitle;
 
 	private String caption;
+
+	private Document documentBibjson;
 }

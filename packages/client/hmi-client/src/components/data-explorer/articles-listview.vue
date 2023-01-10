@@ -1,111 +1,118 @@
 <template>
-	<div>
-		<div v-if="viewType === XDDViewType.EXTRACTIONS" class="extractions-container">
-			<!-- FIXME: the content of this div is copied and adapted from Document.vue -->
-			<div v-for="ex in extractions" :key="ex.askemId">
-				<template
-					v-if="
-						ex.properties.image &&
-						(ex.askemClass === XDDExtractionType.Figure ||
-							ex.askemClass === XDDExtractionType.Table ||
-							ex.askemClass === XDDExtractionType.Equation)
-					"
+	<div class="table-fixed-head">
+		<table>
+			<tbody>
+				<tr
+					v-for="d in articles"
+					:key="d.gddid"
+					class="tr-item"
+					:class="{ selected: isSelected(d) }"
+					@click="updateExpandedRow(d)"
 				>
-					<!-- render figure -->
-					{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
-					<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-				</template>
-				<template v-else>
-					<!-- render textual content -->
-					<b>{{ ex.properties.title }}</b>
-					{{ ex.properties.caption }}
-					{{ ex.properties.abstractText }}
-					{{ ex.properties.contentText }}
-				</template>
-			</div>
-		</div>
-		<div v-if="viewType === XDDViewType.PUBLICATIONS" class="table-fixed-head">
-			<table>
-				<tbody>
-					<tr
-						v-for="d in articles"
-						:key="d.gddid"
-						class="tr-item"
-						:class="{ selected: isSelected(d) }"
-						@click="updateExpandedRow(d)"
-					>
-						<td class="title-and-abstract-col">
-							<div class="title-and-abstract-layout">
-								<!-- in case of requesting multiple selection -->
-								<div class="radio" @click.stop="updateSelection(d)">
-									<span v-show="isSelected(d)">
-										<IconCheckboxChecked20 />
-									</span>
-									<span v-show="!isSelected(d)">
-										<IconCheckbox20 />
-									</span>
-								</div>
-								<div class="content">
-									<div class="text-bold">{{ formatTitle(d) }}</div>
-									<multiline-description :text="formatDescription(d)" />
-									<div>{{ d.publisher }}, {{ d.journal }}</div>
-									<div v-if="isExpanded(d)" class="knobs">
-										<b>Author(s):</b>
-										<div>
-											{{ formatArticleAuthors(d) }}
-										</div>
-										<div
-											v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
-											class="url-extractions"
-										>
-											<b>URL Extractions(s):</b>
-											<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
-												<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
-													ex.resource_title
-												}}</a>
-											</div>
-										</div>
-									</div>
-									<div v-if="d.highlight" class="knobs">
-										<span v-for="h in d.highlight" :key="h">
-											<span v-html="h"></span>
-										</span>
-									</div>
-									<div v-html="formatKnownTerms(d)"></div>
-									<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
-										Related Documents
-									</div>
-									<div v-if="isExpanded(d) && d.relatedDocuments" class="related-docs-container">
-										<div v-for="a in d.relatedDocuments" :key="a.gddid">
-											{{ a.title }}
-											<span class="item-select" @click.stop="updateSelection(a)"
-												>{{ isSelected(a) ? 'Unselect' : 'Select' }}
-											</span>
-										</div>
+					<td>
+						<div class="content-container">
+							<!-- in case of requesting multiple selection -->
+							<div class="radio" @click.stop="updateSelection(d)">
+								<span v-show="isSelected(d)">
+									<IconCheckboxChecked20 />
+								</span>
+								<span v-show="!isSelected(d)">
+									<IconCheckbox20 />
+								</span>
+							</div>
+							<div class="content">
+								<div class="text-bold">{{ formatTitle(d) }}</div>
+								<multiline-description :text="formatDescription(d)" />
+								<div>{{ d.publisher }}, {{ d.journal }}</div>
+								<div v-if="isExpanded(d)" class="knobs">
+									<b>Author(s):</b>
+									<div>
+										{{ formatArticleAuthors(d) }}
 									</div>
 									<div
-										v-if="isExpanded(d) && d.relatedDocuments && d.relatedDocuments.length === 0"
+										v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
+										class="url-extractions"
 									>
-										No related documents found!
+										<b>URL Extractions(s):</b>
+										<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
+											<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
+												ex.resource_title
+											}}</a>
+										</div>
+									</div>
+								</div>
+								<div v-if="d.highlight" class="knobs">
+									<span v-for="h in d.highlight" :key="h">
+										<span v-html="h"></span>
+									</span>
+								</div>
+								<div v-html="formatKnownTerms(d)"></div>
+								<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
+									Related Documents
+								</div>
+								<div v-if="isExpanded(d) && d.relatedDocuments" class="related-docs-container">
+									<div v-for="a in d.relatedDocuments" :key="a.gddid">
+										{{ a.title }}
+										<span class="item-select" @click.stop="updateSelection(a)"
+											>{{ isSelected(a) ? 'Unselect' : 'Select' }}
+										</span>
+									</div>
+								</div>
+								<div v-if="isExpanded(d) && d.relatedDocuments && d.relatedDocuments.length === 0">
+									No related documents found!
+								</div>
+							</div>
+							<div v-if="d.relatedExtractions" class="content content-extractions">
+								<div class="related-docs" @click.stop="updateExpandedRow(d)">
+									Extractions ({{ d.relatedExtractions?.length }})
+								</div>
+								<div v-if="d.relatedExtractions && isExpanded(d)" class="extractions-container">
+									<!-- FIXME: the content of this div is copied and adapted from Document.vue -->
+									<div v-for="ex in d.relatedExtractions" :key="ex.askemId">
+										<template
+											v-if="
+												ex.properties.image &&
+												(ex.askemClass === XDDExtractionType.Figure ||
+													ex.askemClass === XDDExtractionType.Table ||
+													ex.askemClass === XDDExtractionType.Equation)
+											"
+										>
+											<!-- render figure -->
+											{{
+												ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+											}}
+											<img
+												id="img"
+												:src="'data:image/jpeg;base64,' + ex.properties.image"
+												:alt="''"
+											/>
+										</template>
+										<template v-else>
+											<!-- render textual content -->
+											<b>{{ ex.properties.title }}</b>
+											{{ ex.properties.caption }}
+											{{ ex.properties.abstractText }}
+											{{ ex.properties.contentText }}
+										</template>
 									</div>
 								</div>
 							</div>
-						</td>
-					</tr>
-					<tr v-if="articles.length === 0" class="tr-item">
-						<td colspan="100%" style="text-align: center">No data available</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
+						</div>
+					</td>
+				</tr>
+				<tr v-if="articles.length === 0" class="tr-item">
+					<td colspan="100%" style="text-align: center">No data available</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
-import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
-import { ResultType, XDDViewType } from '@/types/common';
+import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { ResultType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
@@ -118,10 +125,6 @@ const props = defineProps({
 		type: Array as PropType<XDDArticle[]>,
 		default: () => []
 	},
-	extractions: {
-		type: Array as PropType<XDDArtifact[]>,
-		default: () => []
-	},
 	rawConceptFacets: {
 		type: Object as PropType<ConceptFacets | null>,
 		default: () => null
@@ -129,10 +132,6 @@ const props = defineProps({
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
 		required: true
-	},
-	viewType: {
-		type: String,
-		default: XDDViewType.PUBLICATIONS
 	}
 });
 
@@ -142,7 +141,7 @@ const expandedRowId = ref('');
 
 const resources = useResourcesStore();
 
-const { articles, selectedSearchItems, extractions } = toRefs(props);
+const { articles, selectedSearchItems } = toRefs(props);
 
 watch(
 	articles,
@@ -257,58 +256,60 @@ tbody tr:first-child {
 	margin-bottom: 5px;
 }
 
-.title-and-abstract-col {
-	width: 40%;
-}
-
-.title-and-abstract-layout {
+.content-container {
 	display: flex;
 	align-content: stretch;
 	align-items: stretch;
 }
 
-.title-and-abstract-layout .radio {
+.content-container .radio {
 	flex: 0 0 auto;
 	align-self: flex-start;
 	margin: 3px 5px 0 0;
 }
 
-.title-and-abstract-layout .content {
+.content-container .content {
 	flex: 1 1 auto;
 	overflow-wrap: anywhere;
 }
 
-.title-and-abstract-layout .content .knobs {
+.content-container .content-extractions {
+	width: 100%;
+	overflow-y: auto;
+	max-height: 500px;
+}
+
+.content-container .content .knobs {
 	margin-top: 10px;
 }
 
-.title-and-abstract-layout .content .knobs .url-extractions {
+.content-container .content .knobs .url-extractions {
 	display: flex;
 	flex-direction: column;
 }
 
-.title-and-abstract-layout .content .related-docs {
+.content-container .content .related-docs {
 	margin-top: 1rem;
 	color: blue;
 }
 
-.title-and-abstract-layout .content .related-docs:hover {
+.content-container .content .related-docs:hover {
 	text-decoration: underline;
 }
 
-.title-and-abstract-layout .content .related-docs-container {
+.content-container .content .related-docs-container {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	margin-left: 1rem;
 }
 
-.title-and-abstract-layout .content .related-docs-container .item-select {
+.content-container .content .related-docs-container .item-select {
 	color: green;
 	font-weight: bold;
 }
 
-.title-and-abstract-layout .content .related-docs-container .item-select:hover {
+.content-container .content .related-docs-container .item-select:hover {
 	text-decoration: underline;
 }
 

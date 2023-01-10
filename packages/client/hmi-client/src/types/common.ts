@@ -9,11 +9,6 @@ export enum ViewType {
 	GRAPH = 'graph'
 }
 
-export enum XDDViewType {
-	PUBLICATIONS = 'publications',
-	EXTRACTIONS = 'extractions'
-}
-
 export enum ResourceType {
 	XDD = 'xdd',
 	MODEL = 'model',
