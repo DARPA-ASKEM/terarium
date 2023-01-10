@@ -14,6 +14,7 @@ import * as ProjectService from '@/services/project';
 import { searchXDDArticles } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
+import API from '@/api/api';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
@@ -23,7 +24,7 @@ const projectsToDisplay = computed(() =>
 );
 const relevantArticles = ref<XDDArticle[]>([]);
 const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 30 };
+const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
 const selectedPaper = ref<XDDArticle>();
 
 const resourcesStore = useResourcesStore();
@@ -33,16 +34,19 @@ onMounted(async () => {
 	// Clear all...
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
+	console.log('Trying to hit home resource');
+	console.log(await API.get('/home'));
+	console.log('Done home resource');
 
 	const allProjects = (await ProjectService.getAll()) as Project[];
 	if (allProjects) {
-		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
 		const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
 		const result = await Promise.all(promises);
 		for (let i = 0; i < allProjects.length; i++) {
+			// ProjectService.addAsset(allProjects[i].id,"RELATEDPUBLICATIONS",result[i]);
 			allProjects[i].relatedArticles = result[i];
 		}
-		projects.value = await allProjects;
+		projects.value = allProjects;
 	}
 
 	// Get all relevant articles (latest on section)
