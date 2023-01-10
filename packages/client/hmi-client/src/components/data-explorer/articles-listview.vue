@@ -9,11 +9,11 @@
 					:class="{ selected: isSelected(d) }"
 					@click="updateExpandedRow(d)"
 				>
-					<SearchItem
+					<!-- <SearchItem
 						:d="d"
 						:selectedSearchItems="selectedSearchItems"
 						@toggle-article-selected="emit('toggle-article-selected')"
-					/>
+					/> -->
 					<td>
 						<div class="content-container">
 							<!-- in case of requesting multiple selection -->
@@ -124,7 +124,7 @@ import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
-import SearchItem from './search-item.vue';
+// import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	articles: {
