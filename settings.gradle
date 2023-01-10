@@ -12,5 +12,5 @@ pluginManagement {
 rootProject.name = "terarium"
 
 include "packages:services:hmi-server"
-include "packages:services:document-server"
+include "packages:services:document-service"
 

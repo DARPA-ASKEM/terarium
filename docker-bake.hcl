@@ -26,16 +26,16 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "hmi-server-native", "document-server", "document-server-native"]
+  targets = ["hmi-client", "hmi-server", "hmi-server-native", "document-service", "document-service-native"]
 }
 
 # Simplified build without the `native` version for quicker turnaround staging deployments
 group "staging" {
-  targets = ["hmi-client", "hmi-server", "document-server"]
+  targets = ["hmi-client", "hmi-server", "document-service"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "document-server-base"]
+  targets = ["hmi-client-base", "hmi-server-base", "document-service-base"]
 }
 
 # ---------------------------------
@@ -69,18 +69,18 @@ target "hmi-server-native" {
   tags = tag("hmi-server", "", "native")
 }
 
-target "document-server-base" {
-	context = "packages/services/document-server/docker/jvm"
+target "document-service-base" {
+	context = "packages/services/document-service/docker/jvm"
 	dockerfile = "Dockerfile.jvm"
-	tags = tag("document-server", "", "")
+	tags = tag("document-service", "", "")
 }
 
-target "document-server" {
-  inherits = ["_platforms", "document-server-base"]
+target "document-service" {
+  inherits = ["_platforms", "document-service-base"]
 }
 
-target "document-server-native" {
-	context = "packages/services/document-server/docker/native"
+target "document-service-native" {
+	context = "packages/services/document-service/docker/native"
   dockerfile = "Dockerfile.native"
-  tags = tag("document-server", "", "native")
+  tags = tag("document-service", "", "native")
 }
