@@ -77,6 +77,7 @@
 			:resourceRoute="RouteName.DocumentRoute"
 			@show-data-explorer="emit('show-data-explorer')"
 		/>
+		<slot name="footer"> </slot>
 	</section>
 </template>
 
@@ -92,7 +93,7 @@ import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	assetId: string;
-	project: Project;
+	project: Project | null;
 }>();
 
 const emit = defineEmits(['show-data-explorer']);
