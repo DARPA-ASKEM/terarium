@@ -180,8 +180,8 @@ const togglePreview = (article: XDDArticle) => {
 const fetchRelatedDocument = async (article: XDDArticle) => {
 	togglePreview(article);
 	if (!article.relatedDocuments) {
-		// eslint-disable-next-line no-underscore-dangle
 		article.relatedDocuments = await getRelatedDocuments(
+			// eslint-disable-next-line no-underscore-dangle
 			article.gddid || article._gddid,
 			resources.xddDataset
 		);
