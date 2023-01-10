@@ -16,7 +16,7 @@
 						:key="d.id"
 						class="tr-item"
 						:class="{ selected: isSelected(d) }"
-						@click="updateExpandedRow(d)"
+						@click="togglePreview(d)"
 					>
 						<td class="name-and-desc-col">
 							<div class="name-and-desc-layout">
@@ -31,7 +31,7 @@
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
-									<template v-if="isExpanded(d)">
+									<template v-if="isExpanded()">
 										<br />
 										<div><b>Concepts</b></div>
 										<ul>
@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, ref, toRefs, watch } from 'vue';
+import { PropType, toRefs, watch } from 'vue';
 import { Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { isModel } from '@/utils/data-util';
@@ -96,8 +96,6 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-model-selected']);
 
-const expandedRowId = ref<string | number>('');
-
 const { models, selectedSearchItems } = toRefs(props);
 
 watch(
@@ -122,11 +120,7 @@ const getConceptTags = (model: Model) => {
 	return tags;
 };
 
-const isExpanded = (model: Model) => expandedRowId.value === model.id;
-
-const updateExpandedRow = (model: Model) => {
-	expandedRowId.value = expandedRowId.value === model.id ? '' : model.id;
-};
+const isExpanded = () => false;
 
 const formatOutputName = (d: Model) => d.name;
 
@@ -140,14 +134,16 @@ const isSelected = (model: Model) =>
 	});
 
 const updateSelection = (model: Model) => {
-	emit('toggle-model-selected', model);
+	emit('toggle-model-selected', { item: model, type: 'selected' });
+};
+
+const togglePreview = (model: Model) => {
+	emit('toggle-model-selected', { item: model, type: 'clicked' });
 };
 
 const formatDescription = (d: Model) => {
 	if (!d.description) return '';
-	return isExpanded(d) || d.description.length < 140
-		? d.description
-		: `${d.description.substring(0, 140)}...`;
+	return d.description.length < 140 ? d.description : `${d.description.substring(0, 140)}...`;
 };
 </script>
 

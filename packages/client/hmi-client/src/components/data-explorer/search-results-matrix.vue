@@ -89,7 +89,7 @@ const isClusterIncludesVariable = (c: ResultsCluster, v: string) => {
 const updateSelection = (cluster: ResultsCluster) => {
 	cluster.selected = !cluster.selected;
 	cluster.items.forEach((item) => {
-		emit('toggle-data-item-selected', item);
+		emit('toggle-data-item-selected', { item });
 	});
 };
 
