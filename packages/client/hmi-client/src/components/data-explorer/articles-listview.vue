@@ -7,7 +7,7 @@
 					:key="d.gddid"
 					class="tr-item"
 					:class="{ selected: isSelected(d) }"
-					@click="updateExpandedRow(d)"
+					@click="togglePreview(d)"
 				>
 					<td>
 						<div class="content-container">
@@ -24,7 +24,7 @@
 								<div class="text-bold">{{ formatTitle(d) }}</div>
 								<multiline-description :text="formatDescription(d)" />
 								<div>{{ d.publisher }}, {{ d.journal }}</div>
-								<div v-if="isExpanded(d)" class="knobs">
+								<div v-if="isExpanded()" class="knobs">
 									<b>Author(s):</b>
 									<div>
 										{{ formatArticleAuthors(d) }}
@@ -50,7 +50,7 @@
 								<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
 									Related Documents
 								</div>
-								<div v-if="isExpanded(d) && d.relatedDocuments" class="related-docs-container">
+								<div v-if="isExpanded() && d.relatedDocuments" class="related-docs-container">
 									<div v-for="a in d.relatedDocuments" :key="a.gddid">
 										{{ a.title }}
 										<span class="item-select" @click.stop="updateSelection(a)"
@@ -58,15 +58,15 @@
 										</span>
 									</div>
 								</div>
-								<div v-if="isExpanded(d) && d.relatedDocuments && d.relatedDocuments.length === 0">
+								<div v-if="isExpanded() && d.relatedDocuments && d.relatedDocuments.length === 0">
 									No related documents found!
 								</div>
 							</div>
 							<div v-if="d.relatedExtractions" class="content content-extractions">
-								<div class="related-docs" @click.stop="updateExpandedRow(d)">
+								<div class="related-docs" @click.stop="togglePreview(d)">
 									Extractions ({{ d.relatedExtractions?.length }})
 								</div>
-								<div v-if="d.relatedExtractions && isExpanded(d)" class="extractions-container">
+								<div v-if="d.relatedExtractions && isExpanded()" class="extractions-container">
 									<!-- FIXME: the content of this div is copied and adapted from Document.vue -->
 									<div v-for="ex in d.relatedExtractions" :key="ex.askemId">
 										<template
@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, ref, toRefs, watch } from 'vue';
+import { PropType, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
@@ -135,9 +135,9 @@ const props = defineProps({
 	}
 });
 
+// clicked: make the item shown in the preview
+// selected: add the item to the cart
 const emit = defineEmits(['toggle-article-selected']);
-
-const expandedRowId = ref('');
 
 const resources = useResourcesStore();
 
@@ -154,11 +154,7 @@ watch(
 	{ immediate: true }
 );
 
-const isExpanded = (article: XDDArticle) => expandedRowId.value === article.title;
-
-const updateExpandedRow = (article: XDDArticle) => {
-	expandedRowId.value = expandedRowId.value === article.title ? '' : article.title;
-};
+const isExpanded = () => false;
 
 const formatTitle = (d: XDDArticle) => (d.title ? d.title : d.title);
 
@@ -174,23 +170,27 @@ const isSelected = (article: XDDArticle) =>
 	});
 
 const updateSelection = (article: XDDArticle) => {
-	emit('toggle-article-selected', article);
+	emit('toggle-article-selected', { item: article, type: 'selected' });
+};
+
+const togglePreview = (article: XDDArticle) => {
+	emit('toggle-article-selected', { item: article, type: 'clicked' });
 };
 
 const fetchRelatedDocument = async (article: XDDArticle) => {
-	if (!isExpanded(article)) {
-		updateExpandedRow(article);
-	}
+	togglePreview(article);
 	if (!article.relatedDocuments) {
-		article.relatedDocuments = await getRelatedDocuments(article.gddid, resources.xddDataset);
+		article.relatedDocuments = await getRelatedDocuments(
+			// eslint-disable-next-line no-underscore-dangle
+			article.gddid || article._gddid,
+			resources.xddDataset
+		);
 	}
 };
 
 const formatDescription = (d: XDDArticle) => {
 	if (!d.abstractText || typeof d.abstractText !== 'string') return '';
-	return isExpanded(d) || d.abstractText.length < 140
-		? d.abstractText
-		: `${d.abstractText.substring(0, 140)}...`;
+	return d.abstractText.length < 140 ? d.abstractText : `${d.abstractText.substring(0, 140)}...`;
 };
 
 const formatKnownTerms = (d: XDDArticle) => {
