@@ -77,7 +77,6 @@
 			:resourceRoute="RouteName.DocumentRoute"
 			@show-data-explorer="emit('show-data-explorer')"
 		/>
-		<slot name="footer"> </slot>
 	</section>
 </template>
 
