@@ -6389,7 +6389,7 @@ cors@latest:
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
     primeicons: 6.0.1
-    primevue: 3
+    primevue: 3.21.0
     sass: 1.56.1
     typescript: 4.8.4
     vite: 3.2.5
@@ -9379,7 +9379,7 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"primevue@npm:3":
+"primevue@npm:3.21.0":
   version: 3.21.0
   resolution: "primevue@npm:3.21.0"
   peerDependencies:
