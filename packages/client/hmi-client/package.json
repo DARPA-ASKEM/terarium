@@ -33,7 +33,7 @@
 		"primeicons": "6.0.1",
 		"primevue": "3",
 		"sass": "1.56.1",
-		"vue": "3.2.41",
+		"vue": "3.2.45",
 		"vue-router": "4.1.6"
 	},
 	"devDependencies": {
