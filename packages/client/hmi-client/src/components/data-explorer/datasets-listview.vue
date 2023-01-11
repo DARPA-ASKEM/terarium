@@ -16,12 +16,12 @@
 						:key="d.id"
 						class="tr-item"
 						:class="{ selected: isSelected(d) }"
-						@click="updateExpandedRow(d)"
+						@click="togglePreview(d)"
 					>
 						<td class="name-and-desc-col">
 							<div class="name-and-desc-layout">
 								<!-- in case of requesting multiple selection -->
-								<div class="radio" @click.stop="emit('toggle-dataset-selected', d)">
+								<div class="radio" @click.stop="updateSelection(d)">
 									<span v-show="isSelected(d)">
 										<IconCheckboxChecked20 />
 									</span>
@@ -31,7 +31,7 @@
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
-									<template v-if="isExpanded(d)">
+									<template v-if="isExpanded()">
 										<br />
 										<div><b>Concepts</b></div>
 										<ul>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, ref, toRefs, watch } from 'vue';
+import { PropType, toRefs, watch } from 'vue';
 import { ResultType } from '@/types/common';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
@@ -95,13 +95,8 @@ const props = defineProps({
 		default: ''
 	}
 });
-
 const emit = defineEmits(['toggle-dataset-selected']);
-
-const expandedRowId = ref<string | number>('');
-
 const { datasets, selectedSearchItems } = toRefs(props);
-
 watch(
 	datasets,
 	() => {
@@ -112,7 +107,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
 const getConceptTags = (dataset: Dataset) => {
 	const tags = [] as string[];
 	if (props.rawConceptFacets) {
@@ -123,38 +117,32 @@ const getConceptTags = (dataset: Dataset) => {
 	}
 	return tags;
 };
-
-const isExpanded = (dataset: Dataset) => expandedRowId.value === dataset.id;
-
-const updateExpandedRow = (dataset: Dataset) => {
-	expandedRowId.value = expandedRowId.value === dataset.id ? '' : dataset.id;
-};
-
+const isExpanded = () => false;
 const formatOutputName = (d: Dataset) => d.name;
-
 const isSelected = (dataset: Dataset) =>
 	selectedSearchItems.value.find((item) => {
-		console.log(selectedSearchItems.value);
 		if (isDataset(item)) {
 			const itemAsDataset = item as Dataset;
 			return itemAsDataset.id === dataset.id;
 		}
 		return false;
 	});
-
+const updateSelection = (dataset: Dataset) => {
+	emit('toggle-dataset-selected', { item: dataset, type: 'selected' });
+};
+const togglePreview = (dataset: Dataset) => {
+	emit('toggle-dataset-selected', { item: dataset, type: 'clicked' });
+};
 const formatDescription = (d: Dataset) => {
 	if (!d.description) return '';
-	return isExpanded(d) || d.description.length < 140
-		? d.description
-		: `${d.description.substring(0, 140)}...`;
+	return d.description.length < 140 ? d.description : `${d.description.substring(0, 140)}...`;
 };
-
 const formatFeatures = (d: Dataset) => {
 	const features = d.annotations.annotations.feature ?? [];
 	if (!features || features.length === 0) return [];
 	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
 	const max = 5;
-	return isExpanded(d) || featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
+	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
 };
 </script>
 

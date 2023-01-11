@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
 import { PropType, toRefs, watch } from 'vue';
+import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
@@ -141,6 +142,8 @@ const props = defineProps({
 	}
 });
 
+// clicked: make the item shown in the preview
+// selected: add the item to the cart
 const emit = defineEmits(['toggle-article-selected']);
 
 const resources = useResourcesStore();
