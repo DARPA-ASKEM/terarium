@@ -22,7 +22,7 @@ export enum RoutePath {
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
-	DataExplorer = '/data-explorer',
+	DataExplorer = '/explorer',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
