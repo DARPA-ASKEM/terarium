@@ -76,7 +76,21 @@
 					/>
 				</div>
 			</template>
+			<!-- document preview -->
+			<document
+				v-if="previewItem"
+				class="selected-resources-pane"
+				:asset-id="previewItemId"
+				:project="resources.activeProject"
+			>
+				<template #footer>
+					Add to cart
+					<br />
+					Add to Project
+				</template>
+			</document>
 			<selected-resources-options-pane
+				v-else
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
 				@remove-item="toggleDataItemSelected"
@@ -92,6 +106,7 @@ import SearchResultsList from '@/components/data-explorer/search-results-list.vu
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
+import Document from '@/views/Document.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -114,7 +129,7 @@ import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
-import { cloneDeep, intersectionBy, isEmpty, max, min, unionBy } from 'lodash';
+import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { Dataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
@@ -128,6 +143,7 @@ const route = useRoute();
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
+const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 const query = useQueryStore();
 const resources = useResourcesStore();
@@ -293,8 +309,23 @@ const executeSearch = async () => {
 	calculateFacets(allData, allDataFilteredWithFacets);
 };
 
-const toggleDataItemSelected = (item: ResultType) => {
+const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
+	const item = dataItem.item;
+
+	if (dataItem.type && dataItem.type === 'clicked') {
+		// toggle preview
+		if (isEqual(dataItem.item, previewItem.value)) {
+			// clear preview item and close the preview panel
+			// FIXME: should we clear the preview if item is de-selected even if other items are still selected
+			previewItem.value = null;
+		} else {
+			// open the preview panel
+			previewItem.value = item;
+		}
+		return; // do not add to cart if the purpose is to toggel preview
+	}
+
 	selectedSearchItems.value.forEach((searchItem, indx) => {
 		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
@@ -318,6 +349,16 @@ const toggleDataItemSelected = (item: ResultType) => {
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
+
+const previewItemId = computed(() => {
+	if (previewItem.value === null) return '';
+	if (isXDDArticle(previewItem.value)) {
+		const itemAsArticle = previewItem.value as XDDArticle;
+		// eslint-disable-next-line no-underscore-dangle
+		return itemAsArticle.gddid || itemAsArticle._gddid;
+	}
+	return '';
+});
 
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
@@ -472,7 +513,7 @@ onUnmounted(() => {
 
 .facets-panel {
 	margin-top: 10px;
-	width: 250px;
+	width: 20%;
 	overflow-y: auto;
 }
 
@@ -508,6 +549,6 @@ onUnmounted(() => {
 }
 
 .selected-resources-pane {
-	width: 250px;
+	width: 35%;
 }
 </style>
