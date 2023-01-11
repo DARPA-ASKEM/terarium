@@ -17,7 +17,8 @@ export enum RouteName {
 	ProjectRoute = 'project',
 	ProvenanceRoute = 'provenance',
 	SimulationRoute = 'simulation',
-	SimulationResultRoute = 'simulationResult'
+	SimulationResultRoute = 'simulationResult',
+	DataExplorerRoute = 'dataExplorer'
 }
 
 export const RouteMetadata: {
@@ -51,5 +52,6 @@ export const RouteMetadata: {
 		projectAsset: ProjectAssetTypes.SIMULATION_RUNS
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
-	[RouteName.HomeRoute]: { displayName: 'Home', icon: null }
+	[RouteName.HomeRoute]: { displayName: 'Home', icon: null },
+	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: null }
 };

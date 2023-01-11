@@ -3,17 +3,24 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { RoutePath, useCurrentRouter } from '@/router/index';
+import { useCurrentRoute } from '@/router/index';
 import { Project } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
 import useAuthStore from '@/stores/auth';
 import Dialog from 'primevue/dialog';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
+import { RouteMetadata, RouteName } from '@/router/routes';
 
+const currentRoute = useCurrentRoute();
+const pageName = computed(() => {
+	if (currentRoute.value.name) {
+		const { displayName } = RouteMetadata[currentRoute.value.name];
+		return displayName;
+	}
+	return '';
+});
 const router = useRouter();
-const { isCurrentRouteHome } = useCurrentRouter();
 const auth = useAuthStore();
-const isHome = computed(() => isCurrentRouteHome.value);
+
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
 const userMenuItems = ref([
@@ -24,13 +31,6 @@ const userMenuItems = ref([
 		}
 	}
 ]);
-const resources = useResourcesStore();
-
-const goToHomepage = () => {
-	resources.setActiveProject(null);
-	resources.activeProjectAssets = null;
-	router.push('/');
-};
 
 defineProps<{
 	projectName?: Project['name'];
@@ -47,26 +47,27 @@ const userInitials = computed(() =>
 );
 
 function searchTextChanged(value) {
-	router.push({ path: RoutePath.DataExplorer, query: { q: value } });
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
 }
 </script>
 
 <template>
 	<header>
 		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-		<p v-if="!isHome">
-			<a @click="goToHomepage">Projects</a>
-			<span>{{ projectName }}</span>
-		</p>
+		<section class="page-name">
+			<p>
+				{{ pageName }}
+			</p>
+		</section>
 		<SearchBar class="searchbar" @search-text-changed="searchTextChanged" />
-		<aside>
+		<section>
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
 				@click="showUserMenu"
 			>
 				{{ userInitials }}
 			</Button>
-		</aside>
+		</section>
 		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
 		<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
 			<span>You will be returned to the login screen.</span>
@@ -114,7 +115,7 @@ p a:focus {
 	color: var(--un-color-accent-dark);
 }
 
-aside {
+section {
 	display: flex;
 	margin-left: auto;
 	gap: 1rem;
@@ -128,5 +129,10 @@ aside {
 .user-button:enabled:hover {
 	color: var(--un-color-body-text-secondary);
 	background-color: var(--un-color-body-surface-secondary);
+}
+
+.page-name {
+	width: 5%;
+	justify-content: center;
 }
 </style>

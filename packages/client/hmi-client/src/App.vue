@@ -6,14 +6,14 @@ import Sidebar from '@/components/Sidebar.vue';
 import { Project } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { useCurrentRouter } from './router/index';
+import { RoutePath, useCurrentRoute } from './router/index';
 
 /**
  * Router
  */
 const route = useRoute();
-const { isCurrentRouteHome } = useCurrentRouter();
-const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
+const currentRoute = useCurrentRoute();
+const isSidebarVisible = computed(() => currentRoute.value.path !== RoutePath.Home);
 
 const resources = useResourcesStore();
 /**

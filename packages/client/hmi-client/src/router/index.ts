@@ -44,6 +44,7 @@ const routes = [
 		component: SimulationResultView
 	},
 	{
+		name: RouteName.DataExplorerRoute,
 		path: RoutePath.DataExplorer,
 		component: DataExplorerView,
 		props: (route) => ({ query: route.query.q })
@@ -63,10 +64,8 @@ const router = createRouter({
 	routes
 });
 
-export function useCurrentRouter() {
-	return {
-		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home)
-	};
+export function useCurrentRoute() {
+	return computed(() => router.currentRoute.value);
 }
 
 export default router;
