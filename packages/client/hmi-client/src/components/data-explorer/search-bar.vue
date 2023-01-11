@@ -69,7 +69,6 @@ watch(searchTerms, () => {
 <style scoped>
 .search-bar-container {
 	display: flex;
-	flex: 1;
 	align-items: center;
 }
 

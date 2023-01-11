@@ -53,14 +53,16 @@ function searchTextChanged(value) {
 
 <template>
 	<header>
-		<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-		<section class="page-name">
-			<p>
-				{{ pageName }}
-			</p>
+		<section class="header-left">
+			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+			<section class="page-name">
+				<p>
+					{{ pageName }}
+				</p>
+			</section>
 		</section>
 		<SearchBar class="searchbar" @search-text-changed="searchTextChanged" />
-		<section>
+		<section class="header-right">
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
 				@click="showUserMenu"
@@ -89,7 +91,7 @@ header {
 	background-color: var(--un-color-body-surface-primary);
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
-	justify-content: left;
+	justify-content: center;
 	gap: 2rem;
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
@@ -117,7 +119,6 @@ p a:focus {
 
 section {
 	display: flex;
-	margin-left: auto;
 	gap: 1rem;
 }
 
@@ -132,7 +133,20 @@ section {
 }
 
 .page-name {
-	width: 5%;
 	justify-content: center;
+	margin-left: auto;
+}
+
+.header-left {
+	flex: 1;
+}
+
+.header-right {
+	flex: 1;
+	justify-content: right;
+}
+
+.searchbar {
+	flex: 2;
 }
 </style>
