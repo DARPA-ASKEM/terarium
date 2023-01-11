@@ -5,7 +5,9 @@
 				<SearchItem
 					:d="d"
 					:selectedSearchItems="selectedSearchItems"
+					:previewedArticle="previewedArticle"
 					@toggle-article-selected="updateSelection(d)"
+					@toggle-article-preview="togglePreview(d)"
 				/>
 			</li>
 		</ul>
@@ -117,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, toRefs, watch } from 'vue';
+import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
@@ -125,6 +127,8 @@ import { isXDDArticle } from '@/utils/data-util';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import SearchItem from './search-item.vue';
 
 const props = defineProps({
@@ -147,6 +151,8 @@ const props = defineProps({
 const emit = defineEmits(['toggle-article-selected']);
 
 const resources = useResourcesStore();
+
+const previewedArticle = ref<XDDArticle | null>(null);
 
 const { articles, selectedSearchItems } = toRefs(props);
 
@@ -182,6 +188,7 @@ const updateSelection = (article: XDDArticle) => {
 
 const togglePreview = (article: XDDArticle) => {
 	emit('toggle-article-selected', { item: article, type: 'clicked' });
+	previewedArticle.value = previewedArticle.value === article ? null : article;
 };
 
 const fetchRelatedDocument = async (article: XDDArticle) => {
