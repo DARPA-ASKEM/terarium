@@ -15,53 +15,7 @@
 				</search-bar>
 			</template>
 		</modal-header>
-		<div class="secondary-header">
-			<span class="section-label">View only</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.XDD }"
-					@click="updateResultType(ResourceType.XDD)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-					Papers
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.MODEL }"
-					@click="updateResultType(ResourceType.MODEL)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-					Models
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.DATASET }"
-					@click="updateResultType(ResourceType.DATASET)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-					Datasets
-				</button>
-			</div>
 
-			<span class="section-label">View as</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.LIST }"
-					@click="viewType = ViewType.LIST"
-				>
-					List
-				</button>
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.MATRIX }"
-					@click="viewType = ViewType.MATRIX"
-				>
-					Matrix
-				</button>
-			</div>
-		</div>
 		<div class="facets-and-results-container">
 			<template v-if="viewType === ViewType.LIST">
 				<facets-panel
@@ -71,6 +25,50 @@
 					:result-type="resultType"
 				/>
 				<div class="results-content">
+					<div class="secondary-header">
+						<div class="button-group">
+							<button
+								type="button"
+								:class="{ active: resultType === ResourceType.XDD }"
+								@click="updateResultType(ResourceType.XDD)"
+							>
+								<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+								Papers
+							</button>
+							<button
+								type="button"
+								:class="{ active: resultType === ResourceType.MODEL }"
+								@click="updateResultType(ResourceType.MODEL)"
+							>
+								<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
+								Models
+							</button>
+							<button
+								type="button"
+								:class="{ active: resultType === ResourceType.DATASET }"
+								@click="updateResultType(ResourceType.DATASET)"
+							>
+								<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+								Datasets
+							</button>
+						</div>
+						<div class="button-group">
+							<button
+								type="button"
+								:class="{ active: viewType === ViewType.LIST }"
+								@click="viewType = ViewType.LIST"
+							>
+								List
+							</button>
+							<button
+								type="button"
+								:class="{ active: viewType === ViewType.MATRIX }"
+								@click="viewType = ViewType.MATRIX"
+							>
+								Matrix
+							</button>
+						</div>
+					</div>
 					<search-results-list
 						:data-items="dataItems"
 						:result-type="resultType"
@@ -431,14 +429,10 @@ onUnmounted(() => {
 
 .secondary-header {
 	display: flex;
-	padding: 10px;
+	padding: 1rem 0;
+	justify-content: space-between;
 	align-items: center;
 	height: var(--nav-bar-height);
-}
-
-.secondary-header .section-label {
-	margin-right: 5px;
-	margin-left: 20px;
 }
 
 .data-explorer-container .header {
@@ -505,7 +499,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	align-items: center;
 }
 
 .xdd-known-terms {

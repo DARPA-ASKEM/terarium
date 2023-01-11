@@ -1,34 +1,23 @@
 <template>
 	<div class="table-fixed-head">
+		<ul>
+			<li v-for="d in articles" :key="d.gddid" class="tr-item" @click="updateExpandedRow(d)">
+				<SearchItem
+					:d="d"
+					:selectedSearchItems="selectedSearchItems"
+					@toggle-article-selected="updateSelection(d)"
+				/>
+			</li>
+		</ul>
 		<table>
 			<tbody>
-				<tr
-					v-for="d in articles"
-					:key="d.gddid"
-					class="tr-item"
-					:class="{ selected: isSelected(d) }"
-					@click="updateExpandedRow(d)"
-				>
-					<!-- <SearchItem
-						:d="d"
-						:selectedSearchItems="selectedSearchItems"
-						@toggle-article-selected="emit('toggle-article-selected')"
-					/> -->
+				<tr v-for="d in articles" :key="d.gddid" class="tr-item" @click="updateExpandedRow(d)">
 					<td>
 						<div class="content-container">
-							<!-- in case of requesting multiple selection -->
-							<div class="radio" @click.stop="updateSelection(d)">
-								<span v-show="isSelected(d)">
-									<IconCheckboxChecked20 />
-								</span>
-								<span v-show="!isSelected(d)">
-									<IconCheckbox20 />
-								</span>
-							</div>
 							<div class="content">
 								<div class="text-bold">{{ formatTitle(d) }}</div>
-								<multiline-description :text="formatDescription(d)" />
-								<div>{{ d.publisher }}, {{ d.journal }}</div>
+								<!-- <multiline-description :text="formatDescription(d)" /> -->
+								<!-- <div>{{ d.publisher }}, {{ d.journal }}</div> -->
 								<div v-if="isExpanded(d)" class="knobs">
 									<b>Author(s):</b>
 									<div>
@@ -115,16 +104,13 @@
 
 <script setup lang="ts">
 import { PropType, ref, toRefs, watch } from 'vue';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
-import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
-import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
-// import SearchItem from './search-item.vue';
+import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	articles: {
@@ -192,13 +178,6 @@ const fetchRelatedDocument = async (article: XDDArticle) => {
 	}
 };
 
-const formatDescription = (d: XDDArticle) => {
-	if (!d.abstractText || typeof d.abstractText !== 'string') return '';
-	return isExpanded(d) || d.abstractText.length < 140
-		? d.abstractText
-		: `${d.abstractText.substring(0, 140)}...`;
-};
-
 const formatKnownTerms = (d: XDDArticle) => {
 	let knownTerms = '';
 	if (d.knownTerms) {
@@ -214,6 +193,13 @@ const formatKnownTerms = (d: XDDArticle) => {
 </script>
 
 <style scoped>
+ul {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	list-style: none;
+}
+
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -250,7 +236,7 @@ tbody tr:first-child {
 }
 
 .tr-item {
-	height: 50px;
+	/* height: 50px; */
 }
 
 .tr-item.selected td {
