@@ -1,6 +1,6 @@
-@import '@node_modules/@ibm/plex/css/ibm-plex.css';
+@import '@node_modules/@ibm/plex/css/ibm-plex.css'; /* IBM Plex font-family */
 @import '@assets/css/reset.css';
-@import '@assets/css/properties.css';
+@import '@assets/css/theme.css';
 
 :root {
 	font-synthesis: none;
@@ -38,9 +38,9 @@ h4 {
 
 
 /**
-* @section Forms
-* Styling for form elements.
-*/
+ * @section Forms
+ * Styling for form elements.
+ */
 form,
 fieldset {
 	margin-bottom: 1rem;
@@ -59,11 +59,11 @@ label {
 }
 
 /**
-* 1. Correct color not being inherited.
-*    Known issue: affects color of disabled elements.
-* 2. Correct font properties not being inherited.
-* 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
-*/
+	* 1. Correct color not being inherited.
+	*    Known issue: affects color of disabled elements.
+	* 2. Correct font properties not being inherited.
+	* 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
+	*/
 button,
 input,
 optgroup,
