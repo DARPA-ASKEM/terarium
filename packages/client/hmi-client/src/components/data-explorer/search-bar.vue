@@ -8,7 +8,12 @@
 				v-model="searchText"
 				@keyup.enter="addSearchTerm"
 			/>
-			<i class="pi pi-times clear-search" style="font-size: 1rem" @click="clearText"></i>
+			<i
+				class="pi pi-times clear-search"
+				:class="{ hidden: isClearSearchButtonHidden }"
+				style="font-size: 1rem"
+				@click="clearText"
+			></i>
 		</span>
 		<i class="pi pi-history" />
 	</div>
@@ -29,6 +34,7 @@ const route = useRoute();
 
 const searchText = ref('');
 const defaultText = computed(() => props.text);
+const isClearSearchButtonHidden = computed(() => !searchText.value);
 
 const clearText = () => {
 	searchText.value = '';
@@ -79,5 +85,9 @@ watch(defaultText, (newText) => {
 	border-radius: 1rem;
 	top: 1rem;
 	right: 0.5rem;
+}
+
+.clear-search.hidden {
+	visibility: hidden;
 }
 </style>
