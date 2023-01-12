@@ -60,7 +60,7 @@ export const getResourceTypeIcon = (type: string) => {
 
 // TEMP FUNCTIONS
 export function isModel(item: ResultType): item is Model {
-	return (<Model>item).content !== undefined;
+	return (<Model>item).framework !== undefined;
 }
 
 export function isDataset(item: ResultType): item is Dataset {
@@ -73,7 +73,8 @@ export function isXDDArticle(item: ResultType): item is XDDArticle {
 
 export function getResourceID(item: ResultType) {
 	if (isXDDArticle(item)) {
-		return (item as XDDArticle).gddid;
+		// eslint-disable-next-line no-underscore-dangle
+		return (item as XDDArticle).gddid || (item as XDDArticle)._gddid;
 	}
 	return item.id;
 }

@@ -31,6 +31,14 @@
 								</div>
 								<div class="content">
 									<div class="text-bold">{{ formatOutputName(d) }}</div>
+
+									<!-- FIXME: remove once the UI menu is added to the model card allowing the user to do search-by-example from there -->
+									<div class="search-by-example" @click.stop="addToSearchByExample(d)">
+										Search by Example
+										<IconImageSearch16 />
+									</div>
+
+									<!-- FIXME: isExpanded is not longer possible since click now opens a preview window -->
 									<template v-if="isExpanded()">
 										<br />
 										<div><b>Concepts</b></div>
@@ -73,6 +81,7 @@ import { ResultType } from '@/types/common';
 import { isModel } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 import { ConceptFacets } from '@/types/Concept';
 
 const props = defineProps({
@@ -139,6 +148,11 @@ const updateSelection = (model: Model) => {
 
 const togglePreview = (model: Model) => {
 	emit('toggle-model-selected', { item: model, type: 'clicked' });
+};
+
+// issue a search-by-example for the given model
+const addToSearchByExample = (model: Model) => {
+	emit('toggle-model-selected', { item: model, type: 'search-by-example' });
 };
 
 const formatDescription = (d: Model) => {
@@ -270,5 +284,17 @@ tr th {
 }
 .highlight-concept {
 	background-color: yellow;
+}
+
+.search-by-example {
+	margin-top: 1rem;
+	color: black;
+	display: flex;
+	flex-direction: column;
+	align-items: baseline;
+}
+
+.search-by-example:hover {
+	text-decoration: underline;
 }
 </style>

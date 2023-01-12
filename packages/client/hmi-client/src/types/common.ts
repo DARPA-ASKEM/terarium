@@ -40,6 +40,13 @@ export type FullSearchResults = {
 	allDataFilteredWithFacets: SearchResults;
 };
 
+export type SearchByExampleOptions = {
+	similarContent: boolean;
+	forwardCitation: boolean;
+	bakcwardCitation: boolean;
+	modelsAndDatasets: boolean;
+};
+
 //
 // Facets
 //

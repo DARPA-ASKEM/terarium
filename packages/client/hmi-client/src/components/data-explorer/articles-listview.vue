@@ -24,6 +24,7 @@
 								<div class="text-bold">{{ formatTitle(d) }}</div>
 								<multiline-description :text="formatDescription(d)" />
 								<div>{{ d.publisher }}, {{ d.journal }}</div>
+								<!-- FIXME: isExpanded is not longer possible since click now opens a preview window -->
 								<div v-if="isExpanded()" class="knobs">
 									<b>Author(s):</b>
 									<div>
@@ -47,25 +48,18 @@
 									</span>
 								</div>
 								<div v-html="formatKnownTerms(d)"></div>
-								<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
-									Related Documents
-								</div>
-								<div v-if="isExpanded() && d.relatedDocuments" class="related-docs-container">
-									<div v-for="a in d.relatedDocuments" :key="a.gddid">
-										{{ a.title }}
-										<span class="item-select" @click.stop="updateSelection(a)"
-											>{{ isSelected(a) ? 'Unselect' : 'Select' }}
-										</span>
-									</div>
-								</div>
-								<div v-if="isExpanded() && d.relatedDocuments && d.relatedDocuments.length === 0">
-									No related documents found!
+
+								<!-- FIXME: remove once the UI menu is added to the document card allowing the user to do search-by-example from there -->
+								<div class="search-by-example" @click.stop="addToSearchByExample(d)">
+									Search by Example
+									<IconImageSearch16 />
 								</div>
 							</div>
 							<div v-if="d.relatedExtractions" class="content content-extractions">
 								<div class="related-docs" @click.stop="togglePreview(d)">
 									Extractions ({{ d.relatedExtractions?.length }})
 								</div>
+								<!-- FIXME: isExpanded is not longer possible since click now opens a preview window -->
 								<div v-if="d.relatedExtractions && isExpanded()" class="extractions-container">
 									<!-- FIXME: the content of this div is copied and adapted from Document.vue -->
 									<div v-for="ex in d.relatedExtractions" :key="ex.askemId">
@@ -116,9 +110,8 @@ import { ResultType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import { getRelatedDocuments } from '@/services/data';
-import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
+import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 
 const props = defineProps({
 	articles: {
@@ -138,8 +131,6 @@ const props = defineProps({
 // clicked: make the item shown in the preview
 // selected: add the item to the cart
 const emit = defineEmits(['toggle-article-selected']);
-
-const resources = useResourcesStore();
 
 const { articles, selectedSearchItems } = toRefs(props);
 
@@ -177,15 +168,9 @@ const togglePreview = (article: XDDArticle) => {
 	emit('toggle-article-selected', { item: article, type: 'clicked' });
 };
 
-const fetchRelatedDocument = async (article: XDDArticle) => {
-	togglePreview(article);
-	if (!article.relatedDocuments) {
-		article.relatedDocuments = await getRelatedDocuments(
-			// eslint-disable-next-line no-underscore-dangle
-			article.gddid || article._gddid,
-			resources.xddDataset
-		);
-	}
+// issue a search-by-example for the given article
+const addToSearchByExample = (article: XDDArticle) => {
+	emit('toggle-article-selected', { item: article, type: 'search-by-example' });
 };
 
 const formatDescription = (d: XDDArticle) => {
@@ -234,13 +219,6 @@ tbody tr:first-child {
 	overflow-x: hidden;
 	height: 100%;
 	width: 100%;
-}
-
-.table-fixed-head thead th {
-	position: sticky;
-	top: -1px;
-	z-index: 1;
-	background-color: aliceblue;
 }
 
 .tr-item {
@@ -310,6 +288,18 @@ tbody tr:first-child {
 }
 
 .content-container .content .related-docs-container .item-select:hover {
+	text-decoration: underline;
+}
+
+.content-container .content .search-by-example {
+	margin-top: 1rem;
+	color: black;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.content-container .content .search-by-example:hover {
 	text-decoration: underline;
 }
 

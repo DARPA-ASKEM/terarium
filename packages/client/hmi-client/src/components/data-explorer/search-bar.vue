@@ -1,6 +1,7 @@
 <template>
 	<div class="search-bar-container">
 		<slot name="dataset"></slot>
+		<slot name="tag"></slot>
 		<div class="input-container">
 			<IconSearch16 class="search-icon" />
 			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
@@ -17,6 +18,7 @@
 			<IconClose16 class="clear-icon" @click="clearText" />
 		</div>
 		<slot name="sort"></slot>
+		<slot name="search-by-example"></slot>
 	</div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
 	<div class="data-explorer-container">
-		<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
+		<modal-header :nav-back-label="'Back'" @close="onClose">
 			<template #content>
 				<search-bar :focus-input="true" @search-text-changed="onSearchTermChanged">
 					<template #dataset>
@@ -12,7 +12,22 @@
 							@item-selected="xddDatasetSelectionChanged"
 						/>
 					</template>
+					<template #tag>
+						<!-- this should be rendered as a non-editable tag inside the search input field -->
+						<div v-if="executeSearchByExample" style="color: cyan">Related Search</div>
+					</template>
+					<template #search-by-example>
+						<Button title="Search by Example" @click="searchByExampleModal = !searchByExampleModal">
+							<IconImageSearch16 />
+						</Button>
+					</template>
 				</search-bar>
+				<search-by-example
+					v-if="searchByExampleModal"
+					:item="searchByExampleItem"
+					@search="onSearchByExample"
+					@hide="searchByExampleModal = false"
+				/>
 			</template>
 		</modal-header>
 		<div class="secondary-header">
@@ -122,10 +137,12 @@ import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
+import SearchByExample from '@/components/data-explorer/search-by-example.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import Document from '@/views/Document.vue';
+import Button from '@/components/Button.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -134,7 +151,8 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType
+	ViewType,
+	SearchByExampleOptions
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import {
@@ -143,23 +161,26 @@ import {
 	FACET_FIELDS as XDD_FACET_FIELDS,
 	YEAR
 } from '@/types/XDD';
-import { Model } from '@/types/Model';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { getResourceID, getResourceTypeIcon, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { Dataset } from '@/types/Dataset';
+import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 
 const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
+const searchByExampleItem = ref<ResultType | null>(null);
+const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 const query = useQueryStore();
 const resources = useResourcesStore();
+
+const searchByExampleModal = ref(false);
 
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
@@ -218,7 +239,7 @@ const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resultType.value]) return;
 
-	// TODO: only search (or fetch data) relevant to the currently selected tab
+	// only search (or fetch data) relevant to the currently selected tab
 
 	emit('show-overlay');
 
@@ -268,6 +289,14 @@ const executeSearch = async () => {
 	// extend search parameters by converting facet filters into proper search parameters
 	//
 	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
+
+	// handle the search-by-example for finding related articles
+	if (executeSearchByExample.value && searchByExampleItem.value) {
+		xddSearchParams.related_search = executeSearchByExample.value;
+		const id = getResourceID(searchByExampleItem.value) as string;
+		xddSearchParams.docid = id;
+	}
+
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -331,9 +360,40 @@ const onClose = () => {
 	emit('hide');
 };
 
+const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
+	// user has requested a search by example, so re-fetch data
+	dirtyResults.value[resultType.value] = true;
+
+	// FIXME: what exactly is similar content search?
+	//         is it only to find related papers for the selected paper?
+	if (searchOptions.similarContent) {
+		// just set a proper search-by-example search parameter
+		//  and let the data service handles the fetch
+		executeSearchByExample.value = true;
+
+		await executeSearch();
+
+		searchByExampleItem.value = null;
+		dirtyResults.value[resultType.value] = false;
+	}
+	// FIXME: what about searching for other related artifacts, e.g. models and datasets
+};
+
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
 	const item = dataItem.item;
+
+	if (dataItem.type && dataItem.type === 'search-by-example') {
+		if (searchByExampleItem.value && isEqual(searchByExampleItem.value, item)) {
+			// item was already in the list so remove it
+			searchByExampleItem.value = null;
+		} else {
+			// add it to the list
+			searchByExampleItem.value = item;
+		}
+		searchByExampleModal.value = true;
+		return;
+	}
 
 	if (dataItem.type && dataItem.type === 'clicked') {
 		// toggle preview
@@ -348,21 +408,8 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		return; // do not add to cart if the purpose is to toggel preview
 	}
 
-	selectedSearchItems.value.forEach((searchItem, indx) => {
-		if (isModel(item) && isModel(searchItem)) {
-			const itemAsModel = item as Model;
-			const searchItemAsModel = searchItem as Model;
-			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
-		} else if (isDataset(item) && isDataset(searchItem)) {
-			const itemAsDataset = item as Dataset;
-			const searchItemAsDataset = searchItem as Dataset;
-			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
-		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
-			const itemAsArticle = item as XDDArticle;
-			const searchItemAsArticle = searchItem as XDDArticle;
-			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
-		}
-	});
+	// by now, the user has explicitly asked for this item to be added to the cart
+	foundIndx = selectedSearchItems.value.indexOf(item);
 	if (foundIndx >= 0) {
 		// item was already in the list so remove it
 		selectedSearchItems.value.splice(foundIndx, 1);
@@ -386,6 +433,9 @@ const previewItemId = computed(() => {
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
 
+	// disable search by example, if it was enabled
+	executeSearchByExample.value = false;
+
 	// user has changed some of the facet filter, so re-fetch data
 	dirtyResults.value[resultType.value] = true;
 
@@ -399,6 +449,9 @@ watch(clientFilters, async (n, o) => {
 const onSearchTermChanged = async (filterTerm: string) => {
 	if (filterTerm !== searchTerm.value) {
 		searchTerm.value = filterTerm;
+
+		// disable search by example, if it was enabled
+		executeSearchByExample.value = false;
 
 		// search term has changed, so all search results are dirty; need re-fetch
 		Object.values(ResourceType).forEach((key) => {
@@ -421,6 +474,8 @@ const updateResultType = async (newResultType: string) => {
 			(res) => res.searchSubsystem === resultType.value
 		);
 		if (!resList || dirtyResults.value[resultType.value]) {
+			// disable search by example, if it was enabled
+			executeSearchByExample.value = false;
 			await executeSearch();
 			dirtyResults.value[resultType.value] = false;
 		} else {

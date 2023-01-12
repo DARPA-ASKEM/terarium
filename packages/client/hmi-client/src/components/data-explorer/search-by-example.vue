@@ -1,0 +1,203 @@
+<script setup lang="ts">
+import Button from '@/components/Button.vue';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
+
+import { ref, PropType, computed } from 'vue';
+import { ResultType, SearchByExampleOptions } from '@/types/common';
+import { Model } from '@/types/Model';
+import { XDDArticle } from '@/types/XDD';
+
+const props = defineProps({
+	item: {
+		type: Object as PropType<ResultType | null>,
+		default: () => null
+	}
+});
+
+const emit = defineEmits(['hide', 'search']);
+
+const searchOptions = ref<SearchByExampleOptions>({
+	similarContent: true,
+	forwardCitation: false,
+	bakcwardCitation: false,
+	modelsAndDatasets: false
+});
+
+const onClose = () => {
+	emit('hide');
+};
+
+function search() {
+	emit('search', searchOptions.value);
+	onClose();
+}
+
+const isSearchDisabled = computed(() => {
+	if (!props.item) return true;
+	if (
+		!searchOptions.value.similarContent &&
+		!searchOptions.value.forwardCitation &&
+		!searchOptions.value.bakcwardCitation &&
+		!searchOptions.value.modelsAndDatasets
+	) {
+		return true;
+	}
+	return false;
+});
+
+const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
+</script>
+
+<template>
+	<div class="search-by-example-card">
+		<div class="header">
+			<h3>Search by Example</h3>
+			<IconClose16 class="hover-hand" @click="onClose" />
+		</div>
+		<div class="search-items-container">
+			<!--
+				list of dropped items here: this should be rendered component items
+				FIXME: for now, render their title
+			-->
+			<div v-if="props.item">
+				{{ getTitle(props.item) }}
+			</div>
+		</div>
+		<footer>
+			<div @click.stop="searchOptions.similarContent = !searchOptions.similarContent">
+				Similar Content
+				<span v-show="searchOptions.similarContent">
+					<IconCheckboxChecked20 />
+				</span>
+				<span v-show="!searchOptions.similarContent">
+					<IconCheckbox20 />
+				</span>
+			</div>
+			<div @click.stop="searchOptions.forwardCitation = !searchOptions.forwardCitation">
+				Forward Citation
+				<span v-show="searchOptions.forwardCitation">
+					<IconCheckboxChecked20 />
+				</span>
+				<span v-show="!searchOptions.forwardCitation">
+					<IconCheckbox20 />
+				</span>
+			</div>
+			<div @click.stop="searchOptions.bakcwardCitation = !searchOptions.bakcwardCitation">
+				Backward Citation
+				<span v-show="searchOptions.bakcwardCitation">
+					<IconCheckboxChecked20 />
+				</span>
+				<span v-show="!searchOptions.bakcwardCitation">
+					<IconCheckbox20 />
+				</span>
+			</div>
+			<div @click.stop="searchOptions.modelsAndDatasets = !searchOptions.modelsAndDatasets">
+				Models & Datasets
+				<span v-show="searchOptions.modelsAndDatasets">
+					<IconCheckboxChecked20 />
+				</span>
+				<span v-show="!searchOptions.modelsAndDatasets">
+					<IconCheckbox20 />
+				</span>
+			</div>
+			<Button :class="{ disabled: isSearchDisabled }" :disabled="isSearchDisabled" @click="search"
+				>Search</Button
+			>
+		</footer>
+	</div>
+</template>
+
+<style scoped>
+.search-by-example-card {
+	border: 1px solid var(--un-color-body-stroke);
+	background-color: var(--un-color-body-surface-primary);
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	border-radius: 0.5rem;
+	transition: 0.2s;
+	text-align: left;
+	position: absolute;
+	top: 48px;
+	box-shadow: var(--un-box-shadow-default);
+	color: black;
+	padding: 1rem;
+	width: 50%;
+	z-index: 2;
+}
+
+.search-by-example-card > button {
+	font-size: 1.25rem;
+	font-weight: 500;
+	border-radius: 0.5rem;
+	width: 100%;
+	height: 100%;
+	margin: auto;
+	justify-content: center;
+	cursor: pointer;
+	background-color: transparent;
+	color: var(--un-color-body-text-disabled);
+}
+
+.search-by-example-card button:hover {
+	background-color: var(--un-color-body-surface-secondary);
+	color: var(--un-color-body-text-secondary);
+}
+
+.search-by-example-card button:disabled {
+	cursor: not-allowed;
+	color: var(--un-color-body-text-secondary);
+}
+
+.search-by-example-card button svg {
+	color: var(--un-color-body-text-disabled);
+}
+
+.search-by-example-card button:hover svg {
+	color: var(--un-color-body-text-secondary);
+}
+
+.search-items-container {
+	border-width: 2px;
+	border-style: dotted;
+	border-color: black;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	height: 100px;
+	overflow-y: auto;
+}
+
+.header {
+	margin-bottom: 1em;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+footer {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-top: 2rem;
+}
+
+footer div {
+	display: flex;
+}
+
+footer div:hover {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.hover-hand {
+	cursor: pointer;
+}
+.hover-hand:hover {
+	color: red;
+}
+</style>
