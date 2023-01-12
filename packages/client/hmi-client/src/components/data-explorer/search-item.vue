@@ -22,24 +22,25 @@ const isSelected = () =>
 		return false;
 	});
 
-const formatTitle = () => (props.d.title ? props.d.title : props.d.title);
-const formatArticleAuthors = () => props.d.author.map((a) => a.name).join(', ');
+// Return formatted author, year, journal
+const formatDetails = () =>
+	`${props.d.author.map((a) => a.name).join(', ')} (${props.d.year}) ${props.d.journal}`;
 </script>
 
 <template>
 	<div class="search-item" :active="previewedArticle === d" @click="emit('toggle-article-preview')">
 		<div>
 			<div>ARTICLE</div>
-			<div class="title">{{ formatTitle() }}</div>
-			<div class="details">{{ formatArticleAuthors() }} ({{ d.year }}) {{ d.journal }}</div>
+			<div class="title">{{ d.title }}</div>
+			<div class="details">{{ formatDetails() }}</div>
 			<ul class="snippets" v-if="d.highlight">
 				<li v-for="h in d.highlight" :key="h">...<span v-html="h"></span>...</li>
 			</ul>
 		</div>
-		<div @click.stop="emit('toggle-article-selected')">
+		<button type="button" @click.stop="emit('toggle-article-selected')">
 			<IconAdd24 v-show="!isSelected()" />
 			<IconCheckmark24 class="checkmark-color" v-show="isSelected()" />
-		</div>
+		</button>
 	</div>
 </template>
 
@@ -73,8 +74,17 @@ const formatArticleAuthors = () => props.d.author.map((a) => a.name).join(', ');
 	margin: 0.25rem 0 0.5rem 0;
 }
 
-svg {
+button {
+	border: none;
+	background-color: transparent;
+	height: min-content;
+	padding: 0;
+}
+
+svg:hover {
 	cursor: pointer;
+	background-color: hsla(0, 0%, 0%, 0.1);
+	border-radius: 5px;
 }
 
 .checkmark-color {
