@@ -1,6 +1,6 @@
 <template>
 	<div class="search-bar-container">
-		<span class="p-input-icon-left">
+		<span class="p-input-icon-left p-input-icon-right">
 			<i class="pi pi-search" />
 			<InputText
 				type="text"
@@ -8,6 +8,7 @@
 				v-model="searchText"
 				@keyup.enter="addSearchTerm"
 			/>
+			<i class="pi pi-times clear-search" style="font-size: 1rem" @click="clearText"></i>
 		</span>
 		<i class="pi pi-history" />
 	</div>
@@ -42,6 +43,11 @@ const inputElement = ref<HTMLInputElement | null>(null);
 
 const searchText = ref('');
 const searchTerms = ref('');
+
+const clearText = () => {
+	searchText.value = '';
+	searchTerms.value = '';
+};
 
 const execSearch = () => {
 	emit('search-text-changed', searchTerms.value);
@@ -84,5 +90,14 @@ watch(searchTerms, () => {
 
 .pi-history {
 	color: var(--un-color-body-text-secondary);
+}
+
+.clear-search:hover {
+	color: var(--un-color-body-text-primary);
+	background-color: var(--un-color-body-surface-secondary);
+	padding: 0.5rem;
+	border-radius: 1rem;
+	top: 1rem;
+	right: 0.5rem;
 }
 </style>
