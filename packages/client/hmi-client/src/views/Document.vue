@@ -3,7 +3,7 @@
 		<div v-if="doc">
 			<div class="journal">{{ doc.journal }}</div>
 			<div v-if="docLink" class="title">
-				<a :href="docLink" target="_blank" rel="noreferrer noopener">{{ doc.title }}</a>
+				<a :href="docLink" rel="noreferrer noopener">{{ doc.title }}</a>
 			</div>
 			<div v-else class="title">{{ doc.title }}</div>
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>

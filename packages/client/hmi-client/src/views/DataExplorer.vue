@@ -94,7 +94,7 @@
 
 			<!-- document preview -->
 			<div v-if="previewItem" class="selected-resources-pane">
-				<document :asset-id="previewItemId" :project="resources.activeProject" />
+				<Document :asset-id="previewItemId" :project="resources.activeProject" />
 				<Button label="Add to Cart"></Button>
 				<Button label="Add to Project"></Button>
 			</div>
