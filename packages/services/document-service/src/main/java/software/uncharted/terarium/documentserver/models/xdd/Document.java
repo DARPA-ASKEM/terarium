@@ -48,4 +48,21 @@ public class Document implements Serializable {
 	@JsonbProperty("known_terms")
 	private Map<String, List<String>> knownTerms;
 
+	public Document(String gddId, String title, String abstractText, String journal ){
+		this.gddId = gddId;
+		this.title = title;
+		this.abstractText = abstractText;
+		this.journal = journal;
+	}
+
+	@Override
+    public String toString(){
+		return "Document: { gddId: " + this.gddId +
+				" title: " + this.title + 
+				" abstractText: " + this.abstractText +
+				" journal: " + this.journal +
+				" }";
+	}
+
+	public String getID(){ return this.gddId; }
 }
