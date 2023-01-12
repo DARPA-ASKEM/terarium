@@ -10,13 +10,20 @@ import Dialog from 'primevue/dialog';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import { RouteMetadata, RouteName } from '@/router/routes';
 
+const props = defineProps<{
+	projectName?: Project['name'];
+}>();
+
 const currentRoute = useCurrentRoute();
 const pageName = computed(() => {
-	if (currentRoute.value.name) {
+	if (
+		currentRoute.value.name === RouteName.HomeRoute ||
+		currentRoute.value.name === RouteName.DataExplorerRoute
+	) {
 		const { displayName } = RouteMetadata[currentRoute.value.name];
 		return displayName;
 	}
-	return '';
+	return props.projectName;
 });
 const router = useRouter();
 const auth = useAuthStore();
@@ -31,10 +38,6 @@ const userMenuItems = ref([
 		}
 	}
 ]);
-
-defineProps<{
-	projectName?: Project['name'];
-}>();
 
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
