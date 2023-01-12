@@ -3,9 +3,9 @@
 		<ul>
 			<li v-for="d in articles" :key="d.gddid" class="tr-item">
 				<SearchItem
-					:d="d"
+					:asset="d"
 					:selectedSearchItems="selectedSearchItems"
-					:previewedArticle="previewedArticle"
+					:isPreviewedArticle="previewedArticle === d"
 					@toggle-article-selected="updateSelection(d)"
 					@toggle-article-preview="togglePreview(d)"
 				/>

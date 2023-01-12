@@ -17,78 +17,69 @@
 		</modal-header>
 
 		<div class="facets-and-results-container">
-			<template v-if="viewType === ViewType.LIST">
-				<facets-panel
-					class="facets-panel"
-					:facets="facets"
-					:filtered-facets="filteredFacets"
-					:result-type="resultType"
-				/>
-				<div class="results-content">
-					<div class="secondary-header">
-						<div class="button-group">
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.XDD }"
-								@click="updateResultType(ResourceType.XDD)"
-							>
-								<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-								Papers
-							</button>
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.MODEL }"
-								@click="updateResultType(ResourceType.MODEL)"
-							>
-								<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-								Models
-							</button>
-							<button
-								type="button"
-								:class="{ active: resultType === ResourceType.DATASET }"
-								@click="updateResultType(ResourceType.DATASET)"
-							>
-								<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-								Datasets
-							</button>
-						</div>
-						<div class="button-group">
-							<button
-								type="button"
-								:class="{ active: viewType === ViewType.LIST }"
-								@click="viewType = ViewType.LIST"
-							>
-								List
-							</button>
-							<button
-								type="button"
-								:class="{ active: viewType === ViewType.MATRIX }"
-								@click="viewType = ViewType.MATRIX"
-							>
-								Matrix
-							</button>
-						</div>
+			<facets-panel
+				v-if="viewType === ViewType.LIST"
+				class="facets-panel"
+				:facets="facets"
+				:filtered-facets="filteredFacets"
+				:result-type="resultType"
+			/>
+			<div class="results-content">
+				<div class="secondary-header">
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.XDD }"
+							@click="updateResultType(ResourceType.XDD)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+							Papers
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.MODEL }"
+							@click="updateResultType(ResourceType.MODEL)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
+							Models
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.DATASET }"
+							@click="updateResultType(ResourceType.DATASET)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+							Datasets
+						</button>
 					</div>
-					<search-results-list
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:search-term="searchTerm"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: viewType === ViewType.LIST }"
+							@click="viewType = ViewType.LIST"
+						>
+							List
+						</button>
+						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
+					</div>
 				</div>
-			</template>
-			<template v-if="viewType === ViewType.MATRIX">
-				<div class="results-content">
-					<search-results-matrix
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:dict-names="dictNames"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
+				<search-results-list
+					v-if="viewType === ViewType.LIST"
+					:data-items="dataItems"
+					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:search-term="searchTerm"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				/>
+				<search-results-matrix
+					v-if="viewType === ViewType.MATRIX"
+					:data-items="dataItems"
+					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:dict-names="dictNames"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				/>
+			</div>
 			<!-- document preview -->
 			<document
 				v-if="previewItem"

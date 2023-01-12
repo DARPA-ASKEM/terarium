@@ -6,8 +6,8 @@ import IconCheckmark24 from '@carbon/icons-vue/es/checkmark/24';
 import { ResultType } from '@/types/common';
 
 const props = defineProps<{
-	d: XDDArticle;
-	previewedArticle: XDDArticle | null;
+	asset: XDDArticle; // Will be abstracted later
+	isPreviewedArticle: boolean;
 	selectedSearchItems: ResultType[];
 }>();
 
@@ -17,24 +17,26 @@ const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
 		if (isXDDArticle(item)) {
 			const itemAsArticle = item as XDDArticle;
-			return itemAsArticle.title === props.d.title;
+			return itemAsArticle.title === props.asset.title;
 		}
 		return false;
 	});
 
 // Return formatted author, year, journal
 const formatDetails = () =>
-	`${props.d.author.map((a) => a.name).join(', ')} (${props.d.year}) ${props.d.journal}`;
+	`${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
+		props.asset.journal
+	}`;
 </script>
 
 <template>
-	<div class="search-item" :active="previewedArticle === d" @click="emit('toggle-article-preview')">
+	<div class="search-item" :active="isPreviewedArticle" @click="emit('toggle-article-preview')">
 		<div>
 			<div>ARTICLE</div>
-			<div class="title">{{ d.title }}</div>
+			<div class="title">{{ asset.title }}</div>
 			<div class="details">{{ formatDetails() }}</div>
-			<ul class="snippets" v-if="d.highlight">
-				<li v-for="h in d.highlight" :key="h">...<span v-html="h"></span>...</li>
+			<ul class="snippets" v-if="asset.highlight">
+				<li v-for="h in asset.highlight" :key="h">...<span v-html="h"></span>...</li>
 			</ul>
 		</div>
 		<button type="button" @click.stop="emit('toggle-article-selected')">
