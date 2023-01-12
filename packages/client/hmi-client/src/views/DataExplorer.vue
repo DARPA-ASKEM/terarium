@@ -134,6 +134,7 @@ import { Dataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
 // FIXME: page count is not taken into consideration
+const emit = defineEmits(['search-query-changed']);
 
 const props = defineProps<{
 	query?: LocationQuery;
@@ -375,6 +376,7 @@ watch(clientFilters, async (n, o) => {
 });
 
 watch(searchQuery, async (newQuery) => {
+	emit('search-query-changed', newQuery);
 	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
 	// search term has changed, so all search results are dirty; need re-fetch
 	Object.values(ResourceType).forEach((key) => {

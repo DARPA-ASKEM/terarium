@@ -12,6 +12,7 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	projectName?: Project['name'];
+	searchBarText?: string;
 }>();
 
 const currentRoute = useCurrentRoute();
@@ -64,7 +65,7 @@ function searchTextChanged(value) {
 				</p>
 			</section>
 		</section>
-		<SearchBar class="searchbar" @search-text-changed="searchTextChanged" />
+		<SearchBar class="searchbar" :text="searchBarText" @search-text-changed="searchTextChanged" />
 		<section class="header-right">
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"

@@ -15,60 +15,40 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 
-const props = defineProps({
-	realtime: {
-		type: Boolean,
-		default: false
-	},
-	searchLabel: {
-		type: String,
-		default: ''
-	},
-	searchPlaceholder: {
-		type: String,
-		default: 'Search for resources'
-	},
-	focusInput: {
-		type: Boolean,
-		default: true
-	}
-});
+const props = defineProps<{
+	text?: string;
+}>();
 
 const emit = defineEmits(['search-text-changed']);
 
-const inputElement = ref<HTMLInputElement | null>(null);
+const route = useRoute();
 
 const searchText = ref('');
-const searchTerms = ref('');
+const defaultText = computed(() => props.text);
 
 const clearText = () => {
 	searchText.value = '';
-	searchTerms.value = '';
 };
 
 const execSearch = () => {
-	emit('search-text-changed', searchTerms.value);
+	emit('search-text-changed', searchText.value);
 };
 
-const addSearchTerm = (event: Event) => {
-	if (!props.realtime) {
-		const term = (event.target as HTMLInputElement).value;
-		searchTerms.value = term;
-		execSearch();
-	}
+const addSearchTerm = () => {
+	execSearch();
 };
 
 onMounted(() => {
-	if (props.focusInput) {
-		inputElement.value?.focus();
-	}
+	const { q } = route.query;
+	searchText.value = q?.toString() ?? searchText.value;
 });
 
-watch(searchTerms, () => {
-	execSearch();
+watch(defaultText, (newText) => {
+	searchText.value = newText || searchText.value;
 });
 </script>
 

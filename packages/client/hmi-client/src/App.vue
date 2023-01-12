@@ -14,7 +14,7 @@ import { RoutePath, useCurrentRoute } from './router/index';
 const route = useRoute();
 const currentRoute = useCurrentRoute();
 const isSidebarVisible = computed(() => currentRoute.value.path !== RoutePath.Home);
-
+const searchBarText = ref('');
 const resources = useResourcesStore();
 /**
  * Project
@@ -23,6 +23,10 @@ const resources = useResourcesStore();
  * It is loaded at the root and passed to all views as prop.
  */
 const project = ref<Project | null>(null);
+
+function updateSearchBar(newQuery) {
+	searchBarText.value = newQuery;
+}
 
 watch(
 	() => route.params.projectId,
@@ -42,10 +46,10 @@ watch(
 </script>
 
 <template>
-	<Navbar class="header" :projectName="project?.name" />
+	<Navbar class="header" :projectName="project?.name" :searchBarText="searchBarText" />
 	<main>
 		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
-		<router-view class="page" :project="project" />
+		<router-view class="page" :project="project" @search-query-changed="updateSearchBar" />
 	</main>
 </template>
 
