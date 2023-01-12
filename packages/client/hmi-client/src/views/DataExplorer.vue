@@ -15,7 +15,6 @@
 				</search-bar>
 			</template>
 		</modal-header>
-
 		<div class="facets-and-results-container">
 			<facets-panel
 				v-if="viewType === ViewType.LIST"
@@ -72,7 +71,7 @@
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
 				<search-results-matrix
-					v-if="viewType === ViewType.MATRIX"
+					v-else-if="viewType === ViewType.MATRIX"
 					:data-items="dataItems"
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
