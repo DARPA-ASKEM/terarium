@@ -279,7 +279,7 @@ const getXDDArtifacts = async (doc_doi: string, term?: string) => {
 //  semantic similarity (i.e., document embedding) from XDD via the HMI server
 //
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
-	if (docid === '' || dataset) {
+	if (docid === '' || dataset === null) {
 		return [] as XDDArticle[];
 	}
 
@@ -500,6 +500,34 @@ const fetchResource = async (
 		try {
 			switch (resourceType) {
 				case ResourceType.XDD: // XDD
+					// are we executing a search-by-example (e.g., to find related documents)?
+					if (
+						searchParam?.xdd?.related_search &&
+						searchParam?.xdd.docid &&
+						searchParam?.xdd.dataset
+					) {
+						const relatedDocuments = await getRelatedDocuments(
+							searchParam?.xdd.docid,
+							searchParam?.xdd.dataset
+						);
+						const relatedSearchResults = {
+							results: relatedDocuments,
+							searchSubsystem: ResourceType.XDD,
+							hits: 0
+						};
+						resolve({
+							allData: relatedSearchResults,
+							allDataFilteredWithFacets: relatedSearchResults
+						});
+					} else {
+						resolve({
+							allData: await searchXDDArticles(term, searchParam?.xdd),
+							allDataFilteredWithFacets: await searchXDDArticles(
+								term,
+								searchParamWithFacetFilters?.xdd
+							)
+						});
+					}
 					resolve({
 						allData: await searchXDDArticles(term, searchParam?.xdd),
 						allDataFilteredWithFacets: await searchXDDArticles(

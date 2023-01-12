@@ -283,19 +283,19 @@ const executeSearch = async () => {
 		}
 	};
 
+	// handle the search-by-example for finding related articles
+	if (searchParams.xdd && executeSearchByExample.value && searchByExampleItem.value) {
+		searchParams.xdd.related_search = executeSearchByExample.value;
+		const id = getResourceID(searchByExampleItem.value) as string;
+		searchParams.xdd.docid = id;
+	}
+
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
 	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
-
-	// handle the search-by-example for finding related articles
-	if (executeSearchByExample.value && searchByExampleItem.value) {
-		xddSearchParams.related_search = executeSearchByExample.value;
-		const id = getResourceID(searchByExampleItem.value) as string;
-		xddSearchParams.docid = id;
-	}
 
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
