@@ -13,7 +13,10 @@ import { RoutePath, useCurrentRoute } from './router/index';
  */
 const route = useRoute();
 const currentRoute = useCurrentRoute();
-const isSidebarVisible = computed(() => currentRoute.value.path !== RoutePath.Home);
+const isSidebarVisible = computed(
+	() =>
+		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
+);
 const searchBarText = ref('');
 const resources = useResourcesStore();
 /**
