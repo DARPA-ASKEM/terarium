@@ -279,7 +279,7 @@ const getXDDArtifacts = async (doc_doi: string, term?: string) => {
 //  semantic similarity (i.e., document embedding) from XDD via the HMI server
 //
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
-	if (docid === '' || dataset === null) {
+	if (docid === '' || dataset) {
 		return [] as XDDArticle[];
 	}
 

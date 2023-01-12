@@ -15,83 +15,85 @@
 				</search-bar>
 			</template>
 		</modal-header>
-		<div class="secondary-header">
-			<span class="section-label">View only</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.XDD }"
-					@click="updateResultType(ResourceType.XDD)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-					Papers
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.MODEL }"
-					@click="updateResultType(ResourceType.MODEL)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-					Models
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.DATASET }"
-					@click="updateResultType(ResourceType.DATASET)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-					Datasets
-				</button>
-			</div>
-
-			<span class="section-label">View as</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.LIST }"
-					@click="viewType = ViewType.LIST"
-				>
-					List
-				</button>
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.MATRIX }"
-					@click="viewType = ViewType.MATRIX"
-				>
-					Matrix
-				</button>
-			</div>
-		</div>
 		<div class="facets-and-results-container">
-			<template v-if="viewType === ViewType.LIST">
-				<facets-panel
-					class="facets-panel"
-					:facets="facets"
-					:filtered-facets="filteredFacets"
+			<facets-panel
+				v-if="viewType === ViewType.LIST"
+				class="facets-panel"
+				:facets="facets"
+				:filtered-facets="filteredFacets"
+				:result-type="resultType"
+			/>
+			<div class="results-content">
+				<div class="secondary-header">
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.XDD }"
+							@click="updateResultType(ResourceType.XDD)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+							Papers
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.MODEL }"
+							@click="updateResultType(ResourceType.MODEL)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
+							Models
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.DATASET }"
+							@click="updateResultType(ResourceType.DATASET)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+							Datasets
+						</button>
+					</div>
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: viewType === ViewType.LIST }"
+							@click="viewType = ViewType.LIST"
+						>
+							List
+						</button>
+						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
+					</div>
+				</div>
+				<search-results-list
+					v-if="viewType === ViewType.LIST"
+					:data-items="dataItems"
 					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:search-term="searchTerm"
+					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
-				<div class="results-content">
-					<search-results-list
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:search-term="searchTerm"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
-			<template v-if="viewType === ViewType.MATRIX">
-				<div class="results-content">
-					<search-results-matrix
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:dict-names="dictNames"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
+				<search-results-matrix
+					v-else-if="viewType === ViewType.MATRIX"
+					:data-items="dataItems"
+					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:dict-names="dictNames"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				/>
+			</div>
+			<!-- document preview -->
+			<document
+				v-if="previewItem"
+				class="selected-resources-pane"
+				:asset-id="previewItemId"
+				:project="resources.activeProject"
+			>
+				<template #footer>
+					Add to cart
+					<br />
+					Add to Project
+				</template>
+			</document>
 			<selected-resources-options-pane
+				v-else
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
 				@remove-item="toggleDataItemSelected"
@@ -111,6 +113,7 @@ import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
+import Document from '@/views/Document.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -133,16 +136,15 @@ import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
-import { cloneDeep, intersectionBy, isEmpty, max, min, unionBy } from 'lodash';
+import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { Dataset } from '@/types/Dataset';
-
-// FIXME: page count is not taken into consideration
 
 const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
 
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
+const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 const query = useQueryStore();
 const resources = useResourcesStore();
@@ -317,8 +319,23 @@ const onClose = () => {
 	emit('hide');
 };
 
-const toggleDataItemSelected = (item: ResultType) => {
+const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
+	const item = dataItem.item;
+
+	if (dataItem.type && dataItem.type === 'clicked') {
+		// toggle preview
+		if (isEqual(dataItem.item, previewItem.value)) {
+			// clear preview item and close the preview panel
+			// FIXME: should we clear the preview if item is de-selected even if other items are still selected
+			previewItem.value = null;
+		} else {
+			// open the preview panel
+			previewItem.value = item;
+		}
+		return; // do not add to cart if the purpose is to toggel preview
+	}
+
 	selectedSearchItems.value.forEach((searchItem, indx) => {
 		if (isModel(item) && isModel(searchItem)) {
 			const itemAsModel = item as Model;
@@ -342,6 +359,16 @@ const toggleDataItemSelected = (item: ResultType) => {
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
+
+const previewItemId = computed(() => {
+	if (previewItem.value === null) return '';
+	if (isXDDArticle(previewItem.value)) {
+		const itemAsArticle = previewItem.value as XDDArticle;
+		// eslint-disable-next-line no-underscore-dangle
+		return itemAsArticle.gddid || itemAsArticle._gddid;
+	}
+	return '';
+});
 
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
@@ -431,14 +458,10 @@ onUnmounted(() => {
 
 .secondary-header {
 	display: flex;
-	padding: 10px;
+	padding: 1rem 0;
+	justify-content: space-between;
 	align-items: center;
 	height: var(--nav-bar-height);
-}
-
-.secondary-header .section-label {
-	margin-right: 5px;
-	margin-left: 20px;
 }
 
 .data-explorer-container .header {
@@ -497,7 +520,7 @@ onUnmounted(() => {
 
 .facets-panel {
 	margin-top: 10px;
-	width: 250px;
+	width: 20%;
 	overflow-y: auto;
 }
 
@@ -505,7 +528,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	align-items: center;
 }
 
 .xdd-known-terms {
@@ -533,6 +555,6 @@ onUnmounted(() => {
 }
 
 .selected-resources-pane {
-	width: 250px;
+	width: 35%;
 }
 </style>
