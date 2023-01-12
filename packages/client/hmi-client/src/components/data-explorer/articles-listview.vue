@@ -6,6 +6,7 @@
 					:asset="d"
 					:selectedSearchItems="selectedSearchItems"
 					:isPreviewedArticle="previewedArticle === d"
+					:isInCart="false"
 					@toggle-article-selected="updateSelection(d)"
 					@toggle-article-preview="togglePreview(d)"
 				/>

@@ -1,17 +1,41 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { XDDArticle } from '@/types/XDD';
 import { isXDDArticle } from '@/utils/data-util';
 import IconAdd24 from '@carbon/icons-vue/es/add/24';
 import IconCheckmark24 from '@carbon/icons-vue/es/checkmark/24';
+import IconOverflowMenuVertical24 from '@carbon/icons-vue/es/overflow-menu--vertical/24';
+import IconDocumentBlank16 from '@carbon/icons-vue/es/document--blank/16';
+import IconLink16 from '@carbon/icons-vue/es/link/16';
+import IconChartLine16 from '@carbon/icons-vue/es/chart--line/16';
+import IconTable16 from '@carbon/icons-vue/es/table/16';
+import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
+import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import { ResultType } from '@/types/common';
 
 const props = defineProps<{
-	asset: XDDArticle; // Will be abstracted later
+	asset: XDDArticle; // Will be abstracted later to make other assets compatible
 	isPreviewedArticle: boolean;
+	isInCart: boolean;
 	selectedSearchItems: ResultType[];
 }>();
 
+console.log(props.asset?.relatedExtractions);
+
 const emit = defineEmits(['toggle-article-selected', 'toggle-article-preview']);
+
+const assetIndex = ref<number>(1);
+
+function navigateAssetCarousel(movement: number) {
+	const newPage = assetIndex.value + movement;
+	if (
+		props.asset.relatedExtractions &&
+		newPage > 0 &&
+		newPage <= props.asset.relatedExtractions.length
+	) {
+		assetIndex.value = newPage;
+	}
+}
 
 const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
@@ -32,17 +56,38 @@ const formatDetails = () =>
 <template>
 	<div class="search-item" :active="isPreviewedArticle" @click="emit('toggle-article-preview')">
 		<div>
-			<div>ARTICLE</div>
+			<div class="type-and-filters">
+				ARTICLE
+				<span class="asset-filters">
+					<IconDocumentBlank16 />
+					<IconLink16 />
+					<IconChartLine16 />
+					<IconTable16 />
+				</span>
+			</div>
 			<div class="title">{{ asset.title }}</div>
 			<div class="details">{{ formatDetails() }}</div>
 			<ul class="snippets" v-if="asset.highlight">
 				<li v-for="h in asset.highlight" :key="h">...<span v-html="h"></span>...</li>
 			</ul>
 		</div>
-		<button type="button" @click.stop="emit('toggle-article-selected')">
-			<IconAdd24 v-show="!isSelected()" />
-			<IconCheckmark24 class="checkmark-color" v-show="isSelected()" />
-		</button>
+		<div class="right">
+			<figure v-if="asset.relatedExtractions">
+				<img class="extracted-assets" src="" alt="asset" />
+				<div class="asset-nav-arrows">
+					<IconArrowLeft16 @click="navigateAssetCarousel(-1)" />
+					Asset {{ assetIndex }} of {{ asset.relatedExtractions?.length }}
+					<IconArrowRight16 @click="navigateAssetCarousel(1)" />
+				</div>
+			</figure>
+			<button type="button" v-if="isInCart">
+				<IconOverflowMenuVertical24 />
+			</button>
+			<button v-else type="button" @click.stop="emit('toggle-article-selected')">
+				<IconAdd24 v-show="!isSelected()" />
+				<IconCheckmark24 class="checkmark-color" v-show="isSelected()" />
+			</button>
+		</div>
 	</div>
 </template>
 
@@ -66,6 +111,28 @@ const formatDetails = () =>
 	outline: 1px solid var(--un-color-feedback-success);
 }
 
+.type-and-filters {
+	display: flex;
+	align-items: center;
+}
+
+.asset-nav-arrows {
+	display: flex;
+}
+
+.right {
+	display: flex;
+}
+
+.right figure {
+	width: 10rem;
+}
+
+.asset-filters {
+	display: flex;
+	margin-left: 2rem;
+}
+
 .title {
 	font-weight: 500;
 	color: var(--un-color-body-text-primary);
@@ -74,6 +141,14 @@ const formatDetails = () =>
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
+}
+
+.title,
+.details {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
 }
 
 button {
@@ -86,7 +161,7 @@ button {
 svg:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
-	border-radius: 5px;
+	border-radius: 3px;
 }
 
 .checkmark-color {
