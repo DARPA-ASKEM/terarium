@@ -1,0 +1,57 @@
+@import '@node_modules/@ibm/plex/css/ibm-plex.css'; /* IBM Plex font-family */
+@import '@assets/css/reset.css'; /* Reset */
+
+/* 
+ * Uncharted Design Tokens
+ * TODO: needs to be depracated 
+ */
+@import '@node_modules/@uncharted.software/design-tokens/build/css/uncharted-tokens.css';
+
+/** 
+ * PrimeVue
+ * https://primefaces.org/primevue/setup
+ */
+@import '@node_modules/primeflex/primeflex.min.css';
+@import '@node_modules/primevue/resources/primevue.min.css';
+@import '@node_modules/primeicons/primeicons.css';
+
+/* 
+ * TERArium PrimeVue Theme 
+ * https://www.primefaces.org/designer/primevue
+ */
+@import '@assets/css/theme/theme.scss';
+
+
+:root {
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+	background-color: var(--un-color-body-surface-background);
+	color: var(--un-color-body-text-primary);
+	color-scheme: light;
+	font: var(--un-font-body);
+}
+
+body {
+	background-color: inherit;
+	color: inherit;
+	display: flex;
+	flex-direction: column;
+	font: inherit;
+	isolation: isolate;
+}
+
+h1 {
+	font: var(--un-font-h1)
+}
+h2 {
+	font: var(--un-font-h2)
+}
+h3 {
+	font: var(--un-font-h3)
+}
+h4 {
+	font: var(--un-font-h4)
+}

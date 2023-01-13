@@ -1,12 +1,6 @@
-@import '@node_modules/@uncharted.software/design-tokens/build/css/uncharted-tokens.css';
-
-/** 
- * PrimeVue
- * https://primefaces.org/primevue/setup
- */
-@import '@node_modules/primevue/resources/themes/md-light-indigo/theme.css';
-@import '@node_modules/primevue/resources/primevue.css';
-@import '@node_modules/primeicons/primeicons.css';
+@import './variables';
+@import './designer/_components';
+@import './extensions/vendor_extensions';
 
 :root {
     /* Overwriting Uncharted design-tokens for TERArium */
