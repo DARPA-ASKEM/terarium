@@ -116,7 +116,7 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
 
-const sectionElem = ref(null);
+const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
