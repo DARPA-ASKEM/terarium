@@ -1,75 +1,75 @@
 <template>
 	<section class="doc-view-container">
 		<div v-if="doc">
+			<div class="journal">{{ doc.journal }}</div>
 			<div v-if="docLink" class="title">
-				<a :href="docLink" target="_blank" rel="noreferrer noopener">{{ doc.title }}</a>
+				<a :href="docLink" rel="noreferrer noopener">{{ doc.title }}</a>
 			</div>
 			<div v-else class="title">{{ doc.title }}</div>
-
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
-			<div class="journal">{{ doc.journal }}</div>
-			<div class="publisher">{{ doc.publisher }}</div>
-			<div class="desc">{{ formatDescription(doc) }}</div>
-			<div class="doi">DOI: {{ doi }}</div>
-			<div class="artifacts-header">
-				<b>Document Artifacts:</b> Found
-				{{ artifacts.length + (urlExtractions ? urlExtractions.length : 0) }} Extractions
-			</div>
-			<div class="extractions-container">
-				<div class="nav-container">
-					<ul class="nav">
-						<li v-for="exType in Object.keys(groupedExtractions)" :key="exType">
-							<button
-								type="button"
-								:class="{ active: extractionType === exType }"
-								@click="extractionType = exType"
-							>
-								{{ exType }} ({{ groupedExtractions[exType].length }})
-							</button>
-						</li>
-						<li v-if="urlExtractions">
-							<button
-								type="button"
-								:class="{ active: extractionType === XDDExtractionType.URL }"
-								@click="extractionType = XDDExtractionType.URL"
-							>
-								URLs ({{ urlExtractions.length }})
-							</button>
-						</li>
-					</ul>
+			<br />
+
+			<div class="row">
+				<!-- TODO -->
+				<!-- Journal impact factor -->
+				<!-- # Citations -->
+				<div>
+					<div class="publisher">{{ doc.publisher }}</div>
+					<div class="doi">DOI: {{ doi }}</div>
 				</div>
-				<template v-if="extractionType !== XDDExtractionType.URL">
-					<div v-for="ex in groupedExtractions[extractionType]" :key="ex.askemId">
-						<template
-							v-if="
-								ex.properties.image &&
-								(ex.askemClass === XDDExtractionType.Figure ||
-									ex.askemClass === XDDExtractionType.Table ||
-									ex.askemClass === XDDExtractionType.Equation)
-							"
-						>
-							<!-- render figure -->
-							{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						</template>
-						<template v-else>
-							<!-- render textual content -->
-							<b>{{ ex.properties.title }}</b>
-							{{ ex.properties.caption }}
-							{{ ex.properties.abstractText }}
-							{{ ex.properties.contentText }}
-						</template>
+				<Button label="Open PDF"></Button>
+			</div>
+
+			<Accordion :multiple="true" class="accordian">
+				<AccordionTab header="Abstract">
+					{{ formatAbstract(doc) }}
+				</AccordionTab>
+
+				<AccordionTab header="Snippets"> </AccordionTab>
+
+				<AccordionTab header="Figures">
+					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
 					</div>
-				</template>
-				<template v-else>
-					<div v-for="ex in urlExtractions" :key="ex.url">
+				</AccordionTab>
+
+				<AccordionTab header="Tables">
+					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+					</div>
+				</AccordionTab>
+
+				<AccordionTab header="Equations">
+					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+					</div>
+				</AccordionTab>
+
+				<AccordionTab header="URLs">
+					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resource_title }}</b>
 						<div>
 							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
 					</div>
-				</template>
-			</div>
+				</AccordionTab>
+
+				<AccordionTab header="Others">
+					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
+						<b>{{ ex.properties.title }}</b>
+						{{ ex.properties.caption }}
+						{{ ex.properties.abstractText }}
+						{{ ex.properties.contentText }}
+					</div>
+				</AccordionTab>
+
+				<AccordionTab header="Other versions"> </AccordionTab>
+				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
+				<AccordionTab header="Provenance"> </AccordionTab>
+			</Accordion>
 		</div>
 		<resources-list
 			v-else
@@ -77,15 +77,16 @@
 			:resourceRoute="RouteName.DocumentRoute"
 			@show-data-explorer="emit('show-data-explorer')"
 		/>
-		<slot name="footer"> </slot>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
-import { groupBy } from 'lodash';
 import { getDocumentDoi } from '@/utils/data-util';
 import { RouteName } from '@/router/routes';
 import { Project } from '@/types/Project';
@@ -125,30 +126,37 @@ const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
 );
 
-const urlExtractions = computed(() =>
-	doc.value?.knownEntities && doc.value.knownEntities.url_extractions.length > 0
-		? doc.value.knownEntities.url_extractions
-		: null
-);
-
-const formatDescription = (d: XDDArticle) =>
+const formatAbstract = (d: XDDArticle) =>
 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
 	'[no abstract]';
 
 const doi = computed(() => getDocumentDoi(doc.value));
 
-const extractionType = ref('');
-
 const artifacts = ref<XDDArtifact[]>([]);
+const figureArtifacts = computed(() =>
+	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure)
+);
+const tableArtifacts = computed(() =>
+	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table)
+);
+const equationArtifacts = computed(() =>
+	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation)
+);
+const urlArtifacts = computed(() =>
+	doc.value?.knownEntities && doc.value.knownEntities.url_extractions.length > 0
+		? doc.value.knownEntities.url_extractions
+		: null
+);
 
-const groupedExtractions = computed(() => groupBy(artifacts.value, 'askemClass'));
+const otherArtifacts = computed(() => {
+	const exclusion = [
+		XDDExtractionType.URL,
+		XDDExtractionType.Table,
+		XDDExtractionType.Figure,
+		XDDExtractionType.Equation
+	];
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-watch(artifacts, (currentValue, oldValue) => {
-	if (artifacts.value.length > 0) {
-		extractionType.value = artifacts.value[0].askemClass;
-	}
+	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
 
 const fetchArtifacts = async () => {
@@ -185,10 +193,13 @@ onMounted(async () => {
 	margin: 1rem;
 }
 
+.row {
+	display: flex;
+	justify-content: space-between;
+}
+
 .title {
-	font-weight: bold;
-	font-size: x-large;
-	line-height: 2rem;
+	font: var(--un-font-h3);
 }
 
 .authors {
@@ -202,68 +213,12 @@ onMounted(async () => {
 	padding-top: 8px;
 }
 
-.desc {
-	padding-top: 8px;
+.accordian {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 }
 
-.invalid-doc {
-	color: red;
-}
-
-.artifacts-header {
-	padding-top: 2rem;
-	padding-bottom: 8px;
-}
-
-.extractions-container {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	padding-left: 1rem;
-	width: 100%;
-	height: 100%;
-}
-
-.nav-container {
-	display: flex;
-	align-items: center;
-	background-color: white;
-	overflow: auto;
-}
-
-.nav {
-	list-style-type: none;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-	margin-right: 2rem;
-	margin-left: 5rem;
-}
-
-li {
-	float: left;
-}
-
-li button {
-	display: block;
-	color: blue;
-	text-align: center;
-	padding: 8px 12px;
-	text-decoration: none;
-	border: none;
-	background-color: transparent;
-	font-size: larger;
-	cursor: pointer;
-}
-
-li button:hover:not(.active) {
-	text-decoration: underline;
-	border: none;
-}
-
-li button.active {
-	text-decoration: underline;
-	font-weight: bold;
-	border: none;
+.extracted-item {
+	padding-bottom: 20px;
 }
 </style>
