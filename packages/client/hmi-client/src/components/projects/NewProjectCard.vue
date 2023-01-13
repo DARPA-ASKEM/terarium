@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Button from 'primevue/button';
 import Modal from '@/components/Modal.vue';
+import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import { ref } from 'vue';

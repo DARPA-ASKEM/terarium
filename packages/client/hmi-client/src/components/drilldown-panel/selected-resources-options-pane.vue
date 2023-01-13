@@ -3,11 +3,10 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-selected-buttons">
 			<Button
-				action
 				@click="addAssetsToProject"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				>Add to current project</Button
-			>
+				label="Add to current project"
+			/>
 			<dropdown-button
 				v-if="selectedSearchItems.length > 0"
 				:inner-button-label="'Add to another project'"
@@ -37,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import Button from '@/components/Button.vue';
+import Button from 'primevue/button';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
