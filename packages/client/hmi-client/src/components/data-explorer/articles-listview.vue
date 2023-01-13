@@ -1,5 +1,16 @@
 <template>
 	<div class="table-fixed-head">
+		<ul>
+			<li v-for="d in articles" :key="d.gddid" class="tr-item">
+				<SearchItem
+					:asset="d"
+					:selectedSearchItems="selectedSearchItems"
+					:isPreviewedArticle="previewedArticle === d"
+					@toggle-article-selected="updateSelection(d)"
+					@toggle-article-preview="togglePreview(d)"
+				/>
+			</li>
+		</ul>
 		<table>
 			<tbody>
 				<tr
@@ -11,7 +22,6 @@
 				>
 					<td>
 						<div class="content-container">
-							<!-- in case of requesting multiple selection -->
 							<div class="radio" @click.stop="updateSelection(d)">
 								<span v-show="isSelected(d)">
 									<IconCheckboxChecked20 />
@@ -109,16 +119,17 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, toRefs, watch } from 'vue';
+import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
-import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
-import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
+import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	articles: {
@@ -140,6 +151,8 @@ const props = defineProps({
 const emit = defineEmits(['toggle-article-selected']);
 
 const resources = useResourcesStore();
+
+const previewedArticle = ref<XDDArticle | null>(null);
 
 const { articles, selectedSearchItems } = toRefs(props);
 
@@ -175,6 +188,7 @@ const updateSelection = (article: XDDArticle) => {
 
 const togglePreview = (article: XDDArticle) => {
 	emit('toggle-article-selected', { item: article, type: 'clicked' });
+	previewedArticle.value = previewedArticle.value === article ? null : article;
 };
 
 const fetchRelatedDocument = async (article: XDDArticle) => {
@@ -208,6 +222,13 @@ const formatKnownTerms = (d: XDDArticle) => {
 </script>
 
 <style scoped>
+ul {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	list-style: none;
+}
+
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -244,7 +265,7 @@ tbody tr:first-child {
 }
 
 .tr-item {
-	height: 50px;
+	/* height: 50px; */
 }
 
 .tr-item.selected td {
