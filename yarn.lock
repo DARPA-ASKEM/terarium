@@ -563,13 +563,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ibm/plex@npm:6.1.1":
-  version: 6.1.1
-  resolution: "@ibm/plex@npm:6.1.1"
-  checksum: 832f1928732374d15208151d251b31b73ad196006274807a82aaf8075f83b308faa379e3d1dc0bb0952f1ad0848f8bdc1f67cd477404bab7f1f30daf202ccdaa
-  languageName: node
-  linkType: hard
-
 "@istanbuljs/load-nyc-config@npm:^1.0.0":
   version: 1.1.0
   resolution: "@istanbuljs/load-nyc-config@npm:1.1.0"
@@ -6365,7 +6358,6 @@ cors@latest:
   resolution: "hmi-client@workspace:packages/client/hmi-client"
   dependencies:
     "@carbon/icons-vue": 10.60.0
-    "@ibm/plex": 6.1.1
     "@pinia/testing": 0.0.14
     "@playwright/experimental-ct-vue": 1.27.1
     "@playwright/test": 1.27.1
