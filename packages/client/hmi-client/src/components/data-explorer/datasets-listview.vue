@@ -95,11 +95,8 @@ const props = defineProps({
 		default: ''
 	}
 });
-
 const emit = defineEmits(['toggle-dataset-selected']);
-
 const { datasets, selectedSearchItems } = toRefs(props);
-
 watch(
 	datasets,
 	() => {
@@ -110,7 +107,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
 const getConceptTags = (dataset: Dataset) => {
 	const tags = [] as string[];
 	if (props.rawConceptFacets) {
@@ -121,11 +117,8 @@ const getConceptTags = (dataset: Dataset) => {
 	}
 	return tags;
 };
-
 const isExpanded = () => false;
-
 const formatOutputName = (d: Dataset) => d.name;
-
 const isSelected = (dataset: Dataset) =>
 	selectedSearchItems.value.find((item) => {
 		if (isDataset(item)) {
@@ -134,20 +127,16 @@ const isSelected = (dataset: Dataset) =>
 		}
 		return false;
 	});
-
 const updateSelection = (dataset: Dataset) => {
 	emit('toggle-dataset-selected', { item: dataset, type: 'selected' });
 };
-
 const togglePreview = (dataset: Dataset) => {
 	emit('toggle-dataset-selected', { item: dataset, type: 'clicked' });
 };
-
 const formatDescription = (d: Dataset) => {
 	if (!d.description) return '';
 	return d.description.length < 140 ? d.description : `${d.description.substring(0, 140)}...`;
 };
-
 const formatFeatures = (d: Dataset) => {
 	const features = d.annotations.annotations.feature ?? [];
 	if (!features || features.length === 0) return [];

@@ -15,95 +15,76 @@
 				</search-bar>
 			</template>
 		</modal-header>
-		<div class="secondary-header">
-			<span class="section-label">View only</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.XDD }"
-					@click="updateResultType(ResourceType.XDD)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-					Papers
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.MODEL }"
-					@click="updateResultType(ResourceType.MODEL)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-					Models
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.DATASET }"
-					@click="updateResultType(ResourceType.DATASET)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-					Datasets
-				</button>
-			</div>
-
-			<span class="section-label">View as</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.LIST }"
-					@click="viewType = ViewType.LIST"
-				>
-					List
-				</button>
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.MATRIX }"
-					@click="viewType = ViewType.MATRIX"
-				>
-					Matrix
-				</button>
-			</div>
-		</div>
 		<div class="facets-and-results-container">
-			<template v-if="viewType === ViewType.LIST">
-				<facets-panel
-					class="facets-panel"
-					:facets="facets"
-					:filtered-facets="filteredFacets"
+			<facets-panel
+				v-if="viewType === ViewType.LIST"
+				class="facets-panel"
+				:facets="facets"
+				:filtered-facets="filteredFacets"
+				:result-type="resultType"
+			/>
+			<div class="results-content">
+				<div class="secondary-header">
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.XDD }"
+							@click="updateResultType(ResourceType.XDD)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+							Papers
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.MODEL }"
+							@click="updateResultType(ResourceType.MODEL)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
+							Models
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.DATASET }"
+							@click="updateResultType(ResourceType.DATASET)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+							Datasets
+						</button>
+					</div>
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: viewType === ViewType.LIST }"
+							@click="viewType = ViewType.LIST"
+						>
+							List
+						</button>
+						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
+					</div>
+				</div>
+				<search-results-list
+					v-if="viewType === ViewType.LIST"
+					:data-items="dataItems"
 					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:search-term="searchTerm"
+					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
-				<div class="results-content">
-					<search-results-list
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:search-term="searchTerm"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
-			<template v-if="viewType === ViewType.MATRIX">
-				<div class="results-content">
-					<search-results-matrix
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:dict-names="dictNames"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
+				<search-results-matrix
+					v-else-if="viewType === ViewType.MATRIX"
+					:data-items="dataItems"
+					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:dict-names="dictNames"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				/>
+			</div>
 			<!-- document preview -->
-			<document
-				v-if="previewItem"
-				class="selected-resources-pane"
-				:asset-id="previewItemId"
-				:project="resources.activeProject"
-			>
-				<template #footer>
-					Add to cart
-					<br />
-					Add to Project
-				</template>
-			</document>
+			<div v-if="previewItem" class="selected-resources-pane">
+				<Document :asset-id="previewItemId" :project="resources.activeProject" />
+				<Button label="Add to Cart"></Button>
+				<Button label="Add to Project"></Button>
+			</div>
 			<selected-resources-options-pane
 				v-else
 				class="selected-resources-pane"
@@ -117,6 +98,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import Button from 'primevue/button';
 
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
@@ -470,14 +452,10 @@ onUnmounted(() => {
 
 .secondary-header {
 	display: flex;
-	padding: 10px;
+	padding: 1rem 0;
+	justify-content: space-between;
 	align-items: center;
 	height: var(--nav-bar-height);
-}
-
-.secondary-header .section-label {
-	margin-right: 5px;
-	margin-left: 20px;
 }
 
 .data-explorer-container .header {
@@ -544,7 +522,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	align-items: center;
 }
 
 .xdd-known-terms {
