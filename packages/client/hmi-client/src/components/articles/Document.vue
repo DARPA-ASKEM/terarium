@@ -29,22 +29,34 @@
 
 				<AccordionTab header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+						<div class="img-container">
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+							<span>{{
+								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+							}}</span>
+						</div>
 					</div>
 				</AccordionTab>
 
 				<AccordionTab header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+						<div class="img-container">
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+							<span>{{
+								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+							}}</span>
+						</div>
 					</div>
 				</AccordionTab>
 
 				<AccordionTab header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						{{ ex.properties.caption ? ex.properties.caption : ex.properties.contentText }}
+						<div class="img-container">
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+							<span>{{
+								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+							}}</span>
+						</div>
 					</div>
 				</AccordionTab>
 
@@ -71,12 +83,6 @@
 				<AccordionTab header="Provenance"> </AccordionTab>
 			</Accordion>
 		</div>
-		<resources-list
-			v-else
-			:project="props?.project"
-			:resourceRoute="RouteName.DocumentRoute"
-			@show-data-explorer="emit('show-data-explorer')"
-		/>
 	</section>
 </template>
 
@@ -88,16 +94,10 @@ import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
-import { RouteName } from '@/router/routes';
-import { Project } from '@/types/Project';
-import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	assetId: string;
-	project: Project | null;
 }>();
-
-const emit = defineEmits(['show-data-explorer']);
 
 const doc = ref<XDDArticle | null>(null);
 
@@ -220,5 +220,17 @@ onMounted(async () => {
 
 .extracted-item {
 	padding-bottom: 20px;
+}
+
+/* Meant for left:right image:caption */
+.img-container {
+	display: flex;
+	flex-direction: row;
+}
+
+.img-container > img {
+	max-width: 180px;
+	margin: 5px;
+	border: 1px solid var(--background-light-3);
 }
 </style>

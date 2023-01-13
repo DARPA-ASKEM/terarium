@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
-import DocumentView from '@/views/Document.vue';
+import DocumentView from '@/views/DocumentView.vue';
 import HomeView from '@/views/Home.vue';
 import DatasetView from '@/views/Dataset.vue';
 import ProjectView from '@/views/Project.vue';

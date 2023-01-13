@@ -107,7 +107,7 @@ import SearchBar from '@/components/data-explorer/search-bar.vue';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import Document from '@/views/Document.vue';
+import Document from '@/components/articles/Document.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
