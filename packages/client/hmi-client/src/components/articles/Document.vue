@@ -1,5 +1,5 @@
 <template>
-	<section class="doc-view-container">
+	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
 			<div class="journal">{{ doc.journal }}</div>
 			<div v-if="docLink" class="title">
@@ -32,7 +32,12 @@
 				<AccordionTab header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+							<img
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								:style="{ 'max-width': imageSize }"
+							/>
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -43,7 +48,12 @@
 				<AccordionTab header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+							<img
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								:style="{ 'max-width': imageSize }"
+							/>
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -54,7 +64,12 @@
 				<AccordionTab header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+							<img
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								:style="{ 'max-width': imageSize }"
+							/>
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -100,6 +115,8 @@ import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
+
+const sectionElem = ref(null);
 
 const props = defineProps<{
 	assetId: string;
@@ -182,8 +199,15 @@ watch(doi, (currentValue, oldValue) => {
 	}
 });
 
+// Image size will adapt depend on available space
+const imageSize = ref('160px');
+
 // fetch artifacts from COSMOS using the doc doi
 onMounted(async () => {
+	const rect = (sectionElem.value as HTMLElement).getBoundingClientRect();
+	if (rect.width > 800) {
+		imageSize.value = '400px';
+	}
 	fetchArtifacts();
 });
 </script>
@@ -235,7 +259,6 @@ onMounted(async () => {
 }
 
 .img-container > img {
-	max-width: 180px;
 	margin: 5px;
 	border: 1px solid var(--background-light-3);
 }
