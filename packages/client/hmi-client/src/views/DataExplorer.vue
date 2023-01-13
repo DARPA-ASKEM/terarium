@@ -80,18 +80,11 @@
 				/>
 			</div>
 			<!-- document preview -->
-			<document
-				v-if="previewItem"
-				class="selected-resources-pane"
-				:asset-id="previewItemId"
-				:project="resources.activeProject"
-			>
-				<template #footer>
-					Add to cart
-					<br />
-					Add to Project
-				</template>
-			</document>
+			<div v-if="previewItem" class="selected-resources-pane">
+				<Document :asset-id="previewItemId" :project="resources.activeProject" />
+				<Button label="Add to Cart"></Button>
+				<Button label="Add to Project"></Button>
+			</div>
 			<selected-resources-options-pane
 				v-else
 				class="selected-resources-pane"
@@ -105,6 +98,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import Button from 'primevue/button';
 
 import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
