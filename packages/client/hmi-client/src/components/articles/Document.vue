@@ -20,12 +20,14 @@
 				<Button label="Open PDF"></Button>
 			</div>
 
-			<Accordion :multiple="true" class="accordian">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
 				<AccordionTab header="Abstract">
 					{{ formatAbstract(doc) }}
 				</AccordionTab>
 
+				<!--
 				<AccordionTab header="Snippets"> </AccordionTab>
+				-->
 
 				<AccordionTab header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
@@ -78,7 +80,11 @@
 					</div>
 				</AccordionTab>
 
+				<!--
 				<AccordionTab header="Other versions"> </AccordionTab>
+				-->
+				<AccordionTab header="References"> </AccordionTab>
+				<AccordionTab header="Cited by"> </AccordionTab>
 				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
 				<AccordionTab header="Provenance"> </AccordionTab>
 			</Accordion>
