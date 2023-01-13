@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Button from '@/components/Button.vue';
+import Button from 'primevue/button';
 import IconAdd32 from '@carbon/icons-vue/es/add/32';
 import Modal from '@/components/Modal.vue';
 import InputText from 'primevue/inputtext';
@@ -25,7 +25,7 @@ async function createNewProject() {
 
 <template>
 	<div class="new-project-card">
-		<Button @click="isModalVisible = true">
+		<Button class="p-button-plain" @click="isModalVisible = true">
 			<IconAdd32 />
 			New Project
 		</Button>
@@ -42,8 +42,8 @@ async function createNewProject() {
 				</template>
 				<template #footer>
 					<footer>
-						<Button action @click="createNewProject">Create Project</Button>
-						<Button @click="isModalVisible = false">Cancel</Button>
+						<Button @click="createNewProject">Create Project</Button>
+						<Button class="p-button-secondary" @click="isModalVisible = false">Cancel</Button>
 					</footer>
 				</template>
 			</Modal>
