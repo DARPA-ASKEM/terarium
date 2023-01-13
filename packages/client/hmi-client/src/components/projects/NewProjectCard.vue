@@ -2,6 +2,8 @@
 import Button from '@/components/Button.vue';
 import IconAdd32 from '@carbon/icons-vue/es/add/32';
 import Modal from '@/components/Modal.vue';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
@@ -28,16 +30,14 @@ async function createNewProject() {
 			New Project
 		</Button>
 		<Teleport to="body">
-			<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
-				<template #header>
-					<h3>New Project</h3>
-				</template>
+			<Modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 				<template #default>
 					<form>
 						<label for="new-project-name">Project Name</label>
-						<input id="new-project-name" v-model="name" />
-						<label for="description">Project Purpose</label>
-						<textarea id="new-project-description" v-model="description" />
+						<InputText id="new-project-name" type="text" v-model="name" />
+
+						<label for="new-project-description">Project Purpose</label>
+						<Textarea id="new-project-description" rows="5" v-model="description" />
 					</form>
 				</template>
 				<template #footer>
@@ -46,7 +46,7 @@ async function createNewProject() {
 						<Button @click="isModalVisible = false">Cancel</Button>
 					</footer>
 				</template>
-			</modal>
+			</Modal>
 		</Teleport>
 	</div>
 </template>
@@ -92,8 +92,20 @@ async function createNewProject() {
 	color: var(--un-color-body-text-secondary);
 }
 
-.modal h3 {
+.modal h4 {
 	margin-bottom: 1em;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.modal input,
+.modal textarea {
+	display: block;
+	margin-bottom: 2rem;
+	width: 100%;
 }
 
 .modal footer {
