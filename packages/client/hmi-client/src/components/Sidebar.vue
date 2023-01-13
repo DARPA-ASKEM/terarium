@@ -5,12 +5,8 @@
 import { ref, computed } from 'vue';
 import { RouteParamsRaw, useRoute, useRouter } from 'vue-router';
 
-// Icons
-import IconCaretLeft16 from '@carbon/icons-vue/es/caret--left/16';
-import IconCaretRight16 from '@carbon/icons-vue/es/caret--right/16';
-
 // Components
-import Button from '@/components/Button.vue';
+import Button from 'primevue/button';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DatasetSidebarPanel from '@/components/sidebar-panel/dataset-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
@@ -104,13 +100,11 @@ const DISABLED_BUTTONS = [RouteName.ProvenanceRoute];
 				</li>
 			</ul>
 			<Button
-				round
-				class="side-panel-control"
+				class="p-button-rounded p-button-icon p-button-sm side-panel-control"
+				icon="pi pi-angle-right"
 				v-if="isSidePanelClose && showSidePanel"
 				@click="openSidePanel"
-			>
-				<IconCaretRight16 />
-			</Button>
+			/>
 		</nav>
 		<aside v-if="showSidebar(selectedView)" :class="{ 'side-panel-close': isSidePanelClose }">
 			<h4>{{ RouteMetadata[selectedView].displayName }}</h4>
@@ -125,9 +119,11 @@ const DISABLED_BUTTONS = [RouteName.ProvenanceRoute];
 				v-if="project && selectedView === RouteName.SimulationRoute"
 				:project="project"
 			/>
-			<Button round class="side-panel-control" @click="closeSidePanel">
-				<IconCaretLeft16 />
-			</Button>
+			<Button
+				class="p-button-rounded p-button-icon p-button-sm side-panel-control"
+				icon="pi pi-angle-left"
+				@click="closeSidePanel"
+			/>
 		</aside>
 	</section>
 </template>
@@ -144,17 +140,17 @@ section aside {
 	position: relative;
 }
 
-section .side-panel-control {
-	--btn-background: var(--un-color-accent-mono);
-	--btn-box-shadow: none;
+section .side-panel-control.side-panel-control {
 	position: absolute;
 	right: 0;
 	top: 50%;
 	transform: translateX(50%);
+	height: 2rem;
+	width: 2rem;
 }
 
 nav {
-	background-color: var(--un-color-accent);
+	background-color: var(--primary-color);
 	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
@@ -184,7 +180,7 @@ nav ul li {
 }
 
 nav li svg {
-	fill: var(--un-color-accent-light);
+	fill: var(--primary-color-light);
 }
 
 nav li[active='true'] svg {
@@ -196,7 +192,7 @@ nav li:hover {
 }
 
 nav li:hover svg {
-	fill: var(--un-color-accent);
+	fill: var(--primary-color);
 }
 
 nav li[disabled] {
@@ -204,7 +200,7 @@ nav li[disabled] {
 }
 
 nav li[disabled] svg {
-	fill: var(--un-color-accent-dark);
+	fill: var(--primary-color-dark);
 }
 
 aside {

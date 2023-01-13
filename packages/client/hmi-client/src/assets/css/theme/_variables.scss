@@ -18,6 +18,7 @@ $emphasis-low:rgba(102, 112, 133, 1) !default;
 $emphasis-lower:rgba(208, 213, 221, 1) !default;
 $overlayColor:#000000 !default;
 
+$primaryColorRGB: 45,142,45;
 $primaryColor:#1B8073 !default;
 $primaryTextColor:#ffffff !default;
 $accentColor:rgba(208, 213, 221, .3) !default;
@@ -840,6 +841,8 @@ $imagePreviewActionIconBorderRadius:50% !default;
     --text-color:#{$textColor};
     --text-color-secondary:#{$textSecondaryColor};
     --primary-color:#{$primaryColor};
+    --primary-color-light: #92E192ff;
+    --primary-color-dark: #1C5A1Cff;
     --primary-color-text:#{$primaryTextColor};
     --font-family:#{$fontFamily};
     --surface-0: #ffffff;
