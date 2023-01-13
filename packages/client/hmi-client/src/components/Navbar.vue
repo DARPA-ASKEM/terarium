@@ -3,17 +3,32 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { useCurrentRouter } from '@/router/index';
+import { useCurrentRoute } from '@/router/index';
 import { Project } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
 import useAuthStore from '@/stores/auth';
 import Dialog from 'primevue/dialog';
+import SearchBar from '@/components/data-explorer/search-bar.vue';
+import { RouteMetadata, RouteName } from '@/router/routes';
 
-const emit = defineEmits(['show-data-explorer']);
+const props = defineProps<{
+	projectName?: Project['name'];
+	searchBarText?: string;
+}>();
+
+const currentRoute = useCurrentRoute();
+const pageName = computed(() => {
+	if (
+		currentRoute.value.name === RouteName.HomeRoute ||
+		currentRoute.value.name === RouteName.DataExplorerRoute
+	) {
+		const { displayName } = RouteMetadata[currentRoute.value.name];
+		return displayName;
+	}
+	return props.projectName;
+});
 const router = useRouter();
-const { isCurrentRouteHome } = useCurrentRouter();
 const auth = useAuthStore();
-const isHome = computed(() => isCurrentRouteHome.value);
+
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
 const userMenuItems = ref([
@@ -24,17 +39,6 @@ const userMenuItems = ref([
 		}
 	}
 ]);
-const resources = useResourcesStore();
-
-const goToHomepage = () => {
-	resources.setActiveProject(null);
-	resources.activeProjectAssets = null;
-	router.push('/');
-};
-
-defineProps<{
-	projectName?: Project['name'];
-}>();
 
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
@@ -45,31 +49,31 @@ const userInitials = computed(() =>
 		?.split(' ')
 		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
 );
+
+function searchTextChanged(value) {
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
+}
 </script>
 
 <template>
 	<header>
-		<img v-if="isHome" src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-		<img v-else src="@assets/images/icon.png" height="32" width="32" alt="TERArium icon" />
-		<p v-if="!isHome">
-			<a @click="goToHomepage">Projects</a>
-			<span>{{ projectName }}</span>
-		</p>
-		<aside>
-			<Button
-				class="data-explorer p-button p-button-icon-only p-button-rounded"
-				@click="emit('show-data-explorer')"
-				aria-label="Data Explorer"
-			>
-				<i class="pi pi-search" />
-			</Button>
+		<section class="header-left">
+			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+			<section class="page-name">
+				<p>
+					{{ pageName }}
+				</p>
+			</section>
+		</section>
+		<SearchBar class="searchbar" :text="searchBarText" @search-text-changed="searchTextChanged" />
+		<section class="header-right">
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
 				@click="showUserMenu"
 			>
 				{{ userInitials }}
 			</Button>
-		</aside>
+		</section>
 		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
 		<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
 			<span>You will be returned to the login screen.</span>
@@ -91,7 +95,7 @@ header {
 	background-color: var(--un-color-body-surface-primary);
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
-	justify-content: space-between;
+	justify-content: center;
 	gap: 2rem;
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
@@ -117,28 +121,36 @@ p a:focus {
 	color: var(--un-color-accent-dark);
 }
 
-aside {
+section {
 	display: flex;
-	/* Push it to the far side */
 	gap: 1rem;
 }
 
-.p-button {
-	background-color: var(--un-color-accent);
-}
-
-.p-button:enabled:hover,
-.p-button:enabled:focus {
-	background-color: var(--un-color-accent-light);
-}
-
 .user-button {
-	color: var(--un-color-text-secondary);
+	color: var(--un-color-body-text-secondary);
 	background-color: var(--un-color-body-surface-background);
 }
 
 .user-button:enabled:hover {
-	color: var(--un-color-text-secondary);
+	color: var(--un-color-body-text-secondary);
 	background-color: var(--un-color-body-surface-secondary);
+}
+
+.page-name {
+	justify-content: center;
+	margin-left: auto;
+}
+
+.header-left {
+	flex: 1;
+}
+
+.header-right {
+	flex: 1;
+	justify-content: right;
+}
+
+.searchbar {
+	flex: 2;
 }
 </style>
