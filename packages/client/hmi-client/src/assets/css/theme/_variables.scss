@@ -1,4 +1,4 @@
-$primaryColor:#2D8E2Dff !default;
+$primaryColor:#1B8073 !default;
 $primaryTextColor:#ffffff !default;
 $accentColor:#FF9800 !default;
 $accentTextColor:#ffffff !default;
@@ -18,10 +18,10 @@ $colors: (
     "primary": $primaryColor
 );
 
-$emphasis-high:rgba(0,0,0,.87) !default;
+$emphasis-high:rgba(16, 24, 40, 1) !default;
 $emphasis-medium:rgba(0,0,0,.60) !default;
-$emphasis-low:rgba(0,0,0,.38) !default;
-$emphasis-lower:rgba(0,0,0,.12) !default;
+$emphasis-low:rgba(102, 112, 133, 1) !default;
+$emphasis-lower:rgba(208, 213, 221, 1) !default;
 $overlayColor:#000000 !default;
 
 //global
@@ -36,7 +36,7 @@ $formElementTransition:background-color $transitionDuration, border-color $trans
 $actionIconTransition:background-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration !default;
 $listItemTransition:none !default;
 $primeIconFontSize:1rem !default;
-$divider:1px solid rgba(0,0,0,.12) !default;
+$divider:1px solid $emphasis-lower !default;
 $inlineSpacing:.5rem !default;
 $disabledOpacity:.38 !default;
 $maskBg:rgba(0, 0, 0, 0.32) !default;
@@ -44,9 +44,9 @@ $loadingIconFontSize:2rem !default;
 $errorColor:#B00020 !default;
 
 //selected state
-$highlightBg:rgba($primaryColor, .12) !default;
+$highlightBg:rgba(233, 255, 252, 1) !default;
 $highlightTextColor:$primaryColor !default;
-$highlightFocusBg: rgba($primaryColor, .24) !default;
+$highlightFocusBg: rgba(233, 255, 252, 1) !default;
 
 //scale
 $scaleSM:0.875 !default;
