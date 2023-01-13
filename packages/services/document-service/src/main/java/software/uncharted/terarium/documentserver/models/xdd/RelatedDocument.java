@@ -3,12 +3,15 @@ package software.uncharted.terarium.documentserver.models.xdd;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
-
 @Data
 @Accessors(chain = true)
-public class XDDResponse<T> implements Serializable {
-	private T success;
+public class RelatedDocument {
 
-	private XDDResponseError error;
+	/**
+	 * The related document
+	 **/
+	private Document bibjson;
+
+	private Number score;
+
 }

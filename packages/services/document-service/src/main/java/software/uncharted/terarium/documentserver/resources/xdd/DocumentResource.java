@@ -1,14 +1,14 @@
 package software.uncharted.terarium.documentserver.resources.xdd;
 
 
-import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.documentserver.models.xdd.XDDArticlesResponseOK;
+import software.uncharted.terarium.documentserver.models.xdd.XDDResponse;
 import software.uncharted.terarium.documentserver.proxies.xdd.DocumentProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,7 +25,7 @@ public class DocumentResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all xdd documents via proxy")
 	@Path("/articles")
-	public Response getDocuments(
+	public XDDResponse<XDDArticlesResponseOK> getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
@@ -73,8 +73,9 @@ public class DocumentResource {
 			return proxy.getDocuments(
 				docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
 				min_published, max_published, pubname, publisher, additional_fields, match);
+
 		}
-		return Response.noContent().build();
+		return new XDDResponse<>();
 	}
 
 }
