@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { XDDArticle } from '@/types/XDD';
+import { ref, computed } from 'vue';
+import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { isXDDArticle } from '@/utils/data-util';
 import IconAdd24 from '@carbon/icons-vue/es/add/24';
 import IconCheckmark24 from '@carbon/icons-vue/es/checkmark/24';
@@ -20,20 +20,23 @@ const props = defineProps<{
 	selectedSearchItems: ResultType[];
 }>();
 
-console.log(props.asset?.relatedExtractions);
-
 const emit = defineEmits(['toggle-article-selected', 'toggle-article-preview']);
 
-const assetIndex = ref<number>(1);
+const assetPage = ref<number>(0);
+const relatedAsset = computed(
+	() => props.asset.relatedExtractions && props.asset.relatedExtractions[assetPage.value]
+);
 
-function navigateAssetCarousel(movement: number) {
-	const newPage = assetIndex.value + movement;
+console.log(props.asset.relatedExtractions && props.asset.relatedExtractions);
+
+function paginationMovement(movement: number) {
+	const newPage = assetPage.value + movement;
 	if (
 		props.asset.relatedExtractions &&
-		newPage > 0 &&
-		newPage <= props.asset.relatedExtractions.length
+		newPage > -1 &&
+		newPage < props.asset.relatedExtractions.length
 	) {
-		assetIndex.value = newPage;
+		assetPage.value = newPage;
 	}
 }
 
@@ -73,11 +76,25 @@ const formatDetails = () =>
 		</div>
 		<div class="right">
 			<figure v-if="asset.relatedExtractions">
-				<img class="extracted-assets" src="" alt="asset" />
+				<template
+					v-if="
+						relatedAsset &&
+						relatedAsset.properties.image &&
+						(relatedAsset.askemClass === XDDExtractionType.Figure ||
+							relatedAsset.askemClass === XDDExtractionType.Table ||
+							relatedAsset.askemClass === XDDExtractionType.Equation)
+					"
+				>
+					<img
+						class="extracted-assets"
+						:src="`data:image/jpeg;base64,${asset.relatedExtractions[assetPage].properties.image}`"
+						alt="asset"
+					/>
+				</template>
 				<div class="asset-nav-arrows">
-					<IconArrowLeft16 @click="navigateAssetCarousel(-1)" />
-					Asset {{ assetIndex }} of {{ asset.relatedExtractions?.length }}
-					<IconArrowRight16 @click="navigateAssetCarousel(1)" />
+					<IconArrowLeft16 @click="paginationMovement(-1)" />
+					Asset {{ assetPage + 1 }} of {{ asset.relatedExtractions?.length }}
+					<IconArrowRight16 @click="paginationMovement(1)" />
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
