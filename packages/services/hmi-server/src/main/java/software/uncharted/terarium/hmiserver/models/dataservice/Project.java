@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-// import software.uncharted.terarium.documentserver.models.xdd.document;
+import software.uncharted.terarium.documentserver.models.xdd.Document;
+
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -27,7 +28,7 @@ public class Project implements Serializable {
 
 	private Map<String, List<Long>> assets;
 
-	private String relatedDocuments; //TODO: Replace with document-service's document class
+	private Document relatedDocuments; //TODO: Replace with document-service's document class
 
 	public Project(String id, String name, String description) {//String timestamp, String active, String concept){
 		this.id = id;
@@ -37,7 +38,7 @@ public class Project implements Serializable {
 
 	public String getID(){ return this.id; }
 
-	public void setRelatedDocuments(String relatedDocuments){
+	public void setRelatedDocuments(Document relatedDocuments){
 		this.relatedDocuments = relatedDocuments;
 	}
 	@Override

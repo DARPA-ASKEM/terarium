@@ -124,7 +124,6 @@ public class HomeResource {
 
     //Take a string representation of a document (massive json crap) and parse it into distinct fields
     private Document stringToDocument(String aDocument){
-        String currentProject = m.group();
         LOG.info(aDocument);
         String gddId = aDocument.split("\"gddId\":")[1].split(",")[0];
         String title = aDocument.split("\"title\":")[1].split(",")[0];
