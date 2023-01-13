@@ -1,20 +1,5 @@
 <template>
 	<div class="data-explorer-container">
-		<modal-header :nav-back-label="'Back'" class="header" @close="onClose">
-			<template #content>
-				<search-bar :focus-input="true" @search-text-changed="onSearchTermChanged">
-					<template #dataset>
-						<dropdown-button
-							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
-							:is-dropdown-left-aligned="true"
-							:items="xddDatasets"
-							:selected-item="xddDataset"
-							@item-selected="xddDatasetSelectionChanged"
-						/>
-					</template>
-				</search-bar>
-			</template>
-		</modal-header>
 		<div class="facets-and-results-container">
 			<facets-panel
 				v-if="viewType === ViewType.LIST"
@@ -90,7 +75,6 @@
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
 				@remove-item="toggleDataItemSelected"
-				@close="onClose"
 			/>
 		</div>
 	</div>
@@ -100,11 +84,8 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 
-import ModalHeader from '@/components/data-explorer/modal-header.vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
-import SearchBar from '@/components/data-explorer/search-bar.vue';
-import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import Document from '@/components/articles/Document.vue';
@@ -132,9 +113,16 @@ import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { Dataset } from '@/types/Dataset';
+import { LocationQuery, useRoute } from 'vue-router';
 
-const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
+// FIXME: page count is not taken into consideration
+const emit = defineEmits(['search-query-changed']);
 
+const props = defineProps<{
+	query?: LocationQuery;
+}>();
+const searchQuery = computed(() => props.query);
+const route = useRoute();
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -199,10 +187,7 @@ const mergeResultsKeepRecentDuplicates = (
 const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resultType.value]) return;
-
 	// TODO: only search (or fetch data) relevant to the currently selected tab
-
-	emit('show-overlay');
 
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
@@ -305,12 +290,6 @@ const executeSearch = async () => {
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
-
-	emit('hide-overlay');
-};
-
-const onClose = () => {
-	emit('hide');
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -378,20 +357,18 @@ watch(clientFilters, async (n, o) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-const onSearchTermChanged = async (filterTerm: string) => {
-	if (filterTerm !== searchTerm.value) {
-		searchTerm.value = filterTerm;
+watch(searchQuery, async (newQuery) => {
+	emit('search-query-changed', newQuery);
+	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
+	// search term has changed, so all search results are dirty; need re-fetch
+	Object.values(ResourceType).forEach((key) => {
+		dirtyResults.value[key as string] = true;
+	});
 
-		// search term has changed, so all search results are dirty; need re-fetch
-		Object.values(ResourceType).forEach((key) => {
-			dirtyResults.value[key as string] = true;
-		});
-
-		// re-fetch data from the server, apply filters, and re-calculate the facets
-		await executeSearch();
-		dirtyResults.value[resultType.value] = false;
-	}
-};
+	// re-fetch data from the server, apply filters, and re-calculate the facets
+	await executeSearch();
+	dirtyResults.value[resultType.value] = false;
+});
 
 const updateResultType = async (newResultType: string) => {
 	if (resultType.value !== newResultType) {
@@ -414,6 +391,9 @@ const updateResultType = async (newResultType: string) => {
 };
 
 onMounted(async () => {
+	const { q } = route.query;
+	searchTerm.value = q?.toString() ?? searchTerm.value;
+
 	xddDatasets.value = await getXDDSets();
 	if (xddDatasets.value.length > 0 && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
@@ -438,7 +418,6 @@ onUnmounted(() => {
 
 <style scoped>
 .data-explorer-container {
-	position: absolute;
 	left: 0px;
 	top: 0px;
 	right: 0px;
