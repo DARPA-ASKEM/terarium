@@ -500,16 +500,18 @@ const fetchResource = async (
 		try {
 			switch (resourceType) {
 				case ResourceType.XDD: // XDD
-					// are we executing a search-by-example (e.g., to find related documents)?
+					// are we executing a search-by-example (i.e., to find related documents)?
 					if (
-						searchParam?.xdd?.related_search &&
-						searchParam?.xdd.docid &&
+						searchParam?.xdd?.related_search_enabled &&
+						searchParam?.xdd.related_search_id &&
 						searchParam?.xdd.dataset
 					) {
 						const relatedDocuments = await getRelatedDocuments(
-							searchParam?.xdd.docid,
+							searchParam?.xdd.related_search_id as string,
 							searchParam?.xdd.dataset
 						);
+						// FIXME: no facets support when search by example is executed
+						//        xDD does not provide facets data when using doc2vec API for fetching related documents!
 						const relatedSearchResults = {
 							results: relatedDocuments,
 							searchSubsystem: ResourceType.XDD,
@@ -537,10 +539,43 @@ const fetchResource = async (
 					});
 					break;
 				case ResourceType.MODEL: // Models
-					resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
+					// are we executing a search-by-example (i.e., to find related models)?
+					if (searchParam?.model?.related_search_enabled && searchParam?.model.related_search_id) {
+						const relatedModels = []; // use provenance API to find related models
+						// FIXME: no facets support when search by example is executed
+						// FIXME: no concepts support when search by example is executed
+						const relatedSearchResults = {
+							results: relatedModels,
+							searchSubsystem: ResourceType.MODEL
+						};
+						resolve({
+							allData: relatedSearchResults,
+							allDataFilteredWithFacets: relatedSearchResults
+						});
+					} else {
+						resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
+					}
 					break;
 				case ResourceType.DATASET: // Datasets
-					resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
+					// are we executing a search-by-example (i.e., to find related datasets)?
+					if (
+						searchParam?.dataset?.related_search_enabled &&
+						searchParam?.dataset.related_search_id
+					) {
+						const relatedDatasets = []; // use provenance API to find related datasets
+						// FIXME: no facets support when search by example is executed
+						// FIXME: no concepts support when search by example is executed
+						const relatedSearchResults = {
+							results: relatedDatasets,
+							searchSubsystem: ResourceType.DATASET
+						};
+						resolve({
+							allData: relatedSearchResults,
+							allDataFilteredWithFacets: relatedSearchResults
+						});
+					} else {
+						resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
+					}
 					break;
 				default:
 					break;

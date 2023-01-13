@@ -164,7 +164,14 @@ import {
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceID, getResourceTypeIcon, isXDDArticle, validate } from '@/utils/data-util';
+import {
+	getResourceID,
+	getResourceTypeIcon,
+	isXDDArticle,
+	isModel,
+	isDataset,
+	validate
+} from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 
@@ -239,7 +246,8 @@ const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resultType.value]) return;
 
-	// only search (or fetch data) relevant to the currently selected tab
+	// only search (or fetch data) relevant to the currently selected tab or the search by example item
+	let searchType = resultType.value;
 
 	emit('show-overlay');
 
@@ -280,14 +288,38 @@ const executeSearch = async () => {
 			match: true,
 			additional_fields: 'title,abstract',
 			known_entities: 'url_extractions'
-		}
+		},
+		model: {},
+		dataset: {}
 	};
 
-	// handle the search-by-example for finding related articles
-	if (searchParams.xdd && executeSearchByExample.value && searchByExampleItem.value) {
-		searchParams.xdd.related_search = executeSearchByExample.value;
+	// handle the search-by-example for finding related articles, models, and/or datasets
+	if (executeSearchByExample.value && searchByExampleItem.value) {
 		const id = getResourceID(searchByExampleItem.value) as string;
-		searchParams.xdd.docid = id;
+		//
+		// find related articles (which utilizes the xDD doc2vec API through the HMI server)
+		//
+		if (isXDDArticle(searchByExampleItem.value) && searchParams.xdd) {
+			searchParams.xdd.related_search_enabled = executeSearchByExample.value;
+			searchParams.xdd.related_search_id = id;
+			searchType = ResourceType.XDD;
+		}
+		//
+		// find related models (which utilizes the TDS provenance API through the HMI server)
+		//
+		if (isModel(searchByExampleItem.value) && searchParams.model) {
+			searchParams.model.related_search_enabled = executeSearchByExample.value;
+			searchParams.model.related_search_id = id;
+			searchType = ResourceType.MODEL;
+		}
+		//
+		// find related datasets (which utilizes the TDS provenance API through the HMI server)
+		//
+		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
+			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
+			searchParams.dataset.related_search_id = id;
+			searchType = ResourceType.DATASET;
+		}
 	}
 
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
@@ -341,7 +373,7 @@ const executeSearch = async () => {
 		searchWords,
 		searchParams,
 		searchParamsWithFacetFilters,
-		resultType.value
+		searchType
 	);
 
 	// cache unfiltered data
@@ -360,14 +392,21 @@ const onClose = () => {
 	emit('hide');
 };
 
+const disableSearchByExample = () => {
+	// disable search by example, if it was enabled
+	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
+	executeSearchByExample.value = false;
+};
+
 const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	// user has requested a search by example, so re-fetch data
 	dirtyResults.value[resultType.value] = true;
 
-	// FIXME: what exactly is similar content search?
-	//         is it only to find related papers for the selected paper?
+	// REVIEW: executing a similar content search means to find similar objects to the one selected:
+	//         if a paper is selected then find related papers
+	//         if a model/dataset is selected then find related models/datasets
 	if (searchOptions.similarContent) {
-		// just set a proper search-by-example search parameter
+		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
 		executeSearchByExample.value = true;
 
@@ -376,7 +415,8 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 		searchByExampleItem.value = null;
 		dirtyResults.value[resultType.value] = false;
 	}
-	// FIXME: what about searching for other related artifacts, e.g. models and datasets
+
+	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -433,8 +473,7 @@ const previewItemId = computed(() => {
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
 
-	// disable search by example, if it was enabled
-	executeSearchByExample.value = false;
+	disableSearchByExample();
 
 	// user has changed some of the facet filter, so re-fetch data
 	dirtyResults.value[resultType.value] = true;
@@ -450,8 +489,7 @@ const onSearchTermChanged = async (filterTerm: string) => {
 	if (filterTerm !== searchTerm.value) {
 		searchTerm.value = filterTerm;
 
-		// disable search by example, if it was enabled
-		executeSearchByExample.value = false;
+		disableSearchByExample();
 
 		// search term has changed, so all search results are dirty; need re-fetch
 		Object.values(ResourceType).forEach((key) => {
@@ -474,8 +512,7 @@ const updateResultType = async (newResultType: string) => {
 			(res) => res.searchSubsystem === resultType.value
 		);
 		if (!resList || dirtyResults.value[resultType.value]) {
-			// disable search by example, if it was enabled
-			executeSearchByExample.value = false;
+			disableSearchByExample();
 			await executeSearch();
 			dirtyResults.value[resultType.value] = false;
 		} else {
