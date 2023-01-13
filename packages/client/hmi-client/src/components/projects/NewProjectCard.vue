@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
-import IconAdd32 from '@carbon/icons-vue/es/add/32';
 import Modal from '@/components/Modal.vue';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -25,10 +24,12 @@ async function createNewProject() {
 
 <template>
 	<div class="new-project-card">
-		<Button class="p-button-plain" @click="isModalVisible = true">
-			<IconAdd32 />
-			New Project
-		</Button>
+		<Button
+			label="New Project"
+			class="p-button-text p-button-plain"
+			icon="pi pi-plus"
+			@click="isModalVisible = true"
+		/>
 		<Teleport to="body">
 			<Modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 				<template #default>
@@ -67,29 +68,9 @@ async function createNewProject() {
 
 .new-project-card > button {
 	font-size: 1.25rem;
-	font-weight: 500;
-	border-radius: 0.5rem;
 	width: 100%;
 	height: 100%;
-	margin: auto;
 	justify-content: center;
-	cursor: pointer;
-	background-color: transparent;
-	color: var(--un-color-body-text-disabled);
-	box-shadow: none;
-}
-
-.new-project-card button:hover {
-	background-color: var(--un-color-body-surface-secondary);
-	color: var(--un-color-body-text-secondary);
-}
-
-.new-project-card button svg {
-	color: var(--un-color-body-text-disabled);
-}
-
-.new-project-card button:hover svg {
-	color: var(--un-color-body-text-secondary);
 }
 
 .modal h4 {
@@ -114,5 +95,11 @@ async function createNewProject() {
 	gap: 1rem;
 	justify-content: end;
 	margin-top: 2rem;
+}
+</style>
+<style>
+.new-project-card > button.p-button .p-button-label {
+	/* hack necessary because of making the button bigger to fill the card */
+	flex: none;
 }
 </style>
