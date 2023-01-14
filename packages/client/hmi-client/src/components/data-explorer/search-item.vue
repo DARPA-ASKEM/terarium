@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { watch, ref, computed } from 'vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { isXDDArticle } from '@/utils/data-util';
 import IconAdd24 from '@carbon/icons-vue/es/add/24';
@@ -22,21 +22,25 @@ const props = defineProps<{
 
 const emit = defineEmits(['toggle-article-selected', 'toggle-article-preview']);
 
-const assetPage = ref<number>(0);
+const relatedAssetPage = ref<number>(0); // reset on new search
 const relatedAsset = computed(
-	() => props.asset.relatedExtractions && props.asset.relatedExtractions[assetPage.value]
+	() => props.asset.relatedExtractions && props.asset.relatedExtractions[relatedAssetPage.value]
 );
 
-console.log(props.asset.relatedExtractions && props.asset.relatedExtractions);
+// console.log(props.asset.relatedExtractions && props.asset.relatedExtractions);
+// console.log(props.asset)
+watch(props.asset, () => {
+	relatedAssetPage.value = 0;
+});
 
 function paginationMovement(movement: number) {
-	const newPage = assetPage.value + movement;
+	const newPage = relatedAssetPage.value + movement;
 	if (
 		props.asset.relatedExtractions &&
 		newPage > -1 &&
 		newPage < props.asset.relatedExtractions.length
 	) {
-		assetPage.value = newPage;
+		relatedAssetPage.value = newPage;
 	}
 }
 
@@ -76,7 +80,7 @@ const formatDetails = () =>
 		</div>
 		<div class="right">
 			<figure v-if="asset.relatedExtractions">
-				<template
+				<img
 					v-if="
 						relatedAsset &&
 						relatedAsset.properties.image &&
@@ -84,16 +88,13 @@ const formatDetails = () =>
 							relatedAsset.askemClass === XDDExtractionType.Table ||
 							relatedAsset.askemClass === XDDExtractionType.Equation)
 					"
-				>
-					<img
-						class="extracted-assets"
-						:src="`data:image/jpeg;base64,${asset.relatedExtractions[assetPage].properties.image}`"
-						alt="asset"
-					/>
-				</template>
+					:src="`data:image/jpeg;base64,${asset.relatedExtractions[relatedAssetPage].properties.image}`"
+					class="extracted-assets"
+					alt="asset"
+				/>
 				<div class="asset-nav-arrows">
 					<IconArrowLeft16 @click="paginationMovement(-1)" />
-					Asset {{ assetPage + 1 }} of {{ asset.relatedExtractions?.length }}
+					Asset {{ relatedAssetPage + 1 }} of {{ asset.relatedExtractions?.length }}
 					<IconArrowRight16 @click="paginationMovement(1)" />
 				</div>
 			</figure>

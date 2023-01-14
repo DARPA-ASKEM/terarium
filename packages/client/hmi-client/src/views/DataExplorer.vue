@@ -454,22 +454,21 @@ onUnmounted(() => {
 	align-items: center;
 	text-decoration: none;
 	background: transparent;
-	padding: 5px 10px;
 	border: 1px solid black;
 	cursor: pointer;
+	margin: auto;
 	border-left-width: 0;
-	height: 40px;
 }
 
 .button-group button:first-child {
 	border-left-width: 1px;
-	border-top-left-radius: 3px;
-	border-bottom-left-radius: 3px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
 }
 
 .button-group button:last-child {
-	border-top-right-radius: 3px;
-	border-bottom-right-radius: 3px;
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .button-group button:hover {
@@ -477,7 +476,7 @@ onUnmounted(() => {
 }
 
 .button-group button.active {
-	background: white;
+	background: var(--un-color-feedback-success-lighter);
 	cursor: default;
 }
 
