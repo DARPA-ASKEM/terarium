@@ -83,6 +83,7 @@ const formatDetails = () =>
 		</div>
 		<div class="right">
 			<figure v-if="asset.relatedExtractions">
+				<!--and type is article-->
 				<img
 					v-if="
 						relatedAsset &&
