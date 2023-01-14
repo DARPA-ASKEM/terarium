@@ -29,9 +29,12 @@ const relatedAsset = computed(
 
 // console.log(props.asset.relatedExtractions && props.asset.relatedExtractions);
 // console.log(props.asset)
-watch(props.asset, () => {
-	relatedAssetPage.value = 0;
-});
+watch(
+	() => props.asset,
+	() => {
+		relatedAssetPage.value = 0;
+	}
+); // Reset page
 
 function paginationMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
