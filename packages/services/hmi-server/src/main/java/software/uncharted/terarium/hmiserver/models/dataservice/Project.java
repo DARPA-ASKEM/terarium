@@ -9,6 +9,9 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.time.*;
+
+
 
 @Data
 @Accessors(chain = true)
@@ -30,12 +33,15 @@ public class Project implements Serializable {
 
 	private Document relatedDocuments; //TODO: Replace with document-service's document class
 
-	public Project(String id, String name, String description) {//String timestamp, String active, String concept){
+	public Project(String id, String name, String description,String timestamp) {
 		this.id = id;
 		this.name = name;
 		this.description = description;
+		this.active = true;
+		this.timestamp = Instant.parse(timestamp + "Z");
+		
 	}
-
+	
 	public String getID(){ return this.id; }
 
 	public void setRelatedDocuments(Document relatedDocuments){

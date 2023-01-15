@@ -10,7 +10,6 @@ import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { Project } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
-import * as ProjectService from '@/services/project';
 import { searchXDDArticles } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
@@ -34,20 +33,10 @@ onMounted(async () => {
 	// Clear all...
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
-	console.log('Trying to hit home resource');
-	console.log(await API.get('/home'));
-	console.log('Done home resource');
 
-	const allProjects = (await ProjectService.getAll()) as Project[];
-	if (allProjects) {
-		const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
-		const result = await Promise.all(promises);
-		for (let i = 0; i < allProjects.length; i++) {
-			// ProjectService.addAsset(allProjects[i].id,"RELATEDPUBLICATIONS",result[i]);
-			allProjects[i].relatedArticles = result[i];
-		}
-		projects.value = allProjects;
-	}
+	projects.value = (await API.get('/home')).data as Project[];
+	console.log('Projects.value after /home call');
+	console.log(projects.value);
 
 	// Get all relevant articles (latest on section)
 	const allArticles = await searchXDDArticles(relevantSearchTerm, relevantSearchParams);

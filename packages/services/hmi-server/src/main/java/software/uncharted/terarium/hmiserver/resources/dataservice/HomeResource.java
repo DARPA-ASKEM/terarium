@@ -51,25 +51,28 @@ public class HomeResource {
      */
 	public Response getHomePageInfo() {
         LOG.info("--- Home Resource --- ");
-        List<Project> allProjects = getAllProjectIDs(); //grab the ID in the project
+        List<Project> allProjects = getAllProjects(); //grab the ID in the project
         
-        LOG.info("ID:" + allProjects.get(0).getID());
+        LOG.info("id:" + allProjects.get(0).getID());
+
         
         //Get project's related documents and add them to the project.
         //Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
         for (int i = 0; i < allProjects.size(); i++){
-            LOG.info("Start getting related");
+            LOG.info("Start getting related for project: " + allProjects.get(i).getID());
+            
             String projectAssets = projectProxy.getAssets(allProjects.get(i).getID()).readEntity(String.class);
-            //LOG.info(i + projectAssets);
+            LOG.info("Project asset done");
             // If the project has no publications dont try to find related articles...
             //it will have a length of 0 as after the split that will just mean it has at least an empty list
             if (projectAssets.split("\"publications\":")[1].split("\"xdd_uri\":").length > 1){ 
+                LOG.info("publications, xdd: " + projectAssets.split("\"publications\":")[1].split("\"xdd_uri\":")[0]);
                 String projectFirstPublication = projectAssets.split("\"publications\":")[1].split("\"xdd_uri\":")[1].split(",")[0].replace("\"",""); //.split(",")[0]; //.split("\"xdd_uri\":")[1].replace("\"","");
                 LOG.info("project's first publication: " + projectFirstPublication);    
                 String relatedDocumentsString = documentProxy.getRelatedDocuments("xdd-covid-19",projectFirstPublication).readEntity(String.class); 
                 Document relatedDocuments = stringToDocument(relatedDocumentsString);
                 
-                LOG.info("Related Documents Length: " + relatedDocuments.getID());
+                LOG.info("Related Documents ID: " + relatedDocuments.getID());
                 allProjects.get(i).setRelatedDocuments(relatedDocuments);
             }
         }
@@ -80,18 +83,13 @@ public class HomeResource {
             LOG.info(allProjects.get(i).toString());
         } //TODO Remove this log check
 
-        return Response.ok("Tom").build();
-		//return Response.ok("Tom").build();
+        return Response.status(Response.Status.OK).entity(allProjects).build();
 	}
 
-    public List<Project> getAllProjectIDs(){
+    private List<Project> getAllProjects(){
         Integer pageSize = 5;
         Integer page = 0;
         List<Project> allProjects = new ArrayList<>();
-        // LOG.info("Date:");
-        // LOG.info(projectProxy.getProjects(pageSize, page).getDate());
-        // LOG.info("Data:");
-        // LOG.info(projectProxy.getProjects(pageSize, page).readEntity(String.class)); 
         
         String allProjectsString = projectProxy.getProjects(pageSize, page).readEntity(String.class);
         LOG.info("All Projects String: " + allProjectsString);
@@ -101,22 +99,21 @@ public class HomeResource {
         while(m.find()){
             String currentProject = m.group();
             LOG.info(currentProject);
-            String currentID = currentProject.split("\"id\":")[1].split(",")[0];
-            String currentName = currentProject.split("\"name\":")[1].split(",")[0];
-            String currentDescription = currentProject.split("\"description\":")[1].split(",")[0];
-            // String currentTimestamp = currentProject.split("\"timestamp\":")[1].split(",")[0];
+            String currentID = currentProject.split("\"id\":")[1].split(",")[0].replace("\"","");
+            String currentName = currentProject.split("\"name\":")[1].split(",")[0].replace("\"","");
+            String currentDescription = currentProject.split("\"description\":")[1].split(",")[0].replace("\"","");
+            String currentTimestamp = currentProject.split("\"timestamp\":")[1].split(",")[0].replace("\"","");
             // String currentActive = currentProject.split("\"active\":")[1].split(",")[0];
             // String currentConcept = currentProject.split("\"concept\":")[1].split(",")[1];
             LOG.info("Current ID: " + currentID);
             LOG.info("Current Name: " + currentName);
             LOG.info("Current Description: " + currentDescription);
+            LOG.info("Current timestamp: " + currentTimestamp);
 
-            Project aProject = new Project(currentID,currentName,currentDescription);
+            Project aProject = new Project(currentID,currentName,currentDescription,currentTimestamp);
             allProjects.add(aProject);
             LOG.info("New project " + aProject.toString());
-            // LOG.info("Current timestamp: " + currentTimestamp);
-            // LOG.info("Current Active: " + currentActive);
-            // LOG.info("Current Concept: " + currentConcept);
+            
         }
 
         return allProjects;
@@ -124,16 +121,16 @@ public class HomeResource {
 
     //Take a string representation of a document (massive json crap) and parse it into distinct fields
     private Document stringToDocument(String aDocument){
-        LOG.info(aDocument);
-        String gddId = aDocument.split("\"gddId\":")[1].split(",")[0];
+
+        String gddId = aDocument.split("\"_gddid\":")[1].split(",")[0];
         String title = aDocument.split("\"title\":")[1].split(",")[0];
-        String abstractText = aDocument.split("\"abstractText\":")[1].split(",")[0];
+        String abstractText = aDocument.split("\"abstract\":")[1].split(",")[0];
         String journal = aDocument.split("\"journal\":")[1].split(",")[0];
-        
-        LOG.info("Current ID: " + gddId);
-        LOG.info("Title: " + title);
-        LOG.info("Abstract Text: " + abstractText);
-        LOG.info("Journal: " + journal);
+       
+        // LOG.info("Current ID: " + gddId);
+        // LOG.info("Title: " + title);
+        // LOG.info("Abstract Text: " + abstractText);
+        // LOG.info("Journal: " + journal);
 
         Document result = new Document(gddId,title,abstractText,journal);
 
