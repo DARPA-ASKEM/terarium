@@ -1,34 +1,42 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, watch, shallowRef } from 'vue';
+import { useRouter, RouteParamsRaw } from 'vue-router';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { useCurrentRoute } from '@/router/index';
 import { Project } from '@/types/Project';
 import useAuthStore from '@/stores/auth';
 import Dialog from 'primevue/dialog';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import { RouteMetadata, RouteName } from '@/router/routes';
+import Dropdown from 'primevue/dropdown';
+import { useCurrentRoute, RoutePath } from '@/router/index';
 
 const props = defineProps<{
-	projectName?: Project['name'];
+	project: Project | null;
 	searchBarText?: string;
 }>();
-
+interface NavItem {
+	[key: string]: { name: string; icon: string; routeName: string };
+}
+// const activeProjectName = computed(() => props.project?.name || '');
+const activeProjectId = computed(() => props.project?.id);
 const currentRoute = useCurrentRoute();
-const pageName = computed(() => {
-	if (
-		currentRoute.value.name === RouteName.HomeRoute ||
-		currentRoute.value.name === RouteName.DataExplorerRoute
-	) {
-		const { displayName } = RouteMetadata[currentRoute.value.name];
-		return displayName;
-	}
-	return props.projectName;
-});
 const router = useRouter();
+const navItems = shallowRef<NavItem>({
+	[RoutePath.Home]: {
+		name: RouteMetadata[RouteName.HomeRoute].displayName,
+		icon: RouteMetadata[RouteName.HomeRoute].icon,
+		routeName: RouteName.HomeRoute
+	},
+	[RoutePath.DataExplorer]: {
+		name: RouteMetadata[RouteName.DataExplorerRoute].displayName,
+		icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
+		routeName: RouteName.DataExplorerRoute
+	}
+});
+// const selectedPage = computed(() => navItems.value[currentRoute.value.path]);
+const selectedPage = ref(navItems.value[currentRoute.value.path]);
 const auth = useAuthStore();
-
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
 const userMenuItems = ref([
@@ -39,11 +47,9 @@ const userMenuItems = ref([
 		}
 	}
 ]);
-
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
-
 const userInitials = computed(() =>
 	auth.name
 		?.split(' ')
@@ -53,16 +59,56 @@ const userInitials = computed(() =>
 function searchTextChanged(value) {
 	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
 }
+
+function goToPage(event) {
+	const routeName = event.value.routeName;
+	if (routeName.path === RoutePath.Project && activeProjectId.value) {
+		console.log(activeProjectId.value);
+
+		const params: RouteParamsRaw = { projectId: activeProjectId.value };
+		router.push({ name: routeName, params });
+	} else {
+		router.push({ name: routeName });
+	}
+}
+
+watch(currentRoute, (newRoute) => {
+	if (newRoute.fullPath.includes('projects')) {
+		selectedPage.value = navItems.value[RoutePath.Project];
+	} else {
+		selectedPage.value = navItems.value[newRoute.path];
+	}
+});
+
+// watch(activeProjectId, (newProjectId) => {
+// 	if (newProjectId) {
+
+// 	}
+// })
 </script>
 
 <template>
 	<header>
 		<section class="header-left">
 			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-			<section class="page-name">
-				<p>
-					{{ pageName }}
-				</p>
+			<section class="nav">
+				<Dropdown
+					class="dropdown"
+					v-model="selectedPage"
+					:options="Object.values(navItems)"
+					optionLabel="name"
+					panelClass="dropdown-panel"
+					@change="goToPage"
+				>
+					<template #value="slotProps">
+						<i :class="slotProps.value.icon" />
+						<span>{{ slotProps.value.name }}</span>
+					</template>
+					<template #option="slotProps">
+						<i :class="slotProps.option.icon" />
+						<span>{{ slotProps.option.name }}</span>
+					</template>
+				</Dropdown>
 			</section>
 		</section>
 		<SearchBar class="searchbar" :text="searchBarText" @search-text-changed="searchTextChanged" />
@@ -136,9 +182,10 @@ section {
 	background-color: var(--un-color-body-surface-secondary);
 }
 
-.page-name {
+.nav {
 	justify-content: center;
 	margin-left: auto;
+	flex: 0.5;
 }
 
 .header-left {
@@ -152,5 +199,23 @@ section {
 
 .searchbar {
 	flex: 2;
+}
+
+.p-dropdown {
+	height: 3rem;
+	flex: 1;
+	border: 0;
+}
+
+.p-dropdown:not(.p-disabled).p-focus {
+	box-shadow: none;
+}
+
+.p-dropdown-label {
+	color: var(--un-color-body-text-secondary);
+}
+
+i {
+	margin-right: 0.5rem;
 }
 </style>
