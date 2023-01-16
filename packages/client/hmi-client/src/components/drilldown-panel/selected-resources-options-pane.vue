@@ -6,8 +6,8 @@
 				action
 				@click="addAssetsToProject"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				>Add to current project</Button
-			>
+				>Add to current project
+			</Button>
 			<dropdown-button
 				v-if="selectedSearchItems.length > 0"
 				:inner-button-label="'Add to another project'"
@@ -113,7 +113,7 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
 			const body: PublicationAsset = {
-				xdd_uri: (selectedItem as XDDArticle).gddid,
+				xddUri: (selectedItem as XDDArticle).gddId,
 				title: (selectedItem as XDDArticle).title
 			};
 

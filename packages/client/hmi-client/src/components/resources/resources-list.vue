@@ -42,7 +42,7 @@ filteredRouteMetadata.forEach((metadata) => {
 				route,
 				params: {
 					projectId: props?.project.id,
-					assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
+					assetId: route === RouteName.DocumentRoute ? asset.xddUri : asset.id
 				},
 				name: displayName,
 				icon,
