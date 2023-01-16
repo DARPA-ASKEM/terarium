@@ -61,8 +61,8 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-data-item-selected']);
 
-const toggleDataItemSelected = (item: ResultType) => {
-	emit('toggle-data-item-selected', item);
+const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
+	emit('toggle-data-item-selected', dataItem);
 };
 
 const filteredModels = computed(() => {

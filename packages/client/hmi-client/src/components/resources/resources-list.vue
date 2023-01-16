@@ -7,7 +7,7 @@ import useResourcesStore from '@/stores/resources';
 import { RouteParamsRaw, useRouter } from 'vue-router';
 
 const props = defineProps<{
-	project: Project;
+	project: Project | null;
 	resourceRoute?: RouteName;
 	// maybe add list size later
 }>();
@@ -35,13 +35,14 @@ const assetAmount = props.resourceRoute ? 10 : 2;
 filteredRouteMetadata.forEach((metadata) => {
 	const route = metadata.route;
 	const { displayName, icon, projectAsset } = metadata;
-	if (projectAsset && activeProjectAssets !== null) {
+	if (projectAsset && activeProjectAssets !== null && props?.project !== null) {
+		const projId = props?.project.id;
 		const assets = activeProjectAssets[projectAsset].slice(0, assetAmount);
 		assets.forEach((asset) => {
 			resources.push({
 				route,
 				params: {
-					projectId: props?.project.id,
+					projectId: projId,
 					assetId: route === RouteName.DocumentRoute ? asset.xddUri : asset.id
 				},
 				name: displayName,
