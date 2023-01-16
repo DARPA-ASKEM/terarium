@@ -86,10 +86,3 @@ const formattedFacets = computed(() => {
 	return facetList;
 });
 </script>
-
-<style scoped>
-h4 {
-	/* Left align with the text in the facets themselves */
-	margin-left: 12px;
-}
-</style>
