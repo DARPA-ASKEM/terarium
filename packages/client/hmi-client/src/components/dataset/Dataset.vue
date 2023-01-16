@@ -51,7 +51,7 @@ const formatFeatures = (d: Dataset) => {
 <template>
 	<section class="dataset">
 		<template v-if="dataset !== null">
-			<h3>{{ dataset?.name ?? '' }}</h3>
+			<div class="title">{{ dataset?.name ?? '' }}</div>
 			<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
 			<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
 			<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
@@ -61,22 +61,22 @@ const formatFeatures = (d: Dataset) => {
 
 			<Accordion :multiple="true" class="accordian">
 				<AccordionTab header="Annotations">
-					<ul>
+					<div>
 						Geo Annotations:
-						<li v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
+						<div v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
 							<strong>{{ annotation.name }}</strong
 							>: <strong>Description: </strong> {{ annotation.description }}
 							<strong>GADM Level: </strong> {{ annotation.gadm_level }}
-						</li>
-					</ul>
-					<ul>
+						</div>
+					</div>
+					<div>
 						Temporal Annotations:
-						<li v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
+						<div v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
 							<strong>{{ annotation.name }}</strong
 							>: <strong>Description: </strong> {{ annotation.description }}
 							<strong>Time Format: </strong> {{ annotation.time_format }}
-						</li>
-					</ul>
+						</div>
+					</div>
 				</AccordionTab>
 				<AccordionTab header="Concepts"> </AccordionTab>
 				<AccordionTab header="Features">
@@ -123,23 +123,20 @@ const formatFeatures = (d: Dataset) => {
 	margin: 10px;
 	display: flex;
 	flex-direction: column;
+	height: calc(100vh - 50px);
 	gap: 1rem;
 	padding: 1rem;
 	overflow: auto;
 	background: var(--un-color-body-surface-primary);
 }
 
-h3 {
-	margin-bottom: 10px;
+.title {
+	font: var(--un-font-h3);
 }
 
 .description {
 	max-height: 400px;
 	overflow-y: auto;
-}
-
-li {
-	display: block;
 }
 
 strong {

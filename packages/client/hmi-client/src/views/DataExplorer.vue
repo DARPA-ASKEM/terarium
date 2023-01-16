@@ -66,7 +66,16 @@
 			</div>
 			<!-- document preview -->
 			<div v-if="previewItem" class="selected-resources-pane">
-				<Document :asset-id="previewItemId" :project="resources.activeProject" />
+				<Document
+					v-if="resultType === ResourceType.XDD"
+					:asset-id="previewItemId"
+					:project="resources.activeProject"
+				/>
+				<Dataset
+					v-if="resultType === ResourceType.DATASET"
+					:asset-id="previewItemId"
+					:project="resources.activeProject"
+				/>
 				<Button label="Add to Cart"></Button>
 				<Button label="Add to Project"></Button>
 			</div>
@@ -89,6 +98,7 @@ import SearchResultsMatrix from '@/components/data-explorer/search-results-matri
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import Document from '@/components/articles/Document.vue';
+import Dataset from '@/components/dataset/Dataset.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -112,7 +122,7 @@ import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { Dataset } from '@/types/Dataset';
+import { Dataset as IDataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
 // FIXME: page count is not taken into consideration
@@ -315,8 +325,8 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 			const searchItemAsModel = searchItem as Model;
 			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
 		} else if (isDataset(item) && isDataset(searchItem)) {
-			const itemAsDataset = item as Dataset;
-			const searchItemAsDataset = searchItem as Dataset;
+			const itemAsDataset = item as IDataset;
+			const searchItemAsDataset = searchItem as IDataset;
 			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
 		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
@@ -340,7 +350,7 @@ const previewItemId = computed(() => {
 		// eslint-disable-next-line no-underscore-dangle
 		return itemAsArticle.gddid || itemAsArticle._gddid;
 	}
-	return '';
+	return previewItem.value.id;
 });
 
 // this is called whenever the user apply some facet filter(s)
