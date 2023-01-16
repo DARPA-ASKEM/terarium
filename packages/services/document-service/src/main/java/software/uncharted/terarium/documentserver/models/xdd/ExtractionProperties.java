@@ -16,8 +16,7 @@ public class ExtractionProperties implements Serializable {
 	private String DOI;
 
 	private String trustScore;
-
-	@JsonbProperty("_abstract")
+	
 	@JsonAlias("abstract")
 	private String abstractText;
 
@@ -44,4 +43,9 @@ public class ExtractionProperties implements Serializable {
 	private String caption;
 
 	private Document documentBibjson;
+
+	@JsonbProperty("_abstract")
+	public void setAbstract(String abstractText) {
+		this.abstractText = abstractText;
+	}
 }

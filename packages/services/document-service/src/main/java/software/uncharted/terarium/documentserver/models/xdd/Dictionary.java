@@ -11,19 +11,33 @@ import java.time.Instant;
 @Accessors(chain = true)
 public class Dictionary implements Serializable {
 
-	private Number dict_id;
+	private Number dictId;
 
 	private String name;
-
-	@JsonbProperty("base_classification")
 	private String baseClassification;
 
 	private String source;
+	private Boolean caseSensitive;
+	private Instant lastUpdated;
+
+	@JsonbProperty("dict_id")
+	public void setDictId(Number dictId) {
+		this.dictId = dictId;
+	}
+
+	@JsonbProperty("base_classification")
+	public void setBaseClassification(String baseClassification) {
+		this.baseClassification = baseClassification;
+	}
 
 	@JsonbProperty("case_sensitive")
-	private Boolean caseSensitive;
+	public void setCaseSensitive(Boolean caseSensitive) {
+		this.caseSensitive = caseSensitive;
+	}
 
 	@JsonbProperty("last_updated")
-	private Instant lastUpdated;
+	public void setAbstract(Instant lastUpdated) {
+		this.lastUpdated = lastUpdated;
+	}
 
 }

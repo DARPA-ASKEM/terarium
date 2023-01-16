@@ -10,6 +10,7 @@ import software.uncharted.terarium.documentserver.proxies.xdd.DocumentProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -74,11 +75,10 @@ public class DocumentResource {
 			XDDResponse<XDDArticlesResponseOK> doc = proxy.getDocuments(
 				docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
 				min_published, max_published, pubname, publisher, additional_fields, match);
-
 			return doc;
 
 		}
-		return new XDDResponse<>();
+		return new XDDResponse();
 	}
 
 }
