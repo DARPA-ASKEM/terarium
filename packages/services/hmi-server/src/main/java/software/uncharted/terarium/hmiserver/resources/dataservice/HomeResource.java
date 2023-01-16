@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Software;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ExternalProxy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.Person; //TODO Remove
 import software.uncharted.terarium.hmiserver.proxies.xdd.DocumentProxy;
 
 import software.uncharted.terarium.documentserver.models.xdd.Document;
@@ -76,16 +75,7 @@ public class HomeResource {
                 allProjects.get(i).setRelatedDocuments(relatedDocuments);
             }
         }
-        
-        //TODO Remove this log check
-        LOG.info("Post processing all projects:");
-        for (int i = 0; i < allProjects.size(); i++){
-            LOG.info(allProjects.get(i).toString());
-        } //TODO Remove this log check
 
-        List<Person> test = new ArrayList<>();
-        test.add(new Person("1","Tom")); //TODO Remove
-        test.add(new Person("2","Mark"));
         return Response
             .status(Response.Status.OK)
             .entity(allProjects)
@@ -135,11 +125,12 @@ public class HomeResource {
             String journal = aDocument.split("\"journal\":")[i].split(",")[0];
             String currentPublisher = aDocument.split("\"publisher\":")[1].split(",")[0].replace("\"","");
             String currentAuthor = aDocument.split("\"author\":")[1].split(",")[1]; //TODO Parse author better
-            
-    
-            //TODO: actually grab correct id
+            String currentIdentifier = aDocument.split("\"identifier\":")[1].split(",")[1].split("\"id\":")[1].replace("\"","");
+            currentIdentifier = currentIdentifier.substring(0,currentIdentifier.indexOf("}")); //Cut out the extra crap from id
+
+            LOG.info("currentAuthor: " + currentAuthor);
             List<Map<String, String>> identifier = new ArrayList<>();
-            identifier.add(Map.of("type", "doi","id", "10.1016/B978-0-12-824313-8.01001-9"));
+            identifier.add(Map.of("type", "doi","id", currentIdentifier));
             List<Map<String, String>> author = new ArrayList<>();
             //TODO Check author's structure. It is often empty so hard to check
             //author.add(Map.of("type", "doi","id", "10.1016/B978-0-12-824313-8.01001-9"));
