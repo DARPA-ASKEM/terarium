@@ -88,7 +88,7 @@ import SearchResultsList from '@/components/data-explorer/search-results-list.vu
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import Document from '@/views/Document.vue';
+import Document from '@/components/articles/Document.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
