@@ -11,12 +11,13 @@ import IconChartLine16 from '@carbon/icons-vue/es/chart--line/16';
 import IconTable16 from '@carbon/icons-vue/es/table/16';
 import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
 import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
-import { ResultType } from '@/types/common';
+import { ResultType, ResourceType } from '@/types/common';
 
 const props = defineProps<{
 	asset: XDDArticle; // Will be abstracted later to make other assets compatible
 	isPreviewedArticle: boolean;
 	isInCart: boolean;
+	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
 }>();
 
@@ -67,7 +68,7 @@ const formatDetails = () =>
 	<div class="search-item" :active="isPreviewedArticle" @click="emit('toggle-article-preview')">
 		<div>
 			<div class="type-and-filters">
-				ARTICLE
+				{{ resourceType }}
 				<span class="asset-filters">
 					<IconDocumentBlank16 />
 					<IconLink16 />
@@ -83,7 +84,7 @@ const formatDetails = () =>
 		</div>
 		<div class="right">
 			<figure v-if="asset.relatedExtractions">
-				<!--and type is article-->
+				<!--and type is article filter above instead of if-->
 				<img
 					v-if="
 						relatedAsset &&

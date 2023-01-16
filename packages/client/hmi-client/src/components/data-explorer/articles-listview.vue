@@ -7,6 +7,7 @@
 					:selectedSearchItems="selectedSearchItems"
 					:isPreviewedArticle="previewedArticle === d"
 					:isInCart="false"
+					:resourceType="ResourceType.XDD"
 					@toggle-article-selected="updateSelection(d)"
 					@toggle-article-preview="togglePreview(d)"
 				/>
@@ -123,7 +124,7 @@
 import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
-import { ResultType } from '@/types/common';
+import { ResultType, ResourceType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
