@@ -3,7 +3,7 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-selected-buttons">
 			<Button
-				@click="addAssetsToProject"
+				@click="addAssetsToProject()"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
 				label="Add to current project"
 			/>
