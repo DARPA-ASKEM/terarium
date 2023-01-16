@@ -1,7 +1,7 @@
 package software.uncharted.terarium.documentserver.proxies.xdd;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.documentserver.models.xdd.*;
+import software.uncharted.terarium.documentserver.responses.xdd.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;

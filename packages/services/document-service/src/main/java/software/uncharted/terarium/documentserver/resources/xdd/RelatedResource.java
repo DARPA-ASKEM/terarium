@@ -2,7 +2,7 @@ package software.uncharted.terarium.documentserver.resources.xdd;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.documentserver.models.xdd.XDDRelatedDocumentsResponse;
+import software.uncharted.terarium.documentserver.responses.xdd.XDDRelatedDocumentsResponse;
 import software.uncharted.terarium.documentserver.proxies.xdd.DocumentProxy;
 
 

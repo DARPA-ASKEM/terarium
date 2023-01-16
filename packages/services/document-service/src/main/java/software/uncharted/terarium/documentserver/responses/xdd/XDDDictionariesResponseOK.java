@@ -1,7 +1,8 @@
-package software.uncharted.terarium.documentserver.models.xdd;
+package software.uncharted.terarium.documentserver.responses.xdd;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.documentserver.models.xdd.Dictionary;
 
 import java.util.List;
 

@@ -1,8 +1,8 @@
 package software.uncharted.terarium.documentserver.proxies.xdd;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.documentserver.models.xdd.XDDExtractionsResponseOK;
-import software.uncharted.terarium.documentserver.models.xdd.XDDResponse;
+import software.uncharted.terarium.documentserver.responses.xdd.XDDExtractionsResponseOK;
+import software.uncharted.terarium.documentserver.responses.xdd.XDDResponse;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
