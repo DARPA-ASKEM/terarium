@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Model, { ModelProps } from '@/components/models/Model.vue';
+import Document from '@/components/articles/Document.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
@@ -18,12 +18,12 @@ const props = defineProps<{
 const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
 
-const newModelId = computed(() => props.assetId);
+const newDocumentId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
-const modelsInCurrentProject = resourcesStore.activeProjectAssets?.models;
+const documentsInCurrentProject = resourcesStore.activeProjectAssets?.publications; // fixme
 const activeProject = resourcesStore.activeProject;
-const tabContext = `model${activeProject?.id}`;
+const tabContext = `document${activeProject?.id}`;
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,10 +39,10 @@ function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(tabContext, tabIndexToRemove);
 }
 
-function getModelName(id: string): string | null {
-	const currentModel = modelsInCurrentProject?.find((model) => model.id.toString() === id);
-	if (currentModel) {
-		return currentModel.name;
+function getDocumentName(id: string): string | null {
+	const currentDocument = documentsInCurrentProject?.find((doc) => doc.xdd_uri.toString() === id);
+	if (currentDocument) {
+		return currentDocument.title;
 	}
 	return null;
 }
@@ -52,17 +52,17 @@ function setActiveTab(index: number) {
 	tabStore.setActiveTabIndex(tabContext, index);
 }
 
-watch(newModelId, (id) => {
+watch(newDocumentId, (id) => {
 	if (id) {
 		const newTab = {
-			name: getModelName(id),
+			name: getDocumentName(id),
 			props: {
 				assetId: id
 			}
 		} as Tab;
 		// Would have loved to use a Set here instead of an array, but equality does not work as expected for objects
 		const foundTabIndex = openTabs.value.findIndex((tab) => {
-			const tabProps = tab.props as ModelProps;
+			const tabProps = tab.props as { assetId: string };
 			return tabProps.assetId === props.assetId;
 		});
 		if (foundTabIndex === -1) {
@@ -87,20 +87,20 @@ if (previousOpenTabs) {
 		v-if="!isEmpty(Array.from(openTabs))"
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
-		:component-to-render="Model"
+		:component-to-render="Document"
 		:active-tab="props.assetId"
 		@tab-closed="(tab) => removeClosedTab(tab)"
 		@tab-selected="(index) => setActiveTab(index)"
 		:active-tab-index="activeTabIndex"
 	>
 	</TabContainer>
-	<section v-else class="recent-models-page">
+	<section v-else class="recent-documents-page">
 		<resources-list :project="props.project" :resource-route="RouteName.ModelRoute" />
 	</section>
 </template>
 
 <style scoped>
-.recent-models-page {
+.recent-documents-page {
 	margin: 10px;
 	display: flex;
 	flex-direction: column;
