@@ -58,7 +58,7 @@ public class Document implements Serializable {
 		this.identifier = identifier; 
 	}
 	
-	public Document(){}
+	public Document(){} //Default constructor for @Data
 
 	@Override
     public String toString(){
