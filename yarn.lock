@@ -563,13 +563,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ibm/plex@npm:6.1.1":
-  version: 6.1.1
-  resolution: "@ibm/plex@npm:6.1.1"
-  checksum: 832f1928732374d15208151d251b31b73ad196006274807a82aaf8075f83b308faa379e3d1dc0bb0952f1ad0848f8bdc1f67cd477404bab7f1f30daf202ccdaa
-  languageName: node
-  linkType: hard
-
 "@istanbuljs/load-nyc-config@npm:^1.0.0":
   version: 1.1.0
   resolution: "@istanbuljs/load-nyc-config@npm:1.1.0"
@@ -6365,7 +6358,6 @@ cors@latest:
   resolution: "hmi-client@workspace:packages/client/hmi-client"
   dependencies:
     "@carbon/icons-vue": 10.60.0
-    "@ibm/plex": 6.1.1
     "@pinia/testing": 0.0.14
     "@playwright/experimental-ct-vue": 1.27.1
     "@playwright/test": 1.27.1
@@ -6388,6 +6380,7 @@ cors@latest:
     pinia: 2.0.28
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
+    primeflex: 3.3.0
     primeicons: 6.0.1
     primevue: 3.21.0
     sass: 1.56.1
@@ -9369,6 +9362,13 @@ opn@latest:
     ansi-styles: ^5.0.0
     react-is: ^18.0.0
   checksum: 9917a0bb859cd7a24a343363f70d5222402c86d10eb45bcc2f77b23a4e67586257390e959061aec22762a782fe6bafb59bf34eb94527bc2e5d211afdb287eb4e
+  languageName: node
+  linkType: hard
+
+"primeflex@npm:3.3.0":
+  version: 3.3.0
+  resolution: "primeflex@npm:3.3.0"
+  checksum: 26ac5d5a4d6131e6e864aa03ba3ea96c031e65eaa0ab73201fa7c2ea4f78c8e75787dc7fa4275190e51f44cc0ba0a21f5990c8a799576b927132b261d7a75957
   languageName: node
   linkType: hard
 
