@@ -4,14 +4,24 @@
 
 import API from '@/api/api';
 import { Model } from '@/types/Model';
-import { ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
+import { ProvenanceArtifacts, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
 import { XDDArticle, XDDResult } from '@/types/XDD';
 
 /**
- * docid: document id to use as the root document
- * dataset: xDD dataset name to focus the similarity search
+ For a paper, find related artifacts
+	Find models that reference that paper
+	Find datasets that reference that paper
+ */
+/**
+ For a paper, find similar content
+	Find related papers (xDD)
+*/
+
+/**
+ * Given a document ID, find semantically similar documents (utilizing xDD doc2vec API via the HMI server)
+ * @docid: document id to use as the root document
+ * @dataset: xDD dataset name to focus the similarity search
  * @return the list of related documents
- *  utilizing semantic similarity (i.e., document embedding) from XDD via the HMI server
  */
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (docid === '' || dataset === null) {
@@ -46,38 +56,50 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-/**
- * Get related models
- * @id: model id to be used as the root
- * @return Array<Model>|null - the list of all datasets, or null if none returned by API
- */
-async function getRelatedModels(id: string | number): Promise<Model[] | null> {
+// low-level API helper function for fetching model revisions
+async function getRelatedModelRevisions(
+	modelId: string | number
+): Promise<ProvenanceArtifacts | null> {
 	const body: ProvenanceQueryParam = {
-		root_id: Number(id),
-		root_type: ProvenanceType.Model,
+		root_id: Number(modelId),
+		root_type: ProvenanceType.Model, // FIXME: not sure why other root types are allowed
 		user_id: 0 // FIXME: seems required!
 	};
-
-	// FIXME: what exactly is the definition of relatedness for models?
-	// for now, let's return a combination of derived_models, model_revisions, and connected_nodes
-	//
-	// const derivedModelsRaw = await API.post('/provenance/derived_models', body).catch((error) => {
-	// 	console.log('Error: ', error);
-	// });
-	// const derivedModels: Array<Model> = derivedModelsRaw?.data ?? [] as Array<Model>;
-	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) => {
-		console.log('Error: ', error);
-	});
-	const connectedNodes: Array<Model> = connectedNodesRaw?.data ?? ([] as Array<Model>);
 	const modelRevisionsRaw = await API.post('/provenance/parent_model_revisions', body).catch(
 		(error) => {
 			console.log('Error: ', error);
 		}
 	);
 	const modelRevisions: Array<Model> = modelRevisionsRaw?.data ?? ([] as Array<Model>);
-	// return a combination of models from the aforementioned results
-	// FIXME: filter any results that are not models
-	return [/* ...derivedModels, */ ...modelRevisions, ...connectedNodes] ?? null;
+	return {
+		models: modelRevisions
+		// FIXME: also include the raw response
+	};
+}
+
+//
+// FIXME: needs to create a similar one for finding related datasets
+//
+/**
+ * Find related artifacts of a given model
+ * @id: model id to be used as the root
+ * @return ProvenanceArtifacts|null - the list of all models, or null if none returned by API
+ */
+async function getRelatedModels(modelId: string | number): Promise<ProvenanceArtifacts | null> {
+	const res: ProvenanceArtifacts = {};
+
+	// For a model, find related content:
+	// 	Find other model revisions
+	// 	Find publication(s) used to referencing the model
+	// 	Find datasets used in the simulation of the model
+	// 	Find datasets that represent the simulation runs of the model
+
+	const modelRevisions = await getRelatedModelRevisions(modelId);
+	if (modelRevisions) {
+		res.models = modelRevisions?.models;
+	}
+
+	return res;
 }
 
 export { getRelatedDocuments, getRelatedModels };
