@@ -37,10 +37,10 @@ onMounted(async () => {
 	const allProjects = (await ProjectService.getAll()) as Project[];
 	if (allProjects) {
 		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
-		const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
-		const result = await Promise.all(promises);
+		// const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
+		// const result = await Promise.all(promises);
 		for (let i = 0; i < allProjects.length; i++) {
-			allProjects[i].relatedArticles = result[i];
+			allProjects[i].relatedArticles = [];
 		}
 		projects.value = allProjects;
 	}

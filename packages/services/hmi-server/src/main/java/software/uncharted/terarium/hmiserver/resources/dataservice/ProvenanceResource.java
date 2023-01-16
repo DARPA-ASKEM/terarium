@@ -4,6 +4,7 @@ import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.ProvenanceQueryParameters;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 
 import javax.inject.Inject;
@@ -34,13 +35,24 @@ public class ProvenanceResource {
 		return proxy.createProvenance(provenance);
 	}
 
-	@GET
-	@Path("/derived_from")
-	public Response searchProvenance(
-		@QueryParam("artifact_id") final String artifactId,
-		@QueryParam("artifact_type") final String artifactType
+	@POST
+	@Path("/connected_nodes")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response searchConnectedNodes(
+		final ProvenanceQueryParameters body,
+		@QueryParam("search_type") @DefaultValue("connected_nodes") String searchType
 	) {
-		return proxy.searchProvenance(artifactId, artifactType);
+		return proxy.search(body, searchType);
+	}
+
+	@POST
+	@Path("/parent_model_revisions")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response searchParentModelRevisions(
+		final ProvenanceQueryParameters body,
+		@QueryParam("search_type") @DefaultValue("parent_model_revisions") String searchType
+	) {
+		return proxy.search(body, searchType);
 	}
 
 	@DELETE
