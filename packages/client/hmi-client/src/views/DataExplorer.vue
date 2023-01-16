@@ -1,15 +1,10 @@
 <template>
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
-			<slider
-				content-width="20%"
-				tab-width="48px"
-				direction="left"
-				:is-open="isSliderFacetsOpen"
-			>
+			<slider content-width="20%" tab-width="48px" direction="left" :is-open="isSliderFacetsOpen">
 				<template v-slot:content>
 					<div class="slider-header content">
-						<IconChevronLeft24 class="slider-header-item" @click="isSliderFacetsOpen = false"/>
+						<IconChevronLeft24 class="slider-header-item" @click="isSliderFacetsOpen = false" />
 						<h4 class="slider-header-item">Facets</h4>
 					</div>
 					<facets-panel
@@ -22,7 +17,7 @@
 				</template>
 				<template v-slot:tab>
 					<div class="slider-header tab">
-						<IconChevronRight24 class="slider-header-item" @click="isSliderFacetsOpen = true"/>
+						<IconChevronRight24 class="slider-header-item" @click="isSliderFacetsOpen = true" />
 					</div>
 				</template>
 			</slider>
@@ -92,7 +87,7 @@
 			>
 				<template v-slot:content>
 					<div class="slider-header content">
-						<IconClose24 class="slider-header-item" @click="previewItem = null"/>
+						<IconClose24 class="slider-header-item" @click="previewItem = null" />
 					</div>
 					<div :v-if="previewItem" class="selected-resources-pane">
 						<Document :asset-id="previewItemId" :project="resources.activeProject" />
@@ -110,18 +105,18 @@
 			>
 				<template v-slot:content>
 					<div class="slider-header content">
-						<IconChevronRight24 class="slider-header-item" @click="isSliderResourcesOpen = false"/>
+						<IconChevronRight24 class="slider-header-item" @click="isSliderResourcesOpen = false" />
 					</div>
 					<selected-resources-options-pane
 						class="selected-resources-pane"
 						:selected-search-items="selectedSearchItems"
 						@remove-item="toggleDataItemSelected"
-						@close="isSliderResourcesOpen = false;"
+						@close="isSliderResourcesOpen = false"
 					/>
 				</template>
 				<template v-slot:tab>
 					<div class="slider-header tab">
-						<IconChevronLeft24 class="slider-header-item" @click="openResourcesSlider"/>
+						<IconChevronLeft24 class="slider-header-item" @click="openResourcesSlider" />
 					</div>
 				</template>
 			</slider>
@@ -353,7 +348,7 @@ const executeSearch = async () => {
 const openResourcesSlider = () => {
 	previewItem.value = null;
 	isSliderResourcesOpen.value = true;
-}
+};
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
@@ -613,7 +608,7 @@ onUnmounted(() => {
 	justify-content: space-between;
 }
 .slider-header.tab {
-	justify-content: center;;
+	justify-content: center;
 }
 .slider-header-item {
 	font-weight: bold;

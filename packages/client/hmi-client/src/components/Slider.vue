@@ -1,5 +1,8 @@
 <template>
-	<div :class="`slider ${isOpen ? 'open' : 'closed'}`" :style="{ width: isOpen ? contentWidth : tabWidth }">
+	<div
+		:class="`slider ${isOpen ? 'open' : 'closed'}`"
+		:style="{ width: isOpen ? contentWidth : tabWidth }"
+	>
 		<div class="slider-content-container" :style="{ width: contentWidth }">
 			<div class="slider-content" :style="sidePanelContentStyle">
 				<slot name="content"></slot>
@@ -17,11 +20,11 @@ import { computed } from 'vue';
 const props = defineProps({
 	isOpen: {
 		type: Boolean,
-		default: true,
+		default: true
 	},
 	direction: {
 		type: String,
-		default: 'left',
+		default: 'left'
 	},
 	contentWidth: {
 		type: String,
@@ -30,22 +33,22 @@ const props = defineProps({
 	tabWidth: {
 		type: String,
 		default: '50px'
-	},
+	}
 });
 
 const directionMap = {
 	left: {
 		content: 'margin-left: -100%; margin-right: 100%;',
-		tab: 'margin-left: auto;',
+		tab: 'margin-left: auto;'
 	},
 	right: {
 		content: 'margin-left: 100%; margin-right: -100%;',
-		tab: 'margin-right: auto;',
+		tab: 'margin-right: auto;'
 	}
 };
 
-const sidePanelContentStyle = computed(
-	() => props.isOpen ? '' : directionMap[props.direction].content
+const sidePanelContentStyle = computed(() =>
+	props.isOpen ? '' : directionMap[props.direction].content
 );
 const sidePanelTabStyle = computed(
 	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab}`
@@ -53,7 +56,9 @@ const sidePanelTabStyle = computed(
 </script>
 
 <style scoped>
-.slider, .slider-content, .slider-tab {
+.slider,
+.slider-content,
+.slider-tab {
 	transition: all 0.3s ease-out;
 }
 
