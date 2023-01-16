@@ -3,6 +3,7 @@
 		<span class="p-input-icon-left p-input-icon-right">
 			<i class="pi pi-search" />
 			<InputText
+				class="input-text"
 				type="text"
 				placeholder="Search"
 				v-model="searchText"
@@ -69,9 +70,10 @@ watch(defaultText, (newText) => {
 	flex: 1;
 }
 
-.p-inputtext {
-	height: 3rem;
+.input-text {
 	border-radius: 1.5rem;
+	height: 3rem;
+	width: 100%;
 }
 
 .pi-history {
