@@ -19,7 +19,7 @@ const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
-	projects.value.filter((project) => project.relatedArticles.length > 0).slice(0, 5)
+	projects.value.filter((project) => project.relatedArticles !== undefined).slice(0, 5)
 );
 const relevantArticles = ref<XDDArticle[]>([]);
 const relevantSearchTerm = 'COVID-19';
@@ -37,15 +37,23 @@ onMounted(async () => {
 	projects.value = (await API.get('/home')).data as Project[];
 	console.log('Projects.value after /home call');
 	console.log(projects.value);
+	console.log(projects.value[0].relatedArticles);
 
 	// Get all relevant articles (latest on section)
 	const allArticles = await searchXDDArticles(relevantSearchTerm, relevantSearchParams);
 	if (allArticles) {
 		relevantArticles.value = allArticles.results;
 	}
+
+	console.log('Relevant Articles:');
+	console.log(relevantArticles.value);
+	console.log("Project 1's related artciles:");
+	console.log(projects.value[0].relatedArticles);
 });
 
 const selectArticle = (item: XDDArticle) => {
+	console.log('Clicked selected Article.');
+	console.log(item);
 	const itemID = item as XDDArticle;
 	selectedPaper.value = itemID;
 };

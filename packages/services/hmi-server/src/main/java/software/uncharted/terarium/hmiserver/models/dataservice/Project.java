@@ -11,13 +11,15 @@ import java.util.List;
 import java.util.Map;
 import java.time.*;
 
+import javax.json.bind.annotation.JsonbProperty;
 
 
 @Data
 @Accessors(chain = true)
 public class Project implements Serializable {
 
-	private String id;
+	@JsonbProperty("id")
+	private String projectID;
 
 	private String name;
 
@@ -31,25 +33,28 @@ public class Project implements Serializable {
 
 	private Map<String, List<Long>> assets;
 
-	private Document relatedDocuments; //TODO: Replace with document-service's document class
+	@JsonbProperty("relatedArticles")
+	private List<Document> relatedDocuments;
 
 	public Project(String id, String name, String description,String timestamp) {
-		this.id = id;
+		this.projectID = id;
 		this.name = name;
 		this.description = description;
 		this.active = true;
 		this.timestamp = Instant.parse(timestamp + "Z");
 		
 	}
-	
-	public String getID(){ return this.id; }
 
-	public void setRelatedDocuments(Document relatedDocuments){
+	public Project(){} //Required default constructor for the data annotation
+	
+	public String getID(){ return this.projectID; }
+
+	public void setRelatedDocuments(List<Document> relatedDocuments){
 		this.relatedDocuments = relatedDocuments;
 	}
 	@Override
     public String toString(){
-		return "Project: { id: " + this.id +
+		return "Project: { id: " + this.projectID +
 				" name: " + this.name + 
 				" description: " + this.description +
 				" Related Documents: " + this.relatedDocuments +

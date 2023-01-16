@@ -16,13 +16,13 @@ import java.util.Map;
 @Accessors(chain = true)
 public class Document implements Serializable {
 
-	@JsonbProperty("_gddid")
+	@JsonbProperty("gddid")
 	private String gddId;
 
 	private String title;
 
-	@JsonbProperty("_abstract")
-	@JsonAlias("abstract")
+	@JsonbProperty("abstract")
+	// @JsonAlias("abstractText")
 	private String abstractText;
 
 	private String journal;
@@ -48,12 +48,17 @@ public class Document implements Serializable {
 	@JsonbProperty("known_terms")
 	private Map<String, List<String>> knownTerms;
 
-	public Document(String gddId, String title, String abstractText, String journal ){
+	public Document(String gddId, String title, String abstractText, String journal, String publisher, List<Map<String, String>> author, List<Map<String, String>> identifier){
 		this.gddId = gddId;
 		this.title = title;
 		this.abstractText = abstractText;
 		this.journal = journal;
+		this.publisher = publisher;
+		this.author = author;
+		this.identifier = identifier; 
 	}
+	
+	public Document(){}
 
 	@Override
     public String toString(){
