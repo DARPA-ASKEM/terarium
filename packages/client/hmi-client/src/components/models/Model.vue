@@ -12,7 +12,7 @@ import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/
 import { Model } from '@/types/Model';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
-import Button from '@/components/Button.vue';
+import Button from 'primevue/button';
 
 export interface ModelProps {
 	assetId: string;
@@ -104,14 +104,16 @@ const goToSimulationPlanPage = () => {
 	<section class="model">
 		<header>
 			<h3>{{ model?.name ?? '' }}</h3>
-			<Button action @click="goToSimulationPlanPage">Add to new workflow</Button>
+			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
 		</header>
 		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
 			<p>{{ model?.description ?? '' }}</p>
 			<div class="less-more-button-container">
-				<Button @click="isDescriptionExpanded = !isDescriptionExpanded">
-					{{ isDescriptionExpanded ? 'Show less' : 'Show more' }}
-				</Button>
+				<Button
+					class="p-button-secondary p-button-sm"
+					:label="isDescriptionExpanded ? 'Show less' : 'Show more'"
+					@click="isDescriptionExpanded = !isDescriptionExpanded"
+				/>
 			</div>
 		</div>
 		<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
