@@ -9,8 +9,8 @@
 			>
 				<template v-slot:content>
 					<div class="slider-header content">
-						<h4 class="slider-header-item">Facets</h4>
 						<IconChevronLeft24 class="slider-header-item" @click="isSliderFacetsOpen = false"/>
+						<h4 class="slider-header-item">Facets</h4>
 					</div>
 					<facets-panel
 						v-if="viewType === ViewType.LIST"
@@ -92,7 +92,6 @@
 			>
 				<template v-slot:content>
 					<div class="slider-header content">
-						<h4 class="slider-header-item"></h4>
 						<IconClose24 class="slider-header-item" @click="previewItem = null"/>
 					</div>
 					<div :v-if="previewItem" class="selected-resources-pane">
@@ -111,7 +110,6 @@
 			>
 				<template v-slot:content>
 					<div class="slider-header content">
-						<h4 class="slider-header-item">Rsrcs</h4>
 						<IconChevronRight24 class="slider-header-item" @click="isSliderResourcesOpen = false"/>
 					</div>
 					<selected-resources-options-pane
@@ -611,6 +609,7 @@ onUnmounted(() => {
 	align-items: center;
 }
 .slider-header.content {
+	flex-direction: row-reverse;
 	justify-content: space-between;
 }
 .slider-header.tab {
