@@ -404,7 +404,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	if (rawdata.success) {
 		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
-		const articlesRaw = data as XDDArticle[];
+		const articlesRaw =
+			xddSearchParam?.fields === undefined
+				? (data as XDDArticle[])
+				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent resposne object
 
 		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
 		//       is not populated and instead the raw field name, abstract, is the one with data
