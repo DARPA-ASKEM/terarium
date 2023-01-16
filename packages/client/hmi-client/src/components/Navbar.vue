@@ -18,11 +18,11 @@ const props = defineProps<{
 interface NavItem {
 	[key: string]: { name: string; icon: string; routeName: string };
 }
-// const activeProjectName = computed(() => props.project?.name || '');
+const activeProjectName = computed(() => props.project?.name || '');
 const activeProjectId = computed(() => props.project?.id);
 const currentRoute = useCurrentRoute();
 const router = useRouter();
-const navItems = shallowRef<NavItem>({
+const initialNavItems = {
 	[RoutePath.Home]: {
 		name: RouteMetadata[RouteName.HomeRoute].displayName,
 		icon: RouteMetadata[RouteName.HomeRoute].icon,
@@ -33,9 +33,10 @@ const navItems = shallowRef<NavItem>({
 		icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
 		routeName: RouteName.DataExplorerRoute
 	}
-});
-// const selectedPage = computed(() => navItems.value[currentRoute.value.path]);
-const selectedPage = ref(navItems.value[currentRoute.value.path]);
+};
+const navItems = shallowRef<NavItem>(initialNavItems);
+
+const selectedPage = ref(navItems.value[currentRoute.value.path] || navItems.value[RoutePath.Home]);
 const auth = useAuthStore();
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
@@ -62,9 +63,7 @@ function searchTextChanged(value) {
 
 function goToPage(event) {
 	const routeName = event.value.routeName;
-	if (routeName.path === RoutePath.Project && activeProjectId.value) {
-		console.log(activeProjectId.value);
-
+	if (routeName === RouteName.ProjectRoute && activeProjectId.value) {
 		const params: RouteParamsRaw = { projectId: activeProjectId.value };
 		router.push({ name: routeName, params });
 	} else {
@@ -72,19 +71,18 @@ function goToPage(event) {
 	}
 }
 
-watch(currentRoute, (newRoute) => {
-	if (newRoute.fullPath.includes('projects')) {
-		selectedPage.value = navItems.value[RoutePath.Project];
-	} else {
-		selectedPage.value = navItems.value[newRoute.path];
-	}
+watch(activeProjectId, (newProjectId) => {
+	const projectNavKey = `/projects/${newProjectId}`;
+	const projectNavItem = {
+		[projectNavKey]: {
+			name: activeProjectName.value,
+			icon: 'pi pi-images',
+			routeName: RouteName.ProjectRoute
+		}
+	};
+	navItems.value = { ...initialNavItems, ...projectNavItem };
+	selectedPage.value = navItems.value[currentRoute.value.path];
 });
-
-// watch(activeProjectId, (newProjectId) => {
-// 	if (newProjectId) {
-
-// 	}
-// })
 </script>
 
 <template>
