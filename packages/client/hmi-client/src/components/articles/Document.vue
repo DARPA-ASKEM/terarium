@@ -216,11 +216,6 @@ onMounted(async () => {
 .doc-view-container {
 	padding: 2rem;
 	font-size: large;
-	height: calc(100vh - 50px);
-	width: 100%;
-	overflow: auto;
-	background: var(--un-color-body-surface-primary);
-	margin: 1rem;
 }
 
 .row {

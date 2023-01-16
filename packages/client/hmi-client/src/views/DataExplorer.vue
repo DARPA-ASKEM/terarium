@@ -1,13 +1,31 @@
 <template>
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
-			<facets-panel
-				v-if="viewType === ViewType.LIST"
-				class="facets-panel"
-				:facets="facets"
-				:filtered-facets="filteredFacets"
-				:result-type="resultType"
-			/>
+			<slider
+				content-width="20%"
+				tab-width="48px"
+				direction="left"
+				:is-open="isSliderFacetsOpen"
+			>
+				<template v-slot:content>
+					<div class="slider-header content">
+						<h4 class="slider-header-item">Facets</h4>
+						<IconChevronLeft24 class="slider-header-item" @click="isSliderFacetsOpen = false"/>
+					</div>
+					<facets-panel
+						v-if="viewType === ViewType.LIST"
+						class="facets-panel"
+						:facets="facets"
+						:filtered-facets="filteredFacets"
+						:result-type="resultType"
+					/>
+				</template>
+				<template v-slot:tab>
+					<div class="slider-header tab">
+						<IconChevronRight24 class="slider-header-item" @click="isSliderFacetsOpen = true"/>
+					</div>
+				</template>
+			</slider>
 			<div class="results-content">
 				<div class="secondary-header">
 					<div class="button-group">
@@ -65,17 +83,50 @@
 				/>
 			</div>
 			<!-- document preview -->
-			<div v-if="previewItem" class="selected-resources-pane">
-				<Document :asset-id="previewItemId" :project="resources.activeProject" />
-				<Button label="Add to Cart"></Button>
-				<Button label="Add to Project"></Button>
-			</div>
-			<selected-resources-options-pane
-				v-else
-				class="selected-resources-pane"
-				:selected-search-items="selectedSearchItems"
-				@remove-item="toggleDataItemSelected"
-			/>
+			<slider
+				class="preview-slider"
+				content-width="calc(35% - 48px)"
+				tab-width="0"
+				direction="right"
+				:is-open="Boolean(previewItem)"
+			>
+				<template v-slot:content>
+					<div class="slider-header content">
+						<h4 class="slider-header-item"></h4>
+						<IconClose24 class="slider-header-item" @click="previewItem = null"/>
+					</div>
+					<div :v-if="previewItem" class="selected-resources-pane">
+						<Document :asset-id="previewItemId" :project="resources.activeProject" />
+						<Button label="Add to Cart"></Button>
+						<Button label="Add to Project"></Button>
+					</div>
+				</template>
+			</slider>
+			<slider
+				class="resources-slider"
+				content-width="35%"
+				tab-width="48px"
+				direction="right"
+				:is-open="isSliderResourcesOpen"
+			>
+				<template v-slot:content>
+					<div class="slider-header content">
+						<h4 class="slider-header-item">Rsrcs</h4>
+						<IconChevronRight24 class="slider-header-item" @click="isSliderResourcesOpen = false"/>
+					</div>
+					<selected-resources-options-pane
+						class="selected-resources-pane"
+						:selected-search-items="selectedSearchItems"
+						@remove-item="toggleDataItemSelected"
+						@close="isSliderResourcesOpen = false;"
+					/>
+				</template>
+				<template v-slot:tab>
+					<div class="slider-header tab">
+						<IconChevronLeft24 class="slider-header-item" @click="openResourcesSlider"/>
+					</div>
+				</template>
+			</slider>
 		</div>
 	</div>
 </template>
@@ -83,12 +134,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
+import IconChevronLeft24 from '@carbon/icons-vue/es/chevron--left/24';
+import IconChevronRight24 from '@carbon/icons-vue/es/chevron--right/24';
+import IconClose24 from '@carbon/icons-vue/es/close/24';
 
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import Document from '@/components/articles/Document.vue';
+import Slider from '@/components/Slider.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -123,6 +178,11 @@ const props = defineProps<{
 }>();
 const searchQuery = computed(() => props.query);
 const route = useRoute();
+
+// default slider state
+const isSliderFacetsOpen = ref(true);
+const isSliderResourcesOpen = ref(true);
+
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -292,6 +352,11 @@ const executeSearch = async () => {
 	calculateFacets(allData, allDataFilteredWithFacets);
 };
 
+const openResourcesSlider = () => {
+	previewItem.value = null;
+	isSliderResourcesOpen.value = true;
+}
+
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
 	const item = dataItem.item;
@@ -305,6 +370,7 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		} else {
 			// open the preview panel
 			previewItem.value = item;
+			isSliderResourcesOpen.value = false;
 		}
 		return; // do not add to cart if the purpose is to toggel preview
 	}
@@ -422,7 +488,7 @@ onUnmounted(() => {
 	top: 0px;
 	right: 0px;
 	display: flex;
-	width: 100vw;
+	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
@@ -482,18 +548,19 @@ onUnmounted(() => {
 }
 
 .data-explorer-container .facets-and-results-container {
+	position: relative;
 	height: calc(100vh - 50px - var(--nav-bar-height));
 	display: flex;
 	flex-grow: 1;
 	min-height: 0;
-	gap: 10px;
-	/* Add space to the right of the selected assets column */
-	padding-right: 10px;
+}
+
+.results-content {
+	margin: 0 10px;
 }
 
 .facets-panel {
 	margin-top: 10px;
-	width: 20%;
 	overflow-y: auto;
 }
 
@@ -527,7 +594,30 @@ onUnmounted(() => {
 	min-width: 100px;
 }
 
-.selected-resources-pane {
-	width: 35%;
+.preview-slider {
+	margin-right: 1px;
+}
+
+.resources-slider {
+	z-index: 1;
+}
+
+.slider {
+	background: var(--un-color-body-surface-primary);
+}
+
+.slider-header {
+	display: flex;
+	align-items: center;
+}
+.slider-header.content {
+	justify-content: space-between;
+}
+.slider-header.tab {
+	justify-content: center;;
+}
+.slider-header-item {
+	font-weight: bold;
+	margin: 12px;
 }
 </style>
