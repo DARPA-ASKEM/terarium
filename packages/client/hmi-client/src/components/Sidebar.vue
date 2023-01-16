@@ -14,7 +14,6 @@ import Button from '@/components/Button.vue';
 import ModelSidebarPanel from '@/components/sidebar-panel/model-sidebar-panel.vue';
 import DatasetSidebarPanel from '@/components/sidebar-panel/dataset-sidebar-panel.vue';
 import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-panel.vue';
-import ProfileSidebarPanel from '@/components/sidebar-panel/profile-sidebar-panel.vue';
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
@@ -46,8 +45,7 @@ function showSidebar(view: RouteName): boolean {
 	const needProject = [
 		RouteName.ModelRoute,
 		RouteName.DatasetRoute,
-		RouteName.DocumentRoute,
-		RouteName.ProfileRoute
+		RouteName.DocumentRoute
 	].includes(view);
 
 	// Sidebars that needs a defined Project
@@ -76,7 +74,7 @@ const BUTTON_ORDER = [
 	RouteName.DocumentRoute
 ];
 
-const DISABLED_BUTTONS = [RouteName.ProvenanceRoute, RouteName.ProfileRoute];
+const DISABLED_BUTTONS = [RouteName.ProvenanceRoute];
 </script>
 
 <template>
@@ -119,7 +117,6 @@ const DISABLED_BUTTONS = [RouteName.ProvenanceRoute, RouteName.ProfileRoute];
 			<ModelSidebarPanel v-if="selectedView === RouteName.ModelRoute" />
 			<DatasetSidebarPanel v-if="selectedView === RouteName.DatasetRoute" />
 			<DocumentsSidebarPanel v-if="selectedView === RouteName.DocumentRoute" />
-			<ProfileSidebarPanel v-if="selectedView === RouteName.ProfileRoute" />
 			<SimulationResultSidebarPanel
 				v-if="project && selectedView === RouteName.SimulationResultRoute"
 				:project="project"
