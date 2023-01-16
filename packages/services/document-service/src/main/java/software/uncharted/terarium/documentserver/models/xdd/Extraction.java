@@ -18,19 +18,37 @@ import java.util.Date;
 @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
 public class Extraction implements Serializable {
 
-	@JsonbProperty("ASKEM_CLASS")
 	private String askemClass;
 
-	@JsonbProperty("properties")
+
 	private ExtractionProperties properties;
 
-	@JsonbProperty("askem_id")
 	private String askemId;
 
-	@JsonbProperty("_xdd_created")
 	private Date xddCreated;
 
-	@JsonbProperty("_xdd_registrant")
 	private Number xddRegistrant;
+
+
+	@JsonbProperty("ASKEM_CLASS")
+	public void setAskemClass(String askemClass) {
+		this.askemClass = askemClass;
+	}
+
+	@JsonbProperty("askem_id")
+	public void setAskemId(String askemId) {
+		this.askemId = askemId;
+	}
+
+	@JsonbProperty("_xdd_created")
+	public void setXddCreated(Date xddCreated) {
+		this.xddCreated = xddCreated;
+	}
+
+	@JsonbProperty("_xdd_registrant")
+	public void setXddRegistrant(Number xddRegistrant) {
+		this.xddRegistrant = xddRegistrant;
+	}
+
 }
 
