@@ -56,7 +56,7 @@ public class HomeResource {
             //it will have a length of 0 as after the split that will just mean it has at least an empty list
             String[] projectPublication  = projectAssets.split("\"publications\":")[1].split("\"xdd_uri\":");
             if (projectPublication.length > 1){ 
-                String projectFirstPublication = projectPublication[1].split(",")[0].replace("\"",""); //.split(",")[0]; //.split("\"xdd_uri\":")[1].replace("\"","");
+                String projectFirstPublication = projectPublication[1].split(",")[0].replace("\"","");
                 String relatedDocumentsString = documentProxy.getRelatedDocuments("xdd-covid-19",projectFirstPublication).readEntity(String.class); 
                 List<Document> relatedDocuments = stringToDocument(relatedDocumentsString);
                 
@@ -104,7 +104,7 @@ public class HomeResource {
             String abstractText = aDocument.split("\"abstract\":")[i].split(",")[0].replace("\"","");
             String journal = aDocument.split("\"journal\":")[i].split(",")[0];
             String currentPublisher = aDocument.split("\"publisher\":")[1].split(",")[0].replace("\"","");
-            String currentAuthor = aDocument.split("\"author\":")[1].split(",")[1].split("\"name\":")[1].replace("\"",""); //TODO Parse author better
+            String currentAuthor = aDocument.split("\"author\":")[1].split(",")[1].split("\"name\":")[1].replace("\"",""); 
             currentAuthor = currentAuthor.substring(0,currentAuthor.indexOf("}")); 
             String currentIdentifier = aDocument.split("\"identifier\":")[1].split(",")[1].split("\"id\":")[1].replace("\"","");
             currentIdentifier = currentIdentifier.substring(0,currentIdentifier.indexOf("}")); //Cut out the extra crap from id

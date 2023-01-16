@@ -50,9 +50,6 @@ async function get(projectId: string): Promise<Project | null> {
  */
 async function getAll(): Promise<Project[] | null> {
 	const response = await API.get('/projects');
-	// TODO Remove in cleanup
-	console.log('Response for getAll:');
-	console.log(response?.data);
 	return response?.data ?? null;
 }
 
@@ -83,8 +80,6 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 	// FIXME: handle cases where assets is already added to the project
 	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 	const response = await API.post(url);
-	// TODO Remove in cleanup
-	console.log('Done adding asset');
 	return response?.data ?? null;
 }
 
