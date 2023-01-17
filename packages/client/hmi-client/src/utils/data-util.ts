@@ -73,10 +73,11 @@ export function isXDDArticle(item: ResultType): item is XDDArticle {
 
 export function getResourceID(item: ResultType) {
 	if (isXDDArticle(item)) {
-		return (item as XDDArticle).gddid;
+		return (item as XDDArticle).gddId;
 	}
 	return item.id;
 }
+
 //
 
 /**

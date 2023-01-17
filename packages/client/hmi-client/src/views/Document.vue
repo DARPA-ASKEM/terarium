@@ -25,7 +25,7 @@
 					{{ formatAbstract(doc) }}
 				</AccordionTab>
 
-				<AccordionTab header="Snippets"> </AccordionTab>
+				<AccordionTab header="Snippets"></AccordionTab>
 
 				<AccordionTab header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
@@ -50,7 +50,7 @@
 
 				<AccordionTab header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
-						<b>{{ ex.resource_title }}</b>
+						<b>{{ ex.resourceTitle }}</b>
 						<div>
 							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
@@ -66,9 +66,9 @@
 					</div>
 				</AccordionTab>
 
-				<AccordionTab header="Other versions"> </AccordionTab>
-				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
-				<AccordionTab header="Provenance"> </AccordionTab>
+				<AccordionTab header="Other versions"></AccordionTab>
+				<AccordionTab header="Related TERARium artifacts"></AccordionTab>
+				<AccordionTab header="Provenance"></AccordionTab>
 			</Accordion>
 		</div>
 		<resources-list
@@ -143,8 +143,8 @@ const equationArtifacts = computed(() =>
 	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation)
 );
 const urlArtifacts = computed(() =>
-	doc.value?.knownEntities && doc.value.knownEntities.url_extractions.length > 0
-		? doc.value.knownEntities.url_extractions
+	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
+		? doc.value.knownEntities.urlExtractions
 		: null
 );
 

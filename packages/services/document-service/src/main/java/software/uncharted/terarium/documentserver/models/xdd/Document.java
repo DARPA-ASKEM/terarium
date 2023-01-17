@@ -16,13 +16,11 @@ import java.util.Map;
 @Accessors(chain = true)
 public class Document implements Serializable {
 
-	@JsonbProperty("gddid")
 	private String gddId;
 
 	private String title;
 
-	@JsonbProperty("abstract")
-	// @JsonAlias("abstractText")
+	@JsonAlias("abstract")
 	private String abstractText;
 
 	private String journal;
@@ -44,9 +42,38 @@ public class Document implements Serializable {
 	private List<Map<String, String>> author;
 
 	private List<Map<String, String>> identifier;
+	private Map<String, List<String>> knownTerms;
+	private List<String> highlight;
+
+	private List<Document> relatedDocuments;
+
+	private List<Extraction> relatedExtractions;
+	private KnownEntities knownEntities;
+
+	@JsonbProperty("_gddid")
+	public void setID(String id) {
+		this.gddId = id;
+	}
+
+	@JsonbProperty("_abstract")
+	public void setAbstract(String abstractText) {
+		this.abstractText = abstractText;
+	}
 
 	@JsonbProperty("known_terms")
-	private Map<String, List<String>> knownTerms;
+	public void setKnownTerms(Map<String, List<String>> knownTerms) {
+		this.knownTerms = knownTerms;
+	}
+
+	@JsonbProperty("_highlight")
+	public void setKnownTerms(List<String> highlight) {
+		this.highlight = highlight;
+	}
+
+	@JsonbProperty("known_entities")
+	public void setKnownEntities(KnownEntities knownEntities) {
+		this.knownEntities = knownEntities;
+	}
 
 	public Document(String gddId, String title, String abstractText, String journal, String publisher, List<Map<String, String>> author, List<Map<String, String>> identifier){
 		this.gddId = gddId;
@@ -69,5 +96,5 @@ public class Document implements Serializable {
 				" }";
 	}
 
-	public String getID(){ return this.gddId; }
 }
+

@@ -27,25 +27,21 @@ export type XDDArticleKnownTerms = {
 
 export type XDDUrlExtraction = {
 	url: string;
-	resource_title: string;
-	extracted_from: string[];
+	resourceTitle: string;
+	extractedFrom: string[];
 };
 
 export type XDDArticleKnownEntity = {
-	url_extractions: XDDUrlExtraction[];
+	urlExtractions: XDDUrlExtraction[];
 };
 
 export type XDDArticle = {
-	// REVIEW: FIXME: server should provide proper field names
-	//         also, reove the temp workaround in the client data service
 	abstractText: string; // mapped from abstract
 	abstract: string;
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string;
-	// eslint-disable-next-line no-underscore-dangle
-	known_terms?: XDDArticleKnownTerms[]; // TEMP
-	knownTerms?: XDDArticleKnownTerms[]; // mapped from known_terms
+	knownTerms?: XDDArticleKnownTerms[];
 	link: XDDArticleLink[];
 	number: string;
 	pages: string;
@@ -54,14 +50,9 @@ export type XDDArticle = {
 	type: string;
 	volume: string;
 	year: string;
-	gddid: string; // TEMP: mapped from _gddid
-	// eslint-disable-next-line no-underscore-dangle
-	_highlight: string[];
-	highlight: string[]; // TEMP: mapped from _highlight
-	// eslint-disable-next-line no-underscore-dangle
-	_gddid: string; // TEMP
-	known_entities?: XDDArticleKnownEntity;
-	knownEntities?: XDDArticleKnownEntity; // TEMP: mapped from known_entities
+	gddId: string;
+	highlight: string[];
+	knownEntities?: XDDArticleKnownEntity;
 	// additional-client-side fields
 	relatedDocuments?: XDDArticle[];
 	relatedExtractions?: XDDArtifact[];
@@ -69,7 +60,7 @@ export type XDDArticle = {
 
 export type PublicationAsset = {
 	id?: string;
-	xdd_uri: string; // this is the internal XDD id known as "docid" NOT "doi"
+	xddUri: string; // this is the internal XDD id known as "docid" NOT "doi"
 	title: string;
 };
 
@@ -104,9 +95,9 @@ export type XDDArtifact = {
 
 export type XDDDictionary = {
 	name: string;
-	base_classification: string;
+	baseClassification: string;
 	source: string;
-	case_sensitive: boolean;
+	caseSensitive: boolean;
 };
 
 export type XDDFacetsItemResponse = {

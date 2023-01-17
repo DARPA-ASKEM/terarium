@@ -1,11 +1,13 @@
-package software.uncharted.terarium.documentserver.models.xdd;
+package software.uncharted.terarium.documentserver.responses.xdd;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.documentserver.models.xdd.Document;
 
 import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Accessors(chain = true)
@@ -18,4 +20,6 @@ public class XDDArticlesResponseOK extends XDDResponseOK implements Serializable
 	private String scrollId;
 
 	private Number hits;
+
+	private Map<String, XDDFacetsItemResponse> facets;
 }

@@ -102,7 +102,7 @@ const filteredArticles = computed(() => {
 				if (ex.properties.documentBibjson === undefined) return; // skip
 
 				// eslint-disable-next-line no-underscore-dangle
-				const docid = ex.properties.documentBibjson.gddid || ex.properties.documentBibjson._gddid; // FIXME: embedded doc metadata has no proper fields mapping
+				const docid = ex.properties.documentBibjson.gddId;
 				if (docMap[docid] === undefined) {
 					docMap[docid] = ex.properties.documentBibjson;
 					docMap[docid].relatedExtractions = [];

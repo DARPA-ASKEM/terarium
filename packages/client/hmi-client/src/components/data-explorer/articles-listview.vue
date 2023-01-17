@@ -15,7 +15,7 @@
 			<tbody>
 				<tr
 					v-for="d in articles"
-					:key="d.gddid"
+					:key="d.gddId"
 					class="tr-item"
 					:class="{ selected: isSelected(d) }"
 					@click="togglePreview(d)"
@@ -40,13 +40,13 @@
 										{{ formatArticleAuthors(d) }}
 									</div>
 									<div
-										v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
+										v-if="d.knownEntities && d.knownEntities.urlExtractions.length > 0"
 										class="url-extractions"
 									>
 										<b>URL Extractions(s):</b>
-										<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
+										<div v-for="ex in d.knownEntities.urlExtractions" :key="ex.url">
 											<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
-												ex.resource_title
+												ex.resourceTitle
 											}}</a>
 										</div>
 									</div>
@@ -61,7 +61,7 @@
 									Related Documents
 								</div>
 								<div v-if="isExpanded() && d.relatedDocuments" class="related-docs-container">
-									<div v-for="a in d.relatedDocuments" :key="a.gddid">
+									<div v-for="a in d.relatedDocuments" :key="a.gddId">
 										{{ a.title }}
 										<span class="item-select" @click.stop="updateSelection(a)"
 											>{{ isSelected(a) ? 'Unselect' : 'Select' }}
@@ -196,7 +196,7 @@ const fetchRelatedDocument = async (article: XDDArticle) => {
 	if (!article.relatedDocuments) {
 		article.relatedDocuments = await getRelatedDocuments(
 			// eslint-disable-next-line no-underscore-dangle
-			article.gddid || article._gddid,
+			article.gddId,
 			resources.xddDataset
 		);
 	}
