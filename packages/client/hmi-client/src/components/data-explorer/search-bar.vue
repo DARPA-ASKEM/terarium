@@ -4,6 +4,7 @@
 			<i class="pi pi-search" />
 			<InputText
 				type="text"
+				class="input-text"
 				placeholder="Search"
 				v-model="searchText"
 				@keyup.enter="addSearchTerm"
@@ -69,9 +70,9 @@ watch(defaultText, (newText) => {
 	flex: 1;
 }
 
-.p-inputtext {
-	height: 3rem;
+.input-text {
 	border-radius: 1.5rem;
+	width: 100%;
 }
 
 .pi-history {

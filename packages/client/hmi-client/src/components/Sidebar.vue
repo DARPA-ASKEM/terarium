@@ -151,7 +151,6 @@ section .side-panel-control.side-panel-control {
 
 nav {
 	background-color: var(--primary-color);
-	box-shadow: var(--un-box-shadow-default);
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
@@ -184,11 +183,11 @@ nav li svg {
 }
 
 nav li[active='true'] svg {
-	fill: var(--un-color-white);
+	fill: white;
 }
 
 nav li:hover {
-	background-color: var(--un-color-white);
+	background-color: white;
 }
 
 nav li:hover svg {
@@ -204,8 +203,7 @@ nav li[disabled] svg {
 }
 
 aside {
-	background-color: var(--un-color-body-surface-primary);
-	box-shadow: var(--un-box-shadow-default);
+	background-color: var(--surface-overlay);
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
@@ -219,15 +217,5 @@ aside {
 
 aside.side-panel-close {
 	display: none;
-}
-
-aside header {
-	font: var(--un-font-h5);
-	overflow: hidden;
-}
-
-aside main {
-	flex-grow: 1;
-	overflow: hidden;
 }
 </style>
