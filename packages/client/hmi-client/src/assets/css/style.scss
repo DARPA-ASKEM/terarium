@@ -1,4 +1,5 @@
-@import '@assets/css/reset.css'; /* Reset */
+@import '@assets/css/reset.css';
+/* Reset */
 
 /* 
  * Uncharted Design Tokens
@@ -26,7 +27,7 @@
     --un-color-accent-darker: #133013ff;
     --un-color-accent-dark: #1C5A1Cff;
     --un-color-accent: #2D8E2Dff;
-    --un-color-accent-rgb: 45,142,45;
+    --un-color-accent-rgb: 45, 142, 45;
     --un-color-accent-light: #92E192ff;
     --un-color-accent-lighter: #E4FAE4ff;
     --un-color-accent-mono: #39B539;
@@ -68,52 +69,59 @@
 
 /* Global */
 body {
-	background-color: inherit;
-	color: inherit;
-	display: flex;
-	flex-direction: column;
-	font: inherit;
-	isolation: isolate;
+    background-color: inherit;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    font: inherit;
+    isolation: isolate;
 }
 
 /* Text styles */
-h1, .text-h1 {
+h1,
+.text-h1 {
     font-weight: 400;
     font-size: 88px;
     line-height: 96px;
 }
 
-h2, .text-h2 {
+h2,
+.text-h2 {
     font-weight: 400;
     font-size: 57px;
     line-height: 60px;
 }
 
-h3, .text-h3 {
+h3,
+.text-h3 {
     font-weight: 400;
     font-size: 48px;
     line-height: 50px;
 }
 
-h4, .text-h4 {
+h4,
+.text-h4 {
     font-weight: 400;
     font-size: 34px;
     line-height: 40px;
 }
 
-h5, .text-h5 {
+h5,
+.text-h5 {
     font-weight: 400;
     font-size: 23px;
     line-height: 32px;
 }
 
-h6, .text-h6 {
+h6,
+.text-h6 {
     font-weight: 600;
     font-size: 20px;
     line-height: 24px;
 }
 
-h7, .text-h7 {
+h7,
+.text-h7 {
     font-weight: 600;
     font-size: 16px;
     line-height: 24px;
@@ -169,16 +177,16 @@ h7, .text-h7 {
 }
 
 .color-text-subdued {
-    color:rgb(102, 112, 133)
+    color: rgb(102, 112, 133)
 }
 
 .color-text-disabled {
-    color:rgb(208, 213, 221)
+    color: rgb(208, 213, 221)
 }
 
 .color-link {
     color: rgb(27, 128, 115);
-    text-decoration: none;    
+    text-decoration: none;
 }
 
 .color-background {
