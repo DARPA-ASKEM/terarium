@@ -57,9 +57,15 @@ async function getAll(): Promise<Project[] | null> {
  * Get project assets for a given project per id
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
-async function getAssets(projectId: string): Promise<ProjectAssets | null> {
+async function getAssets(projectId: string, types?: string[]): Promise<ProjectAssets | null> {
 	try {
-		const response = await API.get(`/projects/${projectId}/assets`);
+		let url = `/projects/${projectId}/assets`;
+		if (types) {
+			types.forEach((type, indx) => {
+				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+			});
+		}
+		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200) return null;
 		return data ?? null;
