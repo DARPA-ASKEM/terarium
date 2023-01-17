@@ -381,12 +381,12 @@ const clustersInfo = computed(() => {
 			z-index: 1;
 			font-weight: normal;
 			/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
-			background-color: var(--un-color-body-surface-background);
+			background-color: var(--surface-ground);
 		}
 	}
 
 	td {
-		background: var(--un-color-body-surface-primary);
+		background: var(--surface-section);
 	}
 
 	.tr-item {

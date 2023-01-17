@@ -219,7 +219,7 @@ onMounted(async () => {
 	height: calc(100vh - 50px);
 	width: 100%;
 	overflow: auto;
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-section);
 	margin: 1rem;
 }
 

@@ -81,7 +81,7 @@ watch(defaultText, (newText) => {
 
 .clear-search:hover {
 	color: var(--text-color-primary);
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 	padding: 0.5rem;
 	border-radius: 1rem;
 	top: 1rem;

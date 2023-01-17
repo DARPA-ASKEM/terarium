@@ -435,7 +435,7 @@ onUnmounted(() => {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 }
 
 .secondary-header {

@@ -1,5 +1,4 @@
-@import '@assets/css/reset.css';
-/* Reset */
+@import '@assets/css/reset.css'; /* Reset */
 
 /* 
  * Uncharted Design Tokens
@@ -31,7 +30,6 @@
     --un-color-accent-light: #92E192ff;
     --un-color-accent-lighter: #E4FAE4ff;
     --un-color-accent-mono: #39B539;
-    --un-color-body-surface-secondary: #f4f4f4;
 
     --label-color: #707070;
     --text-color-light: #C2C2C4;
@@ -60,7 +58,7 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 	color: var(--text-color-primary);
 	color-scheme: light;
 	font-family: 'Figtree';

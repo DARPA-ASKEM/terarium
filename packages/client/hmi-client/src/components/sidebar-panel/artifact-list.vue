@@ -59,7 +59,7 @@ function isArtifactSelected(artifactId) {
 }
 
 .row:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 }
 
 .active {

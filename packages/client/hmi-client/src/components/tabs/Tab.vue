@@ -89,7 +89,7 @@ div.active {
 }
 
 div:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 }
 
 section {

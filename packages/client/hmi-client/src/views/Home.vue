@@ -163,7 +163,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 <style scoped>
 section {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 	color: var(--text-color-secondary);
 	display: flex;
 	flex-direction: column;
@@ -213,12 +213,12 @@ header svg {
 	top: 50%;
 	visibility: visible;
 	z-index: 3;
-	background: var(--un-color-body-surface-secondary);
+	background: var(--surface-secondary);
 	border-radius: 10rem;
 }
 
 .chevron:hover {
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 	color: var(--un-color-accent);
 }
 
@@ -272,7 +272,7 @@ li {
 	position: relative;
 	width: 500px;
 	margin: 0px auto;
-	background-color: var(--un-color-body-surface-primary);
+	background-color: var(--surface-section);
 	border-radius: 2px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	overflow-y: auto;

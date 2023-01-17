@@ -136,7 +136,7 @@ watch(activeProjectId, (newProjectId) => {
 <style scoped>
 header {
 	align-items: center;
-	background-color: var(--un-color-body-surface-primary);
+	background-color: var(--surface-section);
 	display: flex;
 	justify-content: center;
 	gap: 2rem;
@@ -151,12 +151,12 @@ section {
 
 .user-button {
 	color: var(--text-color-secondary);
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 }
 
 .user-button:enabled:hover {
 	color: var(--text-color-secondary);
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 }
 
 .nav {

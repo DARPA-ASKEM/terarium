@@ -21,7 +21,7 @@ const placeholderRandomColorOpacity = Math.random();
 <style scoped>
 .project-card {
 	border: 1px solid var(--surface-border);
-	background-color: var(--un-color-body-surface-primary);
+	background-color: var(--surface-section);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;

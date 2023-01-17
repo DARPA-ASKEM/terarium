@@ -125,7 +125,7 @@ const formatFeatures = (d: Dataset) => {
 	gap: 1rem;
 	padding: 1rem;
 	overflow: auto;
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-section);
 }
 
 .description {

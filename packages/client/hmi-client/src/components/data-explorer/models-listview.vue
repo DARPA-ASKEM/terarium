@@ -194,7 +194,7 @@ tr th {
 	top: -1px;
 	z-index: 1;
 	/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 }
 
 .tr-item {

@@ -55,7 +55,7 @@ function getRandomImage() {
 <style scoped>
 .article-card {
 	border: 1px solid var(--surface-border);
-	background-color: var(--un-color-body-surface-primary);
+	background-color: var(--surface-section);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
