@@ -78,7 +78,10 @@ const formatFeatures = () => {
 		<div>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
-				<div class="asset-filters" v-if="resourceType === ResourceType.XDD">
+				<div
+					class="asset-filters"
+					v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0"
+				>
 					<i class="pi pi-link"></i>
 					<i class="pi pi-chart-bar"></i>
 					<i class="pi pi-table"></i>
@@ -170,6 +173,17 @@ const formatFeatures = () => {
 	display: flex;
 }
 
+.title,
+.details,
+.description,
+.parameters,
+.features {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
+}
+
 .right {
 	display: flex;
 }
@@ -191,17 +205,6 @@ const formatFeatures = () => {
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
-}
-
-.title,
-.details,
-.description,
-.parameters,
-.features {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 1;
-	overflow: hidden;
 }
 
 button {
