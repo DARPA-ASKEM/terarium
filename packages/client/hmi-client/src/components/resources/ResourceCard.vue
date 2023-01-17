@@ -31,7 +31,7 @@ defineProps<{
 	border: 2px solid var(--un-color-black-100);
 	border-radius: 0.25rem;
 	cursor: pointer;
-	border: 1px solid var(--un-color-body-stroke);
+	border: 1px solid var(--surface-border);
 }
 
 svg {
@@ -42,7 +42,7 @@ svg {
 
 .resource-details {
 	width: 80%;
-	border-left: 1px solid var(--un-color-body-stroke);
+	border-left: 1px solid var(--surface-border);
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;

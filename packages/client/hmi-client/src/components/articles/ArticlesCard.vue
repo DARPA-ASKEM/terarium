@@ -54,7 +54,7 @@ function getRandomImage() {
 
 <style scoped>
 .article-card {
-	border: 1px solid var(--un-color-body-stroke);
+	border: 1px solid var(--surface-border);
 	background-color: var(--un-color-body-surface-primary);
 	display: flex;
 	flex-direction: column;
@@ -69,7 +69,7 @@ function getRandomImage() {
 }
 
 footer {
-	border-top: 1px solid var(--un-color-body-stroke);
+	border-top: 1px solid var(--surface-border);
 	padding: 0.5rem 1rem;
 	align-self: stretch;
 }
