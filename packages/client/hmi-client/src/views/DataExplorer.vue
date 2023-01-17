@@ -220,7 +220,7 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		xdd: {
+		[ResourceType.XDD]: {
 			dict: dictNames.value,
 			dataset:
 				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
@@ -244,7 +244,7 @@ const executeSearch = async () => {
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -272,10 +272,10 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.model || {
+	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
 		filters: clientFilters.value
 	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.dataset || {
+	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
 		filters: clientFilters.value
 	};
 
@@ -380,10 +380,9 @@ watch(searchQuery, async (newQuery) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-const updateResultType = async (newResultType: string) => {
+const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-
 		// if no data currently exist for the selected tab,
 		//  or if data exists but outdated then we should refetch
 		const resList = dataItemsUnfiltered.value.find(
@@ -464,22 +463,22 @@ onUnmounted(() => {
 	align-items: center;
 	text-decoration: none;
 	background: transparent;
-	padding: 5px 10px;
 	border: 1px solid black;
 	cursor: pointer;
+	padding: 0.25rem;
+	margin: auto;
 	border-left-width: 0;
-	height: 40px;
 }
 
 .button-group button:first-child {
 	border-left-width: 1px;
-	border-top-left-radius: 3px;
-	border-bottom-left-radius: 3px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
 }
 
 .button-group button:last-child {
-	border-top-right-radius: 3px;
-	border-bottom-right-radius: 3px;
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .button-group button:hover {
@@ -487,7 +486,7 @@ onUnmounted(() => {
 }
 
 .button-group button.active {
-	background: white;
+	background: var(--un-color-feedback-success-lighter);
 	cursor: default;
 }
 
