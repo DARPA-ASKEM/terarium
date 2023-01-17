@@ -4944,7 +4944,25 @@ cors@latest:
   languageName: node
   linkType: hard
 
-"eslint-import-resolver-typescript@npm:3.5.2, eslint-import-resolver-typescript@npm:^3.4.0":
+"eslint-import-resolver-typescript@npm:3.5.3":
+  version: 3.5.3
+  resolution: "eslint-import-resolver-typescript@npm:3.5.3"
+  dependencies:
+    debug: ^4.3.4
+    enhanced-resolve: ^5.10.0
+    get-tsconfig: ^4.2.0
+    globby: ^13.1.2
+    is-core-module: ^2.10.0
+    is-glob: ^4.0.3
+    synckit: ^0.8.4
+  peerDependencies:
+    eslint: "*"
+    eslint-plugin-import: "*"
+  checksum: 63b5f28bec5a29b1d3be33b79795441f7b0da54479e5c99a115877d9b70b2b7464c19a928b4ae7674a937b9ee8e7d4b1d30b7f5e6325c4c3aaa8c607bb175258
+  languageName: node
+  linkType: hard
+
+"eslint-import-resolver-typescript@npm:^3.4.0":
   version: 3.5.2
   resolution: "eslint-import-resolver-typescript@npm:3.5.2"
   dependencies:
@@ -6374,7 +6392,7 @@ cors@latest:
     chroma-js: 2.4.2
     d3: 7.6.1
     dagre: 0.8.5
-    eslint-import-resolver-typescript: 3.5.2
+    eslint-import-resolver-typescript: 3.5.3
     graph-scaffolder: "*"
     lodash: 4.17.21
     pinia: 2.0.28
