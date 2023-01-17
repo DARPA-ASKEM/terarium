@@ -17,6 +17,7 @@ const props = defineProps<{
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
+const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
 
 // These asset types don't appear at the moment
 const extractionsWithImages = computed(() =>
@@ -46,6 +47,11 @@ function paginationMovement(movement: number) {
 	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
 		relatedAssetPage.value = newPage;
 	}
+}
+
+function updateExtractionFilter(extractionType: XDDExtractionType | null) {
+	chosenExtractionFilter.value =
+		chosenExtractionFilter.value === extractionType ? null : extractionType;
 }
 
 const isSelected = () =>
@@ -82,10 +88,17 @@ const formatFeatures = () => {
 					class="asset-filters"
 					v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0"
 				>
-					<i class="pi pi-link"></i>
-					<i class="pi pi-chart-bar"></i>
-					<i class="pi pi-table"></i>
-					<i class="pi pi-file-pdf"></i>
+					<template
+						v-for="(icon, index) in [
+							{ type: XDDExtractionType.URL, class: 'pi-link' },
+							{ type: XDDExtractionType.Figure, class: 'pi-chart-bar' },
+							{ type: XDDExtractionType.Table, class: 'pi-table' },
+							{ type: XDDExtractionType.Document, class: 'pi-file-pdf' }
+						]"
+						:key="index"
+					>
+						<i :class="`pi ${icon.class}`" @click="updateExtractionFilter(icon.type)"></i>
+					</template>
 				</div>
 				<div v-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
 				<div v-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
@@ -212,6 +225,10 @@ button {
 	background-color: transparent;
 	height: min-content;
 	padding: 0;
+}
+
+i {
+	padding: 0.2rem;
 }
 
 i:hover {
