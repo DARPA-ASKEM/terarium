@@ -49,7 +49,7 @@ const formatFeatures = (d: Dataset) => {
 <template>
 	<section class="dataset">
 		<template v-if="dataset !== null">
-			<div class="title">{{ dataset?.name ?? '' }}</div>
+			<h4 class="title">{{ dataset?.name ?? '' }}</h4>
 			<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
 			<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
 			<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
@@ -126,10 +126,6 @@ const formatFeatures = (d: Dataset) => {
 	padding: 1rem;
 	overflow: auto;
 	background: var(--un-color-body-surface-primary);
-}
-
-.title {
-	font: var(--un-font-h3);
 }
 
 .description {

@@ -137,7 +137,6 @@ watch(activeProjectId, (newProjectId) => {
 header {
 	align-items: center;
 	background-color: var(--un-color-body-surface-primary);
-	box-shadow: var(--un-box-shadow-small);
 	display: flex;
 	justify-content: center;
 	gap: 2rem;

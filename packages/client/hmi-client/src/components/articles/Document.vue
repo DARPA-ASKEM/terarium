@@ -2,10 +2,10 @@
 	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
 			<div class="journal">{{ doc.journal }}</div>
-			<h3 class="title">
+			<h4 class="title">
 				<a v-if="docLink" :href="docLink" rel="noreferrer noopener">{{ doc.title }}</a>
 				<template v-else>{{ doc.title }}</template>
-			</h3>
+			</h4>
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
 			<br />
 
