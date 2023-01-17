@@ -1,16 +1,5 @@
 <template>
 	<div class="table-fixed-head">
-		<ul>
-			<li v-for="d in articles" :key="d.gddid" class="tr-item">
-				<SearchItem
-					:asset="d"
-					:selectedSearchItems="selectedSearchItems"
-					:isPreviewedArticle="previewedArticle === d"
-					@toggle-article-selected="updateSelection(d)"
-					@toggle-article-preview="togglePreview(d)"
-				/>
-			</li>
-		</ul>
 		<table>
 			<tbody>
 				<tr
@@ -129,7 +118,6 @@ import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	articles: {
@@ -222,13 +210,6 @@ const formatKnownTerms = (d: XDDArticle) => {
 </script>
 
 <style scoped>
-ul {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	list-style: none;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;

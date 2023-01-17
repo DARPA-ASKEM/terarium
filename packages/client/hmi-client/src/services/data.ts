@@ -481,24 +481,18 @@ const fetchResource = async (
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise<FullSearchResults>(async (resolve, reject) => {
 		try {
-			switch (resourceType) {
-				case ResourceType.XDD: // XDD
-					resolve({
-						allData: await searchXDDArticles(term, searchParam?.xdd),
-						allDataFilteredWithFacets: await searchXDDArticles(
-							term,
-							searchParamWithFacetFilters?.xdd
-						)
-					});
-					break;
-				case ResourceType.MODEL: // Models
-					resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
-					break;
-				case ResourceType.DATASET: // Datasets
-					resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
-					break;
-				default:
-					break;
+			if (resourceType === ResourceType.XDD) {
+				resolve({
+					allData: await searchXDDArticles(term, searchParam?.[ResourceType.XDD]),
+					allDataFilteredWithFacets: await searchXDDArticles(
+						term,
+						searchParamWithFacetFilters?.[ResourceType.XDD]
+					)
+				});
+			} else if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
+				resolve(
+					getAssets(term, resourceType, searchParamWithFacetFilters?.[resourceType as ResourceType])
+				);
 			}
 		} catch (err: any) {
 			reject(new Error(`Error fetching ${resourceType} results: ${err}`));
