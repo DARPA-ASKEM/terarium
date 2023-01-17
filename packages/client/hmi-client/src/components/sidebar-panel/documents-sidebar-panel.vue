@@ -30,7 +30,7 @@ const documentId = ref('');
 const documents = ref<PublicationAsset[]>([]);
 
 const documentsAsArtifactList = computed(() =>
-	documents.value.map((document) => ({ id: document.xdd_uri, name: document.title }))
+	documents.value.map((document) => ({ id: document.xddUri, name: document.title }))
 );
 
 const openDocumentPage = async (xddUri: string) => {
@@ -43,7 +43,7 @@ const openDocumentPage = async (xddUri: string) => {
 };
 
 const removeDocument = async (xddUri: string) => {
-	const docAsset = documents.value.find((document) => document.xdd_uri === xddUri);
+	const docAsset = documents.value.find((document) => document.xddUri === xddUri);
 	if (docAsset === undefined) {
 		console.error('Failed to remove document with XDD uri', xddUri);
 		return;
@@ -65,7 +65,7 @@ const removeDocument = async (xddUri: string) => {
 	}
 
 	// if the user deleted the currently selected document, then clear its content from the view
-	if (docAsset.xdd_uri === documentId.value) {
+	if (docAsset.xddUri === documentId.value) {
 		router.push('/document'); // clear the doc ID as a URL param
 	}
 };

@@ -76,7 +76,7 @@ const filteredAssets = computed(() => {
 				const docMap: { [docid: string]: XDDArticle } = {};
 				searchResults.xddExtractions.forEach((ex) => {
 					if (ex.properties.documentBibjson === undefined) return; // skip
-					const docid = ex.properties.documentBibjson.gddid;
+					const docid = ex.properties.documentBibjson.gddId;
 					if (docMap[docid] === undefined) {
 						docMap[docid] = ex.properties.documentBibjson;
 						docMap[docid].relatedExtractions = [];
