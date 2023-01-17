@@ -49,7 +49,7 @@ watch(
 </script>
 
 <template>
-	<Navbar class="header" :projectName="project?.name" :searchBarText="searchBarText" />
+	<Navbar class="header" :project="project" :searchBarText="searchBarText" />
 	<main>
 		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
 		<router-view class="page" :project="project" @search-query-changed="updateSearchBar" />

@@ -1,8 +1,3 @@
-$primaryColor:#1B8073 !default;
-$primaryTextColor:#ffffff !default;
-$accentColor:#FF9800 !default;
-$accentTextColor:#ffffff !default;
-
 $colors: (
     "blue": #2196F3,
     "green": #689F38,
@@ -14,8 +9,7 @@ $colors: (
     "orange": #FF9800,
     "bluegray": #607D8B,
     "purple": #9C27B0,
-    "red": #F44336,
-    "primary": $primaryColor
+    "red": #F44336
 );
 
 $emphasis-high:rgba(16, 24, 40, 1) !default;
@@ -23,6 +17,11 @@ $emphasis-medium:rgba(0,0,0,.60) !default;
 $emphasis-low:rgba(102, 112, 133, 1) !default;
 $emphasis-lower:rgba(208, 213, 221, 1) !default;
 $overlayColor:#000000 !default;
+
+$primaryColor:#1B8073 !default;
+$primaryTextColor:#ffffff !default;
+$accentColor:rgba(208, 213, 221, .3) !default;
+$accentTextColor:$emphasis-high !default;
 
 //global
 $fontFamily:Figtree,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif !default;
