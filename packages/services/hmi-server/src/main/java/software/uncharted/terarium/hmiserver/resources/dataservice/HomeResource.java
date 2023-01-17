@@ -14,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 
 import software.uncharted.terarium.documentserver.models.xdd.Document;
+import software.uncharted.terarium.documentserver.responses.xdd.XDDRelatedDocumentsResponse;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -77,18 +78,8 @@ public class HomeResource {
             log.info("---------------");
             
             if (currentProjectPublications.size() > 0){
-                String relatedDocumentsString = documentProxy.getRelatedDocuments("xdd-covid-19",currentProjectPublications.get(0).getXddUri()).readEntity(String.class);
-                //relatedDocumentsString = relatedDocumentsString.replace("Document String: { \"status\": \"200\", \"data\": [{\"bibjson\":", "");
-                //relatedDocumentsString = relatedDocumentsString.substring(0,relatedDocumentsString.length() - 1);
-                log.info("Document String: " + relatedDocumentsString);
-
-                List<Document> relatedDocuments = jsonb.fromJson(relatedDocumentsString, new ArrayList<Document>(){}.getClass().getGenericSuperclass());
-                
-                
-                log.info("\n Found related documents: \n");
-                log.info(relatedDocuments);
-                //List<Document> relatedDocuments = stringToDocument(relatedDocumentsString);
-                allProjects.get(i).setRelatedDocuments(relatedDocuments);
+                XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments("xdd-covid-19",currentProjectPublications.get(0).getXddUri()).readEntity(XDDRelatedDocumentsResponse.class);
+                allProjects.get(i).setRelatedDocuments(relatedDocumentResponse.getData());
             }
         
         }
@@ -110,32 +101,4 @@ public class HomeResource {
         return allProjects;
     }
 
-    //Take a string representation of documents (massive json) and parse it into distinct fields
-    //Parse for each distinct gddid (doc id)
-    private List<Document> stringToDocument(String documentJSON){
-        log.info("Hi");
-        List<Document> result = new ArrayList<>();
-        for (int i = 1; i < documentJSON.split("\"_gddid\":").length; i++){
-            String gddId = documentJSON.split("\"_gddid\":")[i].split(",")[0].replace("\"","");
-            String title = documentJSON.split("\"title\":")[i].split(",")[0].replace("\"","");
-            String abstractText = documentJSON.split("\"abstract\":")[i].split(",")[0].replace("\"","");
-            String journal = documentJSON.split("\"journal\":")[i].split(",")[0];
-            String currentPublisher = documentJSON.split("\"publisher\":")[1].split(",")[0].replace("\"","");
-            String currentAuthor = documentJSON.split("\"author\":")[i].split(",")[1].split("\"name\":")[1].replace("\"",""); 
-            currentAuthor = currentAuthor.substring(0,currentAuthor.indexOf("}")); 
-            String currentIdentifier = documentJSON.split("\"identifier\":")[i].split(",")[1].split("\"id\":")[1].replace("\"","");
-            currentIdentifier = currentIdentifier.substring(0,currentIdentifier.indexOf("}")); //Cut out the extra crap from id
-
-            List<Map<String, String>> identifier = new ArrayList<>();
-            identifier.add(Map.of("type", "doi","id", currentIdentifier));
-            List<Map<String, String>> author = new ArrayList<>();
-            author.add(Map.of("name", currentAuthor));
-
-            Document newDocument = new Document(gddId,title,abstractText,journal,currentPublisher,author,identifier);
-            result.add(newDocument);
-        }
-        
-        return result;
-    }
-	
 }

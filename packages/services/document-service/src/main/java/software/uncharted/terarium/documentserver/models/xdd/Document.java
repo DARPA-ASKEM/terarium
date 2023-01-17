@@ -55,6 +55,8 @@ public class Document implements Serializable {
 		this.gddId = id;
 	}
 
+	public String getID(){ return this.gddId; }
+
 	@JsonbProperty("_abstract")
 	public void setAbstract(String abstractText) {
 		this.abstractText = abstractText;

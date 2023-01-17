@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 import software.uncharted.terarium.documentserver.models.xdd.Document;
 import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
+import software.uncharted.terarium.documentserver.models.xdd.RelatedDocument;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -38,13 +39,13 @@ public class Project implements Serializable {
 	private List<ResourceType> assets;
 
 	@JsonbProperty("relatedArticles")
-	private List<Document> relatedDocuments;
+	private List<RelatedDocument> relatedDocuments;
 
 	public Project(){} //Required default constructor for the data annotation
 	
 	public String getID(){ return this.projectID; }
 
-	public void setRelatedDocuments(List<Document> relatedDocuments){
+	public void setRelatedDocuments(List<RelatedDocument> relatedDocuments){
 		this.relatedDocuments = relatedDocuments;
 	}
 

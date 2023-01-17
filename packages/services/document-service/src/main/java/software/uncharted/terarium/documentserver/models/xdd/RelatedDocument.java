@@ -14,4 +14,5 @@ public class RelatedDocument {
 
 	private Number score;
 
+	public Document getDocument(){ return this.bibjson; }
 }
