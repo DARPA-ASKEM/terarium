@@ -22,14 +22,19 @@ const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
 // These asset types don't appear at the moment
 const extractionsWithImages = computed(() =>
 	props.asset.relatedExtractions
-		? props.asset.relatedExtractions?.filter(
-				(ex) =>
-					ex.askemClass === XDDExtractionType.Figure ||
-					ex.askemClass === XDDExtractionType.Table ||
-					ex.askemClass === XDDExtractionType.Equation ||
-					ex.askemClass === XDDExtractionType.Section || // remove this later just for testing pagination
-					ex.askemClass === XDDExtractionType.Document // remove this later just for testing pagination
-		  )
+		? props.asset.relatedExtractions?.filter((ex) => {
+				if (chosenExtractionFilter.value === null) {
+					return (
+						ex.askemClass === XDDExtractionType.Figure ||
+						ex.askemClass === XDDExtractionType.Table ||
+						ex.askemClass === XDDExtractionType.Equation ||
+						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing pagination
+						ex.askemClass === XDDExtractionType.Document || // remove this later just for testing pagination
+						ex.askemClass === undefined // remove this later just for testing pagination
+					);
+				}
+				return ex.askemClass === chosenExtractionFilter.value;
+		  })
 		: []
 );
 
@@ -86,7 +91,7 @@ const formatFeatures = () => {
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0"
+					v-if="resourceType === ResourceType.XDD && asset.relatedExtractions"
 				>
 					<template
 						v-for="icon in [
@@ -97,11 +102,15 @@ const formatFeatures = () => {
 						]"
 						:key="icon"
 					>
-						<i :class="`pi ${icon.class}`" @click="updateExtractionFilter(icon.type)"></i>
+						<i
+							:class="`pi ${icon.class}`"
+							:active="chosenExtractionFilter === icon.type"
+							@click="updateExtractionFilter(icon.type)"
+						></i>
 					</template>
 				</div>
-				<div v-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
-				<div v-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
+				<div v-else-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
+				<div v-else-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
 					Simulation run
 				</div>
 			</div>
@@ -133,7 +142,7 @@ const formatFeatures = () => {
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
 		<div class="right">
-			<figure v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0">
+			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<img
 					v-if="relatedAsset && relatedAsset.properties.image"
 					:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
@@ -142,7 +151,10 @@ const formatFeatures = () => {
 				/>
 				<div class="asset-nav-arrows">
 					<i class="pi pi-arrow-left" @click="paginationMovement(-1)"></i>
-					Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
+					<template v-if="extractionsWithImages.length > 0">
+						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
+					</template>
+					<template v-else> No {{ chosenExtractionFilter }}s </template>
 					<i class="pi pi-arrow-right" @click="paginationMovement(1)"></i>
 				</div>
 			</figure>
@@ -229,12 +241,16 @@ button {
 
 i {
 	padding: 0.2rem;
+	border-radius: 3px;
+}
+
+.pi[active='true'] {
+	background-color: var(--un-color-feedback-success-light);
 }
 
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
-	border-radius: 3px;
 }
 
 .checkmark-color {
