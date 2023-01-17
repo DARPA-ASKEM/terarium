@@ -42,9 +42,7 @@ const rawColumnNames = computed(() => {
 
 const formatFeatures = (d: Dataset) => {
 	const features = d.annotations.annotations.feature ?? [];
-	if (!features || features.length === 0) return [];
 	return features;
-	// return features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
 };
 </script>
 
