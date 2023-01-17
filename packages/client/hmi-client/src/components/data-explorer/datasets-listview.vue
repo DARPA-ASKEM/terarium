@@ -159,7 +159,7 @@ th {
 }
 
 tbody tr {
-	border-top: 2px solid var(--separator);
+	border-top: 2px solid var(--gray-300);
 	cursor: pointer;
 }
 
@@ -168,13 +168,12 @@ tbody tr:first-child {
 }
 
 td {
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	vertical-align: top;
 	padding: 8px 16px;
 }
 
 tr th {
-	font-size: var(--font-size-small);
 	font-weight: normal;
 }
 
@@ -224,7 +223,7 @@ tr th {
 }
 
 .name-and-desc-layout .radio .disabled {
-	color: var(--background-light-3);
+	color: var(--gray-300);
 }
 
 .name-and-desc-layout .content {
@@ -236,7 +235,7 @@ tr th {
 	font-weight: 600;
 	border: none;
 	border-radius: 5px;
-	background-color: var(--background-light-3);
+	background-color: var(--gray-300);
 	color: darkgray;
 	padding: 6px;
 	float: right;

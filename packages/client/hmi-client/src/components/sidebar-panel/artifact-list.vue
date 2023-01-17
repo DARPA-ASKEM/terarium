@@ -51,7 +51,7 @@ function isArtifactSelected(artifactId) {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	border-top: 1px solid var(--separator);
+	border-top: 1px solid var(--gray-300);
 }
 
 .row:first-child {

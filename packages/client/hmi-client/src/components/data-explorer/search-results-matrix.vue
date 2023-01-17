@@ -363,7 +363,7 @@ const clustersInfo = computed(() => {
 	}
 
 	tr {
-		border: 2px solid var(--separator);
+		border: 2px solid var(--gray-300);
 	}
 
 	thead {

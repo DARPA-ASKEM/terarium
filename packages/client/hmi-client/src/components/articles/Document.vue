@@ -256,6 +256,6 @@ onMounted(async () => {
 
 .img-container > img {
 	margin: 5px;
-	border: 1px solid var(--background-light-3);
+	border: 1px solid var(--gray-300);
 }
 </style>

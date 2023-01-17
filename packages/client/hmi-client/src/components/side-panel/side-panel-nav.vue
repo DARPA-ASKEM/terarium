@@ -77,7 +77,7 @@ li {
 	border-bottom-right-radius: 3px;
 	color: rgba(0, 0, 0, 0.61);
 	margin-bottom: 5px;
-	background: var(--background-light-1-faded);
+	background: var(--gray-0);
 	transform: translateX(-25%);
 	transition: transform 0.1s ease;
 }
@@ -93,7 +93,7 @@ li::before {
 	z-index: -1;
 	/* // Overlap the tab slightly to cover tiny gaps during animation */
 	right: calc(100% - 1px);
-	background: var(--background-light-1);
+	background: var(--gray-0);
 }
 
 li button {
@@ -108,7 +108,6 @@ li button {
 li button .counter-badge {
 	display: inline-block;
 	padding: 3px 7px;
-	font-size: var(--font-size-small);
 	font-weight: bold;
 	color: white;
 	line-height: 1;
@@ -131,13 +130,13 @@ li img {
 }
 
 li:not(.active):hover {
-	background-color: var(--background-light-1);
+	background-color: var(--gray-0);
 	color: #000;
 }
 
 li.active {
 	transform: translateX(0);
-	background-color: var(--background-light-1);
+	background-color: var(--gray-0);
 	color: var(--primary-color-dark);
 }
 

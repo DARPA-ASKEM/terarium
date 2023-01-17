@@ -446,16 +446,8 @@ onUnmounted(() => {
 	height: var(--nav-bar-height);
 }
 
-.data-explorer-container .header {
-	height: var(--header-height);
-}
-
 .button-group {
 	display: flex;
-}
-
-.bottom-padding {
-	padding-bottom: 2px;
 }
 
 .button-group button {
@@ -510,30 +502,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-}
-
-.xdd-known-terms {
-	display: flex;
-}
-
-.xdd-known-terms .flex-aligned-item {
-	display: flex;
-	align-items: center;
-	color: var(--primary-color-dark);
-}
-
-.xdd-known-terms .flex-aligned-item-delete-btn {
-	color: red;
-}
-
-.xdd-known-terms .flex-aligned-item-delete-btn:hover {
-	cursor: pointer;
-}
-
-.xdd-known-terms :deep(.search-bar-container input) {
-	margin: 4px;
-	padding: 4px;
-	min-width: 100px;
 }
 
 .selected-resources-pane {
