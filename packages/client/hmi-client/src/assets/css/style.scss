@@ -1,4 +1,5 @@
-@import '@assets/css/reset.css'; /* Reset */
+/* Reset */
+@import '@assets/css/reset.css';
 
 /** 
  * PrimeVue
@@ -136,21 +137,21 @@ h7,
 }
 
 /* Colors */
-
+/*
 .color-text-primary {
-    color: rgb(16, 24, 40);
+    color: var(--text-color-primary);
 }
 
 .color-text-subdued {
-    color: rgb(102, 112, 133)
+    color: var(--text-color-subdued);
 }
 
 .color-text-disabled {
-    color: rgb(208, 213, 221)
+    color: var(--text-color-disabled);
 }
 
 .color-link {
-    color: rgb(27, 128, 115);
+    color: var(--primary-color);
     text-decoration: none;
 }
 
@@ -185,3 +186,4 @@ h7,
 .color-paper-success {
     background: #EBF4F3;
 }
+*/

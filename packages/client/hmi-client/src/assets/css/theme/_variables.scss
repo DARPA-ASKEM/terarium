@@ -19,7 +19,7 @@ $emphasis-lower:rgba(208, 213, 221, 1) !default;
 $overlayColor:#000000 !default;
 
 $primaryColorRGB: 45,142,45;
-$primaryColor:#1B8073 !default;
+$primaryColor:rgb(27, 128, 115) !default;
 $primaryTextColor:#ffffff !default;
 $accentColor:rgba(208, 213, 221, .3) !default;
 $accentTextColor:$emphasis-high !default;
@@ -28,7 +28,7 @@ $accentTextColor:$emphasis-high !default;
 $fontFamily:Figtree,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif !default;
 $fontSize:1rem !default;
 $fontWeight:400 !default;
-$textColor:$emphasis-high !default;
+$textColor:rgb(16, 24, 40);
 $textSecondaryColor:$emphasis-medium !default;
 $borderRadius:4px !default;
 $transitionDuration:.2s !default;
