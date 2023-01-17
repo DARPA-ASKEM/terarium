@@ -12,29 +12,12 @@
 			/>
 		</li>
 	</ul>
-	<!--UNCOMMENT BELOW IF YOU WANT TO SEE OLD VERSION OF LIST-->
-	<!-- <div class="search-container">
-		<models-listview v-if="resultType === ResourceType.MODEL" class="list-view"
-			:models="(filteredAssets as Model[])" :raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems" :search-term="searchTerm"
-			@toggle-model-selected="updateSelection" />
-		<datasets-listview v-if="resultType === ResourceType.DATASET" class="list-view"
-			:datasets="(filteredAssets as Dataset[])" :raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems" :search-term="searchTerm"
-			@toggle-dataset-selected="updateSelection" />
-		<articles-listview v-if="resultType === ResourceType.XDD" class="list-view"
-			:articles="(filteredAssets as XDDArticle[])" :raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems" @toggle-article-selected="updateSelection" />
-	</div> -->
 	<div v-if="resultsCount === 0">Loading...</div>
 	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-// import ModelsListview from '@/components/data-explorer/models-listview.vue';
-// import DatasetsListview from '@/components/data-explorer/datasets-listview.vue';
-// import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
@@ -93,9 +76,7 @@ const filteredAssets = computed(() => {
 				const docMap: { [docid: string]: XDDArticle } = {};
 				searchResults.xddExtractions.forEach((ex) => {
 					if (ex.properties.documentBibjson === undefined) return; // skip
-
-					// eslint-disable-next-line no-underscore-dangle
-					const docid = ex.properties.documentBibjson.gddid || ex.properties.documentBibjson._gddid; // FIXME: embedded doc metadata has no proper fields mapping
+					const docid = ex.properties.documentBibjson.gddid;
 					if (docMap[docid] === undefined) {
 						docMap[docid] = ex.properties.documentBibjson;
 						docMap[docid].relatedExtractions = [];

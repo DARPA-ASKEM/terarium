@@ -4,16 +4,8 @@ import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isXDDArticle } from '@/utils/data-util';
-import IconAdd24 from '@carbon/icons-vue/es/add/24';
-import IconCheckmark24 from '@carbon/icons-vue/es/checkmark/24';
-import IconOverflowMenuVertical24 from '@carbon/icons-vue/es/overflow-menu--vertical/24';
-import IconPDF16 from '@carbon/icons-vue/es/PDF/16';
-import IconLink16 from '@carbon/icons-vue/es/link/16';
-import IconChartLine16 from '@carbon/icons-vue/es/chart--line/16';
-import IconTable16 from '@carbon/icons-vue/es/table/16';
-import IconArrowLeft16 from '@carbon/icons-vue/es/arrow--left/16';
-import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import { ResultType, ResourceType } from '@/types/common';
+import 'primeicons/primeicons.css';
 
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
@@ -88,10 +80,10 @@ const formatFeatures = () => {
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
 				<div class="asset-filters" v-if="resourceType === ResourceType.XDD">
-					<IconLink16 />
-					<IconChartLine16 />
-					<IconTable16 />
-					<IconPDF16 />
+					<i class="pi pi-link"></i>
+					<i class="pi pi-chart-bar"></i>
+					<i class="pi pi-table"></i>
+					<i class="pi pi-file-pdf"></i>
 				</div>
 				<div v-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
 				<div v-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
@@ -117,7 +109,7 @@ const formatFeatures = () => {
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
 				PARAMETERS:
 				{{ asset.parameters }}
-				<!--may need a formatting a function this attribute is always undefined at the moment-->
+				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
 				FEATURES:
@@ -134,18 +126,18 @@ const formatFeatures = () => {
 					alt="asset"
 				/>
 				<div class="asset-nav-arrows">
-					<IconArrowLeft16 @click="paginationMovement(-1)" />
+					<i class="pi pi-arrow-left" @click="paginationMovement(-1)"></i>
 					Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
-					<IconArrowRight16 @click="paginationMovement(1)" />
+					<i class="pi pi-arrow-right" @click="paginationMovement(1)"></i>
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
 				<!--there are talks of having the plus and three dot menu available wherever-->
-				<IconOverflowMenuVertical24 />
+				<i class="pi pi-ellipsis-v"></i>
 			</button>
 			<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
-				<IconAdd24 v-show="!isSelected()" />
-				<IconCheckmark24 class="checkmark-color" v-show="isSelected()" />
+				<i class="pi pi-plus" v-show="!isSelected()"></i>
+				<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
 			</button>
 		</div>
 	</div>
@@ -220,7 +212,7 @@ button {
 	padding: 0;
 }
 
-svg:hover {
+i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
 	border-radius: 3px;
