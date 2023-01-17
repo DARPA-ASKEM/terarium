@@ -12,6 +12,7 @@
 			/>
 		</li>
 	</ul>
+	<!--UNCOMMENT BELOW IF YOU WANT TO SEE OLD VERSION OF LIST-->
 	<!-- <div class="search-container">
 		<models-listview v-if="resultType === ResourceType.MODEL" class="list-view"
 			:models="(filteredAssets as Model[])" :raw-concept-facets="rawConceptFacets"
@@ -25,7 +26,8 @@
 			:articles="(filteredAssets as XDDArticle[])" :raw-concept-facets="rawConceptFacets"
 			:selected-search-items="selectedSearchItems" @toggle-article-selected="updateSelection" />
 	</div> -->
-	<div class="results-count-label">Showing {{ resultsCount }} item(s).</div>
+	<div v-if="resultsCount === 0">No data available</div>
+	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
 <script setup lang="ts">
@@ -33,7 +35,6 @@ import { ref, computed, PropType } from 'vue';
 // import ModelsListview from '@/components/data-explorer/models-listview.vue';
 // import DatasetsListview from '@/components/data-explorer/datasets-listview.vue';
 // import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
-
 import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
@@ -69,8 +70,17 @@ const updateSelection = (asset: ResultType) => {
 
 const togglePreview = (asset: ResultType) => {
 	emit('toggle-data-item-selected', { item: asset, type: 'clicked' });
+	console.log(asset);
 	previewedAsset.value = previewedAsset.value === asset ? null : asset;
 };
+
+// const rawConceptFacets = computed(() => {
+// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	if (searchResults) {
+// 		return searchResults.rawConceptFacets;
+// 	}
+// 	return null;
+// });
 
 const filteredAssets = computed(() => {
 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
@@ -104,14 +114,6 @@ const filteredAssets = computed(() => {
 	return [];
 });
 
-// const rawConceptFacets = computed(() => {
-// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
-// 	if (searchResults) {
-// 		return searchResults.rawConceptFacets;
-// 	}
-// 	return null;
-// });
-
 const resultsCount = computed(() => {
 	let total = 0;
 	if (props.resultType === ResourceType.ALL) {
@@ -137,9 +139,8 @@ ul {
 	list-style: none;
 }
 
-.list-view {
-	flex: 1;
-	min-height: 0px;
+.search-container {
+	overflow-y: auto;
 }
 
 .results-count-label {

@@ -7,7 +7,7 @@ import { isXDDArticle } from '@/utils/data-util';
 import IconAdd24 from '@carbon/icons-vue/es/add/24';
 import IconCheckmark24 from '@carbon/icons-vue/es/checkmark/24';
 import IconOverflowMenuVertical24 from '@carbon/icons-vue/es/overflow-menu--vertical/24';
-import IconDocumentBlank16 from '@carbon/icons-vue/es/document--blank/16';
+import IconPDF16 from '@carbon/icons-vue/es/PDF/16';
 import IconLink16 from '@carbon/icons-vue/es/link/16';
 import IconChartLine16 from '@carbon/icons-vue/es/chart--line/16';
 import IconTable16 from '@carbon/icons-vue/es/table/16';
@@ -25,35 +25,34 @@ const props = defineProps<{
 
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
-const relatedAssetPage = ref<number>(0); // reset on new search
+const relatedAssetPage = ref<number>(0);
 
+// These asset types don't appear at the moment
 const extractionsWithImages = computed(() =>
-	props.asset.relatedExtractions?.filter(
-		(ex) =>
-			ex.askemClass === XDDExtractionType.Figure ||
-			ex.askemClass === XDDExtractionType.Table ||
-			ex.askemClass === XDDExtractionType.Equation
-	)
+	props.asset.relatedExtractions
+		? props.asset.relatedExtractions?.filter(
+				(ex) =>
+					ex.askemClass === XDDExtractionType.Figure ||
+					ex.askemClass === XDDExtractionType.Table ||
+					ex.askemClass === XDDExtractionType.Equation ||
+					ex.askemClass === XDDExtractionType.Section || // remove this later just for testing pagination
+					ex.askemClass === XDDExtractionType.Document // remove this later just for testing pagination
+		  )
+		: []
 );
 
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
 
-// console.log(props.asset.relatedExtractions && props.asset.relatedExtractions);
-// console.log(props.asset)
 watch(
 	() => props.asset,
 	() => {
 		relatedAssetPage.value = 0;
 	}
-); // Reset page
+); // reset page number on new search
 
 function paginationMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
-	if (
-		props.asset.relatedExtractions &&
-		newPage > -1 &&
-		newPage < props.asset.relatedExtractions.length
-	) {
+	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
 		relatedAssetPage.value = newPage;
 	}
 }
@@ -72,6 +71,15 @@ const formatDetails = () =>
 	`${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
 		props.asset.journal
 	}`;
+
+// Format features for dataset type
+const formatFeatures = () => {
+	const features = props.asset.annotations.annotations.feature ?? [];
+	if (!features || features.length === 0) return [];
+	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
+	const max = 5;
+	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
+};
 </script>
 
 <template>
@@ -80,34 +88,59 @@ const formatDetails = () =>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
 				<div class="asset-filters" v-if="resourceType === ResourceType.XDD">
-					<IconDocumentBlank16 />
 					<IconLink16 />
 					<IconChartLine16 />
 					<IconTable16 />
+					<IconPDF16 />
+				</div>
+				<div v-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
+				<div v-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
+					Simulation run
 				</div>
 			</div>
-			<div class="title">{{ asset.title }}{{ asset.name }}</div>
-			<div class="details">{{ formatDetails() }}</div>
+			<div class="title">
+				<template v-if="resourceType === ResourceType.XDD">{{ asset.title }}</template>
+				<template
+					v-else-if="resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET"
+				>
+					{{ asset.name }}
+				</template>
+			</div>
+			<div class="details">
+				<template v-if="resourceType === ResourceType.XDD">{{ formatDetails() }}</template>
+				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
+			</div>
 			<ul class="snippets" v-if="asset.highlight">
 				<li v-for="h in asset.highlight" :key="h">...<span v-html="h"></span>...</li>
 			</ul>
+			<div class="description">{{ asset.description }}</div>
+			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
+				PARAMETERS:
+				{{ asset.parameters }}
+				<!--may need a formatting a function this attribute is always undefined at the moment-->
+			</div>
+			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
+				FEATURES:
+				<span v-for="(feature, index) in formatFeatures()" :key="index"> {{ feature }}, </span>
+			</div>
+			<footer><!--pill tags if already in another project--></footer>
 		</div>
 		<div class="right">
-			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
-				<!--and type is article filter above instead of if-->
+			<figure v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0">
 				<img
 					v-if="relatedAsset && relatedAsset.properties.image"
-					:src="`data:image/jpeg;base64,${asset.relatedExtractions[relatedAssetPage].properties.image}`"
+					:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
 					class="extracted-assets"
 					alt="asset"
 				/>
 				<div class="asset-nav-arrows">
 					<IconArrowLeft16 @click="paginationMovement(-1)" />
-					Asset {{ relatedAssetPage + 1 }} of {{ asset.relatedExtractions?.length }}
+					Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
 					<IconArrowRight16 @click="paginationMovement(1)" />
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
+				<!--there are talks of having the plus and three dot menu available wherever-->
 				<IconOverflowMenuVertical24 />
 			</button>
 			<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
@@ -125,8 +158,6 @@ const formatDetails = () =>
 	padding: 1rem;
 	margin: 1px;
 	display: flex;
-	/* align-content: stretch;
-	align-items: stretch; */
 	justify-content: space-between;
 }
 
@@ -141,6 +172,7 @@ const formatDetails = () =>
 .type-and-filters {
 	display: flex;
 	align-items: center;
+	gap: 2rem;
 }
 
 .asset-nav-arrows {
@@ -157,7 +189,6 @@ const formatDetails = () =>
 
 .asset-filters {
 	display: flex;
-	margin-left: 2rem;
 	gap: 0.5rem;
 }
 
@@ -172,7 +203,10 @@ const formatDetails = () =>
 }
 
 .title,
-.details {
+.details,
+.description,
+.parameters,
+.features {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 1;
