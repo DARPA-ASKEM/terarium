@@ -68,12 +68,12 @@
 			<div v-if="previewItem" class="selected-resources-pane">
 				<Document
 					v-if="resultType === ResourceType.XDD"
-					:asset-id="previewItemId"
+					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
 				/>
 				<Dataset
 					v-if="resultType === ResourceType.DATASET"
-					:asset-id="previewItemId"
+					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
 				/>
 				<Button label="Add to Cart"></Button>
