@@ -76,27 +76,8 @@ public class Document implements Serializable {
 	public void setKnownEntities(KnownEntities knownEntities) {
 		this.knownEntities = knownEntities;
 	}
-
-	public Document(String gddId, String title, String abstractText, String journal, String publisher, List<Map<String, String>> author, List<Map<String, String>> identifier){
-		this.gddId = gddId;
-		this.title = title;
-		this.abstractText = abstractText;
-		this.journal = journal;
-		this.publisher = publisher;
-		this.author = author;
-		this.identifier = identifier; 
-	}
-	
+		
 	public Document(){} //Default constructor for @Data
-
-	@Override
-    public String toString(){
-		return "Document: { gddId: " + this.gddId +
-				" title: " + this.title + 
-				" abstractText: " + this.abstractText +
-				" journal: " + this.journal +
-				" }";
-	}
 
 }
 
