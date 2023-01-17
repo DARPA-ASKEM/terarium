@@ -5,7 +5,6 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isXDDArticle } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
-import 'primeicons/primeicons.css';
 
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
