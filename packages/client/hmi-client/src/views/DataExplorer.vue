@@ -486,7 +486,7 @@ onUnmounted(() => {
 }
 
 .button-group button.active {
-	background: var(--un-color-feedback-success-lighter);
+	background: var(--primary-color-lighter);
 	cursor: default;
 }
 
