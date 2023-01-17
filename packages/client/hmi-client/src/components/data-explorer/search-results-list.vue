@@ -26,7 +26,7 @@
 			:articles="(filteredAssets as XDDArticle[])" :raw-concept-facets="rawConceptFacets"
 			:selected-search-items="selectedSearchItems" @toggle-article-selected="updateSelection" />
 	</div> -->
-	<div v-if="resultsCount === 0">No data available</div>
+	<div v-if="resultsCount === 0">Loading...</div>
 	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
