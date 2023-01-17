@@ -295,15 +295,9 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (rawdata.data) {
 		const articlesRaw = rawdata.data.map((a) => a.bibjson);
 
-		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
-		//       is not populated and instead the raw field name, abstract, is the one with data
-		//       similarly, re-map the gddid field
 		const articles = articlesRaw.map((a) => ({
 			...a,
-			abstractText: a.abstract,
-			// eslint-disable-next-line no-underscore-dangle
-			gddid: a._gddid,
-			knownTerms: a.known_terms
+			abstractText: a.abstract
 		}));
 
 		return articles;
@@ -407,22 +401,11 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		const articlesRaw =
 			xddSearchParam?.fields === undefined
 				? (data as XDDArticle[])
-				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent resposne object
+				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent response object
 
-		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
-		//       is not populated and instead the raw field name, abstract, is the one with data
-		//       similarly, re-map the gddid field
-		// FIXME: setting the following mapping ignores the fact that the user may have specifically
-		//        requested certain fields, and thus other mapped fields will be set to undefined
 		const articles = articlesRaw.map((a) => ({
 			...a,
-			abstractText: a.abstract,
-			// eslint-disable-next-line no-underscore-dangle
-			gddid: a._gddid,
-			knownTerms: a.known_terms,
-			knownEntities: a.known_entities,
-			// eslint-disable-next-line no-underscore-dangle
-			highlight: a._highlight
+			abstractText: a.abstract
 		}));
 
 		// process document highlights and style the search term differently in each highlight
@@ -477,7 +460,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 const getDocumentById = async (docid: string) => {
 	const searchParams: XDDSearchParams = {
 		docid,
-		known_entities: 'url_extractions'
+		known_entities: 'urlExtractions'
 	};
 	const xddRes = await searchXDDArticles('', searchParams);
 	if (xddRes) {

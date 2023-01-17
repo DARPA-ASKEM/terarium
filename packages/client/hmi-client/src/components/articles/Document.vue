@@ -79,7 +79,7 @@
 
 				<AccordionTab header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
-						<b>{{ ex.resource_title }}</b>
+						<b>{{ ex.resourceTitle }}</b>
 						<div>
 							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
@@ -166,8 +166,8 @@ const equationArtifacts = computed(() =>
 	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation)
 );
 const urlArtifacts = computed(() =>
-	doc.value?.knownEntities && doc.value.knownEntities.url_extractions.length > 0
-		? doc.value.knownEntities.url_extractions
+	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
+		? doc.value.knownEntities.urlExtractions
 		: null
 );
 
