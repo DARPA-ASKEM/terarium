@@ -49,6 +49,6 @@ export const RouteMetadata: {
 		projectAsset: ProjectAssetTypes.SIMULATION_RUNS
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
-	[RouteName.HomeRoute]: { displayName: 'Home', icon: null },
-	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: null }
+	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },
+	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: 'pi pi-compass' }
 };
