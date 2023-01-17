@@ -68,7 +68,8 @@ yarn install
 Start local dev server for Vue webapp, with Hot Module Replacement.
 
 ```
-yarn workspace hmi-client run dev
+yarn dev
+# equivalent to: yarn workspace hmi-client run dev
 ```
 
 ## Packaging and running the server
