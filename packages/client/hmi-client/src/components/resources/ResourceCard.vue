@@ -37,7 +37,7 @@ defineProps<{
 svg {
 	width: 20%;
 	margin: auto;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .resource-details {

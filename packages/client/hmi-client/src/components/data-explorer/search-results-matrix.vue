@@ -395,7 +395,7 @@ const clustersInfo = computed(() => {
 	}
 
 	.tr-item.selected td {
-		background-color: var(--un-color-accent-lighter);
+		background-color: var(--primary-color-lighter);
 	}
 
 	.name-col {

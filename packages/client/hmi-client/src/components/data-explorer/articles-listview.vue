@@ -250,7 +250,7 @@ tbody tr:first-child {
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .text-bold {

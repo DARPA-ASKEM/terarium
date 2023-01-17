@@ -63,7 +63,7 @@ function isArtifactSelected(artifactId) {
 }
 
 .active {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .remove-button {

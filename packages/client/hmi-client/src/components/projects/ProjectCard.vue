@@ -42,12 +42,12 @@ footer {
 .placeholder-color {
 	flex: 1;
 	min-height: 0;
-	background: var(--un-color-accent-lighter);
+	background: var(--primary-color-lighter);
 	position: relative;
 }
 
 .placeholder-color-random {
-	background: var(--un-color-accent-light);
+	background: var(--primary-color-light);
 	position: absolute;
 	left: 0;
 	top: 0;

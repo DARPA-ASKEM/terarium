@@ -188,7 +188,7 @@ header {
 }
 
 header svg {
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 	margin-right: 0.5rem;
 }
 
@@ -219,7 +219,7 @@ header svg {
 
 .chevron:hover {
 	background-color: var(--surface-ground);
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .chevron-left {

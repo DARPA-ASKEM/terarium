@@ -138,7 +138,7 @@ li:not(.active):hover {
 li.active {
 	transform: translateX(0);
 	background-color: var(--background-light-1);
-	color: var(--un-color-accent-dark);
+	color: var(--primary-color-dark);
 }
 
 li:hover {

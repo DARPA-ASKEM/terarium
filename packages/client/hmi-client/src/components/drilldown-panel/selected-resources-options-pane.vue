@@ -197,7 +197,7 @@ onMounted(async () => {
 	font-size: larger;
 	text-align: center;
 	font-weight: bold;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .add-selected-buttons {

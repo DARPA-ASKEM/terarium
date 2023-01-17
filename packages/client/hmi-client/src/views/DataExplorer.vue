@@ -519,7 +519,7 @@ onUnmounted(() => {
 .xdd-known-terms .flex-aligned-item {
 	display: flex;
 	align-items: center;
-	color: var(--un-color-accent-darker);
+	color: var(--primary-color-dark);
 }
 
 .xdd-known-terms .flex-aligned-item-delete-btn {

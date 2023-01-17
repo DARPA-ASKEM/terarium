@@ -187,7 +187,7 @@ const isSelectedItem = (item: string) => {
 }
 
 .dropdown-option-selected {
-	color: var(--un-color-accent-dark);
+	color: var(--primary-color-dark);
 }
 
 .dropdown-btn {
