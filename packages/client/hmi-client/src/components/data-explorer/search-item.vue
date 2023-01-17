@@ -105,7 +105,7 @@ const formatFeatures = () => {
 						<i
 							:class="`pi ${icon.class}`"
 							:active="chosenExtractionFilter === icon.type"
-							@click="updateExtractionFilter(icon.type)"
+							@click.stop="updateExtractionFilter(icon.type)"
 						></i>
 					</template>
 				</div>
@@ -150,12 +150,12 @@ const formatFeatures = () => {
 					alt="asset"
 				/>
 				<div class="asset-nav-arrows">
-					<i class="pi pi-arrow-left" @click="paginationMovement(-1)"></i>
+					<i class="pi pi-arrow-left" @click.stop="paginationMovement(-1)"></i>
 					<template v-if="extractionsWithImages.length > 0">
 						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
 					</template>
 					<template v-else> No {{ chosenExtractionFilter }}s </template>
-					<i class="pi pi-arrow-right" @click="paginationMovement(1)"></i>
+					<i class="pi pi-arrow-right" @click.stop="paginationMovement(1)"></i>
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
@@ -242,6 +242,7 @@ button {
 i {
 	padding: 0.2rem;
 	border-radius: 3px;
+	z-index: 2;
 }
 
 .pi[active='true'] {
