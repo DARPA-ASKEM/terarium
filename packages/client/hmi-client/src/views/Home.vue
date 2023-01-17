@@ -108,11 +108,11 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			</div>
 		</div>
 
-		<h2>Projects</h2>
+		<h4>Projects</h4>
 		<div class="carousel">
 			<header>
 				<component :is="IconTime32" />
-				<h3>Recent</h3>
+				<h5>Recent</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -135,7 +135,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 		<!-- Hot Topics carousel -->
 		<div class="carousel" v-if="relevantArticles.length > 0">
 			<header>
-				<h3>Latest on {{ relevantSearchTerm }}</h3>
+				<h5>Latest on {{ relevantSearchTerm }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -148,7 +148,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 		<!-- Show related articles for the top 5 projects -->
 		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
 			<header>
-				<h3>Related to: {{ project.name }}</h3>
+				<h5>Related to: {{ project.name }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -178,11 +178,11 @@ header {
 	z-index: -1;
 }
 
-h2 {
+h4 {
 	margin-left: 4rem;
 }
 
-h2,
+h4,
 header {
 	margin-top: 1rem;
 }
