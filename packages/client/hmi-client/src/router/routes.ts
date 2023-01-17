@@ -5,7 +5,6 @@ import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-mo
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
-import IconUser32 from '@carbon/icons-vue/es/user/32';
 import { ProjectAssetTypes } from '@/types/Project';
 
 export enum RouteName {
@@ -13,11 +12,11 @@ export enum RouteName {
 	DocumentRoute = 'document',
 	HomeRoute = 'home',
 	ModelRoute = 'model',
-	ProfileRoute = 'profile',
 	ProjectRoute = 'project',
 	ProvenanceRoute = 'provenance',
 	SimulationRoute = 'simulation',
-	SimulationResultRoute = 'simulationResult'
+	SimulationResultRoute = 'simulationResult',
+	DataExplorerRoute = 'dataExplorer'
 }
 
 export const RouteMetadata: {
@@ -38,7 +37,6 @@ export const RouteMetadata: {
 		icon: IconMachineLearningModel32,
 		projectAsset: ProjectAssetTypes.MODELS
 	},
-	[RouteName.ProfileRoute]: { displayName: 'Profile', icon: IconUser32 },
 	[RouteName.ProjectRoute]: { displayName: 'Project summary', icon: IconAccount32 },
 	[RouteName.SimulationRoute]: {
 		displayName: 'Workflows',
@@ -51,5 +49,6 @@ export const RouteMetadata: {
 		projectAsset: ProjectAssetTypes.SIMULATION_RUNS
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
-	[RouteName.HomeRoute]: { displayName: 'Home', icon: null }
+	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },
+	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: 'pi pi-compass' }
 };

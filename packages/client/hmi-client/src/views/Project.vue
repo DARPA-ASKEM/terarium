@@ -5,8 +5,6 @@ import ResourcesList from '@/components/resources/resources-list.vue';
 defineProps<{
 	project: Project;
 }>();
-
-const emit = defineEmits(['show-data-explorer']);
 </script>
 
 <template>
@@ -29,7 +27,7 @@ const emit = defineEmits(['show-data-explorer']);
 				</div>
 			</section>
 			<section class="detail">
-				<resources-list :project="project" @show-data-explorer="emit('show-data-explorer')" />
+				<resources-list :project="project" />
 			</section>
 		</section>
 	</div>
