@@ -145,26 +145,6 @@ header {
 	padding: 0.5rem 1rem;
 }
 
-p {
-	align-items: center;
-	display: flex;
-	font-size: var(--un-font-xlarge);
-}
-
-p > * + *::before {
-	content: '>';
-	margin: 0 1rem;
-}
-
-p a {
-	text-decoration: underline;
-}
-
-p a:hover,
-p a:focus {
-	color: var(--un-color-accent-dark);
-}
-
 section {
 	display: flex;
 	gap: 1rem;

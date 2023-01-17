@@ -17,7 +17,6 @@ button {
 	color: var(--btn-color);
 	cursor: pointer;
 	display: flex;
-	font: var(--un-font-body);
 	justify-content: center;
 	gap: 0.5rem;
 	outline: 0;

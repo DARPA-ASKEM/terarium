@@ -179,12 +179,7 @@ header {
 }
 
 h2 {
-	font: var(--un-font-h2);
 	margin-left: 4rem;
-}
-
-h3 {
-	font: var(--un-font-h3);
 }
 
 h2,
