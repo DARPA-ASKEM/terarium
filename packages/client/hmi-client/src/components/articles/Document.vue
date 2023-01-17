@@ -182,8 +182,6 @@ const otherArtifacts = computed(() => {
 	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
 
-console.log(artifacts);
-
 const fetchArtifacts = async () => {
 	if (doi.value !== '') {
 		const allArtifacts = await getXDDArtifacts(doi.value);
