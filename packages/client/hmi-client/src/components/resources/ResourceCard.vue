@@ -28,7 +28,7 @@ defineProps<{
 	width: 25rem;
 	height: 6rem;
 	display: flex;
-	border: 2px solid var(--un-color-black-100);
+	border: 2px solid var(--gray-900);
 	border-radius: 0.25rem;
 	cursor: pointer;
 	border: 1px solid var(--surface-border);

@@ -227,7 +227,7 @@ onMounted(async () => {
 
 .selected-items-container .selected-item {
 	padding: 5px;
-	background: var(--un-color-white);
+	background: white;
 	margin-top: 1px;
 }
 

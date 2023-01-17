@@ -168,7 +168,7 @@ export default {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	color: var(--un-color-black-100);
+	color: var(--gray-900);
 	transform: rotate(90deg);
 }
 </style>

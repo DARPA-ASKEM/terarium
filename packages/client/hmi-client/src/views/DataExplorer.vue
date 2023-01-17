@@ -482,7 +482,7 @@ onUnmounted(() => {
 }
 
 .button-group button:hover {
-	background: var(--un-color-black-5);
+	background: var(--gray-50);
 }
 
 .button-group button.active {

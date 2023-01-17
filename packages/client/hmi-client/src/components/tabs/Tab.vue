@@ -139,6 +139,6 @@ span {
 }
 
 .close:hover {
-	background-color: var(--un-color-black-20);
+	background-color: var(--gray-200);
 }
 </style>
