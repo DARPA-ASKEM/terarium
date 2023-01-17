@@ -62,6 +62,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 		let url = `/projects/${projectId}/assets`;
 		if (types) {
 			types.forEach((type, indx) => {
+				// add URL with format: ...?types=A&types=B&types=C
 				url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
 		}
