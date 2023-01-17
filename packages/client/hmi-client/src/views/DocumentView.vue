@@ -40,7 +40,7 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 function getDocumentName(id: string): string | null {
-	const currentDocument = documentsInCurrentProject?.find((doc) => doc.xdd_uri.toString() === id);
+	const currentDocument = documentsInCurrentProject?.find((doc) => doc.xddUri.toString() === id);
 	if (currentDocument) {
 		return currentDocument.title;
 	}

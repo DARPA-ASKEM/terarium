@@ -348,7 +348,7 @@ const previewItemId = computed(() => {
 	if (isXDDArticle(previewItem.value)) {
 		const itemAsArticle = previewItem.value as XDDArticle;
 		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddid || itemAsArticle._gddid;
+		return itemAsArticle.gddId;
 	}
 	return previewItem.value.id;
 });

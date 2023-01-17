@@ -16,12 +16,10 @@ import java.util.Map;
 @Accessors(chain = true)
 public class Document implements Serializable {
 
-	@JsonbProperty("_gddid")
 	private String gddId;
 
 	private String title;
 
-	@JsonbProperty("_abstract")
 	@JsonAlias("abstract")
 	private String abstractText;
 
@@ -44,8 +42,38 @@ public class Document implements Serializable {
 	private List<Map<String, String>> author;
 
 	private List<Map<String, String>> identifier;
+	private Map<String, List<String>> knownTerms;
+	private List<String> highlight;
+
+	private List<Document> relatedDocuments;
+
+	private List<Extraction> relatedExtractions;
+	private KnownEntities knownEntities;
+
+	@JsonbProperty("_gddid")
+	public void setID(String id) {
+		this.gddId = id;
+	}
+
+	@JsonbProperty("_abstract")
+	public void setAbstract(String abstractText) {
+		this.abstractText = abstractText;
+	}
 
 	@JsonbProperty("known_terms")
-	private Map<String, List<String>> knownTerms;
+	public void setKnownTerms(Map<String, List<String>> knownTerms) {
+		this.knownTerms = knownTerms;
+	}
+
+	@JsonbProperty("_highlight")
+	public void setKnownTerms(List<String> highlight) {
+		this.highlight = highlight;
+	}
+
+	@JsonbProperty("known_entities")
+	public void setKnownEntities(KnownEntities knownEntities) {
+		this.knownEntities = knownEntities;
+	}
 
 }
+
