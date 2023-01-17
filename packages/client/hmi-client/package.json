@@ -23,7 +23,7 @@
 		"chroma-js": "2.4.2",
 		"d3": "7.6.1",
 		"dagre": "0.8.5",
-		"eslint-import-resolver-typescript": "3.5.2",
+		"eslint-import-resolver-typescript": "3.5.3",
 		"graph-scaffolder": "*",
 		"lodash": "4.17.21",
 		"pinia": "2.0.28",
