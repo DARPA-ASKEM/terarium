@@ -151,7 +151,7 @@ const formatFeatures = () => {
 	</div>
 </template>
 
-<style>
+<style scoped>
 .search-item {
 	background-color: white;
 	color: var(--un-color-body-text-secondary);
