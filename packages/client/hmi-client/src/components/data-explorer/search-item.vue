@@ -89,13 +89,13 @@ const formatFeatures = () => {
 					v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0"
 				>
 					<template
-						v-for="(icon, index) in [
+						v-for="icon in [
 							{ type: XDDExtractionType.URL, class: 'pi-link' },
 							{ type: XDDExtractionType.Figure, class: 'pi-chart-bar' },
 							{ type: XDDExtractionType.Table, class: 'pi-table' },
 							{ type: XDDExtractionType.Document, class: 'pi-file-pdf' }
 						]"
-						:key="index"
+						:key="icon"
 					>
 						<i :class="`pi ${icon.class}`" @click="updateExtractionFilter(icon.type)"></i>
 					</template>
