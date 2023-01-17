@@ -164,7 +164,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 <style scoped>
 section {
 	background-color: var(--un-color-body-surface-secondary);
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;

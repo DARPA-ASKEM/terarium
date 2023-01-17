@@ -49,7 +49,7 @@ const formatDetails = () =>
 <style>
 .search-item {
 	background-color: white;
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 	padding: 1rem;
 	margin: 1px;
 	display: flex;
@@ -68,7 +68,7 @@ const formatDetails = () =>
 
 .title {
 	font-weight: 500;
-	color: var(--un-color-body-text-primary);
+	color: var(--text-color-primary);
 	margin: 0.5rem 0 0.25rem 0;
 }
 

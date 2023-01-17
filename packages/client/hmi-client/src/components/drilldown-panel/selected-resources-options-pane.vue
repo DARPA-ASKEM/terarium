@@ -250,12 +250,12 @@ onMounted(async () => {
 }
 
 .item-delete-btn {
-	color: var(--un-color-body-text-disabled);
+	color: var(--text-color-disabled);
 	cursor: pointer;
 }
 
 .item-delete-btn:hover {
-	/* color: var(--un-color-body-text-primary); */
+	/* color: var(--text-color-primary); */
 	color: red;
 }
 </style>

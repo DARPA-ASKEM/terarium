@@ -76,11 +76,11 @@ watch(defaultText, (newText) => {
 }
 
 .pi-history {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 }
 
 .clear-search:hover {
-	color: var(--un-color-body-text-primary);
+	color: var(--text-color-primary);
 	background-color: var(--un-color-body-surface-secondary);
 	padding: 0.5rem;
 	border-radius: 1rem;

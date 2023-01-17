@@ -57,7 +57,7 @@ header {
 	overflow: hidden;
 	font-weight: bold;
 	font-size: 1.1rem;
-	color: var(--un-color-body-text-primary);
+	color: var(--text-color-primary);
 }
 
 footer {

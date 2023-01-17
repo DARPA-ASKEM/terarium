@@ -84,7 +84,7 @@ ul {
 	list-style: none;
 	gap: 1rem;
 	margin: 1rem 0;
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 	width: fit-content;
 }
 

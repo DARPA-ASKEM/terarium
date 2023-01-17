@@ -150,12 +150,12 @@ section {
 }
 
 .user-button {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 	background-color: var(--un-color-body-surface-background);
 }
 
 .user-button:enabled:hover {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 	background-color: var(--un-color-body-surface-secondary);
 }
 
@@ -189,7 +189,7 @@ section {
 }
 
 .p-dropdown-label {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 }
 
 i {
