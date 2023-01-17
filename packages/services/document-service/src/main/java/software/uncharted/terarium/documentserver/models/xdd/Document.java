@@ -77,7 +77,7 @@ public class Document implements Serializable {
 		this.knownEntities = knownEntities;
 	}
 
-	public Document(String gddId, String title, String abstractText, String journal, String publisher, List<Map<String, String>> author, List<Map<String, String>> identifier){
+public Document(String gddId, String title, String abstractText, String journal, String publisher, List<Map<String, String>> author, List<Map<String, String>> identifier){
 		this.gddId = gddId;
 		this.title = title;
 		this.abstractText = abstractText;
