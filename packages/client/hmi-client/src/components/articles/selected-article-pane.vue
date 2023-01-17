@@ -66,7 +66,9 @@ const addResourcesToProject = async (projectId: string) => {
 
 // TODO: May need more formatting than just replcing <p></p> in future
 const formatAbstract = (item: XDDArticle) =>
-	item.abstract.replace('<p>', '\n').replace('</p>', '\n') || '[no abstract]';
+	item.abstract !== undefined
+		? item.abstract.replace('<p>', '\n').replace('</p>', '\n')
+		: '[no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
 	let projectId = '';

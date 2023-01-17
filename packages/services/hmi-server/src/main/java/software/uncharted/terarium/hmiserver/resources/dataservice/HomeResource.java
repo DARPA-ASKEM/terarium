@@ -79,7 +79,12 @@ public class HomeResource {
             
             if (currentProjectPublications.size() > 0){
                 XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments("xdd-covid-19",currentProjectPublications.get(0).getXddUri()).readEntity(XDDRelatedDocumentsResponse.class);
-                allProjects.get(i).setRelatedDocuments(relatedDocumentResponse.getData());
+                List<Document> relatedDocuments = new ArrayList();
+                for (int j = 0; j < relatedDocumentResponse.getData().size(); j++){
+                    relatedDocuments.add(relatedDocumentResponse.getData().get(j).getDocument());
+                }
+                
+                allProjects.get(i).setRelatedDocuments(relatedDocuments);
             }
         
         }

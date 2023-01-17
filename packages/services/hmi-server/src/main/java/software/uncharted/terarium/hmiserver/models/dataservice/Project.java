@@ -39,13 +39,13 @@ public class Project implements Serializable {
 	private List<ResourceType> assets;
 
 	@JsonbProperty("relatedArticles")
-	private List<RelatedDocument> relatedDocuments;
+	private List<Document> relatedDocuments;
 
 	public Project(){} //Required default constructor for the data annotation
 	
 	public String getID(){ return this.projectID; }
 
-	public void setRelatedDocuments(List<RelatedDocument> relatedDocuments){
+	public void setRelatedDocuments(List<Document> relatedDocuments){
 		this.relatedDocuments = relatedDocuments;
 	}
 
