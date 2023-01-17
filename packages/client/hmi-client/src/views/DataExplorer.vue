@@ -210,7 +210,7 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		xdd: {
+		[ResourceType.XDD]: {
 			dict: dictNames.value,
 			dataset:
 				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
@@ -234,7 +234,7 @@ const executeSearch = async () => {
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -262,10 +262,10 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.model || {
+	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
 		filters: clientFilters.value
 	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.dataset || {
+	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
 		filters: clientFilters.value
 	};
 
@@ -370,10 +370,9 @@ watch(searchQuery, async (newQuery) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-const updateResultType = async (newResultType: string) => {
+const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-
 		// if no data currently exist for the selected tab,
 		//  or if data exists but outdated then we should refetch
 		const resList = dataItemsUnfiltered.value.find(

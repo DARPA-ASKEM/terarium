@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { watch, ref, computed } from 'vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { Model } from '@/types/Model';
+import { Dataset } from '@/types/Dataset';
 import { isXDDArticle } from '@/utils/data-util';
 import IconAdd24 from '@carbon/icons-vue/es/add/24';
 import IconCheckmark24 from '@carbon/icons-vue/es/checkmark/24';
@@ -14,19 +16,27 @@ import IconArrowRight16 from '@carbon/icons-vue/es/arrow--right/16';
 import { ResultType, ResourceType } from '@/types/common';
 
 const props = defineProps<{
-	asset: XDDArticle; // Will be abstracted later to make other assets compatible
-	isPreviewedArticle: boolean;
+	asset: XDDArticle & Model & Dataset;
+	isPreviewed: boolean;
 	isInCart: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
 }>();
 
-const emit = defineEmits(['toggle-article-selected', 'toggle-article-preview']);
+const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0); // reset on new search
-const relatedAsset = computed(
-	() => props.asset.relatedExtractions && props.asset.relatedExtractions[relatedAssetPage.value]
+
+const extractionsWithImages = computed(() =>
+	props.asset.relatedExtractions?.filter(
+		(ex) =>
+			ex.askemClass === XDDExtractionType.Figure ||
+			ex.askemClass === XDDExtractionType.Table ||
+			ex.askemClass === XDDExtractionType.Equation
+	)
 );
+
+const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
 
 // console.log(props.asset.relatedExtractions && props.asset.relatedExtractions);
 // console.log(props.asset)
@@ -65,34 +75,28 @@ const formatDetails = () =>
 </script>
 
 <template>
-	<div class="search-item" :active="isPreviewedArticle" @click="emit('toggle-article-preview')">
+	<div class="search-item" :active="isPreviewed" @click="emit('toggle-asset-preview')">
 		<div>
 			<div class="type-and-filters">
-				{{ resourceType }}
-				<span class="asset-filters">
+				{{ resourceType.toUpperCase() }}
+				<div class="asset-filters" v-if="resourceType === ResourceType.XDD">
 					<IconDocumentBlank16 />
 					<IconLink16 />
 					<IconChartLine16 />
 					<IconTable16 />
-				</span>
+				</div>
 			</div>
-			<div class="title">{{ asset.title }}</div>
+			<div class="title">{{ asset.title }}{{ asset.name }}</div>
 			<div class="details">{{ formatDetails() }}</div>
 			<ul class="snippets" v-if="asset.highlight">
 				<li v-for="h in asset.highlight" :key="h">...<span v-html="h"></span>...</li>
 			</ul>
 		</div>
 		<div class="right">
-			<figure v-if="asset.relatedExtractions">
+			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<!--and type is article filter above instead of if-->
 				<img
-					v-if="
-						relatedAsset &&
-						relatedAsset.properties.image &&
-						(relatedAsset.askemClass === XDDExtractionType.Figure ||
-							relatedAsset.askemClass === XDDExtractionType.Table ||
-							relatedAsset.askemClass === XDDExtractionType.Equation)
-					"
+					v-if="relatedAsset && relatedAsset.properties.image"
 					:src="`data:image/jpeg;base64,${asset.relatedExtractions[relatedAssetPage].properties.image}`"
 					class="extracted-assets"
 					alt="asset"
@@ -106,7 +110,7 @@ const formatDetails = () =>
 			<button type="button" v-if="isInCart">
 				<IconOverflowMenuVertical24 />
 			</button>
-			<button v-else type="button" @click.stop="emit('toggle-article-selected')">
+			<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
 				<IconAdd24 v-show="!isSelected()" />
 				<IconCheckmark24 class="checkmark-color" v-show="isSelected()" />
 			</button>
@@ -121,8 +125,8 @@ const formatDetails = () =>
 	padding: 1rem;
 	margin: 1px;
 	display: flex;
-	align-content: stretch;
-	align-items: stretch;
+	/* align-content: stretch;
+	align-items: stretch; */
 	justify-content: space-between;
 }
 
@@ -154,6 +158,7 @@ const formatDetails = () =>
 .asset-filters {
 	display: flex;
 	margin-left: 2rem;
+	gap: 0.5rem;
 }
 
 .title {
