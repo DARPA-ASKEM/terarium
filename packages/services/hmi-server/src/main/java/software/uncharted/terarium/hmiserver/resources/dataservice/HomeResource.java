@@ -62,28 +62,28 @@ public class HomeResource {
         log.info(allProjects.get(0));
         //Get project's related documents and add them to the project.
         //Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
-        
         for (int i = 0; i < allProjects.size(); i++){            
-            //Map<String, List<Long>>
-            //String currentProjectAssets = projectProxy.getAssets(allProjects.get(i).getID()).readEntity(String.class);
-
-
             List<String> param = Arrays.asList("publications");
             String currentProjectAssetsString = projectProxy.getAssets(allProjects.get(i).getID(),param).readEntity(String.class);
+            //Format from : { publications: [ ..... ]} to [ .... ]
+            currentProjectAssetsString = currentProjectAssetsString.replace("{\"publications\":", "");
+            currentProjectAssetsString = currentProjectAssetsString.substring(0,currentProjectAssetsString.length() - 1);
             
             log.info("String: " + currentProjectAssetsString);
             Jsonb jsonb = JsonbBuilder.create();
             List<Publication> currentProjectPublications = jsonb.fromJson(currentProjectAssetsString, new ArrayList<Publication>(){}.getClass().getGenericSuperclass());
             log.info(currentProjectPublications);
-             
-            //allProjects.get(0).setAssets(currentProjectAssets);
-            // If project has publication, grab the first one and get its related documents
-            String[] projectPublication  = currentProjectAssetsString.split("\"publications\":")[1].split("\"xdd_uri\":");
-            if (projectPublication.length > 1){ 
-                String firstPublicationID = projectPublication[1].split(",")[0].replace("\"","");
-                String relatedDocumentsString = documentProxy.getRelatedDocuments("xdd-covid-19",firstPublicationID).readEntity(String.class); 
-                List<Document> relatedDocuments = jsonb.fromJson(relatedDocumentsString, new ArrayList<Document>(){}.getClass().getGenericSuperclass());
+            log.info(currentProjectPublications.get(0).getXddUri());
+            log.info("---------------");
+            
+            if (currentProjectPublications.size() > 0){
+                String relatedDocumentsString = documentProxy.getRelatedDocuments("xdd-covid-19",currentProjectPublications.get(0).getXddUri()).readEntity(String.class);
+                //relatedDocumentsString = relatedDocumentsString.replace("Document String: { \"status\": \"200\", \"data\": [{\"bibjson\":", "");
+                //relatedDocumentsString = relatedDocumentsString.substring(0,relatedDocumentsString.length() - 1);
                 log.info("Document String: " + relatedDocumentsString);
+
+                List<Document> relatedDocuments = jsonb.fromJson(relatedDocumentsString, new ArrayList<Document>(){}.getClass().getGenericSuperclass());
+                
                 
                 log.info("\n Found related documents: \n");
                 log.info(relatedDocuments);
@@ -92,13 +92,6 @@ public class HomeResource {
             }
         
         }
-        //         String projectFirstPublication = projectPublication[1].split(",")[0].replace("\"","");
-        //         String relatedDocumentsString = documentProxy.getRelatedDocuments("xdd-covid-19",projectFirstPublication).readEntity(String.class); 
-        //         List<Document> relatedDocuments = stringToDocument(relatedDocumentsString);
-                
-        //         allProjects.get(i).setRelatedDocuments(relatedDocuments); //update corresponding project
-        //     }
-        // }
 
         return Response
             .status(Response.Status.OK)

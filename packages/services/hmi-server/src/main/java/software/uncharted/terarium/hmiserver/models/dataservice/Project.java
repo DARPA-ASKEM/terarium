@@ -40,15 +40,6 @@ public class Project implements Serializable {
 	@JsonbProperty("relatedArticles")
 	private List<Document> relatedDocuments;
 
-	public Project(String id, String name, String description) {
-		this.projectID = id;
-		this.name = name;
-		this.description = description;
-		this.active = true;
-		// this.timestamp = Instant.parse(timestamp + "Z");
-		
-	}
-
 	public Project(){} //Required default constructor for the data annotation
 	
 	public String getID(){ return this.projectID; }
