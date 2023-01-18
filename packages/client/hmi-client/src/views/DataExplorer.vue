@@ -93,7 +93,8 @@
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
-						@exec-search-by-example="execSearchByExample"
+						@find-related-content="onFindRelatedContent"
+						@find-similar-content="onFindSimilarContent"
 						@remove-item="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
 					/>
@@ -147,6 +148,13 @@ const props = defineProps<{
 }>();
 const searchQuery = computed(() => props.query);
 const route = useRoute();
+
+const searchByExampleOptions = ref<SearchByExampleOptions>({
+	similarContent: false,
+	forwardCitation: false,
+	bakcwardCitation: false,
+	relatedContent: false
+});
 
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
@@ -277,7 +285,12 @@ const executeSearch = async () => {
 		// find related articles (which utilizes the xDD doc2vec API through the HMI server)
 		//
 		if (isXDDArticle(searchByExampleItem.value) && searchParams.xdd) {
-			searchParams.xdd.related_search_enabled = executeSearchByExample.value;
+			if (searchByExampleOptions.value.similarContent) {
+				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
+			}
+			if (searchByExampleOptions.value.relatedContent) {
+				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
+			}
 			searchParams.xdd.related_search_id = id;
 			searchType = ResourceType.XDD;
 		}
@@ -372,9 +385,10 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	dirtyResults.value[resultType.value] = true;
 
 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
-	//         if a paper is selected then find related papers
-	//         if a model/dataset is selected then find related models/datasets
-	if (searchOptions.similarContent) {
+	//         if a paper is selected then find related papers (from xDD)
+	// REVIEW: executing a related content search means to find related artifacts to the one selected:
+	//         if a model/dataset/paper is selected then find related artifacts from TDS
+	if (searchOptions.similarContent || searchOptions.relatedContent) {
 		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
 		executeSearchByExample.value = true;
@@ -384,21 +398,34 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 		searchByExampleItem.value = null;
 		dirtyResults.value[resultType.value] = false;
 	}
-
-	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
 };
 
 // helper function to bypass the search-by-example modal
 //  by executing a search by example and refreshing the output
-const execSearchByExample = (item: ResultType) => {
+const onFindRelatedContent = (item: ResultType) => {
+	searchByExampleItem.value = item;
+	const searchOptions: SearchByExampleOptions = {
+		similarContent: false,
+		forwardCitation: false,
+		bakcwardCitation: false,
+		relatedContent: true
+	};
+	searchByExampleOptions.value = searchOptions;
+	onSearchByExample(searchByExampleOptions.value);
+};
+
+// helper function to bypass the search-by-example modal
+//  by executing a search by example and refreshing the output
+const onFindSimilarContent = (item: ResultType) => {
 	searchByExampleItem.value = item;
 	const searchOptions: SearchByExampleOptions = {
 		similarContent: true,
 		forwardCitation: false,
 		bakcwardCitation: false,
-		modelsAndDatasets: false
+		relatedContent: false
 	};
-	onSearchByExample(searchOptions);
+	searchByExampleOptions.value = searchOptions;
+	onSearchByExample(searchByExampleOptions.value);
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {

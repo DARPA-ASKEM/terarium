@@ -539,6 +539,7 @@ const fetchData = async (
 
 	if (resourceType) {
 		if (
+			searchParam?.xdd?.similar_search_enabled ||
 			searchParam?.xdd?.related_search_enabled ||
 			searchParam?.model?.related_search_enabled ||
 			searchParam?.dataset?.related_search_enabled
@@ -551,19 +552,27 @@ const fetchData = async (
 			// FIXME: no concepts support when search by example is executed
 			// xDD does not provide facets data when using doc2vec API for fetching related documents!
 
-			// @review
-			// are we executing a search-by-example (i.e., to find related documents for a given document)?
-			if (searchParam.xdd && searchParam?.xdd.related_search_id && searchParam?.xdd.dataset) {
-				const relatedDocuments = await getRelatedDocuments(
-					searchParam?.xdd.related_search_id as string,
-					searchParam?.xdd.dataset
-				);
-				const similarDocumentsSearchResults = {
-					results: relatedDocuments,
-					searchSubsystem: ResourceType.XDD
-				};
-				finalResponse.allData.push(similarDocumentsSearchResults);
-				finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
+			// are we executing a search-by-example
+			// (i.e., to find similar documents or related artifacts for a given document)?
+			if (searchParam.xdd && searchParam?.xdd.dataset) {
+				if (searchParam?.xdd.similar_search_enabled) {
+					const relatedDocuments = await getRelatedDocuments(
+						searchParam?.xdd.related_search_id as string,
+						searchParam?.xdd.dataset
+					);
+					const similarDocumentsSearchResults = {
+						results: relatedDocuments,
+						searchSubsystem: ResourceType.XDD
+					};
+					finalResponse.allData.push(similarDocumentsSearchResults);
+					finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
+				}
+				if (searchParam?.xdd.related_search_enabled) {
+					relatedArtifacts = await getRelatedArtifacts(
+						searchParam?.xdd.related_search_id as string,
+						ProvenanceType.Publication
+					);
+				}
 			}
 
 			// are we executing a search-by-example

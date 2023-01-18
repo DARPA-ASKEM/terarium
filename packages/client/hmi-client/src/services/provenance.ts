@@ -113,7 +113,10 @@ async function getRelatedArtifacts(
 		response.push(...models);
 
 		const publicationAssets = await getBulkPublicationAssets(publicationIDs);
-		const publications = await getBulkDocuments(publicationAssets.map((p) => p.xddUri));
+		// FIXME: xdd_uri
+		const publications = await getBulkDocuments(
+			publicationAssets.map((p) => p.xddUri || p.xdd_uri)
+		);
 		response.push(...publications);
 
 		// FIXME: fetch simulation runs and append them to the result

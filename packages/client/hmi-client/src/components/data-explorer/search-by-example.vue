@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Button from '@/components/Button.vue';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
@@ -8,6 +7,7 @@ import { ref, PropType, computed } from 'vue';
 import { ResultType, SearchByExampleOptions } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
+import Button from '@/components/Button.vue';
 
 const props = defineProps({
 	item: {
@@ -22,7 +22,7 @@ const searchOptions = ref<SearchByExampleOptions>({
 	similarContent: true,
 	forwardCitation: false,
 	bakcwardCitation: false,
-	modelsAndDatasets: false
+	relatedContent: false
 });
 
 const onClose = () => {
@@ -40,7 +40,7 @@ const isSearchDisabled = computed(() => {
 		!searchOptions.value.similarContent &&
 		!searchOptions.value.forwardCitation &&
 		!searchOptions.value.bakcwardCitation &&
-		!searchOptions.value.modelsAndDatasets
+		!searchOptions.value.relatedContent
 	) {
 		return true;
 	}
@@ -93,12 +93,12 @@ const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArtic
 					<IconCheckbox20 />
 				</span>
 			</div>
-			<div @click.stop="searchOptions.modelsAndDatasets = !searchOptions.modelsAndDatasets">
-				Models & Datasets
-				<span v-show="searchOptions.modelsAndDatasets">
+			<div @click.stop="searchOptions.relatedContent = !searchOptions.relatedContent">
+				Related Content
+				<span v-show="searchOptions.relatedContent">
 					<IconCheckboxChecked20 />
 				</span>
-				<span v-show="!searchOptions.modelsAndDatasets">
+				<span v-show="!searchOptions.relatedContent">
 					<IconCheckbox20 />
 				</span>
 			</div>

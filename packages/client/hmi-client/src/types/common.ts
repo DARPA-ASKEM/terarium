@@ -44,7 +44,7 @@ export type SearchByExampleOptions = {
 	similarContent: boolean;
 	forwardCitation: boolean;
 	bakcwardCitation: boolean;
-	modelsAndDatasets: boolean;
+	relatedContent: boolean;
 };
 
 //

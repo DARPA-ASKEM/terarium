@@ -21,8 +21,16 @@
 					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
 					<div class="item-title" :title="getTitle(item)">
 						{{ formatTitle(item) }}
-						<div class="search-by-example" @click.stop="execSearchByExample(item)">
-							Search by Example
+						<div class="search-by-example" @click.stop="findRelatedContent(item)">
+							Find Related Content
+							<IconImageSearch16 />
+						</div>
+						<div
+							v-if="isXDDArticle(item)"
+							class="search-by-example"
+							@click.stop="findSimilarContent(item)"
+						>
+							Find Similar Content
 							<IconImageSearch16 />
 						</div>
 					</div>
@@ -62,7 +70,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close', 'remove-item', 'exec-search-by-example']);
+const emit = defineEmits(['close', 'remove-item', 'find-related-content', 'find-similar-content']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
@@ -112,9 +120,13 @@ const getType = (item: ResultType) => {
 	return ResourceType.ALL;
 };
 
-// issue a search-by-example for the given item
-const execSearchByExample = (item: ResultType) => {
-	emit('exec-search-by-example', item);
+const findRelatedContent = (item: ResultType) => {
+	emit('find-related-content', item);
+};
+
+// only available for publications
+const findSimilarContent = (item: ResultType) => {
+	emit('find-similar-content', item);
 };
 
 const addResourcesToProject = async (projectId: string) => {
