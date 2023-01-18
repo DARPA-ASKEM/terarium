@@ -14,6 +14,7 @@ import { useCurrentRoute, RoutePath } from '@/router/index';
 const props = defineProps<{
 	project: Project | null;
 	searchBarText?: string;
+	relatedSearchTerms?: string[];
 }>();
 interface NavItem {
 	[key: string]: { name: string; icon: string; routeName: string };
@@ -109,7 +110,12 @@ watch(activeProjectId, (newProjectId) => {
 				</Dropdown>
 			</section>
 		</section>
-		<SearchBar class="searchbar" :text="searchBarText" @search-text-changed="searchTextChanged" />
+		<SearchBar
+			class="searchbar"
+			:text="searchBarText"
+			@search-text-changed="searchTextChanged"
+			:relatedSearchTerms="relatedSearchTerms"
+		/>
 		<section class="header-right">
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
@@ -143,6 +149,7 @@ header {
 	gap: 2rem;
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
+	flex: none;
 }
 
 p {

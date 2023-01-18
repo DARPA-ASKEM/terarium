@@ -49,4 +49,11 @@ public interface DocumentProxy {
 		@PathParam("set") String set,
 		@QueryParam("docid") String docid
 	);
+
+	@GET
+	@Path("sets/{set}/word2vec/api/most_similar")
+	Response getRelatedWords(
+		@PathParam("set") String set,
+		@QueryParam("word") String word
+	);
 }

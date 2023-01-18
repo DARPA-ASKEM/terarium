@@ -29,4 +29,17 @@ public class RelatedResource {
 		@QueryParam("docid") String docid) {
 		return proxy.getRelatedDocuments(set, docid);
 	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/word")
+	@Tag(name = "Get most similar words for a given XDD internal doc id")
+	public Response getRelatedWords(
+		@QueryParam("set") String set,
+		@QueryParam("word") String word) {
+		System.out.println(" ");
+		System.out.println(set);
+		System.out.println(" ");
+		return proxy.getRelatedWords(set, word);
+	}
 }

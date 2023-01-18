@@ -30,4 +30,17 @@ public class RelatedResource {
 
 		return proxy.getRelatedDocuments(set, docid);
 	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{set}/word2vec/api/most_similar")
+	@Tag(name = "Get most similar words for a given XDD internal doc id")
+	public Response getRelatedWords(
+		@PathParam("set") String set,
+		@QueryParam("word") String word) {
+		System.out.println(" ");
+		System.out.println(set);
+		System.out.println(" ");
+		return proxy.getRelatedWords(set, word);
+	}
 }
