@@ -76,8 +76,8 @@ input + span {
 	display: inline-block;
 	width: var(--toggle-size);
 	height: calc(var(--toggle-size) / 2);
-	background: var(--label-color);
-	border: 1px solid var(--label-color);
+	background: var(--gray-600);
+	border: 1px solid var(--gray-600);
 	border-radius: 10px;
 	transition: all 0.3s ease-in-out;
 }

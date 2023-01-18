@@ -363,7 +363,7 @@ const clustersInfo = computed(() => {
 	}
 
 	tr {
-		border: 2px solid var(--separator);
+		border: 2px solid var(--gray-300);
 	}
 
 	thead {
@@ -381,12 +381,12 @@ const clustersInfo = computed(() => {
 			z-index: 1;
 			font-weight: normal;
 			/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
-			background-color: var(--un-color-body-surface-background);
+			background-color: var(--surface-ground);
 		}
 	}
 
 	td {
-		background: var(--un-color-body-surface-primary);
+		background: var(--surface-section);
 	}
 
 	.tr-item {
@@ -395,7 +395,7 @@ const clustersInfo = computed(() => {
 	}
 
 	.tr-item.selected td {
-		background-color: var(--un-color-accent-lighter);
+		background-color: var(--primary-color-lighter);
 	}
 
 	.name-col {

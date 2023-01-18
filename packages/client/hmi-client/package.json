@@ -3,7 +3,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"dev": "vite --host",
+		"dev": "yarn install && vite --host",
 		"build": "vue-tsc --noEmit && vite build",
 		"typecheck": "yarn workspace graph-scaffolder tsc --build && vue-tsc --noEmit",
 		"preview": "vite preview",

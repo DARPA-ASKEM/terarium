@@ -34,7 +34,7 @@ const close = () => {
 
 <style scoped>
 .full-screen-modal-header-container {
-	background-color: var(--un-color-accent-dark);
+	background-color: var(--primary-color-dark);
 	display: flex;
 	align-items: center;
 	min-height: 48px;

@@ -2,10 +2,10 @@
 	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
 			<div class="journal">{{ doc.journal }}</div>
-			<div v-if="docLink" class="title">
-				<a :href="docLink" rel="noreferrer noopener">{{ doc.title }}</a>
-			</div>
-			<div v-else class="title">{{ doc.title }}</div>
+			<h4 class="title">
+				<a v-if="docLink" :href="docLink" rel="noreferrer noopener">{{ doc.title }}</a>
+				<template v-else>{{ doc.title }}</template>
+			</h4>
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
 			<br />
 
@@ -216,20 +216,11 @@ onMounted(async () => {
 .doc-view-container {
 	padding: 2rem;
 	font-size: large;
-	height: calc(100vh - 50px);
-	width: 100%;
-	overflow: auto;
-	background: var(--un-color-body-surface-primary);
-	margin: 1rem;
 }
 
 .row {
 	display: flex;
 	justify-content: space-between;
-}
-
-.title {
-	font: var(--un-font-h3);
 }
 
 .authors {
@@ -260,6 +251,6 @@ onMounted(async () => {
 
 .img-container > img {
 	margin: 5px;
-	border: 1px solid var(--background-light-3);
+	border: 1px solid var(--gray-300);
 }
 </style>
