@@ -14,4 +14,5 @@ public class XDDRelatedDocumentsResponse {
 
 	private List<RelatedDocument> data;
 
+
 }

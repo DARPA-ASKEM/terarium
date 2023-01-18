@@ -10,20 +10,20 @@ import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { Project } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
-import * as ProjectService from '@/services/project';
 import { searchXDDArticles } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
+import API from '@/api/api';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
-	projects.value.filter((project) => project.relatedArticles.length > 0).slice(0, 5)
+	projects.value.filter((project) => project.relatedArticles !== undefined).slice(0, 5)
 );
 const relevantArticles = ref<XDDArticle[]>([]);
 const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 30 };
+const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
 const selectedPaper = ref<XDDArticle>();
 
 const resourcesStore = useResourcesStore();
@@ -34,16 +34,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	const allProjects = (await ProjectService.getAll()) as Project[];
-	if (allProjects) {
-		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
-		const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
-		const result = await Promise.all(promises);
-		for (let i = 0; i < allProjects.length; i++) {
-			allProjects[i].relatedArticles = result[i];
-		}
-		projects.value = allProjects;
-	}
+	projects.value = (await API.get('/home')).data as Project[];
 
 	// Get all relevant articles (latest on section)
 	const allArticles = await searchXDDArticles(relevantSearchTerm, relevantSearchParams);
