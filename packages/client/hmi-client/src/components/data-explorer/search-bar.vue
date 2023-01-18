@@ -39,7 +39,6 @@
 import { onMounted, ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
-import { useCurrentRoute, RoutePath } from '@/router';
 
 const props = defineProps<{
 	text?: string;
@@ -49,7 +48,6 @@ const props = defineProps<{
 const emit = defineEmits(['search-text-changed']);
 
 const route = useRoute();
-const currentRoute = useCurrentRoute();
 
 const searchText = ref('');
 const defaultText = computed(() => props.text);
@@ -83,12 +81,6 @@ watch(defaultText, (newText) => {
 
 watch(suggestedItems, (newItems) => {
 	isSuggestedItemsVisible.value = newItems ? newItems.length > 0 : false;
-});
-
-watch(currentRoute, (newRoute) => {
-	if (!newRoute.path.includes(RoutePath.DataExplorer)) {
-		isSuggestedItemsVisible.value = false;
-	}
 });
 </script>
 
