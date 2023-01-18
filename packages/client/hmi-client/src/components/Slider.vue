@@ -38,20 +38,20 @@ const props = defineProps({
 
 const directionMap = {
 	left: {
-		content: 'margin-left: -100%; margin-right: 100%;',
-		tab: 'margin-left: auto;'
+		content: () => 'margin-left: -100%; margin-right: 100%;',
+		tab: () => 'margin-left: auto;'
 	},
 	right: {
-		content: 'margin-left: 100%; margin-right: -100%;',
-		tab: 'margin-right: auto;'
+		content: () => `margin-left: ${props.tabWidth};`,
+		tab: () => 'margin-right: auto;'
 	}
 };
 
 const sidePanelContentStyle = computed(() =>
-	props.isOpen ? '' : directionMap[props.direction].content
+	props.isOpen ? '' : directionMap[props.direction].content()
 );
 const sidePanelTabStyle = computed(
-	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab}`
+	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab()}`
 );
 </script>
 
@@ -71,7 +71,8 @@ const sidePanelTabStyle = computed(
 	position: relative;
 	height: 100%;
 }
-.slider.open .slider-tab {
+.slider.open .slider-tab,
+.slider.closed .slider-content {
 	visibility: hidden;
 	opacity: 0;
 }
