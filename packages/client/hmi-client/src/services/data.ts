@@ -398,8 +398,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 				? (data as XDDArticle[])
 				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent response object
 
-		console.log(rawdata.success);
-
 		const articles = articlesRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract

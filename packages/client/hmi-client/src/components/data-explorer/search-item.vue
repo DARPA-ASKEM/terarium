@@ -28,6 +28,7 @@ const extractionsWithImages = computed(() =>
 						ex.askemClass === XDDExtractionType.Figure ||
 						ex.askemClass === XDDExtractionType.Table ||
 						ex.askemClass === XDDExtractionType.Equation ||
+						ex.askemClass === XDDExtractionType.URL ||
 						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
 						ex.askemClass === XDDExtractionType.Document // remove this later just for testing preview pagination
 					);
@@ -38,8 +39,6 @@ const extractionsWithImages = computed(() =>
 );
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight);
-
-console.log(props.asset.highlight);
 
 watch(
 	() => props.asset,
