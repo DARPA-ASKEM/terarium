@@ -3,6 +3,7 @@ import {
 	Facets,
 	FullSearchResults,
 	ResourceType,
+	ResultType,
 	SearchParameters,
 	SearchResults
 } from '@/types/common';
@@ -13,6 +14,7 @@ import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
+import { ProvenanceType } from '@/types/Provenance';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
 	XDDArticle,
@@ -541,6 +543,7 @@ const fetchData = async (
 			searchParam?.model?.related_search_enabled ||
 			searchParam?.dataset?.related_search_enabled
 		) {
+			let relatedArtifacts: ResultType[] = [];
 			//
 			// search by example
 			//
@@ -557,18 +560,32 @@ const fetchData = async (
 				);
 				const similarDocumentsSearchResults = {
 					results: relatedDocuments,
-					searchSubsystem: ResourceType.XDD,
-					hits: 0
+					searchSubsystem: ResourceType.XDD
 				};
 				finalResponse.allData.push(similarDocumentsSearchResults);
 				finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
 			}
 
-			// are we executing a search-by-example (i.e., to find related artifacts for a given model)?
+			// are we executing a search-by-example
+			// (i.e., to find related artifacts for a given model)?
 			if (searchParam?.model && searchParam?.model.related_search_id) {
-				// use provenance API to find related models
-				const relatedArtifacts = await getRelatedArtifacts(searchParam?.model.related_search_id);
+				relatedArtifacts = await getRelatedArtifacts(
+					searchParam?.model.related_search_id,
+					ProvenanceType.Model
+				);
+			}
 
+			// are we executing a search-by-example
+			// (i.e., to find related artifacts for a given dataset)?
+			if (searchParam?.dataset && searchParam?.dataset.related_search_id) {
+				relatedArtifacts = await getRelatedArtifacts(
+					searchParam?.dataset.related_search_id,
+					ProvenanceType.Dataset
+				);
+			}
+
+			// parse retrieved related artifacts and make them ready for consumption by the explorer
+			if (relatedArtifacts.length > 0) {
 				//
 				// models
 				//
@@ -602,8 +619,6 @@ const fetchData = async (
 				finalResponse.allData.push(relatedPublicationsSearchResults);
 				finalResponse.allDataFilteredWithFacets.push(relatedPublicationsSearchResults);
 			}
-
-			// FIXME: what about given a dataset
 
 			return finalResponse;
 		}

@@ -61,6 +61,20 @@ function searchTextChanged(value) {
 	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
 }
 
+function searchByExampleModalToggled() {
+	// TODO
+	// toggle the search by example modal represented by the component search-by-example
+	// which may be used as follows
+	/*
+	<search-by-example
+		v-if="searchByExampleModal"
+		:item="searchByExampleItem"
+		@search="onSearchByExample"
+		@hide="searchByExampleModal = false"
+	/>
+	*/
+}
+
 function goToPage(event) {
 	const routeName = event.value.routeName;
 	if (routeName === RouteName.ProjectRoute && activeProjectId.value) {
@@ -109,7 +123,12 @@ watch(activeProjectId, (newProjectId) => {
 				</Dropdown>
 			</section>
 		</section>
-		<SearchBar class="searchbar" :text="searchBarText" @search-text-changed="searchTextChanged" />
+		<SearchBar
+			class="searchbar"
+			:text="searchBarText"
+			@search-text-changed="searchTextChanged"
+			@toggle-search-by-example="searchByExampleModalToggled"
+		/>
 		<section class="header-right">
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"

@@ -44,26 +44,50 @@ async function getConnectedNodes(
 }
 
 /**
- * Find related artifacts of a given model
- *  	Find other model revisions
- *	 	Find publication(s) used to referencing the model
- *	 	Find datasets used in the simulation of the model
- *	 	Find datasets that represent the simulation runs of the model
- * @modelId: model id to be used as the root
- * @return ProvenanceArtifacts|null - the list of all models, or null if none returned by API
+ * Find related artifacts of a given root type
+ * @id: id to be used as the root
+ * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
  */
-async function getRelatedArtifacts(modelId: string | number): Promise<ResultType[]> {
+async function getRelatedArtifacts(
+	id: string | number,
+	rootType: ProvenanceType
+): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
-	const connectedNodes = await getConnectedNodes(modelId, ProvenanceType.Model);
+	const connectedNodes = await getConnectedNodes(id, rootType);
 	if (connectedNodes) {
 		const modelRevisionIDs: string[] = [];
 		const publicationIDs: string[] = [];
 		const datasetIDs: string[] = [];
 		const simulationRunIDs: string[] = [];
 
+		// For a model/dataset root type:
+		//  	Find other model revisions
+		//	 	Find publication(s) used to referencing the model
+		//	 	Find datasets used in the simulation of the model
+		//	 	Find datasets that represent the simulation runs of the model
+
+		// For a publication root type:
+		//  	Find models that reference that paper
+		//    Find datasets that reference that paper
+
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.result.nodes.forEach((node) => {
+			if (rootType !== ProvenanceType.Publication) {
+				if (
+					node.type === ProvenanceType.SimulationRun &&
+					simulationRunIDs.length < MAX_RELATED_ARTIFACT_COUNT
+				) {
+					simulationRunIDs.push(node.id.toString());
+				}
+				if (
+					node.type === ProvenanceType.Publication &&
+					publicationIDs.length < MAX_RELATED_ARTIFACT_COUNT
+				) {
+					publicationIDs.push(node.id.toString());
+				}
+			}
+
 			if (node.type === ProvenanceType.Dataset && datasetIDs.length < MAX_RELATED_ARTIFACT_COUNT) {
 				// FIXME: provenance data return IDs as number(s)
 				// but the fetch service expects IDs as string(s)
@@ -74,18 +98,6 @@ async function getRelatedArtifacts(modelId: string | number): Promise<ResultType
 				modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
 			) {
 				modelRevisionIDs.push(node.id.toString());
-			}
-			if (
-				node.type === ProvenanceType.SimulationRun &&
-				simulationRunIDs.length < MAX_RELATED_ARTIFACT_COUNT
-			) {
-				simulationRunIDs.push(node.id.toString());
-			}
-			if (
-				node.type === ProvenanceType.Publication &&
-				publicationIDs.length < MAX_RELATED_ARTIFACT_COUNT
-			) {
-				publicationIDs.push(node.id.toString());
 			}
 		});
 
@@ -101,7 +113,7 @@ async function getRelatedArtifacts(modelId: string | number): Promise<ResultType
 		response.push(...models);
 
 		const publicationAssets = await getBulkPublicationAssets(publicationIDs);
-		const publications = await getBulkDocuments(publicationAssets.map((p) => p.xdd_uri));
+		const publications = await getBulkDocuments(publicationAssets.map((p) => p.xddUri));
 		response.push(...publications);
 
 		// FIXME: fetch simulation runs and append them to the result

@@ -17,6 +17,7 @@
 			></i>
 		</span>
 		<i class="pi pi-history" />
+		<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
 	</div>
 </template>
 
@@ -29,7 +30,7 @@ const props = defineProps<{
 	text?: string;
 }>();
 
-const emit = defineEmits(['search-text-changed']);
+const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 
@@ -43,6 +44,10 @@ const clearText = () => {
 
 const execSearch = () => {
 	emit('search-text-changed', searchText.value);
+};
+
+const toggleSearchByExample = () => {
+	emit('toggle-search-by-example');
 };
 
 const addSearchTerm = () => {
@@ -77,6 +82,16 @@ watch(defaultText, (newText) => {
 
 .pi-history {
 	color: var(--text-color-secondary);
+}
+
+.pi-image {
+	color: var(--text-color-secondary);
+	margin-left: 1rem;
+}
+
+.pi-image:hover {
+	color: var(--text-color-primary);
+	cursor: pointer;
 }
 
 .clear-search:hover {

@@ -93,6 +93,7 @@
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
+						@exec-search-by-example="execSearchByExample"
 						@remove-item="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
 					/>
@@ -119,8 +120,8 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType // ,
-	// SearchByExampleOptions
+	ViewType,
+	SearchByExampleOptions
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import { XDD_RESULT_DEFAULT_PAGE_SIZE, FACET_FIELDS as XDD_FACET_FIELDS, YEAR } from '@/types/XDD';
@@ -167,7 +168,6 @@ watch(isSliderResourcesOpen, () => {
 	}
 });
 
-const searchByExampleModal = ref(false);
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
 const xddDatasets = ref<string[]>([]);
@@ -367,42 +367,43 @@ const disableSearchByExample = () => {
 	executeSearchByExample.value = false;
 };
 
-// const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
-// 	// user has requested a search by example, so re-fetch data
-// 	dirtyResults.value[resultType.value] = true;
+const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
+	// user has requested a search by example, so re-fetch data
+	dirtyResults.value[resultType.value] = true;
 
-// 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
-// 	//         if a paper is selected then find related papers
-// 	//         if a model/dataset is selected then find related models/datasets
-// 	if (searchOptions.similarContent) {
-// 		// NOTE the executeSearch will set proper search-by-example search parameters
-// 		//  and let the data service handles the fetch
-// 		executeSearchByExample.value = true;
+	// REVIEW: executing a similar content search means to find similar objects to the one selected:
+	//         if a paper is selected then find related papers
+	//         if a model/dataset is selected then find related models/datasets
+	if (searchOptions.similarContent) {
+		// NOTE the executeSearch will set proper search-by-example search parameters
+		//  and let the data service handles the fetch
+		executeSearchByExample.value = true;
 
-// 		await executeSearch();
+		await executeSearch();
 
-// 		searchByExampleItem.value = null;
-// 		dirtyResults.value[resultType.value] = false;
-// 	}
+		searchByExampleItem.value = null;
+		dirtyResults.value[resultType.value] = false;
+	}
 
-// 	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
-// };
+	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
+};
+
+// helper function to bypass the search-by-example modal
+//  by executing a search by example and refreshing the output
+const execSearchByExample = (item: ResultType) => {
+	searchByExampleItem.value = item;
+	const searchOptions: SearchByExampleOptions = {
+		similarContent: true,
+		forwardCitation: false,
+		bakcwardCitation: false,
+		modelsAndDatasets: false
+	};
+	onSearchByExample(searchOptions);
+};
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
 	const item = dataItem.item;
-
-	if (dataItem.type && dataItem.type === 'search-by-example') {
-		if (searchByExampleItem.value && isEqual(searchByExampleItem.value, item)) {
-			// item was already in the list so remove it
-			searchByExampleItem.value = null;
-		} else {
-			// add it to the list
-			searchByExampleItem.value = item;
-		}
-		searchByExampleModal.value = true;
-		return;
-	}
 
 	if (dataItem.type && dataItem.type === 'clicked') {
 		// toggle preview

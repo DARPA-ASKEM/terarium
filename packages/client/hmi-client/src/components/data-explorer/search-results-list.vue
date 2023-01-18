@@ -69,10 +69,10 @@ const filteredAssets = computed(() => {
 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
 
 	if (searchResults) {
-		if (searchResults.xddExtractions && props.resultType === ResourceType.XDD) {
+		if (props.resultType === ResourceType.XDD) {
 			let articlesFromExtractions: XDDArticle[] = [];
 
-			if (searchResults.xddExtractions.length > 0) {
+			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
 				const docMap: { [docid: string]: XDDArticle } = {};
 				searchResults.xddExtractions.forEach((ex) => {
 					if (ex.properties.documentBibjson === undefined) return; // skip
