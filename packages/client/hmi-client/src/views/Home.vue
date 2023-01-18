@@ -108,11 +108,11 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			</div>
 		</div>
 
-		<h2>Projects</h2>
+		<h4>Projects</h4>
 		<div class="carousel">
 			<header>
 				<component :is="IconTime32" />
-				<h3>Recent</h3>
+				<h5>Recent</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -135,7 +135,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 		<!-- Hot Topics carousel -->
 		<div class="carousel" v-if="relevantArticles.length > 0">
 			<header>
-				<h3>Latest on {{ relevantSearchTerm }}</h3>
+				<h5>Latest on {{ relevantSearchTerm }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -148,7 +148,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 		<!-- Show related articles for the top 5 projects -->
 		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
 			<header>
-				<h3>Related to: {{ project.name }}</h3>
+				<h5>Related to: {{ project.name }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -163,8 +163,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 <style scoped>
 section {
-	background-color: var(--un-color-body-surface-secondary);
-	color: var(--un-color-body-text-secondary);
+	background-color: var(--surface-secondary);
+	color: var(--text-color-secondary);
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
@@ -178,22 +178,17 @@ header {
 	z-index: -1;
 }
 
-h2 {
-	font: var(--un-font-h2);
+h4 {
 	margin-left: 4rem;
 }
 
-h3 {
-	font: var(--un-font-h3);
-}
-
-h2,
+h4,
 header {
 	margin-top: 1rem;
 }
 
 header svg {
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 	margin-right: 0.5rem;
 }
 
@@ -218,13 +213,13 @@ header svg {
 	top: 50%;
 	visibility: visible;
 	z-index: 3;
-	background: var(--un-color-body-surface-secondary);
+	background: var(--surface-secondary);
 	border-radius: 10rem;
 }
 
 .chevron:hover {
-	background-color: var(--un-color-body-surface-background);
-	color: var(--un-color-accent);
+	background-color: var(--surface-ground);
+	color: var(--primary-color);
 }
 
 .chevron-left {
@@ -277,7 +272,7 @@ li {
 	position: relative;
 	width: 500px;
 	margin: 0px auto;
-	background-color: var(--un-color-body-surface-primary);
+	background-color: var(--surface-section);
 	border-radius: 2px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	overflow-y: auto;

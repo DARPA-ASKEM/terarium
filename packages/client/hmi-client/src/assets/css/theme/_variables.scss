@@ -1,8 +1,3 @@
-$primaryColor:#1B8073 !default;
-$primaryTextColor:#ffffff !default;
-$accentColor:#FF9800 !default;
-$accentTextColor:#ffffff !default;
-
 $colors: (
     "blue": #2196F3,
     "green": #689F38,
@@ -14,8 +9,7 @@ $colors: (
     "orange": #FF9800,
     "bluegray": #607D8B,
     "purple": #9C27B0,
-    "red": #F44336,
-    "primary": $primaryColor
+    "red": #F44336
 );
 
 $emphasis-high:rgba(16, 24, 40, 1) !default;
@@ -23,6 +17,12 @@ $emphasis-medium:rgba(0,0,0,.60) !default;
 $emphasis-low:rgba(102, 112, 133, 1) !default;
 $emphasis-lower:rgba(208, 213, 221, 1) !default;
 $overlayColor:#000000 !default;
+
+$primaryColorRGB: 45,142,45;
+$primaryColor:#1B8073 !default;
+$primaryTextColor:#ffffff !default;
+$accentColor:rgba(208, 213, 221, .3) !default;
+$accentTextColor:$emphasis-high !default;
 
 //global
 $fontFamily:Figtree,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif !default;
@@ -839,8 +839,14 @@ $imagePreviewActionIconBorderRadius:50% !default;
     --surface-e:#ffffff;
     --surface-f:#ffffff;
     --text-color:#{$textColor};
+    --text-color-primary:#{$textColor};
     --text-color-secondary:#{$textSecondaryColor};
+    --text-color-subdued:rgb(102, 112, 133);
+    --text-color-disabled:rgb(208, 213, 221);
     --primary-color:#{$primaryColor};
+    --primary-color-lighter: #E4FAE4ff;
+    --primary-color-light: #92E192ff;
+    --primary-color-dark: #1C5A1Cff;
     --primary-color-text:#{$primaryTextColor};
     --font-family:#{$fontFamily};
     --surface-0: #ffffff;
@@ -854,6 +860,7 @@ $imagePreviewActionIconBorderRadius:50% !default;
     --surface-700: #616161;
     --surface-800: #424242;
     --surface-900: #212121;
+    --gray-0: #FFFFFF;
     --gray-50: #FAFAFA;
     --gray-100: #F5F5F5;
     --gray-200: #EEEEEE;
@@ -867,7 +874,8 @@ $imagePreviewActionIconBorderRadius:50% !default;
     --content-padding:#{$panelContentPadding};
     --inline-spacing:#{$inlineSpacing};
     --border-radius:#{$borderRadius};
-    --surface-ground:#fafafa;
+    --surface-ground:#f4f4f4;
+    --surface-secondary: #F9FAFB;
     --surface-section:#ffffff;
     --surface-card:#ffffff;
     --surface-overlay:#ffffff;

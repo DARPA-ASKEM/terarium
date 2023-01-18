@@ -305,7 +305,7 @@ export default {
 
 <style scoped>
 .cell-selected-bar {
-	border: 2px solid var(--un-color-black-10);
+	border: 2px solid var(--gray-100);
 	border-radius: 5px;
 }
 </style>

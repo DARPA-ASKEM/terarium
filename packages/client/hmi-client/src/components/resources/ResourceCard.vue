@@ -28,21 +28,21 @@ defineProps<{
 	width: 25rem;
 	height: 6rem;
 	display: flex;
-	border: 2px solid var(--un-color-black-100);
+	border: 2px solid var(--gray-900);
 	border-radius: 0.25rem;
 	cursor: pointer;
-	border: 1px solid var(--un-color-body-stroke);
+	border: 1px solid var(--surface-border);
 }
 
 svg {
 	width: 20%;
 	margin: auto;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .resource-details {
 	width: 80%;
-	border-left: 1px solid var(--un-color-body-stroke);
+	border-left: 1px solid var(--surface-border);
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
@@ -57,7 +57,7 @@ header {
 	overflow: hidden;
 	font-weight: bold;
 	font-size: 1.1rem;
-	color: var(--un-color-body-text-primary);
+	color: var(--text-color-primary);
 }
 
 footer {

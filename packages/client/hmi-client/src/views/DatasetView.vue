@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Document from '@/components/articles/Document.vue';
+import Dataset from '@/components/dataset/Dataset.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
@@ -18,12 +18,12 @@ const props = defineProps<{
 const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
 
-const newDocumentId = computed(() => props.assetId);
+const newDatasetId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
-const documentsInCurrentProject = resourcesStore.activeProjectAssets?.publications; // fixme
+const datasetsInCurrentProject = resourcesStore.activeProjectAssets?.datasets;
 const activeProject = resourcesStore.activeProject;
-const tabContext = `document${activeProject?.id}`;
+const tabContext = `dataset${activeProject?.id}`;
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -40,9 +40,10 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 function getDocumentName(id: string): string | null {
-	const currentDocument = documentsInCurrentProject?.find((doc) => doc.xddUri.toString() === id);
+	console.log(datasetsInCurrentProject);
+	const currentDocument = datasetsInCurrentProject?.find((doc) => doc.id.toString() === id);
 	if (currentDocument) {
-		return currentDocument.title;
+		return currentDocument.name;
 	}
 	return null;
 }
@@ -52,7 +53,7 @@ function setActiveTab(index: number) {
 	tabStore.setActiveTabIndex(tabContext, index);
 }
 
-watch(newDocumentId, (id) => {
+watch(newDatasetId, (id) => {
 	if (id) {
 		const newTab = {
 			name: getDocumentName(id),
@@ -87,7 +88,7 @@ if (previousOpenTabs) {
 		v-if="!isEmpty(Array.from(openTabs))"
 		class="tab-container"
 		:tabs="Array.from(openTabs)"
-		:component-to-render="Document"
+		:component-to-render="Dataset"
 		:active-tab="props.assetId"
 		@tab-closed="(tab) => removeClosedTab(tab)"
 		@tab-selected="(index) => setActiveTab(index)"

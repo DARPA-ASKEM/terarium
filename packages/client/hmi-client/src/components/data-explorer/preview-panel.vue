@@ -11,7 +11,16 @@
 				<IconClose24 class="slider-header-item" @click="emit('update:previewItem', null)" />
 			</div>
 			<div class="selected-resources-pane">
-				<Document :asset-id="previewItemId" :project="resources.activeProject" />
+				<Document
+					v-if="resultType === ResourceType.XDD"
+					:asset-id="previewItemId as string"
+					:project="resources.activeProject"
+				/>
+				<Dataset
+					v-if="resultType === ResourceType.DATASET"
+					:asset-id="previewItemId as string"
+					:project="resources.activeProject"
+				/>
 				<Button label="Add to Cart"></Button>
 				<Button label="Add to Project"></Button>
 			</div>
@@ -26,12 +35,13 @@ import { PropType, computed, ref, watch } from 'vue';
 
 import useResourcesStore from '@/stores/resources';
 
-import { ResultType } from '@/types/common';
+import { ResultType, ResourceType } from '@/types/common';
 import { XDDArticle } from '@/types/XDD';
 
 import { isXDDArticle } from '@/utils/data-util';
 
 import Document from '@/components/articles/Document.vue';
+import Dataset from '@/components/dataset/Dataset.vue';
 import Slider from '@/components/Slider.vue';
 
 const resources = useResourcesStore();
@@ -54,6 +64,10 @@ const props = defineProps({
 	// slider-panel props
 	previewItem: {
 		type: Object as PropType<ResultType | null>,
+		default: null
+	},
+	resultType: {
+		type: String,
 		default: null
 	}
 });
@@ -80,9 +94,9 @@ const previewItemId = computed(() => {
 	if (isXDDArticle(previewItem)) {
 		const itemAsArticle = previewItem as XDDArticle;
 		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddid || itemAsArticle._gddid;
+		return itemAsArticle.gddId;
 	}
-	return '';
+	return previewItem.id;
 });
 </script>
 

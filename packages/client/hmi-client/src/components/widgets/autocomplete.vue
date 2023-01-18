@@ -160,11 +160,11 @@ onUnmounted(() => {
 .autocomplete-container .autocomplete-results {
 	padding: 0;
 	margin-left: 1rem;
-	background-color: var(--background-light-1);
+	background-color: var(--gray-0);
 }
 
 .autocomplete-results .is-active {
-	background-color: var(--background-light-3);
+	background-color: var(--gray-300);
 }
 
 .autocomplete-container :deep(.autocomplete-result) {

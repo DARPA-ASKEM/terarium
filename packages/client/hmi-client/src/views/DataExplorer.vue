@@ -80,6 +80,7 @@
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
+				:result-type="resultType"
 			/>
 			<slider-panel
 				class="resources-slider"
@@ -91,7 +92,6 @@
 			>
 				<template v-slot:content>
 					<selected-resources-options-pane
-						class="selected-resources-pane"
 						:selected-search-items="selectedSearchItems"
 						@remove-item="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
@@ -134,7 +134,7 @@ import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { Dataset } from '@/types/Dataset';
+import { Dataset as IDataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
 // FIXME: page count is not taken into consideration
@@ -243,7 +243,7 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		xdd: {
+		[ResourceType.XDD]: {
 			dict: dictNames.value,
 			dataset:
 				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
@@ -267,7 +267,7 @@ const executeSearch = async () => {
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -295,10 +295,10 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.model || {
+	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
 		filters: clientFilters.value
 	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.dataset || {
+	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
 		filters: clientFilters.value
 	};
 
@@ -349,8 +349,8 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 			const searchItemAsModel = searchItem as Model;
 			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
 		} else if (isDataset(item) && isDataset(searchItem)) {
-			const itemAsDataset = item as Dataset;
-			const searchItemAsDataset = searchItem as Dataset;
+			const itemAsDataset = item as IDataset;
+			const searchItemAsDataset = searchItem as IDataset;
 			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
 		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
@@ -394,10 +394,9 @@ watch(searchQuery, async (newQuery) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-const updateResultType = async (newResultType: string) => {
+const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-
 		// if no data currently exist for the selected tab,
 		//  or if data exists but outdated then we should refetch
 		const resList = dataItemsUnfiltered.value.find(
@@ -450,7 +449,7 @@ onUnmounted(() => {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 }
 
 .secondary-header {
@@ -461,16 +460,8 @@ onUnmounted(() => {
 	height: var(--nav-bar-height);
 }
 
-.data-explorer-container .header {
-	height: var(--header-height);
-}
-
 .button-group {
 	display: flex;
-}
-
-.bottom-padding {
-	padding-bottom: 2px;
 }
 
 .button-group button {
@@ -478,30 +469,30 @@ onUnmounted(() => {
 	align-items: center;
 	text-decoration: none;
 	background: transparent;
-	padding: 5px 10px;
 	border: 1px solid black;
 	cursor: pointer;
+	padding: 0.25rem;
+	margin: auto;
 	border-left-width: 0;
-	height: 40px;
 }
 
 .button-group button:first-child {
 	border-left-width: 1px;
-	border-top-left-radius: 3px;
-	border-bottom-left-radius: 3px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
 }
 
 .button-group button:last-child {
-	border-top-right-radius: 3px;
-	border-bottom-right-radius: 3px;
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .button-group button:hover {
-	background: var(--un-color-black-5);
+	background: var(--gray-50);
 }
 
 .button-group button.active {
-	background: white;
+	background: var(--primary-color-lighter);
 	cursor: default;
 }
 
@@ -528,30 +519,6 @@ onUnmounted(() => {
 	flex: 1;
 }
 
-.xdd-known-terms {
-	display: flex;
-}
-
-.xdd-known-terms .flex-aligned-item {
-	display: flex;
-	align-items: center;
-	color: var(--un-color-accent-darker);
-}
-
-.xdd-known-terms .flex-aligned-item-delete-btn {
-	color: red;
-}
-
-.xdd-known-terms .flex-aligned-item-delete-btn:hover {
-	cursor: pointer;
-}
-
-.xdd-known-terms :deep(.search-bar-container input) {
-	margin: 4px;
-	padding: 4px;
-	min-width: 100px;
-}
-
 .preview-slider {
 	margin-right: 1px;
 }
@@ -561,6 +528,6 @@ onUnmounted(() => {
 }
 
 .slider {
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-card);
 }
 </style>

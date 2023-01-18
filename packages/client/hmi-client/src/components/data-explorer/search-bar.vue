@@ -3,8 +3,8 @@
 		<span class="p-input-icon-left p-input-icon-right">
 			<i class="pi pi-search" />
 			<InputText
-				class="input-text"
 				type="text"
+				class="input-text"
 				placeholder="Search"
 				v-model="searchText"
 				@keyup.enter="addSearchTerm"
@@ -72,17 +72,16 @@ watch(defaultText, (newText) => {
 
 .input-text {
 	border-radius: 1.5rem;
-	height: 3rem;
 	width: 100%;
 }
 
 .pi-history {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 }
 
 .clear-search:hover {
-	color: var(--un-color-body-text-primary);
-	background-color: var(--un-color-body-surface-secondary);
+	color: var(--text-color-primary);
+	background-color: var(--surface-secondary);
 	padding: 0.5rem;
 	border-radius: 1rem;
 	top: 1rem;

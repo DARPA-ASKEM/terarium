@@ -1,21 +1,10 @@
 <template>
 	<div class="table-fixed-head">
-		<ul>
-			<li v-for="d in articles" :key="d.gddid" class="tr-item">
-				<SearchItem
-					:asset="d"
-					:selectedSearchItems="selectedSearchItems"
-					:isPreviewedArticle="previewedArticle === d"
-					@toggle-article-selected="updateSelection(d)"
-					@toggle-article-preview="togglePreview(d)"
-				/>
-			</li>
-		</ul>
 		<table>
 			<tbody>
 				<tr
 					v-for="d in articles"
-					:key="d.gddid"
+					:key="d.gddId"
 					class="tr-item"
 					:class="{ selected: isSelected(d) }"
 					@click="togglePreview(d)"
@@ -40,13 +29,13 @@
 										{{ formatArticleAuthors(d) }}
 									</div>
 									<div
-										v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
+										v-if="d.knownEntities && d.knownEntities.urlExtractions.length > 0"
 										class="url-extractions"
 									>
 										<b>URL Extractions(s):</b>
-										<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
+										<div v-for="ex in d.knownEntities.urlExtractions" :key="ex.url">
 											<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
-												ex.resource_title
+												ex.resourceTitle
 											}}</a>
 										</div>
 									</div>
@@ -61,7 +50,7 @@
 									Related Documents
 								</div>
 								<div v-if="isExpanded() && d.relatedDocuments" class="related-docs-container">
-									<div v-for="a in d.relatedDocuments" :key="a.gddid">
+									<div v-for="a in d.relatedDocuments" :key="a.gddId">
 										{{ a.title }}
 										<span class="item-select" @click.stop="updateSelection(a)"
 											>{{ isSelected(a) ? 'Unselect' : 'Select' }}
@@ -129,7 +118,6 @@ import useResourcesStore from '@/stores/resources';
 import { ConceptFacets } from '@/types/Concept';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	articles: {
@@ -196,7 +184,7 @@ const fetchRelatedDocument = async (article: XDDArticle) => {
 	if (!article.relatedDocuments) {
 		article.relatedDocuments = await getRelatedDocuments(
 			// eslint-disable-next-line no-underscore-dangle
-			article.gddid || article._gddid,
+			article.gddId,
 			resources.xddDataset
 		);
 	}
@@ -222,13 +210,6 @@ const formatKnownTerms = (d: XDDArticle) => {
 </script>
 
 <style scoped>
-ul {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	list-style: none;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;
@@ -237,12 +218,12 @@ table {
 
 td {
 	padding: 8px 16px;
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	vertical-align: top;
 }
 
 tbody tr {
-	border-top: 2px solid var(--separator);
+	border-top: 2px solid var(--gray-300);
 	cursor: pointer;
 }
 
@@ -269,7 +250,7 @@ tbody tr:first-child {
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .text-bold {
