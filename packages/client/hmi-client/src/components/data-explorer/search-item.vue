@@ -156,11 +156,12 @@ const formatFeatures = () => {
 }
 
 .search-item:hover {
-	background-color: var(--primary-color-lighter);
+	background-color: var(--surface-hover);
+	cursor: pointer;
 }
 
 .search-item[active='true'] {
-	outline: 1px solid var(--primary-color-lighter);
+	outline: 1px solid var(--primary-color-light);
 }
 
 .type-and-filters {
@@ -221,7 +222,7 @@ i:hover {
 }
 
 .checkmark-color {
-	color: var(--primary-color-lighter);
+	color: var(--primary-color);
 }
 
 .snippets {
