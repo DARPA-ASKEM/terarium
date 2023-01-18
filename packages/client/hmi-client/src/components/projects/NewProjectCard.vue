@@ -54,8 +54,8 @@ async function createNewProject() {
 
 <style scoped>
 .new-project-card {
-	border: 1px solid var(--un-color-body-stroke);
-	background-color: var(--un-color-body-surface-primary);
+	border: 1px solid var(--surface-border);
+	background-color: var(--surface-section);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;

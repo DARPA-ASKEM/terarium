@@ -11,6 +11,8 @@ repositories {
 dependencies {
 	implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusVersion}")
 
+	implementation project(":packages:services:document-service")
+
 	// REST server
 	implementation "io.quarkus:quarkus-resteasy"
 	implementation "io.quarkus:quarkus-resteasy-jackson"

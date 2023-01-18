@@ -136,33 +136,12 @@ watch(activeProjectId, (newProjectId) => {
 <style scoped>
 header {
 	align-items: center;
-	background-color: var(--un-color-body-surface-primary);
-	box-shadow: var(--un-box-shadow-small);
+	background-color: var(--surface-section);
 	display: flex;
 	justify-content: center;
 	gap: 2rem;
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
-}
-
-p {
-	align-items: center;
-	display: flex;
-	font-size: var(--un-font-xlarge);
-}
-
-p > * + *::before {
-	content: '>';
-	margin: 0 1rem;
-}
-
-p a {
-	text-decoration: underline;
-}
-
-p a:hover,
-p a:focus {
-	color: var(--un-color-accent-dark);
 }
 
 section {
@@ -171,13 +150,13 @@ section {
 }
 
 .user-button {
-	color: var(--un-color-body-text-secondary);
-	background-color: var(--un-color-body-surface-background);
+	color: var(--text-color-secondary);
+	background-color: var(--surface-ground);
 }
 
 .user-button:enabled:hover {
-	color: var(--un-color-body-text-secondary);
-	background-color: var(--un-color-body-surface-secondary);
+	color: var(--text-color-secondary);
+	background-color: var(--surface-secondary);
 }
 
 .nav {
@@ -210,7 +189,7 @@ section {
 }
 
 .p-dropdown-label {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 }
 
 i {

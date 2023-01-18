@@ -11,7 +11,6 @@
 				>
 					<td>
 						<div class="content-container">
-							<!-- in case of requesting multiple selection -->
 							<div class="radio" @click.stop="updateSelection(d)">
 								<span v-show="isSelected(d)">
 									<IconCheckboxChecked20 />
@@ -121,12 +120,11 @@ import MultilineDescription from '@/components/widgets/multiline-description.vue
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
 import { isXDDArticle } from '@/utils/data-util';
-import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
-import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
-import { ConceptFacets } from '@/types/Concept';
-import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 import { getRelatedDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
+import { ConceptFacets } from '@/types/Concept';
+import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
+import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 
 const props = defineProps({
 	articles: {
@@ -227,12 +225,12 @@ table {
 
 td {
 	padding: 8px 16px;
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	vertical-align: top;
 }
 
 tbody tr {
-	border-top: 2px solid var(--separator);
+	border-top: 2px solid var(--gray-300);
 	cursor: pointer;
 }
 
@@ -252,7 +250,7 @@ tbody tr:first-child {
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .text-bold {

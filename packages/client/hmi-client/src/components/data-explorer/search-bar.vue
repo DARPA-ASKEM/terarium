@@ -1,10 +1,10 @@
 <template>
 	<div class="search-bar-container">
-		<slot name="tag"></slot>
 		<span class="p-input-icon-left p-input-icon-right">
 			<i class="pi pi-search" />
 			<InputText
 				type="text"
+				class="input-text"
 				placeholder="Search"
 				v-model="searchText"
 				@keyup.enter="addSearchTerm"
@@ -17,7 +17,6 @@
 			></i>
 		</span>
 		<i class="pi pi-history" />
-		<slot name="search-by-example"></slot>
 	</div>
 </template>
 
@@ -71,18 +70,18 @@ watch(defaultText, (newText) => {
 	flex: 1;
 }
 
-.p-inputtext {
-	height: 3rem;
+.input-text {
 	border-radius: 1.5rem;
+	width: 100%;
 }
 
 .pi-history {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 }
 
 .clear-search:hover {
-	color: var(--un-color-body-text-primary);
-	background-color: var(--un-color-body-surface-secondary);
+	color: var(--text-color-primary);
+	background-color: var(--surface-secondary);
 	padding: 0.5rem;
 	border-radius: 1rem;
 	top: 1rem;

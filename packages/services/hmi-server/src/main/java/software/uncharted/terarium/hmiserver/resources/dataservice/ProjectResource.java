@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.*;
 
 @Path("/api/projects")
 @Authenticated
@@ -26,7 +27,10 @@ public class ProjectResource {
 		@DefaultValue("50") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
-		return proxy.getProjects(pageSize, page);
+		return Response
+			.status(Response.Status.OK)
+			.entity(proxy.getProjects(pageSize, page))
+			.build();
 	}
 
 	@GET
@@ -67,9 +71,10 @@ public class ProjectResource {
 	@GET
 	@Path("/{project_id}/assets")
 	public Response getAssets(
-		@PathParam("project_id") final String projectId
+		@PathParam("project_id") final String projectId,
+		@QueryParam("types") final List<String> types
 	) {
-		return proxy.getAssets(projectId);
+		return proxy.getAssets(projectId,types);
 	}
 
 	@POST

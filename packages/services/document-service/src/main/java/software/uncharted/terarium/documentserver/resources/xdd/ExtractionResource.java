@@ -22,7 +22,7 @@ public class ExtractionResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
-	public XDDResponse<XDDExtractionsResponseOK> searchExtractions(@QueryParam("doi") final String doi, @QueryParam("query_all") final String query_all) {
-		return proxy.getExtractions(doi, query_all);
+	public XDDResponse<XDDExtractionsResponseOK> searchExtractions(@QueryParam("doi") final String doi, @QueryParam("query_all") final String queryAll, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass) {
+		return proxy.getExtractions(doi, queryAll, page, askemClass);
 	}
 }
