@@ -25,7 +25,8 @@ import {
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
-import { getRelatedDocuments, getRelatedModels } from './provenance';
+// eslint-disable-next-line import/no-cycle
+import { getRelatedModels } from './provenance';
 
 const getXDDSets = async () => {
 	const res = await API.get('/xdd/sets');
@@ -41,6 +42,45 @@ const getXDDDictionaries = async () => {
 		return data;
 	}
 	return [] as XDDDictionary[];
+};
+
+/**
+ * Given a document ID, find semantically similar documents (utilizing xDD doc2vec API via the HMI server)
+ * @docid: document id to use as the root document
+ * @dataset: xDD dataset name to focus the similarity search
+ * @return the list of related documents
+ */
+const getRelatedDocuments = async (docid: string, dataset: string | null) => {
+	if (docid === '' || dataset === null) {
+		return [] as XDDArticle[];
+	}
+
+	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
+	// dataset=xdd-covid-19
+	// doi=10.1002/pbc.28600
+	// docid=5ebd1de8998e17af826e810e
+	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
+
+	const res = await API.get(url);
+	const rawdata: XDDResult = res.data;
+
+	if (rawdata.data) {
+		const articlesRaw = rawdata.data.map((a) => a.bibjson);
+
+		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
+		//       is not populated and instead the raw field name, abstract, is the one with data
+		//       similarly, re-map the gddid field
+		const articles = articlesRaw.map((a) => ({
+			...a,
+			abstractText: a.abstract,
+			// eslint-disable-next-line no-underscore-dangle
+			gddid: a._gddid,
+			knownTerms: a.known_terms
+		}));
+
+		return articles;
+	}
+	return [] as XDDArticle[];
 };
 
 const filterAssets = <T extends Model | Dataset>(
@@ -453,6 +493,21 @@ const getDocumentById = async (docid: string) => {
 	return null;
 };
 
+const getBulkDocuments = async (docIDs: string[]) => {
+	const result: XDDArticle[] = [];
+	const promiseList = [] as Promise<XDDArticle | null>[];
+	docIDs.forEach((docId) => {
+		promiseList.push(getDocumentById(docId));
+	});
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((r) => {
+		if (r) {
+			result.push(r);
+		}
+	});
+	return result;
+};
+
 const fetchResource = async (
 	term: string,
 	searchParam?: SearchParameters,
@@ -599,5 +654,7 @@ export {
 	getXDDArtifacts,
 	searchXDDArticles,
 	getAssets,
-	getDocumentById
+	getDocumentById,
+	getBulkDocuments,
+	getRelatedDocuments
 };
