@@ -8,7 +8,7 @@ import {
 } from '@/types/common';
 import API from '@/api/api';
 import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFilters } from '@/utils/data-util';
+import { applyFacetFilters, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
@@ -26,7 +26,7 @@ import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
 import { getAllModelDescriptions } from './model';
 // eslint-disable-next-line import/no-cycle
-import { getRelatedModels } from './provenance';
+import { getRelatedArtifacts } from './provenance';
 
 const getXDDSets = async () => {
 	const res = await API.get('/xdd/sets');
@@ -519,36 +519,6 @@ const fetchResource = async (
 		try {
 			switch (resourceType) {
 				case ResourceType.XDD: // XDD
-					// are we executing a search-by-example (i.e., to find related documents)?
-					if (
-						searchParam?.xdd?.related_search_enabled &&
-						searchParam?.xdd.related_search_id &&
-						searchParam?.xdd.dataset
-					) {
-						const relatedDocuments = await getRelatedDocuments(
-							searchParam?.xdd.related_search_id as string,
-							searchParam?.xdd.dataset
-						);
-						// FIXME: no facets support when search by example is executed
-						//        xDD does not provide facets data when using doc2vec API for fetching related documents!
-						const relatedSearchResults = {
-							results: relatedDocuments,
-							searchSubsystem: ResourceType.XDD,
-							hits: 0
-						};
-						resolve({
-							allData: relatedSearchResults,
-							allDataFilteredWithFacets: relatedSearchResults
-						});
-					} else {
-						resolve({
-							allData: await searchXDDArticles(term, searchParam?.xdd),
-							allDataFilteredWithFacets: await searchXDDArticles(
-								term,
-								searchParamWithFacetFilters?.xdd
-							)
-						});
-					}
 					resolve({
 						allData: await searchXDDArticles(term, searchParam?.xdd),
 						allDataFilteredWithFacets: await searchXDDArticles(
@@ -558,48 +528,10 @@ const fetchResource = async (
 					});
 					break;
 				case ResourceType.MODEL: // Models
-					// are we executing a search-by-example (i.e., to find related models)?
-					if (searchParam?.model?.related_search_enabled && searchParam?.model.related_search_id) {
-						// use provenance API to find related models
-						const relatedModels = await getRelatedModels(searchParam?.model.related_search_id);
-						// FIXME: no facets support when search by example is executed
-						// FIXME: no concepts support when search by example is executed
-						const relatedSearchResults: SearchResults = {
-							results: relatedModels,
-							searchSubsystem: ResourceType.MODEL
-						};
-						// FIXME: performing a provenance search is likely to return
-						//        a list of TERArium artifacts, which means different types of artifacts
-						//        are returned and the explorer view won't only be showing
-						//        a single asset type such as models
-						resolve({
-							allData: relatedSearchResults,
-							allDataFilteredWithFacets: relatedSearchResults
-						});
-					} else {
-						resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
-					}
+					resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
 					break;
 				case ResourceType.DATASET: // Datasets
-					// are we executing a search-by-example (i.e., to find related datasets)?
-					if (
-						searchParam?.dataset?.related_search_enabled &&
-						searchParam?.dataset.related_search_id
-					) {
-						const relatedDatasets = []; // use provenance API to find related datasets
-						// FIXME: no facets support when search by example is executed
-						// FIXME: no concepts support when search by example is executed
-						const relatedSearchResults = {
-							results: relatedDatasets,
-							searchSubsystem: ResourceType.DATASET
-						};
-						resolve({
-							allData: relatedSearchResults,
-							allDataFilteredWithFacets: relatedSearchResults
-						});
-					} else {
-						resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
-					}
+					resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
 					break;
 				default:
 					break;
@@ -615,6 +547,14 @@ const fetchData = async (
 	searchParamWithFacetFilters?: SearchParameters,
 	resourceType?: string
 ) => {
+	const finalResponse = {
+		allData: [],
+		allDataFilteredWithFacets: []
+	} as {
+		allData: SearchResults[];
+		allDataFilteredWithFacets: SearchResults[];
+	};
+
 	//
 	// call the different search sub-systems to retrieve results
 	// ideally, all such subsystems should be registered in an array, which will force refactoring of the following code
@@ -622,6 +562,81 @@ const fetchData = async (
 	const promiseList = [] as Promise<FullSearchResults>[];
 
 	if (resourceType) {
+		if (
+			searchParam?.xdd?.related_search_enabled ||
+			searchParam?.model?.related_search_enabled ||
+			searchParam?.dataset?.related_search_enabled
+		) {
+			//
+			// search by example
+			//
+			// FIXME: no facets support when search by example is executed
+			// FIXME: no concepts support when search by example is executed
+			// xDD does not provide facets data when using doc2vec API for fetching related documents!
+
+			// @review
+			// are we executing a search-by-example (i.e., to find related documents for a given document)?
+			if (searchParam.xdd && searchParam?.xdd.related_search_id && searchParam?.xdd.dataset) {
+				const relatedDocuments = await getRelatedDocuments(
+					searchParam?.xdd.related_search_id as string,
+					searchParam?.xdd.dataset
+				);
+				const similarDocumentsSearchResults = {
+					results: relatedDocuments,
+					searchSubsystem: ResourceType.XDD,
+					hits: 0
+				};
+				finalResponse.allData.push(similarDocumentsSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
+			}
+
+			// are we executing a search-by-example (i.e., to find related artifacts for a given model)?
+			if (searchParam?.model && searchParam?.model.related_search_id) {
+				// use provenance API to find related models
+				const relatedArtifacts = await getRelatedArtifacts(searchParam?.model.related_search_id);
+
+				//
+				// models
+				//
+				const relatedModels = relatedArtifacts.filter((a) => isModel(a));
+				const relatedModelsSearchResults: SearchResults = {
+					results: relatedModels,
+					searchSubsystem: ResourceType.MODEL
+				};
+				finalResponse.allData.push(relatedModelsSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(relatedModelsSearchResults);
+
+				//
+				// datasets
+				//
+				const relatedDatasets = relatedArtifacts.filter((a) => isDataset(a));
+				const relatedDatasetSearchResults: SearchResults = {
+					results: relatedDatasets,
+					searchSubsystem: ResourceType.DATASET
+				};
+				finalResponse.allData.push(relatedDatasetSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(relatedDatasetSearchResults);
+
+				//
+				// publications
+				//
+				const relatedPublications = relatedArtifacts.filter((a) => isXDDArticle(a));
+				const relatedPublicationsSearchResults: SearchResults = {
+					results: relatedPublications,
+					searchSubsystem: ResourceType.XDD
+				};
+				finalResponse.allData.push(relatedPublicationsSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(relatedPublicationsSearchResults);
+			}
+
+			// FIXME: what about given a dataset
+
+			return finalResponse;
+		}
+
+		//
+		// normal search flow continue here
+		//
 		if (resourceType === ResourceType.ALL) {
 			Object.entries(ResourceType).forEach(async ([key]) => {
 				if (ResourceType[key] !== ResourceType.ALL) {
@@ -637,11 +652,6 @@ const fetchData = async (
 
 	// fetch results from all search subsystems in parallel
 	const responses = await Promise.all(promiseList);
-
-	const finalResponse = {} as {
-		allData: SearchResults[];
-		allDataFilteredWithFacets: SearchResults[];
-	};
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
 	return finalResponse;

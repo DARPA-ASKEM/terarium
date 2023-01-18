@@ -506,19 +506,21 @@ const updateResultType = async (newResultType: string) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
 
-		// if no data currently exist for the selected tab,
-		//  or if data exists but outdated then we should refetch
-		const resList = dataItemsUnfiltered.value.find(
-			(res) => res.searchSubsystem === resultType.value
-		);
-		if (!resList || dirtyResults.value[resultType.value]) {
-			disableSearchByExample();
-			await executeSearch();
-			dirtyResults.value[resultType.value] = false;
-		} else {
-			// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
-			// re-calculate the facets
-			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+		if (executeSearchByExample.value === false) {
+			// if no data currently exist for the selected tab,
+			//  or if data exists but outdated then we should refetch
+			const resList = dataItemsUnfiltered.value.find(
+				(res) => res.searchSubsystem === resultType.value
+			);
+			if (!resList || dirtyResults.value[resultType.value]) {
+				disableSearchByExample();
+				await executeSearch();
+				dirtyResults.value[resultType.value] = false;
+			} else {
+				// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
+				// re-calculate the facets
+				calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+			}
 		}
 	}
 };

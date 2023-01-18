@@ -52,7 +52,7 @@ async function getConnectedNodes(
  * @modelId: model id to be used as the root
  * @return ProvenanceArtifacts|null - the list of all models, or null if none returned by API
  */
-async function getRelatedModels(modelId: string | number): Promise<ResultType[]> {
+async function getRelatedArtifacts(modelId: string | number): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
 	const connectedNodes = await getConnectedNodes(modelId, ProvenanceType.Model);
@@ -107,12 +107,15 @@ async function getRelatedModels(modelId: string | number): Promise<ResultType[]>
 		// FIXME: fetch simulation runs and append them to the result
 	}
 
+	// NOTE: performing a provenance search returns
+	//        a list of TERArium artifacts, which means different types of artifacts
+	//        are returned and the explorer view would have to decide to display them
 	return response;
 }
 
 //
-// FIXME: needs to create a similar function to "getRelatedModels"
+// FIXME: needs to create a similar function to "getRelatedArtifacts"
 //        for finding related datasets
 //
 
-export { getRelatedModels };
+export { getRelatedArtifacts };
