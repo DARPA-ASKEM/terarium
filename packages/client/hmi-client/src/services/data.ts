@@ -264,12 +264,7 @@ const getXDDArtifacts = async (doc_doi: string, term?: string) => {
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
-	if (rawdata.success) {
-		const { data } = rawdata.success;
-		const artifacts = data as XDDArtifact[];
-		// TEMP: the following mapping is needed because the backend is returning raw xdd response
-		return artifacts.map((a) => ({ ...a, askemClass: a.ASKEM_CLASS }));
-	}
+	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
 
 	return [] as XDDArtifact[];
 };
@@ -402,6 +397,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			xddSearchParam?.fields === undefined
 				? (data as XDDArticle[])
 				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent response object
+
+		console.log(rawdata.success);
 
 		const articles = articlesRaw.map((a) => ({
 			...a,

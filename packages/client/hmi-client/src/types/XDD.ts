@@ -1,10 +1,9 @@
 export enum XDDExtractionType {
 	Document = 'Document',
-	Section = 'Section',
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
-	Body = 'Body Text', // Section
+	Section = 'Section', // Section
 	URL = 'URL' // websites, URLs, links, etc.
 }
 

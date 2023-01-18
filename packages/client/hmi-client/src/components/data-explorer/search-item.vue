@@ -29,8 +29,7 @@ const extractionsWithImages = computed(() =>
 						ex.askemClass === XDDExtractionType.Table ||
 						ex.askemClass === XDDExtractionType.Equation ||
 						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
-						ex.askemClass === XDDExtractionType.Document || // remove this later just for testing preview pagination
-						ex.askemClass === undefined // remove this later just for testing preview pagination
+						ex.askemClass === XDDExtractionType.Document // remove this later just for testing preview pagination
 					);
 				}
 				return ex.askemClass === chosenExtractionFilter.value;
@@ -40,7 +39,7 @@ const extractionsWithImages = computed(() =>
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight);
 
-console.log(props.asset);
+console.log(props.asset.highlight);
 
 watch(
 	() => props.asset,
