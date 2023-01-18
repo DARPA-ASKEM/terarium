@@ -18,6 +18,7 @@ import java.time.*;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbDateFormat;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Setter;
 
 @Data
 @Accessors(chain = true)
@@ -39,19 +40,7 @@ public class Project implements Serializable {
 	private List<ResourceType> assets;
 
 	@JsonbProperty("relatedArticles")
-	private List<Document> relatedDocuments;
-
-	public Project(){} //Required default constructor for the data annotation
-	
-	public String getID(){ return this.projectID; }
-
-	public void setRelatedDocuments(List<Document> relatedDocuments){
-		this.relatedDocuments = relatedDocuments;
-	}
-
-	public void setAssets(List<ResourceType> assets){
-		this.assets = assets;
-	}
+	@Setter private List<Document> relatedDocuments;
 
 	@Override
     public String toString(){

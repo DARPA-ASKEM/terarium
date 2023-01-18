@@ -58,9 +58,10 @@ public class HomeResource {
 
         //Get project's related documents and add them to the project.
         //Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
+        //TODO: Make this smarter than grabbing first publication and then its related
         for (int i = 0; i < allProjects.size(); i++){            
             List<String> param = Arrays.asList("publications");
-            String currentProjectAssetsString = projectProxy.getAssets(allProjects.get(i).getID(),param).readEntity(String.class);
+            String currentProjectAssetsString = projectProxy.getAssets(allProjects.get(i).getProjectID(),param).readEntity(String.class);
             //Format from : { publications: [ ..... ]} to [ .... ]
             currentProjectAssetsString = currentProjectAssetsString.replace("{\"publications\":", "");
             currentProjectAssetsString = currentProjectAssetsString.substring(0,currentProjectAssetsString.length() - 1);
@@ -69,6 +70,7 @@ public class HomeResource {
             List<Publication> currentProjectPublications = jsonb.fromJson(currentProjectAssetsString, new ArrayList<Publication>(){}.getClass().getGenericSuperclass());
             
             if (currentProjectPublications.size() > 0){
+                //TODO: Fix the hard coded xdd-covid-19
                 XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments("xdd-covid-19",currentProjectPublications.get(0).getXddUri()).readEntity(XDDRelatedDocumentsResponse.class);
                 List<Document> relatedDocuments = new ArrayList();
                 for (int j = 0; j < relatedDocumentResponse.getData().size(); j++){
