@@ -1,8 +1,3 @@
-import { Dataset } from './Dataset';
-import { Model } from './Model';
-import { ProjectAssetTypes } from './Project';
-import { XDDArticle } from './XDD';
-
 export enum ProvenanceType {
 	// eslint-disable-next-line @typescript-eslint/no-shadow
 	Dataset = 'Dataset',
@@ -26,16 +21,17 @@ export type ProvenanceQueryParam = {
 	curie?: string;
 };
 
-// @FIXME: note that each provenance artifact result should have a field that highlights
-//         how that artifact relates to the root type
-export type ProvenanceArtifacts = {
-	[ProjectAssetTypes.PUBLICATIONS]?: XDDArticle[];
-	[ProjectAssetTypes.MODELS]?: Model[] | string[];
-	[ProjectAssetTypes.DATASETS]?: Dataset[] | string[];
-	// FIXME: add more types of artifacts that can be returned as part of the provenance search
-};
-
 export type ProvenanceResult = {
-	artifacts: ProvenanceArtifacts;
-	raw: any; // return the raw graph DB response
+	result: {
+		edges: {
+			relationship: string;
+			left: { type: string; id: number };
+			right: { type: string; id: number };
+		}[];
+		nodes: {
+			type: string;
+			id: number;
+			uuid: string;
+		}[];
+	};
 };

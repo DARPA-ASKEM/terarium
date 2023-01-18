@@ -45,16 +45,6 @@ public class ProvenanceResource {
 		return proxy.search(body, searchType);
 	}
 
-	@POST
-	@Path("/parent_model_revisions")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response searchParentModelRevisions(
-		final ProvenanceQueryParameters body,
-		@QueryParam("search_type") @DefaultValue("parent_model_revisions") String searchType
-	) {
-		return proxy.search(body, searchType);
-	}
-
 	@DELETE
 	@Path("/hanging_nodes")
 	public Response deleteHangingNodes() {

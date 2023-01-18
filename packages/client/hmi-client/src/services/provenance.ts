@@ -3,9 +3,10 @@
  */
 
 import API from '@/api/api';
-import { Model } from '@/types/Model';
-import { ProvenanceArtifacts, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
+import { ResultType } from '@/types/common';
+import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
 import { XDDArticle, XDDResult } from '@/types/XDD';
+import { getDataset } from './dataset';
 
 /**
  For a paper, find related artifacts
@@ -56,50 +57,94 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-// low-level API helper function for fetching model revisions
-async function getRelatedModelRevisions(
-	modelId: string | number
-): Promise<ProvenanceArtifacts | null> {
+// API helper function for fetching provenance data
+async function getConnectedNodes(
+	id: string | number,
+	rootType: ProvenanceType
+): Promise<ProvenanceResult | null> {
 	const body: ProvenanceQueryParam = {
-		root_id: Number(modelId),
-		root_type: ProvenanceType.Model, // FIXME: not sure why other root types are allowed
-		user_id: 0 // FIXME: seems required!
+		root_id: Number(id),
+		root_type: rootType
 	};
-	const modelRevisionsRaw = await API.post('/provenance/parent_model_revisions', body).catch(
-		(error) => {
-			console.log('Error: ', error);
-		}
-	);
-	const modelRevisions: Array<Model> = modelRevisionsRaw?.data ?? ([] as Array<Model>);
-	return {
-		models: modelRevisions
-		// FIXME: also include the raw response
-	};
+	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) => {
+		console.log('Error: ', error);
+	});
+	const connectedNodes: ProvenanceResult = connectedNodesRaw?.data ?? null;
+	return connectedNodes;
 }
 
 //
-// FIXME: needs to create a similar one for finding related datasets
+// FIXME: needs to create a similar function to "getRelatedModels"
+//        for finding related datasets
 //
+
 /**
  * Find related artifacts of a given model
- * @id: model id to be used as the root
+ *  	Find other model revisions
+ *	 	Find publication(s) used to referencing the model
+ *	 	Find datasets used in the simulation of the model
+ *	 	Find datasets that represent the simulation runs of the model
+ * @modelId: model id to be used as the root
  * @return ProvenanceArtifacts|null - the list of all models, or null if none returned by API
  */
-async function getRelatedModels(modelId: string | number): Promise<ProvenanceArtifacts | null> {
-	const res: ProvenanceArtifacts = {};
+async function getRelatedModels(modelId: string | number): Promise<ResultType[]> {
+	const response: ResultType[] = [];
+	//
+	// FIXME: currently related artifacts extracted from the provenance graph will be provided
+	//        as IDs that needs to be fetched, and since no bulk fetch API exists
+	//        so we are using the following limit to optimize things a bit
+	const MAX_RELATED_ARTIFACT_COUNT = 5;
 
-	// For a model, find related content:
-	// 	Find other model revisions
-	// 	Find publication(s) used to referencing the model
-	// 	Find datasets used in the simulation of the model
-	// 	Find datasets that represent the simulation runs of the model
+	const connectedNodes = await getConnectedNodes(modelId, ProvenanceType.Model);
+	if (connectedNodes) {
+		const datasets: string[] = [];
+		const publications: string[] = [];
+		const simulationRuns: string[] = [];
+		const modelRevisions: string[] = [];
 
-	const modelRevisions = await getRelatedModelRevisions(modelId);
-	if (modelRevisions) {
-		res.models = modelRevisions?.models;
+		// parse the response (sub)graph and extract relevant artifacts
+		connectedNodes.result.nodes.forEach((node) => {
+			if (node.type === ProvenanceType.Dataset && datasets.length < MAX_RELATED_ARTIFACT_COUNT) {
+				// FIXME: provenance data return IDs as number(s)
+				// but the fetch service expects IDs as string(s)
+				datasets.push(node.id.toString());
+			}
+			if (
+				node.type === ProvenanceType.SimulationRun &&
+				simulationRuns.length < MAX_RELATED_ARTIFACT_COUNT
+			) {
+				simulationRuns.push(node.id.toString());
+			}
+			if (
+				node.type === ProvenanceType.ModelRevision &&
+				modelRevisions.length < MAX_RELATED_ARTIFACT_COUNT
+			) {
+				modelRevisions.push(node.id.toString());
+			}
+			if (
+				node.type === ProvenanceType.Publication &&
+				publications.length < MAX_RELATED_ARTIFACT_COUNT
+			) {
+				publications.push(node.id.toString());
+			}
+		});
+
+		const promiseList = [] as Promise<ResultType | null>[];
+		datasets.forEach((datasetId) => {
+			promiseList.push(getDataset(datasetId));
+		});
+
+		// FIXME: other assets need to be fetched separately
+
+		const responsesRaw = await Promise.all(promiseList);
+		responsesRaw.forEach((r) => {
+			if (r) {
+				response.push(r);
+			}
+		});
 	}
 
-	return res;
+	return response;
 }
 
 export { getRelatedDocuments, getRelatedModels };

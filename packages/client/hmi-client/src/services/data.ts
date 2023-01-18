@@ -505,15 +505,18 @@ const fetchResource = async (
 				case ResourceType.MODEL: // Models
 					// are we executing a search-by-example (i.e., to find related models)?
 					if (searchParam?.model?.related_search_enabled && searchParam?.model.related_search_id) {
-						const relatedModels = []; // use provenance API to find related models
-						const xx = await getRelatedModels(0);
-						console.log(xx);
+						// use provenance API to find related models
+						const relatedModels = await getRelatedModels(searchParam?.model.related_search_id);
 						// FIXME: no facets support when search by example is executed
 						// FIXME: no concepts support when search by example is executed
-						const relatedSearchResults = {
+						const relatedSearchResults: SearchResults = {
 							results: relatedModels,
 							searchSubsystem: ResourceType.MODEL
 						};
+						// FIXME: performing a provenance search is likely to return
+						//        a list of TERArium artifacts, which means different types of artifacts
+						//        are returned and the explorer view won't only be showing
+						//        a single asset type such as models
 						resolve({
 							allData: relatedSearchResults,
 							allDataFilteredWithFacets: relatedSearchResults
