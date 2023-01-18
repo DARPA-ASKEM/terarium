@@ -1,147 +1,95 @@
 <template>
 	<div class="search-bar-container">
-		<slot name="dataset"></slot>
 		<slot name="tag"></slot>
-		<div class="input-container">
-			<IconSearch16 class="search-icon" />
-			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
-			<input
-				id="search"
-				v-model="searchText"
-				ref="inputElement"
+		<span class="p-input-icon-left p-input-icon-right">
+			<i class="pi pi-search" />
+			<InputText
 				type="text"
-				name="search"
-				:placeholder="searchPlaceholder"
+				placeholder="Search"
+				v-model="searchText"
 				@keyup.enter="addSearchTerm"
-				@input="searchTextHandler"
 			/>
-			<IconClose16 class="clear-icon" @click="clearText" />
-		</div>
-		<slot name="sort"></slot>
+			<i
+				class="pi pi-times clear-search"
+				:class="{ hidden: isClearSearchButtonHidden }"
+				style="font-size: 1rem"
+				@click="clearText"
+			></i>
+		</span>
+		<i class="pi pi-history" />
 		<slot name="search-by-example"></slot>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import IconClose16 from '@carbon/icons-vue/es/close/16';
-import IconSearch16 from '@carbon/icons-vue/es/search/16';
+import { onMounted, ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import InputText from 'primevue/inputtext';
 
-const props = defineProps({
-	realtime: {
-		type: Boolean,
-		default: false
-	},
-	searchLabel: {
-		type: String,
-		default: ''
-	},
-	searchPlaceholder: {
-		type: String,
-		default: 'Search for resources'
-	},
-	focusInput: {
-		type: Boolean,
-		default: true
-	}
-});
+const props = defineProps<{
+	text?: string;
+}>();
 
 const emit = defineEmits(['search-text-changed']);
 
-const inputElement = ref<HTMLInputElement | null>(null);
+const route = useRoute();
 
 const searchText = ref('');
-const searchTerms = ref('');
+const defaultText = computed(() => props.text);
+const isClearSearchButtonHidden = computed(() => !searchText.value);
 
 const clearText = () => {
 	searchText.value = '';
-	searchTerms.value = '';
-};
-
-const searchTextHandler = (event: Event) => {
-	if (props.realtime) {
-		searchTerms.value = (event.target as HTMLInputElement).value;
-	}
 };
 
 const execSearch = () => {
-	emit('search-text-changed', searchTerms.value);
+	emit('search-text-changed', searchText.value);
 };
 
-const addSearchTerm = (event: Event) => {
-	if (!props.realtime) {
-		const term = (event.target as HTMLInputElement).value;
-		searchTerms.value = term;
-		execSearch();
-	}
+const addSearchTerm = () => {
+	execSearch();
 };
 
 onMounted(() => {
-	if (props.focusInput) {
-		inputElement.value?.focus();
-	}
+	const { q } = route.query;
+	searchText.value = q?.toString() ?? searchText.value;
 });
 
-watch(searchTerms, () => {
-	execSearch();
+watch(defaultText, (newText) => {
+	searchText.value = newText || searchText.value;
 });
 </script>
 
 <style scoped>
 .search-bar-container {
 	display: flex;
-	background-color: transparent;
 	align-items: center;
-	color: white;
-	flex: 1;
 }
 
-.search-label {
-	font-weight: bold;
-	padding: 8px;
-}
-
-.input-container {
-	position: relative;
-	margin-left: 1rem;
+.p-input-icon-left {
 	margin-right: 1rem;
 	flex: 1;
 }
 
-.input-container .search-icon {
-	height: 100%;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	color: black;
-	margin-left: 4px;
+.p-inputtext {
+	height: 3rem;
+	border-radius: 1.5rem;
 }
 
-.input-container .clear-icon {
-	height: 100%;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	right: 0;
-	color: red;
-	cursor: pointer;
-	margin-right: 4px;
+.pi-history {
+	color: var(--un-color-body-text-secondary);
 }
 
-input[type='text'] {
-	padding: 10px;
-	/* Leave space for the search icon */
-	padding-left: 25px;
-	border: none;
-	outline: none;
-	width: 100%;
-	margin: 0;
+.clear-search:hover {
+	color: var(--un-color-body-text-primary);
+	background-color: var(--un-color-body-surface-secondary);
+	padding: 0.5rem;
+	border-radius: 1rem;
+	top: 1rem;
+	right: 0.5rem;
 }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-	transition: background-color 5000s ease-in-out 0s;
+.clear-search.hidden {
+	visibility: hidden;
 }
 </style>

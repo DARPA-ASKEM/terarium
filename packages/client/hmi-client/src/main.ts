@@ -4,7 +4,7 @@ import PrimeVue from 'primevue/config';
 import useAuthStore from './stores/auth';
 import router from './router';
 import App from './App.vue';
-import './assets/css/style.css';
+import './assets/css/style.scss';
 
 const app = createApp(App);
 app.use(createPinia());
