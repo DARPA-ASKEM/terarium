@@ -4,7 +4,7 @@
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
 				<InputText
-					ref="input"
+					ref="inputElement"
 					type="text"
 					placeholder="Search"
 					v-model="searchText"
@@ -47,7 +47,7 @@ const route = useRoute();
 const searchText = ref('');
 const defaultText = computed(() => props.text);
 const isClearSearchButtonHidden = computed(() => !searchText.value);
-const input = ref<HTMLInputElement | null>(null);
+const inputElement = ref<HTMLInputElement | null>(null);
 
 const clearText = () => {
 	searchText.value = '';
@@ -59,7 +59,7 @@ const execSearch = () => {
 
 function addSearchTerm(term) {
 	searchText.value = term;
-	input?.value?.focus();
+	inputElement.value?.$el.focus();
 }
 
 onMounted(() => {
