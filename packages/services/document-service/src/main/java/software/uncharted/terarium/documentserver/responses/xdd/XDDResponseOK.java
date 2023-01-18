@@ -2,17 +2,16 @@ package software.uncharted.terarium.documentserver.responses.xdd;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.documentserver.models.xdd.Document;
+
+import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class XDDResponseOK {
-
+public class XDDResponseOK implements Serializable {
 	/**
-	 * The related document
+	 * Version
 	 **/
-	private Document bibjson;
+	private Number v;
 
-	private Number score;
-
+	private String license;
 }
