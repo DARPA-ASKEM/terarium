@@ -21,6 +21,8 @@
     .p-dropdown-label {
         background: transparent;
         border: 0 none;
+        display: flex;
+        align-items: center;
 
         &.p-placeholder {
             color: $inputPlaceholderTextColor;
@@ -93,6 +95,7 @@
             &.p-highlight {
                 color: $highlightTextColor;
                 background: $highlightBg;
+                font-weight: $fontWeightSemiBold;
 
                 &.p-focus {
                     background: $highlightFocusBg;

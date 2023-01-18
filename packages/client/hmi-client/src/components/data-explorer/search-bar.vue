@@ -71,7 +71,9 @@ watch(defaultText, (newText) => {
 }
 
 .input-text {
+	border-color: var(--surface-border);
 	border-radius: 1.5rem;
+	padding: 12px;
 	width: 100%;
 }
 
