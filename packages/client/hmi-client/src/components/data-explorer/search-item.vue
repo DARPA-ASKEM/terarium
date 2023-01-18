@@ -28,9 +28,9 @@ const extractionsWithImages = computed(() =>
 						ex.askemClass === XDDExtractionType.Figure ||
 						ex.askemClass === XDDExtractionType.Table ||
 						ex.askemClass === XDDExtractionType.Equation ||
-						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing pagination
-						ex.askemClass === XDDExtractionType.Document || // remove this later just for testing pagination
-						ex.askemClass === undefined // remove this later just for testing pagination
+						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
+						ex.askemClass === XDDExtractionType.Document || // remove this later just for testing preview pagination
+						ex.askemClass === undefined // remove this later just for testing preview pagination
 					);
 				}
 				return ex.askemClass === chosenExtractionFilter.value;
@@ -40,6 +40,8 @@ const extractionsWithImages = computed(() =>
 
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
 
+const snippets = computed(() => props.asset.highlight);
+
 watch(
 	() => props.asset,
 	() => {
@@ -47,7 +49,7 @@ watch(
 	}
 ); // reset page number on new search
 
-function paginationMovement(movement: number) {
+function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
 	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
 		relatedAssetPage.value = newPage;
@@ -127,7 +129,9 @@ const formatFeatures = () => {
 				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
 			</div>
 			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="h in asset.highlight" :key="h">...<span v-html="h"></span>...</li>
+				<li v-for="snippet in snippets.splice(0, 3)" :key="snippet">
+					...<span v-html="snippet"></span>...
+				</li>
 			</ul>
 			<div class="description">{{ asset.description }}</div>
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
@@ -150,12 +154,12 @@ const formatFeatures = () => {
 					alt="asset"
 				/>
 				<div class="asset-nav-arrows">
-					<i class="pi pi-arrow-left" @click.stop="paginationMovement(-1)"></i>
+					<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
 					<template v-if="extractionsWithImages.length > 0">
 						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
 					</template>
 					<template v-else> No {{ chosenExtractionFilter }}s </template>
-					<i class="pi pi-arrow-right" @click.stop="paginationMovement(1)"></i>
+					<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
@@ -202,7 +206,8 @@ const formatFeatures = () => {
 .details,
 .description,
 .parameters,
-.features {
+.features,
+.snippets li {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 1;
