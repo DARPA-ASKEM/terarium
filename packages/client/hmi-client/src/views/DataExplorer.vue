@@ -352,42 +352,16 @@ const executeSearch = async () => {
 	emit('hide-overlay');
 };
 
-// const onClose = () => {
-// 	emit('hide');
-// };
-// const disableSearchByExample = () => {
-// 	// disable search by example, if it was enabled
-// 	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
-// 	executeSearchByExample.value = false;
-// };
-
-// const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
-// 	// user has requested a search by example, so re-fetch data
-// 	dirtyResults.value[resultType.value] = true;
-
-// 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
-// 	//         if a paper is selected then find related papers
-// 	//         if a model/dataset is selected then find related models/datasets
-// 	if (searchOptions.similarContent) {
-// 		// NOTE the executeSearch will set proper search-by-example search parameters
-// 		//  and let the data service handles the fetch
-// 		executeSearchByExample.value = true;
-
-// 		await executeSearch();
-
-// 		searchByExampleItem.value = null;
-// 		dirtyResults.value[resultType.value] = false;
-// 	}
-
-// 	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
-// };
-
 const disableSearchByExample = () => {
 	// disable search by example, if it was enabled
 	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
 	executeSearchByExample.value = false;
 };
 
+// TODO: Tom!
+// @ts-ignore
+// eslint-disable-next-line
+// @typescript-eslint/no-unused-vars
 // const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 // 	// user has requested a search by example, so re-fetch data
 // 	dirtyResults.value[resultType.value] = true;
@@ -494,6 +468,7 @@ watch(searchQuery, async (newQuery) => {
 	emit('search-query-changed', newQuery);
 	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
 	// search term has changed, so all search results are dirty; need re-fetch
+	disableSearchByExample();
 	Object.values(ResourceType).forEach((key) => {
 		dirtyResults.value[key as string] = true;
 	});
@@ -503,39 +478,25 @@ watch(searchQuery, async (newQuery) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-// const onSearchTermChanged = async (filterTerm: string) => {
-// 	if (filterTerm !== searchTerm.value) {
-// 		searchTerm.value = filterTerm;
-
-// 		disableSearchByExample();
-
-// 		// search term has changed, so all search results are dirty; need re-fetch
-// 		Object.values(ResourceType).forEach((key) => {
-// 			dirtyResults.value[key as string] = true;
-// 		});
-
-// 		// re-fetch data from the server, apply filters, and re-calculate the facets
-// 		await executeSearch();
-// 		dirtyResults.value[resultType.value] = false;
-// 	}
-// };
-
 const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-		// if no data currently exist for the selected tab,
-		//  or if data exists but outdated then we should refetch
-		const resList = dataItemsUnfiltered.value.find(
-			(res) => res.searchSubsystem === resultType.value
-		);
-		if (!resList || dirtyResults.value[resultType.value]) {
-			disableSearchByExample();
-			await executeSearch();
-			dirtyResults.value[resultType.value] = false;
-		} else {
-			// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
-			// re-calculate the facets
-			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+
+		if (executeSearchByExample.value === false) {
+			// if no data currently exist for the selected tab,
+			//  or if data exists but outdated then we should refetch
+			const resList = dataItemsUnfiltered.value.find(
+				(res) => res.searchSubsystem === resultType.value
+			);
+			if (!resList || dirtyResults.value[resultType.value]) {
+				disableSearchByExample();
+				await executeSearch();
+				dirtyResults.value[resultType.value] = false;
+			} else {
+				// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
+				// re-calculate the facets
+				calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+			}
 		}
 	}
 };

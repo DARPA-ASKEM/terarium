@@ -65,7 +65,7 @@ watch(
 	async () => {
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
-			model.value = result.data as Model;
+			model.value = result;
 		} else {
 			model.value = null;
 		}

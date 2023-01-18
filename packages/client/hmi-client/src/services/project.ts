@@ -4,8 +4,8 @@
 
 import API from '@/api/api';
 import { Project, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
-import { getRelatedDocuments } from '@/services/data';
 import { XDDArticle } from '@/types/XDD';
+import { getRelatedDocuments } from './data';
 
 /**
  * Create a project

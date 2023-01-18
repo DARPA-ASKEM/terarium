@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Provenance;
+import software.uncharted.terarium.hmiserver.models.dataservice.ProvenanceQueryParameters;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -20,11 +21,12 @@ public interface ProvenanceProxy {
 		Provenance provenance
 	);
 
-	@GET
-	@Path("/derived_from")
-	Response searchProvenance(
-		@QueryParam("artifact_id") String artifactId,
-		@QueryParam("artifact_type") String artifactType
+	@POST
+	@Path("/search")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response search(
+		ProvenanceQueryParameters body,
+		@QueryParam("search_type") String searchType
 	);
 
 	@DELETE
