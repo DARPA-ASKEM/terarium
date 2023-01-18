@@ -1,130 +1,89 @@
 <template>
 	<div class="data-explorer-container">
-		<modal-header :nav-back-label="'Back'" @close="onClose">
-			<template #content>
-				<search-bar :focus-input="true" @search-text-changed="onSearchTermChanged">
-					<template #dataset>
-						<dropdown-button
-							:inner-button-label="resultType === ResourceType.XDD ? 'Collection' : 'Database'"
-							:is-dropdown-left-aligned="true"
-							:items="xddDatasets"
-							:selected-item="xddDataset"
-							@item-selected="xddDatasetSelectionChanged"
-						/>
-					</template>
-					<template #tag>
-						<!-- this should be rendered as a non-editable tag inside the search input field -->
-						<div v-if="executeSearchByExample" style="color: cyan">Related Search</div>
-					</template>
-					<template #search-by-example>
-						<Button title="Search by Example" @click="searchByExampleModal = !searchByExampleModal">
-							<IconImageSearch16 />
-						</Button>
-					</template>
-				</search-bar>
-				<search-by-example
-					v-if="searchByExampleModal"
-					:item="searchByExampleItem"
-					@search="onSearchByExample"
-					@hide="searchByExampleModal = false"
-				/>
-			</template>
-		</modal-header>
-		<div class="secondary-header">
-			<span class="section-label">View only</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.XDD }"
-					@click="updateResultType(ResourceType.XDD)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-					Papers
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.MODEL }"
-					@click="updateResultType(ResourceType.MODEL)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-					Models
-				</button>
-				<button
-					type="button"
-					:class="{ active: resultType === ResourceType.DATASET }"
-					@click="updateResultType(ResourceType.DATASET)"
-				>
-					<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-					Datasets
-				</button>
-			</div>
-
-			<span class="section-label">View as</span>
-			<div class="button-group">
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.LIST }"
-					@click="viewType = ViewType.LIST"
-				>
-					List
-				</button>
-				<button
-					type="button"
-					:class="{ active: viewType === ViewType.MATRIX }"
-					@click="viewType = ViewType.MATRIX"
-				>
-					Matrix
-				</button>
-			</div>
-		</div>
 		<div class="facets-and-results-container">
-			<template v-if="viewType === ViewType.LIST">
-				<facets-panel
-					class="facets-panel"
-					:facets="facets"
-					:filtered-facets="filteredFacets"
+			<facets-panel
+				v-if="viewType === ViewType.LIST"
+				class="facets-panel"
+				:facets="facets"
+				:filtered-facets="filteredFacets"
+				:result-type="resultType"
+			/>
+			<div class="results-content">
+				<div class="secondary-header">
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.XDD }"
+							@click="updateResultType(ResourceType.XDD)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
+							Papers
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.MODEL }"
+							@click="updateResultType(ResourceType.MODEL)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
+							Models
+						</button>
+						<button
+							type="button"
+							:class="{ active: resultType === ResourceType.DATASET }"
+							@click="updateResultType(ResourceType.DATASET)"
+						>
+							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
+							Datasets
+						</button>
+					</div>
+					<div class="button-group">
+						<button
+							type="button"
+							:class="{ active: viewType === ViewType.LIST }"
+							@click="viewType = ViewType.LIST"
+						>
+							List
+						</button>
+						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
+					</div>
+				</div>
+				<search-results-list
+					v-if="viewType === ViewType.LIST"
+					:data-items="dataItems"
 					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:search-term="searchTerm"
+					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
-				<div class="results-content">
-					<search-results-list
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:search-term="searchTerm"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
-			<template v-if="viewType === ViewType.MATRIX">
-				<div class="results-content">
-					<search-results-matrix
-						:data-items="dataItems"
-						:result-type="resultType"
-						:selected-search-items="selectedSearchItems"
-						:dict-names="dictNames"
-						@toggle-data-item-selected="toggleDataItemSelected"
-					/>
-				</div>
-			</template>
+				<search-results-matrix
+					v-else-if="viewType === ViewType.MATRIX"
+					:data-items="dataItems"
+					:result-type="resultType"
+					:selected-search-items="selectedSearchItems"
+					:dict-names="dictNames"
+					@toggle-data-item-selected="toggleDataItemSelected"
+				/>
+			</div>
 			<!-- document preview -->
-			<document
-				v-if="previewItem"
-				class="selected-resources-pane"
-				:asset-id="previewItemId"
-				:project="resources.activeProject"
-			>
-				<template #footer>
-					Add to cart
-					<br />
-					Add to Project
-				</template>
-			</document>
+			<div v-if="previewItem" class="selected-resources-pane">
+				<Document
+					v-if="resultType === ResourceType.XDD"
+					:asset-id="previewItemId as string"
+					:project="resources.activeProject"
+				/>
+				<Dataset
+					v-if="resultType === ResourceType.DATASET"
+					:asset-id="previewItemId as string"
+					:project="resources.activeProject"
+				/>
+				<Button label="Add to Cart"></Button>
+				<Button label="Add to Project"></Button>
+			</div>
 			<selected-resources-options-pane
 				v-else
 				class="selected-resources-pane"
 				:selected-search-items="selectedSearchItems"
 				@remove-item="toggleDataItemSelected"
-				@close="onClose"
 			/>
 		</div>
 	</div>
@@ -132,17 +91,17 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-
-import ModalHeader from '@/components/data-explorer/modal-header.vue';
+import Button from 'primevue/button';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
-import SearchBar from '@/components/data-explorer/search-bar.vue';
-import SearchByExample from '@/components/data-explorer/search-by-example.vue';
-import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import Document from '@/views/Document.vue';
-import Button from '@/components/Button.vue';
+import Document from '@/components/articles/Document.vue';
+import Dataset from '@/components/dataset/Dataset.vue';
+// import ModalHeader from '@/components/data-explorer/modal-header.vue';
+// import SearchBar from '@/components/data-explorer/search-bar.vue';
+// import SearchByExample from '@/components/data-explorer/search-by-example.vue';
+// import DropdownButton from '@/components/widgets/dropdown-button.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -151,8 +110,8 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType,
-	SearchByExampleOptions
+	ViewType // ,
+	// SearchByExampleOptions
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
 import {
@@ -173,10 +132,17 @@ import {
 	validate
 } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
+import { Dataset as IDataset } from '@/types/Dataset';
+import { LocationQuery, useRoute } from 'vue-router';
+// import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
+// FIXME: page count is not taken into consideration
+const emit = defineEmits(['search-query-changed']);
 
-const emit = defineEmits(['hide', 'show-overlay', 'hide-overlay']);
-
+const props = defineProps<{
+	query?: LocationQuery;
+}>();
+const searchQuery = computed(() => props.query);
+const route = useRoute();
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -272,7 +238,7 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		xdd: {
+		[ResourceType.XDD]: {
 			dict: dictNames.value,
 			dataset:
 				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
@@ -321,14 +287,12 @@ const executeSearch = async () => {
 			searchType = ResourceType.DATASET;
 		}
 	}
-
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
 
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
-
+	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -356,10 +320,10 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.model || {
+	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
 		filters: clientFilters.value
 	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.dataset || {
+	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
 		filters: clientFilters.value
 	};
 
@@ -388,9 +352,35 @@ const executeSearch = async () => {
 	emit('hide-overlay');
 };
 
-const onClose = () => {
-	emit('hide');
-};
+// const onClose = () => {
+// 	emit('hide');
+// };
+// const disableSearchByExample = () => {
+// 	// disable search by example, if it was enabled
+// 	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
+// 	executeSearchByExample.value = false;
+// };
+
+// const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
+// 	// user has requested a search by example, so re-fetch data
+// 	dirtyResults.value[resultType.value] = true;
+
+// 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
+// 	//         if a paper is selected then find related papers
+// 	//         if a model/dataset is selected then find related models/datasets
+// 	if (searchOptions.similarContent) {
+// 		// NOTE the executeSearch will set proper search-by-example search parameters
+// 		//  and let the data service handles the fetch
+// 		executeSearchByExample.value = true;
+
+// 		await executeSearch();
+
+// 		searchByExampleItem.value = null;
+// 		dirtyResults.value[resultType.value] = false;
+// 	}
+
+// 	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
+// };
 
 const disableSearchByExample = () => {
 	// disable search by example, if it was enabled
@@ -398,26 +388,26 @@ const disableSearchByExample = () => {
 	executeSearchByExample.value = false;
 };
 
-const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
-	// user has requested a search by example, so re-fetch data
-	dirtyResults.value[resultType.value] = true;
+// const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
+// 	// user has requested a search by example, so re-fetch data
+// 	dirtyResults.value[resultType.value] = true;
 
-	// REVIEW: executing a similar content search means to find similar objects to the one selected:
-	//         if a paper is selected then find related papers
-	//         if a model/dataset is selected then find related models/datasets
-	if (searchOptions.similarContent) {
-		// NOTE the executeSearch will set proper search-by-example search parameters
-		//  and let the data service handles the fetch
-		executeSearchByExample.value = true;
+// 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
+// 	//         if a paper is selected then find related papers
+// 	//         if a model/dataset is selected then find related models/datasets
+// 	if (searchOptions.similarContent) {
+// 		// NOTE the executeSearch will set proper search-by-example search parameters
+// 		//  and let the data service handles the fetch
+// 		executeSearchByExample.value = true;
 
-		await executeSearch();
+// 		await executeSearch();
 
-		searchByExampleItem.value = null;
-		dirtyResults.value[resultType.value] = false;
-	}
+// 		searchByExampleItem.value = null;
+// 		dirtyResults.value[resultType.value] = false;
+// 	}
 
-	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
-};
+// 	// FIXME: what about searching for other related artifacts, e.g. mentioned models and datasets
+// };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
@@ -448,6 +438,21 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		return; // do not add to cart if the purpose is to toggel preview
 	}
 
+	selectedSearchItems.value.forEach((searchItem, indx) => {
+		if (isModel(item) && isModel(searchItem)) {
+			const itemAsModel = item as Model;
+			const searchItemAsModel = searchItem as Model;
+			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
+		} else if (isDataset(item) && isDataset(searchItem)) {
+			const itemAsDataset = item as IDataset;
+			const searchItemAsDataset = searchItem as IDataset;
+			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
+		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
+			const itemAsArticle = item as XDDArticle;
+			const searchItemAsArticle = searchItem as XDDArticle;
+			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
+		}
+	});
 	// by now, the user has explicitly asked for this item to be added to the cart
 	foundIndx = selectedSearchItems.value.indexOf(item);
 	if (foundIndx >= 0) {
@@ -464,9 +469,9 @@ const previewItemId = computed(() => {
 	if (isXDDArticle(previewItem.value)) {
 		const itemAsArticle = previewItem.value as XDDArticle;
 		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddid || itemAsArticle._gddid;
+		return itemAsArticle.gddId;
 	}
-	return '';
+	return previewItem.value.id;
 });
 
 // this is called whenever the user apply some facet filter(s)
@@ -485,27 +490,39 @@ watch(clientFilters, async (n, o) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-const onSearchTermChanged = async (filterTerm: string) => {
-	if (filterTerm !== searchTerm.value) {
-		searchTerm.value = filterTerm;
+watch(searchQuery, async (newQuery) => {
+	emit('search-query-changed', newQuery);
+	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
+	// search term has changed, so all search results are dirty; need re-fetch
+	Object.values(ResourceType).forEach((key) => {
+		dirtyResults.value[key as string] = true;
+	});
 
-		disableSearchByExample();
+	// re-fetch data from the server, apply filters, and re-calculate the facets
+	await executeSearch();
+	dirtyResults.value[resultType.value] = false;
+});
 
-		// search term has changed, so all search results are dirty; need re-fetch
-		Object.values(ResourceType).forEach((key) => {
-			dirtyResults.value[key as string] = true;
-		});
+// const onSearchTermChanged = async (filterTerm: string) => {
+// 	if (filterTerm !== searchTerm.value) {
+// 		searchTerm.value = filterTerm;
 
-		// re-fetch data from the server, apply filters, and re-calculate the facets
-		await executeSearch();
-		dirtyResults.value[resultType.value] = false;
-	}
-};
+// 		disableSearchByExample();
 
-const updateResultType = async (newResultType: string) => {
+// 		// search term has changed, so all search results are dirty; need re-fetch
+// 		Object.values(ResourceType).forEach((key) => {
+// 			dirtyResults.value[key as string] = true;
+// 		});
+
+// 		// re-fetch data from the server, apply filters, and re-calculate the facets
+// 		await executeSearch();
+// 		dirtyResults.value[resultType.value] = false;
+// 	}
+// };
+
+const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-
 		// if no data currently exist for the selected tab,
 		//  or if data exists but outdated then we should refetch
 		const resList = dataItemsUnfiltered.value.find(
@@ -524,6 +541,9 @@ const updateResultType = async (newResultType: string) => {
 };
 
 onMounted(async () => {
+	const { q } = route.query;
+	searchTerm.value = q?.toString() ?? searchTerm.value;
+
 	xddDatasets.value = await getXDDSets();
 	if (xddDatasets.value.length > 0 && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
@@ -548,7 +568,6 @@ onUnmounted(() => {
 
 <style scoped>
 .data-explorer-container {
-	position: absolute;
 	left: 0px;
 	top: 0px;
 	right: 0px;
@@ -562,14 +581,10 @@ onUnmounted(() => {
 
 .secondary-header {
 	display: flex;
-	padding: 10px;
+	padding: 1rem 0;
+	justify-content: space-between;
 	align-items: center;
 	height: var(--nav-bar-height);
-}
-
-.secondary-header .section-label {
-	margin-right: 5px;
-	margin-left: 20px;
 }
 
 .data-explorer-container .header {
@@ -589,22 +604,22 @@ onUnmounted(() => {
 	align-items: center;
 	text-decoration: none;
 	background: transparent;
-	padding: 5px 10px;
 	border: 1px solid black;
 	cursor: pointer;
+	padding: 0.25rem;
+	margin: auto;
 	border-left-width: 0;
-	height: 40px;
 }
 
 .button-group button:first-child {
 	border-left-width: 1px;
-	border-top-left-radius: 3px;
-	border-bottom-left-radius: 3px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
 }
 
 .button-group button:last-child {
-	border-top-right-radius: 3px;
-	border-bottom-right-radius: 3px;
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .button-group button:hover {
@@ -612,7 +627,7 @@ onUnmounted(() => {
 }
 
 .button-group button.active {
-	background: white;
+	background: var(--un-color-feedback-success-lighter);
 	cursor: default;
 }
 
@@ -636,7 +651,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	align-items: center;
 }
 
 .xdd-known-terms {

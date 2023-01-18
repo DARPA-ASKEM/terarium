@@ -12,8 +12,6 @@ const props = defineProps<{
 	// maybe add list size later
 }>();
 
-const emit = defineEmits(['show-data-explorer']);
-
 const router = useRouter();
 const activeProjectAssets = useResourcesStore().activeProjectAssets;
 
@@ -43,7 +41,7 @@ filteredRouteMetadata.forEach((metadata) => {
 				route,
 				params: {
 					projectId: projId,
-					assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
+					assetId: route === RouteName.DocumentRoute ? asset.xddUri : asset.id
 				},
 				name: displayName,
 				icon,
@@ -56,6 +54,10 @@ filteredRouteMetadata.forEach((metadata) => {
 function openResource(name: RouteName, params: RouteParamsRaw) {
 	router.push({ name, params });
 }
+
+const openDataExplorer = () => {
+	router.push({ name: RouteName.DataExplorerRoute });
+};
 </script>
 
 <template>
@@ -69,9 +71,9 @@ function openResource(name: RouteName, params: RouteParamsRaw) {
 			<resource-card :resource="resource" />
 		</li>
 	</ul>
-	<p v-else>
+	<p>
 		Find Models, Datasets, or Papers with the
-		<a @click="emit('show-data-explorer')"> Data Explorer </a>
+		<a @click="openDataExplorer()"> Data Explorer </a>
 	</p>
 </template>
 

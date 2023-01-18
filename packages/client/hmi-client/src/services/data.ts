@@ -295,15 +295,9 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (rawdata.data) {
 		const articlesRaw = rawdata.data.map((a) => a.bibjson);
 
-		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
-		//       is not populated and instead the raw field name, abstract, is the one with data
-		//       similarly, re-map the gddid field
 		const articles = articlesRaw.map((a) => ({
 			...a,
-			abstractText: a.abstract,
-			// eslint-disable-next-line no-underscore-dangle
-			gddid: a._gddid,
-			knownTerms: a.known_terms
+			abstractText: a.abstract
 		}));
 
 		return articles;
@@ -407,22 +401,11 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		const articlesRaw =
 			xddSearchParam?.fields === undefined
 				? (data as XDDArticle[])
-				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent resposne object
+				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent response object
 
-		// TEMP: since the backend has a bug related to applying mapping, the field "abstractText"
-		//       is not populated and instead the raw field name, abstract, is the one with data
-		//       similarly, re-map the gddid field
-		// FIXME: setting the following mapping ignores the fact that the user may have specifically
-		//        requested certain fields, and thus other mapped fields will be set to undefined
 		const articles = articlesRaw.map((a) => ({
 			...a,
-			abstractText: a.abstract,
-			// eslint-disable-next-line no-underscore-dangle
-			gddid: a._gddid,
-			knownTerms: a.known_terms,
-			knownEntities: a.known_entities,
-			// eslint-disable-next-line no-underscore-dangle
-			highlight: a._highlight
+			abstractText: a.abstract
 		}));
 
 		// process document highlights and style the search term differently in each highlight
@@ -477,7 +460,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 const getDocumentById = async (docid: string) => {
 	const searchParams: XDDSearchParams = {
 		docid,
-		known_entities: 'url_extractions'
+		known_entities: 'urlExtractions'
 	};
 	const xddRes = await searchXDDArticles('', searchParams);
 	if (xddRes) {
@@ -498,87 +481,18 @@ const fetchResource = async (
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise<FullSearchResults>(async (resolve, reject) => {
 		try {
-			switch (resourceType) {
-				case ResourceType.XDD: // XDD
-					// are we executing a search-by-example (i.e., to find related documents)?
-					if (
-						searchParam?.xdd?.related_search_enabled &&
-						searchParam?.xdd.related_search_id &&
-						searchParam?.xdd.dataset
-					) {
-						const relatedDocuments = await getRelatedDocuments(
-							searchParam?.xdd.related_search_id as string,
-							searchParam?.xdd.dataset
-						);
-						// FIXME: no facets support when search by example is executed
-						//        xDD does not provide facets data when using doc2vec API for fetching related documents!
-						const relatedSearchResults = {
-							results: relatedDocuments,
-							searchSubsystem: ResourceType.XDD,
-							hits: 0
-						};
-						resolve({
-							allData: relatedSearchResults,
-							allDataFilteredWithFacets: relatedSearchResults
-						});
-					} else {
-						resolve({
-							allData: await searchXDDArticles(term, searchParam?.xdd),
-							allDataFilteredWithFacets: await searchXDDArticles(
-								term,
-								searchParamWithFacetFilters?.xdd
-							)
-						});
-					}
-					resolve({
-						allData: await searchXDDArticles(term, searchParam?.xdd),
-						allDataFilteredWithFacets: await searchXDDArticles(
-							term,
-							searchParamWithFacetFilters?.xdd
-						)
-					});
-					break;
-				case ResourceType.MODEL: // Models
-					// are we executing a search-by-example (i.e., to find related models)?
-					if (searchParam?.model?.related_search_enabled && searchParam?.model.related_search_id) {
-						const relatedModels = []; // use provenance API to find related models
-						// FIXME: no facets support when search by example is executed
-						// FIXME: no concepts support when search by example is executed
-						const relatedSearchResults = {
-							results: relatedModels,
-							searchSubsystem: ResourceType.MODEL
-						};
-						resolve({
-							allData: relatedSearchResults,
-							allDataFilteredWithFacets: relatedSearchResults
-						});
-					} else {
-						resolve(getAssets(term, ResourceType.MODEL, searchParamWithFacetFilters?.model));
-					}
-					break;
-				case ResourceType.DATASET: // Datasets
-					// are we executing a search-by-example (i.e., to find related datasets)?
-					if (
-						searchParam?.dataset?.related_search_enabled &&
-						searchParam?.dataset.related_search_id
-					) {
-						const relatedDatasets = []; // use provenance API to find related datasets
-						// FIXME: no facets support when search by example is executed
-						// FIXME: no concepts support when search by example is executed
-						const relatedSearchResults = {
-							results: relatedDatasets,
-							searchSubsystem: ResourceType.DATASET
-						};
-						resolve({
-							allData: relatedSearchResults,
-							allDataFilteredWithFacets: relatedSearchResults
-						});
-					} else {
-						resolve(getAssets(term, ResourceType.DATASET, searchParamWithFacetFilters?.dataset));
-					}
-					break;
-				default:
-					break;
+			if (resourceType === ResourceType.XDD) {
+				resolve({
+					allData: await searchXDDArticles(term, searchParam?.[ResourceType.XDD]),
+					allDataFilteredWithFacets: await searchXDDArticles(
+						term,
+						searchParamWithFacetFilters?.[ResourceType.XDD]
+					)
+				});
+			} else if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
+				resolve(
+					getAssets(term, resourceType, searchParamWithFacetFilters?.[resourceType as ResourceType])
+				);
 			}
 		} catch (err: any) {
 			reject(new Error(`Error fetching ${resourceType} results: ${err}`));

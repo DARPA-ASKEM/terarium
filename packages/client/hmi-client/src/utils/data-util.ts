@@ -73,11 +73,11 @@ export function isXDDArticle(item: ResultType): item is XDDArticle {
 
 export function getResourceID(item: ResultType) {
 	if (isXDDArticle(item)) {
-		// eslint-disable-next-line no-underscore-dangle
-		return (item as XDDArticle).gddid || (item as XDDArticle)._gddid;
+		return (item as XDDArticle).gddId;
 	}
 	return item.id;
 }
+
 //
 
 /**

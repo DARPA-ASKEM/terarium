@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, toRefs, watch } from 'vue';
+import { PropType, toRefs, ref, watch } from 'vue';
 import { Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { isModel } from '@/utils/data-util';
@@ -106,6 +106,8 @@ const props = defineProps({
 const emit = defineEmits(['toggle-model-selected']);
 
 const { models, selectedSearchItems } = toRefs(props);
+
+const previewedAsset = ref<Model | null>(null);
 
 watch(
 	models,
@@ -148,6 +150,7 @@ const updateSelection = (model: Model) => {
 
 const togglePreview = (model: Model) => {
 	emit('toggle-model-selected', { item: model, type: 'clicked' });
+	previewedAsset.value = previewedAsset.value === model ? null : model;
 };
 
 // issue a search-by-example for the given model
@@ -282,6 +285,7 @@ tr th {
 	width: 100%;
 	height: 50px;
 }
+
 .highlight-concept {
 	background-color: yellow;
 }

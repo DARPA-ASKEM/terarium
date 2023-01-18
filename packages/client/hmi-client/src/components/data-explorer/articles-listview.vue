@@ -4,7 +4,7 @@
 			<tbody>
 				<tr
 					v-for="d in articles"
-					:key="d.gddid"
+					:key="d.gddId"
 					class="tr-item"
 					:class="{ selected: isSelected(d) }"
 					@click="togglePreview(d)"
@@ -31,13 +31,13 @@
 										{{ formatArticleAuthors(d) }}
 									</div>
 									<div
-										v-if="d.knownEntities && d.knownEntities.url_extractions.length > 0"
+										v-if="d.knownEntities && d.knownEntities.urlExtractions.length > 0"
 										class="url-extractions"
 									>
 										<b>URL Extractions(s):</b>
-										<div v-for="ex in d.knownEntities.url_extractions" :key="ex.url">
+										<div v-for="ex in d.knownEntities.urlExtractions" :key="ex.url">
 											<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
-												ex.resource_title
+												ex.resourceTitle
 											}}</a>
 										</div>
 									</div>
@@ -48,11 +48,24 @@
 									</span>
 								</div>
 								<div v-html="formatKnownTerms(d)"></div>
-
+								<div class="related-docs" @click.stop="fetchRelatedDocument(d)">
+									Related Documents
+								</div>
 								<!-- FIXME: remove once the UI menu is added to the document card allowing the user to do search-by-example from there -->
 								<div class="search-by-example" @click.stop="addToSearchByExample(d)">
 									Search by Example
 									<IconImageSearch16 />
+								</div>
+								<div v-if="isExpanded() && d.relatedDocuments" class="related-docs-container">
+									<div v-for="a in d.relatedDocuments" :key="a.gddId">
+										{{ a.title }}
+										<span class="item-select" @click.stop="updateSelection(a)"
+											>{{ isSelected(a) ? 'Unselect' : 'Select' }}
+										</span>
+									</div>
+								</div>
+								<div v-if="isExpanded() && d.relatedDocuments && d.relatedDocuments.length === 0">
+									No related documents found!
 								</div>
 							</div>
 							<div v-if="d.relatedExtractions" class="content content-extractions">
@@ -103,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, toRefs, watch } from 'vue';
+import { PropType, ref, toRefs, watch } from 'vue';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { ResultType } from '@/types/common';
@@ -112,6 +125,8 @@ import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import { ConceptFacets } from '@/types/Concept';
 import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
+import { getRelatedDocuments } from '@/services/data';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps({
 	articles: {
@@ -131,6 +146,10 @@ const props = defineProps({
 // clicked: make the item shown in the preview
 // selected: add the item to the cart
 const emit = defineEmits(['toggle-article-selected']);
+
+const resources = useResourcesStore();
+
+const previewedArticle = ref<XDDArticle | null>(null);
 
 const { articles, selectedSearchItems } = toRefs(props);
 
@@ -166,11 +185,18 @@ const updateSelection = (article: XDDArticle) => {
 
 const togglePreview = (article: XDDArticle) => {
 	emit('toggle-article-selected', { item: article, type: 'clicked' });
+	previewedArticle.value = previewedArticle.value === article ? null : article;
 };
 
-// issue a search-by-example for the given article
-const addToSearchByExample = (article: XDDArticle) => {
-	emit('toggle-article-selected', { item: article, type: 'search-by-example' });
+const fetchRelatedDocument = async (article: XDDArticle) => {
+	togglePreview(article);
+	if (!article.relatedDocuments) {
+		article.relatedDocuments = await getRelatedDocuments(
+			// eslint-disable-next-line no-underscore-dangle
+			article.gddId,
+			resources.xddDataset
+		);
+	}
 };
 
 const formatDescription = (d: XDDArticle) => {
@@ -222,7 +248,7 @@ tbody tr:first-child {
 }
 
 .tr-item {
-	height: 50px;
+	/* height: 50px; */
 }
 
 .tr-item.selected td {
