@@ -1,12 +1,14 @@
 <template>
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
-			<slider content-width="20%" tab-width="48px" direction="left" :is-open="isSliderFacetsOpen">
+			<slider-panel
+				content-width="20%"
+				tab-width="48px"
+				direction="left"
+				header="Facets"
+				v-model:is-open="isSliderFacetsOpen"
+			>
 				<template v-slot:content>
-					<div class="slider-header content">
-						<IconChevronLeft24 class="slider-header-item" @click="isSliderFacetsOpen = false" />
-						<h4 class="slider-header-item">Facets</h4>
-					</div>
 					<facets-panel
 						v-if="viewType === ViewType.LIST"
 						class="facets-panel"
@@ -15,12 +17,7 @@
 						:result-type="resultType"
 					/>
 				</template>
-				<template v-slot:tab>
-					<div class="slider-header tab">
-						<IconChevronRight24 class="slider-header-item" @click="isSliderFacetsOpen = true" />
-					</div>
-				</template>
-			</slider>
+			</slider-panel>
 			<div class="results-content">
 				<div class="secondary-header">
 					<div class="button-group">
@@ -77,36 +74,22 @@
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
 			</div>
-			<!-- document preview -->
-			<slider
+			<preview-panel
 				class="preview-slider"
 				content-width="calc(35% - 48px)"
 				tab-width="0"
 				direction="right"
-				:is-open="Boolean(previewItem)"
-			>
-				<template v-slot:content>
-					<div class="slider-header content">
-						<IconClose24 class="slider-header-item" @click="previewItem = null" />
-					</div>
-					<div :v-if="previewItem" class="selected-resources-pane">
-						<Document :asset-id="previewItemId" :project="resources.activeProject" />
-						<Button label="Add to Cart"></Button>
-						<Button label="Add to Project"></Button>
-					</div>
-				</template>
-			</slider>
-			<slider
+				v-model:preview-item="previewItem"
+			/>
+			<slider-panel
 				class="resources-slider"
 				content-width="35%"
 				tab-width="48px"
 				direction="right"
-				:is-open="isSliderResourcesOpen"
+				header="Cart"
+				v-model:is-open="isSliderResourcesOpen"
 			>
 				<template v-slot:content>
-					<div class="slider-header content">
-						<IconChevronRight24 class="slider-header-item" @click="isSliderResourcesOpen = false" />
-					</div>
 					<selected-resources-options-pane
 						class="selected-resources-pane"
 						:selected-search-items="selectedSearchItems"
@@ -114,29 +97,20 @@
 						@close="isSliderResourcesOpen = false"
 					/>
 				</template>
-				<template v-slot:tab>
-					<div class="slider-header tab">
-						<IconChevronLeft24 class="slider-header-item" @click="openResourcesSlider" />
-					</div>
-				</template>
-			</slider>
+			</slider-panel>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Button from 'primevue/button';
-import IconChevronLeft24 from '@carbon/icons-vue/es/chevron--left/24';
-import IconChevronRight24 from '@carbon/icons-vue/es/chevron--right/24';
-import IconClose24 from '@carbon/icons-vue/es/close/24';
 
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import Document from '@/components/articles/Document.vue';
-import Slider from '@/components/Slider.vue';
+import SliderPanel from '@/components/data-explorer/slider-panel.vue';
+import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -172,10 +146,6 @@ const props = defineProps<{
 const searchQuery = computed(() => props.query);
 const route = useRoute();
 
-// default slider state
-const isSliderFacetsOpen = ref(true);
-const isSliderResourcesOpen = ref(true);
-
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -183,6 +153,16 @@ const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 const query = useQueryStore();
 const resources = useResourcesStore();
+
+// default slider state
+const isSliderFacetsOpen = ref(true);
+const isSliderResourcesOpen = ref(false);
+// close resources if preview opens
+watch(isSliderResourcesOpen, () => {
+	if (isSliderResourcesOpen.value) {
+		previewItem.value = null;
+	}
+});
 
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
@@ -345,11 +325,6 @@ const executeSearch = async () => {
 	calculateFacets(allData, allDataFilteredWithFacets);
 };
 
-const openResourcesSlider = () => {
-	previewItem.value = null;
-	isSliderResourcesOpen.value = true;
-};
-
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
 	let foundIndx = -1;
 	const item = dataItem.item;
@@ -391,16 +366,6 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
-
-const previewItemId = computed(() => {
-	if (previewItem.value === null) return '';
-	if (isXDDArticle(previewItem.value)) {
-		const itemAsArticle = previewItem.value as XDDArticle;
-		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddid || itemAsArticle._gddid;
-	}
-	return '';
-});
 
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
@@ -597,21 +562,5 @@ onUnmounted(() => {
 
 .slider {
 	background: var(--un-color-body-surface-primary);
-}
-
-.slider-header {
-	display: flex;
-	align-items: center;
-}
-.slider-header.content {
-	flex-direction: row-reverse;
-	justify-content: space-between;
-}
-.slider-header.tab {
-	justify-content: center;
-}
-.slider-header-item {
-	font-weight: bold;
-	margin: 12px;
 }
 </style>
