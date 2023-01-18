@@ -249,7 +249,7 @@ i {
 }
 
 .pi[active='true'] {
-	background-color: var(--un-color-feedback-success-light);
+	background-color: var(--primary-color-light);
 }
 
 i:hover {
@@ -258,7 +258,7 @@ i:hover {
 }
 
 .checkmark-color {
-	color: var(--primary-color-lighter);
+	color: var(--primary-color);
 }
 
 .snippets {
