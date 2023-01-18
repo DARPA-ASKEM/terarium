@@ -9,7 +9,7 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -29,7 +29,7 @@ public class EventResource {
 	 * @param limit				the number of events to fetch
 	 * @return						a list of {@link Event} for the given user/project/type sorted by most to least recent
 	 */
-	@GET
+	@POST
 	public Response getEvents(@QueryParam("type") final EventType type,
 														@QueryParam("projectId") final Long projectId,
 														@QueryParam("search") final String likeValue,
