@@ -3,13 +3,11 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
 import { csvToRecords, getColumns, Record } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
-import { RouteName } from '@/router/routes';
-import { Project } from '@/types/Project';
-import ResourcesList from '@/components/resources/resources-list.vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 
 const props = defineProps<{
 	assetId: string;
-	project: Project;
 }>();
 
 const dataset = ref<Dataset | null>(null);
@@ -44,43 +42,50 @@ const rawColumnNames = computed(() => {
 
 const formatFeatures = (d: Dataset) => {
 	const features = d.annotations.annotations.feature ?? [];
-	if (!features || features.length === 0) return [];
-	return features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
+	return features;
 };
 </script>
 
 <template>
 	<section class="dataset">
 		<template v-if="dataset !== null">
-			<h3>{{ dataset?.name ?? '' }}</h3>
+			<h4 class="title">{{ dataset?.name ?? '' }}</h4>
 			<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
 			<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
 			<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
 			<div><b>URL:</b> {{ dataset?.url ?? '' }}</div>
 			<div><b>Geospatial Resolution:</b> {{ dataset?.geospatialResolution ?? '' }}</div>
 			<div><b>Temporal Resolution:</b> {{ dataset?.temporalResolution ?? '' }}</div>
-			<ul>
-				Geo Annotations:
-				<li v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
-					<strong>{{ annotation.name }}</strong
-					>: <strong>Description: </strong> {{ annotation.description }}
-					<strong>GADM Level: </strong> {{ annotation.gadm_level }}
-				</li>
-			</ul>
-			<ul>
-				Temporal Annotations:
-				<li v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
-					<strong>{{ annotation.name }}</strong
-					>: <strong>Description: </strong> {{ annotation.description }}
-					<strong>Time Format: </strong> {{ annotation.time_format }}
-				</li>
-			</ul>
-			<h4>Features</h4>
-			<ul>
-				<li v-for="feature in formatFeatures(dataset)" :key="feature">
-					{{ feature }}
-				</li>
-			</ul>
+
+			<Accordion :multiple="true" class="accordian">
+				<AccordionTab header="Annotations">
+					<div>
+						Geo Annotations:
+						<div v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
+							<strong>{{ annotation.name }}</strong
+							>: <strong>Description: </strong> {{ annotation.description }}
+							<strong>GADM Level: </strong> {{ annotation.gadm_level }}
+						</div>
+					</div>
+					<div>
+						Temporal Annotations:
+						<div v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
+							<strong>{{ annotation.name }}</strong
+							>: <strong>Description: </strong> {{ annotation.description }}
+							<strong>Time Format: </strong> {{ annotation.time_format }}
+						</div>
+					</div>
+				</AccordionTab>
+				<AccordionTab header="Concepts"> </AccordionTab>
+				<AccordionTab header="Features">
+					<div v-for="feature of formatFeatures(dataset)" :key="feature.name">
+						<div>Name: {{ feature.display_name || feature.name }}</div>
+						<div>Type: {{ feature.feature_type }}</div>
+					</div>
+				</AccordionTab>
+				<AccordionTab header="Associated Objects"> </AccordionTab>
+			</Accordion>
+
 			<!-- table preview of the data -->
 			Dataset Records: {{ csvContent.length }}
 			<div class="table-fixed-head">
@@ -108,7 +113,6 @@ const formatFeatures = (d: Dataset) => {
 				</table>
 			</div>
 		</template>
-		<resources-list v-else :project="props?.project" :resourceRoute="RouteName.DatasetRoute" />
 	</section>
 </template>
 
@@ -117,26 +121,16 @@ const formatFeatures = (d: Dataset) => {
 	margin: 10px;
 	display: flex;
 	flex-direction: column;
+	height: calc(100vh - 50px);
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--un-color-body-surface-primary);
-}
-
-h3 {
-	margin-bottom: 10px;
-}
-
-h4 {
-	margin-top: 30px;
+	overflow: auto;
+	background: var(--surface-section);
 }
 
 .description {
 	max-height: 400px;
 	overflow-y: auto;
-}
-
-li {
-	display: block;
 }
 
 strong {
@@ -151,12 +145,12 @@ table {
 
 td {
 	padding: 8px 16px;
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	vertical-align: top;
 }
 
 tbody tr {
-	border-top: 2px solid var(--separator);
+	border-top: 2px solid var(--gray-300);
 	cursor: pointer;
 }
 
@@ -178,7 +172,7 @@ tbody tr:first-child {
 .table-fixed-head {
 	overflow-y: auto;
 	overflow-x: auto;
-	height: 100%;
+	min-height: 200px;
 	width: 100%;
 }
 </style>

@@ -17,4 +17,5 @@ public class Publication implements Serializable {
 
 	@JsonbProperty("title")
 	private String title;
+
 }

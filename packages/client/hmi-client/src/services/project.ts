@@ -57,9 +57,16 @@ async function getAll(): Promise<Project[] | null> {
  * Get project assets for a given project per id
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
-async function getAssets(projectId: string): Promise<ProjectAssets | null> {
+async function getAssets(projectId: string, types?: string[]): Promise<ProjectAssets | null> {
 	try {
-		const response = await API.get(`/projects/${projectId}/assets`);
+		let url = `/projects/${projectId}/assets`;
+		if (types) {
+			types.forEach((type, indx) => {
+				// add URL with format: ...?types=A&types=B&types=C
+				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+			});
+		}
+		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200) return null;
 		return data ?? null;
@@ -106,7 +113,7 @@ async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
 		// TODO: Speak with XDD Team about broken doc: 5f6d0e20a58f1dfd52184931
 		// Grab the 2nd of publication for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
 		const listOfRelatedArticles = await getRelatedDocuments(
-			resp?.[ProjectAssetTypes.PUBLICATIONS][1].xdd_uri ?? '',
+			resp?.[ProjectAssetTypes.PUBLICATIONS][1].xddUri ?? '',
 			'xdd-covid-19'
 		);
 		return listOfRelatedArticles;

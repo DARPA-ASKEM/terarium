@@ -112,7 +112,7 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
 			const body: PublicationAsset = {
-				xdd_uri: (selectedItem as XDDArticle).gddid,
+				xddUri: (selectedItem as XDDArticle).gddId,
 				title: (selectedItem as XDDArticle).title
 			};
 
@@ -197,7 +197,7 @@ onMounted(async () => {
 	font-size: larger;
 	text-align: center;
 	font-weight: bold;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .add-selected-buttons {
@@ -227,7 +227,7 @@ onMounted(async () => {
 
 .selected-items-container .selected-item {
 	padding: 5px;
-	background: var(--un-color-white);
+	background: white;
 	margin-top: 1px;
 }
 
@@ -250,12 +250,12 @@ onMounted(async () => {
 }
 
 .item-delete-btn {
-	color: var(--un-color-body-text-disabled);
+	color: var(--text-color-disabled);
 	cursor: pointer;
 }
 
 .item-delete-btn:hover {
-	/* color: var(--un-color-body-text-primary); */
+	/* color: var(--text-color-primary); */
 	color: red;
 }
 </style>

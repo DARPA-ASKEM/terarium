@@ -1,13 +1,23 @@
 <template>
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
-			<facets-panel
-				v-if="viewType === ViewType.LIST"
-				class="facets-panel"
-				:facets="facets"
-				:filtered-facets="filteredFacets"
-				:result-type="resultType"
-			/>
+			<slider-panel
+				content-width="20%"
+				tab-width="48px"
+				direction="left"
+				header="Facets"
+				v-model:is-open="isSliderFacetsOpen"
+			>
+				<template v-slot:content>
+					<facets-panel
+						v-if="viewType === ViewType.LIST"
+						class="facets-panel"
+						:facets="facets"
+						:filtered-facets="filteredFacets"
+						:result-type="resultType"
+					/>
+				</template>
+			</slider-panel>
 			<div class="results-content">
 				<div class="secondary-header">
 					<div class="button-group">
@@ -64,31 +74,43 @@
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
 			</div>
-			<!-- document preview -->
-			<div v-if="previewItem" class="selected-resources-pane">
-				<Document :asset-id="previewItemId" :project="resources.activeProject" />
-				<Button label="Add to Cart"></Button>
-				<Button label="Add to Project"></Button>
-			</div>
-			<selected-resources-options-pane
-				v-else
-				class="selected-resources-pane"
-				:selected-search-items="selectedSearchItems"
-				@remove-item="toggleDataItemSelected"
+			<preview-panel
+				class="preview-slider"
+				content-width="calc(35% - 48px)"
+				tab-width="0"
+				direction="right"
+				v-model:preview-item="previewItem"
+				:result-type="resultType"
 			/>
+			<slider-panel
+				class="resources-slider"
+				content-width="35%"
+				tab-width="48px"
+				direction="right"
+				header="Cart"
+				v-model:is-open="isSliderResourcesOpen"
+			>
+				<template v-slot:content>
+					<selected-resources-options-pane
+						:selected-search-items="selectedSearchItems"
+						@remove-item="toggleDataItemSelected"
+						@close="isSliderResourcesOpen = false"
+					/>
+				</template>
+			</slider-panel>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Button from 'primevue/button';
 
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import Document from '@/components/articles/Document.vue';
+import SliderPanel from '@/components/data-explorer/slider-panel.vue';
+import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
@@ -112,7 +134,7 @@ import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { Dataset } from '@/types/Dataset';
+import { Dataset as IDataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
 // FIXME: page count is not taken into consideration
@@ -123,6 +145,7 @@ const props = defineProps<{
 }>();
 const searchQuery = computed(() => props.query);
 const route = useRoute();
+
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -131,6 +154,16 @@ const searchTerm = ref('');
 const relatedSearchTerms = ref<string[]>([]);
 const query = useQueryStore();
 const resources = useResourcesStore();
+
+// default slider state
+const isSliderFacetsOpen = ref(true);
+const isSliderResourcesOpen = ref(false);
+// close resources if preview opens
+watch(isSliderResourcesOpen, () => {
+	if (isSliderResourcesOpen.value) {
+		previewItem.value = null;
+	}
+});
 
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
@@ -211,7 +244,7 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		xdd: {
+		[ResourceType.XDD]: {
 			dict: dictNames.value,
 			dataset:
 				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
@@ -235,7 +268,7 @@ const executeSearch = async () => {
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.xdd || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -263,10 +296,10 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.model || {
+	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
 		filters: clientFilters.value
 	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.dataset || {
+	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
 		filters: clientFilters.value
 	};
 
@@ -308,6 +341,7 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		} else {
 			// open the preview panel
 			previewItem.value = item;
+			isSliderResourcesOpen.value = false;
 		}
 		return; // do not add to cart if the purpose is to toggel preview
 	}
@@ -318,8 +352,8 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 			const searchItemAsModel = searchItem as Model;
 			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
 		} else if (isDataset(item) && isDataset(searchItem)) {
-			const itemAsDataset = item as Dataset;
-			const searchItemAsDataset = searchItem as Dataset;
+			const itemAsDataset = item as IDataset;
+			const searchItemAsDataset = searchItem as IDataset;
 			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
 		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
 			const itemAsArticle = item as XDDArticle;
@@ -335,16 +369,6 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
 	}
 };
-
-const previewItemId = computed(() => {
-	if (previewItem.value === null) return '';
-	if (isXDDArticle(previewItem.value)) {
-		const itemAsArticle = previewItem.value as XDDArticle;
-		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddid || itemAsArticle._gddid;
-	}
-	return '';
-});
 
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
@@ -377,10 +401,9 @@ watch(relatedSearchTerms, (newSearchTerms) => {
 	emit('related-search-terms-updated', newSearchTerms);
 });
 
-const updateResultType = async (newResultType: string) => {
+const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-
 		// if no data currently exist for the selected tab,
 		//  or if data exists but outdated then we should refetch
 		const resList = dataItemsUnfiltered.value.find(
@@ -429,11 +452,11 @@ onUnmounted(() => {
 	top: 0px;
 	right: 0px;
 	display: flex;
-	width: 100vw;
+	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 }
 
 .secondary-header {
@@ -444,16 +467,8 @@ onUnmounted(() => {
 	height: var(--nav-bar-height);
 }
 
-.data-explorer-container .header {
-	height: var(--header-height);
-}
-
 .button-group {
 	display: flex;
-}
-
-.bottom-padding {
-	padding-bottom: 2px;
 }
 
 .button-group button {
@@ -461,46 +476,47 @@ onUnmounted(() => {
 	align-items: center;
 	text-decoration: none;
 	background: transparent;
-	padding: 5px 10px;
 	border: 1px solid black;
 	cursor: pointer;
+	padding: 0.25rem;
+	margin: auto;
 	border-left-width: 0;
-	height: 40px;
 }
 
 .button-group button:first-child {
 	border-left-width: 1px;
-	border-top-left-radius: 3px;
-	border-bottom-left-radius: 3px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
 }
 
 .button-group button:last-child {
-	border-top-right-radius: 3px;
-	border-bottom-right-radius: 3px;
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .button-group button:hover {
-	background: var(--un-color-black-5);
+	background: var(--gray-50);
 }
 
 .button-group button.active {
-	background: white;
+	background: var(--primary-color-lighter);
 	cursor: default;
 }
 
 .data-explorer-container .facets-and-results-container {
+	position: relative;
 	height: calc(100vh - 50px - var(--nav-bar-height));
 	display: flex;
 	flex-grow: 1;
 	min-height: 0;
-	gap: 10px;
-	/* Add space to the right of the selected assets column */
-	padding-right: 10px;
+}
+
+.results-content {
+	margin: 0 10px;
 }
 
 .facets-panel {
 	margin-top: 10px;
-	width: 20%;
 	overflow-y: auto;
 }
 
@@ -510,31 +526,15 @@ onUnmounted(() => {
 	flex: 1;
 }
 
-.xdd-known-terms {
-	display: flex;
+.preview-slider {
+	margin-right: 1px;
 }
 
-.xdd-known-terms .flex-aligned-item {
-	display: flex;
-	align-items: center;
-	color: var(--un-color-accent-darker);
+.resources-slider {
+	z-index: 1;
 }
 
-.xdd-known-terms .flex-aligned-item-delete-btn {
-	color: red;
-}
-
-.xdd-known-terms .flex-aligned-item-delete-btn:hover {
-	cursor: pointer;
-}
-
-.xdd-known-terms :deep(.search-bar-container input) {
-	margin: 4px;
-	padding: 4px;
-	min-width: 100px;
-}
-
-.selected-resources-pane {
-	width: 35%;
+.slider {
+	background: var(--surface-card);
 }
 </style>

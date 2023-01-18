@@ -2,7 +2,7 @@ import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import DocumentView from '@/views/DocumentView.vue';
 import HomeView from '@/views/Home.vue';
-import DatasetView from '@/views/Dataset.vue';
+import DatasetView from '@/views/DatasetView.vue';
 import ProjectView from '@/views/Project.vue';
 import ModelView from '@/views/ModelView.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';

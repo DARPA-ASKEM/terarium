@@ -81,19 +81,16 @@ section {
 }
 
 h4 {
-	font: var(--un-font-h4);
 	margin: 1rem 0;
 }
 
 h3 {
-	font: var(--un-font-h3);
 }
 
 h2 {
-	font: var(--un-font-h2);
 }
 
 .secondary-text {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 }
 </style>

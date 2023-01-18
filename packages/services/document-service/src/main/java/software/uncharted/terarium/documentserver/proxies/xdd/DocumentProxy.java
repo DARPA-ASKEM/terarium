@@ -1,17 +1,17 @@
 package software.uncharted.terarium.documentserver.proxies.xdd;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.documentserver.responses.xdd.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "xdd-document-service")
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocumentProxy {
 	@GET
 	@Path("/api/articles")
-	Response getDocuments(
+	XDDResponse<XDDArticlesResponseOK> getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
@@ -35,15 +35,15 @@ public interface DocumentProxy {
 
 	@GET
 	@Path("/sets")
-	Response getAvailableSets();
+	XDDSetsResponse getAvailableSets();
 
 	@GET
 	@Path("/api/dictionaries")
-	Response getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
+	XDDResponse<XDDDictionariesResponseOK> getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
 
 	@GET
 	@Path("/sets/{set}/doc2vec/api/similar")
-	Response getRelatedDocuments(
+	XDDRelatedDocumentsResponse getRelatedDocuments(
 		@PathParam("set") String set,
 		@QueryParam("docid") String docid
 	);
