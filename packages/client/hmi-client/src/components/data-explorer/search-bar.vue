@@ -24,14 +24,14 @@
 			Suggested items
 			<ul>
 				<li v-for="item in suggestedItems" :key="item">
-					<span class="item" @click="addSearchTerm(item)">{{ item }}</span>
+					<Button :label="item" class="item" @click="addSearchTerm(item)" />
 				</li>
 			</ul>
-			<i
-				class="pi pi-times clear-search-terms"
-				style="font-size: 1rem"
+			<Button
+				icon="pi pi-times"
+				class="p-button-rounded clear-search-terms"
 				@click="isSuggestedItemsVisible = false"
-			></i>
+			/>
 		</div>
 	</div>
 </template>
@@ -40,6 +40,7 @@
 import { onMounted, ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	text?: string;
@@ -129,19 +130,23 @@ watch(suggestedItems, (newItems) => {
 	right: 0.5rem;
 }
 
-.clear-search-terms {
+.clear-search-terms:enabled {
 	color: var(--text-color-secondary);
 	background-color: transparent;
-	padding: 0.5rem;
-	border-radius: 1rem;
 }
 
-.clear-search-terms:hover {
+.clear-search-terms:enabled:hover {
 	background-color: var(--surface-hover);
+	color: var(--text-color-secondary);
 }
 
 .clear-search.hidden {
 	visibility: hidden;
+}
+
+.p-button.p-button-icon-only.p-button-rounded {
+	height: 2rem;
+	width: 2rem;
 }
 
 ul {
@@ -151,13 +156,13 @@ ul {
 
 .item {
 	background-color: var(--surface-secondary);
-	padding: 0.25rem;
+	color: var(--text-color-secondary);
+	padding: 0 0.5rem 0 0.5rem;
 	margin: 0.5rem;
-	border-radius: 0.5rem;
 }
 
-.item:hover {
+.item:enabled:hover {
+	color: var(--text-color-secondary);
 	background-color: var(--surface-hover);
-	cursor: pointer;
 }
 </style>
