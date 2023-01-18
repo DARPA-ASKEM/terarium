@@ -132,7 +132,6 @@ import {
 	validate
 } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { Dataset as IDataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 // import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 // FIXME: page count is not taken into consideration
@@ -354,10 +353,6 @@ const disableSearchByExample = () => {
 	executeSearchByExample.value = false;
 };
 
-// TODO: Tom!
-// @ts-ignore
-// eslint-disable-next-line
-// @typescript-eslint/no-unused-vars
 // const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 // 	// user has requested a search by example, so re-fetch data
 // 	dirtyResults.value[resultType.value] = true;
@@ -408,21 +403,6 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		return; // do not add to cart if the purpose is to toggel preview
 	}
 
-	selectedSearchItems.value.forEach((searchItem, indx) => {
-		if (isModel(item) && isModel(searchItem)) {
-			const itemAsModel = item as Model;
-			const searchItemAsModel = searchItem as Model;
-			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
-		} else if (isDataset(item) && isDataset(searchItem)) {
-			const itemAsDataset = item as IDataset;
-			const searchItemAsDataset = searchItem as IDataset;
-			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
-		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
-			const itemAsArticle = item as XDDArticle;
-			const searchItemAsArticle = searchItem as XDDArticle;
-			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
-		}
-	});
 	// by now, the user has explicitly asked for this item to be added to the cart
 	foundIndx = selectedSearchItems.value.indexOf(item);
 	if (foundIndx >= 0) {
