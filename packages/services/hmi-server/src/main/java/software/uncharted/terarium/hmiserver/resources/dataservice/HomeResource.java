@@ -32,8 +32,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 
-import org.jboss.logging.Logger; //TODO: Delete
-
 
 @Path("/api/home")
 @Authenticated
@@ -48,8 +46,6 @@ public class HomeResource {
 	@RestClient
     DocumentProxy documentProxy;
 
-    private static final Logger log = Logger.getLogger(HomeResource.class);
-
 	@GET
     /*
      * 1) Get all projects
@@ -60,7 +56,6 @@ public class HomeResource {
 	public Response getHomePageInfo() {
         List<Project> allProjects = getAllProjects();
 
-        log.info(allProjects.get(0));
         //Get project's related documents and add them to the project.
         //Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
         for (int i = 0; i < allProjects.size(); i++){            
@@ -70,12 +65,8 @@ public class HomeResource {
             currentProjectAssetsString = currentProjectAssetsString.replace("{\"publications\":", "");
             currentProjectAssetsString = currentProjectAssetsString.substring(0,currentProjectAssetsString.length() - 1);
             
-            log.info("String: " + currentProjectAssetsString);
             Jsonb jsonb = JsonbBuilder.create();
             List<Publication> currentProjectPublications = jsonb.fromJson(currentProjectAssetsString, new ArrayList<Publication>(){}.getClass().getGenericSuperclass());
-            log.info(currentProjectPublications);
-            log.info(currentProjectPublications.get(0).getXddUri());
-            log.info("---------------");
             
             if (currentProjectPublications.size() > 0){
                 XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments("xdd-covid-19",currentProjectPublications.get(0).getXddUri()).readEntity(XDDRelatedDocumentsResponse.class);
