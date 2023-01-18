@@ -61,7 +61,7 @@ export type XDDArticle = {
 
 export type PublicationAsset = {
 	id?: string;
-	xddUri: string; // this is the internal XDD id known as "docid" NOT "doi"
+	xdd_uri: string; // xddUri: string; // this is the internal XDD id known as "docid" NOT "doi"
 	title: string;
 };
 
