@@ -37,9 +37,6 @@ public class RelatedResource {
 	public Response getRelatedWords(
 		@QueryParam("set") String set,
 		@QueryParam("word") String word) {
-		System.out.println(" ");
-		System.out.println(set);
-		System.out.println(" ");
 		return proxy.getRelatedWords(set, word);
 	}
 }

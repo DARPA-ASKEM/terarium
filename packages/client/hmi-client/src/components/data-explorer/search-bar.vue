@@ -9,6 +9,7 @@
 					placeholder="Search"
 					v-model="searchText"
 					@keyup.enter="execSearch"
+					class="input-text"
 				/>
 				<i
 					class="pi pi-times clear-search"
@@ -20,7 +21,7 @@
 			<i class="pi pi-history" />
 		</div>
 		<div class="suggested-items" v-if="isSuggestedItemsVisible">
-			<span>Suggested items</span>
+			Suggested items
 			<ul>
 				<li v-for="item in suggestedItems" :key="item">
 					<span class="item" @click="addSearchTerm(item)">{{ item }}</span>
@@ -112,6 +113,7 @@ watch(suggestedItems, (newItems) => {
 .input-text {
 	border-radius: 1.5rem;
 	width: 100%;
+	height: 3rem;
 }
 
 .pi-history {
@@ -119,8 +121,7 @@ watch(suggestedItems, (newItems) => {
 }
 
 .clear-search:hover {
-	color: var(--text-color-primary);
-	background-color: var(--surface-secondary);
+	background-color: var(--surface-hover);
 	padding: 0.5rem;
 	border-radius: 1rem;
 	top: 1rem;
@@ -128,14 +129,14 @@ watch(suggestedItems, (newItems) => {
 }
 
 .clear-search-terms {
+	color: var(--text-color-secondary);
 	background-color: transparent;
 	padding: 0.5rem;
 	border-radius: 1rem;
 }
 
 .clear-search-terms:hover {
-	color: var(--un-color-body-text-primary);
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-hover);
 }
 
 .clear-search.hidden {
@@ -148,14 +149,14 @@ ul {
 }
 
 .item {
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-secondary);
 	padding: 0.25rem;
 	margin: 0.5rem;
 	border-radius: 0.5rem;
 }
 
 .item:hover {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-hover);
 	cursor: pointer;
 }
 </style>

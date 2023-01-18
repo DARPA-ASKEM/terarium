@@ -50,7 +50,7 @@ public interface DocumentProxy {
 
 	@GET
 	@Path("/sets/{set}/word2vec/api/most_similar")
-	Response getRelatedWords(
+	XDDRelatedWordsResponse getRelatedWords(
 		@PathParam("set") String set,
 		@QueryParam("word") String word
 	);

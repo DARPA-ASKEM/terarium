@@ -4,6 +4,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDRelatedDocumentsResponse;
 import software.uncharted.terarium.documentserver.proxies.xdd.DocumentProxy;
+import software.uncharted.terarium.documentserver.responses.xdd.XDDRelatedWordsResponse;
 
 
 import javax.ws.rs.*;
@@ -33,12 +34,9 @@ public class RelatedResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{set}/word2vec/api/most_similar")
 	@Tag(name = "Get most similar words for a given XDD internal doc id")
-	public Response getRelatedWords(
+	public XDDRelatedWordsResponse getRelatedWords(
 		@PathParam("set") String set,
 		@QueryParam("word") String word) {
-		System.out.println(" ");
-		System.out.println(set);
-		System.out.println(" ");
 		return proxy.getRelatedWords(set, word);
 	}
 }
