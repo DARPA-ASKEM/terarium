@@ -54,11 +54,11 @@ const cancel = () => {
 
 .message-container {
 	font-size: 4rem;
-	color: var(--un-color-black-20);
+	color: var(--gray-200);
 }
 
 .message-secondary-container {
 	font-size: 2.25rem;
-	color: var(--un-color-black-20);
+	color: var(--gray-200);
 }
 </style>

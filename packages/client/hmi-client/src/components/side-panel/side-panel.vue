@@ -129,10 +129,9 @@ const isPanelOpen = computed(() => {
 	margin: 0;
 	margin-left: 8px;
 	flex: 1;
-	font-size: var(--font-size-medium);
 	text-transform: uppercase;
 	letter-spacing: 0.066rem;
-	color: var(--label-color);
+	color: var(--gray-600);
 	font-weight: 600;
 }
 

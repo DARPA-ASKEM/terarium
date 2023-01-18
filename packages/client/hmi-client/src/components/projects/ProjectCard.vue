@@ -20,8 +20,8 @@ const placeholderRandomColorOpacity = Math.random();
 
 <style scoped>
 .project-card {
-	border: 1px solid var(--un-color-body-stroke);
-	background-color: var(--un-color-body-surface-primary);
+	border: 1px solid var(--surface-border);
+	background-color: var(--surface-section);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
@@ -35,19 +35,19 @@ const placeholderRandomColorOpacity = Math.random();
 }
 
 footer {
-	border-top: 1px solid var(--un-color-body-stroke);
+	border-top: 1px solid var(--surface-border);
 	padding: 0.5rem 1rem;
 }
 
 .placeholder-color {
 	flex: 1;
 	min-height: 0;
-	background: var(--un-color-accent-lighter);
+	background: var(--primary-color-lighter);
 	position: relative;
 }
 
 .placeholder-color-random {
-	background: var(--un-color-accent-light);
+	background: var(--primary-color-light);
 	position: absolute;
 	left: 0;
 	top: 0;

@@ -3,11 +3,10 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-selected-buttons">
 			<Button
-				action
-				@click="addAssetsToProject"
+				@click="addAssetsToProject()"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				>Add to current project
-			</Button>
+				label="Add to current project"
+			/>
 			<dropdown-button
 				v-if="selectedSearchItems.length > 0"
 				:inner-button-label="'Add to another project'"
@@ -37,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import Button from '@/components/Button.vue';
+import Button from 'primevue/button';
 import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
@@ -198,7 +197,7 @@ onMounted(async () => {
 	font-size: larger;
 	text-align: center;
 	font-weight: bold;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .add-selected-buttons {
@@ -228,7 +227,7 @@ onMounted(async () => {
 
 .selected-items-container .selected-item {
 	padding: 5px;
-	background: var(--un-color-white);
+	background: white;
 	margin-top: 1px;
 }
 
@@ -251,12 +250,12 @@ onMounted(async () => {
 }
 
 .item-delete-btn {
-	color: var(--un-color-body-text-disabled);
+	color: var(--text-color-disabled);
 	cursor: pointer;
 }
 
 .item-delete-btn:hover {
-	/* color: var(--un-color-body-text-primary); */
+	/* color: var(--text-color-primary); */
 	color: red;
 }
 </style>

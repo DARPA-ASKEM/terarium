@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, toRefs, watch } from 'vue';
+import { PropType, toRefs, ref, watch } from 'vue';
 import { Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { isModel } from '@/utils/data-util';
@@ -97,6 +97,8 @@ const props = defineProps({
 const emit = defineEmits(['toggle-model-selected']);
 
 const { models, selectedSearchItems } = toRefs(props);
+
+const previewedAsset = ref<Model | null>(null);
 
 watch(
 	models,
@@ -139,6 +141,7 @@ const updateSelection = (model: Model) => {
 
 const togglePreview = (model: Model) => {
 	emit('toggle-model-selected', { item: model, type: 'clicked' });
+	previewedAsset.value = previewedAsset.value === model ? null : model;
 };
 
 const formatDescription = (d: Model) => {
@@ -160,7 +163,7 @@ th {
 }
 
 tbody tr {
-	border-top: 2px solid var(--separator);
+	border-top: 2px solid var(--gray-300);
 	cursor: pointer;
 }
 
@@ -169,13 +172,12 @@ tbody tr:first-child {
 }
 
 td {
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	vertical-align: top;
 	padding: 8px 16px;
 }
 
 tr th {
-	font-size: var(--font-size-small);
 	font-weight: normal;
 }
 
@@ -191,7 +193,7 @@ tr th {
 	top: -1px;
 	z-index: 1;
 	/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
-	background-color: var(--un-color-body-surface-background);
+	background-color: var(--surface-ground);
 }
 
 .tr-item {
@@ -199,7 +201,7 @@ tr th {
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .text-bold {
@@ -225,7 +227,7 @@ tr th {
 }
 
 .name-and-desc-layout .radio .disabled {
-	color: var(--background-light-3);
+	color: var(--gray-300);
 }
 
 .name-and-desc-layout .content {
@@ -237,7 +239,7 @@ tr th {
 	font-weight: 600;
 	border: none;
 	border-radius: 5px;
-	background-color: var(--background-light-3);
+	background-color: var(--gray-300);
 	color: darkgray;
 	padding: 6px;
 	float: right;
@@ -268,6 +270,7 @@ tr th {
 	width: 100%;
 	height: 50px;
 }
+
 .highlight-concept {
 	background-color: yellow;
 }

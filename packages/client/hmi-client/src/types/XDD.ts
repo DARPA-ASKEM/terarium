@@ -1,5 +1,6 @@
 export enum XDDExtractionType {
 	Document = 'Document',
+	Section = 'Section',
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',

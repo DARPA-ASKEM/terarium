@@ -1,19 +1,43 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, watch, shallowRef } from 'vue';
+import { useRouter, RouteParamsRaw } from 'vue-router';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import { useCurrentRouter } from '@/router/index';
 import { Project } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
 import useAuthStore from '@/stores/auth';
 import Dialog from 'primevue/dialog';
+import SearchBar from '@/components/data-explorer/search-bar.vue';
+import { RouteMetadata, RouteName } from '@/router/routes';
+import Dropdown from 'primevue/dropdown';
+import { useCurrentRoute, RoutePath } from '@/router/index';
 
-const emit = defineEmits(['show-data-explorer']);
+const props = defineProps<{
+	project: Project | null;
+	searchBarText?: string;
+}>();
+interface NavItem {
+	[key: string]: { name: string; icon: string; routeName: string };
+}
+const activeProjectName = computed(() => props.project?.name || '');
+const activeProjectId = computed(() => props.project?.id);
+const currentRoute = useCurrentRoute();
 const router = useRouter();
-const { isCurrentRouteHome } = useCurrentRouter();
+const initialNavItems = {
+	[RoutePath.Home]: {
+		name: RouteMetadata[RouteName.HomeRoute].displayName,
+		icon: RouteMetadata[RouteName.HomeRoute].icon,
+		routeName: RouteName.HomeRoute
+	},
+	[RoutePath.DataExplorer]: {
+		name: RouteMetadata[RouteName.DataExplorerRoute].displayName,
+		icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
+		routeName: RouteName.DataExplorerRoute
+	}
+};
+const navItems = shallowRef<NavItem>(initialNavItems);
+
+const selectedPage = ref(navItems.value[currentRoute.value.path] || navItems.value[RoutePath.Home]);
 const auth = useAuthStore();
-const isHome = computed(() => isCurrentRouteHome.value);
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
 const userMenuItems = ref([
@@ -24,52 +48,76 @@ const userMenuItems = ref([
 		}
 	}
 ]);
-const resources = useResourcesStore();
-
-const goToHomepage = () => {
-	resources.setActiveProject(null);
-	resources.activeProjectAssets = null;
-	router.push('/');
-};
-
-defineProps<{
-	projectName?: Project['name'];
-}>();
-
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
-
 const userInitials = computed(() =>
 	auth.name
 		?.split(' ')
 		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
 );
+
+function searchTextChanged(value) {
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
+}
+
+function goToPage(event) {
+	const routeName = event.value.routeName;
+	if (routeName === RouteName.ProjectRoute && activeProjectId.value) {
+		const params: RouteParamsRaw = { projectId: activeProjectId.value };
+		router.push({ name: routeName, params });
+	} else {
+		router.push({ name: routeName });
+	}
+}
+
+watch(activeProjectId, (newProjectId) => {
+	const projectNavKey = `/projects/${newProjectId}`;
+	const projectNavItem = {
+		[projectNavKey]: {
+			name: activeProjectName.value,
+			icon: 'pi pi-images',
+			routeName: RouteName.ProjectRoute
+		}
+	};
+	navItems.value = { ...initialNavItems, ...projectNavItem };
+	selectedPage.value = navItems.value[currentRoute.value.path];
+});
 </script>
 
 <template>
 	<header>
-		<img v-if="isHome" src="@assets/images/logo.png" height="32" width="128" alt="logo" />
-		<img v-else src="@assets/images/icon.png" height="32" width="32" alt="TERArium icon" />
-		<p v-if="!isHome">
-			<a @click="goToHomepage">Projects</a>
-			<span>{{ projectName }}</span>
-		</p>
-		<aside>
-			<Button
-				class="data-explorer p-button p-button-icon-only p-button-rounded"
-				@click="emit('show-data-explorer')"
-				aria-label="Data Explorer"
-			>
-				<i class="pi pi-search" />
-			</Button>
+		<section class="header-left">
+			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+			<section class="nav">
+				<Dropdown
+					class="dropdown"
+					v-model="selectedPage"
+					:options="Object.values(navItems)"
+					optionLabel="name"
+					panelClass="dropdown-panel"
+					@change="goToPage"
+				>
+					<template #value="slotProps">
+						<i :class="slotProps.value.icon" />
+						<span>{{ slotProps.value.name }}</span>
+					</template>
+					<template #option="slotProps">
+						<i :class="slotProps.option.icon" />
+						<span>{{ slotProps.option.name }}</span>
+					</template>
+				</Dropdown>
+			</section>
+		</section>
+		<SearchBar class="searchbar" :text="searchBarText" @search-text-changed="searchTextChanged" />
+		<section class="header-right">
 			<Button
 				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
 				@click="showUserMenu"
 			>
 				{{ userInitials }}
 			</Button>
-		</aside>
+		</section>
 		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
 		<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
 			<span>You will be returned to the login screen.</span>
@@ -88,57 +136,63 @@ const userInitials = computed(() =>
 <style scoped>
 header {
 	align-items: center;
-	background-color: var(--un-color-body-surface-primary);
-	box-shadow: var(--un-box-shadow-small);
+	background-color: var(--surface-section);
 	display: flex;
-	justify-content: space-between;
+	justify-content: center;
 	gap: 2rem;
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
 }
 
-p {
-	align-items: center;
+section {
 	display: flex;
-	font-size: var(--un-font-xlarge);
-}
-
-p > * + *::before {
-	content: '>';
-	margin: 0 1rem;
-}
-
-p a {
-	text-decoration: underline;
-}
-
-p a:hover,
-p a:focus {
-	color: var(--un-color-accent-dark);
-}
-
-aside {
-	display: flex;
-	/* Push it to the far side */
 	gap: 1rem;
 }
 
-.p-button {
-	background-color: var(--un-color-accent);
-}
-
-.p-button:enabled:hover,
-.p-button:enabled:focus {
-	background-color: var(--un-color-accent-light);
-}
-
 .user-button {
-	color: var(--un-color-text-secondary);
-	background-color: var(--un-color-body-surface-background);
+	color: var(--text-color-secondary);
+	background-color: var(--surface-ground);
 }
 
 .user-button:enabled:hover {
-	color: var(--un-color-text-secondary);
-	background-color: var(--un-color-body-surface-secondary);
+	color: var(--text-color-secondary);
+	background-color: var(--surface-secondary);
+}
+
+.nav {
+	justify-content: center;
+	margin-left: auto;
+	flex: 0.5;
+}
+
+.header-left {
+	flex: 1;
+}
+
+.header-right {
+	flex: 1;
+	justify-content: right;
+}
+
+.searchbar {
+	flex: 2;
+}
+
+.p-dropdown {
+	height: 3rem;
+	flex: 1;
+	border: 0;
+}
+
+.p-dropdown:not(.p-disabled).p-focus {
+	box-shadow: none;
+}
+
+.p-dropdown-label {
+	color: var(--text-color-secondary);
+}
+
+i {
+	margin-right: 0.5rem;
 }
 </style>

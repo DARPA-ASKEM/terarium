@@ -15,8 +15,6 @@ const props = defineProps<{
 	project: Project;
 }>();
 
-const emit = defineEmits(['show-data-explorer']);
-
 const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
 
@@ -97,11 +95,7 @@ if (previousOpenTabs) {
 	>
 	</TabContainer>
 	<section v-else class="recent-models-page">
-		<resources-list
-			:project="props.project"
-			:resource-route="RouteName.ModelRoute"
-			@show-data-explorer="emit('show-data-explorer')"
-		/>
+		<resources-list :project="props.project" :resource-route="RouteName.ModelRoute" />
 	</section>
 </template>
 
@@ -112,7 +106,7 @@ if (previousOpenTabs) {
 	flex-direction: column;
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-section);
 }
 
 .tab-container {

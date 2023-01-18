@@ -1,8 +1,8 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
-import DocumentView from '@/views/Document.vue';
+import DocumentView from '@/views/DocumentView.vue';
 import HomeView from '@/views/Home.vue';
-import DatasetView from '@/views/Dataset.vue';
+import DatasetView from '@/views/DatasetView.vue';
 import ProjectView from '@/views/Project.vue';
 import ModelView from '@/views/ModelView.vue';
 import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
@@ -11,6 +11,7 @@ import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
+import DataExplorerView from '@/views/DataExplorer.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -21,6 +22,7 @@ export enum RoutePath {
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
+	DataExplorer = '/explorer',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
@@ -41,7 +43,12 @@ const routes = [
 		path: RoutePath.SimulationResult,
 		component: SimulationResultView
 	},
-
+	{
+		name: RouteName.DataExplorerRoute,
+		path: RoutePath.DataExplorer,
+		component: DataExplorerView,
+		props: (route) => ({ query: route.query.q })
+	},
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
@@ -57,10 +64,8 @@ const router = createRouter({
 	routes
 });
 
-export function useCurrentRouter() {
-	return {
-		isCurrentRouteHome: computed(() => router.currentRoute.value.path === RoutePath.Home)
-	};
+export function useCurrentRoute() {
+	return computed(() => router.currentRoute.value);
 }
 
 export default router;
