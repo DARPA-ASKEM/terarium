@@ -6,6 +6,8 @@ import { Dataset } from '@/types/Dataset';
 import { isXDDArticle } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
 
+import OverlayPanel from 'primevue/overlaypanel';
+
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	isPreviewed: boolean;
@@ -17,6 +19,7 @@ const props = defineProps<{
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
+const contextMenu = ref();
 
 // These asset types don't appear at the moment
 const extractionsWithImages = computed(() =>
@@ -70,6 +73,10 @@ const formatFeatures = () => {
 	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
 	const max = 5;
 	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
+};
+
+const toggleContextMenu = (event: any) => {
+	contextMenu.value?.toggle(event);
 };
 </script>
 
@@ -133,14 +140,28 @@ const formatFeatures = () => {
 					<i class="pi pi-arrow-right" @click="paginationMovement(1)"></i>
 				</div>
 			</figure>
-			<button type="button" v-if="isInCart">
-				<!--there are talks of having the plus and three dot menu available wherever-->
-				<i class="pi pi-ellipsis-v"></i>
-			</button>
-			<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
-				<i class="pi pi-plus" v-show="!isSelected()"></i>
-				<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
-			</button>
+
+			<div style="display: flex; flex-direction: column">
+				<button type="button" v-if="isInCart">
+					<!--there are talks of having the plus and three dot menu available wherever-->
+					<i class="pi pi-ellipsis-v"></i>
+				</button>
+				<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
+					<i class="pi pi-plus" v-show="!isSelected()"></i>
+					<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
+				</button>
+
+				<!-- temporary, replace will drag-n-drop interaction  -->
+				<button type="button" class="context-button" @click.stop="toggleContextMenu">
+					<i class="pi pi-ellipsis-v"></i>
+				</button>
+				<OverlayPanel ref="contextMenu">
+					<div class="context-menu-item">Open preview</div>
+					<div class="context-menu-item">Similiar content</div>
+					<div class="context-menu-item">Forward citations</div>
+					<div class="context-menu-item">Backward citations</div>
+				</OverlayPanel>
+			</div>
 		</div>
 	</div>
 </template>
@@ -226,5 +247,18 @@ i:hover {
 
 .snippets {
 	list-style: none;
+}
+
+.context-button {
+	margin-top: 1rem;
+}
+
+.context-menu-item {
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+
+.context-menu-item:hover {
+	background-color: var(--primary-color-lighter);
 }
 </style>
