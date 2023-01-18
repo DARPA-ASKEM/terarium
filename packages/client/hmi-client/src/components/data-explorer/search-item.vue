@@ -17,22 +17,28 @@ const props = defineProps<{
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
+const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
 
 // These asset types don't appear at the moment
 const extractionsWithImages = computed(() =>
 	props.asset.relatedExtractions
-		? props.asset.relatedExtractions?.filter(
-				(ex) =>
-					ex.askemClass === XDDExtractionType.Figure ||
-					ex.askemClass === XDDExtractionType.Table ||
-					ex.askemClass === XDDExtractionType.Equation ||
-					ex.askemClass === XDDExtractionType.Section || // remove this later just for testing pagination
-					ex.askemClass === XDDExtractionType.Document // remove this later just for testing pagination
-		  )
+		? props.asset.relatedExtractions?.filter((ex) => {
+				if (chosenExtractionFilter.value === null) {
+					return (
+						ex.askemClass === XDDExtractionType.Figure ||
+						ex.askemClass === XDDExtractionType.Table ||
+						ex.askemClass === XDDExtractionType.Equation ||
+						ex.askemClass === XDDExtractionType.URL ||
+						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
+						ex.askemClass === XDDExtractionType.Document // remove this later just for testing preview pagination
+					);
+				}
+				return ex.askemClass === chosenExtractionFilter.value;
+		  })
 		: []
 );
-
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
+const snippets = computed(() => props.asset.highlight);
 
 watch(
 	() => props.asset,
@@ -41,11 +47,16 @@ watch(
 	}
 ); // reset page number on new search
 
-function paginationMovement(movement: number) {
+function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
 	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
 		relatedAssetPage.value = newPage;
 	}
+}
+
+function updateExtractionFilter(extractionType: XDDExtractionType | null) {
+	chosenExtractionFilter.value =
+		chosenExtractionFilter.value === extractionType ? null : extractionType;
 }
 
 const isSelected = () =>
@@ -80,15 +91,26 @@ const formatFeatures = () => {
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0"
+					v-if="resourceType === ResourceType.XDD && asset.relatedExtractions"
 				>
-					<i class="pi pi-link"></i>
-					<i class="pi pi-chart-bar"></i>
-					<i class="pi pi-table"></i>
-					<i class="pi pi-file-pdf"></i>
+					<template
+						v-for="icon in [
+							{ type: XDDExtractionType.URL, class: 'pi-link' },
+							{ type: XDDExtractionType.Figure, class: 'pi-chart-bar' },
+							{ type: XDDExtractionType.Table, class: 'pi-table' },
+							{ type: XDDExtractionType.Document, class: 'pi-file-pdf' }
+						]"
+						:key="icon"
+					>
+						<i
+							:class="`pi ${icon.class}`"
+							:active="chosenExtractionFilter === icon.type"
+							@click.stop="updateExtractionFilter(icon.type)"
+						></i>
+					</template>
 				</div>
-				<div v-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
-				<div v-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
+				<div v-else-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
+				<div v-else-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
 					Simulation run
 				</div>
 			</div>
@@ -105,7 +127,9 @@ const formatFeatures = () => {
 				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
 			</div>
 			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="h in asset.highlight" :key="h">...<span v-html="h"></span>...</li>
+				<li v-for="snippet in snippets.splice(0, 3)" :key="snippet">
+					...<span v-html="snippet"></span>...
+				</li>
 			</ul>
 			<div class="description">{{ asset.description }}</div>
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
@@ -120,7 +144,7 @@ const formatFeatures = () => {
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
 		<div class="right">
-			<figure v-if="resourceType === ResourceType.XDD && extractionsWithImages.length > 0">
+			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<img
 					v-if="relatedAsset && relatedAsset.properties.image"
 					:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
@@ -128,9 +152,12 @@ const formatFeatures = () => {
 					alt="asset"
 				/>
 				<div class="asset-nav-arrows">
-					<i class="pi pi-arrow-left" @click="paginationMovement(-1)"></i>
-					Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
-					<i class="pi pi-arrow-right" @click="paginationMovement(1)"></i>
+					<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
+					<template v-if="extractionsWithImages.length > 0">
+						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
+					</template>
+					<template v-else> No {{ chosenExtractionFilter }}s </template>
+					<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
@@ -177,7 +204,8 @@ const formatFeatures = () => {
 .details,
 .description,
 .parameters,
-.features {
+.features,
+.snippets li {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 1;
@@ -214,14 +242,23 @@ button {
 	padding: 0;
 }
 
+i {
+	padding: 0.2rem;
+	border-radius: 3px;
+	z-index: 2;
+}
+
+.pi[active='true'] {
+	background-color: var(--primary-color-light);
+}
+
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
-	border-radius: 3px;
 }
 
 .checkmark-color {
-	color: var(--primary-color-lighter);
+	color: var(--primary-color);
 }
 
 .snippets {
