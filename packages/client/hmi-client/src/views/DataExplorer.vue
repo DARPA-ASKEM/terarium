@@ -215,8 +215,6 @@ const executeSearch = async () => {
 	// only search (or fetch data) relevant to the currently selected tab or the search by example item
 	let searchType = resultType.value;
 
-	emit('show-overlay');
-
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
 	//
@@ -348,8 +346,6 @@ const executeSearch = async () => {
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
-
-	emit('hide-overlay');
 };
 
 const disableSearchByExample = () => {
