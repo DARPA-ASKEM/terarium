@@ -7,13 +7,19 @@
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<IconChevronLeft24 class="slider-header-item" @click="emit('update:isOpen', false)" />
+				<i
+					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
+					@click="emit('update:isOpen', false)"
+				></i>
 				<h4 class="slider-header-item">{{ header }}</h4>
 			</div>
 			<slot name="content"></slot>
 		</template>
 		<template v-slot:tab>
-			<IconChevronRight24 class="slider-header-item" @click="emit('update:isOpen', true)" />
+			<i
+				:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
+				@click="emit('update:isOpen', true)"
+			></i>
 			<h5 class="slider-header-item">{{ header }}</h5>
 			<slot name="tab"></slot>
 		</template>
@@ -21,9 +27,6 @@
 </template>
 
 <script setup lang="ts">
-import IconChevronLeft24 from '@carbon/icons-vue/es/chevron--left/24';
-import IconChevronRight24 from '@carbon/icons-vue/es/chevron--right/24';
-
 import Slider from '../Slider.vue';
 
 defineProps({
@@ -54,19 +57,24 @@ defineProps({
 
 const emit = defineEmits(['update:isOpen']);
 
-// const directionMap = {
-// 	left: {
-// 		content: 'margin-left: -100%; margin-right: 100%;',
-// 		tab: 'margin-left: auto;'
-// 	},
-// 	right: {
-// 		content: 'margin-left: 100%; margin-right: -100%;',
-// 		tab: 'margin-right: auto;'
-// 	}
-// };
+const directionMap = {
+	left: {
+		iconOpen: 'pi-angle-double-left',
+		iconClosed: 'pi-angle-double-right'
+	},
+	right: {
+		iconOpen: 'pi-angle-double-right',
+		iconClosed: 'pi-angle-double-left'
+	}
+};
 </script>
 
 <style scoped>
+i {
+	font-size: 1.5rem;
+	cursor: pointer;
+}
+
 .slider-header {
 	display: flex;
 	align-items: center;

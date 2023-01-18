@@ -8,7 +8,7 @@
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<IconClose24 class="slider-header-item" @click="emit('update:previewItem', null)" />
+				<i class="slider-header-item pi pi-times" @click="emit('update:previewItem', null)"></i>
 			</div>
 			<div class="selected-resources-pane">
 				<Document
@@ -30,7 +30,6 @@
 
 <script setup lang="ts">
 import Button from 'primevue/button';
-import IconClose24 from '@carbon/icons-vue/es/close/24';
 import { PropType, computed, ref, watch } from 'vue';
 
 import useResourcesStore from '@/stores/resources';
@@ -101,6 +100,11 @@ const previewItemId = computed(() => {
 </script>
 
 <style scoped>
+i {
+	font-size: 1.5rem;
+	cursor: pointer;
+}
+
 .slider-header {
 	display: flex;
 	align-items: center;
