@@ -11,6 +11,8 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
@@ -20,6 +22,13 @@ import java.util.UUID;
 @Data
 @Accessors(chain = true)
 @NoArgsConstructor
+@Table(indexes = {
+	@Index(columnList = "timestampmillis"),
+	@Index(columnList = "projectid"),
+	@Index(columnList = "username"),
+	@Index(columnList = "type"),
+	@Index(columnList = "value")
+})
 public class Event extends PanacheEntityBase implements Serializable {
 	@Id
 	private String id = UUID.randomUUID().toString();
