@@ -89,7 +89,7 @@ watch(activeProjectId, (newProjectId) => {
 <template>
 	<header>
 		<section class="header-left">
-			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" class="logo" />
 			<section class="nav">
 				<Dropdown
 					class="dropdown"
@@ -141,7 +141,7 @@ watch(activeProjectId, (newProjectId) => {
 
 <style scoped>
 header {
-	align-items: center;
+	align-items: flex-start;
 	background-color: var(--un-color-body-surface-primary);
 	box-shadow: var(--un-box-shadow-small);
 	display: flex;
@@ -222,5 +222,9 @@ section {
 
 i {
 	margin-right: 0.5rem;
+}
+
+.logo {
+	align-self: center;
 }
 </style>
