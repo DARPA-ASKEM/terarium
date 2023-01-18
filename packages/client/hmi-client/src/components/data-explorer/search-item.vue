@@ -40,6 +40,8 @@ const extractionsWithImages = computed(() =>
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight);
 
+console.log(props.asset);
+
 watch(
 	() => props.asset,
 	() => {
