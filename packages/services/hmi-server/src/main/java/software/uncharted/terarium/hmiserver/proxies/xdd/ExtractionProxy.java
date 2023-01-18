@@ -16,6 +16,8 @@ public interface ExtractionProxy {
 	@Path("object")
 	Response getExtractions(
 		@QueryParam("doi") String doi,
-		@QueryParam("query_all") String query_all
+		@QueryParam("query_all") String queryAll,
+		@QueryParam("page") Integer page,
+		@QueryParam("ASKEM_CLASS") String askemClass
 	);
 }
