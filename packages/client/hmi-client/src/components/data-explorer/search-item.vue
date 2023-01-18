@@ -148,7 +148,7 @@ const formatFeatures = () => {
 <style scoped>
 .search-item {
 	background-color: white;
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
 	padding: 1rem;
 	margin: 1px;
 	display: flex;
@@ -156,11 +156,11 @@ const formatFeatures = () => {
 }
 
 .search-item:hover {
-	background-color: var(--un-color-feedback-success-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .search-item[active='true'] {
-	outline: 1px solid var(--un-color-feedback-success);
+	outline: 1px solid var(--primary-color-lighter);
 }
 
 .type-and-filters {
@@ -199,7 +199,7 @@ const formatFeatures = () => {
 
 .title {
 	font-weight: 500;
-	color: var(--un-color-body-text-primary);
+	color: var(--text-color-primary);
 	margin: 0.5rem 0 0.25rem 0;
 }
 
@@ -221,7 +221,7 @@ i:hover {
 }
 
 .checkmark-color {
-	color: var(--un-color-feedback-success);
+	color: var(--primary-color-lighter);
 }
 
 .snippets {

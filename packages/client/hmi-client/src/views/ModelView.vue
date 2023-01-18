@@ -106,7 +106,7 @@ if (previousOpenTabs) {
 	flex-direction: column;
 	gap: 1rem;
 	padding: 1rem;
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-section);
 }
 
 .tab-container {

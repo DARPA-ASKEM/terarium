@@ -51,7 +51,7 @@ function isArtifactSelected(artifactId) {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	border-top: 1px solid var(--separator);
+	border-top: 1px solid var(--gray-300);
 }
 
 .row:first-child {
@@ -59,11 +59,11 @@ function isArtifactSelected(artifactId) {
 }
 
 .row:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 }
 
 .active {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .remove-button {
@@ -77,7 +77,7 @@ function isArtifactSelected(artifactId) {
 }
 
 .remove-button:hover {
-	background-color: var(--un-color-black-20);
+	background-color: var(--gray-200);
 }
 
 span {

@@ -218,12 +218,12 @@ table {
 
 td {
 	padding: 8px 16px;
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	vertical-align: top;
 }
 
 tbody tr {
-	border-top: 2px solid var(--separator);
+	border-top: 2px solid var(--gray-300);
 	cursor: pointer;
 }
 
@@ -250,7 +250,7 @@ tbody tr:first-child {
 }
 
 .tr-item.selected td {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .text-bold {

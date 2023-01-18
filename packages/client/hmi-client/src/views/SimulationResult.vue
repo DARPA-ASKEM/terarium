@@ -338,7 +338,7 @@ onMounted(() => {
 	flex-direction: column;
 	width: 100%;
 	padding: 10px;
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-ground);
 	margin: 10px;
 }
 
@@ -351,7 +351,6 @@ onMounted(() => {
 }
 
 h3 {
-	font: var(--un-font-h3);
 	margin-bottom: 10px;
 }
 </style>
