@@ -16,7 +16,9 @@ public interface ExtractionProxy {
 	@GET
 	@Path("object")
 	XDDResponse<XDDExtractionsResponseOK> getExtractions(
-		@QueryParam("doi") String doi,
-		@QueryParam("query_all") String query_all
+		@QueryParam("doi") final String doi,
+		@QueryParam("query_all") final String queryAll,
+		@QueryParam("page") final Integer page,
+		@QueryParam("ASKEM_CLASS") String askemClass
 	);
 }
