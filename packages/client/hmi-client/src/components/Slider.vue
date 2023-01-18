@@ -1,17 +1,17 @@
 <template>
-	<div
+	<aside
 		:class="`slider ${isOpen ? 'open' : 'closed'}`"
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
 		<div class="slider-content-container" :style="{ width: contentWidth }">
-			<div class="slider-content" :style="sidePanelContentStyle">
+			<section class="slider-content" :style="sidePanelContentStyle">
 				<slot name="content"></slot>
-			</div>
+			</section>
 		</div>
-		<div class="slider-tab" :style="sidePanelTabStyle">
+		<section class="slider-tab" :style="sidePanelTabStyle">
 			<slot name="tab"></slot>
-		</div>
-	</div>
+		</section>
+	</aside>
 </template>
 
 <script setup lang="ts">
