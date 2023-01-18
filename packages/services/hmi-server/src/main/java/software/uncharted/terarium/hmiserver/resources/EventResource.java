@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response;
 @Slf4j
 public class EventResource {
 	@Inject
-	private SecurityIdentity securityIdentity;
+	SecurityIdentity securityIdentity;
 
 	/**
 	 * Gets a list of events sorted by timestamp descending
