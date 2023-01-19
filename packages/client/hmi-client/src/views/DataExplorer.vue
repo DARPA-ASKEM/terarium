@@ -2,8 +2,7 @@
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
 			<slider-panel
-				content-width="20%"
-				tab-width="48px"
+				content-width="240px"
 				direction="left"
 				header="Facets"
 				v-model:is-open="isSliderFacetsOpen"

@@ -10,17 +10,19 @@
 				<i
 					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
 					@click="emit('update:isOpen', false)"
-				></i>
+				/>
 				<h4 class="slider-header-item">{{ header }}</h4>
 			</div>
 			<slot name="content"></slot>
 		</template>
 		<template v-slot:tab>
-			<i
-				:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
-				@click="emit('update:isOpen', true)"
-			></i>
-			<h5 class="slider-header-item">{{ header }}</h5>
+			<div :class="`slider-tab-header ${direction}`">
+				<i
+					:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
+					@click="emit('update:isOpen', true)"
+				/>
+				<h4 class="slider-header-item">{{ header }}</h4>
+			</div>
 			<slot name="tab"></slot>
 		</template>
 	</slider>
@@ -41,11 +43,11 @@ defineProps({
 	},
 	contentWidth: {
 		type: String,
-		default: '25%'
+		default: '240px'
 	},
 	tabWidth: {
 		type: String,
-		default: '50px'
+		default: '48px'
 	},
 
 	// slider-panel props
@@ -71,7 +73,7 @@ const directionMap = {
 
 <style scoped>
 i {
-	font-size: 1.5rem;
+	font-size: 1.25rem;
 	cursor: pointer;
 }
 
@@ -82,16 +84,33 @@ i {
 .slider-header.content {
 	flex-direction: row-reverse;
 	justify-content: space-between;
+	padding: 16px;
 }
 .slider-header.tab {
 	justify-content: center;
 }
-.slider-header-item {
-	font-weight: bold;
-	margin: 12px;
+
+i.slider-header-item {
+	color: var(--text-color-subdued);
 }
 
-.slider-tab h5 {
-	transform: rotate(90deg);
+.slider-tab-header {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	padding: 16px;
+	gap: 16px;
+}
+.slider-tab-header h4 {
+	text-align: left;
+	transform-origin: top right;
+	line-height: 1em;
+}
+
+.slider-tab-header.left h4 {
+	transform: translateX(-2em) rotate(270deg);
+}
+.slider-tab-header.right h4 {
+	transform: translateX(-1.5em) rotate(270deg);
 }
 </style>
