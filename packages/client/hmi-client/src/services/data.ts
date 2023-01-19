@@ -410,7 +410,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			articles.forEach((article) => {
 				if (article.highlight) {
 					article.highlight = article.highlight.map((h) =>
-						h.replaceAll(term, `<span style='background-color: yellow'>${term}</span>`)
+						h.replaceAll(term, `<span style='background-color: #92E192ff'>${term}</span>`)
 					);
 				}
 			});

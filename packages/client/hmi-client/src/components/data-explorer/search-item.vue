@@ -25,12 +25,10 @@ const extractionsWithImages = computed(() =>
 		? props.asset.relatedExtractions?.filter((ex) => {
 				if (chosenExtractionFilter.value === null) {
 					return (
+						ex.askemClass === XDDExtractionType.URL ||
 						ex.askemClass === XDDExtractionType.Figure ||
 						ex.askemClass === XDDExtractionType.Table ||
-						ex.askemClass === XDDExtractionType.Equation ||
-						ex.askemClass === XDDExtractionType.URL ||
-						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
-						ex.askemClass === XDDExtractionType.Document // remove this later just for testing preview pagination
+						ex.askemClass === XDDExtractionType.Document
 					);
 				}
 				return ex.askemClass === chosenExtractionFilter.value;
@@ -38,7 +36,9 @@ const extractionsWithImages = computed(() =>
 		: []
 );
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight);
+const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
+
+// console.log(snippets.value, props.asset.relatedExtractions)
 
 watch(
 	() => props.asset,
@@ -127,9 +127,7 @@ const formatFeatures = () => {
 				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
 			</div>
 			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets.splice(0, 3)" :key="snippet">
-					...<span v-html="snippet"></span>...
-				</li>
+				<li v-for="snippet in snippets" :key="snippet">...<span v-html="snippet"></span>...</li>
 			</ul>
 			<div class="description">{{ asset.description }}</div>
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
