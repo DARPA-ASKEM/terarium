@@ -14,6 +14,7 @@ import { useCurrentRoute, RoutePath } from '@/router/index';
 const props = defineProps<{
 	project: Project | null;
 	searchBarText?: string;
+	relatedSearchTerms?: string[];
 }>();
 interface NavItem {
 	[key: string]: { name: string; icon: string; routeName: string };
@@ -102,7 +103,7 @@ watch(activeProjectId, (newProjectId) => {
 <template>
 	<header>
 		<section class="header-left">
-			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" />
+			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" class="logo" />
 			<section class="nav">
 				<Dropdown
 					class="dropdown"
@@ -128,6 +129,7 @@ watch(activeProjectId, (newProjectId) => {
 			:text="searchBarText"
 			@search-text-changed="searchTextChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
+			:relatedSearchTerms="relatedSearchTerms"
 		/>
 		<section class="header-right">
 			<Button
@@ -154,13 +156,14 @@ watch(activeProjectId, (newProjectId) => {
 
 <style scoped>
 header {
-	align-items: center;
+	align-items: flex-start;
 	background-color: var(--surface-section);
 	display: flex;
 	justify-content: center;
 	gap: 2rem;
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
+	flex: none;
 }
 
 section {
@@ -213,5 +216,9 @@ section {
 
 i {
 	margin-right: 0.5rem;
+}
+
+.logo {
+	align-self: center;
 }
 </style>

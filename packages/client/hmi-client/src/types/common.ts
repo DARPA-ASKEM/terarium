@@ -38,6 +38,7 @@ export type SearchResults = {
 export type FullSearchResults = {
 	allData: SearchResults;
 	allDataFilteredWithFacets: SearchResults;
+	relatedWords: string[];
 };
 
 export type SearchByExampleOptions = {

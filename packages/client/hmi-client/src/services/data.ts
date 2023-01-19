@@ -304,6 +304,14 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
+const getRelatedWords = async (searchTerm: string, dataset: string | null | undefined) => {
+	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
+	const response = await API.get(url);
+	const data = response.data.data;
+	const words = data ? data.map((tuple) => tuple[0]) : [];
+	return words;
+};
+
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
@@ -449,8 +457,11 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		};
 	}
 
+	const relatedWords = getRelatedWords(term, xddSearchParam?.dataset);
+
 	return {
 		results: [] as XDDArticle[],
+		relatedWords,
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -501,7 +512,8 @@ const fetchResource = async (
 					allDataFilteredWithFacets: await searchXDDArticles(
 						term,
 						searchParamWithFacetFilters?.[ResourceType.XDD]
-					)
+					),
+					relatedWords: await getRelatedWords(term, searchParam?.xdd?.dataset)
 				});
 			} else if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
 				resolve(
@@ -521,10 +533,12 @@ const fetchData = async (
 ) => {
 	const finalResponse = {
 		allData: [],
-		allDataFilteredWithFacets: []
+		allDataFilteredWithFacets: [],
+		relatedWords: []
 	} as {
 		allData: SearchResults[];
 		allDataFilteredWithFacets: SearchResults[];
+		relatedWords: string[];
 	};
 
 	//
@@ -647,6 +661,7 @@ const fetchData = async (
 	const responses = await Promise.all(promiseList);
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
+	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
 	return finalResponse;
 };
 
@@ -659,5 +674,6 @@ export {
 	getAssets,
 	getDocumentById,
 	getBulkDocuments,
-	getRelatedDocuments
+	getRelatedDocuments,
+	getRelatedWords
 };

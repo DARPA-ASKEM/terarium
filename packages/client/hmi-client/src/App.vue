@@ -18,6 +18,7 @@ const isSidebarVisible = computed(
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
 const searchBarText = ref('');
+const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
 /**
  * Project
@@ -29,6 +30,10 @@ const project = ref<Project | null>(null);
 
 function updateSearchBar(newQuery) {
 	searchBarText.value = newQuery;
+}
+
+function updateRelatedSearchTerms(newTerms) {
+	relatedSearchTerms.value = newTerms.slice(0, 5);
 }
 
 watch(
@@ -49,10 +54,20 @@ watch(
 </script>
 
 <template>
-	<Navbar class="header" :project="project" :searchBarText="searchBarText" />
+	<Navbar
+		class="header"
+		:project="project"
+		:searchBarText="searchBarText"
+		:relatedSearchTerms="relatedSearchTerms"
+	/>
 	<main>
 		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
-		<router-view class="page" :project="project" @search-query-changed="updateSearchBar" />
+		<router-view
+			class="page"
+			:project="project"
+			@search-query-changed="updateSearchBar"
+			@related-search-terms-updated="updateRelatedSearchTerms"
+		/>
 	</main>
 </template>
 
