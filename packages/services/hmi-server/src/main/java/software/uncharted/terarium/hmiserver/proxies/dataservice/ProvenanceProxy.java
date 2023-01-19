@@ -23,7 +23,6 @@ public interface ProvenanceProxy {
 
 	@POST
 	@Path("/search")
-	@Consumes(MediaType.APPLICATION_JSON)
 	Response search(
 		ProvenanceQueryParameters body,
 		@QueryParam("search_type") String searchType

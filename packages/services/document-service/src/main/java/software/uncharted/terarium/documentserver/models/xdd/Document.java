@@ -68,7 +68,7 @@ public class Document implements Serializable {
 	}
 
 	@JsonbProperty("_highlight")
-	public void setKnownTerms(List<String> highlight) {
+	public void setHighlight(List<String> highlight) {
 		this.highlight = highlight;
 	}
 
@@ -76,7 +76,7 @@ public class Document implements Serializable {
 	public void setKnownEntities(KnownEntities knownEntities) {
 		this.knownEntities = knownEntities;
 	}
-		
+
 	public Document(){} //Default constructor for @Data
 
 }

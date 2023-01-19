@@ -32,6 +32,7 @@ async function getConnectedNodes(
 	id: string | number,
 	rootType: ProvenanceType
 ): Promise<ProvenanceResult | null> {
+	// FIXME: all underscore naming should be fixed
 	const body: ProvenanceQueryParam = {
 		root_id: Number(id),
 		root_type: rootType
