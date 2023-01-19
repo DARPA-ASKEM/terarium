@@ -538,7 +538,7 @@ const fetchData = async (
 	} as {
 		allData: SearchResults[];
 		allDataFilteredWithFacets: SearchResults[];
-		relatedWords: string[];
+		relatedWords: string[][];
 	};
 
 	//
