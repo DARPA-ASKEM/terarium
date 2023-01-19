@@ -15,30 +15,21 @@
 				@item-selected="addAssetsToProject"
 			/>
 		</div>
-		<div class="selected-items-container">
-			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
-				<div class="item-header">
-					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
-					<div class="item-title" :title="getTitle(item)">
-						{{ formatTitle(item) }}
-					</div>
-					<div class="item-delete-btn" @click.stop="removeItem(item)">
-						<IconClose16 />
-					</div>
-				</div>
-				<div class="content">
-					<multiline-description :text="formatDescription(item)" />
-				</div>
-			</div>
-		</div>
+		<ul>
+			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
+				<asset-card
+					:asset="(asset as XDDArticle & Model & Dataset)"
+					:resourceType="(getType(asset) as ResourceType)"
+				/>
+			</li>
+		</ul>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import Button from 'primevue/button';
-import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
+import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
@@ -48,7 +39,7 @@ import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
-import IconClose16 from '@carbon/icons-vue/es/close/16';
+import AssetCard from '@/components/data-explorer/asset-card.vue';
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -64,35 +55,6 @@ const validProject = computed(() => resources.activeProject);
 
 const projectsList = ref<Project[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
-
-const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
-
-const formatTitle = (item: ResultType) => {
-	const maxSize = 36;
-	const itemTitle = getTitle(item);
-	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-};
-
-const formatDescription = (item: ResultType) => {
-	const maxSize = 120;
-	let itemDesc = '[No Desc]';
-	if (isModel(item)) {
-		itemDesc = (item as Model).description || itemDesc;
-	}
-	if (isDataset(item)) {
-		itemDesc = (item as Dataset).description || itemDesc;
-	}
-	if (isXDDArticle(item)) {
-		itemDesc =
-			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
-				? (item as XDDArticle).abstractText
-				: false) ||
-			(item as XDDArticle).journal ||
-			(item as XDDArticle).publisher ||
-			itemDesc;
-	}
-	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
-};
 
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
@@ -174,10 +136,6 @@ const addAssetsToProject = async (projectName?: string) => {
 	emit('close');
 };
 
-const removeItem = (item: ResultType) => {
-	emit('remove-item', item);
-};
-
 onMounted(async () => {
 	const all = await ProjectService.getAll();
 	if (all !== null) {
@@ -212,50 +170,12 @@ onMounted(async () => {
 }
 
 .breakdown-pane-container {
-	margin-bottom: 40px;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
 }
 
-.selected-items-container {
-	display: flex;
-	flex-direction: column;
-	overflow-y: auto;
-	margin-top: 10px;
-}
-
-.selected-items-container .selected-item {
-	padding: 5px;
-	background: white;
-	margin-top: 1px;
-}
-
-.selected-items-container .item-header {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-.selected-items-container .item-header .item-title {
-	font-weight: 500;
-}
-
-.selected-items-container .item-header .icon {
-	margin-right: 5px;
-}
-
-.selected-items-container .selected-item .content {
-	margin-left: 22px;
-}
-
-.item-delete-btn {
-	color: var(--text-color-disabled);
-	cursor: pointer;
-}
-
-.item-delete-btn:hover {
-	/* color: var(--text-color-primary); */
-	color: red;
+.cart-item {
+	border-bottom: 1px solid var(--surface-ground);
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
 	<ul>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
-			<SearchItem
+			<search-item
 				:asset="(asset as XDDArticle & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
