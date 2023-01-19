@@ -43,7 +43,7 @@ const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	const body: PublicationAsset = {
-		xddUri: props.selectedArticle.gddId,
+		xdd_uri: props.selectedArticle.gddId,
 		title: props.selectedArticle.title
 	};
 

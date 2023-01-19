@@ -30,22 +30,22 @@ const documentId = ref('');
 const documents = ref<PublicationAsset[]>([]);
 
 const documentsAsArtifactList = computed(() =>
-	documents.value.map((document) => ({ id: document.xddUri, name: document.title }))
+	documents.value.map((document) => ({ id: document.xdd_uri, name: document.title }))
 );
 
-const openDocumentPage = async (xddUri: string) => {
+const openDocumentPage = async (xdd_uri: string) => {
 	// pass this doc id as param
-	documentId.value = xddUri; // track selection
+	documentId.value = xdd_uri; // track selection
 	router.push({
 		name: RouteName.DocumentRoute,
-		params: { projectId: resourcesStore.activeProject?.id, assetId: xddUri }
+		params: { projectId: resourcesStore.activeProject?.id, assetId: xdd_uri }
 	});
 };
 
-const removeDocument = async (xddUri: string) => {
-	const docAsset = documents.value.find((document) => document.xddUri === xddUri);
+const removeDocument = async (xdd_uri: string) => {
+	const docAsset = documents.value.find((document) => document.xdd_uri === xdd_uri);
 	if (docAsset === undefined) {
-		console.error('Failed to remove document with XDD uri', xddUri);
+		console.error('Failed to remove document with XDD uri', xdd_uri);
 		return;
 	}
 	// remove the document from the project assets
@@ -65,7 +65,7 @@ const removeDocument = async (xddUri: string) => {
 	}
 
 	// if the user deleted the currently selected document, then clear its content from the view
-	if (docAsset.xddUri === documentId.value) {
+	if (docAsset.xdd_uri === documentId.value) {
 		router.push('/document'); // clear the doc ID as a URL param
 	}
 };
