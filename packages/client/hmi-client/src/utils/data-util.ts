@@ -60,7 +60,7 @@ export const getResourceTypeIcon = (type: string) => {
 
 // TEMP FUNCTIONS
 export function isModel(item: ResultType): item is Model {
-	return (<Model>item).content !== undefined;
+	return (<Model>item).framework !== undefined;
 }
 
 export function isDataset(item: ResultType): item is Dataset {

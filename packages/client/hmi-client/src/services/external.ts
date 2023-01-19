@@ -16,6 +16,26 @@ async function getPublication(docId: string): Promise<PublicationAsset | null> {
 }
 
 /**
+ * Get external publication asset in bulk given their internal TDS IDs
+ * @docId string array - represents a list of specific project asset/doc id
+ * @return PublicationAsset[]|null - the specific publication info including its xdd url, or null if none returned by API
+ */
+async function getBulkPublicationAssets(docIDs: string[]) {
+	const result: PublicationAsset[] = [];
+	const promiseList = [] as Promise<PublicationAsset | null>[];
+	docIDs.forEach((docId) => {
+		promiseList.push(getPublication(docId));
+	});
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((r) => {
+		if (r) {
+			result.push(r);
+		}
+	});
+	return result;
+}
+
+/**
  * add external publication asset
  * @body PublicationAsset - represents the metadata (xdd) url of the asset to be added
  * @return {id: string}|null - the id of the inserted asset, or null if none returned by API
@@ -26,4 +46,4 @@ async function addPublication(body: PublicationAsset): Promise<{ id: string } | 
 	return response?.data ?? null;
 }
 
-export { getPublication, addPublication };
+export { getPublication, getBulkPublicationAssets, addPublication };
