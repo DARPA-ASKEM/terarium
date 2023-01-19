@@ -20,6 +20,7 @@ import {
 	XDDDictionary,
 	XDDResult,
 	XDDSearchParams,
+	XDDExtractionType,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 import { getFacets as getConceptFacets } from './concept';
@@ -252,7 +253,11 @@ const getAssets = async (
 //
 // fetch list of extractions data from the HMI server
 //
-const getXDDArtifacts = async (doc_doi: string, term?: string) => {
+const getXDDArtifacts = async (
+	doc_doi: string,
+	term?: string,
+	extractionTypes?: XDDExtractionType[]
+) => {
 	let url = '/xdd/extractions?';
 	if (doc_doi !== '') {
 		url += `doi=${doc_doi}`;
@@ -260,9 +265,16 @@ const getXDDArtifacts = async (doc_doi: string, term?: string) => {
 	if (term !== undefined) {
 		url += `query_all=${term}`;
 	}
+	if (extractionTypes) {
+		// for (let i = 0; i < extractionTypes.length; i++) {
+		url += `&ASKEM_CLASS=Figure`;
+		// }
+	}
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
+
+	console.log(rawdata.success?.data, url);
 
 	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
 
@@ -431,7 +443,12 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
 		if (term !== '') {
-			extractionsSearchResults = await getXDDArtifacts('', term);
+			extractionsSearchResults = await getXDDArtifacts('', term, [
+				XDDExtractionType.URL,
+				XDDExtractionType.Figure,
+				XDDExtractionType.Table,
+				XDDExtractionType.Document
+			]);
 		}
 
 		return {

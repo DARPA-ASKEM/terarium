@@ -70,6 +70,7 @@ const filteredAssets = computed(() => {
 	if (searchResults) {
 		if (searchResults.xddExtractions && props.resultType === ResourceType.XDD) {
 			let articlesFromExtractions: XDDArticle[] = [];
+			console.log(searchResults);
 
 			if (searchResults.xddExtractions.length > 0) {
 				const docMap: { [docid: string]: XDDArticle } = {};

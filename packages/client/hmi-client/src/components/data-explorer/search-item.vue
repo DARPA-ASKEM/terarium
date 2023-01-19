@@ -25,7 +25,7 @@ const extractionsWithImages = computed(() =>
 		? props.asset.relatedExtractions?.filter((ex) => {
 				if (chosenExtractionFilter.value === null) {
 					return (
-						ex.askemClass === XDDExtractionType.URL ||
+						ex.askemClass === XDDExtractionType.URL || // may be redundant
 						ex.askemClass === XDDExtractionType.Figure ||
 						ex.askemClass === XDDExtractionType.Table ||
 						ex.askemClass === XDDExtractionType.Document
@@ -39,6 +39,7 @@ const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
 
 // console.log(snippets.value, props.asset.relatedExtractions)
+console.log(extractionsWithImages.value);
 
 watch(
 	() => props.asset,
