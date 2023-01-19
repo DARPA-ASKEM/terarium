@@ -25,7 +25,9 @@
 					label="Add to Cart"
 					@click="emit('toggle-data-item-selected', { item: previewItem })"
 				></Button>
+				<!-- TOOD
 				<Button label="Add to Project"></Button>
+				-->
 			</div>
 		</template>
 	</slider>

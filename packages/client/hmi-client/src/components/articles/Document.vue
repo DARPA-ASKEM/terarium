@@ -94,10 +94,10 @@
 					</div>
 				</AccordionTab>
 
+				<!--
 				<AccordionTab header="References"> </AccordionTab>
 				<AccordionTab header="Cited by"> </AccordionTab>
 				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
-				<!--
 				<AccordionTab header="Provenance"> </AccordionTab>
 				-->
 			</Accordion>
