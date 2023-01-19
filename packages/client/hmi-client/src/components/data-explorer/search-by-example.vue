@@ -111,8 +111,8 @@ const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArtic
 
 <style scoped>
 .search-by-example-card {
-	border: 1px solid var(--un-color-body-stroke);
-	background-color: var(--un-color-body-surface-primary);
+	border: 1px solid var(--surface-border);
+	background-color: var(--surface-card);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
@@ -121,7 +121,7 @@ const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArtic
 	text-align: left;
 	position: absolute;
 	top: 48px;
-	box-shadow: var(--un-box-shadow-default);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	color: black;
 	padding: 1rem;
 	width: 50%;
@@ -138,25 +138,25 @@ const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArtic
 	justify-content: center;
 	cursor: pointer;
 	background-color: transparent;
-	color: var(--un-color-body-text-disabled);
+	color: var(--text-color-disabled);
 }
 
 .search-by-example-card button:hover {
-	background-color: var(--un-color-body-surface-secondary);
-	color: var(--un-color-body-text-secondary);
+	background-color: var(--surface-secondary);
+	color: var(--text-color-primary);
 }
 
 .search-by-example-card button:disabled {
 	cursor: not-allowed;
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-primary);
 }
 
 .search-by-example-card button svg {
-	color: var(--un-color-body-text-disabled);
+	color: var(--text-color-disabled);
 }
 
 .search-by-example-card button:hover svg {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-primary);
 }
 
 .search-items-container {
