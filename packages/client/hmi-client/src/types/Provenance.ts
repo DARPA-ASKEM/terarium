@@ -1,7 +1,5 @@
 export enum ProvenanceType {
-	// eslint-disable-next-line @typescript-eslint/no-shadow
 	Dataset = 'Dataset',
-	// eslint-disable-next-line @typescript-eslint/no-shadow
 	Model = 'Model',
 	ModelParameter = 'ModelParameter',
 	Plan = 'Plan',
