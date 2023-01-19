@@ -20,7 +20,7 @@ public class Document implements Serializable {
 
 	private String title;
 
-	@JsonAlias("abstract")
+	@JsonbProperty("abstract")
 	private String abstractText;
 
 	private String journal;
@@ -57,11 +57,6 @@ public class Document implements Serializable {
 
 	public String getID(){ return this.gddId; }
 
-	@JsonbProperty("_abstract")
-	public void setAbstract(String abstractText) {
-		this.abstractText = abstractText;
-	}
-
 	@JsonbProperty("known_terms")
 	public void setKnownTerms(Map<String, List<String>> knownTerms) {
 		this.knownTerms = knownTerms;
@@ -76,7 +71,7 @@ public class Document implements Serializable {
 	public void setKnownEntities(KnownEntities knownEntities) {
 		this.knownEntities = knownEntities;
 	}
-		
+
 	public Document(){} //Default constructor for @Data
 
 }

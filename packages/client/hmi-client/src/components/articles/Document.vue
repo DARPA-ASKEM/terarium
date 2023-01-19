@@ -20,7 +20,7 @@
 			</div>
 
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
-				<AccordionTab v-if="formattedAbstract.lenght > 0" header="Abstract">
+				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
 					{{ formattedAbstract }}
 				</AccordionTab>
 
