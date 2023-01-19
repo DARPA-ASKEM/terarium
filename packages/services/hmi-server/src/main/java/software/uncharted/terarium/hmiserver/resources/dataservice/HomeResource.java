@@ -92,7 +92,7 @@ public class HomeResource {
     //Using proxy get all of the projects. 
     //Parse the nonesense into Project type
     private List<Project> getAllProjects(){
-        Integer pageSize = 50;
+        Integer pageSize = 50; //TODO: Determine a better way of grabbing "all" of a users projects. This will cap out at 50
         Integer page = 0;
         List<Project> allProjects = projectProxy.getProjects(pageSize, page);
         
