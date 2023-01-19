@@ -81,6 +81,7 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:result-type="resultType"
+				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 			<slider-panel
 				class="resources-slider"
@@ -412,6 +413,14 @@ const updateResultType = async (newResultType: ResourceType) => {
 		}
 	}
 };
+
+// const addPreviewItemToCart = () => {
+// 	if (previewItem.value) {
+// 		toggleDataItemSelected( {item: previewItem.value } );
+// 		previewItem.value = null;
+// 		isSliderResourcesOpen.value = true;
+// 	}
+// };
 
 onMounted(async () => {
 	const { q } = route.query;
