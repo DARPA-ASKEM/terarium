@@ -39,7 +39,7 @@ const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
 
 // console.log(snippets.value, props.asset.relatedExtractions)
-console.log(extractionsWithImages.value);
+console.log(relatedAsset.value);
 
 watch(
 	() => props.asset,
