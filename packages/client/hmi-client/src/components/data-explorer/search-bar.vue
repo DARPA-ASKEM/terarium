@@ -67,7 +67,7 @@ const execSearch = () => {
 };
 
 function addSearchTerm(term) {
-	searchText.value = term;
+	searchText.value = searchText.value ? searchText.value.concat(' ').concat(term) : term;
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
