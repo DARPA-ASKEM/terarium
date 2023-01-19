@@ -47,7 +47,7 @@ defineProps({
 	},
 	tabWidth: {
 		type: String,
-		default: '48px'
+		default: '56px'
 	},
 
 	// slider-panel props
