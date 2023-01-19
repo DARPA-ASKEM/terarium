@@ -1,10 +1,9 @@
 export enum XDDExtractionType {
 	Document = 'Document',
-	Section = 'Section',
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
-	Body = 'Body Text', // Section
+	Section = 'Section', // Section
 	URL = 'URL' // websites, URLs, links, etc.
 }
 
@@ -61,7 +60,7 @@ export type XDDArticle = {
 
 export type PublicationAsset = {
 	id?: string;
-	xddUri: string; // this is the internal XDD id known as "docid" NOT "doi"
+	xdd_uri: string; // this is the internal XDD id known as "docid" NOT "doi"
 	title: string;
 };
 

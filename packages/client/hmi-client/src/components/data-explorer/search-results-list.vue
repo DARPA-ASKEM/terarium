@@ -53,7 +53,6 @@ const updateSelection = (asset: ResultType) => {
 
 const togglePreview = (asset: ResultType) => {
 	emit('toggle-data-item-selected', { item: asset, type: 'clicked' });
-	console.log(asset);
 	previewedAsset.value = previewedAsset.value === asset ? null : asset;
 };
 

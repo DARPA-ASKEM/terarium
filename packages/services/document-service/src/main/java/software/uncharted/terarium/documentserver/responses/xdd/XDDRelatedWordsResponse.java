@@ -2,17 +2,12 @@ package software.uncharted.terarium.documentserver.responses.xdd;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import software.uncharted.terarium.documentserver.models.xdd.RelatedDocument;
 
 import java.util.List;
 
 @Data
 @Accessors(chain = true)
-public class XDDRelatedDocumentsResponse {
-
+public class XDDRelatedWordsResponse {
 	private String status;
-
-	private List<RelatedDocument> data;
-
-
+	private List<Object> data;
 }

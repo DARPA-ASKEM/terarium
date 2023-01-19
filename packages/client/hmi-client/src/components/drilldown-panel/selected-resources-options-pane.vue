@@ -112,7 +112,7 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
 			const body: PublicationAsset = {
-				xddUri: (selectedItem as XDDArticle).gddId,
+				xdd_uri: (selectedItem as XDDArticle).gddId,
 				title: (selectedItem as XDDArticle).title
 			};
 

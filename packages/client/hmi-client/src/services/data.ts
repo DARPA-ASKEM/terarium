@@ -264,12 +264,7 @@ const getXDDArtifacts = async (doc_doi: string, term?: string) => {
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
-	if (rawdata.success) {
-		const { data } = rawdata.success;
-		const artifacts = data as XDDArtifact[];
-		// TEMP: the following mapping is needed because the backend is returning raw xdd response
-		return artifacts.map((a) => ({ ...a, askemClass: a.ASKEM_CLASS }));
-	}
+	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
 
 	return [] as XDDArtifact[];
 };
@@ -303,6 +298,14 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 		return articles;
 	}
 	return [] as XDDArticle[];
+};
+
+const getRelatedWords = async (searchTerm: string, dataset: string | null | undefined) => {
+	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
+	const response = await API.get(url);
+	const data = response.data.data;
+	const words = data ? data.map((tuple) => tuple[0]) : [];
+	return words;
 };
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
@@ -450,8 +453,11 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		};
 	}
 
+	const relatedWords = getRelatedWords(term, xddSearchParam?.dataset);
+
 	return {
 		results: [] as XDDArticle[],
+		relatedWords,
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -487,7 +493,8 @@ const fetchResource = async (
 					allDataFilteredWithFacets: await searchXDDArticles(
 						term,
 						searchParamWithFacetFilters?.[ResourceType.XDD]
-					)
+					),
+					relatedWords: await getRelatedWords(term, searchParam?.xdd?.dataset)
 				});
 			} else if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
 				resolve(
@@ -531,9 +538,11 @@ const fetchData = async (
 	const finalResponse = {} as {
 		allData: SearchResults[];
 		allDataFilteredWithFacets: SearchResults[];
+		relatedWords: string[][];
 	};
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
+	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
 	return finalResponse;
 };
 
@@ -545,5 +554,6 @@ export {
 	searchXDDArticles,
 	getAssets,
 	getRelatedDocuments,
-	getDocumentById
+	getDocumentById,
+	getRelatedWords
 };

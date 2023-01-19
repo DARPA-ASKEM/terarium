@@ -10,7 +10,7 @@
 		</div>
 		<div>Publisher: {{ selectedArticle.publisher }}</div>
 		<div>Author: {{ selectedArticle.author.map((a) => a.name).join(', ') }}</div>
-		<div>Abstract: {{ formatAbstract(selectedArticle) }}</div>
+		<div v-html="formatAbstract(selectedArticle)"></div>
 		<div>Journal: {{ selectedArticle.journal }}</div>
 		<div>Doc ID:: {{ selectedArticle.gddId }}</div>
 	</div>
@@ -43,7 +43,7 @@ const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	const body: PublicationAsset = {
-		xddUri: props.selectedArticle.gddId,
+		xdd_uri: props.selectedArticle.gddId,
 		title: props.selectedArticle.title
 	};
 
@@ -64,9 +64,8 @@ const addResourcesToProject = async (projectId: string) => {
 	}
 };
 
-// TODO: May need more formatting than just replcing <p></p> in future
 const formatAbstract = (item: XDDArticle) =>
-	item.abstract.replace('<p>', '\n').replace('</p>', '\n') || '[no abstract]';
+	item.abstract !== undefined ? `Abstract: ${item.abstract}` : 'Abstract: [no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
 	let projectId = '';
