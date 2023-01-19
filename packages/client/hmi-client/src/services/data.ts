@@ -274,7 +274,7 @@ const getXDDArtifacts = async (
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
-	console.log(rawdata.success?.data, url);
+	// console.log(rawdata.success?.data, url);
 
 	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
 

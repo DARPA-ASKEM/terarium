@@ -3,7 +3,7 @@ import { watch, ref, computed } from 'vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { isXDDArticle } from '@/utils/data-util';
+import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
 
 const props = defineProps<{
@@ -17,13 +17,13 @@ const props = defineProps<{
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
-const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
+const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
 // These asset types don't appear at the moment
 const extractionsWithImages = computed(() =>
 	props.asset.relatedExtractions
 		? props.asset.relatedExtractions?.filter((ex) => {
-				if (chosenExtractionFilter.value === null) {
+				if (chosenExtractionFilter.value === 'Asset') {
 					return (
 						ex.askemClass === XDDExtractionType.URL || // may be redundant
 						ex.askemClass === XDDExtractionType.Figure ||
@@ -35,11 +35,8 @@ const extractionsWithImages = computed(() =>
 		  })
 		: []
 );
-const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
+const relatedAsset = computed(() => extractionsWithImages.value[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
-
-// console.log(snippets.value, props.asset.relatedExtractions)
-console.log(relatedAsset.value);
 
 watch(
 	() => props.asset,
@@ -55,9 +52,9 @@ function previewMovement(movement: number) {
 	}
 }
 
-function updateExtractionFilter(extractionType: XDDExtractionType | null) {
+function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? null : extractionType;
+		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
 }
 
 const isSelected = () =>
@@ -65,6 +62,14 @@ const isSelected = () =>
 		if (isXDDArticle(item)) {
 			const itemAsArticle = item as XDDArticle;
 			return itemAsArticle.title === props.asset.title;
+		}
+		if (isDataset(item)) {
+			const itemAsDataset = item as Dataset;
+			return itemAsDataset.id === props.asset.id;
+		}
+		if (isModel(item)) {
+			const itemAsModel = item as Model;
+			return itemAsModel.id === props.asset.id;
 		}
 		return false;
 	});
@@ -142,7 +147,7 @@ const formatFeatures = () => {
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
-		<div class="right">
+		<div class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<img
 					v-if="relatedAsset && relatedAsset.properties.image"
@@ -151,12 +156,13 @@ const formatFeatures = () => {
 					alt="asset"
 				/>
 				<div class="asset-nav-arrows">
-					<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
 					<template v-if="extractionsWithImages.length > 0">
-						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
+						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
+						{{ chosenExtractionFilter }} {{ relatedAssetPage + 1 }} of
+						{{ extractionsWithImages.length }}
+						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</template>
 					<template v-else> No {{ chosenExtractionFilter }}s </template>
-					<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
@@ -196,8 +202,27 @@ const formatFeatures = () => {
 	gap: 2rem;
 }
 
+.preview-and-options {
+	display: flex;
+}
+
+.preview-and-options figure {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 10rem;
+}
+
+.preview-and-options figure img {
+	margin: 0 auto;
+	height: 3rem;
+	max-width: fit-content;
+}
+
 .asset-nav-arrows {
 	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .title,
@@ -210,14 +235,6 @@ const formatFeatures = () => {
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 1;
 	overflow: hidden;
-}
-
-.right {
-	display: flex;
-}
-
-.right figure {
-	width: 10rem;
 }
 
 .asset-filters {
