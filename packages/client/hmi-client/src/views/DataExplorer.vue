@@ -81,6 +81,7 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:result-type="resultType"
+				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 			<slider-panel
 				class="resources-slider"
@@ -138,7 +139,7 @@ import { Dataset as IDataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['search-query-changed']);
+const emit = defineEmits(['search-query-changed', 'related-search-terms-updated']);
 
 const props = defineProps<{
 	query?: LocationQuery;
@@ -151,6 +152,7 @@ const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
+const relatedSearchTerms = ref<string[]>([]);
 const query = useQueryStore();
 const resources = useResourcesStore();
 
@@ -308,7 +310,7 @@ const executeSearch = async () => {
 	searchParamsWithFacetFilters.dataset = datasetSearchParams;
 
 	// fetch the data
-	const { allData, allDataFilteredWithFacets } = await fetchData(
+	const { allData, allDataFilteredWithFacets, relatedWords } = await fetchData(
 		searchWords,
 		searchParams,
 		searchParamsWithFacetFilters,
@@ -323,6 +325,8 @@ const executeSearch = async () => {
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
+
+	relatedSearchTerms.value = relatedWords.flat();
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -394,6 +398,10 @@ watch(searchQuery, async (newQuery) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
+watch(relatedSearchTerms, (newSearchTerms) => {
+	emit('related-search-terms-updated', newSearchTerms);
+});
+
 const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
@@ -412,6 +420,14 @@ const updateResultType = async (newResultType: ResourceType) => {
 		}
 	}
 };
+
+// const addPreviewItemToCart = () => {
+// 	if (previewItem.value) {
+// 		toggleDataItemSelected( {item: previewItem.value } );
+// 		previewItem.value = null;
+// 		isSliderResourcesOpen.value = true;
+// 	}
+// };
 
 onMounted(async () => {
 	const { q } = route.query;

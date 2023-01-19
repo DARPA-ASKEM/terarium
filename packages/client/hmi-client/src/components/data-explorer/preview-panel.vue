@@ -21,8 +21,13 @@
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
 				/>
-				<Button label="Add to Cart"></Button>
+				<Button
+					label="Add to Cart"
+					@click="emit('toggle-data-item-selected', { item: previewItem })"
+				></Button>
+				<!-- TOOD
 				<Button label="Add to Project"></Button>
+				-->
 			</div>
 		</template>
 	</slider>
@@ -72,7 +77,7 @@ const props = defineProps({
 });
 const previewItemState = ref(props.previewItem);
 
-const emit = defineEmits(['update:previewItem']);
+const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
 watch(
 	() => props.previewItem,
