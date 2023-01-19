@@ -35,9 +35,14 @@ const initialNavItems = {
 		routeName: RouteName.DataExplorerRoute
 	}
 };
+const emptyNavItem = {
+	name: '',
+	icon: '',
+	routeName: '/'
+};
 const navItems = shallowRef<NavItem>(initialNavItems);
 
-const selectedPage = ref(navItems.value[currentRoute.value.path] || navItems.value[RoutePath.Home]);
+const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
 const auth = useAuthStore();
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
@@ -83,6 +88,10 @@ watch(activeProjectId, (newProjectId) => {
 	};
 	navItems.value = { ...initialNavItems, ...projectNavItem };
 	selectedPage.value = navItems.value[currentRoute.value.path];
+});
+
+watch(currentRoute, (newRoute) => {
+	selectedPage.value = navItems.value[newRoute.path] || emptyNavItem;
 });
 </script>
 
