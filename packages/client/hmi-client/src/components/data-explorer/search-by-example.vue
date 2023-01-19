@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
-import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
-
 import { ref, PropType, computed } from 'vue';
 import { ResultType, SearchByExampleOptions } from '@/types/common';
 import { Model } from '@/types/Model';
 import { XDDArticle } from '@/types/XDD';
+import Checkbox from 'primevue/checkbox';
 import Button from '@/components/Button.vue';
 
 const props = defineProps({
@@ -66,42 +64,11 @@ const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArtic
 			</div>
 		</div>
 		<footer>
-			<div @click.stop="searchOptions.similarContent = !searchOptions.similarContent">
-				Similar Content
-				<span v-show="searchOptions.similarContent">
-					<IconCheckboxChecked20 />
-				</span>
-				<span v-show="!searchOptions.similarContent">
-					<IconCheckbox20 />
-				</span>
-			</div>
-			<div @click.stop="searchOptions.forwardCitation = !searchOptions.forwardCitation">
-				Forward Citation
-				<span v-show="searchOptions.forwardCitation">
-					<IconCheckboxChecked20 />
-				</span>
-				<span v-show="!searchOptions.forwardCitation">
-					<IconCheckbox20 />
-				</span>
-			</div>
-			<div @click.stop="searchOptions.bakcwardCitation = !searchOptions.bakcwardCitation">
-				Backward Citation
-				<span v-show="searchOptions.bakcwardCitation">
-					<IconCheckboxChecked20 />
-				</span>
-				<span v-show="!searchOptions.bakcwardCitation">
-					<IconCheckbox20 />
-				</span>
-			</div>
-			<div @click.stop="searchOptions.relatedContent = !searchOptions.relatedContent">
-				Related Content
-				<span v-show="searchOptions.relatedContent">
-					<IconCheckboxChecked20 />
-				</span>
-				<span v-show="!searchOptions.relatedContent">
-					<IconCheckbox20 />
-				</span>
-			</div>
+			<Checkbox v-model="searchOptions.similarContent" value="Similar Content" />
+			<Checkbox v-model="searchOptions.forwardCitation" value="Forward Citation" />
+			<Checkbox v-model="searchOptions.bakcwardCitation" value="Backward Content" />
+			<Checkbox v-model="searchOptions.relatedContent" value="Related Content" />
+
 			<Button :class="{ disabled: isSearchDisabled }" :disabled="isSearchDisabled" @click="search"
 				>Search</Button
 			>
