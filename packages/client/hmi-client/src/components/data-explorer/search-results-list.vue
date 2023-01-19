@@ -1,4 +1,6 @@
 <template>
+	<div v-if="resultsCount === 0">Loading...</div>
+	<div v-else>Showing {{ resultsCount }} item(s).</div>
 	<ul>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
@@ -12,8 +14,6 @@
 			/>
 		</li>
 	</ul>
-	<div v-if="resultsCount === 0">Loading...</div>
-	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
 <script setup lang="ts">

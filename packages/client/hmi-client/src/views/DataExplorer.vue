@@ -441,15 +441,16 @@ onUnmounted(() => {
 
 <style scoped>
 .data-explorer-container {
-	left: 0px;
-	top: 0px;
-	right: 0px;
 	display: flex;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
 	background-color: var(--surface-ground);
+}
+
+.data-explorer-container .facets-and-results-container {
+	position: relative;
+	height: calc(100vh - 50px - var(--nav-bar-height));
+	display: flex;
+	flex-grow: 1;
+	min-height: 0;
 }
 
 .secondary-header {
@@ -467,12 +468,12 @@ onUnmounted(() => {
 .button-group button {
 	display: flex;
 	align-items: center;
-	text-decoration: none;
 	background: transparent;
-	border: 1px solid black;
+	border: 1px solid var(--text-color-disabled);
 	cursor: pointer;
 	padding: 0.25rem;
 	margin: auto;
+	background-color: var(--surface-a);
 	border-left-width: 0;
 }
 
@@ -494,14 +495,6 @@ onUnmounted(() => {
 .button-group button.active {
 	background: var(--primary-color-lighter);
 	cursor: default;
-}
-
-.data-explorer-container .facets-and-results-container {
-	position: relative;
-	height: calc(100vh - 50px - var(--nav-bar-height));
-	display: flex;
-	flex-grow: 1;
-	min-height: 0;
 }
 
 .results-content {

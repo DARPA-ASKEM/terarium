@@ -174,7 +174,7 @@ const formatFeatures = () => {
 
 <style scoped>
 .search-item {
-	background-color: white;
+	background-color: var(--surface-a);
 	color: var(--text-color-secondary);
 	padding: 1rem;
 	margin: 1px;
@@ -187,7 +187,7 @@ const formatFeatures = () => {
 }
 
 .search-item[active='true'] {
-	outline: 1px solid var(--primary-color-lighter);
+	outline: 1px solid var(--primary-color-dark);
 }
 
 .type-and-filters {
