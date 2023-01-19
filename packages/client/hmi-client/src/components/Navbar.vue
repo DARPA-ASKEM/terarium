@@ -89,7 +89,7 @@ watch(activeProjectId, (newProjectId) => {
 <template>
 	<header>
 		<section class="header-left">
-			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" class="logo" />
+			<img src="@assets/images/TERArium-logo.png" height="48" width="168" alt="logo" />
 			<section class="nav">
 				<Dropdown
 					class="dropdown"
@@ -141,14 +141,13 @@ watch(activeProjectId, (newProjectId) => {
 
 <style scoped>
 header {
-	align-items: flex-start;
 	background-color: var(--surface-section);
-	display: flex;
-	justify-content: center;
-	gap: 2rem;
 	min-height: var(--header-height);
-	padding: 0.5rem 1rem;
-	flex: none;
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	gap: 8px;
+	border-bottom: 1px solid var(--surface-border);
 }
 
 section {

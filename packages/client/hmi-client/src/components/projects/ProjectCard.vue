@@ -5,15 +5,11 @@ export interface Props {
 const props = withDefaults(defineProps<Props>(), {
 	name: 'Default Project Name'
 });
-
-const placeholderRandomColorOpacity = Math.random();
 </script>
 
 <template>
 	<div class="project-card">
-		<div class="placeholder-color">
-			<div class="placeholder-color-random" :style="{ opacity: placeholderRandomColorOpacity }" />
-		</div>
+		<div class="placeholder-color" />
 		<footer>{{ props?.name }}</footer>
 	</div>
 </template>
@@ -42,16 +38,7 @@ footer {
 .placeholder-color {
 	flex: 1;
 	min-height: 0;
-	background: var(--primary-color-lighter);
+	background: var(--gray-200);
 	position: relative;
-}
-
-.placeholder-color-random {
-	background: var(--primary-color-light);
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 100%;
-	height: 100%;
 }
 </style>
