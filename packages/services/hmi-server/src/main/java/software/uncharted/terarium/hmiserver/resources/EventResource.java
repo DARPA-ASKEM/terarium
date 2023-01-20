@@ -54,7 +54,7 @@ public class EventResource {
 	 */
 	@POST
 	@Transactional
-	public Response putEvent(final Event event) {
+	public Response postEvent(final Event event) {
 		log.info("Event | " + securityIdentity.getPrincipal().getName() + " | " + event);
 
 		// Do not save the event to the database if the type is not specified as persistent
