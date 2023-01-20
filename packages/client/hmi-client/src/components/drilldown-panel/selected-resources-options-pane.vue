@@ -27,6 +27,12 @@
 
 					<OverlayPanel ref="contextMenu">
 						<div class="context-menu-item" @click.stop="removeItem(asset, idx)">Delete</div>
+						<div class="context-menu-item" @click.stop="findRelatedContent(asset, idx)">
+							Find Related Content
+						</div>
+						<div class="context-menu-item" @click.stop="findSimilarContent(asset, idx)">
+							Find Similar Content
+						</div>
 					</OverlayPanel>
 				</asset-card>
 			</li>
@@ -60,7 +66,12 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close', 'toggle-data-item-selected']);
+const emit = defineEmits([
+	'close',
+	'toggle-data-item-selected',
+	'find-related-content',
+	'find-similar-content'
+]);
 const resources = useResourcesStore();
 
 const contextMenu = ref();
@@ -162,6 +173,17 @@ const removeItem = (item: ResultType, idx: number) => {
 	contextMenu.value[idx].hide();
 };
 
+const findRelatedContent = (item: ResultType, idx: number) => {
+	emit('find-related-content', { item, type: 'selected' });
+	contextMenu.value[idx].hide();
+};
+
+// only available for publications
+const findSimilarContent = (item: ResultType, idx: number) => {
+	emit('find-similar-content', { item, type: 'selected' });
+	contextMenu.value[idx].hide();
+};
+
 const toggleContextMenu = (event, idx: number) => {
 	contextMenu.value[idx].toggle(event);
 };
@@ -212,7 +234,6 @@ button {
 i {
 	padding: 0.2rem;
 	border-radius: 3px;
-	z-index: 2;
 }
 i:hover {
 	cursor: pointer;
@@ -220,8 +241,7 @@ i:hover {
 }
 
 .context-menu-item {
-	padding-top: 4px;
-	padding-bottom: 4px;
+	padding: 0.5rem;
 }
 .context-menu-item:hover {
 	background-color: var(--primary-color-lighter);

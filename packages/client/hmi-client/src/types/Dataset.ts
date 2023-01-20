@@ -65,6 +65,8 @@ export type Dataset = {
 
 export type DatasetSearchParams = {
 	filters?: Filters;
+	related_search_id?: string | number;
+	related_search_enabled?: boolean; // if true, then perform a search by example by finding related datasets
 };
 
 //
