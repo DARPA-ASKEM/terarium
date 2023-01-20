@@ -138,6 +138,7 @@ import { ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
+import { ProvenanceType } from '@/types/Provenance';
 
 const sectionElem = ref<HTMLElement | null>(null);
 
@@ -236,7 +237,7 @@ const fetchDocumentArtifacts = async () => {
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (doc.value) {
-		const results = await getRelatedArtifacts(props.assetId, 'Publication');
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];
