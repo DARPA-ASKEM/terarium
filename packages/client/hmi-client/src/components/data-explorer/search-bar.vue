@@ -19,6 +19,7 @@
 				></i>
 			</span>
 			<i class="pi pi-history" />
+			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
 		</div>
 		<div class="suggested-items" v-if="isSuggestedItemsVisible">
 			Suggested items
@@ -47,7 +48,7 @@ const props = defineProps<{
 	relatedSearchTerms?: string[];
 }>();
 
-const emit = defineEmits(['search-text-changed']);
+const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 
@@ -71,6 +72,9 @@ function addSearchTerm(term) {
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
+const toggleSearchByExample = () => {
+	emit('toggle-search-by-example');
+};
 
 onMounted(() => {
 	const { q } = route.query;
@@ -122,6 +126,16 @@ watch(suggestedItems, (newItems) => {
 
 .pi-history {
 	color: var(--text-color-secondary);
+}
+
+.pi-image {
+	color: var(--text-color-secondary);
+	margin-left: 1rem;
+}
+
+.pi-image:hover {
+	color: var(--text-color-primary);
+	cursor: pointer;
 }
 
 .clear-search:hover {

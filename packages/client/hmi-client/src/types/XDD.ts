@@ -64,7 +64,7 @@ export type XDDArticle = {
 
 export type PublicationAsset = {
 	id?: string;
-	xdd_uri: string; // this is the internal XDD id known as "docid" NOT "doi"
+	xdd_uri: string; // FIXME: this is the internal XDD id known as "docid" NOT "doi"
 	title: string;
 };
 
@@ -158,6 +158,9 @@ export type XDDSearchParams = {
 	additional_fields?: string; // Extend the query to include fields in addition to the full-text contents (example: abstract,title). The query logic is OR across the search fields.
 	known_entities?: string; // Include known entities extracted via external tools. Current options: [drugs, emmaa, stratname_candidates, url_extractions]
 	fields?: string; // return only fields of interest (passed as comma-separated string) instead of returing the full record in the xDD results
+	related_search_enabled?: boolean; // if true, then perform a search by example by finding related artifacts
+	similar_search_enabled?: boolean; // if true, then perform a search by example by finding similar documents
+	related_search_id?: string | number;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
