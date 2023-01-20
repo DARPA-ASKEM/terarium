@@ -53,6 +53,10 @@ export type XDDArticle = {
 	gddId: string;
 	highlight: string[];
 	knownEntities?: XDDArticleKnownEntity;
+
+	// We don not know exactly what is in citatinList - DC Jan 2023
+	citationList: { [key: string]: string }[];
+
 	// additional-client-side fields
 	relatedDocuments?: XDDArticle[];
 	relatedExtractions?: XDDArtifact[];

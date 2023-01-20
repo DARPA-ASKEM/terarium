@@ -55,6 +55,8 @@ public class Document implements Serializable {
 		this.gddId = id;
 	}
 
+	private List<Map<String, String>> citationList;
+
 	public String getID(){ return this.gddId; }
 
 	@JsonbProperty("known_terms")
@@ -70,6 +72,11 @@ public class Document implements Serializable {
 	@JsonbProperty("known_entities")
 	public void setKnownEntities(KnownEntities knownEntities) {
 		this.knownEntities = knownEntities;
+	}
+
+	@JsonbProperty("citation_list")
+	public void setCitationList(List<Map<String, String>> v) {
+		this.citationList = v;
 	}
 
 	public Document(){} //Default constructor for @Data
