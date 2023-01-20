@@ -35,9 +35,14 @@ const initialNavItems = {
 		routeName: RouteName.DataExplorerRoute
 	}
 };
+const emptyNavItem = {
+	name: '',
+	icon: '',
+	routeName: '/'
+};
 const navItems = shallowRef<NavItem>(initialNavItems);
 
-const selectedPage = ref(navItems.value[currentRoute.value.path] || navItems.value[RoutePath.Home]);
+const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
 const auth = useAuthStore();
 const userMenu = ref();
 const isLogoutConfirmationVisible = ref(false);
@@ -98,12 +103,16 @@ watch(activeProjectId, (newProjectId) => {
 	navItems.value = { ...initialNavItems, ...projectNavItem };
 	selectedPage.value = navItems.value[currentRoute.value.path];
 });
+
+watch(currentRoute, (newRoute) => {
+	selectedPage.value = navItems.value[newRoute.path] || emptyNavItem;
+});
 </script>
 
 <template>
 	<header>
 		<section class="header-left">
-			<img src="@assets/images/logo.png" height="32" width="128" alt="logo" class="logo" />
+			<img src="@assets/images/TERArium-logo.png" height="48" width="168" alt="logo" />
 			<section class="nav">
 				<Dropdown
 					class="dropdown"
@@ -156,13 +165,13 @@ watch(activeProjectId, (newProjectId) => {
 
 <style scoped>
 header {
-	align-items: flex-start;
 	background-color: var(--surface-section);
-	display: flex;
-	justify-content: center;
-	gap: 2rem;
 	min-height: var(--header-height);
-	padding: 0.5rem 1rem;
+	display: flex;
+	align-items: flex-start;
+	padding: 8px 16px;
+	gap: 8px;
+	border-bottom: 1px solid var(--surface-border);
 	flex: none;
 }
 

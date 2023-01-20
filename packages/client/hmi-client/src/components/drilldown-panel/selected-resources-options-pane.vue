@@ -61,7 +61,10 @@ import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
+import { useRouter } from 'vue-router';
 import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
+
+const router = useRouter();
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -194,6 +197,7 @@ const addAssetsToProject = async (projectName?: string) => {
 	addResourcesToProject(projectId);
 
 	emit('close');
+	router.push(`/projects/${projectId}`);
 };
 
 const removeItem = (item: ResultType) => {

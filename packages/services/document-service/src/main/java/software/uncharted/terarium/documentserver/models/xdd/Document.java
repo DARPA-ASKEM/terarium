@@ -1,6 +1,5 @@
 package software.uncharted.terarium.documentserver.models.xdd;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -55,7 +54,11 @@ public class Document implements Serializable {
 		this.gddId = id;
 	}
 
-	public String getID(){ return this.gddId; }
+	private List<Map<String, String>> citationList;
+
+	public String getID() {
+		return this.gddId;
+	}
 
 	@JsonbProperty("known_terms")
 	public void setKnownTerms(Map<String, List<String>> knownTerms) {
@@ -63,7 +66,8 @@ public class Document implements Serializable {
 	}
 
 	@JsonbProperty("_highlight")
-	public void setHighlight(List<String> highlight) {
+	public void setHighlight
+		(List<String> highlight) {
 		this.highlight = highlight;
 	}
 
@@ -72,7 +76,13 @@ public class Document implements Serializable {
 		this.knownEntities = knownEntities;
 	}
 
-	public Document(){} //Default constructor for @Data
+	@JsonbProperty("citation_list")
+	public void setCitationList(List<Map<String, String>> v) {
+		this.citationList = v;
+	}
+
+	public Document() {
+	} //Default constructor for @Data
 
 }
 

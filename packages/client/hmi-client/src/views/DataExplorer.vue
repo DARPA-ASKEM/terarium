@@ -2,8 +2,7 @@
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
 			<slider-panel
-				content-width="20%"
-				tab-width="48px"
+				content-width="240px"
 				direction="left"
 				header="Facets"
 				v-model:is-open="isSliderFacetsOpen"
@@ -76,7 +75,7 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				content-width="calc(35% - 48px)"
+				content-width="calc(35% - 56px)"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
@@ -86,7 +85,7 @@
 			<slider-panel
 				class="resources-slider"
 				content-width="35%"
-				tab-width="48px"
+				tab-width="56px"
 				direction="right"
 				header="Cart"
 				v-model:is-open="isSliderResourcesOpen"
