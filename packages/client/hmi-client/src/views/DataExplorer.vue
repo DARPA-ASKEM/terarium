@@ -19,42 +19,45 @@
 			</slider-panel>
 			<div class="results-content">
 				<div class="secondary-header">
-					<div class="button-group">
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.XDD }"
+					<span class="p-buttonset">
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.XDD"
+							label="Papers"
+							icon="pi pi-file"
 							@click="updateResultType(ResourceType.XDD)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-							Papers
-						</button>
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.MODEL }"
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.MODEL"
+							label="Models"
+							icon="pi pi-share-alt"
 							@click="updateResultType(ResourceType.MODEL)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-							Models
-						</button>
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.DATASET }"
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.DATASET"
+							label="Datasets"
+							icon="pi pi-table"
 							@click="updateResultType(ResourceType.DATASET)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-							Datasets
-						</button>
-					</div>
-					<div class="button-group">
-						<button
-							type="button"
-							:class="{ active: viewType === ViewType.LIST }"
+						/>
+					</span>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-text p-button-sm"
+							:active="viewType === ViewType.LIST"
+							label="List"
+							icon="pi pi-list"
 							@click="viewType = ViewType.LIST"
-						>
-							List
-						</button>
-						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
-					</div>
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="viewType === ViewType.MATRIX"
+							label="Matrix"
+							icon="pi pi-th-large"
+							@click="viewType = ViewType.MATRIX"
+						/>
+					</span>
 				</div>
 				<search-results-list
 					v-if="viewType === ViewType.LIST"
@@ -129,16 +132,10 @@ import { XDD_RESULT_DEFAULT_PAGE_SIZE, FACET_FIELDS as XDD_FACET_FIELDS, YEAR } 
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import {
-	getResourceID,
-	getResourceTypeIcon,
-	isXDDArticle,
-	isModel,
-	isDataset,
-	validate
-} from '@/utils/data-util';
+import { getResourceID, isXDDArticle, isModel, isDataset, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { LocationQuery, useRoute } from 'vue-router';
+import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['search-query-changed', 'related-search-terms-updated']);
@@ -578,20 +575,21 @@ onUnmounted(() => {
 	height: var(--nav-bar-height);
 }
 
-.button-group {
-	display: flex;
+.p-buttonset button {
+	outline: 1px solid var(--text-color-disabled);
+	border: none;
+	box-shadow: none;
+	background-color: var(--surface-a);
+	color: var(--text-color-primary);
+	padding: none;
+	padding: 0.3rem;
 }
 
-.button-group button {
-	display: flex;
-	align-items: center;
-	background: transparent;
-	border: 1px solid var(--text-color-disabled);
-	cursor: pointer;
-	padding: 0.25rem;
-	margin: auto;
-	background-color: var(--surface-a);
-	border-left-width: 0;
+.p-buttonset button[active='true'],
+.p-button.p-button-text:enabled:focus {
+	font-weight: bold;
+	border: none;
+	background-color: var(--primary-color-lighter);
 }
 
 .button-group button:first-child {
@@ -603,15 +601,6 @@ onUnmounted(() => {
 .button-group button:last-child {
 	border-top-right-radius: 0.5rem;
 	border-bottom-right-radius: 0.5rem;
-}
-
-.button-group button:hover {
-	background: var(--gray-50);
-}
-
-.button-group button.active {
-	background: var(--primary-color-lighter);
-	cursor: default;
 }
 
 .facets-panel {
