@@ -167,9 +167,10 @@ public class DatasetResource {
 	public Response getCsv(
 		@PathParam("id") final String id,
 		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("false") @QueryParam("data_annotation_flag") final Boolean dataAnnotationFlag
+		@DefaultValue("false") @QueryParam("data_annotation_flag") final Boolean dataAnnotationFlag,
+		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
 	) {
-		return proxy.getCsv(id, wideFormat, dataAnnotationFlag);
+		return proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
 	}
 
 	@POST
