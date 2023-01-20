@@ -44,16 +44,14 @@ const isSelected = () =>
 		:active="isPreviewed"
 		@click="emit('toggle-asset-preview')"
 	>
-		<template v-slot:default>
-			<button type="button" v-if="isInCart">
-				<!--there are talks of having the plus and three dot menu available wherever-->
-				<i class="pi pi-ellipsis-v"></i>
-			</button>
-			<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
-				<i class="pi pi-plus" v-show="!isSelected()"></i>
-				<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
-			</button>
-		</template>
+		<button type="button" v-if="isInCart">
+			<!--there are talks of having the plus and three dot menu available wherever-->
+			<i class="pi pi-ellipsis-v"></i>
+		</button>
+		<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
+			<i class="pi pi-plus" v-show="!isSelected()"></i>
+			<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
+		</button>
 	</asset-card>
 </template>
 

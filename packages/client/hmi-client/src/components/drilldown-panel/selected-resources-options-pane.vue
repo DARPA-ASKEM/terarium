@@ -20,7 +20,15 @@
 				<asset-card
 					:asset="(asset as XDDArticle & Model & Dataset)"
 					:resourceType="(getType(asset) as ResourceType)"
-				/>
+				>
+					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
+						<i class="pi pi-ellipsis-v"></i>
+					</button>
+
+					<OverlayPanel ref="contextMenu">
+						<div class="context-menu-item" @click.stop="removeItem(asset, idx)">Delete</div>
+					</OverlayPanel>
+				</asset-card>
 			</li>
 		</ul>
 	</div>
@@ -29,6 +37,7 @@
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import Button from 'primevue/button';
+import OverlayPanel from 'primevue/overlaypanel';
 import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
@@ -48,9 +57,10 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close', 'remove-item']);
+const emit = defineEmits(['close', 'toggle-data-item-selected']);
 const resources = useResourcesStore();
 
+const contextMenu = ref();
 const validProject = computed(() => resources.activeProject);
 
 const projectsList = ref<Project[]>([]);
@@ -142,6 +152,15 @@ onMounted(async () => {
 		projectsList.value = all;
 	}
 });
+
+const removeItem = (item: ResultType, idx: number) => {
+	emit('toggle-data-item-selected', { item, type: 'selected' });
+	contextMenu.value[idx].hide();
+};
+
+const toggleContextMenu = (event, idx: number) => {
+	contextMenu.value[idx].toggle(event);
+};
 </script>
 
 <style scoped>
@@ -177,5 +196,31 @@ onMounted(async () => {
 
 .cart-item {
 	border-bottom: 1px solid var(--surface-ground);
+}
+
+button {
+	border: none;
+	background-color: transparent;
+	height: min-content;
+	padding: 0;
+}
+
+i {
+	padding: 0.2rem;
+	border-radius: 3px;
+	z-index: 2;
+}
+i:hover {
+	cursor: pointer;
+	background-color: hsla(0, 0%, 0%, 0.1);
+}
+
+.context-menu-item {
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+.context-menu-item:hover {
+	background-color: var(--primary-color-lighter);
+	cursor: pointer;
 }
 </style>

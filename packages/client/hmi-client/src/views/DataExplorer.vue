@@ -93,7 +93,7 @@
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
-						@remove-item="toggleDataItemSelected"
+						@toggle-data-item-selected="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
 					/>
 				</template>
