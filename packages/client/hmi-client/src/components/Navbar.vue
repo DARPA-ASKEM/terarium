@@ -153,10 +153,11 @@ header {
 	background-color: var(--surface-section);
 	min-height: var(--header-height);
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	padding: 8px 16px;
 	gap: 8px;
 	border-bottom: 1px solid var(--surface-border);
+	flex: none;
 }
 
 section {

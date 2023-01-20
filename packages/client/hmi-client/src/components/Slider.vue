@@ -1,6 +1,6 @@
 <template>
 	<aside
-		:class="`slider ${isOpen ? 'open' : 'closed'}`"
+		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
 		<div class="slider-content-container" :style="{ width: contentWidth }">
@@ -60,6 +60,15 @@ const sidePanelTabStyle = computed(
 .slider-content,
 .slider-tab {
 	transition: all 0.3s ease-out;
+}
+
+.slider.left.closed .slider-tab,
+.slider.left.open .slider-content {
+	border-right: 1px solid var(--surface-border);
+}
+.slider.right.closed .slider-tab,
+.slider.right.open .slider-content {
+	border-left: 1px solid var(--surface-border);
 }
 
 .slider-content-container {
