@@ -266,15 +266,16 @@ const getXDDArtifacts = async (
 		url += `query_all=${term}`;
 	}
 	if (extractionTypes) {
-		// for (let i = 0; i < extractionTypes.length; i++) {
-		url += `&ASKEM_CLASS=Figure,Table,Document`;
-		// }
+		url += '&ASKEM_CLASS=';
+		for (let i = 0; i < extractionTypes.length; i++) {
+			url += `${extractionTypes[i]},`;
+		}
 	}
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
-	// console.log(rawdata.success?.data, url);
+	console.log(rawdata.success?.data, url);
 
 	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
 
@@ -452,10 +453,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		let extractionsSearchResults = [] as XDDArtifact[];
 		if (term !== '') {
 			extractionsSearchResults = await getXDDArtifacts('', term, [
-				XDDExtractionType.URL,
+				// XDDExtractionType.URL,
 				XDDExtractionType.Figure,
-				XDDExtractionType.Table,
-				XDDExtractionType.Document
+				XDDExtractionType.Table
+				// XDDExtractionType.Document
 			]);
 		}
 

@@ -19,22 +19,16 @@ const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
-// These asset types don't appear at the moment
-const extractionsWithImages = computed(() =>
-	props.asset.relatedExtractions
-		? props.asset.relatedExtractions?.filter((ex) => {
-				if (chosenExtractionFilter.value === 'Asset') {
-					return (
-						ex.askemClass === XDDExtractionType.URL || // may be redundant
-						ex.askemClass === XDDExtractionType.Figure ||
-						ex.askemClass === XDDExtractionType.Table ||
-						ex.askemClass === XDDExtractionType.Document
-					);
-				}
-				return ex.askemClass === chosenExtractionFilter.value;
-		  })
-		: []
-);
+const extractionsWithImages = computed(() => {
+	if (props.asset.relatedExtractions) {
+		if (chosenExtractionFilter.value === 'Asset') return props.asset.relatedExtractions;
+		return props.asset.relatedExtractions?.filter(
+			(ex) => ex.askemClass === chosenExtractionFilter.value
+		);
+	}
+	return [];
+});
+
 const relatedAsset = computed(() => extractionsWithImages.value[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
 
@@ -209,14 +203,15 @@ const formatFeatures = () => {
 .preview-and-options figure {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-between;
+	justify-content: flex-end;
 	width: 10rem;
+	height: 7rem;
 }
 
 .preview-and-options figure img {
-	margin: 0 auto;
-	height: 3rem;
-	max-width: fit-content;
+	margin: auto;
+	max-height: 5rem;
+	max-width: 90%;
 }
 
 .asset-nav-arrows {
