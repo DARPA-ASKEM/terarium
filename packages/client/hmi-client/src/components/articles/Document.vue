@@ -94,8 +94,13 @@
 					</div>
 				</AccordionTab>
 
+				<AccordionTab header="References">
+					<div v-for="(citation, key) of doc.citationList" :Key="key">
+						{{ key + 1 }}. {{ formatCitation(citation) }}
+					</div>
+				</AccordionTab>
+
 				<!--
-				<AccordionTab header="References"> </AccordionTab>
 				<AccordionTab header="Cited by"> </AccordionTab>
 				-->
 
@@ -255,6 +260,19 @@ const openPDF = () => {
 	window.open(docLink.value as string);
 };
 
+/**
+ * Format from xDD citation_list object.
+ *
+ * -  author (year), title, journal, doi
+ */
+const formatCitation = (obj: { [key: string]: string }) => {
+	if (Object.keys(obj).length <= 1) {
+		if (obj.unstructured_citation) return obj.unstructured_citation;
+		return '';
+	}
+	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+};
+
 // Image size will adapt depend on available space
 const imageSize = ref('160px');
 
@@ -274,10 +292,6 @@ onMounted(async () => {
 	padding: 2rem;
 	font-size: large;
 	overflow: auto;
-}
-
-.p-column-title {
-	font-weight: 600;
 }
 
 .row {
