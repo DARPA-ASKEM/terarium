@@ -577,6 +577,13 @@ const fetchData = async (
 					finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
 				}
 				if (searchParam?.xdd.related_search_enabled) {
+					// FIXME:
+					//   searchParam?.xdd.related_search_id will be equal to a publication docid/gddid which is an xDD ID
+					//   However, getRelatedArtifacts expects an ID that represents the internal ID for TDS artifacts
+					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given publication would exist becuase publications are external artifact by definition.
+					//
+					//   One way to simplify the issue is to query the /external/publications API path to search TDS for the internal artifact ID for a given xDD publication using the document gddid/docid as input.
+					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
 						searchParam?.xdd.related_search_id as string,
 						ProvenanceType.Publication
