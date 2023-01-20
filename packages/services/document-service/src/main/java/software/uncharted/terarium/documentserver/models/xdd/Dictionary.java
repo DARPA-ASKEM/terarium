@@ -36,7 +36,7 @@ public class Dictionary implements Serializable {
 	}
 
 	@JsonbProperty("last_updated")
-	public void setAbstract(Instant lastUpdated) {
+	public void setLastUpdated(Instant lastUpdated) {
 		this.lastUpdated = lastUpdated;
 	}
 

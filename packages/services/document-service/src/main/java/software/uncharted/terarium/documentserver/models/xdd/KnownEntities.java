@@ -14,7 +14,7 @@ public class KnownEntities implements Serializable {
 	public List<XDDUrlExtraction> urlExtractions;
 
 	@JsonbProperty("url_extractions")
-	public void setKnownEntities(List<XDDUrlExtraction> urlExtractions) {
+	public void setURLExtractions(List<XDDUrlExtraction> urlExtractions) {
 		this.urlExtractions = urlExtractions;
 	}
 
