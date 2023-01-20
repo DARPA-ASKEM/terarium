@@ -22,6 +22,7 @@ import {
 	XDDDictionary,
 	XDDResult,
 	XDDSearchParams,
+	XDDExtractionType,
 	XDD_RESULT_DEFAULT_PAGE_SIZE
 } from '../types/XDD';
 import { getFacets as getConceptFacets } from './concept';
@@ -256,13 +257,23 @@ const getAssets = async (
 //
 // fetch list of extractions data from the HMI server
 //
-const getXDDArtifacts = async (doc_doi: string, term?: string) => {
+const getXDDArtifacts = async (
+	doc_doi: string,
+	term?: string,
+	extractionTypes?: XDDExtractionType[]
+) => {
 	let url = '/xdd/extractions?';
 	if (doc_doi !== '') {
 		url += `doi=${doc_doi}`;
 	}
 	if (term !== undefined) {
 		url += `query_all=${term}`;
+	}
+	if (extractionTypes) {
+		url += '&ASKEM_CLASS=';
+		for (let i = 0; i < extractionTypes.length; i++) {
+			url += `${extractionTypes[i]},`;
+		}
 	}
 
 	const res = await API.get(url);
@@ -422,7 +433,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			articles.forEach((article) => {
 				if (article.highlight) {
 					article.highlight = article.highlight.map((h) =>
-						h.replaceAll(term, `<span style='background-color: yellow'>${term}</span>`)
+						h.replaceAll(
+							term,
+							`<span style='background-color: #67d2c3; border-radius: 3px;'>${term}</span>`
+						)
 					);
 				}
 			});
@@ -443,7 +457,12 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
 		if (term !== '') {
-			extractionsSearchResults = await getXDDArtifacts('', term);
+			// Temporary call to get a sufficient amount of extractions
+			// (Every call is limited to providing 30 extractions)
+			extractionsSearchResults = [
+				...(await getXDDArtifacts('', term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
+				...(await getXDDArtifacts('', term, [XDDExtractionType.Document]))
+			];
 		}
 
 		return {
