@@ -38,10 +38,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import * as EventService from '@/services/event';
+import { EventType } from '@/types/EventType';
 
 const props = defineProps<{
 	text?: string;
@@ -65,6 +67,7 @@ const clearText = () => {
 
 const execSearch = () => {
 	emit('search-text-changed', searchText.value);
+	EventService.create(EventType.Search, undefined, searchText.value);
 };
 
 function addSearchTerm(term) {
