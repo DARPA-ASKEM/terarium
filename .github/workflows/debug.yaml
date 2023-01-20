@@ -33,7 +33,7 @@ jobs:
         id: targets
         run: |
           set -x
-          docker verrsion
+          docker version
           docker buildx version
           if [[ '${{ github.ref_type }}' == 'branch' && '${{ github.ref_name }}' == 'main' ]]; then
             BAKE_GROUP=staging
