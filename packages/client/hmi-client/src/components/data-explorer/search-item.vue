@@ -19,9 +19,25 @@ const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
-const extractionsWithImages = computed(() => {
+const urlExtractions = computed(() => {
+	if (
+		props.resourceType === ResourceType.XDD &&
+		props.asset.knownEntities &&
+		props.asset.knownEntities.urlExtractions.length > 0
+	) {
+		console.log(props.asset.knownEntities);
+		return props.asset.knownEntities.urlExtractions;
+	}
+	return [];
+});
+
+const extractions = computed(() => {
 	if (props.asset.relatedExtractions) {
-		if (chosenExtractionFilter.value === 'Asset') return props.asset.relatedExtractions;
+		if (chosenExtractionFilter.value === 'Asset') {
+			if (urlExtractions.value.length > 0)
+				return [...props.asset.relatedExtractions, urlExtractions.value];
+			return props.asset.relatedExtractions;
+		}
 		return props.asset.relatedExtractions?.filter(
 			(ex) => ex.askemClass === chosenExtractionFilter.value
 		);
@@ -29,8 +45,10 @@ const extractionsWithImages = computed(() => {
 	return [];
 });
 
-const relatedAsset = computed(() => extractionsWithImages.value[relatedAssetPage.value]);
+const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
+
+console.log(extractions.value);
 
 watch(
 	() => props.asset,
@@ -41,9 +59,10 @@ watch(
 
 function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
+	if (newPage > -1 && newPage < extractions.value.length) {
 		relatedAssetPage.value = newPage;
 	}
+	console.log(relatedAsset.value);
 }
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
@@ -143,19 +162,25 @@ const formatFeatures = () => {
 		</div>
 		<div class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
-				<img
-					v-if="relatedAsset && relatedAsset.properties.image"
-					:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
-					class="extracted-assets"
-					alt="asset"
-				/>
+				<template v-if="relatedAsset">
+					<img
+						v-if="relatedAsset.properties.image"
+						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
+						class="extracted-assets"
+						alt="asset"
+					/>
+					<div v-else-if="relatedAsset.properties.DOI">DOI: {{ relatedAsset.properties.DOI }}</div>
+				</template>
 				<div class="asset-nav-arrows">
-					<template v-if="extractionsWithImages.length > 0">
+					<span class="asset-pages" v-if="extractions.length > 0">
 						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-						{{ chosenExtractionFilter }} {{ relatedAssetPage + 1 }} of
-						{{ extractionsWithImages.length }}
+						<span>
+							{{ chosenExtractionFilter }}
+							<span class="asset-number">{{ relatedAssetPage + 1 }}</span> of
+							<span class="asset-number"> {{ extractions.length }}</span>
+						</span>
 						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
-					</template>
+					</span>
 					<template v-else> No {{ chosenExtractionFilter }}s </template>
 				</div>
 			</figure>
@@ -174,9 +199,10 @@ const formatFeatures = () => {
 <style scoped>
 .search-item {
 	background-color: var(--surface-a);
-	color: var(--text-color-secondary);
+	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
+	font-size: 12px;
 	display: flex;
 	justify-content: space-between;
 }
@@ -198,13 +224,14 @@ const formatFeatures = () => {
 
 .preview-and-options {
 	display: flex;
+	gap: 0.5rem;
 }
 
 .preview-and-options figure {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
-	width: 10rem;
+	width: 8rem;
 	height: 7rem;
 }
 
@@ -215,9 +242,17 @@ const formatFeatures = () => {
 }
 
 .asset-nav-arrows {
+	text-align: center;
+}
+
+.asset-nav-arrows .asset-pages {
 	display: flex;
-	justify-content: center;
+	justify-content: space-between;
 	align-items: center;
+}
+
+.asset-nav-arrows .asset-number {
+	color: var(--text-color-primary);
 }
 
 .title,
@@ -238,13 +273,14 @@ const formatFeatures = () => {
 }
 
 .title {
-	font-weight: 500;
 	color: var(--text-color-primary);
+	font-size: 1rem;
 	margin: 0.5rem 0 0.25rem 0;
 }
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
+	font-size: 14px;
 }
 
 button {
@@ -258,6 +294,11 @@ i {
 	padding: 0.2rem;
 	border-radius: 3px;
 	z-index: 2;
+	font-size: 12px;
+}
+
+.preview-and-options button i {
+	font-size: 14px;
 }
 
 .pi[active='true'] {

@@ -468,9 +468,14 @@ onUnmounted(() => {
 	min-height: 0;
 }
 
+.results-content {
+	display: flex;
+	gap: 0.5rem;
+	margin: 0.5rem;
+}
+
 .secondary-header {
 	display: flex;
-	padding: 1rem 0;
 	justify-content: space-between;
 	align-items: center;
 	height: var(--nav-bar-height);
@@ -510,10 +515,6 @@ onUnmounted(() => {
 .button-group button.active {
 	background: var(--primary-color-lighter);
 	cursor: default;
-}
-
-.results-content {
-	margin: 0 10px;
 }
 
 .facets-panel {

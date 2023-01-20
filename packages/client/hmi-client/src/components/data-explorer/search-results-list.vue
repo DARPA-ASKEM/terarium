@@ -1,6 +1,8 @@
 <template>
-	<div v-if="resultsCount === 0">Loading...</div>
-	<div v-else>Showing {{ resultsCount }} item(s).</div>
+	<div class="results-count">
+		<template v-if="resultsCount === 0">Loading...</template>
+		<template v-else>Showing {{ resultsCount }} item(s)</template>
+	</div>
 	<ul>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
@@ -124,9 +126,7 @@ ul {
 	overflow-y: auto;
 }
 
-.results-count-label {
-	font-weight: bold;
-	margin: 4px;
-	align-self: center;
+.results-count {
+	color: var(--text-color-subdued);
 }
 </style>

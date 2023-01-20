@@ -275,8 +275,6 @@ const getXDDArtifacts = async (
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
-	console.log(rawdata.success?.data, url);
-
 	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
 
 	return [] as XDDArtifact[];
@@ -431,7 +429,10 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			articles.forEach((article) => {
 				if (article.highlight) {
 					article.highlight = article.highlight.map((h) =>
-						h.replaceAll(term, `<span style='background-color: #92E192ff'>${term}</span>`)
+						h.replaceAll(
+							term,
+							`<span style='background-color: #67d2c3; border-radius: 3px;'>${term}</span>`
+						)
 					);
 				}
 			});
@@ -452,12 +453,12 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
 		if (term !== '') {
-			extractionsSearchResults = await getXDDArtifacts('', term, [
-				// XDDExtractionType.URL,
-				XDDExtractionType.Figure,
-				XDDExtractionType.Table
-				// XDDExtractionType.Document
-			]);
+			// Temporary call to get a sufficient amount of extractions
+			// (Every call is limited to providing 30 extractions)
+			extractionsSearchResults = [
+				...(await getXDDArtifacts('', term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
+				...(await getXDDArtifacts('', term, [XDDExtractionType.Document]))
+			];
 		}
 
 		return {
