@@ -48,7 +48,10 @@ import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
+import { useRouter } from 'vue-router';
 import AssetCard from '@/components/data-explorer/asset-card.vue';
+
+const router = useRouter();
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -144,6 +147,7 @@ const addAssetsToProject = async (projectName?: string) => {
 	addResourcesToProject(projectId);
 
 	emit('close');
+	router.push(`/projects/${projectId}`);
 };
 
 onMounted(async () => {

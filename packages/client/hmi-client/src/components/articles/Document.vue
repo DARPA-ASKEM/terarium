@@ -3,8 +3,7 @@
 		<div v-if="doc">
 			<div class="journal">{{ doc.journal }}</div>
 			<h4 class="title">
-				<a v-if="docLink" :href="docLink" rel="noreferrer noopener">{{ doc.title }}</a>
-				<template v-else>{{ doc.title }}</template>
+				{{ doc.title }}
 			</h4>
 			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
 			<br />
@@ -17,19 +16,19 @@
 					<div class="publisher">{{ doc.publisher }}</div>
 					<div class="doi">DOI: {{ doi }}</div>
 				</div>
-				<Button label="Open PDF"></Button>
+				<Button v-if="docLink" label="Open PDF" @click="openPDF"> </Button>
 			</div>
 
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
-				<AccordionTab header="Abstract">
-					{{ formatAbstract(doc) }}
+				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
+					{{ formattedAbstract }}
 				</AccordionTab>
 
 				<!--
 				<AccordionTab header="Snippets"> </AccordionTab>
 				-->
 
-				<AccordionTab header="Figures">
+				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img
@@ -45,7 +44,7 @@
 					</div>
 				</AccordionTab>
 
-				<AccordionTab header="Tables">
+				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img
@@ -61,7 +60,7 @@
 					</div>
 				</AccordionTab>
 
-				<AccordionTab header="Equations">
+				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img
@@ -77,7 +76,7 @@
 					</div>
 				</AccordionTab>
 
-				<AccordionTab header="URLs">
+				<AccordionTab v-if="urlArtifacts.length > 0" header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -86,7 +85,7 @@
 					</div>
 				</AccordionTab>
 
-				<AccordionTab header="Others">
+				<AccordionTab v-if="otherArtifacts.length > 0" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
 						<b>{{ ex.properties.title }}</b>
 						{{ ex.properties.caption }}
@@ -95,13 +94,17 @@
 					</div>
 				</AccordionTab>
 
+				<AccordionTab header="References">
+					<div v-for="(citation, key) of doc.citationList" :Key="key">
+						{{ key + 1 }}. {{ formatCitation(citation) }}
+					</div>
+				</AccordionTab>
+
 				<!--
-				<AccordionTab header="Other versions"> </AccordionTab>
-				-->
-				<AccordionTab header="References"> </AccordionTab>
 				<AccordionTab header="Cited by"> </AccordionTab>
 				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
 				<AccordionTab header="Provenance"> </AccordionTab>
+				-->
 			</Accordion>
 		</div>
 	</section>
@@ -149,26 +152,31 @@ const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
 );
 
-const formatAbstract = (d: XDDArticle) =>
-	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
-	'[no abstract]';
+// const formatAbstract = (d: XDDArticle) =>
+// 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
+// 	'[no abstract]';
+
+const formattedAbstract = computed(() => {
+	if (!doc.value || !doc.value.abstractText) return '';
+	return doc.value.abstractText;
+});
 
 const doi = computed(() => getDocumentDoi(doc.value));
 
 const artifacts = ref<XDDArtifact[]>([]);
-const figureArtifacts = computed(() =>
-	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure)
+const figureArtifacts = computed(
+	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
-const tableArtifacts = computed(() =>
-	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table)
+const tableArtifacts = computed(
+	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
-const equationArtifacts = computed(() =>
-	artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation)
+const equationArtifacts = computed(
+	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
 );
 const urlArtifacts = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
 		? doc.value.knownEntities.urlExtractions
-		: null
+		: []
 );
 
 const otherArtifacts = computed(() => {
@@ -199,6 +207,23 @@ watch(doi, (currentValue, oldValue) => {
 	}
 });
 
+const openPDF = () => {
+	window.open(docLink.value as string);
+};
+
+/**
+ * Format from xDD citation_list object.
+ *
+ * -  author (year), title, journal, doi
+ */
+const formatCitation = (obj: { [key: string]: string }) => {
+	if (Object.keys(obj).length <= 1) {
+		if (obj.unstructured_citation) return obj.unstructured_citation;
+		return '';
+	}
+	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+};
+
 // Image size will adapt depend on available space
 const imageSize = ref('160px');
 
@@ -216,6 +241,7 @@ onMounted(async () => {
 .doc-view-container {
 	padding: 2rem;
 	font-size: large;
+	overflow-y: auto;
 }
 
 .row {
