@@ -27,9 +27,7 @@ public class LoggingResource {
 
 	@POST
 	@Path("/logs")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response letsDoThis(LoggingService logData) {
+	public Response echoLogs(LoggingService logData) {
 		logData.echoLogs(securityIdentity.getPrincipal().getName());
 		return Response.ok().build();
 	}
