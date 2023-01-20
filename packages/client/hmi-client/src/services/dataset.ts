@@ -51,7 +51,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
 async function downloadRawFile(datasetId: string): Promise<string | null> {
 	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
 	const response = await API.get(
-		`/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false`
+		`/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`
 	);
 	return response?.data ?? null;
 }
