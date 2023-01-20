@@ -267,7 +267,7 @@ const getXDDArtifacts = async (
 	}
 	if (extractionTypes) {
 		// for (let i = 0; i < extractionTypes.length; i++) {
-		url += `&ASKEM_CLASS=Figure`;
+		url += `&ASKEM_CLASS=Figure,Table,Document`;
 		// }
 	}
 
