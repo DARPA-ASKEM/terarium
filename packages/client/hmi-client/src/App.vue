@@ -69,6 +69,9 @@ watch(
 			@related-search-terms-updated="updateRelatedSearchTerms"
 		/>
 	</main>
+	<footer>
+		<img src="@assets/images/Uncharted-logo.png" alt="logo" class="uncharted-logo" />
+	</footer>
 </template>
 
 <style scoped>
@@ -96,5 +99,18 @@ main {
 
 .data-explorer {
 	z-index: 3;
+}
+
+footer {
+	width: 100%;
+	height: 48px;
+	background-color: #344054;
+	flex: none;
+	display: flex;
+	align-items: center;
+}
+
+.uncharted-logo {
+	padding-left: 1rem;
 }
 </style>
