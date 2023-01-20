@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { watch, ref, computed } from 'vue';
-import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { watch, ref, computed, ComputedRef } from 'vue';
+import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
@@ -20,27 +20,41 @@ const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
 const urlExtractions = computed(() => {
-	if (
-		props.resourceType === ResourceType.XDD &&
-		props.asset.knownEntities &&
-		props.asset.knownEntities.urlExtractions.length > 0
-	) {
-		console.log(props.asset.knownEntities);
-		return props.asset.knownEntities.urlExtractions;
+	// work in progress weird integration
+	if (props.asset.relatedExtractions) {
+		// const documents = props.asset.relatedExtractions?.filter(
+		// 	(ex) => ex.askemClass === XDDExtractionType.Document
+		// );
+		// 	for (let i = 0; i < documents.length; i++) {
+		// 	}
+		// console.log(documents)
+		// 	if (
+		// 		props.resourceType === ResourceType.XDD &&
+		// 		props.asset.knownEntities &&
+		// 		props.asset.knownEntities.urlExtractions.length > 0
+		// 	) {
+		// 		// console.log(props.asset.knownEntities);
+		// 		return props.asset.knownEntities.urlExtractions;
+		// 	}
 	}
 	return [];
 });
 
-const extractions = computed(() => {
+const extractions: ComputedRef<XDDUrlExtraction[] & XDDArtifact[]> = computed(() => {
 	if (props.asset.relatedExtractions) {
 		if (chosenExtractionFilter.value === 'Asset') {
 			if (urlExtractions.value.length > 0)
-				return [...props.asset.relatedExtractions, urlExtractions.value];
-			return props.asset.relatedExtractions;
+				return [...props.asset.relatedExtractions, ...urlExtractions.value] as XDDUrlExtraction[] &
+					XDDArtifact[];
+
+			return props.asset.relatedExtractions as XDDUrlExtraction[] & XDDArtifact[];
 		}
+		if (chosenExtractionFilter.value === XDDExtractionType.URL)
+			return urlExtractions.value as XDDUrlExtraction[] & XDDArtifact[];
+
 		return props.asset.relatedExtractions?.filter(
 			(ex) => ex.askemClass === chosenExtractionFilter.value
-		);
+		) as XDDUrlExtraction[] & XDDArtifact[];
 	}
 	return [];
 });
@@ -48,7 +62,12 @@ const extractions = computed(() => {
 const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
 
-console.log(extractions.value);
+watch(
+	() => chosenExtractionFilter.value,
+	() => {
+		relatedAssetPage.value = 0;
+	}
+);
 
 watch(
 	() => props.asset,
@@ -184,7 +203,16 @@ const formatFeatures = () => {
 						class="extracted-assets"
 						alt="asset"
 					/>
-					<div v-else-if="relatedAsset.properties.DOI">DOI: {{ relatedAsset.properties.DOI }}</div>
+					<div class="link" v-else-if="relatedAsset.properties.documentBibjson.link">
+						<a
+							:href="relatedAsset.properties.documentBibjson.link[0].url"
+							@click.stop
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							{{ relatedAsset.properties.documentBibjson.link[0].url }}
+						</a>
+					</div>
 				</template>
 				<div class="asset-nav-arrows">
 					<span class="asset-pages" v-if="extractions.length > 0">
@@ -254,6 +282,11 @@ const formatFeatures = () => {
 	margin: auto;
 	max-height: 5rem;
 	max-width: 90%;
+}
+
+.preview-and-options .link {
+	overflow-wrap: break-word;
+	margin: auto 0;
 }
 
 .asset-nav-arrows {

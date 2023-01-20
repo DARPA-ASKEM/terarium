@@ -68,7 +68,6 @@ const togglePreview = (asset: ResultType) => {
 
 const filteredAssets = computed(() => {
 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
-	console.log(searchResults);
 
 	if (searchResults) {
 		if (props.resultType === ResourceType.XDD) {
