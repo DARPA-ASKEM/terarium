@@ -36,7 +36,7 @@ public class EventResource {
 														@QueryParam("projectId") final Long projectId,
 														@QueryParam("search") final String likeValue,
 														@QueryParam("limit") @DefaultValue("10") final int limit) {
-		if (type == null || projectId == null) {
+		if (type == null) {
 			return Response
 				.status(Response.Status.BAD_REQUEST)
 				.build();

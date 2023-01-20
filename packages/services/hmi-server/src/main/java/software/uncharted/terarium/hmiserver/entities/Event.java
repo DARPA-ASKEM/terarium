@@ -36,7 +36,6 @@ public class Event extends PanacheEntityBase implements Serializable {
 	@Column(nullable = false)
 	private Long timestampMillis = Instant.now().toEpochMilli();
 
-	@Column(nullable = false)
 	private Long projectId;
 
 	@Column(nullable = false)
@@ -51,7 +50,7 @@ public class Event extends PanacheEntityBase implements Serializable {
 	/**
 	 * Gets events by type and an option search string for values
 	 * @param type				the {@link EventType}
-	 * @param projectId		the project id
+	 * @param projectId		the optional project id
 	 * @param username		the username of the current user
 	 * @param like				optional search string for values of matching events
 	 * @param limit				the maximum number of events to return
@@ -60,9 +59,17 @@ public class Event extends PanacheEntityBase implements Serializable {
 	public static List<Event> findAllByTypeAndProjectAndUsernameAndLikeLimit(final EventType type, final Long projectId, final String username, String like, int limit) {
 		PanacheQuery<Event> query;
 		if (like != null && !like.isEmpty()) {
-			query = find("type = ?1 and projectid = ?2 and username = ?3 and value like ?4", Sort.descending("timestampmillis"), type, projectId, username, "%" + like + "%");
+			if (projectId != null) {
+				query = find("type = ?1 and projectid = ?2 and username = ?3 and value like ?4", Sort.descending("timestampmillis"), type, projectId, username, "%" + like + "%");
+			} else {
+				query = find("type = ?1 and username = ?2 and value like ?3", Sort.descending("timestampmillis"), type, username, "%" + like + "%");
+			}
 		} else {
-			query = find("type = ?1 and projectid = ?2 and username = ?3", Sort.descending("timestampmillis"), type, projectId, username);
+			if (projectId != null) {
+				query = find("type = ?1 and projectid = ?2 and username = ?3", Sort.descending("timestampmillis"), type, projectId, username);
+			} else {
+				query = find("type = ?1 and username = ?2", Sort.descending("timestampmillis"), type, username);
+			}
 		}
 
 		return query
