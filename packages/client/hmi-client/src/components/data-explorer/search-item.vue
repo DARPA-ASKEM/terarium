@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { watch, ref, computed } from 'vue';
-import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { watch, ref, computed, ComputedRef } from 'vue';
+import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { isXDDArticle } from '@/utils/data-util';
+import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
 
 const props = defineProps<{
@@ -17,28 +17,57 @@ const props = defineProps<{
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
-const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
+const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
-// These asset types don't appear at the moment
-const extractionsWithImages = computed(() =>
-	props.asset.relatedExtractions
-		? props.asset.relatedExtractions?.filter((ex) => {
-				if (chosenExtractionFilter.value === null) {
-					return (
-						ex.askemClass === XDDExtractionType.Figure ||
-						ex.askemClass === XDDExtractionType.Table ||
-						ex.askemClass === XDDExtractionType.Equation ||
-						ex.askemClass === XDDExtractionType.URL ||
-						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
-						ex.askemClass === XDDExtractionType.Document // remove this later just for testing preview pagination
-					);
-				}
-				return ex.askemClass === chosenExtractionFilter.value;
-		  })
-		: []
+const urlExtractions = computed(() => {
+	// work in progress weird integration
+	if (props.asset.relatedExtractions) {
+		// const documents = props.asset.relatedExtractions?.filter(
+		// 	(ex) => ex.askemClass === XDDExtractionType.Document
+		// );
+		// 	for (let i = 0; i < documents.length; i++) {
+		// 	}
+		// console.log(documents)
+		// 	if (
+		// 		props.resourceType === ResourceType.XDD &&
+		// 		props.asset.knownEntities &&
+		// 		props.asset.knownEntities.urlExtractions.length > 0
+		// 	) {
+		// 		// console.log(props.asset.knownEntities);
+		// 		return props.asset.knownEntities.urlExtractions;
+		// 	}
+	}
+	return [];
+});
+
+const extractions: ComputedRef<XDDUrlExtraction[] & XDDArtifact[]> = computed(() => {
+	if (props.asset.relatedExtractions) {
+		if (chosenExtractionFilter.value === 'Asset') {
+			if (urlExtractions.value.length > 0)
+				return [...props.asset.relatedExtractions, ...urlExtractions.value] as XDDUrlExtraction[] &
+					XDDArtifact[];
+
+			return props.asset.relatedExtractions as XDDUrlExtraction[] & XDDArtifact[];
+		}
+		if (chosenExtractionFilter.value === XDDExtractionType.URL)
+			return urlExtractions.value as XDDUrlExtraction[] & XDDArtifact[];
+
+		return props.asset.relatedExtractions?.filter(
+			(ex) => ex.askemClass === chosenExtractionFilter.value
+		) as XDDUrlExtraction[] & XDDArtifact[];
+	}
+	return [];
+});
+
+const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
+const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
+
+watch(
+	() => chosenExtractionFilter.value,
+	() => {
+		relatedAssetPage.value = 0;
+	}
 );
-const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight);
 
 watch(
 	() => props.asset,
@@ -49,14 +78,15 @@ watch(
 
 function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
+	if (newPage > -1 && newPage < extractions.value.length) {
 		relatedAssetPage.value = newPage;
 	}
+	console.log(relatedAsset.value);
 }
 
-function updateExtractionFilter(extractionType: XDDExtractionType | null) {
+function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? null : extractionType;
+		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
 }
 
 const isSelected = () =>
@@ -64,6 +94,14 @@ const isSelected = () =>
 		if (isXDDArticle(item)) {
 			const itemAsArticle = item as XDDArticle;
 			return itemAsArticle.title === props.asset.title;
+		}
+		if (isDataset(item)) {
+			const itemAsDataset = item as Dataset;
+			return itemAsDataset.id === props.asset.id;
+		}
+		if (isModel(item)) {
+			const itemAsModel = item as Model;
+			return itemAsModel.id === props.asset.id;
 		}
 		return false;
 	});
@@ -142,9 +180,7 @@ const formatFeatures = () => {
 				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
 			</div>
 			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets.splice(0, 3)" :key="snippet">
-					...<span v-html="snippet"></span>...
-				</li>
+				<li v-for="snippet in snippets" :key="snippet">...<span v-html="snippet"></span>...</li>
 			</ul>
 			<div class="description">{{ asset.description }}</div>
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
@@ -158,21 +194,37 @@ const formatFeatures = () => {
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
-		<div class="right">
+		<div class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
-				<img
-					v-if="relatedAsset && relatedAsset.properties.image"
-					:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
-					class="extracted-assets"
-					alt="asset"
-				/>
+				<template v-if="relatedAsset">
+					<img
+						v-if="relatedAsset.properties.image"
+						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
+						class="extracted-assets"
+						alt="asset"
+					/>
+					<div class="link" v-else-if="relatedAsset.properties.documentBibjson.link">
+						<a
+							:href="relatedAsset.properties.documentBibjson.link[0].url"
+							@click.stop
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							{{ relatedAsset.properties.documentBibjson.link[0].url }}
+						</a>
+					</div>
+				</template>
 				<div class="asset-nav-arrows">
-					<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-					<template v-if="extractionsWithImages.length > 0">
-						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
-					</template>
+					<span class="asset-pages" v-if="extractions.length > 0">
+						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
+						<span>
+							{{ chosenExtractionFilter }}
+							<span class="asset-number">{{ relatedAssetPage + 1 }}</span> of
+							<span class="asset-number"> {{ extractions.length }}</span>
+						</span>
+						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
+					</span>
 					<template v-else> No {{ chosenExtractionFilter }}s </template>
-					<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 				</div>
 			</figure>
 			<button type="button" v-if="isInCart">
@@ -189,10 +241,11 @@ const formatFeatures = () => {
 
 <style scoped>
 .search-item {
-	background-color: white;
-	color: var(--text-color-secondary);
+	background-color: var(--surface-a);
+	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
+	font-size: 12px;
 	display: flex;
 	justify-content: space-between;
 }
@@ -203,7 +256,7 @@ const formatFeatures = () => {
 }
 
 .search-item[active='true'] {
-	outline: 1px solid var(--primary-color-light);
+	outline: 1px solid var(--primary-color-dark);
 }
 
 .type-and-filters {
@@ -212,8 +265,42 @@ const formatFeatures = () => {
 	gap: 2rem;
 }
 
-.asset-nav-arrows {
+.preview-and-options {
 	display: flex;
+	gap: 0.5rem;
+}
+
+.preview-and-options figure {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	width: 8rem;
+	height: 7rem;
+}
+
+.preview-and-options figure img {
+	margin: auto;
+	max-height: 5rem;
+	max-width: 90%;
+}
+
+.preview-and-options .link {
+	overflow-wrap: break-word;
+	margin: auto 0;
+}
+
+.asset-nav-arrows {
+	text-align: center;
+}
+
+.asset-nav-arrows .asset-pages {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.asset-nav-arrows .asset-number {
+	color: var(--text-color-primary);
 }
 
 .title,
@@ -228,27 +315,20 @@ const formatFeatures = () => {
 	overflow: hidden;
 }
 
-.right {
-	display: flex;
-}
-
-.right figure {
-	width: 10rem;
-}
-
 .asset-filters {
 	display: flex;
 	gap: 0.5rem;
 }
 
 .title {
-	font-weight: 500;
 	color: var(--text-color-primary);
+	font-size: 1rem;
 	margin: 0.5rem 0 0.25rem 0;
 }
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
+	font-size: 14px;
 }
 
 button {
@@ -262,6 +342,11 @@ i {
 	padding: 0.2rem;
 	border-radius: 3px;
 	z-index: 2;
+	font-size: 12px;
+}
+
+.preview-and-options button i {
+	font-size: 14px;
 }
 
 .pi[active='true'] {
