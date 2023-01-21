@@ -21,10 +21,13 @@
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
 				/>
-				<Button
-					label="Add to Cart"
-					@click="emit('toggle-data-item-selected', { item: previewItem })"
-				></Button>
+				<footer>
+					<Button
+						label="ADD TO CART"
+						@click="emit('toggle-data-item-selected', { item: previewItem })"
+						class="add-to-cart"
+					></Button>
+				</footer>
 				<!-- TOOD
 				<Button label="Add to Project"></Button>
 				-->
@@ -114,15 +117,34 @@ i {
 	display: flex;
 	align-items: center;
 }
+
 .slider-header.content {
 	flex-direction: row-reverse;
 	justify-content: space-between;
 }
+
 .slider-header.tab {
 	justify-content: center;
 }
+
 .slider-header-item {
 	font-weight: bold;
 	margin: 12px;
+}
+
+footer {
+	border-top: 1px solid var(--surface-border);
+	background-color: var(--surface-section);
+	position: fixed;
+	height: 5rem;
+	bottom: 0;
+	width: calc(35% - 48px);
+	display: flex;
+	align-items: center;
+}
+
+.add-to-cart {
+	height: 1.5rem;
+	margin-left: 1rem;
 }
 </style>
