@@ -149,6 +149,9 @@ jobs:
       # 2.7 - Setup Docker BuildX for multi platform building
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        with:
+          driver-opts: |
+            image=moby/buildkit:v0.10.6
 
       # 2.8 - Build and push Docker Images
       - name: Build Images using BuildX Bake
