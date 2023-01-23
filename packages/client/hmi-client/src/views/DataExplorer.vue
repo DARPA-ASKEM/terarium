@@ -376,7 +376,7 @@ watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
 
 	// user has changed some of the facet filter, so re-fetch data
-	dirtyResults.value[resultType.value] = true;
+	dirtyResults.value[resultType.value] = false; // true -> If we want to refetch data
 
 	await executeSearch();
 

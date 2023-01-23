@@ -13,6 +13,7 @@ export enum ResourceType {
 	XDD = 'xdd',
 	MODEL = 'model',
 	DATASET = 'dataset',
+	PUBLICATIONS = 'publications',
 	ALL = 'all'
 }
 

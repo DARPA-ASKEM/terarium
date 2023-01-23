@@ -7,7 +7,7 @@ import {
 	SearchResults
 } from '@/types/common';
 import API from '@/api/api';
-import { getDatasetFacets, getModelFacets } from '@/utils/facets';
+import { getDatasetFacets, getModelFacets, getArticleFacets } from '@/utils/facets';
 import { applyFacetFilters } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -94,7 +94,7 @@ const getAssets = async (
 	const results = {} as FullSearchResults;
 
 	// fetch list of model or datasets data from the HMI server
-	let assetList: Model[] | Dataset[] = [];
+	let assetList: Model[] | Dataset[] | XDDArticle[] = [];
 	let projectAssetType: ProjectAssetTypes;
 
 	switch (resourceType) {
@@ -105,6 +105,9 @@ const getAssets = async (
 		case ResourceType.DATASET:
 			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
 			projectAssetType = ProjectAssetTypes.DATASETS;
+			break;
+		case ResourceType.PUBLICATIONS:
+			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -139,6 +142,10 @@ const getAssets = async (
 		case ResourceType.DATASET:
 			assetResults = assetResults as Dataset[];
 			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			break;
+		case ResourceType.PUBLICATIONS:
+			assetResults = assetResults as XDDArticle[];
+			assetFacets = getArticleFacets(assetResults); // will be moved to HMI server - keep this for now
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -231,6 +238,9 @@ const getAssets = async (
 				break;
 			case ResourceType.DATASET:
 				assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
+				break;
+			case ResourceType.PUBLICATIONS:
+				assetFacetsFiltered = getArticleFacets(assetResults as XDDArticle[]);
 				break;
 			default:
 				return results; // error or make new resource type compatible
