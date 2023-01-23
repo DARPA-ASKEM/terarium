@@ -44,15 +44,15 @@ class LogBuffer {
 
 	sendLogsToServer = async () => {
 		if (!this.isEmpty()) {
-			await API.post(`/logs/`, {
-				logs: this.getLogBuffer()
-			})
-				.then(() => {
-					this.clearLogs();
-				})
-				.catch((error) => {
-					console.error(error);
+			try {
+				const resp = await API.post(`/logs/`, {
+					logs: this.getLogBuffer()
 				});
+				const { status } = resp;
+				if (status !== 200) console.warn('POST to /logs did not return a 200');
+			} catch (error) {
+				console.error(error);
+			}
 		}
 	};
 }
