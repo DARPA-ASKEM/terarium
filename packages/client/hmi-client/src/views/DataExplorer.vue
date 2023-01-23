@@ -19,42 +19,45 @@
 			</slider-panel>
 			<div class="results-content">
 				<div class="secondary-header">
-					<div class="button-group">
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.XDD }"
+					<span class="p-buttonset">
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.XDD"
+							label="Papers"
+							icon="pi pi-file"
 							@click="updateResultType(ResourceType.XDD)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-							Papers
-						</button>
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.MODEL }"
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.MODEL"
+							label="Models"
+							icon="pi pi-share-alt"
 							@click="updateResultType(ResourceType.MODEL)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-							Models
-						</button>
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.DATASET }"
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.DATASET"
+							label="Datasets"
+							icon="pi pi-table"
 							@click="updateResultType(ResourceType.DATASET)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-							Datasets
-						</button>
-					</div>
-					<div class="button-group">
-						<button
-							type="button"
-							:class="{ active: viewType === ViewType.LIST }"
+						/>
+					</span>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-text p-button-sm"
+							:active="viewType === ViewType.LIST"
+							label="List"
+							icon="pi pi-list"
 							@click="viewType = ViewType.LIST"
-						>
-							List
-						</button>
-						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
-					</div>
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="viewType === ViewType.MATRIX"
+							label="Matrix"
+							icon="pi pi-th-large"
+							@click="viewType = ViewType.MATRIX"
+						/>
+					</span>
 				</div>
 				<search-results-list
 					v-if="viewType === ViewType.LIST"
@@ -93,6 +96,8 @@
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
+						@find-related-content="onFindRelatedContent"
+						@find-similar-content="onFindSimilarContent"
 						@remove-item="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
 					/>
@@ -119,23 +124,18 @@ import {
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType
+	ViewType,
+	SearchByExampleOptions
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
-import {
-	XDD_RESULT_DEFAULT_PAGE_SIZE,
-	XDDArticle,
-	FACET_FIELDS as XDD_FACET_FIELDS,
-	YEAR
-} from '@/types/XDD';
-import { Model } from '@/types/Model';
+import { XDD_RESULT_DEFAULT_PAGE_SIZE, FACET_FIELDS as XDD_FACET_FIELDS, YEAR } from '@/types/XDD';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceTypeIcon, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { getResourceID, isXDDArticle, isModel, isDataset, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { Dataset as IDataset } from '@/types/Dataset';
 import { LocationQuery, useRoute } from 'vue-router';
+import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['search-query-changed', 'related-search-terms-updated']);
@@ -146,9 +146,18 @@ const props = defineProps<{
 const searchQuery = computed(() => props.query);
 const route = useRoute();
 
+const searchByExampleOptions = ref<SearchByExampleOptions>({
+	similarContent: false,
+	forwardCitation: false,
+	bakcwardCitation: false,
+	relatedContent: false
+});
+
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
+const searchByExampleItem = ref<ResultType | null>(null);
+const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
 const relatedSearchTerms = ref<string[]>([]);
@@ -221,7 +230,9 @@ const mergeResultsKeepRecentDuplicates = (
 const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
 	if (!dirtyResults.value[resultType.value]) return;
-	// TODO: only search (or fetch data) relevant to the currently selected tab
+
+	// only search (or fetch data) relevant to the currently selected tab or the search by example item
+	let searchType = resultType.value;
 
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
@@ -260,9 +271,44 @@ const executeSearch = async () => {
 			match: true,
 			additional_fields: 'title,abstract',
 			known_entities: 'url_extractions'
-		}
+		},
+		model: {},
+		dataset: {}
 	};
 
+	// handle the search-by-example for finding related articles, models, and/or datasets
+	if (executeSearchByExample.value && searchByExampleItem.value) {
+		const id = getResourceID(searchByExampleItem.value) as string;
+		//
+		// find related articles (which utilizes the xDD doc2vec API through the HMI server)
+		//
+		if (isXDDArticle(searchByExampleItem.value) && searchParams.xdd) {
+			if (searchByExampleOptions.value.similarContent) {
+				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
+			}
+			if (searchByExampleOptions.value.relatedContent) {
+				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
+			}
+			searchParams.xdd.related_search_id = id;
+			searchType = ResourceType.XDD;
+		}
+		//
+		// find related models (which utilizes the TDS provenance API through the HMI server)
+		//
+		if (isModel(searchByExampleItem.value) && searchParams.model) {
+			searchParams.model.related_search_enabled = executeSearchByExample.value;
+			searchParams.model.related_search_id = id;
+			searchType = ResourceType.MODEL;
+		}
+		//
+		// find related datasets (which utilizes the TDS provenance API through the HMI server)
+		//
+		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
+			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
+			searchParams.dataset.related_search_id = id;
+			searchType = ResourceType.DATASET;
+		}
+	}
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
 
 	//
@@ -313,7 +359,7 @@ const executeSearch = async () => {
 		searchWords,
 		searchParams,
 		searchParamsWithFacetFilters,
-		resultType.value
+		searchType
 	);
 
 	// cache unfiltered data
@@ -326,6 +372,60 @@ const executeSearch = async () => {
 	calculateFacets(allData, allDataFilteredWithFacets);
 
 	relatedSearchTerms.value = relatedWords.flat();
+};
+
+const disableSearchByExample = () => {
+	// disable search by example, if it was enabled
+	// FIXME/REVIEW: should switching to another tab make all fetches dirty?
+	executeSearchByExample.value = false;
+};
+
+const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
+	// user has requested a search by example, so re-fetch data
+	dirtyResults.value[resultType.value] = true;
+
+	// REVIEW: executing a similar content search means to find similar objects to the one selected:
+	//         if a paper is selected then find related papers (from xDD)
+	// REVIEW: executing a related content search means to find related artifacts to the one selected:
+	//         if a model/dataset/paper is selected then find related artifacts from TDS
+	if (searchOptions.similarContent || searchOptions.relatedContent) {
+		// NOTE the executeSearch will set proper search-by-example search parameters
+		//  and let the data service handles the fetch
+		executeSearchByExample.value = true;
+
+		await executeSearch();
+
+		searchByExampleItem.value = null;
+		dirtyResults.value[resultType.value] = false;
+	}
+};
+
+// helper function to bypass the search-by-example modal
+//  by executing a search by example and refreshing the output
+const onFindRelatedContent = (item: ResultType) => {
+	searchByExampleItem.value = item;
+	const searchOptions: SearchByExampleOptions = {
+		similarContent: false,
+		forwardCitation: false,
+		bakcwardCitation: false,
+		relatedContent: true
+	};
+	searchByExampleOptions.value = searchOptions;
+	onSearchByExample(searchByExampleOptions.value);
+};
+
+// helper function to bypass the search-by-example modal
+//  by executing a search by example and refreshing the output
+const onFindSimilarContent = (item: ResultType) => {
+	searchByExampleItem.value = item;
+	const searchOptions: SearchByExampleOptions = {
+		similarContent: true,
+		forwardCitation: false,
+		bakcwardCitation: false,
+		relatedContent: false
+	};
+	searchByExampleOptions.value = searchOptions;
+	onSearchByExample(searchByExampleOptions.value);
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -346,21 +446,8 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		return; // do not add to cart if the purpose is to toggel preview
 	}
 
-	selectedSearchItems.value.forEach((searchItem, indx) => {
-		if (isModel(item) && isModel(searchItem)) {
-			const itemAsModel = item as Model;
-			const searchItemAsModel = searchItem as Model;
-			if (searchItemAsModel.id === itemAsModel.id) foundIndx = indx;
-		} else if (isDataset(item) && isDataset(searchItem)) {
-			const itemAsDataset = item as IDataset;
-			const searchItemAsDataset = searchItem as IDataset;
-			if (searchItemAsDataset.id === itemAsDataset.id) foundIndx = indx;
-		} else if (isXDDArticle(item) && isXDDArticle(searchItem)) {
-			const itemAsArticle = item as XDDArticle;
-			const searchItemAsArticle = searchItem as XDDArticle;
-			if (searchItemAsArticle.title === itemAsArticle.title) foundIndx = indx;
-		}
-	});
+	// by now, the user has explicitly asked for this item to be added to the cart
+	foundIndx = selectedSearchItems.value.indexOf(item);
 	if (foundIndx >= 0) {
 		// item was already in the list so remove it
 		selectedSearchItems.value.splice(foundIndx, 1);
@@ -373,6 +460,8 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {
 	if (filtersUtil.isEqual(n, o)) return;
+
+	disableSearchByExample();
 
 	// user has changed some of the facet filter, so re-fetch data
 	dirtyResults.value[resultType.value] = true;
@@ -388,6 +477,7 @@ watch(searchQuery, async (newQuery) => {
 	emit('search-query-changed', newQuery);
 	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
 	// search term has changed, so all search results are dirty; need re-fetch
+	disableSearchByExample();
 	Object.values(ResourceType).forEach((key) => {
 		dirtyResults.value[key as string] = true;
 	});
@@ -404,18 +494,22 @@ watch(relatedSearchTerms, (newSearchTerms) => {
 const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
-		// if no data currently exist for the selected tab,
-		//  or if data exists but outdated then we should refetch
-		const resList = dataItemsUnfiltered.value.find(
-			(res) => res.searchSubsystem === resultType.value
-		);
-		if (!resList || dirtyResults.value[resultType.value]) {
-			await executeSearch();
-			dirtyResults.value[resultType.value] = false;
-		} else {
-			// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
-			// re-calculate the facets
-			calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+
+		if (executeSearchByExample.value === false) {
+			// if no data currently exist for the selected tab,
+			//  or if data exists but outdated then we should refetch
+			const resList = dataItemsUnfiltered.value.find(
+				(res) => res.searchSubsystem === resultType.value
+			);
+			if (!resList || dirtyResults.value[resultType.value]) {
+				disableSearchByExample();
+				await executeSearch();
+				dirtyResults.value[resultType.value] = false;
+			} else {
+				// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
+				// re-calculate the facets
+				calculateFacets(dataItemsUnfiltered.value, dataItems.value);
+			}
 		}
 	}
 };
@@ -456,59 +550,8 @@ onUnmounted(() => {
 
 <style scoped>
 .data-explorer-container {
-	left: 0px;
-	top: 0px;
-	right: 0px;
 	display: flex;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
 	background-color: var(--surface-ground);
-}
-
-.secondary-header {
-	display: flex;
-	padding: 1rem 0;
-	justify-content: space-between;
-	align-items: center;
-	height: var(--nav-bar-height);
-}
-
-.button-group {
-	display: flex;
-}
-
-.button-group button {
-	display: flex;
-	align-items: center;
-	text-decoration: none;
-	background: transparent;
-	border: 1px solid black;
-	cursor: pointer;
-	padding: 0.25rem;
-	margin: auto;
-	border-left-width: 0;
-}
-
-.button-group button:first-child {
-	border-left-width: 1px;
-	border-top-left-radius: 0.5rem;
-	border-bottom-left-radius: 0.5rem;
-}
-
-.button-group button:last-child {
-	border-top-right-radius: 0.5rem;
-	border-bottom-right-radius: 0.5rem;
-}
-
-.button-group button:hover {
-	background: var(--gray-50);
-}
-
-.button-group button.active {
-	background: var(--primary-color-lighter);
-	cursor: default;
 }
 
 .data-explorer-container .facets-and-results-container {
@@ -520,7 +563,44 @@ onUnmounted(() => {
 }
 
 .results-content {
-	margin: 0 10px;
+	display: flex;
+	gap: 0.5rem;
+	margin: 0.5rem;
+}
+
+.secondary-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: var(--nav-bar-height);
+}
+
+.p-buttonset button {
+	outline: 1px solid var(--text-color-disabled);
+	border: none;
+	box-shadow: none;
+	background-color: var(--surface-a);
+	color: var(--text-color-primary);
+	padding: none;
+	padding: 0.3rem;
+}
+
+.p-buttonset button[active='true'],
+.p-button.p-button-text:enabled:focus {
+	font-weight: bold;
+	border: none;
+	background-color: var(--primary-color-lighter);
+}
+
+.button-group button:first-child {
+	border-left-width: 1px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
+}
+
+.button-group button:last-child {
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .facets-panel {

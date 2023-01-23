@@ -1,4 +1,8 @@
 <template>
+	<div class="results-count">
+		<template v-if="resultsCount === 0">Loading...</template>
+		<template v-else>Showing {{ resultsCount }} item(s)</template>
+	</div>
 	<ul>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
@@ -12,8 +16,6 @@
 			/>
 		</li>
 	</ul>
-	<div v-if="resultsCount === 0">Loading...</div>
-	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
 <script setup lang="ts">
@@ -68,10 +70,10 @@ const filteredAssets = computed(() => {
 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
 
 	if (searchResults) {
-		if (searchResults.xddExtractions && props.resultType === ResourceType.XDD) {
+		if (props.resultType === ResourceType.XDD) {
 			let articlesFromExtractions: XDDArticle[] = [];
 
-			if (searchResults.xddExtractions.length > 0) {
+			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
 				const docMap: { [docid: string]: XDDArticle } = {};
 				searchResults.xddExtractions.forEach((ex) => {
 					if (ex.properties.documentBibjson === undefined) return; // skip
@@ -116,15 +118,14 @@ ul {
 	flex-direction: column;
 	gap: 0.5rem;
 	list-style: none;
+	overflow-y: scroll;
 }
 
 .search-container {
 	overflow-y: auto;
 }
 
-.results-count-label {
-	font-weight: bold;
-	margin: 4px;
-	align-self: center;
+.results-count {
+	color: var(--text-color-subdued);
 }
 </style>
