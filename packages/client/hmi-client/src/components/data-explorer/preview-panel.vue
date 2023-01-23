@@ -23,7 +23,7 @@
 				/>
 				<footer>
 					<Button
-						label="ADD TO CART"
+						label="Add to cart"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
 						class="add-to-cart"
 					></Button>
