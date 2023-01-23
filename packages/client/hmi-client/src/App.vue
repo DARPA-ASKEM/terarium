@@ -125,7 +125,7 @@ main {
 footer {
 	width: 100%;
 	height: 48px;
-	background-color: var(--gray-800);
+	background-color: var(--footer);
 	flex: none;
 	display: flex;
 	align-items: center;
