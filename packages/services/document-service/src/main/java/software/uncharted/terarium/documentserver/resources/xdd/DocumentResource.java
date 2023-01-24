@@ -70,7 +70,6 @@ public class DocumentResource {
 				publisher = null;
 				additional_fields = null;
 				match = null;
-				known_entities = null;
 			}
 
 			XDDResponse<XDDArticlesResponseOK> doc = proxy.getDocuments(
