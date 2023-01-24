@@ -1,6 +1,7 @@
 <template>
 	<div class="results-count">
-		<template v-if="resultsCount === 0">Loading...</template>
+		<template v-if="isLoading">Loading...</template>
+		<template v-else-if="resultsCount === 0">No results found</template>
 		<template v-else>Showing {{ resultsCount }} item(s)</template>
 	</div>
 	<ul>
@@ -42,6 +43,10 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: ''
+	},
+	isLoading: {
+		type: Boolean,
+		default: true
 	}
 });
 
