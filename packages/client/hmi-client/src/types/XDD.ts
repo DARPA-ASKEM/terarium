@@ -33,6 +33,9 @@ export type XDDUrlExtraction = {
 
 export type XDDArticleKnownEntity = {
 	urlExtractions: XDDUrlExtraction[];
+	summaries: {
+		sections: { [key: string]: string };
+	};
 };
 
 export type XDDArticle = {
@@ -89,7 +92,6 @@ export type XDDArtifactProperties = {
 
 // XDD extraction object, which should match Extraction.java at the backend
 export type XDDArtifact = {
-	ASKEM_CLASS: string; // mapped from askemClass
 	askemClass: string;
 	properties: XDDArtifactProperties;
 	askemId: string;

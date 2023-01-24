@@ -30,7 +30,8 @@ public interface DocumentProxy {
 		@QueryParam("pubname") String pubname,
 		@QueryParam("publisher") String publisher,
 		@QueryParam("additional_fields") String additional_fields,
-		@QueryParam("match") String match
+		@QueryParam("match") String match,
+		@QueryParam("known_entities") String known_entities
 	);
 
 	@GET

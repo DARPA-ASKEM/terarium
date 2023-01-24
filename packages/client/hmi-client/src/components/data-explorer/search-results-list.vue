@@ -1,9 +1,13 @@
 <template>
 	<div class="results-count">
-		<template v-if="resultsCount === 0">Loading...</template>
+		<template v-if="isLoading">Loading...</template>
 		<template v-else>Showing {{ resultsCount }} item(s)</template>
 	</div>
-	<ul>
+	<div v-if="isLoading" class="loading-spinner">
+		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem"></i></div>
+	</div>
+	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
+	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
 				:asset="(asset as XDDArticle & Model & Dataset)"
@@ -42,6 +46,10 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: ''
+	},
+	isLoading: {
+		type: Boolean,
+		default: true
 	}
 });
 
@@ -119,6 +127,17 @@ ul {
 	gap: 0.5rem;
 	list-style: none;
 	overflow-y: scroll;
+}
+
+.loading-spinner {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 8rem;
+	flex-grow: 1;
+	background-color: var(--surface-ground);
+	color: var(--primary-color-dark);
+	font-weight: bold;
 }
 
 .search-container {
