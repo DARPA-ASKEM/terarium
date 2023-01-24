@@ -42,6 +42,13 @@ export type FullSearchResults = {
 	relatedWords: string[];
 };
 
+export type SearchByExampleOptions = {
+	similarContent: boolean;
+	forwardCitation: boolean;
+	bakcwardCitation: boolean;
+	relatedContent: boolean;
+};
+
 //
 // Facets
 //

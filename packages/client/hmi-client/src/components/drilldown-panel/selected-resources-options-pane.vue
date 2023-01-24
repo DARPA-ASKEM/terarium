@@ -21,6 +21,18 @@
 					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
 					<div class="item-title" :title="getTitle(item)">
 						{{ formatTitle(item) }}
+						<div class="search-by-example" @click.stop="findRelatedContent(item)">
+							Find Related Content
+							<IconImageSearch16 />
+						</div>
+						<div
+							v-if="isXDDArticle(item)"
+							class="search-by-example"
+							@click.stop="findSimilarContent(item)"
+						>
+							Find Similar Content
+							<IconImageSearch16 />
+						</div>
 					</div>
 					<div class="item-delete-btn" @click.stop="removeItem(item)">
 						<IconClose16 />
@@ -49,6 +61,7 @@ import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
 import IconClose16 from '@carbon/icons-vue/es/close/16';
+import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -60,7 +73,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close', 'remove-item']);
+const emit = defineEmits(['close', 'remove-item', 'find-related-content', 'find-similar-content']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
@@ -108,6 +121,15 @@ const getType = (item: ResultType) => {
 		return ResourceType.XDD;
 	}
 	return ResourceType.ALL;
+};
+
+const findRelatedContent = (item: ResultType) => {
+	emit('find-related-content', item);
+};
+
+// only available for publications
+const findSimilarContent = (item: ResultType) => {
+	emit('find-similar-content', item);
 };
 
 const addResourcesToProject = async (projectId: string) => {
@@ -261,5 +283,18 @@ onMounted(async () => {
 .item-delete-btn:hover {
 	/* color: var(--text-color-primary); */
 	color: red;
+}
+
+.search-by-example {
+	margin-top: 1rem;
+	color: blue;
+	display: flex;
+	flex-direction: column;
+	align-items: baseline;
+}
+
+.search-by-example:hover {
+	text-decoration: underline;
+	cursor: pointer;
 }
 </style>

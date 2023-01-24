@@ -1,5 +1,13 @@
 <template>
-	<ul>
+	<div class="results-count">
+		<template v-if="isLoading">Loading...</template>
+		<template v-else>Showing {{ resultsCount }} item(s)</template>
+	</div>
+	<div v-if="isLoading" class="loading-spinner">
+		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem"></i></div>
+	</div>
+	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
+	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
 				:asset="(asset as XDDArticle & Model & Dataset)"
@@ -12,8 +20,6 @@
 			/>
 		</li>
 	</ul>
-	<div v-if="resultsCount === 0">Loading...</div>
-	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
 <script setup lang="ts">
@@ -40,6 +46,10 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: ''
+	},
+	isLoading: {
+		type: Boolean,
+		default: true
 	}
 });
 
@@ -68,10 +78,10 @@ const filteredAssets = computed(() => {
 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
 
 	if (searchResults) {
-		if (searchResults.xddExtractions && props.resultType === ResourceType.XDD) {
+		if (props.resultType === ResourceType.XDD) {
 			let articlesFromExtractions: XDDArticle[] = [];
 
-			if (searchResults.xddExtractions.length > 0) {
+			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
 				const docMap: { [docid: string]: XDDArticle } = {};
 				searchResults.xddExtractions.forEach((ex) => {
 					if (ex.properties.documentBibjson === undefined) return; // skip
@@ -116,15 +126,25 @@ ul {
 	flex-direction: column;
 	gap: 0.5rem;
 	list-style: none;
+	overflow-y: scroll;
+}
+
+.loading-spinner {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 8rem;
+	flex-grow: 1;
+	background-color: var(--surface-ground);
+	color: var(--primary-color-dark);
+	font-weight: bold;
 }
 
 .search-container {
 	overflow-y: auto;
 }
 
-.results-count-label {
-	font-weight: bold;
-	margin: 4px;
-	align-self: center;
+.results-count {
+	color: var(--text-color-subdued);
 }
 </style>

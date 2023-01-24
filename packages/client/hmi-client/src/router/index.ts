@@ -12,6 +12,7 @@ import SimulationResultView from '@/views/SimulationResult.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
 import DataExplorerView from '@/views/DataExplorer.vue';
+import UnauthorizedView from '@/views/Unauthorized.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -23,6 +24,7 @@ export enum RoutePath {
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
 	DataExplorer = '/explorer',
+	Unauthorized = '/unauthorized',
 
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
@@ -32,6 +34,7 @@ export enum RoutePath {
 }
 
 const routes = [
+	{ name: 'unauthorized', path: RoutePath.Unauthorized, component: UnauthorizedView },
 	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
@@ -49,6 +52,8 @@ const routes = [
 		component: DataExplorerView,
 		props: (route) => ({ query: route.query.q })
 	},
+	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
+
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
