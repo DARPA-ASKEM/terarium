@@ -56,18 +56,18 @@ public interface ModelProxy {
 	@GET
 	@Path("/descriptions")
 	Response getDescriptions(
-		@DefaultValue("0") @QueryParam("page_size") Integer pageSize,
-		@DefaultValue("100") @QueryParam("page") Integer page
+		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
+		@DefaultValue("0") @QueryParam("page") Integer page
 	);
 
 	@GET
-	@Path("/descriptions/{id}")
+	@Path("/{id}/descriptions")
 	Response getDescription(
 		@PathParam("id") String id
 	);
 
 	@GET
-	@Path("/parameters/{id}")
+	@Path("/{id}/parameters")
 	Response getParameters(
 		@PathParam("id") String id
 	);
@@ -77,7 +77,7 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateParameters(
 		@PathParam("id") String id,
-		Map<String, String> parameters
+		Map<String, Object> parameters
 	);
 
 	@GET

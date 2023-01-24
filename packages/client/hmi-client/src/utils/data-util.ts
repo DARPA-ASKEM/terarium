@@ -7,30 +7,40 @@ import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
+import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
 
-// Apply filter to data in place
-export const applyFacetFiltersToModels = (modelResults: Model[], filters: Filters) => {
-	if (isEmpty(filters) || isEmpty(modelResults)) {
+export const applyFacetFilters = <T>(
+	results: T[],
+	filters: Filters,
+	resourceType: ResourceType
+) => {
+	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
+
 	const { clauses } = filters;
-	clauses.forEach((clause: any) => {
+	const ASSET_FACET_FIELDS: string[] =
+		resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
+
+	clauses.forEach((clause) => {
 		const filterField: string = clause.field; // the field to filter on
 		// "filters" may include fields that belong to different types of artifacts
 		//  thus make sure to only filter models using Model fields
-		if (MODEL_FACET_FIELDS.includes(filterField)) {
-			const filterValues = clause.values; // array of values to filter upon
+		if (ASSET_FACET_FIELDS.includes(filterField)) {
+			const filterValues = clause.values.map((v) => v.toString()); // array of values to filter upon
 			const isNot = !clause.isNot; // is the filter reversed?
-			const filteredModels = modelResults.filter(
-				(model) =>
-					// direct query against Model fields
-					filterValues.includes(model[filterField as keyof Model]) === isNot
+
+			results.splice(
+				0,
+				results.length,
+				...results.filter((asset) => {
+					const assetAttribute: any = asset[filterField as keyof T];
+					return filterValues.includes(assetAttribute.toString()) === isNot;
+				})
 			);
-			// use splice to filter in place
-			modelResults.splice(0, modelResults.length, ...filteredModels);
 		}
 	});
 };
@@ -48,8 +58,13 @@ export const getResourceTypeIcon = (type: string) => {
 	}
 };
 
+// TEMP FUNCTIONS
 export function isModel(item: ResultType): item is Model {
-	return (<Model>item).content !== undefined;
+	return (<Model>item).framework !== undefined;
+}
+
+export function isDataset(item: ResultType): item is Dataset {
+	return (<Dataset>item).annotations !== undefined;
 }
 
 export function isXDDArticle(item: ResultType): item is XDDArticle {
@@ -58,10 +73,12 @@ export function isXDDArticle(item: ResultType): item is XDDArticle {
 
 export function getResourceID(item: ResultType) {
 	if (isXDDArticle(item)) {
-		return (item as XDDArticle).gddid;
+		return (item as XDDArticle).gddId;
 	}
 	return item.id;
 }
+
+//
 
 /**
  * Validate that the input string is valid.

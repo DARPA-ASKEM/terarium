@@ -7,6 +7,7 @@ import { defineComponent, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import API from '@/api/api';
 
 interface NodeData {
 	type: string;
@@ -253,9 +254,8 @@ export default defineComponent({
 		});
 
 		// Test
-		const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-		const testData = await test.json();
-		modelId = testData.id;
+		const resp = await API.put('/model-service/models');
+		modelId = resp.data.id;
 	},
 	setup() {
 		const loadModelID = ref('');
@@ -286,11 +286,8 @@ export default defineComponent({
 			// console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
-			const test = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-			const testData = await test.json();
-			modelId = testData.id;
-
-			console.log('modle id is', modelId);
+			const resp = await API.put('model-service/models');
+			modelId = resp.data.id;
 
 			// Reset
 			g.nodes = [];
@@ -374,41 +371,32 @@ export default defineComponent({
 
 			g = runDagreLayout(_.cloneDeep(g));
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{ name: 'rabbits', type: 'S' },
-						{ name: 'wolves', type: 'S' },
-						{ name: 'birth', type: 'T' },
-						{ name: 'death', type: 'T' },
-						{ name: 'predation', type: 'T' }
-					],
-					edges: [
-						{ source: 'wolves', target: 'death' },
-						{ source: 'predation', target: 'wolves' },
-						{ source: 'predation', target: 'wolves' },
-						{ source: 'wolves', target: 'predation' },
-						{ source: 'rabbits', target: 'predation' },
-						{ source: 'rabbits', target: 'birth' },
-						{ source: 'birth', target: 'rabbits' },
-						{ source: 'birth', target: 'rabbits' }
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
+					{ name: 'rabbits', type: 'S' },
+					{ name: 'wolves', type: 'S' },
+					{ name: 'birth', type: 'T' },
+					{ name: 'death', type: 'T' },
+					{ name: 'predation', type: 'T' }
+				],
+				edges: [
+					{ source: 'wolves', target: 'death' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'predation', target: 'wolves' },
+					{ source: 'wolves', target: 'predation' },
+					{ source: 'rabbits', target: 'predation' },
+					{ source: 'rabbits', target: 'birth' },
+					{ source: 'birth', target: 'rabbits' },
+					{ source: 'birth', target: 'rabbits' }
+				]
 			});
 
 			this.refresh();
 			this.jsonOutput();
 		},
 		async jsonOutput() {
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/json`, {
-				method: 'GET'
-			});
-			const output = await resp.json();
+			const resp = await API.get(`model-service/models/${modelId}/json`);
+			const output = await resp.data;
 			console.log(petriNetValidator(output));
 
 			console.log(output);
@@ -439,20 +427,13 @@ export default defineComponent({
 				data: { val: 1 }
 			});
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					edges: [
-						{
-							source: source.datum().id,
-							target: target.datum().id
-						}
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				edges: [
+					{
+						source: source.datum().id,
+						target: target.datum().id
+					}
+				]
 			});
 
 			this.refresh();
@@ -475,20 +456,13 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: 'S'
-						}
-					]
-				})
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
+					{
+						name: id,
+						type: 'S'
+					}
+				]
 			});
 			this.jsonOutput();
 		},
@@ -509,148 +483,33 @@ export default defineComponent({
 			});
 			this.refresh();
 
-			await fetch(`http://localhost:8888/api/models/${modelId}`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					nodes: [
-						{
-							name: id,
-							type: 'T'
-						}
-					]
-				})
-			});
-			this.jsonOutput();
-		},
-		// provide node details and a flag
-		// createFlag: True = create new + draw, False = just draw
-		async addNode(
-			id: string,
-			label: string,
-			x: number,
-			y: number,
-			height: number,
-			width: number,
-			type: NodeType,
-			createFlag: boolean
-		) {
-			g.nodes.push({
-				id,
-				label,
-				x,
-				y,
-				height,
-				width,
-				data: { type },
-				nodes: []
-			});
-
-			if (createFlag === true) {
-				await fetch(`http://localhost:8888/api/models/${modelId}`, {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						nodes: [
-							{
-								name: label,
-								type
-							}
-						]
-					})
-				});
-			}
-			this.jsonOutput();
-		}, // end addNode
-		// Not sure how to overload functions so here we are
-		// createFlag: True - Create and draw, false - just draw
-		async addEdgeID(sourceID: string, targetID: string, createFlag: boolean) {
-			let sourceX;
-			let sourceY;
-			let targetX;
-			let targetY;
-			let sourceLabel;
-			let targetLabel;
-			// Find source and target's locations
-			// there has to be a better way to get the source and target locations
-			for (let i = 0; i < g.nodes.length; i++) {
-				if (sourceLabel && targetLabel) {
-					break;
-				}
-				if (g.nodes[i].id === sourceID) {
-					sourceLabel = g.nodes[i].label;
-					sourceX = g.nodes[i].x + g.nodes[i].width * 0.5;
-					sourceY = g.nodes[i].y + g.nodes[i].height * 0.5;
-				}
-				if (g.nodes[i].id === targetID) {
-					targetLabel = g.nodes[i].label;
-					targetX = g.nodes[i].x + g.nodes[i].width * 0.5;
-					targetY = g.nodes[i].y + g.nodes[i].height * 0.5;
-				}
-			}
-			g.edges.push({
-				source: sourceID,
-				target: targetID,
-				points: [
+			API.post(`model-service/models/${modelId}`, {
+				nodes: [
 					{
-						x: sourceX, // + source.datum().width * 0.5,
-						y: sourceY // + source.datum().height * 0.5
-					},
-					{
-						x: targetX, // + target.datum().width * 0.5,
-						y: targetY // + target.datum().height * 0.5
+						name: id,
+						type: 'T'
 					}
 				]
 			});
-
-			if (createFlag === true) {
-				await fetch(`http://localhost:8888/api/models/${modelId}`, {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						edges: [
-							{
-								source: sourceLabel,
-								target: targetLabel
-							}
-						]
-					})
-				});
-			}
-		}, // end addEdge
+			this.jsonOutput();
+		},
 		async simulate() {
 			numWolves = +(Math.random() * 100).toFixed();
 			numRabbits = +(Math.random() * 100).toFixed();
 
 			// Run a simulation on LotkaVolterra with random values
-			const resp = await fetch(`http://localhost:8888/api/models/${modelId}/simulate`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
+			const resp = await API.post(`model-service/models/${modelId}/simulate`, {
+				variables: {
+					rabbits: numRabbits,
+					wolves: numWolves
 				},
-				body: JSON.stringify({
-					variables: {
-						rabbits: numRabbits,
-						wolves: numWolves
-					},
-					parameters: {
-						birth: 0.3,
-						predation: 0.015,
-						death: 0.7
-					}
-				})
+				parameters: {
+					birth: 0.3,
+					predation: 0.015,
+					death: 0.7
+				}
 			});
-			const output = await resp.json();
+			const output = resp.data;
 			this.renderResult(output);
 		},
 		renderResult(result: any) {
@@ -717,19 +576,13 @@ export default defineComponent({
 					modelB: stateNamesArrayB[i].trim()
 				});
 			}
-			const resp = await fetch(`http://localhost:8888/api/models/model-composition`, {
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					modelA,
-					modelB,
-					statesToMerge
-				})
+			console.log(modelA);
+			const resp = await API.post(`model-service/models/model-composition`, {
+				modelA,
+				modelB,
+				statesToMerge
 			});
-			mergedModel = await resp.json();
+			mergedModel = await resp.data;
 			console.log('Merged petrinet', mergedModel);
 
 			g3 = parsePetriNet2IGraph(mergedModel);
@@ -739,91 +592,73 @@ export default defineComponent({
 		},
 		// Pulls model ID from form and sends model to createModel function for the actual work
 		async drawModel() {
-			const resp = await fetch(`http://localhost:8888/api/models/${this.loadModelID}/json`, {
-				method: 'GET'
-			});
-			const model: PetriNet = await resp.json();
+			const resp = await API.get(`model-service/models/${this.loadModelID}/json`);
+			const model: PetriNet = resp.data;
 			this.createModel(model, false);
 		},
-		// Expects a JSON of a model with labels T, S, I, O.
-		// populates g + depending on provided flag POST changes to model ID
-		// This is mostly done for stratification testing. Will require a deeper look in future
-		// TODO: We know there are race errors here. We intend to make this service stateless so we wont need to add Edges and Nodes individually
+
+		// Create a model provided if createFlag = True using model-service
+		// draw provided model on first layout
 		async createModel(model: PetriNet, createFlag = false) {
 			// Flag is true so we need to call API PUT new model ID
 			if (createFlag === true) {
-				const newModel = await fetch('http://localhost:8888/api/models', { method: 'PUT' });
-				const modelData = await newModel.json();
+				const resp = await API.put('/model-service/models');
+
+				const modelData = await resp.data;
 				modelId = modelData.id;
 				console.log(`Model ID: ${modelId}`); // currently required for testing
-			}
 
-			// Reset current nodes and edges
-			g.nodes = [];
-			g.edges = [];
+				let modelServiceNodes: { name: string; type: string }[] = [];
+				let modelServiceEdges: { source: string; target: string }[] = [];
 
-			const nodeHeight = 20;
-			const nodeWidth = 20;
-			let nodeX = 0;
-			let nodeY = 0;
-			// Nodes
-			for (let i = 0; i < model.S.length; i++) {
-				const aNode = model.S[i];
-				nodeX += 30;
-				nodeY += 30;
-				this.addNode(
-					`s-${i + 1}`,
-					aNode.sname.toString(),
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					NodeType.Species,
-					createFlag
-				);
-			}
-			// Move Transitions 100 to the right of S
-			nodeX = 100;
-			nodeY = 0;
-			for (let i = 0; i < model.T.length; i++) {
-				const aTransition = model.T[i];
-				nodeX += 30;
-				nodeY += 30;
-				this.addNode(
-					`t-${i + 1}`,
-					aTransition.tname.toString(),
-					nodeX,
-					nodeY,
-					nodeHeight,
-					nodeWidth,
-					NodeType.Transition,
-					createFlag
-				);
-			} // end T
+				// add Nodes
+				// toString() because post strat it can be an array
+				const sNodes = model.S.map((node) => ({
+					name: node.sname.toString(),
+					type: NodeType.Species
+				}));
+				const tNodes = model.T.map((node) => ({
+					name: node.tname.toString(),
+					type: NodeType.Transition
+				}));
+				modelServiceNodes = [...sNodes, ...tNodes];
 
-			// Edges
-			for (let i = 0; i < model.I.length; i++) {
-				const iEdges = model.I[i];
-				const sourceID = `s-${iEdges.is}`;
-				const transitionID = `t-${iEdges.it}`;
-				this.addEdgeID(sourceID, transitionID, createFlag);
+				// Add Edges
+				// - 1 because modelService indexing
+				// + S.length for all transitions as the S are added first to the modelServiceNodes
+				// toString because post stratification the name can be a list instead of a string
+				const iEdges = model.I.map((edge) => ({
+					source: modelServiceNodes[edge.is - 1].name.toString(),
+					target: modelServiceNodes[edge.it - 1 + model.S.length].name.toString()
+				}));
+				const oEdges = model.O.map((edge) => ({
+					source: modelServiceNodes[edge.ot - 1 + model.S.length].name.toString(),
+					target: modelServiceNodes[edge.os - 1].name.toString()
+				}));
+				modelServiceEdges = [...iEdges, ...oEdges];
+
+				// Create model in model-service
+				await API.post(`model-service/models/${modelId}`, {
+					nodes: modelServiceNodes,
+					edges: modelServiceEdges
+				});
 			}
-			for (let i = 0; i < model.O.length; i++) {
-				const oEdges = model.O[i];
-				const sourceID = `s-${oEdges.os}`;
-				const transitionID = `t-${oEdges.ot}`;
-				this.addEdgeID(transitionID, sourceID, createFlag);
-			}
+			// Draw model to window
+			g = await parsePetriNet2IGraph(model);
+			g = runDagreLayout(_.cloneDeep(g));
 			this.refresh();
 			this.jsonOutput();
 		},
 		async stratify() {
+			console.log('Start stratify');
 			try {
 				const outputModel = await fetchStratificationResult(
 					this.stratifyModelA,
 					this.stratifyModelB,
 					this.stratifyTypeModel
 				);
+				console.log('Result');
+				console.log(outputModel);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
 				console.error(e.message);
@@ -856,6 +691,56 @@ export default defineComponent({
 			g2 = { width: 500, height: 500, nodes: [], edges: [] };
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
+		},
+		async createSampleModels() {
+			// TODO: Add Petri Net type to this when merged with other PR
+			const SIRDModel: PetriNet = {
+				T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+				S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 2 },
+					{ it: 2, is: 2 },
+					{ it: 3, is: 2 }
+				],
+				O: [
+					{ ot: 1, os: 2 },
+					{ ot: 1, os: 2 },
+					{ ot: 2, os: 3 },
+					{ ot: 3, os: 4 }
+				]
+			};
+			await this.createModel(SIRDModel, true);
+			const QNotQModel: PetriNet = {
+				T: [{ tname: 'quarantine' }, { tname: 'unquarantine' }],
+				S: [{ sname: 'Q' }, { sname: 'NQ' }],
+				I: [
+					{ it: 1, is: 2 },
+					{ it: 2, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 2 }
+				]
+			};
+			await this.createModel(QNotQModel, true);
+			const typeModel: PetriNet = {
+				T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
+				S: [{ sname: 'Pop' }],
+				I: [
+					{ it: 1, is: 1 },
+					{ it: 1, is: 1 },
+					{ it: 2, is: 1 },
+					{ it: 3, is: 1 }
+				],
+				O: [
+					{ ot: 1, os: 1 },
+					{ ot: 1, os: 1 },
+					{ ot: 2, os: 1 },
+					{ ot: 3, os: 1 }
+				]
+			};
+			await this.createModel(typeModel, true);
 		}
 	}
 });
@@ -868,6 +753,7 @@ export default defineComponent({
 		&nbsp;
 		<button type="button" @click="LotkaVolterra">LotkaVolterra</button>
 		<button type="button" @click="simulate">Simulate</button>
+		<button type="button" @click="createSampleModels">Create Sample Models</button>
 		&nbsp;
 		<form>
 			<label for="loadModel">

@@ -1,43 +1,29 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import Header from '@/components/Header.vue';
-import Overlay from '@/components/Overlay.vue';
-import DataExplorer from '@/views/DataExplorer.vue';
+import { useRoute, useRouter } from 'vue-router';
+import Navbar from '@/components/Navbar.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { Project } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { useCurrentRouter } from './router/index';
+import API from '@/api/api';
+import { RoutePath, useCurrentRoute } from './router/index';
 
 /**
  * Router
  */
 const route = useRoute();
-const { isCurrentRouteHome } = useCurrentRouter();
-const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
+const router = useRouter();
+const currentRoute = useCurrentRoute();
+const isSidebarVisible = computed(
+	() =>
+		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
+);
+const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
+const searchBarText = ref('');
+const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
-
-/**
- * Data Explorer
- */
-const overlayActivated = ref(false);
-const overlayMessage = ref('Loading...');
-
-const enableOverlay = (message?: string) => {
-	overlayActivated.value = true;
-	if (message !== undefined) {
-		overlayMessage.value = message;
-	}
-};
-
-const disableOverlay = () => {
-	overlayActivated.value = false;
-};
-
-const dataExplorerActivated = ref(false);
-
 /**
  * Project
  *
@@ -45,6 +31,25 @@ const dataExplorerActivated = ref(false);
  * It is loaded at the root and passed to all views as prop.
  */
 const project = ref<Project | null>(null);
+
+function updateSearchBar(newQuery) {
+	searchBarText.value = newQuery;
+}
+
+function updateRelatedSearchTerms(newTerms) {
+	relatedSearchTerms.value = newTerms.slice(0, 5);
+}
+
+API.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		const status = error.response.status;
+		console.error(error);
+		if (status === 401 || status === 403) {
+			router.push({ name: 'unauthorized' });
+		}
+	}
+);
 
 watch(
 	() => route.params.projectId,
@@ -64,23 +69,30 @@ watch(
 </script>
 
 <template>
-	<overlay v-if="overlayActivated" :message="overlayMessage" />
-	<data-explorer
-		v-if="dataExplorerActivated"
-		class="data-explorer"
-		@hide="dataExplorerActivated = false"
-		@show-overlay="enableOverlay"
-		@hide-overlay="disableOverlay"
-	/>
-	<Header
+	<Navbar
+		v-if="!isErrorState"
 		class="header"
-		:projectName="project?.name"
-		@show-data-explorer="dataExplorerActivated = true"
+		:project="project"
+		:searchBarText="searchBarText"
+		:relatedSearchTerms="relatedSearchTerms"
 	/>
 	<main>
-		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
-		<router-view class="page" :project="project" />
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
+		<router-view
+			class="page"
+			:project="project"
+			@search-query-changed="updateSearchBar"
+			@related-search-terms-updated="updateRelatedSearchTerms"
+		/>
 	</main>
+	<footer>
+		<img src="@assets/images/Uncharted-logo.png" alt="logo" class="uncharted-logo" />
+	</footer>
 </template>
 
 <style scoped>
@@ -93,7 +105,6 @@ main {
 	flex-grow: 1;
 	isolation: isolate;
 	z-index: 1;
-	height: 100vh - var(--header-height);
 	overflow: hidden;
 }
 
@@ -103,9 +114,24 @@ main {
 
 .page {
 	z-index: 1;
+	flex: 1;
+	min-width: 0;
 }
 
 .data-explorer {
 	z-index: 3;
+}
+
+footer {
+	width: 100%;
+	height: 48px;
+	background-color: var(--gray-800);
+	flex: none;
+	display: flex;
+	align-items: center;
+}
+
+.uncharted-logo {
+	padding-left: 1rem;
 }
 </style>

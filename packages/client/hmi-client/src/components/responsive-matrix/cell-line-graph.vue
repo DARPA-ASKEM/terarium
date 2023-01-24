@@ -3,8 +3,18 @@
 </template>
 
 <script lang="ts">
+import _ from 'lodash';
 import { PropType } from 'vue';
-import { select, extent, scaleLinear, axisBottom, axisLeft } from 'd3';
+import {
+	select,
+	extent,
+	scaleLinear,
+	scaleSymlog,
+	scaleTime,
+	axisBottom,
+	axisLeft,
+	NumberValue
+} from 'd3';
 
 import {
 	D3SvgSelection,
@@ -14,6 +24,7 @@ import {
 	SelectedCell,
 	SelectedCellData
 } from '@/types/ResponsiveMatrix';
+import { formatAxis } from './matrix-util';
 
 export default {
 	// ---------------------------------------------------------------------------- //
@@ -52,7 +63,7 @@ export default {
 			}
 		},
 		labelColList: {
-			type: Array as PropType<number[]>,
+			type: Array as PropType<number[] | Date[]>,
 			default() {
 				return [];
 			}
@@ -79,6 +90,24 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
+			}
+		},
+		labelColFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},
@@ -136,13 +165,19 @@ export default {
 		},
 
 		xScale() {
+			if (this.labelColSelected[0]?.constructor === Date) {
+				return scaleTime()
+					.domain(extent(this.labelColSelected as unknown as Date[]) as [Date, Date])
+					.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
+			}
+
 			return scaleLinear()
-				.domain(extent(this.labelColSelected) as [number, number])
+				.domain(extent(this.labelColSelected as number[]) as [number, number])
 				.range([0, this.containerBoundingBox.width - this.leftMargin - this.rightMargin]);
 		},
 
 		yScale() {
-			return scaleLinear()
+			return scaleSymlog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -185,7 +220,7 @@ export default {
 		extractCellValuesByParam(idx, selectedCells, startCol, endCol) {
 			const cell = this.dataCellList[idx];
 			if (cell.col <= endCol && cell.col >= startCol) {
-				this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
+				this.parameters.forEach((param) => selectedCells[param].push(this.selectorFn(cell, param)));
 			}
 		},
 
@@ -207,27 +242,57 @@ export default {
 				.attr('viewBox', `0 0 ${width} ${height}`)
 				.style('background', 'white');
 
-			const xAxis = axisBottom(this.xScale);
-
-			this.svg
+			const xAxisGen = axisBottom(this.xScale).tickFormat(this.labelColFormatFn);
+			const xAxis = this.svg
 				.append('g')
 				.attr('transform', `translate(${leftMargin},${height - bottomMargin})`)
-				.call(xAxis);
+				.call(xAxisGen);
+			formatAxis(xAxis);
 
-			const yAxis = axisLeft(this.yScale);
+			const yAxisGen = axisLeft(this.yScale).tickFormat(this.labelRowFormatFn).ticks(4);
+			const yAxis = this.svg
+				.append('g')
+				.attr('transform', `translate(${leftMargin},${topMargin})`)
+				.call(yAxisGen);
+			formatAxis(yAxis);
 
-			this.svg.append('g').attr('transform', `translate(${leftMargin},${topMargin})`).call(yAxis);
-
-			Object.keys(this.selectedCells).forEach((parameter) => {
+			const numRows = 4;
+			const rowSize = 15;
+			const colSize = 95;
+			Object.keys(this.selectedCells).forEach((parameter, i) => {
 				this.renderLine(this.svg, parameter, this.selectedCells[parameter], this.labelColSelected);
+
+				this.svg
+					.append('rect')
+					.attr('x', 50 + colSize * Math.floor(i / numRows))
+					.attr('y', 30 + (i % numRows) * rowSize)
+					.attr('width', 8)
+					.attr('height', 8)
+					.attr('fill', this.colorFn(parameter));
+
+				this.svg
+					.append('text')
+					.attr('x', 60 + colSize * Math.floor(i / numRows))
+					.attr('y', 38 + (i % numRows) * rowSize)
+					.attr('font-size', '80%')
+					.style('fill', '#333')
+					.text(parameter);
 			});
+			const rangeText = `From ${this.labelColFormatFn(
+				_.first(this.labelColSelected as NumberValue[]) as NumberValue,
+				1
+			)} to ${this.labelColFormatFn(
+				_.last(this.labelColSelected as NumberValue[]) as NumberValue,
+				1
+			)}`;
+			this.svg.append('text').attr('x', 50).attr('y', 20).style('fill', '#333').text(rangeText);
 		},
 
 		renderLine(
 			svg: D3SvgSelection,
 			parameter: string,
 			yValueArray: number[],
-			xValueArray: number[]
+			xValueArray: number[] | Date[]
 		) {
 			const dataLength = yValueArray.length;
 
@@ -246,8 +311,15 @@ export default {
 				.attr('d', path)
 				.style('fill', 'none')
 				.style('stroke', this.colorFn(parameter))
-				.style('stroke-width', 2);
+				.style('stroke-width', 1.5);
 		}
 	}
 };
 </script>
+
+<style scoped>
+.cell-selected-line {
+	border: 2px solid var(--gray-100);
+	border-radius: 5px;
+}
+</style>

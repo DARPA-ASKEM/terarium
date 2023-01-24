@@ -3,7 +3,9 @@
  */
 
 import API from '@/api/api';
-import { Project, ProjectAssets } from '@/types/Project';
+import { Project, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
+import { XDDArticle } from '@/types/XDD';
+import { getRelatedDocuments } from './data';
 
 /**
  * Create a project
@@ -55,9 +57,16 @@ async function getAll(): Promise<Project[] | null> {
  * Get project assets for a given project per id
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
-async function getAssets(projectId: string): Promise<ProjectAssets | null> {
+async function getAssets(projectId: string, types?: string[]): Promise<ProjectAssets | null> {
 	try {
-		const response = await API.get(`/projects/${projectId}/assets`);
+		let url = `/projects/${projectId}/assets`;
+		if (types) {
+			types.forEach((type, indx) => {
+				// add URL with format: ...?types=A&types=B&types=C
+				url += `${indx === 0 ? '?' : '&'}types=${type}`;
+			});
+		}
+		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200) return null;
 		return data ?? null;
@@ -95,4 +104,23 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { addAsset, create, deleteAsset, get, getAll, getAssets };
+// project id -> project assets -> publication list (Which will give you xdd id + url + title)  -> now you can use getRelatedDocuments given a xdd_uri (docid)
+// TODO: Remove hardcoded dataset
+async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
+	const resp = await getAssets(aProject.id);
+	try {
+		// Dec 6th 2022:
+		// TODO: Speak with XDD Team about broken doc: 5f6d0e20a58f1dfd52184931
+		// Grab the 2nd of publication for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
+		const listOfRelatedArticles = await getRelatedDocuments(
+			resp?.[ProjectAssetTypes.PUBLICATIONS][1].xdd_uri ?? '',
+			'xdd-covid-19'
+		);
+		return listOfRelatedArticles;
+	} catch (error) {
+		// If resp = null (project has no assets or cannot be found)
+		return [] as XDDArticle[];
+	}
+}
+
+export { create, get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };

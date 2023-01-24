@@ -16,6 +16,10 @@ const useResourcesStore = defineStore('resources', {
 		},
 		setActiveProject(project: null | Project) {
 			this.activeProject = project;
+		},
+		reset() {
+			this.activeProject = null;
+			this.activeProjectAssets = null;
 		}
 	}
 });

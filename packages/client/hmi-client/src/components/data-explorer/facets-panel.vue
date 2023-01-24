@@ -1,6 +1,5 @@
 <template>
 	<div class="facets-panel">
-		<h4>Facets</h4>
 		<div v-for="facet in formattedFacets" :key="facet.label">
 			<numerical-facet
 				v-if="facet.isNumerical"
@@ -12,7 +11,7 @@
 			/>
 			<categorical-facet
 				v-else
-				:key="facet.label"
+				:key="facet.id"
 				:facet="facet.id"
 				:label="facet.label"
 				:base-data="facet.baseData"
@@ -87,14 +86,3 @@ const formattedFacets = computed(() => {
 	return facetList;
 });
 </script>
-
-<style scoped>
-.facets-panel {
-	padding-bottom: 10rem;
-}
-
-h4 {
-	/* Left align with the text in the facets themselves */
-	margin-left: 12px;
-}
-</style>

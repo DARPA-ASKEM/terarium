@@ -1,31 +1,30 @@
 <template>
-	<div class="search-container">
-		<models-listview
-			v-if="resultType === ResourceType.MODEL"
-			class="list-view"
-			:models="filteredModels"
-			:raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems"
-			@toggle-model-selected="toggleDataItemSelected"
-		/>
-		<articles-listview
-			v-if="resultType === ResourceType.XDD"
-			class="list-view"
-			:articles="filteredArticles"
-			:raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems"
-			@toggle-article-selected="toggleDataItemSelected"
-		/>
+	<div class="results-count">
+		<template v-if="resultsCount === 0">Loading...</template>
+		<template v-else>Showing {{ resultsCount }} item(s)</template>
 	</div>
+	<ul>
+		<li v-for="(asset, index) in filteredAssets" :key="index">
+			<SearchItem
+				:asset="(asset as XDDArticle & Model & Dataset)"
+				:selectedSearchItems="selectedSearchItems"
+				:isPreviewed="previewedAsset === asset"
+				:isInCart="false"
+				:resourceType="(resultType as ResourceType)"
+				@toggle-selected-asset="updateSelection(asset)"
+				@toggle-asset-preview="togglePreview(asset)"
+			/>
+		</li>
+	</ul>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from 'vue';
-import ModelsListview from '@/components/data-explorer/models-listview.vue';
-import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
-import { Model } from '@/types/Model';
+import { ref, computed, PropType } from 'vue';
 import { XDDArticle } from '@/types/XDD';
+import { Model } from '@/types/Model';
+import { Dataset } from '@/types/Dataset';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
+import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	dataItems: {
@@ -39,49 +38,94 @@ const props = defineProps({
 	resultType: {
 		type: String,
 		default: ResourceType.ALL
+	},
+	searchTerm: {
+		type: String,
+		default: ''
 	}
 });
+
+const previewedAsset = ref<ResultType | null>(null);
 
 const emit = defineEmits(['toggle-data-item-selected']);
 
-const toggleDataItemSelected = (item: ResultType) => {
-	emit('toggle-data-item-selected', item);
+const updateSelection = (asset: ResultType) => {
+	emit('toggle-data-item-selected', { item: asset, type: 'selected' });
 };
 
-const filteredModels = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
-	if (resList) {
-		return resList.results as Model[];
+const togglePreview = (asset: ResultType) => {
+	emit('toggle-data-item-selected', { item: asset, type: 'clicked' });
+	previewedAsset.value = previewedAsset.value === asset ? null : asset;
+};
+
+// const rawConceptFacets = computed(() => {
+// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	if (searchResults) {
+// 		return searchResults.rawConceptFacets;
+// 	}
+// 	return null;
+// });
+
+const filteredAssets = computed(() => {
+	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+
+	if (searchResults) {
+		if (props.resultType === ResourceType.XDD) {
+			let articlesFromExtractions: XDDArticle[] = [];
+
+			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
+				const docMap: { [docid: string]: XDDArticle } = {};
+				searchResults.xddExtractions.forEach((ex) => {
+					if (ex.properties.documentBibjson === undefined) return; // skip
+					const docid = ex.properties.documentBibjson.gddId;
+					if (docMap[docid] === undefined) {
+						docMap[docid] = ex.properties.documentBibjson;
+						docMap[docid].relatedExtractions = [];
+					}
+					docMap[docid].relatedExtractions?.push(ex);
+				});
+				articlesFromExtractions = Object.values(docMap) as XDDArticle[];
+			}
+			const xDDArticlesSearchResults = searchResults.results as XDDArticle[];
+			return [...articlesFromExtractions, ...xDDArticlesSearchResults];
+		}
+		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+			return searchResults.results;
+		}
 	}
 	return [];
 });
-const filteredArticles = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.XDD);
-	if (resList) {
-		return resList.results as XDDArticle[];
+
+const resultsCount = computed(() => {
+	let total = 0;
+	if (props.resultType === ResourceType.ALL) {
+		// count the results from all subsystems
+		props.dataItems.forEach((res) => {
+			const count = res?.hits ?? res?.results.length;
+			total += count;
+		});
+	} else {
+		// only return the results count for the selected subsystems
+		total = filteredAssets.value.length;
 	}
-	return [];
-});
-const rawConceptFacets = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
-	if (resList) {
-		return resList.rawConceptFacets;
-	}
-	return null;
+	return total;
 });
 </script>
 
-<style lang="scss" scoped>
-.search-container {
-	min-height: 0px;
-	width: 100%;
+<style scoped>
+ul {
 	display: flex;
 	flex-direction: column;
-	gap: 1px;
+	gap: 0.5rem;
+	list-style: none;
+	overflow-y: scroll;
+}
 
-	.list-view {
-		flex: 1;
-		min-height: 0;
-	}
+.search-container {
+	overflow-y: auto;
+}
+
+.results-count {
+	color: var(--text-color-subdued);
 }
 </style>

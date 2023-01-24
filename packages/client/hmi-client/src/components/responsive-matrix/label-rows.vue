@@ -1,6 +1,12 @@
 <template>
 	<div class="label-container row" :style="labelContainerStyle">
-		<div class="label" v-for="(label, idx) in labels" :key="idx" :style="getLabelStyle(idx)">
+		<div
+			class="label"
+			v-for="(label, idx) in labels"
+			:key="idx"
+			:title="label.alt"
+			:style="getLabelStyle(idx)"
+		>
 			{{ label.value }}
 		</div>
 	</div>
@@ -8,10 +14,10 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-
+import { NumberValue } from 'd3';
 import { Viewport } from 'pixi-viewport';
 
-import { CellStatus } from '@/types/ResponsiveMatrix';
+import { CellStatus, LabelData } from '@/types/ResponsiveMatrix';
 import { viewport2Screen } from './pixi-utils';
 import { makeLabels } from './matrix-util';
 
@@ -21,13 +27,17 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		items: {
+			type: Array as PropType<LabelData[]>,
+			required: true
+		},
 		viewport: {
 			type: Viewport as PropType<Viewport>,
 			default() {
 				return null;
 			}
 		},
-		numRows: {
+		margin: {
 			type: Number,
 			default() {
 				return 0;
@@ -51,16 +61,16 @@ export default {
 				return [];
 			}
 		},
-		labelRowList: {
-			type: Array as PropType<number[] | string[]>,
-			default() {
-				return [];
-			}
-		},
 		microRowSettings: {
 			type: Array as PropType<number[]>,
 			default() {
 				return [];
+			}
+		},
+		labelRowFormatFn: {
+			type: Function as PropType<(value: NumberValue, index: number) => string>,
+			default(v) {
+				return v;
 			}
 		}
 	},
@@ -72,7 +82,7 @@ export default {
 	data() {
 		return {
 			labelContainerStyle: {},
-			labels: [] as { value: string; position: number }[]
+			labels: [] as { value: string; alt: string; position: number }[]
 		};
 	},
 
@@ -106,16 +116,18 @@ export default {
 		buildLabelData() {
 			const visibleBounds = this.viewport.getVisibleBounds();
 			const viewportRowDensity =
-				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.numRows;
+				((visibleBounds?.height || 0) / (this.viewport.worldHeight || 1)) * this.items.length;
 
-			const thresholdLabelDensity = 8;
+			const thresholdLabelDensity = 16;
 			const labelStride = Math.max(1, Math.ceil(viewportRowDensity / thresholdLabelDensity));
 
 			this.labels = makeLabels(
-				this.labelRowList,
+				this.items.map((d) => d.value),
+				this.items.map((d) => d.altText),
 				this.selectedRows,
 				this.microRowSettings,
-				labelStride
+				labelStride,
+				this.labelRowFormatFn
 			);
 		},
 
@@ -133,8 +145,8 @@ export default {
 
 			this.labelContainerStyle = {
 				left: `${Math.max(topLeft.x, 0)}px`,
-				top: `${topLeft.y}px`,
-				bottom: `${bottomLeft.y}px`,
+				top: `${topLeft.y + this.margin}px`,
+				bottom: `${bottomLeft.y - this.margin}px`,
 				height: `${bottomLeft.y - topLeft.y}px`,
 				width: '30px'
 			};
@@ -146,7 +158,7 @@ export default {
 <style scoped>
 .label-container {
 	position: absolute;
-	pointer-events: none;
+	/* pointer-events: none; */
 	user-select: none;
 }
 
@@ -156,8 +168,7 @@ export default {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	color: white;
-	text-shadow: 0px 0px 4px #000;
+	color: var(--gray-900);
 	transform: rotate(90deg);
 }
 </style>

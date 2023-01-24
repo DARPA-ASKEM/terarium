@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import IconNoImage32 from '@carbon/icons-vue/es/no-image/32';
-
 export interface Props {
 	name: string;
 }
@@ -11,35 +9,36 @@ const props = withDefaults(defineProps<Props>(), {
 
 <template>
 	<div class="project-card">
-		<IconNoImage32 />
+		<div class="placeholder-color" />
 		<footer>{{ props?.name }}</footer>
 	</div>
 </template>
 
 <style scoped>
 .project-card {
-	border: 1px solid var(--un-color-body-stroke);
-	background-color: var(--un-color-body-surface-primary);
+	border: 1px solid var(--surface-border);
+	background-color: var(--surface-section);
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
 	height: 15rem;
 	min-width: 20rem;
 	border-radius: 0.5rem;
-	margin: 0.5rem;
-	transition: 0.2s;
 	text-align: left;
 	cursor: pointer;
+	/* Round the image/placeholder color's corners by clipping them to fit the card */
+	overflow: hidden;
 }
 
 footer {
-	border-top: 1px solid var(--un-color-body-stroke);
+	border-top: 1px solid var(--surface-border);
 	padding: 0.5rem 1rem;
 }
 
-svg {
-	color: var(--un-color-body-text-disabled);
-	cursor: pointer;
-	margin: auto;
+.placeholder-color {
+	flex: 1;
+	min-height: 0;
+	background: var(--gray-200);
+	position: relative;
 }
 </style>

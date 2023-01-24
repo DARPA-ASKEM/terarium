@@ -12,6 +12,14 @@ public class Publication implements Serializable {
 
 	private String id;
 
-	@JsonbProperty("xdd_uri")
 	private String xddUri;
+	@JsonbProperty("xdd_uri")
+	public void setXddUri(String xddUri){
+			this.xddUri = xddUri;
+	}
+	public String getXddUri(){ return this.xddUri; }
+
+	@JsonbProperty("title")
+	private String title;
+
 }

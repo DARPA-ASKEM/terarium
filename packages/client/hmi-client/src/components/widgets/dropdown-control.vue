@@ -19,13 +19,13 @@
 .dropdown-container {
 	position: relative;
 	display: block;
-	background: var(--background-light-1);
+	background: var(--gray-0);
 	box-sizing: border-box;
 	opacity: 1;
 	z-index: 51;
 	border-radius: 4px;
 	box-shadow: 0 -1px 0 #e5e5e5, 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.24);
-	color: var(--text-color-dark);
+	color: var(--gray-900);
 	overflow: hidden;
 }
 

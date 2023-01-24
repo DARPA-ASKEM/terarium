@@ -1,6 +1,7 @@
 import { ConceptFacets } from './Concept';
+import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
-import { XDDArticle, XDDSearchParams } from './XDD';
+import { XDDArticle, XDDArtifact, XDDSearchParams } from './XDD';
 
 export enum ViewType {
 	LIST = 'list',
@@ -18,18 +19,33 @@ export enum ResourceType {
 export type SearchParameters = {
 	[ResourceType.XDD]?: XDDSearchParams;
 	[ResourceType.MODEL]?: ModelSearchParams;
+	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | XDDArticle;
+export type ResultType = Model | Dataset | XDDArticle;
 
 export type SearchResults = {
 	results: ResultType[];
 	facets?: Facets;
 	rawConceptFacets?: ConceptFacets | null;
+	xddExtractions?: XDDArtifact[]; // the result from searching XDD artifacts against a given search term
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;
 	nextPage?: string;
+};
+
+export type FullSearchResults = {
+	allData: SearchResults;
+	allDataFilteredWithFacets: SearchResults;
+	relatedWords: string[];
+};
+
+export type SearchByExampleOptions = {
+	similarContent: boolean;
+	forwardCitation: boolean;
+	bakcwardCitation: boolean;
+	relatedContent: boolean;
 };
 
 //
@@ -51,4 +67,10 @@ export type SidePanelTab = {
 	imgSrc?: string;
 	isGreyscale?: string;
 	badgeCount?: number;
+};
+
+// Tabs
+export type Tab = {
+	name: string;
+	props?: Object;
 };

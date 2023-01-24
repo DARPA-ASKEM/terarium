@@ -9,12 +9,15 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "xdd-extraction-service")
+@RegisterRestClient(configKey = "extraction-service")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ExtractionProxy {
 	@GET
 	@Path("object")
 	Response getExtractions(
-		@QueryParam("doi") String doi
+		@QueryParam("doi") String doi,
+		@QueryParam("query_all") String queryAll,
+		@QueryParam("page") Integer page,
+		@QueryParam("ASKEM_CLASS") String askemClass
 	);
 }

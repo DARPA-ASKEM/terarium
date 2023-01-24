@@ -3,11 +3,10 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-selected-buttons">
 			<Button
-				action
-				@click="addAssetsToProject"
+				@click="addAssetsToProject()"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				>Add to current project</Button
-			>
+				label="Add to current project"
+			/>
 			<dropdown-button
 				v-if="selectedSearchItems.length > 0"
 				:inner-button-label="'Add to another project'"
@@ -20,7 +19,24 @@
 			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
 				<div class="item-header">
 					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
-					<div class="item-title" :title="getTitle(item)">{{ formatTitle(item) }}</div>
+					<div class="item-title" :title="getTitle(item)">
+						{{ formatTitle(item) }}
+						<div class="search-by-example" @click.stop="findRelatedContent(item)">
+							Find Related Content
+							<IconImageSearch16 />
+						</div>
+						<div
+							v-if="isXDDArticle(item)"
+							class="search-by-example"
+							@click.stop="findSimilarContent(item)"
+						>
+							Find Similar Content
+							<IconImageSearch16 />
+						</div>
+					</div>
+					<div class="item-delete-btn" @click.stop="removeItem(item)">
+						<IconClose16 />
+					</div>
 				</div>
 				<div class="content">
 					<multiline-description :text="formatDescription(item)" />
@@ -32,17 +48,23 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import Button from '@/components/Button.vue';
-import { getResourceTypeIcon, isModel, isXDDArticle } from '@/utils/data-util';
+import Button from 'primevue/button';
+import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import MultilineDescription from '@/components/widgets/multiline-description.vue';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { MODELS, Project, PUBLICATIONS } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
+import { Dataset } from '@/types/Dataset';
+import IconClose16 from '@carbon/icons-vue/es/close/16';
+import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -51,7 +73,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'remove-item', 'find-related-content', 'find-similar-content']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
@@ -73,6 +95,9 @@ const formatDescription = (item: ResultType) => {
 	if (isModel(item)) {
 		itemDesc = (item as Model).description || itemDesc;
 	}
+	if (isDataset(item)) {
+		itemDesc = (item as Dataset).description || itemDesc;
+	}
 	if (isXDDArticle(item)) {
 		itemDesc =
 			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
@@ -89,10 +114,22 @@ const getType = (item: ResultType) => {
 	if (isModel(item)) {
 		return (item as Model).type;
 	}
+	if (isDataset(item)) {
+		return (item as Dataset).type;
+	}
 	if (isXDDArticle(item)) {
 		return ResourceType.XDD;
 	}
 	return ResourceType.ALL;
+};
+
+const findRelatedContent = (item: ResultType) => {
+	emit('find-related-content', item);
+};
+
+// only available for publications
+const findSimilarContent = (item: ResultType) => {
+	emit('find-similar-content', item);
 };
 
 const addResourcesToProject = async (projectId: string) => {
@@ -100,7 +137,7 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
 			const body: PublicationAsset = {
-				xdd_uri: (selectedItem as XDDArticle).gddid,
+				xdd_uri: (selectedItem as XDDArticle).gddId,
 				title: (selectedItem as XDDArticle).title
 			};
 
@@ -112,7 +149,7 @@ const addResourcesToProject = async (projectId: string) => {
 				const publicationId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = PUBLICATIONS;
+				const assetsType = ProjectAssetTypes.PUBLICATIONS;
 				await ProjectService.addAsset(projectId, assetsType, publicationId);
 
 				// update local copy of project assets
@@ -124,12 +161,23 @@ const addResourcesToProject = async (projectId: string) => {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = MODELS;
+			const assetsType = ProjectAssetTypes.MODELS;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 
 			// update local copy of project assets
 			validProject.value?.assets.models.push(modelId);
-			resources.activeProjectAssets?.[MODELS].push(selectedItem);
+			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
+		}
+		if (isDataset(selectedItem)) {
+			// FIXME: handle cases where assets is already added to the project
+			const datasetId = selectedItem.id;
+			// then, link and store in the project assets
+			const assetsType = ProjectAssetTypes.DATASETS;
+			await ProjectService.addAsset(projectId, assetsType, datasetId);
+
+			// update local copy of project assets
+			validProject.value?.assets.datasets.push(datasetId);
+			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
 		}
 	});
 };
@@ -149,6 +197,11 @@ const addAssetsToProject = async (projectName?: string) => {
 	addResourcesToProject(projectId);
 
 	emit('close');
+	router.push(`/projects/${projectId}`);
+};
+
+const removeItem = (item: ResultType) => {
+	emit('remove-item', item);
 };
 
 onMounted(async () => {
@@ -170,7 +223,7 @@ onMounted(async () => {
 	font-size: larger;
 	text-align: center;
 	font-weight: bold;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .add-selected-buttons {
@@ -200,7 +253,7 @@ onMounted(async () => {
 
 .selected-items-container .selected-item {
 	padding: 5px;
-	background: var(--un-color-white);
+	background: white;
 	margin-top: 1px;
 }
 
@@ -216,5 +269,32 @@ onMounted(async () => {
 
 .selected-items-container .item-header .icon {
 	margin-right: 5px;
+}
+
+.selected-items-container .selected-item .content {
+	margin-left: 22px;
+}
+
+.item-delete-btn {
+	color: var(--text-color-disabled);
+	cursor: pointer;
+}
+
+.item-delete-btn:hover {
+	/* color: var(--text-color-primary); */
+	color: red;
+}
+
+.search-by-example {
+	margin-top: 1rem;
+	color: blue;
+	display: flex;
+	flex-direction: column;
+	align-items: baseline;
+}
+
+.search-by-example:hover {
+	text-decoration: underline;
+	cursor: pointer;
 }
 </style>
