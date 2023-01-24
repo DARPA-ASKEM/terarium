@@ -13,6 +13,7 @@ import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
 import DataExplorerView from '@/views/DataExplorer.vue';
 import UnauthorizedView from '@/views/Unauthorized.vue';
+import CompareExperiment from '@/views/CompareExperiment.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -30,7 +31,8 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
+	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
+	CompareExperimentPath = '/compare-experiment'
 }
 
 const routes = [
@@ -58,7 +60,8 @@ const routes = [
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground }
+	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
+	{ path: RoutePath.CompareExperimentPath, component: CompareExperiment }
 ];
 
 const router = createRouter({
