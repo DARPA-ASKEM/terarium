@@ -24,9 +24,18 @@
 					{{ formattedAbstract }}
 				</AccordionTab>
 
-				<!--
-				<AccordionTab header="Snippets"> </AccordionTab>
-				-->
+				<AccordionTab
+					v-if="doc.knownEntities && doc.knownEntities.summaries.sections"
+					header="Section summaries"
+				>
+					<div v-for="(v, k) of doc.knownEntities.summaries.sections" :key="k">
+						<div>
+							<strong>{{ k }}</strong>
+						</div>
+						<div>{{ v }}</div>
+						<br />
+					</div>
+				</AccordionTab>
 
 				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
