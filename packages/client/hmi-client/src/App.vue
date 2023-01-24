@@ -91,7 +91,7 @@ watch(
 		/>
 	</main>
 	<footer>
-		<img src="@assets/images/Uncharted-logo.png" alt="logo" class="uncharted-logo" />
+		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="uncharted-logo" />
 	</footer>
 </template>
 
