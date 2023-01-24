@@ -65,6 +65,7 @@
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
+					:is-loading="isLoading"
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
 				<search-results-matrix
@@ -186,6 +187,8 @@ const filteredFacets = ref<Facets>({});
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 
+const isLoading = ref<boolean>(false);
+
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resultType: string]: boolean }>({});
 
@@ -233,7 +236,7 @@ const executeSearch = async () => {
 
 	// only search (or fetch data) relevant to the currently selected tab or the search by example item
 	let searchType = resultType.value;
-
+	isLoading.value = true;
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
 	//
@@ -372,6 +375,8 @@ const executeSearch = async () => {
 	calculateFacets(allData, allDataFilteredWithFacets);
 
 	relatedSearchTerms.value = relatedWords.flat();
+
+	isLoading.value = false;
 };
 
 const disableSearchByExample = () => {
