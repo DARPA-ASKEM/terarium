@@ -26,7 +26,7 @@
 
 				<AccordionTab
 					v-if="doc.knownEntities && doc.knownEntities.summaries.sections"
-					header="Snippets"
+					header="Section summaries"
 				>
 					<div v-for="(v, k) of doc.knownEntities.summaries.sections" :key="k">
 						<div>
