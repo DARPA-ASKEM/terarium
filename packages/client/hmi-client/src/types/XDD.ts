@@ -33,6 +33,9 @@ export type XDDUrlExtraction = {
 
 export type XDDArticleKnownEntity = {
 	urlExtractions: XDDUrlExtraction[];
+	summaries: {
+		sections: { [key: string]: string };
+	};
 };
 
 export type XDDArticle = {

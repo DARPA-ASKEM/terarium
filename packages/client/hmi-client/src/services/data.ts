@@ -489,7 +489,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 const getDocumentById = async (docid: string) => {
 	const searchParams: XDDSearchParams = {
 		docid,
-		known_entities: 'urlExtractions'
+		known_entities: 'url_extractions,summaries'
 	};
 	const xddRes = await searchXDDArticles('', searchParams);
 	if (xddRes) {
