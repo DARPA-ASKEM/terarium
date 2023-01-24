@@ -102,7 +102,26 @@
 
 				<!--
 				<AccordionTab header="Cited by"> </AccordionTab>
-				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
+				-->
+
+				<AccordionTab
+					v-if="relatedTerariumArtifacts.length > 0"
+					header="Related TERARium artifacts"
+				>
+					<DataTable :value="relatedTerariumModels">
+						<Column field="name" header="Models"></Column>
+					</DataTable>
+					<br />
+					<DataTable :value="relatedTerariumDatasets">
+						<Column field="name" header="Datasets"></Column>
+					</DataTable>
+					<br />
+					<DataTable :value="relatedTerariumDocuments">
+						<Column field="name" header="Papers"></Column>
+					</DataTable>
+				</AccordionTab>
+
+				<!--
 				<AccordionTab header="Provenance"> </AccordionTab>
 				-->
 			</Accordion>
@@ -114,10 +133,17 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
-import { getDocumentDoi } from '@/utils/data-util';
+import { getDocumentDoi, isModel, isDataset, isXDDArticle } from '@/utils/data-util';
+import { ResultType } from '@/types/common';
+import { getRelatedArtifacts } from '@/services/provenance';
+import { Model } from '@/types/Model';
+import { Dataset } from '@/types/Dataset';
+import { ProvenanceType } from '@/types/Provenance';
 
 const sectionElem = ref<HTMLElement | null>(null);
 
@@ -164,6 +190,8 @@ const formattedAbstract = computed(() => {
 const doi = computed(() => getDocumentDoi(doc.value));
 
 const artifacts = ref<XDDArtifact[]>([]);
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+
 const figureArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
@@ -179,6 +207,16 @@ const urlArtifacts = computed(() =>
 		: []
 );
 
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+);
+
 const otherArtifacts = computed(() => {
 	const exclusion = [
 		XDDExtractionType.URL,
@@ -190,7 +228,8 @@ const otherArtifacts = computed(() => {
 	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
 
-const fetchArtifacts = async () => {
+// This fetches various parts of the document: figures, tables, equations ... etc
+const fetchDocumentArtifacts = async () => {
 	if (doi.value !== '') {
 		const allArtifacts = await getXDDArtifacts(doi.value);
 		// filter out Document extraction type
@@ -201,9 +240,19 @@ const fetchArtifacts = async () => {
 	}
 };
 
+const fetchRelatedTerariumArtifacts = async () => {
+	if (doc.value) {
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
+		relatedTerariumArtifacts.value = results;
+	} else {
+		relatedTerariumArtifacts.value = [];
+	}
+};
+
 watch(doi, (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
-		fetchArtifacts();
+		fetchDocumentArtifacts();
+		fetchRelatedTerariumArtifacts();
 	}
 });
 
@@ -233,7 +282,8 @@ onMounted(async () => {
 	if (rect.width > 800) {
 		imageSize.value = '400px';
 	}
-	fetchArtifacts();
+	fetchDocumentArtifacts();
+	fetchRelatedTerariumArtifacts();
 });
 </script>
 
@@ -241,7 +291,7 @@ onMounted(async () => {
 .doc-view-container {
 	padding: 2rem;
 	font-size: large;
-	overflow-y: auto;
+	overflow: auto;
 }
 
 .row {

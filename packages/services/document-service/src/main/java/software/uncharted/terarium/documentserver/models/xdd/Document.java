@@ -66,8 +66,7 @@ public class Document implements Serializable {
 	}
 
 	@JsonbProperty("_highlight")
-	public void setHighlight
-		(List<String> highlight) {
+	public void setHighlight(List<String> highlight) {
 		this.highlight = highlight;
 	}
 
