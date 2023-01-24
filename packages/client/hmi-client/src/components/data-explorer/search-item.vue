@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { watch, ref, computed, ComputedRef } from 'vue';
+import { isEmpty } from 'lodash';
 import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
+
+// This type is for easy frontend integration with the rest of the extraction types (just for use here)
+type UrlExtraction = {
+	askemClass: XDDExtractionType;
+	urlExtraction: XDDUrlExtraction;
+};
 
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
@@ -20,41 +27,42 @@ const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
 const urlExtractions = computed(() => {
-	// work in progress weird integration
+	const urls: UrlExtraction[] = [];
+
 	if (props.asset.relatedExtractions) {
-		// const documents = props.asset.relatedExtractions?.filter(
-		// 	(ex) => ex.askemClass === XDDExtractionType.Document
-		// );
-		// 	for (let i = 0; i < documents.length; i++) {
-		// 	}
-		// console.log(documents)
-		// 	if (
-		// 		props.resourceType === ResourceType.XDD &&
-		// 		props.asset.knownEntities &&
-		// 		props.asset.knownEntities.urlExtractions.length > 0
-		// 	) {
-		// 		// console.log(props.asset.knownEntities);
-		// 		return props.asset.knownEntities.urlExtractions;
-		// 	}
+		const documentsWithUrls = props.asset.relatedExtractions.filter(
+			(ex) =>
+				ex.askemClass === XDDExtractionType.Document &&
+				ex.properties.documentBibjson.knownEntities !== undefined &&
+				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
+		);
+
+		for (let i = 0; i < documentsWithUrls.length; i++) {
+			const knownEntities = documentsWithUrls[i].properties.documentBibjson.knownEntities;
+
+			if (knownEntities) {
+				for (let j = 0; i < knownEntities.urlExtractions.length; j++) {
+					urls.push({
+						askemClass: XDDExtractionType.URL,
+						urlExtraction: knownEntities.urlExtractions[j]
+					});
+				}
+			}
+		}
 	}
-	return [];
+	return urls;
 });
 
-const extractions: ComputedRef<XDDUrlExtraction[] & XDDArtifact[]> = computed(() => {
+const extractions: ComputedRef<UrlExtraction[] & XDDArtifact[]> = computed(() => {
 	if (props.asset.relatedExtractions) {
-		if (chosenExtractionFilter.value === 'Asset') {
-			if (urlExtractions.value.length > 0)
-				return [...props.asset.relatedExtractions, ...urlExtractions.value] as XDDUrlExtraction[] &
-					XDDArtifact[];
+		const allExtractions = [
+			...(props.asset.relatedExtractions as UrlExtraction[] & XDDArtifact[]),
+			...(urlExtractions.value as UrlExtraction[] & XDDArtifact[])
+		];
 
-			return props.asset.relatedExtractions as XDDUrlExtraction[] & XDDArtifact[];
-		}
-		if (chosenExtractionFilter.value === XDDExtractionType.URL)
-			return urlExtractions.value as XDDUrlExtraction[] & XDDArtifact[];
+		if (chosenExtractionFilter.value === 'Asset') return allExtractions;
 
-		return props.asset.relatedExtractions?.filter(
-			(ex) => ex.askemClass === chosenExtractionFilter.value
-		) as XDDUrlExtraction[] & XDDArtifact[];
+		return allExtractions.filter((ex) => ex.askemClass === chosenExtractionFilter.value);
 	}
 	return [];
 });
@@ -62,26 +70,20 @@ const extractions: ComputedRef<XDDUrlExtraction[] & XDDArtifact[]> = computed(()
 const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
 
+// Reset page number on new search and when chosenExtractionFilter is changed
 watch(
-	() => chosenExtractionFilter.value,
+	() => [props.asset, chosenExtractionFilter.value],
 	() => {
 		relatedAssetPage.value = 0;
 	}
 );
-
-watch(
-	() => props.asset,
-	() => {
-		relatedAssetPage.value = 0;
-	}
-); // reset page number on new search
 
 function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
 	if (newPage > -1 && newPage < extractions.value.length) {
 		relatedAssetPage.value = newPage;
 	}
-	console.log(relatedAsset.value);
+	// console.log(relatedAsset.value);
 }
 
 function updateExtractionFilter(extractionType: XDDExtractionType) {
@@ -213,9 +215,19 @@ const formatFeatures = () => {
 							{{ relatedAsset.properties.documentBibjson.link[0].url }}
 						</a>
 					</div>
+					<div class="link" v-else-if="relatedAsset.urlExtraction">
+						<a
+							:href="relatedAsset.urlExtraction.url"
+							@click.stop
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							{{ relatedAsset.urlExtraction.resourceTitle }}
+						</a>
+					</div>
 				</template>
 				<div class="asset-nav-arrows">
-					<span class="asset-pages" v-if="extractions.length > 0">
+					<span class="asset-pages" v-if="!isEmpty(extractions)">
 						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
 						<span>
 							{{ chosenExtractionFilter }}
