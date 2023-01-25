@@ -5,10 +5,13 @@ import ResourcesList from '@/components/resources/resources-list.vue';
 import InputText from 'primevue/inputtext';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	project: Project;
 }>();
+
+const mockRelatedProjects = ['Project A', 'Project B'];
 
 const resources = useResourcesStore();
 const isEditingProjectName = ref(false);
@@ -65,12 +68,23 @@ async function updateProjectName() {
 			<section class="summary">
 				<!-- This div is so that child elements will automatically collapse margins -->
 				<div>
+					<!-- Author -->
+					<section class="contributors">
+						{{ project?.username }}
+						<Button label="+ Add contributor" />
+					</section>
 					<section class="description">
-						<!-- Author -->
-						<section class="author">{{ project?.username }}</section>
 						<p>
 							{{ project?.description }}
 						</p>
+					</section>
+					<section class="related">
+						Related projects
+						<ul>
+							<li v-for="item in mockRelatedProjects" :key="item">
+								<Button :label="item" class="item" />
+							</li>
+						</ul>
 					</section>
 				</div>
 			</section>
@@ -81,7 +95,9 @@ async function updateProjectName() {
 	</div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/assets/css/theme/variables';
+
 .flex-container {
 	display: flex;
 	flex-direction: column;
@@ -114,18 +130,29 @@ section {
 	flex: 0.25;
 }
 
-.author {
+.contributors {
 	line-height: 1.75rem;
+	margin: 0 0 1rem 0;
+	font-weight: $fontWeightSemiBold;
+	align-items: flex-start;
 }
 
 .detail {
 	flex: 0.75;
 }
 
-.summary section,
-.detail section {
+.summary,
+.detail {
 	margin: 1rem 0;
 	display: block;
+}
+
+.summary section {
+	margin-bottom: 1rem;
+}
+
+.related {
+	font-weight: $fontWeightSemiBold;
 }
 
 h3 {
@@ -155,5 +182,27 @@ h3 {
 
 .p-inputtext:enabled:focus {
 	box-shadow: none;
+}
+
+.p-button,
+.p-button:enabled:hover,
+.p-button:enabled:focus {
+	background-color: transparent;
+	color: var(--text-color-secondary);
+	padding: 0;
+}
+
+ul {
+	list-style: none;
+	display: inline-flex;
+}
+
+.item,
+.item:enabled:hover,
+.item:enabled:focus {
+	background-color: var(--surface-secondary);
+	color: var(--text-color-secondary);
+	padding: 0 0.5rem 0 0.5rem;
+	margin: 0.5rem;
 }
 </style>
