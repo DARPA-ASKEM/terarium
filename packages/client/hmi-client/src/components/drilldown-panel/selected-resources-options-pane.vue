@@ -235,6 +235,7 @@ i {
 	padding: 0.2rem;
 	border-radius: 3px;
 }
+
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
@@ -243,6 +244,7 @@ i:hover {
 .context-menu-item {
 	padding: 0.5rem;
 }
+
 .context-menu-item:hover {
 	background-color: var(--primary-color-lighter);
 	cursor: pointer;
