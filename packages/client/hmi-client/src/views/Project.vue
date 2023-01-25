@@ -38,7 +38,6 @@ async function updateProjectName() {
 	updatedProject.name = newProjectName.value;
 	const id = await updateProject(updatedProject);
 	if (id) {
-		console.log('set active project');
 		resources.setActiveProject(updatedProject);
 	}
 }
