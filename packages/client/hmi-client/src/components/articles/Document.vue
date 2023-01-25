@@ -319,7 +319,7 @@ span {
 }
 
 .extracted-item {
-	padding-bottom: 20px;
+	padding-bottom: 0.5rem;
 }
 
 /* Meant for left:right image:caption */
