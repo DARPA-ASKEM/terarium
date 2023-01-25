@@ -1,17 +1,66 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
+import { ref, nextTick } from 'vue';
 import ResourcesList from '@/components/resources/resources-list.vue';
+import InputText from 'primevue/inputtext';
+import { update as updateProject } from '@/services/project';
+import useResourcesStore from '@/stores/resources';
 
-defineProps<{
+const props = defineProps<{
 	project: Project;
 }>();
+
+const resources = useResourcesStore();
+const isEditingProjectName = ref(false);
+const inputElement = ref<HTMLInputElement | null>(null);
+const newProjectName = ref<string>('');
+
+function formatTimeStamp(timestamp) {
+	const formattedDate = new Date(timestamp).toLocaleDateString(undefined, {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	});
+	return `Last updated ${formattedDate}`;
+}
+
+async function editProjectName() {
+	isEditingProjectName.value = true;
+	await nextTick();
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+
+async function updateProjectName() {
+	isEditingProjectName.value = false;
+	const updatedProject = props.project;
+	updatedProject.name = newProjectName.value;
+	const id = await updateProject(updatedProject);
+	if (id) {
+		console.log('set active project');
+		resources.setActiveProject(updatedProject);
+	}
+}
 </script>
 
 <template>
 	<div class="flex-container">
 		<header>
-			<h2>{{ project?.name }}</h2>
-			<p class="secondary-text">Last updated: {{ project?.timestamp }}</p>
+			<InputText
+				v-model="newProjectName"
+				ref="inputElement"
+				class="project-name-input"
+				@keyup.enter="updateProjectName"
+				:placeholder="project?.name"
+				:class="{ isVisible: isEditingProjectName }"
+			>
+			</InputText>
+			<h3 :class="{ isVisible: !isEditingProjectName }" @dblclick="editProjectName">
+				{{ project?.name }}
+			</h3>
+
+			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
@@ -19,7 +68,7 @@ defineProps<{
 				<div>
 					<section class="description">
 						<!-- Author -->
-						<section class="author">Edwin Lai, Yohann Paris</section>
+						<section class="author">{{ project?.username }}</section>
 						<p>
 							{{ project?.description }}
 						</p>
@@ -80,17 +129,32 @@ section {
 	display: block;
 }
 
-h4 {
-	margin: 1rem 0;
-}
-
 h3 {
+	font-size: 24px;
+	margin-bottom: 1rem;
+	display: inline;
+	visibility: hidden;
 }
 
-h2 {
+.project-name-input {
+	font-size: 24px;
+	position: absolute;
+	font-weight: 600;
+	padding: 0 0 0 1rem;
+	margin-left: -1rem;
+	border: 0;
+	visibility: hidden;
 }
 
 .secondary-text {
 	color: var(--text-color-secondary);
+}
+
+.isVisible {
+	visibility: visible;
+}
+
+.p-inputtext:enabled:focus {
+	box-shadow: none;
 }
 </style>

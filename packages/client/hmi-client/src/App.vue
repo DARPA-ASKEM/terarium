@@ -66,6 +66,12 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+resources.$subscribe((mutation, state) => {
+	project.value = state.activeProject;
+});
 </script>
 
 <template>
