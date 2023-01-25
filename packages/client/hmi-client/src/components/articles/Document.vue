@@ -3,33 +3,31 @@
 		<div v-if="doc">
 			<header>
 				<div class="journal">{{ doc.journal }}</div>
-				<h4 class="title">
-					{{ doc.title }}
-				</h4>
+				<h4 class="title">{{ doc.title }}</h4>
 				<div class="authors">{{ formatArticleAuthors(doc) }}</div>
-				<br />
-
-				<div class="row">
+				<div class="details">
+					<div v-if="docLink || doi">
+						DOI:
+						<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">
+							{{ doi }}
+						</a>
+					</div>
+					<div>{{ doc.publisher }}</div>
 					<!-- TODO -->
 					<!-- Journal impact factor -->
 					<!-- # Citations -->
-					<div>
-						<div class="publisher">{{ doc.publisher }}</div>
-						<div class="doi">
-							DOI:
-							<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">{{
-								doi
-							}}</a>
-						</div>
-					</div>
-					<Button v-if="docLink" label="Open PDF" @click="openPDF"> </Button>
+					<Button
+						v-if="docLink || doi"
+						class="p-button-sm p-button-outlined"
+						label="Open PDF"
+						@click="openPDF"
+					/>
 				</div>
 			</header>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
 				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
 					{{ formattedAbstract }}
 				</AccordionTab>
-
 				<AccordionTab
 					v-if="doc.knownEntities && doc.knownEntities.summaries.sections"
 					header="Section summaries"
@@ -42,7 +40,6 @@
 						<br />
 					</div>
 				</AccordionTab>
-
 				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
@@ -53,7 +50,6 @@
 						</div>
 					</div>
 				</AccordionTab>
-
 				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
@@ -64,7 +60,6 @@
 						</div>
 					</div>
 				</AccordionTab>
-
 				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
@@ -75,7 +70,6 @@
 						</div>
 					</div>
 				</AccordionTab>
-
 				<AccordionTab v-if="urlArtifacts.length > 0" header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
@@ -84,7 +78,6 @@
 						</div>
 					</div>
 				</AccordionTab>
-
 				<AccordionTab v-if="otherArtifacts.length > 0" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
 						<b>{{ ex.properties.title }}</b>
@@ -93,17 +86,14 @@
 						{{ ex.properties.contentText }}
 					</div>
 				</AccordionTab>
-
 				<AccordionTab header="References">
 					<div v-for="(citation, key) of doc.citationList" :Key="key">
 						{{ key + 1 }}. {{ formatCitation(citation) }}
 					</div>
 				</AccordionTab>
-
 				<!--
 				<AccordionTab header="Cited by"> </AccordionTab>
 				-->
-
 				<AccordionTab
 					v-if="relatedTerariumArtifacts.length > 0"
 					header="Related TERARium artifacts"
@@ -120,7 +110,6 @@
 						<Column field="name" header="Papers"></Column>
 					</DataTable>
 				</AccordionTab>
-
 				<!--
 				<AccordionTab header="Provenance"> </AccordionTab>
 				-->
@@ -258,7 +247,8 @@ watch(doi, (currentValue, oldValue) => {
 });
 
 const openPDF = () => {
-	window.open(docLink.value as string);
+	if (docLink.value) window.open(docLink.value as string);
+	else if (doi.value) window.open(`https://doi.org/${doi.value}`);
 };
 
 /**
@@ -282,13 +272,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.doc-view-container {
-	font-size: large;
-	overflow: auto;
-}
-
 header {
 	padding: 0rem 1rem;
+	color: var(--text-color-subdued);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
 div,
@@ -296,20 +285,29 @@ span {
 	overflow-wrap: break-word;
 }
 
-.row {
-	display: flex;
-	justify-content: space-between;
+a {
+	color: var(--text-color-subdued);
 }
 
-.authors {
-	font-style: italic;
-	padding-top: 8px;
+a:hover {
+	color: var(--primary-color-dark);
 }
 
-.journal,
-.publisher,
-.doi {
-	padding-top: 8px;
+.p-button.p-button-outlined {
+	margin-top: 1rem;
+	background-color: transparent;
+	color: var(--text-color-primary);
+	font-weight: bold;
+	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.title {
+	color: var(--text-color-primary);
+}
+
+.authors,
+.journal {
+	color: var(--primary-color-dark);
 }
 
 .accordian {
@@ -322,7 +320,6 @@ span {
 	padding-bottom: 0.5rem;
 }
 
-/* Meant for left:right image:caption */
 .img-container {
 	display: flex;
 	flex-direction: column;
