@@ -46,14 +46,7 @@
 				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<!-- <div> -->
-							<img
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								:style="{ 'max-width': imageSize }"
-							/>
-							<!-- </div> -->
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -64,14 +57,7 @@
 				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<!-- <div> -->
-							<img
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								:style="{ 'max-width': imageSize }"
-							/>
-							<!-- </div> -->
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -82,14 +68,7 @@
 				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<!-- <div> -->
-							<img
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								:style="{ 'max-width': imageSize }"
-							/>
-							<!-- </div> -->
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -295,15 +274,8 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 };
 
-// Image size will adapt depend on available space
-const imageSize = ref('160px');
-
 // fetch artifacts from COSMOS using the doc doi
 onMounted(async () => {
-	const rect = (sectionElem.value as HTMLElement).getBoundingClientRect();
-	if (rect.width > 800) {
-		imageSize.value = '400px';
-	}
 	fetchDocumentArtifacts();
 	fetchRelatedTerariumArtifacts();
 });
@@ -341,6 +313,7 @@ span {
 }
 
 .accordian {
+	font-size: 14px;
 	margin-top: 1rem;
 	margin-bottom: 1rem;
 }
@@ -352,13 +325,14 @@ span {
 /* Meant for left:right image:caption */
 .img-container {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
 .img-container > img {
-	height: min-content;
+	max-height: 10rem;
+	width: 100%;
 	object-fit: contain;
-	margin-right: 10px;
 	border: 1px solid var(--gray-300);
 }
 </style>
