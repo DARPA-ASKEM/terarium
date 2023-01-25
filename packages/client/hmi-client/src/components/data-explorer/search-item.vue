@@ -9,7 +9,6 @@ import AssetCard from '@/components/data-explorer/asset-card.vue';
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	isPreviewed: boolean;
-	isInCart: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
 }>();
@@ -41,11 +40,7 @@ const isSelected = () =>
 		:active="isPreviewed"
 		@click="emit('toggle-asset-preview')"
 	>
-		<button type="button" v-if="isInCart">
-			<!--there are talks of having the plus and three dot menu available wherever-->
-			<i class="pi pi-ellipsis-v"></i>
-		</button>
-		<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
+		<button type="button" @click.stop="emit('toggle-selected-asset')">
 			<i class="pi pi-plus" v-show="!isSelected()"></i>
 			<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
 		</button>
