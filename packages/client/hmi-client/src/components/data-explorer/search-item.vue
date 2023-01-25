@@ -1,95 +1,19 @@
 <script setup lang="ts">
-import { watch, ref, computed, ComputedRef } from 'vue';
-import { isEmpty } from 'lodash';
-import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
+import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
-
-// This type is for easy frontend integration with the rest of the extraction types (just for use here)
-type UrlExtraction = {
-	askemClass: XDDExtractionType;
-	urlExtraction: XDDUrlExtraction;
-};
+import AssetCard from '@/components/data-explorer/asset-card.vue';
 
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	isPreviewed: boolean;
-	isInCart: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
 }>();
 
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
-
-const relatedAssetPage = ref<number>(0);
-const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
-
-const urlExtractions = computed(() => {
-	const urls: UrlExtraction[] = [];
-
-	if (props.asset.relatedExtractions) {
-		const documentsWithUrls = props.asset.relatedExtractions.filter(
-			(ex) =>
-				ex.askemClass === XDDExtractionType.Document &&
-				ex.properties.documentBibjson.knownEntities !== undefined &&
-				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
-		);
-
-		for (let i = 0; i < documentsWithUrls.length; i++) {
-			const knownEntities = documentsWithUrls[i].properties.documentBibjson.knownEntities;
-
-			if (knownEntities) {
-				for (let j = 0; i < knownEntities.urlExtractions.length; j++) {
-					urls.push({
-						askemClass: XDDExtractionType.URL,
-						urlExtraction: knownEntities.urlExtractions[j]
-					});
-				}
-			}
-		}
-	}
-	return urls;
-});
-
-const extractions: ComputedRef<UrlExtraction[] & XDDArtifact[]> = computed(() => {
-	if (props.asset.relatedExtractions) {
-		const allExtractions = [
-			...(props.asset.relatedExtractions as UrlExtraction[] & XDDArtifact[]),
-			...(urlExtractions.value as UrlExtraction[] & XDDArtifact[])
-		];
-
-		if (chosenExtractionFilter.value === 'Asset') return allExtractions;
-
-		return allExtractions.filter((ex) => ex.askemClass === chosenExtractionFilter.value);
-	}
-	return [];
-});
-
-const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
-
-// Reset page number on new search and when chosenExtractionFilter is changed
-watch(
-	() => [props.asset, chosenExtractionFilter.value],
-	() => {
-		relatedAssetPage.value = 0;
-	}
-);
-
-function previewMovement(movement: number) {
-	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractions.value.length) {
-		relatedAssetPage.value = newPage;
-	}
-	// console.log(relatedAsset.value);
-}
-
-function updateExtractionFilter(extractionType: XDDExtractionType) {
-	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
-}
 
 const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
@@ -107,252 +31,23 @@ const isSelected = () =>
 		}
 		return false;
 	});
-
-//
-// in case we decided to display matching concepts associated with artifacts
-//  when performing a search using a keyword that represents a known concept
-//
-// const getConceptTags = (item: ResultType) => {
-// 	const tags = [] as string[];
-// 	if (props.rawConceptFacets) {
-// 		const itemConcepts = props.rawConceptFacets.results.filter(
-// 			(conceptResult) => conceptResult.id === item.id
-// 		);
-// 		tags.push(...itemConcepts.map((c) => c.name ?? c.curie));
-// 	}
-// 	return tags;
-// };
-
-// Return formatted author, year, journal
-const formatDetails = () =>
-	`${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
-		props.asset.journal
-	}`;
-
-// Format features for dataset type
-const formatFeatures = () => {
-	const features = props.asset.annotations.annotations.feature ?? [];
-	if (!features || features.length === 0) return [];
-	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
-	const max = 5;
-	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
-};
 </script>
 
 <template>
-	<div class="search-item" :active="isPreviewed" @click="emit('toggle-asset-preview')">
-		<div>
-			<div class="type-and-filters">
-				{{ resourceType.toUpperCase() }}
-				<div
-					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && asset.relatedExtractions"
-				>
-					<template
-						v-for="icon in [
-							{ type: XDDExtractionType.URL, class: 'pi-link' },
-							{ type: XDDExtractionType.Figure, class: 'pi-chart-bar' },
-							{ type: XDDExtractionType.Table, class: 'pi-table' },
-							{ type: XDDExtractionType.Document, class: 'pi-file-pdf' }
-						]"
-						:key="icon"
-					>
-						<i
-							:class="`pi ${icon.class}`"
-							:active="chosenExtractionFilter === icon.type"
-							@click.stop="updateExtractionFilter(icon.type)"
-						></i>
-					</template>
-				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
-				<div v-else-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
-					Simulation run
-				</div>
-			</div>
-			<div class="title">
-				<template v-if="resourceType === ResourceType.XDD">{{ asset.title }}</template>
-				<template
-					v-else-if="resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET"
-				>
-					{{ asset.name }}
-				</template>
-			</div>
-			<div class="details">
-				<template v-if="resourceType === ResourceType.XDD">{{ formatDetails() }}</template>
-				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
-			</div>
-			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets" :key="snippet">...<span v-html="snippet"></span>...</li>
-			</ul>
-			<div class="description">{{ asset.description }}</div>
-			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
-				PARAMETERS:
-				{{ asset.parameters }}
-				<!--may need a formatting function this attribute is always undefined at the moment-->
-			</div>
-			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
-				FEATURES:
-				<span v-for="(feature, index) in formatFeatures()" :key="index"> {{ feature }}, </span>
-			</div>
-			<footer><!--pill tags if already in another project--></footer>
-		</div>
-		<div class="preview-and-options">
-			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
-				<template v-if="relatedAsset">
-					<img
-						v-if="relatedAsset.properties.image"
-						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
-						class="extracted-assets"
-						alt="asset"
-					/>
-					<div class="link" v-else-if="relatedAsset.properties.DOI">
-						<a
-							v-if="relatedAsset.properties.documentBibjson.link"
-							:href="relatedAsset.properties.documentBibjson.link[0].url"
-							@click.stop
-							target="_blank"
-							rel="noreferrer noopener"
-						>
-							{{ relatedAsset.properties.documentBibjson.link[0].url }}
-						</a>
-						<a
-							v-else
-							:href="`https://doi.org/${relatedAsset.properties.DOI}`"
-							@click.stop
-							target="_blank"
-							rel="noreferrer noopener"
-						>
-							{{ relatedAsset.properties.DOI }}
-						</a>
-					</div>
-					<div class="link" v-else-if="relatedAsset.urlExtraction">
-						<a
-							:href="relatedAsset.urlExtraction.url"
-							@click.stop
-							target="_blank"
-							rel="noreferrer noopener"
-						>
-							{{ relatedAsset.urlExtraction.resourceTitle }}
-						</a>
-					</div>
-				</template>
-				<div class="asset-nav-arrows">
-					<span class="asset-pages" v-if="!isEmpty(extractions)">
-						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-						<span>
-							{{ chosenExtractionFilter }}
-							<span class="asset-number">{{ relatedAssetPage + 1 }}</span> of
-							<span class="asset-number"> {{ extractions.length }}</span>
-						</span>
-						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
-					</span>
-					<template v-else> No {{ chosenExtractionFilter }}s </template>
-				</div>
-			</figure>
-			<button type="button" v-if="isInCart">
-				<!--there are talks of having the plus and three dot menu available wherever-->
-				<i class="pi pi-ellipsis-v"></i>
-			</button>
-			<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
-				<i class="pi pi-plus" v-show="!isSelected()"></i>
-				<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
-			</button>
-		</div>
-	</div>
+	<asset-card
+		:asset="asset"
+		:resourceType="resourceType"
+		:active="isPreviewed"
+		@click="emit('toggle-asset-preview')"
+	>
+		<button type="button" @click.stop="emit('toggle-selected-asset')">
+			<i class="pi pi-plus" v-show="!isSelected()"></i>
+			<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
+		</button>
+	</asset-card>
 </template>
 
 <style scoped>
-.search-item {
-	background-color: var(--surface-a);
-	color: var(--text-color-subdued);
-	padding: 1rem;
-	margin: 1px;
-	font-size: 12px;
-	display: flex;
-	justify-content: space-between;
-}
-
-.search-item:hover {
-	background-color: var(--surface-hover);
-	cursor: pointer;
-}
-
-.search-item[active='true'] {
-	outline: 1px solid var(--primary-color-dark);
-}
-
-.type-and-filters {
-	display: flex;
-	align-items: center;
-	gap: 2rem;
-}
-
-.preview-and-options {
-	display: flex;
-	gap: 0.5rem;
-}
-
-.preview-and-options figure {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	width: 8rem;
-	height: 7rem;
-}
-
-.preview-and-options figure img {
-	margin: auto;
-	max-height: 5rem;
-	max-width: 90%;
-}
-
-.preview-and-options .link {
-	overflow-wrap: break-word;
-	margin: auto 0;
-}
-
-.asset-nav-arrows {
-	text-align: center;
-}
-
-.asset-nav-arrows .asset-pages {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.asset-nav-arrows .asset-number {
-	color: var(--text-color-primary);
-}
-
-.title,
-.details,
-.description,
-.parameters,
-.features,
-.snippets li {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 1;
-	overflow: hidden;
-}
-
-.asset-filters {
-	display: flex;
-	gap: 0.5rem;
-}
-
-.title {
-	color: var(--text-color-primary);
-	font-size: 1rem;
-	margin: 0.5rem 0 0.25rem 0;
-}
-
-.details {
-	margin: 0.25rem 0 0.5rem 0;
-	font-size: 14px;
-}
-
 button {
 	border: none;
 	background-color: transparent;
@@ -360,31 +55,18 @@ button {
 	padding: 0;
 }
 
-i {
+button i {
 	padding: 0.2rem;
 	border-radius: 3px;
-	z-index: 2;
-	font-size: 12px;
-}
-
-.preview-and-options button i {
 	font-size: 14px;
 }
 
-.pi[active='true'] {
-	background-color: var(--primary-color-light);
-}
-
-i:hover {
+button i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
 }
 
 .checkmark-color {
 	color: var(--primary-color);
-}
-
-.snippets {
-	list-style: none;
 }
 </style>

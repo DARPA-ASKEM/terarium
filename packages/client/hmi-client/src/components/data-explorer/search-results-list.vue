@@ -9,11 +9,10 @@
 	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
-			<SearchItem
+			<search-item
 				:asset="(asset as XDDArticle & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
-				:isInCart="false"
 				:resourceType="(resultType as ResourceType)"
 				@toggle-selected-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
