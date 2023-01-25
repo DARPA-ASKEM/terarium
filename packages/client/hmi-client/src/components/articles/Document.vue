@@ -15,7 +15,12 @@
 					<!-- # Citations -->
 					<div>
 						<div class="publisher">{{ doc.publisher }}</div>
-						<div class="doi">DOI: {{ doi }}</div>
+						<div class="doi">
+							DOI:
+							<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">{{
+								doi
+							}}</a>
+						</div>
 					</div>
 					<Button v-if="docLink" label="Open PDF" @click="openPDF"> </Button>
 				</div>

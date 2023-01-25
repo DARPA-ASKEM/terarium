@@ -222,7 +222,7 @@ const formatFeatures = () => {
 							target="_blank"
 							rel="noreferrer noopener"
 						>
-							{{ `https://doi.org/${relatedAsset.properties.DOI}` }}
+							{{ relatedAsset.properties.DOI }}
 						</a>
 					</div>
 					<div class="link" v-else-if="relatedAsset.urlExtraction">
