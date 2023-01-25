@@ -255,7 +255,6 @@ const fetchDocumentArtifacts = async () => {
 		// note that some XDD documents do not have a valid doi
 		artifacts.value = [];
 	}
-	console.log(artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure));
 };
 
 const fetchRelatedTerariumArtifacts = async () => {
