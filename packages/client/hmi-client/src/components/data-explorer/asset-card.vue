@@ -41,9 +41,7 @@
 				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
 			</div>
 			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets.splice(0, 3)" :key="snippet">
-					...<span v-html="snippet"></span>...
-				</li>
+				<li v-for="snippet in snippets" :key="snippet">...<span v-html="snippet"></span>...</li>
 			</ul>
 			<div class="description">{{ asset.description }}</div>
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
@@ -57,21 +55,57 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
-		<div class="right">
+		<div class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
-				<img
-					v-if="relatedAsset && relatedAsset.properties.image"
-					:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
-					class="extracted-assets"
-					alt="asset"
-				/>
+				<template v-if="relatedAsset">
+					<img
+						v-if="relatedAsset.properties.image"
+						:src="`data:image/jpeg;base64,${relatedAsset.properties.image}`"
+						class="extracted-assets"
+						alt="asset"
+					/>
+					<div class="link" v-else-if="relatedAsset.properties.DOI">
+						<a
+							v-if="relatedAsset.properties.documentBibjson.link"
+							:href="relatedAsset.properties.documentBibjson.link[0].url"
+							@click.stop
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							{{ relatedAsset.properties.documentBibjson.link[0].url }}
+						</a>
+						<a
+							v-else
+							:href="`https://doi.org/${relatedAsset.properties.DOI}`"
+							@click.stop
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							{{ `https://doi.org/${relatedAsset.properties.DOI}` }}
+						</a>
+					</div>
+					<div class="link" v-else-if="relatedAsset.urlExtraction">
+						<a
+							:href="relatedAsset.urlExtraction.url"
+							@click.stop
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							{{ relatedAsset.urlExtraction.resourceTitle }}
+						</a>
+					</div>
+				</template>
 				<div class="asset-nav-arrows">
-					<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-					<template v-if="extractionsWithImages.length > 0">
-						Asset {{ relatedAssetPage + 1 }} of {{ extractionsWithImages.length }}
-					</template>
+					<span class="asset-pages" v-if="!isEmpty(extractions)">
+						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
+						<span>
+							{{ chosenExtractionFilter }}
+							<span class="asset-number">{{ relatedAssetPage + 1 }}</span> of
+							<span class="asset-number"> {{ extractions.length }}</span>
+						</span>
+						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
+					</span>
 					<template v-else> No {{ chosenExtractionFilter }}s </template>
-					<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 				</div>
 			</figure>
 			<slot name="default"></slot>
@@ -80,11 +114,18 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed } from 'vue';
-import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { watch, ref, computed, ComputedRef } from 'vue';
+import { isEmpty } from 'lodash';
+import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
+
+// This type is for easy frontend integration with the rest of the extraction types (just for use here)
+type UrlExtraction = {
+	askemClass: XDDExtractionType;
+	urlExtraction: XDDUrlExtraction;
+};
 
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
@@ -94,47 +135,87 @@ const props = defineProps<{
 // const emit = defineEmits(['toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
-const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
+const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 
-// These asset types don't appear at the moment
-const extractionsWithImages = computed(() =>
-	props.asset.relatedExtractions
-		? props.asset.relatedExtractions?.filter((ex) => {
-				if (chosenExtractionFilter.value === null) {
-					return (
-						ex.askemClass === XDDExtractionType.Figure ||
-						ex.askemClass === XDDExtractionType.Table ||
-						ex.askemClass === XDDExtractionType.Equation ||
-						ex.askemClass === XDDExtractionType.URL ||
-						ex.askemClass === XDDExtractionType.Section || // remove this later just for testing preview pagination
-						ex.askemClass === XDDExtractionType.Document // remove this later just for testing preview pagination
-					);
+const urlExtractions = computed(() => {
+	const urls: UrlExtraction[] = [];
+
+	if (props.asset.relatedExtractions) {
+		const documentsWithUrls = props.asset.relatedExtractions.filter(
+			(ex) =>
+				ex.askemClass === XDDExtractionType.Document &&
+				ex.properties.documentBibjson.knownEntities !== undefined &&
+				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
+		);
+
+		for (let i = 0; i < documentsWithUrls.length; i++) {
+			const knownEntities = documentsWithUrls[i].properties.documentBibjson.knownEntities;
+
+			if (knownEntities) {
+				for (let j = 0; i < knownEntities.urlExtractions.length; j++) {
+					urls.push({
+						askemClass: XDDExtractionType.URL,
+						urlExtraction: knownEntities.urlExtractions[j]
+					});
 				}
-				return ex.askemClass === chosenExtractionFilter.value;
-		  })
-		: []
-);
-const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight);
+			}
+		}
+	}
+	return urls;
+});
 
+const extractions: ComputedRef<UrlExtraction[] & XDDArtifact[]> = computed(() => {
+	if (props.asset.relatedExtractions) {
+		const allExtractions = [
+			...(props.asset.relatedExtractions as UrlExtraction[] & XDDArtifact[]),
+			...(urlExtractions.value as UrlExtraction[] & XDDArtifact[])
+		];
+
+		if (chosenExtractionFilter.value === 'Asset') return allExtractions;
+
+		return allExtractions.filter((ex) => ex.askemClass === chosenExtractionFilter.value);
+	}
+	return [];
+});
+
+const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
+const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
+
+// Reset page number on new search and when chosenExtractionFilter is changed
 watch(
-	() => props.asset,
+	() => [props.asset, chosenExtractionFilter.value],
 	() => {
 		relatedAssetPage.value = 0;
 	}
-); // reset page number on new search
+);
 
 function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
-	if (newPage > -1 && newPage < extractionsWithImages.value.length) {
+	if (newPage > -1 && newPage < extractions.value.length) {
 		relatedAssetPage.value = newPage;
 	}
+	// console.log(relatedAsset.value);
 }
 
-function updateExtractionFilter(extractionType: XDDExtractionType | null) {
+function updateExtractionFilter(extractionType: XDDExtractionType) {
 	chosenExtractionFilter.value =
-		chosenExtractionFilter.value === extractionType ? null : extractionType;
+		chosenExtractionFilter.value === extractionType ? 'Asset' : extractionType;
 }
+
+//
+// in case we decided to display matching concepts associated with artifacts
+//  when performing a search using a keyword that represents a known concept
+//
+// const getConceptTags = (item: ResultType) => {
+// 	const tags = [] as string[];
+// 	if (props.rawConceptFacets) {
+// 		const itemConcepts = props.rawConceptFacets.results.filter(
+// 			(conceptResult) => conceptResult.id === item.id
+// 		);
+// 		tags.push(...itemConcepts.map((c) => c.name ?? c.curie));
+// 	}
+// 	return tags;
+// };
 
 // Return formatted author, year, journal
 const formatDetails = () =>
@@ -154,20 +235,22 @@ const formatFeatures = () => {
 
 <style scoped>
 .asset-card {
-	background-color: white;
-	color: var(--text-color-secondary);
+	background-color: var(--surface-a);
+	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
+	font-size: 12px;
 	display: flex;
 	justify-content: space-between;
 }
 
 .asset-card:hover {
-	background-color: var(--primary-color-lighter);
+	background-color: var(--surface-hover);
+	cursor: pointer;
 }
 
 .asset-card[active='true'] {
-	outline: 1px solid var(--primary-color-lighter);
+	outline: 1px solid var(--primary-color-dark);
 }
 
 .type-and-filters {
@@ -176,8 +259,42 @@ const formatFeatures = () => {
 	gap: 2rem;
 }
 
-.asset-nav-arrows {
+.preview-and-options {
 	display: flex;
+	gap: 0.5rem;
+}
+
+.preview-and-options figure {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	width: 8rem;
+	height: 7rem;
+}
+
+.preview-and-options figure img {
+	margin: auto;
+	max-height: 5rem;
+	max-width: 90%;
+}
+
+.preview-and-options .link {
+	overflow-wrap: break-word;
+	margin: auto 0;
+}
+
+.asset-nav-arrows {
+	text-align: center;
+}
+
+.asset-nav-arrows .asset-pages {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.asset-nav-arrows .asset-number {
+	color: var(--text-color-primary);
 }
 
 .title,
@@ -192,40 +309,26 @@ const formatFeatures = () => {
 	overflow: hidden;
 }
 
-.right {
-	display: flex;
-}
-
-.right figure {
-	width: 10rem;
-}
-
 .asset-filters {
 	display: flex;
 	gap: 0.5rem;
 }
 
 .title {
-	font-weight: 500;
 	color: var(--text-color-primary);
+	font-size: 1rem;
 	margin: 0.5rem 0 0.25rem 0;
 }
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
-}
-
-button {
-	border: none;
-	background-color: transparent;
-	height: min-content;
-	padding: 0;
+	font-size: 14px;
 }
 
 i {
 	padding: 0.2rem;
 	border-radius: 3px;
-	z-index: 2;
+	font-size: 12px;
 }
 
 .pi[active='true'] {
@@ -235,6 +338,10 @@ i {
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
+}
+
+.preview-and-options button i {
+	font-size: 14px;
 }
 
 .snippets {
