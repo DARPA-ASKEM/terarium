@@ -1,24 +1,25 @@
 <template>
 	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
-			<div class="journal">{{ doc.journal }}</div>
-			<h4 class="title">
-				{{ doc.title }}
-			</h4>
-			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
-			<br />
+			<header>
+				<div class="journal">{{ doc.journal }}</div>
+				<h4 class="title">
+					{{ doc.title }}
+				</h4>
+				<div class="authors">{{ formatArticleAuthors(doc) }}</div>
+				<br />
 
-			<div class="row">
-				<!-- TODO -->
-				<!-- Journal impact factor -->
-				<!-- # Citations -->
-				<div>
-					<div class="publisher">{{ doc.publisher }}</div>
-					<div class="doi">DOI: {{ doi }}</div>
+				<div class="row">
+					<!-- TODO -->
+					<!-- Journal impact factor -->
+					<!-- # Citations -->
+					<div>
+						<div class="publisher">{{ doc.publisher }}</div>
+						<div class="doi">DOI: {{ doi }}</div>
+					</div>
+					<Button v-if="docLink" label="Open PDF" @click="openPDF"> </Button>
 				</div>
-				<Button v-if="docLink" label="Open PDF" @click="openPDF"> </Button>
-			</div>
-
+			</header>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
 				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
 					{{ formattedAbstract }}
@@ -40,12 +41,14 @@
 				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
+							<!-- <div> -->
 							<img
 								id="img"
 								:src="'data:image/jpeg;base64,' + ex.properties.image"
 								:alt="''"
 								:style="{ 'max-width': imageSize }"
 							/>
+							<!-- </div> -->
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -56,12 +59,14 @@
 				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
+							<!-- <div> -->
 							<img
 								id="img"
 								:src="'data:image/jpeg;base64,' + ex.properties.image"
 								:alt="''"
 								:style="{ 'max-width': imageSize }"
 							/>
+							<!-- </div> -->
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -72,12 +77,14 @@
 				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
+							<!-- <div> -->
 							<img
 								id="img"
 								:src="'data:image/jpeg;base64,' + ex.properties.image"
 								:alt="''"
 								:style="{ 'max-width': imageSize }"
 							/>
+							<!-- </div> -->
 							<span>{{
 								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
 							}}</span>
@@ -204,6 +211,7 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const figureArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
+
 const tableArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
@@ -247,6 +255,7 @@ const fetchDocumentArtifacts = async () => {
 		// note that some XDD documents do not have a valid doi
 		artifacts.value = [];
 	}
+	console.log(artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure));
 };
 
 const fetchRelatedTerariumArtifacts = async () => {
@@ -298,9 +307,17 @@ onMounted(async () => {
 
 <style scoped>
 .doc-view-container {
-	padding: 2rem;
 	font-size: large;
 	overflow: auto;
+}
+
+header {
+	padding: 0rem 1rem;
+}
+
+div,
+span {
+	overflow-wrap: break-word;
 }
 
 .row {
@@ -335,7 +352,9 @@ onMounted(async () => {
 }
 
 .img-container > img {
-	margin: 5px;
+	height: min-content;
+	object-fit: contain;
+	margin-right: 10px;
 	border: 1px solid var(--gray-300);
 }
 </style>
