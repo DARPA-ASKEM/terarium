@@ -311,10 +311,11 @@ a:hover {
 }
 
 .accordian {
-	font-size: 14px;
 	margin-top: 1rem;
-	margin-bottom: 1rem;
+	font-size: 14px;
 }
+
+/* .p-accordion .p-accordion-content {} */
 
 .extracted-item {
 	padding-bottom: 0.5rem;
