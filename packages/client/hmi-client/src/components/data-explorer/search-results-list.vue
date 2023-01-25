@@ -107,6 +107,7 @@ const filteredAssets = computed(() => {
 				articlesFromExtractions = Object.values(docMap) as XDDArticle[];
 			}
 			const xDDArticlesSearchResults = searchResults.results as XDDArticle[];
+
 			return [...articlesFromExtractions, ...xDDArticlesSearchResults];
 		}
 		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
