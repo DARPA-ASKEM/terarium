@@ -36,7 +36,11 @@ public class Document implements Serializable {
 
 	private String year;
 
-	private List<Map<String, String>> link;
+	/**
+	 * This *should* be List<Map<String, String>> however for some reason that is currently broken
+	 * TODO: must make this work again
+	 */
+	private Object link;
 
 	private List<Map<String, String>> author;
 
