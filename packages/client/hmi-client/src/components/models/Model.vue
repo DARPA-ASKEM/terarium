@@ -111,7 +111,7 @@ const goToSimulationPlanPage = () => {
 			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
 		</header>
 
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordian">
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
 			<AccordionTab header="Description">
 				<p>
 					{{ model?.description }}
@@ -189,7 +189,7 @@ h3 {
 	/* width: 100%; */
 	height: 400px;
 	width: 400px;
-	border: 1px solid var(--surface-300);
+	border: 1px solid var(--surface-border);
 	overflow: hidden;
 }
 
@@ -199,7 +199,7 @@ h3 {
 	height: 100%;
 }
 
-.accordian {
+.accordion {
 	margin-top: 1rem;
 	margin-bottom: 1rem;
 }
