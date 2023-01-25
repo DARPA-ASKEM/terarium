@@ -97,9 +97,9 @@
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
+						@toggle-data-item-selected="toggleDataItemSelected"
 						@find-related-content="onFindRelatedContent"
 						@find-similar-content="onFindSimilarContent"
-						@remove-item="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
 					/>
 				</template>
