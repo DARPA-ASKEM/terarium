@@ -93,6 +93,7 @@
 				direction="right"
 				header="Cart"
 				v-model:is-open="isSliderResourcesOpen"
+				:selected-search-items-amount="selectedSearchItems.length"
 			>
 				<template v-slot:content>
 					<selected-resources-options-pane

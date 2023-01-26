@@ -136,9 +136,9 @@ watch(currentRoute, (newRoute) => {
 		<SearchBar
 			class="searchbar"
 			:text="searchBarText"
+			:suggested-terms="relatedSearchTerms"
 			@search-text-changed="searchTextChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
-			:relatedSearchTerms="relatedSearchTerms"
 		/>
 		<section class="header-right">
 			<Button

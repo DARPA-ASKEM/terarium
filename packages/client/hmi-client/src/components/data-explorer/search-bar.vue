@@ -21,9 +21,9 @@
 			<i class="pi pi-history" />
 			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
 		</div>
-		<span class="suggested-terms" v-if="isSuggestedItemsVisible"
+		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms.length > 0"
 			>Suggested terms:<Chip
-				v-for="item in suggestedItems"
+				v-for="item in suggestedTerms"
 				:key="item"
 				removable
 				remove-icon="pi pi-times"
@@ -42,7 +42,7 @@ import Chip from 'primevue/chip';
 
 const props = defineProps<{
 	text?: string;
-	relatedSearchTerms?: string[];
+	suggestedTerms?: string[];
 }>();
 
 const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
@@ -52,9 +52,7 @@ const route = useRoute();
 const searchText = ref('');
 const defaultText = computed(() => props.text);
 const isClearSearchButtonHidden = computed(() => !searchText.value);
-const isSuggestedItemsVisible = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
-const suggestedItems = computed(() => props.relatedSearchTerms);
 
 const clearText = () => {
 	searchText.value = '';
@@ -76,15 +74,11 @@ const toggleSearchByExample = () => {
 onMounted(() => {
 	const { q } = route.query;
 	searchText.value = q?.toString() ?? searchText.value;
-	isSuggestedItemsVisible.value = suggestedItems.value ? suggestedItems.value.length > 0 : false;
+	console.log(props.suggestedTerms);
 });
 
 watch(defaultText, (newText) => {
 	searchText.value = newText || searchText.value;
-});
-
-watch(suggestedItems, (newItems) => {
-	isSuggestedItemsVisible.value = newItems ? newItems.length > 0 : false;
 });
 </script>
 
@@ -121,6 +115,7 @@ watch(suggestedItems, (newItems) => {
 
 .p-chip {
 	padding: 0 0.75rem;
+	background-color: var(--surface-200);
 }
 
 .p-chip span {
