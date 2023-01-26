@@ -9,24 +9,24 @@ facet-terms {
 
   // No item in the group is selected
   // No item in the group is being hovered
-  --facet-terms-bar-0-normal: #{$accent-dark};
+  --facet-terms-bar-0-normal: #1B8073; // $facetEmptyBg; //{$accent-dark};
   // Another item in the group is being hovered
-  --facet-terms-bar-0-normal-contrast: #{$accent-light};
+  --facet-terms-bar-0-normal-contrast: #1B8073; //$facetEmptyBg;// #{$accent-light};
   // This item is being hovered
-  --facet-terms-bar-0-normal-contrast-hover: #{$accent-main};
+  --facet-terms-bar-0-normal-contrast-hover: #1B8073; //$facetEmptyBg; //#{$accent-main};
 
   // This item is selected
   // No item in the group is being hovered
-  --facet-terms-bar-0-selected: #{$accent-main};
+  --facet-terms-bar-0-selected: #1B8073; //#{$accent-main};
   // Another item in the group is being hovered
-  --facet-terms-bar-0-selected-contrast: #{$accent-light};
+  --facet-terms-bar-0-selected-contrast: #1B8073; //#{$accent-light};
   // This item is being hovered
-  --facet-terms-bar-0-selected-contrast-hover: #{$accent-main};
+  --facet-terms-bar-0-selected-contrast-hover: #1B8073; //#{$accent-main};
 
   // Another item in the group is selected
   // This item is hovered
-  --facet-terms-bar-0-muted-contrast-hover: #{$accent-main};
-  --facet-terms-bar-1-muted-contrast-hover: #{$accent-light};
+  --facet-terms-bar-0-muted-contrast-hover: #1B8073; //#{$accent-main};
+  --facet-terms-bar-1-muted-contrast-hover: #1B8073; //#{$accent-light};
   // Another item in the group is hovered
   // FIXME: there is a bug in the facets library where
   //  "--facet-terms-bar-0-muted-contrast-hover" is applied when

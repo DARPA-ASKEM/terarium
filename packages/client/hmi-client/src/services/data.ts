@@ -8,7 +8,7 @@ import {
 	SearchResults
 } from '@/types/common';
 import API from '@/api/api';
-import { getDatasetFacets, getModelFacets } from '@/utils/facets';
+import { getDatasetFacets, getModelFacets, getArticleFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -99,7 +99,7 @@ const getAssets = async (
 	const results = {} as FullSearchResults;
 
 	// fetch list of model or datasets data from the HMI server
-	let assetList: Model[] | Dataset[] | XDDArticle[] = [];
+	let assetList: Model[] | Dataset[] = [];
 	let projectAssetType: ProjectAssetTypes;
 
 	switch (resourceType) {
@@ -110,9 +110,6 @@ const getAssets = async (
 		case ResourceType.DATASET:
 			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
 			projectAssetType = ProjectAssetTypes.DATASETS;
-			break;
-		case ResourceType.PUBLICATIONS:
-			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -148,10 +145,7 @@ const getAssets = async (
 			assetResults = assetResults as Dataset[];
 			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
-		case ResourceType.PUBLICATIONS:
-			assetResults = assetResults as XDDArticle[];
-			assetFacets = getArticleFacets(assetResults); // will be moved to HMI server - keep this for now
-			break;
+
 		default:
 			return results; // error or make new resource type compatible
 	}
@@ -243,9 +237,6 @@ const getAssets = async (
 				break;
 			case ResourceType.DATASET:
 				assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
-				break;
-			case ResourceType.PUBLICATIONS:
-				assetFacetsFiltered = getArticleFacets(assetResults as XDDArticle[]);
 				break;
 			default:
 				return results; // error or make new resource type compatible
@@ -425,7 +416,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.success) {
-		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
+		const { data, hits, scrollId, nextPage } = rawdata.success;
 		const articlesRaw =
 			xddSearchParam?.fields === undefined
 				? (data as XDDArticle[])
@@ -452,17 +443,18 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			});
 		}
 
-		const formattedFacets: Facets = {};
-		if (facets) {
-			// we receive facets data, so make sure it is in the proper format
-			const facetKeys = Object.keys(facets);
-			facetKeys.forEach((facetKey) => {
-				formattedFacets[facetKey] = facets[facetKey].buckets.map((e) => ({
-					key: e.key,
-					value: e.doc_count
-				}));
-			});
-		}
+		const formattedFacets: Facets = getArticleFacets(articles);
+		// if (facets) {
+		// 	// we receive facets data, so make sure it is in the proper format
+		// 	const facetKeys = ARTICLE_FACET_FIELDS; //Object.keys(facets);
+		// 	facetKeys.forEach((facetKey) => {
+		// 		console.log("Facet Key: " + facetKey);
+		// 		formattedFacets[facetKey] = facets[facetKey].buckets.map((e) => ({
+		// 			key: e.key,
+		// 			value: e.doc_count
+		// 		}));
+		// 	});
+		// }
 
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
@@ -698,6 +690,7 @@ const fetchData = async (
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
 	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
+	console.log('End of fetchData, all data filtered Facets = :');
 	return finalResponse;
 };
 
