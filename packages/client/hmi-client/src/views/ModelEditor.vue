@@ -4,6 +4,7 @@
 			<div id="playground"></div>
 			<div id="parameters"></div>
 		</div>
+		<Button @click="runPetri()">Run simulation</Button>
 	</section>
 </template>
 
@@ -14,6 +15,7 @@ import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/g
 import { onMounted } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph } from '@/services/model';
+import Button from 'primevue/button';
 
 interface NodeData {
 	type: string;
@@ -145,7 +147,11 @@ const renderParameterInput = () => {
 			.style('text-align', 'end')
 			.style('padding-right', '5px')
 			.text(node.label);
-		div.append('input');
+		div
+			.append('input')
+			.datum({ name: node.label })
+			.classed('initial-value', true)
+			.property('value', 0);
 	}
 
 	el.append('hr');
@@ -162,7 +168,7 @@ const renderParameterInput = () => {
 			.style('text-align', 'end')
 			.style('padding-right', '5px')
 			.text(node.label);
-		div.append('input');
+		div.append('input').datum({ name: node.label }).classed('parameter', true).property('value', 0);
 	}
 };
 
@@ -239,11 +245,43 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	return petri;
 };
 
-console.log(graph2petri(parsePetriNet2IGraph(SIRD)));
+// console.log(graph2petri(parsePetriNet2IGraph(SIRD)));
 
 // Tracking variables
 let source: any = null;
 let target: any = null;
+
+const runPetri = () => {
+	const parameterData = d3.selectAll('.parameter');
+	const initData = d3.selectAll('.initial-value');
+
+	const parameters = {};
+	const initials = {};
+
+	parameterData.each((d: any, i, g) => {
+		const value = (d3.select(g[i]).node() as HTMLInputElement).value;
+		parameters[d.name] = +value;
+	});
+	initData.each((d: any, i, g) => {
+		const value = (d3.select(g[i]).node() as HTMLInputElement).value;
+		initials[d.name] = +value;
+	});
+
+	const payload = {
+		inital_values: initials,
+		parameters
+	};
+
+	const final = {
+		petri: graph2petri(renderer?.graph as any),
+		payload
+	};
+
+	console.log(final);
+	console.log(JSON.stringify(final));
+
+	return final;
+};
 
 // Entry point
 onMounted(async () => {
