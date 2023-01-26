@@ -1,6 +1,6 @@
 <template>
 	<div class="asset-card">
-		<div>
+		<main>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
 				<div
@@ -20,7 +20,7 @@
 							:class="`pi ${icon.class}`"
 							:active="chosenExtractionFilter === icon.type"
 							@click.stop="updateExtractionFilter(icon.type)"
-						></i>
+						/>
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
@@ -28,22 +28,12 @@
 					Simulation run
 				</div>
 			</div>
-			<div class="title">
-				<template v-if="resourceType === ResourceType.XDD">{{ asset.title }}</template>
-				<template
-					v-else-if="resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET"
-				>
-					{{ asset.name }}
-				</template>
-			</div>
-			<div class="details">
-				<template v-if="resourceType === ResourceType.XDD">{{ formatDetails() }}</template>
-				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
-			</div>
-			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets" :key="snippet">...<span v-html="snippet"></span>...</li>
+			<header class="title" v-html="title" />
+			<div class="details" v-html="formatDetails" />
+			<ul class="snippets" v-if="snippets">
+				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
-			<div class="description">{{ asset.description }}</div>
+			<div class="description" v-html="highlightSearchTerms(asset.description)" />
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
 				PARAMETERS:
 				{{ asset.parameters }}
@@ -54,8 +44,8 @@
 				<span v-for="(feature, index) in formatFeatures()" :key="index"> {{ feature }}, </span>
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
-		</div>
-		<div class="preview-and-options">
+		</main>
+		<aside class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<template v-if="relatedAsset">
 					<img
@@ -109,7 +99,7 @@
 				</div>
 			</figure>
 			<slot name="default"></slot>
-		</div>
+		</aside>
 	</div>
 </template>
 
@@ -120,6 +110,7 @@ import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
+import * as textUtil from '@/utils/text';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -130,7 +121,16 @@ type UrlExtraction = {
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	resourceType: ResourceType;
+	highlight?: string;
 }>();
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 
 // const emit = defineEmits(['toggle-asset-preview']);
 
@@ -179,7 +179,13 @@ const extractions: ComputedRef<UrlExtraction[] & XDDArtifact[]> = computed(() =>
 });
 
 const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
+const snippets = computed(() =>
+	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
+);
+const title = computed(() => {
+	const value = props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name;
+	return highlightSearchTerms(value);
+});
 
 // Reset page number on new search and when chosenExtractionFilter is changed
 watch(
@@ -218,10 +224,21 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // };
 
 // Return formatted author, year, journal
-const formatDetails = () =>
-	`${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
-		props.asset.journal
-	}`;
+// Return formatted author, year, journal
+const formatDetails = computed(() => {
+	if (props.resourceType === ResourceType.XDD) {
+		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
+			props.asset.journal
+		}`;
+		return highlightSearchTerms(details);
+	}
+
+	if (props.resourceType === ResourceType.DATASET) {
+		return props.asset?.url;
+	}
+
+	return null;
+});
 
 // Format features for dataset type
 const formatFeatures = () => {
@@ -239,7 +256,7 @@ const formatFeatures = () => {
 	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
-	font-size: 12px;
+	font-size: var(--font-caption);
 	display: flex;
 	justify-content: space-between;
 }
@@ -316,19 +333,17 @@ const formatFeatures = () => {
 
 .title {
 	color: var(--text-color-primary);
-	font-size: 1rem;
 	margin: 0.5rem 0 0.25rem 0;
 }
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
-	font-size: 14px;
 }
 
 i {
 	padding: 0.2rem;
 	border-radius: 3px;
-	font-size: 12px;
+	font-size: var(--font-caption);
 }
 
 .pi[active='true'] {
@@ -340,11 +355,21 @@ i:hover {
 	background-color: hsla(0, 0%, 0%, 0.1);
 }
 
-.preview-and-options button i {
-	font-size: 14px;
-}
-
 .snippets {
 	list-style: none;
+}
+
+/* Add ellipsis around a snippet */
+.snippets li::before,
+.snippets li::after {
+	content: '…';
+}
+
+.asset-card >>> .highlight,
+.asset-card >>> .hl {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	padding-left: 0.2em;
+	padding-right: 0.2em;
 }
 </style>

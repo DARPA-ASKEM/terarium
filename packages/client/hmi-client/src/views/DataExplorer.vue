@@ -42,38 +42,13 @@
 							@click="updateResultType(ResourceType.DATASET)"
 						/>
 					</span>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-text p-button-sm"
-							:active="viewType === ViewType.LIST"
-							label="List"
-							icon="pi pi-list"
-							@click="viewType = ViewType.LIST"
-						/>
-						<Button
-							class="p-button-text p-button-sm"
-							:active="viewType === ViewType.MATRIX"
-							label="Matrix"
-							icon="pi pi-th-large"
-							@click="viewType = ViewType.MATRIX"
-						/>
-					</span>
 				</div>
 				<search-results-list
-					v-if="viewType === ViewType.LIST"
 					:data-items="dataItems"
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
-					@toggle-data-item-selected="toggleDataItemSelected"
-				/>
-				<search-results-matrix
-					v-else-if="viewType === ViewType.MATRIX"
-					:data-items="dataItems"
-					:result-type="resultType"
-					:selected-search-items="selectedSearchItems"
-					:dict-names="dictNames"
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
 			</div>
@@ -84,6 +59,7 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:result-type="resultType"
+				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 			<slider-panel
@@ -113,7 +89,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
-import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import SliderPanel from '@/components/data-explorer/slider-panel.vue';
@@ -449,14 +424,13 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		// toggle preview
 		if (isEqual(dataItem.item, previewItem.value)) {
 			// clear preview item and close the preview panel
-			// FIXME: should we clear the preview if item is de-selected even if other items are still selected
 			previewItem.value = null;
 		} else {
 			// open the preview panel
 			previewItem.value = item;
 			isSliderResourcesOpen.value = false;
 		}
-		return; // do not add to cart if the purpose is to toggel preview
+		return; // do not add to cart if the purpose is to toggle preview
 	}
 
 	// by now, the user has explicitly asked for this item to be added to the cart
@@ -589,20 +563,16 @@ onUnmounted(() => {
 }
 
 .p-buttonset button {
-	outline: 1px solid var(--text-color-disabled);
-	border: none;
+	border: 1px solid var(--surface-border);
 	box-shadow: none;
-	background-color: var(--surface-a);
-	color: var(--text-color-primary);
-	padding: none;
-	padding: 0.3rem;
+	background-color: var(--surface-0);
 }
 
 .p-buttonset button[active='true'],
 .p-button.p-button-text:enabled:focus {
 	font-weight: bold;
 	border: none;
-	background-color: var(--primary-color-lighter);
+	background-color: var(--surface-highlight);
 }
 
 .button-group button:first-child {

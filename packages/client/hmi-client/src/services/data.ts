@@ -427,22 +427,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			abstractText: a.abstract
 		}));
 
-		// process document highlights and style the search term differently in each highlight
-		// FIXME: this styling of highlights with search term should be done automatically by XDD
-		//        since the content is coming already styled and should not be done at the clinet side for performance reasons
-		if (term !== '') {
-			articles.forEach((article) => {
-				if (article.highlight) {
-					article.highlight = article.highlight.map((h) =>
-						h.replaceAll(
-							term,
-							`<span style='background-color: #67d2c3; border-radius: 3px;'>${term}</span>`
-						)
-					);
-				}
-			});
-		}
-
 		const formattedFacets: Facets = getArticleFacets(articles);
 
 		// also, perform search across extractions
