@@ -51,7 +51,7 @@ export abstract class BaseComputionGraph<V, E> extends graphScaffolder.BasicRend
 }
 
 export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
-	const g = new dagre.graphlib.Graph({ compound: true });
+	const g = new dagre.graphlib.Graph({ compound: true, multigraph: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
 
@@ -109,7 +109,23 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	// eslint-disable-next-line
 	for (const edge of graphData.edges) {
 		const e = g.edge(edge.source, edge.target);
-		edge.points = e.points;
+		edge.points = _.cloneDeep(e.points);
 	}
+
+	// HACK: multi-edges
+	const dupe: Set<string> = new Set();
+	for (let idx = 0; idx < graphData.edges.length; idx++) {
+		const edge = graphData.edges[idx];
+		const hash = `${edge.source};${edge.target}`;
+		if (dupe.has(hash)) {
+			if (edge.points.length > 2) {
+				for (let i = 1; i < edge.points.length - 1; i++) {
+					edge.points[i].y -= 25;
+				}
+			}
+		}
+		dupe.add(hash);
+	}
+
 	return graphData;
 };

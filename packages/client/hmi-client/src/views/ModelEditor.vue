@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import * as d3 from 'd3';
-import graphScaffolder from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
@@ -185,6 +185,61 @@ const SIRD: PetriNet = {
 		{ ot: 3, os: 4 }
 	]
 };
+
+const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
+	const petri: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+
+	const nodes = graph.nodes;
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i];
+		if (node.data.type === 'S') {
+			petri.S.push({ sname: node.id });
+		} else {
+			petri.T.push({ tname: node.id });
+		}
+	}
+
+	const edges = graph.edges;
+	for (let i = 0; i < edges.length; i++) {
+		const edge = edges[i];
+		const source = edge.source;
+		const target = edge.target;
+
+		const S = petri.S.map((s) => s.sname);
+		const T = petri.T.map((t) => t.tname);
+
+		if (S.includes(source)) {
+			const is = S.indexOf(source) + 1;
+			const it = T.indexOf(target) + 1;
+			petri.I.push({ is, it });
+		} else {
+			const ot = T.indexOf(source) + 1;
+			const os = S.indexOf(target) + 1;
+			petri.O.push({ os, ot });
+		}
+		// console.log('!!', edge);
+	}
+
+	petri.S = [];
+	petri.T = [];
+
+	for (let i = 0; i < nodes.length; i++) {
+		const node = nodes[i];
+		if (node.data.type === 'S') {
+			petri.S.push({ sname: node.label });
+		} else {
+			petri.T.push({ tname: node.label });
+		}
+	}
+	return petri;
+};
+
+console.log(graph2petri(parsePetriNet2IGraph(SIRD)));
 
 // Tracking variables
 let source: any = null;
