@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref } from 'vue';
+import { watch, ref, computed, onMounted } from 'vue';
 import {
 	runDagreLayout,
 	D3SelectionINode,
@@ -9,7 +9,7 @@ import {
 	pathFn
 } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
-import { Model } from '@/types/Model';
+import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
@@ -18,7 +18,13 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as textUtil from '@/utils/text';
+import { isModel, isDataset, isXDDArticle } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
+import { Model } from '@/types/Model';
+import { ResultType } from '@/types/common';
+import { XDDArticle } from '@/types/XDD';
+import { ProvenanceType } from '@/types/Provenance';
+import { Dataset } from '@/types/Dataset';
 
 export interface ModelProps {
 	assetId: string;
@@ -26,6 +32,27 @@ export interface ModelProps {
 }
 
 const props = defineProps<ModelProps>();
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const model = ref<Model | null>(null);
+
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+);
+
+const fetchRelatedTerariumArtifacts = async () => {
+	if (model.value) {
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Model);
+		relatedTerariumArtifacts.value = results;
+	} else {
+		relatedTerariumArtifacts.value = [];
+	}
+};
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -73,7 +100,6 @@ class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	}
 }
 
-const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.assetId],
@@ -81,6 +107,7 @@ watch(
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
+			fetchRelatedTerariumArtifacts();
 		} else {
 			model.value = null;
 		}
@@ -113,7 +140,9 @@ const goToSimulationPlanPage = () => {
 	router.push({ name: RouteName.SimulationRoute });
 };
 
-console.log(model);
+onMounted(async () => {
+	fetchRelatedTerariumArtifacts();
+});
 </script>
 
 <template>
