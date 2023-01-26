@@ -91,17 +91,25 @@ function goToPage(event) {
 	}
 }
 
-watch(activeProjectId, (newProjectId) => {
-	const projectNavKey = `/projects/${newProjectId}`;
+function updateProjectNavItem(id, name) {
+	const projectNavKey = `/projects/${id}`;
 	const projectNavItem = {
 		[projectNavKey]: {
-			name: activeProjectName.value,
+			name,
 			icon: 'pi pi-images',
 			routeName: RouteName.ProjectRoute
 		}
 	};
 	navItems.value = { ...initialNavItems, ...projectNavItem };
 	selectedPage.value = navItems.value[currentRoute.value.path];
+}
+
+watch(activeProjectId, (newProjectId) => {
+	updateProjectNavItem(newProjectId, activeProjectName.value);
+});
+
+watch(activeProjectName, (newProjectName) => {
+	updateProjectNavItem(activeProjectId.value, newProjectName);
 });
 
 watch(currentRoute, (newRoute) => {
