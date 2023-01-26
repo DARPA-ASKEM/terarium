@@ -79,6 +79,11 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 	for (const edge of graphData.edges) {
 		g.setEdge(edge.source, edge.target);
 	}
+
+	g.graph().rankDir = 'LR';
+	g.graph().nodesep = 100;
+	g.graph().ranksep = 100;
+
 	dagre.layout(g);
 
 	g.nodes().forEach((n) => {

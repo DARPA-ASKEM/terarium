@@ -71,7 +71,7 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			.classed('shape', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
-			.style('fill', '#88C')
+			.style('fill', '#89BEFF')
 			.style('stroke', '#888');
 
 		species
@@ -79,8 +79,8 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			.classed('shape', true)
 			.attr('cx', (d) => d.width * 0.5)
 			.attr('cy', (d) => d.height * 0.5)
-			.attr('r', (d) => d.width * 0.5)
-			.attr('fill', '#f80');
+			.attr('r', (d) => d.width * 0.8)
+			.attr('fill', '#FF90A9');
 
 		selection
 			.append('text')
@@ -97,9 +97,50 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
 	}
+
+	addEdge(source: any, target: any) {
+		this.graph.edges.push({
+			id: `${source.datum().id}_${target.datum().id}`,
+			source: source.datum().id,
+			target: target.datum().id,
+			points: [
+				{
+					x: source.datum().x + source.datum().width * 0.5,
+					y: source.datum().y + source.datum().height * 0.5
+				},
+				{
+					x: target.datum().x + target.datum().width * 0.5,
+					y: target.datum().y + target.datum().height * 0.5
+				}
+			],
+			data: { val: 1 }
+		});
+	}
 }
 
-const emptyModel: PetriNet = { T: [], S: [], I: [], O: [] };
+// const emptyModel: PetriNet = { T: [], S: [], I: [], O: [] };
+
+// SIRD
+const SIRD: PetriNet = {
+	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+	I: [
+		{ it: 1, is: 1 },
+		{ it: 1, is: 2 },
+		{ it: 2, is: 2 },
+		{ it: 3, is: 2 }
+	],
+	O: [
+		{ ot: 1, os: 2 },
+		{ ot: 1, os: 2 },
+		{ ot: 2, os: 3 },
+		{ ot: 3, os: 4 }
+	]
+};
+
+// Tracking variables
+let source: any = null;
+let target: any = null;
 
 // Entry point
 onMounted(async () => {
@@ -107,12 +148,53 @@ onMounted(async () => {
 	const renderer: SampleRenderer = new SampleRenderer({
 		el: playground,
 		useAStarRouting: true,
-		runLayout: runDagreLayout
+		runLayout: runDagreLayout,
+		useStableZoomPan: true
 	});
 
-	const g = parsePetriNet2IGraph(emptyModel);
+	renderer.on('background-click', () => {
+		source = null;
+		target = null;
+		renderer.render();
+	});
+
+	renderer.on('node-click', (_evtName, evt, d) => {
+		if (evt.shiftKey) {
+			if (source) {
+				target = d;
+				target.select('.shape').style('stroke', '#000').style('stroke-width', 4);
+			} else {
+				source = d;
+				source.select('.shape').style('stroke', '#000').style('stroke-width', 4);
+			}
+		} else {
+			if (source) {
+				source.select('.shape').style('stroke', null).style('stroke-width', null);
+			}
+			if (target) {
+				target.select('.shape').style('stroke', null).style('stroke-width', null);
+			}
+			source = null;
+			target = null;
+		}
+
+		if (source && target) {
+			renderer.addEdge(source, target);
+			source = null;
+			target = null;
+		}
+	});
+
+	const g = parsePetriNet2IGraph(SIRD);
 	await renderer.setData(g);
+	await renderer.render();
 });
 </script>
 
-<style></style>
+<style>
+#playground {
+	width: 1000px;
+	height: 400px;
+	border: 1px solid #bbb;
+}
+</style>
