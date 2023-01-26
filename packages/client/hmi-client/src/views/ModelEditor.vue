@@ -268,7 +268,7 @@ const runPetri = () => {
 	});
 
 	const payload = {
-		inital_values: initials,
+		initial_values: initials,
 		parameters
 	};
 
