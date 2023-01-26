@@ -8,12 +8,11 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class Publication implements Serializable {
+public class Publication extends ResourceType implements Serializable {
 
-	private String id;
 
-    @JsonbProperty("xdd_uri")
-    private String xddUri;
+	@JsonbProperty("xdd_uri")
+	private String xddUri;
 
 	@JsonbProperty("title")
 	private String title;

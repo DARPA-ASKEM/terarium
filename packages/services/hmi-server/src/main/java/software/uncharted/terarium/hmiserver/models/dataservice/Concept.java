@@ -14,7 +14,7 @@ public class Concept implements Serializable {
 
 	private String curie;
 
-	private ResourceType type;
+	private ResourceType.Type type;
 
 	@JsonbProperty("object_id")
 	private String objectID;
