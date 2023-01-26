@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref } from 'vue';
+import { watch, ref, computed, onMounted } from 'vue';
 import {
 	runDagreLayout,
 	D3SelectionINode,
@@ -9,21 +9,58 @@ import {
 	pathFn
 } from '@/services/graph';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
-import { Model } from '@/types/Model';
+import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import * as textUtil from '@/utils/text';
+import { isModel, isDataset, isXDDArticle } from '@/utils/data-util';
+import { isEmpty } from 'lodash';
+import { Model } from '@/types/Model';
+import { ResultType } from '@/types/common';
+import { XDDArticle } from '@/types/XDD';
+import { ProvenanceType } from '@/types/Provenance';
+import { Dataset } from '@/types/Dataset';
 
 export interface ModelProps {
 	assetId: string;
+	highlight?: string;
 }
 
 const props = defineProps<ModelProps>();
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const model = ref<Model | null>(null);
+
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+);
+
+const fetchRelatedTerariumArtifacts = async () => {
+	if (model.value) {
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Model);
+		relatedTerariumArtifacts.value = results;
+	} else {
+		relatedTerariumArtifacts.value = [];
+	}
+};
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 
 class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
@@ -63,7 +100,6 @@ class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
 	}
 }
 
-const model = ref<Model | null>(null);
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.assetId],
@@ -71,6 +107,7 @@ watch(
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
+			fetchRelatedTerariumArtifacts();
 		} else {
 			model.value = null;
 		}
@@ -102,6 +139,10 @@ const router = useRouter();
 const goToSimulationPlanPage = () => {
 	router.push({ name: RouteName.SimulationRoute });
 };
+
+onMounted(async () => {
+	fetchRelatedTerariumArtifacts();
+});
 </script>
 
 <template>
@@ -113,15 +154,11 @@ const goToSimulationPlanPage = () => {
 
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
 			<AccordionTab header="Description">
-				<p>
-					{{ model?.description }}
-				</p>
+				<p v-html="highlightSearchTerms(model?.description)" />
 			</AccordionTab>
-
 			<AccordionTab header="Structure">
 				<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
 			</AccordionTab>
-
 			<AccordionTab header="Variables">
 				<DataTable :value="model?.content.S">
 					<Column field="sname" header="Name"></Column>
@@ -129,12 +166,24 @@ const goToSimulationPlanPage = () => {
 					<Column field="mira_context" header="MIRA context"></Column>
 				</DataTable>
 			</AccordionTab>
-
 			<AccordionTab header="Parameters">
 				<DataTable :value="model?.parameters">
 					<Column field="name" header="Name"></Column>
 					<Column field="type" header="Type"></Column>
 					<Column field="default_value" header="Default"></Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Related TERARium artifacts">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<br />
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<br />
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Papers"></Column>
 				</DataTable>
 			</AccordionTab>
 		</Accordion>

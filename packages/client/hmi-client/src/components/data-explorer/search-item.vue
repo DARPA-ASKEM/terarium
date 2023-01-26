@@ -11,6 +11,7 @@ const props = defineProps<{
 	isPreviewed: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
+	searchTerm?: string;
 }>();
 
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
@@ -34,17 +35,18 @@ const isSelected = () =>
 </script>
 
 <template>
-	<asset-card
+	<AssetCard
 		:asset="asset"
 		:resourceType="resourceType"
 		:active="isPreviewed"
+		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
 		<button type="button" @click.stop="emit('toggle-selected-asset')">
-			<i class="pi pi-plus" v-show="!isSelected()"></i>
-			<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
+			<i class="pi pi-plus" v-show="!isSelected()" />
+			<i class="pi pi-check checkmark-color" v-show="isSelected()" />
 		</button>
-	</asset-card>
+	</AssetCard>
 </template>
 
 <style scoped>

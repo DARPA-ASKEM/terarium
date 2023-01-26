@@ -5,10 +5,20 @@ import { csvToRecords, getColumns, Record } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import * as textUtil from '@/utils/text';
 
 const props = defineProps<{
 	assetId: string;
+	highlight?: string;
 }>();
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<string | null>(null);
@@ -49,7 +59,7 @@ const formatFeatures = (d: Dataset) => {
 <template>
 	<section class="dataset">
 		<template v-if="dataset !== null">
-			<h4 class="title">{{ dataset?.name ?? '' }}</h4>
+			<h4 class="title" v-html="highlightSearchTerms(dataset?.name ?? '')" />
 			<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
 			<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
 			<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
