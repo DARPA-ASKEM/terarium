@@ -6,15 +6,14 @@ import InputText from 'primevue/inputtext';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 
 const props = defineProps<{
 	project: Project;
 }>();
 
-const mockRelatedProjects = ['Project A', 'Project B'];
-
 const resources = useResourcesStore();
-const isEditingProjectName = ref(false);
+const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 
@@ -28,15 +27,16 @@ function formatTimeStamp(timestamp) {
 	return `Last updated ${formattedDate}`;
 }
 
-async function editProjectName() {
-	isEditingProjectName.value = true;
+async function editProject() {
+	newProjectName.value = props.project.name;
+	isEditingProject.value = true;
 	await nextTick();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 
 async function updateProjectName() {
-	isEditingProjectName.value = false;
+	isEditingProject.value = false;
 	const updatedProject = props.project;
 	updatedProject.name = newProjectName.value;
 	const id = await updateProject(updatedProject);
@@ -44,21 +44,38 @@ async function updateProjectName() {
 		resources.setActiveProject(updatedProject);
 	}
 }
+
+const projectMenu = ref();
+const projectMenuItems = ref([
+	{
+		label: 'Edit',
+		command: editProject
+	}
+]);
+
+function showProjectMenu(event) {
+	projectMenu.value.toggle(event);
+}
 </script>
 
 <template>
 	<div class="flex-container">
 		<header>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-rounded menu-button"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
 			<InputText
 				v-model="newProjectName"
 				ref="inputElement"
 				class="project-name-input"
 				@keyup.enter="updateProjectName"
-				:placeholder="project?.name"
-				:class="{ isVisible: isEditingProjectName }"
+				:class="{ isVisible: isEditingProject }"
 			>
 			</InputText>
-			<h3 :class="{ isVisible: !isEditingProjectName }" @dblclick="editProjectName">
+			<h3 :class="{ isVisible: !isEditingProject }">
 				{{ project?.name }}
 			</h3>
 
@@ -69,22 +86,14 @@ async function updateProjectName() {
 				<!-- This div is so that child elements will automatically collapse margins -->
 				<div>
 					<!-- Author -->
-					<section class="contributors">
-						{{ project?.username }}
-						<Button label="+ Add contributor" />
-					</section>
 					<section class="description">
 						<p>
 							{{ project?.description }}
 						</p>
 					</section>
-					<section class="related">
-						Related projects
-						<ul>
-							<li v-for="item in mockRelatedProjects" :key="item">
-								<Button :label="item" class="item" />
-							</li>
-						</ul>
+					<section class="contributors">
+						{{ project?.username }}
+						<Button label="+ Add contributor" />
 					</section>
 				</div>
 			</section>
@@ -133,7 +142,6 @@ section {
 .contributors {
 	line-height: 1.75rem;
 	margin: 0 0 1rem 0;
-	font-weight: $fontWeightSemiBold;
 	align-items: flex-start;
 }
 
@@ -170,6 +178,7 @@ h3 {
 	margin-left: -1rem;
 	border: 0;
 	visibility: hidden;
+	width: 33%;
 }
 
 .secondary-text {
@@ -178,10 +187,6 @@ h3 {
 
 .isVisible {
 	visibility: visible;
-}
-
-.p-inputtext:enabled:focus {
-	box-shadow: none;
 }
 
 .p-button,
@@ -204,5 +209,10 @@ ul {
 	color: var(--text-color-secondary);
 	padding: 0 0.5rem 0 0.5rem;
 	margin: 0.5rem;
+}
+
+.menu-button {
+	position: absolute;
+	right: 0;
 }
 </style>
