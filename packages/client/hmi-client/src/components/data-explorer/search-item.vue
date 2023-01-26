@@ -35,22 +35,18 @@ const isSelected = () =>
 </script>
 
 <template>
-	<asset-card
+	<AssetCard
 		:asset="asset"
 		:resourceType="resourceType"
 		:active="isPreviewed"
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
-		<button type="button">
-			<!--there are talks of having the plus and three dot menu available wherever-->
-			<i class="pi pi-ellipsis-v"></i>
-		</button>
 		<button type="button" @click.stop="emit('toggle-selected-asset')">
-			<i class="pi pi-plus" v-show="!isSelected()"></i>
-			<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
+			<i class="pi pi-plus" v-show="!isSelected()" />
+			<i class="pi pi-check checkmark-color" v-show="isSelected()" />
 		</button>
-	</asset-card>
+	</AssetCard>
 </template>
 
 <style scoped>

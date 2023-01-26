@@ -24,23 +24,20 @@
 					/>
 				</div>
 			</header>
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
-				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
+				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
 					{{ formattedAbstract }}
 				</AccordionTab>
-				<AccordionTab
-					v-if="doc.knownEntities && doc.knownEntities.summaries.sections"
-					header="Section summaries"
-				>
-					<div v-for="(v, k) of doc.knownEntities.summaries.sections" :key="k">
+				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
+					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<div>
-							<strong>{{ k }}</strong>
+							<strong>{{ index }}</strong>
 						</div>
-						<div>{{ v }}</div>
+						<div>{{ section }}</div>
 						<br />
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
+				<AccordionTab v-if="!isEmpty(figureArtifacts)" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -50,7 +47,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -60,7 +57,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
+				<AccordionTab v-if="!isEmpty(equationArtifacts)" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -70,7 +67,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="urlArtifacts.length > 0" header="URLs">
+				<AccordionTab v-if="!isEmpty(urlArtifacts)" header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -78,7 +75,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="otherArtifacts.length > 0" header="Others">
+				<AccordionTab v-if="!isEmpty(otherArtifacts)" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
 						<b>{{ ex.properties.title }}</b>
 						{{ ex.properties.caption }}
@@ -91,13 +88,7 @@
 						{{ key + 1 }}. {{ formatCitation(citation) }}
 					</div>
 				</AccordionTab>
-				<!--
-				<AccordionTab header="Cited by"> </AccordionTab>
-				-->
-				<AccordionTab
-					v-if="relatedTerariumArtifacts.length > 0"
-					header="Related TERARium artifacts"
-				>
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Related TERARium artifacts">
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
 					</DataTable>
@@ -110,9 +101,6 @@
 						<Column field="name" header="Papers"></Column>
 					</DataTable>
 				</AccordionTab>
-				<!--
-				<AccordionTab header="Provenance"> </AccordionTab>
-				-->
 			</Accordion>
 		</div>
 	</section>
@@ -120,6 +108,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
@@ -253,18 +242,15 @@ const openPDF = () => {
 
 /**
  * Format from xDD citation_list object.
- *
  * -  author (year), title, journal, doi
  */
 const formatCitation = (obj: { [key: string]: string }) => {
 	if (Object.keys(obj).length <= 1) {
-		if (obj.unstructured_citation) return obj.unstructured_citation;
-		return '';
+		return obj.unstructured_citation ?? '';
 	}
 	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 };
 
-// fetch artifacts from COSMOS using the doc doi
 onMounted(async () => {
 	fetchDocumentArtifacts();
 	fetchRelatedTerariumArtifacts();
@@ -310,12 +296,10 @@ a:hover {
 	color: var(--primary-color-dark);
 }
 
-.accordian {
+.accordion {
 	margin-top: 1rem;
 	font-size: 14px;
 }
-
-/* .p-accordion .p-accordion-content {} */
 
 .extracted-item {
 	padding-bottom: 0.5rem;

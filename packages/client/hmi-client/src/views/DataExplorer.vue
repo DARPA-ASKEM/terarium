@@ -411,18 +411,22 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	let foundIndx = -1;
 	const item = dataItem.item;
 
+	console.log({
+		item,
+		foundIndx
+	});
+
 	if (dataItem.type && dataItem.type === 'clicked') {
 		// toggle preview
 		if (isEqual(dataItem.item, previewItem.value)) {
 			// clear preview item and close the preview panel
-			// FIXME: should we clear the preview if item is de-selected even if other items are still selected
 			previewItem.value = null;
 		} else {
 			// open the preview panel
 			previewItem.value = item;
 			isSliderResourcesOpen.value = false;
 		}
-		return; // do not add to cart if the purpose is to toggel preview
+		return; // do not add to cart if the purpose is to toggle preview
 	}
 
 	// by now, the user has explicitly asked for this item to be added to the cart

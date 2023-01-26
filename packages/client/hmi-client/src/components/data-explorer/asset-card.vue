@@ -20,7 +20,7 @@
 							:class="`pi ${icon.class}`"
 							:active="chosenExtractionFilter === icon.type"
 							@click.stop="updateExtractionFilter(icon.type)"
-						></i>
+						/>
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
@@ -28,12 +28,10 @@
 					Simulation run
 				</div>
 			</div>
-			<div class="title" v-html="highlightSearchTerms(title)" />
+			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
 			<ul class="snippets" v-if="snippets">
-				<li v-for="(snippet, index) in snippets" :key="index">
-					&hellip;<template v-html="highlightSearchTerms(snippet)" />&hellip;
-				</li>
+				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
 			<div class="description" v-html="highlightSearchTerms(asset.description)" />
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
@@ -127,11 +125,11 @@ const props = defineProps<{
 }>();
 
 // Highlight strings based on props.highlight
-function highlightSearchTerms(text: string): string {
-	if (props.highlight && text) {
-		textUtil.highlight(text, props.highlight);
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
 	}
-	return text;
+	return text ?? '';
 }
 
 // const emit = defineEmits(['toggle-asset-preview']);
@@ -184,9 +182,10 @@ const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
 const snippets = computed(() =>
 	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
 );
-const title = computed(() =>
-	props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name
-);
+const title = computed(() => {
+	const value = props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name;
+	return highlightSearchTerms(value);
+});
 
 // Reset page number on new search and when chosenExtractionFilter is changed
 watch(
@@ -365,7 +364,14 @@ i:hover {
 	list-style: none;
 }
 
-.asset-card >>> em.highlight {
+/* Add ellipsis around a snippet */
+.snippets li::before,
+.snippets li::after {
+	content: '…';
+}
+
+.asset-card >>> .highlight,
+.asset-card >>> .hl {
 	background-color: var(--surface-highlight);
 	border-radius: var(--border-radius);
 	padding-left: 0.2em;
