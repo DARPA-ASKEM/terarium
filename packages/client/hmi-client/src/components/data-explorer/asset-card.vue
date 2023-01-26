@@ -28,14 +28,14 @@
 					Simulation run
 				</div>
 			</div>
-			<div class="title" v-html="highlightText(title)" />
+			<div class="title" v-html="highlightSearchTerms(title)" />
 			<div class="details" v-html="formatDetails" />
 			<ul class="snippets" v-if="snippets">
 				<li v-for="(snippet, index) in snippets" :key="index">
-					&hellip;<template v-html="highlightText(snippet)" />&hellip;
+					&hellip;<template v-html="highlightSearchTerms(snippet)" />&hellip;
 				</li>
 			</ul>
-			<div class="description" v-html="highlightText(asset.description)" />
+			<div class="description" v-html="highlightSearchTerms(asset.description)" />
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
 				PARAMETERS:
 				{{ asset.parameters }}
@@ -112,6 +112,7 @@ import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
+import * as textUtil from '@/utils/text';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -122,7 +123,7 @@ type UrlExtraction = {
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	resourceType: ResourceType;
-	highlight?: String;
+	highlight?: string;
 }>();
 
 // const emit = defineEmits(['toggle-asset-preview']);
@@ -214,11 +215,10 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // 	return tags;
 // };
 
-// Highlight strings based on props.highligh
-function highlightText(text: string) {
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string): string {
 	if (props.highlight) {
-		const term = RegExp(props.highlight as string, 'gi');
-		return text.replace(term, (match) => `<em class="highlight">${match}</em>`);
+		textUtil.highlight(text, props.highlight);
 	}
 	return text;
 }
@@ -230,7 +230,7 @@ const formatDetails = computed(() => {
 		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
 			props.asset.journal
 		}`;
-		return highlightText(details);
+		return highlightSearchTerms(details);
 	}
 
 	if (props.resourceType === ResourceType.DATASET) {
@@ -362,5 +362,12 @@ i:hover {
 
 .snippets {
 	list-style: none;
+}
+
+.asset-card >>> em.highlight {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	padding-left: 0.2em;
+	padding-right: 0.2em;
 }
 </style>

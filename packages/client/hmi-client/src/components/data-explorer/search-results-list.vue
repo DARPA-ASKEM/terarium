@@ -12,7 +12,6 @@
 			<SearchItem
 				:asset="(asset as XDDArticle & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
-				:isInCart="false"
 				:isPreviewed="previewedAsset === asset"
 				:resourceType="(resultType as ResourceType)"
 				:searchTerm="searchTerm"
