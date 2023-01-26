@@ -54,7 +54,14 @@ public class Document implements Serializable {
 		this.gddId = id;
 	}
 
-	private List<Map<String, String>> citationList;
+	/**
+	 * This is primairly a List<Map<String,String>>, however, there is one specific field named _in_xdd
+	 * which is coming to us as a Boolean.  Once this is changed we should change this back to have
+	 * values of String.
+	 *
+	 * @param v
+	 */
+	private List<Map<String, Object>> citationList;
 
 	public String getID() {
 		return this.gddId;
@@ -76,7 +83,7 @@ public class Document implements Serializable {
 	}
 
 	@JsonbProperty("citation_list")
-	public void setCitationList(List<Map<String, String>> v) {
+	public void setCitationList(List<Map<String, Object>> v) {
 		this.citationList = v;
 	}
 
