@@ -1,6 +1,9 @@
 <template>
 	<section>
-		<div id="playground"></div>
+		<div style="display: flex">
+			<div id="playground"></div>
+			<div id="parameters"></div>
+		</div>
 	</section>
 </template>
 
@@ -115,8 +118,53 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			],
 			data: { val: 1 }
 		});
+		this.render();
 	}
 }
+
+let renderer: SampleRenderer | null = null;
+
+const renderParameterInput = () => {
+	const el = d3.select('#parameters');
+	el.selectAll('*').remove();
+
+	if (!renderer) return;
+
+	const graph = renderer.graph;
+
+	el.append('div').text('Species');
+	const speciesEl = el.append('div').style('display', 'flex').style('flex-direction', 'column');
+
+	const speciesNodes = graph.nodes.filter((d) => d.data.type === 'S');
+	for (let i = 0; i < speciesNodes.length; i++) {
+		const node = speciesNodes[i];
+		const div = speciesEl.append('div').style('display', 'flex');
+		div
+			.append('div')
+			.style('width', '80px')
+			.style('text-align', 'end')
+			.style('padding-right', '5px')
+			.text(node.label);
+		div.append('input');
+	}
+
+	el.append('hr');
+
+	el.append('div').text('Transitions');
+	const transitionsEL = el.append('div').style('display', 'flex').style('flex-direction', 'column');
+	const transitionsNodes = graph.nodes.filter((d) => d.data.type === 'T');
+	for (let i = 0; i < transitionsNodes.length; i++) {
+		const node = transitionsNodes[i];
+		const div = transitionsEL.append('div').style('display', 'flex');
+		div
+			.append('div')
+			.style('width', '80px')
+			.style('text-align', 'end')
+			.style('padding-right', '5px')
+			.text(node.label);
+		div.append('input');
+	}
+};
 
 // const emptyModel: PetriNet = { T: [], S: [], I: [], O: [] };
 
@@ -145,7 +193,7 @@ let target: any = null;
 // Entry point
 onMounted(async () => {
 	const playground = document.getElementById('playground') as HTMLDivElement;
-	const renderer: SampleRenderer = new SampleRenderer({
+	renderer = new SampleRenderer({
 		el: playground,
 		useAStarRouting: true,
 		runLayout: runDagreLayout,
@@ -155,7 +203,7 @@ onMounted(async () => {
 	renderer.on('background-click', () => {
 		source = null;
 		target = null;
-		renderer.render();
+		renderer?.render();
 	});
 
 	renderer.on('node-click', (_evtName, evt, d) => {
@@ -188,6 +236,7 @@ onMounted(async () => {
 	const g = parsePetriNet2IGraph(SIRD);
 	await renderer.setData(g);
 	await renderer.render();
+	renderParameterInput();
 });
 </script>
 
