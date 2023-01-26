@@ -24,11 +24,17 @@ $primaryTextColor: #ffffff !default;
 $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
 
-//global
+// font
+$fontCaption: 12px;
+$fontBodySmall: 14px;
+$fontBodyMedium: 16px;
+$fontBodyLarge: 18px;
 $fontFamily: Figtree, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif !default;
-$fontSize: 1rem !default;
+$fontSize: $fontBodySmall;
 $fontWeight: 400 !default;
 $fontWeightSemiBold: 600;
+
+//global
 $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
@@ -850,6 +856,14 @@ $imagePreviewActionIconBorderRadius: 50% !default;
     --primary-color-dark: #12564D;
     --primary-color-text:#{$primaryTextColor};
     --font-family:#{$fontFamily};
+    --font-caption: $fontCaption;
+    --font-body-small: $fontBodySmall;
+    --font-body-medium: $fontBodyMedium;
+    --font-body-large: $fontBodyLarge;
+    --font-family: $fontFamily;
+    --font-size: $fontSize;
+    --font-weight: $fontWeight;
+    --font-weight-semibold: $fontWeightSemiBold;
     --surface-0: #ffffff;
     --surface-50: #FAFAFA;
     --surface-100: #F5F5F5;

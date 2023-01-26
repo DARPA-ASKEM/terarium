@@ -411,11 +411,6 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	let foundIndx = -1;
 	const item = dataItem.item;
 
-	console.log({
-		item,
-		foundIndx
-	});
-
 	if (dataItem.type && dataItem.type === 'clicked') {
 		// toggle preview
 		if (isEqual(dataItem.item, previewItem.value)) {

@@ -256,6 +256,7 @@ const formatFeatures = () => {
 	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
+	font-size: var(--font-caption);
 	display: flex;
 	justify-content: space-between;
 }
@@ -332,19 +333,17 @@ const formatFeatures = () => {
 
 .title {
 	color: var(--text-color-primary);
-	font-size: 1rem;
 	margin: 0.5rem 0 0.25rem 0;
 }
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
-	font-size: 14px;
 }
 
 i {
 	padding: 0.2rem;
 	border-radius: 3px;
-	font-size: 12px;
+	font-size: var(--font-caption);
 }
 
 .pi[active='true'] {
@@ -354,10 +353,6 @@ i {
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
-}
-
-.preview-and-options button i {
-	font-size: 14px;
 }
 
 .snippets {
