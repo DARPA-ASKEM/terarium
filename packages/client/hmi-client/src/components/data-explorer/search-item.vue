@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { watch, ref } from 'vue';
-import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { XDDArticle } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
@@ -17,18 +16,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
-
-const relatedAssetPage = ref<number>(0);
-
-const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
-
-// Reset page number on new search and when chosenExtractionFilter is changed
-watch(
-	() => [props.asset, chosenExtractionFilter.value],
-	() => {
-		relatedAssetPage.value = 0;
-	}
-);
 
 const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
@@ -60,7 +47,7 @@ const isSelected = () =>
 			<!--there are talks of having the plus and three dot menu available wherever-->
 			<i class="pi pi-ellipsis-v"></i>
 		</button>
-		<button v-else type="button" @click.stop="emit('toggle-selected-asset')">
+		<button type="button" @click.stop="emit('toggle-selected-asset')">
 			<i class="pi pi-plus" v-show="!isSelected()"></i>
 			<i class="pi pi-check checkmark-color" v-show="isSelected()"></i>
 		</button>
@@ -75,22 +62,13 @@ button {
 	padding: 0;
 }
 
-i {
+button i {
 	padding: 0.2rem;
 	border-radius: 3px;
-	z-index: 2;
-	font-size: 12px;
-}
-
-.preview-and-options button i {
 	font-size: 14px;
 }
 
-.pi[active='true'] {
-	background-color: var(--primary-color-light);
-}
-
-i:hover {
+button i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
 }

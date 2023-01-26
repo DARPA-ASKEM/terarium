@@ -14,7 +14,8 @@ export type Model = {
 	framework: string;
 	concept: string;
 	timestamp: string | Date;
-	parameters: { [key: string]: string };
+	/* parameters: { [key: string]: string }; */
+	parameters: any; // FIXME
 	content: PetriNet;
 
 	type: string;

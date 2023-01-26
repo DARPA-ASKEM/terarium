@@ -22,7 +22,7 @@
 					:resourceType="(getType(asset) as ResourceType)"
 				>
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
-						<i class="pi pi-ellipsis-v"></i>
+						<i class="pi pi-ellipsis-v" />
 					</button>
 
 					<OverlayPanel ref="contextMenu">
@@ -233,13 +233,13 @@ button {
 
 i {
 	padding: 0.2rem;
-	border-radius: 3px;
+	border-radius: var(--border-radius);
 }
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
+	background-color: hsla(0, 0%, 0%, 0.1);
 }
-
 .context-menu-item {
 	padding: 0.5rem;
 }

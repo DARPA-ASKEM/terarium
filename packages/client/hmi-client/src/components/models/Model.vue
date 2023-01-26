@@ -14,6 +14,11 @@ import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
 
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+
 export interface ModelProps {
 	assetId: string;
 }
@@ -86,12 +91,11 @@ watch([model, graphElement], async () => {
 		useAStarRouting: true,
 		runLayout: runDagreLayout
 	});
+
 	// Render graph
 	await renderer?.setData(g);
 	await renderer?.render();
 });
-
-const isDescriptionExpanded = ref(false);
 
 // FIXME: update after Dec 8 demo
 const router = useRouter();
@@ -106,17 +110,34 @@ const goToSimulationPlanPage = () => {
 			<h3>{{ model?.name ?? '' }}</h3>
 			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
 		</header>
-		<div class="description" :class="{ 'is-expanded': isDescriptionExpanded }">
-			<p>{{ model?.description ?? '' }}</p>
-			<div class="less-more-button-container">
-				<Button
-					class="p-button-secondary p-button-sm"
-					:label="isDescriptionExpanded ? 'Show less' : 'Show more'"
-					@click="isDescriptionExpanded = !isDescriptionExpanded"
-				/>
-			</div>
-		</div>
-		<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
+
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
+			<AccordionTab header="Description">
+				<p>
+					{{ model?.description }}
+				</p>
+			</AccordionTab>
+
+			<AccordionTab header="Structure">
+				<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
+			</AccordionTab>
+
+			<AccordionTab header="Variables">
+				<DataTable :value="model?.content.S">
+					<Column field="sname" header="Name"></Column>
+					<Column field="mira_ids" header="MIRA IDs"></Column>
+					<Column field="mira_context" header="MIRA context"></Column>
+				</DataTable>
+			</AccordionTab>
+
+			<AccordionTab header="Parameters">
+				<DataTable :value="model?.parameters">
+					<Column field="name" header="Name"></Column>
+					<Column field="type" header="Type"></Column>
+					<Column field="default_value" header="Default"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
 	</section>
 </template>
 
@@ -125,6 +146,7 @@ const goToSimulationPlanPage = () => {
 	padding: 10px;
 	display: flex;
 	flex-direction: column;
+	overflow-y: scroll;
 }
 
 header {
@@ -162,9 +184,12 @@ h3 {
 }
 
 .graph-element {
-	width: 100%;
 	flex: 1;
-	min-height: 0;
+	/* min-height: 0; */
+	/* width: 100%; */
+	height: 400px;
+	width: 400px;
+	border: 1px solid var(--surface-border);
 	overflow: hidden;
 }
 
@@ -172,5 +197,10 @@ h3 {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.accordion {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 }
 </style>

@@ -4,16 +4,16 @@
 		<template v-else>Showing {{ resultsCount }} item(s)</template>
 	</div>
 	<div v-if="isLoading" class="loading-spinner">
-		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem"></i></div>
+		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
 	</div>
 	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
-			<search-item
+			<SearchItem
 				:asset="(asset as XDDArticle & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
-				:isPreviewed="previewedAsset === asset"
 				:isInCart="false"
+				:isPreviewed="previewedAsset === asset"
 				:resourceType="(resultType as ResourceType)"
 				:searchTerm="searchTerm"
 				@toggle-selected-asset="updateSelection(asset)"
