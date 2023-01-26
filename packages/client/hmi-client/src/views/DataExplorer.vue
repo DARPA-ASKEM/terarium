@@ -346,12 +346,19 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
-		filters: clientFilters.value
-	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
-		filters: clientFilters.value
-	};
+
+	let modelSearchParams;
+	if (searchParamsWithFacetFilters?.[ResourceType.MODEL]?.filters) {
+		modelSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+	} else {
+		modelSearchParams = { filters: clientFilters.value };
+	}
+	let datasetSearchParams;
+	if (searchParamsWithFacetFilters?.[ResourceType.DATASET]?.filters) {
+		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+	} else {
+		datasetSearchParams = { filters: clientFilters.value };
+	}
 
 	// update search parameters object
 	searchParamsWithFacetFilters.xdd = xddSearchParams;
