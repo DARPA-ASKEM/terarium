@@ -21,7 +21,7 @@
 			<i class="pi pi-history" />
 			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
 		</div>
-		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms.length > 0"
+		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms.entries.length > 0"
 			>Suggested terms:<Chip
 				v-for="item in suggestedTerms"
 				:key="item"
