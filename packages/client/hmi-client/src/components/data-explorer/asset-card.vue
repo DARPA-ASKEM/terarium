@@ -1,6 +1,6 @@
 <template>
 	<div class="asset-card">
-		<div>
+		<main>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
 				<div
@@ -46,7 +46,7 @@
 				<span v-for="(feature, index) in formatFeatures()" :key="index"> {{ feature }}, </span>
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
-		</div>
+		</main>
 		<aside class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<template v-if="relatedAsset">
@@ -126,6 +126,14 @@ const props = defineProps<{
 	highlight?: string;
 }>();
 
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string): string {
+	if (props.highlight && text) {
+		textUtil.highlight(text, props.highlight);
+	}
+	return text;
+}
+
 // const emit = defineEmits(['toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
@@ -179,6 +187,7 @@ const snippets = computed(() =>
 const title = computed(() =>
 	props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name
 );
+
 // Reset page number on new search and when chosenExtractionFilter is changed
 watch(
 	() => [props.asset, chosenExtractionFilter.value],
@@ -214,14 +223,6 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // 	}
 // 	return tags;
 // };
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string): string {
-	if (props.highlight) {
-		textUtil.highlight(text, props.highlight);
-	}
-	return text;
-}
 
 // Return formatted author, year, journal
 // Return formatted author, year, journal
