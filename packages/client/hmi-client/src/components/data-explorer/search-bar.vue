@@ -87,6 +87,8 @@ watch(defaultText, (newText) => {
 	display: flex;
 	align-items: center;
 	flex-direction: column;
+	max-width: 50%;
+	overflow: hidden;
 }
 
 .search {
@@ -99,7 +101,7 @@ watch(defaultText, (newText) => {
 	margin: 0.75rem 0 0.25rem 0;
 	display: inline-flex;
 	gap: 0.5rem;
-	margin-left: 0.5rem;
+	margin-left: 0.25rem;
 	margin-right: auto;
 	align-items: center;
 	overflow: hidden;
@@ -124,7 +126,7 @@ watch(defaultText, (newText) => {
 }
 
 .p-chip::v-deep .p-chip-remove-icon {
-	font-size: inherit;
+	font-size: 0.75rem;
 }
 
 .p-input-icon-left {
