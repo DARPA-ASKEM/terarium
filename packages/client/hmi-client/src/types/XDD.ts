@@ -196,4 +196,4 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
-export const FACET_FIELDS: string[] = [PUBLISHER, YEAR, PUBLICATION_NAME];
+export const FACET_FIELDS: string[] = [YEAR, PUBLISHER, JOURNAL];
