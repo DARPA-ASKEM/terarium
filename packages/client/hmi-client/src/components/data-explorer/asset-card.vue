@@ -28,22 +28,14 @@
 					Simulation run
 				</div>
 			</div>
-			<div class="title">
-				<template v-if="resourceType === ResourceType.XDD">{{ asset.title }}</template>
-				<template
-					v-else-if="resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET"
-				>
-					{{ asset.name }}
-				</template>
-			</div>
-			<div class="details">
-				<template v-if="resourceType === ResourceType.XDD">{{ formatDetails() }}</template>
-				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
-			</div>
-			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets" :key="snippet">...<span v-html="snippet"></span>...</li>
+			<div class="title" v-html="highlightText(title)" />
+			<div class="details" v-html="formatDetails" />
+			<ul class="snippets" v-if="snippets">
+				<li v-for="(snippet, index) in snippets" :key="index">
+					&hellip;<template v-html="highlightText(snippet)" />&hellip;
+				</li>
 			</ul>
-			<div class="description">{{ asset.description }}</div>
+			<div class="description" v-html="highlightText(asset.description)" />
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
 				PARAMETERS:
 				{{ asset.parameters }}
@@ -55,7 +47,7 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
-		<div class="preview-and-options">
+		<aside class="preview-and-options">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<template v-if="relatedAsset">
 					<img
@@ -109,7 +101,7 @@
 				</div>
 			</figure>
 			<slot name="default"></slot>
-		</div>
+		</aside>
 	</div>
 </template>
 
@@ -130,6 +122,7 @@ type UrlExtraction = {
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	resourceType: ResourceType;
+	highlight?: String;
 }>();
 
 // const emit = defineEmits(['toggle-asset-preview']);
@@ -179,8 +172,12 @@ const extractions: ComputedRef<UrlExtraction[] & XDDArtifact[]> = computed(() =>
 });
 
 const relatedAsset = computed(() => extractions.value[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight && [...props.asset.highlight].splice(0, 3));
-
+const snippets = computed(() =>
+	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
+);
+const title = computed(() =>
+	props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name
+);
 // Reset page number on new search and when chosenExtractionFilter is changed
 watch(
 	() => [props.asset, chosenExtractionFilter.value],
@@ -217,11 +214,31 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // 	return tags;
 // };
 
+// Highlight strings based on props.highligh
+function highlightText(text: string) {
+	if (props.highlight) {
+		const term = RegExp(props.highlight as string, 'gi');
+		return text.replace(term, (match) => `<em class="highlight">${match}</em>`);
+	}
+	return text;
+}
+
 // Return formatted author, year, journal
-const formatDetails = () =>
-	`${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
-		props.asset.journal
-	}`;
+// Return formatted author, year, journal
+const formatDetails = computed(() => {
+	if (props.resourceType === ResourceType.XDD) {
+		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
+			props.asset.journal
+		}`;
+		return highlightText(details);
+	}
+
+	if (props.resourceType === ResourceType.DATASET) {
+		return props.asset?.url;
+	}
+
+	return null;
+});
 
 // Format features for dataset type
 const formatFeatures = () => {
@@ -239,7 +256,6 @@ const formatFeatures = () => {
 	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
-	font-size: 12px;
 	display: flex;
 	justify-content: space-between;
 }
