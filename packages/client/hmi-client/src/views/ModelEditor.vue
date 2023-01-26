@@ -5,17 +5,56 @@
 			<div id="parameters"></div>
 		</div>
 		<Button @click="runPetri()">Run simulation</Button>
+
+		<div>States</div>
+		<table>
+			<thead>
+				<th>Name</th>
+				<th>Value</th>
+			</thead>
+			<tr v-for="v of stateVariables" :key="v.id">
+				<td>
+					<input v-model="v.name" />
+				</td>
+				<td>
+					<input v-model.number="v.value" style="text-align: end" />
+				</td>
+			</tr>
+		</table>
+
+		<div>Parameters</div>
+		<table>
+			<thead>
+				<th>Name</th>
+				<th>Value</th>
+			</thead>
+			<tr v-for="v of paramVariables" :key="v.id">
+				<td>
+					<input v-model="v.name" />
+				</td>
+				<td>
+					<input v-model.number="v.value" style="text-align: end" />
+				</td>
+			</tr>
+		</table>
 	</section>
 </template>
 
 <script setup lang="ts">
 import * as d3 from 'd3';
+import _ from 'lodash';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { onMounted } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph } from '@/services/model';
 import Button from 'primevue/button';
+
+const variablesRef = ref<any[]>([]);
+
+const stateVariables = computed(() => variablesRef.value.filter((d) => d.type === 'S'));
+
+const paramVariables = computed(() => variablesRef.value.filter((d) => d.type === 'T'));
 
 interface NodeData {
 	type: string;
@@ -126,52 +165,6 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 
 let renderer: SampleRenderer | null = null;
 
-const renderParameterInput = () => {
-	const el = d3.select('#parameters');
-	el.selectAll('*').remove();
-
-	if (!renderer) return;
-
-	const graph = renderer.graph;
-
-	el.append('div').text('Species');
-	const speciesEl = el.append('div').style('display', 'flex').style('flex-direction', 'column');
-
-	const speciesNodes = graph.nodes.filter((d) => d.data.type === 'S');
-	for (let i = 0; i < speciesNodes.length; i++) {
-		const node = speciesNodes[i];
-		const div = speciesEl.append('div').style('display', 'flex');
-		div
-			.append('div')
-			.style('width', '80px')
-			.style('text-align', 'end')
-			.style('padding-right', '5px')
-			.text(node.label);
-		div
-			.append('input')
-			.datum({ name: node.label })
-			.classed('initial-value', true)
-			.property('value', 0);
-	}
-
-	el.append('hr');
-
-	el.append('div').text('Transitions');
-	const transitionsEL = el.append('div').style('display', 'flex').style('flex-direction', 'column');
-	const transitionsNodes = graph.nodes.filter((d) => d.data.type === 'T');
-	for (let i = 0; i < transitionsNodes.length; i++) {
-		const node = transitionsNodes[i];
-		const div = transitionsEL.append('div').style('display', 'flex');
-		div
-			.append('div')
-			.style('width', '80px')
-			.style('text-align', 'end')
-			.style('padding-right', '5px')
-			.text(node.label);
-		div.append('input').datum({ name: node.label }).classed('parameter', true).property('value', 0);
-	}
-};
-
 // const emptyModel: PetriNet = { T: [], S: [], I: [], O: [] };
 
 // SIRD
@@ -228,9 +221,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 			const os = S.indexOf(target) + 1;
 			petri.O.push({ os, ot });
 		}
-		// console.log('!!', edge);
 	}
-
 	petri.S = [];
 	petri.T = [];
 
@@ -245,41 +236,30 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	return petri;
 };
 
-// console.log(graph2petri(parsePetriNet2IGraph(SIRD)));
-
 // Tracking variables
 let source: any = null;
 let target: any = null;
 
 const runPetri = () => {
-	const parameterData = d3.selectAll('.parameter');
-	const initData = d3.selectAll('.initial-value');
-
+	const petri = graph2petri(renderer?.graph as any);
 	const parameters = {};
 	const initials = {};
 
-	parameterData.each((d: any, i, g) => {
-		const value = (d3.select(g[i]).node() as HTMLInputElement).value;
-		parameters[d.name] = +value;
+	stateVariables.value.forEach((s) => {
+		initials[s.name] = s.value;
 	});
-	initData.each((d: any, i, g) => {
-		const value = (d3.select(g[i]).node() as HTMLInputElement).value;
-		initials[d.name] = +value;
+	paramVariables.value.forEach((s) => {
+		parameters[s.name] = s.value;
 	});
-
-	const payload = {
-		initial_values: initials,
-		parameters
-	};
 
 	const final = {
-		petri: graph2petri(renderer?.graph as any),
-		payload
+		petri,
+		payload: {
+			inital_values: initials,
+			parameters
+		}
 	};
-
-	console.log(final);
-	console.log(JSON.stringify(final));
-
+	console.log('final', final);
 	return final;
 };
 
@@ -320,7 +300,25 @@ onMounted(async () => {
 		}
 
 		if (source && target) {
-			renderer.addEdge(source, target);
+			renderer?.addEdge(source, target);
+			source = null;
+			target = null;
+		}
+	});
+
+	document.addEventListener('keyup', (event) => {
+		if (event.key === 'Backspace' && renderer) {
+			if (source) {
+				_.remove(
+					renderer.graph.edges,
+					(e) => e.source === source.datum().id || e.target === source.datum().id
+				);
+			}
+			_.remove(renderer.graph.nodes, (n) => n.id === source.datum().id);
+
+			variablesRef.value = variablesRef.value.filter((v) => v.id !== source.datum().id);
+
+			renderer.render();
 			source = null;
 			target = null;
 		}
@@ -329,14 +327,23 @@ onMounted(async () => {
 	const g = parsePetriNet2IGraph(SIRD);
 	await renderer.setData(g);
 	await renderer.render();
-	renderParameterInput();
+
+	renderer.graph.nodes.forEach((n) => {
+		variablesRef.value.push({
+			id: n.id,
+			name: n.label,
+			type: n.data.type,
+			description: '',
+			value: 0
+		});
+	});
 });
 </script>
 
 <style>
 #playground {
 	width: 1000px;
-	height: 400px;
+	height: 350px;
 	border: 1px solid #bbb;
 }
 </style>
