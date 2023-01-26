@@ -8,7 +8,8 @@
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<i class="slider-header-item pi pi-times" @click="emit('update:previewItem', null)"></i>
+				<span>{{ resultType.toUpperCase() }}</span>
+				<i class="pi pi-times" @click="emit('update:previewItem', null)"></i>
 			</div>
 			<div class="selected-resources-pane">
 				<Document
@@ -114,28 +115,25 @@ const previewItemId = computed(() => {
 </script>
 
 <style scoped>
-i {
-	font-size: 1.5rem;
-	cursor: pointer;
-}
-
 .slider-header {
 	display: flex;
 	align-items: center;
+	margin: 1rem;
 }
 
 .slider-header.content {
-	flex-direction: row-reverse;
+	font-size: 14px;
+	color: var(--text-color-subdued);
+	font-weight: bold;
 	justify-content: space-between;
+}
+
+i {
+	cursor: pointer;
 }
 
 .slider-header.tab {
 	justify-content: center;
-}
-
-.slider-header-item {
-	font-weight: bold;
-	margin: 12px;
 }
 
 footer {
