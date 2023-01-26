@@ -5,12 +5,16 @@
 			<div id="parameters"></div>
 		</div>
 		<Button @click="runPetri()">Run simulation</Button>
+		<Button @click="addVariable('S')">Add state</Button>
+		<Button @click="addVariable('T')">Add transition</Button>
 
 		<div>States</div>
 		<table>
 			<thead>
 				<th>Name</th>
 				<th>Value</th>
+				<th>Description</th>
+				<th>Concept</th>
 			</thead>
 			<tr v-for="v of stateVariables" :key="v.id">
 				<td>
@@ -18,6 +22,12 @@
 				</td>
 				<td>
 					<input v-model.number="v.value" style="text-align: end" />
+				</td>
+				<td>
+					<input placeholder="Description..." v-model="v.description" />
+				</td>
+				<td>
+					<input placeholder="Concept..." v-model="v.concept" />
 				</td>
 			</tr>
 		</table>
@@ -27,6 +37,8 @@
 			<thead>
 				<th>Name</th>
 				<th>Value</th>
+				<th>Description</th>
+				<th>Concept</th>
 			</thead>
 			<tr v-for="v of paramVariables" :key="v.id">
 				<td>
@@ -34,6 +46,12 @@
 				</td>
 				<td>
 					<input v-model.number="v.value" style="text-align: end" />
+				</td>
+				<td>
+					<input placeholder="Description..." el="v.description" />
+				</td>
+				<td>
+					<input placeholder="Concept..." v-model="v.concept" />
 				</td>
 			</tr>
 		</table>
@@ -239,6 +257,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 // Tracking variables
 let source: any = null;
 let target: any = null;
+let nameCounter: number = 0;
 
 const runPetri = () => {
 	const petri = graph2petri(renderer?.graph as any);
@@ -260,7 +279,39 @@ const runPetri = () => {
 		}
 	};
 	console.log('final', final);
+	console.log('final', JSON.stringify(final));
 	return final;
+};
+
+const addVariable = (vType: string) => {
+	if (!renderer) return;
+	nameCounter++;
+
+	const id = `state:${nameCounter}`;
+
+	renderer.graph.nodes.push({
+		id,
+		label: id,
+		x: 200,
+		y: 200,
+		width: 20,
+		height: 20,
+		data: {
+			type: vType
+		},
+		nodes: []
+	});
+
+	variablesRef.value.push({
+		id,
+		name: id,
+		type: vType,
+		description: '',
+		concept: '',
+		value: 0
+	});
+
+	renderer.render();
 };
 
 // Entry point
@@ -334,6 +385,7 @@ onMounted(async () => {
 			name: n.label,
 			type: n.data.type,
 			description: '',
+			concept: '',
 			value: 0
 		});
 	});
