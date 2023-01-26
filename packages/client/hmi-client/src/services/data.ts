@@ -444,17 +444,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		}
 
 		const formattedFacets: Facets = getArticleFacets(articles);
-		// if (facets) {
-		// 	// we receive facets data, so make sure it is in the proper format
-		// 	const facetKeys = ARTICLE_FACET_FIELDS; //Object.keys(facets);
-		// 	facetKeys.forEach((facetKey) => {
-		// 		console.log("Facet Key: " + facetKey);
-		// 		formattedFacets[facetKey] = facets[facetKey].buckets.map((e) => ({
-		// 			key: e.key,
-		// 			value: e.doc_count
-		// 		}));
-		// 	});
-		// }
 
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
@@ -690,7 +679,6 @@ const fetchData = async (
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
 	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
-	console.log('End of fetchData, all data filtered Facets = :');
 	return finalResponse;
 };
 
