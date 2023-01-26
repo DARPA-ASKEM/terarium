@@ -16,27 +16,27 @@
 					v-if="resultType === ResourceType.XDD"
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
+					:highlight="searchTerm"
 				/>
 				<Dataset
 					v-if="resultType === ResourceType.DATASET"
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
+					:highlight="searchTerm"
 				/>
 				<Model
 					v-if="resultType === ResourceType.MODEL"
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
+					:highlight="searchTerm"
 				/>
 				<footer>
 					<Button
-						label="Add to cart"
+						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
 						class="add-to-cart"
-					></Button>
+					/>
 				</footer>
-				<!-- TOOD
-				<Button label="Add to Project"></Button>
-				-->
 			</div>
 		</template>
 	</slider>
@@ -81,6 +81,10 @@ const props = defineProps({
 		default: null
 	},
 	resultType: {
+		type: String,
+		default: null
+	},
+	searchTerm: {
 		type: String,
 		default: null
 	}

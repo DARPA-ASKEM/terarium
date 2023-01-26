@@ -3,16 +3,16 @@
 		<div v-if="doc">
 			<header>
 				<div class="journal">{{ doc.journal }}</div>
-				<h4 class="title">{{ doc.title }}</h4>
+				<h4 class="title">{{ highlightSearchTerms(doc.title) }}</h4>
 				<div class="authors">{{ formatArticleAuthors(doc) }}</div>
 				<div class="details">
 					<div v-if="docLink || doi">
 						DOI:
 						<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">
-							{{ doi }}
+							{{ highlightSearchTerms(doi) }}
 						</a>
 					</div>
-					<div>{{ doc.publisher }}</div>
+					<div>{{ highlightSearchTerms(doc.publisher) }}</div>
 					<!-- TODO -->
 					<!-- Journal impact factor -->
 					<!-- # Citations -->
@@ -26,14 +26,14 @@
 			</header>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
 				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
-					{{ formattedAbstract }}
+					{{ highlightSearchTerms(formattedAbstract) }}
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
 					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<div>
 							<strong>{{ index }}</strong>
 						</div>
-						<div>{{ section }}</div>
+						<div>{{ highlightSearchTerms(section) }}</div>
 						<br />
 					</div>
 				</AccordionTab>
@@ -42,7 +42,7 @@
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
 							}}</span>
 						</div>
 					</div>
@@ -52,7 +52,7 @@
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
 							}}</span>
 						</div>
 					</div>
@@ -62,7 +62,7 @@
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
 							}}</span>
 						</div>
 					</div>
@@ -71,16 +71,18 @@
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
+							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
+								highlightSearchTerms(ex.url)
+							}}</a>
 						</div>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherArtifacts)" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
-						<b>{{ ex.properties.title }}</b>
-						{{ ex.properties.caption }}
-						{{ ex.properties.abstractText }}
-						{{ ex.properties.contentText }}
+						<b>{{ highlightSearchTerms(ex.properties.title) }}</b>
+						{{ highlightSearchTerms(ex.properties.caption) }}
+						{{ highlightSearchTerms(ex.properties.abstractText) }}
+						{{ highlightSearchTerms(ex.properties.contentText) }}
 					</div>
 				</AccordionTab>
 				<AccordionTab header="References">
@@ -122,14 +124,24 @@ import { getRelatedArtifacts } from '@/services/provenance';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
+import * as textUtil from '@/utils/text';
 
 const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
+	highlight?: string;
 }>();
 
 const doc = ref<XDDArticle | null>(null);
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 
 watch(
 	props,
@@ -150,7 +162,8 @@ watch(
 	}
 );
 
-const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
+const formatArticleAuthors = (d: XDDArticle) =>
+	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
