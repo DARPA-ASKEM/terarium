@@ -1,5 +1,3 @@
-//TODO: Use _variables for facet colouring.
-
 facet-terms {
   // Hide the rectangle that appears to the left of an item on hover
   --facet-terms-tick-color: transparent;
@@ -11,24 +9,24 @@ facet-terms {
 
   // No item in the group is selected
   // No item in the group is being hovered
-  --facet-terms-bar-0-normal: #1B8073; // $facetEmptyBg; 
+  --facet-terms-bar-0-normal: var(--primary-color); //$facetEmptyBg; 
   // Another item in the group is being hovered
-  --facet-terms-bar-0-normal-contrast: #1B8073; 
+  --facet-terms-bar-0-normal-contrast: var(--primary-color); 
   // This item is being hovered
-  --facet-terms-bar-0-normal-contrast-hover: #1B8073; 
+  --facet-terms-bar-0-normal-contrast-hover: var(--primary-color);
 
   // This item is selected
   // No item in the group is being hovered
-  --facet-terms-bar-0-selected: #1B8073; 
+  --facet-terms-bar-0-selected: var(--primary-color);
   // Another item in the group is being hovered
-  --facet-terms-bar-0-selected-contrast: #1B8073; 
+  --facet-terms-bar-0-selected-contrast: var(--primary-color);
   // This item is being hovered
-  --facet-terms-bar-0-selected-contrast-hover: #1B8073;
+  --facet-terms-bar-0-selected-contrast-hover: var(--primary-color);
 
   // Another item in the group is selected
   // This item is hovered
-  --facet-terms-bar-0-muted-contrast-hover: #1B8073;
-  --facet-terms-bar-1-muted-contrast-hover: #1B8073; 
+  --facet-terms-bar-0-muted-contrast-hover: var(--primary-color);
+  --facet-terms-bar-1-muted-contrast-hover: var(--primary-color);
   // Another item in the group is hovered
   // FIXME: there is a bug in the facets library where
   //  "--facet-terms-bar-0-muted-contrast-hover" is applied when
