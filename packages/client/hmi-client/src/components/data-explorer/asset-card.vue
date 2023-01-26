@@ -28,24 +28,14 @@
 					Simulation run
 				</div>
 			</div>
-			<div class="title">
-				<template v-if="resourceType === ResourceType.XDD">{{ asset.title }}</template>
-				<template
-					v-else-if="resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET"
-				>
-					{{ asset.name }}
-				</template>
-			</div>
-			<div class="details">
-				<template v-if="resourceType === ResourceType.XDD">{{ formatDetails() }}</template>
-				<template v-else-if="resourceType === ResourceType.DATASET">{{ asset.url }}</template>
-			</div>
-			<ul class="snippets" v-if="asset.highlight">
-				<li v-for="snippet in snippets.splice(0, 3)" :key="snippet">
-					...<span v-html="snippet"></span>...
+			<div class="title" v-html="highlightText(title)" />
+			<div class="details" v-html="formatDetails" />
+			<ul class="snippets" v-if="snippets">
+				<li v-for="(snippet, index) in snippets" :key="index">
+					&hellip;<template v-html="highlightText(snippet)" />&hellip;
 				</li>
 			</ul>
-			<div class="description">{{ asset.description }}</div>
+			<div class="description" v-html="highlightText(asset.description)" />
 			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
 				PARAMETERS:
 				{{ asset.parameters }}
@@ -57,7 +47,7 @@
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</div>
-		<div class="right">
+		<aside class="right">
 			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
 				<img
 					v-if="relatedAsset && relatedAsset.properties.image"
@@ -75,7 +65,7 @@
 				</div>
 			</figure>
 			<slot name="default"></slot>
-		</div>
+		</aside>
 	</div>
 </template>
 
@@ -89,9 +79,8 @@ import { ResourceType } from '@/types/common';
 const props = defineProps<{
 	asset: XDDArticle & Model & Dataset;
 	resourceType: ResourceType;
+	highlight?: String;
 }>();
-
-// const emit = defineEmits(['toggle-asset-preview']);
 
 const relatedAssetPage = ref<number>(0);
 const chosenExtractionFilter = ref<XDDExtractionType | null>(null);
@@ -115,7 +104,12 @@ const extractionsWithImages = computed(() =>
 		: []
 );
 const relatedAsset = computed(() => extractionsWithImages[relatedAssetPage.value]);
-const snippets = computed(() => props.asset.highlight);
+const snippets = computed(() =>
+	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
+);
+const title = computed(() =>
+	props.resourceType === ResourceType.XDD ? props.asset.title : props.asset.name
+);
 
 watch(
 	() => props.asset,
@@ -123,6 +117,15 @@ watch(
 		relatedAssetPage.value = 0;
 	}
 ); // reset page number on new search
+
+// Highlight strings based on props.highligh
+function highlightText(text: string) {
+	if (props.highlight) {
+		const term = RegExp(props.highlight as string, 'gi');
+		return text.replace(term, (match) => `<em class="highlight">${match}</em>`);
+	}
+	return text;
+}
 
 function previewMovement(movement: number) {
 	const newPage = relatedAssetPage.value + movement;
@@ -137,10 +140,20 @@ function updateExtractionFilter(extractionType: XDDExtractionType | null) {
 }
 
 // Return formatted author, year, journal
-const formatDetails = () =>
-	`${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
-		props.asset.journal
-	}`;
+const formatDetails = computed(() => {
+	if (props.resourceType === ResourceType.XDD) {
+		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
+			props.asset.journal
+		}`;
+		return highlightText(details);
+	}
+
+	if (props.resourceType === ResourceType.DATASET) {
+		return props.asset?.url;
+	}
+
+	return null;
+});
 
 // Format features for dataset type
 const formatFeatures = () => {
@@ -163,7 +176,7 @@ const formatFeatures = () => {
 }
 
 .asset-card:hover {
-	background-color: var(--primary-color-lighter);
+	background-color: var(--surface-hover);
 }
 
 .asset-card[active='true'] {
@@ -239,5 +252,12 @@ i:hover {
 
 .snippets {
 	list-style: none;
+}
+
+.asset-card >>> em.highlight {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	padding-left: 0.2em;
+	padding-right: 0.2em;
 }
 </style>

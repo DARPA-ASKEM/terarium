@@ -15,6 +15,7 @@
 				:isPreviewed="previewedAsset === asset"
 				:isInCart="false"
 				:resourceType="(resultType as ResourceType)"
+				:searchTerm="searchTerm"
 				@toggle-selected-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
 			/>
