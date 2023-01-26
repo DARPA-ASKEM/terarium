@@ -21,7 +21,7 @@
 			<i class="pi pi-history" />
 			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
 		</div>
-		<span class="suggested-terms" v-if="suggestedTerms && !isEmpty(suggestedTerms)"
+		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms[0]"
 			>Suggested terms:<Chip
 				v-for="item in suggestedTerms"
 				:key="item"
@@ -39,7 +39,6 @@ import { onMounted, ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import Chip from 'primevue/chip';
-import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	text?: string;
