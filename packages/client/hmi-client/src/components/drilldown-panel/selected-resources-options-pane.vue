@@ -15,42 +15,36 @@
 				@item-selected="addAssetsToProject"
 			/>
 		</div>
-		<div class="selected-items-container">
-			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
-				<div class="item-header">
-					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
-					<div class="item-title" :title="getTitle(item)">
-						{{ formatTitle(item) }}
-						<div class="search-by-example" @click.stop="findRelatedContent(item)">
+		<ul>
+			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
+				<asset-card
+					:asset="(asset as XDDArticle & Model & Dataset)"
+					:resourceType="(getType(asset) as ResourceType)"
+				>
+					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
+						<i class="pi pi-ellipsis-v"></i>
+					</button>
+
+					<OverlayPanel ref="contextMenu">
+						<div class="context-menu-item" @click.stop="removeItem(asset, idx)">Delete</div>
+						<div class="context-menu-item" @click.stop="findRelatedContent(asset, idx)">
 							Find Related Content
-							<IconImageSearch16 />
 						</div>
-						<div
-							v-if="isXDDArticle(item)"
-							class="search-by-example"
-							@click.stop="findSimilarContent(item)"
-						>
+						<div class="context-menu-item" @click.stop="findSimilarContent(asset, idx)">
 							Find Similar Content
-							<IconImageSearch16 />
 						</div>
-					</div>
-					<div class="item-delete-btn" @click.stop="removeItem(item)">
-						<IconClose16 />
-					</div>
-				</div>
-				<div class="content">
-					<multiline-description :text="formatDescription(item)" />
-				</div>
-			</div>
-		</div>
+					</OverlayPanel>
+				</asset-card>
+			</li>
+		</ul>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import Button from 'primevue/button';
-import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
+import OverlayPanel from 'primevue/overlaypanel';
+import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
@@ -60,9 +54,8 @@ import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
-import IconClose16 from '@carbon/icons-vue/es/close/16';
-import IconImageSearch16 from '@carbon/icons-vue/es/image--search/16';
 import { useRouter } from 'vue-router';
+import AssetCard from '@/components/data-explorer/asset-card.vue';
 
 const router = useRouter();
 
@@ -73,42 +66,19 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close', 'remove-item', 'find-related-content', 'find-similar-content']);
+const emit = defineEmits([
+	'close',
+	'toggle-data-item-selected',
+	'find-related-content',
+	'find-similar-content'
+]);
 const resources = useResourcesStore();
 
+const contextMenu = ref();
 const validProject = computed(() => resources.activeProject);
 
 const projectsList = ref<Project[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
-
-const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
-
-const formatTitle = (item: ResultType) => {
-	const maxSize = 36;
-	const itemTitle = getTitle(item);
-	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-};
-
-const formatDescription = (item: ResultType) => {
-	const maxSize = 120;
-	let itemDesc = '[No Desc]';
-	if (isModel(item)) {
-		itemDesc = (item as Model).description || itemDesc;
-	}
-	if (isDataset(item)) {
-		itemDesc = (item as Dataset).description || itemDesc;
-	}
-	if (isXDDArticle(item)) {
-		itemDesc =
-			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
-				? (item as XDDArticle).abstractText
-				: false) ||
-			(item as XDDArticle).journal ||
-			(item as XDDArticle).publisher ||
-			itemDesc;
-	}
-	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
-};
 
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
@@ -121,15 +91,6 @@ const getType = (item: ResultType) => {
 		return ResourceType.XDD;
 	}
 	return ResourceType.ALL;
-};
-
-const findRelatedContent = (item: ResultType) => {
-	emit('find-related-content', item);
-};
-
-// only available for publications
-const findSimilarContent = (item: ResultType) => {
-	emit('find-similar-content', item);
 };
 
 const addResourcesToProject = async (projectId: string) => {
@@ -200,16 +161,32 @@ const addAssetsToProject = async (projectName?: string) => {
 	router.push(`/projects/${projectId}`);
 };
 
-const removeItem = (item: ResultType) => {
-	emit('remove-item', item);
-};
-
 onMounted(async () => {
 	const all = await ProjectService.getAll();
 	if (all !== null) {
 		projectsList.value = all;
 	}
 });
+
+const removeItem = (item: ResultType, idx: number) => {
+	emit('toggle-data-item-selected', { item, type: 'selected' });
+	contextMenu.value[idx].hide();
+};
+
+const findRelatedContent = (item: ResultType, idx: number) => {
+	emit('find-related-content', { item, type: 'selected' });
+	contextMenu.value[idx].hide();
+};
+
+// only available for publications
+const findSimilarContent = (item: ResultType, idx: number) => {
+	emit('find-similar-content', { item, type: 'selected' });
+	contextMenu.value[idx].hide();
+};
+
+const toggleContextMenu = (event, idx: number) => {
+	contextMenu.value[idx].toggle(event);
+};
 </script>
 
 <style scoped>
@@ -238,63 +215,38 @@ onMounted(async () => {
 }
 
 .breakdown-pane-container {
-	margin-bottom: 40px;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
 }
 
-.selected-items-container {
-	display: flex;
-	flex-direction: column;
-	overflow-y: auto;
-	margin-top: 10px;
+.cart-item {
+	border-bottom: 1px solid var(--surface-ground);
 }
 
-.selected-items-container .selected-item {
-	padding: 5px;
-	background: white;
-	margin-top: 1px;
+button {
+	border: none;
+	background-color: transparent;
+	height: min-content;
+	padding: 0;
 }
 
-.selected-items-container .item-header {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
+i {
+	padding: 0.2rem;
+	border-radius: 3px;
 }
 
-.selected-items-container .item-header .item-title {
-	font-weight: 500;
-}
-
-.selected-items-container .item-header .icon {
-	margin-right: 5px;
-}
-
-.selected-items-container .selected-item .content {
-	margin-left: 22px;
-}
-
-.item-delete-btn {
-	color: var(--text-color-disabled);
+i:hover {
 	cursor: pointer;
+	background-color: hsla(0, 0%, 0%, 0.1);
 }
 
-.item-delete-btn:hover {
-	/* color: var(--text-color-primary); */
-	color: red;
+.context-menu-item {
+	padding: 0.5rem;
 }
 
-.search-by-example {
-	margin-top: 1rem;
-	color: blue;
-	display: flex;
-	flex-direction: column;
-	align-items: baseline;
-}
-
-.search-by-example:hover {
-	text-decoration: underline;
+.context-menu-item:hover {
+	background-color: var(--primary-color-lighter);
 	cursor: pointer;
 }
 </style>

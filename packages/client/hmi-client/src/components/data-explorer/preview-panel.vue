@@ -21,6 +21,11 @@
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
 				/>
+				<Model
+					v-if="resultType === ResourceType.MODEL"
+					:asset-id="previewItemId as string"
+					:project="resources.activeProject"
+				/>
 				<footer>
 					<Button
 						label="Add to cart"
@@ -49,6 +54,7 @@ import { isXDDArticle } from '@/utils/data-util';
 
 import Document from '@/components/articles/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
+import Model from '@/components/models/Model.vue';
 import Slider from '@/components/Slider.vue';
 
 const resources = useResourcesStore();
