@@ -416,11 +416,13 @@ onMounted(async () => {
 	const g = parsePetriNet2IGraph(SIRD);
 	await renderer.setData(g);
 	await renderer.render();
+
+	// FIXME: Hackathon
 	if (renderer.graph.edges.length === 0) {
 		let c = 0;
 		renderer?.graph.nodes.forEach((n) => {
 			n.x = 60 + Math.round(c / 5) * 50;
-			n.y = 50 * (c % 5);
+			n.y = 80 + 50 * (c % 5);
 			c++;
 		});
 		await renderer.render();
