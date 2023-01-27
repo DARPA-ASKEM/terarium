@@ -39,7 +39,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import Chip from 'primevue/chip';
-import Button from 'primevue/button';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
