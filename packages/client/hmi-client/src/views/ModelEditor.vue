@@ -392,6 +392,7 @@ const runPetri = () => {
 	};
 	console.log('final', final);
 	console.log('final', JSON.stringify(final));
+	localStorage.setItem('sim-input-data', JSON.stringify(final));
 	return final;
 };
 
