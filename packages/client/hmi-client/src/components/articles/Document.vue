@@ -90,7 +90,7 @@
 						{{ key + 1 }}. {{ formatCitation(citation) }}
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Related TERARium artifacts">
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
 					</DataTable>
