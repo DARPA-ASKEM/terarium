@@ -33,17 +33,16 @@
 						<div>
 							<strong>{{ index }}</strong>
 						</div>
-						<div>{{ highlightSearchTerms(section) }}</div>
-						<br />
+						<div v-html="highlightSearchTerms(section)" />
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(figureArtifacts)" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
@@ -51,9 +50,9 @@
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
@@ -61,9 +60,9 @@
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
@@ -71,9 +70,7 @@
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
-								highlightSearchTerms(ex.url)
-							}}</a>
+							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
 					</div>
 				</AccordionTab>
