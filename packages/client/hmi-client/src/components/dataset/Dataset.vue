@@ -6,6 +6,7 @@ import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
+import { isString } from 'lodash';
 
 const props = defineProps<{
 	assetId: string;
@@ -28,44 +29,47 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			dataset.value = await getDataset(props.assetId);
 			rawContent.value = await downloadRawFile(props.assetId);
+
+			const datasetTemp = await getDataset(props.assetId);
+			if (datasetTemp) {
+				Object.entries(datasetTemp).forEach(([key, value]) => {
+					if (isString(value)) {
+						datasetTemp[key] = highlightSearchTerms(value);
+					}
+				});
+				dataset.value = datasetTemp;
+			}
 		}
+
+		dataset.value = null;
+		rawContent.value = null;
 	},
 	{ immediate: true }
 );
 
-const csvContent = computed(() => {
-	if (rawContent.value !== null) {
-		const records = csvToRecords(rawContent.value);
-		return records;
-	}
-	return [] as Record[];
-});
+const csvContent = computed(() =>
+	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
+);
+const rawColumnNames = computed(() =>
+	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
+);
 
-const rawColumnNames = computed(() => {
-	if (csvContent.value !== null) {
-		return getColumns(csvContent.value);
-	}
-	return [] as string[];
-});
-
-const formatFeatures = (d: Dataset) => {
-	const features = d.annotations.annotations.feature ?? [];
-	return features;
-};
+const formatFeatures = (d: Dataset) => d.annotations.annotations.feature ?? [];
 </script>
 
 <template>
 	<section class="dataset">
-		<template v-if="dataset !== null">
-			<h4 class="title" v-html="highlightSearchTerms(dataset?.name ?? '')" />
-			<div><b>Description:</b> {{ dataset?.description ?? '' }}</div>
-			<div><b>Maintainer:</b> {{ dataset?.maintainer ?? '' }}</div>
-			<div><b>Quality:</b> {{ dataset?.quality ?? '' }}</div>
-			<div><b>URL:</b> {{ dataset?.url ?? '' }}</div>
-			<div><b>Geospatial Resolution:</b> {{ dataset?.geospatialResolution ?? '' }}</div>
-			<div><b>Temporal Resolution:</b> {{ dataset?.temporalResolution ?? '' }}</div>
+		<template v-if="dataset">
+			<h4 class="title">{{ dataset?.name }}</h4>
+			<ul>
+				<li><b>Description:</b> {{ dataset?.description }}</li>
+				<li><b>Maintainer:</b> {{ dataset?.maintainer }}</li>
+				<li><b>Quality:</b> {{ dataset?.quality }}</li>
+				<li><b>URL:</b> {{ dataset?.url }}</li>
+				<li><b>Geospatial Resolution:</b> {{ dataset?.geospatialResolution }}</li>
+				<li><b>Temporal Resolution:</b> {{ dataset?.temporalResolution }}</li>
+			</ul>
 
 			<Accordion :multiple="true" class="accordian">
 				<AccordionTab header="Annotations">
