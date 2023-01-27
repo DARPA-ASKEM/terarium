@@ -551,6 +551,7 @@ onUnmounted(() => {
 
 .results-content {
 	display: flex;
+	min-width: 0;
 	gap: 0.5rem;
 	margin: 0.5rem;
 }
