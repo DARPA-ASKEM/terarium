@@ -42,3 +42,12 @@ body {
     font: inherit;
     isolation: isolate;
 }
+
+/* Highlight */
+.highlight,
+.hl {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	padding-left: 0.2em;
+	padding-right: 0.2em;
+}

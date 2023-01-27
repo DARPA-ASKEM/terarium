@@ -47,7 +47,7 @@ const relatedTerariumDocuments = computed(
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (model.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Model);
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.ModelRevision);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];
@@ -143,21 +143,23 @@ const goToSimulationPlanPage = () => {
 onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
+
+const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 </script>
 
 <template>
 	<section class="model">
 		<header>
-			<h3>{{ model?.name ?? '' }}</h3>
+			<h3 v-html="title" />
 			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
 		</header>
-
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
 			<AccordionTab header="Description">
-				<p v-html="highlightSearchTerms(model?.description)" />
+				<p v-html="description" />
 			</AccordionTab>
 			<AccordionTab header="Structure">
-				<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
+				<div v-if="model" ref="graphElement" class="graph-element" />
 			</AccordionTab>
 			<AccordionTab header="Variables">
 				<DataTable :value="model?.content.S">
@@ -173,15 +175,13 @@ onMounted(async () => {
 					<Column field="default_value" header="Default"></Column>
 				</DataTable>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Related TERARium artifacts">
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
 				</DataTable>
-				<br />
 				<DataTable :value="relatedTerariumDatasets">
 					<Column field="name" header="Datasets"></Column>
 				</DataTable>
-				<br />
 				<DataTable :value="relatedTerariumDocuments">
 					<Column field="name" header="Papers"></Column>
 				</DataTable>
@@ -234,12 +234,14 @@ h3 {
 
 .graph-element {
 	flex: 1;
-	/* min-height: 0; */
-	/* width: 100%; */
 	height: 400px;
 	width: 400px;
 	border: 1px solid var(--surface-border);
 	overflow: hidden;
+}
+
+.slider .graph-element {
+	pointer-events: none;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
