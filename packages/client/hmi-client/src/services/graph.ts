@@ -54,7 +54,7 @@ export const runDagreLayout = <V, E>(
 	graphData: IGraph<V, E>,
 	lr: boolean = false
 ): IGraph<V, E> => {
-	const g = new dagre.graphlib.Graph({ compound: true, multigraph: true });
+	const g = new dagre.graphlib.Graph({ compound: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
 

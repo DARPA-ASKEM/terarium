@@ -226,6 +226,95 @@ const SIRD: PetriNet = {
 	*/
 };
 
+const SIRD2 = {
+	S: [
+		{
+			sname: 'Susceptible'
+		},
+		{
+			sname: 'Exposed'
+		},
+		{
+			sname: 'Infected'
+		},
+		{
+			sname: 'Recovered'
+		},
+		{
+			sname: 'Hospitalized'
+		}
+	],
+	T: [
+		{
+			tname: 'beta'
+		},
+		{
+			tname: 'epsilon'
+		},
+		{
+			tname: 'gamma'
+		},
+		{
+			tname: 'h'
+		},
+		{
+			tname: 'r'
+		}
+	],
+	I: [
+		{
+			is: 3,
+			it: 1
+		},
+		{
+			is: 1,
+			it: 1
+		},
+		{
+			is: 2,
+			it: 2
+		},
+		{
+			is: 3,
+			it: 3
+		},
+		{
+			is: 3,
+			it: 4
+		},
+		{
+			is: 5,
+			it: 5
+		}
+	],
+	O: [
+		{
+			os: 3,
+			ot: 1
+		},
+		{
+			os: 2,
+			ot: 1
+		},
+		{
+			os: 3,
+			ot: 2
+		},
+		{
+			os: 4,
+			ot: 3
+		},
+		{
+			os: 5,
+			ot: 4
+		},
+		{
+			os: 4,
+			ot: 5
+		}
+	]
+};
+
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	const petri: PetriNet = {
 		S: [],
@@ -395,7 +484,7 @@ onMounted(async () => {
 		}
 	});
 
-	document.addEventListener('keyup', (event) => {
+	document.addEventListener('keyup', async (event) => {
 		if (event.key === 'Backspace' && renderer) {
 			if (source) {
 				_.remove(
@@ -410,6 +499,28 @@ onMounted(async () => {
 			renderer.render();
 			source = null;
 			target = null;
+		}
+
+		// FIXME: Hackathon
+		if (event.key === '2') {
+			const g = parsePetriNet2IGraph(SIRD2);
+			if (renderer) {
+				renderer.isGraphDirty = true;
+			}
+			await renderer?.setData(g);
+			await renderer?.render();
+
+			variablesRef.value = [];
+			renderer.graph.nodes.forEach((n) => {
+				variablesRef.value.push({
+					id: n.id,
+					name: n.label,
+					type: n.data.type,
+					description: '',
+					concept: '',
+					value: 0
+				});
+			});
 		}
 	});
 
