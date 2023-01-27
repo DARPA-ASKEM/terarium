@@ -24,16 +24,7 @@
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
 						<i class="pi pi-ellipsis-v" />
 					</button>
-
-					<OverlayPanel ref="contextMenu">
-						<div class="context-menu-item" @click.stop="removeItem(asset, idx)">Delete</div>
-						<div class="context-menu-item" @click.stop="findRelatedContent(asset, idx)">
-							Find Related Content
-						</div>
-						<div class="context-menu-item" @click.stop="findSimilarContent(asset, idx)">
-							Find Similar Content
-						</div>
-					</OverlayPanel>
+					<Menu ref="contextMenu" :model="getMenuItemsForItem(asset)" :popup="true" />
 				</asset-card>
 			</li>
 		</ul>
@@ -42,8 +33,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import Button from 'primevue/button';
-import OverlayPanel from 'primevue/overlaypanel';
 import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
@@ -56,6 +45,8 @@ import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
 import { useRouter } from 'vue-router';
 import AssetCard from '@/components/data-explorer/asset-card.vue';
+import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 
 const router = useRouter();
 
@@ -79,6 +70,21 @@ const validProject = computed(() => resources.activeProject);
 
 const projectsList = ref<Project[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
+
+const getMenuItemsForItem = (item: ResultType) => [
+	{
+		label: 'Remove',
+		command: () => emit('toggle-data-item-selected', { item, type: 'selected' })
+	},
+	{
+		label: 'Find Related Content',
+		command: () => emit('find-related-content', { item, type: 'selected' })
+	},
+	{
+		label: 'Find Similar Content', // only for publications
+		command: () => emit('find-similar-content', { item, type: 'selected' })
+	}
+];
 
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
@@ -168,22 +174,6 @@ onMounted(async () => {
 	}
 });
 
-const removeItem = (item: ResultType, idx: number) => {
-	emit('toggle-data-item-selected', { item, type: 'selected' });
-	contextMenu.value[idx].hide();
-};
-
-const findRelatedContent = (item: ResultType, idx: number) => {
-	emit('find-related-content', { item, type: 'selected' });
-	contextMenu.value[idx].hide();
-};
-
-// only available for publications
-const findSimilarContent = (item: ResultType, idx: number) => {
-	emit('find-similar-content', { item, type: 'selected' });
-	contextMenu.value[idx].hide();
-};
-
 const toggleContextMenu = (event, idx: number) => {
 	contextMenu.value[idx].toggle(event);
 };
@@ -235,16 +225,10 @@ i {
 	padding: 0.2rem;
 	border-radius: var(--border-radius);
 }
+
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
 	background-color: hsla(0, 0%, 0%, 0.1);
-}
-.context-menu-item {
-	padding: 0.5rem;
-}
-.context-menu-item:hover {
-	background-color: var(--primary-color-lighter);
-	cursor: pointer;
 }
 </style>

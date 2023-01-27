@@ -129,7 +129,7 @@ watch(defaultText, (newText) => {
 	cursor: pointer;
 }
 
-.p-chip::v-deep .p-chip-remove-icon {
+.p-chip :deep(.p-chip-remove-icon) {
 	font-size: 0.75rem;
 }
 

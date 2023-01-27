@@ -9,24 +9,24 @@
 		<template v-slot:content>
 			<div class="slider-header content">
 				<span>{{ resultType.toUpperCase() }}</span>
-				<i class="pi pi-times" @click="emit('update:previewItem', null)"></i>
+				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
 			</div>
 			<div class="selected-resources-pane">
 				<Document
 					v-if="resultType === ResourceType.XDD"
-					:asset-id="previewItemId as string"
+					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Dataset
 					v-if="resultType === ResourceType.DATASET"
-					:asset-id="previewItemId as string"
+					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Model
 					v-if="resultType === ResourceType.MODEL"
-					:asset-id="previewItemId as string"
+					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
@@ -45,14 +45,9 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
-
 import useResourcesStore from '@/stores/resources';
-
 import { ResultType, ResourceType } from '@/types/common';
-import { XDDArticle } from '@/types/XDD';
-
 import { isXDDArticle } from '@/utils/data-util';
-
 import Document from '@/components/articles/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
@@ -107,14 +102,11 @@ watch(
 );
 
 const previewItemId = computed(() => {
-	const previewItem = previewItemState.value;
-	if (previewItem === null) return '';
-	if (isXDDArticle(previewItem)) {
-		const itemAsArticle = previewItem as XDDArticle;
-		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddId;
+	if (!previewItemState.value) return '';
+	if (isXDDArticle(previewItemState.value)) {
+		return previewItemState.value.gddId;
 	}
-	return previewItem.id;
+	return previewItemState.value.id as string;
 });
 </script>
 
@@ -145,7 +137,7 @@ footer {
 	background-color: var(--surface-section);
 	position: fixed;
 	height: 5rem;
-	bottom: 0;
+	bottom: 3rem;
 	width: calc(35% - 48px);
 	display: flex;
 	align-items: center;

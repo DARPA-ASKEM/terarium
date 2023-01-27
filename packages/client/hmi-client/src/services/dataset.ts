@@ -21,7 +21,9 @@ async function getAll(): Promise<Dataset[] | null> {
  * @return Dataset|null - the dataset, or null if none returned by API
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
-	const response = await API.get(`/datasets/${datasetId}`);
+	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
+		console.log(`Error: data-service was not able to retreive the dataset ${datasetId}`, error);
+	});
 	return response?.data ?? null;
 }
 
@@ -50,9 +52,10 @@ async function getBulkDatasets(datasetIDs: string[]) {
  */
 async function downloadRawFile(datasetId: string): Promise<string | null> {
 	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
-	const response = await API.get(
-		`/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`
-	);
+	const URL = `/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`;
+	const response = await API.get(URL).catch((error) => {
+		console.error(`Error: data-service was not able to retrieve the dataset's rawfile`, error);
+	});
 	return response?.data ?? null;
 }
 
