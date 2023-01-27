@@ -32,36 +32,7 @@ const pathFn = d3
 	.x((d) => d.x)
 	.y((d) => d.y);
 
-const MARKER_VIEWBOX = '-5 -5 10 10';
-const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
-
 class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
-	setupDefs() {
-		const svg = d3.select(this.svgEl);
-
-		// Clean up
-		svg.select('defs').selectAll('.edge-marker-end').remove();
-
-		// Arrow defs
-		svg
-			.select('defs')
-			.append('marker')
-			.classed('edge-marker-end', true)
-			.attr('id', 'arrowhead')
-			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 2)
-			.attr('refY', 0)
-			.attr('orient', 'auto')
-			.attr('markerWidth', 15)
-			.attr('markerHeight', 15)
-			.attr('markerUnits', 'userSpaceOnUse')
-			.attr('xoverflow', 'visible')
-			.append('svg:path')
-			.attr('d', ARROW)
-			.style('fill', '#000')
-			.style('stroke', 'none');
-	}
-
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const species = selection.filter(
 			(d) => d.data.type === 'species' || d.data.type === NodeType.Species
@@ -172,6 +143,8 @@ onMounted(async () => {
 
 	renderer.on('node-click', (_evtName, _evt, _renderer, d) => {
 		moveTo(d, _renderer);
+		const svg = d3.select(d.svgEl);
+		d3.zoom().scaleTo(svg.transition(), 20);
 	});
 });
 </script>
