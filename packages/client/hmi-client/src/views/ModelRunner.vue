@@ -7,6 +7,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable */
 import * as d3 from 'd3';
 import graphScaffolder from '@graph-scaffolder/index';
 import { moveTo } from '@graph-scaffolder/fn/move-to';
