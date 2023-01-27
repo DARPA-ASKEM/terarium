@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<div id="experiment" style="width: 800px; height: 500px"></div>
+		<div id="experiment" style="width: 1200px; height: 800px"></div>
 	</section>
 </template>
 
@@ -19,6 +19,17 @@ interface NodeData {
 interface EdgeData {
 	val: number;
 }
+
+const palette = [
+	'#89BEFF',
+	'#B0E6D9',
+	'#FDE267',
+	'#FF90A9',
+	'#B49CFD',
+	'#FEAB79',
+	'#78DDED',
+	'#78E3AF'
+];
 
 let g: IGraph<NodeData, EdgeData> = {
 	width: 800,
@@ -60,21 +71,26 @@ interModelEdges.forEach((edge) => {
 	}
 });
 
-console.log(equalPools);
+console.log('pool', equalPools);
 
 // Create nodes
 const modelKeys = Object.keys(modelsMap);
 
 modelKeys.forEach((modelKey) => {
 	const nodeKeys = Object.keys(modelsMap[modelKey]);
+	const blah = {
+		id: modelKey,
+		label: 'p',
+		data: { name: modelKey, models: [] },
+		nodes: []
+	};
+
 	nodeKeys.forEach((nodeKey) => {
 		const hash = `${modelKey}:${nodeKey}`;
-		console.log(hash);
 		const pool = equalPools.find((p) => p.includes(hash));
 
 		if (!pool) {
-			// const node = modelsMap[modelKey][nodeKey];
-			g.nodes.push({
+			blah.nodes.push({
 				id: hash,
 				label: hash,
 				x: 0,
@@ -101,7 +117,9 @@ modelKeys.forEach((modelKey) => {
 			g.nodes.find((d) => d.id === surrogateId)?.data.models.push(modelKey);
 		}
 	});
+	g.nodes.push(blah);
 });
+console.log(g.nodes.map((d) => d.data.models));
 
 let eCounter = 0;
 intraModelEdges.forEach((edge) => {
@@ -158,23 +176,41 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		selection
+		const children = selection.filter((d) => d.nodes.length === 0);
+		// const parents = selection.filter(d => d.nodes.length > 0);
+
+		// parents
+		// 	.append('rect')
+		//   .attr('x', d => d.x)
+		//   .attr('y', d => d.y)
+		//   .attr('width', d => d.width)
+		//   .attr('height', d => d.height)
+		//   .attr('fill', '#f80')
+		//   .attr('fill-opacity', 0.5)
+		//   .attr('stroke', '#888');
+
+		children
 			.append('circle')
 			.classed('shape', true)
 			.attr('cx', (d) => d.width * 0.5)
 			.attr('cy', (d) => d.height * 0.5)
 			.attr('r', (d) => d.width * 0.5)
-			.attr('fill', '#CCC');
+			.attr('fill', (d) => {
+				if (d.data.models.length > 1) {
+					return '#DDD';
+				}
+				return palette[d.data.models[0]];
+			});
 
-		selection
+		children
 			.append('text')
 			.attr('y', 30)
 			.attr('x', 60)
 			.text((d) => `${d.id}`);
 
-		const cat10 = d3.schemeCategory10;
-		selection.each((d, i, g2) => {
-			if (d.data.models.length > 1) {
+		const cat10 = palette;
+		children.each((d, i, g2) => {
+			if (d.data.models.length === 2) {
 				for (let idx = 0; idx < 2; idx++) {
 					const arcExample = d3
 						.arc()
@@ -186,16 +222,16 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 					d3.select(g2[i])
 						.append('path')
 						.attr('transform', `translate(${d.width * 0.5}, ${d.height * 0.5})`)
-						.attr('fill', cat10[idx])
+						.attr('fill', palette[d.data.models[idx]])
 						.attr('stroke', '#888')
 						.attr('d', arcExample);
 				}
-			} else if (d.data.models.length > 2) {
+			} else if (d.data.models.length === 3) {
 				for (let idx = 0; idx < 3; idx++) {
 					const arcExample = d3
 						.arc()
 						.innerRadius(d.width * 0.5 + 5)
-						.outerRadius(d.width * 0.5 + 30)
+						.outerRadius(d.width * 0.5 + 25)
 						.startAngle((idx * 2 * Math.PI) / 3)
 						.endAngle(((idx + 1) * 2 * Math.PI) / 3)();
 
@@ -216,7 +252,7 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
 			.style('stroke', '#000')
-			.style('stroke-width', 5)
+			.style('stroke-width', 3)
 			.attr('marker-end', `url(#${this.EDGE_ARROW_ID})`);
 	}
 }
@@ -232,6 +268,36 @@ onMounted(async () => {
 	g = runDagreLayout(_.cloneDeep(g));
 	await renderer.setData(g);
 	await renderer.render();
+
+	// stuff
+	/*
+	const parents = g.nodes.filter(d => d.label === 'p');
+	console.log(parents);
+
+	parents.forEach(p => {
+		let minx = 99999;
+		let miny = 99999;
+		let maxx = 0;
+		let maxy = 0;
+
+		p.nodes.forEach(cn => {
+			if (cn.x < minx) minx = cn.x;
+			if (cn.y < miny) miny = cn.y;
+
+			if (cn.x + cn.width > maxx) maxx = cn.x + cn.width;
+			if (cn.y + cn.height > maxy) maxy = cn.y + cn.height;
+		});
+		console.log(minx, miny, maxx, maxy);
+
+		renderer.chart.append('rect')
+		  .attr('x', minx)
+		  .attr('y', miny)
+		  .attr('width', maxx - minx)
+		  .attr('height', maxy - miny)
+		  .attr('fill', '#f80')
+		  .attr('stroke', '#888');
+	});
+	*/
 });
 
 // const modelKeys = Object.keys(models);
