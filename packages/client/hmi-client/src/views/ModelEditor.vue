@@ -62,7 +62,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph } from '@/services/model';
@@ -341,15 +341,10 @@ watch(
 	() => {
 		variablesRef.value.forEach((v) => {
 			const updated = renderer?.chart?.selectAll('.node-ui').filter((d: any) => d.id === v.id);
-			updated.each((d: any) => {
+			updated?.each((d: any) => {
 				d.label = v.name;
 			});
 			updated?.select('text').text(v.name);
-
-			// .each((d, g, idx) => {
-			// 	d.label = v.name;
-			// 	console.log('>>>', d3.select(g[idx]).node());
-			// });
 		});
 	},
 	{
@@ -363,7 +358,7 @@ onMounted(async () => {
 	renderer = new SampleRenderer({
 		el: playground,
 		useAStarRouting: true,
-		runLayout: runDagreLayout,
+		runLayout: runDagreLayout2,
 		useStableZoomPan: true
 	});
 

@@ -50,7 +50,10 @@ export abstract class BaseComputionGraph<V, E> extends graphScaffolder.BasicRend
 	}
 }
 
-export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
+export const runDagreLayout = <V, E>(
+	graphData: IGraph<V, E>,
+	lr: boolean = false
+): IGraph<V, E> => {
 	const g = new dagre.graphlib.Graph({ compound: true, multigraph: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
@@ -80,9 +83,12 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 		g.setEdge(edge.source, edge.target);
 	}
 
-	g.graph().rankDir = 'LR';
-	g.graph().nodesep = 100;
-	g.graph().ranksep = 100;
+	// FIXME: Hackathon show-n-tell, remove
+	if (lr === true) {
+		g.graph().rankDir = 'LR';
+		g.graph().nodesep = 100;
+		g.graph().ranksep = 100;
+	}
 
 	dagre.layout(g);
 
@@ -129,3 +135,6 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> => {
 
 	return graphData;
 };
+
+export const runDagreLayout2 = <V, E>(graphData: IGraph<V, E>): IGraph<V, E> =>
+	runDagreLayout(graphData, true);
