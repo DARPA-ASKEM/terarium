@@ -2,9 +2,9 @@
 	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
 			<header>
-				<div class="journal">{{ doc.journal }}</div>
-				<h4 class="title">{{ highlightSearchTerms(doc.title) }}</h4>
-				<div class="authors">{{ formatArticleAuthors(doc) }}</div>
+				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
+				<h4 class="title" v-html="highlightSearchTerms(doc.title)" />
+				<div class="authors" v-html="formatArticleAuthors(doc)" />
 				<div class="details">
 					<div v-if="docLink || doi">
 						DOI:
@@ -178,13 +178,13 @@ const formattedAbstract = computed(() => {
 
 const doi = computed(() => getDocumentDoi(doc.value));
 
+/* Artifacts */
 const artifacts = ref<XDDArtifact[]>([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const figureArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
-
 const tableArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
@@ -195,16 +195,6 @@ const urlArtifacts = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
 		? doc.value.knownEntities.urlExtractions
 		: []
-);
-
-const relatedTerariumModels = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
 );
 
 const otherArtifacts = computed(() => {
@@ -245,6 +235,17 @@ watch(doi, (currentValue, oldValue) => {
 		fetchRelatedTerariumArtifacts();
 	}
 });
+
+/* Provenance */
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+);
 
 const openPDF = () => {
 	if (docLink.value) window.open(docLink.value as string);
