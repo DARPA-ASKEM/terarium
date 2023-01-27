@@ -37,9 +37,11 @@ async function getConnectedNodes(
 		root_id: Number(id),
 		root_type: rootType
 	};
-	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) => {
-		console.log('Error: ', error);
-	});
+
+	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
+		console.log('Error: ', error)
+	);
+
 	const connectedNodes: ProvenanceResult = connectedNodesRaw?.data ?? null;
 	return connectedNodes;
 }
@@ -70,7 +72,7 @@ async function getRelatedArtifacts(
 
 		// For a publication root type:
 		//  	Find models that reference that paper
-		//    Find datasets that reference that paper
+		//		Find datasets that reference that paper
 
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.result.nodes.forEach((node) => {
@@ -131,5 +133,4 @@ async function getRelatedArtifacts(
 // FIXME: needs to create a similar function to "getRelatedArtifacts"
 //        for finding related datasets
 //
-
 export { getRelatedArtifacts };

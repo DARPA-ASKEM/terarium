@@ -47,7 +47,7 @@ const relatedTerariumDocuments = computed(
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (model.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Model);
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.ModelRevision);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];
