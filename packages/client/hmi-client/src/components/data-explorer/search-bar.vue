@@ -9,8 +9,10 @@
 					placeholder="Search"
 					v-model="searchText"
 					@keyup.enter="execSearch"
+					@keyup.space="showAutoComplete"
 					class="input-text"
 				/>
+				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
 				<i
 					class="pi pi-times clear-search"
 					:class="{ hidden: isClearSearchButtonHidden }"
@@ -42,21 +44,33 @@ import Chip from 'primevue/chip';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
+import { ResourceType } from '@/types/common';
+import { getRelatedWords } from '@/services/data';
+import Menu from 'primevue/menu';
 
 const props = defineProps<{
 	text?: string;
 	suggestedTerms?: string[];
+	resultType: string;
 }>();
+
+const autocompleteMenu = ref();
+const autocompleteMenuItems = ref([{}]);
 
 const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
-const resources = useResourcesStore();
 
 const searchText = ref('');
 const defaultText = computed(() => props.text);
 const isClearSearchButtonHidden = computed(() => !searchText.value);
 const inputElement = ref<HTMLInputElement | null>(null);
+// const suggestedItems = computed(() => props.relatedSearchTerms?.slice(0, maxSuggestedTerms));
+
+const resources = useResourcesStore();
+const xddDataset = computed(() =>
+	props.resultType === ResourceType.XDD ? resources.xddDataset : ''
+);
 
 const clearText = () => {
 	searchText.value = '';
@@ -64,6 +78,7 @@ const clearText = () => {
 
 const execSearch = () => {
 	emit('search-text-changed', searchText.value);
+	autocompleteMenu.value.hide();
 	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
 };
 
@@ -72,8 +87,32 @@ function addSearchTerm(term) {
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
+
+function addSearchTermNoSpace(term) {
+	searchText.value = searchText.value ? searchText.value.concat(term) : term;
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
 const toggleSearchByExample = () => {
 	emit('toggle-search-by-example');
+};
+
+const showAutoComplete = async (event) => {
+	if (xddDataset.value) {
+		const promise = getRelatedWords(searchText.value, xddDataset.value);
+		promise.then((response) => {
+			autocompleteMenuItems.value = response.map((item) => ({
+				label: item,
+				icon: 'pi pi-search',
+				command: () => {
+					addSearchTermNoSpace(item);
+				}
+			}));
+			// @ts-ignore
+			inputElement.value?.$el.focus();
+		});
+	}
+	autocompleteMenu.value.show(event);
 };
 
 onMounted(() => {
@@ -192,5 +231,9 @@ watch(defaultText, (newText) => {
 .item:enabled:hover {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-hover);
+}
+
+.p-menu.autocomplete {
+	border-radius: 0 0 1.5rem 1.5rem;
 }
 </style>
