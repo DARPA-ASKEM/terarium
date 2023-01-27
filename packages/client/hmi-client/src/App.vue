@@ -37,7 +37,7 @@ function updateSearchBar(newQuery) {
 }
 
 function updateRelatedSearchTerms(newTerms) {
-	relatedSearchTerms.value = newTerms.slice(0, 5);
+	relatedSearchTerms.value = newTerms;
 }
 
 API.interceptors.response.use(
@@ -66,6 +66,12 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+resources.$subscribe((mutation, state) => {
+	project.value = state.activeProject;
+});
 </script>
 
 <template>

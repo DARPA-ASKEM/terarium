@@ -8,7 +8,7 @@ import {
 	SearchResults
 } from '@/types/common';
 import API from '@/api/api';
-import { getDatasetFacets, getModelFacets } from '@/utils/facets';
+import { getDatasetFacets, getModelFacets, getArticleFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -145,6 +145,7 @@ const getAssets = async (
 			assetResults = assetResults as Dataset[];
 			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
+
 		default:
 			return results; // error or make new resource type compatible
 	}
@@ -415,7 +416,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.success) {
-		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
+		const { data, hits, scrollId, nextPage } = rawdata.success;
 		const articlesRaw =
 			xddSearchParam?.fields === undefined
 				? (data as XDDArticle[])
@@ -426,33 +427,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			abstractText: a.abstract
 		}));
 
-		// process document highlights and style the search term differently in each highlight
-		// FIXME: this styling of highlights with search term should be done automatically by XDD
-		//        since the content is coming already styled and should not be done at the clinet side for performance reasons
-		if (term !== '') {
-			articles.forEach((article) => {
-				if (article.highlight) {
-					article.highlight = article.highlight.map((h) =>
-						h.replaceAll(
-							term,
-							`<span style='background-color: #67d2c3; border-radius: 3px;'>${term}</span>`
-						)
-					);
-				}
-			});
-		}
-
-		const formattedFacets: Facets = {};
-		if (facets) {
-			// we receive facets data, so make sure it is in the proper format
-			const facetKeys = Object.keys(facets);
-			facetKeys.forEach((facetKey) => {
-				formattedFacets[facetKey] = facets[facetKey].buckets.map((e) => ({
-					key: e.key,
-					value: e.doc_count
-				}));
-			});
-		}
+		const formattedFacets: Facets = getArticleFacets(articles);
 
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];

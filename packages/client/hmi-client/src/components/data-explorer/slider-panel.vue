@@ -22,6 +22,11 @@
 					@click="emit('update:isOpen', true)"
 				/>
 				<h4 class="slider-header-item">{{ header }}</h4>
+				<Badge
+					v-if="selectedSearchItemsAmount"
+					:value="selectedSearchItemsAmount"
+					size="large"
+				></Badge>
 			</div>
 			<slot name="tab"></slot>
 		</template>
@@ -29,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import Badge from 'primevue/badge';
 import Slider from '../Slider.vue';
 
 defineProps({
@@ -49,11 +55,14 @@ defineProps({
 		type: String,
 		default: '56px'
 	},
-
 	// slider-panel props
 	header: {
 		type: String,
 		default: ''
+	},
+	selectedSearchItemsAmount: {
+		type: Number,
+		default: 0
 	}
 });
 
@@ -81,11 +90,13 @@ i {
 	display: flex;
 	align-items: center;
 }
+
 .slider-header.content {
 	flex-direction: row-reverse;
 	justify-content: space-between;
 	padding: 16px;
 }
+
 .slider-header.tab {
 	justify-content: center;
 }
@@ -98,19 +109,28 @@ i.slider-header-item {
 	align-items: center;
 	display: flex;
 	flex-direction: column;
-	padding: 16px;
-	gap: 16px;
+	padding: 1rem;
+	gap: 2rem;
 }
+
 .slider-tab-header h4 {
 	text-align: left;
 	transform-origin: top right;
 	line-height: 1em;
+	margin-bottom: 1rem;
 }
 
+.p-badge {
+	background-color: var(--surface-200);
+	color: var(--text-color-primary);
+}
+
+/* TODO: those translateX are hard coded, this need to be neater. YP */
 .slider-tab-header.left h4 {
 	transform: translateX(-2em) rotate(270deg);
 }
+
 .slider-tab-header.right h4 {
-	transform: translateX(-1.5em) rotate(270deg);
+	transform: translateX(-3em) rotate(270deg);
 }
 </style>

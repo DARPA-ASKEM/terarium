@@ -87,6 +87,7 @@ watch(newActiveTab, (index) => {
 
 <style scoped>
 div {
+	overflow: auto;
 	width: 100%;
 }
 
