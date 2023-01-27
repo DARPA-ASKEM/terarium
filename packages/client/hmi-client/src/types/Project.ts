@@ -38,4 +38,5 @@ export type Project = {
 	concept: string | null;
 	assets: SimpleProjectAssets;
 	relatedArticles: XDDArticle[];
+	username: string;
 };

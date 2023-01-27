@@ -66,6 +66,7 @@ const sidePanelTabStyle = computed(
 .slider.left.open .slider-content {
 	border-right: 1px solid var(--surface-border);
 }
+
 .slider.right.closed .slider-tab,
 .slider.right.open .slider-content {
 	border-left: 1px solid var(--surface-border);
@@ -80,11 +81,13 @@ const sidePanelTabStyle = computed(
 	position: relative;
 	height: 100%;
 }
+
 .slider.open .slider-tab,
 .slider.closed .slider-content {
 	visibility: hidden;
 	opacity: 0;
 }
+
 .slider-content {
 	position: relative;
 	width: 100%;
