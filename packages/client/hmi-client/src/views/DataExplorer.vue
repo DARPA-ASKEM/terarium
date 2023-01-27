@@ -67,7 +67,7 @@
 				content-width="35%"
 				tab-width="56px"
 				direction="right"
-				header="Cart"
+				header="Resources"
 				v-model:is-open="isSliderResourcesOpen"
 			>
 				<template v-slot:content>
