@@ -35,7 +35,7 @@ import javax.json.bind.JsonbBuilder;
 @Slf4j
 public class HomeResource {
 	private static final int DEFAULT_PAGE = 0;
-	private static final int DEFAULT_PAGE_SIZE = 50;
+	private static final int DEFAULT_PAGE_SIZE = 200;
 
 	//TODO: Fix the hard coded xdd-covid-19
 	private static final String DEFAULT_DOC = "xdd-covid-19";
@@ -100,6 +100,5 @@ public class HomeResource {
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
-
-
+  
 }

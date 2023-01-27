@@ -2,17 +2,17 @@
 	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
 			<header>
-				<div class="journal">{{ doc.journal }}</div>
-				<h4 class="title">{{ doc.title }}</h4>
-				<div class="authors">{{ formatArticleAuthors(doc) }}</div>
+				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
+				<h4 class="title" v-html="highlightSearchTerms(doc.title)" />
+				<div class="authors" v-html="formatArticleAuthors(doc)" />
 				<div class="details">
 					<div v-if="docLink || doi">
 						DOI:
 						<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">
-							{{ doi }}
+							{{ highlightSearchTerms(doi) }}
 						</a>
 					</div>
-					<div>{{ doc.publisher }}</div>
+					<div>{{ highlightSearchTerms(doc.publisher) }}</div>
 					<!-- TODO -->
 					<!-- Journal impact factor -->
 					<!-- # Citations -->
@@ -24,53 +24,49 @@
 					/>
 				</div>
 			</header>
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
-				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
-					{{ formattedAbstract }}
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
+				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
+					<span v-html="formattedAbstract" />
 				</AccordionTab>
-				<AccordionTab
-					v-if="doc.knownEntities && doc.knownEntities.summaries.sections"
-					header="Section summaries"
-				>
-					<div v-for="(v, k) of doc.knownEntities.summaries.sections" :key="k">
+				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
+					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<div>
-							<strong>{{ k }}</strong>
+							<strong>{{ index }}</strong>
 						</div>
-						<div>{{ v }}</div>
-						<br />
+						<div v-html="highlightSearchTerms(section)" />
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
+				<AccordionTab v-if="!isEmpty(figureArtifacts)" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
+				<AccordionTab v-if="!isEmpty(equationArtifacts)" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="urlArtifacts.length > 0" header="URLs">
+				<AccordionTab v-if="!isEmpty(urlArtifacts)" header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -78,41 +74,30 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="otherArtifacts.length > 0" header="Others">
+				<AccordionTab v-if="!isEmpty(otherArtifacts)" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
-						<b>{{ ex.properties.title }}</b>
-						{{ ex.properties.caption }}
-						{{ ex.properties.abstractText }}
-						{{ ex.properties.contentText }}
+						<b v-html="highlightSearchTerms(ex.properties.title)" />
+						<span v-html="highlightSearchTerms(ex.properties.caption)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</div>
 				</AccordionTab>
 				<AccordionTab header="References">
 					<div v-for="(citation, key) of doc.citationList" :Key="key">
-						{{ key + 1 }}. {{ formatCitation(citation) }}
+						{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
 					</div>
 				</AccordionTab>
-				<!--
-				<AccordionTab header="Cited by"> </AccordionTab>
-				-->
-				<AccordionTab
-					v-if="relatedTerariumArtifacts.length > 0"
-					header="Related TERARium artifacts"
-				>
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
 					</DataTable>
-					<br />
 					<DataTable :value="relatedTerariumDatasets">
 						<Column field="name" header="Datasets"></Column>
 					</DataTable>
-					<br />
 					<DataTable :value="relatedTerariumDocuments">
 						<Column field="name" header="Papers"></Column>
 					</DataTable>
 				</AccordionTab>
-				<!--
-				<AccordionTab header="Provenance"> </AccordionTab>
-				-->
 			</Accordion>
 		</div>
 	</section>
@@ -120,6 +105,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
@@ -133,14 +119,24 @@ import { getRelatedArtifacts } from '@/services/provenance';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
+import * as textUtil from '@/utils/text';
 
 const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
+	highlight?: string;
 }>();
 
 const doc = ref<XDDArticle | null>(null);
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 
 watch(
 	props,
@@ -161,30 +157,27 @@ watch(
 	}
 );
 
-const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
+const formatArticleAuthors = (d: XDDArticle) =>
+	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
 );
 
-// const formatAbstract = (d: XDDArticle) =>
-// 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
-// 	'[no abstract]';
-
 const formattedAbstract = computed(() => {
 	if (!doc.value || !doc.value.abstractText) return '';
-	return doc.value.abstractText;
+	return highlightSearchTerms(doc.value.abstractText);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));
 
+/* Artifacts */
 const artifacts = ref<XDDArtifact[]>([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const figureArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
-
 const tableArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
@@ -195,16 +188,6 @@ const urlArtifacts = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
 		? doc.value.knownEntities.urlExtractions
 		: []
-);
-
-const relatedTerariumModels = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
 );
 
 const otherArtifacts = computed(() => {
@@ -246,6 +229,17 @@ watch(doi, (currentValue, oldValue) => {
 	}
 });
 
+/* Provenance */
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+);
+
 const openPDF = () => {
 	if (docLink.value) window.open(docLink.value as string);
 	else if (doi.value) window.open(`https://doi.org/${doi.value}`);
@@ -253,18 +247,17 @@ const openPDF = () => {
 
 /**
  * Format from xDD citation_list object.
- *
  * -  author (year), title, journal, doi
  */
 const formatCitation = (obj: { [key: string]: string }) => {
+	let citation: string;
 	if (Object.keys(obj).length <= 1) {
-		if (obj.unstructured_citation) return obj.unstructured_citation;
-		return '';
+		citation = obj.unstructured_citation ?? '';
 	}
-	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+	citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+	return highlightSearchTerms(citation);
 };
 
-// fetch artifacts from COSMOS using the doc doi
 onMounted(async () => {
 	fetchDocumentArtifacts();
 	fetchRelatedTerariumArtifacts();
@@ -310,12 +303,10 @@ a:hover {
 	color: var(--primary-color-dark);
 }
 
-.accordian {
+.accordion {
 	margin-top: 1rem;
 	font-size: 14px;
 }
-
-/* .p-accordion .p-accordion-content {} */
 
 .extracted-item {
 	padding-bottom: 0.5rem;
