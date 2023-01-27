@@ -1,5 +1,5 @@
 <template>
-	<section>
+	<section class="container">
 		<div style="display: flex">
 			<div id="playground"></div>
 			<div id="parameters"></div>
@@ -63,7 +63,7 @@ import * as d3 from 'd3';
 import _ from 'lodash';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph } from '@/services/model';
 import Button from 'primevue/button';
@@ -187,6 +187,28 @@ let renderer: SampleRenderer | null = null;
 
 // SIRD
 const SIRD: PetriNet = {
+	// ['dSdt', 'dEdt', 'dIdt', 'dRdt', 'dDdt', 'dNdt']  ['y', 't', 'N0', 'alpha', 'beta', 'gamma', 'epsilon', 'mu']
+	S: [
+		{ sname: 'dSdt' },
+		{ sname: 'dEdt' },
+		{ sname: 'dIdt' },
+		{ sname: 'dRdt' },
+		{ sname: 'dDdt' },
+		{ sname: 'dNdt' }
+	],
+	T: [
+		{ tname: 'y' },
+		{ tname: 't' },
+		{ tname: 'N0' },
+		{ tname: 'apha' },
+		{ tname: 'beta' },
+		{ tname: 'epsilon' },
+		{ tname: 'mu' }
+	],
+	I: [],
+	O: []
+
+	/*
 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
 	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
 	I: [
@@ -201,6 +223,7 @@ const SIRD: PetriNet = {
 		{ ot: 2, os: 3 },
 		{ ot: 3, os: 4 }
 	]
+	*/
 };
 
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
@@ -310,10 +333,30 @@ const addVariable = (vType: string) => {
 		concept: '',
 		value: 0
 	});
-
 	renderer.render();
 };
 
+watch(
+	variablesRef,
+	() => {
+		variablesRef.value.forEach((v) => {
+			const updated = renderer?.chart?.selectAll('.node-ui').filter((d: any) => d.id === v.id);
+			updated.each((d: any) => {
+				d.label = v.name;
+			});
+			updated?.select('text').text(v.name);
+
+			// .each((d, g, idx) => {
+			// 	d.label = v.name;
+			// 	console.log('>>>', d3.select(g[idx]).node());
+			// });
+		});
+	},
+	{
+		immediate: true,
+		deep: true
+	}
+);
 // Entry point
 onMounted(async () => {
 	const playground = document.getElementById('playground') as HTMLDivElement;
@@ -378,6 +421,15 @@ onMounted(async () => {
 	const g = parsePetriNet2IGraph(SIRD);
 	await renderer.setData(g);
 	await renderer.render();
+	if (renderer.graph.edges.length === 0) {
+		let c = 0;
+		renderer?.graph.nodes.forEach((n) => {
+			n.x = 60 + Math.round(c / 5) * 50;
+			n.y = 50 * (c % 5);
+			c++;
+		});
+		await renderer.render();
+	}
 
 	renderer.graph.nodes.forEach((n) => {
 		variablesRef.value.push({
@@ -395,7 +447,7 @@ onMounted(async () => {
 <style>
 #playground {
 	width: 1000px;
-	height: 350px;
+	height: 450px;
 	border: 1px solid #bbb;
 }
 </style>
