@@ -10,7 +10,7 @@
 import * as d3 from 'd3';
 import graphScaffolder from '@graph-scaffolder/index';
 import { moveTo } from '@graph-scaffolder/fn/move-to';
-import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 
@@ -146,14 +146,13 @@ onMounted(async () => {
 	renderer = new SampleRenderer({
 		el: playground,
 		useAStarRouting: true,
-		runLayout: runDagreLayout,
+		runLayout: runDagreLayout2,
 		useStableZoomPan: true
 	});
 
 	try {
 		const simInputDataString = JSON.parse(localStorage.getItem('sim-input-data') as string);
-		console.log('!!!', simInputDataString);
-		const g = parsePetriNet2IGraph(simInputDataString.petri);
+		const g = parsePetriNet2IGraph(simInputDataString);
 		await renderer.setData(g);
 		await renderer.render();
 	} catch (e) {
