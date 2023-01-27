@@ -15,6 +15,11 @@ import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/
 import { onMounted, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 
+import S from '@/assets/images/S_thumb.png';
+import I from '@/assets/images/I_thumb.png';
+import R from '@/assets/images/R_thumb.png';
+import V from '@/assets/images/V_thumb.png';
+
 const variablesRef = ref<any[]>([]);
 
 interface NodeData {
@@ -62,7 +67,20 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			.classed('shape', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
-			.attr('xlink:href', (d) => `/app/src/assets/images/${d.label}_thumb.png`)
+			.attr('xlink:href', (d) => {
+				switch (d.label) {
+					case 'S':
+						return S;
+					case 'I':
+						return I;
+					case 'R':
+						return R;
+					case 'V':
+						return V;
+					default:
+						return '';
+				}
+			})
 			.on('error', function () {
 				// set transparent empty svg image
 				(this as any).setAttribute(
@@ -127,9 +145,7 @@ onMounted(async () => {
 		const g = parsePetriNet2IGraph(simInputDataString);
 		await renderer.setData(g);
 		await renderer.render();
-	} catch (e) {
-		throw Error();
-	}
+	} catch (e) {}
 
 	renderer.graph.nodes.forEach((n) => {
 		variablesRef.value.push({
