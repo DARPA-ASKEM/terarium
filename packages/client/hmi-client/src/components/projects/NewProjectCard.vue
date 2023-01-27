@@ -6,15 +6,18 @@ import Textarea from 'primevue/textarea';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
+import useAuthStore from '@/stores/auth';
 
 const router = useRouter();
+const auth = useAuthStore();
 
 const isModalVisible = ref(false);
 const name = ref('');
 const description = ref('');
 
 async function createNewProject() {
-	const project = await ProjectService.create(name.value, description.value);
+	const author = auth.name ?? '';
+	const project = await ProjectService.create(name.value, description.value, author);
 	if (project) {
 		router.push(`/projects/${project.id}`);
 		isModalVisible.value = false;

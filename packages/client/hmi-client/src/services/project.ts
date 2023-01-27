@@ -15,12 +15,28 @@ import { getRelatedDocuments } from './data';
  */
 async function create(
 	name: Project['name'],
-	description: Project['description'] = ''
+	description: Project['description'] = '',
+	username: Project['username'] = ''
 ): Promise<Project | null> {
 	try {
-		const response = await API.post(`/projects`, { name, description });
+		const response = await API.post(`/projects`, { name, description, username });
 		const { status, data } = response;
 		if (status !== 201) return null;
+		return data ?? null;
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+}
+
+async function update(project: Project): Promise<Project | null> {
+	try {
+		const { id, name, description, active, username } = project;
+		const response = await API.put(`/projects/${id}`, { id, name, description, active, username });
+		const { status, data } = response;
+		if (status !== 200) {
+			return null;
+		}
 		return data ?? null;
 	} catch (error) {
 		console.error(error);
@@ -123,4 +139,4 @@ async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
 	}
 }
 
-export { create, get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };
+export { create, update, get, getAll, addAsset, deleteAsset, getAssets, getRelatedArticles };

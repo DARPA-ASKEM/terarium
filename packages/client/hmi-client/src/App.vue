@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Navbar from '@/components/Navbar.vue';
 import Sidebar from '@/components/Sidebar.vue';
 import { Project } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
+import API from '@/api/api';
 import { RoutePath, useCurrentRoute } from './router/index';
 
 /**
  * Router
  */
 const route = useRoute();
+const router = useRouter();
 const currentRoute = useCurrentRoute();
 const isSidebarVisible = computed(
 	() =>
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
+const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
+
 const searchBarText = ref('');
 const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
@@ -36,6 +40,17 @@ function updateRelatedSearchTerms(newTerms) {
 	relatedSearchTerms.value = newTerms.slice(0, 5);
 }
 
+API.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		const status = error.response.status;
+		console.error(error);
+		if (status === 401 || status === 403) {
+			router.push({ name: 'unauthorized' });
+		}
+	}
+);
+
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
@@ -51,17 +66,29 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+resources.$subscribe((mutation, state) => {
+	project.value = state.activeProject;
+});
 </script>
 
 <template>
 	<Navbar
+		v-if="!isErrorState"
 		class="header"
 		:project="project"
 		:searchBarText="searchBarText"
 		:relatedSearchTerms="relatedSearchTerms"
 	/>
 	<main>
-		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
 		<router-view
 			class="page"
 			:project="project"
@@ -69,6 +96,9 @@ watch(
 			@related-search-terms-updated="updateRelatedSearchTerms"
 		/>
 	</main>
+	<footer>
+		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="uncharted-logo" />
+	</footer>
 </template>
 
 <style scoped>
@@ -96,5 +126,18 @@ main {
 
 .data-explorer {
 	z-index: 3;
+}
+
+footer {
+	width: 100%;
+	height: 48px;
+	background-color: var(--gray-800);
+	flex: none;
+	display: flex;
+	align-items: center;
+}
+
+.uncharted-logo {
+	padding-left: 1rem;
 }
 </style>

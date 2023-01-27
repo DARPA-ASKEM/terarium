@@ -8,26 +8,35 @@
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<i class="slider-header-item pi pi-times" @click="emit('update:previewItem', null)"></i>
+				<span>{{ resultType.toUpperCase() }}</span>
+				<i class="pi pi-times" @click="emit('update:previewItem', null)"></i>
 			</div>
 			<div class="selected-resources-pane">
 				<Document
 					v-if="resultType === ResourceType.XDD"
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
+					:highlight="searchTerm"
 				/>
 				<Dataset
 					v-if="resultType === ResourceType.DATASET"
 					:asset-id="previewItemId as string"
 					:project="resources.activeProject"
+					:highlight="searchTerm"
 				/>
-				<Button
-					label="Add to Cart"
-					@click="emit('toggle-data-item-selected', { item: previewItem })"
-				></Button>
-				<!-- TOOD
-				<Button label="Add to Project"></Button>
-				-->
+				<Model
+					v-if="resultType === ResourceType.MODEL"
+					:asset-id="previewItemId as string"
+					:project="resources.activeProject"
+					:highlight="searchTerm"
+				/>
+				<footer>
+					<Button
+						label="Add to Resources"
+						@click="emit('toggle-data-item-selected', { item: previewItem })"
+						class="add-to-cart"
+					/>
+				</footer>
 			</div>
 		</template>
 	</slider>
@@ -46,6 +55,7 @@ import { isXDDArticle } from '@/utils/data-util';
 
 import Document from '@/components/articles/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
+import Model from '@/components/models/Model.vue';
 import Slider from '@/components/Slider.vue';
 
 const resources = useResourcesStore();
@@ -71,6 +81,10 @@ const props = defineProps({
 		default: null
 	},
 	resultType: {
+		type: String,
+		default: null
+	},
+	searchTerm: {
 		type: String,
 		default: null
 	}
@@ -105,24 +119,40 @@ const previewItemId = computed(() => {
 </script>
 
 <style scoped>
-i {
-	font-size: 1.5rem;
-	cursor: pointer;
-}
-
 .slider-header {
 	display: flex;
 	align-items: center;
+	margin: 1rem;
 }
+
 .slider-header.content {
-	flex-direction: row-reverse;
+	font-size: 14px;
+	color: var(--text-color-subdued);
+	font-weight: bold;
 	justify-content: space-between;
 }
+
+i {
+	cursor: pointer;
+}
+
 .slider-header.tab {
 	justify-content: center;
 }
-.slider-header-item {
-	font-weight: bold;
-	margin: 12px;
+
+footer {
+	border-top: 1px solid var(--surface-border);
+	background-color: var(--surface-section);
+	position: fixed;
+	height: 5rem;
+	bottom: 0;
+	width: calc(35% - 48px);
+	display: flex;
+	align-items: center;
+}
+
+.add-to-cart {
+	height: 1.5rem;
+	margin-left: 1rem;
 }
 </style>

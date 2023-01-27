@@ -1,24 +1,30 @@
 <template>
-	<ul>
+	<div class="results-count">
+		<template v-if="isLoading">Loading...</template>
+		<template v-else>Showing {{ resultsCount }} item(s)</template>
+	</div>
+	<div v-if="isLoading" class="loading-spinner">
+		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
+	</div>
+	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
+	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
 				:asset="(asset as XDDArticle & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
-				:isInCart="false"
 				:resourceType="(resultType as ResourceType)"
+				:searchTerm="searchTerm"
 				@toggle-selected-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
 			/>
 		</li>
 	</ul>
-	<div v-if="resultsCount === 0">Loading...</div>
-	<div v-else class="results-count-label">Showing {{ resultsCount }} item(s).</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-import { XDDArticle } from '@/types/XDD';
+import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
@@ -40,6 +46,10 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: ''
+	},
+	isLoading: {
+		type: Boolean,
+		default: true
 	}
 });
 
@@ -73,18 +83,31 @@ const filteredAssets = computed(() => {
 
 			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
 				const docMap: { [docid: string]: XDDArticle } = {};
+
 				searchResults.xddExtractions.forEach((ex) => {
-					if (ex.properties.documentBibjson === undefined) return; // skip
 					const docid = ex.properties.documentBibjson.gddId;
 					if (docMap[docid] === undefined) {
 						docMap[docid] = ex.properties.documentBibjson;
 						docMap[docid].relatedExtractions = [];
+					}
+					// Avoid duplicate documents
+					else if (ex.askemClass === XDDExtractionType.Document) {
+						const docExtractions = docMap[docid].relatedExtractions?.filter(
+							(extraction) => extraction.askemClass === XDDExtractionType.Document
+						);
+
+						if (docExtractions) {
+							for (let i = 0; i < docExtractions.length; i++) {
+								if (ex.properties.DOI === docExtractions[i].properties.DOI) return; // Skip
+							}
+						}
 					}
 					docMap[docid].relatedExtractions?.push(ex);
 				});
 				articlesFromExtractions = Object.values(docMap) as XDDArticle[];
 			}
 			const xDDArticlesSearchResults = searchResults.results as XDDArticle[];
+
 			return [...articlesFromExtractions, ...xDDArticlesSearchResults];
 		}
 		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
@@ -116,15 +139,25 @@ ul {
 	flex-direction: column;
 	gap: 0.5rem;
 	list-style: none;
+	overflow-y: scroll;
+}
+
+.loading-spinner {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 8rem;
+	flex-grow: 1;
+	background-color: var(--surface-ground);
+	color: var(--primary-color-dark);
+	font-weight: bold;
 }
 
 .search-container {
 	overflow-y: auto;
 }
 
-.results-count-label {
-	font-weight: bold;
-	margin: 4px;
-	align-self: center;
+.results-count {
+	color: var(--text-color-subdued);
 }
 </style>

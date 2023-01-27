@@ -1,110 +1,108 @@
 <template>
 	<section class="doc-view-container" ref="sectionElem">
 		<div v-if="doc">
-			<div class="journal">{{ doc.journal }}</div>
-			<h4 class="title">
-				{{ doc.title }}
-			</h4>
-			<div class="authors">{{ formatArticleAuthors(doc) }}</div>
-			<br />
-
-			<div class="row">
-				<!-- TODO -->
-				<!-- Journal impact factor -->
-				<!-- # Citations -->
-				<div>
-					<div class="publisher">{{ doc.publisher }}</div>
-					<div class="doi">DOI: {{ doi }}</div>
+			<header>
+				<div class="journal">{{ doc.journal }}</div>
+				<h4 class="title">{{ highlightSearchTerms(doc.title) }}</h4>
+				<div class="authors">{{ formatArticleAuthors(doc) }}</div>
+				<div class="details">
+					<div v-if="docLink || doi">
+						DOI:
+						<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">
+							{{ highlightSearchTerms(doi) }}
+						</a>
+					</div>
+					<div>{{ highlightSearchTerms(doc.publisher) }}</div>
+					<!-- TODO -->
+					<!-- Journal impact factor -->
+					<!-- # Citations -->
+					<Button
+						v-if="docLink || doi"
+						class="p-button-sm p-button-outlined"
+						label="Open PDF"
+						@click="openPDF"
+					/>
 				</div>
-				<Button v-if="docLink" label="Open PDF" @click="openPDF"> </Button>
-			</div>
-
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordian">
-				<AccordionTab v-if="formattedAbstract.length > 0" header="Abstract">
-					{{ formattedAbstract }}
+			</header>
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
+				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
+					{{ highlightSearchTerms(formattedAbstract) }}
 				</AccordionTab>
-
-				<!--
-				<AccordionTab header="Snippets"> </AccordionTab>
-				-->
-
-				<AccordionTab v-if="figureArtifacts.length > 0" header="Figures">
+				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
+					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+						<div>
+							<strong>{{ index }}</strong>
+						</div>
+						<div>{{ highlightSearchTerms(section) }}</div>
+						<br />
+					</div>
+				</AccordionTab>
+				<AccordionTab v-if="!isEmpty(figureArtifacts)" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<img
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								:style="{ 'max-width': imageSize }"
-							/>
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
 							}}</span>
 						</div>
 					</div>
 				</AccordionTab>
-
-				<AccordionTab v-if="tableArtifacts.length > 0" header="Tables">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" header="Tables">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<img
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								:style="{ 'max-width': imageSize }"
-							/>
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
 							}}</span>
 						</div>
 					</div>
 				</AccordionTab>
-
-				<AccordionTab v-if="equationArtifacts.length > 0" header="Equations">
+				<AccordionTab v-if="!isEmpty(equationArtifacts)" header="Equations">
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
-							<img
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								:style="{ 'max-width': imageSize }"
-							/>
+							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span>{{
-								ex.properties.caption ? ex.properties.caption : ex.properties.contentText
+								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
 							}}</span>
 						</div>
 					</div>
 				</AccordionTab>
-
-				<AccordionTab v-if="urlArtifacts.length > 0" header="URLs">
+				<AccordionTab v-if="!isEmpty(urlArtifacts)" header="URLs">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
+							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
+								highlightSearchTerms(ex.url)
+							}}</a>
 						</div>
 					</div>
 				</AccordionTab>
-
-				<AccordionTab v-if="otherArtifacts.length > 0" header="Others">
+				<AccordionTab v-if="!isEmpty(otherArtifacts)" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
-						<b>{{ ex.properties.title }}</b>
-						{{ ex.properties.caption }}
-						{{ ex.properties.abstractText }}
-						{{ ex.properties.contentText }}
+						<b>{{ highlightSearchTerms(ex.properties.title) }}</b>
+						{{ highlightSearchTerms(ex.properties.caption) }}
+						{{ highlightSearchTerms(ex.properties.abstractText) }}
+						{{ highlightSearchTerms(ex.properties.contentText) }}
 					</div>
 				</AccordionTab>
-
 				<AccordionTab header="References">
 					<div v-for="(citation, key) of doc.citationList" :Key="key">
 						{{ key + 1 }}. {{ formatCitation(citation) }}
 					</div>
 				</AccordionTab>
-
-				<!--
-				<AccordionTab header="Cited by"> </AccordionTab>
-				<AccordionTab header="Related TERARium artifacts"> </AccordionTab>
-				<AccordionTab header="Provenance"> </AccordionTab>
-				-->
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Related TERARium artifacts">
+					<DataTable :value="relatedTerariumModels">
+						<Column field="name" header="Models"></Column>
+					</DataTable>
+					<br />
+					<DataTable :value="relatedTerariumDatasets">
+						<Column field="name" header="Datasets"></Column>
+					</DataTable>
+					<br />
+					<DataTable :value="relatedTerariumDocuments">
+						<Column field="name" header="Papers"></Column>
+					</DataTable>
+				</AccordionTab>
 			</Accordion>
 		</div>
 	</section>
@@ -112,20 +110,38 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
-import { getDocumentDoi } from '@/utils/data-util';
+import { getDocumentDoi, isModel, isDataset, isXDDArticle } from '@/utils/data-util';
+import { ResultType } from '@/types/common';
+import { getRelatedArtifacts } from '@/services/provenance';
+import { Model } from '@/types/Model';
+import { Dataset } from '@/types/Dataset';
+import { ProvenanceType } from '@/types/Provenance';
+import * as textUtil from '@/utils/text';
 
 const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
+	highlight?: string;
 }>();
 
 const doc = ref<XDDArticle | null>(null);
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 
 watch(
 	props,
@@ -146,7 +162,8 @@ watch(
 	}
 );
 
-const formatArticleAuthors = (d: XDDArticle) => d.author.map((a) => a.name).join(', ');
+const formatArticleAuthors = (d: XDDArticle) =>
+	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
@@ -164,9 +181,12 @@ const formattedAbstract = computed(() => {
 const doi = computed(() => getDocumentDoi(doc.value));
 
 const artifacts = ref<XDDArtifact[]>([]);
+const relatedTerariumArtifacts = ref<ResultType[]>([]);
+
 const figureArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
+
 const tableArtifacts = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
@@ -177,6 +197,16 @@ const urlArtifacts = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
 		? doc.value.knownEntities.urlExtractions
 		: []
+);
+
+const relatedTerariumModels = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
 );
 
 const otherArtifacts = computed(() => {
@@ -190,7 +220,8 @@ const otherArtifacts = computed(() => {
 	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
 
-const fetchArtifacts = async () => {
+// This fetches various parts of the document: figures, tables, equations ... etc
+const fetchDocumentArtifacts = async () => {
 	if (doi.value !== '') {
 		const allArtifacts = await getXDDArtifacts(doi.value);
 		// filter out Document extraction type
@@ -201,82 +232,102 @@ const fetchArtifacts = async () => {
 	}
 };
 
+const fetchRelatedTerariumArtifacts = async () => {
+	if (doc.value) {
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
+		relatedTerariumArtifacts.value = results;
+	} else {
+		relatedTerariumArtifacts.value = [];
+	}
+};
+
 watch(doi, (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
-		fetchArtifacts();
+		fetchDocumentArtifacts();
+		fetchRelatedTerariumArtifacts();
 	}
 });
 
 const openPDF = () => {
-	window.open(docLink.value as string);
+	if (docLink.value) window.open(docLink.value as string);
+	else if (doi.value) window.open(`https://doi.org/${doi.value}`);
 };
 
 /**
  * Format from xDD citation_list object.
- *
  * -  author (year), title, journal, doi
  */
 const formatCitation = (obj: { [key: string]: string }) => {
 	if (Object.keys(obj).length <= 1) {
-		if (obj.unstructured_citation) return obj.unstructured_citation;
-		return '';
+		return obj.unstructured_citation ?? '';
 	}
 	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 };
 
-// Image size will adapt depend on available space
-const imageSize = ref('160px');
-
-// fetch artifacts from COSMOS using the doc doi
 onMounted(async () => {
-	const rect = (sectionElem.value as HTMLElement).getBoundingClientRect();
-	if (rect.width > 800) {
-		imageSize.value = '400px';
-	}
-	fetchArtifacts();
+	fetchDocumentArtifacts();
+	fetchRelatedTerariumArtifacts();
 });
 </script>
 
 <style scoped>
-.doc-view-container {
-	padding: 2rem;
-	font-size: large;
-	overflow-y: auto;
-}
-
-.row {
+header {
+	padding: 0rem 1rem;
+	color: var(--text-color-subdued);
 	display: flex;
-	justify-content: space-between;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
-.authors {
-	font-style: italic;
-	padding-top: 8px;
+div,
+span {
+	overflow-wrap: break-word;
 }
 
-.journal,
-.publisher,
-.doi {
-	padding-top: 8px;
+a {
+	color: var(--text-color-subdued);
 }
 
-.accordian {
+a:hover {
+	color: var(--primary-color-dark);
+}
+
+.p-button.p-button-outlined {
 	margin-top: 1rem;
-	margin-bottom: 1rem;
+	background-color: transparent;
+	color: var(--text-color-primary);
+	font-weight: bold;
+	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.title {
+	color: var(--text-color-primary);
+}
+
+.authors,
+.journal {
+	color: var(--primary-color-dark);
+}
+
+.accordion {
+	margin-top: 1rem;
+	font-size: 14px;
 }
 
 .extracted-item {
-	padding-bottom: 20px;
+	padding-bottom: 0.5rem;
 }
 
-/* Meant for left:right image:caption */
 .img-container {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
 .img-container > img {
-	margin: 5px;
+	max-height: 10rem;
+	width: 100%;
+	object-fit: contain;
 	border: 1px solid var(--gray-300);
 }
 </style>

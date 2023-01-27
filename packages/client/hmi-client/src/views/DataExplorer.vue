@@ -19,57 +19,36 @@
 			</slider-panel>
 			<div class="results-content">
 				<div class="secondary-header">
-					<div class="button-group">
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.XDD }"
+					<span class="p-buttonset">
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.XDD"
+							label="Papers"
+							icon="pi pi-file"
 							@click="updateResultType(ResourceType.XDD)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.XDD)" />
-							Papers
-						</button>
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.MODEL }"
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.MODEL"
+							label="Models"
+							icon="pi pi-share-alt"
 							@click="updateResultType(ResourceType.MODEL)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.MODEL)" />
-							Models
-						</button>
-						<button
-							type="button"
-							:class="{ active: resultType === ResourceType.DATASET }"
+						/>
+						<Button
+							class="p-button-text p-button-sm"
+							:active="resultType === ResourceType.DATASET"
+							label="Datasets"
+							icon="pi pi-table"
 							@click="updateResultType(ResourceType.DATASET)"
-						>
-							<component :is="getResourceTypeIcon(ResourceType.DATASET)" />
-							Datasets
-						</button>
-					</div>
-					<div class="button-group">
-						<button
-							type="button"
-							:class="{ active: viewType === ViewType.LIST }"
-							@click="viewType = ViewType.LIST"
-						>
-							List
-						</button>
-						<button type="button" @click="viewType = ViewType.MATRIX">Matrix</button>
-					</div>
+						/>
+					</span>
 				</div>
 				<search-results-list
-					v-if="viewType === ViewType.LIST"
 					:data-items="dataItems"
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
-					@toggle-data-item-selected="toggleDataItemSelected"
-				/>
-				<search-results-matrix
-					v-else-if="viewType === ViewType.MATRIX"
-					:data-items="dataItems"
-					:result-type="resultType"
-					:selected-search-items="selectedSearchItems"
-					:dict-names="dictNames"
+					:is-loading="isLoading"
 					@toggle-data-item-selected="toggleDataItemSelected"
 				/>
 			</div>
@@ -80,6 +59,7 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:result-type="resultType"
+				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 			<slider-panel
@@ -93,9 +73,9 @@
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
+						@toggle-data-item-selected="toggleDataItemSelected"
 						@find-related-content="onFindRelatedContent"
 						@find-similar-content="onFindSimilarContent"
-						@remove-item="toggleDataItemSelected"
 						@close="isSliderResourcesOpen = false"
 					/>
 				</template>
@@ -108,7 +88,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
-import SearchResultsMatrix from '@/components/data-explorer/search-results-matrix.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import SliderPanel from '@/components/data-explorer/slider-panel.vue';
@@ -129,16 +108,10 @@ import { XDD_RESULT_DEFAULT_PAGE_SIZE, FACET_FIELDS as XDD_FACET_FIELDS, YEAR } 
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import {
-	getResourceID,
-	getResourceTypeIcon,
-	isXDDArticle,
-	isModel,
-	isDataset,
-	validate
-} from '@/utils/data-util';
+import { getResourceID, isXDDArticle, isModel, isDataset, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { LocationQuery, useRoute } from 'vue-router';
+import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['search-query-changed', 'related-search-terms-updated']);
@@ -189,6 +162,8 @@ const filteredFacets = ref<Facets>({});
 const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 
+const isLoading = ref<boolean>(false);
+
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resultType: string]: boolean }>({});
 
@@ -236,7 +211,7 @@ const executeSearch = async () => {
 
 	// only search (or fetch data) relevant to the currently selected tab or the search by example item
 	let searchType = resultType.value;
-
+	isLoading.value = true;
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
 	//
@@ -345,12 +320,19 @@ const executeSearch = async () => {
 			}
 		}
 	});
-	const modelSearchParams = searchParamsWithFacetFilters?.[ResourceType.MODEL] || {
-		filters: clientFilters.value
-	};
-	const datasetSearchParams = searchParamsWithFacetFilters?.[ResourceType.DATASET] || {
-		filters: clientFilters.value
-	};
+
+	let modelSearchParams;
+	if (searchParamsWithFacetFilters?.[ResourceType.MODEL]?.filters) {
+		modelSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+	} else {
+		modelSearchParams = { filters: clientFilters.value };
+	}
+	let datasetSearchParams;
+	if (searchParamsWithFacetFilters?.[ResourceType.DATASET]?.filters) {
+		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+	} else {
+		datasetSearchParams = { filters: clientFilters.value };
+	}
 
 	// update search parameters object
 	searchParamsWithFacetFilters.xdd = xddSearchParams;
@@ -375,6 +357,8 @@ const executeSearch = async () => {
 	calculateFacets(allData, allDataFilteredWithFacets);
 
 	relatedSearchTerms.value = relatedWords.flat();
+
+	isLoading.value = false;
 };
 
 const disableSearchByExample = () => {
@@ -439,14 +423,13 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		// toggle preview
 		if (isEqual(dataItem.item, previewItem.value)) {
 			// clear preview item and close the preview panel
-			// FIXME: should we clear the preview if item is de-selected even if other items are still selected
 			previewItem.value = null;
 		} else {
 			// open the preview panel
 			previewItem.value = item;
 			isSliderResourcesOpen.value = false;
 		}
-		return; // do not add to cart if the purpose is to toggel preview
+		return; // do not add to cart if the purpose is to toggle preview
 	}
 
 	// by now, the user has explicitly asked for this item to be added to the cart
@@ -553,59 +536,8 @@ onUnmounted(() => {
 
 <style scoped>
 .data-explorer-container {
-	left: 0px;
-	top: 0px;
-	right: 0px;
 	display: flex;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
 	background-color: var(--surface-ground);
-}
-
-.secondary-header {
-	display: flex;
-	padding: 1rem 0;
-	justify-content: space-between;
-	align-items: center;
-	height: var(--nav-bar-height);
-}
-
-.button-group {
-	display: flex;
-}
-
-.button-group button {
-	display: flex;
-	align-items: center;
-	text-decoration: none;
-	background: transparent;
-	border: 1px solid black;
-	cursor: pointer;
-	padding: 0.25rem;
-	margin: auto;
-	border-left-width: 0;
-}
-
-.button-group button:first-child {
-	border-left-width: 1px;
-	border-top-left-radius: 0.5rem;
-	border-bottom-left-radius: 0.5rem;
-}
-
-.button-group button:last-child {
-	border-top-right-radius: 0.5rem;
-	border-bottom-right-radius: 0.5rem;
-}
-
-.button-group button:hover {
-	background: var(--gray-50);
-}
-
-.button-group button.active {
-	background: var(--primary-color-lighter);
-	cursor: default;
 }
 
 .data-explorer-container .facets-and-results-container {
@@ -617,7 +549,40 @@ onUnmounted(() => {
 }
 
 .results-content {
-	margin: 0 10px;
+	display: flex;
+	gap: 0.5rem;
+	margin: 0.5rem;
+}
+
+.secondary-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: var(--nav-bar-height);
+}
+
+.p-buttonset button {
+	border: 1px solid var(--surface-border);
+	box-shadow: none;
+	background-color: var(--surface-0);
+}
+
+.p-buttonset button[active='true'],
+.p-button.p-button-text:enabled:focus {
+	font-weight: bold;
+	border: none;
+	background-color: var(--surface-highlight);
+}
+
+.button-group button:first-child {
+	border-left-width: 1px;
+	border-top-left-radius: 0.5rem;
+	border-bottom-left-radius: 0.5rem;
+}
+
+.button-group button:last-child {
+	border-top-right-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
 }
 
 .facets-panel {

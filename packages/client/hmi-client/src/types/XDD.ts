@@ -33,6 +33,9 @@ export type XDDUrlExtraction = {
 
 export type XDDArticleKnownEntity = {
 	urlExtractions: XDDUrlExtraction[];
+	summaries: {
+		sections: { [key: string]: string };
+	};
 };
 
 export type XDDArticle = {
@@ -89,7 +92,6 @@ export type XDDArtifactProperties = {
 
 // XDD extraction object, which should match Extraction.java at the backend
 export type XDDArtifact = {
-	ASKEM_CLASS: string; // mapped from askemClass
 	askemClass: string;
 	properties: XDDArtifactProperties;
 	askemId: string;
@@ -194,4 +196,4 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
-export const FACET_FIELDS: string[] = [PUBLISHER, YEAR, PUBLICATION_NAME];
+export const FACET_FIELDS: string[] = [YEAR, PUBLISHER, JOURNAL];

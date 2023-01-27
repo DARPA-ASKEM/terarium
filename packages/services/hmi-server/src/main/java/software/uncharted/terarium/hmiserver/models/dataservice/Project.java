@@ -39,6 +39,8 @@ public class Project implements Serializable {
 
 	private List<ResourceType> assets;
 
+	private String username;
+
 	@JsonbProperty("relatedArticles")
 	@Setter private List<Document> relatedDocuments;
 
