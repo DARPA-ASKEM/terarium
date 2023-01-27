@@ -20,6 +20,13 @@ dependencies {
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 
+	// Persistence
+	implementation "io.quarkus:quarkus-hibernate-orm"
+	implementation "io.quarkus:quarkus-jdbc-postgresql"
+	implementation "io.quarkus:quarkus-hibernate-orm-panache"
+	annotationProcessor "io.quarkus:quarkus-panache-common"
+
+
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client"
 
