@@ -143,21 +143,23 @@ const goToSimulationPlanPage = () => {
 onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
+
+const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 </script>
 
 <template>
 	<section class="model">
 		<header>
-			<h3>{{ model?.name ?? '' }}</h3>
+			<h3 v-html="title" />
 			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
 		</header>
-
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
 			<AccordionTab header="Description">
-				<p v-html="highlightSearchTerms(model?.description)" />
+				<p v-html="description" />
 			</AccordionTab>
 			<AccordionTab header="Structure">
-				<div v-if="model !== null" ref="graphElement" class="graph-element"></div>
+				<div v-if="model" ref="graphElement" class="graph-element" />
 			</AccordionTab>
 			<AccordionTab header="Variables">
 				<DataTable :value="model?.content.S">
@@ -177,11 +179,9 @@ onMounted(async () => {
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
 				</DataTable>
-				<br />
 				<DataTable :value="relatedTerariumDatasets">
 					<Column field="name" header="Datasets"></Column>
 				</DataTable>
-				<br />
 				<DataTable :value="relatedTerariumDocuments">
 					<Column field="name" header="Papers"></Column>
 				</DataTable>
