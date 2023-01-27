@@ -120,7 +120,7 @@ watch(currentRoute, (newRoute) => {
 <template>
 	<header>
 		<section class="header-left">
-			<img src="@assets/images/TERArium-logo.png" height="48" width="168" alt="logo" />
+			<img src="@assets/svg/TERArium-logo.svg" height="48" width="168" alt="TERArium logo" />
 			<nav>
 				<Dropdown
 					class="dropdown"
