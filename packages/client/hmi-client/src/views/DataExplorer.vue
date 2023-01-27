@@ -557,6 +557,7 @@ onUnmounted(() => {
 	min-width: 0;
 	gap: 0.5rem;
 	margin: 0.5rem;
+	margin-bottom: 0;
 }
 
 .secondary-header {
