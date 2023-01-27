@@ -553,6 +553,7 @@ onUnmounted(() => {
 	display: flex;
 	gap: 0.5rem;
 	margin: 0.5rem;
+	margin-bottom: 0;
 }
 
 .secondary-header {
