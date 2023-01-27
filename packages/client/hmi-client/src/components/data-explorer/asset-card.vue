@@ -364,12 +364,4 @@ i:hover {
 .snippets li::after {
 	content: '…';
 }
-
-.asset-card >>> .highlight,
-.asset-card >>> .hl {
-	background-color: var(--surface-highlight);
-	border-radius: var(--border-radius);
-	padding-left: 0.2em;
-	padding-right: 0.2em;
-}
 </style>

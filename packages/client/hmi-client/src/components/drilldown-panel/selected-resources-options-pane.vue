@@ -235,14 +235,17 @@ i {
 	padding: 0.2rem;
 	border-radius: var(--border-radius);
 }
+
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
 	background-color: hsla(0, 0%, 0%, 0.1);
 }
+
 .context-menu-item {
 	padding: 0.5rem;
 }
+
 .context-menu-item:hover {
 	background-color: var(--primary-color-lighter);
 	cursor: pointer;

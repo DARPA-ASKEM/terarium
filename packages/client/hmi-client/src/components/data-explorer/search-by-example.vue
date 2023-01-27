@@ -164,6 +164,7 @@ footer div:hover {
 .hover-hand {
 	cursor: pointer;
 }
+
 .hover-hand:hover {
 	color: red;
 }
