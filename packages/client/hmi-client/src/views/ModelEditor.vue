@@ -1,5 +1,5 @@
 <template>
-	<section class="container">
+	<section class="container" style="max-height: 90vh; overflow-y: auto">
 		<div style="display: flex">
 			<div id="playground"></div>
 			<div id="parameters"></div>
@@ -521,6 +521,16 @@ onMounted(async () => {
 					value: 0
 				});
 			});
+			variablesRef.value.find((d) => d.name === 'Susceptible').value = 9979999.0;
+			variablesRef.value.find((d) => d.name === 'Exposed').value = 20000.0;
+			variablesRef.value.find((d) => d.name === 'Infected').value = 1.0;
+			variablesRef.value.find((d) => d.name === 'Recovered').value = 0.0;
+			variablesRef.value.find((d) => d.name === 'Hospitalized').value = 0.0;
+			variablesRef.value.find((d) => d.name === 'beta').value = 0.833;
+			variablesRef.value.find((d) => d.name === 'epsilon').value = 0.33333;
+			variablesRef.value.find((d) => d.name === 'gamma').value = 0.125;
+			variablesRef.value.find((d) => d.name === 'h').value = 0.0;
+			variablesRef.value.find((d) => d.name === 'r').value = 0.0;
 		}
 	});
 
@@ -555,7 +565,7 @@ onMounted(async () => {
 <style>
 #playground {
 	width: 1000px;
-	height: 450px;
+	height: 350px;
 	border: 1px solid #bbb;
 }
 </style>
