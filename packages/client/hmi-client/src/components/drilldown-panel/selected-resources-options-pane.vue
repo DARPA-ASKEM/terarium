@@ -195,10 +195,6 @@ const toggleContextMenu = (event, idx: number) => {
 	cursor: not-allowed;
 }
 
-.p-overlaycontent {
-	padding: 1rem;
-}
-
 .selected-title {
 	margin-bottom: 5px;
 	font-size: larger;
