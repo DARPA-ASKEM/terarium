@@ -25,8 +25,9 @@
 				<Badge
 					v-if="selectedSearchItemsAmount"
 					:value="selectedSearchItemsAmount"
+					class="resources-count"
 					size="large"
-				></Badge>
+				/>
 			</div>
 			<slot name="tab"></slot>
 		</template>
@@ -121,9 +122,10 @@ i.slider-header-item {
 	display: flex;
 }
 
-.p-badge {
+.resources-count {
 	background-color: var(--surface-200);
 	color: var(--text-color-primary);
+	margin-top: 4rem;
 }
 
 /* TODO: those translateX are hard coded, this need to be neater. YP */

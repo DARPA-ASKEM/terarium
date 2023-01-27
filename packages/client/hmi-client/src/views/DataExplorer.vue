@@ -441,6 +441,9 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	} else {
 		// add it to the list
 		selectedSearchItems.value = [...selectedSearchItems.value, item];
+		// open cart and close preview panel
+		previewItem.value = null;
+		isSliderResourcesOpen.value = true;
 	}
 };
 
@@ -551,6 +554,7 @@ onUnmounted(() => {
 
 .results-content {
 	display: flex;
+	min-width: 0;
 	gap: 0.5rem;
 	margin: 0.5rem;
 	margin-bottom: 0;
