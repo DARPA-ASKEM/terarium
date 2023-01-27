@@ -45,6 +45,7 @@
 				</div>
 				<search-results-list
 					:data-items="dataItems"
+					:facets="filteredFacets"
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
@@ -183,6 +184,7 @@ const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchRe
 	// retrieves filtered & unfiltered facet data
 	facets.value = getFacets(unfilteredData, resultType.value);
 	filteredFacets.value = getFacets(filteredData, resultType.value);
+	console.log(facets.value, filteredFacets.value);
 };
 
 const mergeResultsKeepRecentDuplicates = (

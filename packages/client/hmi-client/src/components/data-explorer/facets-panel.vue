@@ -83,6 +83,7 @@ const formattedFacets = computed(() => {
 			filteredData
 		};
 	});
+	console.log(facetList);
 	return facetList;
 });
 </script>

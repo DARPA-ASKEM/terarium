@@ -2,6 +2,7 @@
 	<div class="results-count">
 		<template v-if="isLoading">Loading...</template>
 		<template v-else>Showing {{ resultsCount }} item(s)</template>
+		<Chip label="applied facet" removable remove-icon="pi pi-times" />
 	</div>
 	<div v-if="isLoading" class="loading-spinner">
 		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
@@ -27,13 +28,18 @@ import { ref, computed, PropType } from 'vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { SearchResults, ResourceType, ResultType } from '@/types/common';
+import { Facets, SearchResults, ResourceType, ResultType } from '@/types/common';
+import Chip from 'primevue/chip';
 import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	dataItems: {
 		type: Array as PropType<SearchResults[]>,
 		default: () => []
+	},
+	facets: {
+		type: Object as PropType<Facets>,
+		required: true
 	},
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
@@ -153,11 +159,34 @@ ul {
 	font-weight: bold;
 }
 
-.search-container {
-	overflow-y: auto;
+.results-count {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 }
 
-.results-count {
+.results-count,
+.p-chip {
 	color: var(--text-color-subdued);
+}
+
+.p-chip {
+	font-size: small;
+	outline: 1px solid var(--gray-300);
+	font-weight: bold;
+	padding: 0 0.75rem;
+	background-color: var(--surface-200);
+}
+
+.p-chip :deep(.p-chip-text) {
+	margin: 0.2rem 0;
+}
+
+.p-chip :deep(.p-chip-remove-icon) {
+	font-size: 0.75rem;
+}
+
+.search-container {
+	overflow-y: auto;
 }
 </style>
