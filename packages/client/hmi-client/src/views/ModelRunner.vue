@@ -152,6 +152,7 @@ onMounted(async () => {
 
 	try {
 		const simInputDataString = JSON.parse(localStorage.getItem('sim-input-data') as string);
+		console.log('!!!', simInputDataString);
 		const g = parsePetriNet2IGraph(simInputDataString.petri);
 		await renderer.setData(g);
 		await renderer.render();
@@ -171,7 +172,7 @@ onMounted(async () => {
 	});
 
 	renderer.on('node-click', (_evtName, _evt, _renderer, d) => {
-		moveTo(d, renderer);
+		moveTo(d, _renderer);
 	});
 });
 </script>

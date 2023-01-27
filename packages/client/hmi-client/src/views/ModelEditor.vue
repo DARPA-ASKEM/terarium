@@ -61,12 +61,16 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import _ from 'lodash';
-import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
+// import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
+import graphScaffolder from '@graph-scaffolder/index';
 import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph } from '@/services/model';
 import Button from 'primevue/button';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const variablesRef = ref<any[]>([]);
 
@@ -226,6 +230,24 @@ const SIRD: PetriNet = {
 	*/
 };
 
+// FIXME: Hackathon
+const MANFRED = {
+	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+	S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+	I: [
+		{ it: 1, is: 1 },
+		{ it: 1, is: 2 },
+		{ it: 2, is: 2 },
+		{ it: 3, is: 2 }
+	],
+	O: [
+		{ ot: 1, os: 2 },
+		{ ot: 1, os: 2 },
+		{ ot: 2, os: 3 },
+		{ ot: 3, os: 4 }
+	]
+};
+
 const SIRD2 = {
 	S: [
 		{
@@ -315,6 +337,7 @@ const SIRD2 = {
 	]
 };
 
+/*
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	const petri: PetriNet = {
 		S: [],
@@ -365,6 +388,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	}
 	return petri;
 };
+*/
 
 // Tracking variables
 let source: any = null;
@@ -372,6 +396,10 @@ let target: any = null;
 let nameCounter: number = 0;
 
 const runPetri = () => {
+	localStorage.setItem('sim-input-data', JSON.stringify(MANFRED));
+	router.push({ path: '/model-runner' });
+
+	/*
 	const petri = graph2petri(renderer?.graph as any);
 	const parameters = {};
 	const initials = {};
@@ -392,8 +420,8 @@ const runPetri = () => {
 	};
 	console.log('final', final);
 	console.log('final', JSON.stringify(final));
-	localStorage.setItem('sim-input-data', JSON.stringify(final));
 	return final;
+	*/
 };
 
 const addVariable = (vType: string) => {
@@ -563,7 +591,7 @@ onMounted(async () => {
 });
 </script>
 
-<style>
+<style scoped>
 #playground {
 	width: 1000px;
 	height: 350px;
