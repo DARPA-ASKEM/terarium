@@ -118,8 +118,7 @@ i.slider-header-item {
 	text-align: left;
 	transform-origin: top right;
 	line-height: 1em;
-	height: 6rem;
-	display: flex;
+	margin-bottom: 1rem;
 }
 
 .resources-count {
