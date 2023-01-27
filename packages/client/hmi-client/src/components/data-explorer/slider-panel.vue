@@ -117,7 +117,8 @@ i.slider-header-item {
 	text-align: left;
 	transform-origin: top right;
 	line-height: 1em;
-	margin-bottom: 1rem;
+	height: 6rem;
+	display: flex;
 }
 
 .p-badge {
