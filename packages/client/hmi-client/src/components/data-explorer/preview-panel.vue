@@ -145,7 +145,7 @@ footer {
 	background-color: var(--surface-section);
 	position: fixed;
 	height: 5rem;
-	bottom: 0;
+	bottom: 3rem;
 	width: calc(35% - 48px);
 	display: flex;
 	align-items: center;

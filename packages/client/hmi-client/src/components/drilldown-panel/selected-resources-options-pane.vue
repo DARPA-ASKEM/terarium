@@ -195,6 +195,10 @@ const toggleContextMenu = (event, idx: number) => {
 	cursor: not-allowed;
 }
 
+.p-overlaycontent {
+	padding: 1rem;
+}
+
 .selected-title {
 	margin-bottom: 5px;
 	font-size: larger;
@@ -235,14 +239,17 @@ i {
 	padding: 0.2rem;
 	border-radius: var(--border-radius);
 }
+
 i:hover {
 	cursor: pointer;
 	background-color: hsla(0, 0%, 0%, 0.1);
 	background-color: hsla(0, 0%, 0%, 0.1);
 }
+
 .context-menu-item {
 	padding: 0.5rem;
 }
+
 .context-menu-item:hover {
 	background-color: var(--primary-color-lighter);
 	cursor: pointer;
