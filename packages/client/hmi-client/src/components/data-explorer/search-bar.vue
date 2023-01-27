@@ -44,6 +44,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/EventType';
+import useResourcesStore from '@/stores/resources';
 
 const props = defineProps<{
 	text?: string;
@@ -53,6 +54,7 @@ const props = defineProps<{
 const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
+const resources = useResourcesStore();
 
 const searchText = ref('');
 const defaultText = computed(() => props.text);
@@ -67,7 +69,7 @@ const clearText = () => {
 
 const execSearch = () => {
 	emit('search-text-changed', searchText.value);
-	EventService.create(EventType.Search, undefined, searchText.value);
+	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
 };
 
 function addSearchTerm(term) {
