@@ -540,7 +540,7 @@ onMounted(async () => {
 			await renderer?.render();
 
 			variablesRef.value = [];
-			renderer.graph.nodes.forEach((n) => {
+			(renderer as any).graph.nodes.forEach((n) => {
 				variablesRef.value.push({
 					id: n.id,
 					name: n.label,

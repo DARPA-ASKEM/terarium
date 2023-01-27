@@ -143,7 +143,7 @@ onMounted(async () => {
 	});
 
 	renderer.on('node-click', (_evtName, _evt, _renderer, d) => {
-		moveTo(d, _renderer);
+		moveTo(d, _renderer, 0);
 		const svg = d3.select(d.svgEl);
 		d3.zoom().scaleTo(svg.transition(), 20);
 	});
