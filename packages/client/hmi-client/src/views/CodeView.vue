@@ -11,7 +11,7 @@
 				:customUpload="true"
 				@uploader="myUploader"
 				mode="basic"
-				auto="true"
+				auto
 				chooseLabel="Load File"
 			/>
 		</div>
@@ -56,12 +56,12 @@ async function uploadSelected() {
 	};
 	console.log(`Transforming: ${selectedText.value}`);
 	const response = await API.post('/code', payload);
-	// @ts-ignore: no-alert
+	// eslint-disable-next-line
 	alert(JSON.stringify(response.data));
 }
 
 function onSelectedTextChange() {
-	selectedText.value = editor.value.getSelectedText();
+	selectedText.value = editor.value?.getSelectedText();
 }
 
 async function initialize(editorInstance) {
