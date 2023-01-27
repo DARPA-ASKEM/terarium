@@ -37,7 +37,7 @@ function updateSearchBar(newQuery) {
 }
 
 function updateRelatedSearchTerms(newTerms) {
-	relatedSearchTerms.value = newTerms.slice(0, 5);
+	relatedSearchTerms.value = newTerms;
 }
 
 API.interceptors.response.use(

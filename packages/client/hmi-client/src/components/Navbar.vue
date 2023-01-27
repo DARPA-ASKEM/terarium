@@ -121,7 +121,7 @@ watch(currentRoute, (newRoute) => {
 	<header>
 		<section class="header-left">
 			<img src="@assets/images/TERArium-logo.png" height="48" width="168" alt="logo" />
-			<section class="nav">
+			<nav>
 				<Dropdown
 					class="dropdown"
 					v-model="selectedPage"
@@ -139,14 +139,14 @@ watch(currentRoute, (newRoute) => {
 						<span>{{ slotProps.option.name }}</span>
 					</template>
 				</Dropdown>
-			</section>
+			</nav>
 		</section>
 		<SearchBar
 			class="searchbar"
 			:text="searchBarText"
+			:suggested-terms="relatedSearchTerms"
 			@search-text-changed="searchTextChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
-			:relatedSearchTerms="relatedSearchTerms"
 		/>
 		<section class="header-right">
 			<Button
@@ -185,7 +185,7 @@ header {
 
 section {
 	display: flex;
-	gap: 1rem;
+	gap: 0.5rem;
 }
 
 .user-button {
@@ -198,10 +198,10 @@ section {
 	background-color: var(--surface-secondary);
 }
 
-.nav {
-	justify-content: center;
-	margin-left: auto;
+nav {
+	justify-content: space-between;
 	flex: 0.5;
+	margin-right: auto;
 }
 
 .header-left {
@@ -219,6 +219,7 @@ section {
 
 .p-dropdown {
 	height: 3rem;
+	width: 9rem;
 	flex: 1;
 	border: 0;
 }
