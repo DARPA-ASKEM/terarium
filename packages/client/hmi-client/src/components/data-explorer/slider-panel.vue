@@ -125,11 +125,12 @@ i.slider-header-item {
 	color: var(--text-color-primary);
 }
 
+/* TODO: those translateX are hard coded, this need to be neater. YP */
 .slider-tab-header.left h4 {
 	transform: translateX(-2em) rotate(270deg);
 }
 
 .slider-tab-header.right h4 {
-	transform: translateX(-1.5em) rotate(270deg);
+	transform: translateX(-3em) rotate(270deg);
 }
 </style>
