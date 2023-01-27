@@ -26,7 +26,7 @@
 			</header>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
 				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
-					{{ highlightSearchTerms(formattedAbstract) }}
+					<span v-html="highlightSearchTerms(formattedAbstract)" />
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
 					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
