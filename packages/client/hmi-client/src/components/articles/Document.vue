@@ -94,11 +94,9 @@
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
 					</DataTable>
-					<br />
 					<DataTable :value="relatedTerariumDatasets">
 						<Column field="name" header="Datasets"></Column>
 					</DataTable>
-					<br />
 					<DataTable :value="relatedTerariumDocuments">
 						<Column field="name" header="Papers"></Column>
 					</DataTable>

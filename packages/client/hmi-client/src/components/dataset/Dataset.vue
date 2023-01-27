@@ -88,8 +88,8 @@ const formatFeatures = (d: Dataset) => {
 				</AccordionTab>
 				<AccordionTab header="Concepts"> </AccordionTab>
 				<AccordionTab header="Features">
-					<div v-for="feature of formatFeatures(dataset)" :key="feature.name">
-						<div>Name: {{ feature.display_name || feature.name }}</div>
+					<div v-for="(feature, index) of formatFeatures(dataset)" :key="index">
+						<div>Name: {{ highlightSearchTerms(feature.display_name || feature.name) }}</div>
 						<div>Type: {{ feature.feature_type }}</div>
 					</div>
 				</AccordionTab>
