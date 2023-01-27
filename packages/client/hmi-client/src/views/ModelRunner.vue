@@ -65,7 +65,7 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			.attr('xlink:href', (d) => `/app/src/assets/images/${d.label}_thumb.png`)
 			.on('error', function () {
 				// set transparent empty svg image
-				this.setAttribute(
+				(this as any).setAttribute(
 					'href',
 					'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
 				);
@@ -88,7 +88,7 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	}
 
 	addEdge(source: any, target: any) {
-		this.graph.edges.push({
+		(this as any).graph.edges.push({
 			id: `${source.datum().id}_${target.datum().id}`,
 			source: source.datum().id,
 			target: target.datum().id,
@@ -104,18 +104,18 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			],
 			data: { val: 1 }
 		});
-		this.render();
+		(this as any).render();
 	}
 }
 
-let renderer: SampleRenderer | null = null;
+let renderer: any = null;
 
 // const emptyModel: PetriNet = { T: [], S: [], I: [], O: [] };
 
 // Entry point
 onMounted(async () => {
 	const playground = document.getElementById('playground') as HTMLDivElement;
-	renderer = new SampleRenderer({
+	renderer = new (SampleRenderer as any)({
 		el: playground,
 		useAStarRouting: true,
 		runLayout: runDagreLayout2,
@@ -128,7 +128,7 @@ onMounted(async () => {
 		await renderer.setData(g);
 		await renderer.render();
 	} catch (e) {
-		throw Error(e);
+		throw Error();
 	}
 
 	renderer.graph.nodes.forEach((n) => {
