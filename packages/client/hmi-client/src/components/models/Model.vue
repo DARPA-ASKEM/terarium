@@ -234,12 +234,14 @@ h3 {
 
 .graph-element {
 	flex: 1;
-	/* min-height: 0; */
-	/* width: 100%; */
 	height: 400px;
 	width: 400px;
 	border: 1px solid var(--surface-border);
 	overflow: hidden;
+}
+
+.slider .graph-element {
+	pointer-events: none;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
