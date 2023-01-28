@@ -9,6 +9,7 @@ import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
+import CodeView from '@/views/CodeView.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
 import DataExplorerView from '@/views/DataExplorer.vue';
@@ -25,6 +26,7 @@ export enum RoutePath {
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
+	Code = '/projects/:projectId/code',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
@@ -57,7 +59,7 @@ const routes = [
 		props: (route) => ({ query: route.query.q })
 	},
 	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
-
+	{ name: RouteName.CodeRoute, path: RoutePath.Code, component: CodeView },
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
