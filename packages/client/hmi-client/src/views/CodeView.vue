@@ -11,7 +11,7 @@
 				:customUpload="true"
 				@uploader="myUploader"
 				mode="basic"
-				auto="true"
+				auto
 				chooseLabel="Load File"
 			/>
 		</div>
@@ -36,7 +36,7 @@ import API from '@/api/api';
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
 const content = ref(DEFAULT_TEXT);
-const editor = ref<VAceEditorInstance | null>(null);
+const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 
 async function myUploader(event) {
@@ -56,12 +56,12 @@ async function uploadSelected() {
 	};
 	console.log(`Transforming: ${selectedText.value}`);
 	const response = await API.post('/code', payload);
-	// @ts-ignore: no-alert
+	// eslint-disable-next-line
 	alert(JSON.stringify(response.data));
 }
 
 function onSelectedTextChange() {
-	selectedText.value = editor.value.getSelectedText();
+	selectedText.value = editor.value?.getSelectedText() ?? '';
 }
 
 async function initialize(editorInstance) {
