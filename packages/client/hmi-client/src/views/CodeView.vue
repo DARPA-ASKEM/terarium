@@ -4,12 +4,12 @@
 			<Button
 				label="Extract Model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
-				@click="uploadSelected"
+				@click="onExtractModel"
 			></Button>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
-				@uploader="myUploader"
+				@uploader="onFileOpen"
 				mode="basic"
 				auto
 				chooseLabel="Load File"
@@ -39,7 +39,12 @@ const content = ref(DEFAULT_TEXT);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 
-async function myUploader(event) {
+/**
+ * File open/add event handler.  Immediately render the contents of the file to the editor
+ * content
+ * @param event	the input event when a file is added
+ */
+async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(event.files[0], 'UTF-8');
 	reader.onload = (evt) => {
@@ -47,23 +52,28 @@ async function myUploader(event) {
 	};
 }
 
-async function uploadSelected() {
-	const payload = {
-		files: ['test'],
-		blobs: [selectedText.value],
-		system_name: '',
-		root_name: ''
-	};
+/**
+ * Send the selected contents of the editor to the backend for persistence and model extraction
+ * via TA1
+ */
+async function onExtractModel() {
 	console.log(`Transforming: ${selectedText.value}`);
-	const response = await API.post('/code', payload);
+	const response = await API.post('/code', selectedText.value);
 	// eslint-disable-next-line
 	alert(JSON.stringify(response.data));
 }
 
+/**
+ * Event handler for selected text change in the code editor
+ */
 function onSelectedTextChange() {
 	selectedText.value = editor.value?.getSelectedText() ?? '';
 }
 
+/**
+ * Editor initialization function
+ * @param editorInstance	the Ace editor instance
+ */
 async function initialize(editorInstance) {
 	editor.value = editorInstance;
 	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
