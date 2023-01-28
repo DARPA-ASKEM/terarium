@@ -50,7 +50,8 @@ const intraModelEdges = data.intra_model_edges;
 
 const equalPools: string[][] = [];
 
-// Find equality nodes
+// Find equality nodes, create a list-of-list of all nodes thare are equivalent, note we will
+// double count, if a = b and b = c, we will get [a, b, b, c]
 interModelEdges.forEach((edge) => {
 	const [[sourceModelId, sourceNodeId], [targetModelId, targetNodeId], relation] = edge;
 	const sourceHash = `${sourceModelId}:${sourceNodeId}`;
@@ -67,12 +68,11 @@ interModelEdges.forEach((edge) => {
 	}
 });
 
-// Create nodes
+// Create nodes, segment nodes into nodes that are specific to a model, and nodes that are shared across models
 const modelKeys = Object.keys(modelsMap);
-
 modelKeys.forEach((modelKey) => {
 	const nodeKeys = Object.keys(modelsMap[modelKey]);
-	const blah = {
+	const modelGroup = {
 		id: modelKey,
 		label: 'p',
 		data: { name: modelKey, models: [] },
@@ -84,7 +84,7 @@ modelKeys.forEach((modelKey) => {
 		const pool = equalPools.find((p) => p.includes(hash));
 
 		if (!pool) {
-			blah.nodes.push({
+			modelGroup.nodes.push({
 				id: hash,
 				label: hash,
 				x: 0,
@@ -111,7 +111,7 @@ modelKeys.forEach((modelKey) => {
 			g.nodes.find((d) => d.id === surrogateId)?.data.models.push(modelKey);
 		}
 	});
-	g.nodes.push(blah);
+	g.nodes.push(modelGroup);
 });
 
 let eCounter = 0;
