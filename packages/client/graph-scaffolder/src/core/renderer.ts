@@ -226,12 +226,12 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				emit('node-dbl-click', evt, d3.select(this), renderer);
 			});
 
-			node.on('click', function (evt) {
+			node.on('click', function (evt, d) {
 				evt.stopPropagation();
 				const e = d3.select(this);
 				window.clearTimeout(renderer.clickTimer);
 				renderer.clickTimer = window.setTimeout(() => {
-					emit('node-click', evt, e, renderer);
+					emit('node-click', evt, e, renderer, d);
 				}, 200);
 			});
 

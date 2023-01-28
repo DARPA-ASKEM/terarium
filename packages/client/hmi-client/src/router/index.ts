@@ -14,6 +14,8 @@ import TheiaView from '@/views/theia.vue';
 import DataExplorerView from '@/views/DataExplorer.vue';
 import UnauthorizedView from '@/views/Unauthorized.vue';
 import CompareExperiment from '@/views/CompareExperiment.vue';
+import ModelEditorView from '@/views/ModelEditor.vue';
+import ModelRunnerView from '@/views/ModelRunner.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -32,7 +34,9 @@ export enum RoutePath {
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
-	CompareExperimentPath = '/compare-experiment'
+	CompareExperimentPath = '/compare-experiment',
+	ModelEditor = '/model-editor',
+	ModelRunner = '/model-runner'
 }
 
 const routes = [
@@ -61,7 +65,9 @@ const routes = [
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
-	{ path: RoutePath.CompareExperimentPath, component: CompareExperiment }
+	{ path: RoutePath.CompareExperimentPath, component: CompareExperiment },
+	{ path: RoutePath.ModelEditor, component: ModelEditorView },
+	{ path: RoutePath.ModelRunner, component: ModelRunnerView }
 ];
 
 const router = createRouter({

@@ -6,7 +6,7 @@ import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
-import { isString } from 'lodash';
+// import { isString } from 'lodash';
 
 const props = defineProps<{
 	assetId: string;
@@ -30,7 +30,9 @@ watch(
 	async () => {
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId);
+			dataset.value = await getDataset(props.assetId);
 
+			/*
 			const datasetTemp = await getDataset(props.assetId);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
@@ -40,6 +42,7 @@ watch(
 				});
 				dataset.value = datasetTemp;
 			}
+			*/
 		}
 
 		dataset.value = null;

@@ -26,24 +26,23 @@
 			</header>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
 				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
-					{{ highlightSearchTerms(formattedAbstract) }}
+					<span v-html="formattedAbstract" />
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
 					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<div>
 							<strong>{{ index }}</strong>
 						</div>
-						<div>{{ highlightSearchTerms(section) }}</div>
-						<br />
+						<div v-html="highlightSearchTerms(section)" />
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(figureArtifacts)" header="Figures">
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
@@ -51,9 +50,9 @@
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
@@ -61,9 +60,9 @@
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span>{{
-								highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)
-							}}</span>
+							<span
+								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							></span>
 						</div>
 					</div>
 				</AccordionTab>
@@ -71,23 +70,21 @@
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{
-								highlightSearchTerms(ex.url)
-							}}</a>
+							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherArtifacts)" header="Others">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
-						<b>{{ highlightSearchTerms(ex.properties.title) }}</b>
-						{{ highlightSearchTerms(ex.properties.caption) }}
-						{{ highlightSearchTerms(ex.properties.abstractText) }}
-						{{ highlightSearchTerms(ex.properties.contentText) }}
+						<b v-html="highlightSearchTerms(ex.properties.title)" />
+						<span v-html="highlightSearchTerms(ex.properties.caption)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</div>
 				</AccordionTab>
 				<AccordionTab header="References">
 					<div v-for="(citation, key) of doc.citationList" :Key="key">
-						{{ key + 1 }}. {{ formatCitation(citation) }}
+						{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
@@ -167,13 +164,9 @@ const docLink = computed(() =>
 	doc.value?.link && doc.value.link.length > 0 ? doc.value.link[0].url : null
 );
 
-// const formatAbstract = (d: XDDArticle) =>
-// 	(d.abstractText && typeof d.abstractText === 'string' ? d.abstractText : false) ||
-// 	'[no abstract]';
-
 const formattedAbstract = computed(() => {
 	if (!doc.value || !doc.value.abstractText) return '';
-	return doc.value.abstractText;
+	return highlightSearchTerms(doc.value.abstractText);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));
@@ -257,10 +250,12 @@ const openPDF = () => {
  * -  author (year), title, journal, doi
  */
 const formatCitation = (obj: { [key: string]: string }) => {
+	let citation: string;
 	if (Object.keys(obj).length <= 1) {
-		return obj.unstructured_citation ?? '';
+		citation = obj.unstructured_citation ?? '';
 	}
-	return `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+	citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+	return highlightSearchTerms(citation);
 };
 
 onMounted(async () => {
