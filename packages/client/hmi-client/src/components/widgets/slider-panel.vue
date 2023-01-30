@@ -122,12 +122,8 @@ i.slider-header-item {
 	margin-top: 4rem;
 }
 
-/* TODO: those translateX are hard coded, this need to be neater. YP */
-.slider-tab-header.left h4 {
-	transform: translateX(-2em) rotate(270deg);
-}
-
-.slider-tab-header.right h4 {
-	transform: translateX(-3em) rotate(270deg);
+.slider-tab-header h4 {
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
 }
 </style>
