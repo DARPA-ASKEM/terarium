@@ -35,12 +35,13 @@
 						v-if="!previewItemSelected"
 						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
+						class="toggle-selection"
 					/>
 					<Button
 						v-else
 						label="Remove from Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="p-button-secondary"
+						class="toggle-selection p-button-secondary"
 					/>
 				</footer>
 			</div>
@@ -155,5 +156,9 @@ footer {
 	width: calc(35% - 48px);
 	display: flex;
 	align-items: center;
+}
+
+.toggle-selection {
+	margin-left: 1rem;
 }
 </style>
