@@ -336,11 +336,13 @@ const formatFeatures = () => {
 
 .title {
 	color: var(--text-color-primary);
+	font-size: var(--font-body-medium);
 	margin: 0.5rem 0 0.25rem 0;
 }
 
 .details {
 	margin: 0.25rem 0 0.5rem 0;
+	font-size: var(--font-size);
 }
 
 i {
