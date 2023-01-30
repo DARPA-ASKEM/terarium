@@ -88,10 +88,10 @@
 				<div class="asset-nav-arrows">
 					<span class="asset-pages" v-if="!isEmpty(extractions)">
 						<i class="pi pi-arrow-left" @click.stop="previewMovement(-1)"></i>
-						<span>
+						<span class="asset-count">
 							{{ chosenExtractionFilter }}
-							<span class="asset-number">{{ relatedAssetPage + 1 }}</span> of
-							<span class="asset-number"> {{ extractions.length }}</span>
+							<span class="asset-count-text">{{ relatedAssetPage + 1 }}</span> of
+							<span class="asset-count-text">{{ extractions.length }}</span>
 						</span>
 						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
@@ -313,7 +313,11 @@ const formatFeatures = () => {
 	align-items: center;
 }
 
-.asset-nav-arrows .asset-number {
+.asset-nav-arrows .asset-count {
+	white-space: nowrap;
+}
+
+.asset-nav-arrows .asset-count-text {
 	color: var(--text-color-primary);
 }
 
