@@ -95,6 +95,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
@@ -104,10 +106,6 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
-		} else {
-			setTimeout(() => {
-				previewItemState.value = null;
-			}, 200);
 		}
 	}
 );
