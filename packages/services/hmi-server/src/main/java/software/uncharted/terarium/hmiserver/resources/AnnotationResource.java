@@ -28,12 +28,6 @@ public class AnnotationResource {
 			@QueryParam("artifact_type") final String artifactType,
 			@QueryParam("artifact_id") final String artifactId) {
 
-			System.out.println("");
-			System.out.println("");
-			System.out.println("In getAnnotations");
-			System.out.println("");
-			System.out.println("");
-
 			if (artifactType == null || artifactId == null) {
 				return Response
 					.status(Response.Status.BAD_REQUEST)

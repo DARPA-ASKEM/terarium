@@ -21,7 +21,7 @@ import java.util.UUID;
 
 
 /**
- * Definition for use rannotations. An annotation can be applied to TERARium artiacts (e.g. document, model, dataset ...) as additional
+ * Definition for user annotations. An annotation can be applied to TERARium artiacts (e.g. document, model, dataset ...) as additional
  * user-generated metadata. Note to uniquely identify an artifact in TERARium we need a composite key (artifactType, artifactId).
  *
  **/
