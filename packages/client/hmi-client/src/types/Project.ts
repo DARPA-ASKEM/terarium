@@ -7,7 +7,8 @@ export enum ProjectAssetTypes {
 	MODELS = 'models',
 	PLANS = 'plans',
 	SIMULATION_RUNS = 'simulation_runs',
-	DATASETS = 'datasets'
+	DATASETS = 'datasets',
+	CODE = 'code'
 }
 
 export type ProjectAssets = {
@@ -17,6 +18,7 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.DATASETS]: any[]; // FIXME: add proper type
+	[ProjectAssetTypes.CODE]: any[];
 };
 
 export type SimpleProjectAssets = {
