@@ -22,12 +22,7 @@
 					@click="emit('update:isOpen', true)"
 				/>
 				<h4 class="slider-header-item">{{ header }}</h4>
-				<Badge
-					v-if="selectedSearchItemsAmount"
-					:value="selectedSearchItemsAmount"
-					class="resources-count"
-					size="large"
-				/>
+				<Badge v-if="indicatorValue" :value="indicatorValue" class="resources-count" size="large" />
 			</div>
 			<slot name="tab"></slot>
 		</template>
@@ -36,7 +31,7 @@
 
 <script setup lang="ts">
 import Badge from 'primevue/badge';
-import Slider from '../Slider.vue';
+import Slider from './Slider.vue';
 
 defineProps({
 	// slider props
@@ -61,7 +56,7 @@ defineProps({
 		type: String,
 		default: ''
 	},
-	selectedSearchItemsAmount: {
+	indicatorValue: {
 		type: Number,
 		default: 0
 	}
