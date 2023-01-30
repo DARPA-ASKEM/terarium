@@ -42,7 +42,7 @@ public class AnnotationResource {
 			return Response
 				.ok(Annotation.findByArtifact(artifactType, artifactId))
 				.build();
-	}
+			}
 
 	@POST
 	@Transactional

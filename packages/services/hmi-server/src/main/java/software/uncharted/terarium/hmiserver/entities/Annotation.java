@@ -31,7 +31,7 @@ import java.util.UUID;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Table(indexes = {
-	@Index(columnList = "artifactType, artifactId")
+@Index(columnList = "artifactType, artifactId")
 })
 public class Annotation extends PanacheEntityBase implements Serializable {
 	@Id
@@ -55,7 +55,7 @@ public class Annotation extends PanacheEntityBase implements Serializable {
 	@JsonbProperty("artifact_type")
 	private String artifactType;
 
-  /**
+	/**
 	 * Find annotations by artifactType and artifactId
 	 */
 	public static List<Annotation> findByArtifact(String artifactType, String artifactId) {
