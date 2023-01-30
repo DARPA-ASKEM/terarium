@@ -11,12 +11,11 @@ import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "extraction-service")
 @Produces(MediaType.APPLICATION_JSON)
+@Path("/api/xdd/extractions")
 public interface ExtractionProxy {
 	@GET
-	@Path("object")
 	Response getExtractions(
-		@QueryParam("doi") String doi,
-		@QueryParam("query_all") String queryAll,
+		@QueryParam("term") String term,
 		@QueryParam("page") Integer page,
 		@QueryParam("ASKEM_CLASS") String askemClass
 	);
