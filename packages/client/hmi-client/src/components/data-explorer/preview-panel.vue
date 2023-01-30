@@ -32,9 +32,16 @@
 				/>
 				<footer>
 					<Button
+						v-if="!previewItemSelected"
 						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
 						class="add-to-cart"
+					/>
+					<Button
+						v-else
+						label="Remove from Resources"
+						@click="emit('toggle-data-item-selected', { item: previewItem })"
+						class="add-to-cart p-button-secondary"
 					/>
 				</footer>
 			</div>
@@ -71,6 +78,10 @@ const props = defineProps({
 	},
 
 	// slider-panel props
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		default: () => []
+	},
 	previewItem: {
 		type: Object as PropType<ResultType | null>,
 		default: null
@@ -108,6 +119,10 @@ const previewItemId = computed(() => {
 	}
 	return previewItemState.value.id as string;
 });
+
+const previewItemSelected = computed(() =>
+	props.selectedSearchItems.some((selectedItem) => selectedItem === props.previewItem)
+);
 </script>
 
 <style scoped>

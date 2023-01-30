@@ -59,6 +59,7 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:result-type="resultType"
+				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
