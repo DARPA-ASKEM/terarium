@@ -296,8 +296,11 @@ const formatFeatures = () => {
 }
 
 .preview-and-options .link {
+	overflow: auto;
 	overflow-wrap: break-word;
 	margin: auto 0;
+	min-height: 0;
+	font-size: var(--font-caption);
 }
 
 .asset-nav-arrows {
