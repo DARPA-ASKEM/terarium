@@ -106,7 +106,7 @@ watch(
 		} else {
 			setTimeout(() => {
 				previewItemState.value = null;
-			}, 300);
+			}, 200);
 		}
 	}
 );
