@@ -256,7 +256,6 @@ const formatFeatures = () => {
 	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
-	font-size: var(--font-caption);
 	display: flex;
 	justify-content: space-between;
 }
