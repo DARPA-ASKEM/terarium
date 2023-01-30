@@ -35,13 +35,12 @@
 						v-if="!previewItemSelected"
 						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="add-to-cart"
 					/>
 					<Button
 						v-else
 						label="Remove from Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="add-to-cart p-button-secondary"
+						class="p-button-secondary"
 					/>
 				</footer>
 			</div>
@@ -156,10 +155,5 @@ footer {
 	width: calc(35% - 48px);
 	display: flex;
 	align-items: center;
-}
-
-.add-to-cart {
-	height: 1.5rem;
-	margin-left: 1rem;
 }
 </style>
