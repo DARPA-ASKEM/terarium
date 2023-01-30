@@ -569,7 +569,6 @@ const getBulkDocuments = async (docIDs: string[]) => {
 
 const fetchResource = async (
 	term: string,
-	searchParam?: SearchParameters,
 	searchParamWithFacetFilters?: SearchParameters,
 	resourceType?: string
 ): Promise<FullSearchResults> =>
@@ -727,13 +726,11 @@ const fetchData = async (
 		if (resourceType === ResourceType.ALL) {
 			Object.entries(ResourceType).forEach(async ([key]) => {
 				if (ResourceType[key] !== ResourceType.ALL) {
-					promiseList.push(
-						fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
-					);
+					promiseList.push(fetchResource(term, searchParamWithFacetFilters, ResourceType[key]));
 				}
 			});
 		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
-			promiseList.push(fetchResource(term, searchParam, searchParamWithFacetFilters, resourceType));
+			promiseList.push(fetchResource(term, searchParamWithFacetFilters, resourceType));
 		}
 	}
 
