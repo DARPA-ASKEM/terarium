@@ -9,6 +9,7 @@ import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
 import ResourcesList from '@/components/resources/resources-list.vue';
+import SliderPanel from '@/components/widgets/slider-panel.vue';
 
 const props = defineProps<{
 	assetId?: string;
@@ -17,6 +18,8 @@ const props = defineProps<{
 
 const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
+
+const isPanelOpen = ref(false);
 
 const newDocumentId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([]);
@@ -97,6 +100,19 @@ if (previousOpenTabs) {
 	<section v-else class="recent-documents-page">
 		<resources-list :project="props.project" :resource-route="RouteName.ModelRoute" />
 	</section>
+
+	<slider-panel
+		class="slider"
+		content-width="200px"
+		tab-width="56px"
+		direction="right"
+		header="Notes"
+		v-model:is-open="isPanelOpen"
+	>
+		<template v-slot:content>
+			<div>Future notes goes in here.</div>
+		</template>
+	</slider-panel>
 </template>
 
 <style scoped>
@@ -111,5 +127,9 @@ if (previousOpenTabs) {
 
 .tab-container {
 	height: 100%;
+}
+
+.slider {
+	background: var(--surface-card);
 }
 </style>
