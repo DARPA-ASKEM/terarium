@@ -61,7 +61,7 @@ public class Annotation extends PanacheEntityBase implements Serializable {
 	public static List<Annotation> findByArtifact(String artifactType, String artifactId) {
 		PanacheQuery<Annotation> query;
 
-		query = find("artifacttype = ?1 and artifactid = ?2");
+		query = find("artifacttype = ?1 and artifactid = ?2", artifactType, artifactId);
 		return query
 			.range(0, 100)
 			.list();
