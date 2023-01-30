@@ -11,7 +11,7 @@ import { Dataset } from '@/types/Dataset';
  */
 async function getAll(): Promise<Dataset[] | null> {
 	const response = await API.get('/datasets').catch((error) => {
-		console.log('Error: ', error);
+		console.error('Error: ', error);
 	});
 	return response?.data ?? null;
 }
@@ -22,7 +22,7 @@ async function getAll(): Promise<Dataset[] | null> {
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
-		console.log(`Error: data-service was not able to retreive the dataset ${datasetId}`, error);
+		console.error(`Error: data-service was not able to retreive the dataset ${datasetId}`, error);
 	});
 	return response?.data ?? null;
 }
