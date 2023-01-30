@@ -47,7 +47,6 @@ public class AnnotationResource {
 	@POST
 	@Transactional
 	public Response postEvent(final Annotation annotation) {
-		log.info("Annotation | " + securityIdentity.getPrincipal().getName() + " | " + annotation);
 		annotation.setUsername(securityIdentity.getPrincipal().getName());
 
 		Annotation.persist(annotation);
