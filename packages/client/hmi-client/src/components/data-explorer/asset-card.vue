@@ -300,7 +300,7 @@ const formatFeatures = () => {
 	overflow-wrap: break-word;
 	margin: auto 0;
 	min-height: 0;
-	font-size: 12px;
+	font-size: var(--font-caption);
 }
 
 .asset-nav-arrows {
