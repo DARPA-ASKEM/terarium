@@ -255,7 +255,7 @@ const formatCitation = (obj: { [key: string]: string }) => {
 		citation = obj.unstructured_citation ?? '';
 		citation = citation.replace(
 			/\bhttps?:\/\/\S+/,
-			`<a style='color: var(--text-color-subdued); text-decoration: underline'>$&</a>`
+			`<a style='color: var(--text-color-subdued);' href=$&>$&</a>`
 		);
 	} else {
 		citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
