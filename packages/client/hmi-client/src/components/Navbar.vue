@@ -156,39 +156,37 @@ function addSearchTerm(term) {
 
 <template>
 	<header>
-		<main>
-			<section class="header-left">
-				<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
-				<nav>
-					<Dropdown
-						class="dropdown"
-						v-model="selectedPage"
-						:options="Object.values(navItems)"
-						optionLabel="name"
-						panelClass="dropdown-panel"
-						@change="goToPage"
-					>
-						<template #value="slotProps">
-							<i :class="slotProps.value.icon" />
-							<span>{{ slotProps.value.name }}</span>
-						</template>
-						<template #option="slotProps">
-							<i :class="slotProps.option.icon" />
-							<span>{{ slotProps.option.name }}</span>
-						</template>
-					</Dropdown>
-				</nav>
-			</section>
-			<SearchBar
-				class="searchbar"
-				:text="query"
-				@search-text-changed="searchTextChanged"
-				@toggle-search-by-example="searchByExampleModalToggled"
-			/>
-			<section class="header-right">
-				<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
-			</section>
-		</main>
+		<section class="header-left">
+			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+			<nav>
+				<Dropdown
+					class="dropdown"
+					v-model="selectedPage"
+					:options="Object.values(navItems)"
+					optionLabel="name"
+					panelClass="dropdown-panel"
+					@change="goToPage"
+				>
+					<template #value="slotProps">
+						<i :class="slotProps.value.icon" />
+						<span>{{ slotProps.value.name }}</span>
+					</template>
+					<template #option="slotProps">
+						<i :class="slotProps.option.icon" />
+						<span>{{ slotProps.option.name }}</span>
+					</template>
+				</Dropdown>
+			</nav>
+		</section>
+		<SearchBar
+			class="search-bar"
+			:text="query"
+			@search-text-changed="searchTextChanged"
+			@toggle-search-by-example="searchByExampleModalToggled"
+		/>
+		<section class="header-right">
+			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+		</section>
 		<aside class="suggested-terms" v-if="!isEmpty(terms)">
 			Suggested terms:
 			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
@@ -211,20 +209,31 @@ header {
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border);
 	padding: 0.5rem 1rem;
+
+	display: grid;
+	gap: 0.5rem;
+	grid-template-areas:
+		'header-left search-bar header-right'
+		'. suggested-terms .';
+	grid-template-columns: minMax(max-content, 25%) auto min-content;
+	grid-template-rows: max-content max-content;
 }
 
-header > main {
-	align-items: center;
-	display: flex;
-	justify-content: space-between;
+/* Search Bar */
+
+.search-bar {
+	grid-area: search-bar;
+	margin-left: auto;
+	margin-right: auto;
+	min-width: 25vw;
+	max-width: 60rem;
+	width: 100%;
 }
 
-header > aside {
-	justify-content: center;
-}
+/* Header Right */
 
-.searchbar {
-	flex-grow: 3;
+.header-right {
+	grid-area: header-right;
 }
 
 .avatar {
@@ -238,11 +247,13 @@ header > aside {
 	background-color: var(--surface-hover);
 }
 
+/* Header Left */
 .header-left {
 	align-items: center;
 	display: flex;
-	height: 100%;
 	gap: 1rem;
+	grid-area: header-left;
+	height: 100%;
 }
 
 .header-left >>> .p-dropdown-label.p-inputtext {
@@ -263,10 +274,11 @@ i {
 
 /* Suggested terms */
 .suggested-terms {
-	margin: 0.75rem 0 0.25rem 0;
+	align-items: center;
 	display: flex;
 	gap: 0.5rem;
-	align-items: center;
+	grid-area: suggested-terms;
+	justify-content: center;
 	overflow: hidden;
 	white-space: nowrap;
 }

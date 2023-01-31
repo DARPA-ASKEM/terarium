@@ -1,5 +1,5 @@
 <template>
-	<aside class="search-bar-container">
+	<section class="search-bar-container">
 		<div class="search">
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
@@ -20,7 +20,7 @@
 			<!-- <i class="pi pi-history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
-	</aside>
+	</section>
 </template>
 
 <script setup lang="ts">
