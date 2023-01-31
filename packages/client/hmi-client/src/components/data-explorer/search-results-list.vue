@@ -1,14 +1,16 @@
 <template>
-	<div class="results-count">
-		<template v-if="isLoading">Loading...</template>
-		<template v-else>Showing {{ resultsCount }} item(s)</template>
+	<div class="result-details">
+		<span class="result-count">
+			<template v-if="isLoading">Loading...</template>
+			<template v-else>Showing {{ resultsCount }} results(s)</template>
+		</span>
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
 				:label="(value as string)"
 				:key="index"
 				removable
-				:remove="removeFacetValue(facet.field, facet.values, value)"
+				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
 			/>
 		</template>
@@ -78,8 +80,8 @@ const chosenFacets = computed(() => useQueryStore().clientFilters.clauses);
 
 const removeFacetValue = (field: string, values: ClauseValue[], valueToRemove: ClauseValue) => {
 	const query = useQueryStore();
-	const updatedValues = values.splice(values.indexOf(valueToRemove), 1);
-	query.setSearchClause({ field, values: updatedValues });
+	values.splice(values.indexOf(valueToRemove), 1);
+	query.setSearchClause({ field, values });
 };
 
 const updateSelection = (asset: ResultType) => {
@@ -178,19 +180,24 @@ ul {
 	font-weight: bold;
 }
 
-.results-count {
+.result-details {
 	display: flex;
 	align-items: center;
+	overflow: visible;
 	gap: 0.5rem;
 }
 
-.results-count,
+.result-details,
 .p-chip {
 	color: var(--text-color-subdued);
 }
 
+.result-count {
+	font-size: var(--font-size);
+	white-space: nowrap;
+}
+
 .p-chip {
-	font-size: small;
 	outline: 1px solid var(--gray-300);
 	font-weight: bold;
 	padding: 0 0.75rem;
@@ -199,10 +206,15 @@ ul {
 
 .p-chip :deep(.p-chip-text) {
 	margin: 0.2rem 0;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
 }
 
+.p-chip,
 .p-chip :deep(.p-chip-remove-icon) {
-	font-size: 0.75rem;
+	font-size: var(--font-caption);
 }
 
 .search-container {

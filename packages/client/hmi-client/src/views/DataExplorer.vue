@@ -185,7 +185,6 @@ const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchRe
 	// retrieves filtered & unfiltered facet data
 	facets.value = getFacets(unfilteredData, resultType.value);
 	filteredFacets.value = getFacets(filteredData, resultType.value);
-	console.log(facets.value, filteredFacets.value);
 };
 
 const mergeResultsKeepRecentDuplicates = (

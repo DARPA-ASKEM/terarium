@@ -216,7 +216,6 @@ export default defineComponent({
 				if (facet.selection) {
 					const selectedIndexes = Object.keys(facet.selection);
 					const values = selectedIndexes.map((s) => this.sortedJoinedData[parseInt(s)].key);
-					console.log(this.facet, values);
 					this.query.setSearchClause({ field: this.facet, values });
 				} else {
 					this.query.setSearchClause({ field: this.facet, values: [] });
