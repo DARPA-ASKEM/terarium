@@ -173,6 +173,7 @@ export default defineComponent({
 					acc[keyIndexDict[val]] = true;
 					return acc;
 				}, {});
+				console.log(facetClause, selectionDict);
 				return selectionDict;
 			}
 			return null;
