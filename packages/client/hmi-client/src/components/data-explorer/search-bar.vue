@@ -18,8 +18,8 @@
 					@click="clearText"
 				/>
 			</span>
-			<!-- <i class="pi pi-history" />
-			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
+			<!-- <i class="pi pi-history" /> -->
+			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
 		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms[0]"
 			>Suggested terms:<Chip
