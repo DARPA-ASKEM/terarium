@@ -78,7 +78,7 @@ $actionIconBorderRadius: 50% !default;
 
 //input field (e.g. inputtext, spinner, inputmask)
 $inputPadding: 1rem 1rem !default;
-$inputTextFontSize: 1rem !default;
+$inputTextFontSize: $fontSize;
 $inputBg: #ffffff !default;
 $inputTextColor: $emphasis-high !default;
 $inputIconColor: $emphasis-medium !default;
@@ -612,15 +612,15 @@ $overlayContentBg: $panelContentBg !default;
 $overlayContainerShadow: 0 11px 15px -7px rgba(0, 0, 0, .2), 0 24px 38px 3px rgba(0, 0, 0, .14), 0 9px 46px 8px rgba(0, 0, 0, .12) !default;
 
 //dialog
-$dialogHeaderBg: #ffffff !default;
-$dialogHeaderBorder: 0 none !default;
-$dialogHeaderTextColor: $textColor !default;
-$dialogHeaderFontWeight: 500 !default;
-$dialogHeaderFontSize: 1.25rem !default;
-$dialogHeaderPadding: 1.5rem !default;
-$dialogContentPadding: 0 1.5rem 1.5rem 1.5rem !default;
-$dialogFooterBorder: 0 none !default;
-$dialogFooterPadding: 1rem 1.5rem !default;
+$dialogHeaderBg: #ffffff;
+$dialogHeaderBorder: 0 none;
+$dialogHeaderTextColor: $textColor;
+$dialogHeaderFontWeight: $fontWeightSemiBold;
+$dialogHeaderFontSize: $fontBodyMedium;
+$dialogHeaderPadding: 1rem 1.33rem;
+$dialogContentPadding: 0 1.33rem 1.33rem 1.33rem;
+$dialogFooterBorder: 0 none;
+$dialogFooterPadding: 1rem 1.33rem;
 
 //confirmpopup
 $confirmPopupContentPadding: 1.5rem !default;

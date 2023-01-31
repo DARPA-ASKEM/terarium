@@ -16,10 +16,10 @@
 					:class="{ hidden: isClearSearchButtonHidden }"
 					style="font-size: 1rem"
 					@click="clearText"
-				></i>
+				/>
 			</span>
-			<i class="pi pi-history" />
-			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
+			<!-- <i class="pi pi-history" />
+			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
 		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms[0]"
 			>Suggested terms:<Chip
@@ -72,9 +72,9 @@ function addSearchTerm(term) {
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
-const toggleSearchByExample = () => {
-	emit('toggle-search-by-example');
-};
+// const toggleSearchByExample = () => {
+// 	emit('toggle-search-by-example');
+// };
 
 onMounted(() => {
 	const { q } = route.query;
