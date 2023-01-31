@@ -1,5 +1,5 @@
 <template>
-	<div class="search-bar-container">
+	<aside class="search-bar-container">
 		<div class="search">
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
@@ -27,7 +27,7 @@
 				<span @click="addSearchTerm(item)">{{ item }}</span>
 			</Chip>
 		</span>
-	</div>
+	</aside>
 </template>
 
 <script setup lang="ts">
@@ -80,10 +80,11 @@ onMounted(() => {
 	searchText.value = q?.toString() ?? searchText.value;
 });
 
+// Update the suggested terms list
 watch(
 	() => props.suggestedTerms,
 	(newTerms) => {
-		terms.value = newTerms ?? [];
+		terms.value = newTerms ? newTerms.filter((t) => !!t) : [];
 	},
 	{ immediate: true }
 );
