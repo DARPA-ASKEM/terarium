@@ -463,6 +463,21 @@ watch(
 		deep: true
 	}
 );
+
+// If no edges at all, grid whatever data we have
+const gridData = async () => {
+	// FIXME: Hackathon
+	if (renderer?.graph.edges.length === 0) {
+		let c = 0;
+		renderer?.graph.nodes.forEach((n) => {
+			n.x = 60 + Math.round(c / 5) * 50;
+			n.y = 80 + 50 * (c % 5);
+			c++;
+		});
+		await renderer.render();
+	}
+};
+
 // Entry point
 onMounted(async () => {
 	const playground = document.getElementById('playground') as HTMLDivElement;
@@ -579,6 +594,7 @@ onMounted(async () => {
 					value: 0
 				});
 			});
+			gridData();
 		}
 	});
 
@@ -596,6 +612,8 @@ onMounted(async () => {
 		});
 		await renderer.render();
 	}
+
+	gridData();
 
 	renderer.graph.nodes.forEach((n) => {
 		variablesRef.value.push({
