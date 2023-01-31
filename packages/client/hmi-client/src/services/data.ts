@@ -1,4 +1,4 @@
-import { cloneDeep, uniq, uniqBy } from 'lodash';
+import { cloneDeep, uniq, uniqBy, isEmpty } from 'lodash';
 import {
 	Facets,
 	FullSearchResults,
@@ -194,7 +194,7 @@ const getAssets = async (params: GetAssetsParams) => {
 	// apply facet filters
 	if (searchParam) {
 		// Filtering for model/dataset data
-		if (searchParam && searchParam.filters && searchParam.filters.clauses.length > 0) {
+		if (searchParam && searchParam.filters && !isEmpty(searchParam?.filters?.clauses)) {
 			// modelSearchParam currently represent facets filters that can be applied
 			//  to further refine the list of models
 
