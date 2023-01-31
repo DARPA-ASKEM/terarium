@@ -65,7 +65,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			y: nodeY,
 			height: nodeHeight,
 			width: nodeWidth,
-			data: { type: NodeType.Transition },
+			data: { type: NodeType.Transition, uid: aTransition.uid },
 			nodes: []
 		});
 	} // end T

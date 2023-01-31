@@ -11,6 +11,7 @@ interface State {
 }
 interface Transition {
 	tname: string;
+	uid?: string;
 }
 interface Input {
 	// Identifies the states connected by an edge going from state -> transition
