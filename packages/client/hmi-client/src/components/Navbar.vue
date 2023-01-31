@@ -264,10 +264,8 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	margin: 0.75rem 0 0.25rem 0;
-	display: inline-flex;
+	display: flex;
 	gap: 0.5rem;
-	margin-left: 0.25rem;
-	margin-right: auto;
 	align-items: center;
 	overflow: hidden;
 	white-space: nowrap;

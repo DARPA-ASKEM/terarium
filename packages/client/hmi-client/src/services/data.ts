@@ -126,7 +126,6 @@ const getAssets = async (params: GetAssetsParams) => {
 				(await searchXDDArticles(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
 				([] as XDDArticle[]);
 			assetList = xddResults.results;
-			results.relatedWords = xddResults.relatedWords;
 			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
 			break;
 		default:
@@ -500,7 +499,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 		return {
 			results: articles,
-			relatedWords: await getRelatedWords(term, xddSearchParam?.dataset),
 			facets: formattedFacets,
 			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
@@ -512,7 +510,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	return {
 		results: [] as XDDArticle[],
-		relatedWords: await getRelatedWords(term, xddSearchParam?.dataset),
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -576,12 +573,10 @@ const fetchData = async (
 ) => {
 	const finalResponse = {
 		allData: [],
-		allDataFilteredWithFacets: [],
-		relatedWords: []
+		allDataFilteredWithFacets: []
 	} as {
 		allData: SearchResults[];
 		allDataFilteredWithFacets: SearchResults[];
-		relatedWords: string[][];
 	};
 
 	//
@@ -711,7 +706,6 @@ const fetchData = async (
 	const responses = await Promise.all(promiseList);
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
-	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
 
 	return finalResponse;
 };
