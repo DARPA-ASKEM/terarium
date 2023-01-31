@@ -326,6 +326,10 @@ const TEST_METADATA = JSON.parse(
 	'{"S": [{"sname": "S", "uid": 15}, {"sname": " I", "uid": 16}, {"sname": " D", "uid": 17}, {"sname": " A", "uid": 18}, {"sname": " R", "uid": 19}, {"sname": " T", "uid": 20}, {"sname": " H", "uid": 21}, {"sname": " E", "uid": 22}], "T": [{"tname": "alpha", "uid": 0}, {"tname": " beta", "uid": 1}, {"tname": " gamma", "uid": 2}, {"tname": " delta", "uid": 3}, {"tname": " epsilon", "uid": 4}, {"tname": " mu", "uid": 5}, {"tname": " zeta", "uid": 6}, {"tname": " lamb", "uid": 7}, {"tname": " eta", "uid": 8}, {"tname": " rho", "uid": 9}, {"tname": " theta", "uid": 10}, {"tname": " kappa", "uid": 11}, {"tname": " nu", "uid": 12}, {"tname": " xi", "uid": 13}, {"tname": " sigma", "uid": 14}, {"tname": " tau", "uid": 15}], "I": [], "O": []}'
 );
 
+const TEST_META = JSON.parse(
+	'{"0": "Test metadata 0", "1": "Test metadata 1","2": "Test metadata 2","3": "Test metadata 3","4": "Test metadata 4","5": "Test metadata 5","6": "Test metadata 6","7": "Test metadata 7","8": "Test metadata 8","9": "Test metadata 9","10": "Test metadata 10","11": "Test metadata 11","12": "Test metadata 12","13": "Test metadata 13","14": "Test metadata 14","15": "Test metadata 15","16": "Test metadata 16","17": "Test metadata 17","18": "Test metadata 18","19": "Test metadata 19","20": "Test metadata 20","21": "Test metadata 21","22": "Test metadata 22"}'
+);
+
 /*
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	const petri: PetriNet = {
@@ -500,6 +504,14 @@ onMounted(async () => {
 			source = null;
 			target = null;
 		}
+	});
+
+	renderer.on('node-mouse-enter', (_evtName, _evt, el) => {
+		const textContent = TEST_META[el.datum().data.uid];
+		el.append('text').attr('x', 50).attr('y', 15).attr('popup', true).text(textContent);
+	});
+	renderer.on('node-mouse-leave', (_evtName, _evt, el) => {
+		el.selectAll('text[popup=true]').remove();
 	});
 
 	document.addEventListener('keyup', async (event) => {
