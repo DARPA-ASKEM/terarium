@@ -177,8 +177,9 @@ header {
 	border-bottom: 1px solid var(--surface-border);
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
-	gap: 0.5rem;
 	justify-content: space-between;
+	flex-shrink: 0;
+	flex-grow: 1;
 }
 
 .searchbar {
@@ -203,19 +204,12 @@ header {
 	gap: 1rem;
 }
 
-.header-left .p-dropdown-label .p-inputtext {
-	padding: 1rem 0;
+.header-left >>> .p-dropdown-label.p-inputtext {
+	padding-right: 0;
 }
 
 .p-dropdown {
-	height: 3rem;
-	width: 9rem;
-	flex: 1;
 	border: 0;
-}
-
-.p-dropdown:not(.p-disabled).p-focus {
-	box-shadow: none;
 }
 
 .p-dropdown-label {
