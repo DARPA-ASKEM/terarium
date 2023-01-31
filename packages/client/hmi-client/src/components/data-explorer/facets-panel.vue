@@ -83,12 +83,6 @@ const formattedFacets = computed(() => {
 			filteredData
 		};
 	});
-	facetList.forEach((facet) => {
-		if (facet.id === 'year') {
-			facet.baseData.sort((a, b) => b.key.localeCompare(a.key));
-			facet.filteredData.sort((a, b) => b.key.localeCompare(a.key));
-		}
-	});
 	return facetList;
 });
 </script>
