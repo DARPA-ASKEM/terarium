@@ -61,6 +61,9 @@ function setActiveTab(index: number) {
 	tabStore.setActiveTabIndex(tabContext, index);
 }
 
+// FIXME:
+// - Need to establish terarium artifact types
+// - Move to service layer
 const fetchAnnotations = async () => {
 	const response = await API.get('/annotations', {
 		params: {
@@ -76,8 +79,9 @@ const addAnnotation = async () => {
 	await API.post('/annotations', {
 		content,
 		artifact_id: newDocumentId.value,
-		artifact_type: ResourceType.XDD // FIXME: need to establish artifact types
+		artifact_type: ResourceType.XDD
 	});
+	annotationContent.value = '';
 
 	// Refresh
 	await fetchAnnotations();
@@ -113,10 +117,7 @@ if (previousOpenTabs) {
 	setActiveTab(tabStore.getActiveTabIndex(tabContext));
 }
 
-const formatDate = (millis: number) => {
-	const dt = new Date(millis).toLocaleDateString();
-	return dt;
-};
+const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 </script>
 
 <template>
@@ -138,14 +139,13 @@ const formatDate = (millis: number) => {
 	<slider-panel
 		class="slider"
 		content-width="300px"
-		tab-width="56px"
 		direction="right"
 		header="Notes"
 		v-model:is-open="isPanelOpen"
 	>
 		<template v-slot:content>
 			<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
-				<p>{{ annotation.content }}</p>
+				<p class="annotation-content">{{ annotation.content }}</p>
 				<div class="annotation-footer">
 					<div>{{ annotation.username }}</div>
 					<div>{{ formatDate(annotation.timestampMillis) }}</div>
@@ -167,16 +167,24 @@ const formatDate = (millis: number) => {
 	gap: 1rem;
 	padding: 1rem;
 	background: var(--surface-section);
-	flex: 1;
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
 }
 
 .tab-container {
 	height: 100%;
-	flex: 1;
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
 }
 
 .slider {
 	background: var(--surface-card);
+}
+
+.annotation-content {
+	word-break: break-all;
 }
 
 .annotation-panel {
