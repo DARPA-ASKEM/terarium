@@ -2,13 +2,18 @@
 import Document from '@/components/articles/Document.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
-import { Tab } from '@/types/common';
+import { Tab, Annotation, ResourceType } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import { Project } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
 import ResourcesList from '@/components/resources/resources-list.vue';
+import SliderPanel from '@/components/widgets/slider-panel.vue';
+import Textarea from 'primevue/textarea';
+import Button from 'primevue/button';
+
+import API from '@/api/api';
 
 const props = defineProps<{
 	assetId?: string;
@@ -18,6 +23,10 @@ const props = defineProps<{
 const resourcesStore = useResourcesStore();
 const tabStore = useTabStore();
 
+const isPanelOpen = ref(false);
+const annotations = ref<Annotation[]>([]);
+
+const annotationContent = ref<string>('');
 const newDocumentId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
@@ -52,6 +61,32 @@ function setActiveTab(index: number) {
 	tabStore.setActiveTabIndex(tabContext, index);
 }
 
+// FIXME:
+// - Need to establish terarium artifact types
+// - Move to service layer
+const fetchAnnotations = async () => {
+	const response = await API.get('/annotations', {
+		params: {
+			artifact_type: ResourceType.XDD,
+			artifact_id: newDocumentId.value
+		}
+	});
+	annotations.value = response.data;
+};
+
+const addAnnotation = async () => {
+	const content = annotationContent.value;
+	await API.post('/annotations', {
+		content,
+		artifact_id: newDocumentId.value,
+		artifact_type: ResourceType.XDD
+	});
+	annotationContent.value = '';
+
+	// Refresh
+	await fetchAnnotations();
+};
+
 watch(newDocumentId, (id) => {
 	if (id) {
 		const newTab = {
@@ -72,6 +107,7 @@ watch(newDocumentId, (id) => {
 		} else {
 			tabStore.setActiveTabIndex(tabContext, foundTabIndex);
 		}
+		fetchAnnotations();
 	}
 });
 
@@ -80,6 +116,8 @@ if (previousOpenTabs) {
 	openTabs.value = openTabs.value.concat(previousOpenTabs);
 	setActiveTab(tabStore.getActiveTabIndex(tabContext));
 }
+
+const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 </script>
 
 <template>
@@ -97,6 +135,28 @@ if (previousOpenTabs) {
 	<section v-else class="recent-documents-page">
 		<resources-list :project="props.project" :resource-route="RouteName.ModelRoute" />
 	</section>
+
+	<slider-panel
+		class="slider"
+		content-width="300px"
+		direction="right"
+		header="Notes"
+		v-model:is-open="isPanelOpen"
+	>
+		<template v-slot:content>
+			<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
+				<p class="annotation-content">{{ annotation.content }}</p>
+				<div class="annotation-footer">
+					<div>{{ annotation.username }}</div>
+					<div>{{ formatDate(annotation.timestampMillis) }}</div>
+				</div>
+			</div>
+			<div class="annotation-panel">
+				<Textarea v-model="annotationContent" rows="5" cols="30" aria-labelledby="annotation" />
+				<Button @click="addAnnotation()" label="Add note" />
+			</div>
+		</template>
+	</slider-panel>
 </template>
 
 <style scoped>
@@ -107,9 +167,32 @@ if (previousOpenTabs) {
 	gap: 1rem;
 	padding: 1rem;
 	background: var(--surface-section);
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
 }
 
 .tab-container {
 	height: 100%;
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
+}
+
+.slider {
+	background: var(--surface-card);
+}
+
+.annotation-content {
+	word-break: break-all;
+}
+
+.annotation-panel {
+	padding: 8px;
+	font-size: var(--font-body-small);
+}
+
+.annotation-footer {
+	text-align: right;
 }
 </style>

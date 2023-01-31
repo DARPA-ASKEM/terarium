@@ -59,6 +59,7 @@
 				direction="right"
 				v-model:preview-item="previewItem"
 				:result-type="resultType"
+				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
@@ -69,7 +70,7 @@
 				direction="right"
 				header="Resources"
 				v-model:is-open="isSliderResourcesOpen"
-				:selected-search-items-amount="selectedSearchItems.length"
+				:indicator-value="selectedSearchItems.length"
 			>
 				<template v-slot:content>
 					<selected-resources-options-pane
@@ -91,7 +92,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
-import SliderPanel from '@/components/data-explorer/slider-panel.vue';
+import SliderPanel from '@/components/widgets/slider-panel.vue';
 import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
