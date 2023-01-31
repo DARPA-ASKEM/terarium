@@ -55,7 +55,7 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				content-width="calc(35% - 56px)"
+				content-width="calc(35% - 3rem)"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
@@ -67,7 +67,6 @@
 			<slider-panel
 				class="resources-slider"
 				content-width="35%"
-				tab-width="56px"
 				direction="right"
 				header="Resources"
 				v-model:is-open="isSliderResourcesOpen"
