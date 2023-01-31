@@ -258,7 +258,7 @@ const getAssets = async (params: GetAssetsParams) => {
 
 			// re-create the concept facets if the user has applyied any concept filters
 			const uniqueCuries = uniq(curies);
-			if (uniqueCuries.length > 0) {
+			if (!isEmpty(uniqueCuries)) {
 				conceptFacets = await getConceptFacets([projectAssetType], uniqueCuries);
 			}
 
