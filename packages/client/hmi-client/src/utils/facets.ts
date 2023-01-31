@@ -130,7 +130,10 @@ export const getArticleFacets = (articles: XDDArticle[]) => {
 	ARTICLE_FACET_FIELDS.forEach((field) => {
 		// exclude dataset ID as a facet since it is created from mapping concepts
 		if (field !== ID) {
-			const facetForField = aggField(field);
+			let facetForField = aggField(field);
+			facetForField = facetForField.filter(
+				(value) => value.key !== undefined && value.key !== 'undefined'
+			);
 			if (facetForField.length > 0) {
 				facets[field] = facetForField;
 			}
