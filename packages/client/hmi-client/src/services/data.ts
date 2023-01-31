@@ -123,9 +123,8 @@ const getAssets = async (params: GetAssetsParams) => {
 			break;
 		case ResourceType.XDD:
 			// @ts-ignore
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define
 			assetList =
-				(await searchXDDArticles(term, searchParam?.[ResourceType.XDD])).results ||
+				(await searchXDDArticles(term, searchParam?.[ResourceType.XDD])).results || // eslint-disable-line @typescript-eslint/no-use-before-define
 				([] as XDDArticle[]);
 			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
 			break;
