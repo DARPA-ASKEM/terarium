@@ -5,6 +5,7 @@ import { IGraph } from '@graph-scaffolder/types';
 
 export interface NodeData {
 	type: string;
+	uid?: string;
 }
 
 export interface EdgeData {
@@ -46,7 +47,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			y: nodeY,
 			height: nodeHeight,
 			width: nodeWidth,
-			data: { type: NodeType.State },
+			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
 	}

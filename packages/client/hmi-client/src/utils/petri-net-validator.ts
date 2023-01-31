@@ -7,6 +7,7 @@ export interface PetriNet {
 
 interface State {
 	sname: string;
+	uid?: string;
 }
 interface Transition {
 	tname: string;
@@ -22,8 +23,8 @@ interface Output {
 	os: number; // State ID which is the target
 }
 
-/* 
-Validates petrinet - check #2 must come before check #3 to avoid an infinite loop 
+/*
+Validates petrinet - check #2 must come before check #3 to avoid an infinite loop
 Returns an string explaining the invalidity or a true boolean if it's valid
 */
 export const petriNetValidator = (petrinet: PetriNet): string | true => {

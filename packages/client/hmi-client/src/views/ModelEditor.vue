@@ -66,28 +66,15 @@ import graphScaffolder from '@graph-scaffolder/index';
 import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
-import { parsePetriNet2IGraph } from '@/services/model';
+import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
 const variablesRef = ref<any[]>([]);
-
 const stateVariables = computed(() => variablesRef.value.filter((d) => d.type === 'S'));
-
 const paramVariables = computed(() => variablesRef.value.filter((d) => d.type === 'T'));
-
-interface NodeData {
-	type: string;
-}
-interface EdgeData {
-	val: number;
-}
-enum NodeType {
-	Species = 'S',
-	Transition = 'T'
-}
 
 const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -125,11 +112,9 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const species = selection.filter(
-			(d) => d.data.type === 'species' || d.data.type === NodeType.Species
-		);
+		const species = selection.filter((d) => d.data.type === 'S' || d.data.type === NodeType.State);
 		const transitions = selection.filter(
-			(d) => d.data.type === 'transition' || d.data.type === NodeType.Transition
+			(d) => d.data.type === 'T' || d.data.type === NodeType.Transition
 		);
 
 		transitions
@@ -336,6 +321,10 @@ const SIRD2 = {
 		}
 	]
 };
+
+const TEST_METADATA = JSON.parse(
+	'{"S": [{"sname": "S", "uid": 15}, {"sname": " I", "uid": 16}, {"sname": " D", "uid": 17}, {"sname": " A", "uid": 18}, {"sname": " R", "uid": 19}, {"sname": " T", "uid": 20}, {"sname": " H", "uid": 21}, {"sname": " E", "uid": 22}], "T": [{"tname": "alpha", "uid": 0}, {"tname": " beta", "uid": 1}, {"tname": " gamma", "uid": 2}, {"tname": " delta", "uid": 3}, {"tname": " epsilon", "uid": 4}, {"tname": " mu", "uid": 5}, {"tname": " zeta", "uid": 6}, {"tname": " lamb", "uid": 7}, {"tname": " eta", "uid": 8}, {"tname": " rho", "uid": 9}, {"tname": " theta", "uid": 10}, {"tname": " kappa", "uid": 11}, {"tname": " nu", "uid": 12}, {"tname": " xi", "uid": 13}, {"tname": " sigma", "uid": 14}, {"tname": " tau", "uid": 15}], "I": [], "O": []}'
+);
 
 /*
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
@@ -560,6 +549,24 @@ onMounted(async () => {
 			variablesRef.value.find((d) => d.name === 'gamma').value = 0.125;
 			variablesRef.value.find((d) => d.name === 'h').value = 0.0;
 			variablesRef.value.find((d) => d.name === 'r').value = 0.0;
+		} else if (event.key === '3') {
+			const g = parsePetriNet2IGraph(TEST_METADATA);
+			if (renderer) {
+				renderer.isGraphDirty = true;
+			}
+			await renderer?.setData(g);
+			await renderer?.render();
+			variablesRef.value = [];
+			(renderer as any).graph.nodes.forEach((n) => {
+				variablesRef.value.push({
+					id: n.id,
+					name: n.label,
+					type: n.data.type,
+					description: '',
+					concept: '',
+					value: 0
+				});
+			});
 		}
 	});
 
