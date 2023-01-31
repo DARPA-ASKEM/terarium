@@ -333,18 +333,10 @@ const getAssets = async (params: GetAssetsParams) => {
 //
 // fetch list of extractions data from the HMI server
 //
-const getXDDArtifacts = async (
-	doc_doi: string,
-	term?: string,
-	extractionTypes?: XDDExtractionType[]
-) => {
+const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
 	let url = '/xdd/extractions?';
-	if (doc_doi !== '') {
-		url += `doi=${doc_doi}`;
-	}
-	if (term !== undefined) {
-		url += `query_all=${term}`;
-	}
+	url += `term=${term}`;
+
 	if (extractionTypes) {
 		url += '&ASKEM_CLASS=';
 		for (let i = 0; i < extractionTypes.length; i++) {
@@ -510,8 +502,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			// Temporary call to get a sufficient amount of extractions
 			// (Every call is limited to providing 30 extractions)
 			extractionsSearchResults = [
-				...(await getXDDArtifacts('', term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
-				...(await getXDDArtifacts('', term, [XDDExtractionType.Document]))
+				...(await getXDDArtifacts(term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
+				...(await getXDDArtifacts(term, [XDDExtractionType.Document]))
 			];
 		}
 
