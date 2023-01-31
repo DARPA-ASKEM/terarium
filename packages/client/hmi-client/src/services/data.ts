@@ -713,8 +713,6 @@ const fetchData = async (
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
 	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
 
-	console.log(finalResponse);
-
 	return finalResponse;
 };
 
