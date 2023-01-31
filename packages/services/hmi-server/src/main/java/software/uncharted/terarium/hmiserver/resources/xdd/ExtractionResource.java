@@ -32,7 +32,7 @@ public class ExtractionResource {
 	@Path("/askem_autocomplete/{term}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
-	public Response searchExtractions(@PathParam("term") String term) {
+	public Response getAutocomplete(@PathParam("term") String term) {
 		return proxy.getAutocomplete(term);
 	}
 }
