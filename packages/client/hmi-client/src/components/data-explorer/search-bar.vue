@@ -21,13 +21,9 @@
 			<!-- <i class="pi pi-history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
-		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms[0]"
-			>Suggested terms:<Chip
-				v-for="item in suggestedTerms"
-				:key="item"
-				removable
-				remove-icon="pi pi-times"
-			>
+		<span class="suggested-terms" v-if="!isEmpty(terms)">
+			Suggested terms:
+			<Chip v-for="item in terms" :key="item" removable remove-icon="pi pi-times">
 				<span @click="addSearchTerm(item)">{{ item }}</span>
 			</Chip>
 		</span>
@@ -42,6 +38,7 @@ import Chip from 'primevue/chip';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	text?: string;
@@ -57,9 +54,11 @@ const searchText = ref('');
 const defaultText = computed(() => props.text);
 const isClearSearchButtonHidden = computed(() => !searchText.value);
 const inputElement = ref<HTMLInputElement | null>(null);
+const terms = ref<string[]>([]);
 
 const clearText = () => {
 	searchText.value = '';
+	terms.value = [];
 };
 
 const execSearch = () => {
@@ -80,6 +79,14 @@ onMounted(() => {
 	const { q } = route.query;
 	searchText.value = q?.toString() ?? searchText.value;
 });
+
+watch(
+	() => props.suggestedTerms,
+	(newTerms) => {
+		terms.value = newTerms ?? [];
+	},
+	{ immediate: true }
+);
 
 watch(defaultText, (newText) => {
 	searchText.value = newText || searchText.value;
