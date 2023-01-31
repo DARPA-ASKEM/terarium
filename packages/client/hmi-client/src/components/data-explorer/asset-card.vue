@@ -253,6 +253,7 @@ const formatFeatures = () => {
 <style scoped>
 .asset-card {
 	background-color: var(--surface-a);
+	border: 1px solid transparent;
 	color: var(--text-color-subdued);
 	padding: 1rem;
 	margin: 1px;
@@ -262,7 +263,7 @@ const formatFeatures = () => {
 }
 
 .asset-card:hover {
-	background-color: var(--surface-hover);
+	border-color: var(--surface-border);
 	cursor: pointer;
 }
 

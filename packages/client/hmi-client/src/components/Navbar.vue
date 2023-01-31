@@ -178,8 +178,6 @@ header {
 	min-height: var(--header-height);
 	padding: 0.5rem 1rem;
 	justify-content: space-between;
-	flex-shrink: 0;
-	flex-grow: 1;
 }
 
 .searchbar {
