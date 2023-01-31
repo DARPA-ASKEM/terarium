@@ -151,20 +151,10 @@ const getAssets = async (params: GetAssetsParams) => {
 	//
 	// This is going to calculate facets aggregations from the list of results
 
-	let assetResults;
-	switch (resourceType) {
-		case ResourceType.MODEL:
-			assetResults = filterAssets(allAssets, resourceType, conceptFacets, term);
-			break;
-		case ResourceType.DATASET:
-			assetResults = filterAssets(allAssets, resourceType, conceptFacets, term);
-			break;
-		case ResourceType.XDD:
-			assetResults = allAssets;
-			break;
-		default:
-			return results; // error or make new resource type compatible
-	}
+	let assetResults =
+		resourceType === ResourceType.XDD
+			? allAssets
+			: filterAssets(allAssets, resourceType, conceptFacets, term);
 
 	let assetFacets: Facets;
 	switch (resourceType) {
