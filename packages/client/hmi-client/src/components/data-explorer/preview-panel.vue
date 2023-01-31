@@ -35,13 +35,13 @@
 						v-if="!previewItemSelected"
 						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="add-to-cart"
+						class="toggle-selection"
 					/>
 					<Button
 						v-else
 						label="Remove from Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="add-to-cart p-button-secondary"
+						class="toggle-selection p-button-secondary"
 					/>
 				</footer>
 			</div>
@@ -95,6 +95,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
@@ -104,10 +106,6 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
-		} else {
-			setTimeout(() => {
-				previewItemState.value = null;
-			}, 300);
 		}
 	}
 );
@@ -158,8 +156,7 @@ footer {
 	align-items: center;
 }
 
-.add-to-cart {
-	height: 1.5rem;
+.toggle-selection {
 	margin-left: 1rem;
 }
 </style>
