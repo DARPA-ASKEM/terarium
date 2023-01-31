@@ -4,7 +4,6 @@
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
 				<InputText
-					ref="inputElement"
 					type="text"
 					placeholder="Search"
 					v-model="searchText"
@@ -21,12 +20,6 @@
 			<!-- <i class="pi pi-history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
-		<span class="suggested-terms" v-if="!isEmpty(terms)">
-			Suggested terms:
-			<Chip v-for="item in terms" :key="item" removable remove-icon="pi pi-times">
-				<span @click="addSearchTerm(item)">{{ item }}</span>
-			</Chip>
-		</span>
 	</aside>
 </template>
 
@@ -34,11 +27,9 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
-import Chip from 'primevue/chip';
 import * as EventService from '@/services/event';
 import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
-import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	text?: string;
@@ -53,12 +44,9 @@ const resources = useResourcesStore();
 const searchText = ref('');
 const defaultText = computed(() => props.text);
 const isClearSearchButtonHidden = computed(() => !searchText.value);
-const inputElement = ref<HTMLInputElement | null>(null);
-const terms = ref<string[]>([]);
 
 const clearText = () => {
 	searchText.value = '';
-	terms.value = [];
 };
 
 const execSearch = () => {
@@ -66,11 +54,6 @@ const execSearch = () => {
 	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
 };
 
-function addSearchTerm(term) {
-	searchText.value = searchText.value ? searchText.value.concat(' ').concat(term) : term;
-	// @ts-ignore
-	inputElement.value?.$el.focus();
-}
 // const toggleSearchByExample = () => {
 // 	emit('toggle-search-by-example');
 // };
@@ -79,15 +62,6 @@ onMounted(() => {
 	const { q } = route.query;
 	searchText.value = q?.toString() ?? searchText.value;
 });
-
-// Update the suggested terms list
-watch(
-	() => props.suggestedTerms,
-	(newTerms) => {
-		terms.value = newTerms ? newTerms.filter((t) => !!t) : [];
-	},
-	{ immediate: true }
-);
 
 watch(defaultText, (newText) => {
 	searchText.value = newText || searchText.value;
@@ -107,38 +81,6 @@ watch(defaultText, (newText) => {
 	display: flex;
 	align-items: center;
 	width: 100%;
-}
-
-.suggested-terms {
-	margin: 0.75rem 0 0.25rem 0;
-	display: inline-flex;
-	gap: 0.5rem;
-	margin-left: 0.25rem;
-	margin-right: auto;
-	align-items: center;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.suggested-terms,
-.p-chip {
-	font-size: small;
-	font-weight: bold;
-	color: var(--text-color-subdued);
-}
-
-.p-chip {
-	padding: 0 0.75rem;
-	background-color: var(--surface-200);
-}
-
-.p-chip span {
-	margin: 0.25rem 0;
-	cursor: pointer;
-}
-
-.p-chip :deep(.p-chip-remove-icon) {
-	font-size: 0.75rem;
 }
 
 .p-input-icon-left {

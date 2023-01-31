@@ -375,13 +375,13 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-const getRelatedWords = async (searchTerm: string, dataset?: string | null) => {
-	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
-	const response = await API.get(url);
+// Return the top 5 words related to a term
+async function getRelatedWords(searchTerm: string, dataset?: string | null): Promise<string[]> {
+	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: searchTerm });
+	const response = await API.get(`/xdd/related/word?${params}`);
 	const data = response.data.data;
-	const words = data ? data.map((tuple) => tuple[0]) : [];
-	return words;
-};
+	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
+}
 
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
