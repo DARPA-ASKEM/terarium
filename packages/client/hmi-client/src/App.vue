@@ -80,7 +80,7 @@ resources.$subscribe((mutation, state) => {
 		class="header"
 		:project="project"
 		:searchBarText="searchBarText"
-		:relatedSearchTerms="relatedSearchTerms"
+		:suggested-terms="relatedSearchTerms"
 	/>
 	<main>
 		<Sidebar

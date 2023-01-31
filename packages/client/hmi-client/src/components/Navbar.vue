@@ -10,11 +10,12 @@ import SearchBar from '@/components/data-explorer/search-bar.vue';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import Dropdown from 'primevue/dropdown';
 import { useCurrentRoute, RoutePath } from '@/router/index';
+import Chip from 'primevue/chip';
 
 const props = defineProps<{
 	project: Project | null;
 	searchBarText?: string;
-	relatedSearchTerms?: string[];
+	suggestedTerms?: string[];
 }>();
 interface NavItem {
 	[key: string]: { name: string; icon: string; routeName: string };
@@ -119,55 +120,71 @@ watch(currentRoute, (newRoute) => {
 
 <template>
 	<header>
-		<section class="header-left">
-			<img src="@assets/svg/terarium-logo.svg" height="48" width="168" alt="TERArium logo" />
-			<nav>
-				<Dropdown
-					class="dropdown"
-					v-model="selectedPage"
-					:options="Object.values(navItems)"
-					optionLabel="name"
-					panelClass="dropdown-panel"
-					@change="goToPage"
-				>
-					<template #value="slotProps">
-						<i :class="slotProps.value.icon" />
-						<span>{{ slotProps.value.name }}</span>
-					</template>
-					<template #option="slotProps">
-						<i :class="slotProps.option.icon" />
-						<span>{{ slotProps.option.name }}</span>
-					</template>
-				</Dropdown>
-			</nav>
-		</section>
-		<SearchBar
-			class="searchbar"
-			:text="searchBarText"
-			:suggested-terms="relatedSearchTerms"
-			@search-text-changed="searchTextChanged"
-			@toggle-search-by-example="searchByExampleModalToggled"
-		/>
-		<section class="header-right">
-			<Button
-				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
-				@click="showUserMenu"
-			>
-				{{ userInitials }}
-			</Button>
-		</section>
-		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
-		<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
-			<span>You will be returned to the login screen.</span>
-			<template #footer>
-				<Button label="Ok" class="p-button-text" @click="auth.logout"></Button>
+		<main>
+			<section class="header-left">
+				<img src="@assets/svg/terarium-logo.svg" height="48" width="168" alt="TERArium logo" />
+				<nav>
+					<Dropdown
+						class="dropdown"
+						v-model="selectedPage"
+						:options="Object.values(navItems)"
+						optionLabel="name"
+						panelClass="dropdown-panel"
+						@change="goToPage"
+					>
+						<template #value="slotProps">
+							<i :class="slotProps.value.icon" />
+							<span>{{ slotProps.value.name }}</span>
+						</template>
+						<template #option="slotProps">
+							<i :class="slotProps.option.icon" />
+							<span>{{ slotProps.option.name }}</span>
+						</template>
+					</Dropdown>
+				</nav>
+			</section>
+			<SearchBar
+				class="searchbar"
+				:text="searchBarText"
+				@search-text-changed="searchTextChanged"
+				@toggle-search-by-example="searchByExampleModalToggled"
+			/>
+			<section class="header-right">
 				<Button
-					label="Cancel"
-					class="p-button-text"
-					@click="isLogoutConfirmationVisible = false"
-				></Button>
-			</template>
-		</Dialog>
+					class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
+					@click="showUserMenu"
+				>
+					{{ userInitials }}
+				</Button>
+			</section>
+			<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
+			<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
+				<span>You will be returned to the login screen.</span>
+				<template #footer>
+					<Button label="Ok" class="p-button-text" @click="auth.logout"></Button>
+					<Button
+						label="Cancel"
+						class="p-button-text"
+						@click="isLogoutConfirmationVisible = false"
+					></Button>
+				</template>
+			</Dialog>
+		</main>
+		<span class="suggested-terms" v-if="suggestedTerms"
+			>Suggested terms:<Chip
+				v-for="item in suggestedTerms"
+				:key="item"
+				removable
+				remove-icon="pi pi-times"
+			>
+				<!-- @click="addSearchTerm(item)" -->
+				<span>{{ item }}</span>
+			</Chip>
+			<Chip v-for="item in suggestedTerms" :key="item" removable remove-icon="pi pi-times">
+				<!-- @click="addSearchTerm(item)" -->
+				<span>{{ item }}</span>
+			</Chip>
+		</span>
 	</header>
 </template>
 
@@ -175,12 +192,15 @@ watch(currentRoute, (newRoute) => {
 header {
 	background-color: var(--surface-section);
 	min-height: var(--header-height);
-	display: flex;
-	align-items: flex-start;
 	padding: 8px 16px;
 	gap: 8px;
 	border-bottom: 1px solid var(--surface-border);
 	flex: none;
+}
+
+header main {
+	display: flex;
+	align-items: flex-start;
 }
 
 section {
@@ -238,5 +258,38 @@ i {
 
 .logo {
 	align-self: center;
+}
+
+.suggested-terms {
+	margin: 0.75rem 0 0.25rem 0;
+	margin-right: auto;
+	width: 80vw;
+	display: flex;
+	gap: 0.5rem;
+	justify-content: center;
+	align-items: center;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.suggested-terms,
+.p-chip {
+	font-size: small;
+	font-weight: bold;
+	color: var(--text-color-subdued);
+}
+
+.p-chip {
+	padding: 0 0.75rem;
+	background-color: var(--surface-200);
+}
+
+.p-chip span {
+	margin: 0.25rem 0;
+	cursor: pointer;
+}
+
+.p-chip :deep(.p-chip-remove-icon) {
+	font-size: 0.75rem;
 }
 </style>
