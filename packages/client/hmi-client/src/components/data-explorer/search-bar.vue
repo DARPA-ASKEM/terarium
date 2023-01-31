@@ -56,11 +56,13 @@ const execSearch = () => {
 	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
 };
 
-// function addSearchTerm(term) {
-// 	searchText.value = searchText.value ? searchText.value.concat(' ').concat(term) : term;
-// 	// @ts-ignore
-// 	inputElement.value?.$el.focus();
-// }
+function addSearchTerm(term) {
+	searchText.value = searchText.value ? searchText.value.concat(' ').concat(term) : term;
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+defineExpose({ addSearchTerm });
+
 const toggleSearchByExample = () => {
 	emit('toggle-search-by-example');
 };

@@ -46,6 +46,7 @@ const navItems = shallowRef<NavItem>(initialNavItems);
 const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
 const auth = useAuthStore();
 const userMenu = ref();
+const searchBarRef = ref();
 const isLogoutConfirmationVisible = ref(false);
 const userMenuItems = ref([
 	{
@@ -145,6 +146,7 @@ watch(currentRoute, (newRoute) => {
 			</section>
 			<SearchBar
 				class="searchbar"
+				ref="searchBarRef"
 				:text="searchBarText"
 				@search-text-changed="searchTextChanged"
 				@toggle-search-by-example="searchByExampleModalToggled"
@@ -177,12 +179,7 @@ watch(currentRoute, (newRoute) => {
 				removable
 				remove-icon="pi pi-times"
 			>
-				<!-- @click="addSearchTerm(item)" -->
-				<span>{{ item }}</span>
-			</Chip>
-			<Chip v-for="item in suggestedTerms" :key="item" removable remove-icon="pi pi-times">
-				<!-- @click="addSearchTerm(item)" -->
-				<span>{{ item }}</span>
+				<span :key="item" @click="searchBarRef?.addSearchTerm(item)">{{ item }}</span>
 			</Chip>
 		</span>
 	</header>
@@ -261,9 +258,8 @@ i {
 }
 
 .suggested-terms {
-	margin: 0.75rem 0 0.25rem 0;
-	margin-right: auto;
-	width: 80vw;
+	margin: 0.5rem auto 0 auto;
+	width: fit-content;
 	display: flex;
 	gap: 0.5rem;
 	justify-content: center;
@@ -274,7 +270,7 @@ i {
 
 .suggested-terms,
 .p-chip {
-	font-size: small;
+	font-size: var(--font-caption);
 	font-weight: bold;
 	color: var(--text-color-subdued);
 }
