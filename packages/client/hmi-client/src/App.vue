@@ -97,7 +97,7 @@ resources.$subscribe((mutation, state) => {
 		/>
 	</main>
 	<footer>
-		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="ml-2" />
+		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
 	</footer>
 </template>
 
@@ -126,10 +126,11 @@ main {
 }
 
 footer {
+	align-items: center;
+	background-color: var(--surface-section);
+	border-top: 1px solid var(--surface-border);
+	display: flex;
 	grid-area: footer;
 	height: 3rem;
-	background-color: var(--gray-800);
-	display: flex;
-	align-items: center;
 }
 </style>
