@@ -2,7 +2,7 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else>Showing {{ resultsCount }} results(s)</template>
+			<template v-else>Showing {{ resultsCount }} result(s)</template>
 		</span>
 		<template v-for="facet in chosenFacets">
 			<Chip
