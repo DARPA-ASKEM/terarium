@@ -51,7 +51,6 @@ import filtersUtil from '@/utils/filters-util';
 import useQueryStore from '@/stores/query';
 import IconChevronDown16 from '@carbon/icons-vue/es/chevron--down/16';
 import IconChevronUp16 from '@carbon/icons-vue/es/chevron--up/16';
-import { propsToAttrMap } from '@vue/shared';
 
 const FACET_DEFAULT_SIZE = 5;
 
@@ -193,7 +192,6 @@ export default defineComponent({
 				}
 			});
 
-			console.log(this.label);
 			if (this.rescaleAfterSelect) {
 				if (this.label === 'Publication Year') {
 					baseClone.sort((a, b) => a.selectedValue - b.selectedValue);
