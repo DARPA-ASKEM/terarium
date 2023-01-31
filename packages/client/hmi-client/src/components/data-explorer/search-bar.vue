@@ -9,8 +9,9 @@
 					placeholder="Search"
 					v-model="searchText"
 					@keyup.enter="execSearch"
-					@keyup.space="showAutoComplete"
+					@keyup.space="handleSearchEvent"
 					class="input-text"
+					@input="handleSearchEvent"
 				/>
 				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
 				<i
@@ -45,7 +46,7 @@ import * as EventService from '@/services/event';
 import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
 import { ResourceType } from '@/types/common';
-import { getRelatedWords } from '@/services/data';
+import { getRelatedWords, getAutocomplete } from '@/services/data';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -78,7 +79,6 @@ const clearText = () => {
 
 const execSearch = () => {
 	emit('search-text-changed', searchText.value);
-	autocompleteMenu.value.hide();
 	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
 };
 
@@ -93,11 +93,36 @@ function addSearchTermNoSpace(term) {
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
+
+function replaceSearchTerm(term) {
+	searchText.value = term;
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+
 const toggleSearchByExample = () => {
 	emit('toggle-search-by-example');
 };
 
-const showAutoComplete = async (event) => {
+async function showAutocomplete(event) {
+	if (searchText.value.length >= 3) {
+		const promise = getAutocomplete(searchText.value);
+		promise.then((response) => {
+			autocompleteMenuItems.value = response.map((item) => ({
+				label: item,
+				icon: 'pi pi-search',
+				command: () => {
+					replaceSearchTerm(item);
+				}
+			}));
+			// @ts-ignore
+			inputElement.value?.$el.focus();
+		});
+		autocompleteMenu.value.show(event);
+	}
+}
+
+async function showSuggestions(event) {
 	if (xddDataset.value) {
 		const promise = getRelatedWords(searchText.value, xddDataset.value);
 		promise.then((response) => {
@@ -111,8 +136,17 @@ const showAutoComplete = async (event) => {
 			// @ts-ignore
 			inputElement.value?.$el.focus();
 		});
+		autocompleteMenu.value.show(event);
 	}
-	autocompleteMenu.value.show(event);
+}
+
+const handleSearchEvent = (event) => {
+	const keyboardEvent = event as KeyboardEvent;
+	if (keyboardEvent.code === 'Space') {
+		showSuggestions(event);
+	} else {
+		showAutocomplete(event);
+	}
 };
 
 onMounted(() => {
