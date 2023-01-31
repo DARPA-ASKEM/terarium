@@ -9,9 +9,7 @@ import java.time.Instant;
 
 @Data
 @Accessors(chain = true)
-public class Dataset implements Serializable {
-
-	private String id;
+public class Dataset extends ResourceType implements Serializable {
 
 	private String name;
 
