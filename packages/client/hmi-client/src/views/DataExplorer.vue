@@ -45,6 +45,7 @@
 				</div>
 				<search-results-list
 					:data-items="dataItems"
+					:facets="filteredFacets"
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
