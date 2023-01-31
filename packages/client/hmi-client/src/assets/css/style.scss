@@ -49,7 +49,7 @@ body {
 		"header"
 		"main"
 		"footer";
-	grid-template-rows: max-content 1fr max-content;
+	grid-template-rows: minMax(var(--navbar-outer-height), max-content) 1fr max-content;
 }
 
 /* Highlights */
