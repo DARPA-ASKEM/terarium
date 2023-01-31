@@ -49,10 +49,6 @@ public class ExtractionResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
 	public XDDAutocompleteResponse getAutocomplete(@PathParam("term") String term) {
-
-		XDDAutocompleteResponse autocomplete = proxy.getAutocomplete(term);
-		System.out.println("===========");
-		System.out.println(autocomplete);
-		return autocomplete;
+		return proxy.getAutocomplete(term);
 	}
 }
