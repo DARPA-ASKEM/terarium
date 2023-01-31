@@ -74,7 +74,12 @@ public class ProjectResource {
 		@PathParam("project_id") final String projectId,
 		@QueryParam("types") final List<String> types
 	) {
-		return proxy.getAssets(projectId,types);
+		return Response
+			.status(Response.Status.OK)
+			.entity(proxy.getAssets(projectId, types))
+			.type(MediaType.APPLICATION_JSON)
+			.build();
+
 	}
 
 	@POST

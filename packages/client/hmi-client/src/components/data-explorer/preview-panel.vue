@@ -9,32 +9,39 @@
 		<template v-slot:content>
 			<div class="slider-header content">
 				<span>{{ resultType.toUpperCase() }}</span>
-				<i class="pi pi-times" @click="emit('update:previewItem', null)"></i>
+				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
 			</div>
 			<div class="selected-resources-pane">
 				<Document
 					v-if="resultType === ResourceType.XDD"
-					:asset-id="previewItemId as string"
+					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Dataset
 					v-if="resultType === ResourceType.DATASET"
-					:asset-id="previewItemId as string"
+					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Model
 					v-if="resultType === ResourceType.MODEL"
-					:asset-id="previewItemId as string"
+					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<footer>
 					<Button
+						v-if="!previewItemSelected"
 						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="add-to-cart"
+						class="toggle-selection"
+					/>
+					<Button
+						v-else
+						label="Remove from Resources"
+						@click="emit('toggle-data-item-selected', { item: previewItem })"
+						class="toggle-selection p-button-secondary"
 					/>
 				</footer>
 			</div>
@@ -45,14 +52,9 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
-
 import useResourcesStore from '@/stores/resources';
-
 import { ResultType, ResourceType } from '@/types/common';
-import { XDDArticle } from '@/types/XDD';
-
 import { isXDDArticle } from '@/utils/data-util';
-
 import Document from '@/components/articles/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
@@ -76,6 +78,10 @@ const props = defineProps({
 	},
 
 	// slider-panel props
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		default: () => []
+	},
 	previewItem: {
 		type: Object as PropType<ResultType | null>,
 		default: null
@@ -89,6 +95,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
@@ -98,24 +106,21 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
-		} else {
-			setTimeout(() => {
-				previewItemState.value = null;
-			}, 300);
 		}
 	}
 );
 
 const previewItemId = computed(() => {
-	const previewItem = previewItemState.value;
-	if (previewItem === null) return '';
-	if (isXDDArticle(previewItem)) {
-		const itemAsArticle = previewItem as XDDArticle;
-		// eslint-disable-next-line no-underscore-dangle
-		return itemAsArticle.gddId;
+	if (!previewItemState.value) return '';
+	if (isXDDArticle(previewItemState.value)) {
+		return previewItemState.value.gddId;
 	}
-	return previewItem.id;
+	return previewItemState.value.id as string;
 });
+
+const previewItemSelected = computed(() =>
+	props.selectedSearchItems.some((selectedItem) => selectedItem === props.previewItem)
+);
 </script>
 
 <style scoped>
@@ -145,14 +150,13 @@ footer {
 	background-color: var(--surface-section);
 	position: fixed;
 	height: 5rem;
-	bottom: 0;
+	bottom: 3rem;
 	width: calc(35% - 48px);
 	display: flex;
 	align-items: center;
 }
 
-.add-to-cart {
-	height: 1.5rem;
+.toggle-selection {
 	margin-left: 1rem;
 }
 </style>

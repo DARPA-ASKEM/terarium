@@ -9,10 +9,13 @@ import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
 import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
 import SimulationView from '@/views/Simulation.vue';
 import SimulationResultView from '@/views/SimulationResult.vue';
+import CodeView from '@/views/CodeView.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
 import DataExplorerView from '@/views/DataExplorer.vue';
 import UnauthorizedView from '@/views/Unauthorized.vue';
+import ModelEditorView from '@/views/ModelEditor.vue';
+import ModelRunnerView from '@/views/ModelRunner.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -23,6 +26,7 @@ export enum RoutePath {
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
+	Code = '/projects/:projectId/code',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
@@ -30,7 +34,9 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
+	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
+	ModelEditor = '/model-editor',
+	ModelRunner = '/model-runner'
 }
 
 const routes = [
@@ -53,12 +59,14 @@ const routes = [
 		props: (route) => ({ query: route.query.q })
 	},
 	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
-
+	{ name: RouteName.CodeRoute, path: RoutePath.Code, component: CodeView },
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground }
+	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
+	{ path: RoutePath.ModelEditor, component: ModelEditorView },
+	{ path: RoutePath.ModelRunner, component: ModelRunnerView }
 ];
 
 const router = createRouter({

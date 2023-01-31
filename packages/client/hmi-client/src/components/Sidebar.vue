@@ -2,7 +2,7 @@
 /**
  * Sidebar component for navigating view.
  * */
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { RouteParamsRaw, useRoute, useRouter } from 'vue-router';
 
 // Components
@@ -13,7 +13,7 @@ import DocumentsSidebarPanel from '@/components/sidebar-panel/documents-sidebar-
 import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-result-sidebar-panel.vue';
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
-import { RouteName, RouteMetadata } from '@/router/routes';
+import { RouteMetadata, RouteName } from '@/router/routes';
 import { Project } from '@/types/Project';
 
 const router = useRouter();
@@ -46,7 +46,9 @@ function showSidebar(view: RouteName): boolean {
 
 	// Sidebars that needs a defined Project
 	const noNeedProject =
-		[RouteName.SimulationRoute, RouteName.SimulationResultRoute].includes(view) && !!props.project;
+		[RouteName.SimulationRoute, RouteName.SimulationResultRoute, RouteName.CodeRoute].includes(
+			view
+		) && !!props.project;
 
 	return needProject || noNeedProject;
 }
@@ -67,7 +69,8 @@ const BUTTON_ORDER = [
 	RouteName.ModelRoute,
 	RouteName.DatasetRoute,
 	RouteName.SimulationResultRoute,
-	RouteName.DocumentRoute
+	RouteName.DocumentRoute,
+	RouteName.CodeRoute
 ];
 
 const DISABLED_BUTTONS = [RouteName.ProvenanceRoute];
