@@ -253,8 +253,13 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	let citation: string;
 	if (Object.keys(obj).length <= 1) {
 		citation = obj.unstructured_citation ?? '';
+		citation = citation.replace(
+			/\bhttps?:\/\/\S+/,
+			`<a style='color: var(--text-color-subdued); text-decoration: underline'>$&</a>`
+		);
+	} else {
+		citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 	}
-	citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 	return highlightSearchTerms(citation);
 };
 

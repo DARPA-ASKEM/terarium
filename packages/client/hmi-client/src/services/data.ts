@@ -376,9 +376,12 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 };
 
 const getRelatedWords = async (searchTerm: string, dataset?: string | null) => {
+	if (!searchTerm && !dataset) {
+		return [];
+	}
 	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
 	const response = await API.get(url);
-	const data = response.data.data;
+	const data = response?.data?.data;
 	const words = data ? data.map((tuple) => tuple[0]) : [];
 	return words;
 };
