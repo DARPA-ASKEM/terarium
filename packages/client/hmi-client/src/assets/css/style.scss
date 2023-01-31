@@ -21,29 +21,38 @@
     --header-height: 3.5rem;
     --navbar-outer-height: 51px;
 
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
+
 	background-color: var(--surface-ground);
 	color: var(--text-color-primary);
 	color-scheme: light;
-	font-family: 'Figtree';
-    font-style: normal;
+	font-family: var(--font-family);
+	font-size: var(--font-size);
+	font-style: normal;
+	font-synthesis: none;
+    font-weight: var(--font-weight);
+	text-rendering: optimizeLegibility;
 }
 
 /* Global */
 body {
     background-color: inherit;
     color: inherit;
-    display: flex;
-    flex-direction: column;
     font: inherit;
     isolation: isolate;
+
+
+	display: grid;
+	grid-template-areas: 
+		"header"
+		"main"
+		"footer";
+	grid-template-rows: max-content 1fr max-content;
 }
 
-/* Highlight */
+/* Highlights */
 .highlight,
 .hl {
 	background-color: var(--surface-highlight);

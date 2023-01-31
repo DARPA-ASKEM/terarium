@@ -97,16 +97,17 @@ resources.$subscribe((mutation, state) => {
 		/>
 	</main>
 	<footer>
-		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="uncharted-logo" />
+		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="ml-2" />
 	</footer>
 </template>
 
 <style scoped>
 .header {
-	z-index: 2;
+	grid-area: header;
 }
 
 main {
+	grid-area: main;
 	display: flex;
 	flex-grow: 1;
 	isolation: isolate;
@@ -124,20 +125,11 @@ main {
 	min-width: 0;
 }
 
-.data-explorer {
-	z-index: 3;
-}
-
 footer {
-	width: 100%;
-	height: 48px;
+	grid-area: footer;
+	height: 3rem;
 	background-color: var(--gray-800);
-	flex: none;
 	display: flex;
 	align-items: center;
-}
-
-.uncharted-logo {
-	padding-left: 1rem;
 }
 </style>
