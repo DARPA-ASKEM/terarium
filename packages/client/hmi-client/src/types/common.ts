@@ -3,6 +3,14 @@ import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
 import { XDDArticle, XDDArtifact, XDDSearchParams } from './XDD';
 
+export type Annotation = {
+	artifact_id: string;
+	artifact_type: string;
+	content: string;
+	timestampMillis: number;
+	username: number;
+};
+
 export enum ViewType {
 	LIST = 'list',
 	MATRIX = 'matrix',

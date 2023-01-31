@@ -58,7 +58,7 @@ import { isXDDArticle } from '@/utils/data-util';
 import Document from '@/components/articles/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
-import Slider from '@/components/Slider.vue';
+import Slider from '@/components/widgets/Slider.vue';
 
 const resources = useResourcesStore();
 
