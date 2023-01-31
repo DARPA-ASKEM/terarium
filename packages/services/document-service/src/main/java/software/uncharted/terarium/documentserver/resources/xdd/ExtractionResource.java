@@ -2,7 +2,6 @@ package software.uncharted.terarium.documentserver.resources.xdd;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.documentserver.responses.xdd.XDDAutocompleteResponse;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDExtractionsResponseOK;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDResponse;
 import software.uncharted.terarium.documentserver.proxies.xdd.ExtractionProxy;
@@ -47,7 +46,7 @@ public class ExtractionResource {
 	@Path("/askem_autocomplete/{term}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
-	public XDDAutocompleteResponse getAutocomplete(@PathParam("term") String term) {
+	public Response getAutocomplete(@PathParam("term") String term) {
 		return proxy.getAutocomplete(term);
 	}
 }

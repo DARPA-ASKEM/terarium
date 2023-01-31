@@ -1,7 +1,6 @@
 package software.uncharted.terarium.documentserver.proxies.xdd;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.documentserver.responses.xdd.XDDAutocompleteResponse;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDExtractionsResponseOK;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDResponse;
 
@@ -27,7 +26,7 @@ public interface ExtractionProxy {
 
 	@GET
 	@Path("askem_autocomplete/{term}")
-	XDDAutocompleteResponse  getAutocomplete(
+	Response  getAutocomplete(
 		@PathParam("term") final String term
 	);
 }
