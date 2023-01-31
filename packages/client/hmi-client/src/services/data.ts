@@ -95,8 +95,7 @@ const filterAssets = <T extends Model | Dataset>(
 interface GetAssetsParams {
 	term: string;
 	resourceType: ResourceType;
-	searchParam?: ModelSearchParams | DatasetSearchParams;
-	xDDSearchParam?: XDDSearchParams;
+	searchParam: ModelSearchParams & DatasetSearchParams & XDDSearchParams;
 }
 
 const getAssets = async (params: GetAssetsParams) => {
@@ -104,13 +103,13 @@ const getAssets = async (params: GetAssetsParams) => {
 	const term = params.term;
 	const resourceType = params.resourceType;
 	const searchParam = params.searchParam;
-	const xDDSearchParam = params.xDDSearchParam;
 
 	const results = {} as FullSearchResults;
 
 	// fetch list of model or datasets data from the HMI server
 	let assetList: Model[] | Dataset[] | XDDArticle[] = [];
 	let projectAssetType: ProjectAssetTypes;
+	let xddResults;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
@@ -123,9 +122,11 @@ const getAssets = async (params: GetAssetsParams) => {
 			break;
 		case ResourceType.XDD:
 			// @ts-ignore
-			assetList =
-				(await searchXDDArticles(term, searchParam?.[ResourceType.XDD])).results || // eslint-disable-line @typescript-eslint/no-use-before-define
+			xddResults =
+				(await searchXDDArticles(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
 				([] as XDDArticle[]);
+			assetList = xddResults.results;
+			results.relatedWords = xddResults.relatedWords;
 			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
 			break;
 		default:
@@ -182,7 +183,7 @@ const getAssets = async (params: GetAssetsParams) => {
 	};
 
 	// apply facet filters
-	if (searchParam) {
+	if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
 		// Filtering for model/dataset data
 		if (searchParam && searchParam.filters && !isEmpty(searchParam?.filters?.clauses)) {
 			// modelSearchParam currently represent facets filters that can be applied
@@ -277,7 +278,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		} else {
 			results.allDataFilteredWithFacets = results.allData;
 		}
-	} else if (xDDSearchParam) {
+	} else if (resourceType === ResourceType.XDD) {
 		// Filtering for Articles
 		const allResults = assetResults as XDDArticle[];
 		let returnResults = allResults;
@@ -288,11 +289,11 @@ const getAssets = async (params: GetAssetsParams) => {
 			// TOM TODO: change year to XDDArticle's "year" field
 			if (
 				field === 'year' &&
-				xDDSearchParam.max_published !== undefined &&
-				xDDSearchParam.min_published !== undefined
+				searchParam.max_published !== undefined &&
+				searchParam.min_published !== undefined
 			) {
-				const formattedMaxYear = xDDSearchParam.max_published.slice(0, 4);
-				const formattedMinYear = xDDSearchParam.min_published.slice(0, 4);
+				const formattedMaxYear = searchParam.max_published.slice(0, 4);
+				const formattedMinYear = searchParam.min_published.slice(0, 4);
 				returnResults = returnResults.filter(
 					(article) =>
 						Number(article.year) <= Number(formattedMaxYear) &&
@@ -301,9 +302,9 @@ const getAssets = async (params: GetAssetsParams) => {
 			}
 
 			// For all fields that are not year
-			else if (field in xDDSearchParam) {
+			else if (field in searchParam) {
 				// Check out xdd params actually has this field (if it doesnt it hasnt been clicked on as facet)
-				const filtersForField = xDDSearchParam[field].split(',') as string[]; // Split incase multiple of the same has been clicked (2 journals for eg)
+				const filtersForField = searchParam[field].split(',') as string[]; // Split incase multiple of the same has been clicked (2 journals for eg)
 				returnResults = returnResults.filter((article) => filtersForField.includes(article[field]));
 			}
 		});
@@ -313,6 +314,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		results.allDataFilteredWithFacets = results.allData;
 		results.allDataFilteredWithFacets.results = returnResults;
 		results.allData.facets = newFacets;
+		results.allData.xddExtractions = xddResults.xddExtractions;
 	} else {
 		results.allDataFilteredWithFacets = results.allData;
 	}
@@ -373,7 +375,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-const getRelatedWords = async (searchTerm: string, dataset: string | null | undefined) => {
+const getRelatedWords = async (searchTerm: string, dataset?: string | null) => {
 	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
 	const response = await API.get(url);
 	const data = response.data.data;
@@ -470,10 +472,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
 	const res = await API.get(url + searchParams);
-	const rawdata: XDDResult = res.data;
 
-	if (rawdata.success) {
-		const { data, hits, scrollId, nextPage } = rawdata.success;
+	if (res.data && res.data.success) {
+		const { data, hits, scrollId, nextPage } = res.data.success;
 		const articlesRaw =
 			xddSearchParam?.fields === undefined
 				? (data as XDDArticle[])
@@ -499,6 +500,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 		return {
 			results: articles,
+			relatedWords: await getRelatedWords(term, xddSearchParam?.dataset),
 			facets: formattedFacets,
 			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
@@ -508,11 +510,9 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		};
 	}
 
-	const relatedWords = getRelatedWords(term, xddSearchParam?.dataset);
-
 	return {
 		results: [] as XDDArticle[],
-		relatedWords,
+		relatedWords: await getRelatedWords(term, xddSearchParam?.dataset),
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -550,29 +550,19 @@ const getBulkDocuments = async (docIDs: string[]) => {
 
 const fetchResource = async (
 	term: string,
-	searchParamWithFacetFilters?: SearchParameters,
-	resourceType?: string
+	resourceType: ResourceType,
+	searchParamWithFacetFilters?: SearchParameters
 ): Promise<FullSearchResults> =>
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise<FullSearchResults>(async (resolve, reject) => {
 		try {
-			if (resourceType === ResourceType.XDD) {
-				resolve(
-					getAssets({
-						term,
-						resourceType,
-						xDDSearchParam: searchParamWithFacetFilters?.[resourceType as ResourceType.XDD]
-					})
-				);
-			} else if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
-				resolve(
-					getAssets({
-						term,
-						resourceType,
-						searchParam: searchParamWithFacetFilters?.[resourceType as ResourceType]
-					})
-				);
-			}
+			resolve(
+				getAssets({
+					term,
+					resourceType,
+					searchParam: searchParamWithFacetFilters?.[resourceType]
+				})
+			);
 		} catch (err: any) {
 			reject(new Error(`Error fetching ${resourceType} results: ${err}`));
 		}
@@ -707,11 +697,13 @@ const fetchData = async (
 		if (resourceType === ResourceType.ALL) {
 			Object.entries(ResourceType).forEach(async ([key]) => {
 				if (ResourceType[key] !== ResourceType.ALL) {
-					promiseList.push(fetchResource(term, searchParamWithFacetFilters, ResourceType[key]));
+					promiseList.push(fetchResource(term, ResourceType[key], searchParamWithFacetFilters));
 				}
 			});
 		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
-			promiseList.push(fetchResource(term, searchParamWithFacetFilters, resourceType));
+			promiseList.push(
+				fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters)
+			);
 		}
 	}
 
@@ -720,6 +712,7 @@ const fetchData = async (
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
 	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
+
 	return finalResponse;
 };
 
