@@ -114,7 +114,7 @@ export const getArticleFacets = (articles: XDDArticle[]) => {
 	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
-		const articlesMap = articles.map((model) => model[fieldName as keyof XDDArticle]);
+		const articlesMap = articles.map((article) => article[fieldName as keyof XDDArticle]);
 		const grouped = groupBy(articlesMap);
 		Object.keys(grouped).forEach((gKey) => {
 			if (gKey !== '') {
