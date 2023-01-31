@@ -27,7 +27,6 @@ public class ExtractionResource {
 	ExtractionProxy proxy;
 
 	@GET
-	@Path("/object")
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
