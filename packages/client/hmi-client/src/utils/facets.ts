@@ -117,7 +117,7 @@ export const getArticleFacets = (articles: XDDArticle[]) => {
 		const articlesMap = articles.map((article) => article[fieldName as keyof XDDArticle]);
 		const grouped = groupBy(articlesMap);
 		Object.keys(grouped).forEach((gKey) => {
-			if (gKey !== '') {
+			if (gKey !== '' && gKey !== 'undefined') {
 				aggs.push({ key: gKey, value: grouped[gKey].length });
 			}
 		});
@@ -130,10 +130,7 @@ export const getArticleFacets = (articles: XDDArticle[]) => {
 	ARTICLE_FACET_FIELDS.forEach((field) => {
 		// exclude dataset ID as a facet since it is created from mapping concepts
 		if (field !== ID) {
-			let facetForField = aggField(field);
-			facetForField = facetForField.filter(
-				(value) => value.key !== undefined && value.key !== 'undefined'
-			);
+			const facetForField = aggField(field);
 			if (facetForField.length > 0) {
 				facets[field] = facetForField;
 			}
