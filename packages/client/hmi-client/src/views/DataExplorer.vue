@@ -21,30 +21,31 @@
 				<div class="secondary-header">
 					<span class="p-buttonset">
 						<Button
-							class="p-button-text p-button-sm"
+							class="p-button-secondary p-button-sm"
 							:active="resultType === ResourceType.XDD"
 							label="Papers"
 							icon="pi pi-file"
 							@click="updateResultType(ResourceType.XDD)"
 						/>
 						<Button
-							class="p-button-text p-button-sm"
+							class="p-button-secondary p-button-sm"
 							:active="resultType === ResourceType.MODEL"
 							label="Models"
 							icon="pi pi-share-alt"
 							@click="updateResultType(ResourceType.MODEL)"
 						/>
 						<Button
-							class="p-button-text p-button-sm"
+							class="p-button-secondary p-button-sm"
 							:active="resultType === ResourceType.DATASET"
 							label="Datasets"
-							icon="pi pi-table"
+							icon="pi pi-database"
 							@click="updateResultType(ResourceType.DATASET)"
 						/>
 					</span>
 				</div>
 				<search-results-list
 					:data-items="dataItems"
+					:facets="filteredFacets"
 					:result-type="resultType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
@@ -97,20 +98,20 @@ import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
 
 import { fetchData, getXDDSets } from '@/services/data';
 import {
-	SearchParameters,
-	SearchResults,
 	Facets,
 	ResourceType,
 	ResultType,
-	ViewType,
-	SearchByExampleOptions
+	SearchByExampleOptions,
+	SearchParameters,
+	SearchResults,
+	ViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
-import { XDD_RESULT_DEFAULT_PAGE_SIZE, FACET_FIELDS as XDD_FACET_FIELDS, YEAR } from '@/types/XDD';
+import { FACET_FIELDS as XDD_FACET_FIELDS, XDD_RESULT_DEFAULT_PAGE_SIZE, YEAR } from '@/types/XDD';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceID, isXDDArticle, isModel, isDataset, validate } from '@/utils/data-util';
+import { getResourceID, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { LocationQuery, useRoute } from 'vue-router';
 import Button from 'primevue/button';
@@ -317,8 +318,7 @@ const executeSearch = async () => {
 					xddSearchParams.max_published = formattedValMaxYear;
 				}
 			} else {
-				const val = (clause.values as string[]).join(',');
-				xddSearchParams[clause.field] = val;
+				xddSearchParams[clause.field] = (clause.values as string[]).join(',');
 			}
 		}
 	});
@@ -557,8 +557,7 @@ onUnmounted(() => {
 	display: flex;
 	min-width: 0;
 	gap: 0.5rem;
-	margin: 0.5rem;
-	margin-bottom: 0;
+	margin: 0.5rem 0.5rem 0;
 }
 
 .secondary-header {
@@ -568,28 +567,37 @@ onUnmounted(() => {
 	height: var(--nav-bar-height);
 }
 
-.p-buttonset button {
+.p-button.p-button-secondary {
 	border: 1px solid var(--surface-border);
 	box-shadow: none;
+}
+
+.p-button[active='false'].p-button-secondary,
+.p-button[active='false'].p-button-secondary:focus,
+.p-button[active='false'].p-button-secondary:enabled {
+	border-color: var(--surface-border);
 	background-color: var(--surface-0);
+	color: var(--text-color-subdued);
 }
 
-.p-buttonset button[active='true'],
-.p-button.p-button-text:enabled:focus {
-	font-weight: bold;
-	border: none;
+.p-button[active='false'].p-button-secondary:hover {
+	border-color: var(--surface-border);
+	background-color: var(--surface-100);
+	color: var(--text-color-subdued);
+}
+
+.p-button[active='true'].p-button-secondary,
+.p-button[active='true'].p-button-secondary:focus,
+.p-button[active='true'].p-button-secondary:enabled {
+	border-color: var(--surface-border);
 	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
 }
 
-.button-group button:first-child {
-	border-left-width: 1px;
-	border-top-left-radius: 0.5rem;
-	border-bottom-left-radius: 0.5rem;
-}
-
-.button-group button:last-child {
-	border-top-right-radius: 0.5rem;
-	border-bottom-right-radius: 0.5rem;
+.p-button[active='true'].p-button-secondary:hover {
+	border-color: var(--surface-border);
+	background-color: var(--surface-highlight);
+	color: var(--text-color-subdued);
 }
 
 .facets-panel {

@@ -1,7 +1,19 @@
 <template>
-	<div class="results-count">
-		<template v-if="isLoading">Loading...</template>
-		<template v-else>Showing {{ resultsCount }} item(s)</template>
+	<div class="result-details">
+		<span class="result-count">
+			<template v-if="isLoading">Loading...</template>
+			<template v-else>Showing {{ resultsCount }} result(s)</template>
+		</span>
+		<template v-for="facet in chosenFacets">
+			<Chip
+				v-for="(value, index) in facet.values"
+				:label="(value as string)"
+				:key="index"
+				removable
+				@remove="removeFacetValue(facet.field, facet.values, value)"
+				remove-icon="pi pi-times"
+			/>
+		</template>
 	</div>
 	<div v-if="isLoading" class="loading-spinner">
 		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
@@ -25,15 +37,22 @@
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
 import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { SearchResults, ResourceType, ResultType } from '@/types/common';
+import { Facets, SearchResults, ResourceType, ResultType } from '@/types/common';
+import Chip from 'primevue/chip';
+import { ClauseValue } from '@/types/Filter';
 import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	dataItems: {
 		type: Array as PropType<SearchResults[]>,
 		default: () => []
+	},
+	facets: {
+		type: Object as PropType<Facets>,
+		required: true
 	},
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
@@ -56,6 +75,14 @@ const props = defineProps({
 const previewedAsset = ref<ResultType | null>(null);
 
 const emit = defineEmits(['toggle-data-item-selected']);
+
+const chosenFacets = computed(() => useQueryStore().clientFilters.clauses);
+
+const removeFacetValue = (field: string, values: ClauseValue[], valueToRemove: ClauseValue) => {
+	const query = useQueryStore();
+	values.splice(values.indexOf(valueToRemove), 1);
+	query.setSearchClause({ field, values });
+};
 
 const updateSelection = (asset: ResultType) => {
 	emit('toggle-data-item-selected', { item: asset, type: 'selected' });
@@ -153,11 +180,44 @@ ul {
 	font-weight: bold;
 }
 
-.search-container {
-	overflow-y: auto;
+.result-details {
+	display: flex;
+	align-items: center;
+	overflow: visible;
+	gap: 0.5rem;
 }
 
-.results-count {
+.result-details,
+.p-chip {
 	color: var(--text-color-subdued);
+}
+
+.result-count {
+	font-size: var(--font-size);
+	white-space: nowrap;
+}
+
+.p-chip {
+	outline: 1px solid var(--gray-300);
+	font-weight: bold;
+	padding: 0 0.75rem;
+	background-color: var(--surface-200);
+}
+
+.p-chip :deep(.p-chip-text) {
+	margin: 0.2rem 0;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+	overflow: hidden;
+}
+
+.p-chip,
+.p-chip :deep(.p-chip-remove-icon) {
+	font-size: var(--font-caption);
+}
+
+.search-container {
+	overflow-y: auto;
 }
 </style>
