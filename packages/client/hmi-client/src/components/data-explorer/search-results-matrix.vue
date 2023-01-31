@@ -380,7 +380,6 @@ const clustersInfo = computed(() => {
 			top: -1px;
 			z-index: 1;
 			font-weight: normal;
-			/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
 			background-color: var(--surface-ground);
 		}
 	}
