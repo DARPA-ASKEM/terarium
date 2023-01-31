@@ -59,7 +59,7 @@ const sidePanelTabStyle = computed(
 .slider,
 .slider-content,
 .slider-tab {
-	transition: all 0.3s ease-out;
+	transition: all 0.2s ease-out;
 }
 
 .slider.left.closed .slider-tab,

@@ -6,7 +6,7 @@ import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
-// import { isString } from 'lodash';
+import { isString } from 'lodash';
 
 const props = defineProps<{
 	assetId: string;
@@ -24,15 +24,19 @@ function highlightSearchTerms(text: string | undefined): string {
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<string | null>(null);
 
+const csvContent = computed(() =>
+	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
+);
+const rawColumnNames = computed(() =>
+	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
+);
+
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId);
-			dataset.value = await getDataset(props.assetId);
-
-			/*
 			const datasetTemp = await getDataset(props.assetId);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
@@ -42,94 +46,91 @@ watch(
 				});
 				dataset.value = datasetTemp;
 			}
-			*/
+		} else {
+			dataset.value = null;
+			rawContent.value = null;
 		}
-
-		dataset.value = null;
-		rawContent.value = null;
 	},
 	{ immediate: true }
 );
 
-const csvContent = computed(() =>
-	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
-);
-const rawColumnNames = computed(() =>
-	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
-);
-
-const formatFeatures = (d: Dataset) => d.annotations.annotations.feature ?? [];
+const annotations = computed(() => dataset.value?.annotations.annotations);
 </script>
 
 <template>
 	<section class="dataset">
-		<template v-if="dataset">
-			<h4 class="title">{{ dataset?.name }}</h4>
-			<ul>
-				<li><b>Description:</b> {{ dataset?.description }}</li>
-				<li><b>Maintainer:</b> {{ dataset?.maintainer }}</li>
-				<li><b>Quality:</b> {{ dataset?.quality }}</li>
-				<li><b>URL:</b> {{ dataset?.url }}</li>
-				<li><b>Geospatial Resolution:</b> {{ dataset?.geospatialResolution }}</li>
-				<li><b>Temporal Resolution:</b> {{ dataset?.temporalResolution }}</li>
-			</ul>
+		<h4 class="title">{{ dataset?.name }}</h4>
+		<Accordion :multiple="true" class="accordian">
+			<AccordionTab v-if="annotations" header="Description"
+				><span v-html="dataset?.description"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Maintainer"
+				><span v-html="dataset?.maintainer"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Quality"
+				><span v-html="dataset?.quality"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="URL"><span v-html="dataset?.url" /></AccordionTab>
+			<AccordionTab v-if="annotations" header="Geospatial Resolution"
+				><span v-html="dataset?.geospatialResolution"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Temporal Resolution"
+				><span v-html="dataset?.temporalResolution"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Annotations">
+				<div>
+					Geo Annotations:
+					<div v-for="annotation in annotations?.geo" :key="annotation.name">
+						<strong>{{ annotation.name }}</strong
+						>: <strong>Description: </strong> {{ annotation.description }}
+						<strong>GADM Level: </strong> {{ annotation.gadm_level }}
+					</div>
+				</div>
+				<div>
+					Temporal Annotations:
+					<div v-for="annotation in annotations.date" :key="annotation.name">
+						<strong>{{ annotation.name }}</strong
+						>: <strong>Description: </strong> {{ annotation.description }}
+						<strong>Time Format: </strong> {{ annotation.time_format }}
+					</div>
+				</div>
+			</AccordionTab>
+			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
+			<AccordionTab v-if="annotations" header="Features">
+				<div v-for="(feature, index) of annotations.feature" :key="index">
+					<div>Name: {{ highlightSearchTerms(feature.display_name || feature.name) }}</div>
+					<div>Type: {{ feature.feature_type }}</div>
+				</div>
+			</AccordionTab>
+			<!-- <AccordionTab header="Associated Objects"></AccordionTab> -->
+		</Accordion>
 
-			<Accordion :multiple="true" class="accordian">
-				<AccordionTab header="Annotations">
-					<div>
-						Geo Annotations:
-						<div v-for="annotation in dataset.annotations.annotations.geo" :key="annotation.name">
-							<strong>{{ annotation.name }}</strong
-							>: <strong>Description: </strong> {{ annotation.description }}
-							<strong>GADM Level: </strong> {{ annotation.gadm_level }}
-						</div>
-					</div>
-					<div>
-						Temporal Annotations:
-						<div v-for="annotation in dataset.annotations.annotations.date" :key="annotation.name">
-							<strong>{{ annotation.name }}</strong
-							>: <strong>Description: </strong> {{ annotation.description }}
-							<strong>Time Format: </strong> {{ annotation.time_format }}
-						</div>
-					</div>
-				</AccordionTab>
-				<AccordionTab header="Concepts"> </AccordionTab>
-				<AccordionTab header="Features">
-					<div v-for="(feature, index) of formatFeatures(dataset)" :key="index">
-						<div>Name: {{ highlightSearchTerms(feature.display_name || feature.name) }}</div>
-						<div>Type: {{ feature.feature_type }}</div>
-					</div>
-				</AccordionTab>
-				<AccordionTab header="Associated Objects"> </AccordionTab>
-			</Accordion>
-
-			<!-- table preview of the data -->
-			Dataset Records: {{ csvContent.length }}
-			<div class="table-fixed-head">
-				<table>
-					<thead>
-						<tr class="tr-item">
-							<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
-							<td
-								v-for="(_, colIndex) in row"
-								:key="colIndex.toString()"
-								class="title-and-abstract-col"
-							>
-								<div class="title-and-abstract-layout">
-									<div class="content">
-										<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
-									</div>
+		<!-- table preview of the data -->
+		Dataset Records: {{ csvContent.length }}
+		<div class="table-fixed-head">
+			<table>
+				<thead>
+					<tr class="tr-item">
+						<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
+						<td
+							v-for="(_, colIndex) in row"
+							:key="colIndex.toString()"
+							class="title-and-abstract-col"
+						>
+							<div class="title-and-abstract-layout">
+								<div class="content">
+									<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
 								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		</template>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 	</section>
 </template>
 

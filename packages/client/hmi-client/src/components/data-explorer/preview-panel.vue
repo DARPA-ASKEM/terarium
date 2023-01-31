@@ -32,9 +32,16 @@
 				/>
 				<footer>
 					<Button
+						v-if="!previewItemSelected"
 						label="Add to Resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="add-to-cart"
+						class="toggle-selection"
+					/>
+					<Button
+						v-else
+						label="Remove from Resources"
+						@click="emit('toggle-data-item-selected', { item: previewItem })"
+						class="toggle-selection p-button-secondary"
 					/>
 				</footer>
 			</div>
@@ -71,6 +78,10 @@ const props = defineProps({
 	},
 
 	// slider-panel props
+	selectedSearchItems: {
+		type: Array as PropType<ResultType[]>,
+		default: () => []
+	},
 	previewItem: {
 		type: Object as PropType<ResultType | null>,
 		default: null
@@ -84,6 +95,8 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
@@ -93,10 +106,6 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
-		} else {
-			setTimeout(() => {
-				previewItemState.value = null;
-			}, 300);
 		}
 	}
 );
@@ -108,6 +117,10 @@ const previewItemId = computed(() => {
 	}
 	return previewItemState.value.id as string;
 });
+
+const previewItemSelected = computed(() =>
+	props.selectedSearchItems.some((selectedItem) => selectedItem === props.previewItem)
+);
 </script>
 
 <style scoped>
@@ -143,8 +156,7 @@ footer {
 	align-items: center;
 }
 
-.add-to-cart {
-	height: 1.5rem;
+.toggle-selection {
 	margin-left: 1rem;
 }
 </style>
