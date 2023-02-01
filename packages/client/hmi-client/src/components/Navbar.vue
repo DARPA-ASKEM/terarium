@@ -270,27 +270,6 @@ i {
 	white-space: nowrap;
 }
 
-.suggested-terms,
-.p-chip {
-	font-size: small;
-	font-weight: bold;
-	color: var(--text-color-subdued);
-}
-
-.p-chip {
-	padding: 0 0.75rem;
-	background-color: var(--surface-200);
-}
-
-.p-chip span {
-	margin: 0.25rem 0;
-	cursor: pointer;
-}
-
-.p-chip :deep(.p-chip-remove-icon) {
-	font-size: 0.75rem;
-}
-
 .clear-search-terms:enabled {
 	color: var(--text-color-secondary);
 	background-color: transparent;
