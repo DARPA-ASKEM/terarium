@@ -1,12 +1,39 @@
+<template>
+	<Navbar
+		v-if="!isErrorState"
+		class="header"
+		:project="project"
+		:searchBarText="searchBarText"
+		:relatedSearchTerms="relatedSearchTerms"
+	/>
+	<main>
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
+		<router-view
+			class="page"
+			:project="project"
+			@search-query-changed="updateSearchBar"
+			@related-search-terms-updated="updateRelatedSearchTerms"
+		/>
+	</main>
+	<footer>
+		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
+	</footer>
+</template>
+
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Navbar from '@/components/Navbar.vue';
+import API from '@/api/api';
 import Sidebar from '@/components/Sidebar.vue';
-import { Project } from '@/types/Project';
+import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import API from '@/api/api';
+import { Project } from '@/types/Project';
 import { RoutePath, useCurrentRoute } from './router/index';
 
 /**
@@ -73,33 +100,6 @@ resources.$subscribe((mutation, state) => {
 	project.value = state.activeProject;
 });
 </script>
-
-<template>
-	<Navbar
-		v-if="!isErrorState"
-		class="header"
-		:project="project"
-		:searchBarText="searchBarText"
-		:relatedSearchTerms="relatedSearchTerms"
-	/>
-	<main>
-		<Sidebar
-			v-if="isSidebarVisible && !isErrorState"
-			class="sidebar"
-			data-test-id="sidebar"
-			:project="project"
-		/>
-		<router-view
-			class="page"
-			:project="project"
-			@search-query-changed="updateSearchBar"
-			@related-search-terms-updated="updateRelatedSearchTerms"
-		/>
-	</main>
-	<footer>
-		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
-	</footer>
-</template>
 
 <style scoped>
 .header {

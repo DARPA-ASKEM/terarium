@@ -1,19 +1,69 @@
+<template>
+	<header>
+		<section class="header-left">
+			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+			<nav>
+				<Dropdown
+					class="dropdown"
+					v-model="selectedPage"
+					:options="Object.values(navItems)"
+					optionLabel="name"
+					panelClass="dropdown-panel"
+					@change="goToPage"
+				>
+					<template #value="slotProps">
+						<i :class="slotProps.value.icon" />
+						<span>{{ slotProps.value.name }}</span>
+					</template>
+					<template #option="slotProps">
+						<i :class="slotProps.option.icon" />
+						<span>{{ slotProps.option.name }}</span>
+					</template>
+				</Dropdown>
+			</nav>
+		</section>
+		<SearchBar
+			class="search-bar"
+			:text="query"
+			@query-changed="queryChanged"
+			@toggle-search-by-example="searchByExampleModalToggled"
+		/>
+		<section class="header-right">
+			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+		</section>
+		<aside class="suggested-terms" v-if="!isEmpty(terms)">
+			Suggested terms:
+			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
+				<span @click="addSearchTerm(term)">{{ term }}</span>
+			</Chip>
+		</aside>
+	</header>
+	<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
+	<Dialog header="Logout" v-model:visible="isLogoutDialog">
+		<p>You will be returned to the login screen.</p>
+		<template #footer>
+			<Button label="Cancel" class="p-button-secondary" @click="closeLogoutDialog" />
+			<Button label="Ok" @click="auth.logout" />
+		</template>
+	</Dialog>
+</template>
+
 <script setup lang="ts">
 import { computed, ref, watch, shallowRef } from 'vue';
 import { useRouter, RouteParamsRaw } from 'vue-router';
-import Button from 'primevue/button';
+import { isEmpty } from 'lodash';
 import Avatar from 'primevue/avatar';
-import Menu from 'primevue/menu';
-import { Project } from '@/types/Project';
-import useAuthStore from '@/stores/auth';
+import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
-import SearchBar from '@/components/data-explorer/search-bar.vue';
-import { RouteMetadata, RouteName } from '@/router/routes';
 import Dropdown from 'primevue/dropdown';
+import Menu from 'primevue/menu';
+import SearchBar from '@/components/data-explorer/search-bar.vue';
 import { useCurrentRoute, RoutePath } from '@/router/index';
-import { isEmpty } from 'lodash';
+import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedWords } from '@/services/data';
+import useAuthStore from '@/stores/auth';
+import { Project } from '@/types/Project';
 
 const props = defineProps<{
 	project: Project | null;
@@ -122,20 +172,19 @@ watch(currentRoute, (newRoute) => {
 });
 
 /*
- * Search text
+ * Search
  */
 
 const query = ref<string>();
-
-function searchTextChanged(value) {
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
-}
-
-/*
- * Suggested Terms
- */
-
 const terms = ref<string[]>([]);
+
+function queryChanged(q: string | null) {
+	// Empty the related terms when the query is over
+	if (!q) {
+		terms.value = [];
+	}
+	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
+}
 
 watch(
 	() => props.searchBarText,
@@ -153,56 +202,6 @@ function addSearchTerm(term) {
 	query.value = query.value ? query.value.concat(' ').concat(term) : term;
 }
 </script>
-
-<template>
-	<header>
-		<section class="header-left">
-			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
-			<nav>
-				<Dropdown
-					class="dropdown"
-					v-model="selectedPage"
-					:options="Object.values(navItems)"
-					optionLabel="name"
-					panelClass="dropdown-panel"
-					@change="goToPage"
-				>
-					<template #value="slotProps">
-						<i :class="slotProps.value.icon" />
-						<span>{{ slotProps.value.name }}</span>
-					</template>
-					<template #option="slotProps">
-						<i :class="slotProps.option.icon" />
-						<span>{{ slotProps.option.name }}</span>
-					</template>
-				</Dropdown>
-			</nav>
-		</section>
-		<SearchBar
-			class="search-bar"
-			:text="query"
-			@search-text-changed="searchTextChanged"
-			@toggle-search-by-example="searchByExampleModalToggled"
-		/>
-		<section class="header-right">
-			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
-		</section>
-		<aside class="suggested-terms" v-if="!isEmpty(terms)">
-			Suggested terms:
-			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="addSearchTerm(term)">{{ term }}</span>
-			</Chip>
-		</aside>
-	</header>
-	<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
-	<Dialog header="Logout" v-model:visible="isLogoutDialog">
-		<p>You will be returned to the login screen.</p>
-		<template #footer>
-			<Button label="Cancel" class="p-button-secondary" @click="closeLogoutDialog" />
-			<Button label="Ok" @click="auth.logout" />
-		</template>
-	</Dialog>
-</template>
 
 <style scoped>
 header {
@@ -302,5 +301,15 @@ i {
 
 .p-chip :deep(.p-chip-remove-icon) {
 	font-size: 0.75rem;
+}
+
+.clear-search-terms:enabled {
+	color: var(--text-color-secondary);
+	background-color: transparent;
+}
+
+.clear-search-terms:enabled:hover {
+	background-color: var(--surface-hover);
+	color: var(--text-color-secondary);
 }
 </style>

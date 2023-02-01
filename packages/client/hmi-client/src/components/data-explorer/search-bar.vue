@@ -6,18 +6,18 @@
 				<InputText
 					type="text"
 					placeholder="Search"
-					v-model="searchText"
+					v-model="query"
 					@keyup.enter="execSearch"
 					class="input-text"
 				/>
 				<i
 					class="pi pi-times clear-search"
-					:class="{ hidden: isClearSearchButtonHidden }"
+					:class="{ hidden: isClearQueryButtonHidden }"
 					style="font-size: 1rem"
-					@click="clearText"
+					@click="clearQuery"
 				/>
 			</span>
-			<!-- <i class="pi pi-history" /> -->
+			<!-- <i class="pi pi-history" title="Search history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
 	</section>
@@ -28,30 +28,29 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';
-import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
+import { EventType } from '@/types/EventType';
 
 const props = defineProps<{
-	text?: string;
-	suggestedTerms?: string[];
+	query?: string;
 }>();
 
-const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
+const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 const resources = useResourcesStore();
 
-const searchText = ref('');
-const defaultText = computed(() => props.text);
-const isClearSearchButtonHidden = computed(() => !searchText.value);
+const query = ref('');
+const isClearQueryButtonHidden = computed(() => !query.value);
 
-const clearText = () => {
-	searchText.value = '';
-};
+function clearQuery() {
+	query.value = '';
+	emit('query-changed');
+}
 
 const execSearch = () => {
-	emit('search-text-changed', searchText.value);
-	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
+	emit('query-changed', query.value);
+	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
 // const toggleSearchByExample = () => {
@@ -60,12 +59,15 @@ const execSearch = () => {
 
 onMounted(() => {
 	const { q } = route.query;
-	searchText.value = q?.toString() ?? searchText.value;
+	query.value = q?.toString() ?? query.value;
 });
 
-watch(defaultText, (newText) => {
-	searchText.value = newText || searchText.value;
-});
+watch(
+	() => props.query,
+	(newQuery) => {
+		query.value = newQuery ?? query.value;
+	}
+);
 </script>
 
 <style scoped>
@@ -96,6 +98,7 @@ watch(defaultText, (newText) => {
 	height: 3rem;
 }
 
+/* 
 .pi-history {
 	color: var(--text-color-secondary);
 }
@@ -108,7 +111,8 @@ watch(defaultText, (newText) => {
 .pi-image:hover {
 	color: var(--text-color-primary);
 	cursor: pointer;
-}
+} 
+*/
 
 .clear-search:hover {
 	background-color: var(--surface-hover);
@@ -116,16 +120,6 @@ watch(defaultText, (newText) => {
 	border-radius: 1rem;
 	top: 1rem;
 	right: 0.5rem;
-}
-
-.clear-search-terms:enabled {
-	color: var(--text-color-secondary);
-	background-color: transparent;
-}
-
-.clear-search-terms:enabled:hover {
-	background-color: var(--surface-hover);
-	color: var(--text-color-secondary);
 }
 
 .clear-search.hidden {
