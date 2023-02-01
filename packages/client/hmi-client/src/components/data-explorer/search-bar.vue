@@ -72,7 +72,7 @@ const execSearch = () => {
 // };
 
 function addToQuery(term: string) {
-	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
+	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
 	execSearch();
 	// @ts-ignore
 	inputElement.value?.$el.focus();

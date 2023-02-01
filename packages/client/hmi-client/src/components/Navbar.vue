@@ -261,8 +261,10 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
+	color: var(--text-subdued);
 	display: flex;
 	column-gap: 0.5rem;
+	font-size: var(--font-caption);
 	grid-area: suggested-terms;
 	justify-content: center;
 	margin-top: 0.5rem;
