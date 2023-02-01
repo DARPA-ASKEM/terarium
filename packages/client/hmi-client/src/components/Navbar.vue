@@ -25,7 +25,6 @@
 		<SearchBar
 			class="search-bar"
 			ref="searchBarRef"
-			:query-add-on="query"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -176,8 +175,6 @@ watch(currentRoute, (newRoute) => {
 /*
  * Search
  */
-
-const query = ref<string>();
 const terms = ref<string[]>([]);
 
 function queryChanged(q: string | null) {
