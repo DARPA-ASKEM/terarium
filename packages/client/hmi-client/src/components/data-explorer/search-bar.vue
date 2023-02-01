@@ -43,7 +43,6 @@ const route = useRoute();
 const resources = useResourcesStore();
 
 const props = defineProps<{
-	text: string;
 	resultType: string;
 }>();
 
@@ -75,6 +74,7 @@ const execSearch = () => {
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
 	execSearch();
+	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
 defineExpose({ addToQuery });
