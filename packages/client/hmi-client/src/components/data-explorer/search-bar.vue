@@ -5,6 +5,7 @@
 				<i class="pi pi-search" />
 				<InputText
 					type="text"
+					ref="inputElement"
 					placeholder="Search"
 					v-model="query"
 					@keyup.enter="execSearch"
@@ -32,7 +33,7 @@ import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/EventType';
 
 const props = defineProps<{
-	query?: string;
+	queryAddOn?: string;
 }>();
 
 const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
@@ -40,7 +41,9 @@ const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 const route = useRoute();
 const resources = useResourcesStore();
 
+const inputElement = ref();
 const query = ref('');
+
 const isClearQueryButtonHidden = computed(() => !query.value);
 
 function clearQuery() {
@@ -57,13 +60,19 @@ const execSearch = () => {
 // 	emit('toggle-search-by-example');
 // };
 
+function addToQuery(term) {
+	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
+	inputElement.value?.$el.focus();
+}
+defineExpose({ addToQuery });
+
 onMounted(() => {
 	const { q } = route.query;
 	query.value = q?.toString() ?? query.value;
 });
 
 watch(
-	() => props.query,
+	() => props.queryAddOn,
 	(newQuery) => {
 		query.value = newQuery ?? query.value;
 	}

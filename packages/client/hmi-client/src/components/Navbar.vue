@@ -24,7 +24,8 @@
 		</section>
 		<SearchBar
 			class="search-bar"
-			:text="query"
+			ref="searchBarRef"
+			:query-add-on="query"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -34,7 +35,7 @@
 		<aside class="suggested-terms" v-if="!isEmpty(terms)">
 			Suggested terms:
 			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="addToQuery(term)">{{ term }}</span>
+				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
 			</Chip>
 		</aside>
 	</header>
@@ -97,6 +98,7 @@ const emptyNavItem = {
 };
 const navItems = shallowRef<NavItem>(initialNavItems);
 
+const searchBarRef = ref();
 const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
 const auth = useAuthStore();
 const userMenu = ref();
@@ -196,10 +198,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-function addToQuery(term) {
-	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
-}
 </script>
 
 <style scoped>
