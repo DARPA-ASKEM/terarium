@@ -55,6 +55,7 @@ const execSearch = () => {
 
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
+	execSearch();
 }
 defineExpose({ addToQuery });
 
