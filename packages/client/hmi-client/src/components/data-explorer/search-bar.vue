@@ -24,23 +24,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/EventType';
 
-const props = defineProps<{
-	query?: string;
-}>();
-
 const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 const resources = useResourcesStore();
-
 const query = ref('');
+
 const isClearQueryButtonHidden = computed(() => !query.value);
 
 function clearQuery() {
@@ -57,17 +53,15 @@ const execSearch = () => {
 // 	emit('toggle-search-by-example');
 // };
 
+function addToQuery(term: string) {
+	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
+}
+defineExpose({ addToQuery });
+
 onMounted(() => {
 	const { q } = route.query;
 	query.value = q?.toString() ?? query.value;
 });
-
-watch(
-	() => props.query,
-	(newQuery) => {
-		query.value = newQuery ?? query.value;
-	}
-);
 </script>
 
 <style scoped>

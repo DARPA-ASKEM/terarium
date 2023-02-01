@@ -24,7 +24,7 @@
 		</section>
 		<SearchBar
 			class="search-bar"
-			:text="searchQuery"
+			ref="searchBarRef"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -34,7 +34,7 @@
 		<aside class="suggested-terms" v-if="!isEmpty(terms)">
 			Suggested terms:
 			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="addToQuery(term)">{{ term }}</span>
+				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
 			</Chip>
 		</aside>
 	</header>
@@ -97,6 +97,7 @@ const emptyNavItem = {
 };
 const navItems = shallowRef<NavItem>(initialNavItems);
 
+const searchBarRef = ref();
 const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
 const auth = useAuthStore();
 const userMenu = ref();
@@ -174,34 +175,15 @@ watch(currentRoute, (newRoute) => {
 /*
  * Search
  */
-
-const searchQuery = ref<string>();
 const terms = ref<string[]>([]);
 
-function queryChanged(q: string | null) {
-	console.log(q);
+async function queryChanged(q: string | null) {
 	// Empty the related terms when the query is over
-	// if (!q) {
-	// 	terms.value = [];
-	// }
+	if (!q) terms.value = [];
+	else terms.value = await getRelatedWords(q);
+	console.log(q, terms.value);
+
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
-}
-
-watch(
-	() => props.query,
-	async (newQuery) => {
-		searchQuery.value = newQuery;
-		terms.value = [];
-		if (newQuery) {
-			console.log(newQuery);
-			terms.value = await getRelatedWords(newQuery);
-		}
-	},
-	{ immediate: true }
-);
-
-function addToQuery(term) {
-	searchQuery.value = searchQuery.value ? searchQuery.value.concat(' ').concat(term).trim() : term;
 }
 </script>
 
