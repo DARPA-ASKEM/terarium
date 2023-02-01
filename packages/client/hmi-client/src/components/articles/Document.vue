@@ -48,7 +48,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables(${tableArtifacts.length})`">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -60,7 +60,7 @@
 				</AccordionTab>
 				<AccordionTab
 					v-if="!isEmpty(equationArtifacts)"
-					:header="`Equations(${equationArtifacts.length})`"
+					:header="`Equations (${equationArtifacts.length})`"
 				>
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
@@ -71,7 +71,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(urlArtifacts)" :header="`URLs(${urlArtifacts.length})`">
+				<AccordionTab v-if="!isEmpty(urlArtifacts)" :header="`URLs (${urlArtifacts.length})`">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -79,7 +79,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherArtifacts)" :header="`Others(${otherArtifacts.length})`">
+				<AccordionTab v-if="!isEmpty(otherArtifacts)" :header="`Others (${otherArtifacts.length})`">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
@@ -89,13 +89,16 @@
 				</AccordionTab>
 				<AccordionTab
 					v-if="!isEmpty(doc.citationList)"
-					:header="`References(${doc.citationList.length})`"
+					:header="`References (${doc.citationList.length})`"
 				>
 					<div v-for="(citation, key) of doc.citationList" :Key="key">
 						{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<AccordionTab
+					v-if="!isEmpty(relatedTerariumArtifacts)"
+					:header="`Associated resources (${relatedTerariumArtifacts.length})`"
+				>
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
 					</DataTable>
