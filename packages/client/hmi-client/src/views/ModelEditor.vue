@@ -7,6 +7,7 @@
 		<Button @click="runPetri()">Run simulation</Button>
 		<Button @click="addVariable('S')">Add state</Button>
 		<Button @click="addVariable('T')">Add transition</Button>
+		<Button @click="onDownload()">Download Petri</Button>
 
 		<div>States</div>
 		<table>
@@ -457,6 +458,26 @@ const gridData = async () => {
 		});
 		await renderer.render();
 	}
+};
+
+const onDownload = () => {
+	const petri = graph2petri((renderer as any).graph as any);
+
+	const pom = document.createElement('a');
+	pom.setAttribute(
+		'href',
+		`data:text/plain;charset=utf-8,${encodeURIComponent(JSON.stringify(petri, null, 2))}`
+	);
+	pom.setAttribute('download', 'petri.json');
+
+	if (document.createEvent) {
+		const event = document.createEvent('MouseEvents');
+		event.initEvent('click', true, true);
+		pom.dispatchEvent(event);
+	} else {
+		pom.click();
+	}
+	pom.remove();
 };
 
 // Entry point
