@@ -177,25 +177,14 @@ watch(currentRoute, (newRoute) => {
  */
 const terms = ref<string[]>([]);
 
-function queryChanged(q: string | null) {
+async function queryChanged(q: string | null) {
 	// Empty the related terms when the query is over
-	if (!q) {
-		terms.value = [];
-	}
+	if (!q) terms.value = [];
+	else terms.value = await getRelatedWords(q);
+	console.log(q, terms.value);
+
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
-
-watch(
-	() => props.query,
-	async (newQuery) => {
-		terms.value = [];
-		if (newQuery) {
-			terms.value = await getRelatedWords(newQuery);
-			console.log(newQuery, terms.value);
-		}
-	},
-	{ immediate: true }
-);
 </script>
 
 <script lang="ts">
