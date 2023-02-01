@@ -278,6 +278,7 @@ i {
 	column-gap: 0.5rem;
 	grid-area: suggested-terms;
 	justify-content: center;
+	margin-top: 0.5rem;
 	overflow: hidden;
 	white-space: nowrap;
 }

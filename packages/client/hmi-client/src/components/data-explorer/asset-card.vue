@@ -255,11 +255,12 @@ const formatFeatures = () => {
 	background-color: var(--surface-a);
 	border: 1px solid transparent;
 	color: var(--text-color-subdued);
-	padding: 1rem;
-	margin: 1px;
-	font-size: var(--font-caption);
 	display: flex;
+	font-size: var(--font-caption);
 	justify-content: space-between;
+	margin: 1px;
+	min-height: 5rem;
+	padding: 1rem;
 }
 
 .asset-card:hover {
