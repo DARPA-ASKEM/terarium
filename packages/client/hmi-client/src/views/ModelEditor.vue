@@ -2,7 +2,7 @@
 	<section class="container" style="max-height: 90vh; overflow-y: auto">
 		<div style="display: flex">
 			<div id="playground"></div>
-			<div id="parameters"></div>
+			<metadata-table :data="currentNodeMetadata" />
 		</div>
 		<Button @click="runPetri()">Run simulation</Button>
 		<Button @click="addVariable('S')">Add state</Button>
@@ -68,12 +68,14 @@ import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
+import MetadataTable from '@/components/models/MetadataTable.vue';
 
 const router = useRouter();
 
 const variablesRef = ref<any[]>([]);
 const stateVariables = computed(() => variablesRef.value.filter((d) => d.type === 'S'));
 const paramVariables = computed(() => variablesRef.value.filter((d) => d.type === 'T'));
+const currentNodeMetadata = ref<any | null>(null);
 
 const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -308,7 +310,7 @@ const TEST_METADATA = JSON.parse(
 );
 
 const TEST_META = JSON.parse(
-	'{"15": "  Susceptible;  susceptible (uninfected);  fraction of population in susceptible stage;  Susceptible individuals;  fraction of the population in each stage at day 1;","16": "  Infected;  infected (asymptomatic or pauci-symptomatic infected, undetected);  fraction of population in infected stage;  Infected individuals;  number of diagnosed individuals who recovered;  fraction of the population in each stage at day 1;","17": "  Diagnosed;  diagnosed (asymptomatic infected, detected);  fraction of population in diagnosed stage;  Infected individuals;  fraction of the population in each stage at day 1;","18": "  Ailing;  ailing (symptomatic infected, undetected);  fraction of population in ailing stage;  Infected individuals;  fraction of the population in each stage at day 1;","19": "  Recognized;  recognized (symptomatic infected, detected);  fraction of population in recognized stage;  Infected individuals;  fraction of the population in each stage at day 1;","20": "  Threatened;  threatened (infected with life-threatening symptoms, detected);  fraction of population in threatened stage;  Infected individuals;  fraction of the population in each stage at day 1;","21": "  Healed;  healed (recovered);  fraction of population in hospitalized stage;  Healed individuals;  fraction of the population in each stage at day 1;","22": "  Extinct;  extinct (dead);  fraction of population in expired stage;  Deceased individuals;  fraction of the population in each stage at day 1;","0": "  transmission rate due to contacts between a susceptible subject and an infected subject;  parameter magnitude of relative epidemiological information;  Infection rate;  Social-distancing countermeasures;  Transmission parameters, related to lockdown measures;  Increases all the curves;  Infection coefficient;  transmission coefficient;  Transmission coefficient;","1": "  transmission rate due to contacts between a susceptible subject and a diagnosed subject;  parameter magnitude of relative epidemiological information;  Transmission rate;  Transmission parameters, related to lockdown measures;  Increases all the curves;  Infection coefficient;  transmission coefficient;","2": "  transmission rate due to contacts between a susceptible subject and an ailing subject;  parameter magnitude of relative epidemiological information;  Recovery rate;  Social-distancing countermeasures;  Transmission parameters, related to lockdown measures;  Increases all the curves;  Infection coefficient;  Transmission coefficient;","3": "  transmission rate due to contacts between a susceptible subject and a recognized subject;  parameter magnitude of relative epidemiological information;  Transmission rate;  Transmission parameters, related to lockdown measures;  Increases all the curves;  Infection coefficient;  Transmission coefficient;","4": "  probability rate of detection of asymptomatic cases;  Constant;  parameter magnitude of relative epidemiological information;  Infection rate;  Decreases all the curves;  Testing coefficient;","5": "  probability rate at which an ailing subject is recognized;  rate at which undetected infected subjects develop life-threatening symptoms;  Constant;  parameter magnitude of relative epidemiological information;  Testing parameter;  Decreases final number of infected and recovered, increases number of deaths;  worsening coefficients leading to life-threatening symptoms;","6": "  probability rate at which an infected subject not aware of being infected develops clinically relevant symptoms;  parameter magnitude of relative epidemiological information;  Testing parameter;  Decreases final number of infected and recovered, increases number of deaths;  worsening coefficients leading to clinically relevant symptoms;","7": "  probability rate at which an infected subject not aware of being infected is diagnosed;  rate of recovery for infected subjects;  parameter magnitude of relative epidemiological information;  Healing parameter;  Decreases all the curves, apart from the curve of recovered patients;  healing coefficient;","8": "  probability rate at which an infected subject aware of being infected develops clinically relevant symptoms;  parameter magnitude of relative epidemiological information;  Testing parameter;  Decreases final number of infected and recovered, increases number of deaths;  worsening coefficients leading to clinically relevant symptoms;","9": "  probability rate at which an infected subject aware of being infected is diagnosed;  rate of recovery for infected subjects;  parameter magnitude of relative epidemiological information;  Healing parameter;  Decreases all the curves;  healing coefficients;","10": "  probability rate of detection of symptomatic cases;  Constant;  parameter magnitude of relative epidemiological information;  Testing parameter;  Decreases all the curves;  Testing coefficient;","11": "  probability rate at;  rate of recovery for infected subjects;  parameter magnitude of relative epidemiological information;  Healing parameter;  Decreases all the curves;  healing coefficients;","12": "  rate at which detected infected subjects develop life-threatening symptoms;  parameter magnitude of relative epidemiological information;  Testing parameter;  Decreases final number of infected and recovered, increases number of deaths;  worsening coefficients leading to life-threatening symptoms;","13": "  rate of recovery for infected subjects;  parameter magnitude of;  Healing parameter;  Decreases all the curves;  healing coefficients;","14": "  rate of recovery for infected subjects;  Healing parameter;  Decreases all the curves;  healing coefficients;","23": "  mortality rate for infected subjects with life-threatening symptoms;  parameter magnitude of relative epidemiological information;  Healing parameter;  Leaves all the curves almost unaffected;  mortality coefficient;"}'
+	'{"15": {"type": "variable", "name": "S", "id": "v0", "text_annotations": [" Susceptible (uninfected)"], "dkg_annotations": [["ncit:C171133", "COVID-19 Infection"], ["ido:0000514", "susceptible population"]]}, "16": {"type": "variable", "name": "I", "id": "v1", "text_annotations": [" Infected (asymptomatic or pauci-symptomatic infected, undetected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]]}, "17": {"type": "variable", "name": "D", "id": "v2", "text_annotations": [" Diagnosed (asymptomatic infected, detected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]]}, "18": {"type": "variable", "name": "A", "id": "v3", "text_annotations": [" Ailing (symptomatic infected, undetected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]]}, "19": {"type": "variable", "name": "R", "id": "v4", "text_annotations": [" Recognized (symptomatic infected, detected)"], "dkg_annotations": [["ncit:C171133", "COVID-19 Infection"], ["ncit:C28554", "Dead"]]}, "20": {"type": "variable", "name": "T", "id": "v5", "text_annotations": [" Threatened (infected with life-threatening symptoms, detected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]]}, "21": {"type": "variable", "name": "H", "id": "v6", "text_annotations": [" Healed (recovered)"], "dkg_annotations": [["ncit:C171133", "COVID-19 Infection"], ["ncit:C28554", "Dead"]]}, "22": {"type": "variable", "name": "E", "id": "v7", "text_annotations": [" Extinct (dead)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]]}, "0": {"type": "variable", "name": "\u03b1", "id": "v8", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)"], "dkg_annotations": []}, "1": {"type": "variable", "name": "\u03b2", "id": "v9", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)"], "dkg_annotations": [["doid:0080928", "dialysis-related amyloidosis"], ["vo:0005114", "\u03b2-propiolactone-inactivated SARS-CoV vaccine"]]}, "2": {"type": "variable", "name": "\u03b3", "id": "v10", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)"], "dkg_annotations": [["askemo:0000013", "recovery rate"], ["vo:0004915", "vaccine specific interferon-\u03b3 immune response"]]}, "3": {"type": "variable", "name": "\u03b4", "id": "v11", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)\u03b5"], "dkg_annotations": [["askemo:0000011", "progression rate"], ["vo:0005123", "VSV\u0394G-MERS vaccine"]]}, "4": {}, "5": {}, "6": {"type": "variable", "name": "\u03b6", "id": "v13", "text_annotations": [" probability rate at which an infected subject not aware of being infected develops clinically relevant symptoms"], "dkg_annotations": []}, "7": {"type": "variable", "name": "\u03bb", "id": "v17", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": []}, "8": {"type": "variable", "name": "\u03b7", "id": "v14", "text_annotations": [" probability rate at which an infected subject aware of being infected develops clinically relevant symptoms\u03bc"], "dkg_annotations": []}, "9": {"type": "variable", "name": "\u03c1", "id": "v20", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": []}, "10": {"type": "variable", "name": "\u03b8", "id": "v12", "text_annotations": [" probability rate of detection relative to symptomatic cases"], "dkg_annotations": []}, "11": {"type": "variable", "name": "\u03ba", "id": "v18", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": []}, "12": {"type": "variable", "name": "\u03bd", "id": "v15", "text_annotations": [" Rate at which detected infected subjects develop life-threatening symptoms"], "dkg_annotations": []}, "13": {"type": "variable", "name": "\u03be", "id": "v19", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": []}, "14": {"type": "variable", "name": "\u03c3", "id": "v21", "text_annotations": [" Rate of recovery for infected subjectsNone"], "dkg_annotations": []}, "23": {"type": "variable", "name": "\u03c4", "id": "v16", "text_annotations": [" Mortality rate for infected subjects with life-threatening symptoms"], "dkg_annotations": []}}'
 );
 
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
@@ -471,6 +473,7 @@ onMounted(async () => {
 		source = null;
 		target = null;
 		renderer?.render();
+		currentNodeMetadata.value = null;
 	});
 
 	renderer.on('node-click', (_evtName, evt, d) => {
@@ -501,12 +504,13 @@ onMounted(async () => {
 	});
 
 	renderer.on('node-mouse-enter', (_evtName, _evt, el) => {
-		const textContent = TEST_META[el.datum().data.uid];
-		el.append('text').attr('x', 50).attr('y', 15).attr('popup', true).text(textContent);
+		const metadataObj = TEST_META[el.datum().data.uid];
+		// el.append('text').attr('x', 50).attr('y', 15).attr('popup', true).text(metadataObj);
+		currentNodeMetadata.value = metadataObj;
 	});
-	renderer.on('node-mouse-leave', (_evtName, _evt, el) => {
-		el.selectAll('text[popup=true]').remove();
-	});
+	// renderer.on('node-mouse-leave', (_evtName, _evt, el) => {
+	// 	el.selectAll('text[popup=true]').remove();
+	// });
 
 	document.addEventListener('keyup', async (event) => {
 		if (event.key === 'Backspace' && renderer) {
@@ -609,7 +613,7 @@ onMounted(async () => {
 
 <style scoped>
 #playground {
-	width: 1000px;
+	width: 800px;
 	height: 350px;
 	border: 1px solid #bbb;
 }
