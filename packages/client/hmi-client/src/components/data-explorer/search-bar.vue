@@ -185,25 +185,10 @@ watch(defaultText, (newText) => {
 	white-space: nowrap;
 }
 
-.suggested-terms,
-.p-chip {
-	font-size: small;
+.suggested-terms {
 	font-weight: bold;
+	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-}
-
-.p-chip {
-	padding: 0 0.75rem;
-	background-color: var(--surface-200);
-}
-
-.p-chip span {
-	margin: 0.25rem 0;
-	cursor: pointer;
-}
-
-.p-chip :deep(.p-chip-remove-icon) {
-	font-size: 0.75rem;
 }
 
 .p-input-icon-left {
