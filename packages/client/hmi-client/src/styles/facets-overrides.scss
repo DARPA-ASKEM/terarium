@@ -11,7 +11,7 @@ facet-terms {
   // No item in the group is being hovered
   --facet-terms-bar-0-normal: var(--primary-color);
   // Another item in the group is being hovered
-  --facet-terms-bar-0-normal-contrast: var(--primary-color-light); 
+  --facet-terms-bar-0-normal-contrast: var(--primary-color-light);
   // This item is being hovered
   --facet-terms-bar-0-normal-contrast-hover: var(--primary-color);
 
@@ -44,20 +44,31 @@ facet-bars {
   --facet-bars-0-selected-contrast-hover: #{$accent-main};
   --facet-bars-1-unselected-contrast-hover: #{$accent-lightest};
   --facet-bars-0-unselected-contrast-hover: #{$accent-main};
+
   :deep(.facet-bars-selection-computed) {
     border-color: $accent-main;
     background-color: rgba($color: $accent-main, $alpha: 0.05);
   }
+
   :deep(.facet-bars-selection-handle-left) {
     border-right-color: $accent-main;
   }
+
   :deep(.facet-bars-selection-handle-right) {
     border-left-color: $accent-main;
   }
+
   :deep(.facet-bars-selection-clear-button) {
     background-color: $accent-main;
   }
+
   :deep(.facet-bars-value-background) {
     background-color: $accent-lightest;
   }
+}
+
+facet-timeline {
+  --facet-bars-0-normal: var(--primary-color);
+  --facet-bars-0-normal-contrast-hover: var(--primary-color-light);
+  --facet-bars-0-unselected: var(--primary-color-light);
 }

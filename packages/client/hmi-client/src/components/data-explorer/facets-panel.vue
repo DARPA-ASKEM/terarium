@@ -1,6 +1,12 @@
 <template>
 	<div class="facets-panel">
-		<div v-for="facet in formattedFacets" :key="facet.label">
+		<!-- <facet-timeline :data="timelineData">
+			<div slot="header" class="slot-header">
+				<span class="facet-font">{{ formattedFacetsYear[0].label }}</span>
+			</div>
+		</facet-timeline> -->
+		<timeline-facet :data="timelineData" :label="formattedFacetsYear[0]?.label"></timeline-facet>
+		<div v-for="facet in formattedFacetsNoYear" :key="facet.label">
 			<numerical-facet
 				v-if="facet.isNumerical"
 				:key="facet.label"
@@ -22,11 +28,28 @@
 	</div>
 </template>
 
+<style scoped>
+.facet-blueprint-content {
+	background-color: var(--surface-a);
+}
+
+.slot-header {
+	padding: 2px 15px 0px 10px;
+}
+
+.slot-header,
+.slot-left,
+.slot-right {
+	background-color: var(--surface-a);
+}
+</style>
+
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
 
 import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
+import TimelineFacet from '@/components/facets/timeline-facet.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
@@ -84,5 +107,25 @@ const formattedFacets = computed(() => {
 		};
 	});
 	return facetList;
+});
+
+const formattedFacetsNoYear = computed(() =>
+	formattedFacets.value.filter((facet) => facet.id !== 'year')
+);
+const formattedFacetsYear = computed(() =>
+	formattedFacets.value.filter((facet) => facet.id === 'year')
+);
+const timelineData = computed(() => {
+	console.log(formattedFacetsYear.value[0]?.label);
+	const initialValue = 0;
+	const totalValue = formattedFacetsYear.value[0]?.baseData.reduce(
+		(accumulator, currentValue) => accumulator + currentValue.value,
+		initialValue
+	);
+	const timeline = formattedFacetsYear.value[0]?.baseData.map((entry) => ({
+		ratio: entry.value / totalValue,
+		label: entry.key
+	}));
+	return timeline;
 });
 </script>
