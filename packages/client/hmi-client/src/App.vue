@@ -1,5 +1,12 @@
 <template>
-	<Navbar v-if="!isErrorState" class="header" :project="project" :query="searchBarText" />
+	<header>
+		<Navbar
+			v-if="!isErrorState"
+			:project="project"
+			:query="searchBarText"
+			:resultType="resultType"
+		/>
+	</header>
 	<main>
 		<Sidebar
 			v-if="isSidebarVisible && !isErrorState"
@@ -7,7 +14,12 @@
 			data-test-id="sidebar"
 			:project="project"
 		/>
-		<router-view class="page" :project="project" @search-query-changed="updateSearchBar" />
+		<router-view
+			class="page"
+			:project="project"
+			@search-query-changed="updateSearchBar"
+			@result-type-changed="updateResultType"
+		/>
 	</main>
 	<footer>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
@@ -24,6 +36,7 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { Project } from '@/types/Project';
 import { RoutePath, useCurrentRoute } from './router/index';
+import { ResourceType } from './types/common';
 
 /**
  * Router
@@ -39,6 +52,7 @@ const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const searchBarText = ref('');
 const resources = useResourcesStore();
+const resultType = ref<string>(ResourceType.XDD);
 /**
  * Project
  *
@@ -49,6 +63,10 @@ const project = ref<Project | null>(null);
 
 function updateSearchBar(newQuery) {
 	searchBarText.value = newQuery;
+}
+
+function updateResultType(newResultType) {
+	resultType.value = newResultType;
 }
 
 API.interceptors.response.use(
@@ -86,7 +104,7 @@ resources.$subscribe((mutation, state) => {
 </script>
 
 <style scoped>
-.header {
+header {
 	grid-area: header;
 }
 

@@ -382,6 +382,14 @@ async function getRelatedWords(searchTerm: string, dataset?: string | null): Pro
 	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
 }
 
+const getAutocomplete = async (searchTerm: string) => {
+	const url = `/xdd/extractions/askem_autocomplete/${searchTerm}`;
+	const response = await API.get(url);
+	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
+	const terms = data.map((d) => d.text);
+	return terms;
+};
+
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
@@ -720,5 +728,6 @@ export {
 	getDocumentById,
 	getBulkDocuments,
 	getRelatedDocuments,
-	getRelatedWords
+	getRelatedWords,
+	getAutocomplete
 };

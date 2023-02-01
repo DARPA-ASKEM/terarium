@@ -1,43 +1,42 @@
 <template>
-	<header>
-		<section class="header-left">
-			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
-			<nav>
-				<Dropdown
-					class="dropdown"
-					v-model="selectedPage"
-					:options="Object.values(navItems)"
-					optionLabel="name"
-					panelClass="dropdown-panel"
-					@change="goToPage"
-				>
-					<template #value="slotProps">
-						<i :class="slotProps.value.icon" />
-						<span>{{ slotProps.value.name }}</span>
-					</template>
-					<template #option="slotProps">
-						<i :class="slotProps.option.icon" />
-						<span>{{ slotProps.option.name }}</span>
-					</template>
-				</Dropdown>
-			</nav>
-		</section>
-		<SearchBar
-			class="search-bar"
-			ref="searchBarRef"
-			@query-changed="queryChanged"
-			@toggle-search-by-example="searchByExampleModalToggled"
-		/>
-		<section class="header-right">
-			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
-		</section>
-		<aside class="suggested-terms" v-if="!isEmpty(terms)">
-			Suggested terms:
-			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
-			</Chip>
-		</aside>
-	</header>
+	<section class="header-left">
+		<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+		<nav>
+			<Dropdown
+				class="dropdown"
+				v-model="selectedPage"
+				:options="Object.values(navItems)"
+				optionLabel="name"
+				panelClass="dropdown-panel"
+				@change="goToPage"
+			>
+				<template #value="slotProps">
+					<i :class="slotProps.value.icon" />
+					<span>{{ slotProps.value.name }}</span>
+				</template>
+				<template #option="slotProps">
+					<i :class="slotProps.option.icon" />
+					<span>{{ slotProps.option.name }}</span>
+				</template>
+			</Dropdown>
+		</nav>
+	</section>
+	<SearchBar
+		class="search-bar"
+		ref="searchBarRef"
+		:resultType="resultType"
+		@query-changed="queryChanged"
+		@toggle-search-by-example="searchByExampleModalToggled"
+	/>
+	<section class="header-right">
+		<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+	</section>
+	<aside class="suggested-terms" v-if="!isEmpty(terms)">
+		Suggested terms:
+		<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
+			<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
+		</Chip>
+	</aside>
 	<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 	<Dialog header="Logout" v-model:visible="isLogoutDialog">
 		<p>You will be returned to the login screen.</p>
@@ -68,6 +67,7 @@ import { Project } from '@/types/Project';
 const props = defineProps<{
 	project: Project | null;
 	query: string;
+	resultType: string;
 }>();
 
 interface NavItem {
@@ -185,13 +185,6 @@ async function queryChanged(q: string | null) {
 
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
-</script>
-
-<script lang="ts">
-// use normal <script> to declare options
-export default {
-	inheritAttrs: false
-};
 </script>
 
 <style scoped>
