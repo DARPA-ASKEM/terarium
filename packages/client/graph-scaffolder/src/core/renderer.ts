@@ -15,6 +15,7 @@ interface Options {
 	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
 
 	useZoom?: boolean;
+	zoomRange?: [number, number];
 	useStableLayout?: boolean;
 
 	// Attempt to use the same set of zoom parameters across layout changes
@@ -294,7 +295,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		const minZoom = 0.05;
 		const maxZoom = Math.max(2, Math.floor((this.graph.width as number) / this.chartSize.width));
 		let zoomLevel = Math.min(1, 1 / ((this.graph.height as number) / this.chartSize.height));
-		this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
+
+		if (this.options.zoomRange) {
+			this.zoom = d3
+				.zoom()
+				.scaleExtent(this.options.zoomRange)
+				.on('zoom', zoomed)
+				.on('end', zoomEnd);
+		} else {
+			this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
+		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
 		let zoomX =
