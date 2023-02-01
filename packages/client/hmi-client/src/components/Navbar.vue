@@ -34,7 +34,7 @@
 		<aside class="suggested-terms" v-if="!isEmpty(terms)">
 			Suggested terms:
 			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
-				<span @click="addSearchTerm(term)">{{ term }}</span>
+				<span @click="addToQuery(term)">{{ term }}</span>
 			</Chip>
 		</aside>
 	</header>
@@ -189,17 +189,16 @@ function queryChanged(q: string | null) {
 watch(
 	() => props.searchBarText,
 	async (newSearchTerm) => {
+		terms.value = [];
 		if (newSearchTerm) {
 			terms.value = await getRelatedWords(newSearchTerm);
-		} else {
-			terms.value = [];
 		}
 	},
 	{ immediate: true }
 );
 
-function addSearchTerm(term) {
-	query.value = query.value ? query.value.concat(' ').concat(term) : term;
+function addToQuery(term) {
+	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
 }
 </script>
 
