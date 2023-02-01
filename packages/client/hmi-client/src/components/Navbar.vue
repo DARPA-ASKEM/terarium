@@ -3,8 +3,14 @@
 		<section class="header-left">
 			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
 			<nav>
-				<Dropdown class="dropdown" v-model="selectedPage" :options="Object.values(navItems)" optionLabel="name"
-					panelClass="dropdown-panel" @change="goToPage">
+				<Dropdown
+					class="dropdown"
+					v-model="selectedPage"
+					:options="Object.values(navItems)"
+					optionLabel="name"
+					panelClass="dropdown-panel"
+					@change="goToPage"
+				>
 					<template #value="slotProps">
 						<i :class="slotProps.value.icon" />
 						<span>{{ slotProps.value.name }}</span>
@@ -16,8 +22,12 @@
 				</Dropdown>
 			</nav>
 		</section>
-		<SearchBar class="search-bar" ref="searchBarRef" @query-changed="queryChanged"
-			@toggle-search-by-example="searchByExampleModalToggled" />
+		<SearchBar
+			class="search-bar"
+			ref="searchBarRef"
+			@query-changed="queryChanged"
+			@toggle-search-by-example="searchByExampleModalToggled"
+		/>
 		<section class="header-right">
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 		</section>
@@ -181,8 +191,8 @@ watch(
 	async (newQuery) => {
 		terms.value = [];
 		if (newQuery) {
-			console.log(newQuery);
 			terms.value = await getRelatedWords(newQuery);
+			console.log(newQuery, terms.value);
 		}
 	},
 	{ immediate: true }
@@ -247,7 +257,7 @@ header {
 	height: 100%;
 }
 
-.header-left>>>.p-dropdown-label.p-inputtext {
+.header-left >>> .p-dropdown-label.p-inputtext {
 	padding-right: 0;
 }
 
