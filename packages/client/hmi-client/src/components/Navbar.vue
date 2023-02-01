@@ -183,16 +183,8 @@ async function queryChanged(q: string | null) {
 	else terms.value = await getRelatedWords(q);
 	console.log(q, terms.value);
 
-
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
-</script>
-
-<script lang="ts">
-// use normal <script> to declare options
-export default {
-	inheritAttrs: false
-};
 </script>
 
 <script lang="ts">
