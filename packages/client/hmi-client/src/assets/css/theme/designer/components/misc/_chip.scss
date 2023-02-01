@@ -4,8 +4,8 @@
     background-color: $chipBg;
     color: $chipTextColor;
     border-radius: $chipBorderRadius;
-    font-weight: bold;
-    font-size: var(--font-caption);
+    font-weight: $fontWeightSemiBold;
+    font-size: $fontCaption;
     padding: 0 0.75rem;
 
     .p-chip-text,
@@ -33,7 +33,7 @@
     }
 
     .p-chip-remove-icon {
-        font-size: var(--font-caption);
+        font-size: $fontCaption;
         margin-left: $inlineSpacing;
         border-radius: $borderRadius;
         transition: $actionIconTransition;
