@@ -5,8 +5,8 @@
 			border: $accordionHeaderBorder;
 			color: $accordionHeaderTextColor;
 			background: $accordionHeaderBg;
-			font-weight: $fontWeightSemiBold;
-			font-size: $fontBodyMedium;
+			font-weight: $accordionHeaderFontWeight;
+			font-size: $accordionHeaderFontSize;
 			border-radius: $borderRadius;
 			transition: $listItemTransition;
 

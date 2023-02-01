@@ -381,7 +381,8 @@ $accordionSpacing: 0 !default;
 $accordionHeaderBorder: 0 none !default;
 $accordionHeaderBg: #ffffff !default;
 $accordionHeaderTextColor: $textColor !default;
-$accordionHeaderFontWeight: 400 !default;
+$accordionHeaderFontWeight: $fontWeightSemiBold !default;
+$accordionHeaderFontSize: $fontBodyMedium !default;
 $accordionHeaderPadding: .5rem !default;
 
 $accordionHeaderHoverBg: #f6f6f6 !default;
