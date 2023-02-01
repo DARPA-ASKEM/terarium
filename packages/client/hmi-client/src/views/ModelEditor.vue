@@ -306,13 +306,331 @@ const SIRD2 = {
 	]
 };
 
-const TEST_METADATA = JSON.parse(
-	'{"S": [{"sname": "S", "uid": 15}, {"sname": " I", "uid": 16}, {"sname": " D", "uid": 17}, {"sname": " A", "uid": 18}, {"sname": " R", "uid": 19}, {"sname": " T", "uid": 20}, {"sname": " H", "uid": 21}, {"sname": " E", "uid": 22}], "T": [{"tname": "alpha", "uid": 0}, {"tname": " beta", "uid": 1}, {"tname": " gamma", "uid": 2}, {"tname": " delta", "uid": 3}, {"tname": " epsilon", "uid": 4}, {"tname": " mu", "uid": 5}, {"tname": " zeta", "uid": 6}, {"tname": " lamda", "uid": 7}, {"tname": " eta", "uid": 8}, {"tname": " rho", "uid": 9}, {"tname": " theta", "uid": 10}, {"tname": " kappa", "uid": 11}, {"tname": " nu", "uid": 12}, {"tname": " xi", "uid": 13}, {"tname": " sigma", "uid": 14}, {"tname": " tau", "uid": 23}], "I": [], "O": []}'
-);
+const TEST_METADATA = {
+	S: [
+		{ sname: 'S', uid: 15 },
+		{ sname: ' I', uid: 16 },
+		{ sname: ' D', uid: 17 },
+		{ sname: ' A', uid: 18 },
+		{ sname: ' R', uid: 19 },
+		{ sname: ' T', uid: 20 },
+		{ sname: ' H', uid: 21 },
+		{ sname: ' E', uid: 22 }
+	],
+	T: [
+		{ tname: 'alpha', uid: 0 },
+		{ tname: ' beta', uid: 1 },
+		{ tname: ' gamma', uid: 2 },
+		{ tname: ' delta', uid: 3 },
+		{ tname: ' epsilon', uid: 4 },
+		{ tname: ' mu', uid: 5 },
+		{ tname: ' zeta', uid: 6 },
+		{ tname: ' lamda', uid: 7 },
+		{ tname: ' eta', uid: 8 },
+		{ tname: ' rho', uid: 9 },
+		{ tname: ' theta', uid: 10 },
+		{ tname: ' kappa', uid: 11 },
+		{ tname: ' nu', uid: 12 },
+		{ tname: ' xi', uid: 13 },
+		{ tname: ' sigma', uid: 14 },
+		{ tname: ' tau', uid: 23 }
+	],
+	I: [],
+	O: []
+};
 
-const TEST_META = JSON.parse(
-	'{"15": {"type": "variable", "name": "S", "id": "v0", "text_annotations": [" Susceptible (uninfected)"], "dkg_annotations": [["ncit:C171133", "COVID-19 Infection"], ["ido:0000514", "susceptible population"]], "equation_annotations": {"\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)": ["S"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "16": {"type": "variable", "name": "I", "id": "v1", "text_annotations": [" Infected (asymptomatic or pauci-symptomatic infected, undetected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]], "equation_annotations": {"{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)": ["I"], "{\\hat{D}}(t)=\\varepsilon I(t)-(\\eta+\\rho)D(t)": ["I"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "17": {"type": "variable", "name": "D", "id": "v2", "text_annotations": [" Diagnosed (asymptomatic infected, detected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]], "equation_annotations": {"{\\hat{D}}(t)=\\varepsilon I(t)-(\\eta+\\rho)D(t)": ["D"], "\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)": ["D"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "18": {"type": "variable", "name": "A", "id": "v3", "text_annotations": [" Ailing (symptomatic infected, undetected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]], "equation_annotations": {"{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)": ["A"], "\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)": ["A"], "{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)": ["A"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "19": {"type": "variable", "name": "R", "id": "v4", "text_annotations": [" Recognized (symptomatic infected, detected)"], "dkg_annotations": [["ncit:C171133", "COVID-19 Infection"], ["ncit:C28554", "Dead"]], "equation_annotations": {"{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)": []}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "20": {"type": "variable", "name": "T", "id": "v5", "text_annotations": [" Threatened (infected with life-threatening symptoms, detected)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]], "equation_annotations": {"{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)": []}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "21": {"type": "variable", "name": "H", "id": "v6", "text_annotations": [" Healed (recovered)"], "dkg_annotations": [["ncit:C171133", "COVID-19 Infection"], ["ncit:C28554", "Dead"]], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "22": {"type": "variable", "name": "E", "id": "v7", "text_annotations": [" Extinct (dead)"], "dkg_annotations": [["ido:0000511", "infected population"], ["ncit:C171133", "COVID-19 Infection"]], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "0": {"type": "variable", "name": "\u03b1", "id": "v8", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)"], "dkg_annotations": [], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "1": {"type": "variable", "name": "\u03b2", "id": "v9", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)"], "dkg_annotations": [["doid:0080928", "dialysis-related amyloidosis"], ["vo:0005114", "\u03b2-propiolactone-inactivated SARS-CoV vaccine"]], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "2": {"type": "variable", "name": "\u03b3", "id": "v10", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)"], "dkg_annotations": [["askemo:0000013", "recovery rate"], ["vo:0004915", "vaccine specific interferon-\u03b3 immune response"]], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "3": {"type": "variable", "name": "\u03b4", "id": "v11", "text_annotations": [" Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)\u03b5"], "dkg_annotations": [["askemo:0000011", "progression rate"], ["vo:0005123", "VSV\u0394G-MERS vaccine"]], "equation_annotations": {"\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)": ["\u03b4"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "4": {"file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "5": {"file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "6": {"type": "variable", "name": "\u03b6", "id": "v13", "text_annotations": [" probability rate at which an infected subject not aware of being infected develops clinically relevant symptoms"], "dkg_annotations": [], "equation_annotations": {"{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)": ["\u03b6"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "7": {"type": "variable", "name": "\u03bb", "id": "v17", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": [], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "8": {"type": "variable", "name": "\u03b7", "id": "v14", "text_annotations": [" probability rate at which an infected subject aware of being infected develops clinically relevant symptoms\u03bc"], "dkg_annotations": [], "equation_annotations": {"R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)": ["\u03b7"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "9": {"type": "variable", "name": "\u03c1", "id": "v20", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": [], "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "10": {"type": "variable", "name": "\u03b8", "id": "v12", "text_annotations": [" probability rate of detection relative to symptomatic cases"], "dkg_annotations": [], "equation_annotations": {"{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)": ["\u03b8"], "H(t)=i I(t)+\\theta b(t)+\\kappa d(t)+i R(t)+\\sigma T(t)": ["\u03b8"], "R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)": ["\u03b8"], "\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)": ["\u03b8"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "11": {"type": "variable", "name": "\u03ba", "id": "v18", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": [], "equation_annotations": {"{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)": ["\u03ba"], "H(t)=i I(t)+\\theta b(t)+\\kappa d(t)+i R(t)+\\sigma T(t)": ["\u03ba"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "12": {"type": "variable", "name": "\u03bd", "id": "v15", "text_annotations": [" Rate at which detected infected subjects develop life-threatening symptoms"], "dkg_annotations": [], "equation_annotations": {"R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)": ["\u03bd"], "{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)": ["\u03bd"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "13": {"type": "variable", "name": "\u03be", "id": "v19", "text_annotations": [" Rate of recovery for infected subjects"], "dkg_annotations": [], "equation_annotations": {"R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)": ["\u03be"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "14": {"type": "variable", "name": "\u03c3", "id": "v21", "text_annotations": [" Rate of recovery for infected subjectsNone"], "dkg_annotations": [], "equation_annotations": {"H(t)=i I(t)+\\theta b(t)+\\kappa d(t)+i R(t)+\\sigma T(t)": ["\u03c3"], "{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)": ["\u03c3"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}, "23": {"type": "variable", "name": "\u03c4", "id": "v16", "text_annotations": [" Mortality rate for infected subjects with life-threatening symptoms"], "dkg_annotations": [], "equation_annotations": {"{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)": ["\u03c4"]}, "file": "41591_2020_Article_883.pdf", "doi": "https://doi.org/10.1038/s41591-020-0883-7"}}'
-);
+const TEST_META = {
+	'15': {
+		type: 'variable',
+		name: 'S',
+		id: 'v0',
+		text_annotations: [' Susceptible (uninfected)'],
+		dkg_annotations: [
+			['ncit:C171133', 'COVID-19 Infection'],
+			['ido:0000514', 'susceptible population']
+		],
+		equation_annotations: { '\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)': ['S'] },
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'16': {
+		type: 'variable',
+		name: 'I',
+		id: 'v1',
+		text_annotations: [' Infected (asymptomatic or pauci-symptomatic infected, undetected)'],
+		dkg_annotations: [
+			['ido:0000511', 'infected population'],
+			['ncit:C171133', 'COVID-19 Infection']
+		],
+		equation_annotations: {
+			'{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)': ['I'],
+			'{\\hat{D}}(t)=\\varepsilon I(t)-(\\eta+\\rho)D(t)': ['I']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'17': {
+		type: 'variable',
+		name: 'D',
+		id: 'v2',
+		text_annotations: [' Diagnosed (asymptomatic infected, detected)'],
+		dkg_annotations: [
+			['ido:0000511', 'infected population'],
+			['ncit:C171133', 'COVID-19 Infection']
+		],
+		equation_annotations: {
+			'{\\hat{D}}(t)=\\varepsilon I(t)-(\\eta+\\rho)D(t)': ['D'],
+			'\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)': ['D']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'18': {
+		type: 'variable',
+		name: 'A',
+		id: 'v3',
+		text_annotations: [' Ailing (symptomatic infected, undetected)'],
+		dkg_annotations: [
+			['ido:0000511', 'infected population'],
+			['ncit:C171133', 'COVID-19 Infection']
+		],
+		equation_annotations: {
+			'{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)': ['A'],
+			'\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)': ['A'],
+			'{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)': ['A']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'19': {
+		type: 'variable',
+		name: 'R',
+		id: 'v4',
+		text_annotations: [' Recognized (symptomatic infected, detected)'],
+		dkg_annotations: [
+			['ncit:C171133', 'COVID-19 Infection'],
+			['ncit:C28554', 'Dead']
+		],
+		equation_annotations: { '{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)': [] },
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'20': {
+		type: 'variable',
+		name: 'T',
+		id: 'v5',
+		text_annotations: [' Threatened (infected with life-threatening symptoms, detected)'],
+		dkg_annotations: [
+			['ido:0000511', 'infected population'],
+			['ncit:C171133', 'COVID-19 Infection']
+		],
+		equation_annotations: { '{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)': [] },
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'21': {
+		type: 'variable',
+		name: 'H',
+		id: 'v6',
+		text_annotations: [' Healed (recovered)'],
+		dkg_annotations: [
+			['ncit:C171133', 'COVID-19 Infection'],
+			['ncit:C28554', 'Dead']
+		],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'22': {
+		type: 'variable',
+		name: 'E',
+		id: 'v7',
+		text_annotations: [' Extinct (dead)'],
+		dkg_annotations: [
+			['ido:0000511', 'infected population'],
+			['ncit:C171133', 'COVID-19 Infection']
+		],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'0': {
+		type: 'variable',
+		name: '\u03b1',
+		id: 'v8',
+		text_annotations: [
+			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)'
+		],
+		dkg_annotations: [],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'1': {
+		type: 'variable',
+		name: '\u03b2',
+		id: 'v9',
+		text_annotations: [
+			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)'
+		],
+		dkg_annotations: [
+			['doid:0080928', 'dialysis-related amyloidosis'],
+			['vo:0005114', '\u03b2-propiolactone-inactivated SARS-CoV vaccine']
+		],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'2': {
+		type: 'variable',
+		name: '\u03b3',
+		id: 'v10',
+		text_annotations: [
+			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)'
+		],
+		dkg_annotations: [
+			['askemo:0000013', 'recovery rate'],
+			['vo:0004915', 'vaccine specific interferon-\u03b3 immune response']
+		],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'3': {
+		type: 'variable',
+		name: '\u03b4',
+		id: 'v11',
+		text_annotations: [
+			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)\u03b5'
+		],
+		dkg_annotations: [
+			['askemo:0000011', 'progression rate'],
+			['vo:0005123', 'VSV\u0394G-MERS vaccine']
+		],
+		equation_annotations: {
+			'\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)': ['\u03b4']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'4': { file: '41591_2020_Article_883.pdf', doi: 'https://doi.org/10.1038/s41591-020-0883-7' },
+	'5': { file: '41591_2020_Article_883.pdf', doi: 'https://doi.org/10.1038/s41591-020-0883-7' },
+	'6': {
+		type: 'variable',
+		name: '\u03b6',
+		id: 'v13',
+		text_annotations: [
+			' probability rate at which an infected subject not aware of being infected develops clinically relevant symptoms'
+		],
+		dkg_annotations: [],
+		equation_annotations: { '{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)': ['\u03b6'] },
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'7': {
+		type: 'variable',
+		name: '\u03bb',
+		id: 'v17',
+		text_annotations: [' Rate of recovery for infected subjects'],
+		dkg_annotations: [],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'8': {
+		type: 'variable',
+		name: '\u03b7',
+		id: 'v14',
+		text_annotations: [
+			' probability rate at which an infected subject aware of being infected develops clinically relevant symptoms\u03bc'
+		],
+		dkg_annotations: [],
+		equation_annotations: { 'R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)': ['\u03b7'] },
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'9': {
+		type: 'variable',
+		name: '\u03c1',
+		id: 'v20',
+		text_annotations: [' Rate of recovery for infected subjects'],
+		dkg_annotations: [],
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'10': {
+		type: 'variable',
+		name: '\u03b8',
+		id: 'v12',
+		text_annotations: [' probability rate of detection relative to symptomatic cases'],
+		dkg_annotations: [],
+		equation_annotations: {
+			'{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)': ['\u03b8'],
+			'H(t)=i I(t)+\\theta b(t)+\\kappa d(t)+i R(t)+\\sigma T(t)': ['\u03b8'],
+			'R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)': ['\u03b8'],
+			'\\delta(t)=-S(t)(a l(t)+\\theta D(t)+r A(t)+\\delta t(t)': ['\u03b8']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'11': {
+		type: 'variable',
+		name: '\u03ba',
+		id: 'v18',
+		text_annotations: [' Rate of recovery for infected subjects'],
+		dkg_annotations: [],
+		equation_annotations: {
+			'{\\dot{A}}(t)=\\zeta I(t)-(\\theta+\\mu+\\kappa)A(t)': ['\u03ba'],
+			'H(t)=i I(t)+\\theta b(t)+\\kappa d(t)+i R(t)+\\sigma T(t)': ['\u03ba']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'12': {
+		type: 'variable',
+		name: '\u03bd',
+		id: 'v15',
+		text_annotations: [
+			' Rate at which detected infected subjects develop life-threatening symptoms'
+		],
+		dkg_annotations: [],
+		equation_annotations: {
+			'R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)': ['\u03bd'],
+			'{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)': ['\u03bd']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'13': {
+		type: 'variable',
+		name: '\u03be',
+		id: 'v19',
+		text_annotations: [' Rate of recovery for infected subjects'],
+		dkg_annotations: [],
+		equation_annotations: { 'R(t)=\\eta D(t)+\\theta A(t)-(\\nu+\\xi)R(t)': ['\u03be'] },
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'14': {
+		type: 'variable',
+		name: '\u03c3',
+		id: 'v21',
+		text_annotations: [' Rate of recovery for infected subjectsNone'],
+		dkg_annotations: [],
+		equation_annotations: {
+			'H(t)=i I(t)+\\theta b(t)+\\kappa d(t)+i R(t)+\\sigma T(t)': ['\u03c3'],
+			'{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)': ['\u03c3']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	},
+	'23': {
+		type: 'variable',
+		name: '\u03c4',
+		id: 'v16',
+		text_annotations: [' Mortality rate for infected subjects with life-threatening symptoms'],
+		dkg_annotations: [],
+		equation_annotations: {
+			'{\\hat{T}}(t)=\\mu A(t)+\\nu R(t)-(\\sigma+\\tau){\\hat{T}}(t)': ['\u03c4']
+		},
+		file: '41591_2020_Article_883.pdf',
+		doi: 'https://doi.org/10.1038/s41591-020-0883-7'
+	}
+};
 
 const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 	const petri: PetriNet = {
