@@ -1,8 +1,8 @@
 @use 'sass:math';
 
 .p-chip {
-    background-color: var(--surface-200);
-    color: var(--text-color-subdued);
+    background-color: $chipBg;
+    color: $chipTextColor;
     border-radius: $chipBorderRadius;
     font-weight: bold;
     font-size: var(--font-caption);

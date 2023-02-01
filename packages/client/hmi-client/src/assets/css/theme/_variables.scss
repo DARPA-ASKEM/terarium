@@ -399,7 +399,7 @@ $accordionHeaderTextActiveHoverColor: $textColor !default;
 $accordionContentBorder: 0 none !default;
 $accordionContentBg: #ffffff !default;
 $accordionContentTextColor: $textColor !default;
-$accordionContentPadding: 1rem 1.5rem !default;
+$accordionContentPadding: 0.5rem !default;
 
 //tabview
 $tabviewNavBorder: solid rgba(0, 0, 0, .12) !default;
@@ -778,8 +778,8 @@ $avatarBg: rgba(0, 0, 0, .12) !default;
 $avatarTextColor: $textColor !default;
 
 //chip
-$chipBg: rgba(0, 0, 0, .12) !default;
-$chipTextColor: $textColor !default;
+$chipBg: var(--surface-200) !default;
+$chipTextColor: var(--text-color-subdued) !default;
 $chipBorderRadius: 16px !default;
 $chipFocusBg: rgba(0, 0, 0, .24) !default;
 $chipFocusTextColor: $textColor !default;
