@@ -1,12 +1,6 @@
 <template>
 	<div class="facets-panel">
-		<!-- <facet-timeline :data="timelineData">
-			<div slot="header" class="slot-header">
-				<span class="facet-font">{{ formattedFacetsYear[0].label }}</span>
-			</div>
-		</facet-timeline> -->
-		<timeline-facet :data="timelineData" :label="formattedFacetsYear[0]?.label"></timeline-facet>
-		<div v-for="facet in formattedFacetsNoYear" :key="facet.label">
+		<div v-for="facet in formattedFacets" :key="facet.label">
 			<numerical-facet
 				v-if="facet.isNumerical"
 				:key="facet.label"
@@ -15,6 +9,11 @@
 				:base-data="facet.baseData"
 				:selected-data="facet.filteredData"
 			/>
+			<timeline-facet
+				v-else-if="facet.id === 'year'"
+				:data="facet.baseData"
+				:label="facet.label"
+			></timeline-facet>
 			<categorical-facet
 				v-else
 				:key="facet.id"
@@ -109,23 +108,23 @@ const formattedFacets = computed(() => {
 	return facetList;
 });
 
-const formattedFacetsNoYear = computed(() =>
-	formattedFacets.value.filter((facet) => facet.id !== 'year')
-);
-const formattedFacetsYear = computed(() =>
-	formattedFacets.value.filter((facet) => facet.id === 'year')
-);
-const timelineData = computed(() => {
-	console.log(formattedFacetsYear.value[0]?.label);
-	const initialValue = 0;
-	const totalValue = formattedFacetsYear.value[0]?.baseData.reduce(
-		(accumulator, currentValue) => accumulator + currentValue.value,
-		initialValue
-	);
-	const timeline = formattedFacetsYear.value[0]?.baseData.map((entry) => ({
-		ratio: entry.value / totalValue,
-		label: entry.key
-	}));
-	return timeline;
-});
+// const formattedFacetsNoYear = computed(() =>
+// 	formattedFacets.value.filter((facet) => facet.id !== 'year')
+// );
+// const formattedFacetsYear = computed(() =>
+// 	formattedFacets.value.filter((facet) => facet.id === 'year')
+// );
+// const timelineData = computed(() => {
+// 	console.log(formattedFacetsYear.value[0]?.label);
+// 	const initialValue = 0;
+// 	const totalValue = formattedFacetsYear.value[0]?.baseData.reduce(
+// 		(accumulator, currentValue) => accumulator + currentValue.value,
+// 		initialValue
+// 	);
+// 	const timeline = formattedFacetsYear.value[0]?.baseData.map((entry) => ({
+// 		ratio: entry.value / totalValue,
+// 		label: entry.key
+// 	}));
+// 	return timeline;
+// });
 </script>
