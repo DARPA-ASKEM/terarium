@@ -1,12 +1,11 @@
 <template>
-	<header>
-		<Navbar
-			v-if="!isErrorState"
-			:project="project"
-			:query="searchBarText"
-			:resultType="resultType"
-		/>
-	</header>
+	<Navbar
+		class="header"
+		:active="!isErrorState"
+		:project="project"
+		:query="searchBarText"
+		:resultType="resultType"
+	/>
 	<main>
 		<Sidebar
 			v-if="isSidebarVisible && !isErrorState"
@@ -104,7 +103,7 @@ resources.$subscribe((mutation, state) => {
 </script>
 
 <style scoped>
-header {
+.header {
 	grid-area: header;
 }
 
