@@ -24,7 +24,7 @@
 		</section>
 		<SearchBar
 			class="search-bar"
-			:text="query"
+			:text="searchQuery"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -67,7 +67,7 @@ import { Project } from '@/types/Project';
 
 const props = defineProps<{
 	project: Project | null;
-	searchBarText?: string;
+	query: string;
 }>();
 
 interface NavItem {
@@ -175,31 +175,41 @@ watch(currentRoute, (newRoute) => {
  * Search
  */
 
-const query = ref<string>();
+const searchQuery = ref<string>();
 const terms = ref<string[]>([]);
 
 function queryChanged(q: string | null) {
+	console.log(q);
 	// Empty the related terms when the query is over
-	if (!q) {
-		terms.value = [];
-	}
+	// if (!q) {
+	// 	terms.value = [];
+	// }
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
 
 watch(
-	() => props.searchBarText,
-	async (newSearchTerm) => {
+	() => props.query,
+	async (newQuery) => {
+		searchQuery.value = newQuery;
 		terms.value = [];
-		if (newSearchTerm) {
-			terms.value = await getRelatedWords(newSearchTerm);
+		if (newQuery) {
+			console.log(newQuery);
+			terms.value = await getRelatedWords(newQuery);
 		}
 	},
 	{ immediate: true }
 );
 
 function addToQuery(term) {
-	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
+	searchQuery.value = searchQuery.value ? searchQuery.value.concat(' ').concat(term).trim() : term;
 }
+</script>
+
+<script lang="ts">
+// use normal <script> to declare options
+export default {
+	inheritAttrs: false
+};
 </script>
 
 <style scoped>
