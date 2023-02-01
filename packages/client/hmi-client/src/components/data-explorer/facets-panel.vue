@@ -107,24 +107,4 @@ const formattedFacets = computed(() => {
 	});
 	return facetList;
 });
-
-// const formattedFacetsNoYear = computed(() =>
-// 	formattedFacets.value.filter((facet) => facet.id !== 'year')
-// );
-// const formattedFacetsYear = computed(() =>
-// 	formattedFacets.value.filter((facet) => facet.id === 'year')
-// );
-// const timelineData = computed(() => {
-// 	console.log(formattedFacetsYear.value[0]?.label);
-// 	const initialValue = 0;
-// 	const totalValue = formattedFacetsYear.value[0]?.baseData.reduce(
-// 		(accumulator, currentValue) => accumulator + currentValue.value,
-// 		initialValue
-// 	);
-// 	const timeline = formattedFacetsYear.value[0]?.baseData.map((entry) => ({
-// 		ratio: entry.value / totalValue,
-// 		label: entry.key
-// 	}));
-// 	return timeline;
-// });
 </script>
