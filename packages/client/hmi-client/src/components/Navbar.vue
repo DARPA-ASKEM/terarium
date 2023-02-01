@@ -3,14 +3,8 @@
 		<section class="header-left">
 			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
 			<nav>
-				<Dropdown
-					class="dropdown"
-					v-model="selectedPage"
-					:options="Object.values(navItems)"
-					optionLabel="name"
-					panelClass="dropdown-panel"
-					@change="goToPage"
-				>
+				<Dropdown class="dropdown" v-model="selectedPage" :options="Object.values(navItems)" optionLabel="name"
+					panelClass="dropdown-panel" @change="goToPage">
 					<template #value="slotProps">
 						<i :class="slotProps.value.icon" />
 						<span>{{ slotProps.value.name }}</span>
@@ -22,12 +16,8 @@
 				</Dropdown>
 			</nav>
 		</section>
-		<SearchBar
-			class="search-bar"
-			ref="searchBarRef"
-			@query-changed="queryChanged"
-			@toggle-search-by-example="searchByExampleModalToggled"
-		/>
+		<SearchBar class="search-bar" ref="searchBarRef" @query-changed="queryChanged"
+			@toggle-search-by-example="searchByExampleModalToggled" />
 		<section class="header-right">
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 		</section>
@@ -67,7 +57,7 @@ import { Project } from '@/types/Project';
 
 const props = defineProps<{
 	project: Project | null;
-	searchBarText?: string;
+	query: string;
 }>();
 
 interface NavItem {
@@ -178,23 +168,32 @@ watch(currentRoute, (newRoute) => {
 const terms = ref<string[]>([]);
 
 function queryChanged(q: string | null) {
+	console.log(q);
 	// Empty the related terms when the query is over
-	if (!q) {
-		terms.value = [];
-	}
+	// if (!q) {
+	// 	terms.value = [];
+	// }
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
 
 watch(
-	() => props.searchBarText,
-	async (newSearchTerm) => {
+	() => props.query,
+	async (newQuery) => {
 		terms.value = [];
-		if (newSearchTerm) {
-			terms.value = await getRelatedWords(newSearchTerm);
+		if (newQuery) {
+			console.log(newQuery);
+			terms.value = await getRelatedWords(newQuery);
 		}
 	},
 	{ immediate: true }
 );
+</script>
+
+<script lang="ts">
+// use normal <script> to declare options
+export default {
+	inheritAttrs: false
+};
 </script>
 
 <style scoped>
@@ -248,7 +247,7 @@ header {
 	height: 100%;
 }
 
-.header-left >>> .p-dropdown-label.p-inputtext {
+.header-left>>>.p-dropdown-label.p-inputtext {
 	padding-right: 0;
 }
 

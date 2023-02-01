@@ -1,11 +1,5 @@
 <template>
-	<Navbar
-		v-if="!isErrorState"
-		class="header"
-		:project="project"
-		:searchBarText="searchBarText"
-		:relatedSearchTerms="relatedSearchTerms"
-	/>
+	<Navbar v-if="!isErrorState" class="header" :project="project" :query="searchBarText" />
 	<main>
 		<Sidebar
 			v-if="isSidebarVisible && !isErrorState"
@@ -13,12 +7,7 @@
 			data-test-id="sidebar"
 			:project="project"
 		/>
-		<router-view
-			class="page"
-			:project="project"
-			@search-query-changed="updateSearchBar"
-			@related-search-terms-updated="updateRelatedSearchTerms"
-		/>
+		<router-view class="page" :project="project" @search-query-changed="updateSearchBar" />
 	</main>
 	<footer>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
@@ -49,7 +38,6 @@ const isSidebarVisible = computed(
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const searchBarText = ref('');
-const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
 /**
  * Project
@@ -61,10 +49,6 @@ const project = ref<Project | null>(null);
 
 function updateSearchBar(newQuery) {
 	searchBarText.value = newQuery;
-}
-
-function updateRelatedSearchTerms(newTerms) {
-	relatedSearchTerms.value = newTerms;
 }
 
 API.interceptors.response.use(
