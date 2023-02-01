@@ -117,7 +117,11 @@ import { LocationQuery, useRoute } from 'vue-router';
 import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['search-query-changed', 'related-search-terms-updated']);
+const emit = defineEmits([
+	'search-query-changed',
+	'related-search-terms-updated',
+	'result-type-changed'
+]);
 
 const props = defineProps<{
 	query?: LocationQuery;
@@ -504,6 +508,10 @@ const updateResultType = async (newResultType: ResourceType) => {
 		}
 	}
 };
+
+watch(resultType, (newResultType) => {
+	emit('result-type-changed', newResultType);
+});
 
 // const addPreviewItemToCart = () => {
 // 	if (previewItem.value) {

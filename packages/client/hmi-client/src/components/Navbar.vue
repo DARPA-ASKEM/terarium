@@ -15,6 +15,7 @@ const props = defineProps<{
 	project: Project | null;
 	searchBarText?: string;
 	relatedSearchTerms?: string[];
+	resultType: string;
 }>();
 interface NavItem {
 	[key: string]: { name: string; icon: string; routeName: string };
@@ -147,6 +148,7 @@ watch(currentRoute, (newRoute) => {
 			:suggested-terms="relatedSearchTerms"
 			@search-text-changed="searchTextChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
+			:resultType="resultType"
 		/>
 		<section class="header-right">
 			<Button

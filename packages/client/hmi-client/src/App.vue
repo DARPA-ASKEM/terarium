@@ -8,6 +8,7 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
 import { RoutePath, useCurrentRoute } from './router/index';
+import { ResourceType } from './types/common';
 
 /**
  * Router
@@ -24,6 +25,7 @@ const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 const searchBarText = ref('');
 const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
+const resultType = ref<string>(ResourceType.XDD);
 /**
  * Project
  *
@@ -38,6 +40,10 @@ function updateSearchBar(newQuery) {
 
 function updateRelatedSearchTerms(newTerms) {
 	relatedSearchTerms.value = newTerms;
+}
+
+function updateResultType(newResultType) {
+	resultType.value = newResultType;
 }
 
 API.interceptors.response.use(
@@ -81,6 +87,7 @@ resources.$subscribe((mutation, state) => {
 		:project="project"
 		:searchBarText="searchBarText"
 		:relatedSearchTerms="relatedSearchTerms"
+		:resultType="resultType"
 	/>
 	<main>
 		<Sidebar
@@ -94,6 +101,7 @@ resources.$subscribe((mutation, state) => {
 			:project="project"
 			@search-query-changed="updateSearchBar"
 			@related-search-terms-updated="updateRelatedSearchTerms"
+			@result-type-changed="updateResultType"
 		/>
 	</main>
 	<footer>
