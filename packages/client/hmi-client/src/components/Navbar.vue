@@ -209,9 +209,8 @@ header {
 	background-color: var(--surface-section);
 	border-bottom: 1px solid var(--surface-border);
 	padding: 0.5rem 1rem;
-
 	display: grid;
-	gap: 0.5rem;
+	column-gap: 0.5rem;
 	grid-template-areas:
 		'header-left search-bar header-right'
 		'. suggested-terms .';
@@ -276,7 +275,7 @@ i {
 .suggested-terms {
 	align-items: center;
 	display: flex;
-	gap: 0.5rem;
+	column-gap: 0.5rem;
 	grid-area: suggested-terms;
 	justify-content: center;
 	overflow: hidden;

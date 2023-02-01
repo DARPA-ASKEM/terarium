@@ -18,7 +18,6 @@
 
 :root {
     /* Layout */
-    --header-height: 3.5rem;
     --navbar-outer-height: 51px;
 
 	-webkit-font-smoothing: antialiased;
@@ -42,14 +41,14 @@ body {
     color: inherit;
     font: inherit;
     isolation: isolate;
-
+	min-width: 1000px;
 
 	display: grid;
 	grid-template-areas: 
 		"header"
 		"main"
 		"footer";
-	grid-template-rows: minMax(var(--navbar-outer-height), max-content) 1fr max-content;
+	grid-template-rows: minMax(3.5rem, max-content) 1fr max-content;
 }
 
 /* Highlights */
