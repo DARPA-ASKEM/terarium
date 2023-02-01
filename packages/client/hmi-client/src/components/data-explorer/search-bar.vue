@@ -5,7 +5,6 @@
 				<i class="pi pi-search" />
 				<InputText
 					type="text"
-					ref="inputElement"
 					placeholder="Search"
 					v-model="query"
 					@keyup.enter="execSearch"
@@ -36,8 +35,6 @@ const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 const resources = useResourcesStore();
-
-const inputElement = ref();
 const query = ref('');
 
 const isClearQueryButtonHidden = computed(() => !query.value);
@@ -58,8 +55,6 @@ const execSearch = () => {
 
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.concat(' ').concat(term).trim() : term;
-	emit('query-changed', query.value);
-	inputElement.value?.$el.focus();
 }
 defineExpose({ addToQuery });
 
