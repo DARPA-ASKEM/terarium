@@ -4,7 +4,7 @@
 		:active="!isErrorState"
 		:project="project"
 		:query="searchBarText"
-		:resultType="resultType"
+		:resourcesType="resourcesType"
 	/>
 	<main>
 		<Sidebar
@@ -17,7 +17,7 @@
 			class="page"
 			:project="project"
 			@search-query-changed="updateSearchBar"
-			@result-type-changed="updateResultType"
+			@resources-type-changed="updateResourcesType"
 		/>
 	</main>
 	<footer>
@@ -51,7 +51,8 @@ const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const searchBarText = ref('');
 const resources = useResourcesStore();
-const resultType = ref<string>(ResourceType.XDD);
+const resourcesType = ref<string>(ResourceType.XDD);
+
 /**
  * Project
  *
@@ -64,8 +65,8 @@ function updateSearchBar(newQuery) {
 	searchBarText.value = newQuery;
 }
 
-function updateResultType(newResultType) {
-	resultType.value = newResultType;
+function updateResourcesType(newResourcesType) {
+	resourcesType.value = newResourcesType;
 }
 
 API.interceptors.response.use(

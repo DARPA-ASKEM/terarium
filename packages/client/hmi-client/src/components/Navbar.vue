@@ -26,7 +26,7 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:resultType="resultType"
+			:suggestions="resourcesType === ResourceType.XDD"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -65,13 +65,14 @@ import { useCurrentRoute, RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedWords } from '@/services/data';
 import useAuthStore from '@/stores/auth';
+import { ResourceType } from '@/types/common';
 import { Project } from '@/types/Project';
 
 const props = defineProps<{
 	active: boolean;
 	project: Project | null;
 	query: string;
-	resultType: string;
+	resourcesType: string;
 }>();
 
 interface NavItem {
