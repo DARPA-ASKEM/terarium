@@ -256,6 +256,7 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
+	font-weight: var(--font-weight-semibold);
 	color: var(--text-color-subdued);
 	display: flex;
 	column-gap: 0.5rem;
