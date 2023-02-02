@@ -44,7 +44,7 @@ function updateSelection(event) {
 	<facet-timeline :data="timelineData" @facet-element-updated="updateSelection">
 		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
 		<div slot="header" class="header">
-			<span>{{ label }}</span>
+			<span class="facet-font">{{ label }}</span>
 		</div>
 		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
 		<div slot="footer" class="footer"></div>
@@ -54,17 +54,16 @@ function updateSelection(event) {
 <style lang="scss" scoped>
 @import '@/styles/variables.scss';
 
+.facet-font {
+	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
 .header {
-	padding-left: 8px;
-	font-weight: bold;
-	font-size: medium;
+	padding: 6px 12px 5px;
 }
 
 .footer {
 	min-height: 16px;
-}
-
-facet-timeline::deep.facet-blueprint {
-	background-color: red;
 }
 </style>
