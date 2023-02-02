@@ -37,8 +37,7 @@
 				</AccordionTab>
 				<AccordionTab
 					v-if="!isEmpty(figureArtifacts)"
-					header="Figures"
-					:data-count="figureArtifacts.length"
+					:header="`Figures (${figureArtifacts.length})`"
 				>
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
@@ -49,11 +48,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab
-					v-if="!isEmpty(tableArtifacts)"
-					header="Tables"
-					:data-count="tableArtifacts.length"
-				>
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
