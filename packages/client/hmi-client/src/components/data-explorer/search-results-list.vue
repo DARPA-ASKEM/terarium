@@ -3,7 +3,7 @@
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
 			<template v-else
-				>{{ resultsText }}<span>{{ props.searchTerm }}</span></template
+				>{{ resultsText }}<span v-if="resultsCount">{{ props.searchTerm }}</span></template
 			>
 		</span>
 		<template v-for="facet in chosenFacets">
