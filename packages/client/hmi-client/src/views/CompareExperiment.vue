@@ -11,6 +11,7 @@ import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge, pathFn } from '@/services/graph';
 import comaprisonData from '@/views/simulation-run-data/comp-not-stratified.json';
 import * as _ from 'lodash';
+import * as BubbleSets from 'bubblesets-js';
 
 interface NodeData {
 	name: string;
@@ -406,5 +407,16 @@ onMounted(async () => {
 	await renderer.setData(g);
 	await renderer.render();
 	renderer.renderLegend();
+
+	const bubbleSets = new BubbleSets.BubbleSets();
+	bubbleSets.pushMember(BubbleSets.rect(30, 30, 50, 20));
+	bubbleSets.pushMember(BubbleSets.rect(200, 100, 50, 20));
+	bubbleSets.pushMember(BubbleSets.circle(240, 40, 10));
+
+	const pointPath = bubbleSets.compute();
+	const cleanPath = pointPath.sample(8).simplify(0).bSplines().simplify(0);
+	console.log(cleanPath);
+
+	renderer.chart?.append('path').attr('d', pathFn(cleanPath.points)).attr('fill', '#f80');
 });
 </script>
