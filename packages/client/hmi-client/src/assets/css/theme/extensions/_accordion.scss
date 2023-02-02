@@ -49,7 +49,7 @@
 		}
 	}
 
-	.p-accordian-tab[data-count]>*::after {
+	.p-accordion-tab[data-count]>*::after {
 		font-size: $fontCaption;
 		color: var(--text-color-subdued);
 		content: ' (' attr(data-count)')';
