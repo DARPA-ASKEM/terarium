@@ -88,11 +88,6 @@ const initialNavItems = {
 		name: RouteMetadata[RouteName.HomeRoute].displayName,
 		icon: RouteMetadata[RouteName.HomeRoute].icon,
 		routeName: RouteName.HomeRoute
-	},
-	[RoutePath.DataExplorer]: {
-		name: RouteMetadata[RouteName.DataExplorerRoute].displayName,
-		icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
-		routeName: RouteName.DataExplorerRoute
 	}
 };
 const emptyNavItem = {
