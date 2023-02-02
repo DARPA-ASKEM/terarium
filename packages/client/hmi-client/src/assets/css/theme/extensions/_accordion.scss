@@ -16,6 +16,8 @@
 			border-bottom-right-radius: $borderRadius;
 		}
 
+
+
 		.p-accordion-toggle-icon {
 			order: 1;
 			margin-left: auto;
@@ -40,10 +42,16 @@
 			&.p-disabled {
 				opacity: 1;
 
-				.p-accordion-header-link > * {
+				.p-accordion-header-link>* {
 					opacity: $disabledOpacity;
 				}
 			}
 		}
+	}
+
+	.p-accordian-tab[data-count]>*::after {
+		font-size: $fontCaption;
+		color: var(--text-color-subdued);
+		content: ' (' attr(data-count)')';
 	}
 }
