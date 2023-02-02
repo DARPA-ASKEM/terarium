@@ -26,7 +26,7 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:resultType="resultType"
+			:suggestions="resourceType === ResourceType.XDD"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -65,13 +65,14 @@ import { useCurrentRoute, RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedWords } from '@/services/data';
 import useAuthStore from '@/stores/auth';
+import { ResourceType } from '@/types/common';
 import { Project } from '@/types/Project';
 
 const props = defineProps<{
 	active: boolean;
 	project: Project | null;
 	query: string;
-	resultType: string;
+	resourceType: string;
 }>();
 
 interface NavItem {
@@ -185,8 +186,6 @@ async function queryChanged(q: string | null) {
 	// Empty the related terms when the query is over
 	if (!q) terms.value = [];
 	else terms.value = await getRelatedWords(q);
-	console.log(q, terms.value);
-
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
 </script>
@@ -200,9 +199,8 @@ header {
 	column-gap: 0.5rem;
 	grid-template-areas:
 		'header-left search-bar header-right'
-		'. suggested-terms .';
+		'suggested-terms suggested-terms suggested-terms';
 	grid-template-columns: minMax(max-content, 25%) auto min-content;
-	grid-template-rows: max-content max-content;
 }
 
 /* Search Bar */
@@ -220,10 +218,11 @@ header {
 
 .header-right {
 	grid-area: header-right;
+	margin-left: auto;
 }
 
 .avatar {
-	color: var(--text-subdued);
+	color: var(--text-color-subdued);
 	background-color: var(--surface-ground);
 	cursor: pointer;
 }
@@ -261,14 +260,13 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
-	color: var(--text-subdued);
+	color: var(--text-color-subdued);
 	display: flex;
 	column-gap: 0.5rem;
 	font-size: var(--font-caption);
 	grid-area: suggested-terms;
 	justify-content: center;
 	margin-top: 0.5rem;
-	overflow: hidden;
 	white-space: nowrap;
 }
 

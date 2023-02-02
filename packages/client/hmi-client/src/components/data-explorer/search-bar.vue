@@ -32,7 +32,6 @@ import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import { ResourceType } from '@/types/common';
 import { getRelatedWords, getAutocomplete } from '@/services/data';
 import Menu from 'primevue/menu';
 import { EventType } from '@/types/EventType';
@@ -43,17 +42,13 @@ const route = useRoute();
 const resources = useResourcesStore();
 
 const props = defineProps<{
-	resultType: string;
+	suggestions: boolean;
 }>();
 
 const query = ref('');
 const autocompleteMenu = ref();
 const autocompleteMenuItems = ref([{}]);
 const inputElement = ref<HTMLInputElement | null>(null);
-
-const xddDataset = computed(() =>
-	props.resultType === ResourceType.XDD ? resources.xddDataset : ''
-);
 
 const isClearQueryButtonHidden = computed(() => !query.value);
 
@@ -96,16 +91,14 @@ async function showAutocomplete(event) {
 					replaceSearchTerm(item);
 				}
 			}));
-			// @ts-ignore
-			inputElement.value?.$el.focus();
 		});
 		autocompleteMenu.value.show(event);
 	}
 }
 
 async function showSuggestions(event) {
-	if (xddDataset.value) {
-		const promise = getRelatedWords(query.value, xddDataset.value);
+	if (props.suggestions) {
+		const promise = getRelatedWords(query.value, resources.xddDataset);
 		promise.then((response) => {
 			autocompleteMenuItems.value = response.map((item) => ({
 				label: item,
