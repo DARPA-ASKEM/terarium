@@ -252,8 +252,10 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	let citation: string;
 	if (Object.keys(obj).length <= 1) {
 		citation = obj.unstructured_citation ?? '';
+		citation = citation.replace(/\bhttps?:\/\/\S+/, `<a href=$&>$&</a>`);
+	} else {
+		citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 	}
-	citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
 	return highlightSearchTerms(citation);
 };
 
@@ -277,11 +279,11 @@ span {
 	overflow-wrap: break-word;
 }
 
-a {
+>>> a {
 	color: var(--text-color-subdued);
 }
 
-a:hover {
+>>> a:hover {
 	color: var(--primary-color-dark);
 }
 

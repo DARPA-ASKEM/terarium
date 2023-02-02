@@ -376,6 +376,9 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 
 // Return the top 5 words related to a term
 async function getRelatedWords(query: string, dataset?: string | null): Promise<string[]> {
+	if (!query) {
+		return [];
+	}
 	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
 	const response = await API.get(`/xdd/related/word?${params}`);
 	const data = response?.data?.data;
