@@ -6,6 +6,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -18,5 +19,11 @@ public interface ExtractionProxy {
 		@QueryParam("term") String term,
 		@QueryParam("page") Integer page,
 		@QueryParam("ASKEM_CLASS") String askemClass
+	);
+
+	@GET
+	@Path("askem_autocomplete/{term}")
+	Response getAutocomplete(
+		@PathParam("term") final String term
 	);
 }

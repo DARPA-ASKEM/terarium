@@ -33,7 +33,7 @@ public class RelatedResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{set}/word2vec/api/most_similar")
-	@Tag(name = "Get most similar words for a given XDD internal doc id")
+	@Tag(name = "Get most similar words for a given string")
 	public XDDRelatedWordsResponse getRelatedWords(
 		@PathParam("set") String set,
 		@QueryParam("word") String word) {

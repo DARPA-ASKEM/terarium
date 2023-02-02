@@ -59,7 +59,7 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 
 <template>
 	<section class="dataset">
-		<h4 class="title">{{ dataset?.name }}</h4>
+		<h4 class="title" v-html="dataset?.name" />
 		<Accordion :multiple="true" class="accordian">
 			<AccordionTab v-if="annotations" header="Description"
 				><span v-html="dataset?.description"
@@ -81,25 +81,25 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 				<div>
 					Geo Annotations:
 					<div v-for="annotation in annotations?.geo" :key="annotation.name">
-						<strong>{{ annotation.name }}</strong
-						>: <strong>Description: </strong> {{ annotation.description }}
-						<strong>GADM Level: </strong> {{ annotation.gadm_level }}
+						<strong v-html="annotation.name" />: <strong>Description:</strong>
+						<span v-html="annotation.description" /> <strong>GADM Level: </strong>
+						<span v-html="annotation.gadm_level" />
 					</div>
 				</div>
 				<div>
 					Temporal Annotations:
 					<div v-for="annotation in annotations.date" :key="annotation.name">
-						<strong>{{ annotation.name }}</strong
-						>: <strong>Description: </strong> {{ annotation.description }}
-						<strong>Time Format: </strong> {{ annotation.time_format }}
+						<strong v-html="annotation.name" />: <strong>Description:</strong>
+						<span v-html="annotation.description" /> <strong>Time Format:</strong>
+						<span v-html="annotation.time_format" />
 					</div>
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
 			<AccordionTab v-if="annotations" header="Features">
 				<div v-for="(feature, index) of annotations.feature" :key="index">
-					<div>Name: {{ highlightSearchTerms(feature.display_name || feature.name) }}</div>
-					<div>Type: {{ feature.feature_type }}</div>
+					<div>Name: <span v-html="feature.display_name || feature.name" /></div>
+					<div>Type: <span v-html="feature.feature_type" /></div>
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Associated Objects"></AccordionTab> -->

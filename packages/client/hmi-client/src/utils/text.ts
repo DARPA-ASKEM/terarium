@@ -4,7 +4,7 @@ function highlightText(text: string, searchTerms: string): string {
 	const emphasis = (value) => `<em class="highlight">${value}</em>`;
 
 	// Split the search terms by spaces to make a RegEx
-	const terms = searchTerms.split(' ').join('|');
+	const terms = searchTerms.trim().split(' ').join('|');
 	const search = RegExp(`\\b(${terms})\\b`, 'gi');
 
 	// For each term, highlight it

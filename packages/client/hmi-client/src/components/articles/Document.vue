@@ -8,14 +8,13 @@
 				<div class="details">
 					<div v-if="docLink || doi">
 						DOI:
-						<a :href="`https://doi.org/${doi}`" target="_blank" rel="noreferrer noopener">
-							{{ highlightSearchTerms(doi) }}
-						</a>
+						<a
+							:href="`https://doi.org/${doi}`"
+							rel="noreferrer noopener"
+							v-html="highlightSearchTerms(doi)"
+						/>
 					</div>
-					<div>{{ highlightSearchTerms(doc.publisher) }}</div>
-					<!-- TODO -->
-					<!-- Journal impact factor -->
-					<!-- # Citations -->
+					<div v-html="highlightSearchTerms(doc.publisher)" />
 					<Button
 						v-if="docLink || doi"
 						class="p-button-sm p-button-outlined"
@@ -42,7 +41,7 @@
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span
 								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							></span>
+							/>
 						</div>
 					</div>
 				</AccordionTab>
@@ -52,7 +51,7 @@
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span
 								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							></span>
+							/>
 						</div>
 					</div>
 				</AccordionTab>
@@ -62,7 +61,7 @@
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 							<span
 								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							></span>
+							/>
 						</div>
 					</div>
 				</AccordionTab>
@@ -70,7 +69,7 @@
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
+							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
 					</div>
 				</AccordionTab>
