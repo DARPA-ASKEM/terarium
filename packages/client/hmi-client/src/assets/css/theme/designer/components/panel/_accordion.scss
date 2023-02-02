@@ -6,6 +6,7 @@
 			color: $accordionHeaderTextColor;
 			background: $accordionHeaderBg;
 			font-weight: $accordionHeaderFontWeight;
+			font-size: $accordionHeaderFontSize;
 			border-radius: $borderRadius;
 			transition: $listItemTransition;
 
@@ -78,7 +79,7 @@
 	.p-accordion-tab {
 		margin-bottom: $accordionSpacing;
 
-		@if $accordionSpacing == 0 {
+		@if $accordionSpacing ==0 {
 			.p-accordion-header {
 				.p-accordion-header-link {
 					border-radius: 0;

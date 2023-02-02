@@ -187,8 +187,7 @@ ul {
 	gap: 0.5rem;
 }
 
-.result-details,
-.p-chip {
+.result-details {
 	color: var(--text-color-subdued);
 }
 
@@ -199,22 +198,6 @@ ul {
 
 .p-chip {
 	outline: 1px solid var(--gray-300);
-	font-weight: bold;
-	padding: 0 0.75rem;
-	background-color: var(--surface-200);
-}
-
-.p-chip :deep(.p-chip-text) {
-	margin: 0.2rem 0;
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 1;
-	overflow: hidden;
-}
-
-.p-chip,
-.p-chip :deep(.p-chip-remove-icon) {
-	font-size: var(--font-caption);
 }
 
 .search-container {

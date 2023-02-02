@@ -126,7 +126,6 @@ const getAssets = async (params: GetAssetsParams) => {
 				(await searchXDDArticles(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
 				([] as XDDArticle[]);
 			assetList = xddResults.results;
-			results.relatedWords = xddResults.relatedWords;
 			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
 			break;
 		default:
@@ -375,13 +374,13 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-const getRelatedWords = async (searchTerm: string, dataset?: string | null) => {
-	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
-	const response = await API.get(url);
-	const data = response.data.data;
-	const words = data ? data.map((tuple) => tuple[0]) : [];
-	return words;
-};
+// Return the top 5 words related to a term
+async function getRelatedWords(query: string, dataset?: string | null): Promise<string[]> {
+	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
+	const response = await API.get(`/xdd/related/word?${params}`);
+	const data = response?.data?.data;
+	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
+}
 
 const getAutocomplete = async (searchTerm: string) => {
 	const url = `/xdd/extractions/askem_autocomplete/${searchTerm}`;
@@ -508,7 +507,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 		return {
 			results: articles,
-			relatedWords: await getRelatedWords(term, xddSearchParam?.dataset),
 			facets: formattedFacets,
 			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
@@ -520,7 +518,6 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	return {
 		results: [] as XDDArticle[],
-		relatedWords: await getRelatedWords(term, xddSearchParam?.dataset),
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -584,12 +581,10 @@ const fetchData = async (
 ) => {
 	const finalResponse = {
 		allData: [],
-		allDataFilteredWithFacets: [],
-		relatedWords: []
+		allDataFilteredWithFacets: []
 	} as {
 		allData: SearchResults[];
 		allDataFilteredWithFacets: SearchResults[];
-		relatedWords: string[][];
 	};
 
 	//
@@ -719,7 +714,6 @@ const fetchData = async (
 	const responses = await Promise.all(promiseList);
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
-	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
 
 	return finalResponse;
 };
