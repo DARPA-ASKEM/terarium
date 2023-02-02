@@ -107,8 +107,8 @@ export type XDDDictionary = {
 };
 
 export type XDDFacetsItemResponse = {
-	doc_count_error_upper_bound: number;
-	sum_other_doc_count: number;
+	docCountErrorUpperBound: number;
+	sumOtherDocCount: number;
 	buckets: { key: string; doc_count: number }[];
 };
 

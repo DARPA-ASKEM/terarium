@@ -1,88 +1,131 @@
 <template>
-	<div class="search-bar-container">
+	<section class="search-bar-container">
 		<div class="search">
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
 				<InputText
-					ref="inputElement"
 					type="text"
 					placeholder="Search"
-					v-model="searchText"
+					v-model="query"
 					@keyup.enter="execSearch"
+					@keyup.space="handleSearchEvent"
 					class="input-text"
+					@input="handleSearchEvent"
 				/>
+				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
 				<i
 					class="pi pi-times clear-search"
-					:class="{ hidden: isClearSearchButtonHidden }"
+					:class="{ hidden: isClearQueryButtonHidden }"
 					style="font-size: 1rem"
-					@click="clearText"
-				></i>
+					@click="clearQuery"
+				/>
 			</span>
-			<i class="pi pi-history" />
-			<i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" />
+			<!-- <i class="pi pi-history" title="Search history" /> -->
+			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
-		<span class="suggested-terms" v-if="suggestedTerms && suggestedTerms[0]"
-			>Suggested terms:<Chip
-				v-for="item in suggestedTerms"
-				:key="item"
-				removable
-				remove-icon="pi pi-times"
-			>
-				<span @click="addSearchTerm(item)">{{ item }}</span>
-			</Chip>
-		</span>
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import InputText from 'primevue/inputtext';
-import Chip from 'primevue/chip';
 import * as EventService from '@/services/event';
-import { EventType } from '@/types/EventType';
 import useResourcesStore from '@/stores/resources';
+import { getRelatedWords, getAutocomplete } from '@/services/data';
+import Menu from 'primevue/menu';
+import { EventType } from '@/types/EventType';
 
-const props = defineProps<{
-	text?: string;
-	suggestedTerms?: string[];
-}>();
-
-const emit = defineEmits(['search-text-changed', 'toggle-search-by-example']);
+const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 const resources = useResourcesStore();
 
-const searchText = ref('');
-const defaultText = computed(() => props.text);
-const isClearSearchButtonHidden = computed(() => !searchText.value);
+const props = defineProps<{
+	suggestions: boolean;
+}>();
+
+const query = ref('');
+const autocompleteMenu = ref();
+const autocompleteMenuItems = ref([{}]);
 const inputElement = ref<HTMLInputElement | null>(null);
 
-const clearText = () => {
-	searchText.value = '';
-};
+const isClearQueryButtonHidden = computed(() => !query.value);
+
+function clearQuery() {
+	query.value = '';
+	emit('query-changed');
+}
 
 const execSearch = () => {
-	emit('search-text-changed', searchText.value);
-	EventService.create(EventType.Search, resources.activeProject?.id, searchText.value);
+	emit('query-changed', query.value);
+	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
-function addSearchTerm(term) {
-	searchText.value = searchText.value ? searchText.value.concat(' ').concat(term) : term;
+// const toggleSearchByExample = () => {
+// 	emit('toggle-search-by-example');
+// };
+
+function addToQuery(term: string) {
+	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
+	execSearch();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
-const toggleSearchByExample = () => {
-	emit('toggle-search-by-example');
+defineExpose({ addToQuery });
+
+function replaceSearchTerm(term) {
+	query.value = term;
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+
+async function showAutocomplete(event) {
+	if (query.value.length >= 3) {
+		const promise = getAutocomplete(query.value);
+		promise.then((response) => {
+			autocompleteMenuItems.value = response.map((item) => ({
+				label: item,
+				icon: 'pi pi-search',
+				command: () => {
+					replaceSearchTerm(item);
+				}
+			}));
+		});
+		autocompleteMenu.value.show(event);
+	}
+}
+
+async function showSuggestions(event) {
+	if (props.suggestions) {
+		const promise = getRelatedWords(query.value, resources.xddDataset);
+		promise.then((response) => {
+			autocompleteMenuItems.value = response.map((item) => ({
+				label: item,
+				icon: 'pi pi-search',
+				command: () => {
+					addToQuery(item);
+				}
+			}));
+			// @ts-ignore
+			inputElement.value?.$el.focus();
+		});
+		autocompleteMenu.value.show(event);
+	}
+}
+
+const handleSearchEvent = (event) => {
+	const keyboardEvent = event as KeyboardEvent;
+	if (keyboardEvent.code === 'Space') {
+		showSuggestions(event);
+	} else {
+		showAutocomplete(event);
+	}
 };
 
 onMounted(() => {
 	const { q } = route.query;
-	searchText.value = q?.toString() ?? searchText.value;
-});
-
-watch(defaultText, (newText) => {
-	searchText.value = newText || searchText.value;
+	query.value = q?.toString() ?? query.value;
 });
 </script>
 
@@ -101,38 +144,6 @@ watch(defaultText, (newText) => {
 	width: 100%;
 }
 
-.suggested-terms {
-	margin: 0.75rem 0 0.25rem 0;
-	display: inline-flex;
-	gap: 0.5rem;
-	margin-left: 0.25rem;
-	margin-right: auto;
-	align-items: center;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
-.suggested-terms,
-.p-chip {
-	font-size: small;
-	font-weight: bold;
-	color: var(--text-color-subdued);
-}
-
-.p-chip {
-	padding: 0 0.75rem;
-	background-color: var(--surface-200);
-}
-
-.p-chip span {
-	margin: 0.25rem 0;
-	cursor: pointer;
-}
-
-.p-chip :deep(.p-chip-remove-icon) {
-	font-size: 0.75rem;
-}
-
 .p-input-icon-left {
 	margin-right: 1rem;
 	flex: 1;
@@ -146,6 +157,7 @@ watch(defaultText, (newText) => {
 	height: 3rem;
 }
 
+/* 
 .pi-history {
 	color: var(--text-color-secondary);
 }
@@ -158,7 +170,8 @@ watch(defaultText, (newText) => {
 .pi-image:hover {
 	color: var(--text-color-primary);
 	cursor: pointer;
-}
+} 
+*/
 
 .clear-search:hover {
 	background-color: var(--surface-hover);
@@ -166,16 +179,6 @@ watch(defaultText, (newText) => {
 	border-radius: 1rem;
 	top: 1rem;
 	right: 0.5rem;
-}
-
-.clear-search-terms:enabled {
-	color: var(--text-color-secondary);
-	background-color: transparent;
-}
-
-.clear-search-terms:enabled:hover {
-	background-color: var(--surface-hover);
-	color: var(--text-color-secondary);
 }
 
 .clear-search.hidden {
@@ -192,5 +195,9 @@ watch(defaultText, (newText) => {
 .item:enabled:hover {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-hover);
+}
+
+.p-menu.autocomplete {
+	border-radius: 0 0 1.5rem 1.5rem;
 }
 </style>
