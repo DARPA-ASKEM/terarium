@@ -374,6 +374,24 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
+async function getRelatedTerms(query?: string, dataset?: string | null): Promise<string[]> {
+	if (!query) {
+		return [];
+	}
+	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
+	const response = await API.get(`/xdd/related/word?${params}`);
+	const data = response?.data?.data;
+	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
+}
+
+const getAutocomplete = async (searchTerm: string) => {
+	const url = `/xdd/extractions/askem_autocomplete/${searchTerm}`;
+	const response = await API.get(url);
+	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
+	const terms = data.map((d) => d.text);
+	return terms;
+};
+
 const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
@@ -711,5 +729,7 @@ export {
 	getAssets,
 	getDocumentById,
 	getBulkDocuments,
-	getRelatedDocuments
+	getRelatedDocuments,
+	getRelatedTerms,
+	getAutocomplete
 };

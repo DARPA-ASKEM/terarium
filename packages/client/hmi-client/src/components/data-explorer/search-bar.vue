@@ -28,9 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import API from '@/api/api';
-import { useRouter, useRoute } from 'vue-router';
-import { RouteName } from '@/router/routes';
+import { useRoute } from 'vue-router';
+import { getRelatedTerms, getAutocomplete } from '@/services/data';
 import { computed, onMounted, ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import * as EventService from '@/services/event';
@@ -41,7 +40,6 @@ import { EventType } from '@/types/EventType';
 const emit = defineEmits(['update-related-terms', 'toggle-search-by-example']);
 
 const route = useRoute();
-const router = useRouter();
 const resources = useResourcesStore();
 
 const props = defineProps<{
@@ -58,14 +56,10 @@ const isClearQueryButtonHidden = computed(() => !query.value);
 function clearQuery() {
 	query.value = '';
 	emit('update-related-terms');
-	const q = query.value;
-	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
 }
 
 const execSearch = () => {
-	emit('update-related-terms');
-	const q = query.value;
-	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
+	emit('update-related-terms', query.value);
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
@@ -73,35 +67,13 @@ const execSearch = () => {
 // 	emit('toggle-search-by-example');
 // };
 
-const getAutocomplete = async (searchTerm: string) => {
-	const url = `/xdd/extractions/askem_autocomplete/${searchTerm}`;
-	const response = await API.get(url);
-	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
-	const terms = data.map((d) => d.text);
-	return terms;
-};
-
-// Return the top 5 words related to a term
-async function getRelatedTerms(): Promise<string[]> {
-	if (!query.value) {
-		return [];
-	}
-	const params = new URLSearchParams({
-		set: resources.xddDataset ?? 'xdd-covid-19',
-		word: query.value
-	});
-	const response = await API.get(`/xdd/related/word?${params}`);
-	const data = response?.data?.data;
-	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
-}
-
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
 	execSearch();
 	// @ts-ignore
 	inputElement.value?.$el.focus();
 }
-defineExpose({ addToQuery, getRelatedTerms });
+defineExpose({ addToQuery });
 
 function replaceSearchTerm(term) {
 	query.value = term;
@@ -129,7 +101,7 @@ async function showAutocomplete(event) {
 
 async function showSuggestions(event) {
 	if (props.suggestions) {
-		const promise = getRelatedTerms();
+		const promise = getRelatedTerms(query.value);
 		promise.then((response) => {
 			autocompleteMenuItems.value = response.map((item) => ({
 				label: item,

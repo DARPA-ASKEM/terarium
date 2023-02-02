@@ -54,6 +54,7 @@
 import { computed, ref, watch, shallowRef } from 'vue';
 import { useRouter, RouteParamsRaw } from 'vue-router';
 import { isEmpty } from 'lodash';
+import { getRelatedTerms } from '@/services/data';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
@@ -182,8 +183,9 @@ watch(currentRoute, (newRoute) => {
 const terms = ref<string[]>([]);
 
 // Empty the related terms when the query is over
-async function updateRelatedTerms() {
-	terms.value = await searchBarRef.value?.getRelatedTerms();
+async function updateRelatedTerms(query?: string) {
+	terms.value = await getRelatedTerms(query);
+	router.push({ name: RouteName.DataExplorerRoute, query: { query } });
 }
 </script>
 
