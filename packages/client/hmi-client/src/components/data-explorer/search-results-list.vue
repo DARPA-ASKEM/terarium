@@ -2,7 +2,9 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else>Showing {{ resultsCount }} result(s)</template>
+			<template v-else
+				>{{ resultsText }}<span>{{ props.searchTerm }}</span></template
+			>
 		</span>
 		<template v-for="facet in chosenFacets">
 			<Chip
@@ -158,6 +160,14 @@ const resultsCount = computed(() => {
 	}
 	return total;
 });
+
+const resultsText = computed(() => {
+	if (resultsCount.value === 0) {
+		return 'No results found';
+	}
+	const s = resultsCount.value === 1 ? '' : 's';
+	return `Showing ${resultsCount.value} result${s} for `;
+});
 </script>
 
 <style scoped>
@@ -192,8 +202,12 @@ ul {
 }
 
 .result-count {
-	font-size: var(--font-size);
+	font-size: var(--font-body-small);
 	white-space: nowrap;
+}
+
+.result-count span {
+	color: var(--text-color-primary);
 }
 
 .p-chip {
