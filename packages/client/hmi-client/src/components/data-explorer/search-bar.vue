@@ -101,7 +101,7 @@ async function showAutocomplete(event) {
 
 async function showSuggestions(event) {
 	if (props.suggestions) {
-		const promise = getRelatedTerms(query.value);
+		const promise = getRelatedTerms(query.value, resources.xddDataset);
 		promise.then((response) => {
 			autocompleteMenuItems.value = response.map((item) => ({
 				label: item,
