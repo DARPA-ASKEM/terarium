@@ -375,10 +375,10 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 };
 
 // Return the top 5 words related to a term
-async function getRelatedWords(searchTerm: string, dataset?: string | null): Promise<string[]> {
-	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: searchTerm });
+async function getRelatedWords(query: string, dataset?: string | null): Promise<string[]> {
+	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
 	const response = await API.get(`/xdd/related/word?${params}`);
-	const data = response.data.data;
+	const data = response?.data?.data;
 	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
 }
 
