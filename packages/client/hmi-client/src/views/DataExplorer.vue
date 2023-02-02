@@ -480,7 +480,7 @@ const updateResultType = async (newResultType: ResourceType) => {
 
 		if (executeSearchByExample.value === false) {
 			// if no data currently exist for the selected tab,
-			//  or if data exists but outdated then we should refetch
+			// or if data exists but outdated then we should refetch
 			const resList = dataItemsUnfiltered.value.find(
 				(res) => res.searchSubsystem === resultType.value
 			);

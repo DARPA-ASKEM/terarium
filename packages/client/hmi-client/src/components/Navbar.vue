@@ -26,7 +26,7 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:suggestions="resourcesType === ResourceType.XDD"
+			:suggestions="resourceType === ResourceType.XDD"
 			@query-changed="queryChanged"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -72,7 +72,7 @@ const props = defineProps<{
 	active: boolean;
 	project: Project | null;
 	query: string;
-	resourcesType: string;
+	resourceType: string;
 }>();
 
 interface NavItem {
