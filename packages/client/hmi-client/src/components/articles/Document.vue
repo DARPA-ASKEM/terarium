@@ -35,7 +35,10 @@
 						<div v-html="highlightSearchTerms(section)" />
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(figureArtifacts)" header="Figures">
+				<AccordionTab
+					v-if="!isEmpty(figureArtifacts)"
+					:header="`Figures (${figureArtifacts.length})`"
+				>
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -45,7 +48,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tableArtifacts)" header="Tables">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -55,7 +58,10 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(equationArtifacts)" header="Equations">
+				<AccordionTab
+					v-if="!isEmpty(equationArtifacts)"
+					:header="`Equations (${equationArtifacts.length})`"
+				>
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<div class="img-container">
 							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
@@ -65,7 +71,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(urlArtifacts)" header="URLs">
+				<AccordionTab v-if="!isEmpty(urlArtifacts)" :header="`URLs (${urlArtifacts.length})`">
 					<div v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -73,7 +79,7 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherArtifacts)" header="Others">
+				<AccordionTab v-if="!isEmpty(otherArtifacts)" :header="`Others (${otherArtifacts.length})`">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
@@ -81,12 +87,18 @@
 						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</div>
 				</AccordionTab>
-				<AccordionTab header="References">
+				<AccordionTab
+					v-if="!isEmpty(doc.citationList)"
+					:header="`References (${doc.citationList.length})`"
+				>
 					<div v-for="(citation, key) of doc.citationList" :Key="key">
 						{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<AccordionTab
+					v-if="!isEmpty(relatedTerariumArtifacts)"
+					:header="`Associated resources (${relatedTerariumArtifacts.length})`"
+				>
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
 					</DataTable>
@@ -305,8 +317,8 @@ span {
 }
 
 .accordion {
+	margin: 0.5rem;
 	margin-top: 1rem;
-	font-size: 14px;
 }
 
 .extracted-item {
