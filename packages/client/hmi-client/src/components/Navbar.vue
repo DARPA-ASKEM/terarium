@@ -1,7 +1,9 @@
 <template>
 	<header>
 		<section class="header-left">
-			<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+			<router-link :to="RoutePath.Home">
+				<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+			</router-link>
 			<nav v-if="active">
 				<Dropdown
 					class="dropdown"
