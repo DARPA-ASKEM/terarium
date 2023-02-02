@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<div id="experiment" style="width: 1500px; height: 960px"></div>
+		<div id="experiment" style="width: 1500px; height: 1100px"></div>
 	</section>
 </template>
 
@@ -79,6 +79,7 @@ const interModelEdges = data.inter_model_edges;
 const intraModelEdges = data.intra_model_edges;
 
 const equalPools: string[][] = [];
+const refinementPools: string[][] = [];
 
 // Find equality nodes, create a list-of-list of all nodes thare are equivalent, note we will
 // double count, if a = b and b = c, we will get [a, b, b, c]
@@ -96,35 +97,53 @@ interModelEdges.forEach((edge) => {
 			pool.push(targetHash);
 		}
 	}
+
+	if (relation === 'refinement_of') {
+		const pool = refinementPools.find((p) => p.includes(sourceHash) || p.includes(targetHash));
+		if (!pool) {
+			refinementPools.push([sourceHash, targetHash]);
+		} else {
+			pool.push(sourceHash);
+			pool.push(targetHash);
+		}
+	}
 });
 
-// Create nodes, segment nodes into nodes that are specific to a model, and nodes that are shared across models
+for (let i = 0; i < equalPools.length; i++) {
+	equalPools[i] = _.uniq(equalPools[i]);
+}
+for (let i = 0; i < refinementPools.length; i++) {
+	refinementPools[i] = _.uniq(refinementPools[i]);
+}
+
+console.log('Equal pools', equalPools);
+console.log('Refinement pools', refinementPools);
+
+// console.log('Equal pools', JSON.stringify(equalPools));
+// console.log('Refinement pools', JSON.stringify(refinementPools));
+
+// Temporary placeholder for nodes after collapsing equal-nodes
+const temporaryNodes: any[] = [];
+
 const modelKeys = Object.keys(modelsMap);
+
 modelKeys.forEach((modelKey) => {
 	const nodeKeys = Object.keys(modelsMap[modelKey]);
-	const modelGroup = {
-		id: modelKey,
-		label: 'p',
-		data: { name: modelKey, models: [] },
-		nodes: []
-	};
-
 	nodeKeys.forEach((nodeKey) => {
 		const hash = `${modelKey}:${nodeKey}`;
 		const pool = equalPools.find((p) => p.includes(hash));
-
-		// console.log(modelsMap[modelKey][nodeKey]);
-
 		const currentNode = modelsMap[modelKey][nodeKey];
 
+		const size = currentNode.name ? 80 : 40;
+
 		if (!pool) {
-			modelGroup.nodes.push({
+			temporaryNodes.push({
 				id: hash,
 				label: hash,
 				x: 0,
 				y: 0,
-				height: 80,
-				width: 80,
+				height: size,
+				width: size,
 				data: {
 					name: hash,
 					displayName: currentNode.name || '',
@@ -135,14 +154,16 @@ modelKeys.forEach((modelKey) => {
 			});
 		} else {
 			const surrogateId = pool[0];
-			if (!g.nodes.find((d) => d.id === surrogateId)) {
-				g.nodes.push({
+
+			// Create a stub for the equality "group"
+			if (!temporaryNodes.find((d) => d.id === surrogateId)) {
+				temporaryNodes.push({
 					id: surrogateId,
 					label: surrogateId,
 					x: 0,
 					y: 0,
-					height: 80,
-					width: 80,
+					height: size,
+					width: size,
 					data: {
 						name: surrogateId,
 						displayName: currentNode.name || '',
@@ -153,14 +174,65 @@ modelKeys.forEach((modelKey) => {
 				});
 			}
 
-			const n = g.nodes.find((d) => d.id === surrogateId) as any;
+			// Inject model information
+			const n = temporaryNodes.find((d) => d.id === surrogateId) as any;
 			if (!n.data.models.includes(modelKey)) {
 				n.data.models.push(modelKey);
 			}
 		}
 	});
-	if (modelGroup.nodes.length > 0) {
-		g.nodes.push(modelGroup);
+});
+
+// console.log('!!!!!', temporaryNodes);
+// g.nodes = temporaryNodes;
+
+// Seed the graph with refinement groups
+for (let i = 0; i < refinementPools.length; i++) {
+	g.nodes.push({
+		id: `${i}`, // This is poolIdx
+		label: `${i}`,
+		x: 0,
+		y: 0,
+		width: 80,
+		height: 80,
+		data: {
+			name: `${i}`,
+			displayName: '',
+			templateName: '',
+			models: []
+		},
+		nodes: []
+	});
+}
+
+// Seed template node section
+g.nodes.push({
+	id: 'temp',
+	label: 'temp',
+	x: 0,
+	y: 0,
+	width: 80,
+	height: 80,
+	data: {
+		name: 'temp',
+		displayName: '',
+		templateName: '',
+		models: []
+	},
+	nodes: []
+});
+
+temporaryNodes.forEach((node) => {
+	const poolIdx = refinementPools.findIndex((d) => d.includes(node.id));
+	if (node.data.templateName.length > 0) {
+		g.nodes.find((d) => d.id === 'temp')?.nodes.push(node);
+		return;
+	}
+
+	if (poolIdx < 0) {
+		g.nodes.push(node);
+	} else {
+		g.nodes.find((d) => d.id === `${poolIdx}`)?.nodes.push(node);
 	}
 });
 
@@ -221,7 +293,7 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const children = selection.filter((d) => d.nodes.length === 0);
 		const conceptNodes = children.filter((d) => d.data.displayName?.length > 0);
-		const templateNodes = children.filter((d) => d.data.displayName?.length === 0);
+		const templateNodes = children.filter((d) => d.data.templateName?.length > 0);
 
 		conceptNodes
 			.append('circle')
@@ -240,16 +312,16 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 		templateNodes
 			.append('rect')
 			.classed('shape', true)
-			.attr('x', 10)
-			.attr('y', 10)
-			.attr('width', (d) => d.width - 20)
-			.attr('height', (d) => d.height - 20)
+			.attr('x', 0)
+			.attr('y', 0)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
 			.style('stroke', '#222')
 			.style('fill', 'transparent');
 
 		// const cat10 = palette;
 		children.each((d, i, g2) => {
-			if (d.data.models.length === 1) return;
+			if (d.data.models.length === 1 || d.data.displayName.length === 0) return;
 
 			const len = d.data.models.length;
 
@@ -277,8 +349,9 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			.append('text')
 			.attr('x', 0)
 			.attr('y', -10)
-			.style('font-size', 50)
+			.style('font-size', 80)
 			.style('text-anchor', 'middle')
+			// .text((d) => `${d.id} => ${d.data.displayName}`);
 			.text((d) => `${d.data.displayName}`);
 
 		templateNodes
@@ -286,7 +359,8 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			.attr('x', -20)
 			.attr('y', 30)
 			.style('font-size', 12)
-			.text((d) => `${d.data.templateName}`);
+			.text((d) => `${d.id} => ${d.data.templateName}`);
+		// .text((d) => `${d.data.templateName}`);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -304,7 +378,7 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			this.chart
 				.append('rect')
 				.attr('x', -145)
-				.attr('y', 16 + i * 60)
+				.attr('y', 1300 + 16 + i * 60)
 				.attr('width', 20)
 				.attr('height', 20)
 				.attr('fill', palette[i]);
@@ -312,10 +386,9 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			this.chart
 				.append('text')
 				.attr('x', -120)
-				.attr('y', 30 + i * 60)
+				.attr('y', 1300 + 30 + i * 60)
 				.style('font-size', 32)
 				.text(comaprisonData.model_names[i]);
-			console.log('!!!!!!!!!', comaprisonData.model_names[i]);
 		}
 	}
 }
