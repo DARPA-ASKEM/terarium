@@ -1,12 +1,39 @@
+<template>
+	<Navbar
+		class="header"
+		:active="!isErrorState"
+		:project="project"
+		:query="searchBarText"
+		:resourceType="resourceType"
+	/>
+	<main>
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
+		<router-view
+			class="page"
+			:project="project"
+			@search-query-changed="updateSearchBar"
+			@resources-type-changed="updateResourceType"
+		/>
+	</main>
+	<footer>
+		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
+	</footer>
+</template>
+
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Navbar from '@/components/Navbar.vue';
+import API from '@/api/api';
 import Sidebar from '@/components/Sidebar.vue';
-import { Project } from '@/types/Project';
+import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import API from '@/api/api';
+import { Project } from '@/types/Project';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
 
@@ -23,9 +50,9 @@ const isSidebarVisible = computed(
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const searchBarText = ref('');
-const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
-const resultType = ref<string>(ResourceType.XDD);
+const resourceType = ref<string>(ResourceType.XDD);
+
 /**
  * Project
  *
@@ -38,12 +65,8 @@ function updateSearchBar(newQuery) {
 	searchBarText.value = newQuery;
 }
 
-function updateRelatedSearchTerms(newTerms) {
-	relatedSearchTerms.value = newTerms;
-}
-
-function updateResultType(newResultType) {
-	resultType.value = newResultType;
+function updateResourceType(newResourceType) {
+	resourceType.value = newResourceType;
 }
 
 API.interceptors.response.use(
@@ -80,41 +103,13 @@ resources.$subscribe((mutation, state) => {
 });
 </script>
 
-<template>
-	<Navbar
-		v-if="!isErrorState"
-		class="header"
-		:project="project"
-		:searchBarText="searchBarText"
-		:relatedSearchTerms="relatedSearchTerms"
-		:resultType="resultType"
-	/>
-	<main>
-		<Sidebar
-			v-if="isSidebarVisible && !isErrorState"
-			class="sidebar"
-			data-test-id="sidebar"
-			:project="project"
-		/>
-		<router-view
-			class="page"
-			:project="project"
-			@search-query-changed="updateSearchBar"
-			@related-search-terms-updated="updateRelatedSearchTerms"
-			@result-type-changed="updateResultType"
-		/>
-	</main>
-	<footer>
-		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="uncharted-logo" />
-	</footer>
-</template>
-
 <style scoped>
 .header {
-	z-index: 2;
+	grid-area: header;
 }
 
 main {
+	grid-area: main;
 	display: flex;
 	flex-grow: 1;
 	isolation: isolate;
@@ -132,20 +127,12 @@ main {
 	min-width: 0;
 }
 
-.data-explorer {
-	z-index: 3;
-}
-
 footer {
-	width: 100%;
-	height: 48px;
-	background-color: var(--gray-800);
-	flex: none;
-	display: flex;
 	align-items: center;
-}
-
-.uncharted-logo {
-	padding-left: 1rem;
+	background-color: var(--surface-section);
+	border-top: 1px solid var(--surface-border);
+	display: flex;
+	grid-area: footer;
+	height: 3rem;
 }
 </style>

@@ -7,7 +7,6 @@
 @mixin focused() {
 	outline: $focusOutline;
     outline-offset: $focusOutlineOffset;
-    box-shadow: $focusShadow;
 }
 
 @mixin focused-inset() {
