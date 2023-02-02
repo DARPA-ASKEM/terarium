@@ -193,15 +193,11 @@ export default defineComponent({
 			});
 
 			if (this.rescaleAfterSelect) {
-				if (this.label === 'Publication Year') {
-					baseClone.sort((a, b) => a.selectedValue - b.selectedValue);
-				} else {
+				{
 					baseClone.sort((a, b) => b.selectedValue - a.selectedValue);
 				}
 			} else {
-				if (this.label === 'Publication Year') {
-					baseClone.sort((a, b) => a.selectedValue - b.selectedValue);
-				} else {
+				{
 					baseClone.sort((a, b) => b.value - a.value);
 				}
 			}

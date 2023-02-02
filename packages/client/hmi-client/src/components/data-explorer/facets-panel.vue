@@ -1,19 +1,19 @@
 <template>
 	<div class="facets-panel">
 		<div v-for="facet in formattedFacets" :key="facet.label">
+			<timeline-facet
+				v-if="facet.id === 'year'"
+				:data="facet.baseData"
+				:label="facet.label"
+			></timeline-facet>
 			<numerical-facet
-				v-if="facet.isNumerical"
+				v-else-if="facet.isNumerical"
 				:key="facet.label"
 				:facet="facet.id"
 				:label="facet.label"
 				:base-data="facet.baseData"
 				:selected-data="facet.filteredData"
 			/>
-			<timeline-facet
-				v-else-if="facet.id === 'year'"
-				:data="facet.baseData"
-				:label="facet.label"
-			></timeline-facet>
 			<categorical-facet
 				v-else
 				:key="facet.id"
