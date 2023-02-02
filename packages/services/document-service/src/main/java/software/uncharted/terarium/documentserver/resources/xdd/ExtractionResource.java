@@ -8,6 +8,7 @@ import software.uncharted.terarium.documentserver.proxies.xdd.ExtractionProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,5 +40,13 @@ public class ExtractionResource {
 		} else {
 			return proxy.getExtractions(null, term, page, askemClass);
 		}
+	}
+
+	@GET
+	@Path("/askem_autocomplete/{term}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
+	public Response getAutocomplete(@PathParam("term") String term) {
+		return proxy.getAutocomplete(term);
 	}
 }

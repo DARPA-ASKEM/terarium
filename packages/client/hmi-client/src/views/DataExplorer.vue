@@ -55,7 +55,7 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				content-width="calc(35% - 56px)"
+				content-width="calc(35% - 3rem)"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
@@ -67,7 +67,6 @@
 			<slider-panel
 				class="resources-slider"
 				content-width="35%"
-				tab-width="56px"
 				direction="right"
 				header="Resources"
 				v-model:is-open="isSliderResourcesOpen"
@@ -117,7 +116,7 @@ import { LocationQuery, useRoute } from 'vue-router';
 import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['search-query-changed', 'related-search-terms-updated']);
+const emit = defineEmits(['search-query-changed', 'resources-type-changed']);
 
 const props = defineProps<{
 	query?: LocationQuery;
@@ -139,7 +138,6 @@ const searchByExampleItem = ref<ResultType | null>(null);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
-const relatedSearchTerms = ref<string[]>([]);
 const query = useQueryStore();
 const resources = useResourcesStore();
 
@@ -342,7 +340,7 @@ const executeSearch = async () => {
 	searchParamsWithFacetFilters.dataset = datasetSearchParams;
 
 	// fetch the data
-	const { allData, allDataFilteredWithFacets, relatedWords } = await fetchData(
+	const { allData, allDataFilteredWithFacets } = await fetchData(
 		searchWords,
 		searchParams,
 		searchParamsWithFacetFilters,
@@ -357,8 +355,6 @@ const executeSearch = async () => {
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
-
-	relatedSearchTerms.value = relatedWords.flat();
 
 	isLoading.value = false;
 };
@@ -478,17 +474,13 @@ watch(searchQuery, async (newQuery) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-watch(relatedSearchTerms, (newSearchTerms) => {
-	emit('related-search-terms-updated', newSearchTerms);
-});
-
 const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
 		resultType.value = newResultType;
 
 		if (executeSearchByExample.value === false) {
 			// if no data currently exist for the selected tab,
-			//  or if data exists but outdated then we should refetch
+			// or if data exists but outdated then we should refetch
 			const resList = dataItemsUnfiltered.value.find(
 				(res) => res.searchSubsystem === resultType.value
 			);
@@ -504,6 +496,10 @@ const updateResultType = async (newResultType: ResourceType) => {
 		}
 	}
 };
+
+watch(resultType, (newResultType) => {
+	emit('resources-type-changed', newResultType);
+});
 
 // const addPreviewItemToCart = () => {
 // 	if (previewItem.value) {

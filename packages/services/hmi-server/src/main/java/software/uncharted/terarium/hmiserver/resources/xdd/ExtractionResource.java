@@ -27,4 +27,12 @@ public class ExtractionResource {
 	public Response searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass) {
 		return proxy.getExtractions(term, page, askemClass);
 	}
+
+	@GET
+	@Path("/askem_autocomplete/{term}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
+	public Response getAutocomplete(@PathParam("term") String term) {
+		return proxy.getAutocomplete(term);
+	}
 }
