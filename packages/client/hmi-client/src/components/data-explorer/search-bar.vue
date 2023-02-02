@@ -11,6 +11,7 @@
 					@keyup.space="handleSearchEvent"
 					class="input-text"
 					@input="handleSearchEvent"
+					ref="inputElement"
 				/>
 				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
 				<i
@@ -119,6 +120,8 @@ async function showAutocomplete(event) {
 					replaceSearchTerm(item);
 				}
 			}));
+			// @ts-ignore
+			inputElement.value?.$el.focus();
 		});
 		autocompleteMenu.value.show(event);
 	}
