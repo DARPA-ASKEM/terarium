@@ -1,26 +1,36 @@
 <template>
 	<section class="search-bar-container">
 		<div class="search">
-			<span class="p-input-icon-left p-input-icon-right">
-				<i class="pi pi-search" />
-				<InputText
-					type="text"
-					placeholder="Search"
-					v-model="query"
-					@keyup.enter="execSearch"
-					@keyup.space="handleSearchEvent"
-					class="input-text"
-					@input="handleSearchEvent"
-					ref="inputElement"
-				/>
+			<AutoComplete
+				:active="searchBarRef?.containerClass[1]['p-overlay-open']"
+				placeholder="Search"
+				v-model="query"
+				:suggestions="autocompleteMenuItems"
+				@complete="execSearch"
+				@change="handleSearchEvent"
+				ref="searchBarRef"
+				scrollHeight="400px"
+				removeTokenIcon="pi pi-times"
+				loadingIcon="undefined"
+			>
+				<template #item="prop">
+					<i class="pi pi-search" />
+					<span>{{ prop.item.label }}</span>
+				</template>
+			</AutoComplete>
+			<i
+				class="pi pi-times clear-search"
+				:class="{ hidden: isClearQueryButtonHidden }"
+				style="font-size: 1rem"
+				@click="clearQuery"
+			/>
+			<!-- <span class="p-input-icon-left p-input-icon-right">
+			
+				<InputText type="text" placeholder="Search" v-model="query" @keyup.enter="execSearch"
+					@keyup.space="handleSearchEvent" class="input-text" @input="handleSearchEvent" ref="searchBarRef" />
 				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
-				<i
-					class="pi pi-times clear-search"
-					:class="{ hidden: isClearQueryButtonHidden }"
-					style="font-size: 1rem"
-					@click="clearQuery"
-				/>
-			</span>
+			
+			</span> -->
 			<!-- <i class="pi pi-history" title="Search history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
@@ -30,11 +40,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import InputText from 'primevue/inputtext';
+// import InputText from 'primevue/inputtext';
+// import Menu from 'primevue/menu';
+import AutoComplete from 'primevue/autocomplete';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import { getRelatedWords, getAutocomplete } from '@/services/data';
-import Menu from 'primevue/menu';
 import { EventType } from '@/types/EventType';
 
 const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
@@ -47,9 +58,8 @@ const props = defineProps<{
 }>();
 
 const query = ref('');
-const autocompleteMenu = ref();
+const searchBarRef = ref();
 const autocompleteMenuItems = ref([{}]);
-const inputElement = ref<HTMLInputElement | null>(null);
 
 const isClearQueryButtonHidden = computed(() => !query.value);
 
@@ -59,6 +69,7 @@ function clearQuery() {
 }
 
 const execSearch = () => {
+	console.log(searchBarRef.value);
 	emit('query-changed', query.value);
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
@@ -71,14 +82,14 @@ function addToQuery(term: string) {
 	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
 	execSearch();
 	// @ts-ignore
-	inputElement.value?.$el.focus();
+	searchBarRef.value?.$el.focus();
 }
 defineExpose({ addToQuery });
 
 function replaceSearchTerm(term) {
 	query.value = term;
 	// @ts-ignore
-	inputElement.value?.$el.focus();
+	searchBarRef.value?.$el.focus();
 }
 
 async function showAutocomplete(event) {
@@ -93,9 +104,9 @@ async function showAutocomplete(event) {
 				}
 			}));
 			// @ts-ignore
-			inputElement.value?.$el.focus();
+			searchBarRef.value?.$el.focus();
 		});
-		autocompleteMenu.value.show(event);
+		searchBarRef.value.show(event);
 	}
 }
 
@@ -111,9 +122,9 @@ async function showSuggestions(event) {
 				}
 			}));
 			// @ts-ignore
-			inputElement.value?.$el.focus();
+			searchBarRef.value?.$el.focus();
 		});
-		autocompleteMenu.value.show(event);
+		searchBarRef.value.show(event);
 	}
 }
 
@@ -141,6 +152,30 @@ onMounted(() => {
 	overflow: hidden;
 }
 
+.p-autocomplete {
+	border-color: var(--surface-border);
+	height: 3rem;
+	width: 100%;
+}
+
+.p-autocomplete:deep(.p-inputtext),
+.p-autocomplete:deep(.p-inputtext:hover) {
+	border-color: var(--surface-border);
+	border-radius: 1.5rem;
+	width: 100%;
+}
+
+.p-autocomplete:deep(.p-inputtext:focus) {
+	box-shadow: none;
+	border: 1px solid var(--surface-border);
+}
+
+.p-autocomplete[active='true']:deep(.p-inputtext) {
+	border-bottom: none;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
 .search {
 	display: flex;
 	align-items: center;
@@ -152,12 +187,12 @@ onMounted(() => {
 	flex: 1;
 }
 
-.input-text {
-	border-color: var(--surface-border);
-	border-radius: 1.5rem;
-	padding: 12px;
-	width: 100%;
-	height: 3rem;
+i {
+	color: var(--text-color-subdued);
+}
+
+.pi-search {
+	margin-right: 1rem;
 }
 
 /* 
