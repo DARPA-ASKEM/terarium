@@ -38,17 +38,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-// import InputText from 'primevue/inputtext';
-// import Menu from 'primevue/menu';
-import AutoComplete from 'primevue/autocomplete';
+import { getRelatedTerms, getAutocomplete } from '@/services/data';
+import { computed, onMounted, ref } from 'vue';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import { getRelatedWords, getAutocomplete } from '@/services/data';
+// import Menu from 'primevue/menu';
+// import InputText from 'primevue/inputtext';
 import { EventType } from '@/types/EventType';
 
-const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
+const emit = defineEmits(['update-related-terms', 'toggle-search-by-example']);
 
 const route = useRoute();
 const resources = useResourcesStore();
@@ -65,12 +64,11 @@ const isClearQueryButtonHidden = computed(() => !query.value);
 
 function clearQuery() {
 	query.value = '';
-	emit('query-changed');
+	emit('update-related-terms');
 }
 
 const execSearch = () => {
-	console.log(searchBarRef.value);
-	emit('query-changed', query.value);
+	emit('update-related-terms', query.value);
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
@@ -112,7 +110,7 @@ async function showAutocomplete(event) {
 
 async function showSuggestions(event) {
 	if (props.suggestions) {
-		const promise = getRelatedWords(query.value, resources.xddDataset);
+		const promise = getRelatedTerms(query.value, resources.xddDataset);
 		promise.then((response) => {
 			autocompleteMenuItems.value = response.map((item) => ({
 				label: item,

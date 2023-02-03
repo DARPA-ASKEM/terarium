@@ -29,7 +29,7 @@
 			class="search-bar"
 			ref="searchBarRef"
 			:suggestions="resourceType === ResourceType.XDD"
-			@query-changed="queryChanged"
+			@update-related-terms="updateRelatedTerms"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
 		<section v-if="active" class="header-right">
@@ -56,6 +56,7 @@
 import { computed, ref, watch, shallowRef } from 'vue';
 import { useRouter, RouteParamsRaw } from 'vue-router';
 import { isEmpty } from 'lodash';
+import { getRelatedTerms } from '@/services/data';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
@@ -65,7 +66,6 @@ import Menu from 'primevue/menu';
 import SearchBar from '@/components/data-explorer/search-bar.vue';
 import { useCurrentRoute, RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
-import { getRelatedWords } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import { ResourceType } from '@/types/common';
 import { Project } from '@/types/Project';
@@ -179,11 +179,10 @@ watch(currentRoute, (newRoute) => {
  */
 const terms = ref<string[]>([]);
 
-async function queryChanged(q: string | null) {
-	// Empty the related terms when the query is over
-	if (!q) terms.value = [];
-	else terms.value = await getRelatedWords(q);
-	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
+// Empty the related terms when the query is over
+async function updateRelatedTerms(query?: string) {
+	terms.value = await getRelatedTerms(query);
+	router.push({ name: RouteName.DataExplorerRoute, query: { query } });
 }
 </script>
 
@@ -257,6 +256,7 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
+	font-weight: var(--font-weight-semibold);
 	color: var(--text-color-subdued);
 	display: flex;
 	column-gap: 0.5rem;

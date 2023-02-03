@@ -374,8 +374,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-// Return the top 5 words related to a term
-async function getRelatedWords(query: string, dataset?: string | null): Promise<string[]> {
+async function getRelatedTerms(query?: string, dataset?: string | null): Promise<string[]> {
 	if (!query) {
 		return [];
 	}
@@ -731,6 +730,6 @@ export {
 	getDocumentById,
 	getBulkDocuments,
 	getRelatedDocuments,
-	getRelatedWords,
+	getRelatedTerms,
 	getAutocomplete
 };
