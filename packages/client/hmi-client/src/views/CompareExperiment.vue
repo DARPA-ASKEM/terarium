@@ -24,6 +24,7 @@ interface EdgeData {
 	val: number;
 }
 
+const EDGE_COLOR = '#BBB';
 const palette = [
 	'#89BEFF',
 	'#B0E6D9',
@@ -41,8 +42,8 @@ const palette = [
 ];
 
 let g: IGraph<NodeData, EdgeData> = {
-	width: 800,
-	height: 400,
+	width: 1500,
+	height: 1100,
 	nodes: [],
 	edges: []
 };
@@ -120,12 +121,8 @@ for (let i = 0; i < refinementPools.length; i++) {
 console.log('Equal pools', equalPools);
 console.log('Refinement pools', refinementPools);
 
-// console.log('Equal pools', JSON.stringify(equalPools));
-// console.log('Refinement pools', JSON.stringify(refinementPools));
-
 // Temporary placeholder for nodes after collapsing equal-nodes
 const temporaryNodes: any[] = [];
-
 const modelKeys = Object.keys(modelsMap);
 
 modelKeys.forEach((modelKey) => {
@@ -184,9 +181,6 @@ modelKeys.forEach((modelKey) => {
 	});
 });
 
-// console.log('!!!!!', temporaryNodes);
-// g.nodes = temporaryNodes;
-
 // Seed the graph with refinement groups
 for (let i = 0; i < refinementPools.length; i++) {
 	g.nodes.push({
@@ -194,10 +188,10 @@ for (let i = 0; i < refinementPools.length; i++) {
 		label: `${i}`,
 		x: 0,
 		y: 0,
-		width: 80,
-		height: 80,
+		width: 0,
+		height: 0,
 		data: {
-			name: `${i}`,
+			name: 'container',
 			displayName: '',
 			templateName: '',
 			models: []
@@ -212,8 +206,8 @@ g.nodes.push({
 	label: 'temp',
 	x: 0,
 	y: 0,
-	width: 80,
-	height: 80,
+	width: 0,
+	height: 0,
 	data: {
 		name: 'temp',
 		displayName: '',
@@ -224,7 +218,7 @@ g.nodes.push({
 });
 
 temporaryNodes.forEach((node) => {
-	const poolIdx = refinementPools.findIndex((d) => d.includes(node.id));
+	const poolIdx = refinementPools.findIndex((d) => d.includes(`${node.id}`));
 	if (node.data.templateName.length > 0) {
 		g.nodes.find((d) => d.id === 'temp')?.nodes.push(node);
 		return;
@@ -236,6 +230,9 @@ temporaryNodes.forEach((node) => {
 		g.nodes.find((d) => d.id === `${poolIdx}`)?.nodes.push(node);
 	}
 });
+
+// Clean up
+_.remove(g.nodes, (n) => n.data.name === 'container' && n.nodes.length === 0);
 
 let eCounter = 0;
 intraModelEdges.forEach((edge) => {
@@ -287,11 +284,11 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			.attr('xoverflow', 'visible')
 			.append('svg:path')
 			.attr('d', ARROW_PATH)
-			.style('fill', '#000')
+			.style('fill', EDGE_COLOR)
 			.style('stroke', 'none');
 	}
 
-	renderNodes(selection: D3SelectionINode<NodeData>) {
+	renderNodes(selection: D3SelectionINode<any>) {
 		const children = selection.filter((d) => d.nodes.length === 0);
 		const conceptNodes = children.filter((d) => d.data.displayName?.length > 0);
 		const templateNodes = children.filter((d) => d.data.templateName?.length > 0);
@@ -335,14 +332,14 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 					.innerRadius(d.width * 0.5 + innerR)
 					.outerRadius(d.width * 0.5 + outerR)
 					.startAngle((idx * 2 * Math.PI) / len)
-					.endAngle(((idx + 1) * 2 * Math.PI) / len)();
+					.endAngle(((idx + 1) * 2 * Math.PI) / len);
 
 				d3.select(g2[i])
 					.append('path')
 					.attr('transform', `translate(${d.width * 0.5}, ${d.height * 0.5})`)
 					.attr('fill', palette[d.data.models[idx]])
 					.attr('stroke', '#888')
-					.attr('d', arcExample);
+					.attr('d', arcExample as any);
 			}
 		});
 
@@ -360,16 +357,16 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 			.attr('x', -20)
 			.attr('y', 30)
 			.style('font-size', 12)
-			.text((d) => `${d.id} => ${d.data.templateName}`);
+			.text((d) => `@@@ ${d.id} => ${d.data.templateName}`);
 		// .text((d) => `${d.data.templateName}`);
 	}
 
-	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
+	renderEdges(selection: D3SelectionIEdge<any>) {
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
-			.style('stroke', '#bbb')
+			.style('stroke', EDGE_COLOR)
 			.style('stroke-width', 3)
 			.attr('marker-end', `url(#${this.EDGE_ARROW_ID})`);
 	}
@@ -377,7 +374,7 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 	renderLegend() {
 		for (let i = 0; i < comaprisonData.model_names.length; i++) {
 			this.chart
-				.append('rect')
+				?.append('rect')
 				.attr('x', -145)
 				.attr('y', 1300 + 16 + i * 60)
 				.attr('width', 20)
@@ -385,7 +382,7 @@ class ComparisonRenderer<V, E> extends graphScaffolder.BasicRenderer<V, E> {
 				.attr('fill', palette[i]);
 
 			this.chart
-				.append('text')
+				?.append('text')
 				.attr('x', -120)
 				.attr('y', 1300 + 30 + i * 60)
 				.style('font-size', 32)
@@ -408,15 +405,49 @@ onMounted(async () => {
 	await renderer.render();
 	renderer.renderLegend();
 
-	const bubbleSets = new BubbleSets.BubbleSets();
-	bubbleSets.pushMember(BubbleSets.rect(30, 30, 50, 20));
-	bubbleSets.pushMember(BubbleSets.rect(200, 100, 50, 20));
-	bubbleSets.pushMember(BubbleSets.circle(240, 40, 10));
+	// eslint-disable-next-line
+	for (const pool of refinementPools) {
+		const bubbleSets = new BubbleSets.BubbleSets();
+		// const pool = refinementPools[4];
 
+		const group = renderer.chart
+			?.selectAll('.node-ui')
+			.select('circle, rect')
+			.filter((d: any) => pool.includes(d.id));
+		group?.each((_d, i, gr) => {
+			const el: any = d3.select(gr[i]).node();
+			const rect = el.getBoundingClientRect();
+			bubbleSets.pushMember(
+				BubbleSets.rect(
+					rect.x - 0.5 * rect.width,
+					rect.y - 0.5 * rect.width,
+					rect.width,
+					rect.height
+				)
+			);
+			renderer.chart
+				?.append('circle')
+				.attr('cx', rect.x)
+				.attr('cy', rect.y)
+				.attr('r', 5)
+				.attr('fill', 'red');
+		});
+		// const pointPath = bubbleSets.compute();
+		// const cleanPath = pointPath.sample(8).simplify(0).bSplines().simplify(0);
+		// renderer.chart?.append('path').attr('d', pathFn(cleanPath.points)).attr('fill', '#f80').attr('fill-opacity', 0.2);
+	}
+
+	// pool.forEach(hashKey => {
+	// 	const nodeSelection = renderer.chart?.selectAll('.node-ui').filter(d => d.id === hashKey);
+	// 	if (nodeSelection.size() === 0) return;
+	// 	console.log(nodeSelection.at(i));
+	// 	// const data: any = nodeSelection.data()[0];
+	//   // bubbleSets.pushMember(BubbleSets.rect(data.x, data.y, data.width, data.height));
+	// });
+	/*
 	const pointPath = bubbleSets.compute();
 	const cleanPath = pointPath.sample(8).simplify(0).bSplines().simplify(0);
-	console.log(cleanPath);
-
-	renderer.chart?.append('path').attr('d', pathFn(cleanPath.points)).attr('fill', '#f80');
+	renderer.chart?.append('path').attr('d', pathFn(cleanPath.points)).attr('fill', '#f80').attr('fill-opacity', 0.2);
+	*/
 });
 </script>

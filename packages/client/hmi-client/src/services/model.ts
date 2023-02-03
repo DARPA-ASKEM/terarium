@@ -32,36 +32,28 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	g.edges = [];
 	const nodeHeight = 20;
 	const nodeWidth = 20;
-	let nodeX = 10;
-	let nodeY = 10;
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
 		const aNode = model.S[i];
-		nodeX += 30;
-		nodeY += 30;
 		g.nodes.push({
 			id: `s-${i + 1}`,
 			label: aNode.sname,
-			x: nodeX,
-			y: nodeY,
+			x: 0,
+			y: 0,
 			height: nodeHeight,
 			width: nodeWidth,
 			data: { type: NodeType.State },
 			nodes: []
 		});
 	}
-	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
-	nodeY = 10;
 	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
-		nodeX += 30;
-		nodeY += 30;
 		g.nodes.push({
 			id: `t-${i + 1}`,
 			label: aTransition.tname,
-			x: nodeX,
-			y: nodeY,
+			x: 0,
+			y: 0,
 			height: nodeHeight,
 			width: nodeWidth,
 			data: { type: NodeType.Transition },
