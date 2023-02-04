@@ -180,9 +180,10 @@ watch(currentRoute, (newRoute) => {
 const terms = ref<string[]>([]);
 
 // Empty the related terms when the query is over
-async function updateRelatedTerms(query?: string) {
-	terms.value = await getRelatedTerms(query);
-	router.push({ name: RouteName.DataExplorerRoute, query: { query } });
+async function updateRelatedTerms(q?: string) {
+	terms.value = await getRelatedTerms(q);
+	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
+	console.log(props.query);
 }
 </script>
 

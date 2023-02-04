@@ -11,7 +11,7 @@
 					v-model="query"
 					:suggestions="autocompleteMenuItems"
 					:minLength="MIN_LENGTH"
-					@complete="execSearch"
+					@keyup.enter="execSearch"
 					@keyup.space="handleSearchEvent"
 					@change="handleSearchEvent"
 					ref="searchBarRef"

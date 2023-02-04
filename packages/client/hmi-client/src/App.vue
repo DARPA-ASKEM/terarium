@@ -17,7 +17,7 @@
 			class="page"
 			:project="project"
 			@search-query-changed="updateSearchBar"
-			@resources-type-changed="updateResourceType"
+			@resource-type-changed="updateResourceType"
 		/>
 	</main>
 	<footer>

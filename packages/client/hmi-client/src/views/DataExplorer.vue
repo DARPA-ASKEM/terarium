@@ -116,7 +116,7 @@ import { LocationQuery, useRoute } from 'vue-router';
 import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['search-query-changed', 'resources-type-changed']);
+const emit = defineEmits(['search-query-changed', 'resource-type-changed']);
 
 const props = defineProps<{
 	query?: LocationQuery;
@@ -462,6 +462,7 @@ watch(clientFilters, async (n, o) => {
 
 watch(searchQuery, async (newQuery) => {
 	emit('search-query-changed', newQuery);
+	console.log(searchQuery, newQuery);
 	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
@@ -498,7 +499,7 @@ const updateResultType = async (newResultType: ResourceType) => {
 };
 
 watch(resultType, (newResultType) => {
-	emit('resources-type-changed', newResultType);
+	emit('resource-type-changed', newResultType);
 });
 
 // const addPreviewItemToCart = () => {
