@@ -29,6 +29,11 @@
 			"automerge": true,
 			"automergeType": "pr",
 			"platformAutomerge": true
+		},
+		{
+			"description": "Limit ESBuild upgrades to < 0.17 due to breaking changes introduced in v0.17",
+			"matchPackageNames": ["esbuild"],
+			"allowedVersions": "<0.17.0"
 		}
 	]
 }
