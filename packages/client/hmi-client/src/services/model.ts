@@ -5,7 +5,7 @@ import { IGraph } from '@graph-scaffolder/types';
 
 export interface NodeData {
 	type: string;
-	uid?: string;
+	uid?: string | number;
 }
 
 export interface EdgeData {
