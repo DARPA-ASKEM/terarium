@@ -1,11 +1,5 @@
 <template>
-	<Navbar
-		class="header"
-		:active="!isErrorState"
-		:project="project"
-		:query="searchBarText"
-		:resourceType="resourceType"
-	/>
+	<Navbar class="header" :active="!isErrorState" :project="project" :resourceType="resourceType" />
 	<main>
 		<Sidebar
 			v-if="isSidebarVisible && !isErrorState"
@@ -13,12 +7,7 @@
 			data-test-id="sidebar"
 			:project="project"
 		/>
-		<router-view
-			class="page"
-			:project="project"
-			@search-query-changed="updateSearchBar"
-			@resource-type-changed="updateResourceType"
-		/>
+		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
 	</main>
 	<footer>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
@@ -49,7 +38,6 @@ const isSidebarVisible = computed(
 );
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
-const searchBarText = ref('');
 const resources = useResourcesStore();
 const resourceType = ref<string>(ResourceType.XDD);
 
@@ -60,10 +48,6 @@ const resourceType = ref<string>(ResourceType.XDD);
  * It is loaded at the root and passed to all views as prop.
  */
 const project = ref<Project | null>(null);
-
-function updateSearchBar(newQuery) {
-	searchBarText.value = newQuery;
-}
 
 function updateResourceType(newResourceType) {
 	resourceType.value = newResourceType;

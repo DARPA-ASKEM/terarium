@@ -4,9 +4,7 @@
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
 				<AutoComplete
-					:active="
-						searchBarRef?.containerClass[1]['p-overlay-open'] && !isEmpty(autocompleteMenuItems)
-					"
+					:active="searchBarRef?.overlayVisible"
 					placeholder="Search"
 					v-model="query"
 					:suggestions="autocompleteMenuItems"
@@ -33,7 +31,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { isEmpty } from 'lodash';
+// import { isEmpty } from 'lodash';
 import { getRelatedTerms, getAutocomplete } from '@/services/data';
 import { onMounted, ref } from 'vue';
 import * as EventService from '@/services/event';
@@ -65,7 +63,7 @@ function clearQuery() {
 }
 
 const execSearch = () => {
-	console.log(query.value, autocompleteMenuItems.value);
+	console.log(query.value, autocompleteMenuItems.value, resources, EventService);
 	emit('update-related-terms', query.value);
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };

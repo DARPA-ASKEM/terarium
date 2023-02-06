@@ -73,7 +73,6 @@ import { Project } from '@/types/Project';
 const props = defineProps<{
 	active: boolean;
 	project: Project | null;
-	query: string;
 	resourceType: string;
 }>();
 
@@ -183,7 +182,6 @@ const terms = ref<string[]>([]);
 async function updateRelatedTerms(q?: string) {
 	terms.value = await getRelatedTerms(q);
 	router.push({ name: RouteName.DataExplorerRoute, query: { q } });
-	console.log(props.query);
 }
 </script>
 
