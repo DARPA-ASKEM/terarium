@@ -7,7 +7,7 @@ export interface PetriNet {
 
 interface State {
 	sname: string;
-	uid?: string;
+	uid?: string | number;
 }
 interface Transition {
 	tname: string;

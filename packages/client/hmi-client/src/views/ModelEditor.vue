@@ -803,7 +803,7 @@ onMounted(async () => {
 	const playground = document.getElementById('playground') as HTMLDivElement;
 	renderer = new SampleRenderer({
 		el: playground,
-		useAStarRouting: true,
+		useAStarRouting: false, // People get distracted with squiggly connectors - Jan 2023
 		runLayout: runDagreLayout2,
 		useStableZoomPan: true
 	});
