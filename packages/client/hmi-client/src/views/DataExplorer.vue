@@ -462,7 +462,7 @@ watch(clientFilters, async (n, o) => {
 
 watch(searchQuery, async (newQuery) => {
 	emit('search-query-changed', newQuery);
-	console.log(searchQuery, newQuery);
+	console.log(searchQuery.value, newQuery);
 	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
