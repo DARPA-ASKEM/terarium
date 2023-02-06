@@ -1,7 +1,7 @@
 # graph-scaffolder
-graph-scaffolder provides SVG/DOM scaffolding:
+graph-scaffolder provides SVG/DOM scaffolding to do graph-ish things
 - SVG/DOM hierarchies + data-binding via D3
-- Basic boiler-plate functions such as pan/zoom, highlighting
+- Basic boiler-plate functions such as pan/zoom, highlighting, navigation
 - Hooks for building custom events
 
 Note: graph-scaffolder is _not_ a layout engine. It can leverage a layout function, provided that the algorithm produces output in the format below.
@@ -115,6 +115,15 @@ const graphData = layout_algorithm(rawData);
 await renderer.setData(graphData);
 await renderer.render();
 ```
+
+### Options
+- el: Container HTML element, e.g. a DIV element
+- runLayout: Layout function that returns an `IGraph<V, E>` data structure
+- useZoom: Boolean, whether to enable zomming and panning
+- zoomRange: [min, max], specifies the min and max zoom ratios
+- useStableLayout: Boolean. If true attempt to lock layout alteration on minor changes. Experimental.
+- useStableZoomPan: Boolean. If true do not reset zoom transform after re-layout
+- useAStarRouting: Boolean. Whether to use AStar to route edges when partial edge-routing is not available in the layout algorithm.
 
 
 ### Renderers
