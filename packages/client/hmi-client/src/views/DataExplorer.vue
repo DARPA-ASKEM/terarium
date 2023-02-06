@@ -116,13 +116,15 @@ import { LocationQuery, useRoute } from 'vue-router';
 import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['search-query-changed', 'resource-type-changed']);
+const emit = defineEmits(['resource-type-changed']);
 
 const props = defineProps<{
 	query?: LocationQuery;
 }>();
-const searchQuery = computed(() => props.query);
+
 const route = useRoute();
+const queryStore = useQueryStore();
+const resources = useResourcesStore();
 
 const searchByExampleOptions = ref<SearchByExampleOptions>({
 	similarContent: false,
@@ -130,7 +132,6 @@ const searchByExampleOptions = ref<SearchByExampleOptions>({
 	bakcwardCitation: false,
 	relatedContent: false
 });
-
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -138,19 +139,9 @@ const searchByExampleItem = ref<ResultType | null>(null);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
-const query = useQueryStore();
-const resources = useResourcesStore();
-
 // default slider state
 const isSliderFacetsOpen = ref(true);
 const isSliderResourcesOpen = ref(false);
-// close resources if preview opens
-watch(isSliderResourcesOpen, () => {
-	if (isSliderResourcesOpen.value) {
-		previewItem.value = null;
-	}
-});
-
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
 const xddDatasets = ref<string[]>([]);
@@ -164,14 +155,20 @@ const resultType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 
 const isLoading = ref<boolean>(false);
-
 // optimize search performance: only fetch as needed
 const dirtyResults = ref<{ [resultType: string]: boolean }>({});
 
 const xddDataset = computed(() =>
 	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
-const clientFilters = computed(() => query.clientFilters);
+const clientFilters = computed(() => queryStore.clientFilters);
+
+// close resources if preview opens
+watch(isSliderResourcesOpen, () => {
+	if (isSliderResourcesOpen.value) {
+		previewItem.value = null;
+	}
+});
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
 	if (xddDataset.value !== newDataset) {
@@ -460,19 +457,22 @@ watch(clientFilters, async (n, o) => {
 	dirtyResults.value[resultType.value] = false;
 });
 
-watch(searchQuery, async (newQuery) => {
-	console.log(searchQuery.value, newQuery);
-	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
-	// search term has changed, so all search results are dirty; need re-fetch
-	disableSearchByExample();
-	Object.values(ResourceType).forEach((key) => {
-		dirtyResults.value[key as string] = true;
-	});
+watch(
+	() => props.query,
+	async (newQuery) => {
+		console.log(props.query, newQuery, useQueryStore());
+		searchTerm.value = newQuery?.toString() ?? searchTerm.value;
+		// search term has changed, so all search results are dirty; need re-fetch
+		disableSearchByExample();
+		Object.values(ResourceType).forEach((key) => {
+			dirtyResults.value[key as string] = true;
+		});
 
-	// re-fetch data from the server, apply filters, and re-calculate the facets
-	await executeSearch();
-	dirtyResults.value[resultType.value] = false;
-});
+		// re-fetch data from the server, apply filters, and re-calculate the facets
+		await executeSearch();
+		dirtyResults.value[resultType.value] = false;
+	}
+);
 
 const updateResultType = async (newResultType: ResourceType) => {
 	if (resultType.value !== newResultType) {
@@ -531,7 +531,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-	query.reset();
+	queryStore.reset();
 });
 </script>
 
