@@ -11,12 +11,13 @@
 						<a
 							:href="`https://doi.org/${doi}`"
 							rel="noreferrer noopener"
+							target="_blank"
 							v-html="highlightSearchTerms(doi)"
 						/>
 					</div>
 					<div v-html="highlightSearchTerms(doc.publisher)" />
 					<Button
-						v-if="docLink || doi"
+						v-if="hasPdf()"
 						class="p-button-sm p-button-outlined"
 						label="Open PDF"
 						@click="openPDF"
@@ -250,6 +251,11 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
 );
+
+function hasPdf() {
+	const link = docLink.value ?? doi.value;
+	return link.match(/^.*\.(pdf|PDF)$/);
+}
 
 const openPDF = () => {
 	if (docLink.value) window.open(docLink.value as string);
