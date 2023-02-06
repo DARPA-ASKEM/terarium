@@ -89,7 +89,7 @@ const isClusterIncludesVariable = (c: ResultsCluster, v: string) => {
 const updateSelection = (cluster: ResultsCluster) => {
 	cluster.selected = !cluster.selected;
 	cluster.items.forEach((item) => {
-		emit('toggle-data-item-selected', item);
+		emit('toggle-data-item-selected', { item });
 	});
 };
 
@@ -356,13 +356,16 @@ const clustersInfo = computed(() => {
 		width: 100%;
 		vertical-align: top;
 	}
+
 	th,
 	td {
 		padding: 2px 4px;
 	}
+
 	tr {
-		border: 2px solid var(--separator);
+		border: 2px solid var(--gray-300);
 	}
+
 	thead {
 		tr {
 			border: none;
@@ -377,37 +380,43 @@ const clustersInfo = computed(() => {
 			top: -1px;
 			z-index: 1;
 			font-weight: normal;
-			/* FIXME: shouldn't need to be manually kept in sync with data explorer bg colour */
-			background-color: var(--un-color-body-surface-background);
+			background-color: var(--surface-ground);
 		}
 	}
+
 	td {
-		background: var(--un-color-body-surface-primary);
+		background: var(--surface-section);
 	}
 
 	.tr-item {
 		height: 50px;
 		padding: 8px;
 	}
+
 	.tr-item.selected td {
-		background-color: var(--un-color-accent-lighter);
+		background-color: var(--primary-color-lighter);
 	}
+
 	.name-col {
 		width: 20%;
+
 		.name-layout {
 			display: flex;
 			align-content: stretch;
 			align-items: stretch;
+
 			.radio {
 				flex: 0 0 auto;
 				align-self: flex-start;
 				margin: 0px 5px 0 0;
 			}
+
 			.content {
 				flex: 1 1 auto;
 			}
 		}
 	}
+
 	.preview-container {
 		background-color: gray;
 		height: 30px;

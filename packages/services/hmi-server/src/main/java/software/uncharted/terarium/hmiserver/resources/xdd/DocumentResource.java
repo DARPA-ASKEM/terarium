@@ -40,11 +40,15 @@ public class DocumentResource {
 		@QueryParam("min_published") String min_published,
 		@QueryParam("max_published") String max_published,
 		@QueryParam("pubname") String pubname,
-		@QueryParam("publisher") String publisher
+		@QueryParam("publisher") String publisher,
+		@QueryParam("additional_fields") String additional_fields,
+		@QueryParam("match") String match,
+		@QueryParam("known_entities") String known_entities,
+		@QueryParam("fields") String fields
 	) {
 		// only go ahead with the query if at least one param is present
-		if (docid != null || doi != null || title != null || term != null) {
-			// for consistency, if doi/title are valid, then make sure other params are null
+		if (docid != null || doi != null || term != null) {
+			// for a more direct search, if doi is valid, then make sure other params are null
 			if (docid != null || doi != null) {
 				title = null;
 				term = null;
@@ -60,27 +64,12 @@ public class DocumentResource {
 				max_published = null;
 				pubname = null;
 				publisher = null;
-			}
-			if (title != null) {
-				doi = null;
-				docid = null;
-				term = null;
-				dataset = null;
-				include_score = null;
-				include_highlights = null;
-				inclusive = null;
-				full_results = null;
-				max = null;
-				per_page = null;
-				dict = null;
-				min_published = null;
-				max_published = null;
-				pubname = null;
-				publisher = null;
+				additional_fields = null;
+				match = null;
 			}
 			return proxy.getDocuments(
 				docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-				min_published, max_published, pubname, publisher);
+				min_published, max_published, pubname, publisher, additional_fields, match, known_entities, fields);
 		}
 		return Response.noContent().build();
 	}

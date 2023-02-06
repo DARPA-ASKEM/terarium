@@ -4,7 +4,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { select, scaleLog, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
+import { select, scaleSymlog, scaleBand, axisBottom, axisLeft, NumberValue } from 'd3';
 
 import {
 	D3SvgSelection,
@@ -80,6 +80,12 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
 			}
 		},
 		labelRowFormatFn: {
@@ -181,7 +187,7 @@ export default {
 		},
 
 		yScale() {
-			return scaleLog()
+			return scaleSymlog()
 				.domain([this.parametersMaxAll, this.parametersMinAll])
 				.range([0, this.containerBoundingBox.height - this.bottomMargin - this.topMargin]);
 		}
@@ -230,7 +236,7 @@ export default {
 		extractCellValuesByParam(idx, selectedCells, startCol, endCol) {
 			const cell = this.dataCellList[idx];
 			if (cell.col <= endCol && cell.col >= startCol) {
-				this.parameters.forEach((param) => selectedCells[param].push(cell[param]));
+				this.parameters.forEach((param) => selectedCells[param].push(this.selectorFn(cell, param)));
 			}
 		},
 
@@ -299,7 +305,7 @@ export default {
 
 <style scoped>
 .cell-selected-bar {
-	border: 2px solid var(--un-color-black-10);
+	border: 2px solid var(--gray-100);
 	border-radius: 5px;
 }
 </style>

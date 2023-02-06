@@ -8,9 +8,7 @@ import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class SimulationPlan implements Serializable {
-
-	private String id;
+public class SimulationPlan extends ResourceType implements Serializable {
 
 	@JsonbProperty("model_id")
 	private String modelId;

@@ -29,4 +29,14 @@ public class RelatedResource {
 		@QueryParam("docid") String docid) {
 		return proxy.getRelatedDocuments(set, docid);
 	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/word")
+	@Tag(name = "Get most similar words for a string")
+	public Response getRelatedWords(
+		@QueryParam("set") String set,
+		@QueryParam("word") String word) {
+		return proxy.getRelatedWords(set, word);
+	}
 }

@@ -10,9 +10,8 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class SimulationRun implements Serializable {
+public class SimulationRun extends ResourceType implements Serializable {
 
-	private String id;
 
 	@JsonbProperty("simulator_id")
 	private String simulatorId;

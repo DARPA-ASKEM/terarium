@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const router = useRouter();
 const openSimulationResult = (runId: string | number) => {
-	router.push({ params: { simulationRunId: runId } });
+	router.push({ params: { assetId: runId } });
 };
 const simulationRunsAsArtifactList = computed(() =>
 	props.project.assets.simulation_runs.map((runId) => ({
@@ -22,7 +22,7 @@ const route = useRoute();
 const selectedArtifactId = computed(() => {
 	// route.params values can be string or string[], safe to assume there is
 	//	only one value for this param.
-	const runId = route.params.simulationRunId as string;
+	const runId = route.params.assetId as string;
 	// Convert that string to a (decimal) number so it's comparable with the run
 	//	IDs we display in the list.
 	return Number.parseInt(runId, 10);
@@ -34,7 +34,7 @@ const selectedArtifactId = computed(() => {
 	<!-- @remove-artifact="deleteSimulationResult" -->
 	<ArtifactList
 		:artifacts="simulationRunsAsArtifactList"
-		:selected-artifact-id="selectedArtifactId"
+		:selected-artifact-ids="[selectedArtifactId.toString()]"
 		@artifact-clicked="openSimulationResult"
 	/>
 </template>

@@ -1,93 +1,122 @@
 <script setup lang="ts">
 import { Project } from '@/types/Project';
+import { ref, nextTick } from 'vue';
+import ResourcesList from '@/components/resources/resources-list.vue';
+import InputText from 'primevue/inputtext';
+import { update as updateProject } from '@/services/project';
+import useResourcesStore from '@/stores/resources';
+import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 
-defineProps<{
+const props = defineProps<{
 	project: Project;
 }>();
+
+const resources = useResourcesStore();
+const isEditingProject = ref(false);
+const inputElement = ref<HTMLInputElement | null>(null);
+const newProjectName = ref<string>('');
+
+function formatTimeStamp(timestamp) {
+	const formattedDate = new Date(timestamp).toLocaleDateString(undefined, {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric'
+	});
+	return `Last updated ${formattedDate}`;
+}
+
+async function editProject() {
+	newProjectName.value = props.project.name;
+	isEditingProject.value = true;
+	await nextTick();
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+
+async function updateProjectName() {
+	isEditingProject.value = false;
+	const updatedProject = props.project;
+	updatedProject.name = newProjectName.value;
+	const id = await updateProject(updatedProject);
+	if (id) {
+		resources.setActiveProject(updatedProject);
+	}
+}
+
+const projectMenu = ref();
+const projectMenuItems = ref([
+	{
+		label: 'Edit',
+		command: editProject
+	}
+]);
+
+function showProjectMenu(event) {
+	projectMenu.value.toggle(event);
+}
 </script>
 
 <template>
 	<div class="flex-container">
 		<header>
-			<h2>{{ project?.name }}</h2>
-			<p class="secondary-text">Last updated: {{ project?.timestamp }}</p>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-rounded menu-button"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<InputText
+				v-model="newProjectName"
+				ref="inputElement"
+				class="project-name-input"
+				@keyup.enter="updateProjectName"
+				:class="{ isVisible: isEditingProject }"
+			>
+			</InputText>
+			<h3 :class="{ isVisible: !isEditingProject }">
+				{{ project?.name }}
+			</h3>
+
+			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
 				<!-- This div is so that child elements will automatically collapse margins -->
 				<div>
+					<!-- Author -->
 					<section class="description">
-						<!-- Author -->
-						<section class="author">Edwin Lai, Yohann Paris</section>
 						<p>
 							{{ project?.description }}
 						</p>
 					</section>
-					<section class="related-projects">
-						<h4>Related projects:</h4>
+					<section class="contributors">
+						{{ project?.username }}
+						<Button label="+ Add contributor" />
 					</section>
 				</div>
 			</section>
 			<section class="detail">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<section>
-						<h4>Questions / Simulation Plans</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-					<section>
-						<h4>Models</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-					<section>
-						<h4>Scenarios</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-					<section>
-						<h4>Key Outcomes</h4>
-						<p>
-							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-							incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-							exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-							dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-							Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-							mollit anim id est laborum.
-						</p>
-					</section>
-				</div>
+				<resources-list :project="project" />
 			</section>
 		</section>
 	</div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@/assets/css/theme/variables';
+
 .flex-container {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 	margin: 0.5rem;
 	background: white;
+}
+
+a {
+	text-decoration: underline;
 }
 
 .content-container {
@@ -110,34 +139,80 @@ section {
 	flex: 0.25;
 }
 
-.author {
+.contributors {
 	line-height: 1.75rem;
+	margin: 0 0 1rem 0;
+	align-items: flex-start;
 }
 
 .detail {
 	flex: 0.75;
 }
 
-.summary section,
-.detail section {
+.summary,
+.detail {
 	margin: 1rem 0;
 	display: block;
 }
 
-h4 {
-	font: var(--un-font-h4);
-	margin: 1rem 0;
+.summary section {
+	margin-bottom: 1rem;
+}
+
+.related {
+	font-weight: $fontWeightSemiBold;
 }
 
 h3 {
-	font: var(--un-font-h3);
+	font-size: 24px;
+	margin-bottom: 1rem;
+	display: inline;
+	visibility: hidden;
 }
 
-h2 {
-	font: var(--un-font-h2);
+.project-name-input {
+	font-size: 24px;
+	position: absolute;
+	font-weight: 600;
+	padding: 0 0 0 1rem;
+	margin-left: -1rem;
+	border: 0;
+	visibility: hidden;
+	width: 33%;
 }
 
 .secondary-text {
-	color: var(--un-color-body-text-secondary);
+	color: var(--text-color-secondary);
+}
+
+.isVisible {
+	visibility: visible;
+}
+
+.p-button,
+.p-button:enabled:hover,
+.p-button:enabled:focus {
+	background-color: transparent;
+	color: var(--text-color-secondary);
+	padding: 0;
+}
+
+ul {
+	list-style: none;
+	display: inline-flex;
+}
+
+.item,
+.item:enabled:hover,
+.item:enabled:focus {
+	background-color: var(--surface-secondary);
+	color: var(--text-color-secondary);
+	padding: 0 0.5rem 0 0.5rem;
+	margin: 0.5rem;
+}
+
+.menu-button {
+	position: absolute;
+	right: 0;
 }
 </style>

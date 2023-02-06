@@ -6,7 +6,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "xdd-document-service")
+@RegisterRestClient(configKey = "document-service")
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocumentProxy {
 	@GET
@@ -28,7 +28,11 @@ public interface DocumentProxy {
 		@QueryParam("min_published") String min_published,
 		@QueryParam("max_published") String max_published,
 		@QueryParam("pubname") String pubname,
-		@QueryParam("publisher") String publisher
+		@QueryParam("publisher") String publisher,
+		@QueryParam("additional_fields") String additional_fields,
+		@QueryParam("match") String match,
+		@QueryParam("known_entities") String known_entities,
+		@QueryParam("fields") String fields
 	);
 
 	@GET
@@ -44,5 +48,12 @@ public interface DocumentProxy {
 	Response getRelatedDocuments(
 		@PathParam("set") String set,
 		@QueryParam("docid") String docid
+	);
+
+	@GET
+	@Path("sets/{set}/word2vec/api/most_similar")
+	Response getRelatedWords(
+		@PathParam("set") String set,
+		@QueryParam("word") String word
 	);
 }

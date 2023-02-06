@@ -14,7 +14,8 @@ export type Model = {
 	framework: string;
 	concept: string;
 	timestamp: string | Date;
-	parameters: { [key: string]: string };
+	/* parameters: { [key: string]: string }; */
+	parameters: any; // FIXME
 	content: PetriNet;
 
 	type: string;
@@ -22,6 +23,8 @@ export type Model = {
 
 export type ModelSearchParams = {
 	filters?: Filters;
+	related_search_id?: string | number;
+	related_search_enabled?: boolean; // if true, then perform a search by example by finding related models
 };
 
 //

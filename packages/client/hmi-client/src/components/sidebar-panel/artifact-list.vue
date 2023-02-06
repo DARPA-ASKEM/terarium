@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import IconClose32 from '@carbon/icons-vue/es/close/32';
+import IconClose32 from '@carbon/icons-vue/es/close/16';
 
 export interface ArtifactListItem {
 	id: string | number;
 	name: string;
 }
 
-defineProps<{
+const props = defineProps<{
 	artifacts: ArtifactListItem[];
-	selectedArtifactId?: string | number;
+	selectedArtifactIds?: string[];
 }>();
 
 const emit = defineEmits<{
-	(e: 'artifact-clicked', id: string | number): void;
+	(e: 'artifact-clicked', id: string | number, name?: string): void;
 	(e: 'remove-artifact', id: string | number): void;
 }>();
+
+function isArtifactSelected(artifactId) {
+	if (props.selectedArtifactIds) {
+		return props.selectedArtifactIds.includes(artifactId.toString());
+	}
+	return false;
+}
 </script>
 
 <template>
@@ -23,8 +30,8 @@ const emit = defineEmits<{
 			v-for="artifact in artifacts"
 			:key="artifact.id"
 			class="row"
-			:class="{ active: artifact.id === selectedArtifactId }"
-			@click="emit('artifact-clicked', artifact.id)"
+			:class="{ active: isArtifactSelected(artifact.id) }"
+			@click="emit('artifact-clicked', artifact.id, artifact.name)"
 		>
 			<span>
 				{{ artifact.name }}
@@ -44,7 +51,7 @@ const emit = defineEmits<{
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	border-top: 1px solid var(--separator);
+	border-top: 1px solid var(--gray-300);
 }
 
 .row:first-child {
@@ -52,18 +59,17 @@ const emit = defineEmits<{
 }
 
 .row:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 }
 
 .active {
-	background-color: var(--un-color-accent-lighter);
+	background-color: var(--primary-color-lighter);
 }
 
 .remove-button {
-	color: var(--text-color-light);
 	display: none;
-	height: 2rem;
-	width: 2rem;
+	border-radius: 8px;
+	margin-right: 0.5rem;
 }
 
 .row:hover .remove-button {
@@ -71,7 +77,7 @@ const emit = defineEmits<{
 }
 
 .remove-button:hover {
-	color: var(--un-font-body);
+	background-color: var(--gray-200);
 }
 
 span {

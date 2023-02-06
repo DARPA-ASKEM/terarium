@@ -3,11 +3,10 @@
 		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
 		<div class="add-selected-buttons">
 			<Button
-				action
-				@click="addAssetsToProject"
+				@click="addAssetsToProject()"
 				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				>Add to current project</Button
-			>
+				label="Add to current project"
+			/>
 			<dropdown-button
 				v-if="selectedSearchItems.length > 0"
 				:inner-button-label="'Add to another project'"
@@ -16,40 +15,40 @@
 				@item-selected="addAssetsToProject"
 			/>
 		</div>
-		<div class="selected-items-container">
-			<div v-for="(item, indx) in selectedSearchItems" class="selected-item" :key="`item-${indx}`">
-				<div class="item-header">
-					<component class="icon" :is="getResourceTypeIcon(getType(item))" />
-					<div class="item-title" :title="getTitle(item)">
-						{{ formatTitle(item) }}
-					</div>
-					<div class="item-delete-btn" @click.stop="removeItem(item)">
-						<IconClose16 />
-					</div>
-				</div>
-				<div class="content">
-					<multiline-description :text="formatDescription(item)" />
-				</div>
-			</div>
-		</div>
+		<ul>
+			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
+				<asset-card
+					:asset="(asset as XDDArticle & Model & Dataset)"
+					:resourceType="(getType(asset) as ResourceType)"
+				>
+					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
+						<i class="pi pi-ellipsis-v" />
+					</button>
+					<Menu ref="contextMenu" :model="getMenuItemsForItem(asset)" :popup="true" />
+				</asset-card>
+			</li>
+		</ul>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import Button from '@/components/Button.vue';
-import { getResourceTypeIcon, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
-import MultilineDescription from '@/components/widgets/multiline-description.vue';
+import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { DATASETS, MODELS, Project, PUBLICATIONS } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
-import IconClose16 from '@carbon/icons-vue/es/close/16';
+import { useRouter } from 'vue-router';
+import AssetCard from '@/components/data-explorer/asset-card.vue';
+import Button from 'primevue/button';
+import Menu from 'primevue/menu';
+
+const router = useRouter();
 
 const props = defineProps({
 	selectedSearchItems: {
@@ -58,42 +57,34 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close', 'remove-item']);
+const emit = defineEmits([
+	'close',
+	'toggle-data-item-selected',
+	'find-related-content',
+	'find-similar-content'
+]);
 const resources = useResourcesStore();
 
+const contextMenu = ref();
 const validProject = computed(() => resources.activeProject);
 
 const projectsList = ref<Project[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
-const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
-
-const formatTitle = (item: ResultType) => {
-	const maxSize = 36;
-	const itemTitle = getTitle(item);
-	return itemTitle.length < maxSize ? itemTitle : `${itemTitle.substring(0, maxSize)}...`;
-};
-
-const formatDescription = (item: ResultType) => {
-	const maxSize = 120;
-	let itemDesc = '[No Desc]';
-	if (isModel(item)) {
-		itemDesc = (item as Model).description || itemDesc;
+const getMenuItemsForItem = (item: ResultType) => [
+	{
+		label: 'Remove',
+		command: () => emit('toggle-data-item-selected', { item, type: 'selected' })
+	},
+	{
+		label: 'Find Related Content',
+		command: () => emit('find-related-content', { item, type: 'selected' })
+	},
+	{
+		label: 'Find Similar Content', // only for publications
+		command: () => emit('find-similar-content', { item, type: 'selected' })
 	}
-	if (isDataset(item)) {
-		itemDesc = (item as Dataset).description || itemDesc;
-	}
-	if (isXDDArticle(item)) {
-		itemDesc =
-			((item as XDDArticle).abstractText && typeof (item as XDDArticle).abstractText === 'string'
-				? (item as XDDArticle).abstractText
-				: false) ||
-			(item as XDDArticle).journal ||
-			(item as XDDArticle).publisher ||
-			itemDesc;
-	}
-	return itemDesc.length < maxSize ? itemDesc : `${itemDesc.substring(0, maxSize)}...`;
-};
+];
 
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
@@ -113,7 +104,7 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isXDDArticle(selectedItem)) {
 			const body: PublicationAsset = {
-				xdd_uri: (selectedItem as XDDArticle).gddid,
+				xdd_uri: (selectedItem as XDDArticle).gddId,
 				title: (selectedItem as XDDArticle).title
 			};
 
@@ -125,7 +116,7 @@ const addResourcesToProject = async (projectId: string) => {
 				const publicationId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = PUBLICATIONS;
+				const assetsType = ProjectAssetTypes.PUBLICATIONS;
 				await ProjectService.addAsset(projectId, assetsType, publicationId);
 
 				// update local copy of project assets
@@ -137,23 +128,23 @@ const addResourcesToProject = async (projectId: string) => {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = MODELS;
+			const assetsType = ProjectAssetTypes.MODELS;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 
 			// update local copy of project assets
 			validProject.value?.assets.models.push(modelId);
-			resources.activeProjectAssets?.[MODELS].push(selectedItem);
+			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = DATASETS;
+			const assetsType = ProjectAssetTypes.DATASETS;
 			await ProjectService.addAsset(projectId, assetsType, datasetId);
 
 			// update local copy of project assets
 			validProject.value?.assets.datasets.push(datasetId);
-			resources.activeProjectAssets?.[DATASETS].push(selectedItem);
+			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
 		}
 	});
 };
@@ -173,10 +164,7 @@ const addAssetsToProject = async (projectName?: string) => {
 	addResourcesToProject(projectId);
 
 	emit('close');
-};
-
-const removeItem = (item: ResultType) => {
-	emit('remove-item', item);
+	router.push(`/projects/${projectId}`);
 };
 
 onMounted(async () => {
@@ -185,6 +173,10 @@ onMounted(async () => {
 		projectsList.value = all;
 	}
 });
+
+const toggleContextMenu = (event, idx: number) => {
+	contextMenu.value[idx].toggle(event);
+};
 </script>
 
 <style scoped>
@@ -198,7 +190,7 @@ onMounted(async () => {
 	font-size: larger;
 	text-align: center;
 	font-weight: bold;
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 }
 
 .add-selected-buttons {
@@ -213,50 +205,30 @@ onMounted(async () => {
 }
 
 .breakdown-pane-container {
-	margin-bottom: 40px;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
 }
 
-.selected-items-container {
-	display: flex;
-	flex-direction: column;
-	overflow-y: auto;
-	margin-top: 10px;
+.cart-item {
+	border-bottom: 1px solid var(--surface-ground);
 }
 
-.selected-items-container .selected-item {
-	padding: 5px;
-	background: var(--un-color-white);
-	margin-top: 1px;
+button {
+	border: none;
+	background-color: transparent;
+	height: min-content;
+	padding: 0;
 }
 
-.selected-items-container .item-header {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
+i {
+	padding: 0.2rem;
+	border-radius: var(--border-radius);
 }
 
-.selected-items-container .item-header .item-title {
-	font-weight: 500;
-}
-
-.selected-items-container .item-header .icon {
-	margin-right: 5px;
-}
-
-.selected-items-container .selected-item .content {
-	margin-left: 22px;
-}
-
-.item-delete-btn {
-	color: var(--un-color-body-text-disabled);
+i:hover {
 	cursor: pointer;
-}
-
-.item-delete-btn:hover {
-	/* color: var(--un-color-body-text-primary); */
-	color: red;
+	background-color: hsla(0, 0%, 0%, 0.1);
+	background-color: hsla(0, 0%, 0%, 0.1);
 }
 </style>

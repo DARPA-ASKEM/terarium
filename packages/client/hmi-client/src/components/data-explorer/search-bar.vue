@@ -1,146 +1,206 @@
 <template>
-	<div class="search-bar-container">
-		<slot name="dataset"></slot>
-		<div class="input-container">
-			<IconSearch16 class="search-icon" />
-			<label v-if="searchLabel !== ''" for="search" class="search-label">{{ searchLabel }}</label>
-			<input
-				id="search"
-				v-model="searchText"
-				ref="inputElement"
-				type="text"
-				name="search"
-				:placeholder="searchPlaceholder"
-				@keyup.enter="addSearchTerm"
-				@input="searchTextHandler"
-			/>
-			<IconClose16 class="clear-icon" @click="clearText" />
+	<section class="search-bar-container">
+		<div class="search">
+			<span class="p-input-icon-left p-input-icon-right">
+				<i class="pi pi-search" />
+				<InputText
+					type="text"
+					placeholder="Search"
+					v-model="query"
+					@keyup.enter="execSearch"
+					@keyup.space="handleSearchEvent"
+					class="input-text"
+					@input="handleSearchEvent"
+					ref="inputElement"
+				/>
+				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
+				<i
+					class="pi pi-times clear-search"
+					:class="{ hidden: isClearQueryButtonHidden }"
+					style="font-size: 1rem"
+					@click="clearQuery"
+				/>
+			</span>
+			<!-- <i class="pi pi-history" title="Search history" /> -->
+			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
-		<slot name="sort"></slot>
-		<slot name="params"></slot>
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import IconClose16 from '@carbon/icons-vue/es/close/16';
-import IconSearch16 from '@carbon/icons-vue/es/search/16';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import InputText from 'primevue/inputtext';
+import * as EventService from '@/services/event';
+import useResourcesStore from '@/stores/resources';
+import { getRelatedWords, getAutocomplete } from '@/services/data';
+import Menu from 'primevue/menu';
+import { EventType } from '@/types/EventType';
 
-const props = defineProps({
-	realtime: {
-		type: Boolean,
-		default: false
-	},
-	searchLabel: {
-		type: String,
-		default: ''
-	},
-	searchPlaceholder: {
-		type: String,
-		default: 'Search for resources'
-	},
-	focusInput: {
-		type: Boolean,
-		default: true
-	}
-});
+const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
-const emit = defineEmits(['search-text-changed']);
+const route = useRoute();
+const resources = useResourcesStore();
 
+const props = defineProps<{
+	suggestions: boolean;
+}>();
+
+const query = ref('');
+const autocompleteMenu = ref();
+const autocompleteMenuItems = ref([{}]);
 const inputElement = ref<HTMLInputElement | null>(null);
 
-const searchText = ref('');
-const searchTerms = ref('');
+const isClearQueryButtonHidden = computed(() => !query.value);
 
-const clearText = () => {
-	searchText.value = '';
-	searchTerms.value = '';
-};
-
-const searchTextHandler = (event: Event) => {
-	if (props.realtime) {
-		searchTerms.value = (event.target as HTMLInputElement).value;
-	}
-};
+function clearQuery() {
+	query.value = '';
+	emit('query-changed');
+}
 
 const execSearch = () => {
-	emit('search-text-changed', searchTerms.value);
+	emit('query-changed', query.value);
+	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
-const addSearchTerm = (event: Event) => {
-	if (!props.realtime) {
-		const term = (event.target as HTMLInputElement).value;
-		searchTerms.value = term;
-		execSearch();
+// const toggleSearchByExample = () => {
+// 	emit('toggle-search-by-example');
+// };
+
+function addToQuery(term: string) {
+	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
+	execSearch();
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+defineExpose({ addToQuery });
+
+function replaceSearchTerm(term) {
+	query.value = term;
+	// @ts-ignore
+	inputElement.value?.$el.focus();
+}
+
+async function showAutocomplete(event) {
+	if (query.value.length >= 3) {
+		const promise = getAutocomplete(query.value);
+		promise.then((response) => {
+			autocompleteMenuItems.value = response.map((item) => ({
+				label: item,
+				icon: 'pi pi-search',
+				command: () => {
+					replaceSearchTerm(item);
+				}
+			}));
+			// @ts-ignore
+			inputElement.value?.$el.focus();
+		});
+		autocompleteMenu.value.show(event);
+	}
+}
+
+async function showSuggestions(event) {
+	if (props.suggestions) {
+		const promise = getRelatedWords(query.value, resources.xddDataset);
+		promise.then((response) => {
+			autocompleteMenuItems.value = response.map((item) => ({
+				label: item,
+				icon: 'pi pi-search',
+				command: () => {
+					addToQuery(item);
+				}
+			}));
+			// @ts-ignore
+			inputElement.value?.$el.focus();
+		});
+		autocompleteMenu.value.show(event);
+	}
+}
+
+const handleSearchEvent = (event) => {
+	const keyboardEvent = event as KeyboardEvent;
+	if (keyboardEvent.code === 'Space') {
+		showSuggestions(event);
+	} else {
+		showAutocomplete(event);
 	}
 };
 
 onMounted(() => {
-	if (props.focusInput) {
-		inputElement.value?.focus();
-	}
-});
-
-watch(searchTerms, () => {
-	execSearch();
+	const { q } = route.query;
+	query.value = q?.toString() ?? query.value;
 });
 </script>
 
 <style scoped>
 .search-bar-container {
 	display: flex;
-	background-color: transparent;
 	align-items: center;
-	color: white;
-	flex: 1;
+	flex-direction: column;
+	max-width: 50%;
+	overflow: hidden;
 }
 
-.search-label {
-	font-weight: bold;
-	padding: 8px;
+.search {
+	display: flex;
+	align-items: center;
+	width: 100%;
 }
 
-.input-container {
-	position: relative;
-	margin-left: 1rem;
+.p-input-icon-left {
 	margin-right: 1rem;
 	flex: 1;
 }
 
-.input-container .search-icon {
-	height: 100%;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	color: black;
-	margin-left: 4px;
-}
-
-.input-container .clear-icon {
-	height: 100%;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	right: 0;
-	color: red;
-	cursor: pointer;
-	margin-right: 4px;
-}
-
-input[type='text'] {
-	padding: 10px;
-	/* Leave space for the search icon */
-	padding-left: 25px;
-	border: none;
-	outline: none;
+.input-text {
+	border-color: var(--surface-border);
+	border-radius: 1.5rem;
+	padding: 12px;
 	width: 100%;
-	margin: 0;
+	height: 3rem;
 }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-	transition: background-color 5000s ease-in-out 0s;
+/* 
+.pi-history {
+	color: var(--text-color-secondary);
+}
+
+.pi-image {
+	color: var(--text-color-secondary);
+	margin-left: 1rem;
+}
+
+.pi-image:hover {
+	color: var(--text-color-primary);
+	cursor: pointer;
+} 
+*/
+
+.clear-search:hover {
+	background-color: var(--surface-hover);
+	padding: 0.5rem;
+	border-radius: 1rem;
+	top: 1rem;
+	right: 0.5rem;
+}
+
+.clear-search.hidden {
+	visibility: hidden;
+}
+
+.item {
+	background-color: var(--surface-secondary);
+	color: var(--text-color-secondary);
+	padding: 0 0.5rem 0 0.5rem;
+	margin: 0.5rem;
+}
+
+.item:enabled:hover {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-hover);
+}
+
+.p-menu.autocomplete {
+	border-radius: 0 0 1.5rem 1.5rem;
 }
 </style>

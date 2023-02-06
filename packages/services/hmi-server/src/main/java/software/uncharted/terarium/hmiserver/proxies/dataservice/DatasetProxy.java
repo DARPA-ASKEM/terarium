@@ -125,7 +125,8 @@ public interface DatasetProxy {
 	Response getCsv(
 		@PathParam("id") String id,
 		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("false") @QueryParam("data_annotation_flag") Boolean dataAnnotationFlag
+		@DefaultValue("false") @QueryParam("data_annotation_flag") Boolean dataAnnotationFlag,
+		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
 	);
 
 	@POST

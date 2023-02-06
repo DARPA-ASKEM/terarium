@@ -11,10 +11,14 @@ import {
 	DISPLAY_NAMES as MODEL_DISPLAY_NAMES,
 	ID
 } from '@/types/Model';
-import { DISPLAY_NAMES as XDD_DISPLAY_NAMES } from '@/types/XDD';
+import {
+	DISPLAY_NAMES as XDD_DISPLAY_NAMES,
+	XDDArticle,
+	FACET_FIELDS as ARTICLE_FACET_FIELDS
+} from '@/types/XDD';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
-// FIXME: this client-side computation of facets from "models" data should be done
+// FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
 export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | null) => {
 	// utility function for manually calculating facet aggregation from model results
@@ -59,7 +63,7 @@ export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | n
 	return facets;
 };
 
-// FIXME: this client-side computation of facets from "datasets" data should be done
+// FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
 export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFacets | null) => {
 	// utility function for manually calculating facet aggregation from dataset results
@@ -104,6 +108,38 @@ export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFace
 	return facets;
 };
 
+// FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
+//        at the HMI server
+export const getArticleFacets = (articles: XDDArticle[]) => {
+	// utility function for manually calculating facet aggregation from dataset results
+	const aggField = (fieldName: string) => {
+		const aggs: FacetBucket[] = [];
+		const articlesMap = articles.map((article) => article[fieldName as keyof XDDArticle]);
+		const grouped = groupBy(articlesMap);
+		Object.keys(grouped).forEach((gKey) => {
+			if (gKey !== '' && gKey !== 'undefined') {
+				aggs.push({ key: gKey, value: grouped[gKey].length });
+			}
+		});
+		return aggs;
+	};
+
+	const facets = {} as Facets;
+
+	// create facets from specific dataset fields
+	ARTICLE_FACET_FIELDS.forEach((field) => {
+		// exclude dataset ID as a facet since it is created from mapping concepts
+		if (field !== ID) {
+			const facetForField = aggField(field);
+			if (facetForField.length > 0) {
+				facets[field] = facetForField;
+			}
+		}
+	});
+
+	return facets;
+};
+
 // Merging facets who share the same key requires custom logic, e.g.,
 //  XDD documents of "type" [fulltext] and Models of "type": [model, dataset]
 //  should be merged into one facet representing the overall "type" of result
@@ -116,7 +152,7 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 	// return null;
 }
 
-export const getFacets = (results: SearchResults[], resultType: string) => {
+export const getFacets = (results: SearchResults[], resultType: ResourceType | string) => {
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
@@ -124,17 +160,12 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 				// extract facets based on the result type
 				// because we would have different facets for different result types
 				// e.g., XDD will have facets that leverage the XDD fields and stats
-				if (resultsObj.searchSubsystem === ResourceType.XDD) {
-					const xddFacets = resultsObj.facets;
-					facets = mergeWith(facets, xddFacets, mergeCustomizer);
-				}
-				if (resultsObj.searchSubsystem === ResourceType.MODEL) {
-					const modelFacets = resultsObj.facets;
-					facets = mergeWith(facets, modelFacets, mergeCustomizer);
-				}
-				if (resultsObj.searchSubsystem === ResourceType.DATASET) {
-					const datasetFacets = resultsObj.facets;
-					facets = mergeWith(facets, datasetFacets, mergeCustomizer);
+				if (
+					resultsObj.searchSubsystem === ResourceType.XDD ||
+					resultsObj.searchSubsystem === ResourceType.MODEL ||
+					resultsObj.searchSubsystem === ResourceType.DATASET
+				) {
+					facets = mergeWith(facets, resultsObj.facets, mergeCustomizer);
 				}
 			}
 		});
@@ -143,30 +174,33 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 };
 
 export const getFacetsDisplayNames = (resultType: string, key: string) => {
-	if (resultType === ResourceType.XDD) {
-		return XDD_DISPLAY_NAMES[key];
+	let hits = 0;
+
+	switch (resultType) {
+		case ResourceType.XDD:
+			return XDD_DISPLAY_NAMES[key];
+		case ResourceType.MODEL:
+			return MODEL_DISPLAY_NAMES[key];
+		case ResourceType.DATASET:
+			return DATASET_DISPLAY_NAMES[key];
+		case ResourceType.ALL:
+			// merge display names from all results types,
+			//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
+			//  and attempt to return the display-name based on the input key
+			[MODEL_DISPLAY_NAMES, XDD_DISPLAY_NAMES].forEach((d) => {
+				if (d[key] !== undefined) hits += 1;
+			});
+			if (hits === 1) {
+				const displayName = {
+					...MODEL_DISPLAY_NAMES,
+					...MODEL_DISPLAY_NAMES,
+					...XDD_DISPLAY_NAMES
+				}[key];
+				console.log(displayName);
+				return displayName;
+			}
+			return key;
+		default:
+			return key;
 	}
-	if (resultType === ResourceType.MODEL) {
-		return MODEL_DISPLAY_NAMES[key];
-	}
-	if (resultType === ResourceType.DATASET) {
-		return DATASET_DISPLAY_NAMES[key];
-	}
-	if (resultType === ResourceType.ALL) {
-		// merge display names from all results types,
-		//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
-		//  and attempt to return the display-name based on the input key
-		const allDisplayNames = [MODEL_DISPLAY_NAMES, XDD_DISPLAY_NAMES];
-		let hits = 0;
-		allDisplayNames.forEach((d) => {
-			if (d[key] !== undefined) hits += 1;
-		});
-		if (hits === 1) {
-			const displayName = { ...MODEL_DISPLAY_NAMES, ...MODEL_DISPLAY_NAMES, ...XDD_DISPLAY_NAMES }[
-				key
-			];
-			return displayName;
-		}
-	}
-	return key;
 };

@@ -1,48 +1,60 @@
 <template>
-	<div class="search-container">
-		<models-listview
-			v-if="resultType === ResourceType.MODEL"
-			class="list-view"
-			:models="filteredModels"
-			:raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems"
-			:search-term="searchTerm"
-			@toggle-model-selected="toggleDataItemSelected"
-		/>
-		<datasets-listview
-			v-if="resultType === ResourceType.DATASET"
-			class="list-view"
-			:datasets="filteredDatasets"
-			:raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems"
-			:search-term="searchTerm"
-			@toggle-dataset-selected="toggleDataItemSelected"
-		/>
-		<articles-listview
-			v-if="resultType === ResourceType.XDD"
-			class="list-view"
-			:articles="filteredArticles"
-			:raw-concept-facets="rawConceptFacets"
-			:selected-search-items="selectedSearchItems"
-			@toggle-article-selected="toggleDataItemSelected"
-		/>
+	<div class="result-details">
+		<span class="result-count">
+			<template v-if="isLoading">Loading...</template>
+			<template v-else
+				>{{ resultsText }}<span v-if="resultsCount">{{ props.searchTerm }}</span></template
+			>
+		</span>
+		<template v-for="facet in chosenFacets">
+			<Chip
+				v-for="(value, index) in facet.values"
+				:label="(value as string)"
+				:key="index"
+				removable
+				@remove="removeFacetValue(facet.field, facet.values, value)"
+				remove-icon="pi pi-times"
+			/>
+		</template>
 	</div>
+	<div v-if="isLoading" class="loading-spinner">
+		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
+	</div>
+	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
+	<ul v-else>
+		<li v-for="(asset, index) in filteredAssets" :key="index">
+			<SearchItem
+				:asset="(asset as XDDArticle & Model & Dataset)"
+				:selectedSearchItems="selectedSearchItems"
+				:isPreviewed="previewedAsset === asset"
+				:resourceType="(resultType as ResourceType)"
+				:searchTerm="searchTerm"
+				@toggle-selected-asset="updateSelection(asset)"
+				@toggle-asset-preview="togglePreview(asset)"
+			/>
+		</li>
+	</ul>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from 'vue';
-import ModelsListview from '@/components/data-explorer/models-listview.vue';
-import DatasetsListview from '@/components/data-explorer/datasets-listview.vue';
-import ArticlesListview from '@/components/data-explorer/articles-listview.vue';
+import { ref, computed, PropType } from 'vue';
+import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
-import { XDDArticle } from '@/types/XDD';
 import { Dataset } from '@/types/Dataset';
-import { SearchResults, ResourceType, ResultType } from '@/types/common';
+import { Facets, SearchResults, ResourceType, ResultType } from '@/types/common';
+import Chip from 'primevue/chip';
+import { ClauseValue } from '@/types/Filter';
+import SearchItem from './search-item.vue';
 
 const props = defineProps({
 	dataItems: {
 		type: Array as PropType<SearchResults[]>,
 		default: () => []
+	},
+	facets: {
+		type: Object as PropType<Facets>,
+		required: true
 	},
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
@@ -55,56 +67,154 @@ const props = defineProps({
 	searchTerm: {
 		type: String,
 		default: ''
+	},
+	isLoading: {
+		type: Boolean,
+		default: true
 	}
 });
+
+const previewedAsset = ref<ResultType | null>(null);
 
 const emit = defineEmits(['toggle-data-item-selected']);
 
-const toggleDataItemSelected = (item: ResultType) => {
-	emit('toggle-data-item-selected', item);
+const chosenFacets = computed(() => useQueryStore().clientFilters.clauses);
+
+const removeFacetValue = (field: string, values: ClauseValue[], valueToRemove: ClauseValue) => {
+	const query = useQueryStore();
+	values.splice(values.indexOf(valueToRemove), 1);
+	query.setSearchClause({ field, values });
 };
 
-const filteredModels = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.MODEL);
-	if (resList) {
-		return resList.results as Model[];
+const updateSelection = (asset: ResultType) => {
+	emit('toggle-data-item-selected', { item: asset, type: 'selected' });
+};
+
+const togglePreview = (asset: ResultType) => {
+	emit('toggle-data-item-selected', { item: asset, type: 'clicked' });
+	previewedAsset.value = previewedAsset.value === asset ? null : asset;
+};
+
+// const rawConceptFacets = computed(() => {
+// 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+// 	if (searchResults) {
+// 		return searchResults.rawConceptFacets;
+// 	}
+// 	return null;
+// });
+
+const filteredAssets = computed(() => {
+	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
+
+	if (searchResults) {
+		if (props.resultType === ResourceType.XDD) {
+			let articlesFromExtractions: XDDArticle[] = [];
+
+			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
+				const docMap: { [docid: string]: XDDArticle } = {};
+
+				searchResults.xddExtractions.forEach((ex) => {
+					const docid = ex.properties.documentBibjson.gddId;
+					if (docMap[docid] === undefined) {
+						docMap[docid] = ex.properties.documentBibjson;
+						docMap[docid].relatedExtractions = [];
+					}
+					// Avoid duplicate documents
+					else if (ex.askemClass === XDDExtractionType.Document) {
+						const docExtractions = docMap[docid].relatedExtractions?.filter(
+							(extraction) => extraction.askemClass === XDDExtractionType.Document
+						);
+
+						if (docExtractions) {
+							for (let i = 0; i < docExtractions.length; i++) {
+								if (ex.properties.DOI === docExtractions[i].properties.DOI) return; // Skip
+							}
+						}
+					}
+					docMap[docid].relatedExtractions?.push(ex);
+				});
+				articlesFromExtractions = Object.values(docMap) as XDDArticle[];
+			}
+			const xDDArticlesSearchResults = searchResults.results as XDDArticle[];
+
+			return [...articlesFromExtractions, ...xDDArticlesSearchResults];
+		}
+		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+			return searchResults.results;
+		}
 	}
 	return [];
 });
-const filteredDatasets = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.DATASET);
-	if (resList) {
-		return resList.results as Dataset[];
+
+const resultsCount = computed(() => {
+	let total = 0;
+	if (props.resultType === ResourceType.ALL) {
+		// count the results from all subsystems
+		props.dataItems.forEach((res) => {
+			const count = res?.hits ?? res?.results.length;
+			total += count;
+		});
+	} else {
+		// only return the results count for the selected subsystems
+		total = filteredAssets.value.length;
 	}
-	return [];
+	return total;
 });
-const filteredArticles = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.XDD);
-	if (resList) {
-		return resList.results as XDDArticle[];
+
+const resultsText = computed(() => {
+	if (resultsCount.value === 0) {
+		return 'No results found';
 	}
-	return [];
-});
-const rawConceptFacets = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
-	if (resList) {
-		return resList.rawConceptFacets;
-	}
-	return null;
+	const s = resultsCount.value === 1 ? '' : 's';
+	return `Showing ${resultsCount.value} result${s} for `;
 });
 </script>
 
-<style lang="scss" scoped>
-.search-container {
-	min-height: 0px;
-	width: 100%;
+<style scoped>
+ul {
 	display: flex;
 	flex-direction: column;
-	gap: 1px;
+	gap: 0.5rem;
+	list-style: none;
+	overflow-y: scroll;
+}
 
-	.list-view {
-		flex: 1;
-		min-height: 0;
-	}
+.loading-spinner {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 8rem;
+	flex-grow: 1;
+	background-color: var(--surface-ground);
+	color: var(--primary-color-dark);
+	font-weight: bold;
+}
+
+.result-details {
+	display: flex;
+	align-items: center;
+	overflow: visible;
+	gap: 0.5rem;
+}
+
+.result-details {
+	color: var(--text-color-subdued);
+}
+
+.result-count {
+	font-size: var(--font-body-small);
+	white-space: nowrap;
+}
+
+.result-count span {
+	color: var(--text-color-primary);
+}
+
+.p-chip {
+	outline: 1px solid var(--gray-300);
+}
+
+.search-container {
+	overflow-y: auto;
 }
 </style>

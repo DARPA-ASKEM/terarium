@@ -1,13 +1,11 @@
 <template>
-	<main class="matrix-container" ref="matrixContainer">
+	<main class="matrix-container" ref="matrixContainer" :class="{ 'camera-cursor': isCameraMode }">
 		<div class="matrix" ref="matrix" :style="matrixStyle">
 			<LabelCols
-				v-if="!disableLabelCol && rendererReady"
+				v-if="visConfig.col.borderEnabled && rendererReady"
+				:items="dataConfig.dataCol"
 				:selectedCols="selectedCols"
-				:labelColList="labelColList"
-				:labelColAltList="cellLabelAltCol"
 				:microColSettings="microColSettings"
-				:numCols="numCols"
 				:viewport="viewport"
 				:margin="margin"
 				:update="update"
@@ -15,12 +13,10 @@
 				:labelColFormatFn="labelColFormatFn"
 			/>
 			<LabelRows
-				v-if="!disableLabelRow && rendererReady"
+				v-if="visConfig.row.borderEnabled && rendererReady"
+				:items="dataConfig.dataRow"
 				:selectedRows="selectedRows"
-				:labelRowList="labelRowList"
-				:labelRowAltList="cellLabelAltRow"
 				:microRowSettings="microRowSettings"
-				:numRows="numRows"
 				:viewport="viewport"
 				:margin="margin"
 				:update="update"
@@ -43,6 +39,7 @@
 				:parametersMin="dataParametersMin"
 				:parametersMax="dataParametersMax"
 				:colorFn="getSelectedGraphColorFn(selectedCell)"
+				:selectorFn="selectorFn"
 				:labelRowFormatFn="labelRowFormatFn"
 				:labelColFormatFn="labelColFormatFn"
 				@click="selectedCellClick(idx)"
@@ -86,9 +83,13 @@ import {
 	CellData,
 	CellStatus,
 	CellType,
-	Uniforms
+	Uniforms,
+	ParamMinMax,
+	DataConfig,
+	VisConfig,
+	CursorModes
 } from '@/types/ResponsiveMatrix';
-import { uint32ArrayToRedIntTex } from './pixi-utils';
+import { getGlMaxTextureSize, getTextureDim, uint32ArrayToRedIntTex } from './pixi-utils';
 
 import LabelCols from './label-cols.vue';
 import LabelRows from './label-rows.vue';
@@ -119,10 +120,33 @@ export default {
 	// ---------------------------------------------------------------------------- //
 
 	props: {
+		// New properties
+		dataConfig: {
+			type: Object as PropType<DataConfig>,
+			required: true
+		},
+		visConfig: {
+			type: Object as PropType<VisConfig>,
+			required: true
+		},
+
+		// To be deprecated
 		margin: {
 			type: Number,
 			default() {
 				return 0;
+			}
+		},
+		parametersMin: {
+			type: Object as PropType<ParamMinMax | undefined>,
+			default() {
+				return undefined;
+			}
+		},
+		parametersMax: {
+			type: Object as PropType<ParamMinMax | undefined>,
+			default() {
+				return undefined;
 			}
 		},
 		data: {
@@ -131,32 +155,8 @@ export default {
 				return [[], []]; // e.g. [[{}, {}, {}], [{}, {}, {}]]
 			}
 		},
-		disableLabelRow: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
 		cellLabelRow: {
 			type: Array as PropType<number[] | string[]>,
-			default() {
-				return [];
-			}
-		},
-		cellLabelAltRow: {
-			type: Array as PropType<string[]>,
-			default() {
-				return [];
-			}
-		},
-		disableLabelCol: {
-			type: Boolean,
-			default() {
-				return false;
-			}
-		},
-		cellLabelAltCol: {
-			type: Array as PropType<string[]>,
 			default() {
 				return [];
 			}
@@ -171,6 +171,12 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
 			}
 		},
 		barColorFn: {
@@ -226,13 +232,17 @@ export default {
 			numRows: 0,
 			numCols: 0,
 
+			glMaxTextureSize: 4096,
+
 			// break down real rows and columns (with arbitrarily different dimensions)
 			// into uniformly sized "micro" rows and columns using a process analogous
 			// to grid supersampling
-			microRowArray: new Uint32Array(0) as Uint32Array,
-			microColArray: new Uint32Array(0) as Uint32Array,
+			microRowArray: [] as number[],
+			microColArray: [] as number[],
 
-			uniforms: {} as Uniforms,
+			uniforms: {
+				uMicroElDim: { x: 1, y: 1 }
+			} as Uniforms,
 			worldWidth: 1,
 			worldHeight: 1,
 			screenHeight: 0,
@@ -248,7 +258,7 @@ export default {
 			update: 0,
 			move: 0,
 
-			enableDrag: false,
+			cursorMode: CursorModes.SELECT,
 			resizeObserver: null as unknown as ResizeObserver
 		};
 	},
@@ -334,6 +344,9 @@ export default {
 			}
 
 			return microColSettings;
+		},
+		isCameraMode(): boolean {
+			return this.cursorMode === CursorModes.CAMERA;
 		}
 	},
 
@@ -384,8 +397,7 @@ export default {
 		this.resizeObserver.observe(matrixContainer);
 
 		// start event listeners
-		window.addEventListener('keydown', this.handleKey);
-		window.addEventListener('keyup', this.handleKey);
+		window.addEventListener('keydown', this.handleKeyDown);
 		matrixContainer.addEventListener('wheel', this.handleScroll);
 
 		// ///////////////////////////////////////////////////////////////////////////////
@@ -397,6 +409,9 @@ export default {
 			backgroundColor: this.backgroundColor
 		});
 		matrix.appendChild(this.app.view as unknown as Node);
+
+		// use the app webgl context to set the gl max texture size
+		this.glMaxTextureSize = getGlMaxTextureSize(this.app);
 
 		// create viewport
 		const screenHeight = this.screenHeight;
@@ -493,6 +508,7 @@ export default {
 			// row/col data
 			uNumRow: this.numRows,
 			uNumCol: this.numCols,
+			uMicroElDim: this.uniforms.uMicroElDim,
 			uMicroRow: this.uniforms.uMicroRow,
 			uMicroCol: this.uniforms.uMicroCol,
 
@@ -562,8 +578,7 @@ export default {
 	unmounted() {
 		this.resizeObserver.disconnect();
 		this.app?.destroy(false, true);
-		window.removeEventListener('keydown', this.handleKey);
-		window.removeEventListener('keyup', this.handleKey);
+		window.removeEventListener('keydown', this.handleKeyDown);
 	},
 
 	// ---------------------------------------------------------------------------- //
@@ -600,7 +615,6 @@ export default {
 				this.data.forEach((row, indexRow) =>
 					row.forEach((cell, indexCol) => {
 						if (cell) {
-							this.extractParams(cell);
 							// find better solution than using reserved properties
 							// for cell identification
 							const cellData = {
@@ -614,6 +628,16 @@ export default {
 						}
 					})
 				);
+
+				if (!this.parametersMin && !this.parametersMax) {
+					this.extractParams();
+				} else {
+					this.dataParametersMin = this.parametersMin as ParamMinMax;
+					this.dataParametersMax = this.parametersMax as ParamMinMax;
+
+					Object.keys(this.parametersMin as object).map((k) => this.dataParameters.add(k));
+					Object.keys(this.parametersMax as object).map((k) => this.dataParameters.add(k));
+				}
 			} else {
 				console.error('Data Invalid');
 			}
@@ -644,25 +668,22 @@ export default {
 		/**
 		 * Processes a single cell object and extract the parameters from it.
 		 * As well update the parameters min and max state objects.
-		 * @param {object} cellObject
 		 */
-		extractParams(cellObject: object) {
-			Object.keys(cellObject).forEach((param) => {
-				if (!this.dataParameters.has(param)) {
-					this.dataParametersMin[param] = cellObject[param];
-					this.dataParametersMax[param] = cellObject[param];
-				} else {
-					this.dataParametersMin[param] = Math.min(
-						this.dataParametersMin[param],
-						cellObject[param]
-					);
-					this.dataParametersMax[param] = Math.max(
-						this.dataParametersMax[param],
-						cellObject[param]
-					);
-				}
-				this.dataParameters.add(param);
-			});
+		extractParams() {
+			this.data.forEach((row) =>
+				row.forEach((cell) => {
+					Object.keys(cell).forEach((param) => {
+						if (!this.dataParameters.has(param)) {
+							this.dataParametersMin[param] = cell[param];
+							this.dataParametersMax[param] = cell[param];
+						} else {
+							this.dataParametersMin[param] = Math.min(this.dataParametersMin[param], cell[param]);
+							this.dataParametersMax[param] = Math.max(this.dataParametersMax[param], cell[param]);
+						}
+						this.dataParameters.add(param);
+					});
+				})
+			);
 		},
 
 		/**
@@ -699,7 +720,7 @@ export default {
 		 * @param {CellStatus[]} elStatusArray
 		 * @param {number[]} statusSettingsArray
 		 */
-		createMicroArray(elStatusArray: CellStatus[], statusSettingsArray: number[]): Uint32Array {
+		createMicroArray(elStatusArray: CellStatus[], statusSettingsArray: number[]): number[] {
 			const microArray: number[] = [];
 			let i = 0;
 
@@ -709,7 +730,7 @@ export default {
 				}
 			}
 
-			return new Uint32Array(microArray);
+			return microArray;
 		},
 
 		// ///////////////////////////////////////////////////////////////////////////////
@@ -738,24 +759,32 @@ export default {
 			});
 
 			this.microRowArray = this.createMicroArray(this.selectedRows, this.microRowSettings);
-			// TODO: switch microRows to use 2D textures to avoid running into texture size limits
-			this.uniforms.uMicroRow = uint32ArrayToRedIntTex(
-				this.microRowArray,
-				this.microRowArray.length,
-				1
-			);
+			this.uniforms.uMicroElDim.y = this.microRowArray.length;
+			this.uniforms.uMicroRow = this.createMicroElTexture(this.microRowArray);
 
 			this.microColArray = this.createMicroArray(this.selectedCols, this.microColSettings);
-			// TODO: switch microRows to use 2D textures to avoid running into texture size limits
-			this.uniforms.uMicroCol = uint32ArrayToRedIntTex(
-				this.microColArray,
-				this.microColArray.length,
-				1
-			);
+			this.uniforms.uMicroElDim.x = this.microColArray.length;
+			this.uniforms.uMicroCol = this.createMicroElTexture(this.microColArray);
 
 			// wait for the grid recalculation to complete before triggering children update
 			await nextTick();
 			this.incrementUpdate();
+		},
+
+		/**
+		 * With a micro element array as input, produce a 2D texture of the minimum size required to
+		 * contain the input data.
+		 * @param {number[]} microElArray
+		 */
+		createMicroElTexture(microElArray: number[]) {
+			const microElArrayBufferDim = getTextureDim(microElArray.length, this.glMaxTextureSize);
+			const microElArrayBuffer = new Uint32Array(microElArrayBufferDim.n);
+			microElArrayBuffer.set(microElArray);
+			return uint32ArrayToRedIntTex(
+				microElArrayBuffer,
+				microElArrayBufferDim.x,
+				microElArrayBufferDim.y
+			);
 		},
 
 		/**
@@ -978,21 +1007,22 @@ export default {
 			this.uniforms.uViewportWorldHeight = visibleBounds?.height || 0;
 		},
 
-		handleKey({ shiftKey }: KeyboardEvent) {
-			this.enableDrag = shiftKey;
-			if (this.viewport) {
-				this.viewport.pause = !shiftKey;
+		handleKeyDown({ altKey }: KeyboardEvent) {
+			if (altKey && this.viewport) {
+				this.cursorMode =
+					this.cursorMode === CursorModes.SELECT ? CursorModes.CAMERA : CursorModes.SELECT;
+				this.viewport.pause = this.cursorMode === CursorModes.SELECT;
 			}
 		},
 
 		handleScroll(e) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				e.preventDefault();
 			}
 		},
 
 		handleMouseDown(e: FederatedPointerEvent) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				return;
 			}
 
@@ -1009,7 +1039,7 @@ export default {
 		},
 
 		handleMouseUp(e: FederatedPointerEvent) {
-			if (this.enableDrag) {
+			if (this.isCameraMode) {
 				return;
 			}
 
@@ -1067,6 +1097,11 @@ export default {
 <style scoped>
 main {
 	position: relative;
+	cursor: default;
+}
+
+.camera-cursor {
+	cursor: move;
 }
 
 .matrix {

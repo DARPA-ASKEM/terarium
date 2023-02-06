@@ -1,0 +1,45 @@
+@use 'sass:math';
+
+.p-chip {
+    background-color: $chipBg;
+    color: $chipTextColor;
+    border-radius: $chipBorderRadius;
+    font-weight: $fontWeightSemiBold;
+    font-size: $fontCaption;
+    padding: 0 0.75rem;
+
+    .p-chip-text,
+    span {
+        line-height: 2;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        overflow: hidden;
+    }
+
+    span {
+        cursor: pointer;
+    }
+
+    .p-chip-icon {
+        margin-right: $inlineSpacing;
+    }
+
+    img {
+        width: 1.5 + nth($inputPadding, 1);
+        height: 1.5 + nth($inputPadding, 1);
+        margin-left: -1 * nth($inputPadding, 2);
+        margin-right: $inlineSpacing;
+    }
+
+    .p-chip-remove-icon {
+        font-size: $fontCaption;
+        margin-left: $inlineSpacing;
+        border-radius: $borderRadius;
+        transition: $actionIconTransition;
+
+        &:focus {
+            @include focused();
+        }
+    }
+}

@@ -1,7 +1,15 @@
 import { ConceptFacets } from './Concept';
 import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
-import { XDDArticle, XDDSearchParams } from './XDD';
+import { XDDArticle, XDDArtifact, XDDSearchParams } from './XDD';
+
+export type Annotation = {
+	artifact_id: string;
+	artifact_type: string;
+	content: string;
+	timestampMillis: number;
+	username: number;
+};
 
 export enum ViewType {
 	LIST = 'list',
@@ -28,10 +36,23 @@ export type SearchResults = {
 	results: ResultType[];
 	facets?: Facets;
 	rawConceptFacets?: ConceptFacets | null;
+	xddExtractions?: XDDArtifact[]; // the result from searching XDD artifacts against a given search term
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;
 	nextPage?: string;
+};
+
+export type FullSearchResults = {
+	allData: SearchResults;
+	allDataFilteredWithFacets: SearchResults;
+};
+
+export type SearchByExampleOptions = {
+	similarContent: boolean;
+	forwardCitation: boolean;
+	bakcwardCitation: boolean;
+	relatedContent: boolean;
 };
 
 //

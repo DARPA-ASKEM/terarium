@@ -1,42 +1,57 @@
+<template>
+	<Navbar
+		class="header"
+		:active="!isErrorState"
+		:project="project"
+		:query="searchBarText"
+		:resourceType="resourceType"
+	/>
+	<main>
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
+		<router-view
+			class="page"
+			:project="project"
+			@search-query-changed="updateSearchBar"
+			@resources-type-changed="updateResourceType"
+		/>
+	</main>
+	<footer>
+		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
+	</footer>
+</template>
+
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import Header from '@/components/Header.vue';
-import Overlay from '@/components/Overlay.vue';
-import DataExplorer from '@/views/DataExplorer.vue';
+import { useRoute, useRouter } from 'vue-router';
+import API from '@/api/api';
 import Sidebar from '@/components/Sidebar.vue';
-import { Project } from '@/types/Project';
+import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { useCurrentRouter } from './router/index';
+import { Project } from '@/types/Project';
+import { RoutePath, useCurrentRoute } from './router/index';
+import { ResourceType } from './types/common';
 
 /**
  * Router
  */
 const route = useRoute();
-const { isCurrentRouteHome } = useCurrentRouter();
-const isSidebarVisible = computed(() => !isCurrentRouteHome.value);
+const router = useRouter();
+const currentRoute = useCurrentRoute();
+const isSidebarVisible = computed(
+	() =>
+		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
+);
+const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
+const searchBarText = ref('');
 const resources = useResourcesStore();
-
-/**
- * Data Explorer
- */
-const overlayActivated = ref(false);
-const overlayMessage = ref('Loading...');
-
-const enableOverlay = (message?: string) => {
-	overlayActivated.value = true;
-	if (message !== undefined) {
-		overlayMessage.value = message;
-	}
-};
-
-const disableOverlay = () => {
-	overlayActivated.value = false;
-};
-
-const dataExplorerActivated = ref(false);
+const resourceType = ref<string>(ResourceType.XDD);
 
 /**
  * Project
@@ -45,6 +60,25 @@ const dataExplorerActivated = ref(false);
  * It is loaded at the root and passed to all views as prop.
  */
 const project = ref<Project | null>(null);
+
+function updateSearchBar(newQuery) {
+	searchBarText.value = newQuery;
+}
+
+function updateResourceType(newResourceType) {
+	resourceType.value = newResourceType;
+}
+
+API.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		const status = error.response.status;
+		console.error(error);
+		if (status === 401 || status === 403) {
+			router.push({ name: 'unauthorized' });
+		}
+	}
+);
 
 watch(
 	() => route.params.projectId,
@@ -61,34 +95,21 @@ watch(
 	},
 	{ immediate: true }
 );
-</script>
 
-<template>
-	<overlay v-if="overlayActivated" :message="overlayMessage" />
-	<data-explorer
-		v-if="dataExplorerActivated"
-		class="data-explorer"
-		@hide="dataExplorerActivated = false"
-		@show-overlay="enableOverlay"
-		@hide-overlay="disableOverlay"
-	/>
-	<Header
-		class="header"
-		:projectName="project?.name"
-		@show-data-explorer="dataExplorerActivated = true"
-	/>
-	<main>
-		<Sidebar v-if="isSidebarVisible" class="sidebar" data-test-id="sidebar" :project="project" />
-		<router-view class="page" :project="project" />
-	</main>
-</template>
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+resources.$subscribe((mutation, state) => {
+	project.value = state.activeProject;
+});
+</script>
 
 <style scoped>
 .header {
-	z-index: 2;
+	grid-area: header;
 }
 
 main {
+	grid-area: main;
 	display: flex;
 	flex-grow: 1;
 	isolation: isolate;
@@ -106,7 +127,12 @@ main {
 	min-width: 0;
 }
 
-.data-explorer {
-	z-index: 3;
+footer {
+	align-items: center;
+	background-color: var(--surface-section);
+	border-top: 1px solid var(--surface-border);
+	display: flex;
+	grid-area: footer;
+	height: 3rem;
 }
 </style>

@@ -11,7 +11,7 @@
  * @property {Object} props - optional - any props that should be passed into componentToRender
  *
  */
-import { ref, computed, onBeforeUpdate, watch } from 'vue';
+import { ref, computed, onBeforeUpdate, watch, onBeforeMount } from 'vue';
 import TabComponent from '@/components/tabs/Tab.vue';
 import { Tab } from '@/types/common';
 
@@ -22,16 +22,19 @@ const props = defineProps<{
 	activeTabIndex: number;
 }>();
 
-const emit = defineEmits(['closeTab']);
+const emit = defineEmits<{
+	(e: 'tabClosed', index: number): void;
+	(e: 'tabSelected', index: number): void;
+}>();
 
 const newActiveTab = computed(() => props.activeTabIndex);
 const currentActiveTab = ref(0);
 
 function addKeysToTabs(tabs: Tab[]) {
-	return tabs.map((tab, index) => ({
+	return tabs.map((tab, key) => ({
 		name: tab.name,
 		props: tab.props,
-		tabKey: index
+		key
 	}));
 }
 
@@ -41,28 +44,19 @@ const keyedTabs = computed(() => addKeysToTabs(tabsRef.value));
 
 function setActiveTab(tabIndex: number) {
 	currentActiveTab.value = tabIndex;
+	emit('tabSelected', tabIndex);
 }
 
 function closeTab(tabIndexToClose: number) {
-	const tabToClose = tabsRef.value[tabIndexToClose];
-	const lastTabIndex = tabsRef.value.length - 1;
-	tabsRef.value.splice(tabIndexToClose, 1);
-	// If the tab that is closed is to the left of the active tab, decrement the active tab index by one, so that the active tab preserves its position.
-	// E.g. if the active tab is the last tab, it will remain the last tab. If the active tab is second last, it will remain second last.
-	// If the tab that is closed is to the right of the active tab, no special logic is needed to preserve the active tab's position.
-	// If the active tab is closed, the next tab to the right becomes the active tab.
-	// This replicates the tab behaviour in Chrome.
-	if (
-		(currentActiveTab.value !== 0 && currentActiveTab.value > tabIndexToClose) ||
-		currentActiveTab.value === lastTabIndex
-	) {
-		currentActiveTab.value--;
-	}
-	emit('closeTab', tabToClose);
+	emit('tabClosed', tabIndexToClose);
 }
 
 onBeforeUpdate(() => {
 	tabsRef.value = props.tabs;
+});
+
+onBeforeMount(() => {
+	setActiveTab(props.activeTabIndex);
 });
 
 watch(newActiveTab, (index) => {
@@ -77,7 +71,7 @@ watch(newActiveTab, (index) => {
 			v-for="(tab, index) in keyedTabs"
 			:name="tab.name"
 			:index="index"
-			:key="tab.tabKey"
+			:key="tab.key"
 			:isActive="currentActiveTab === index"
 			:num-tabs="keyedTabs.length"
 			@click-tab-header="(tabIndex) => setActiveTab(tabIndex)"
@@ -93,6 +87,7 @@ watch(newActiveTab, (index) => {
 
 <style scoped>
 div {
+	overflow: auto;
 	width: 100%;
 }
 

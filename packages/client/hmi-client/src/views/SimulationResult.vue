@@ -29,12 +29,12 @@ import run9Description from './simulation-run-data/9/description.json';
 const route = useRoute();
 
 watch(
-	() => route.params.simulationRunId,
-	async (simulationRunId) => {
-		if (!simulationRunId) return;
+	() => route.params.assetId,
+	async (assetId) => {
+		if (!assetId) return;
 
 		// FIXME: siwtch to different simulation run result
-		console.log('simulation run id changed to', simulationRunId);
+		console.log('simulation run id changed to', assetId);
 	},
 	{ immediate: true }
 );
@@ -75,8 +75,10 @@ function parseSimData(input) {
 
 	let divergingMaxMin = 0;
 	const dataParameters = new Set();
-	const dataParametersMax: any = {};
-	const dataParametersMin: any = {};
+	const parametersMax: any = {};
+	const parametersMin: any = {};
+	const parametersDiffMax: any = {};
+	const parametersDiffMin: any = {};
 	data.forEach((row) =>
 		row.forEach((cell: any, j) => {
 			// diverging max/min
@@ -87,18 +89,33 @@ function parseSimData(input) {
 			// data parameters max/min
 			Object.keys(cell).forEach((param) => {
 				if (!dataParameters.has(param)) {
-					dataParametersMin[param] = cell[param];
-					dataParametersMax[param] = cell[param];
+					parametersMin[param] = cell[param];
+					parametersMax[param] = cell[param];
+					parametersDiffMin[param] = cell[param] - cellBase[param];
+					parametersDiffMax[param] = cell[param] - cellBase[param];
 				} else {
-					dataParametersMin[param] = Math.min(dataParametersMin[param], cell[param]);
-					dataParametersMax[param] = Math.max(dataParametersMax[param], cell[param]);
+					parametersMin[param] = Math.min(parametersMin[param], cell[param]);
+					parametersMax[param] = Math.max(parametersMax[param], cell[param]);
+					parametersDiffMin[param] = Math.min(
+						parametersDiffMin[param],
+						cell[param] - cellBase[param]
+					);
+					parametersDiffMax[param] = Math.max(
+						parametersDiffMax[param],
+						cell[param] - cellBase[param]
+					);
 				}
 				dataParameters.add(param);
 			});
 		})
 	);
 
-	const fillColorFn = (datum: CellData, parametersMin: any, parametersMax: any) => {
+	const selectorFn = (datum: CellData, param: number | string) => {
+		const datumBase: any = data[baseRow][datum.col];
+		return datum[param] - datumBase[param];
+	};
+
+	const fillColorFn = (datum: CellData) => {
 		const colorExtremePos = '#4d9221';
 		const colorExtremeNeg = '#c51b7d';
 		const colorMid = '#f7f7f7';
@@ -148,11 +165,14 @@ function parseSimData(input) {
 
 	return {
 		data,
-		dataParametersMax,
-		dataParametersMin,
+		parametersMax,
+		parametersMin,
+		parametersDiffMax,
+		parametersDiffMin,
 		cellLabelCol,
 		cellLabelAltCol,
 		cellLabelRow,
+		selectorFn,
 		fillColorFn,
 		lineColorFn: drilldownColorFn,
 		barColorFn: drilldownColorFn,
@@ -176,14 +196,34 @@ const scenarioDescriptionData = [
 
 const {
 	data,
+	parametersDiffMax,
+	parametersDiffMin,
 	cellLabelRow,
 	cellLabelCol,
 	cellLabelAltCol,
+	selectorFn,
 	fillColorFn,
 	lineColorFn,
 	barColorFn,
 	labelColFormatFn
 } = simData;
+
+const dataConfig = {
+	data,
+	dataCol: cellLabelCol.map((v, i) => ({ value: v, altText: cellLabelAltCol[i] })),
+	dataRow: cellLabelRow.map((v, i) => ({ value: v, altText: scenarioDescriptionData[i] }))
+};
+
+const visConfig = {
+	row: {
+		borderEnabled: true,
+		borderWidth: 1
+	},
+	col: {
+		borderEnabled: true,
+		borderWidth: 1
+	}
+};
 
 // ///////////////////////////////////////////////////////////////////////////////
 // generate legend
@@ -221,8 +261,8 @@ onMounted(() => {
 
 	// base legend
 	const svgBase = select(legendBase.value as any);
-	const maxBase = simData.dataParametersMax.Infected;
-	const minBase = simData.dataParametersMin.Infected;
+	const maxBase = simData.parametersMax.Infected;
+	const minBase = simData.parametersMin.Infected;
 	let cntBase = 0;
 	svgBase.append('text').attr('x', 10).attr('y', 12).text(String(minBase).slice(0, 7));
 	const colorMapBase = ['#f7f7f7', 'mix', 'mix', 'mix', '#252525'];
@@ -262,15 +302,18 @@ onMounted(() => {
 
 		<div class="result">
 			<ResponsiveMatrix
+				:dataConfig="dataConfig"
+				:visConfig="visConfig"
 				:data="data"
+				:selectorFn="selectorFn"
+				:parametersMax="parametersDiffMax"
+				:parametersMin="parametersDiffMin"
 				:fillColorFn="fillColorFn"
 				:lineColorFn="lineColorFn"
 				:barColorFn="barColorFn"
 				:labelColFormatFn="labelColFormatFn"
 				:cellLabelRow="cellLabelRow"
-				:cellLabelAltRow="scenarioDescriptionData"
 				:cellLabelCol="cellLabelCol"
-				:cellLabelAltCol="cellLabelAltCol"
 				:margin="40"
 				:style="{ flex: '1' }"
 			/>
@@ -295,7 +338,7 @@ onMounted(() => {
 	flex-direction: column;
 	width: 100%;
 	padding: 10px;
-	background: var(--un-color-body-surface-primary);
+	background: var(--surface-ground);
 	margin: 10px;
 }
 
@@ -308,7 +351,6 @@ onMounted(() => {
 }
 
 h3 {
-	font: var(--un-font-h3);
 	margin-bottom: 10px;
 }
 </style>

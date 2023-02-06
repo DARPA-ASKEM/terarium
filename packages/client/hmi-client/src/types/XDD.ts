@@ -3,7 +3,8 @@ export enum XDDExtractionType {
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
-	Body = 'Body Text' // Section
+	Section = 'Section', // Section
+	URL = 'URL' // websites, URLs, links, etc.
 }
 
 export type XDDArticleAuthor = {
@@ -24,17 +25,26 @@ export type XDDArticleKnownTerms = {
 	[term: string]: string[];
 };
 
+export type XDDUrlExtraction = {
+	url: string;
+	resourceTitle: string;
+	extractedFrom: string[];
+};
+
+export type XDDArticleKnownEntity = {
+	urlExtractions: XDDUrlExtraction[];
+	summaries: {
+		sections: { [key: string]: string };
+	};
+};
+
 export type XDDArticle = {
-	// REVIEW: FIXME: server should provide proper field names
-	//         also, reove the temp workaround in the client data service
 	abstractText: string; // mapped from abstract
 	abstract: string;
 	author: XDDArticleAuthor[];
 	identifier: XDDArticleIdentifier[];
 	journal: string;
-	// eslint-disable-next-line no-underscore-dangle
-	known_terms?: XDDArticleKnownTerms[]; // TEMP
-	knownTerms?: XDDArticleKnownTerms[]; // mapped from known_terms
+	knownTerms?: XDDArticleKnownTerms[];
 	link: XDDArticleLink[];
 	number: string;
 	pages: string;
@@ -43,19 +53,21 @@ export type XDDArticle = {
 	type: string;
 	volume: string;
 	year: string;
-	gddid: string; // mapped from _gddid
-	// eslint-disable-next-line no-underscore-dangle
-	_highlight: string[];
-	highlight: string[]; // TEMP: mapped from _highlight
-	// eslint-disable-next-line no-underscore-dangle
-	_gddid: string; // TEMP
+	gddId: string;
+	highlight: string[];
+	knownEntities?: XDDArticleKnownEntity;
+
+	// We don not know exactly what is in citatinList - DC Jan 2023
+	citationList: { [key: string]: string }[];
+
 	// additional-client-side fields
 	relatedDocuments?: XDDArticle[];
+	relatedExtractions?: XDDArtifact[];
 };
 
 export type PublicationAsset = {
 	id?: string;
-	xdd_uri: string; // this is the internal XDD id known as "docid" NOT "doi"
+	xdd_uri: string; // FIXME: this is the internal XDD id known as "docid" NOT "doi"
 	title: string;
 };
 
@@ -75,11 +87,11 @@ export type XDDArtifactProperties = {
 	sectionID: string;
 	sectionTitle: string;
 	caption: string;
+	documentBibjson: XDDArticle; // the embedded document metadata wherein this artifact is extracted
 };
 
 // XDD extraction object, which should match Extraction.java at the backend
 export type XDDArtifact = {
-	ASKEM_CLASS: string; // mapped from askemClass
 	askemClass: string;
 	properties: XDDArtifactProperties;
 	askemId: string;
@@ -89,14 +101,14 @@ export type XDDArtifact = {
 
 export type XDDDictionary = {
 	name: string;
-	base_classification: string;
+	baseClassification: string;
 	source: string;
-	case_sensitive: boolean;
+	caseSensitive: boolean;
 };
 
 export type XDDFacetsItemResponse = {
-	doc_count_error_upper_bound: number;
-	sum_other_doc_count: number;
+	docCountErrorUpperBound: number;
+	sumOtherDocCount: number;
 	buckets: { key: string; doc_count: number }[];
 };
 
@@ -128,7 +140,6 @@ export type XDDResult = {
 export type XDDSearchParams = {
 	docid?: string; // internal xdd document id
 	doi?: string;
-	title?: string;
 	term?: string;
 	dict?: string[];
 	dataset?: string | null;
@@ -145,6 +156,13 @@ export type XDDSearchParams = {
 	max_published?: string; // Must be ISO date string e.g., "2020-01-01"
 	pubname?: string;
 	publisher?: string;
+	match?: boolean; // If true, utilizes a \"match\" instead of a \"match_phrase\" query within Elaticsearch. This has the effect of finding documents which most frequently use the individial terms in the query, rather than looking for the exact phrase.
+	additional_fields?: string; // Extend the query to include fields in addition to the full-text contents (example: abstract,title). The query logic is OR across the search fields.
+	known_entities?: string; // Include known entities extracted via external tools. Current options: [drugs, emmaa, stratname_candidates, url_extractions]
+	fields?: string; // return only fields of interest (passed as comma-separated string) instead of returing the full record in the xDD results
+	related_search_enabled?: boolean; // if true, then perform a search by example by finding related artifacts
+	similar_search_enabled?: boolean; // if true, then perform a search by example by finding similar documents
+	related_search_id?: string | number;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
@@ -178,4 +196,4 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
-export const FACET_FIELDS: string[] = [PUBLISHER, YEAR, PUBLICATION_NAME];
+export const FACET_FIELDS: string[] = [YEAR, PUBLISHER, JOURNAL];

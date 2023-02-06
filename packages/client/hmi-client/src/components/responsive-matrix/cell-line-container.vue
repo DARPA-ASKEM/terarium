@@ -14,6 +14,7 @@
 		:parametersMin="parametersMin"
 		:parametersMax="parametersMax"
 		:colorFn="colorFn"
+		:selectorFn="selectorFn"
 		:labelRowFormatFn="labelRowFormatFn"
 		:labelColFormatFn="labelColFormatFn"
 		@click="$emit('click')"
@@ -117,6 +118,12 @@ export default {
 			type: Function,
 			default() {
 				return '#000000';
+			}
+		},
+		selectorFn: {
+			type: Function as PropType<(datum: CellData, param: string | number) => number>,
+			default(cell: CellData, param: string | number) {
+				return cell[param];
 			}
 		},
 		labelRowFormatFn: {

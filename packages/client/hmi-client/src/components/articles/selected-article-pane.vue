@@ -10,9 +10,9 @@
 		</div>
 		<div>Publisher: {{ selectedArticle.publisher }}</div>
 		<div>Author: {{ selectedArticle.author.map((a) => a.name).join(', ') }}</div>
-		<div>Abstract: {{ formatAbstract(selectedArticle) }}</div>
+		<div v-html="formatAbstract(selectedArticle)"></div>
 		<div>Journal: {{ selectedArticle.journal }}</div>
-		<div>Doc ID:: {{ selectedArticle.gddid }}</div>
+		<div>Doc ID:: {{ selectedArticle.gddId }}</div>
 	</div>
 </template>
 
@@ -20,7 +20,7 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { PublicationAsset, XDDArticle } from '@/types/XDD';
 import useResourcesStore from '@/stores/resources';
-import { Project, PUBLICATIONS } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addPublication } from '@/services/external';
@@ -43,7 +43,7 @@ const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	const body: PublicationAsset = {
-		xdd_uri: props.selectedArticle.gddid,
+		xdd_uri: props.selectedArticle.gddId,
 		title: props.selectedArticle.title
 	};
 
@@ -55,7 +55,7 @@ const addResourcesToProject = async (projectId: string) => {
 		const publicationId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = PUBLICATIONS;
+		const assetsType = ProjectAssetTypes.PUBLICATIONS;
 		await ProjectService.addAsset(projectId, assetsType, publicationId);
 
 		// update local copy of project assets
@@ -64,9 +64,8 @@ const addResourcesToProject = async (projectId: string) => {
 	}
 };
 
-// TODO: May need more formatting than just replcing <p></p> in future
 const formatAbstract = (item: XDDArticle) =>
-	item.abstract.replace('<p>', '\n').replace('</p>', '\n') || '[no abstract]';
+	item.abstract !== undefined ? `Abstract: ${item.abstract}` : 'Abstract: [no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
 	let projectId = '';

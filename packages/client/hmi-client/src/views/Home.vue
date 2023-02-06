@@ -10,20 +10,20 @@ import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { Project } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
-import * as ProjectService from '@/services/project';
 import { searchXDDArticles } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
+import API from '@/api/api';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
-	projects.value.filter((project) => project.relatedArticles.length > 0).slice(0, 5)
+	projects.value.filter((project) => project.relatedArticles !== undefined).slice(0, 5)
 );
 const relevantArticles = ref<XDDArticle[]>([]);
 const relevantSearchTerm = 'COVID-19';
-const relevantSearchParams: XDDSearchParams = { perPage: 30 };
+const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
 const selectedPaper = ref<XDDArticle>();
 
 const resourcesStore = useResourcesStore();
@@ -34,16 +34,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	const allProjects = (await ProjectService.getAll()) as Project[];
-	if (allProjects) {
-		// TODO: Fix this so we send backend all of this with 1 call and it deals with it all
-		const promises = allProjects.map((project) => ProjectService.getRelatedArticles(project));
-		const result = await Promise.all(promises);
-		for (let i = 0; i < allProjects.length; i++) {
-			allProjects[i].relatedArticles = result[i];
-		}
-		projects.value = await allProjects;
-	}
+	projects.value = (await API.get('/home')).data as Project[];
 
 	// Get all relevant articles (latest on section)
 	const allArticles = await searchXDDArticles(relevantSearchTerm, relevantSearchParams);
@@ -64,8 +55,22 @@ const close = () => {
 const SCROLL_INCREMENT_IN_REM = 21;
 const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const chevronElement = event.target as HTMLElement;
-	const cardListElement = chevronElement.parentElement?.querySelector('ul');
+	const cardListElement =
+		chevronElement.nodeName === 'svg'
+			? chevronElement.parentElement?.querySelector('ul')
+			: chevronElement.parentElement?.parentElement?.querySelector('ul');
+
 	if (cardListElement === null || cardListElement === undefined) return;
+
+	// Don't scroll if last element is already within viewport
+	if (direction === 'right' && cardListElement.lastElementChild) {
+		const parentBounds = cardListElement.parentElement?.getBoundingClientRect();
+		const bounds = cardListElement.lastElementChild.getBoundingClientRect();
+		if (bounds && parentBounds && bounds.x + bounds.width < parentBounds.x + parentBounds.width) {
+			return;
+		}
+	}
+
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseInt(marginLeftString, 10);
@@ -94,11 +99,11 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			</div>
 		</div>
 
-		<h2>Projects</h2>
+		<h4>Projects</h4>
 		<div class="carousel">
 			<header>
 				<component :is="IconTime32" />
-				<h3>Recent</h3>
+				<h5>Recent</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -121,7 +126,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 		<!-- Hot Topics carousel -->
 		<div class="carousel" v-if="relevantArticles.length > 0">
 			<header>
-				<h3>Latest on {{ relevantSearchTerm }}</h3>
+				<h5>Latest on {{ relevantSearchTerm }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -134,7 +139,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 		<!-- Show related articles for the top 5 projects -->
 		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
 			<header>
-				<h3>Related to: {{ project.name }}</h3>
+				<h5>Related to: {{ project.name }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
@@ -149,8 +154,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 <style scoped>
 section {
-	background-color: var(--un-color-body-surface-secondary);
-	color: var(--un-color-body-text-secondary);
+	background-color: var(--surface-secondary);
+	color: var(--text-color-secondary);
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
@@ -164,22 +169,17 @@ header {
 	z-index: -1;
 }
 
-h2 {
-	font: var(--un-font-h2);
+h4 {
 	margin-left: 4rem;
 }
 
-h3 {
-	font: var(--un-font-h3);
-}
-
-h2,
+h4,
 header {
 	margin-top: 1rem;
 }
 
 header svg {
-	color: var(--un-color-accent);
+	color: var(--primary-color);
 	margin-right: 0.5rem;
 }
 
@@ -204,13 +204,13 @@ header svg {
 	top: 50%;
 	visibility: visible;
 	z-index: 3;
-	background: var(--un-color-body-surface-secondary);
+	background: var(--surface-secondary);
 	border-radius: 10rem;
 }
 
 .chevron:hover {
-	background-color: var(--un-color-body-surface-background);
-	color: var(--un-color-accent);
+	background-color: var(--surface-ground);
+	color: var(--primary-color);
 }
 
 .chevron-left {
@@ -235,6 +235,7 @@ li {
 .card {
 	z-index: 1;
 	transition: 0.2s;
+	max-width: 21rem; /* See SCROLL_INCREMENT_IN_REM */
 }
 
 .card:hover {
@@ -257,11 +258,12 @@ li {
 	display: flex;
 	align-items: center;
 }
+
 .selected-paper-modal {
 	position: relative;
 	width: 500px;
 	margin: 0px auto;
-	background-color: var(--un-color-body-surface-primary);
+	background-color: var(--surface-section);
 	border-radius: 2px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	overflow-y: auto;

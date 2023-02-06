@@ -1,0 +1,61 @@
+/* Reset */
+@import '@assets/css/reset.css';
+
+/** 
+ * PrimeVue
+ * https://primefaces.org/primevue/setup
+ */
+@import '@node_modules/primeflex/primeflex.min.css';
+@import '@node_modules/primevue/resources/primevue.min.css';
+@import '@node_modules/primeicons/primeicons.css';
+
+/* 
+ * TERArium PrimeVue Theme 
+ * https://www.primefaces.org/designer/primevue
+ */
+@import '@assets/css/theme/theme.scss';
+
+
+:root {
+    /* Layout */
+    --navbar-outer-height: 51px;
+
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+
+	background-color: var(--surface-ground);
+	color: var(--text-color-primary);
+	color-scheme: light;
+	font-family: var(--font-family);
+	font-size: var(--font-size);
+	font-style: normal;
+	font-synthesis: none;
+    font-weight: var(--font-weight);
+	text-rendering: optimizeLegibility;
+}
+
+/* Global */
+body {
+    background-color: inherit;
+    color: inherit;
+    font: inherit;
+    isolation: isolate;
+	min-width: 1000px;
+
+	display: grid;
+	grid-template-areas: 
+		"header"
+		"main"
+		"footer";
+	grid-template-rows: minMax(3.5rem, max-content) 1fr max-content;
+}
+
+/* Highlights */
+.highlight,
+.hl {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	padding-left: 0.2em;
+	padding-right: 0.2em;
+}

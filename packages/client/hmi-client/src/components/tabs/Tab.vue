@@ -27,7 +27,7 @@ function calcTabWidthPercentage() {
 	if (props.numTabs <= 5) {
 		return 20;
 	}
-	return Math.floor(100 / props.numTabs);
+	return 100 / props.numTabs;
 }
 
 const headerStyle = computed(
@@ -57,6 +57,16 @@ const outerContainerStyle = computed(() => `top: ${-100 * props.index}%;`);
 </template>
 
 <style scoped>
+@keyframes show-tab {
+	0% {
+		width: 0%;
+	}
+
+	100% {
+		width: 100%;
+	}
+}
+
 header {
 	position: relative;
 	z-index: 1;
@@ -71,6 +81,7 @@ div {
 	width: 100%;
 	position: relative;
 	justify-content: space-between;
+	animation: show-tab 0.15s ease forwards;
 }
 
 div.active {
@@ -78,7 +89,7 @@ div.active {
 }
 
 div:hover:not(.active) {
-	background-color: var(--un-color-body-surface-secondary);
+	background-color: var(--surface-secondary);
 }
 
 section {
@@ -96,12 +107,15 @@ section {
 .content {
 	background-color: white;
 	visibility: hidden;
+	z-index: 0;
 	flex: 1;
 	min-height: 0;
+	isolation: isolate;
 }
 
 .content.active {
 	visibility: visible;
+	z-index: 1;
 }
 
 span {
@@ -125,6 +139,6 @@ span {
 }
 
 .close:hover {
-	background-color: var(--un-color-black-20);
+	background-color: var(--gray-200);
 }
 </style>

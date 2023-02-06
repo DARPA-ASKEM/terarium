@@ -5,6 +5,7 @@ import { IGraph } from '@graph-scaffolder/types';
 
 export interface NodeData {
 	type: string;
+	uid?: string | number;
 }
 
 export interface EdgeData {
@@ -46,7 +47,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			y: nodeY,
 			height: nodeHeight,
 			width: nodeWidth,
-			data: { type: NodeType.State },
+			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
 	}
@@ -64,7 +65,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			y: nodeY,
 			height: nodeHeight,
 			width: nodeWidth,
-			data: { type: NodeType.Transition },
+			data: { type: NodeType.Transition, uid: aTransition.uid },
 			nodes: []
 		});
 	} // end T
@@ -95,7 +96,33 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	return { ...g };
 };
 
-export const getModel = async (modelId: string) => API.get(`/models/${modelId}`);
+/**
+ * Get Model from the data service
+ * @return Model|null - the model, or null if none returned by API
+ */
+export async function getModel(modelId: string): Promise<Model | null> {
+	const response = await API.get(`/models/${modelId}`);
+	return response?.data ?? null;
+}
+
+//
+// Retrieve multiple datasets by their IDs
+// FIXME: the backend does not support bulk fetch
+//        so for now we are fetching by issueing multiple API calls
+export async function getBulkModels(modelIDs: string[]) {
+	const result: Model[] = [];
+	const promiseList = [] as Promise<Model | null>[];
+	modelIDs.forEach((modelId) => {
+		promiseList.push(getModel(modelId));
+	});
+	const responsesRaw = await Promise.all(promiseList);
+	responsesRaw.forEach((r) => {
+		if (r) {
+			result.push(r);
+		}
+	});
+	return result;
+}
 
 /**
  * Get all models

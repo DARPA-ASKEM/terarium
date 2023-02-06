@@ -1,3 +1,5 @@
+import { getMicroEl } from './matrix-utils.glsl';
+
 export default `
 #version 300 es
 
@@ -11,20 +13,19 @@ uniform sampler2D uColor;
 uniform usampler2D uMicroRow;
 uniform usampler2D uMicroCol;
 
+uniform vec2 uMicroElDim;
+
 out vec4 fragColor;
 
-vec4 getColorFromRowCol(sampler2D tex, int index) {
-	int texWidth = textureSize(tex, 0).x;
-	int col = index % texWidth;
-	int row = index / texWidth;
-	return texelFetch(tex, ivec2(col, row), 0);
-}
+${getMicroEl}
 
 void main() {
-	float microColLen = float(textureSize(uMicroCol, 0).x);
-	float microRowLen = float(textureSize(uMicroRow, 0).x);
-	uint colIndex = texelFetch(uMicroCol, ivec2(int(vUvs.x * microColLen), 0), 0).r;
-	uint rowIndex = texelFetch(uMicroRow, ivec2(int(vUvs.y * microRowLen), 0), 0).r;
+	// get the total number of micro cols and rows
+	float microColLen = uMicroElDim.x;
+	float microRowLen = uMicroElDim.y;
+
+	uint colIndex = getMicroEl(uMicroCol, int(vUvs.x * microColLen)).r;
+	uint rowIndex = getMicroEl(uMicroRow, int(vUvs.y * microRowLen)).r;
 
 	fragColor = texelFetch(uColor, ivec2(colIndex, rowIndex), 0);
 }`;
