@@ -17,7 +17,7 @@
 					</div>
 					<div v-html="highlightSearchTerms(doc.publisher)" />
 					<Button
-						v-if="hasPdf()"
+						v-if="linkIsPDF()"
 						class="p-button-sm p-button-outlined"
 						label="Open PDF"
 						@click="openPDF"
@@ -252,7 +252,7 @@ const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
 );
 
-function hasPdf() {
+function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
 	return link.match(/^.*\.(pdf|PDF)$/);
 }

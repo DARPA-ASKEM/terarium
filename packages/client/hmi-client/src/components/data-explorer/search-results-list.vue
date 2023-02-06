@@ -170,9 +170,7 @@ const resultsText = computed(() => {
 });
 </script>
 
-<style scoped lang="scss">
-@import '@/assets/css/theme/variables';
-
+<style scoped>
 ul {
 	display: flex;
 	flex-direction: column;
@@ -188,7 +186,7 @@ ul {
 	margin-bottom: 8rem;
 	flex-grow: 1;
 	background-color: var(--surface-ground);
-	color: $primaryColor;
+	color: var(--primary-color);
 	font-weight: bold;
 }
 
