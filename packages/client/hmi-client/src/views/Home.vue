@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import ProjectCard from '@/components/projects/ProjectCard.vue';
-import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import ArticlesCard from '@/components/articles/ArticlesCard.vue';
 import SelectedArticlePane from '@/components/articles/selected-article-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
@@ -14,6 +12,8 @@ import { searchXDDArticles } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import API from '@/api/api';
+import Card from 'primevue/card';
+import Button from 'primevue/button';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
@@ -108,9 +108,6 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<li class="card">
-					<NewProjectCard />
-				</li>
 				<!-- .slice() to copy the array, .reverse() to put new projects at the left of the list instead of the right -->
 				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
 					<router-link
@@ -118,7 +115,26 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 						:to="'/projects/' + project.id"
 						:projectId="project.id"
 					>
-						<ProjectCard :name="project.name" />
+						<Card>
+							<template #header>
+								<header class="card-header">
+									<div><i class="pi pi-user"></i> 6</div>
+									<div><i class="pi pi-box"></i> 6</div>
+									<div><i class="pi pi-hashtag"></i> 6</div>
+									<div><i class="pi pi-file"></i> 6</div>
+								</header>
+							</template>
+							<template #title>
+								<div class="card-img"></div>
+								{{ project.name }}
+							</template>
+							<template #content>
+								<div class="card-content">
+									<span>Last modified Dec 20, 2022</span>
+									<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
+								</div>
+							</template>
+						</Card>
 					</router-link>
 				</li>
 			</ul>
@@ -153,6 +169,32 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 </template>
 
 <style scoped>
+.card-content {
+	align-items: center;
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-color-secondary);
+}
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	padding: 0 1rem 0 1rem;
+}
+
+.card-header div {
+	padding-top: 1rem;
+	color: var(--text-color-secondary);
+}
+
+.card-img {
+	width: 248px;
+	height: 191px;
+	background-color: var(--surface-ground);
+	border-radius: 1rem;
+	margin-bottom: 1rem;
+}
+
 section {
 	background-color: var(--surface-secondary);
 	color: var(--text-color-secondary);
@@ -230,12 +272,14 @@ ul {
 
 li {
 	list-style: none;
+	margin-right: 1rem;
 }
 
 .card {
 	z-index: 1;
 	transition: 0.2s;
-	max-width: 21rem; /* See SCROLL_INCREMENT_IN_REM */
+	max-width: 21rem;
+	/* See SCROLL_INCREMENT_IN_REM */
 }
 
 .card:hover {
