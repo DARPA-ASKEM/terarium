@@ -5,6 +5,7 @@ import { Resource } from '@/types/Resource';
 import ResourceCard from '@/components/resources/ResourceCard.vue';
 import useResourcesStore from '@/stores/resources';
 import { RouteParamsRaw, useRouter } from 'vue-router';
+import { ref } from 'vue';
 
 const props = defineProps<{
 	project: Project | null;
@@ -13,9 +14,8 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
-const activeProjectAssets = useResourcesStore().activeProjectAssets;
-
-const resources: Resource[] = [];
+const resourcesStore = useResourcesStore();
+const resources = ref<Resource[]>([]);
 
 const filteredRouteMetadata: {
 	route: RouteName;
@@ -30,25 +30,34 @@ const filteredRouteMetadata: {
 
 const assetAmount = props.resourceRoute ? 10 : 2;
 
-filteredRouteMetadata.forEach((metadata) => {
-	const route = metadata.route;
-	const { displayName, icon, projectAsset } = metadata;
-	if (projectAsset && activeProjectAssets !== null && props?.project !== null) {
-		const projId = props?.project.id;
-		const assets = activeProjectAssets[projectAsset].slice(0, assetAmount);
-		assets.forEach((asset) => {
-			resources.push({
-				route,
-				params: {
-					projectId: projId,
-					assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
-				},
-				name: displayName,
-				icon,
-				projectAsset: asset
-			});
+function updateResources() {
+	const activeProjectAssets = resourcesStore.activeProjectAssets;
+	return filteredRouteMetadata
+		.filter((metadata) => metadata.projectAsset && activeProjectAssets && props?.project)
+		.flatMap((metadata) => {
+			const { displayName, icon, projectAsset, route } = metadata;
+			const projectId = props.project?.id;
+			return (
+				activeProjectAssets![projectAsset!]?.slice(0, assetAmount)?.map((asset) => ({
+					route,
+					params: {
+						projectId,
+						assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
+					},
+					name: displayName,
+					icon,
+					projectAsset: asset
+				})) ?? []
+			);
 		});
-	}
+}
+
+resources.value = updateResources();
+
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+resourcesStore.$subscribe((mutation, state) => {
+	resources.value = updateResources();
 });
 
 function openResource(name: RouteName, params: RouteParamsRaw) {
