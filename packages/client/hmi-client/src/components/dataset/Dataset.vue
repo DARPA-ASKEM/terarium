@@ -75,9 +75,9 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 				><span v-html="dataset?.geospatialResolution"
 			/></AccordionTab>
 			<AccordionTab v-if="annotations" header="Temporal Resolution"
-				><span v-html="dataset?.temporalResolution"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="Annotations">
+				><span v-html="dataset?.temporalResolution" />
+			</AccordionTab>
+			<AccordionTab v-if="annotations" :header="`Annotations (${annotations.feature.length})`">
 				<div>
 					Geo Annotations:
 					<div v-for="annotation in annotations?.geo" :key="annotation.name">
@@ -96,7 +96,10 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
-			<AccordionTab v-if="annotations" header="Features">
+			<AccordionTab
+				v-if="annotations"
+				:header="`Features (${annotations.geo.length + annotations.date.length})`"
+			>
 				<div v-for="(feature, index) of annotations.feature" :key="index">
 					<div>Name: <span v-html="feature.display_name || feature.name" /></div>
 					<div>Type: <span v-html="feature.feature_type" /></div>
