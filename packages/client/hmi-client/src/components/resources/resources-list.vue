@@ -54,9 +54,7 @@ function updateResources() {
 
 resources.value = updateResources();
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-resourcesStore.$subscribe((mutation, state) => {
+resourcesStore.$subscribe(() => {
 	resources.value = updateResources();
 });
 
