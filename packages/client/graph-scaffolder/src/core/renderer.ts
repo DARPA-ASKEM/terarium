@@ -103,6 +103,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 	}
 
+	// Returns the chart boundary in screen coordinate
 	getBoundary(): { x1: number; y1: number; x2: number; y2: number } {
 		const t = d3.zoomTransform(this.chart?.node() as Element);
 		const x1 = (0 - t.x) / t.k;

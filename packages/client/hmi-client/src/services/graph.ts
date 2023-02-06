@@ -59,7 +59,7 @@ export const runDagreLayout = <V, E>(
 	g.setDefaultEdgeLabel(() => ({}));
 
 	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
-		if (node.width && node.height) {
+		if (node.width > 0 && node.height > 0) {
 			g.setNode(node.id, {
 				label: node.label,
 				width: node.width,
@@ -86,10 +86,10 @@ export const runDagreLayout = <V, E>(
 	// FIXME: Hackathon show-n-tell, remove
 	if (lr === true) {
 		g.graph().rankDir = 'LR';
-		g.graph().nodesep = 100;
-		g.graph().ranksep = 100;
+		g.graph().nodesep = 25;
+		g.graph().ranksep = 80;
+		g.graph().ranker = 'tight-tree';
 	}
-
 	dagre.layout(g);
 
 	g.nodes().forEach((n) => {

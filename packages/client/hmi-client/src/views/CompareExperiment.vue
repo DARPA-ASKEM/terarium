@@ -405,26 +405,35 @@ onMounted(async () => {
 	await renderer.render();
 	renderer.renderLegend();
 
+	let c = 0;
+	const cat10 = d3.schemeCategory10;
+
 	// eslint-disable-next-line
 	for (const pool of refinementPools) {
+		c++;
 		const bubbleSets = new BubbleSets.BubbleSets();
-		// const pool = refinementPools[4];
-
 		const group = renderer.chart
 			?.selectAll('.node-ui')
 			.select('circle, rect')
 			.filter((d: any) => pool.includes(d.id));
-		group?.each((_d, i, gr) => {
+
+		let makeContour = true;
+		group?.each((d, i, gr) => {
 			const el: any = d3.select(gr[i]).node();
 			const rect = el.getBoundingClientRect();
 			bubbleSets.pushMember(
 				BubbleSets.rect(
-					rect.x - 0.5 * rect.width,
-					rect.y - 0.5 * rect.width,
-					rect.width,
-					rect.height
+					rect.x - rect.width * 2,
+					rect.y - rect.width * 2,
+					4 * rect.width,
+					4 * rect.height
 				)
 			);
+
+			if (d.data.templateName.length > 0) {
+				makeContour = false;
+			}
+
 			renderer.chart
 				?.append('circle')
 				.attr('cx', rect.x)
@@ -432,9 +441,15 @@ onMounted(async () => {
 				.attr('r', 5)
 				.attr('fill', 'red');
 		});
-		// const pointPath = bubbleSets.compute();
-		// const cleanPath = pointPath.sample(8).simplify(0).bSplines().simplify(0);
-		// renderer.chart?.append('path').attr('d', pathFn(cleanPath.points)).attr('fill', '#f80').attr('fill-opacity', 0.2);
+		if (makeContour === true) {
+			const pointPath = bubbleSets.compute();
+			const cleanPath = pointPath.sample(8).simplify(0).bSplines().simplify(0);
+			renderer.chart
+				?.append('path')
+				.attr('d', pathFn(cleanPath.points))
+				.attr('fill', cat10[c % 8])
+				.attr('fill-opacity', 0.4);
+		}
 	}
 
 	// pool.forEach(hashKey => {
