@@ -85,7 +85,7 @@ const fillAutocomplete = async () => {
 
 	promise.then((response) => {
 		autocompleteMenuItems.value = appendToQuery
-			? response.map((term) => `${query.value}${term}`) // Append your input in front of suggested term
+			? response.map((term) => `${query.value}${term}`) // Append your input in front of suggested terms
 			: response;
 		// @ts-ignore
 		searchBarRef.value?.$el.focus();
