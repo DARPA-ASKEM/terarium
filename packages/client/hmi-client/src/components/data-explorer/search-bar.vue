@@ -93,19 +93,18 @@ async function fillAutocomplete() {
 }
 
 async function fillSuggestions() {
-	if (props.suggestions) {
-		const promise = getRelatedTerms(query.value, resources.xddDataset);
-		promise.then((response) => {
-			autocompleteMenuItems.value = response;
-			// addToQuery(item);
-			// @ts-ignore
-			searchBarRef.value?.$el.focus();
-		});
-	}
+	const promise = getRelatedTerms(query.value, resources.xddDataset);
+	promise.then((response) => {
+		autocompleteMenuItems.value = response;
+		// addToQuery(item);
+		// @ts-ignore
+		searchBarRef.value?.$el.focus();
+	});
 }
+
 const handleSearchEvent = (event) => {
 	const keyboardEvent = event as KeyboardEvent;
-	if (keyboardEvent.code === 'Space') {
+	if (keyboardEvent.code === 'Space' && props.suggestions) {
 		fillSuggestions();
 	} else {
 		fillAutocomplete();
