@@ -4,27 +4,32 @@
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
 				<AutoComplete
+					ref="searchBarRef"
 					:active="searchBarRef?.overlayVisible"
-					placeholder="Search"
 					v-model="query"
 					:suggestions="autocompleteMenuItems"
-					:minLength="MIN_LENGTH"
-					@keyup.enter="execSearch"
-					@keyup.space="handleSearchEvent"
-					@change="handleSearchEvent"
-					ref="searchBarRef"
+					placeholder="Search"
+					:autoOptionFocus="false"
+					:minLength="3"
 					scrollHeight="400px"
-					removeTokenIcon="pi pi-times"
 					loadingIcon="null"
+					@complete="handleSearchEvent"
+					@keyup.enter="initiateSearch"
+					@item-select="initiateSearch"
 				>
-					<template #item="prop">
-						<span><i class="pi pi-search" />{{ prop.item }}</span>
+					<template #option="prop">
+						<span class="auto-complete-term">
+							<i class="pi pi-search" />
+							<span>{{ prop.option }}</span>
+							<i class="pi pi-arrow-right"
+						/></span>
 					</template>
 				</AutoComplete>
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
 			<!-- <i class="pi pi-history" title="Search history" /> -->
-			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
+			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> 
+					 @keyup.space="handleSearchEvent" @change="handleSearchEvent"-->
 		</div>
 	</section>
 </template>
@@ -46,7 +51,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-related-terms', 'toggle-search-by-example']);
 
-const MIN_LENGTH = 3;
 const route = useRoute();
 const router = useRouter();
 const resources = useResourcesStore();
@@ -64,8 +68,8 @@ function clearQuery() {
 	emit('update-related-terms');
 }
 
-const execSearch = () => {
-	console.log(query.value);
+const initiateSearch = () => {
+	console.log(query.value, searchBarRef.value);
 	emit('update-related-terms', query.value);
 	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
@@ -73,7 +77,7 @@ const execSearch = () => {
 
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
-	execSearch();
+	initiateSearch();
 	// @ts-ignore
 	searchBarRef.value?.$el.focus();
 }
@@ -93,12 +97,7 @@ async function fillSuggestions() {
 		const promise = getRelatedTerms(query.value, resources.xddDataset);
 		promise.then((response) => {
 			autocompleteMenuItems.value = response;
-			// .map((item) => ({
-			// 	label: item,
-			// 	command: () => {
-			// 		addToQuery(item);
-			// 	}
-			// }));
+			// addToQuery(item);
 			// @ts-ignore
 			searchBarRef.value?.$el.focus();
 		});
@@ -108,7 +107,7 @@ const handleSearchEvent = (event) => {
 	const keyboardEvent = event as KeyboardEvent;
 	if (keyboardEvent.code === 'Space') {
 		fillSuggestions();
-	} else if (query.value.length >= MIN_LENGTH) {
+	} else {
 		fillAutocomplete();
 	}
 };
@@ -174,8 +173,17 @@ i {
 	z-index: 1;
 }
 
+.auto-complete-term {
+	display: inline-flex;
+	width: 100%;
+}
+
 .pi-search {
 	margin-right: 1rem;
+}
+
+.pi-arrow-right {
+	margin-left: auto;
 }
 
 .clear-search:hover {
