@@ -3,23 +3,29 @@
 		<div class="search">
 			<span class="p-input-icon-left p-input-icon-right">
 				<i class="pi pi-search" />
-				<InputText
-					type="text"
-					placeholder="Search"
+				<AutoComplete
+					ref="searchBarRef"
+					:active="searchBarRef?.overlayVisible"
 					v-model="query"
-					@keyup.enter="execSearch"
-					@keyup.space="handleSearchEvent"
-					class="input-text"
-					@input="handleSearchEvent"
-					ref="inputElement"
-				/>
-				<Menu ref="autocompleteMenu" :model="autocompleteMenuItems" :popup="true"> </Menu>
-				<i
-					class="pi pi-times clear-search"
-					:class="{ hidden: isClearQueryButtonHidden }"
-					style="font-size: 1rem"
-					@click="clearQuery"
-				/>
+					:suggestions="autocompleteMenuItems"
+					placeholder="Search"
+					:autoOptionFocus="false"
+					:minLength="3"
+					scrollHeight="400px"
+					loadingIcon="null"
+					@complete="fillAutocomplete"
+					@keyup.enter="initiateSearch"
+					@item-select="initiateSearch"
+				>
+					<template #option="prop">
+						<span class="auto-complete-term">
+							<i class="pi pi-search" />
+							<span>{{ prop.option }}</span>
+							<i class="pi pi-arrow-right"
+						/></span>
+					</template>
+				</AutoComplete>
+				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
 			<!-- <i class="pi pi-history" title="Search history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
@@ -28,102 +34,62 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import InputText from 'primevue/inputtext';
+import { useRouter, useRoute } from 'vue-router';
+import { getRelatedTerms, getAutocomplete } from '@/services/data';
+import { RouteName } from '@/router/routes';
+import { onMounted, ref } from 'vue';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import { getRelatedWords, getAutocomplete } from '@/services/data';
-import Menu from 'primevue/menu';
+import AutoComplete from 'primevue/autocomplete';
 import { EventType } from '@/types/EventType';
+
+const props = defineProps<{
+	showSuggestions: boolean;
+}>();
 
 const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
+const router = useRouter();
 const resources = useResourcesStore();
 
-const props = defineProps<{
-	suggestions: boolean;
-}>();
-
-const query = ref('');
-const autocompleteMenu = ref();
-const autocompleteMenuItems = ref([{}]);
-const inputElement = ref<HTMLInputElement | null>(null);
-
-const isClearQueryButtonHidden = computed(() => !query.value);
+const query = ref<string>('');
+const searchBarRef = ref();
+const autocompleteMenuItems = ref<string[]>([]);
 
 function clearQuery() {
 	query.value = '';
 	emit('query-changed');
 }
 
-const execSearch = () => {
+const initiateSearch = () => {
 	emit('query-changed', query.value);
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
-// const toggleSearchByExample = () => {
-// 	emit('toggle-search-by-example');
-// };
-
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
-	execSearch();
+	initiateSearch();
 	// @ts-ignore
-	inputElement.value?.$el.focus();
+	searchBarRef.value?.$el.focus();
 }
 defineExpose({ addToQuery });
 
-function replaceSearchTerm(term) {
-	query.value = term;
-	// @ts-ignore
-	inputElement.value?.$el.focus();
-}
+const fillAutocomplete = async () => {
+	const appendToQuery = query.value[query.value.length - 1] === ' ' && props.showSuggestions;
 
-async function showAutocomplete(event) {
-	if (query.value.length >= 3) {
-		const promise = getAutocomplete(query.value);
-		promise.then((response) => {
-			autocompleteMenuItems.value = response.map((item) => ({
-				label: item,
-				icon: 'pi pi-search',
-				command: () => {
-					replaceSearchTerm(item);
-				}
-			}));
-			// @ts-ignore
-			inputElement.value?.$el.focus();
-		});
-		autocompleteMenu.value.show(event);
-	}
-}
+	const promise: Promise<string[]> = appendToQuery
+		? getRelatedTerms(query.value.trim(), resources.xddDataset) // Appends to what you're typing
+		: getAutocomplete(query.value); // Replaces what you're typing
 
-async function showSuggestions(event) {
-	if (props.suggestions) {
-		const promise = getRelatedWords(query.value, resources.xddDataset);
-		promise.then((response) => {
-			autocompleteMenuItems.value = response.map((item) => ({
-				label: item,
-				icon: 'pi pi-search',
-				command: () => {
-					addToQuery(item);
-				}
-			}));
-			// @ts-ignore
-			inputElement.value?.$el.focus();
-		});
-		autocompleteMenu.value.show(event);
-	}
-}
-
-const handleSearchEvent = (event) => {
-	const keyboardEvent = event as KeyboardEvent;
-	if (keyboardEvent.code === 'Space') {
-		showSuggestions(event);
-	} else {
-		showAutocomplete(event);
-	}
+	promise.then((response) => {
+		autocompleteMenuItems.value = appendToQuery
+			? response.map((term) => `${query.value}${term}`) // Append your input in front of suggested terms
+			: response;
+		// @ts-ignore
+		searchBarRef.value?.$el.focus();
+	});
 };
 
 onMounted(() => {
@@ -147,17 +113,69 @@ onMounted(() => {
 	width: 100%;
 }
 
+.p-autocomplete {
+	border-color: var(--surface-border);
+	height: 3rem;
+	width: 100%;
+}
+
+.p-autocomplete:deep(.p-inputtext) {
+	border-radius: 1.5rem;
+	width: 100%;
+}
+
+.p-autocomplete:deep(.p-inputtext:focus) {
+	box-shadow: none;
+}
+
+.p-autocomplete:deep(.p-inputtext),
+.p-autocomplete:deep(.p-inputtext:hover),
+.p-autocomplete:deep(.p-inputtext:focus) {
+	border: 1px solid var(--surface-border);
+	padding-left: 3rem;
+}
+
+.p-autocomplete[active='true']:deep(.p-inputtext) {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom: none;
+	/* Required for smooth transition */
+	border-bottom-color: transparent;
+}
+
 .p-input-icon-left {
 	margin-right: 1rem;
 	flex: 1;
 }
 
-.input-text {
-	border-color: var(--surface-border);
-	border-radius: 1.5rem;
-	padding: 12px;
+i {
+	color: var(--text-color-subdued);
+	z-index: 1;
+}
+
+.auto-complete-term {
+	display: inline-flex;
 	width: 100%;
-	height: 3rem;
+}
+
+.pi-search {
+	margin-right: 1rem;
+}
+
+.pi-arrow-right {
+	margin-left: auto;
+}
+
+.clear-search:hover {
+	background-color: var(--surface-hover);
+	padding: 0.5rem;
+	border-radius: 1rem;
+	top: 1rem;
+	right: 0.5rem;
+}
+
+.clear-search.hidden {
+	visibility: hidden;
 }
 
 /* 
@@ -175,32 +193,4 @@ onMounted(() => {
 	cursor: pointer;
 } 
 */
-
-.clear-search:hover {
-	background-color: var(--surface-hover);
-	padding: 0.5rem;
-	border-radius: 1rem;
-	top: 1rem;
-	right: 0.5rem;
-}
-
-.clear-search.hidden {
-	visibility: hidden;
-}
-
-.item {
-	background-color: var(--surface-secondary);
-	color: var(--text-color-secondary);
-	padding: 0 0.5rem 0 0.5rem;
-	margin: 0.5rem;
-}
-
-.item:enabled:hover {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-hover);
-}
-
-.p-menu.autocomplete {
-	border-radius: 0 0 1.5rem 1.5rem;
-}
 </style>

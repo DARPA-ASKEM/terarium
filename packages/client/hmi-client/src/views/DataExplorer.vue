@@ -13,7 +13,7 @@
 						class="facets-panel"
 						:facets="facets"
 						:filtered-facets="filteredFacets"
-						:result-type="resultType"
+						:result-type="resourceType"
 					/>
 				</template>
 			</slider-panel>
@@ -22,21 +22,21 @@
 					<span class="p-buttonset">
 						<Button
 							class="p-button-secondary p-button-sm"
-							:active="resultType === ResourceType.XDD"
+							:active="resourceType === ResourceType.XDD"
 							label="Papers"
 							icon="pi pi-file"
 							@click="updateResultType(ResourceType.XDD)"
 						/>
 						<Button
 							class="p-button-secondary p-button-sm"
-							:active="resultType === ResourceType.MODEL"
+							:active="resourceType === ResourceType.MODEL"
 							label="Models"
 							icon="pi pi-share-alt"
 							@click="updateResultType(ResourceType.MODEL)"
 						/>
 						<Button
 							class="p-button-secondary p-button-sm"
-							:active="resultType === ResourceType.DATASET"
+							:active="resourceType === ResourceType.DATASET"
 							label="Datasets"
 							icon="pi pi-database"
 							@click="updateResultType(ResourceType.DATASET)"
@@ -46,7 +46,7 @@
 				<search-results-list
 					:data-items="dataItems"
 					:facets="filteredFacets"
-					:result-type="resultType"
+					:result-type="resourceType"
 					:selected-search-items="selectedSearchItems"
 					:search-term="searchTerm"
 					:is-loading="isLoading"
@@ -59,7 +59,7 @@
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
-				:result-type="resultType"
+				:result-type="resourceType"
 				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
@@ -88,13 +88,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-
 import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
 import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
 import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
-
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
@@ -112,17 +110,15 @@ import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
 import { getResourceID, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
-import { LocationQuery, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['search-query-changed', 'resources-type-changed']);
+const emit = defineEmits(['resource-type-changed']);
 
-const props = defineProps<{
-	query?: LocationQuery;
-}>();
-const searchQuery = computed(() => props.query);
 const route = useRoute();
+const queryStore = useQueryStore();
+const resources = useResourcesStore();
 
 const searchByExampleOptions = ref<SearchByExampleOptions>({
 	similarContent: false,
@@ -130,7 +126,6 @@ const searchByExampleOptions = ref<SearchByExampleOptions>({
 	bakcwardCitation: false,
 	relatedContent: false
 });
-
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -138,19 +133,9 @@ const searchByExampleItem = ref<ResultType | null>(null);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
-const query = useQueryStore();
-const resources = useResourcesStore();
-
 // default slider state
 const isSliderFacetsOpen = ref(true);
 const isSliderResourcesOpen = ref(false);
-// close resources if preview opens
-watch(isSliderResourcesOpen, () => {
-	if (isSliderResourcesOpen.value) {
-		previewItem.value = null;
-	}
-});
-
 const pageSize = ref(XDD_RESULT_DEFAULT_PAGE_SIZE);
 // xdd
 const xddDatasets = ref<string[]>([]);
@@ -160,18 +145,23 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
 //
-const resultType = ref<string>(ResourceType.XDD);
+const resourceType = ref<string>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
-
 const isLoading = ref<boolean>(false);
-
 // optimize search performance: only fetch as needed
-const dirtyResults = ref<{ [resultType: string]: boolean }>({});
+const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
+const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
-	resultType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
-const clientFilters = computed(() => query.clientFilters);
+
+// close resources if preview opens
+watch(isSliderResourcesOpen, () => {
+	if (isSliderResourcesOpen.value) {
+		previewItem.value = null;
+	}
+});
 
 const xddDatasetSelectionChanged = (newDataset: string) => {
 	if (xddDataset.value !== newDataset) {
@@ -181,8 +171,8 @@ const xddDatasetSelectionChanged = (newDataset: string) => {
 
 const calculateFacets = (unfilteredData: SearchResults[], filteredData: SearchResults[]) => {
 	// retrieves filtered & unfiltered facet data
-	facets.value = getFacets(unfilteredData, resultType.value);
-	filteredFacets.value = getFacets(filteredData, resultType.value);
+	facets.value = getFacets(unfilteredData, resourceType.value);
+	filteredFacets.value = getFacets(filteredData, resourceType.value);
 };
 
 const mergeResultsKeepRecentDuplicates = (
@@ -208,10 +198,10 @@ const mergeResultsKeepRecentDuplicates = (
 
 const executeSearch = async () => {
 	// only execute search if current data is dirty and a refetch is needed
-	if (!dirtyResults.value[resultType.value]) return;
+	if (!dirtyResults.value[resourceType.value]) return;
 
 	// only search (or fetch data) relevant to the currently selected tab or the search by example item
-	let searchType = resultType.value;
+	let searchType = resourceType.value;
 	isLoading.value = true;
 	//
 	// search across artifects: XDD, HMI SERVER DB including models, projects, etc.
@@ -367,7 +357,7 @@ const disableSearchByExample = () => {
 
 const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	// user has requested a search by example, so re-fetch data
-	dirtyResults.value[resultType.value] = true;
+	dirtyResults.value[resourceType.value] = true;
 
 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
 	//         if a paper is selected then find related papers (from xDD)
@@ -381,7 +371,7 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 		await executeSearch();
 
 		searchByExampleItem.value = null;
-		dirtyResults.value[resultType.value] = false;
+		dirtyResults.value[resourceType.value] = false;
 	}
 };
 
@@ -444,50 +434,20 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	}
 };
 
-// this is called whenever the user apply some facet filter(s)
-watch(clientFilters, async (n, o) => {
-	if (filtersUtil.isEqual(n, o)) return;
-
-	disableSearchByExample();
-
-	// user has changed some of the facet filter, so re-fetch data
-	dirtyResults.value[resultType.value] = true;
-
-	await executeSearch();
-
-	// since facet filters differ across tabs,
-	// there is no need to refetch the data on the next tab switch
-	dirtyResults.value[resultType.value] = false;
-});
-
-watch(searchQuery, async (newQuery) => {
-	emit('search-query-changed', newQuery);
-	searchTerm.value = newQuery?.toString() ?? searchTerm.value;
-	// search term has changed, so all search results are dirty; need re-fetch
-	disableSearchByExample();
-	Object.values(ResourceType).forEach((key) => {
-		dirtyResults.value[key as string] = true;
-	});
-
-	// re-fetch data from the server, apply filters, and re-calculate the facets
-	await executeSearch();
-	dirtyResults.value[resultType.value] = false;
-});
-
-const updateResultType = async (newResultType: ResourceType) => {
-	if (resultType.value !== newResultType) {
-		resultType.value = newResultType;
+const updateResultType = async (newResourceType: ResourceType) => {
+	if (resourceType.value !== newResourceType) {
+		resourceType.value = newResourceType;
 
 		if (executeSearchByExample.value === false) {
 			// if no data currently exist for the selected tab,
 			// or if data exists but outdated then we should refetch
 			const resList = dataItemsUnfiltered.value.find(
-				(res) => res.searchSubsystem === resultType.value
+				(res) => res.searchSubsystem === resourceType.value
 			);
-			if (!resList || dirtyResults.value[resultType.value]) {
+			if (!resList || dirtyResults.value[resourceType.value]) {
 				disableSearchByExample();
 				await executeSearch();
-				dirtyResults.value[resultType.value] = false;
+				dirtyResults.value[resourceType.value] = false;
 			} else {
 				// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
 				// re-calculate the facets
@@ -497,10 +457,6 @@ const updateResultType = async (newResultType: ResourceType) => {
 	}
 };
 
-watch(resultType, (newResultType) => {
-	emit('resources-type-changed', newResultType);
-});
-
 // const addPreviewItemToCart = () => {
 // 	if (previewItem.value) {
 // 		toggleDataItemSelected( {item: previewItem.value } );
@@ -509,29 +465,61 @@ watch(resultType, (newResultType) => {
 // 	}
 // };
 
-onMounted(async () => {
-	const { q } = route.query;
-	searchTerm.value = q?.toString() ?? searchTerm.value;
-
-	xddDatasets.value = await getXDDSets();
-	if (xddDatasets.value.length > 0 && xddDataset.value === null) {
-		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
-		xddDatasets.value.push(ResourceType.ALL);
-	}
+async function executeNewQuery() {
+	searchTerm.value = route.query?.q?.toString() ?? searchTerm.value;
+	// search term has changed, so all search results are dirty; need re-fetch
+	disableSearchByExample();
 
 	// initially, all search results are dirty; need re-fetch
 	Object.values(ResourceType).forEach((key) => {
 		dirtyResults.value[key as string] = true;
 	});
 
+	// re-fetch data from the server, apply filters, and re-calculate the facets
 	await executeSearch();
 
 	// done with initial fetch for the currently selected tab, so reset
-	dirtyResults.value[resultType.value] = false;
+	dirtyResults.value[resourceType.value] = false;
+}
+
+watch(resourceType, (newResourceType) => {
+	emit('resource-type-changed', newResourceType);
+});
+
+// this is called whenever the user apply some facet filter(s)
+watch(clientFilters, async (n, o) => {
+	if (filtersUtil.isEqual(n, o)) return;
+
+	disableSearchByExample();
+
+	// user has changed some of the facet filter, so re-fetch data
+	dirtyResults.value[resourceType.value] = true;
+
+	await executeSearch();
+
+	// since facet filters differ across tabs,
+	// there is no need to refetch the data on the next tab switch
+	dirtyResults.value[resourceType.value] = false;
+});
+
+// Gets query from search-bar.vue
+watch(
+	() => route.query,
+	() => executeNewQuery()
+);
+
+// Default query on reload
+onMounted(async () => {
+	xddDatasets.value = await getXDDSets();
+	if (!isEmpty(xddDatasets.value) && xddDataset.value === null) {
+		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
+		xddDatasets.value.push(ResourceType.ALL);
+	}
+	executeNewQuery();
 });
 
 onUnmounted(() => {
-	query.reset();
+	queryStore.reset();
 });
 </script>
 
