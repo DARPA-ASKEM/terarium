@@ -77,13 +77,16 @@ function addToQuery(term: string) {
 defineExpose({ addToQuery });
 
 const fillAutocomplete = async () => {
-	const promise: Promise<string[]> =
-		query.value[query.value.length - 1] === ' ' && props.showSuggestions
-			? getRelatedTerms(query.value, resources.xddDataset) // Appends to what you're typing
-			: getAutocomplete(query.value); // Replaces what you're typing
+	const appendToQuery = query.value[query.value.length - 1] === ' ' && props.showSuggestions;
+
+	const promise: Promise<string[]> = appendToQuery
+		? getRelatedTerms(query.value.trim(), resources.xddDataset) // Appends to what you're typing
+		: getAutocomplete(query.value); // Replaces what you're typing
 
 	promise.then((response) => {
-		autocompleteMenuItems.value = response;
+		autocompleteMenuItems.value = appendToQuery
+			? response.map((term) => `${query.value}${term}`)
+			: response;
 		// @ts-ignore
 		searchBarRef.value?.$el.focus();
 	});
