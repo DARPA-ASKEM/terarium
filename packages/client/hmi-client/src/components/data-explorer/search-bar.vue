@@ -30,9 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
 // import { isEmpty } from 'lodash';
+import { useRouter, useRoute } from 'vue-router';
 import { getRelatedTerms, getAutocomplete } from '@/services/data';
+import { RouteName } from '@/router/routes';
 import { onMounted, ref } from 'vue';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
@@ -47,6 +48,7 @@ const emit = defineEmits(['update-related-terms', 'toggle-search-by-example']);
 
 const MIN_LENGTH = 3;
 const route = useRoute();
+const router = useRouter();
 const resources = useResourcesStore();
 
 const query = ref<string>('');
@@ -63,8 +65,9 @@ function clearQuery() {
 }
 
 const execSearch = () => {
-	console.log(query.value, autocompleteMenuItems.value, resources, EventService);
+	console.log(query.value);
 	emit('update-related-terms', query.value);
+	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
 
