@@ -28,8 +28,8 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:suggestions="resourceType === ResourceType.XDD"
-			@update-related-terms="updateRelatedTerms"
+			:showSuggestions="resourceType === ResourceType.XDD"
+			@query-changed="updateRelatedTerms"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
 		<section v-if="active" class="header-right">

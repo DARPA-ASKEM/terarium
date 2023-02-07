@@ -13,7 +13,7 @@
 					:minLength="3"
 					scrollHeight="400px"
 					loadingIcon="null"
-					@complete="fillAutoComplete"
+					@complete="fillAutocomplete"
 					@keyup.enter="initiateSearch"
 					@item-select="initiateSearch"
 				>
@@ -29,7 +29,7 @@
 			</span>
 			<!-- <i class="pi pi-history" title="Search history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> 
-					 @keyup.space="fillAutoComplete" @change="fillAutoComplete"-->
+					 @keyup.space="fillAutocomplete" @change="fillAutocomplete"-->
 		</div>
 	</section>
 </template>
@@ -45,10 +45,10 @@ import AutoComplete from 'primevue/autocomplete';
 import { EventType } from '@/types/EventType';
 
 const props = defineProps<{
-	suggestions: boolean;
+	showSuggestions: boolean;
 }>();
 
-const emit = defineEmits(['update-related-terms', 'toggle-search-by-example']);
+const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
 
 const route = useRoute();
 const router = useRouter();
@@ -60,11 +60,11 @@ const autocompleteMenuItems = ref<string[]>([]);
 
 function clearQuery() {
 	query.value = '';
-	emit('update-related-terms');
+	emit('query-changed');
 }
 
 const initiateSearch = () => {
-	emit('update-related-terms', query.value);
+	emit('query-changed', query.value);
 	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
@@ -77,14 +77,12 @@ function addToQuery(term: string) {
 }
 defineExpose({ addToQuery });
 
-const fillAutoComplete = async (event) => {
-	const keyboardEvent = event as KeyboardEvent;
-	let promise: Promise<string[]>;
-	if (keyboardEvent.code === 'Space' && props.suggestions) {
-		promise = getRelatedTerms(query.value, resources.xddDataset);
-	} else {
-		promise = getAutocomplete(query.value);
-	}
+const fillAutocomplete = async () => {
+	const promise: Promise<string[]> =
+		query.value[query.value.length - 1] === ' ' && props.showSuggestions
+			? getRelatedTerms(query.value, resources.xddDataset)
+			: getAutocomplete(query.value);
+
 	promise.then((response) => {
 		autocompleteMenuItems.value = response;
 		// @ts-ignore
