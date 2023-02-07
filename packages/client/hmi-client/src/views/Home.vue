@@ -6,7 +6,7 @@ import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
-import { Project } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import { XDDArticle, XDDSearchParams } from '@/types/XDD';
 import { searchXDDArticles } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
@@ -118,10 +118,19 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 						<Card>
 							<template #header>
 								<header class="card-header">
-									<div><i class="pi pi-user"></i> 6</div>
-									<div><i class="pi pi-box"></i> 6</div>
-									<div><i class="pi pi-hashtag"></i> 6</div>
-									<div><i class="pi pi-file"></i> 6</div>
+									<div><i class="pi pi-user"></i> 1</div>
+									<div>
+										<i class="pi pi-share-alt"></i>
+										{{ project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0 }}
+									</div>
+									<div>
+										<i class="pi pi-sliders-v"></i>
+										{{ project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0 }}
+									</div>
+									<div>
+										<i class="pi pi-file"></i>
+										{{ project?.assets?.[ProjectAssetTypes.PUBLICATIONS]?.length ?? 0 }}
+									</div>
 								</header>
 							</template>
 							<template #title>
@@ -282,10 +291,10 @@ li {
 	/* See SCROLL_INCREMENT_IN_REM */
 }
 
-.card:hover {
+/* .card:hover {
 	transform: scale(1.2);
 	z-index: 2;
-}
+} */
 
 .carousel:last-of-type {
 	margin-bottom: 3rem;

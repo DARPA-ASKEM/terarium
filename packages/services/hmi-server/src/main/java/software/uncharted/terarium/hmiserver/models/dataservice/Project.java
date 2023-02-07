@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import javax.json.bind.annotation.JsonbProperty;
 
@@ -30,7 +31,7 @@ public class Project implements Serializable {
 
 	private Concept concept;
 
-	private List<String> assets;
+	private Map<String, List<String>> assets;
 
 	private String username;
 
