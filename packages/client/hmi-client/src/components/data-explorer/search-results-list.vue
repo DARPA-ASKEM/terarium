@@ -14,7 +14,8 @@
 				removable
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
-			/>
+			>
+			</Chip>
 		</template>
 	</div>
 	<div v-if="isLoading" class="explorer-status loading-spinner">
@@ -22,8 +23,8 @@
 	</div>
 	<div v-else-if="resultsCount === 0" class="explorer-status">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
-		<div class="no-results-found">No results found</div>
-		<div>Try adjusting your search or filters and try again.</div>
+		<h2 class="no-results-found">No results found</h2>
+		<span>Try adjusting your search or filters and try again.</span>
 	</div>
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
@@ -200,8 +201,8 @@ ul {
 }
 
 .no-results-found {
-	font-size: 34px;
-	margin-top: 2rem;
+	font-weight: var(--font-weight);
+	margin-top: 1.5rem;
 }
 
 .result-details {

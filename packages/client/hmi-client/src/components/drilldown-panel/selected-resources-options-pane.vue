@@ -77,11 +77,11 @@ const getMenuItemsForItem = (item: ResultType) => [
 		command: () => emit('toggle-data-item-selected', { item, type: 'selected' })
 	},
 	{
-		label: 'Find Related Content',
+		label: 'Find related content',
 		command: () => emit('find-related-content', { item, type: 'selected' })
 	},
 	{
-		label: 'Find Similar Content', // only for publications
+		label: 'Find similar content', // only for publications
 		command: () => emit('find-similar-content', { item, type: 'selected' })
 	}
 ];

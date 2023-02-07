@@ -68,7 +68,7 @@
 				class="resources-slider"
 				content-width="35%"
 				direction="right"
-				header="Resources"
+				header="Selected resources"
 				v-model:is-open="isSliderResourcesOpen"
 				:indicator-value="selectedSearchItems.length"
 			>
