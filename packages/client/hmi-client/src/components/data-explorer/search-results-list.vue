@@ -186,7 +186,7 @@ ul {
 	margin-bottom: 8rem;
 	flex-grow: 1;
 	background-color: var(--surface-ground);
-	color: var(--primary-color-dark);
+	color: var(--primary-color);
 	font-weight: bold;
 }
 
