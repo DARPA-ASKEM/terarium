@@ -28,8 +28,7 @@
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
 			<!-- <i class="pi pi-history" title="Search history" /> -->
-			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> 
-					 @keyup.space="fillAutocomplete" @change="fillAutocomplete"-->
+			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 		</div>
 	</section>
 </template>
@@ -80,8 +79,8 @@ defineExpose({ addToQuery });
 const fillAutocomplete = async () => {
 	const promise: Promise<string[]> =
 		query.value[query.value.length - 1] === ' ' && props.showSuggestions
-			? getRelatedTerms(query.value, resources.xddDataset)
-			: getAutocomplete(query.value);
+			? getRelatedTerms(query.value, resources.xddDataset) // Appends to what you're typing
+			: getAutocomplete(query.value); // Replaces what you're typing
 
 	promise.then((response) => {
 		autocompleteMenuItems.value = response;
