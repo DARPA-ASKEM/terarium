@@ -6,11 +6,14 @@
 				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
 			>
 		</span>
+	</div>
+	<div class="facet-chips">
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
-				:label="(value as string)"
+				:label="`${facet.field.charAt(0).toUpperCase() + facet.field.slice(1)}: ${value}`"
 				:key="index"
+				icon="pi pi-filter"
 				removable
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
@@ -179,7 +182,6 @@ const resultsText = computed(() => {
 ul {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
 	list-style: none;
 	overflow-y: scroll;
 }
@@ -225,8 +227,13 @@ ul {
 	color: var(--text-color-primary);
 }
 
+.facet-chips {
+	display: inline-flex;
+	gap: 1rem;
+}
+
 .p-chip {
-	outline: 1px solid var(--gray-300);
+	background-color: var(--surface-section);
 }
 
 .search-container {

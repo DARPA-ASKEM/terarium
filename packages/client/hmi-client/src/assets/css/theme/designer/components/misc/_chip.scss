@@ -23,6 +23,7 @@
 
     .p-chip-icon {
         margin-right: $inlineSpacing;
+        font-size: 10px;
     }
 
     img {
@@ -33,7 +34,7 @@
     }
 
     .p-chip-remove-icon {
-        font-size: $fontCaption;
+        font-size: 10px;
         margin-left: $inlineSpacing;
         border-radius: $borderRadius;
         transition: $actionIconTransition;
