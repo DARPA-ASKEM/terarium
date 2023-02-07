@@ -124,6 +124,7 @@ await renderer.render();
 - useStableLayout: Boolean. If true attempt to lock layout alteration on minor changes. Experimental.
 - useStableZoomPan: Boolean. If true do not reset zoom transform after re-layout
 - useAStarRouting: Boolean. Whether to use AStar to route edges when partial edge-routing is not available in the layout algorithm.
+- useGrid: Boolean. Whether to show grid guidelines.
 
 
 ### Renderers
