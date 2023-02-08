@@ -44,7 +44,11 @@
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 						<span
 							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							class="asset-description"
 						/>
+						<label v-if="isPreview">
+							<input type="checkbox" class="show-more-less" />
+						</label>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
@@ -52,7 +56,11 @@
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 						<span
 							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							class="asset-description"
 						/>
+						<label v-if="isPreview">
+							<input type="checkbox" class="show-more-less" />
+						</label>
 					</div>
 				</AccordionTab>
 				<AccordionTab
@@ -351,10 +359,31 @@ ul li {
 	object-fit: contain;
 }
 
-.extracted-item span {
+.extracted-item .asset-description {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 5;
 	overflow: hidden;
+}
+
+.extracted-item .asset-description:has(+ .show-more-less:checked) {
+	display: inline;
+}
+
+.show-more-less {
+	font-family: inherit;
+	color: var(--primary-color);
+	appearance: none;
+	cursor: pointer;
+	margin: 0;
+}
+
+.show-more-less::before {
+	content: 'Show more';
+}
+
+.show-more-less:checked::before {
+	content: 'Show less';
+	margin-left: 0.5rem;
 }
 </style>
