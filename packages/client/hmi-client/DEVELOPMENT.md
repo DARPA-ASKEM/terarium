@@ -4,34 +4,37 @@ Basic rules to write organised code.
 
 ## Folder organisation
 
-`page`
-: list of folders matching the current pages of terarium.
+### `page`
+- list of folders matching the current pages of terarium.
 
-`components`
-: only components used everywhere in terarium.
-: or base components, which are extended in each `page`.
+### `components`
+- only components used everywhere in terarium.
+- or base components, which are extended in each `page`.
 
-`services`*
-: domain specific to terarium; where calls to API are made; good place to unload big functions off a component.
+### `services`*
+ - domain specific to terarium; 
+ - where calls to API are made; 
+ - good place to unload big functions off a component.
 
-`utils`*
-: generic functions; utilities that can be reused easily.
+### `utils`*
+ - generic functions; 
+ - utilities that can be reused easily.
 
-Folders with an asterisk (*), every function within should have their own test.
+> Folders with an asterisk (*), every function within should have their own test.
 
 ## Naming convention
 
-Default
-: All names should be `kebab-case`.
+### Default
+- All names should be `kebab-case`.
 
-Events
-: context followed by the action
-: _i.e._ `query-updated` or `document-added-to-project`
+### Events
+- context followed by the action
+- _i.e._ `query-updated` or `document-added-to-project`
 
-Types
-: types are in `PascalCase` and end with `Type`
-: please use `interface` instead of `type` to define them
-: _i.e._ `ModelType` or `DocumentNameType`
+### Types
+- types are in `PascalCase` and end with `Type`
+- please use `interface` instead of `type` to define them
+- _i.e._ `ModelType` or `DocumentNameType`
 
 ## Components
 
