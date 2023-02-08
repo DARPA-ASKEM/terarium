@@ -33,13 +33,13 @@ import { getAllModelDescriptions } from './model';
 import { getRelatedArtifacts } from './provenance';
 
 const getXDDSets = async () => {
-	const res = await API.get('/xdd/sets');
+	const res = await API.get('/document/sets');
 	const response: XDDResult = res.data;
 	return response.available_sets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
-	const res = await API.get('/xdd/dictionaries');
+	const res = await API.get('/dictionaries');
 	const rawdata: XDDResult = res.data;
 	if (rawdata.success) {
 		const { data } = rawdata.success;
@@ -327,7 +327,7 @@ const getAssets = async (params: GetAssetsParams) => {
 // fetch list of extractions data from the HMI server
 //
 const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
-	let url = '/xdd/extractions?';
+	let url = '/document/extractions?';
 	url += `term=${term}`;
 
 	if (extractionTypes) {
@@ -358,7 +358,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	// dataset=xdd-covid-19
 	// doi=10.1002/pbc.28600
 	// docid=5ebd1de8998e17af826e810e
-	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
+	const url = `/document/related/document?docid=${docid}&set=${dataset}`;
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
@@ -381,13 +381,13 @@ async function getRelatedTerms(query?: string, dataset?: string | null): Promise
 		return [];
 	}
 	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
-	const response = await API.get(`/xdd/related/word?${params}`);
+	const response = await API.get(`/document/related/word?${params}`);
 	const data = response?.data?.data;
 	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
 }
 
 const getAutocomplete = async (searchTerm: string) => {
-	const url = `/xdd/extractions/askem_autocomplete/${searchTerm}`;
+	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
 	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
 	const terms = data.map((d) => d.text);
@@ -406,7 +406,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
 	let searchParams = `term=${term}`;
-	const url = '/xdd/documents?';
+	const url = '/documents?';
 
 	if (xddSearchParam?.docid) {
 		searchParams += `&docid=${xddSearchParam.docid}`;
