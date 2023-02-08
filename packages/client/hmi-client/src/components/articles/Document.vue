@@ -44,7 +44,6 @@
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 						<span
 							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							class="asset-description"
 						/>
 						<label v-if="isPreview">
 							<input type="checkbox" class="show-more-less" />
@@ -56,7 +55,6 @@
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 						<span
 							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							class="asset-description"
 						/>
 						<label v-if="isPreview">
 							<input type="checkbox" class="show-more-less" />
@@ -359,14 +357,14 @@ ul li {
 	object-fit: contain;
 }
 
-.extracted-item .asset-description {
+.extracted-item span {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 5;
 	overflow: hidden;
 }
 
-.extracted-item .asset-description:has(+ .show-more-less:checked) {
+.extracted-item span:has(+ .show-more-less:checked) {
 	display: inline;
 }
 
