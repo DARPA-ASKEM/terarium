@@ -1,4 +1,4 @@
-# Development hygiene
+# Development
 
 Basic rules to write organised code.
 
