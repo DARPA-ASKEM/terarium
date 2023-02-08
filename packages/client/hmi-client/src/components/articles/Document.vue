@@ -67,12 +67,14 @@
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(urlArtifacts)" :header="`URLs (${urlArtifacts.length})`">
-					<div v-for="ex in urlArtifacts" :key="ex.url">
-						<b>{{ ex.resourceTitle }}</b>
-						<div>
-							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
-						</div>
-					</div>
+					<ul>
+						<li v-for="ex in urlArtifacts" :key="ex.url">
+							<b>{{ ex.resourceTitle }}</b>
+							<div>
+								<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
+							</div>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherArtifacts)" :header="`Others (${otherArtifacts.length})`">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
@@ -86,9 +88,13 @@
 					v-if="!isEmpty(doc.citationList)"
 					:header="`References (${doc.citationList.length})`"
 				>
-					<div v-for="(citation, key) of doc.citationList" :Key="key">
-						{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
-					</div>
+					<ul>
+						<li v-for="(citation, key) of doc.citationList" :Key="key">
+							<template v-if="!isEmpty(formatCitation(citation))">
+								{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
+							</template>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab
 					v-if="!isEmpty(relatedTerariumArtifacts)"
@@ -320,6 +326,14 @@ span {
 .accordion {
 	margin: 0.5rem;
 	margin-top: 1rem;
+}
+
+ul {
+	list-style: none;
+}
+
+ul li {
+	margin-bottom: 0.5rem;
 }
 
 .extracted-item,
