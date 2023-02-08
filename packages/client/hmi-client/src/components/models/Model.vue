@@ -183,7 +183,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 					<Column field="name" header="Datasets"></Column>
 				</DataTable>
 				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Papers"></Column>
+					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
 		</Accordion>

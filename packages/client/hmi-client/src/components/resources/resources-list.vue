@@ -79,7 +79,7 @@ const openDataExplorer = () => {
 		</li>
 	</ul>
 	<p>
-		Find Models, Datasets, or Papers with the
+		Find Models, Datasets, or Documents with the
 		<a @click="openDataExplorer()"> Data Explorer </a>
 	</p>
 </template>

@@ -18,13 +18,13 @@ import { getBulkModels } from './model';
 const MAX_RELATED_ARTIFACT_COUNT = 5;
 
 /**
- For a paper, find related artifacts
-	Find models that reference that paper
-	Find datasets that reference that paper
+ For a document, find related artifacts
+	Find models that reference that document
+	Find datasets that reference that document
  */
 /**
- For a paper, find similar content
-	Find related papers (xDD)
+ For a document, find similar content
+	Find related documents (xDD)
 */
 
 // API helper function for fetching provenance data
@@ -71,8 +71,8 @@ async function getRelatedArtifacts(
 		//	 	Find datasets that represent the simulation runs of the model
 
 		// For a publication root type:
-		//  	Find models that reference that paper
-		//		Find datasets that reference that paper
+		//  	Find models that reference that document
+		//		Find datasets that reference that document
 
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.result.nodes.forEach((node) => {

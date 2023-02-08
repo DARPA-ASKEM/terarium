@@ -24,7 +24,7 @@ const projectsToDisplay = computed(() =>
 const relevantArticles = ref<XDDArticle[]>([]);
 const relevantSearchTerm = 'COVID-19';
 const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
-const selectedPaper = ref<XDDArticle>();
+const selectedDocument = ref<XDDArticle>();
 
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
@@ -45,11 +45,11 @@ onMounted(async () => {
 
 const selectArticle = (item: XDDArticle) => {
 	const itemID = item as XDDArticle;
-	selectedPaper.value = itemID;
+	selectedDocument.value = itemID;
 };
 
 const close = () => {
-	selectedPaper.value = undefined;
+	selectedDocument.value = undefined;
 };
 
 const SCROLL_INCREMENT_IN_REM = 21;
@@ -84,16 +84,20 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 <template>
 	<section>
-		<!-- modal window for showing selected paper -->
-		<div v-if="selectedPaper !== undefined" class="selected-paper-modal-mask" @click="close()">
-			<div class="selected-paper-modal" @click.stop>
+		<!-- modal window for showing selected document -->
+		<div
+			v-if="selectedDocument !== undefined"
+			class="selected-document-modal-mask"
+			@click="close()"
+		>
+			<div class="selected-document-modal" @click.stop>
 				<div class="modal-header">
-					<h4>{{ selectedPaper.title }}</h4>
+					<h4>{{ selectedDocument.title }}</h4>
 					<IconClose32 class="close-button" @click="close()" />
 				</div>
 				<selected-article-pane
 					class="selected-article-pane"
-					:selected-article="selectedPaper"
+					:selected-article="selectedDocument"
 					@close="close()"
 				/>
 			</div>
@@ -131,8 +135,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<li v-for="(paper, index) in relevantArticles" :key="index" class="card">
-					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+				<li v-for="(document, index) in relevantArticles" :key="index" class="card">
+					<ArticlesCard :article="document" @click="selectArticle(document)" />
 				</li>
 			</ul>
 		</div>
@@ -144,8 +148,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<li v-for="(paper, j) in project.relatedArticles" :key="j" class="card">
-					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+				<li v-for="(document, j) in project.relatedArticles" :key="j" class="card">
+					<ArticlesCard :article="document" @click="selectArticle(document)" />
 				</li>
 			</ul>
 		</div>
@@ -247,7 +251,7 @@ li {
 	margin-bottom: 3rem;
 }
 
-.selected-paper-modal-mask {
+.selected-document-modal-mask {
 	position: fixed;
 	z-index: 9998;
 	top: 0;
@@ -259,7 +263,7 @@ li {
 	align-items: center;
 }
 
-.selected-paper-modal {
+.selected-document-modal {
 	position: relative;
 	width: 500px;
 	margin: 0px auto;

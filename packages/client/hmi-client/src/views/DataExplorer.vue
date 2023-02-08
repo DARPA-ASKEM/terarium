@@ -23,7 +23,7 @@
 						<Button
 							class="p-button-secondary p-button-sm"
 							:active="resourceType === ResourceType.XDD"
-							label="Papers"
+							label="Documents"
 							icon="pi pi-file"
 							@click="updateResultType(ResourceType.XDD)"
 						/>
@@ -360,9 +360,9 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	dirtyResults.value[resourceType.value] = true;
 
 	// REVIEW: executing a similar content search means to find similar objects to the one selected:
-	//         if a paper is selected then find related papers (from xDD)
+	//         if a document is selected then find related documents (from xDD)
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
-	//         if a model/dataset/paper is selected then find related artifacts from TDS
+	//         if a model/dataset/document is selected then find related artifacts from TDS
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
 		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
