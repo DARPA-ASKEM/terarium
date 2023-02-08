@@ -1,6 +1,6 @@
 # Guidelines
 - [Development](DEVELOPMENT.md)
-- [Testing](TESTS.md)
+- [Testing](TEST.md)
 
 # Setup
 ## Vue 3 + TypeScript + Vite
