@@ -132,6 +132,7 @@ const sectionElem = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	assetId: string;
 	highlight?: string;
+	isPreview?: boolean;
 }>();
 
 const doc = ref<XDDArticle | null>(null);
@@ -334,5 +335,12 @@ span {
 	border: 1px solid var(--gray-300);
 	border-radius: 6px;
 	object-fit: contain;
+}
+
+.extracted-item span {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 5;
+	overflow: hidden;
 }
 </style>

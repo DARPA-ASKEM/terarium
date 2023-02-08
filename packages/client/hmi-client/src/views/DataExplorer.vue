@@ -59,7 +59,7 @@
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
-				:result-type="resourceType"
+				:resource-type="resourceType"
 				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
@@ -593,10 +593,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-}
-
-.preview-slider {
-	margin-right: 1px;
 }
 
 .resources-slider {

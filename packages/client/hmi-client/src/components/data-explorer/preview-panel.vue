@@ -8,24 +8,25 @@
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<span>{{ resultType.toUpperCase() }}</span>
+				<span>{{ resourceType.toUpperCase() }}</span>
 				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
 			</div>
 			<div class="selected-resources-pane">
 				<Document
-					v-if="resultType === ResourceType.XDD"
+					v-if="resourceType === ResourceType.XDD"
 					:asset-id="previewItemId"
+					:is-preview="true"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Dataset
-					v-if="resultType === ResourceType.DATASET"
+					v-if="resourceType === ResourceType.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Model
-					v-if="resultType === ResourceType.MODEL"
+					v-if="resourceType === ResourceType.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
@@ -86,7 +87,7 @@ const props = defineProps({
 		type: Object as PropType<ResultType | null>,
 		default: null
 	},
-	resultType: {
+	resourceType: {
 		type: String,
 		default: null
 	},
