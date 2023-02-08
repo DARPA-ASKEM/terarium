@@ -182,7 +182,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 <style scoped>
 .card-content {
-	align-items: center;
+	align-items: baseline;
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
