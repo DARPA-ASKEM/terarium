@@ -5,6 +5,7 @@ import io.quarkus.cache.CacheResult;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.documentserver.caching.CacheClearService;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDDictionariesResponseOK;
 import software.uncharted.terarium.documentserver.responses.xdd.XDDResponse;
 import software.uncharted.terarium.documentserver.proxies.xdd.DocumentProxy;
@@ -28,18 +29,10 @@ public class DictionariesResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get available XDD dictionaries")
 	@Path("/dictionaries")
-	@CacheResult(cacheName = CACHE_NAME)
+	@CacheResult(cacheName = CacheClearService.CacheName.Constants.XDD_DICTIONARIES_NAME)
 	public XDDResponse<XDDDictionariesResponseOK> getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all) {
-		try {
-			XDDResponse<XDDDictionariesResponseOK> response = proxy.getAvailableDictionaries(all);
-		} catch (RuntimeException e) {
-			log.error("Unable to get dictionaries. Invalidating cache.", e);
-			invalidateXDDCache(all);
-		}
-		return null;
-	}
+		return proxy.getAvailableDictionaries(all);
 
-	@CacheInvalidate(cacheName = CACHE_NAME)
-	public void invalidateXDDCache(@QueryParam("all") @DefaultValue("") String all) {
 	}
+	
 }

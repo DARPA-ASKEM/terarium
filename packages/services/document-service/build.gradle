@@ -19,6 +19,7 @@ dependencies {
 
 	// Caching
 	implementation "io.quarkus:quarkus-cache"
+	implementation "io.quarkus:quarkus-scheduler"
 
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client"
