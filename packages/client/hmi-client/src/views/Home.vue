@@ -205,7 +205,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
 	margin-bottom: 1rem;
-	transition: opacity 1s ease, height 1s ease;
+	transition: opacity 0.3s ease, height 0.3s ease;
 }
 
 .p-card:hover .card-img {
@@ -217,7 +217,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	opacity: 0;
 	height: 0;
 	width: 248px;
-	transition: opacity 1s ease, height 1s ease;
+	transition: opacity 0.3s ease, height 0.3s ease;
 }
 
 .p-card:hover .project-description {
