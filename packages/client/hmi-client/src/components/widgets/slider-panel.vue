@@ -21,8 +21,8 @@
 					:class="`slider-header-item pi ${directionMap[direction].iconClosed}`"
 					@click="emit('update:isOpen', true)"
 				/>
-				<h4 class="slider-header-item">{{ header }}</h4>
-				<Badge v-if="indicatorValue" :value="indicatorValue" class="resources-count" size="large" />
+				<h5 class="slider-header-item">{{ header }}</h5>
+				<Badge v-if="indicatorValue" :value="indicatorValue" class="selected-resources-count" />
 			</div>
 			<slot name="tab"></slot>
 		</template>
@@ -111,19 +111,22 @@ i.slider-header-item {
 
 .slider-tab-header h4 {
 	text-align: left;
-	transform-origin: top right;
 	line-height: 1em;
 	margin-bottom: 1rem;
 }
 
-.resources-count {
-	background-color: var(--surface-200);
-	color: var(--text-color-primary);
-	margin-top: 4rem;
+.slider-tab-header h5 {
+	transform: rotate(180deg);
+	writing-mode: vertical-lr;
 }
 
-.slider-tab-header h4 {
-	writing-mode: vertical-rl;
-	text-orientation: mixed;
+.selected-resources-count {
+	background-color: var(--surface-200);
+	color: var(--text-color-primary);
+	font-size: 1rem;
+	min-width: 2rem;
+	height: 2rem;
+	line-height: 2rem;
+	font-weight: var(--font-weight);
 }
 </style>

@@ -310,10 +310,12 @@ const getAssets = async (params: GetAssetsParams) => {
 
 		// Set values
 		const newFacets: Facets = getArticleFacets(returnResults);
-		results.allDataFilteredWithFacets = results.allData;
-		results.allDataFilteredWithFacets.results = returnResults;
-		results.allData.facets = newFacets;
-		results.allData.xddExtractions = xddResults.xddExtractions;
+		results.allDataFilteredWithFacets = {
+			results: returnResults,
+			searchSubsystem: resourceType,
+			facets: newFacets,
+			rawConceptFacets: conceptFacets
+		};
 	} else {
 		results.allDataFilteredWithFacets = results.allData;
 	}
@@ -374,8 +376,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	return [] as XDDArticle[];
 };
 
-// Return the top 5 words related to a term
-async function getRelatedWords(query: string, dataset?: string | null): Promise<string[]> {
+async function getRelatedTerms(query?: string, dataset?: string | null): Promise<string[]> {
 	if (!query) {
 		return [];
 	}
@@ -731,6 +732,6 @@ export {
 	getDocumentById,
 	getBulkDocuments,
 	getRelatedDocuments,
-	getRelatedWords,
+	getRelatedTerms,
 	getAutocomplete
 };

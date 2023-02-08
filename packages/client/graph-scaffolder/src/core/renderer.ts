@@ -24,6 +24,9 @@ interface Options {
 	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
 	// which case we can internally route using A-star
 	useAStarRouting?: boolean;
+
+	// Whether to show grid
+	useGrid?: boolean;
 }
 
 export const pathFn = d3
@@ -281,11 +284,68 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			});
 		});
 
+		const width = this.chartSize.width;
+		const height = this.chartSize.height;
+		const x = d3
+			.scaleLinear()
+			.domain([-1, width + 1])
+			.range([-1, width + 1]);
+		const y = d3
+			.scaleLinear()
+			.domain([-1, height + 1])
+			.range([-1, height + 1]);
+
+		const gX = svg.append('g').attr('class', 'axis axis--x');
+		const gY = svg.append('g').attr('class', 'axis axis--y');
+		const xAxis = d3
+			.axisBottom(x)
+			.ticks(((width + 2) / (height + 2)) * 10)
+			.tickSize(height)
+			.tickPadding(8 - height);
+
+		const yAxis = d3
+			.axisRight(y)
+			.ticks(10)
+			.tickSize(width)
+			.tickPadding(8 - width);
+
+		if (this.options.useGrid) {
+			gX?.call(xAxis);
+			gY?.call(yAxis);
+			svg.selectAll('.axis').selectAll('.domain').remove();
+			svg
+				.selectAll('.axis')
+				.selectAll('line')
+				.style('opacity', 0.1)
+				.style('pointer-events', 'none');
+			svg
+				.selectAll('.axis')
+				.selectAll('text')
+				.style('opacity', 0.5)
+				.style('pointer-events', 'none');
+		}
+
 		// Zoom control
 		// FIXME: evt type
 		const zoomed = (evt: any) => {
 			if (this.options.useZoom === false) return;
 			if (chart) chart.attr('transform', evt.transform);
+
+			if (this.options.useGrid) {
+				gX.call(xAxis.scale(evt.transform.rescaleX(x)));
+				gY.call(yAxis.scale(evt.transform.rescaleY(y)));
+				svg.selectAll('.axis').selectAll('.domain').remove();
+				svg
+					.selectAll('.axis')
+					.selectAll('line')
+					.style('opacity', 0.1)
+					.style('pointer-events', 'none');
+				svg
+					.selectAll('.axis')
+					.selectAll('text')
+					.style('opacity', 0.5)
+					.style('pointer-events', 'none');
+			}
 		};
 		const zoomEnd = () => {
 			if (!this.graph || !chart) return;

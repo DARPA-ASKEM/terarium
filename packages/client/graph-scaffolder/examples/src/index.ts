@@ -93,7 +93,8 @@ document.body.append(div);
 const renderer = new SampleRenderer({
 	el: div,
 	useAStarRouting: true,
-	runLayout: runLayout
+	runLayout: runLayout,
+	useGrid: true
 });
 renderer.on('node-click', () => {
 	console.log('node click');
