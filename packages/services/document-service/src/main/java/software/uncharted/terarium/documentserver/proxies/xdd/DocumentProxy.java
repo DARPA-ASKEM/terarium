@@ -1,6 +1,8 @@
 package software.uncharted.terarium.documentserver.proxies.xdd;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.documentserver.exceptions.DocumentResponseExceptionMapper;
 import software.uncharted.terarium.documentserver.responses.xdd.*;
 
 import javax.ws.rs.*;
@@ -8,6 +10,7 @@ import javax.ws.rs.core.MediaType;
 
 @RegisterRestClient(configKey = "xdd-document-service")
 @Produces(MediaType.APPLICATION_JSON)
+@RegisterProvider(DocumentResponseExceptionMapper.class)
 public interface DocumentProxy {
 	@GET
 	@Path("/api/articles")

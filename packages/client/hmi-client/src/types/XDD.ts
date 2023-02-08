@@ -57,7 +57,7 @@ export type XDDArticle = {
 	highlight: string[];
 	knownEntities?: XDDArticleKnownEntity;
 
-	// We don not know exactly what is in citatinList - DC Jan 2023
+	// We do not know exactly what is in citationList - DC Jan 2023
 	citationList: { [key: string]: string }[];
 
 	// additional-client-side fields
