@@ -65,7 +65,7 @@ export type XDDArticle = {
 	relatedExtractions?: XDDArtifact[];
 };
 
-export type PublicationAsset = {
+export type DocumentAsset = {
 	id?: string;
 	xdd_uri: string; // FIXME: this is the internal XDD id known as "docid" NOT "doi"
 	title: string;
@@ -171,28 +171,28 @@ export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
 // XDD Field names
 // Source: https://xdd.wisc.edu/api/articles
 //
-export const TYPE = 'type'; // Type of publication (article, book, etc)
+export const TYPE = 'type'; // Type of document (article, book, etc)
 export const TITLE = 'title'; // Article title
 export const JOURNAL = 'journal'; // The name of the journal
 export const VOL = 'vol'; // Volume
 export const NUMBER = 'number'; // Issue
 export const AUTHORS = 'authors'; // An array of objects, each containing a key 'name' and a value equal to the name of one author
 export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the article (e.g. Elsevier, USGS)
-export const PUBLICATION_NAME = 'pubname';
+export const DOCUMENT_NAME = 'pubname';
 export const PAGES = 'pages'; // Articles' page numbers within the issue
-export const YEAR = 'year'; // Year of publication
+export const YEAR = 'year'; // Year of document
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
-	[TYPE]: 'Publication Type',
+	[TYPE]: 'Document Type',
 	[TITLE]: 'Article Title',
 	[JOURNAL]: 'Journal Name',
 	[VOL]: 'Journal Volume',
 	[NUMBER]: 'Journal Issue Number',
 	[AUTHORS]: 'Authors',
 	[PUBLISHER]: 'Publisher',
-	[PUBLICATION_NAME]: 'Publication Name',
+	[DOCUMENT_NAME]: 'Document Name',
 	[PAGES]: 'Number of Pages',
-	[YEAR]: 'Publication Year'
+	[YEAR]: 'Document Year'
 };
 
 // Initail implementation of facets by XDD team only supports the following fields

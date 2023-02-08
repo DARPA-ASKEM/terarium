@@ -21,14 +21,14 @@ import { RouteName } from '@/router/routes';
 import { deleteAsset } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { ProjectAssetTypes } from '@/types/Project';
-import { PublicationAsset } from '@/types/XDD';
+import { DocumentAsset } from '@/types/XDD';
 import ArtifactList from './artifact-list.vue';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
 
 const documentId = ref('');
-const documents = ref<PublicationAsset[]>([]);
+const documents = ref<DocumentAsset[]>([]);
 
 const documentsAsArtifactList = computed(() =>
 	documents.value.map((document) => ({ id: document?.xdd_uri, name: document?.title }))
@@ -51,18 +51,18 @@ const removeDocument = async (xdd_uri: string) => {
 	}
 	// remove the document from the project assets
 	if (resourcesStore.activeProject && resourcesStore.activeProjectAssets) {
-		const assetsType = ProjectAssetTypes.PUBLICATIONS;
+		const assetsType = ProjectAssetTypes.DOCUMENTS;
 		deleteAsset(resourcesStore.activeProject.id, assetsType, docAsset.id);
 		// remove also from the local cache
-		resourcesStore.activeProject.assets[ProjectAssetTypes.PUBLICATIONS] =
-			resourcesStore.activeProject.assets[ProjectAssetTypes.PUBLICATIONS].filter(
+		resourcesStore.activeProject.assets[ProjectAssetTypes.DOCUMENTS] =
+			resourcesStore.activeProject.assets[ProjectAssetTypes.DOCUMENTS].filter(
 				(docId) => docId !== docAsset.id
 			);
-		resourcesStore.activeProjectAssets[ProjectAssetTypes.PUBLICATIONS] =
-			resourcesStore.activeProjectAssets[ProjectAssetTypes.PUBLICATIONS].filter(
+		resourcesStore.activeProjectAssets[ProjectAssetTypes.DOCUMENTS] =
+			resourcesStore.activeProjectAssets[ProjectAssetTypes.DOCUMENTS].filter(
 				(document) => document.id !== docAsset.id
 			);
-		documents.value = resourcesStore.activeProjectAssets[ProjectAssetTypes.PUBLICATIONS];
+		documents.value = resourcesStore.activeProjectAssets[ProjectAssetTypes.DOCUMENTS];
 	}
 
 	// if the user deleted the currently selected document, then clear its content from the view
@@ -71,9 +71,9 @@ const removeDocument = async (xdd_uri: string) => {
 	}
 };
 
-// Get the publications associated with this project
+// Get the documents associated with this project
 onMounted(() => {
-	documents.value = resourcesStore.activeProjectAssets?.publications ?? [];
+	documents.value = resourcesStore.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS] ?? [];
 });
 
 function exportIds() {

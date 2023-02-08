@@ -227,7 +227,7 @@ const fetchDocumentArtifacts = async () => {
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (doc.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Document);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];

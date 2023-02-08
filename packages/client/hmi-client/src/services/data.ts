@@ -126,7 +126,7 @@ const getAssets = async (params: GetAssetsParams) => {
 				(await searchXDDArticles(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
 				([] as XDDArticle[]);
 			assetList = xddResults.results;
-			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
+			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -284,7 +284,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		ARTICLE_FACET_FIELDS.forEach((field) => {
 			// For each facet we can filter on check if we should be filtering for it
 
-			// Filtering on publication year as its a special case
+			// Filtering on document year as its a special case
 			// TOM TODO: change year to XDDArticle's "year" field
 			if (
 				field === 'year' &&
@@ -626,15 +626,15 @@ const fetchData = async (
 				}
 				if (searchParam?.xdd.related_search_enabled) {
 					// FIXME:
-					//   searchParam?.xdd.related_search_id will be equal to a publication docid/gddid which is an xDD ID
+					//   searchParam?.xdd.related_search_id will be equal to a document docid/gddid which is an xDD ID
 					//   However, getRelatedArtifacts expects an ID that represents the internal ID for TDS artifacts
-					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given publication would exist becuase publications are external artifact by definition.
+					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given document would exist becuase documents are external artifact by definition.
 					//
-					//   One way to simplify the issue is to query the /external/publications API path to search TDS for the internal artifact ID for a given xDD publication using the document gddid/docid as input.
+					//   One way to simplify the issue is to query the /external/documents API path to search TDS for the internal artifact ID for a given xDD document using the document gddid/docid as input.
 					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
 						searchParam?.xdd.related_search_id as string,
-						ProvenanceType.Publication
+						ProvenanceType.Document
 					);
 				}
 			}
@@ -682,15 +682,15 @@ const fetchData = async (
 				finalResponse.allDataFilteredWithFacets.push(relatedDatasetSearchResults);
 
 				//
-				// publications
+				// Documents
 				//
-				const relatedPublications = relatedArtifacts.filter((a) => isXDDArticle(a));
-				const relatedPublicationsSearchResults: SearchResults = {
-					results: relatedPublications,
+				const relatedDocuments = relatedArtifacts.filter((a) => isXDDArticle(a));
+				const relatedDocumentsSearchResults: SearchResults = {
+					results: relatedDocuments,
 					searchSubsystem: ResourceType.XDD
 				};
-				finalResponse.allData.push(relatedPublicationsSearchResults);
-				finalResponse.allDataFilteredWithFacets.push(relatedPublicationsSearchResults);
+				finalResponse.allData.push(relatedDocumentsSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(relatedDocumentsSearchResults);
 			}
 
 			return finalResponse;

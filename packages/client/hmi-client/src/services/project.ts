@@ -95,7 +95,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 /**
  * add project asset
  * @projectId string - represents the project id wherein the asset will be added
- * @assetType string - represents the type of asset to be added, e.g., 'publications'
+ * @assetType string - represents the type of asset to be added, e.g., 'documents'
  * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return any|null - some result if success, or null if none returned by API
  */
@@ -109,7 +109,7 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 /**
  * delete a project asset
  * @projectId string - represents the project id wherein the asset will be added
- * @assetType string - represents the type of asset to be added, e.g., 'publications'
+ * @assetType string - represents the type of asset to be added, e.g., 'documents'
  * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
  * @return any|null - some result if success, or null if none returned by API
  */
@@ -120,16 +120,16 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-// project id -> project assets -> publication list (Which will give you xdd id + url + title)  -> now you can use getRelatedDocuments given a xdd_uri (docid)
+// project id -> project assets -> document list (Which will give you xdd id + url + title)  -> now you can use getRelatedDocuments given a xdd_uri (docid)
 // TODO: Remove hardcoded dataset
 async function getRelatedArticles(aProject: Project): Promise<XDDArticle[]> {
 	const resp = await getAssets(aProject.id);
 	try {
 		// Dec 6th 2022:
 		// TODO: Speak with XDD Team about broken doc: 5f6d0e20a58f1dfd52184931
-		// Grab the 2nd of publication for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
+		// Grab the 2nd of document for related results because grabbing the first provides a broken doc id: 5f6d0e20a58f1dfd52184931
 		const listOfRelatedArticles = await getRelatedDocuments(
-			resp?.[ProjectAssetTypes.PUBLICATIONS][1].xdd_uri ?? '',
+			resp?.[ProjectAssetTypes.DOCUMENTS][1].xdd_uri ?? '',
 			'xdd-covid-19'
 		);
 		return listOfRelatedArticles;
