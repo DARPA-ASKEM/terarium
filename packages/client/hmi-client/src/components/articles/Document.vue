@@ -41,22 +41,18 @@
 					:header="`Figures (${figureArtifacts.length})`"
 				>
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
-						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span
-								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							/>
-						</div>
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						<span
+							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
-						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span
-								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							/>
-						</div>
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						<span
+							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab
@@ -64,12 +60,10 @@
 					:header="`Equations (${equationArtifacts.length})`"
 				>
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
-						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span
-								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							/>
-						</div>
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						<span
+							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(urlArtifacts)" :header="`URLs (${urlArtifacts.length})`">
@@ -327,20 +321,18 @@ span {
 	margin-top: 1rem;
 }
 
+.extracted-item,
 .extracted-item {
-	padding-bottom: 0.5rem;
+	margin-bottom: 1rem;
 }
 
-.img-container {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.img-container > img {
+.extracted-item > img {
 	max-height: 10rem;
-	width: 100%;
-	object-fit: contain;
+	margin-bottom: 0.5rem;
+	width: fit-content;
+	padding: 8px;
 	border: 1px solid var(--gray-300);
+	border-radius: 6px;
+	object-fit: contain;
 }
 </style>

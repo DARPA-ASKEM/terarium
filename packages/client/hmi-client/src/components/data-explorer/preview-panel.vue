@@ -33,7 +33,7 @@
 				<footer>
 					<Button
 						v-if="!previewItemSelected"
-						label="Add to Resources"
+						label="Add to selected resources"
 						@click="emit('toggle-data-item-selected', { item: previewItem })"
 						class="toggle-selection"
 					/>
