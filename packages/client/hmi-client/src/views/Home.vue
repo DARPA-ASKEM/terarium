@@ -137,6 +137,9 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 								<div class="card-img"></div>
 								{{ project.name }}
 							</template>
+							<template #subtitle>
+								<div class="project-description">{{ project.description }}</div>
+							</template>
 							<template #content>
 								<div class="card-content">
 									<span>Last modified Dec 20, 2022</span>
@@ -202,6 +205,24 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
 	margin-bottom: 1rem;
+	transition: opacity 1s ease, height 1s ease;
+}
+
+.p-card:hover .card-img {
+	opacity: 0;
+	height: 0px;
+}
+
+.project-description {
+	opacity: 0;
+	height: 0;
+	width: 248px;
+	transition: opacity 1s ease, height 1s ease;
+}
+
+.p-card:hover .project-description {
+	opacity: 100;
+	height: 191px;
 }
 
 section {
@@ -290,11 +311,6 @@ li {
 	max-width: 21rem;
 	/* See SCROLL_INCREMENT_IN_REM */
 }
-
-/* .card:hover {
-	transform: scale(1.2);
-	z-index: 2;
-} */
 
 .carousel:last-of-type {
 	margin-bottom: 3rem;
