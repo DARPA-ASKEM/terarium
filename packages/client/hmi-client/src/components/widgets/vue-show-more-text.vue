@@ -96,6 +96,7 @@ export default {
 			// 文字列が省略ellipsis(...)されているかをチェックする
 			// scrollWidth、scrollHeight：現在スクロール領域の外側に隠れている部分を含む、ボックスのすべてのコンテンツのサイズ。
 			// offsetWidth、offsetHeight：すべての境界線を含むビジュアルボックスのサイズ。
+			// @ts-ignore
 			if (this.$refs.detail && this.$refs.detail.offsetHeight < this.$refs.detail.scrollHeight) {
 				this.triggerShowMore = true;
 			} else {
