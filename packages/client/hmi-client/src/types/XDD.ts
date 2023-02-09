@@ -102,7 +102,7 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[PUBLISHER]: 'Publisher',
 	[DOCUMENT_NAME]: 'Document Name',
 	[PAGES]: 'Number of Pages',
-	[YEAR]: 'Document Year'
+	[YEAR]: 'Publication Year'
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
