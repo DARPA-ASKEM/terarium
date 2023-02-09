@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
+import io.quarkus.cache.CacheResult;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.caching.CacheClearService;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDSetsResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 
@@ -23,6 +25,7 @@ public class SetResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get available XDD sets or collections")
+	@CacheResult(cacheName = CacheClearService.CacheName.Constants.XDD_SETS_NAME)
 	public XDDSetsResponse getAvailableSets() {
 		return proxy.getAvailableSets();
 	}
