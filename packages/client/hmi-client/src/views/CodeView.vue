@@ -26,6 +26,7 @@
 </template>
 <script setup lang="ts">
 import { VAceEditor } from 'vue3-ace-editor';
+import logger from '@/utils/logger';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
@@ -57,7 +58,7 @@ async function onFileOpen(event) {
  * via TA1
  */
 async function onExtractModel() {
-	console.log(`Transforming: ${selectedText.value}`);
+	logger.info(`Transforming: ${selectedText.value}`);
 	const response = await API.post('/code', selectedText.value);
 	// eslint-disable-next-line
 	alert(JSON.stringify(response.data));

@@ -1,5 +1,6 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
+import logger from '@/utils/logger';
 import {
 	Dataset,
 	FACET_FIELDS as DATASET_FACET_FIELDS,
@@ -196,7 +197,7 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 					...MODEL_DISPLAY_NAMES,
 					...XDD_DISPLAY_NAMES
 				}[key];
-				console.log(displayName);
+				logger.info(displayName);
 				return displayName;
 			}
 			return key;

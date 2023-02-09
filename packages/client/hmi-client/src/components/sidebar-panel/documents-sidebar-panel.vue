@@ -14,6 +14,8 @@
  * Documents Sidebar Panel
  * Display a list of documents available in the current Project.
  */
+
+import logger from '@/utils/logger';
 import Button from 'primevue/button';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -77,7 +79,7 @@ onMounted(() => {
 });
 
 function exportIds() {
-	console.log(
+	logger.info(
 		'List of xDD _gddid ',
 		documents.value.map((document) => document)
 	);

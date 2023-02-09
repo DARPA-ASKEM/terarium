@@ -1,4 +1,5 @@
 import API from '@/api/api';
+import logger from '@/utils/logger';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
@@ -14,7 +15,7 @@ export async function fetchStratificationResult(modelA: string, modelB: string, 
 		const output = resp.data;
 		return output;
 	} catch (err) {
-		console.log(err);
+		logger.error(err);
 		return null;
 	}
 	// this.createModel(output, true);

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import logger from '@/utils/logger';
 import Dataset from '@/components/dataset/Dataset.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
@@ -40,7 +41,7 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 function getDocumentName(id: string): string | null {
-	console.log(datasetsInCurrentProject);
+	logger.info(datasetsInCurrentProject);
 	const currentDocument = datasetsInCurrentProject?.find((doc) => doc.id.toString() === id);
 	if (currentDocument) {
 		return currentDocument.name;

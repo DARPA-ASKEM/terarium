@@ -4,11 +4,10 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
+import logger from '@/utils/logger';
 import useAuthStore from '@/stores/auth';
 
-const router = useRouter();
 const auth = useAuthStore();
 
 const isModalVisible = ref(false);
@@ -19,7 +18,7 @@ async function createNewProject() {
 	const author = auth.name ?? '';
 	const project = await ProjectService.create(name.value, description.value, author);
 	if (project) {
-		router.push(`/projects/${project.id}`);
+		logger.info(`Project ${project.title} created`);
 		isModalVisible.value = false;
 	}
 }

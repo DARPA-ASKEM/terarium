@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import logger from '@/utils/logger';
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { select, scaleOrdinal } from 'd3';
@@ -34,7 +35,7 @@ watch(
 		if (!assetId) return;
 
 		// FIXME: siwtch to different simulation run result
-		console.log('simulation run id changed to', assetId);
+		logger.info('simulation run id changed to', assetId);
 	},
 	{ immediate: true }
 );

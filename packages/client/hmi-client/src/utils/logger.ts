@@ -1,8 +1,9 @@
 // HMI-Client logging service
-import API from '@/api/api';
 import { createLogger, LogEvent, LoggerHook, LogLevel } from 'vue-logger-plugin';
+import API from '@/api/api';
+
 // TODO: add logic for different modes
-// const env = process.env.NODE_ENV;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // LogDetails Interface
 interface LogDetails {
@@ -49,7 +50,11 @@ class LogBuffer {
 					logs: this.getLogBuffer()
 				});
 				const { status } = resp;
-				if (status !== 200) console.warn('POST to /logs did not return a 200');
+				if (status !== 200) {
+					console.warn('POST to /logs did not return a 200');
+				} else {
+					this.clearLogs();
+				}
 			} catch (error) {
 				console.error(error);
 			}
@@ -68,8 +73,12 @@ const bufferLog: LoggerHook = {
 };
 
 // create logger with options
-export const logger = createLogger({
+const logger = createLogger({
 	enabled: true,
+	consoleEnabled: isProduction,
+	callerInfo: true,
 	level: 'debug',
 	afterHooks: [bufferLog]
 });
+
+export default logger;

@@ -3,6 +3,7 @@
  */
 
 import API from '@/api/api';
+import logger from '@/utils/logger';
 import { ResultType } from '@/types/common';
 import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
@@ -39,7 +40,7 @@ async function getConnectedNodes(
 	};
 
 	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
-		console.log('Error: ', error)
+		logger.error(`Error: ${error}`)
 	);
 
 	const connectedNodes: ProvenanceResult = connectedNodesRaw?.data ?? null;

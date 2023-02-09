@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { parseSimulationPlan } from '@/services/simulation';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import logger from '@/utils/logger';
 
 const plan = {
 	InPort: [
@@ -170,7 +171,7 @@ export default defineComponent({
 
 		// Initialize
 		graph.nodes.forEach((d) => {
-			console.log('node >>', d);
+			logger.info(`node >> ${d}`);
 			g.nodes.push({
 				id: d.id,
 				label: d.id, // simulation plan currently allows duplicate labels which create tracking problems in the renderer
@@ -187,7 +188,7 @@ export default defineComponent({
 		});
 
 		graph.edges.forEach((d, i) => {
-			console.log('edge >>', d);
+			logger.info(`edge >> ${d}`);
 			g.edges.push({
 				id: `${i}`,
 				source: d.source,

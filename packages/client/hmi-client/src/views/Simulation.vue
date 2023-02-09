@@ -9,6 +9,7 @@ import {
 	pathFn
 } from '@/services/graph';
 import { parseSimulationPlan2IGraph } from '@/services/simulation';
+import logger from '@/utils/logger';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
 import { RouteName } from '@/router/routes';
@@ -95,7 +96,7 @@ onMounted(async () => {
 			if (!assetId) return;
 
 			// FIXME: siwtch to different simulation run result
-			console.log('simulation id changed to', assetId);
+			logger.info('simulation id changed to', assetId);
 			const response = await API.get(`/simulations/plans/${assetId}`);
 
 			const newPlan = parseSimulationPlan2IGraph(response.data.content);
@@ -112,7 +113,7 @@ onMounted(async () => {
 	renderer.on(
 		'node-click',
 		(_eventName: string | symbol, _event, selection: D3SelectionINode<NodeData>) => {
-			console.log(selection.datum());
+			logger.info(selection.datum());
 		}
 	);
 
