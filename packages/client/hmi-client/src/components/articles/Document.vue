@@ -42,39 +42,19 @@
 				>
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						<span
-							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-						/>
-						<label v-if="isPreview">
-							<input type="checkbox" class="show-more-less" />
-						</label>
-					</div>
-				</AccordionTab>
-				<AccordionTab
-					v-if="!isEmpty(figureArtifacts)"
-					:header="`Figures (${figureArtifacts.length})`"
-				>
-					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
-						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
 						<vue-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							:lines="5"
-							additional-container-css="margin:14px;"
-							additional-content-css="font-size:16px;"
-							additional-content-expanded-css="font-size:16px;"
-							additional-anchor-css="font-size: 16px;"
+							:lines="previewLineLimit"
 						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						<span
-							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+						<vue-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
 						/>
-						<label v-if="isPreview">
-							<input type="checkbox" class="show-more-less" />
-						</label>
 					</div>
 				</AccordionTab>
 				<AccordionTab
@@ -83,8 +63,9 @@
 				>
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						<span
-							v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+						<vue-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
 						/>
 					</div>
 				</AccordionTab>
@@ -161,7 +142,7 @@ const sectionElem = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	assetId: string;
 	highlight?: string;
-	isPreview?: boolean;
+	previewLineLimit?: number;
 }>();
 
 const doc = ref<XDDArticle | null>(null);
@@ -372,33 +353,5 @@ ul li {
 	border: 1px solid var(--gray-300);
 	border-radius: 6px;
 	object-fit: contain;
-}
-
-.extracted-item span {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 5;
-	overflow: hidden;
-}
-
-.extracted-item span:has(+ .show-more-less:checked) {
-	display: inline;
-}
-
-.show-more-less {
-	font-family: inherit;
-	color: var(--primary-color);
-	appearance: none;
-	cursor: pointer;
-	margin: 0;
-}
-
-.show-more-less::before {
-	content: 'Show more';
-}
-
-.show-more-less:checked::before {
-	content: 'Show less';
-	margin-left: 0.5rem;
 }
 </style>

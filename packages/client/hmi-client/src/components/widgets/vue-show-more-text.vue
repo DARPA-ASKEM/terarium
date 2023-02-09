@@ -28,7 +28,7 @@ export default {
 	props: {
 		lines: {
 			type: Number,
-			default: 3
+			default: 9999
 		},
 		text: {
 			type: String,
@@ -107,7 +107,7 @@ export default {
 </script>
 <style scoped>
 .default {
-	--lines: 3;
+	--lines: 9999;
 	white-space: pre-line;
 	display: -webkit-box;
 	max-width: 100%;
@@ -128,11 +128,7 @@ export default {
 	text-align: right;
 	padding: 8px;
 	margin-bottom: 4px;
-	color: #1976d2;
+	color: var(--primary-color);
 	cursor: pointer;
-}
-
-.container {
-	padding: 10px;
 }
 </style>

@@ -312,6 +312,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		const newFacets: Facets = getArticleFacets(returnResults);
 		results.allDataFilteredWithFacets = {
 			results: returnResults,
+			xddExtractions: xddResults.xddExtractions,
 			searchSubsystem: resourceType,
 			facets: newFacets,
 			rawConceptFacets: conceptFacets
