@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
 public interface DocumentProxy {
 	@GET
 	@Path("/api/articles")
-	XDDResponse<XDDArticlesResponseOK> getDocuments(
+	XDDResponse<DocumentsResponseOK> getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
