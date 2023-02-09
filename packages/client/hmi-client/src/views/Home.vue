@@ -14,6 +14,7 @@ import useQueryStore from '@/stores/query';
 import API from '@/api/api';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
+import PapersCard from '@/components/articles/papers-card.vue';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related article
@@ -162,7 +163,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
 				<li v-for="(paper, index) in relevantArticles" :key="index" class="card">
-					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+					<papers-card :article="paper" @click="selectArticle(paper)"></papers-card>
 				</li>
 			</ul>
 		</div>
