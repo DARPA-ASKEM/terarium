@@ -8,23 +8,22 @@ import {
 	SearchResults
 } from '@/types/common';
 import API from '@/api/api';
-import { getDatasetFacets, getModelFacets, getArticleFacets } from '@/utils/facets';
-import { applyFacetFilters, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
+import { getDatasetFacets, getModelFacets, getDocumentFacets } from '@/utils/facets';
+import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
+import { DocumentType, XDDArtifact } from '@/types/Document';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
-	XDDArticle,
-	XDDArtifact,
 	XDDDictionary,
 	XDDResult,
 	XDDSearchParams,
 	XDDExtractionType,
 	XDD_RESULT_DEFAULT_PAGE_SIZE,
-	FACET_FIELDS as ARTICLE_FACET_FIELDS
+	FACET_FIELDS as DOCUMENT_FACET_FIELDS
 } from '../types/XDD';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
@@ -33,13 +32,13 @@ import { getAllModelDescriptions } from './model';
 import { getRelatedArtifacts } from './provenance';
 
 const getXDDSets = async () => {
-	const res = await API.get('/xdd/sets');
+	const res = await API.get('/document/sets');
 	const response: XDDResult = res.data;
 	return response.available_sets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
-	const res = await API.get('/xdd/dictionaries');
+	const res = await API.get('/dictionaries');
 	const rawdata: XDDResult = res.data;
 	if (rawdata.success) {
 		const { data } = rawdata.success;
@@ -107,7 +106,7 @@ const getAssets = async (params: GetAssetsParams) => {
 	const results = {} as FullSearchResults;
 
 	// fetch list of model or datasets data from the HMI server
-	let assetList: Model[] | Dataset[] | XDDArticle[] = [];
+	let assetList: Model[] | Dataset[] | DocumentType[] = [];
 	let projectAssetType: ProjectAssetTypes;
 	let xddResults;
 
@@ -123,10 +122,10 @@ const getAssets = async (params: GetAssetsParams) => {
 		case ResourceType.XDD:
 			// @ts-ignore
 			xddResults =
-				(await searchXDDArticles(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
-				([] as XDDArticle[]);
+				(await searchXDDDocuments(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
+				([] as DocumentType[]);
 			assetList = xddResults.results;
-			projectAssetType = ProjectAssetTypes.PUBLICATIONS;
+			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -167,8 +166,8 @@ const getAssets = async (params: GetAssetsParams) => {
 			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
 		case ResourceType.XDD:
-			assetResults = assetResults as XDDArticle[];
-			assetFacets = getArticleFacets(assetResults); // will be moved to HMI server - keep this for now
+			assetResults = assetResults as DocumentType[];
+			assetFacets = getDocumentFacets(assetResults); // will be moved to HMI server - keep this for now
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -278,14 +277,13 @@ const getAssets = async (params: GetAssetsParams) => {
 			results.allDataFilteredWithFacets = results.allData;
 		}
 	} else if (resourceType === ResourceType.XDD) {
-		// Filtering for Articles
-		const allResults = assetResults as XDDArticle[];
+		// Filtering for Documents
+		const allResults = assetResults as DocumentType[];
 		let returnResults = allResults;
-		ARTICLE_FACET_FIELDS.forEach((field) => {
+		DOCUMENT_FACET_FIELDS.forEach((field) => {
 			// For each facet we can filter on check if we should be filtering for it
 
-			// Filtering on publication year as its a special case
-			// TOM TODO: change year to XDDArticle's "year" field
+			// Filtering on document year as its a special case
 			if (
 				field === 'year' &&
 				searchParam.max_published !== undefined &&
@@ -294,9 +292,9 @@ const getAssets = async (params: GetAssetsParams) => {
 				const formattedMaxYear = searchParam.max_published.slice(0, 4);
 				const formattedMinYear = searchParam.min_published.slice(0, 4);
 				returnResults = returnResults.filter(
-					(article) =>
-						Number(article.year) <= Number(formattedMaxYear) &&
-						Number(article.year) >= Number(formattedMinYear)
+					(document) =>
+						Number(document.year) <= Number(formattedMaxYear) &&
+						Number(document.year) >= Number(formattedMinYear)
 				);
 			}
 
@@ -304,16 +302,20 @@ const getAssets = async (params: GetAssetsParams) => {
 			else if (field in searchParam) {
 				// Check out xdd params actually has this field (if it doesnt it hasnt been clicked on as facet)
 				const filtersForField = searchParam[field].split(',') as string[]; // Split incase multiple of the same has been clicked (2 journals for eg)
-				returnResults = returnResults.filter((article) => filtersForField.includes(article[field]));
+				returnResults = returnResults.filter((document) =>
+					filtersForField.includes(document[field])
+				);
 			}
 		});
 
 		// Set values
-		const newFacets: Facets = getArticleFacets(returnResults);
-		results.allDataFilteredWithFacets = results.allData;
-		results.allDataFilteredWithFacets.results = returnResults;
-		results.allData.facets = newFacets;
-		results.allData.xddExtractions = xddResults.xddExtractions;
+		const newFacets: Facets = getDocumentFacets(returnResults);
+		results.allDataFilteredWithFacets = {
+			results: returnResults,
+			searchSubsystem: resourceType,
+			facets: newFacets,
+			rawConceptFacets: conceptFacets
+		};
 	} else {
 		results.allDataFilteredWithFacets = results.allData;
 	}
@@ -325,7 +327,7 @@ const getAssets = async (params: GetAssetsParams) => {
 // fetch list of extractions data from the HMI server
 //
 const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
-	let url = '/xdd/extractions?';
+	let url = '/document/extractions?';
 	url += `term=${term}`;
 
 	if (extractionTypes) {
@@ -349,63 +351,62 @@ const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType
 //
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (docid === '' || dataset === null) {
-		return [] as XDDArticle[];
+		return [] as DocumentType[];
 	}
 
 	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
 	// dataset=xdd-covid-19
 	// doi=10.1002/pbc.28600
 	// docid=5ebd1de8998e17af826e810e
-	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
+	const url = `/document/related/document?docid=${docid}&set=${dataset}`;
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.data) {
-		const articlesRaw = rawdata.data.map((a) => a.bibjson);
+		const documentsRaw = rawdata.data.map((a) => a.bibjson);
 
-		const articles = articlesRaw.map((a) => ({
+		const documents = documentsRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract
 		}));
 
-		return articles;
+		return documents;
 	}
-	return [] as XDDArticle[];
+	return [] as DocumentType[];
 };
 
-// Return the top 5 words related to a term
-async function getRelatedWords(query: string, dataset?: string | null): Promise<string[]> {
+async function getRelatedTerms(query?: string, dataset?: string | null): Promise<string[]> {
 	if (!query) {
 		return [];
 	}
 	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
-	const response = await API.get(`/xdd/related/word?${params}`);
+	const response = await API.get(`/document/related/word?${params}`);
 	const data = response?.data?.data;
 	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
 }
 
 const getAutocomplete = async (searchTerm: string) => {
-	const url = `/xdd/extractions/askem_autocomplete/${searchTerm}`;
+	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
 	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
 	const terms = data.map((d) => d.text);
 	return terms;
 };
 
-const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
+const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
 	// NOTE when true it disables ranking of results
 	const enablePagination = xddSearchParam?.fullResults ?? false;
 
 	// "full_results": "Optional. When this parameter is included (no value required),
-	//  an overview of total number of matching articles is returned,
+	//  an overview of total number of matching documents is returned,
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
 	let searchParams = `term=${term}`;
-	const url = '/xdd/documents?';
+	const url = '/documents?';
 
 	if (xddSearchParam?.docid) {
 		searchParams += `&docid=${xddSearchParam.docid}`;
@@ -465,7 +466,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	}
 
 	//
-	// "max": "Maximum number of articles to return (default is all)",
+	// "max": "Maximum number of documents to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
 
 	// "per_page": "Maximum number of results to include in one response.
@@ -485,17 +486,17 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 
 	if (res.data && res.data.success) {
 		const { data, hits, scrollId, nextPage } = res.data.success;
-		const articlesRaw =
+		const documentsRaw =
 			xddSearchParam?.fields === undefined
-				? (data as XDDArticle[])
-				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent response object
+				? (data as DocumentType[])
+				: ((data as any).data as DocumentType[]); // FIXME: xDD returns inconsistent response object
 
-		const articles = articlesRaw.map((a) => ({
+		const documents = documentsRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract
 		}));
 
-		const formattedFacets: Facets = getArticleFacets(articles);
+		const formattedFacets: Facets = getDocumentFacets(documents);
 
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
@@ -509,7 +510,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		}
 
 		return {
-			results: articles,
+			results: documents,
 			facets: formattedFacets,
 			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
@@ -520,7 +521,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	}
 
 	return {
-		results: [] as XDDArticle[],
+		results: [] as DocumentType[],
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -531,19 +532,19 @@ const getDocumentById = async (docid: string) => {
 		docid,
 		known_entities: 'url_extractions,summaries'
 	};
-	const xddRes = await searchXDDArticles('', searchParams);
+	const xddRes = await searchXDDDocuments('', searchParams);
 	if (xddRes) {
-		const articles = xddRes.results as XDDArticle[];
-		if (articles.length > 0) {
-			return articles[0];
+		const documents = xddRes.results as DocumentType[];
+		if (documents.length > 0) {
+			return documents[0];
 		}
 	}
 	return null;
 };
 
 const getBulkDocuments = async (docIDs: string[]) => {
-	const result: XDDArticle[] = [];
-	const promiseList = [] as Promise<XDDArticle | null>[];
+	const result: DocumentType[] = [];
+	const promiseList = [] as Promise<DocumentType | null>[];
 	docIDs.forEach((docId) => {
 		promiseList.push(getDocumentById(docId));
 	});
@@ -627,15 +628,15 @@ const fetchData = async (
 				}
 				if (searchParam?.xdd.related_search_enabled) {
 					// FIXME:
-					//   searchParam?.xdd.related_search_id will be equal to a publication docid/gddid which is an xDD ID
+					//   searchParam?.xdd.related_search_id will be equal to a document docid/gddid which is an xDD ID
 					//   However, getRelatedArtifacts expects an ID that represents the internal ID for TDS artifacts
-					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given publication would exist becuase publications are external artifact by definition.
+					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given document would exist becuase documents are external artifact by definition.
 					//
-					//   One way to simplify the issue is to query the /external/publications API path to search TDS for the internal artifact ID for a given xDD publication using the document gddid/docid as input.
+					//   One way to simplify the issue is to query the /external/documents API path to search TDS for the internal artifact ID for a given xDD document using the document gddid/docid as input.
 					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
 						searchParam?.xdd.related_search_id as string,
-						ProvenanceType.Publication
+						ProvenanceType.Document
 					);
 				}
 			}
@@ -683,15 +684,15 @@ const fetchData = async (
 				finalResponse.allDataFilteredWithFacets.push(relatedDatasetSearchResults);
 
 				//
-				// publications
+				// Documents
 				//
-				const relatedPublications = relatedArtifacts.filter((a) => isXDDArticle(a));
-				const relatedPublicationsSearchResults: SearchResults = {
-					results: relatedPublications,
+				const relatedDocuments = relatedArtifacts.filter((a) => isDocument(a));
+				const relatedDocumentsSearchResults: SearchResults = {
+					results: relatedDocuments,
 					searchSubsystem: ResourceType.XDD
 				};
-				finalResponse.allData.push(relatedPublicationsSearchResults);
-				finalResponse.allDataFilteredWithFacets.push(relatedPublicationsSearchResults);
+				finalResponse.allData.push(relatedDocumentsSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(relatedDocumentsSearchResults);
 			}
 
 			return finalResponse;
@@ -726,11 +727,11 @@ export {
 	getXDDSets,
 	getXDDDictionaries,
 	getXDDArtifacts,
-	searchXDDArticles,
+	searchXDDDocuments,
 	getAssets,
 	getDocumentById,
 	getBulkDocuments,
 	getRelatedDocuments,
-	getRelatedWords,
+	getRelatedTerms,
 	getAutocomplete
 };

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import ArticlesCard from '@/components/articles/ArticlesCard.vue';
-import SelectedArticlePane from '@/components/articles/selected-article-pane.vue';
+import DocumentsCard from '@/components/documents/DocumentsCard.vue';
+import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { Project, ProjectAssetTypes } from '@/types/Project';
-import { XDDArticle, XDDSearchParams } from '@/types/XDD';
-import { searchXDDArticles } from '@/services/data';
+import { XDDSearchParams } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
+import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import API from '@/api/api';
@@ -16,15 +17,15 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 
 const projects = ref<Project[]>([]);
-// Only display projects with at least one related article
+// Only display projects with at least one related document
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
-	projects.value.filter((project) => project.relatedArticles !== undefined).slice(0, 5)
+	projects.value.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
 );
-const relevantArticles = ref<XDDArticle[]>([]);
+const relevantDocuments = ref<DocumentType[]>([]);
 const relevantSearchTerm = 'COVID-19';
 const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
-const selectedPaper = ref<XDDArticle>();
+const selectedDocument = ref<DocumentType>();
 
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
@@ -36,20 +37,20 @@ onMounted(async () => {
 
 	projects.value = (await API.get('/home')).data as Project[];
 
-	// Get all relevant articles (latest on section)
-	const allArticles = await searchXDDArticles(relevantSearchTerm, relevantSearchParams);
-	if (allArticles) {
-		relevantArticles.value = allArticles.results;
+	// Get all relevant documents (latest on section)
+	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
+	if (allDocuments) {
+		relevantDocuments.value = allDocuments.results;
 	}
 });
 
-const selectArticle = (item: XDDArticle) => {
-	const itemID = item as XDDArticle;
-	selectedPaper.value = itemID;
+const selectDocument = (item: DocumentType) => {
+	const itemID = item as DocumentType;
+	selectedDocument.value = itemID;
 };
 
 const close = () => {
-	selectedPaper.value = undefined;
+	selectedDocument.value = undefined;
 };
 
 const SCROLL_INCREMENT_IN_REM = 21;
@@ -84,16 +85,20 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 <template>
 	<section>
-		<!-- modal window for showing selected paper -->
-		<div v-if="selectedPaper !== undefined" class="selected-paper-modal-mask" @click="close()">
-			<div class="selected-paper-modal" @click.stop>
+		<!-- modal window for showing selected document -->
+		<div
+			v-if="selectedDocument !== undefined"
+			class="selected-document-modal-mask"
+			@click="close()"
+		>
+			<div class="selected-document-modal" @click.stop>
 				<div class="modal-header">
-					<h4>{{ selectedPaper.title }}</h4>
+					<h4>{{ selectedDocument.title }}</h4>
 					<IconClose32 class="close-button" @click="close()" />
 				</div>
-				<selected-article-pane
-					class="selected-article-pane"
-					:selected-article="selectedPaper"
+				<selected-document-pane
+					class="selected-document-pane"
+					:selected-document="selectedDocument"
 					@close="close()"
 				/>
 			</div>
@@ -154,19 +159,19 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			</ul>
 		</div>
 		<!-- Hot Topics carousel -->
-		<div class="carousel" v-if="relevantArticles.length > 0">
+		<div class="carousel" v-if="relevantDocuments.length > 0">
 			<header>
 				<h5>Latest on {{ relevantSearchTerm }}</h5>
 			</header>
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<li v-for="(paper, index) in relevantArticles" :key="index" class="card">
-					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+				<li v-for="(document, index) in relevantDocuments" :key="index" class="card">
+					<DocumentsCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
 		</div>
-		<!-- Show related articles for the top 5 projects -->
+		<!-- Show related documents for the top 5 projects -->
 		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
 			<header>
 				<h5>Related to: {{ project.name }}</h5>
@@ -174,8 +179,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<li v-for="(paper, j) in project.relatedArticles" :key="j" class="card">
-					<ArticlesCard :article="paper" @click="selectArticle(paper)" />
+				<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+					<DocumentsCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
 		</div>
@@ -326,7 +331,7 @@ li {
 	margin-bottom: 3rem;
 }
 
-.selected-paper-modal-mask {
+.selected-document-modal-mask {
 	position: fixed;
 	z-index: 9998;
 	top: 0;
@@ -338,7 +343,7 @@ li {
 	align-items: center;
 }
 
-.selected-paper-modal {
+.selected-document-modal {
 	position: relative;
 	width: 500px;
 	margin: 0px auto;
@@ -366,7 +371,7 @@ li {
 	opacity: 100%;
 }
 
-.selected-article-pane {
+.selected-document-pane {
 	margin: 2rem 0;
 }
 </style>

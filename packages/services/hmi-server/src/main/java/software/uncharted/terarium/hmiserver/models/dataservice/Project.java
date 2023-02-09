@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import software.uncharted.terarium.documentserver.models.xdd.Document;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

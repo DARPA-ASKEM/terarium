@@ -1,13 +1,13 @@
 import BinaryHeap from '../utils/binary-heap';
 import { IEdge, IGraph, INode, IPoint } from '../types';
 
+// Functions to walk the graph
 export const traverseNode = <T>(node: INode<T>, callback: (node: INode<T>) => void): void => {
 	callback(node);
 	for (let i = 0; i < node.nodes.length; i++) {
 		traverseNode(node.nodes[i], callback);
 	}
 };
-
 export const traverseGraph = <V, E>(
 	graph: IGraph<V, E>,
 	callback: (node: INode<V>) => void
@@ -35,7 +35,7 @@ export const flattenGraph = <V, E>(
 };
 
 /**
- * AStar path find
+ * AStar path finding algorithm.
  */
 export interface IGrid {
 	w: number;
@@ -50,7 +50,11 @@ export const getAStarPath = (
 	gridCell: IGrid = { w: 10, h: 10 },
 	searchLimit = 7000
 ): IPoint[] => {
-	// Encoding helpers
+	// Encoding helpers. We encode the XY coordinate as a single number to allow fast heuristic score lookup without
+	// incurring heavy memory cost of building a world-grid (we only store points we have visisted). Interestingly
+	// off hand testing using more native memory data structures (DataView, ArrayBuffer) to do high/low bit-mask encoding
+	// is not any faster than this scheme...though it probably worth a more thorough investigation if time allows as
+	// the memory-buffer method would be a more generalized solution - DC Feb 2023.
 	const PRIME = 756065179;
 	const SIZE = 8000;
 	const pAsKey = (p: IPoint): number => (Math.round(p.x) + SIZE) * PRIME + (p.y + SIZE);

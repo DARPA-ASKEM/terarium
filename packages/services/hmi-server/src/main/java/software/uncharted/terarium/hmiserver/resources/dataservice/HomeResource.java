@@ -5,17 +5,17 @@ import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.documentserver.models.xdd.RelatedDocument;
+import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocument;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
-import software.uncharted.terarium.hmiserver.proxies.xdd.DocumentProxy;
 
 
-import software.uncharted.terarium.documentserver.models.xdd.Document;
-import software.uncharted.terarium.documentserver.responses.xdd.XDDRelatedDocumentsResponse;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDRelatedDocumentsResponse;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -24,9 +24,6 @@ import javax.ws.rs.core.Response;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 
 
 @Path("/api/home")
@@ -89,7 +86,7 @@ public class HomeResource {
 
 			if (currentProjectPublications.size() > 0) {
 
-				XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments(DEFAULT_DOC, currentProjectPublications.get(0).getXddUri()).readEntity(XDDRelatedDocumentsResponse.class);
+				XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments(DEFAULT_DOC, currentProjectPublications.get(0).getXddUri());
 				List<Document> relatedDocuments = new ArrayList();
 				for (RelatedDocument relatedDocument : relatedDocumentResponse.getData()) {
 					relatedDocuments.add(relatedDocument.getDocument());

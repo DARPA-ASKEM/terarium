@@ -43,10 +43,11 @@
 <script setup lang="ts">
 import { computed, PropType, ref } from 'vue';
 import { Model } from '@/types/Model';
-import { PUBLISHER, XDDArticle } from '@/types/XDD';
+import { PUBLISHER } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import { groupBy, omit, orderBy, uniq } from 'lodash';
-import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
+import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { Dataset } from '@/types/Dataset';
 import IconCheckbox20 from '@carbon/icons-vue/es/checkbox/20';
 import IconCheckboxChecked20 from '@carbon/icons-vue/es/checkbox--checked/20';
@@ -106,10 +107,10 @@ const isDataItemSelected = (item: ResultType) =>
 			const searchItemAsDataset = searchItem as Dataset;
 			return searchItemAsDataset.id === itemAsDataset.id;
 		}
-		if (isXDDArticle(item) && isXDDArticle(searchItem)) {
-			const itemAsArticle = item as XDDArticle;
-			const searchItemAsArticle = searchItem as XDDArticle;
-			return searchItemAsArticle.title === itemAsArticle.title;
+		if (isDocument(item) && isDocument(searchItem)) {
+			const itemAsDocument = item as DocumentType;
+			const searchItemAsDocument = searchItem as DocumentType;
+			return searchItemAsDocument.title === itemAsDocument.title;
 		}
 		return false;
 	});
@@ -138,12 +139,12 @@ const datasetsMap = computed(() => {
 	return datsetMap;
 });
 
-const filteredArticles = computed(() => {
+const filteredDocuments = computed(() => {
 	const resList = props.dataItems.find((res) => res.searchSubsystem === ResourceType.XDD);
 	if (resList) {
-		return resList.results as XDDArticle[];
+		return resList.results as DocumentType[];
 	}
-	return [] as XDDArticle[];
+	return [] as DocumentType[];
 });
 
 const rawConceptFacets = computed(() => {
@@ -247,35 +248,35 @@ const clustersInfo = computed(() => {
 	if (props.resultType === ResourceType.XDD) {
 		// cluster by known_terms, e.g., genes, and if not available then by some default field
 		let clusterVariable = PUBLISHER;
-		let articlesToCluster = filteredArticles.value;
-		let clusteredArticles: { [clusterKey: string]: XDDArticle[] } = {};
+		let documentsToCluster = filteredDocuments.value;
+		let clusteredDocuments: { [clusterKey: string]: DocumentType[] } = {};
 		const mutualExclusiveClutering = true;
 
 		const areKnownTermsIncluded = props.dictNames.length > 0;
 		if (areKnownTermsIncluded) {
 			// REVIEW: not sure why when known_terms are included the results are coming as an array
-			//         for each article although the known terms
+			//         for each document although the known terms
 			//         are actually included as a multi-key object in the known_terms array
 			// FIXME: should we allow clustering across multiple known_terms?
 			const dicNamesIndex = 0;
 
 			clusterVariable = props.dictNames[dicNamesIndex];
-			articlesToCluster = filteredArticles.value.map((ar) => ({
+			documentsToCluster = filteredDocuments.value.map((ar) => ({
 				...ar,
 				[clusterVariable]:
 					ar.knownTerms && ar.knownTerms.length > 0
 						? ar.knownTerms[dicNamesIndex][clusterVariable]
-						: ([] as XDDArticle[])
+						: ([] as DocumentType[])
 			}));
 
 			if (mutualExclusiveClutering) {
 				// i.e., each cluster will only includes the items that exactly match the cluster variable
-				clusteredArticles = groupBy(articlesToCluster, clusterVariable);
+				clusteredDocuments = groupBy(documentsToCluster, clusterVariable);
 			} else {
 				// special clustering is needed
 				//  since the cluster field (or key), e.g., known_terms, is an array
 				// and also because each cluster may include items included in other clusters
-				clusteredArticles = articlesToCluster.reduce((carry, element) => {
+				clusteredDocuments = documentsToCluster.reduce((carry, element) => {
 					if (element.knownTerms !== undefined) {
 						if (element.knownTerms.length > 0) {
 							// check current known terms and add them to the relevant cluster
@@ -284,7 +285,7 @@ const clustersInfo = computed(() => {
 								carry[tag].push({ ...element });
 							});
 						} else {
-							// no known terms associated with this article, so add to the default cluster (with key = '')
+							// no known terms associated with this document, so add to the default cluster (with key = '')
 							const tag = '';
 							carry[tag] = carry[tag] || [];
 							carry[tag].push({ ...element });
@@ -294,21 +295,21 @@ const clustersInfo = computed(() => {
 				}, {});
 			}
 		} else {
-			clusteredArticles = groupBy(articlesToCluster, clusterVariable);
+			clusteredDocuments = groupBy(documentsToCluster, clusterVariable);
 		}
 
-		const names = Object.keys(clusteredArticles);
+		const names = Object.keys(clusteredDocuments);
 		const invalidClusterNameIndex = names.findIndex((name) => name === '');
 		if (invalidClusterNameIndex >= 0) {
-			clusteredArticles[defaultClusterName.value] = clusteredArticles[''];
-			clusteredArticles = omit(clusteredArticles, ['']); // remove invalid cluster
+			clusteredDocuments[defaultClusterName.value] = clusteredDocuments[''];
+			clusteredDocuments = omit(clusteredDocuments, ['']); // remove invalid cluster
 			names[invalidClusterNameIndex] = defaultClusterName.value;
 		}
 
 		vars.push(...names);
 		let letterCounter = 'A'.charCodeAt(0);
 		names.forEach((name) => {
-			const clusterItems = clusteredArticles[name];
+			const clusterItems = clusteredDocuments[name];
 
 			// are all the cluster items selected?
 			// FIXME: this is not reflected in the facets panel
