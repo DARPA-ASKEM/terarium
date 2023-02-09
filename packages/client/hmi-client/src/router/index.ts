@@ -12,7 +12,7 @@ import SimulationResultView from '@/views/SimulationResult.vue';
 import CodeView from '@/views/CodeView.vue';
 import TA2Playground from '@/views/TA2Playground.vue';
 import TheiaView from '@/views/theia.vue';
-import DataExplorerView from '@/views/DataExplorer.vue';
+import DataExplorerView from '@/views/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/views/Unauthorized.vue';
 import ModelEditorView from '@/views/ModelEditor.vue';
 import ModelRunnerView from '@/views/ModelRunner.vue';
