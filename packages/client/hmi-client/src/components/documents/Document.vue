@@ -41,22 +41,20 @@
 					:header="`Figures (${figureArtifacts.length})`"
 				>
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
-						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span
-								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							/>
-						</div>
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
-						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span
-								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							/>
-						</div>
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab
@@ -64,21 +62,22 @@
 					:header="`Equations (${equationArtifacts.length})`"
 				>
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
-						<div class="img-container">
-							<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-							<span
-								v-html="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							/>
-						</div>
+						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
 					</div>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(urlArtifacts)" :header="`URLs (${urlArtifacts.length})`">
-					<div v-for="ex in urlArtifacts" :key="ex.url">
-						<b>{{ ex.resourceTitle }}</b>
-						<div>
-							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
-						</div>
-					</div>
+					<ul>
+						<li v-for="ex in urlArtifacts" :key="ex.url">
+							<b>{{ ex.resourceTitle }}</b>
+							<div>
+								<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
+							</div>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherArtifacts)" :header="`Others (${otherArtifacts.length})`">
 					<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
@@ -92,9 +91,13 @@
 					v-if="!isEmpty(doc.citationList)"
 					:header="`References (${doc.citationList.length})`"
 				>
-					<div v-for="(citation, key) of doc.citationList" :Key="key">
-						{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
-					</div>
+					<ul>
+						<li v-for="(citation, key) of doc.citationList" :Key="key">
+							<template v-if="!isEmpty(formatCitation(citation))">
+								{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
+							</template>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab
 					v-if="!isEmpty(relatedTerariumArtifacts)"
@@ -129,6 +132,7 @@ import { XDDArtifact, DocumentType } from '@/types/Document';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
@@ -139,6 +143,7 @@ const sectionElem = ref<HTMLElement | null>(null);
 const props = defineProps<{
 	assetId: string;
 	highlight?: string;
+	previewLineLimit?: number;
 }>();
 
 const doc = ref<DocumentType | null>(null);
@@ -328,20 +333,26 @@ span {
 	margin-top: 1rem;
 }
 
+ul {
+	list-style: none;
+}
+
+ul li {
+	margin-bottom: 0.5rem;
+}
+
+.extracted-item,
 .extracted-item {
-	padding-bottom: 0.5rem;
+	margin-bottom: 1rem;
 }
 
-.img-container {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.img-container > img {
+.extracted-item > img {
 	max-height: 10rem;
-	width: 100%;
-	object-fit: contain;
+	margin-bottom: 0.5rem;
+	width: fit-content;
+	padding: 8px;
 	border: 1px solid var(--gray-300);
+	border-radius: 6px;
+	object-fit: contain;
 }
 </style>
