@@ -58,8 +58,8 @@ button {
 }
 
 button i {
-	padding: 0.2rem;
-	border-radius: 3px;
+	padding: 0.5rem;
+	border-radius: 2rem;
 	font-size: 14px;
 }
 
