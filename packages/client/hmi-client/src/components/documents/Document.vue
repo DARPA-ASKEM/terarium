@@ -42,7 +42,7 @@
 				>
 					<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						<vue-show-more-text
+						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 							:lines="previewLineLimit"
 						/>
@@ -51,7 +51,7 @@
 				<AccordionTab v-if="!isEmpty(tableArtifacts)" :header="`Tables (${tableArtifacts.length})`">
 					<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						<vue-show-more-text
+						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 							:lines="previewLineLimit"
 						/>
@@ -63,7 +63,7 @@
 				>
 					<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
 						<img id="img" :src="'data:image/jpeg;base64,' + ex.properties.image" :alt="''" />
-						<vue-show-more-text
+						<tera-show-more-text
 							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 							:lines="previewLineLimit"
 						/>
@@ -132,7 +132,7 @@ import { XDDArtifact, DocumentType } from '@/types/Document';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
-import VueShowMoreText from '@/components/widgets/vue-show-more-text.vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
