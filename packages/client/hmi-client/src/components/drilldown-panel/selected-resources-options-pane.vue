@@ -18,7 +18,7 @@
 		<ul>
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
 				<asset-card
-					:asset="(asset as XDDArticle & Model & Dataset)"
+					:asset="(asset as DocumentType & Model & Dataset)"
 					:resourceType="(getType(asset) as ResourceType)"
 				>
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
@@ -33,15 +33,15 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { isDataset, isModel, isXDDArticle } from '@/utils/data-util';
+import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
-import { PublicationAsset, XDDArticle } from '@/types/XDD';
+import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
 import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
-import { addPublication } from '@/services/external';
+import { addDocuments } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
 import { useRouter } from 'vue-router';
 import AssetCard from '@/components/data-explorer/asset-card.vue';
@@ -81,7 +81,7 @@ const getMenuItemsForItem = (item: ResultType) => [
 		command: () => emit('find-related-content', { item, type: 'selected' })
 	},
 	{
-		label: 'Find similar content', // only for publications
+		label: 'Find similar content', // only for documents
 		command: () => emit('find-similar-content', { item, type: 'selected' })
 	}
 ];
@@ -93,7 +93,7 @@ const getType = (item: ResultType) => {
 	if (isDataset(item)) {
 		return (item as Dataset).type;
 	}
-	if (isXDDArticle(item)) {
+	if (isDocument(item)) {
 		return ResourceType.XDD;
 	}
 	return ResourceType.ALL;
@@ -102,26 +102,26 @@ const getType = (item: ResultType) => {
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	props.selectedSearchItems.forEach(async (selectedItem) => {
-		if (isXDDArticle(selectedItem)) {
-			const body: PublicationAsset = {
-				xdd_uri: (selectedItem as XDDArticle).gddId,
-				title: (selectedItem as XDDArticle).title
+		if (isDocument(selectedItem)) {
+			const body: DocumentAsset = {
+				xdd_uri: (selectedItem as DocumentType).gddId,
+				title: (selectedItem as DocumentType).title
 			};
 
 			// FIXME: handle cases where assets is already added to the project
 
 			// first, insert into the proper table/collection
-			const res = await addPublication(body);
+			const res = await addDocuments(body);
 			if (res) {
-				const publicationId = res.id;
+				const documentId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = ProjectAssetTypes.PUBLICATIONS;
-				await ProjectService.addAsset(projectId, assetsType, publicationId);
+				const assetsType = ProjectAssetTypes.DOCUMENTS;
+				await ProjectService.addAsset(projectId, assetsType, documentId);
 
 				// update local copy of project assets
-				validProject.value?.assets.publications.push(publicationId);
-				resources.activeProjectAssets?.publications.push(body);
+				validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
+				resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
 			}
 		}
 		if (isModel(selectedItem)) {

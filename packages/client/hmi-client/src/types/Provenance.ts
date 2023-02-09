@@ -6,7 +6,7 @@ export enum ProvenanceType {
 	PlanParameter = 'PlanParameter',
 	ModelRevision = 'ModelRevision',
 	Intermediate = 'Intermediate',
-	Publication = 'Publication',
+	Document = 'Document',
 	SimulationRun = 'SimulationRun',
 	Project = 'Project',
 	Concept = 'Concept'

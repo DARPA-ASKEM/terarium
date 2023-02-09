@@ -55,8 +55,8 @@ import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
-import { isXDDArticle } from '@/utils/data-util';
-import Document from '@/components/articles/Document.vue';
+import { isDocument } from '@/utils/data-util';
+import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
 import Slider from '@/components/widgets/Slider.vue';
@@ -113,7 +113,7 @@ watch(
 
 const previewItemId = computed(() => {
 	if (!previewItemState.value) return '';
-	if (isXDDArticle(previewItemState.value)) {
+	if (isDocument(previewItemState.value)) {
 		return previewItemState.value.gddId;
 	}
 	return previewItemState.value.id as string;

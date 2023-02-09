@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Document from '@/components/articles/Document.vue';
+import Document from '@/components/documents/Document.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab, Annotation, ResourceType } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
-import { Project } from '@/types/Project';
+import { Project, ProjectAssetTypes } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
@@ -30,7 +30,7 @@ const annotationContent = ref<string>('');
 const newDocumentId = computed(() => props.assetId);
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
-const documentsInCurrentProject = resourcesStore.activeProjectAssets?.publications; // fixme
+const documentsInCurrentProject = resourcesStore.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS]; // fixme
 const activeProject = resourcesStore.activeProject;
 const tabContext = `document${activeProject?.id}`;
 
