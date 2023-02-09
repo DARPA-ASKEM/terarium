@@ -227,6 +227,14 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	height: 191px;
 }
 
+.p-card {
+	height: 423px;
+}
+
+.p-card-titke {
+	height: 280px;
+}
+
 section {
 	background-color: var(--surface-secondary);
 	color: var(--text-color-secondary);
