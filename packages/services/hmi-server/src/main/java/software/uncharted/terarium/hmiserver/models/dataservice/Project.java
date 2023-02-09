@@ -34,7 +34,7 @@ public class Project implements Serializable {
 
 	private String username;
 
-	@JsonbProperty("relatedArticles")
+	@JsonbProperty("relatedDocuments")
 	@Setter
 	private List<Document> relatedDocuments;
 
