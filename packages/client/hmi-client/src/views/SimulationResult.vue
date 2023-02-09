@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import logger from '@/utils/logger';
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { select, scaleOrdinal } from 'd3';
 import { mix } from 'chroma-js';
+import { useLogger } from 'vue-logger-plugin';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
 
@@ -26,6 +26,8 @@ import run6Description from './simulation-run-data/6/description.json';
 import run7Description from './simulation-run-data/7/description.json';
 import run8Description from './simulation-run-data/8/description.json';
 import run9Description from './simulation-run-data/9/description.json';
+
+const logger = useLogger();
 
 const route = useRoute();
 

@@ -12,7 +12,9 @@ interface LogDetails {
 }
 
 // Usage:
-// import logger from '@/utils/logger';
+// import { useLogger } from 'vue-logger-plugin';
+// const logger = useLogger();
+
 class LogBuffer {
 	logs: LogDetails[];
 

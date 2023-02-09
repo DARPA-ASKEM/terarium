@@ -15,7 +15,6 @@
  * Display a list of documents available in the current Project.
  */
 
-import logger from '@/utils/logger';
 import Button from 'primevue/button';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -24,7 +23,10 @@ import { deleteAsset } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { ProjectAssetTypes } from '@/types/Project';
 import { DocumentAsset } from '@/types/Document';
+import { useLogger } from 'vue-logger-plugin';
 import ArtifactList from './artifact-list.vue';
+
+const logger = useLogger();
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();

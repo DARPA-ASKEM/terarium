@@ -1,6 +1,5 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
-import logger from '@/utils/logger';
 import {
 	Dataset,
 	FACET_FIELDS as DATASET_FACET_FIELDS,
@@ -18,6 +17,10 @@ import {
 } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
+
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server

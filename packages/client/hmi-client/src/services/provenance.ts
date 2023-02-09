@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import logger from '@/utils/logger';
+import { useLogger } from 'vue-logger-plugin';
 import { ResultType } from '@/types/common';
 import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
@@ -11,6 +11,8 @@ import { getBulkDocuments } from './data';
 import { getBulkDatasets } from './dataset';
 import { getBulkDocumentAssets } from './external';
 import { getBulkModels } from './model';
+
+const logger = useLogger();
 
 //
 // FIXME: currently related artifacts extracted from the provenance graph will be provided

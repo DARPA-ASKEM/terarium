@@ -1,6 +1,7 @@
+import { useLogger } from 'vue-logger-plugin';
 import API from '@/api/api';
-import logger from '@/utils/logger';
 
+const logger = useLogger();
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
 // TODO: Better error handling (models not found for example)

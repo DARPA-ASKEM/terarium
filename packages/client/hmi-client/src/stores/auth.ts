@@ -92,7 +92,6 @@ const useAuthStore = defineStore('auth', {
 			window.location.assign('/logout');
 		},
 		autoRenew() {
-			console.info('RENEW SSO');
 			clearTimeout(timer);
 			this.fetchSSO();
 		}

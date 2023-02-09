@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import logger from '@/utils/logger';
 import Dataset from '@/components/dataset/Dataset.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
@@ -10,6 +9,9 @@ import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
 import ResourcesList from '@/components/resources/resources-list.vue';
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
 
 const props = defineProps<{
 	assetId?: string;
