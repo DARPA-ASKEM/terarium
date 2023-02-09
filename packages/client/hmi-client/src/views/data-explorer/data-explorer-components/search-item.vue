@@ -4,7 +4,7 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isDocument, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
-import AssetCard from '@/components/data-explorer/asset-card.vue';
+import AssetCard from '@/views/data-explorer/data-explorer-components/asset-card.vue';
 
 const props = defineProps<{
 	asset: DocumentType & Model & Dataset;

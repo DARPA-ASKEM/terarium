@@ -44,7 +44,7 @@ import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
 import { useRouter } from 'vue-router';
-import AssetCard from '@/components/data-explorer/asset-card.vue';
+import AssetCard from '@/views/data-explorer/data-explorer-components/asset-card.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 

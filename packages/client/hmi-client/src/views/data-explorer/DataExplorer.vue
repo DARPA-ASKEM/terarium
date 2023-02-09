@@ -88,11 +88,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
-import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
+import SearchResultsList from '@/views/data-explorer/data-explorer-components/search-results-list.vue';
+import FacetsPanel from '@/views/data-explorer/data-explorer-components/facets-panel.vue';
 import SelectedResourcesOptionsPane from '@/views/data-explorer/data-explorer-components/selected-resources-options-pane.vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
-import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
+import PreviewPanel from '@/views/data-explorer/data-explorer-components/preview-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
