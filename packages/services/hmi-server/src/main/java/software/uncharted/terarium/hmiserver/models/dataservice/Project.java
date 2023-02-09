@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.json.bind.annotation.JsonbProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import lombok.Setter;
 
@@ -34,7 +35,7 @@ public class Project implements Serializable {
 
 	private String username;
 
-	@JsonbProperty("relatedDocuments")
+	@JsonAlias("relatedDocuments")
 	@Setter
 	private List<Document> relatedDocuments;
 
