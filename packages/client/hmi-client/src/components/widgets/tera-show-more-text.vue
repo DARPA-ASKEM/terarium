@@ -19,7 +19,7 @@ import { onMounted, onUpdated, ref, nextTick } from 'vue';
 
 defineProps<{
 	lines?: number;
-	text?: string;
+	text: string;
 }>();
 
 const expanded = ref(false);
