@@ -310,10 +310,12 @@ const getAssets = async (params: GetAssetsParams) => {
 
 		// Set values
 		const newFacets: Facets = getDocumentFacets(returnResults);
-		results.allDataFilteredWithFacets = results.allData;
-		results.allDataFilteredWithFacets.results = returnResults;
-		results.allData.facets = newFacets;
-		results.allData.xddExtractions = xddResults.xddExtractions;
+		results.allDataFilteredWithFacets = {
+			results: returnResults,
+			searchSubsystem: resourceType,
+			facets: newFacets,
+			rawConceptFacets: conceptFacets
+		};
 	} else {
 		results.allDataFilteredWithFacets = results.allData;
 	}
