@@ -36,6 +36,7 @@ public class Project implements Serializable {
 	private String username;
 
 	@JsonAlias("relatedDocuments")
+	@JsonbProperty("relatedArticles")
 	@Setter
 	private List<Document> relatedDocuments;
 
