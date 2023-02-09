@@ -1,8 +1,22 @@
-h1, h2, h3, h4, h5, h6, h7 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+h7 {
     font-weight: $fontWeightSemiBold;
+}
+
+h2 {
+    font-size: 34px;
 }
 
 h4 {
     font-size: 20px;
     letter-spacing: 0.15px;
+}
+
+h5 {
+    font-size: 16px;
 }

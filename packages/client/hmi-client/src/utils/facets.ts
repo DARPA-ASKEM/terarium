@@ -14,9 +14,9 @@ import {
 } from '@/types/Model';
 import {
 	DISPLAY_NAMES as XDD_DISPLAY_NAMES,
-	XDDArticle,
-	FACET_FIELDS as ARTICLE_FACET_FIELDS
+	FACET_FIELDS as DOCUMENT_FACET_FIELDS
 } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
@@ -111,12 +111,12 @@ export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFace
 
 // FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getArticleFacets = (articles: XDDArticle[]) => {
+export const getDocumentFacets = (documents: DocumentType[]) => {
 	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
-		const articlesMap = articles.map((article) => article[fieldName as keyof XDDArticle]);
-		const grouped = groupBy(articlesMap);
+		const documentsMap = documents.map((document) => document[fieldName as keyof DocumentType]);
+		const grouped = groupBy(documentsMap);
 		Object.keys(grouped).forEach((gKey) => {
 			if (gKey !== '' && gKey !== 'undefined') {
 				aggs.push({ key: gKey, value: grouped[gKey].length });
@@ -128,7 +128,7 @@ export const getArticleFacets = (articles: XDDArticle[]) => {
 	const facets = {} as Facets;
 
 	// create facets from specific dataset fields
-	ARTICLE_FACET_FIELDS.forEach((field) => {
+	DOCUMENT_FACET_FIELDS.forEach((field) => {
 		// exclude dataset ID as a facet since it is created from mapping concepts
 		if (field !== ID) {
 			const facetForField = aggField(field);

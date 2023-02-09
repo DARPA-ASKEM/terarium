@@ -106,7 +106,8 @@
 <script setup lang="ts">
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
-import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
+import { XDDExtractionType } from '@/types/XDD';
+import { XDDArtifact, XDDUrlExtraction, DocumentType } from '@/types/Document';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
@@ -119,7 +120,7 @@ type UrlExtraction = {
 };
 
 const props = defineProps<{
-	asset: XDDArticle & Model & Dataset;
+	asset: DocumentType & Model & Dataset;
 	resourceType: ResourceType;
 	highlight?: string;
 }>();
@@ -292,9 +293,9 @@ const formatFeatures = () => {
 }
 
 .preview-and-options figure img {
-	margin: auto;
+	margin: auto 0;
+	object-fit: contain;
 	max-height: 5rem;
-	max-width: 90%;
 }
 
 .preview-and-options .link {
@@ -302,7 +303,18 @@ const formatFeatures = () => {
 	overflow-wrap: break-word;
 	margin: auto 0;
 	min-height: 0;
-	font-size: var(--font-caption);
+	font-size: 10px;
+}
+
+.preview-and-options .link a {
+	color: var(--primary-color);
+}
+
+.preview-and-options figure img,
+.preview-and-options .link {
+	border: 1px solid var(--surface-ground);
+	border-radius: 3px;
+	padding: 4px;
 }
 
 .asset-nav-arrows {

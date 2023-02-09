@@ -30,9 +30,9 @@ export const RouteMetadata: {
 		projectAsset: ProjectAssetTypes.DATASETS
 	},
 	[RouteName.DocumentRoute]: {
-		displayName: 'Papers',
+		displayName: 'Documents',
 		icon: IconDocument32,
-		projectAsset: ProjectAssetTypes.PUBLICATIONS
+		projectAsset: ProjectAssetTypes.DOCUMENTS
 	},
 	[RouteName.ModelRoute]: {
 		displayName: 'Models',

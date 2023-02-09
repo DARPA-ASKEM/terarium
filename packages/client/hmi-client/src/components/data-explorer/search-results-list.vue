@@ -3,28 +3,36 @@
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
 			<template v-else
-				>{{ resultsText }}<span v-if="resultsCount">{{ props.searchTerm }}</span></template
+				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
 			>
 		</span>
+	</div>
+	<div class="facet-chips">
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
-				:label="(value as string)"
+				:label="`${facet.field.charAt(0).toUpperCase() + facet.field.slice(1)}: ${value}`"
 				:key="index"
+				icon="pi pi-filter"
 				removable
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
-			/>
+			>
+			</Chip>
 		</template>
 	</div>
-	<div v-if="isLoading" class="loading-spinner">
+	<div v-if="isLoading" class="explorer-status loading-spinner">
 		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
 	</div>
-	<div v-else-if="resultsCount === 0" class="loading-spinner">No results found</div>
+	<div v-else-if="resultsCount === 0" class="explorer-status">
+		<img src="@assets/svg/seed.svg" alt="Seed" />
+		<h2 class="no-results-found">No results found</h2>
+		<span>Try adjusting your search or filters and try again.</span>
+	</div>
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
-				:asset="(asset as XDDArticle & Model & Dataset)"
+				:asset="(asset as DocumentType & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
 				:resourceType="(resultType as ResourceType)"
@@ -38,7 +46,8 @@
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { XDDExtractionType } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
@@ -108,10 +117,10 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resultType === ResourceType.XDD) {
-			let articlesFromExtractions: XDDArticle[] = [];
+			let documentsFromExtractions: DocumentType[] = [];
 
 			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
-				const docMap: { [docid: string]: XDDArticle } = {};
+				const docMap: { [docid: string]: DocumentType } = {};
 
 				searchResults.xddExtractions.forEach((ex) => {
 					const docid = ex.properties.documentBibjson.gddId;
@@ -133,11 +142,11 @@ const filteredAssets = computed(() => {
 					}
 					docMap[docid].relatedExtractions?.push(ex);
 				});
-				articlesFromExtractions = Object.values(docMap) as XDDArticle[];
+				documentsFromExtractions = Object.values(docMap) as DocumentType[];
 			}
-			const xDDArticlesSearchResults = searchResults.results as XDDArticle[];
+			const documentSearchResults = searchResults.results as DocumentType[];
 
-			return [...articlesFromExtractions, ...xDDArticlesSearchResults];
+			return [...documentsFromExtractions, ...documentSearchResults];
 		}
 		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
 			return searchResults.results;
@@ -163,7 +172,7 @@ const resultsCount = computed(() => {
 
 const resultsText = computed(() => {
 	if (resultsCount.value === 0) {
-		return 'No results found';
+		return 'No results found for';
 	}
 	const s = resultsCount.value === 1 ? '' : 's';
 	return `Showing ${resultsCount.value} result${s} for `;
@@ -174,20 +183,29 @@ const resultsText = computed(() => {
 ul {
 	display: flex;
 	flex-direction: column;
-	gap: 0.5rem;
 	list-style: none;
 	overflow-y: scroll;
 }
 
-.loading-spinner {
+.explorer-status {
 	display: flex;
+	flex-direction: column;
 	justify-content: center;
+	gap: 1rem;
 	align-items: center;
 	margin-bottom: 8rem;
 	flex-grow: 1;
-	background-color: var(--surface-ground);
+	font-size: var(--font-body-small);
+	color: var(--text-color-subdued);
+}
+
+.loading-spinner {
 	color: var(--primary-color);
-	font-weight: bold;
+}
+
+.no-results-found {
+	font-weight: var(--font-weight);
+	margin-top: 1.5rem;
 }
 
 .result-details {
@@ -210,8 +228,13 @@ ul {
 	color: var(--text-color-primary);
 }
 
+.facet-chips {
+	display: inline-flex;
+	gap: 1rem;
+}
+
 .p-chip {
-	outline: 1px solid var(--gray-300);
+	background-color: var(--surface-section);
 }
 
 .search-container {
