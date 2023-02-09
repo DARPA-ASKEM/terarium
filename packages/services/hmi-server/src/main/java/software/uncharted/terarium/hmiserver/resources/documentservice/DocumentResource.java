@@ -3,7 +3,7 @@ package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDArticlesResponseOK;
+import software.uncharted.terarium.hmiserver.resources.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
 
@@ -25,7 +25,7 @@ public class DocumentResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get all xdd documents via proxy")
 	@Path("/documents")
-	public XDDResponse<XDDArticlesResponseOK> getDocuments(
+	public XDDResponse<DocumentsResponseOK> getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
 		@QueryParam("title") String title,
@@ -70,7 +70,7 @@ public class DocumentResource {
 				match = null;
 			}
 
-			XDDResponse<XDDArticlesResponseOK> doc = proxy.getDocuments(
+			XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(
 				docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
 				min_published, max_published, pubname, publisher, additional_fields, match, known_entities);
 			return doc;

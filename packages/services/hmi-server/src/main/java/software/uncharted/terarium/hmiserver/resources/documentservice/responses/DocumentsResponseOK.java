@@ -11,7 +11,7 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class XDDArticlesResponseOK extends XDDResponseOK implements Serializable {
+public class DocumentsResponseOK extends XDDResponseOK implements Serializable {
 	private List<Document> data;
 
 	@JsonbProperty("next_page")
