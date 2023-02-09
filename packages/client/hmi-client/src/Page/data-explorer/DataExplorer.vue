@@ -88,11 +88,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SearchResultsList from '@/views/data-explorer/data-explorer-components/search-results-list.vue';
-import FacetsPanel from '@/views/data-explorer/data-explorer-components/facets-panel.vue';
-import SelectedResourcesOptionsPane from '@/views/data-explorer/data-explorer-components/selected-resources-options-pane.vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
-import PreviewPanel from '@/views/data-explorer/data-explorer-components/preview-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
@@ -112,6 +108,10 @@ import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
+import PreviewPanel from '@/views/data-explorer/data-explorer-components/preview-panel.vue';
+import SelectedResourcesOptionsPane from '@/views/data-explorer/data-explorer-components/selected-resources-options-pane.vue';
+import FacetsPanel from '@/views/data-explorer/data-explorer-components/facets-panel.vue';
+import SearchResultsList from '@/views/data-explorer/data-explorer-components/search-results-list.vue';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['resource-type-changed']);
