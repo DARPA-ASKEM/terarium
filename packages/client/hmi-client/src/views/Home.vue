@@ -118,23 +118,25 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 						<Card>
 							<template #header>
 								<header class="card-header">
-									<div><i class="pi pi-user"></i> 1</div>
-									<div>
+									<div title="Contributors"><i class="pi pi-user"></i> 1</div>
+									<div title="Models">
 										<i class="pi pi-share-alt"></i>
 										{{ project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0 }}
 									</div>
-									<div>
+									<div title="Datasets">
 										<i class="pi pi-sliders-v"></i>
 										{{ project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0 }}
 									</div>
-									<div>
+									<div title="Papers">
 										<i class="pi pi-file"></i>
 										{{ project?.assets?.[ProjectAssetTypes.PUBLICATIONS]?.length ?? 0 }}
 									</div>
 								</header>
 							</template>
 							<template #title>
-								<div class="card-img"></div>
+								<div class="card-img">
+									<img src="@assets/images/project-card.png" alt="Project image" />
+								</div>
 								{{ project.name }}
 							</template>
 							<template #subtitle>
