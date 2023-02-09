@@ -1,5 +1,5 @@
 <template>
-	<div class="selected-article-pane">
+	<div class="selected-document-pane">
 		<div class="add-selected-buttons">
 			<dropdown-button
 				:inner-button-label="'Add to a project'"
@@ -8,26 +8,26 @@
 				@item-selected="addAssetsToProject"
 			/>
 		</div>
-		<div>Publisher: {{ selectedArticle.publisher }}</div>
-		<div>Author: {{ selectedArticle.author.map((a) => a.name).join(', ') }}</div>
-		<div v-html="formatAbstract(selectedArticle)"></div>
-		<div>Journal: {{ selectedArticle.journal }}</div>
-		<div>Doc ID:: {{ selectedArticle.gddId }}</div>
+		<div>Publisher: {{ selectedDocument.publisher }}</div>
+		<div>Author: {{ selectedDocument.author.map((a) => a.name).join(', ') }}</div>
+		<div v-html="formatAbstract(selectedDocument)"></div>
+		<div>Journal: {{ selectedDocument.journal }}</div>
+		<div>Doc ID:: {{ selectedDocument.gddId }}</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { PublicationAsset, XDDArticle } from '@/types/XDD';
+import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
 import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
-import { addPublication } from '@/services/external';
+import { addDocuments } from '@/services/external';
 
 const props = defineProps({
-	selectedArticle: {
-		type: Object as PropType<XDDArticle>,
+	selectedDocument: {
+		type: Object as PropType<DocumentType>,
 		required: true
 	}
 });
@@ -42,29 +42,29 @@ const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
-	const body: PublicationAsset = {
-		xdd_uri: props.selectedArticle.gddId,
-		title: props.selectedArticle.title
+	const body: DocumentAsset = {
+		xdd_uri: props.selectedDocument.gddId,
+		title: props.selectedDocument.title
 	};
 
 	// FIXME: handle cases where assets is already added to the project
 
 	// first, insert into the proper table/collection
-	const res = await addPublication(body);
+	const res = await addDocuments(body);
 	if (res) {
-		const publicationId = res.id;
+		const documentId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = ProjectAssetTypes.PUBLICATIONS;
-		await ProjectService.addAsset(projectId, assetsType, publicationId);
+		const assetsType = ProjectAssetTypes.DOCUMENTS;
+		await ProjectService.addAsset(projectId, assetsType, documentId);
 
 		// update local copy of project assets
-		validProject.value?.assets.publications.push(publicationId);
-		resources.activeProjectAssets?.publications.push(body);
+		validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
+		resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
 	}
 };
 
-const formatAbstract = (item: XDDArticle) =>
+const formatAbstract = (item: DocumentType) =>
 	item.abstract !== undefined ? `Abstract: ${item.abstract}` : 'Abstract: [no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
@@ -91,7 +91,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.selected-article-pane {
+.selected-document-pane {
 	min-height: 0;
 	display: flex;
 	flex-direction: column;

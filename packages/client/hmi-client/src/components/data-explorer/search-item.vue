@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { XDDArticle } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { isXDDArticle, isDataset, isModel } from '@/utils/data-util';
+import { isDocument, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
 import AssetCard from '@/components/data-explorer/asset-card.vue';
 
 const props = defineProps<{
-	asset: XDDArticle & Model & Dataset;
+	asset: DocumentType & Model & Dataset;
 	isPreviewed: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
@@ -18,9 +18,9 @@ const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 
 const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
-		if (isXDDArticle(item)) {
-			const itemAsArticle = item as XDDArticle;
-			return itemAsArticle.title === props.asset.title;
+		if (isDocument(item)) {
+			const itemAsDocument = item as DocumentType;
+			return itemAsDocument.title === props.asset.title;
 		}
 		if (isDataset(item)) {
 			const itemAsDataset = item as Dataset;

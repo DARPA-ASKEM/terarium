@@ -3,7 +3,7 @@ import IconClose16 from '@carbon/icons-vue/es/close/16';
 import { ref, PropType, computed } from 'vue';
 import { ResultType, SearchByExampleOptions } from '@/types/common';
 import { Model } from '@/types/Model';
-import { XDDArticle } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import Checkbox from 'primevue/checkbox';
 import Button from '@/components/Button.vue';
 
@@ -45,7 +45,7 @@ const isSearchDisabled = computed(() => {
 	return false;
 });
 
-const getTitle = (item: ResultType) => (item as Model).name || (item as XDDArticle).title;
+const getTitle = (item: ResultType) => (item as Model).name || (item as DocumentType).title;
 </script>
 
 <template>

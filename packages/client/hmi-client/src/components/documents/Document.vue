@@ -4,7 +4,7 @@
 			<header>
 				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
 				<h4 class="title" v-html="highlightSearchTerms(doc.title)" />
-				<div class="authors" v-html="formatArticleAuthors(doc)" />
+				<div class="authors" v-html="formatDocumentAuthors(doc)" />
 				<div class="details">
 					<div v-if="docLink || doi">
 						DOI:
@@ -107,7 +107,7 @@
 						<Column field="name" header="Datasets"></Column>
 					</DataTable>
 					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Papers"></Column>
+						<Column field="name" header="Documents"></Column>
 					</DataTable>
 				</AccordionTab>
 			</Accordion>
@@ -124,8 +124,9 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
-import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
-import { getDocumentDoi, isModel, isDataset, isXDDArticle } from '@/utils/data-util';
+import { XDDExtractionType } from '@/types/XDD';
+import { XDDArtifact, DocumentType } from '@/types/Document';
+import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { Model } from '@/types/Model';
@@ -140,7 +141,7 @@ const props = defineProps<{
 	highlight?: string;
 }>();
 
-const doc = ref<XDDArticle | null>(null);
+const doc = ref<DocumentType | null>(null);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -169,7 +170,7 @@ watch(
 	}
 );
 
-const formatArticleAuthors = (d: XDDArticle) =>
+const formatDocumentAuthors = (d: DocumentType) =>
 	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
@@ -227,7 +228,7 @@ const fetchDocumentArtifacts = async () => {
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (doc.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Document);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];
@@ -249,7 +250,7 @@ const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
 );
 
 function linkIsPDF() {

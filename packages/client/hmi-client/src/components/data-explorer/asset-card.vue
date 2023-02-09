@@ -106,7 +106,8 @@
 <script setup lang="ts">
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
-import { XDDArticle, XDDArtifact, XDDUrlExtraction, XDDExtractionType } from '@/types/XDD';
+import { XDDExtractionType } from '@/types/XDD';
+import { XDDArtifact, XDDUrlExtraction, DocumentType } from '@/types/Document';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
@@ -119,7 +120,7 @@ type UrlExtraction = {
 };
 
 const props = defineProps<{
-	asset: XDDArticle & Model & Dataset;
+	asset: DocumentType & Model & Dataset;
 	resourceType: ResourceType;
 	highlight?: string;
 }>();

@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { XDDArticle, XDDArtifact, XDDExtractionType } from '@/types/XDD';
+import { XDDExtractionType } from '@/types/XDD';
+import { XDDArtifact, DocumentType } from '@/types/Document';
 import { onMounted, ref, computed } from 'vue';
 import { getXDDArtifacts } from '@/services/data';
 import { getDocumentDoi } from '@/utils/data-util';
 import * as stockImages from '@/assets/images/homePageStockImages';
 
 export interface Props {
-	article: XDDArticle;
+	document: DocumentType;
 }
 const props = defineProps<Props>();
-const articleName = computed(() => props.article.title);
+const documentName = computed(() => props.document.title);
 const extractionType = ref('');
 const artifacts = ref<XDDArtifact[]>([]);
 const images = computed(() => artifacts.value.map((a) => a.properties.image));
@@ -28,7 +29,7 @@ const fetchArtifacts = async (doi) => {
 };
 
 onMounted(async () => {
-	const doi = await getDocumentDoi(props.article);
+	const doi = await getDocumentDoi(props.document);
 	await fetchArtifacts(doi);
 	if (artifacts.value.length > 0) {
 		extractionType.value = artifacts.value[0].askemClass;
@@ -40,7 +41,7 @@ function getRandomImage() {
 }
 </script>
 <template>
-	<div class="article-card">
+	<div class="document-card">
 		<img
 			v-if="images.length > 0"
 			class="card-image"
@@ -48,12 +49,12 @@ function getRandomImage() {
 			alt="''"
 		/>
 		<img v-else class="card-image" :src="'data:image/jpeg;base64,' + getRandomImage()" alt="''" />
-		<footer>{{ articleName }}</footer>
+		<footer>{{ documentName }}</footer>
 	</div>
 </template>
 
 <style scoped>
-.article-card {
+.document-card {
 	border: 1px solid var(--surface-border);
 	background-color: var(--surface-section);
 	display: flex;

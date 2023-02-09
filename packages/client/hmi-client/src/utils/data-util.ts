@@ -2,7 +2,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model, FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { XDDArticle } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
@@ -67,13 +67,13 @@ export function isDataset(item: ResultType): item is Dataset {
 	return (<Dataset>item).annotations !== undefined;
 }
 
-export function isXDDArticle(item: ResultType): item is XDDArticle {
-	return (<XDDArticle>item).publisher !== undefined;
+export function isDocument(item: ResultType): item is DocumentType {
+	return (<DocumentType>item).publisher !== undefined;
 }
 
 export function getResourceID(item: ResultType) {
-	if (isXDDArticle(item)) {
-		return (item as XDDArticle).gddId;
+	if (isDocument(item)) {
+		return (item as DocumentType).gddId;
 	}
 	return item.id;
 }
@@ -93,7 +93,7 @@ export function validate(possibleDOI?: string): boolean {
 	return possibleDOI.match(DOI_VALIDATION_PATTERN) !== null;
 }
 
-export function getDocumentDoi(doc: XDDArticle | null) {
+export function getDocumentDoi(doc: DocumentType | null) {
 	let docIdentifier = '';
 	if (doc && doc.identifier.length > 0) {
 		const defaultDOI = doc.identifier.find((i) => i.type === 'doi');

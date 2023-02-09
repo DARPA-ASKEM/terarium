@@ -3,28 +3,28 @@
  */
 
 import API from '@/api/api';
-import { PublicationAsset } from '@/types/XDD';
+import { DocumentAsset } from '@/types/Document';
 
 /**
- * Get external publication asset linked by a given project asset/doc id
+ * Get external document asset linked by a given project asset/doc id
  * @docId string - represents a specific project asset/doc id
- * @return PublicationAsset|null - the specific publication info including its xdd url, or null if none returned by API
+ * @return DocumentAsset|null - the specific document info including its xdd url, or null if none returned by API
  */
-async function getPublication(docId: string): Promise<PublicationAsset | null> {
+async function getDocument(docId: string): Promise<DocumentAsset | null> {
 	const response = await API.get(`/external/publications/${docId}`);
 	return response?.data ?? null;
 }
 
 /**
- * Get external publication asset in bulk given their internal TDS IDs
+ * Get external document asset in bulk given their internal TDS IDs
  * @docId string array - represents a list of specific project asset/doc id
- * @return PublicationAsset[]|null - the specific publication info including its xdd url, or null if none returned by API
+ * @return DocumentAsset[]|null - the specific document info including its xdd url, or null if none returned by API
  */
-async function getBulkPublicationAssets(docIDs: string[]) {
-	const result: PublicationAsset[] = [];
-	const promiseList = [] as Promise<PublicationAsset | null>[];
+async function getBulkDocumentAssets(docIDs: string[]) {
+	const result: DocumentAsset[] = [];
+	const promiseList = [] as Promise<DocumentAsset | null>[];
 	docIDs.forEach((docId) => {
-		promiseList.push(getPublication(docId));
+		promiseList.push(getDocument(docId));
 	});
 	const responsesRaw = await Promise.all(promiseList);
 	responsesRaw.forEach((r) => {
@@ -36,14 +36,14 @@ async function getBulkPublicationAssets(docIDs: string[]) {
 }
 
 /**
- * add external publication asset
- * @body PublicationAsset - represents the metadata (xdd) url of the asset to be added
+ * add external document asset
+ * @body DocumentAsset - represents the metadata (xdd) url of the asset to be added
  * @return {id: string}|null - the id of the inserted asset, or null if none returned by API
  */
-async function addPublication(body: PublicationAsset): Promise<{ id: string } | null> {
+async function addDocuments(body: DocumentAsset): Promise<{ id: string } | null> {
 	// FIXME: handle cases where assets is already added to the project
 	const response = await API.post('/external/publications', body);
 	return response?.data ?? null;
 }
 
-export { getPublication, getBulkPublicationAssets, addPublication };
+export { getDocument, getBulkDocumentAssets, addDocuments };
