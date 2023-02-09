@@ -18,11 +18,11 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as textUtil from '@/utils/text';
-import { isModel, isDataset, isXDDArticle } from '@/utils/data-util';
+import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import { Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
-import { XDDArticle } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import { ProvenanceType } from '@/types/Provenance';
 import { Dataset } from '@/types/Dataset';
 
@@ -42,7 +42,7 @@ const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isXDDArticle(d)) as XDDArticle[]
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
 );
 
 const fetchRelatedTerariumArtifacts = async () => {

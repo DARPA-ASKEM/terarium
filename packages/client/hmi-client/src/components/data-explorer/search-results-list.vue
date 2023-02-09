@@ -32,7 +32,7 @@
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<SearchItem
-				:asset="(asset as XDDArticle & Model & Dataset)"
+				:asset="(asset as DocumentType & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
 				:resourceType="(resultType as ResourceType)"
@@ -46,7 +46,8 @@
 
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
-import { XDDArticle, XDDExtractionType } from '@/types/XDD';
+import { XDDExtractionType } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
@@ -116,10 +117,10 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resultType === ResourceType.XDD) {
-			let articlesFromExtractions: XDDArticle[] = [];
+			let documentsFromExtractions: DocumentType[] = [];
 
 			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
-				const docMap: { [docid: string]: XDDArticle } = {};
+				const docMap: { [docid: string]: DocumentType } = {};
 
 				searchResults.xddExtractions.forEach((ex) => {
 					const docid = ex.properties.documentBibjson.gddId;
@@ -141,11 +142,11 @@ const filteredAssets = computed(() => {
 					}
 					docMap[docid].relatedExtractions?.push(ex);
 				});
-				articlesFromExtractions = Object.values(docMap) as XDDArticle[];
+				documentsFromExtractions = Object.values(docMap) as DocumentType[];
 			}
-			const xDDArticlesSearchResults = searchResults.results as XDDArticle[];
+			const documentSearchResults = searchResults.results as DocumentType[];
 
-			return [...articlesFromExtractions, ...xDDArticlesSearchResults];
+			return [...documentsFromExtractions, ...documentSearchResults];
 		}
 		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
 			return searchResults.results;

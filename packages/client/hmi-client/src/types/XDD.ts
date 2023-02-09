@@ -1,3 +1,5 @@
+import { DocumentType, XDDArtifact } from '@/types/Document';
+
 export enum XDDExtractionType {
 	Document = 'Document',
 	Table = 'Table',
@@ -6,98 +8,6 @@ export enum XDDExtractionType {
 	Section = 'Section', // Section
 	URL = 'URL' // websites, URLs, links, etc.
 }
-
-export type XDDArticleAuthor = {
-	name: string;
-};
-
-export type XDDArticleIdentifier = {
-	type: string;
-	id: string;
-};
-
-export type XDDArticleLink = {
-	type: string;
-	url: string;
-};
-
-export type XDDArticleKnownTerms = {
-	[term: string]: string[];
-};
-
-export type XDDUrlExtraction = {
-	url: string;
-	resourceTitle: string;
-	extractedFrom: string[];
-};
-
-export type XDDArticleKnownEntity = {
-	urlExtractions: XDDUrlExtraction[];
-	summaries: {
-		sections: { [key: string]: string };
-	};
-};
-
-export type XDDArticle = {
-	abstractText: string; // mapped from abstract
-	abstract: string;
-	author: XDDArticleAuthor[];
-	identifier: XDDArticleIdentifier[];
-	journal: string;
-	knownTerms?: XDDArticleKnownTerms[];
-	link: XDDArticleLink[];
-	number: string;
-	pages: string;
-	publisher: string;
-	title: string; // name
-	type: string;
-	volume: string;
-	year: string;
-	gddId: string;
-	highlight: string[];
-	knownEntities?: XDDArticleKnownEntity;
-
-	// We don not know exactly what is in citatinList - DC Jan 2023
-	citationList: { [key: string]: string }[];
-
-	// additional-client-side fields
-	relatedDocuments?: XDDArticle[];
-	relatedExtractions?: XDDArtifact[];
-};
-
-export type DocumentAsset = {
-	id?: string;
-	xdd_uri: string; // FIXME: this is the internal XDD id known as "docid" NOT "doi"
-	title: string;
-};
-
-export type XDDArtifactProperties = {
-	title: string;
-	DOI: string;
-	trustScore: string;
-	abstractText: string;
-	xddId: string;
-	documentId: string;
-	documentTitle: string;
-	contentText: string;
-	indexInDocument: number;
-	contentJSON: { [key: string]: { [key: string]: string } };
-	image: string;
-	relevantSentences: string;
-	sectionID: string;
-	sectionTitle: string;
-	caption: string;
-	documentBibjson: XDDArticle; // the embedded document metadata wherein this artifact is extracted
-};
-
-// XDD extraction object, which should match Extraction.java at the backend
-export type XDDArtifact = {
-	askemClass: string;
-	properties: XDDArtifactProperties;
-	askemId: string;
-	xddCreated: Date;
-	xddRegistrant: number;
-};
 
 export type XDDDictionary = {
 	name: string;
@@ -118,7 +28,7 @@ export type XDDFacetsResponse = {
 
 export type XDDResult = {
 	success?: {
-		data: XDDArticle[] | XDDDictionary[] | XDDArtifact[];
+		data: DocumentType[] | XDDDictionary[] | XDDArtifact[];
 		facets: XDDFacetsResponse | null;
 		// URL to fetch next page results
 		// https://xdd.wisc.edu/api/articles?&include_score=true&per_page=100&term=abbott&publisher=USGS&full_results
@@ -134,7 +44,7 @@ export type XDDResult = {
 	description?: string;
 	available_sets?: string[];
 	// related docs
-	data?: { bibjson: XDDArticle; score: number }[];
+	data?: { bibjson: DocumentType; score: number }[];
 };
 
 export type XDDSearchParams = {
@@ -171,15 +81,15 @@ export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
 // XDD Field names
 // Source: https://xdd.wisc.edu/api/articles
 //
-export const TYPE = 'type'; // Type of document (article, book, etc)
-export const TITLE = 'title'; // Article title
+export const TYPE = 'type'; // Type of document (document, book, etc)
+export const TITLE = 'title'; // Document title
 export const JOURNAL = 'journal'; // The name of the journal
 export const VOL = 'vol'; // Volume
 export const NUMBER = 'number'; // Issue
 export const AUTHORS = 'authors'; // An array of objects, each containing a key 'name' and a value equal to the name of one author
-export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the article (e.g. Elsevier, USGS)
+export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the document (e.g. Elsevier, USGS)
 export const DOCUMENT_NAME = 'pubname';
-export const PAGES = 'pages'; // Articles' page numbers within the issue
+export const PAGES = 'pages'; // Document' page numbers within the issue
 export const YEAR = 'year'; // Year of document
 
 export const DISPLAY_NAMES: { [key: string]: string } = {

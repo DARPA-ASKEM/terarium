@@ -1,5 +1,5 @@
 <template>
-	<div class="selected-article-pane">
+	<div class="selected-document-pane">
 		<div class="add-selected-buttons">
 			<dropdown-button
 				:inner-button-label="'Add to a project'"
@@ -8,17 +8,17 @@
 				@item-selected="addAssetsToProject"
 			/>
 		</div>
-		<div>Publisher: {{ selectedArticle.publisher }}</div>
-		<div>Author: {{ selectedArticle.author.map((a) => a.name).join(', ') }}</div>
-		<div v-html="formatAbstract(selectedArticle)"></div>
-		<div>Journal: {{ selectedArticle.journal }}</div>
-		<div>Doc ID:: {{ selectedArticle.gddId }}</div>
+		<div>Publisher: {{ selectedDocument.publisher }}</div>
+		<div>Author: {{ selectedDocument.author.map((a) => a.name).join(', ') }}</div>
+		<div v-html="formatAbstract(selectedDocument)"></div>
+		<div>Journal: {{ selectedDocument.journal }}</div>
+		<div>Doc ID:: {{ selectedDocument.gddId }}</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { DocumentAsset, XDDArticle } from '@/types/XDD';
+import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
 import { Project, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
@@ -26,8 +26,8 @@ import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
 
 const props = defineProps({
-	selectedArticle: {
-		type: Object as PropType<XDDArticle>,
+	selectedDocument: {
+		type: Object as PropType<DocumentType>,
 		required: true
 	}
 });
@@ -43,8 +43,8 @@ const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 const addResourcesToProject = async (projectId: string) => {
 	// send selected items to the store
 	const body: DocumentAsset = {
-		xdd_uri: props.selectedArticle.gddId,
-		title: props.selectedArticle.title
+		xdd_uri: props.selectedDocument.gddId,
+		title: props.selectedDocument.title
 	};
 
 	// FIXME: handle cases where assets is already added to the project
@@ -64,7 +64,7 @@ const addResourcesToProject = async (projectId: string) => {
 	}
 };
 
-const formatAbstract = (item: XDDArticle) =>
+const formatAbstract = (item: DocumentType) =>
 	item.abstract !== undefined ? `Abstract: ${item.abstract}` : 'Abstract: [no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
@@ -91,7 +91,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.selected-article-pane {
+.selected-document-pane {
 	min-height: 0;
 	display: flex;
 	flex-direction: column;

@@ -108,7 +108,7 @@ import { FACET_FIELDS as XDD_FACET_FIELDS, XDD_RESULT_DEFAULT_PAGE_SIZE, YEAR } 
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
-import { getResourceID, isDataset, isModel, isXDDArticle, validate } from '@/utils/data-util';
+import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils/data-util';
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
@@ -245,13 +245,13 @@ const executeSearch = async () => {
 		dataset: {}
 	};
 
-	// handle the search-by-example for finding related articles, models, and/or datasets
+	// handle the search-by-example for finding related documents, models, and/or datasets
 	if (executeSearchByExample.value && searchByExampleItem.value) {
 		const id = getResourceID(searchByExampleItem.value) as string;
 		//
-		// find related articles (which utilizes the xDD doc2vec API through the HMI server)
+		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
-		if (isXDDArticle(searchByExampleItem.value) && searchParams.xdd) {
+		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
 			}
@@ -449,7 +449,7 @@ const updateResultType = async (newResourceType: ResourceType) => {
 				await executeSearch();
 				dirtyResults.value[resourceType.value] = false;
 			} else {
-				// data has not changed; the user has just switched the result tab, e.g., from Articles to Models
+				// data has not changed; the user has just switched the result tab, e.g., from Documents to Models
 				// re-calculate the facets
 				calculateFacets(dataItemsUnfiltered.value, dataItems.value);
 			}

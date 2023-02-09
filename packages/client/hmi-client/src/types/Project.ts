@@ -1,4 +1,4 @@
-import { XDDArticle, DocumentAsset } from '@/types/XDD';
+import { DocumentType, DocumentAsset } from '@/types/Document';
 import { Model } from './Model';
 
 export enum ProjectAssetTypes {
@@ -39,6 +39,6 @@ export type Project = {
 	active: boolean;
 	concept: string | null;
 	assets: SimpleProjectAssets;
-	relatedArticles: XDDArticle[];
+	relatedDocuments: DocumentType[];
 	username: string;
 };

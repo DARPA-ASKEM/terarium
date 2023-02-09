@@ -21,7 +21,7 @@ import { RouteName } from '@/router/routes';
 import { deleteAsset } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { ProjectAssetTypes } from '@/types/Project';
-import { DocumentAsset } from '@/types/XDD';
+import { DocumentAsset } from '@/types/Document';
 import ArtifactList from './artifact-list.vue';
 
 const router = useRouter();

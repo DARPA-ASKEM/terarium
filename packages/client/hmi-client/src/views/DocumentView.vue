@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Document from '@/components/articles/Document.vue';
+import Document from '@/components/documents/Document.vue';
 import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab, Annotation, ResourceType } from '@/types/common';
