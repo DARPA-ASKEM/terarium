@@ -2,8 +2,8 @@
 	<div class="container">
 		<div
 			ref="textContainerRef"
-			v-bind:class="{ default: !expanded, expanded: expanded }"
-			v-bind:style="`--lines: ${lines}`"
+			:class="{ default: !expanded, expanded: expanded }"
+			:style="`--lines: ${lines}`"
 		>
 			<div v-html="text"></div>
 		</div>
