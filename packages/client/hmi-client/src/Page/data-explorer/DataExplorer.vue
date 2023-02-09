@@ -108,10 +108,10 @@ import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
-import PreviewPanel from '@/views/data-explorer/data-explorer-components/preview-panel.vue';
-import SelectedResourcesOptionsPane from '@/views/data-explorer/data-explorer-components/selected-resources-options-pane.vue';
-import FacetsPanel from '@/views/data-explorer/data-explorer-components/facets-panel.vue';
-import SearchResultsList from '@/views/data-explorer/data-explorer-components/search-results-list.vue';
+import PreviewPanel from '@/page/data-explorer/components/preview-panel.vue';
+import SelectedResourcesOptionsPane from '@/page/data-explorer/components/selected-resources-options-pane.vue';
+import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
+import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['resource-type-changed']);

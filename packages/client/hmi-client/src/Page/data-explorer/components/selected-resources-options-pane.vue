@@ -46,7 +46,7 @@ import { Dataset } from '@/types/Dataset';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
-import AssetCard from '@/views/data-explorer/data-explorer-components/asset-card.vue';
+import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 
 const router = useRouter();
 
