@@ -11,7 +11,7 @@ test.describe('main landing page test', () => {
 
 	test('should load the main page correctly', async ({ page }) => {
 		// Expect a title "to contain" a substring.
-		await expect(page).toHaveTitle(/TERArium/);
+		await expect(page).toHaveTitle(/terarium/);
 
 		// create a locator
 		const header = page.locator('text=Recent');
