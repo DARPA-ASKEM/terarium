@@ -4,6 +4,15 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 
 defineProps<{ project: Project }>();
+
+function formatTimeStamp(timestamp) {
+	const formattedDate = new Date(timestamp).toLocaleDateString(undefined, {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric'
+	});
+	return `Last updated ${formattedDate}`;
+}
 </script>
 
 <template>
@@ -36,7 +45,7 @@ defineProps<{ project: Project }>();
 		</template>
 		<template #footer>
 			<div class="project-footer">
-				<span>Last modified Dec 20, 2022</span>
+				<span>{{ formatTimeStamp(project.timestamp) }}</span>
 				<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
 			</div>
 		</template>
