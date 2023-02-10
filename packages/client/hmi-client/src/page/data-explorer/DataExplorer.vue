@@ -2,7 +2,7 @@
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
 			<slider-panel
-				content-width="240px"
+				content-width="15rem"
 				direction="left"
 				header="Facets"
 				v-model:is-open="isSliderFacetsOpen"
@@ -55,7 +55,7 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				content-width="calc(35% - 3rem)"
+				:content-width="`${sliderWidth.slice(0, -1)} - 3rem)`"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
@@ -66,7 +66,7 @@
 			/>
 			<slider-panel
 				class="resources-slider"
-				content-width="35%"
+				:content-width="sliderWidth"
 				direction="right"
 				header="Selected resources"
 				v-model:is-open="isSliderResourcesOpen"
@@ -155,6 +155,8 @@ const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
 	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
+
+const sliderWidth = computed(() => (isSliderFacetsOpen.value ? 'calc(50% - 7.5rem)' : 'calc(50%)'));
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -539,7 +541,7 @@ onUnmounted(() => {
 
 .results-content {
 	display: flex;
-	min-width: 0;
+	flex-grow: 1;
 	gap: 0.5rem;
 	margin: 0.5rem 0.5rem 0;
 }

@@ -1,7 +1,7 @@
 <template>
 	<slider
 		class="preview-slider"
-		content-width="calc(35% - 48px)"
+		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
 		:is-open="Boolean(previewItem)"
@@ -152,7 +152,7 @@ footer {
 	position: fixed;
 	height: 5rem;
 	bottom: 3rem;
-	width: calc(35% - 48px);
+	width: 100%;
 	display: flex;
 	align-items: center;
 }
