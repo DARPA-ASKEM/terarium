@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import DocumentsCard from '@/components/documents/DocumentsCard.vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
@@ -14,6 +13,7 @@ import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
+import DocumentCard from '@/components/documents/DocumentCard.vue';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related document
@@ -133,7 +133,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
 				<li v-for="(document, index) in relevantDocuments" :key="index" class="card">
-					<DocumentsCard :document="document" @click="selectDocument(document)" />
+					<DocumentCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
 		</div>
@@ -146,7 +146,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
 				<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-					<DocumentsCard :document="document" @click="selectDocument(document)" />
+					<DocumentCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
 		</div>

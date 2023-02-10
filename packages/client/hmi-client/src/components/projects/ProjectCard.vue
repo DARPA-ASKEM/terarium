@@ -65,12 +65,17 @@ function formatTimeStamp(timestamp) {
 }
 
 .project-img {
-	width: 248px;
+	width: calc(280px - 2rem);
 	height: 190px;
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
 	margin-bottom: 1rem;
 	transition: opacity 0.3s ease, height 0.3s ease;
+}
+
+.project-img img {
+	height: 100%;
+	width: 100%;
 }
 
 .p-card:hover .project-img {
@@ -81,7 +86,7 @@ function formatTimeStamp(timestamp) {
 .project-title {
 	display: inline-block;
 	height: 77px;
-	width: 248px;
+	width: 100%;
 	overflow: hidden;
 }
 
@@ -90,7 +95,7 @@ function formatTimeStamp(timestamp) {
 	overflow: hidden;
 	opacity: 0;
 	height: 17px;
-	width: 248px;
+	width: 100%;
 	transition: opacity 0.3s ease, height 0.3s ease;
 	color: var(--text-color-secondary);
 }
