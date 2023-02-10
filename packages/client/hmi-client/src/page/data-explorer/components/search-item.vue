@@ -1,5 +1,22 @@
+<template>
+	<AssetCard
+		:asset="asset"
+		:resourceType="resourceType"
+		:active="isPreviewed"
+		:highlight="searchTerm"
+		@click="emit('toggle-asset-preview')"
+	>
+		<Button />
+		<button type="button" @click.stop="emit('toggle-selected-asset')">
+			<i class="pi pi-plus" v-show="!isSelected()" />
+			<i class="pi pi-check checkmark-color" v-show="isSelected()" />
+		</button>
+	</AssetCard>
+</template>
+
 <script setup lang="ts">
 import { DocumentType } from '@/types/Document';
+import Button from 'primevue/button';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isDocument, isDataset, isModel } from '@/utils/data-util';
@@ -33,21 +50,6 @@ const isSelected = () =>
 		return false;
 	});
 </script>
-
-<template>
-	<AssetCard
-		:asset="asset"
-		:resourceType="resourceType"
-		:active="isPreviewed"
-		:highlight="searchTerm"
-		@click="emit('toggle-asset-preview')"
-	>
-		<button type="button" @click.stop="emit('toggle-selected-asset')">
-			<i class="pi pi-plus" v-show="!isSelected()" />
-			<i class="pi pi-check checkmark-color" v-show="isSelected()" />
-		</button>
-	</AssetCard>
-</template>
 
 <style scoped>
 button {
