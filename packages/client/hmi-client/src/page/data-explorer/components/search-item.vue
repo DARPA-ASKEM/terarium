@@ -6,16 +6,17 @@
 		:highlight="searchTerm"
 		@click="emit('toggle-asset-preview')"
 	>
-		<Button />
-		<button type="button" @click.stop="emit('toggle-selected-asset')">
-			<i class="pi pi-plus" v-show="!isSelected()" />
-			<i class="pi pi-check checkmark-color" v-show="isSelected()" />
-		</button>
+		<Button
+			:icon="`pi ${statusIcon}`"
+			class="p-button-icon-only p-button-text p-button-rounded"
+			@click.stop="emit('toggle-selected-asset')"
+		/>
 	</AssetCard>
 </template>
 
 <script setup lang="ts">
 import { DocumentType } from '@/types/Document';
+import { computed } from 'vue';
 import Button from 'primevue/button';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
@@ -49,28 +50,12 @@ const isSelected = () =>
 		}
 		return false;
 	});
+
+const statusIcon = computed(() => (isSelected() ? 'pi-check' : 'pi-plus'));
 </script>
 
 <style scoped>
-button {
-	border: none;
-	background-color: transparent;
-	height: min-content;
-	padding: 0;
-}
-
-button i {
-	padding: 0.5rem;
-	border-radius: 2rem;
-	font-size: 14px;
-}
-
-button i:hover {
-	cursor: pointer;
-	background-color: hsla(0, 0%, 0%, 0.1);
-}
-
-.checkmark-color {
-	color: var(--primary-color);
+.p-button:deep(.pi-plus) {
+	color: var(--text-color-primary);
 }
 </style>
