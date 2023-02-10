@@ -31,10 +31,10 @@ defineProps<{ project: Project }>();
 			</div>
 			<div class="project-title">{{ project.name }}</div>
 		</template>
-		<template #subtitle>
+		<template #content>
 			<div class="project-description">{{ project.description }}</div>
 		</template>
-		<template #content>
+		<template #footer>
 			<div class="project-footer">
 				<span>Last modified Dec 20, 2022</span>
 				<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
@@ -44,13 +44,6 @@ defineProps<{ project: Project }>();
 </template>
 
 <style scoped>
-.project-footer {
-	align-items: baseline;
-	display: flex;
-	justify-content: space-between;
-	color: var(--text-color-secondary);
-}
-
 .project-stats {
 	display: flex;
 	justify-content: space-between;
@@ -64,7 +57,7 @@ defineProps<{ project: Project }>();
 
 .project-img {
 	width: 248px;
-	height: 191px;
+	height: 190px;
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
 	margin-bottom: 1rem;
@@ -73,30 +66,39 @@ defineProps<{ project: Project }>();
 
 .p-card:hover .project-img {
 	opacity: 0;
-	height: 0px;
+	height: 17px;
 }
 
 .project-title {
 	display: inline-block;
-	height: 75px;
+	height: 77px;
 	width: 248px;
 	overflow: hidden;
 }
 
 .project-description {
+	display: inline-block;
+	overflow: hidden;
 	opacity: 0;
-	height: 0;
+	height: 17px;
 	width: 248px;
 	transition: opacity 0.3s ease, height 0.3s ease;
+	color: var(--text-color-secondary);
 }
 
 .p-card:hover .project-description {
 	opacity: 100;
-	height: 191px;
+	height: 190px;
+}
+
+.project-footer {
+	align-items: baseline;
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-color-secondary);
 }
 
 .p-card {
-	height: 423px;
 	width: 280px;
 }
 </style>
