@@ -122,7 +122,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 					>
 						<Card>
 							<template #header>
-								<header class="card-header">
+								<header class="project-stats">
 									<div title="Contributors"><i class="pi pi-user"></i> 1</div>
 									<div title="Models">
 										<i class="pi pi-share-alt"></i>
@@ -134,21 +134,21 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 									</div>
 									<div title="Papers">
 										<i class="pi pi-file"></i>
-										{{ project?.assets?.[ProjectAssetTypes.PUBLICATIONS]?.length ?? 0 }}
+										{{ project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0 }}
 									</div>
 								</header>
 							</template>
 							<template #title>
-								<div class="card-img">
+								<div class="project-img">
 									<img src="@assets/images/project-card.png" alt="Project image" />
 								</div>
-								{{ project.name }}
+								<div class="project-title">{{ project.name }}</div>
 							</template>
 							<template #subtitle>
 								<div class="project-description">{{ project.description }}</div>
 							</template>
 							<template #content>
-								<div class="card-content">
+								<div class="project-footer">
 									<span>Last modified Dec 20, 2022</span>
 									<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
 								</div>
@@ -188,25 +188,25 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 </template>
 
 <style scoped>
-.card-content {
+.project-footer {
 	align-items: baseline;
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
 }
 
-.card-header {
+.project-stats {
 	display: flex;
 	justify-content: space-between;
 	padding: 0 1rem 0 1rem;
 }
 
-.card-header div {
+.project-stats div {
 	padding-top: 1rem;
 	color: var(--text-color-secondary);
 }
 
-.card-img {
+.project-img {
 	width: 248px;
 	height: 191px;
 	background-color: var(--surface-ground);
@@ -215,9 +215,16 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	transition: opacity 0.3s ease, height 0.3s ease;
 }
 
-.p-card:hover .card-img {
+.p-card:hover .project-img {
 	opacity: 0;
 	height: 0px;
+}
+
+.project-title {
+	display: inline-block;
+	height: 75px;
+	width: 248px;
+	overflow: hidden;
 }
 
 .project-description {
@@ -234,10 +241,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 .p-card {
 	height: 423px;
-}
-
-.p-card-titke {
-	height: 280px;
+	width: 280px;
 }
 
 section {
