@@ -303,11 +303,11 @@ span {
 	overflow-wrap: break-word;
 }
 
->>> a {
+*:deep(a) {
 	color: var(--text-color-subdued);
 }
 
->>> a:hover {
+*:deep(a:hover) {
 	color: var(--primary-color-dark);
 }
 
