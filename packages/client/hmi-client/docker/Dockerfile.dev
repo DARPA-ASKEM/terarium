@@ -1,0 +1,22 @@
+FROM node:18.14
+
+RUN apt update
+RUN apt install -y yarn
+
+COPY graph-scaffolder /graph-scaffolder
+COPY hmi-client/docker/tsconfig.base.json /graph-scaffolder/tsconfig.base.json
+
+COPY hmi-client /hmi-client/
+WORKDIR /hmi-client
+
+RUN yarn add graph-scaffolder@file:///graph-scaffolder/
+RUN yarn install
+
+COPY hmi-client/docker/tsconfig.base.json /hmi-client/tsconfig.base.json
+RUN sed -i 's|\.\./\.\./\.\.|.|' ./tsconfig.json /graph-scaffolder/tsconfig.json
+
+EXPOSE 5173
+EXPOSE 8080
+
+ENTRYPOINT []
+CMD ["yarn", "run", "local"]

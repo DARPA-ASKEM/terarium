@@ -4,6 +4,7 @@
 	"version": "0.0.0",
 	"scripts": {
 		"dev": "yarn install && vite --host",
+		"local": "yarn install && vite --host --config vite.config.local.ts",
 		"build": "vue-tsc --noEmit && vite build",
 		"typecheck": "yarn workspace graph-scaffolder tsc --build && vue-tsc --noEmit",
 		"preview": "vite preview",

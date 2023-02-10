@@ -1,0 +1,18 @@
+FROM amazoncorretto:17
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+
+RUN yum install -y tar zip unzip
+RUN curl -s "https://get.sdkman.io" | bash
+
+RUN source "/root/.sdkman/bin/sdkman-init.sh" && sdk install quarkus
+RUN source "/root/.sdkman/bin/sdkman-init.sh" && sdk install gradle
+
+COPY . /hmi-server/
+WORKDIR /hmi-server
+
+RUN source "/root/.sdkman/bin/sdkman-init.sh" && gradle build
+
+EXPOSE 3000
+
+CMD  ["/root/.sdkman/candidates/quarkus/current/bin/quarkus", "dev"]
