@@ -63,12 +63,12 @@ import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import Menu from 'primevue/menu';
-import SearchBar from '@/components/data-explorer/search-bar.vue';
 import { useCurrentRoute, RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
 import { ResourceType } from '@/types/common';
 import { Project } from '@/types/Project';
+import SearchBar from '@/page/data-explorer/components/search-bar.vue';
 
 const props = defineProps<{
 	active: boolean;
