@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.json.bind.annotation.JsonbProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import lombok.Setter;
 
@@ -35,7 +36,8 @@ public class Project implements Serializable {
 
 	private String username;
 
-	@JsonbProperty("relatedArticles")
+	@JsonAlias("relatedArticles")
+	@JsonbProperty("relatedDocuments")
 	@Setter
 	private List<Document> relatedDocuments;
 
