@@ -1,7 +1,7 @@
 <template>
 	<aside
 		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
-		:style="`width: ${isOpen ? contentWidth : tabWidth}`"
+		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
 		<div class="slider-content-container" :style="`width: ${contentWidth}`">
 			<section class="slider-content" :style="sidePanelContentStyle">
