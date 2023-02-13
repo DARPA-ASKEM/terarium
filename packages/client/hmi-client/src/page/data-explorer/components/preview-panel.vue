@@ -8,25 +8,25 @@
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<span>{{ updatedResourceType?.toUpperCase() }}</span>
+				<span>{{ previewItemResourceType?.toUpperCase() }}</span>
 				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
 			</div>
 			<div class="selected-resources-pane">
 				<Document
-					v-if="updatedResourceType === ResourceType.XDD"
+					v-if="previewItemResourceType === ResourceType.XDD"
 					:asset-id="previewItemId"
 					:previewLineLimit="5"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Dataset
-					v-else-if="updatedResourceType === ResourceType.DATASET"
+					v-else-if="previewItemResourceType === ResourceType.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Model
-					v-else-if="updatedResourceType === ResourceType.MODEL"
+					v-else-if="previewItemResourceType === ResourceType.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
@@ -99,7 +99,7 @@ const props = defineProps({
 
 // store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
-const updatedResourceType = ref<ResourceType | null>(null);
+const previewItemResourceType = ref<ResourceType | null>(null);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
@@ -108,7 +108,7 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
-			updatedResourceType.value = props.resourceType;
+			previewItemResourceType.value = props.resourceType;
 		}
 	}
 );
