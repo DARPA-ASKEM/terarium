@@ -145,7 +145,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
 //
-const resourceType = ref<string>(ResourceType.XDD);
+const resourceType = ref<ResourceType>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
