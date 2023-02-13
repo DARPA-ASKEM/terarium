@@ -104,6 +104,6 @@ defineProps<{ project: Project }>();
 }
 
 .p-card {
-	width: 280px;
+	width: 20rem;
 }
 </style>
