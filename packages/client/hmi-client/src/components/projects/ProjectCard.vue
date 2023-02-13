@@ -2,17 +2,9 @@
 import { Project, ProjectAssetTypes } from '@/types/Project';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
+import { formatDdMmmYyyy } from '@/utils/date';
 
 defineProps<{ project: Project }>();
-
-function formatTimeStamp(timestamp) {
-	const formattedDate = new Date(timestamp).toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric'
-	});
-	return `Last updated ${formattedDate}`;
-}
 </script>
 
 <template>
@@ -45,7 +37,7 @@ function formatTimeStamp(timestamp) {
 		</template>
 		<template #footer>
 			<div class="project-footer">
-				<span>{{ formatTimeStamp(project.timestamp) }}</span>
+				<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
 				<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
 			</div>
 		</template>
@@ -65,7 +57,7 @@ function formatTimeStamp(timestamp) {
 }
 
 .project-img {
-	width: calc(280px - 2rem);
+	width: 248px;
 	height: 190px;
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
@@ -73,9 +65,8 @@ function formatTimeStamp(timestamp) {
 	transition: opacity 0.3s ease, height 0.3s ease;
 }
 
-.project-img img {
-	height: 100%;
-	width: 100%;
+.project-img {
+	position: relative;
 }
 
 .p-card:hover .project-img {
@@ -83,10 +74,10 @@ function formatTimeStamp(timestamp) {
 	height: 17px;
 }
 
-.project-title {
+x .project-title {
 	display: inline-block;
 	height: 77px;
-	width: 100%;
+	width: 248px;
 	overflow: hidden;
 }
 
@@ -95,7 +86,7 @@ function formatTimeStamp(timestamp) {
 	overflow: hidden;
 	opacity: 0;
 	height: 17px;
-	width: 100%;
+	width: 248px;
 	transition: opacity 0.3s ease, height 0.3s ease;
 	color: var(--text-color-secondary);
 }
@@ -113,6 +104,6 @@ function formatTimeStamp(timestamp) {
 }
 
 .p-card {
-	width: 280px;
+	width: 20rem;
 }
 </style>
