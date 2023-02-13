@@ -234,7 +234,7 @@ header {
 	height: 100%;
 }
 
-.header-left >>> .p-dropdown-label.p-inputtext {
+.header-left:deep(.p-dropdown-label.p-inputtext) {
 	padding-right: 0;
 }
 
