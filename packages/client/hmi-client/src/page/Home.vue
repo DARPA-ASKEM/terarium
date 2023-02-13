@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
-import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
@@ -14,6 +13,9 @@ import useQueryStore from '@/stores/query';
 import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
+import Button from 'primevue/button';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related document
@@ -102,8 +104,49 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 				/>
 			</div>
 		</div>
-
-		<h4>Projects</h4>
+		<section class="projects">
+			<header>
+				<h3>Projects</h3>
+				<Button icon="pi pi-plus" label="New project"></Button>
+			</header>
+			<TabView>
+				<TabPanel header="Recents">
+					<div class="carousel">
+						<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
+						<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+						<ul>
+							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
+								<router-link
+									style="text-decoration: none; color: inherit"
+									:to="'/projects/' + project.id"
+									:projectId="project.id"
+								>
+									<ProjectCard :project="project"></ProjectCard>
+								</router-link>
+							</li>
+						</ul>
+					</div>
+				</TabPanel>
+				<TabPanel header="My projects"></TabPanel>
+				<TabPanel header="Shared projects"></TabPanel>
+			</TabView>
+		</section>
+		<section class="papers">
+			<header>
+				<h3>Papers related to your projects</h3>
+			</header>
+			<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
+				<p>{{ project.name }}</p>
+				<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
+				<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+				<ul>
+					<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+						<DocumentCard :document="document" @click="selectDocument(document)" />
+					</li>
+				</ul>
+			</div>
+		</section>
+		<!-- <h4>Projects</h4>
 		<div class="carousel">
 			<header>
 				<component :is="IconTime32" />
@@ -112,7 +155,6 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<!-- .slice() to copy the array, .reverse() to put new projects at the left of the list instead of the right -->
 				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
 					<router-link
 						style="text-decoration: none; color: inherit"
@@ -123,9 +165,9 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 					</router-link>
 				</li>
 			</ul>
-		</div>
+		</div> -->
 		<!-- Hot Topics carousel -->
-		<div class="carousel" v-if="relevantDocuments.length > 0">
+		<!-- <div class="carousel" v-if="relevantDocuments.length > 0">
 			<header>
 				<h5>Latest on {{ relevantSearchTerm }}</h5>
 			</header>
@@ -136,9 +178,9 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 					<DocumentCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
-		</div>
+		</div> -->
 		<!-- Show related documents for the top 5 projects -->
-		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
+		<!-- <div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
 			<header>
 				<h5>Related to: {{ project.name }}</h5>
 			</header>
@@ -149,22 +191,47 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 					<DocumentCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
-		</div>
+		</div> -->
 	</section>
 </template>
 
 <style scoped>
 section {
-	background-color: var(--surface-secondary);
+	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	overflow-y: scroll;
 	overflow-x: hidden;
 }
 
-header {
+.projects {
+	background-color: var(--surface-section);
+	padding: 1rem;
+}
+
+.papers {
+	background-color: var(--surface-secondary);
+	padding: 1rem;
+}
+
+.papers p {
+	margin: 1rem 0 1rem -4rem;
+}
+
+h3 {
+	font-size: 24px;
+	color: var(--text-color-primary);
+}
+
+.projects header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	padding: 1rem 0 1rem 0;
+}
+
+/* header {
 	align-items: center;
 	display: flex;
 	z-index: -1;
@@ -177,7 +244,7 @@ h4 {
 h4,
 header {
 	margin-top: 1rem;
-}
+} */
 
 header svg {
 	color: var(--primary-color);
