@@ -174,7 +174,7 @@ header {
 	grid-template-areas:
 		'header-left search-bar header-right'
 		'suggested-terms suggested-terms suggested-terms';
-	grid-template-columns: minMax(max-content, 25%) auto min-content;
+	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
 }
 
 h1 {
