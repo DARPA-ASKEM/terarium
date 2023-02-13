@@ -91,7 +91,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 }
 
 /**
- * add project asset
+ * Add project asset
  * @projectId string - represents the project id wherein the asset will be added
  * @assetType string - represents the type of asset to be added, e.g., 'documents'
  * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
@@ -105,7 +105,7 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 }
 
 /**
- * delete a project asset
+ * Delete a project asset
  * @projectId string - represents the project id wherein the asset will be added
  * @assetType string - represents the type of asset to be added, e.g., 'documents'
  * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
