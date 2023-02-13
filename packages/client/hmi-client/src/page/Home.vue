@@ -52,7 +52,7 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT = 280;
+const SCROLL_INCREMENT_IN_REM = 21;
 const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
@@ -74,11 +74,11 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseInt(marginLeftString, 10);
-	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT : SCROLL_INCREMENT;
+	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}px`;
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
 };
 </script>
 
