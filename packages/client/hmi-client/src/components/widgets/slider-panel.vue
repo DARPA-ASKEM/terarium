@@ -45,7 +45,7 @@ defineProps({
 	},
 	contentWidth: {
 		type: String,
-		default: '240px'
+		default: '15rem'
 	},
 	tabWidth: {
 		type: String,
@@ -90,7 +90,7 @@ i {
 .slider-header.content {
 	flex-direction: row-reverse;
 	justify-content: space-between;
-	padding: 16px;
+	padding: 1rem;
 }
 
 .slider-header.tab {
