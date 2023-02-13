@@ -74,7 +74,7 @@ defineProps<{ project: Project }>();
 	height: 17px;
 }
 
-x .project-title {
+.project-title {
 	display: inline-block;
 	height: 77px;
 	width: 248px;

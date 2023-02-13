@@ -65,6 +65,7 @@ onMounted(async () => {
 
 .journal {
 	margin: 0 0 1rem 0;
+	height: 2.4rem;
 }
 
 .journal-name {
