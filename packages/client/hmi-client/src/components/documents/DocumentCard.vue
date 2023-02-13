@@ -87,7 +87,7 @@ onMounted(async () => {
 }
 
 .p-card {
-	width: 280px;
+	width: 20rem;
 }
 
 li {
