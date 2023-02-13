@@ -1,8 +1,13 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.dataservice.Concept;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ConceptProxy;
 
@@ -17,6 +22,8 @@ import javax.ws.rs.core.Response;
 @Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Concept REST Endpoints")
+@RegisterProvider(HmiResponseExceptionMapper.class)
+@Slf4j
 public class ConceptResource {
 
 	@Inject
@@ -24,36 +31,64 @@ public class ConceptResource {
 	ConceptProxy proxy;
 
 	@GET
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "An error occurred fetching search concept")})
 	public Response searchConcept(
-		@QueryParam("curie")final String curie
+		@QueryParam("curie") final String curie
 	) {
-		return proxy.searchConcept(curie);
+		try {
+			return proxy.searchConcept(curie);
+		} catch (RuntimeException e) {
+			log.error("Unable to get search concept", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "Unable to create a concept")})
 	public Response createConcept(
 		final Concept concept
 	) {
-		return proxy.createConcept(concept);
+		try {
+			return proxy.createConcept(concept);
+		} catch (RuntimeException e) {
+			log.error("Unable to create a concept", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 
 	@GET
 	@Path("/definitions")
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "An error searching concept definitions")})
 	public Response searchConceptDefinitions(
 		@QueryParam("term") final String term,
 		@DefaultValue("100") @QueryParam("limit") final Integer limit,
 		@DefaultValue("0") @QueryParam("offset") final Integer offset
 	) {
-		return proxy.searchConceptDefinitions(term, limit, offset);
+		try {
+			return proxy.searchConceptDefinitions(term, limit, offset);
+		} catch (RuntimeException e) {
+			log.error("An error searching concept definitions", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 
 	@GET
 	@Path("/definitions/{curie}")
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "An error getting concept definitions")})
 	public Response getConceptDefinitions(
 		@PathParam("curie") final String curie
 	) {
-		return proxy.getConceptDefinitions(curie);
+		try {
+			return proxy.getConceptDefinitions(curie);
+		} catch (RuntimeException e) {
+			log.error("An error getting concept definitions", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 
 	@GET
@@ -66,29 +101,50 @@ public class ConceptResource {
 
 	@DELETE
 	@Path("/{id}")
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "Unable to delete concept")})
 	public Response deleteConcept(
 		@PathParam("id") final String id
 	) {
-		return proxy.deleteConcept(id);
+		try {
+			return proxy.deleteConcept(id);
+		} catch (RuntimeException e) {
+			log.error("Unable to delete concept", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 
 	@PATCH
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "Unable to update concept")})
 	public Response updateConcept(
 		@PathParam("id") final String id,
 		final Concept concept
 	) {
-		return proxy.updateConcept(id, concept);
+		try {
+			return proxy.updateConcept(id, concept);
+		} catch (RuntimeException e) {
+			log.error("Unable to update concept", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 
 	@GET
 	@Path("/facets")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@APIResponses({
+		@APIResponse(responseCode = "404", description = "Unable to search concept using facets")})
 	public Response searchConceptsUsingFacets(
 		@QueryParam("types") final List<String> types,
 		@QueryParam("curies") final List<String> curies
 	) {
-		return proxy.searchConceptsUsingFacets(types, curies);
+		try {
+			return proxy.searchConceptsUsingFacets(types, curies);
+		} catch (RuntimeException e) {
+			log.error("Unable to search concept using facets", e);
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 	}
 }
