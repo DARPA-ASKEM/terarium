@@ -65,6 +65,10 @@ defineProps<{ project: Project }>();
 	transition: opacity 0.3s ease, height 0.3s ease;
 }
 
+.project-img {
+	position: relative;
+}
+
 .p-card:hover .project-img {
 	opacity: 0;
 	height: 17px;
