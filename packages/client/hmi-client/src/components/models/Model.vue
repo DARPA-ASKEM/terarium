@@ -192,7 +192,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 <style scoped>
 .model {
-	padding: 10px;
 	display: flex;
 	flex-direction: column;
 	overflow-y: scroll;

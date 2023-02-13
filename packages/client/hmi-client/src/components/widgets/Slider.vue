@@ -4,7 +4,10 @@
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
 		<div class="slider-content-container" :style="`width: ${contentWidth}`">
-			<section class="slider-content" :style="sidePanelContentStyle">
+			<section
+				class="slider-content"
+				:style="`height: ${hasFooter ? 'calc(100% - 5rem)' : '100%'}; ${sidePanelContentStyle}`"
+			>
 				<slot name="content"></slot>
 			</section>
 		</div>
@@ -33,6 +36,10 @@ const props = defineProps({
 	tabWidth: {
 		type: String,
 		default: '50px'
+	},
+	hasFooter: {
+		type: Boolean,
+		defualt: false
 	}
 });
 
@@ -74,22 +81,18 @@ const sidePanelTabStyle = computed(
 
 .slider-content-container {
 	position: absolute;
-	height: 100%;
 }
 
 .slider-tab {
 	position: relative;
 	height: 100%;
+	border-left: 1px solid var(--surface-border);
 }
 
 .slider.open .slider-tab,
 .slider.closed .slider-content {
 	visibility: hidden;
 	opacity: 0;
-}
-
-.slider-content-container {
-	border-left: 1px solid var(--surface-border);
 }
 
 .slider-content {

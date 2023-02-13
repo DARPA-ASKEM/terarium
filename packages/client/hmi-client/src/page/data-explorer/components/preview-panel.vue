@@ -5,6 +5,7 @@
 		tab-width="0"
 		direction="right"
 		:is-open="Boolean(previewItem)"
+		:has-footer="true"
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
