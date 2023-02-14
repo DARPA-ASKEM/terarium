@@ -157,9 +157,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
+<style scoped>
 .facet-pointer {
 	cursor: pointer;
 }
