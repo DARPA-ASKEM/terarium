@@ -8,29 +8,32 @@
 		:has-footer="true"
 	>
 		<template v-slot:content>
-			<div class="slider-header content">
+			<header>
 				<span>{{ previewItemResourceType?.toUpperCase() }}</span>
 				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
-			</div>
-			<div class="selected-resources-pane">
-				<Document
+			</header>
+			<section>
+				<document
 					v-if="previewItemResourceType === ResourceType.XDD"
 					:asset-id="previewItemId"
 					:previewLineLimit="5"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
+					:is-editable="false"
 				/>
-				<Dataset
+				<dataset
 					v-else-if="previewItemResourceType === ResourceType.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
+					:is-editable="false"
 				/>
-				<Model
+				<model
 					v-else-if="previewItemResourceType === ResourceType.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
+					:is-editable="false"
 				/>
 				<footer>
 					<Button
@@ -46,7 +49,7 @@
 						class="toggle-selection p-button-secondary"
 					/>
 				</footer>
-			</div>
+			</section>
 		</template>
 	</slider>
 </template>
@@ -128,13 +131,10 @@ const previewItemSelected = computed(() =>
 </script>
 
 <style scoped>
-.slider-header {
+header {
 	display: flex;
 	align-items: center;
 	margin: 1rem;
-}
-
-.slider-header.content {
 	font-size: 14px;
 	color: var(--text-color-subdued);
 	font-weight: bold;
@@ -143,10 +143,6 @@ const previewItemSelected = computed(() =>
 
 i {
 	cursor: pointer;
-}
-
-.slider-header.tab {
-	justify-content: center;
 }
 
 footer {

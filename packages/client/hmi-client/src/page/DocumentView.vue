@@ -92,7 +92,8 @@ watch(newDocumentId, (id) => {
 		const newTab = {
 			name: getDocumentName(id),
 			props: {
-				assetId: id
+				assetId: id,
+				isEditable: true
 			}
 		} as Tab;
 		// Would have loved to use a Set here instead of an array, but equality does not work as expected for objects

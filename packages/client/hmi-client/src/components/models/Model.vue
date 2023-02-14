@@ -17,6 +17,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import Badge from 'primevue/badge';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
@@ -28,10 +31,12 @@ import { Dataset } from '@/types/Dataset';
 
 export interface ModelProps {
 	assetId: string;
+	isEditable: boolean;
 	highlight?: string;
 }
 
 const props = defineProps<ModelProps>();
+
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const model = ref<Model | null>(null);
 
@@ -144,6 +149,10 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 
+function pp() {
+	console.log(model.value);
+}
+
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 </script>
@@ -151,30 +160,40 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 <template>
 	<section class="model">
 		<header>
-			<h3 v-html="title" />
-			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
+			<div class="framework">{{ model?.framework }}</div>
+			<div>
+				<h4 v-html="title" />
+				<span>
+					<Button @click="pp" label="Edit model" class="p-button-sm p-button-outlined" />
+					<Button @click="goToSimulationPlanPage" label="Add to new workflow" class="p-button-sm" />
+				</span>
+			</div>
+			<!--contributor-->
+			<!--created on: date-->
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
 			<AccordionTab header="Description">
 				<p v-html="description" />
 			</AccordionTab>
-			<AccordionTab header="Structure">
+			<AccordionTab header="Model diagram">
 				<div v-if="model" ref="graphElement" class="graph-element" />
 			</AccordionTab>
-			<AccordionTab header="Variables">
-				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Name"></Column>
-					<Column field="mira_ids" header="MIRA IDs"></Column>
-					<Column field="mira_context" header="MIRA context"></Column>
-				</DataTable>
-			</AccordionTab>
-			<AccordionTab header="Parameters">
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</AccordionTab>
+			<template v-if="!isEditable">
+				<AccordionTab header="Variables">
+					<DataTable :value="model?.content.S">
+						<Column field="sname" header="Name"></Column>
+						<Column field="mira_ids" header="MIRA IDs"></Column>
+						<Column field="mira_context" header="MIRA context"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab header="Parameters">
+					<DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
+			</template>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
@@ -187,25 +206,75 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+		<TabView v-if="isEditable">
+			<TabPanel>
+				<template #header>
+					<span>State variables</span>
+					<Badge :value="model?.content.S.length" />
+				</template>
+				<DataTable :value="model?.content.S">
+					<Column field="sname" header="Name"></Column>
+					<Column field="mira_ids" header="Mira IDs"></Column>
+					<Column field="mira_context" header="Mira Context"></Column>
+				</DataTable>
+			</TabPanel>
+			<TabPanel>
+				<template #header>
+					<span>Parameters</span>
+					<Badge :value="model?.parameters.length" />
+				</template>
+				<DataTable :value="model?.parameters">
+					<Column field="name" header="Name"></Column>
+					<Column field="type" header="Type"></Column>
+					<Column field="default_value" header="Default"></Column>
+				</DataTable>
+			</TabPanel>
+		</TabView>
 	</section>
 </template>
 
 <style scoped>
+/**Shares a lot of styling with Document.vue would there be a nice way to generalize? */
 .model {
 	display: flex;
 	flex-direction: column;
-	overflow-y: scroll;
+}
+
+.framework {
+	color: var(--primary-color-dark);
 }
 
 header {
+	margin: 0rem 1rem;
 	display: flex;
-	margin-bottom: 10px;
-	align-items: flex-start;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
-h3 {
-	flex: 1;
-	min-width: 0;
+header div {
+	display: flex;
+	justify-content: space-between;
+}
+
+header button {
+	margin: 0 0.25rem;
+}
+
+/**Maybe generalize this in sass config */
+.p-button.p-button-outlined {
+	background-color: transparent;
+	color: var(--text-color-primary);
+	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.accordion {
+	margin: 0.5rem;
+	margin-top: 1rem;
+}
+
+.p-badge {
+	background-color: var(--surface-200);
+	color: var(--text-color-primary);
 }
 
 .description {
@@ -234,9 +303,10 @@ h3 {
 .graph-element {
 	flex: 1;
 	height: 400px;
-	width: 400px;
+	width: 100%;
 	border: 1px solid var(--surface-border);
 	overflow: hidden;
+	border-radius: 0.25rem;
 }
 
 .slider .graph-element {
@@ -247,10 +317,5 @@ h3 {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.accordion {
-	margin-top: 1rem;
-	margin-bottom: 1rem;
 }
 </style>

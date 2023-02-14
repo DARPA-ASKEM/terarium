@@ -4,15 +4,26 @@
 
         li {
             .p-tabview-nav-link {
+                display: flex;
+                gap: 0.5rem;
                 transition: background-color $transitionDuration;
                 border-radius: 0;
-                
-                > .p-ink {
+
+                >.p-ink {
                     background-color: rgba($primaryColor, .16);
                 }
 
                 &:focus {
                     background-color: rgba($primaryColor, .12);
+                }
+
+                &:hover,
+                &:focus {
+                    text-decoration: none;
+
+                    .p-badge {
+                        color: var(--primary-text);
+                    }
                 }
             }
         }

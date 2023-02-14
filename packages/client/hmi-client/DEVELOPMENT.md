@@ -67,3 +67,13 @@ Basic rules to write organised code.
         aside {}                    /* .sidebar {} */
     </style>
     ```
+
+* Some components (e.g. `Model.vue`) will showcase an asset's attributes and allows users to edit them. However there are cases where we just want to show a more compact read-only version of these components. In these cases assign the flag `:is-editable="false"` for these components:
+    ```html
+    <model 
+        :asset-id="previewItemId"
+		:project="resources.activeProject" 
+        :highlight="searchTerm"
+        :is-editable="false"
+    />
+    ```

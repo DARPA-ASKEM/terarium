@@ -6,13 +6,13 @@
 		:is-open="isOpen"
 	>
 		<template v-slot:content>
-			<div class="slider-header content">
+			<header class="slider-header content">
 				<i
 					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
 					@click="emit('update:isOpen', false)"
 				/>
 				<h4 class="slider-header-item">{{ header }}</h4>
-			</div>
+			</header>
 			<slot name="content"></slot>
 		</template>
 		<template v-slot:tab>

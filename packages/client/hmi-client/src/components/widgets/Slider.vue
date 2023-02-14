@@ -81,12 +81,13 @@ const sidePanelTabStyle = computed(
 
 .slider-content-container {
 	position: absolute;
+	height: 100%;
+	border-left: 1px solid var(--surface-border);
 }
 
 .slider-tab {
 	position: relative;
 	height: 100%;
-	border-left: 1px solid var(--surface-border);
 }
 
 .slider.open .slider-tab,
@@ -100,6 +101,6 @@ const sidePanelTabStyle = computed(
 	position: relative;
 	width: 100%;
 	height: 100%;
-	overflow: auto;
+	overflow-y: auto;
 }
 </style>

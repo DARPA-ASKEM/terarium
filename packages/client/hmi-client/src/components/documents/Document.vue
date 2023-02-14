@@ -1,6 +1,6 @@
 <template>
 	<section class="doc-view-container" ref="sectionElem">
-		<div v-if="doc">
+		<template v-if="doc">
 			<header>
 				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
 				<h4 class="title" v-html="highlightSearchTerms(doc.title)" />
@@ -114,7 +114,7 @@
 					</DataTable>
 				</AccordionTab>
 			</Accordion>
-		</div>
+		</template>
 	</section>
 </template>
 
@@ -142,6 +142,7 @@ const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
+	isEditable: boolean;
 	highlight?: string;
 	previewLineLimit?: number;
 }>();
@@ -291,7 +292,7 @@ onMounted(async () => {
 
 <style scoped>
 header {
-	padding: 0rem 1rem;
+	margin: 0rem 1rem;
 	color: var(--text-color-subdued);
 	display: flex;
 	flex-direction: column;
@@ -315,7 +316,6 @@ span {
 	margin-top: 1rem;
 	background-color: transparent;
 	color: var(--text-color-primary);
-	font-weight: bold;
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
 }
 

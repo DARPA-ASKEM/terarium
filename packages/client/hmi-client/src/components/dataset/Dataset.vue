@@ -10,6 +10,7 @@ import { isString } from 'lodash';
 
 const props = defineProps<{
 	assetId: string;
+	isEditable: boolean;
 	highlight?: string;
 }>();
 
