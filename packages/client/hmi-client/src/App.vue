@@ -1,5 +1,11 @@
 <template>
-	<Navbar class="header" :active="!isErrorState" :project="project" :resourceType="resourceType" />
+	<Navbar
+		class="header"
+		:active="!isErrorState"
+		:current-project-id="project?.id ?? null"
+		:projects="projects"
+		:resourceType="resourceType"
+	/>
 	<main>
 		<Sidebar
 			v-if="isSidebarVisible && !isErrorState"
@@ -15,16 +21,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, shallowRef, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import Sidebar from '@/components/Sidebar.vue';
 import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { Project } from '@/types/Project';
+import { Project as ProjectType } from '@/types/Project';
+import { logBuffer } from '@/utils/logger';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
+
+logBuffer.startService();
 
 /**
  * Router
@@ -36,6 +45,7 @@ const isSidebarVisible = computed(
 	() =>
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
+
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const resources = useResourcesStore();
@@ -47,7 +57,8 @@ const resourceType = ref<string>(ResourceType.XDD);
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const project = ref<Project | null>(null);
+const project = shallowRef<ProjectType | null>(null);
+const projects = shallowRef<ProjectType[] | null>(null);
 
 function updateResourceType(newResourceType) {
 	resourceType.value = newResourceType;
@@ -75,7 +86,12 @@ watch(
 			// fetch basic metadata about project assets and save them into a global store/cache
 			resources.activeProjectAssets = await ProjectService.getAssets(id);
 			resources.setActiveProject(project.value);
+		} else {
+			project.value = null;
 		}
+
+		// Refetch the list of all projects
+		projects.value = await ProjectService.getAll();
 	},
 	{ immediate: true }
 );

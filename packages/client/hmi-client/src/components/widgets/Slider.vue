@@ -3,7 +3,7 @@
 		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
-		<div class="slider-content-container" :style="{ width: contentWidth }">
+		<div class="slider-content-container" :style="`width: ${contentWidth}`">
 			<section class="slider-content" :style="sidePanelContentStyle">
 				<slot name="content"></slot>
 			</section>
@@ -93,10 +93,10 @@ const sidePanelTabStyle = computed(
 }
 
 .slider-content {
+	background-color: var(--surface-section);
 	position: relative;
 	width: 100%;
-	/**Accomodates footer space */
-	height: calc(100% - 5rem);
+	height: 100%;
 	overflow: auto;
 }
 </style>

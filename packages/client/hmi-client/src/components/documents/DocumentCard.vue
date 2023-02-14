@@ -2,7 +2,20 @@
 	<Card>
 		<template #header>
 			<section class="content">
-				<div class="image"></div>
+				<div class="image">
+					<img
+						v-if="images.length > 0"
+						class="card-image"
+						:src="'data:image/jpeg;base64,' + shownImage"
+						alt="Paper image"
+					/>
+					<img
+						v-else
+						class="card-image"
+						:src="'data:image/jpeg;base64,' + getRandomImage()"
+						alt="Paper image"
+					/>
+				</div>
 				<section class="journal">
 					<span class="journal-name">{{ document.journal }}</span> | {{ document.year }}
 				</section>
@@ -25,11 +38,15 @@ import { DocumentType, XDDArtifact } from '@/types/Document';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
 import Card from 'primevue/card';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
+import * as stockImages from '@/assets/images/homePageStockImages';
 
 const props = defineProps<{ document: DocumentType }>();
 const artifacts = ref<XDDArtifact[]>([]);
 const extractionType = ref('');
+const images = computed(() => artifacts.value.map((a) => a.properties.image));
+const shownImage = computed(() => images.value.find((element) => element !== undefined));
+const backupImages = stockImages.backupImagesTwo;
 
 async function fetchArtifacts(doi) {
 	if (doi !== '') {
@@ -38,6 +55,10 @@ async function fetchArtifacts(doi) {
 	} else {
 		artifacts.value = [];
 	}
+}
+
+function getRandomImage() {
+	return backupImages[Math.floor(Math.random() * backupImages.length)];
 }
 
 onMounted(async () => {
@@ -61,6 +82,11 @@ onMounted(async () => {
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
 	display: inline-block;
+}
+
+.image img {
+	height: 100%;
+	width: 100%;
 }
 
 .journal {
