@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import ProjectCard from '@/components/projects/ProjectCard.vue';
-import NewProjectCard from '@/components/projects/NewProjectCard.vue';
 import DocumentsCard from '@/components/documents/DocumentsCard.vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
@@ -15,6 +13,7 @@ import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import API from '@/api/api';
+import ProjectCard from '@/components/projects/ProjectCard.vue';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related document
@@ -113,9 +112,6 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
-				<li class="card">
-					<NewProjectCard />
-				</li>
 				<!-- .slice() to copy the array, .reverse() to put new projects at the left of the list instead of the right -->
 				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
 					<router-link
@@ -123,7 +119,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 						:to="'/projects/' + project.id"
 						:projectId="project.id"
 					>
-						<ProjectCard :name="project.name" />
+						<ProjectCard :project="project"></ProjectCard>
 					</router-link>
 				</li>
 			</ul>
@@ -235,17 +231,14 @@ ul {
 
 li {
 	list-style: none;
+	margin-right: 1rem;
 }
 
 .card {
 	z-index: 1;
 	transition: 0.2s;
-	max-width: 21rem; /* See SCROLL_INCREMENT_IN_REM */
-}
-
-.card:hover {
-	transform: scale(1.2);
-	z-index: 2;
+	max-width: 21rem;
+	/* See SCROLL_INCREMENT_IN_REM */
 }
 
 .carousel:last-of-type {

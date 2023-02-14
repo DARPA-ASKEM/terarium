@@ -84,6 +84,14 @@
             transition: $listItemTransition;
             border-radius: $inputListItemBorderRadius;
 
+            .pi-arrow-right {
+                visibility: hidden;
+            }
+
+            &:hover .pi-arrow-right {
+                visibility: visible;
+            }
+
             &.p-highlight {
                 color: $highlightTextColor;
                 background: $highlightBg;

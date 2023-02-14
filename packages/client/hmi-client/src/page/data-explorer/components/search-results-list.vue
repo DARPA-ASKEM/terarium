@@ -235,6 +235,7 @@ ul {
 
 .p-chip {
 	background-color: var(--surface-section);
+	font-weight: 400;
 }
 
 .search-container {

@@ -15,6 +15,7 @@
 </template>
 
 <script setup lang="ts">
+import { logBuffer } from '@/utils/logger';
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
@@ -26,6 +27,8 @@ import { Project } from '@/types/Project';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
 
+logBuffer.startService();
+
 /**
  * Router
  */
@@ -36,6 +39,7 @@ const isSidebarVisible = computed(
 	() =>
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
+
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const resources = useResourcesStore();
