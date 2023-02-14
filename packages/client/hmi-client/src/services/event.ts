@@ -2,6 +2,9 @@ import { EventType } from '@/types/EventType';
 import API from '@/api/api';
 import { toQueryString } from '@/utils/query-string';
 import { Event } from '@/types/Event';
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
 
 /**
  * Gets a list of events from the given parameters
@@ -21,7 +24,7 @@ async function get(
 		const response = await API.get(`/events?${toQueryString(params)}`);
 		return response?.data ?? [];
 	} catch (e) {
-		console.log('Error fetching events: ', e);
+		logger.error(`Error fetching event: ${e}`);
 	}
 	return [];
 }
@@ -31,7 +34,7 @@ async function create(type: EventType, projectId?: string, value?: string) {
 	try {
 		await API.post('/events', event);
 	} catch (e) {
-		console.log('Error saving event: ', e);
+		logger.error(`Error saving event: ${e}`);
 	}
 }
 

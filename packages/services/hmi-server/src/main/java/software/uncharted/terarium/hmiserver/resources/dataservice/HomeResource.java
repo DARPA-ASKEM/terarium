@@ -5,17 +5,17 @@ import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.documentserver.models.xdd.RelatedDocument;
+import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocument;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
-import software.uncharted.terarium.hmiserver.proxies.xdd.DocumentProxy;
 
 
-import software.uncharted.terarium.documentserver.models.xdd.Document;
-import software.uncharted.terarium.documentserver.responses.xdd.XDDRelatedDocumentsResponse;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
+import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDRelatedDocumentsResponse;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -23,9 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import java.util.*;
-
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
+import java.util.stream.Collectors;
 
 
 @Path("/api/home")
@@ -73,7 +71,12 @@ public class HomeResource {
 		for (Project project : allProjects) {
 			Assets assets = new Assets();
 			try {
-				assets = projectProxy.getAssets(project.getProjectID(), Arrays.asList(ResourceType.Type.PUBLICATIONS.type));
+				assets = projectProxy.getAssets(project.getProjectID(), Arrays.asList(ResourceType.Type.PUBLICATIONS.type, ResourceType.Type.MODELS.type, ResourceType.Type.DATASETS.type));
+				Map<String, List<String>> projectAssets = new HashMap<>();
+				projectAssets.put(ResourceType.Type.MODELS.type, assets.getModels().stream().map(ResourceType::getId).collect(Collectors.toList()));
+				projectAssets.put(ResourceType.Type.DATASETS.type, assets.getDatasets().stream().map(ResourceType::getId).collect(Collectors.toList()));
+				projectAssets.put(ResourceType.Type.PUBLICATIONS.type, assets.getPublications().stream().map(ResourceType::getId).collect(Collectors.toList()));
+				project.setAssets(projectAssets);
 			} catch (RuntimeException e) {
 				log.warn("Unable to access publications for project " + project.getProjectID());
 				continue;
@@ -83,7 +86,7 @@ public class HomeResource {
 
 			if (currentProjectPublications.size() > 0) {
 
-				XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments(DEFAULT_DOC, currentProjectPublications.get(0).getXddUri()).readEntity(XDDRelatedDocumentsResponse.class);
+				XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments(DEFAULT_DOC, currentProjectPublications.get(0).getXddUri());
 				List<Document> relatedDocuments = new ArrayList();
 				for (RelatedDocument relatedDocument : relatedDocumentResponse.getData()) {
 					relatedDocuments.add(relatedDocument.getDocument());
@@ -91,7 +94,6 @@ public class HomeResource {
 
 				project.setRelatedDocuments(relatedDocuments);
 			}
-
 		}
 
 		return Response
@@ -100,5 +102,5 @@ public class HomeResource {
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
-  
+
 }

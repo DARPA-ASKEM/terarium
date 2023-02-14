@@ -1,15 +1,29 @@
+export enum ConceptFacetOptions { // These are the options for /concept/facets in data-service
+	DATASETS = 'datasets',
+	FEATURES = 'features',
+	INTERMEDIATES = 'intermediates',
+	MODEL_PARAMETERS = 'model_parameters',
+	MODELS = 'models',
+	PROJECTS = 'projects',
+	DOCUMENTS = 'publications',
+	QUALIFIERS = 'qualifiers',
+	SIMULATION_PARAMETERS = 'simulation_parameters',
+	SIMULATION_PLANS = 'simulation_plans',
+	SIMLUATION_RUN = 'simulation_run'
+}
+
 export type ConceptFacetsType = {
-	datasets?: number;
-	features?: number;
-	intermediates?: number;
-	model_parameters?: number;
-	models?: number;
-	projects?: number;
-	publications?: number;
-	qualifiers?: number;
-	simulation_parameters?: number;
-	simulation_plans?: number;
-	simulation_run?: number;
+	[ConceptFacetOptions.DATASETS]?: number;
+	[ConceptFacetOptions.FEATURES]?: number;
+	[ConceptFacetOptions.INTERMEDIATES]?: number;
+	[ConceptFacetOptions.MODEL_PARAMETERS]?: number;
+	[ConceptFacetOptions.MODELS]?: number;
+	[ConceptFacetOptions.PROJECTS]?: number;
+	[ConceptFacetOptions.DOCUMENTS]?: number;
+	[ConceptFacetOptions.QUALIFIERS]?: number;
+	[ConceptFacetOptions.SIMULATION_PARAMETERS]?: number;
+	[ConceptFacetOptions.SIMULATION_PLANS]?: number;
+	[ConceptFacetOptions.SIMLUATION_RUN]?: number;
 };
 
 export type Concept = {

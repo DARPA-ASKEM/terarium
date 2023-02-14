@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import software.uncharted.terarium.documentserver.models.xdd.Document;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -8,8 +8,10 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import javax.json.bind.annotation.JsonbProperty;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import lombok.Setter;
 
@@ -30,11 +32,12 @@ public class Project implements Serializable {
 
 	private Concept concept;
 
-	private List<String> assets;
+	private Map<String, List<String>> assets;
 
 	private String username;
 
-	@JsonbProperty("relatedArticles")
+	@JsonAlias("relatedArticles")
+	@JsonbProperty("relatedDocuments")
 	@Setter
 	private List<Document> relatedDocuments;
 

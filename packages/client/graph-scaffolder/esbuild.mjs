@@ -76,7 +76,7 @@ function pluginIgnoreImports(options) {
     };
 }
 
-function getExamplesBuild(watch) {
+function getExamplesBuild() {
     return {
         entryPoints: [ 'examples/src/index.ts' ],
         bundle: true,
@@ -84,12 +84,11 @@ function getExamplesBuild(watch) {
         target: 'es2020',
         format: 'esm',
         sourcemap: true,
-        watch: Boolean(watch),
         plugins: [],
     };
 }
 
-function getLibBuild(watch) {
+function getLibBuild() {
     const input = [];
     globbySync([
         path.join('src/', '/**/*.{ts,js}'),
@@ -105,14 +104,13 @@ function getLibBuild(watch) {
         target: 'es2020',
         format: 'esm',
         sourcemap: true,
-        watch: Boolean(watch),
         plugins: [
             pluginIgnoreImports(),
         ],
     };
 }
 
-function getDistBuild(watch) {
+function getDistBuild() {
     return {
         entryPoints: [ 'src/index.ts' ],
         bundle: true,
@@ -121,35 +119,43 @@ function getDistBuild(watch) {
         format: 'esm',
         sourcemap: false,
         minify: true,
-        watch: Boolean(watch),
         plugins: [],
     };
 }
 
 async function main(options) {
-    const promises = [];
-
+    // const promises = [];
     try {
-        if (options.examples || options.all) {
-            promises.push(esbuild.build(getExamplesBuild(options.watch)));
+			  let context = null;
+        if (options.examples) {
+						console.log('[build]: examples');
+            context = await esbuild.context(getExamplesBuild());
+						await context.rebuild();
+						if (options.watch) {
+							console.log('hihi');
+							await context.watch()
+						}
         }
 
         if (options.lib || options.all) {
-            promises.push(esbuild.build(getLibBuild(options.watch)));
+						console.log('[build]: lib');
+            context = await esbuild.context(getLibBuild());
+						await context.rebuild();
+						context.dispose();
         }
 
         if (options.dist || options.all) {
-            promises.push(esbuild.build(getDistBuild(options.watch)));
+						console.log('[build]: dist');
+            context = await esbuild.context(getDistBuild());
+						await context.rebuild();
+						context.dispose();
         }
-
-        await Promise.all(promises);
 
         if (options.examples) {
             copy('examples/static/**/*', 'build/examples/', (err) => {
                 if (err) {
-                    // Sorry future Adamo, Dario did something here that you copied
-                    // this is going to be an issue one day, you should throw!
-                    console.error(err);
+										console.log('error', err);
+										throw new Error(err);
                 }
             });
         }
