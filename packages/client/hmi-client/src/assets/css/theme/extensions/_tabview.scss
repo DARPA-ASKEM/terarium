@@ -5,6 +5,7 @@
         li {
             .p-tabview-nav-link {
                 display: flex;
+                font-size: $fontBodyMedium;
                 gap: 0.5rem;
                 transition: background-color $transitionDuration;
                 border-radius: 0;
@@ -22,6 +23,7 @@
                     text-decoration: none;
 
                     .p-badge {
+                        font-size: $fontCaption;
                         color: var(--primary-text);
                     }
                 }

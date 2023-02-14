@@ -39,6 +39,7 @@ const props = defineProps<ModelProps>();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const model = ref<Model | null>(null);
+const isEditing = ref(false);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -149,8 +150,9 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 
-function pp() {
-	console.log(model.value);
+function toggleEditMode() {
+	isEditing.value = !isEditing.value;
+	console.log(model.value, isEditing.value);
 }
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
@@ -163,9 +165,18 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 			<div class="framework">{{ model?.framework }}</div>
 			<div>
 				<h4 v-html="title" />
-				<span>
-					<Button @click="pp" label="Edit model" class="p-button-sm p-button-outlined" />
-					<Button @click="goToSimulationPlanPage" label="Add to new workflow" class="p-button-sm" />
+				<span v-if="isEditable">
+					<Button
+						@click="toggleEditMode"
+						:label="isEditing ? 'Save model' : 'Edit model'"
+						class="p-button-sm p-button-outlined"
+					/>
+					<Button
+						@click="goToSimulationPlanPage"
+						label="Open parameter space"
+						:disabled="isEditing"
+						class="p-button-sm"
+					/>
 				</span>
 			</div>
 			<!--contributor-->
@@ -179,11 +190,13 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 				<div v-if="model" ref="graphElement" class="graph-element" />
 			</AccordionTab>
 			<template v-if="!isEditable">
-				<AccordionTab header="Variables">
+				<AccordionTab header="State variables">
 					<DataTable :value="model?.content.S">
-						<Column field="sname" header="Name"></Column>
-						<Column field="mira_ids" header="MIRA IDs"></Column>
-						<Column field="mira_context" header="MIRA context"></Column>
+						<Column field="sname" header="Label"></Column>
+						<Column field="mira_ids" header="Name"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="mira_context" header="Concepts"></Column>
+						<Column field="definition" header="Definition"></Column>
 					</DataTable>
 				</AccordionTab>
 				<AccordionTab header="Parameters">
@@ -213,9 +226,11 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 					<Badge :value="model?.content.S.length" />
 				</template>
 				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Name"></Column>
-					<Column field="mira_ids" header="Mira IDs"></Column>
-					<Column field="mira_context" header="Mira Context"></Column>
+					<Column field="sname" header="Label"></Column>
+					<Column field="mira_ids" header="Name"></Column>
+					<Column field="units" header="Units"></Column>
+					<Column field="mira_context" header="Concepts"></Column>
+					<Column field="definition" header="Definition"></Column>
 				</DataTable>
 			</TabPanel>
 			<TabPanel>
