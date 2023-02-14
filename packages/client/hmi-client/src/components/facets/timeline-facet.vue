@@ -1,8 +1,19 @@
+<template>
+	<facet-timeline :data="timelineData" @facet-element-updated="updateSelection">
+		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
+		<div slot="header" class="header">
+			<span class="facet-font">{{ label }}</span>
+		</div>
+		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
+		<div slot="footer" class="footer"></div>
+	</facet-timeline>
+</template>
+
 <script setup lang="ts">
-import { FacetBucket } from '@/types/common';
-import { FacetTimeline } from '@uncharted.software/facets-core';
 import { computed } from 'vue';
+import { FacetTimeline } from '@uncharted.software/facets-core';
 import useQueryStore from '@/stores/query';
+import { FacetBucket } from '@/types/common';
 
 export interface TimelineData {
 	ratio: number;
@@ -40,25 +51,7 @@ function updateSelection(event) {
 }
 </script>
 
-<template>
-	<facet-timeline :data="timelineData" @facet-element-updated="updateSelection">
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
-		<div slot="header" class="header">
-			<span class="facet-font">{{ label }}</span>
-		</div>
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
-		<div slot="footer" class="footer"></div>
-	</facet-timeline>
-</template>
-
-<style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
-.facet-font {
-	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-}
-
+<style scoped>
 .header {
 	padding: 6px 12px 5px;
 }
