@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import DocumentsCard from '@/components/documents/DocumentsCard.vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
 import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
@@ -14,6 +13,7 @@ import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
+import DocumentCard from '@/components/documents/DocumentCard.vue';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related document
@@ -52,7 +52,7 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 21;
+const SCROLL_INCREMENT_IN_REM = 21.5;
 const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
@@ -73,7 +73,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 
 	const marginLeftString =
 		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
-	const currentMarginLeft = parseInt(marginLeftString, 10);
+	const currentMarginLeft = parseFloat(marginLeftString);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
@@ -133,7 +133,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
 				<li v-for="(document, index) in relevantDocuments" :key="index" class="card">
-					<DocumentsCard :document="document" @click="selectDocument(document)" />
+					<DocumentCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
 		</div>
@@ -146,7 +146,7 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
 			<ul>
 				<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-					<DocumentsCard :document="document" @click="selectDocument(document)" />
+					<DocumentCard :document="document" @click="selectDocument(document)" />
 				</li>
 			</ul>
 		</div>
