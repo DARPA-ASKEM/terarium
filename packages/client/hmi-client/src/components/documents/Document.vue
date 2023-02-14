@@ -1,9 +1,9 @@
 <template>
-	<section class="doc-view-container" ref="sectionElem">
+	<section class="asset" ref="sectionElem">
 		<template v-if="doc">
 			<header>
 				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-				<h4 class="title" v-html="highlightSearchTerms(doc.title)" />
+				<h4 v-html="highlightSearchTerms(doc.title)" />
 				<div class="authors" v-html="formatDocumentAuthors(doc)" />
 				<div class="details">
 					<div v-if="docLink || doi">
@@ -289,70 +289,3 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 </script>
-
-<style scoped>
-header {
-	margin: 0rem 1rem;
-	color: var(--text-color-subdued);
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-div,
-span {
-	overflow-wrap: break-word;
-}
-
-*:deep(a) {
-	color: var(--text-color-subdued);
-}
-
-*:deep(a:hover) {
-	color: var(--primary-color-dark);
-}
-
-.p-button.p-button-outlined {
-	margin-top: 1rem;
-	background-color: transparent;
-	color: var(--text-color-primary);
-	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
-}
-
-.title {
-	color: var(--text-color-primary);
-}
-
-.authors,
-.journal {
-	color: var(--primary-color-dark);
-}
-
-.accordion {
-	margin: 0.5rem;
-	margin-top: 1rem;
-}
-
-ul {
-	list-style: none;
-}
-
-ul li {
-	margin-bottom: 0.5rem;
-}
-
-.extracted-item,
-.extracted-item {
-	margin-bottom: 1rem;
-}
-
-.extracted-item > img {
-	max-height: 10rem;
-	margin-bottom: 0.5rem;
-	width: fit-content;
-	padding: 8px;
-	border: 1px solid var(--gray-300);
-	border-radius: 6px;
-	object-fit: contain;
-}
-</style>

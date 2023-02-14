@@ -1,3 +1,92 @@
+<template>
+	<section class="asset">
+		<header>
+			<div class="framework">{{ model?.framework }}</div>
+			<div>
+				<h4 v-html="title" />
+				<span v-if="isEditable">
+					<Button
+						@click="toggleEditMode"
+						:label="isEditing ? 'Save model' : 'Edit model'"
+						class="p-button-sm p-button-outlined"
+					/>
+					<Button
+						@click="goToSimulationPlanPage"
+						label="Open parameter space"
+						:disabled="isEditing"
+						class="p-button-sm"
+					/>
+				</span>
+			</div>
+			<!--contributor-->
+			<!--created on: date-->
+		</header>
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
+			<AccordionTab header="Description">
+				<p v-html="description" />
+			</AccordionTab>
+			<AccordionTab header="Model diagram">
+				<div v-if="model" ref="graphElement" class="graph-element" />
+			</AccordionTab>
+			<template v-if="!isEditable">
+				<AccordionTab header="State variables">
+					<DataTable :value="model?.content.S">
+						<Column field="sname" header="Label"></Column>
+						<Column field="mira_ids" header="Name"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="mira_context" header="Concepts"></Column>
+						<Column field="definition" header="Definition"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab header="Parameters">
+					<DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
+			</template>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
+		<TabView v-if="isEditable">
+			<TabPanel>
+				<template #header>
+					<span>State variables</span>
+					<Badge :value="model?.content.S.length" />
+				</template>
+				<DataTable :value="model?.content.S">
+					<Column field="sname" header="Label"></Column>
+					<Column field="mira_ids" header="Name"></Column>
+					<Column field="units" header="Units"></Column>
+					<Column field="mira_context" header="Concepts"></Column>
+					<Column field="definition" header="Definition"></Column>
+				</DataTable>
+			</TabPanel>
+			<TabPanel>
+				<template #header>
+					<span>Parameters</span>
+					<Badge :value="model?.parameters.length" />
+				</template>
+				<DataTable :value="model?.parameters">
+					<Column field="name" header="Name"></Column>
+					<Column field="type" header="Type"></Column>
+					<Column field="default_value" header="Default"></Column>
+				</DataTable>
+			</TabPanel>
+		</TabView>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted } from 'vue';
@@ -159,162 +248,7 @@ const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 </script>
 
-<template>
-	<section class="model">
-		<header>
-			<div class="framework">{{ model?.framework }}</div>
-			<div>
-				<h4 v-html="title" />
-				<span v-if="isEditable">
-					<Button
-						@click="toggleEditMode"
-						:label="isEditing ? 'Save model' : 'Edit model'"
-						class="p-button-sm p-button-outlined"
-					/>
-					<Button
-						@click="goToSimulationPlanPage"
-						label="Open parameter space"
-						:disabled="isEditing"
-						class="p-button-sm"
-					/>
-				</span>
-			</div>
-			<!--contributor-->
-			<!--created on: date-->
-		</header>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
-			<AccordionTab header="Description">
-				<p v-html="description" />
-			</AccordionTab>
-			<AccordionTab header="Model diagram">
-				<div v-if="model" ref="graphElement" class="graph-element" />
-			</AccordionTab>
-			<template v-if="!isEditable">
-				<AccordionTab header="State variables">
-					<DataTable :value="model?.content.S">
-						<Column field="sname" header="Label"></Column>
-						<Column field="mira_ids" header="Name"></Column>
-						<Column field="units" header="Units"></Column>
-						<Column field="mira_context" header="Concepts"></Column>
-						<Column field="definition" header="Definition"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable>
-				</AccordionTab>
-			</template>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
-			</AccordionTab>
-		</Accordion>
-		<TabView v-if="isEditable">
-			<TabPanel>
-				<template #header>
-					<span>State variables</span>
-					<Badge :value="model?.content.S.length" />
-				</template>
-				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Label"></Column>
-					<Column field="mira_ids" header="Name"></Column>
-					<Column field="units" header="Units"></Column>
-					<Column field="mira_context" header="Concepts"></Column>
-					<Column field="definition" header="Definition"></Column>
-				</DataTable>
-			</TabPanel>
-			<TabPanel>
-				<template #header>
-					<span>Parameters</span>
-					<Badge :value="model?.parameters.length" />
-				</template>
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</TabPanel>
-		</TabView>
-	</section>
-</template>
-
 <style scoped>
-/**Shares a lot of styling with Document.vue would there be a nice way to generalize? */
-.model {
-	display: flex;
-	flex-direction: column;
-}
-
-.framework {
-	color: var(--primary-color-dark);
-}
-
-header {
-	margin: 0rem 1rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-header div {
-	display: flex;
-	justify-content: space-between;
-}
-
-header button {
-	margin: 0 0.25rem;
-}
-
-/**Maybe generalize this in sass config */
-.p-button.p-button-outlined {
-	background-color: transparent;
-	color: var(--text-color-primary);
-	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
-}
-
-.accordion {
-	margin: 0.5rem;
-	margin-top: 1rem;
-}
-
-.p-badge {
-	background-color: var(--surface-200);
-	color: var(--text-color-primary);
-}
-
-.description {
-	position: relative;
-}
-
-.description p {
-	max-width: 120ch;
-	max-height: 6rem;
-	overflow: hidden;
-}
-
-.description.is-expanded p {
-	max-height: none;
-}
-
-.description:not(.is-expanded) .less-more-button-container {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	background: linear-gradient(#ffffff00, #ffffff);
-	padding-top: 3rem;
-}
-
 .graph-element {
 	flex: 1;
 	height: 400px;

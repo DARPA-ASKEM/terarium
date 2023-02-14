@@ -1,0 +1,87 @@
+.asset {
+    display: flex;
+    flex-direction: column;
+
+    div,
+    span {
+        overflow-wrap: break-word;
+    }
+
+    header {
+        margin: 0rem 1rem;
+        color: var(--text-color-subdued);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .authors,
+        .journal,
+        .framework {
+            color: var(--primary-color-dark);
+        }
+
+        h4 {
+            color: var(--text-color-primary);
+        }
+
+        // div {
+        //     display: flex;
+        //     justify-content: space-between;
+        // }
+
+        button {
+            margin: 0 0.25rem;
+        }
+    }
+
+    .p-accordion {
+        margin: 0.5rem;
+        margin-top: 1rem;
+
+        ul {
+            list-style: none;
+        }
+
+        ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            font-weight: $fontWeightSemiBold;
+        }
+
+        .extracted-item,
+        .extracted-item {
+            margin-bottom: 1rem;
+        }
+
+        .extracted-item>img {
+            max-height: 10rem;
+            margin-bottom: 0.5rem;
+            width: fit-content;
+            padding: 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            object-fit: contain;
+        }
+    }
+
+    .p-badge {
+        background-color: var(--surface-200);
+        color: var(--text-color-primary);
+    }
+
+    .p-button.p-button-outlined {
+        background-color: transparent;
+        color: var(--text-color-primary);
+        box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+    }
+
+    a {
+        color: var(--text-color-subdued);
+
+        &:hover {
+            color: var(--primary-color-dark);
+        }
+    }
+}

@@ -1,66 +1,8 @@
-<script setup lang="ts">
-import { downloadRawFile, getDataset } from '@/services/dataset';
-import { Dataset } from '@/types/Dataset';
-import { csvToRecords, getColumns, Record } from '@/utils/csv';
-import { computed, ref, watch } from 'vue';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import * as textUtil from '@/utils/text';
-import { isString } from 'lodash';
-
-const props = defineProps<{
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-}>();
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
-
-const dataset = ref<Dataset | null>(null);
-const rawContent = ref<string | null>(null);
-
-const csvContent = computed(() =>
-	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
-);
-const rawColumnNames = computed(() =>
-	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
-);
-
-// Whenever assetId changes, fetch dataset with that ID
-watch(
-	() => [props.assetId],
-	async () => {
-		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId);
-			const datasetTemp = await getDataset(props.assetId);
-			if (datasetTemp) {
-				Object.entries(datasetTemp).forEach(([key, value]) => {
-					if (isString(value)) {
-						datasetTemp[key] = highlightSearchTerms(value);
-					}
-				});
-				dataset.value = datasetTemp;
-			}
-		} else {
-			dataset.value = null;
-			rawContent.value = null;
-		}
-	},
-	{ immediate: true }
-);
-
-const annotations = computed(() => dataset.value?.annotations.annotations);
-</script>
-
 <template>
-	<section class="dataset">
-		<h4 class="title" v-html="dataset?.name" />
+	<section class="asset">
+		<header>
+			<h4 v-html="dataset?.name" />
+		</header>
 		<Accordion :multiple="true" class="accordian">
 			<AccordionTab v-if="annotations" header="Description"
 				><span v-html="dataset?.description"
@@ -138,27 +80,67 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 	</section>
 </template>
 
+<script setup lang="ts">
+import { downloadRawFile, getDataset } from '@/services/dataset';
+import { Dataset } from '@/types/Dataset';
+import { csvToRecords, getColumns, Record } from '@/utils/csv';
+import { computed, ref, watch } from 'vue';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import * as textUtil from '@/utils/text';
+import { isString } from 'lodash';
+
+const props = defineProps<{
+	assetId: string;
+	isEditable: boolean;
+	highlight?: string;
+}>();
+
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
+
+const dataset = ref<Dataset | null>(null);
+const rawContent = ref<string | null>(null);
+
+const csvContent = computed(() =>
+	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
+);
+const rawColumnNames = computed(() =>
+	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
+);
+
+// Whenever assetId changes, fetch dataset with that ID
+watch(
+	() => [props.assetId],
+	async () => {
+		if (props.assetId !== '') {
+			rawContent.value = await downloadRawFile(props.assetId);
+			const datasetTemp = await getDataset(props.assetId);
+			if (datasetTemp) {
+				Object.entries(datasetTemp).forEach(([key, value]) => {
+					if (isString(value)) {
+						datasetTemp[key] = highlightSearchTerms(value);
+					}
+				});
+				dataset.value = datasetTemp;
+			}
+		} else {
+			dataset.value = null;
+			rawContent.value = null;
+		}
+	},
+	{ immediate: true }
+);
+
+const annotations = computed(() => dataset.value?.annotations.annotations);
+</script>
+
 <style scoped>
-.dataset {
-	margin: 10px;
-	display: flex;
-	flex-direction: column;
-	height: calc(100vh - 50px);
-	gap: 1rem;
-	padding: 1rem;
-	overflow: auto;
-	background: var(--surface-section);
-}
-
-.description {
-	max-height: 400px;
-	overflow-y: auto;
-}
-
-strong {
-	font-weight: bold;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;
