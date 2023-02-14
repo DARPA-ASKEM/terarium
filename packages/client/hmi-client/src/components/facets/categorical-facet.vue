@@ -247,11 +247,6 @@ export default defineComponent({
 	cursor: pointer;
 }
 
-.facet-font {
-	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-}
-
 .facet-label-truncated {
 	overflow-x: hidden;
 	text-overflow: ellipsis;
