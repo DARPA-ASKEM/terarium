@@ -2,7 +2,7 @@
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
 			<slider-panel
-				content-width="240px"
+				content-width="15rem"
 				direction="left"
 				header="Facets"
 				v-model:is-open="isSliderFacetsOpen"
@@ -55,18 +55,18 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				content-width="calc(35% - 3rem)"
+				:content-width="`${sliderWidth.slice(0, -1)} - 3rem)`"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
-				:result-type="resourceType"
+				:resource-type="resourceType"
 				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 			<slider-panel
 				class="resources-slider"
-				content-width="35%"
+				:content-width="sliderWidth"
 				direction="right"
 				header="Selected resources"
 				v-model:is-open="isSliderResourcesOpen"
@@ -88,11 +88,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SearchResultsList from '@/components/data-explorer/search-results-list.vue';
-import FacetsPanel from '@/components/data-explorer/facets-panel.vue';
-import SelectedResourcesOptionsPane from '@/components/drilldown-panel/selected-resources-options-pane.vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
-import PreviewPanel from '@/components/data-explorer/preview-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
@@ -112,6 +108,10 @@ import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
+import PreviewPanel from '@/page/data-explorer/components/preview-panel.vue';
+import SelectedResourcesOptionsPane from '@/page/data-explorer/components/selected-resources-options-pane.vue';
+import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
+import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['resource-type-changed']);
@@ -145,7 +145,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
 //
-const resourceType = ref<string>(ResourceType.XDD);
+const resourceType = ref<ResourceType>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
@@ -155,6 +155,8 @@ const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
 	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
+
+const sliderWidth = computed(() => (isSliderFacetsOpen.value ? 'calc(50% - 7.5rem)' : 'calc(50%)'));
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -539,7 +541,7 @@ onUnmounted(() => {
 
 .results-content {
 	display: flex;
-	min-width: 0;
+	flex-grow: 1;
 	gap: 0.5rem;
 	margin: 0.5rem 0.5rem 0;
 }
@@ -593,10 +595,6 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-}
-
-.preview-slider {
-	margin-right: 1px;
 }
 
 .resources-slider {

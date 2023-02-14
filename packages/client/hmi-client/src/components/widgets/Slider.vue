@@ -3,7 +3,7 @@
 		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
-		<div class="slider-content-container" :style="{ width: contentWidth }">
+		<div class="slider-content-container" :style="`width: ${contentWidth}`">
 			<section class="slider-content" :style="sidePanelContentStyle">
 				<slot name="content"></slot>
 			</section>
@@ -67,10 +67,10 @@ const sidePanelTabStyle = computed(
 	border-right: 1px solid var(--surface-border);
 }
 
-.slider.right.closed .slider-tab,
+/* .slider.right.closed .slider-tab,
 .slider.right.open .slider-content {
-	border-left: 1px solid var(--surface-border);
-}
+	
+} */
 
 .slider-content-container {
 	position: absolute;
@@ -88,7 +88,12 @@ const sidePanelTabStyle = computed(
 	opacity: 0;
 }
 
+.slider-content-container {
+	border-left: 1px solid var(--surface-border);
+}
+
 .slider-content {
+	background-color: var(--surface-section);
 	position: relative;
 	width: 100%;
 	height: 100%;
