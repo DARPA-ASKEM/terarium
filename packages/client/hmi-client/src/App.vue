@@ -82,6 +82,8 @@ watch(
 			// fetch basic metadata about project assets and save them into a global store/cache
 			resources.activeProjectAssets = await ProjectService.getAssets(id);
 			resources.setActiveProject(project.value);
+		} else {
+			project.value = null;
 		}
 
 		// Refetch the list of all projects

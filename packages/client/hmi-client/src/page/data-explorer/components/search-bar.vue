@@ -34,13 +34,13 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { getRelatedTerms, getAutocomplete } from '@/services/data';
+import AutoComplete from 'primevue/autocomplete';
 import { RouteName } from '@/router/routes';
-import { onMounted, ref } from 'vue';
+import { getRelatedTerms, getAutocomplete } from '@/services/data';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import AutoComplete from 'primevue/autocomplete';
 import { EventType } from '@/types/EventType';
 
 const props = defineProps<{
@@ -96,6 +96,12 @@ onMounted(() => {
 	const { q } = route.query;
 	query.value = q?.toString() ?? query.value;
 });
+
+// Clear the query if not on the data explorer view
+watch(
+	() => route.name,
+	(name) => name !== RouteName.DataExplorerRoute && clearQuery()
+);
 </script>
 
 <style scoped>
