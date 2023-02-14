@@ -220,7 +220,7 @@ section {
 }
 
 .papers p {
-	margin: 1rem 0 1rem -4rem;
+	margin: 1rem 0 1rem -5rem;
 }
 
 h3 {
