@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Path("/api/home")
@@ -75,7 +76,12 @@ public class HomeResource {
 		for (Project project : allProjects) {
 			Assets assets = new Assets();
 			try {
-				assets = projectProxy.getAssets(project.getProjectID(), Arrays.asList(ResourceType.Type.PUBLICATIONS.type));
+				assets = projectProxy.getAssets(project.getProjectID(), Arrays.asList(ResourceType.Type.PUBLICATIONS.type, ResourceType.Type.MODELS.type, ResourceType.Type.DATASETS.type));
+				Map<String, List<String>> projectAssets = new HashMap<>();
+				projectAssets.put(ResourceType.Type.MODELS.type, assets.getModels().stream().map(ResourceType::getId).collect(Collectors.toList()));
+				projectAssets.put(ResourceType.Type.DATASETS.type, assets.getDatasets().stream().map(ResourceType::getId).collect(Collectors.toList()));
+				projectAssets.put(ResourceType.Type.PUBLICATIONS.type, assets.getPublications().stream().map(ResourceType::getId).collect(Collectors.toList()));
+				project.setAssets(projectAssets);
 			} catch (RuntimeException e) {
 				log.warn("Unable to access publications for project " + project.getProjectID());
 				continue;
@@ -93,7 +99,6 @@ public class HomeResource {
 
 				project.setRelatedDocuments(relatedDocuments);
 			}
-
 		}
 		if (allProjects.isEmpty()) {
 			return Response

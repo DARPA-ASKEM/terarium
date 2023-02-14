@@ -1,32 +1,32 @@
 <template>
 	<slider
 		class="preview-slider"
-		content-width="calc(35% - 48px)"
+		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
 			<div class="slider-header content">
-				<span>{{ resourceType.toUpperCase() }}</span>
+				<span>{{ previewItemResourceType?.toUpperCase() }}</span>
 				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
 			</div>
 			<div class="selected-resources-pane">
 				<Document
-					v-if="resourceType === ResourceType.XDD"
+					v-if="previewItemResourceType === ResourceType.XDD"
 					:asset-id="previewItemId"
 					:previewLineLimit="5"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Dataset
-					v-if="resourceType === ResourceType.DATASET"
+					v-else-if="previewItemResourceType === ResourceType.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 				/>
 				<Model
-					v-if="resourceType === ResourceType.MODEL"
+					v-else-if="previewItemResourceType === ResourceType.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
@@ -88,7 +88,7 @@ const props = defineProps({
 		default: null
 	},
 	resourceType: {
-		type: String,
+		type: String as PropType<ResourceType>,
 		default: null
 	},
 	searchTerm: {
@@ -99,6 +99,7 @@ const props = defineProps({
 
 // store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
+const previewItemResourceType = ref<ResourceType | null>(null);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
@@ -107,6 +108,7 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
+			previewItemResourceType.value = props.resourceType;
 		}
 	}
 );
@@ -152,7 +154,7 @@ footer {
 	position: fixed;
 	height: 5rem;
 	bottom: 3rem;
-	width: calc(35% - 48px);
+	width: 100%;
 	display: flex;
 	align-items: center;
 }
