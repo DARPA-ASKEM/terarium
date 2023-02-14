@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.proxies.documentservice;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 
@@ -29,7 +30,7 @@ public interface ExtractionProxy {
 
 	@GET
 	@Path("askem_autocomplete/{term}")
-	Response getAutocomplete(
+	AutoComplete getAutocomplete(
 		@PathParam("term") final String term
 	);
 }

@@ -390,7 +390,7 @@ async function getRelatedTerms(query?: string, dataset?: string | null): Promise
 const getAutocomplete = async (searchTerm: string) => {
 	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
-	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
+	const data = response.data.suggest.entitySuggestFuzzy[0].options;
 	const terms = data.map((d) => d.text);
 	return terms;
 };

@@ -5,6 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
@@ -75,12 +76,22 @@ public class ExtractionResource {
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
 	@APIResponses({
 		@APIResponse(responseCode = "404", description = "An error occurred retrieving auto complete suggestions"),
-		//TODO @APIResponse(responseCode = "204", description = "Returned if there are no suggestions for the user")
+		@APIResponse(responseCode = "204", description = "Returned if there are no suggestions for the user")
 	})
 	public Response getAutocomplete(@PathParam("term") String term) {
 		try {
-			//TODO this has to be properly deserialized to see if there is suggestions here to return a 204
-			return proxy.getAutocomplete(term);
+
+			AutoComplete autoComplete = proxy.getAutocomplete(term);
+			if (autoComplete.hasNoSuggestions())
+				return Response.noContent().build();
+
+			return Response
+				.status(Response.Status.OK)
+				.entity(autoComplete)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+
+
 		} catch (RuntimeException e) {
 			log.error("Unable to autocomplete");
 			return Response.status(Response.Status.BAD_REQUEST).build();
