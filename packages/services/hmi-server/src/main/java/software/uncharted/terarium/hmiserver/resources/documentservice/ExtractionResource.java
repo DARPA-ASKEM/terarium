@@ -63,7 +63,7 @@ public class ExtractionResource {
 
 		} catch (RuntimeException e) {
 			log.error("Unable to search in extractions. An error occurred", e);
-			return Response.status(Response.Status.BAD_REQUEST).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 
 
