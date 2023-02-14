@@ -2,7 +2,7 @@
 	<section class="asset">
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
-			<div>
+			<div class="header-and-buttons">
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
@@ -21,7 +21,7 @@
 			<!--contributor-->
 			<!--created on: date-->
 		</header>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
 			<AccordionTab header="Description">
 				<p v-html="description" />
 			</AccordionTab>

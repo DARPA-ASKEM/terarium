@@ -5,36 +5,32 @@
 				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
 				<h4 v-html="highlightSearchTerms(doc.title)" />
 				<div class="authors" v-html="formatDocumentAuthors(doc)" />
-				<div class="details">
-					<div v-if="docLink || doi">
-						DOI:
-						<a
-							:href="`https://doi.org/${doi}`"
-							rel="noreferrer noopener"
-							target="_blank"
-							v-html="highlightSearchTerms(doi)"
-						/>
-					</div>
-					<div v-html="highlightSearchTerms(doc.publisher)" />
-					<Button
-						v-if="linkIsPDF()"
-						class="p-button-sm p-button-outlined"
-						label="Open PDF"
-						@click="openPDF"
+				<div v-if="docLink || doi">
+					DOI:
+					<a
+						:href="`https://doi.org/${doi}`"
+						rel="noreferrer noopener"
+						target="_blank"
+						v-html="highlightSearchTerms(doi)"
 					/>
 				</div>
+				<div v-html="highlightSearchTerms(doc.publisher)" />
+				<Button
+					v-if="linkIsPDF()"
+					class="p-button-sm p-button-outlined"
+					label="Open PDF"
+					@click="openPDF"
+				/>
 			</header>
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]" class="accordion">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 				<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
 					<span v-html="formattedAbstract" />
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" header="Section summaries">
-					<div v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
-						<div>
-							<strong>{{ index }}</strong>
-						</div>
-						<div v-html="highlightSearchTerms(section)" />
-					</div>
+					<template v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+						<h6>{{ index }}</h6>
+						<p v-html="highlightSearchTerms(section)" />
+					</template>
 				</AccordionTab>
 				<AccordionTab
 					v-if="!isEmpty(figureArtifacts)"

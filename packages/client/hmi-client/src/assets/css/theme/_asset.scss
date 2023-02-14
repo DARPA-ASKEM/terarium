@@ -16,7 +16,8 @@
 
         .authors,
         .journal,
-        .framework {
+        .framework,
+        .simulation {
             color: var(--primary-color-dark);
         }
 
@@ -24,33 +25,40 @@
             color: var(--text-color-primary);
         }
 
-        // div {
-        //     display: flex;
-        //     justify-content: space-between;
-        // }
+        .header-and-buttons {
+            display: flex;
+            justify-content: space-between;
+
+            button {
+                margin: 0 0.25rem
+            }
+        }
 
         button {
-            margin: 0 0.25rem;
+            width: fit-content;
         }
     }
 
     .p-accordion {
-        margin: 0.5rem;
+        margin: 1rem 0.5rem;
         margin-top: 1rem;
 
         ul {
             list-style: none;
+
+            li {
+                margin-bottom: 0.5rem;
+            }
         }
 
-        ul li {
-            margin-bottom: 0.5rem;
+        p {
+            margin: 0.5rem 0;
         }
 
         strong {
             font-weight: $fontWeightSemiBold;
         }
 
-        .extracted-item,
         .extracted-item {
             margin-bottom: 1rem;
         }

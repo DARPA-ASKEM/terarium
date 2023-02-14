@@ -1,9 +1,10 @@
 <template>
 	<section class="asset">
 		<header>
+			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
 			<h4 v-html="dataset?.name" />
 		</header>
-		<Accordion :multiple="true" class="accordian">
+		<Accordion :multiple="true">
 			<AccordionTab v-if="annotations" header="Description"
 				><span v-html="dataset?.description"
 			/></AccordionTab>
@@ -21,21 +22,17 @@
 				><span v-html="dataset?.temporalResolution" />
 			</AccordionTab>
 			<AccordionTab v-if="annotations" :header="`Annotations (${annotations.feature.length})`">
-				<div>
-					Geo Annotations:
-					<div v-for="annotation in annotations?.geo" :key="annotation.name">
-						<strong v-html="annotation.name" />: <strong>Description:</strong>
-						<span v-html="annotation.description" /> <strong>GADM Level: </strong>
-						<span v-html="annotation.gadm_level" />
-					</div>
+				Geo Annotations:
+				<div v-for="annotation in annotations?.geo" :key="annotation.name">
+					<strong v-html="annotation.name" />: <strong>Description:</strong>
+					<span v-html="annotation.description" /> <strong>GADM Level: </strong>
+					<span v-html="annotation.gadm_level" />
 				</div>
-				<div>
-					Temporal Annotations:
-					<div v-for="annotation in annotations.date" :key="annotation.name">
-						<strong v-html="annotation.name" />: <strong>Description:</strong>
-						<span v-html="annotation.description" /> <strong>Time Format:</strong>
-						<span v-html="annotation.time_format" />
-					</div>
+				Temporal Annotations:
+				<div v-for="annotation in annotations.date" :key="annotation.name">
+					<strong v-html="annotation.name" />: <strong>Description:</strong>
+					<span v-html="annotation.description" /> <strong>Time Format:</strong>
+					<span v-html="annotation.time_format" />
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
