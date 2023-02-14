@@ -268,13 +268,14 @@ header svg {
 
 .carousel {
 	position: relative;
-	margin-left: 4rem;
+	margin: 0 5rem;
 }
 
 .carousel ul {
 	align-items: center;
 	display: flex;
 	margin: 0.5rem 0;
+	overflow: hidden;
 }
 
 .pi-chevron-left,
@@ -301,7 +302,7 @@ header svg {
 }
 
 .pi-chevron-right {
-	right: 0rem;
+	right: -4rem;
 }
 
 ul {
