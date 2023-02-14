@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
-import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
-import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { Project } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
@@ -14,8 +12,13 @@ import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import Modal from '@/components/Modal.vue';
+import { useRouter } from 'vue-router';
+import * as ProjectService from '@/services/project';
+import useAuthStore from '@/stores/auth';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related document
@@ -30,6 +33,12 @@ const selectedDocument = ref<DocumentType>();
 
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
+const router = useRouter();
+const auth = useAuthStore();
+
+const isNewProjectModelVisible = ref(false);
+const newProjectName = ref('');
+const newProjectDescription = ref('');
 
 onMounted(async () => {
 	// Clear all...
@@ -55,7 +64,7 @@ const close = () => {
 };
 
 const SCROLL_INCREMENT_IN_REM = 21.5;
-const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
+const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
 		chevronElement.nodeName === 'svg'
@@ -82,6 +91,19 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	//	first card.
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
 };
+
+async function createNewProject() {
+	const author = auth.name ?? '';
+	const project = await ProjectService.create(
+		newProjectName.value,
+		newProjectDescription.value,
+		author
+	);
+	if (project) {
+		router.push(`/projects/${project.id}`);
+		isNewProjectModelVisible.value = false;
+	}
+}
 </script>
 
 <template>
@@ -104,16 +126,46 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 				/>
 			</div>
 		</div>
+		<!-- New project modal -->
+		<Teleport to="body">
+			<Modal
+				v-if="isNewProjectModelVisible"
+				class="modal"
+				@modal-mask-clicked="isNewProjectModelVisible = false"
+			>
+				<template #default>
+					<form>
+						<label for="new-project-name">Project Name</label>
+						<InputText id="new-project-name" type="text" v-model="newProjectName" />
+
+						<label for="new-project-description">Project Purpose</label>
+						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+					</form>
+				</template>
+				<template #footer>
+					<footer>
+						<Button @click="createNewProject">Create Project</Button>
+						<Button class="p-button-secondary" @click="isNewProjectModelVisible = false"
+							>Cancel</Button
+						>
+					</footer>
+				</template>
+			</Modal>
+		</Teleport>
 		<section class="projects">
 			<header>
 				<h3>Projects</h3>
-				<Button icon="pi pi-plus" label="New project"></Button>
+				<Button
+					icon="pi pi-plus"
+					label="New project"
+					@click="isNewProjectModelVisible = true"
+				></Button>
 			</header>
 			<TabView>
 				<TabPanel header="Recents">
 					<div class="carousel">
-						<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-						<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 						<ul>
 							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
 								<router-link
@@ -137,8 +189,8 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 			</header>
 			<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
 				<p>{{ project.name }}</p>
-				<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-				<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
+				<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+				<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 				<ul>
 					<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
 						<DocumentCard :document="document" @click="selectDocument(document)" />
@@ -146,52 +198,6 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 				</ul>
 			</div>
 		</section>
-		<!-- <h4>Projects</h4>
-		<div class="carousel">
-			<header>
-				<component :is="IconTime32" />
-				<h5>Recent</h5>
-			</header>
-			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
-			<ul>
-				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
-					<router-link
-						style="text-decoration: none; color: inherit"
-						:to="'/projects/' + project.id"
-						:projectId="project.id"
-					>
-						<ProjectCard :project="project"></ProjectCard>
-					</router-link>
-				</li>
-			</ul>
-		</div> -->
-		<!-- Hot Topics carousel -->
-		<!-- <div class="carousel" v-if="relevantDocuments.length > 0">
-			<header>
-				<h5>Latest on {{ relevantSearchTerm }}</h5>
-			</header>
-			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
-			<ul>
-				<li v-for="(document, index) in relevantDocuments" :key="index" class="card">
-					<DocumentCard :document="document" @click="selectDocument(document)" />
-				</li>
-			</ul>
-		</div> -->
-		<!-- Show related documents for the top 5 projects -->
-		<!-- <div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
-			<header>
-				<h5>Related to: {{ project.name }}</h5>
-			</header>
-			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
-			<ul>
-				<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-					<DocumentCard :document="document" @click="selectDocument(document)" />
-				</li>
-			</ul>
-		</div> -->
 	</section>
 </template>
 
@@ -231,20 +237,29 @@ h3 {
 	padding: 1rem 0 1rem 0;
 }
 
-/* header {
-	align-items: center;
+.modal h4 {
+	margin-bottom: 1em;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.modal input,
+.modal textarea {
+	display: block;
+	margin-bottom: 2rem;
+	width: 100%;
+}
+
+.modal footer {
 	display: flex;
-	z-index: -1;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
 }
-
-h4 {
-	margin-left: 4rem;
-}
-
-h4,
-header {
-	margin-top: 1rem;
-} */
 
 header svg {
 	color: var(--primary-color);
@@ -262,7 +277,8 @@ header svg {
 	margin: 0.5rem 0;
 }
 
-.chevron {
+.pi-chevron-left,
+.pi-chevron-right {
 	/* 	see about making the right ones appear as required (by watching scrollbar position)
 		eg. if I am on the very left of the carousel don't show the left arrow
 	*/
@@ -272,20 +288,19 @@ header svg {
 	top: 50%;
 	visibility: visible;
 	z-index: 3;
-	background: var(--surface-secondary);
-	border-radius: 10rem;
+	font-size: 2rem;
 }
 
-.chevron:hover {
-	background-color: var(--surface-ground);
+.pi-chevron-left:hover,
+.pi-chevron-right:hover {
 	color: var(--primary-color);
 }
 
-.chevron-left {
+.pi-chevron-left {
 	left: -4rem;
 }
 
-.chevron-right {
+.pi-chevron-right {
 	right: 0rem;
 }
 
