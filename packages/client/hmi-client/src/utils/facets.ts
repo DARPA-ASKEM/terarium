@@ -18,6 +18,10 @@ import {
 import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
+
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
 export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | null) => {
@@ -196,7 +200,7 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 					...MODEL_DISPLAY_NAMES,
 					...XDD_DISPLAY_NAMES
 				}[key];
-				console.log(displayName);
+				logger.info(displayName);
 				return displayName;
 			}
 			return key;

@@ -29,8 +29,11 @@ import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { Project as ProjectType } from '@/types/Project';
+import { logBuffer } from '@/utils/logger';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
+
+logBuffer.startService();
 
 /**
  * Router
@@ -42,6 +45,7 @@ const isSidebarVisible = computed(
 	() =>
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
+
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const resources = useResourcesStore();
