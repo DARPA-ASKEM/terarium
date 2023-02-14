@@ -83,13 +83,13 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	}
 
 	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
+		cardListElement.style.marginLeft === '' ? '0.5' : cardListElement.style.marginLeft;
 	const currentMarginLeft = parseFloat(marginLeftString);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
 };
 
 async function createNewProject() {
@@ -274,7 +274,8 @@ header svg {
 .carousel ul {
 	align-items: center;
 	display: flex;
-	margin: 0.5rem 0;
+	margin: 0.5rem 0.5rem 0 0.5rem;
+	padding-bottom: 0.5rem;
 	overflow: hidden;
 }
 
@@ -308,20 +309,18 @@ header svg {
 ul {
 	align-items: center;
 	display: inline-flex;
-	gap: 0.5rem;
+	gap: 1.5rem;
 	transition: margin-left 0.2s;
 }
 
 li {
 	list-style: none;
-	margin-right: 1rem;
 }
 
 .card {
 	z-index: 1;
 	transition: 0.2s;
 	max-width: 21rem;
-	/* See SCROLL_INCREMENT_IN_REM */
 }
 
 .carousel:last-of-type {
