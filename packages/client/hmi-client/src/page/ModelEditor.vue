@@ -711,8 +711,8 @@ const runPetri = () => {
 			parameters
 		}
 	};
-	console.log('final', final);
-	console.log('final', JSON.stringify(final));
+	logger.info(`final ${final}`);
+	logger.info(`final ${JSON.stringify(final)}`);
 	return final;
 	*/
 };

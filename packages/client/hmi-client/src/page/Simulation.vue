@@ -12,6 +12,9 @@ import { parseSimulationPlan2IGraph } from '@/services/simulation';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
 import { RouteName } from '@/router/routes';
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
 
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;
@@ -95,7 +98,7 @@ onMounted(async () => {
 			if (!assetId) return;
 
 			// FIXME: siwtch to different simulation run result
-			console.log('simulation id changed to', assetId);
+			logger.info('simulation id changed to', assetId);
 			const response = await API.get(`/simulations/plans/${assetId}`);
 
 			const newPlan = parseSimulationPlan2IGraph(response.data.content);
@@ -112,7 +115,7 @@ onMounted(async () => {
 	renderer.on(
 		'node-click',
 		(_eventName: string | symbol, _event, selection: D3SelectionINode<NodeData>) => {
-			console.log(selection.datum());
+			logger.info(selection.datum());
 		}
 	);
 

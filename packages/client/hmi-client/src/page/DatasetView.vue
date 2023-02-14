@@ -9,6 +9,9 @@ import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
 import ResourcesList from '@/components/resources/resources-list.vue';
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
 
 const props = defineProps<{
 	assetId?: string;
@@ -40,7 +43,7 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 function getDocumentName(id: string): string | null {
-	console.log(datasetsInCurrentProject);
+	logger.info(datasetsInCurrentProject);
 	const currentDocument = datasetsInCurrentProject?.find((doc) => doc.id.toString() === id);
 	if (currentDocument) {
 		return currentDocument.name;
