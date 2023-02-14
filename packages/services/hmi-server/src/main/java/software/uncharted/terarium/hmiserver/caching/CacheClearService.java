@@ -49,7 +49,6 @@ public class CacheClearService {
 	@Scheduled(cron = "0 0 * * * ?")
 		// every hour on the hour
 	void clearXDDCaches(ScheduledExecution execution) {
-		System.out.println("clear");
 		CacheName.findAllByCollection(CacheCollection.XDD).forEach(cacheName -> {
 			cacheManager.getCache(cacheName.getName()).ifPresent(cache ->
 				cache.invalidateAll().await().indefinitely()
