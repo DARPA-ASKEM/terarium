@@ -1,3 +1,4 @@
+/* Styling for asset components Document.vue, Model.vue, Dataset.vue */
 .asset {
     display: flex;
     flex-direction: column;
@@ -56,7 +57,7 @@
         }
 
         strong {
-            font-weight: $fontWeightSemiBold;
+            font-weight: var(--font-weight-semibold);
         }
 
         .extracted-item {
