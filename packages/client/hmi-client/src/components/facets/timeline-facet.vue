@@ -1,11 +1,7 @@
 <template>
 	<facet-timeline :data="timelineData" @facet-element-updated="updateSelection">
 		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
-		<div slot="header" class="header">
-			<span class="facet-font">{{ label }}</span>
-		</div>
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
-		<div slot="footer" class="footer"></div>
+		<div slot="header">{{ label }}</div>
 	</facet-timeline>
 </template>
 
@@ -52,11 +48,11 @@ function updateSelection(event) {
 </script>
 
 <style scoped>
-.header {
-	padding: 6px 12px 5px;
+.facet-pointer {
+	cursor: pointer;
 }
 
-.footer {
+.facet-footer-container {
 	min-height: 16px;
 }
 </style>
