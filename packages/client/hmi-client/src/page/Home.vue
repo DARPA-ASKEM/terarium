@@ -37,7 +37,7 @@ const queryStore = useQueryStore();
 const router = useRouter();
 const auth = useAuthStore();
 
-const isNewProjectModelVisible = ref(false);
+const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
 
@@ -102,7 +102,7 @@ async function createNewProject() {
 	);
 	if (project) {
 		router.push(`/projects/${project.id}`);
-		isNewProjectModelVisible.value = false;
+		isNewProjectModalVisible.value = false;
 	}
 }
 </script>
@@ -130,9 +130,9 @@ async function createNewProject() {
 		<!-- New project modal -->
 		<Teleport to="body">
 			<Modal
-				v-if="isNewProjectModelVisible"
+				v-if="isNewProjectModalVisible"
 				class="modal"
-				@modal-mask-clicked="isNewProjectModelVisible = false"
+				@modal-mask-clicked="isNewProjectModalVisible = false"
 			>
 				<template #default>
 					<form>
@@ -146,7 +146,7 @@ async function createNewProject() {
 				<template #footer>
 					<footer>
 						<Button @click="createNewProject">Create Project</Button>
-						<Button class="p-button-secondary" @click="isNewProjectModelVisible = false"
+						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
 							>Cancel</Button
 						>
 					</footer>
@@ -159,7 +159,7 @@ async function createNewProject() {
 				<Button
 					icon="pi pi-plus"
 					label="New project"
-					@click="isNewProjectModelVisible = true"
+					@click="isNewProjectModalVisible = true"
 				></Button>
 			</header>
 			<TabView>
