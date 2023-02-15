@@ -17,6 +17,7 @@ import UnauthorizedView from '@/page/Unauthorized.vue';
 import ModelEditorView from '@/page/ModelEditor.vue';
 import ModelRunnerView from '@/page/ModelRunner.vue';
 import { RouteName } from './routes';
+import WorkflowPlayground from '@/page/workflow-playground/WorkflowPlayground.vue'
 
 export enum RoutePath {
 	Home = '/',
@@ -66,7 +67,8 @@ const routes = [
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
-	{ path: RoutePath.ModelRunner, component: ModelRunnerView }
+	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
+	{ path: '/workflow-playground', component: WorkflowPlayground }
 ];
 
 const router = createRouter({
