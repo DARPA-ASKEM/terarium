@@ -33,6 +33,14 @@ public class DictionariesResource {
 	public Response getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all) {
 		try {
 			XDDResponse<XDDDictionariesResponseOK> response = proxy.getAvailableDictionaries(all);
+
+			if (response.getErrorMessage() != null) {
+				Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(response.getErrorMessage())
+					.build();
+			}
+
+
 			if (response.getSuccess() == null || response.getSuccess().getData().isEmpty())
 				return Response.noContent().build();
 

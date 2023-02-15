@@ -51,6 +51,12 @@ public class ExtractionResource {
 				response = proxy.getExtractions(null, term, page, askemClass);
 			}
 
+			if (response.getErrorMessage() != null) {
+				Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					.entity(response.getErrorMessage())
+					.build();
+			}
+
 			if (response.getSuccess() == null || response.getSuccess().getData().isEmpty()) {
 				return Response.noContent().build();
 			}

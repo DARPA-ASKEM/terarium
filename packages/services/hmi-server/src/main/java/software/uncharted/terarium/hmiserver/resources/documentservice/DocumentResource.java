@@ -82,6 +82,14 @@ public class DocumentResource {
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
 					min_published, max_published, pubname, publisher, additional_fields, match, known_entities);
+
+
+				if (doc.getErrorMessage() != null) {
+					Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.entity(doc.getErrorMessage())
+						.build();
+				}
+
 				if (doc.getSuccess() == null || doc.getSuccess().getData().isEmpty()) {
 					return Response.noContent().build();
 				}
