@@ -136,7 +136,7 @@ onMounted(async () => {
 	renderer = new (SampleRenderer as any)({
 		el: playground,
 		useAStarRouting: true,
-		runLayout: runDagreLayout2,
+		runLayout: runDagreLayout,
 		useStableZoomPan: true
 	});
 
