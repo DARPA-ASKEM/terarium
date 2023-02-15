@@ -45,11 +45,11 @@ defineProps({
 	},
 	contentWidth: {
 		type: String,
-		default: '15rem'
+		default: '240px'
 	},
 	tabWidth: {
 		type: String,
-		default: '3rem'
+		default: '40px'
 	},
 	// slider-panel props
 	header: {
