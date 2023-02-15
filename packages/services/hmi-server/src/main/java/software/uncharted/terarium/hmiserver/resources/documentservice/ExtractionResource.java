@@ -93,7 +93,7 @@ public class ExtractionResource {
 
 			return Response
 				.status(Response.Status.OK)
-				.entity(autoComplete)
+				.entity(autoComplete.getSuggest().getEntitySuggestFuzzy().get(0).getOptions())
 				.type(MediaType.APPLICATION_JSON)
 				.build();
 
