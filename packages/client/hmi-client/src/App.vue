@@ -1,13 +1,39 @@
+<template>
+	<Navbar
+		class="header"
+		:active="!isErrorState"
+		:current-project-id="project?.id ?? null"
+		:projects="projects"
+		:resourceType="resourceType"
+	/>
+	<main>
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
+		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
+	</main>
+	<footer>
+		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
+	</footer>
+</template>
+
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, shallowRef, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Navbar from '@/components/Navbar.vue';
+import API from '@/api/api';
 import Sidebar from '@/components/Sidebar.vue';
-import { Project } from '@/types/Project';
+import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import API from '@/api/api';
+import { Project as ProjectType } from '@/types/Project';
+import { logBuffer } from '@/utils/logger';
 import { RoutePath, useCurrentRoute } from './router/index';
+import { ResourceType } from './types/common';
+
+logBuffer.startService();
 
 /**
  * Router
@@ -19,25 +45,23 @@ const isSidebarVisible = computed(
 	() =>
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
+
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
-const searchBarText = ref('');
-const relatedSearchTerms = ref<string[]>([]);
 const resources = useResourcesStore();
+const resourceType = ref<string>(ResourceType.XDD);
+
 /**
  * Project
  *
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const project = ref<Project | null>(null);
+const project = shallowRef<ProjectType | null>(null);
+const projects = shallowRef<ProjectType[] | null>(null);
 
-function updateSearchBar(newQuery) {
-	searchBarText.value = newQuery;
-}
-
-function updateRelatedSearchTerms(newTerms) {
-	relatedSearchTerms.value = newTerms.slice(0, 5);
+function updateResourceType(newResourceType) {
+	resourceType.value = newResourceType;
 }
 
 API.interceptors.response.use(
@@ -62,45 +86,30 @@ watch(
 			// fetch basic metadata about project assets and save them into a global store/cache
 			resources.activeProjectAssets = await ProjectService.getAssets(id);
 			resources.setActiveProject(project.value);
+		} else {
+			project.value = null;
 		}
+
+		// Refetch the list of all projects
+		projects.value = await ProjectService.getAll();
 	},
 	{ immediate: true }
 );
-</script>
 
-<template>
-	<Navbar
-		v-if="!isErrorState"
-		class="header"
-		:project="project"
-		:searchBarText="searchBarText"
-		:relatedSearchTerms="relatedSearchTerms"
-	/>
-	<main>
-		<Sidebar
-			v-if="isSidebarVisible && !isErrorState"
-			class="sidebar"
-			data-test-id="sidebar"
-			:project="project"
-		/>
-		<router-view
-			class="page"
-			:project="project"
-			@search-query-changed="updateSearchBar"
-			@related-search-terms-updated="updateRelatedSearchTerms"
-		/>
-	</main>
-	<footer>
-		<img src="@assets/svg/uncharted-logo.svg" alt="logo" class="uncharted-logo" />
-	</footer>
-</template>
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+resources.$subscribe((mutation, state) => {
+	project.value = state.activeProject;
+});
+</script>
 
 <style scoped>
 .header {
-	z-index: 2;
+	grid-area: header;
 }
 
 main {
+	grid-area: main;
 	display: flex;
 	flex-grow: 1;
 	isolation: isolate;
@@ -118,20 +127,12 @@ main {
 	min-width: 0;
 }
 
-.data-explorer {
-	z-index: 3;
-}
-
 footer {
-	width: 100%;
-	height: 48px;
-	background-color: var(--gray-800);
-	flex: none;
-	display: flex;
 	align-items: center;
-}
-
-.uncharted-logo {
-	padding-left: 1rem;
+	background-color: var(--surface-section);
+	border-top: 1px solid var(--surface-border);
+	display: flex;
+	grid-area: footer;
+	height: 3rem;
 }
 </style>

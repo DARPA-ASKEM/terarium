@@ -1,7 +1,16 @@
 import { ConceptFacets } from './Concept';
 import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
-import { XDDArticle, XDDArtifact, XDDSearchParams } from './XDD';
+import { XDDSearchParams } from './XDD';
+import { XDDArtifact, DocumentType } from './Document';
+
+export type Annotation = {
+	artifact_id: string;
+	artifact_type: string;
+	content: string;
+	timestampMillis: number;
+	username: number;
+};
 
 export enum ViewType {
 	LIST = 'list',
@@ -22,7 +31,7 @@ export type SearchParameters = {
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | XDDArticle;
+export type ResultType = Model | Dataset | DocumentType;
 
 export type SearchResults = {
 	results: ResultType[];
@@ -38,7 +47,6 @@ export type SearchResults = {
 export type FullSearchResults = {
 	allData: SearchResults;
 	allDataFilteredWithFacets: SearchResults;
-	relatedWords: string[];
 };
 
 export type SearchByExampleOptions = {

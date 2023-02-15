@@ -1,4 +1,4 @@
-import { cloneDeep, uniq, uniqBy } from 'lodash';
+import { cloneDeep, uniq, uniqBy, isEmpty } from 'lodash';
 import {
 	Facets,
 	FullSearchResults,
@@ -8,22 +8,22 @@ import {
 	SearchResults
 } from '@/types/common';
 import API from '@/api/api';
-import { getDatasetFacets, getModelFacets } from '@/utils/facets';
-import { applyFacetFilters, isDataset, isModel, isXDDArticle } from '@/utils/data-util';
+import { getDatasetFacets, getModelFacets, getDocumentFacets } from '@/utils/facets';
+import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
+import { DocumentType, XDDArtifact } from '@/types/Document';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
-	XDDArticle,
-	XDDArtifact,
 	XDDDictionary,
 	XDDResult,
 	XDDSearchParams,
 	XDDExtractionType,
-	XDD_RESULT_DEFAULT_PAGE_SIZE
+	XDD_RESULT_DEFAULT_PAGE_SIZE,
+	FACET_FIELDS as DOCUMENT_FACET_FIELDS
 } from '../types/XDD';
 import { getFacets as getConceptFacets } from './concept';
 import * as DatasetService from './dataset';
@@ -32,13 +32,13 @@ import { getAllModelDescriptions } from './model';
 import { getRelatedArtifacts } from './provenance';
 
 const getXDDSets = async () => {
-	const res = await API.get('/xdd/sets');
+	const res = await API.get('/document/sets');
 	const response: XDDResult = res.data;
 	return response.available_sets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
-	const res = await API.get('/xdd/dictionaries');
+	const res = await API.get('/dictionaries');
 	const rawdata: XDDResult = res.data;
 	if (rawdata.success) {
 		const { data } = rawdata.success;
@@ -91,16 +91,24 @@ const filterAssets = <T extends Model | Dataset>(
 	return allAssets;
 };
 
-const getAssets = async (
-	term: string,
-	resourceType: ResourceType,
-	searchParam?: ModelSearchParams | DatasetSearchParams
-) => {
+interface GetAssetsParams {
+	term: string;
+	resourceType: ResourceType;
+	searchParam: ModelSearchParams & DatasetSearchParams & XDDSearchParams;
+}
+
+const getAssets = async (params: GetAssetsParams) => {
+	// Get paramaters as an interface allowing us to provide optional fields accurately with names rather than positions
+	const term = params.term;
+	const resourceType = params.resourceType;
+	const searchParam = params.searchParam;
+
 	const results = {} as FullSearchResults;
 
 	// fetch list of model or datasets data from the HMI server
-	let assetList: Model[] | Dataset[] = [];
+	let assetList: Model[] | Dataset[] | DocumentType[] = [];
 	let projectAssetType: ProjectAssetTypes;
+	let xddResults;
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
@@ -110,6 +118,14 @@ const getAssets = async (
 		case ResourceType.DATASET:
 			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
 			projectAssetType = ProjectAssetTypes.DATASETS;
+			break;
+		case ResourceType.XDD:
+			// @ts-ignore
+			xddResults =
+				(await searchXDDDocuments(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
+				([] as DocumentType[]);
+			assetList = xddResults.results;
+			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -133,9 +149,13 @@ const getAssets = async (
 	//        at the HMI server
 	//
 	// This is going to calculate facets aggregations from the list of results
-	let assetResults = filterAssets(allAssets, resourceType, conceptFacets, term);
-	let assetFacets: Facets;
 
+	let assetResults =
+		resourceType === ResourceType.XDD
+			? allAssets
+			: filterAssets(allAssets, resourceType, conceptFacets, term);
+
+	let assetFacets: Facets;
 	switch (resourceType) {
 		case ResourceType.MODEL:
 			assetResults = assetResults as Model[];
@@ -144,6 +164,10 @@ const getAssets = async (
 		case ResourceType.DATASET:
 			assetResults = assetResults as Dataset[];
 			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
+			break;
+		case ResourceType.XDD:
+			assetResults = assetResults as DocumentType[];
+			assetFacets = getDocumentFacets(assetResults); // will be moved to HMI server - keep this for now
 			break;
 		default:
 			return results; // error or make new resource type compatible
@@ -157,94 +181,140 @@ const getAssets = async (
 	};
 
 	// apply facet filters
-	if (searchParam && searchParam.filters && searchParam.filters.clauses.length > 0) {
-		// modelSearchParam currently represent facets filters that can be applied
-		//  to further refine the list of models
+	if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
+		// Filtering for model/dataset data
+		if (searchParam && searchParam.filters && !isEmpty(searchParam?.filters?.clauses)) {
+			// modelSearchParam currently represent facets filters that can be applied
+			//  to further refine the list of models
 
-		// a special facet related to ontology/DKG concepts needs to be transformed into
-		//  some form of filters that can filter the list of models.
-		// In this case, each concept has an associated list of model IDs that can be used to filter models
-		//  so, we need to map the facet filters from field "concepts" to "id"
+			// a special facet related to ontology/DKG concepts needs to be transformed into
+			//  some form of filters that can filter the list of models.
+			// In this case, each concept has an associated list of model IDs that can be used to filter models
+			//  so, we need to map the facet filters from field "concepts" to "id"
 
-		// Each clause of 'concepts' should have another corresponding one with 'id'
-		const curies = [] as ClauseValue[];
-		const idClauses = [] as Clause[];
-		searchParam.filters.clauses.forEach((clause) => {
-			if (clause.field === CONCEPT_FACETS_FIELD) {
-				const idClause = cloneDeep(clause);
-				idClause.field = 'id';
-				const clauseValues = [] as ClauseValue[];
-				idClause.values.forEach((conceptNameOrCurie) => {
-					// find the corresponding model IDs
-					if (conceptFacets !== null) {
-						const matching = conceptFacets.results.filter(
-							(conceptResult) =>
-								conceptResult.name === conceptNameOrCurie ||
-								conceptResult.curie === conceptNameOrCurie
-						);
-						// update the clause value by mapping concept/curie to model id
-						clauseValues.push(...matching.map((m) => m.id));
-						curies.push(...matching.map((m) => m.curie));
-					}
-				});
-				idClause.values = clauseValues;
-				idClauses.push(idClause);
-			}
-		});
-		// NOTE that we need to merge all concept filters into a single ID filter
-		if (idClauses.length > 0) {
-			const finalIdClause = cloneDeep(idClauses[0]);
-			const allIdValues = idClauses.map((c) => c.values).flat();
-			finalIdClause.values = uniq(allIdValues);
-			searchParam.filters.clauses.push(finalIdClause);
-		}
-
-		applyFacetFilters(assetResults, searchParam.filters, resourceType);
-
-		// remove any previously added concept/id filters
-		searchParam.filters.clauses = searchParam.filters.clauses.filter((c) => c.field !== ID);
-
-		// ensure that concepts are re-created following the current filtered list of model results
-		// e.g., if the user has applied other facet filters, e.g. selected some model by name
-		// then we need to find corresponding curies to filter the concepts accordingly
-		if (conceptFacets !== null) {
-			// FIXME:
-			// This step won't be needed if the concept facets API is able to receive filters as well
-			// to only provide concept aggregations based on a filtered set of models rather than the full list of models
-			const finalAssetIDs = assetResults.map((m) => m.id);
-			conceptFacets.results.forEach((conceptFacetResult) => {
-				if (finalAssetIDs.includes(conceptFacetResult.id)) {
-					curies.push(conceptFacetResult.curie);
+			// Each clause of 'concepts' should have another corresponding one with 'id'
+			const curies = [] as ClauseValue[];
+			const idClauses = [] as Clause[];
+			searchParam.filters.clauses.forEach((clause) => {
+				if (clause.field === CONCEPT_FACETS_FIELD) {
+					const idClause = cloneDeep(clause);
+					idClause.field = 'id';
+					const clauseValues = [] as ClauseValue[];
+					idClause.values.forEach((conceptNameOrCurie) => {
+						// find the corresponding model IDs
+						if (conceptFacets !== null) {
+							const matching = conceptFacets.results.filter(
+								(conceptResult) =>
+									conceptResult.name === conceptNameOrCurie ||
+									conceptResult.curie === conceptNameOrCurie
+							);
+							// update the clause value by mapping concept/curie to model id
+							clauseValues.push(...matching.map((m) => m.id));
+							curies.push(...matching.map((m) => m.curie));
+						}
+					});
+					idClause.values = clauseValues;
+					idClauses.push(idClause);
 				}
 			});
-		}
+			// NOTE that we need to merge all concept filters into a single ID filter
+			if (idClauses.length > 0) {
+				const finalIdClause = cloneDeep(idClauses[0]);
+				const allIdValues = idClauses.map((c) => c.values).flat();
+				finalIdClause.values = uniq(allIdValues);
+				searchParam.filters.clauses.push(finalIdClause);
+			}
 
-		// re-create the concept facets if the user has applyied any concept filters
-		const uniqueCuries = uniq(curies);
-		if (uniqueCuries.length > 0) {
-			conceptFacets = await getConceptFacets([projectAssetType], uniqueCuries);
-		}
+			applyFacetFilters(assetResults, searchParam.filters, resourceType);
 
-		// FIXME: this client-side computation of facets from "models" data should be done
-		//        at the HMI server
-		//
-		// This is going to calculate facets aggregations from the list of results
-		let assetFacetsFiltered: Facets;
-		switch (resourceType) {
-			case ResourceType.MODEL:
-				assetFacetsFiltered = getModelFacets(assetResults as Model[], conceptFacets);
-				break;
-			case ResourceType.DATASET:
-				assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
-				break;
-			default:
-				return results; // error or make new resource type compatible
-		}
+			// remove any previously added concept/id filters
+			searchParam.filters.clauses = searchParam.filters.clauses.filter((c) => c.field !== ID);
 
+			// ensure that concepts are re-created following the current filtered list of model results
+			// e.g., if the user has applied other facet filters, e.g. selected some model by name
+			// then we need to find corresponding curies to filter the concepts accordingly
+			if (conceptFacets !== null) {
+				// FIXME:
+				// This step won't be needed if the concept facets API is able to receive filters as well
+				// to only provide concept aggregations based on a filtered set of models rather than the full list of models
+				const finalAssetIDs = assetResults.map((m) => m.id);
+				conceptFacets.results.forEach((conceptFacetResult) => {
+					if (finalAssetIDs.includes(conceptFacetResult.id)) {
+						curies.push(conceptFacetResult.curie);
+					}
+				});
+			}
+
+			// re-create the concept facets if the user has applyied any concept filters
+			const uniqueCuries = uniq(curies);
+			if (!isEmpty(uniqueCuries)) {
+				conceptFacets = await getConceptFacets([projectAssetType], uniqueCuries);
+			}
+
+			// FIXME: this client-side computation of facets from "models" data should be done
+			//        at the HMI server
+			//
+			// This is going to calculate facets aggregations from the list of results
+			let assetFacetsFiltered: Facets;
+			switch (resourceType) {
+				case ResourceType.MODEL:
+					assetFacetsFiltered = getModelFacets(assetResults as Model[], conceptFacets);
+					break;
+				case ResourceType.DATASET:
+					assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
+					break;
+				default:
+					return results; // error or make new resource type compatible
+			}
+
+			results.allDataFilteredWithFacets = {
+				results: assetResults,
+				searchSubsystem: resourceType,
+				facets: assetFacetsFiltered,
+				rawConceptFacets: conceptFacets
+			};
+		} else {
+			results.allDataFilteredWithFacets = results.allData;
+		}
+	} else if (resourceType === ResourceType.XDD) {
+		// Filtering for Documents
+		const allResults = assetResults as DocumentType[];
+		let returnResults = allResults;
+		DOCUMENT_FACET_FIELDS.forEach((field) => {
+			// For each facet we can filter on check if we should be filtering for it
+
+			// Filtering on document year as its a special case
+			if (
+				field === 'year' &&
+				searchParam.max_published !== undefined &&
+				searchParam.min_published !== undefined
+			) {
+				const formattedMaxYear = searchParam.max_published.slice(0, 4);
+				const formattedMinYear = searchParam.min_published.slice(0, 4);
+				returnResults = returnResults.filter(
+					(document) =>
+						Number(document.year) <= Number(formattedMaxYear) &&
+						Number(document.year) >= Number(formattedMinYear)
+				);
+			}
+
+			// For all fields that are not year
+			else if (field in searchParam) {
+				// Check out xdd params actually has this field (if it doesnt it hasnt been clicked on as facet)
+				const filtersForField = searchParam[field].split(',') as string[]; // Split incase multiple of the same has been clicked (2 journals for eg)
+				returnResults = returnResults.filter((document) =>
+					filtersForField.includes(document[field])
+				);
+			}
+		});
+
+		// Set values
+		const newFacets: Facets = getDocumentFacets(returnResults);
 		results.allDataFilteredWithFacets = {
-			results: assetResults,
+			results: returnResults,
+			xddExtractions: xddResults.xddExtractions,
 			searchSubsystem: resourceType,
-			facets: assetFacetsFiltered,
+			facets: newFacets,
 			rawConceptFacets: conceptFacets
 		};
 	} else {
@@ -257,18 +327,10 @@ const getAssets = async (
 //
 // fetch list of extractions data from the HMI server
 //
-const getXDDArtifacts = async (
-	doc_doi: string,
-	term?: string,
-	extractionTypes?: XDDExtractionType[]
-) => {
-	let url = '/xdd/extractions?';
-	if (doc_doi !== '') {
-		url += `doi=${doc_doi}`;
-	}
-	if (term !== undefined) {
-		url += `query_all=${term}`;
-	}
+const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
+	let url = '/document/extractions?';
+	url += `term=${term}`;
+
 	if (extractionTypes) {
 		url += '&ASKEM_CLASS=';
 		for (let i = 0; i < extractionTypes.length; i++) {
@@ -290,52 +352,62 @@ const getXDDArtifacts = async (
 //
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (docid === '' || dataset === null) {
-		return [] as XDDArticle[];
+		return [] as DocumentType[];
 	}
 
 	// https://xdd.wisc.edu/sets/xdd-covid-19/doc2vec/api/similar?doi=10.1002/pbc.28600
 	// dataset=xdd-covid-19
 	// doi=10.1002/pbc.28600
 	// docid=5ebd1de8998e17af826e810e
-	const url = `/xdd/related/document?docid=${docid}&set=${dataset}`;
+	const url = `/document/related/document?docid=${docid}&set=${dataset}`;
 
 	const res = await API.get(url);
 	const rawdata: XDDResult = res.data;
 
 	if (rawdata.data) {
-		const articlesRaw = rawdata.data.map((a) => a.bibjson);
+		const documentsRaw = rawdata.data.map((a) => a.bibjson);
 
-		const articles = articlesRaw.map((a) => ({
+		const documents = documentsRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract
 		}));
 
-		return articles;
+		return documents;
 	}
-	return [] as XDDArticle[];
+	return [] as DocumentType[];
 };
 
-const getRelatedWords = async (searchTerm: string, dataset: string | null | undefined) => {
-	const url = `/xdd/related/word?set=${dataset}&word=${searchTerm}`;
+async function getRelatedTerms(query?: string, dataset?: string | null): Promise<string[]> {
+	if (!query) {
+		return [];
+	}
+	const params = new URLSearchParams({ set: dataset ?? 'xdd-covid-19', word: query });
+	const response = await API.get(`/document/related/word?${params}`);
+	const data = response?.data?.data;
+	return data ? data.map((tuple) => tuple[0]).slice(0, 5) : [];
+}
+
+const getAutocomplete = async (searchTerm: string) => {
+	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
-	const data = response.data.data;
-	const words = data ? data.map((tuple) => tuple[0]) : [];
-	return words;
+	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
+	const terms = data.map((d) => d.text);
+	return terms;
 };
 
-const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams) => {
+const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {
 	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
 
 	// NOTE when true it disables ranking of results
 	const enablePagination = xddSearchParam?.fullResults ?? false;
 
 	// "full_results": "Optional. When this parameter is included (no value required),
-	//  an overview of total number of matching articles is returned,
+	//  an overview of total number of matching documents is returned,
 	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
 	//  NOTE: the "max" parameter will be ignored
 	//  NOTE: results may not be ranked in this mode
 	let searchParams = `term=${term}`;
-	const url = '/xdd/documents?';
+	const url = '/documents?';
 
 	if (xddSearchParam?.docid) {
 		searchParams += `&docid=${xddSearchParam.docid}`;
@@ -395,7 +467,7 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	}
 
 	//
-	// "max": "Maximum number of articles to return (default is all)",
+	// "max": "Maximum number of documents to return (default is all)",
 	searchParams += `&max=${limitResultsCount}`;
 
 	// "per_page": "Maximum number of results to include in one response.
@@ -412,47 +484,20 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
 
 	const res = await API.get(url + searchParams);
-	const rawdata: XDDResult = res.data;
 
-	if (rawdata.success) {
-		const { data, hits, scrollId, nextPage, facets } = rawdata.success;
-		const articlesRaw =
+	if (res.data && res.data.success) {
+		const { data, hits, scrollId, nextPage } = res.data.success;
+		const documentsRaw =
 			xddSearchParam?.fields === undefined
-				? (data as XDDArticle[])
-				: ((data as any).data as XDDArticle[]); // FIXME: xDD returns inconsistent response object
+				? (data as DocumentType[])
+				: ((data as any).data as DocumentType[]); // FIXME: xDD returns inconsistent response object
 
-		const articles = articlesRaw.map((a) => ({
+		const documents = documentsRaw.map((a) => ({
 			...a,
 			abstractText: a.abstract
 		}));
 
-		// process document highlights and style the search term differently in each highlight
-		// FIXME: this styling of highlights with search term should be done automatically by XDD
-		//        since the content is coming already styled and should not be done at the clinet side for performance reasons
-		if (term !== '') {
-			articles.forEach((article) => {
-				if (article.highlight) {
-					article.highlight = article.highlight.map((h) =>
-						h.replaceAll(
-							term,
-							`<span style='background-color: #67d2c3; border-radius: 3px;'>${term}</span>`
-						)
-					);
-				}
-			});
-		}
-
-		const formattedFacets: Facets = {};
-		if (facets) {
-			// we receive facets data, so make sure it is in the proper format
-			const facetKeys = Object.keys(facets);
-			facetKeys.forEach((facetKey) => {
-				formattedFacets[facetKey] = facets[facetKey].buckets.map((e) => ({
-					key: e.key,
-					value: e.doc_count
-				}));
-			});
-		}
+		const formattedFacets: Facets = getDocumentFacets(documents);
 
 		// also, perform search across extractions
 		let extractionsSearchResults = [] as XDDArtifact[];
@@ -460,13 +505,13 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 			// Temporary call to get a sufficient amount of extractions
 			// (Every call is limited to providing 30 extractions)
 			extractionsSearchResults = [
-				...(await getXDDArtifacts('', term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
-				...(await getXDDArtifacts('', term, [XDDExtractionType.Document]))
+				...(await getXDDArtifacts(term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
+				...(await getXDDArtifacts(term, [XDDExtractionType.Document]))
 			];
 		}
 
 		return {
-			results: articles,
+			results: documents,
 			facets: formattedFacets,
 			xddExtractions: extractionsSearchResults,
 			searchSubsystem: ResourceType.XDD,
@@ -476,11 +521,8 @@ const searchXDDArticles = async (term: string, xddSearchParam?: XDDSearchParams)
 		};
 	}
 
-	const relatedWords = getRelatedWords(term, xddSearchParam?.dataset);
-
 	return {
-		results: [] as XDDArticle[],
-		relatedWords,
+		results: [] as DocumentType[],
 		searchSubsystem: ResourceType.XDD,
 		hits: 0
 	};
@@ -491,19 +533,19 @@ const getDocumentById = async (docid: string) => {
 		docid,
 		known_entities: 'url_extractions,summaries'
 	};
-	const xddRes = await searchXDDArticles('', searchParams);
+	const xddRes = await searchXDDDocuments('', searchParams);
 	if (xddRes) {
-		const articles = xddRes.results as XDDArticle[];
-		if (articles.length > 0) {
-			return articles[0];
+		const documents = xddRes.results as DocumentType[];
+		if (documents.length > 0) {
+			return documents[0];
 		}
 	}
 	return null;
 };
 
 const getBulkDocuments = async (docIDs: string[]) => {
-	const result: XDDArticle[] = [];
-	const promiseList = [] as Promise<XDDArticle | null>[];
+	const result: DocumentType[] = [];
+	const promiseList = [] as Promise<DocumentType | null>[];
 	docIDs.forEach((docId) => {
 		promiseList.push(getDocumentById(docId));
 	});
@@ -518,27 +560,19 @@ const getBulkDocuments = async (docIDs: string[]) => {
 
 const fetchResource = async (
 	term: string,
-	searchParam?: SearchParameters,
-	searchParamWithFacetFilters?: SearchParameters,
-	resourceType?: string
+	resourceType: ResourceType,
+	searchParamWithFacetFilters?: SearchParameters
 ): Promise<FullSearchResults> =>
 	// eslint-disable-next-line no-async-promise-executor
 	new Promise<FullSearchResults>(async (resolve, reject) => {
 		try {
-			if (resourceType === ResourceType.XDD) {
-				resolve({
-					allData: await searchXDDArticles(term, searchParam?.[ResourceType.XDD]),
-					allDataFilteredWithFacets: await searchXDDArticles(
-						term,
-						searchParamWithFacetFilters?.[ResourceType.XDD]
-					),
-					relatedWords: await getRelatedWords(term, searchParam?.xdd?.dataset)
-				});
-			} else if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
-				resolve(
-					getAssets(term, resourceType, searchParamWithFacetFilters?.[resourceType as ResourceType])
-				);
-			}
+			resolve(
+				getAssets({
+					term,
+					resourceType,
+					searchParam: searchParamWithFacetFilters?.[resourceType]
+				})
+			);
 		} catch (err: any) {
 			reject(new Error(`Error fetching ${resourceType} results: ${err}`));
 		}
@@ -552,12 +586,10 @@ const fetchData = async (
 ) => {
 	const finalResponse = {
 		allData: [],
-		allDataFilteredWithFacets: [],
-		relatedWords: []
+		allDataFilteredWithFacets: []
 	} as {
 		allData: SearchResults[];
 		allDataFilteredWithFacets: SearchResults[];
-		relatedWords: string[][];
 	};
 
 	//
@@ -597,15 +629,15 @@ const fetchData = async (
 				}
 				if (searchParam?.xdd.related_search_enabled) {
 					// FIXME:
-					//   searchParam?.xdd.related_search_id will be equal to a publication docid/gddid which is an xDD ID
+					//   searchParam?.xdd.related_search_id will be equal to a document docid/gddid which is an xDD ID
 					//   However, getRelatedArtifacts expects an ID that represents the internal ID for TDS artifacts
-					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given publication would exist becuase publications are external artifact by definition.
+					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given document would exist becuase documents are external artifact by definition.
 					//
-					//   One way to simplify the issue is to query the /external/publications API path to search TDS for the internal artifact ID for a given xDD publication using the document gddid/docid as input.
+					//   One way to simplify the issue is to query the /external/documents API path to search TDS for the internal artifact ID for a given xDD document using the document gddid/docid as input.
 					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
 						searchParam?.xdd.related_search_id as string,
-						ProvenanceType.Publication
+						ProvenanceType.Document
 					);
 				}
 			}
@@ -653,15 +685,15 @@ const fetchData = async (
 				finalResponse.allDataFilteredWithFacets.push(relatedDatasetSearchResults);
 
 				//
-				// publications
+				// Documents
 				//
-				const relatedPublications = relatedArtifacts.filter((a) => isXDDArticle(a));
-				const relatedPublicationsSearchResults: SearchResults = {
-					results: relatedPublications,
+				const relatedDocuments = relatedArtifacts.filter((a) => isDocument(a));
+				const relatedDocumentsSearchResults: SearchResults = {
+					results: relatedDocuments,
 					searchSubsystem: ResourceType.XDD
 				};
-				finalResponse.allData.push(relatedPublicationsSearchResults);
-				finalResponse.allDataFilteredWithFacets.push(relatedPublicationsSearchResults);
+				finalResponse.allData.push(relatedDocumentsSearchResults);
+				finalResponse.allDataFilteredWithFacets.push(relatedDocumentsSearchResults);
 			}
 
 			return finalResponse;
@@ -673,13 +705,13 @@ const fetchData = async (
 		if (resourceType === ResourceType.ALL) {
 			Object.entries(ResourceType).forEach(async ([key]) => {
 				if (ResourceType[key] !== ResourceType.ALL) {
-					promiseList.push(
-						fetchResource(term, searchParam, searchParamWithFacetFilters, ResourceType[key])
-					);
+					promiseList.push(fetchResource(term, ResourceType[key], searchParamWithFacetFilters));
 				}
 			});
 		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
-			promiseList.push(fetchResource(term, searchParam, searchParamWithFacetFilters, resourceType));
+			promiseList.push(
+				fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters)
+			);
 		}
 	}
 
@@ -687,7 +719,7 @@ const fetchData = async (
 	const responses = await Promise.all(promiseList);
 	finalResponse.allData = responses.map((r) => r.allData);
 	finalResponse.allDataFilteredWithFacets = responses.map((r) => r.allDataFilteredWithFacets);
-	finalResponse.relatedWords = responses.map((r) => r.relatedWords);
+
 	return finalResponse;
 };
 
@@ -696,10 +728,11 @@ export {
 	getXDDSets,
 	getXDDDictionaries,
 	getXDDArtifacts,
-	searchXDDArticles,
+	searchXDDDocuments,
 	getAssets,
 	getDocumentById,
 	getBulkDocuments,
 	getRelatedDocuments,
-	getRelatedWords
+	getRelatedTerms,
+	getAutocomplete
 };

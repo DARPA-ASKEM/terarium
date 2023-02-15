@@ -11,8 +11,16 @@ import {
 	DISPLAY_NAMES as MODEL_DISPLAY_NAMES,
 	ID
 } from '@/types/Model';
-import { DISPLAY_NAMES as XDD_DISPLAY_NAMES } from '@/types/XDD';
+import {
+	DISPLAY_NAMES as XDD_DISPLAY_NAMES,
+	FACET_FIELDS as DOCUMENT_FACET_FIELDS
+} from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
+
+import { useLogger } from 'vue-logger-plugin';
+
+const logger = useLogger();
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
@@ -104,6 +112,38 @@ export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFace
 	return facets;
 };
 
+// FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
+//        at the HMI server
+export const getDocumentFacets = (documents: DocumentType[]) => {
+	// utility function for manually calculating facet aggregation from dataset results
+	const aggField = (fieldName: string) => {
+		const aggs: FacetBucket[] = [];
+		const documentsMap = documents.map((document) => document[fieldName as keyof DocumentType]);
+		const grouped = groupBy(documentsMap);
+		Object.keys(grouped).forEach((gKey) => {
+			if (gKey !== '' && gKey !== 'undefined') {
+				aggs.push({ key: gKey, value: grouped[gKey].length });
+			}
+		});
+		return aggs;
+	};
+
+	const facets = {} as Facets;
+
+	// create facets from specific dataset fields
+	DOCUMENT_FACET_FIELDS.forEach((field) => {
+		// exclude dataset ID as a facet since it is created from mapping concepts
+		if (field !== ID) {
+			const facetForField = aggField(field);
+			if (facetForField.length > 0) {
+				facets[field] = facetForField;
+			}
+		}
+	});
+
+	return facets;
+};
+
 // Merging facets who share the same key requires custom logic, e.g.,
 //  XDD documents of "type" [fulltext] and Models of "type": [model, dataset]
 //  should be merged into one facet representing the overall "type" of result
@@ -160,7 +200,7 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 					...MODEL_DISPLAY_NAMES,
 					...XDD_DISPLAY_NAMES
 				}[key];
-				console.log(displayName);
+				logger.info(displayName);
 				return displayName;
 			}
 			return key;

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/experimental-ct-vue';
-import Home from '@/views/Home.vue';
+import Home from '@/page/Home.vue';
 
 test.describe('test Home component', () => {
 	test('option to create a new project is avialable', async ({ mount }) => {

@@ -1,23 +1,18 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import software.uncharted.terarium.documentserver.models.xdd.Document;
-import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
-import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
-import software.uncharted.terarium.documentserver.models.xdd.RelatedDocument;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.time.*;
 
 import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbDateFormat;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 import lombok.Setter;
 
 @Data
@@ -37,21 +32,24 @@ public class Project implements Serializable {
 
 	private Concept concept;
 
-	private List<ResourceType> assets;
+	private Map<String, List<String>> assets;
 
-	@JsonbProperty("relatedArticles")
-	@Setter private List<Document> relatedDocuments;
+	private String username;
+
+	@JsonAlias("relatedArticles")
+	@JsonbProperty("relatedDocuments")
+	@Setter
+	private List<Document> relatedDocuments;
 
 	@Override
-    public String toString(){
+	public String toString() {
 		return "Project: { id: " + this.projectID +
-				" name: " + this.name + 
-				" description: " + this.description +
-				" Assets: " + this.assets +
-				" Related Documents: " + this.relatedDocuments +
-				" }";
+			" name: " + this.name +
+			" description: " + this.description +
+			" Assets: " + this.assets +
+			" Related Documents: " + this.relatedDocuments +
+			" }";
 	}
 
-	
 
 }

@@ -1,18 +1,21 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
-import DocumentView from '@/views/DocumentView.vue';
-import HomeView from '@/views/Home.vue';
-import DatasetView from '@/views/DatasetView.vue';
-import ProjectView from '@/views/Project.vue';
-import ModelView from '@/views/ModelView.vue';
-import ResponsivePlayground from '@/views/ResponsivePlayground.vue';
-import SimulationPlanPlayground from '@/views/SimulationPlanPlayground.vue';
-import SimulationView from '@/views/Simulation.vue';
-import SimulationResultView from '@/views/SimulationResult.vue';
-import TA2Playground from '@/views/TA2Playground.vue';
-import TheiaView from '@/views/theia.vue';
-import DataExplorerView from '@/views/DataExplorer.vue';
-import UnauthorizedView from '@/views/Unauthorized.vue';
+import DocumentView from '@/page/DocumentView.vue';
+import HomeView from '@/page/Home.vue';
+import DatasetView from '@/page/DatasetView.vue';
+import ProjectView from '@/page/Project.vue';
+import ModelView from '@/page/ModelView.vue';
+import ResponsivePlayground from '@/page/ResponsivePlayground.vue';
+import SimulationPlanPlayground from '@/page/SimulationPlanPlayground.vue';
+import SimulationView from '@/page/Simulation.vue';
+import SimulationResultView from '@/page/SimulationResult.vue';
+import CodeView from '@/page/CodeView.vue';
+import TA2Playground from '@/page/TA2Playground.vue';
+import TheiaView from '@/page/theia.vue';
+import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
+import UnauthorizedView from '@/page/Unauthorized.vue';
+import ModelEditorView from '@/page/ModelEditor.vue';
+import ModelRunnerView from '@/page/ModelRunner.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -23,6 +26,7 @@ export enum RoutePath {
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
 	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
+	Code = '/projects/:projectId/code',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
@@ -30,7 +34,9 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	SimulationPlanPlaygroundPath = '/simulation-plan-playground'
+	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
+	ModelEditor = '/model-editor',
+	ModelRunner = '/model-runner'
 }
 
 const routes = [
@@ -53,12 +59,14 @@ const routes = [
 		props: (route) => ({ query: route.query.q })
 	},
 	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
-
+	{ name: RouteName.CodeRoute, path: RoutePath.Code, component: CodeView },
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground }
+	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
+	{ path: RoutePath.ModelEditor, component: ModelEditorView },
+	{ path: RoutePath.ModelRunner, component: ModelRunnerView }
 ];
 
 const router = createRouter({

@@ -1,6 +1,9 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
 
 import javax.ws.rs.*;
@@ -13,6 +16,7 @@ import java.util.*;
 @RegisterRestClient(configKey = "data-service")
 @Path("/projects")
 @Produces(MediaType.APPLICATION_JSON)
+@RegisterProvider(HmiResponseExceptionMapper.class)
 public interface ProjectProxy {
 
 	@GET
@@ -50,7 +54,7 @@ public interface ProjectProxy {
 
 	@GET
 	@Path("/{project_id}/assets")
-	Response getAssets(
+	Assets getAssets(
 		@PathParam("project_id") String projectId,
 		@QueryParam("types") final List<String> types
 	);

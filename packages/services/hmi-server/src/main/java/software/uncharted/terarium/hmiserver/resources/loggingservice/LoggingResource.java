@@ -4,6 +4,7 @@ import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import software.uncharted.terarium.hmiserver.models.loggingservice.LoggingService;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;

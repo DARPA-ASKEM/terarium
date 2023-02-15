@@ -1,15 +1,15 @@
 $colors: (
-    "blue": #2196F3,
-    "green": #689F38,
-    "yellow": #FBC02D,
-    "cyan": #00BCD4,
-    "pink": #E91E63,
-    "indigo": #4E5FBB,
-    "teal": #009688,
-    "orange": #FF9800,
-    "bluegray": #607D8B,
-    "purple": #9C27B0,
-    "red": #F44336
+	"blue": #2196F3,
+	"green": #689F38,
+	"yellow": #FBC02D,
+	"cyan": #00BCD4,
+	"pink": #E91E63,
+	"indigo": #4E5FBB,
+	"teal": #009688,
+	"orange": #FF9800,
+	"bluegray": #607D8B,
+	"purple": #9C27B0,
+	"red": #F44336
 );
 
 $emphasis-high: rgba(16, 24, 40, 1) !default;
@@ -20,15 +20,24 @@ $overlayColor: #000000 !default;
 
 $primaryColorRGB: 45, 142, 45;
 $primaryColor: #1B8073;
+$primaryColorLighter: #ABEFE6;
+$primaryColorLight: #67d2c3;
+$primaryColorDark: #12564D;
 $primaryTextColor: #ffffff !default;
 $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
 
-//global
+// font
+$fontCaption: 12px;
+$fontBodySmall: 14px;
+$fontBodyMedium: 16px;
+$fontBodyLarge: 18px;
 $fontFamily: Figtree, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif !default;
-$fontSize: 1rem !default;
+$fontSize: $fontBodySmall;
 $fontWeight: 400 !default;
 $fontWeightSemiBold: 600;
+
+//global
 $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
@@ -72,7 +81,7 @@ $actionIconBorderRadius: 50% !default;
 
 //input field (e.g. inputtext, spinner, inputmask)
 $inputPadding: 1rem 1rem !default;
-$inputTextFontSize: 1rem !default;
+$inputTextFontSize: $fontSize;
 $inputBg: #ffffff !default;
 $inputTextColor: $emphasis-high !default;
 $inputIconColor: $emphasis-medium !default;
@@ -95,7 +104,7 @@ $inputListBg: #ffffff !default;
 $inputListTextColor: $textColor !default;
 $inputListBorder: 1px solid #e5e5e5 !default;
 $inputListPadding: 0 !default;
-$inputListItemPadding: 1rem 1rem !default;
+$inputListItemPadding: 0.5rem 1rem !default;
 $inputListItemBg: transparent !default;
 $inputListItemTextColor: $textColor !default;
 $inputListItemHoverBg: rgba(0, 0, 0, .04) !default;
@@ -116,7 +125,7 @@ $inputListHeaderBorder: 1px solid rgba(0, 0, 0, .12) !default;
 $inputOverlayBg: $inputListBg !default;
 $inputOverlayHeaderBg: $inputListHeaderBg !default;
 $inputOverlayBorder: 0 none !default;
-$inputOverlayShadow: 0 5px 5px -3px rgba(0, 0, 0, .2), 0 8px 10px 1px rgba(0, 0, 0, .14), 0 3px 14px 2px rgba(0, 0, 0, .12) !default;
+$inputOverlayShadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.08), 0px 2px 4px -1px rgba(0, 0, 0, 0.06);
 
 //password
 $passwordMeterBg: rgba($primaryColor, .32) !default;
@@ -126,8 +135,8 @@ $passwordStrongBg: #689F38 !default;
 
 //button
 $buttonPadding: 0.714rem 1rem !default;
-$buttonIconOnlyWidth: 3rem !default;
-$buttonIconOnlyPadding: 0.714rem !default;
+$buttonIconOnlyWidth: 2rem !default;
+$buttonIconOnlyPadding: 0.5rem !default;
 $buttonBg: $primaryColor !default;
 $buttonTextColor: $primaryTextColor !default;
 $buttonBorder: 0 none !default;
@@ -375,8 +384,9 @@ $accordionSpacing: 0 !default;
 $accordionHeaderBorder: 0 none !default;
 $accordionHeaderBg: #ffffff !default;
 $accordionHeaderTextColor: $textColor !default;
-$accordionHeaderFontWeight: 400 !default;
-$accordionHeaderPadding: 1.5rem !default;
+$accordionHeaderFontWeight: $fontWeightSemiBold !default;
+$accordionHeaderFontSize: $fontBodyMedium !default;
+$accordionHeaderPadding: .5rem !default;
 
 $accordionHeaderHoverBg: #f6f6f6 !default;
 $accordionHeaderHoverBorderColor: transparent !default;
@@ -393,7 +403,7 @@ $accordionHeaderTextActiveHoverColor: $textColor !default;
 $accordionContentBorder: 0 none !default;
 $accordionContentBg: #ffffff !default;
 $accordionContentTextColor: $textColor !default;
-$accordionContentPadding: 1rem 1.5rem !default;
+$accordionContentPadding: 0.5rem !default;
 
 //tabview
 $tabviewNavBorder: solid rgba(0, 0, 0, .12) !default;
@@ -606,15 +616,15 @@ $overlayContentBg: $panelContentBg !default;
 $overlayContainerShadow: 0 11px 15px -7px rgba(0, 0, 0, .2), 0 24px 38px 3px rgba(0, 0, 0, .14), 0 9px 46px 8px rgba(0, 0, 0, .12) !default;
 
 //dialog
-$dialogHeaderBg: #ffffff !default;
-$dialogHeaderBorder: 0 none !default;
-$dialogHeaderTextColor: $textColor !default;
-$dialogHeaderFontWeight: 500 !default;
-$dialogHeaderFontSize: 1.25rem !default;
-$dialogHeaderPadding: 1.5rem !default;
-$dialogContentPadding: 0 1.5rem 1.5rem 1.5rem !default;
-$dialogFooterBorder: 0 none !default;
-$dialogFooterPadding: 1rem 1.5rem !default;
+$dialogHeaderBg: #ffffff;
+$dialogHeaderBorder: 0 none;
+$dialogHeaderTextColor: $textColor;
+$dialogHeaderFontWeight: $fontWeightSemiBold;
+$dialogHeaderFontSize: $fontBodyMedium;
+$dialogHeaderPadding: 1rem 1.33rem;
+$dialogContentPadding: 0 1.33rem 1.33rem 1.33rem;
+$dialogFooterBorder: 0 none;
+$dialogFooterPadding: 1rem 1.33rem;
 
 //confirmpopup
 $confirmPopupContentPadding: 1.5rem !default;
@@ -648,7 +658,7 @@ $menuWidth: 12.5rem !default;
 $menuBg: #ffffff !default;
 $menuBorder: 1px solid #e5e5e5 !default;
 $menuTextColor: $textColor !default;
-$menuitemPadding: 1rem 1rem !default;
+$menuitemPadding: 0.5rem 1rem !default;
 $menuitemBorderRadius: 0 !default;
 $menuitemTextColor: $textColor !default;
 $menuitemIconColor: $textSecondaryColor !default;
@@ -772,8 +782,8 @@ $avatarBg: rgba(0, 0, 0, .12) !default;
 $avatarTextColor: $textColor !default;
 
 //chip
-$chipBg: rgba(0, 0, 0, .12) !default;
-$chipTextColor: $textColor !default;
+$chipBg: var(--surface-200) !default;
+$chipTextColor: var(--text-color-subdued) !default;
 $chipBorderRadius: 16px !default;
 $chipFocusBg: rgba(0, 0, 0, .24) !default;
 $chipFocusTextColor: $textColor !default;
@@ -833,57 +843,65 @@ $imagePreviewActionIconFontSize: 1.5rem !default;
 $imagePreviewActionIconBorderRadius: 50% !default;
 
 :root {
-    --surface-a: #ffffff;
-    --surface-b: #fafafa;
-    --surface-c: rgba(0, 0, 0, .04);
-    --surface-d: rgba(0, 0, 0, .12);
-    --surface-e: #ffffff;
-    --surface-f: #ffffff;
-    --text-color:#{$textColor};
-    --text-color-primary:#{$textColor};
-    --text-color-secondary:#{$textSecondaryColor};
-    --text-color-subdued: rgb(102, 112, 133);
-    --text-color-disabled: rgb(208, 213, 221);
-    --primary-color:#{$primaryColor};
-    --primary-color-lighter: #ABEFE6;
-    --primary-color-light: #67d2c3;
-    --primary-color-dark: #12564D;
-    --primary-color-text:#{$primaryTextColor};
-    --font-family:#{$fontFamily};
-    --surface-0: #ffffff;
-    --surface-50: #FAFAFA;
-    --surface-100: #F5F5F5;
-    --surface-200: #EEEEEE;
-    --surface-300: #E0E0E0;
-    --surface-400: #BDBDBD;
-    --surface-500: #9E9E9E;
-    --surface-600: #757575;
-    --surface-700: #616161;
-    --surface-800: #424242;
-    --surface-900: #212121;
-    --gray-0: #FFFFFF;
-    --gray-50: #FAFAFA;
-    --gray-100: #F5F5F5;
-    --gray-200: #EEEEEE;
-    --gray-300: #E0E0E0;
-    --gray-400: #BDBDBD;
-    --gray-500: #9E9E9E;
-    --gray-600: #757575;
-    --gray-700: #616161;
-    --gray-800: #424242;
-    --gray-900: #212121;
-    --content-padding:#{$panelContentPadding};
-    --inline-spacing:#{$inlineSpacing};
-    --border-radius:#{$borderRadius};
-    --surface-ground: var(--gray-100);
-    --surface-secondary: #F9FAFB;
-    --surface-section: #ffffff;
-    --surface-card: #ffffff;
-    --surface-overlay: #ffffff;
-    --surface-border: #D0D5DD;
-    --surface-hover: rgba(0, 0, 0, .04);
-    --surface-highlight: #E9FFFC;
-    --focus-ring: #{$focusShadow};
-    --maskbg: #{$maskBg};
-    color-scheme: light;
+	--surface-a: #ffffff;
+	--surface-b: #fafafa;
+	--surface-c: rgba(0, 0, 0, .04);
+	--surface-d: rgba(0, 0, 0, .12);
+	--surface-e: #ffffff;
+	--surface-f: #ffffff;
+	--text-color: #{$textColor};
+	--text-color-primary: #{$textColor};
+	--text-color-secondary: #{$textSecondaryColor};
+	--text-color-subdued: rgb(102, 112, 133);
+	--text-color-disabled: rgb(208, 213, 221);
+	--primary-color: #{$primaryColor};
+	--primary-color-lighter: #{$primaryColorLighter};
+	--primary-color-light: #{$primaryColorLight};
+	--primary-color-dark: #{$primaryColorDark};
+	--primary-color-text: #{$primaryTextColor};
+	--font-family: #{$fontFamily};
+	--font-caption: #{$fontCaption};
+	--font-body-small: #{$fontBodySmall};
+	--font-body-medium: #{$fontBodyMedium};
+	--font-body-large: #{$fontBodyLarge};
+	--font-size: #{$fontSize};
+	--font-weight: #{$fontWeight};
+	--font-weight-semibold: #{$fontWeightSemiBold};
+	--surface-0: #ffffff;
+	--surface-50: #FAFAFA;
+	--surface-100: #F5F5F5;
+	--surface-200: #EEEEEE;
+	--surface-300: #E0E0E0;
+	--surface-400: #BDBDBD;
+	--surface-500: #9E9E9E;
+	--surface-600: #757575;
+	--surface-700: #616161;
+	--surface-800: #424242;
+	--surface-900: #212121;
+	--gray-0: #FFFFFF;
+	--gray-50: #FAFAFA;
+	--gray-100: #F5F5F5;
+	--gray-200: #EEEEEE;
+	--gray-300: #E0E0E0;
+	--gray-400: #BDBDBD;
+	--gray-500: #9E9E9E;
+	--gray-600: #757575;
+	--gray-700: #616161;
+	--gray-800: #424242;
+	--gray-900: #212121;
+	--content-padding: #{$panelContentPadding};
+	--inline-spacing: #{$inlineSpacing};
+	--border-radius: #{$borderRadius};
+	--surface-ground: var(--gray-100);
+	--surface-secondary: #F9FAFB;
+	--surface-section: #ffffff;
+	--surface-card: #ffffff;
+	--surface-overlay: #ffffff;
+	--surface-border: #D0D5DD;
+	--surface-hover: var(--gray-200);
+	--surface-highlight: #E3EFE4;
+	--focus-ring: #{$focusShadow};
+	--maskbg: #{$maskBg};
+	color-scheme: light;
+	--primary-color:#{$primaryColor};
 }

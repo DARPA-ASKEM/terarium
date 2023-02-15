@@ -1,70 +1,126 @@
+<template>
+	<header>
+		<section class="header-left">
+			<router-link :to="RoutePath.Home">
+				<img
+					v-if="currentProjectId"
+					src="@assets/svg/terarium-icon.svg"
+					height="36"
+					alt="TERArium icon"
+				/>
+				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+			</router-link>
+			<h1 v-if="currentProjectId" @click="showNavigationMenu">
+				{{ currentProjectName }}
+				<i class="pi pi-angle-down" />
+			</h1>
+			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" />
+		</section>
+		<SearchBar
+			v-if="active"
+			class="search-bar"
+			ref="searchBarRef"
+			:showSuggestions="resourceType === ResourceType.XDD"
+			@query-changed="updateRelatedTerms"
+			@toggle-search-by-example="searchByExampleModalToggled"
+		/>
+		<section v-if="active" class="header-right">
+			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
+			<Dialog header="Logout" v-model:visible="isLogoutDialog">
+				<p>You will be returned to the login screen.</p>
+				<template #footer>
+					<Button label="Cancel" class="p-button-secondary" @click="closeLogoutDialog" />
+					<Button label="Ok" @click="auth.logout" />
+				</template>
+			</Dialog>
+		</section>
+		<aside class="suggested-terms" v-if="!isEmpty(terms)">
+			Suggested terms:
+			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
+				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
+			</Chip>
+		</aside>
+	</header>
+</template>
+
 <script setup lang="ts">
-import { computed, ref, watch, shallowRef } from 'vue';
-import { useRouter, RouteParamsRaw } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { isEmpty } from 'lodash';
+import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
-import Menu from 'primevue/menu';
-import { Project } from '@/types/Project';
-import useAuthStore from '@/stores/auth';
+import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
-import SearchBar from '@/components/data-explorer/search-bar.vue';
+import Menu from 'primevue/menu';
+import SearchBar from '@/page/data-explorer/components/search-bar.vue';
+import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
-import Dropdown from 'primevue/dropdown';
-import { useCurrentRoute, RoutePath } from '@/router/index';
+import { getRelatedTerms } from '@/services/data';
+import useAuthStore from '@/stores/auth';
+import { ResourceType } from '@/types/common';
+import { Project as ProjectType } from '@/types/Project';
+import { MenuItem } from 'primevue/menuitem';
 
 const props = defineProps<{
-	project: Project | null;
-	searchBarText?: string;
-	relatedSearchTerms?: string[];
+	active: boolean;
+	currentProjectId: ProjectType['id'] | null;
+	projects: ProjectType[] | null;
+	resourceType: string;
 }>();
-interface NavItem {
-	[key: string]: { name: string; icon: string; routeName: string };
-}
-const activeProjectName = computed(() => props.project?.name || '');
-const activeProjectId = computed(() => props.project?.id);
-const currentRoute = useCurrentRoute();
-const router = useRouter();
-const initialNavItems = {
-	[RoutePath.Home]: {
-		name: RouteMetadata[RouteName.HomeRoute].displayName,
-		icon: RouteMetadata[RouteName.HomeRoute].icon,
-		routeName: RouteName.HomeRoute
-	},
-	[RoutePath.DataExplorer]: {
-		name: RouteMetadata[RouteName.DataExplorerRoute].displayName,
-		icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
-		routeName: RouteName.DataExplorerRoute
-	}
-};
-const emptyNavItem = {
-	name: '',
-	icon: '',
-	routeName: '/'
-};
-const navItems = shallowRef<NavItem>(initialNavItems);
 
-const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
+/*
+ * Navigation Menu
+ */
+const router = useRouter();
+const navigationMenu = ref();
+const homeItem: MenuItem = {
+	label: RouteMetadata[RouteName.HomeRoute].displayName,
+	icon: RouteMetadata[RouteName.HomeRoute].icon,
+	command: () => router.push(RoutePath.Home)
+};
+const navMenuItems = ref<MenuItem[]>([homeItem]);
+const showNavigationMenu = (event) => {
+	navigationMenu.value.toggle(event);
+};
+
+/*
+ * User Menu
+ */
 const auth = useAuthStore();
 const userMenu = ref();
-const isLogoutConfirmationVisible = ref(false);
+const isLogoutDialog = ref(false);
 const userMenuItems = ref([
 	{
 		label: 'Logout',
 		command: () => {
-			isLogoutConfirmationVisible.value = !isLogoutConfirmationVisible.value;
+			isLogoutDialog.value = true;
 		}
 	}
 ]);
+
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
+
 const userInitials = computed(() =>
 	auth.name
 		?.split(' ')
 		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
 );
 
-function searchTextChanged(value) {
-	router.push({ name: RouteName.DataExplorerRoute, query: { q: value } });
+function closeLogoutDialog() {
+	isLogoutDialog.value = false;
+}
+
+/*
+ * Search
+ */
+const searchBarRef = ref();
+const terms = ref<string[]>([]);
+
+async function updateRelatedTerms(q?: string) {
+	terms.value = await getRelatedTerms(q);
 }
 
 function searchByExampleModalToggled() {
@@ -81,142 +137,95 @@ function searchByExampleModalToggled() {
 	*/
 }
 
-function goToPage(event) {
-	const routeName = event.value.routeName;
-	if (routeName === RouteName.ProjectRoute && activeProjectId.value) {
-		const params: RouteParamsRaw = { projectId: activeProjectId.value };
-		router.push({ name: routeName, params });
-	} else {
-		router.push({ name: routeName });
-	}
-}
+/*
+ * Reactive
+ */
+const currentProjectName = computed(
+	() => props.projects?.find((project) => project.id === props.currentProjectId?.toString())?.name
+);
 
-watch(activeProjectId, (newProjectId) => {
-	const projectNavKey = `/projects/${newProjectId}`;
-	const projectNavItem = {
-		[projectNavKey]: {
-			name: activeProjectName.value,
-			icon: 'pi pi-images',
-			routeName: RouteName.ProjectRoute
+watch(
+	() => props.projects,
+	() => {
+		if (props.projects) {
+			const items: MenuItem[] = [];
+			props.projects?.forEach((project) => {
+				items.push({
+					label: project.name,
+					icon: 'pi pi-clone',
+					command: () =>
+						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
+				});
+			});
+			navMenuItems.value = [homeItem, { label: 'Projects', items }];
 		}
-	};
-	navItems.value = { ...initialNavItems, ...projectNavItem };
-	selectedPage.value = navItems.value[currentRoute.value.path];
-});
-
-watch(currentRoute, (newRoute) => {
-	selectedPage.value = navItems.value[newRoute.path] || emptyNavItem;
-});
+	},
+	{ immediate: true }
+);
 </script>
-
-<template>
-	<header>
-		<section class="header-left">
-			<img src="@assets/images/TERArium-logo.png" height="48" width="168" alt="logo" />
-			<section class="nav">
-				<Dropdown
-					class="dropdown"
-					v-model="selectedPage"
-					:options="Object.values(navItems)"
-					optionLabel="name"
-					panelClass="dropdown-panel"
-					@change="goToPage"
-				>
-					<template #value="slotProps">
-						<i :class="slotProps.value.icon" />
-						<span>{{ slotProps.value.name }}</span>
-					</template>
-					<template #option="slotProps">
-						<i :class="slotProps.option.icon" />
-						<span>{{ slotProps.option.name }}</span>
-					</template>
-				</Dropdown>
-			</section>
-		</section>
-		<SearchBar
-			class="searchbar"
-			:text="searchBarText"
-			@search-text-changed="searchTextChanged"
-			@toggle-search-by-example="searchByExampleModalToggled"
-			:relatedSearchTerms="relatedSearchTerms"
-		/>
-		<section class="header-right">
-			<Button
-				class="p-button p-button-icon-only p-button-rounded p-button-sm user-button"
-				@click="showUserMenu"
-			>
-				{{ userInitials }}
-			</Button>
-		</section>
-		<Menu ref="userMenu" :model="userMenuItems" :popup="true"> </Menu>
-		<Dialog header="Logout" v-model:visible="isLogoutConfirmationVisible">
-			<span>You will be returned to the login screen.</span>
-			<template #footer>
-				<Button label="Ok" class="p-button-text" @click="auth.logout"></Button>
-				<Button
-					label="Cancel"
-					class="p-button-text"
-					@click="isLogoutConfirmationVisible = false"
-				></Button>
-			</template>
-		</Dialog>
-	</header>
-</template>
 
 <style scoped>
 header {
 	background-color: var(--surface-section);
-	min-height: var(--header-height);
-	display: flex;
-	align-items: flex-start;
-	padding: 8px 16px;
-	gap: 8px;
 	border-bottom: 1px solid var(--surface-border);
-	flex: none;
+	padding: 0.5rem 1rem;
+	display: grid;
+	column-gap: 0.5rem;
+	grid-template-areas:
+		'header-left search-bar header-right'
+		'suggested-terms suggested-terms suggested-terms';
+	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
 }
 
-section {
-	display: flex;
-	gap: 1rem;
+h1 {
+	font-size: var(--font-body-large);
+	font-weight: var(--font-weight-semibold);
 }
 
-.user-button {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-ground);
-}
+/* Search Bar */
 
-.user-button:enabled:hover {
-	color: var(--text-color-secondary);
-	background-color: var(--surface-secondary);
-}
-
-.nav {
-	justify-content: center;
+.search-bar {
+	grid-area: search-bar;
 	margin-left: auto;
-	flex: 0.5;
+	margin-right: auto;
+	min-width: 25vw;
+	max-width: 60rem;
+	width: 100%;
 }
 
-.header-left {
-	flex: 1;
-}
+/* Header Right */
 
 .header-right {
-	flex: 1;
-	justify-content: right;
+	grid-area: header-right;
+	margin-left: auto;
 }
 
-.searchbar {
-	flex: 2;
+.avatar {
+	color: var(--text-color-subdued);
+	background-color: var(--surface-ground);
+	cursor: pointer;
+}
+
+.avatar:hover {
+	color: var(--text-color);
+	background-color: var(--surface-hover);
+}
+
+/* Header Left */
+.header-left {
+	align-items: center;
+	display: flex;
+	gap: 1rem;
+	grid-area: header-left;
+	height: 100%;
+}
+
+.header-left:deep(.p-dropdown-label.p-inputtext) {
+	padding-right: 0;
 }
 
 .p-dropdown {
-	height: 3rem;
-	flex: 1;
 	border: 0;
-}
-
-.p-dropdown:not(.p-disabled).p-focus {
-	box-shadow: none;
 }
 
 .p-dropdown-label {
@@ -227,7 +236,27 @@ i {
 	margin-right: 0.5rem;
 }
 
-.logo {
-	align-self: center;
+/* Suggested terms */
+.suggested-terms {
+	align-items: center;
+	font-weight: var(--font-weight-semibold);
+	color: var(--text-color-subdued);
+	display: flex;
+	column-gap: 0.5rem;
+	font-size: var(--font-caption);
+	grid-area: suggested-terms;
+	justify-content: center;
+	margin-top: 0.5rem;
+	white-space: nowrap;
+}
+
+.clear-search-terms:enabled {
+	color: var(--text-color-secondary);
+	background-color: transparent;
+}
+
+.clear-search-terms:enabled:hover {
+	background-color: var(--surface-hover);
+	color: var(--text-color-secondary);
 }
 </style>

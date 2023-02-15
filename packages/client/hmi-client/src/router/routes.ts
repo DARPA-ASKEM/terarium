@@ -5,6 +5,7 @@ import IconMachineLearningModel32 from '@carbon/icons-vue/es/machine-learning-mo
 import IconTableSplit32 from '@carbon/icons-vue/es/table--split/32';
 import IconChartCombo32 from '@carbon/icons-vue/es/chart--combo/32';
 import IconFlow32 from '@carbon/icons-vue/es/flow/32';
+import IconCode32 from '@carbon/icons-vue/es/code/32';
 import { ProjectAssetTypes } from '@/types/Project';
 
 export enum RouteName {
@@ -16,7 +17,8 @@ export enum RouteName {
 	ProvenanceRoute = 'provenance',
 	SimulationRoute = 'simulation',
 	SimulationResultRoute = 'simulationResult',
-	DataExplorerRoute = 'dataExplorer'
+	DataExplorerRoute = 'dataExplorer',
+	CodeRoute = 'code'
 }
 
 export const RouteMetadata: {
@@ -28,9 +30,9 @@ export const RouteMetadata: {
 		projectAsset: ProjectAssetTypes.DATASETS
 	},
 	[RouteName.DocumentRoute]: {
-		displayName: 'Papers',
+		displayName: 'Documents',
 		icon: IconDocument32,
-		projectAsset: ProjectAssetTypes.PUBLICATIONS
+		projectAsset: ProjectAssetTypes.DOCUMENTS
 	},
 	[RouteName.ModelRoute]: {
 		displayName: 'Models',
@@ -47,6 +49,11 @@ export const RouteMetadata: {
 		displayName: 'Analysis',
 		icon: IconChartCombo32,
 		projectAsset: ProjectAssetTypes.SIMULATION_RUNS
+	},
+	[RouteName.CodeRoute]: {
+		displayName: 'Code',
+		icon: IconCode32,
+		projectAsset: ProjectAssetTypes.CODE
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
 	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },
