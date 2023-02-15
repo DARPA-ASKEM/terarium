@@ -55,7 +55,6 @@ const directionMap = {
 const sidePanelContentStyle = computed(() => {
 	let style: string = props.isOpen ? '' : directionMap[props.direction].content();
 	style += thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : '';
-	console.log(style);
 	return style;
 });
 

@@ -241,7 +241,6 @@ onMounted(async () => {
 
 function toggleEditMode() {
 	isEditing.value = !isEditing.value;
-	console.log(model.value, isEditing.value);
 }
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));

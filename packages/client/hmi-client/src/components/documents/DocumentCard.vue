@@ -52,7 +52,6 @@ async function fetchArtifacts(doi) {
 	if (doi !== '') {
 		const allArtifacts = await getXDDArtifacts(doi);
 		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
-		console.log(artifacts.value);
 	} else {
 		artifacts.value = [];
 	}
