@@ -1,11 +1,10 @@
 <template>
-	<slider
+	<tera-slider
 		class="preview-slider"
 		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
 		:is-open="Boolean(previewItem)"
-		:has-footer="true"
 	>
 		<template v-slot:content>
 			<header>
@@ -35,23 +34,23 @@
 					:highlight="searchTerm"
 					:is-editable="false"
 				/>
-				<footer>
-					<Button
-						v-if="!previewItemSelected"
-						label="Add to selected resources"
-						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="toggle-selection"
-					/>
-					<Button
-						v-else
-						label="Remove from Resources"
-						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="toggle-selection p-button-secondary"
-					/>
-				</footer>
 			</section>
 		</template>
-	</slider>
+		<template v-slot:footerButtons>
+			<Button
+				v-if="!previewItemSelected"
+				label="Add to selected resources"
+				@click="emit('toggle-data-item-selected', { item: previewItem })"
+				class="toggle-selection"
+			/>
+			<Button
+				v-else
+				label="Remove from Resources"
+				@click="emit('toggle-data-item-selected', { item: previewItem })"
+				class="toggle-selection p-button-secondary"
+			/>
+		</template>
+	</tera-slider>
 </template>
 
 <script setup lang="ts">
@@ -63,7 +62,7 @@ import { isDocument } from '@/utils/data-util';
 import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
-import Slider from '@/components/widgets/Slider.vue';
+import TeraSlider from '@/components/widgets/tera-slider.vue';
 
 const resources = useResourcesStore();
 
@@ -143,17 +142,6 @@ header {
 
 i {
 	cursor: pointer;
-}
-
-footer {
-	border-top: 1px solid var(--surface-border);
-	background-color: var(--surface-section);
-	position: fixed;
-	height: 5rem;
-	bottom: 3rem;
-	width: 100%;
-	display: flex;
-	align-items: center;
 }
 
 .toggle-selection {

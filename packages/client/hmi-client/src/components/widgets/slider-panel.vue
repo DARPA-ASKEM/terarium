@@ -1,5 +1,5 @@
 <template>
-	<slider
+	<tera-slider
 		:content-width="contentWidth"
 		:tab-width="tabWidth"
 		:direction="direction"
@@ -26,12 +26,12 @@
 			</div>
 			<slot name="tab"></slot>
 		</template>
-	</slider>
+	</tera-slider>
 </template>
 
 <script setup lang="ts">
 import Badge from 'primevue/badge';
-import Slider from './Slider.vue';
+import TeraSlider from './tera-slider.vue';
 
 defineProps({
 	// slider props
