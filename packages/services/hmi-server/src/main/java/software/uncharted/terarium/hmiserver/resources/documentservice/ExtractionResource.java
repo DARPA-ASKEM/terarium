@@ -29,16 +29,16 @@ public class ExtractionResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
-	public XDDResponse<XDDExtractionsResponseOK> searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass) {
+	public XDDResponse<XDDExtractionsResponseOK> searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass, @QueryParam("include_highlights") String include_highlights) {
 
 		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
 
 		Boolean isDoi = matcher.find();
 
 		if (isDoi) {
-			return proxy.getExtractions(term, null, page, askemClass);
+			return proxy.getExtractions(term, null, page, askemClass, include_highlights);
 		} else {
-			return proxy.getExtractions(null, term, page, askemClass);
+			return proxy.getExtractions(null, term, page, askemClass, include_highlights);
 		}
 	}
 
