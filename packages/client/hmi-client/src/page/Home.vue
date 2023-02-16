@@ -192,15 +192,22 @@ async function createNewProject() {
 			<header>
 				<h3>Papers related to your projects</h3>
 			</header>
-			<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
+
+			<div v-for="(project, index) in projectsToDisplay" :key="index">
 				<p>{{ project.name }}</p>
-				<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
-				<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
-				<ul>
-					<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-						<DocumentCard :document="document" @click="selectDocument(document)" />
-					</li>
-				</ul>
+				<div class="carousel">
+					<div class="chevron-left">
+						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+					</div>
+					<div class="chevron-right">
+						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+					</div>
+					<ul>
+						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+							<DocumentCard :document="document" @click="selectDocument(document)" />
+						</li>
+					</ul>
+				</div>
 			</div>
 		</section>
 	</section>
@@ -224,7 +231,7 @@ section {
 }
 
 .papers p {
-	margin: 1rem 0 1rem -5rem;
+	margin: 1rem 0 1rem 0rem;
 }
 
 h3 {
@@ -288,7 +295,6 @@ header svg {
 .chevron-right {
 	width: 4rem;
 	position: absolute;
-	/* visibility: hidden; */
 }
 
 .chevron-left,
