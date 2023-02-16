@@ -12,9 +12,13 @@
             <div class="connection"></div>
             <div class="inputs"></div>
             <div class="node" :id="node.id">
-                <div class="node-in" @click.stop="(event) => createConnection(event)"></div>
+                <div class="node-in" @click.stop="(event) => nodeSelected(event)"></div>
                 <div>{{ node.name }}</div>
-                <div class="node-out" @click.stop="(event) => createConnection(event)"></div>
+                <div class="node-out" @click.stop="(event) => nodeSelected(event)"></div>
+            </div>
+            <div class="outputs">
+                <div class="wire" v-for="out in node.outputs">
+                </div>
             </div>
         </div>
     </div>
@@ -37,7 +41,8 @@
 
 .connection,
 .inputs,
-.node {
+.node,
+.outputs {
     flex: 1;
     height: 100px;
     min-width: 50px;
@@ -62,6 +67,10 @@
 .node div:hover {
     background-color: var(--surface-secondary);
 }
+
+.wire {
+    height: 10px;
+}
 </style>
 
 <script setup lang="ts">
@@ -72,12 +81,12 @@ import InputText from 'primevue/inputtext';
 interface Node {
     id: string,
     name: string,
-    inputs?: Node[],
-    outputs?: Node[]
+    inputs: Node[],
+    outputs: Node[]
 }
 interface Connection {
-    in?: string,
-    out?: string
+    in?: Node,
+    out?: Node
 }
 const nodes = ref<Node[]>([]);
 const modalVisible = ref(false);
@@ -96,28 +105,45 @@ async function createNode() {
 function insertNode() {
     const newNode: Node = {
         id: nodes.value.length.toString(),
-        name: newNodeName.value
+        name: newNodeName.value,
+        inputs: [],
+        outputs: []
     };
     nodes.value.push(newNode);
     modalVisible.value = false;
     newNodeName.value = '';
 }
 
-function invalidateConnection() {
-    console.warn("Invalid connection");
+function invalidateConnection(reason?: string) {
+    console.warn(`Invalid connection - ${reason}`);
     newConnection.value = {};
 }
 
-function createConnection(event) {
+function createConnection() {
+    if (newConnection.value.out && newConnection.value.in) {
+        newConnection.value.in?.inputs.push(newConnection.value.out);
+        newConnection.value.out?.outputs.push(newConnection.value.in);
+    }
+    newConnection.value = {};
+}
+
+function getNodeById(id: string | undefined): Node | undefined {
+    if (!id) {
+        return undefined;
+    }
+    return nodes.value.find(n => n.id === id);
+}
+
+function nodeSelected(event) {
     const clickedElement: HTMLElement = event.target;
     if (isSelectingConnection.value === false) {
         isSelectingConnection.value = true;
         switch (clickedElement.className) {
             case 'node-out':
-                newConnection.value.out = clickedElement.parentElement?.id;
+                newConnection.value.out = getNodeById(clickedElement.parentElement?.id);
                 break;
             case 'node-in':
-                newConnection.value.in = clickedElement.parentElement?.id;
+                newConnection.value.in = getNodeById(clickedElement.parentElement?.id);
                 break;
             default: break;
         }
@@ -125,25 +151,35 @@ function createConnection(event) {
         switch (clickedElement.className) {
             case 'node-out':
                 if (newConnection.value.out) {
-                    invalidateConnection();
+                    invalidateConnection("Can't connect output to output");
                 } else {
-                    const nodeId = clickedElement.parentElement?.id;
-                    if (newConnection.value.in === nodeId) {
-                        invalidateConnection();
+                    const clickedNodeId = clickedElement.parentElement?.id;
+                    if (newConnection.value.in?.id === clickedNodeId) {
+                        invalidateConnection("Can't connect node to itself");
                     } else {
-                        newConnection.value.out = nodeId;
+                        const clickedNode = getNodeById(clickedNodeId);
+                        if (clickedNode?.outputs.find(n => n.id === newConnection.value.in?.id)) {
+                            invalidateConnection("Connection already exists");
+                        }
+                        newConnection.value.out = getNodeById(clickedNodeId);
+                        createConnection();
                     }
                 }
                 break;
             case 'node-in':
                 if (newConnection.value.in) {
-                    invalidateConnection();
+                    invalidateConnection("Can't connect input to input");
                 } else {
-                    const nodeId = clickedElement.parentElement?.id;
-                    if (newConnection.value.out === nodeId) {
-                        invalidateConnection();
+                    const clickedNodeId = clickedElement.parentElement?.id;
+                    if (newConnection.value.out?.id === clickedNodeId) {
+                        invalidateConnection("Can't connect node to itself");
                     } else {
-                        newConnection.value.in = nodeId;
+                        const clickedNode = getNodeById(clickedNodeId);
+                        if (clickedNode?.inputs.find(n => n.id === newConnection.value.out?.id)) {
+                            invalidateConnection("Connection already exists");
+                        }
+                        newConnection.value.in = getNodeById(clickedNodeId);
+                        createConnection();
                     }
                 }
                 break;
