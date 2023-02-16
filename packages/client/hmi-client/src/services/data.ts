@@ -330,6 +330,7 @@ const getAssets = async (params: GetAssetsParams) => {
 const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
 	let url = '/document/extractions?';
 	url += `term=${term}`;
+	url += '&include_highlights=true';
 
 	if (extractionTypes) {
 		url += '&ASKEM_CLASS=';

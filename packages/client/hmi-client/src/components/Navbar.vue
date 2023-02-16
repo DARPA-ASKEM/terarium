@@ -2,27 +2,19 @@
 	<header>
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
-				<img src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+				<img
+					v-if="currentProjectId"
+					src="@assets/svg/terarium-icon.svg"
+					height="36"
+					alt="TERArium icon"
+				/>
+				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
 			</router-link>
-			<nav v-if="active">
-				<Dropdown
-					class="dropdown"
-					v-model="selectedPage"
-					:options="Object.values(navItems)"
-					optionLabel="name"
-					panelClass="dropdown-panel"
-					@change="goToPage"
-				>
-					<template #value="slotProps">
-						<i :class="slotProps.value.icon" />
-						<span>{{ slotProps.value.name }}</span>
-					</template>
-					<template #option="slotProps">
-						<i :class="slotProps.option.icon" />
-						<span>{{ slotProps.option.name }}</span>
-					</template>
-				</Dropdown>
-			</nav>
+			<h1 v-if="currentProjectId" @click="showNavigationMenu">
+				{{ currentProjectName }}
+				<i class="pi pi-angle-down" />
+			</h1>
+			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" />
 		</section>
 		<SearchBar
 			v-if="active"
@@ -34,6 +26,14 @@
 		/>
 		<section v-if="active" class="header-right">
 			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
+			<Dialog header="Logout" v-model:visible="isLogoutDialog">
+				<p>You will be returned to the login screen.</p>
+				<template #footer>
+					<Button label="Cancel" class="p-button-secondary" @click="closeLogoutDialog" />
+					<Button label="Ok" @click="auth.logout" />
+				</template>
+			</Dialog>
 		</section>
 		<aside class="suggested-terms" v-if="!isEmpty(terms)">
 			Suggested terms:
@@ -42,64 +42,51 @@
 			</Chip>
 		</aside>
 	</header>
-	<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
-	<Dialog header="Logout" v-model:visible="isLogoutDialog">
-		<p>You will be returned to the login screen.</p>
-		<template #footer>
-			<Button label="Cancel" class="p-button-secondary" @click="closeLogoutDialog" />
-			<Button label="Ok" @click="auth.logout" />
-		</template>
-	</Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, shallowRef } from 'vue';
-import { useRouter, RouteParamsRaw } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
-import { getRelatedTerms } from '@/services/data';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
 import Menu from 'primevue/menu';
-import { useCurrentRoute, RoutePath } from '@/router/index';
+import SearchBar from '@/page/data-explorer/components/search-bar.vue';
+import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
+import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import { ResourceType } from '@/types/common';
-import { Project } from '@/types/Project';
-import SearchBar from '@/page/data-explorer/components/search-bar.vue';
+import { Project as ProjectType } from '@/types/Project';
+import { MenuItem } from 'primevue/menuitem';
 
 const props = defineProps<{
 	active: boolean;
-	project: Project | null;
+	currentProjectId: ProjectType['id'] | null;
+	projects: ProjectType[] | null;
 	resourceType: string;
 }>();
 
-interface NavItem {
-	[key: string]: { name: string; icon: string; routeName: string };
-}
-
-const activeProjectName = computed(() => props.project?.name || '');
-const activeProjectId = computed(() => props.project?.id);
-const currentRoute = useCurrentRoute();
+/*
+ * Navigation Menu
+ */
 const router = useRouter();
-const initialNavItems = {
-	[RoutePath.Home]: {
-		name: RouteMetadata[RouteName.HomeRoute].displayName,
-		icon: RouteMetadata[RouteName.HomeRoute].icon,
-		routeName: RouteName.HomeRoute
-	}
+const navigationMenu = ref();
+const homeItem: MenuItem = {
+	label: RouteMetadata[RouteName.HomeRoute].displayName,
+	icon: RouteMetadata[RouteName.HomeRoute].icon,
+	command: () => router.push(RoutePath.Home)
 };
-const emptyNavItem = {
-	name: '',
-	icon: '',
-	routeName: '/'
+const navMenuItems = ref<MenuItem[]>([homeItem]);
+const showNavigationMenu = (event) => {
+	navigationMenu.value.toggle(event);
 };
-const navItems = shallowRef<NavItem>(initialNavItems);
 
-const searchBarRef = ref();
-const selectedPage = ref(navItems.value[currentRoute.value.path] || emptyNavItem);
+/*
+ * User Menu
+ */
 const auth = useAuthStore();
 const userMenu = ref();
 const isLogoutDialog = ref(false);
@@ -111,14 +98,30 @@ const userMenuItems = ref([
 		}
 	}
 ]);
+
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
+
 const userInitials = computed(() =>
 	auth.name
 		?.split(' ')
 		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
 );
+
+function closeLogoutDialog() {
+	isLogoutDialog.value = false;
+}
+
+/*
+ * Search
+ */
+const searchBarRef = ref();
+const terms = ref<string[]>([]);
+
+async function updateRelatedTerms(q?: string) {
+	terms.value = await getRelatedTerms(q);
+}
 
 function searchByExampleModalToggled() {
 	// TODO
@@ -134,53 +137,31 @@ function searchByExampleModalToggled() {
 	*/
 }
 
-function goToPage(event) {
-	const routeName = event.value.routeName;
-	if (routeName === RouteName.ProjectRoute && activeProjectId.value) {
-		const params: RouteParamsRaw = { projectId: activeProjectId.value };
-		router.push({ name: routeName, params });
-	} else {
-		router.push({ name: routeName });
-	}
-}
-
-function updateProjectNavItem(id, name) {
-	const projectNavKey = `/projects/${id}`;
-	const projectNavItem = {
-		[projectNavKey]: {
-			name,
-			icon: 'pi pi-clone',
-			routeName: RouteName.ProjectRoute
-		}
-	};
-	navItems.value = { ...initialNavItems, ...projectNavItem };
-	selectedPage.value = navItems.value[currentRoute.value.path];
-}
-
-function closeLogoutDialog() {
-	isLogoutDialog.value = false;
-}
-
-watch(activeProjectId, (newProjectId) => {
-	updateProjectNavItem(newProjectId, activeProjectName.value);
-});
-
-watch(activeProjectName, (newProjectName) => {
-	updateProjectNavItem(activeProjectId.value, newProjectName);
-});
-
-watch(currentRoute, (newRoute) => {
-	selectedPage.value = navItems.value[newRoute.path] || emptyNavItem;
-});
-
 /*
- * Search
+ * Reactive
  */
-const terms = ref<string[]>([]);
+const currentProjectName = computed(
+	() => props.projects?.find((project) => project.id === props.currentProjectId?.toString())?.name
+);
 
-async function updateRelatedTerms(q?: string) {
-	terms.value = await getRelatedTerms(q);
-}
+watch(
+	() => props.projects,
+	() => {
+		if (props.projects) {
+			const items: MenuItem[] = [];
+			props.projects?.forEach((project) => {
+				items.push({
+					label: project.name,
+					icon: 'pi pi-clone',
+					command: () =>
+						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
+				});
+			});
+			navMenuItems.value = [homeItem, { label: 'Projects', items }];
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -193,7 +174,12 @@ header {
 	grid-template-areas:
 		'header-left search-bar header-right'
 		'suggested-terms suggested-terms suggested-terms';
-	grid-template-columns: minMax(max-content, 25%) auto min-content;
+	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
+}
+
+h1 {
+	font-size: var(--font-body-large);
+	font-weight: var(--font-weight-semibold);
 }
 
 /* Search Bar */

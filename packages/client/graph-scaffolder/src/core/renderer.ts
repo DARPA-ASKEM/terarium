@@ -295,8 +295,9 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			.domain([-1, height + 1])
 			.range([-1, height + 1]);
 
-		const gX = svg.append('g').attr('class', 'axis axis--x');
-		const gY = svg.append('g').attr('class', 'axis axis--y');
+		svg.selectAll('.grid').remove();
+		const gX = svg.append('g').attr('class', 'axis axis--x').classed('grid', true);
+		const gY = svg.append('g').attr('class', 'axis axis--y').classed('grid', true);
 		const xAxis = d3
 			.axisBottom(x)
 			.ticks(((width + 2) / (height + 2)) * 10)

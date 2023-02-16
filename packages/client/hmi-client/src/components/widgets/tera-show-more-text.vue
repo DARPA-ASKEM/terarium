@@ -1,17 +1,15 @@
 <template>
-	<div class="container">
-		<div
-			ref="textContainerRef"
-			:class="{ default: !expanded, expanded: expanded }"
-			:style="`--lines: ${lines}`"
-		>
-			<div v-html="text"></div>
-		</div>
-		<a class="anchor" @click="collapseOrExpand">
-			<template v-if="triggerShowMore">Show more</template>
-			<template v-if="expanded">Show less</template>
-		</a>
+	<div
+		ref="textContainerRef"
+		:class="{ default: !expanded, expanded: expanded }"
+		:style="`--lines: ${lines}`"
+	>
+		<div v-html="text"></div>
 	</div>
+	<span @click="collapseOrExpand">
+		<template v-if="triggerShowMore">Show more</template>
+		<template v-if="expanded">Show less</template>
+	</span>
 </template>
 
 <script setup lang="ts">
@@ -64,10 +62,10 @@ onUpdated(async () => {
 	white-space: pre-line;
 }
 
-.anchor {
+span {
 	display: block;
-	text-align: right;
-	padding: 8px;
+	font-size: var(--font-caption);
+	padding: 4px 0;
 	margin-bottom: 4px;
 	color: var(--primary-color);
 	cursor: pointer;

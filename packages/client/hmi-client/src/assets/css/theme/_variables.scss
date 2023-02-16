@@ -20,6 +20,9 @@ $overlayColor: #000000 !default;
 
 $primaryColorRGB: 45, 142, 45;
 $primaryColor: #1B8073;
+$primaryColorLighter: #ABEFE6;
+$primaryColorLight: #67d2c3;
+$primaryColorDark: #12564D;
 $primaryTextColor: #ffffff !default;
 $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
@@ -132,8 +135,8 @@ $passwordStrongBg: #689F38 !default;
 
 //button
 $buttonPadding: 0.714rem 1rem !default;
-$buttonIconOnlyWidth: 3rem !default;
-$buttonIconOnlyPadding: 0.714rem !default;
+$buttonIconOnlyWidth: 2rem !default;
+$buttonIconOnlyPadding: 0.5rem !default;
 $buttonBg: $primaryColor !default;
 $buttonTextColor: $primaryTextColor !default;
 $buttonBorder: 0 none !default;
@@ -486,7 +489,7 @@ $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 1rem !default;
 $tableHeaderCellBg: #ffffff !default;
-$tableHeaderCellTextColor: $textColor !default;
+$tableHeaderCellTextColor: var(--text-color-subdued) !default;
 $tableHeaderCellFontWeight: 500 !default;
 $tableHeaderCellBorder: 1px solid #e4e4e4 !default;
 $tableHeaderCellBorderWidth: 0 0 1px 0 !default;
@@ -852,9 +855,9 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--text-color-subdued: rgb(102, 112, 133);
 	--text-color-disabled: rgb(208, 213, 221);
 	--primary-color: #{$primaryColor};
-	--primary-color-lighter: #ABEFE6;
-	--primary-color-light: #67d2c3;
-	--primary-color-dark: #12564D;
+	--primary-color-lighter: #{$primaryColorLighter};
+	--primary-color-light: #{$primaryColorLight};
+	--primary-color-dark: #{$primaryColorDark};
 	--primary-color-text: #{$primaryTextColor};
 	--font-family: #{$fontFamily};
 	--font-caption: #{$fontCaption};

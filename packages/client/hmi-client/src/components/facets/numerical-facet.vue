@@ -157,14 +157,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/variables.scss';
-
-.facet-font {
-	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-}
-
+<style scoped>
 .facet-pointer {
 	cursor: pointer;
 }
