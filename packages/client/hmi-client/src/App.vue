@@ -1,4 +1,9 @@
 <template>
+	<!-- Sets the Toast notification groups and their respective levels-->
+	<Toast position="top-right" group="error" />
+	<Toast position="top-right" group="warn" />
+	<Toast position="bottom-right" group="info" />
+	<Toast position="bottom-right" group="success" />
 	<Navbar
 		class="header"
 		:active="!isErrorState"
@@ -22,6 +27,8 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, ref, watch } from 'vue';
+import Toast from 'primevue/toast';
+import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
 import Sidebar from '@/components/Sidebar.vue';
@@ -29,11 +36,10 @@ import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { Project as ProjectType } from '@/types/Project';
-import { logBuffer } from '@/utils/logger';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
 
-logBuffer.startService();
+const toast = useToastService();
 
 /**
  * Router
@@ -68,7 +74,12 @@ API.interceptors.response.use(
 	(response) => response,
 	(error) => {
 		const status = error.response.status;
-		console.error(error);
+		toast.showToast(
+			ToastSeverity.error,
+			`${ToastSummaries.NETWORK_ERROR} (${status})`,
+			'Unauthorized',
+			5000
+		);
 		if (status === 401 || status === 403) {
 			router.push({ name: 'unauthorized' });
 		}

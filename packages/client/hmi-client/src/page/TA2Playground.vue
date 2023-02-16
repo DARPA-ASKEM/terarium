@@ -7,10 +7,8 @@ import { defineComponent, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { useLogger } from 'vue-logger-plugin';
+import { logger } from '@/utils/logger';
 import API from '@/api/api';
-
-const logger = useLogger();
 
 interface NodeData {
 	type: string;

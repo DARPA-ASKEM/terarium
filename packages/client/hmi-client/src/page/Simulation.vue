@@ -12,9 +12,7 @@ import { parseSimulationPlan2IGraph } from '@/services/simulation';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
 import { RouteName } from '@/router/routes';
-import { useLogger } from 'vue-logger-plugin';
-
-const logger = useLogger();
+import { logger } from '@/utils/logger';
 
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;

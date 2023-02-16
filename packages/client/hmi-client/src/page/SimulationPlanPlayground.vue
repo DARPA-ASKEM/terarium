@@ -5,9 +5,7 @@ import * as d3 from 'd3';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { parseSimulationPlan } from '@/services/simulation';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { useLogger } from 'vue-logger-plugin';
-
-const logger = useLogger();
+import { logger } from '@/utils/logger';
 
 const plan = {
 	InPort: [
