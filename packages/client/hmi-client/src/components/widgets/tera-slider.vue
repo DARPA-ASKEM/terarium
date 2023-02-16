@@ -3,10 +3,13 @@
 		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
-		<div class="slider-content-container" :style="`width: ${contentWidth}`">
+		<div class="slider-content-container" :style="{ width: contentWidth }">
 			<section class="slider-content" :style="sidePanelContentStyle">
-				<slot name="content"></slot>
+				<slot name="content" />
 			</section>
+			<footer>
+				<slot name="footerButtons" />
+			</footer>
 		</div>
 		<section class="slider-tab" :style="sidePanelTabStyle">
 			<slot name="tab"></slot>
@@ -15,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, getCurrentInstance } from 'vue';
 
 const props = defineProps({
 	isOpen: {
@@ -36,6 +39,8 @@ const props = defineProps({
 	}
 });
 
+const thisSlider = getCurrentInstance();
+
 const directionMap = {
 	left: {
 		content: () => 'margin-left: -100%; margin-right: 100%;',
@@ -47,9 +52,12 @@ const directionMap = {
 	}
 };
 
-const sidePanelContentStyle = computed(() =>
-	props.isOpen ? '' : directionMap[props.direction].content()
-);
+const sidePanelContentStyle = computed(() => {
+	let style: string = props.isOpen ? '' : directionMap[props.direction].content();
+	style += thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : '';
+	return style;
+});
+
 const sidePanelTabStyle = computed(
 	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab()}`
 );
@@ -75,6 +83,7 @@ const sidePanelTabStyle = computed(
 .slider-content-container {
 	position: absolute;
 	height: 100%;
+	border-left: 1px solid var(--surface-border);
 }
 
 .slider-tab {
@@ -88,15 +97,22 @@ const sidePanelTabStyle = computed(
 	opacity: 0;
 }
 
-.slider-content-container {
-	border-left: 1px solid var(--surface-border);
-}
-
 .slider-content {
 	background-color: var(--surface-section);
 	position: relative;
 	width: 100%;
 	height: 100%;
-	overflow: auto;
+	min-height: 90%;
+	overflow-y: auto;
+}
+
+footer {
+	position: relative;
+	border-top: 1px solid var(--surface-border);
+	background-color: var(--surface-section);
+	height: 5rem;
+	width: 100%;
+	display: flex;
+	align-items: center;
 }
 </style>

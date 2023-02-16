@@ -109,7 +109,7 @@ section {
 	visibility: hidden;
 	z-index: 0;
 	flex: 1;
-	min-height: 0;
+	padding: 1rem 0;
 	isolation: isolate;
 }
 
