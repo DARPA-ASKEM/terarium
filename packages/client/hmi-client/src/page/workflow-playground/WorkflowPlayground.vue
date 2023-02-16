@@ -8,7 +8,7 @@
         </Modal>
     </Teleport>
     <div class="container" @click="createNode()">
-        <div class="column" v-for="node in nodes">
+        <div class="column" v-for="node in nodes" :style="node.gridPosition">
             <div class="junction">
                 <div :style="calcJunctionSize(node)"></div>
             </div>
@@ -35,13 +35,15 @@
     height: 100%;
     width: 100%;
     grid-auto-columns: auto;
+    grid-auto-rows: auto;
     background-color: var(--surface-ground);
 }
 
 .column {
     display: flex;
     background-color: var(--surface-secondary);
-    grid-row-start: 1;
+    /* grid-row: 1; */
+    /* grid-column: 1; */
 }
 
 .junction,
@@ -104,7 +106,11 @@ interface Node {
     id: string,
     name: string,
     inputs: Node[],
-    outputs: Node[]
+    outputs: Node[],
+    gridPosition: {
+        gridRow?: string,
+        gridColumn?: string
+    }
 }
 interface Connection {
     in?: Node,
@@ -133,7 +139,10 @@ function insertNode() {
         id: nodes.value.length.toString(),
         name: newNodeName.value,
         inputs: [],
-        outputs: []
+        outputs: [],
+        gridPosition: {
+            gridColumn: "1"
+        }
     };
     nodes.value.push(newNode);
     modalVisible.value = false;
@@ -145,10 +154,23 @@ function invalidateConnection(reason?: string) {
     newConnection.value = {};
 }
 
+function updateNodePositions() {
+    const nodes = [newConnection.value.in, newConnection.value.out];
+    nodes.forEach(n => {
+        if (n?.inputs.length === 0) {
+            n.gridPosition.gridColumn = "1";
+        } else if (n?.outputs.length === 0) {
+            n.gridPosition.gridColumn = "none"
+            n.gridPosition.gridRow = "1";
+        }
+    });
+}
+
 function createConnection() {
     if (newConnection.value.out && newConnection.value.in) {
-        newConnection.value.in?.inputs.push(newConnection.value.out);
-        newConnection.value.out?.outputs.push(newConnection.value.in);
+        newConnection.value.in.inputs.push(newConnection.value.out);
+        newConnection.value.out.outputs.push(newConnection.value.in);
+        updateNodePositions();
     }
     newConnection.value = {};
 }
@@ -162,6 +184,7 @@ function getNodeById(id: string | undefined): Node | undefined {
 
 function nodeSelected(event) {
     const clickedElement: HTMLElement = event.target;
+    // console.log(clickedElement.parentElement?.parentElement?.style);
     if (isSelectingConnection.value === false) {
         isSelectingConnection.value = true;
         switch (clickedElement.className) {
