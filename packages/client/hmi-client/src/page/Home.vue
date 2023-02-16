@@ -64,7 +64,7 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 21.5 * 5;
+const SCROLL_INCREMENT_IN_REM = 21.5 * 5; // (card width + margin) * number of cards to display at once
 const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
