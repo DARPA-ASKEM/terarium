@@ -1,3 +1,82 @@
+<template>
+	<section class="asset">
+		<header>
+			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
+			<h4 v-html="dataset?.name" />
+		</header>
+		<Accordion :multiple="true">
+			<AccordionTab v-if="annotations" header="Description"
+				><span v-html="dataset?.description"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Maintainer"
+				><span v-html="dataset?.maintainer"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Quality"
+				><span v-html="dataset?.quality"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="URL"><span v-html="dataset?.url" /></AccordionTab>
+			<AccordionTab v-if="annotations" header="Geospatial Resolution"
+				><span v-html="dataset?.geospatialResolution"
+			/></AccordionTab>
+			<AccordionTab v-if="annotations" header="Temporal Resolution"
+				><span v-html="dataset?.temporalResolution" />
+			</AccordionTab>
+			<AccordionTab v-if="annotations" :header="`Annotations (${annotations.feature.length})`">
+				Geo Annotations:
+				<div v-for="annotation in annotations?.geo" :key="annotation.name">
+					<strong v-html="annotation.name" />: <strong>Description:</strong>
+					<span v-html="annotation.description" /> <strong>GADM Level: </strong>
+					<span v-html="annotation.gadm_level" />
+				</div>
+				Temporal Annotations:
+				<div v-for="annotation in annotations.date" :key="annotation.name">
+					<strong v-html="annotation.name" />: <strong>Description:</strong>
+					<span v-html="annotation.description" /> <strong>Time Format:</strong>
+					<span v-html="annotation.time_format" />
+				</div>
+			</AccordionTab>
+			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
+			<AccordionTab
+				v-if="annotations"
+				:header="`Features (${annotations.geo.length + annotations.date.length})`"
+			>
+				<div v-for="(feature, index) of annotations.feature" :key="index">
+					<div>Name: <span v-html="feature.display_name || feature.name" /></div>
+					<div>Type: <span v-html="feature.feature_type" /></div>
+				</div>
+			</AccordionTab>
+			<!-- <AccordionTab header="Associated Objects"></AccordionTab> -->
+		</Accordion>
+
+		<!-- table preview of the data -->
+		Dataset Records: {{ csvContent.length }}
+		<div class="table-fixed-head">
+			<table>
+				<thead>
+					<tr class="tr-item">
+						<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
+						<td
+							v-for="(_, colIndex) in row"
+							:key="colIndex.toString()"
+							class="title-and-abstract-col"
+						>
+							<div class="title-and-abstract-layout">
+								<div class="content">
+									<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
@@ -10,6 +89,7 @@ import { isString } from 'lodash';
 
 const props = defineProps<{
 	assetId: string;
+	isEditable: boolean;
 	highlight?: string;
 }>();
 
@@ -57,107 +137,7 @@ watch(
 const annotations = computed(() => dataset.value?.annotations.annotations);
 </script>
 
-<template>
-	<section class="dataset">
-		<h4 class="title" v-html="dataset?.name" />
-		<Accordion :multiple="true" class="accordian">
-			<AccordionTab v-if="annotations" header="Description"
-				><span v-html="dataset?.description"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="Maintainer"
-				><span v-html="dataset?.maintainer"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="Quality"
-				><span v-html="dataset?.quality"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="URL"><span v-html="dataset?.url" /></AccordionTab>
-			<AccordionTab v-if="annotations" header="Geospatial Resolution"
-				><span v-html="dataset?.geospatialResolution"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="Temporal Resolution"
-				><span v-html="dataset?.temporalResolution" />
-			</AccordionTab>
-			<AccordionTab v-if="annotations" :header="`Annotations (${annotations.feature.length})`">
-				<div>
-					Geo Annotations:
-					<div v-for="annotation in annotations?.geo" :key="annotation.name">
-						<strong v-html="annotation.name" />: <strong>Description:</strong>
-						<span v-html="annotation.description" /> <strong>GADM Level: </strong>
-						<span v-html="annotation.gadm_level" />
-					</div>
-				</div>
-				<div>
-					Temporal Annotations:
-					<div v-for="annotation in annotations.date" :key="annotation.name">
-						<strong v-html="annotation.name" />: <strong>Description:</strong>
-						<span v-html="annotation.description" /> <strong>Time Format:</strong>
-						<span v-html="annotation.time_format" />
-					</div>
-				</div>
-			</AccordionTab>
-			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
-			<AccordionTab
-				v-if="annotations"
-				:header="`Features (${annotations.geo.length + annotations.date.length})`"
-			>
-				<div v-for="(feature, index) of annotations.feature" :key="index">
-					<div>Name: <span v-html="feature.display_name || feature.name" /></div>
-					<div>Type: <span v-html="feature.feature_type" /></div>
-				</div>
-			</AccordionTab>
-			<!-- <AccordionTab header="Associated Objects"></AccordionTab> -->
-		</Accordion>
-
-		<!-- table preview of the data -->
-		Dataset Records: {{ csvContent.length }}
-		<div class="table-fixed-head">
-			<table>
-				<thead>
-					<tr class="tr-item">
-						<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
-						<td
-							v-for="(_, colIndex) in row"
-							:key="colIndex.toString()"
-							class="title-and-abstract-col"
-						>
-							<div class="title-and-abstract-layout">
-								<div class="content">
-									<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
-								</div>
-							</div>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</section>
-</template>
-
 <style scoped>
-.dataset {
-	margin: 10px;
-	display: flex;
-	flex-direction: column;
-	height: calc(100vh - 50px);
-	gap: 1rem;
-	padding: 1rem;
-	overflow: auto;
-	background: var(--surface-section);
-}
-
-.description {
-	max-height: 400px;
-	overflow-y: auto;
-}
-
-strong {
-	font-weight: bold;
-}
-
 table {
 	border-collapse: collapse;
 	width: 100%;

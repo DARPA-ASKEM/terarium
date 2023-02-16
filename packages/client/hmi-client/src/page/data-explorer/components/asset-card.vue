@@ -23,7 +23,7 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === ResourceType.MODEL">Framework / {{ asset.framework }}</div>
+				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.framework }}</div>
 				<div v-else-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
 					Simulation run
 				</div>
