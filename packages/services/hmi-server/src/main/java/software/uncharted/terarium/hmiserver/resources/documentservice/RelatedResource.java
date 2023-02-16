@@ -29,7 +29,7 @@ public class RelatedResource {
 	@Path("/document")
 	@Tag(name = "Get related documents for a given XDD internal doc id")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving related documents"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving related documents"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no related documents")})
 	public Response getRelatedDocuments(
 		@QueryParam("set") String set,
@@ -47,7 +47,7 @@ public class RelatedResource {
 
 		} catch (RuntimeException e) {
 			log.error("There was an error finding related documents", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -56,7 +56,7 @@ public class RelatedResource {
 	@Path("/word")
 	@Tag(name = "Get most similar words for a given string")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving related words"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving related words"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no related words")})
 	public Response getRelatedWords(
 		@QueryParam("set") String set,
@@ -75,7 +75,7 @@ public class RelatedResource {
 
 		} catch (RuntimeException e) {
 			log.error("An error occurred finding related words", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 }

@@ -31,7 +31,7 @@ public class DocumentResource {
 	@Tag(name = "Get all xdd documents via proxy")
 	@Path("/documents")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving documents"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving documents"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are documents"),
 		@APIResponse(responseCode = "400", description = "Query must contain one of docid, doi or term")})
 	public Response getDocuments(
@@ -97,7 +97,7 @@ public class DocumentResource {
 
 			} catch (RuntimeException e) {
 				log.error("Unable to find documents, an error occurred", e);
-				return Response.status(Response.Status.NOT_FOUND).build();
+				return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 			}
 
 

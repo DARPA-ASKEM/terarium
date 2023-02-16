@@ -29,7 +29,7 @@ public class SetResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get available sets or collections")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving sets"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving sets"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no sets")})
 	public Response getAvailableSets() {
 
@@ -47,7 +47,7 @@ public class SetResource {
 
 		} catch (RuntimeException e) {
 			log.error("There was an error finding available sets", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 
 	}

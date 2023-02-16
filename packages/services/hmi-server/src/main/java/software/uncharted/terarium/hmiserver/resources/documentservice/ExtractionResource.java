@@ -35,7 +35,7 @@ public class ExtractionResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving extractions"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving extractions"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are extractions")})
 	public Response searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass) {
 
@@ -70,7 +70,7 @@ public class ExtractionResource {
 
 		} catch (RuntimeException e) {
 			log.error("Unable to search in extractions. An error occurred", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 
 
@@ -81,7 +81,7 @@ public class ExtractionResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving auto complete suggestions"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving auto complete suggestions"),
 		@APIResponse(responseCode = "204", description = "Returned if there are no suggestions for the user")
 	})
 	public Response getAutocomplete(@PathParam("term") String term) {
@@ -100,7 +100,7 @@ public class ExtractionResource {
 
 		} catch (RuntimeException e) {
 			log.error("Unable to autocomplete");
-			return Response.status(Response.Status.BAD_REQUEST).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 
 	}

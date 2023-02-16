@@ -32,7 +32,7 @@ public class ConceptResource {
 
 	@GET
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred fetching search concept")})
+		@APIResponse(responseCode = "500", description = "An error occurred fetching search concept")})
 	public Response searchConcept(
 		@QueryParam("curie") final String curie
 	) {
@@ -40,14 +40,14 @@ public class ConceptResource {
 			return proxy.searchConcept(curie);
 		} catch (RuntimeException e) {
 			log.error("Unable to get search concept", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "Unable to create a concept")})
+		@APIResponse(responseCode = "500", description = "Unable to create a concept")})
 	public Response createConcept(
 		final Concept concept
 	) {
@@ -55,14 +55,14 @@ public class ConceptResource {
 			return proxy.createConcept(concept);
 		} catch (RuntimeException e) {
 			log.error("Unable to create a concept", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
 	@GET
 	@Path("/definitions")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error searching concept definitions")})
+		@APIResponse(responseCode = "500", description = "An error searching concept definitions")})
 	public Response searchConceptDefinitions(
 		@QueryParam("term") final String term,
 		@DefaultValue("100") @QueryParam("limit") final Integer limit,
@@ -72,14 +72,14 @@ public class ConceptResource {
 			return proxy.searchConceptDefinitions(term, limit, offset);
 		} catch (RuntimeException e) {
 			log.error("An error searching concept definitions", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
 	@GET
 	@Path("/definitions/{curie}")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error getting concept definitions")})
+		@APIResponse(responseCode = "500", description = "An error getting concept definitions")})
 	public Response getConceptDefinitions(
 		@PathParam("curie") final String curie
 	) {
@@ -87,7 +87,7 @@ public class ConceptResource {
 			return proxy.getConceptDefinitions(curie);
 		} catch (RuntimeException e) {
 			log.error("An error getting concept definitions", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -102,7 +102,7 @@ public class ConceptResource {
 	@DELETE
 	@Path("/{id}")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "Unable to delete concept")})
+		@APIResponse(responseCode = "500", description = "Unable to delete concept")})
 	public Response deleteConcept(
 		@PathParam("id") final String id
 	) {
@@ -110,7 +110,7 @@ public class ConceptResource {
 			return proxy.deleteConcept(id);
 		} catch (RuntimeException e) {
 			log.error("Unable to delete concept", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -118,7 +118,7 @@ public class ConceptResource {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "Unable to update concept")})
+		@APIResponse(responseCode = "500", description = "Unable to update concept")})
 	public Response updateConcept(
 		@PathParam("id") final String id,
 		final Concept concept
@@ -127,7 +127,7 @@ public class ConceptResource {
 			return proxy.updateConcept(id, concept);
 		} catch (RuntimeException e) {
 			log.error("Unable to update concept", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -135,7 +135,7 @@ public class ConceptResource {
 	@Path("/facets")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "Unable to search concept using facets")})
+		@APIResponse(responseCode = "500", description = "Unable to search concept using facets")})
 	public Response searchConceptsUsingFacets(
 		@QueryParam("types") final List<String> types,
 		@QueryParam("curies") final List<String> curies
@@ -144,7 +144,7 @@ public class ConceptResource {
 			return proxy.searchConceptsUsingFacets(types, curies);
 		} catch (RuntimeException e) {
 			log.error("Unable to search concept using facets", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 }

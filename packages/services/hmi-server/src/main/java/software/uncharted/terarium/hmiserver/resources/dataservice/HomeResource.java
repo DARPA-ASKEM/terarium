@@ -50,7 +50,7 @@ public class HomeResource {
 
 	@GET
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error occurred retrieving projects"),
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving projects"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no projects")})
 	/*
 	 * 1) Get all projects
@@ -65,7 +65,7 @@ public class HomeResource {
 		} catch (RuntimeException e) {
 			log.error("Unable to get projects", e);
 			return Response
-				.status(Response.Status.NOT_FOUND)
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
 				.build();
 

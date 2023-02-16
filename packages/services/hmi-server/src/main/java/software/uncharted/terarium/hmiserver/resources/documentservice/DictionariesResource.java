@@ -28,7 +28,7 @@ public class DictionariesResource {
 	@Tag(name = "Get available dictionaries")
 	@Path("/dictionaries")
 	@APIResponses({
-		@APIResponse(responseCode = "404", description = "An error getting available dictionaries"),
+		@APIResponse(responseCode = "500", description = "An error getting available dictionaries"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no dictionaries")})
 	public Response getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all) {
 		try {
@@ -51,7 +51,7 @@ public class DictionariesResource {
 
 		} catch (RuntimeException e) {
 			log.error("Unable to get available dictionaries", e);
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 }
