@@ -12,9 +12,8 @@
 					/>
 					<Button
 						@click="goToSimulationPlanPage"
-						icon="pi pi-caret-right"
-						label="Open simulation space"
-						:disabled="true"
+						label="Open parameter space"
+						:disabled="isEditing"
 						class="p-button-sm"
 					/>
 				</span>
@@ -26,19 +25,7 @@
 			<AccordionTab header="Description">
 				<p v-html="description" />
 			</AccordionTab>
-			<TabView v-if="isEditable">
-				<TabPanel header="Model space">
-					<div v-if="model" ref="graphElement" class="graph-element" />
-				</TabPanel>
-				<TabPanel header="Parameter space">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable>
-				</TabPanel>
-			</TabView>
-			<AccordionTab header="Model diagram" v-else>
+			<AccordionTab header="Model diagram">
 				<div v-if="model" ref="graphElement" class="graph-element" />
 			</AccordionTab>
 			<template v-if="!isEditable">
@@ -71,13 +58,32 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-		<DataTable :value="model?.content.S">
-			<Column field="sname" header="Label"></Column>
-			<Column field="mira_ids" header="Name"></Column>
-			<Column field="units" header="Units"></Column>
-			<Column field="mira_context" header="Concepts"></Column>
-			<Column field="definition" header="Definition"></Column>
-		</DataTable>
+		<TabView v-if="isEditable">
+			<TabPanel>
+				<template #header>
+					<span>State variables</span>
+					<Badge :value="model?.content.S.length" />
+				</template>
+				<DataTable :value="model?.content.S">
+					<Column field="sname" header="Label"></Column>
+					<Column field="mira_ids" header="Name"></Column>
+					<Column field="units" header="Units"></Column>
+					<Column field="mira_context" header="Concepts"></Column>
+					<Column field="definition" header="Definition"></Column>
+				</DataTable>
+			</TabPanel>
+			<TabPanel>
+				<template #header>
+					<span>Parameters</span>
+					<Badge :value="model?.parameters.length" />
+				</template>
+				<DataTable :value="model?.parameters">
+					<Column field="name" header="Name"></Column>
+					<Column field="type" header="Type"></Column>
+					<Column field="default_value" header="Default"></Column>
+				</DataTable>
+			</TabPanel>
+		</TabView>
 	</section>
 </template>
 
@@ -102,6 +108,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
+import Badge from 'primevue/badge';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
