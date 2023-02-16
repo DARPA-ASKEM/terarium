@@ -75,11 +75,16 @@ interface Node {
     inputs?: Node[],
     outputs?: Node[]
 }
+interface Connection {
+    in?: string,
+    out?: string
+}
 const nodes = ref<Node[]>([]);
 const modalVisible = ref(false);
 const newNodeName = ref<string>('');
 const input = ref<HTMLInputElement | null>(null);
 const isSelectingConnection = ref(false);
+const newConnection = ref<Connection>({});
 
 async function createNode() {
     modalVisible.value = true;
@@ -89,25 +94,62 @@ async function createNode() {
 }
 
 function insertNode() {
-    const newNode = {
+    const newNode: Node = {
         id: nodes.value.length.toString(),
         name: newNodeName.value
-    } as Node;
+    };
     nodes.value.push(newNode);
     modalVisible.value = false;
     newNodeName.value = '';
 }
 
+function invalidateConnection() {
+    console.warn("Invalid connection");
+    newConnection.value = {};
+}
+
 function createConnection(event) {
     const clickedElement: HTMLElement = event.target;
-    if (clickedElement && clickedElement.className.includes('node')) {
-        console.log(clickedElement.parentElement?.id);
-    }
-    if (isSelectingConnection.value === true) {
-
-    } else {
+    if (isSelectingConnection.value === false) {
         isSelectingConnection.value = true;
-
+        switch (clickedElement.className) {
+            case 'node-out':
+                newConnection.value.out = clickedElement.parentElement?.id;
+                break;
+            case 'node-in':
+                newConnection.value.in = clickedElement.parentElement?.id;
+                break;
+            default: break;
+        }
+    } else {
+        switch (clickedElement.className) {
+            case 'node-out':
+                if (newConnection.value.out) {
+                    invalidateConnection();
+                } else {
+                    const nodeId = clickedElement.parentElement?.id;
+                    if (newConnection.value.in === nodeId) {
+                        invalidateConnection();
+                    } else {
+                        newConnection.value.out = nodeId;
+                    }
+                }
+                break;
+            case 'node-in':
+                if (newConnection.value.in) {
+                    invalidateConnection();
+                } else {
+                    const nodeId = clickedElement.parentElement?.id;
+                    if (newConnection.value.out === nodeId) {
+                        invalidateConnection();
+                    } else {
+                        newConnection.value.in = nodeId;
+                    }
+                }
+                break;
+            default: break;
+        }
+        isSelectingConnection.value = false;
     }
 }
 </script>
