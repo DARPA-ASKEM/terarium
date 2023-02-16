@@ -63,7 +63,7 @@
 import * as d3 from 'd3';
 import _ from 'lodash';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
 import { PetriNet } from '@/utils/petri-net-validator';
 import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
@@ -804,7 +804,7 @@ onMounted(async () => {
 	renderer = new SampleRenderer({
 		el: playground,
 		useAStarRouting: false, // People get distracted with squiggly connectors - Jan 2023
-		runLayout: runDagreLayout2,
+		runLayout: runDagreLayout,
 		useStableZoomPan: true
 	});
 
