@@ -1,8 +1,8 @@
 .p-tree {
-    border: $panelContentBorder;
+    border: none;
     background: $panelContentBg;
     color: $panelContentTextColor;
-    padding: $panelContentPadding;
+    padding: none;
     border-radius: $borderRadius;
 
     .p-tree-container {
@@ -16,7 +16,7 @@
 
                 .p-tree-toggler {
                     margin-right: $inlineSpacing;
-                    @include action-icon();
+                    // @include action-icon();
                 }
 
                 .p-treenode-icon {
