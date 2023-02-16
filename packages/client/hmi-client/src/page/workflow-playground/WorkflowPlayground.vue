@@ -13,7 +13,7 @@
                 <div :style="calcJunctionSize(node)"></div>
             </div>
             <div class="inputs">
-                <div class="wire" v-for="out in node.inputs">
+                <div class="wire" :style="`height: ${wireSize}px`" v-for="out in node.inputs">
                 </div>
             </div>
             <div class="node" :id="node.id">
@@ -22,7 +22,7 @@
                 <div class="node-out" @click.stop="(event) => nodeSelected(event)"></div>
             </div>
             <div class="outputs">
-                <div class="wire" v-for="out in node.outputs">
+                <div class="wire" :style="`height: ${wireSize}px`" v-for="out in node.outputs">
                 </div>
             </div>
         </div>
@@ -79,7 +79,7 @@
 }
 
 .wire {
-    height: 1px;
+    /* height: 1px; */
     width: 100%;
     background-color: var(--gray-500);
 }
@@ -116,8 +116,12 @@ const newNodeName = ref<string>('');
 const input = ref<HTMLInputElement | null>(null);
 const isSelectingConnection = ref(false);
 const newConnection = ref<Connection>({});
+const wireSize = 2;
 
 async function createNode() {
+    isSelectingConnection.value = false;
+    newConnection.value = {};
+
     modalVisible.value = true;
     await nextTick();
     // @ts-ignore
@@ -212,7 +216,7 @@ function nodeSelected(event) {
 }
 
 function calcJunctionSize(node: Node) {
-    const size = `${Math.max(node.inputs.length, node.outputs.length) * 1}px`;
+    const size = `${Math.max(node.inputs.length, node.outputs.length) * wireSize}px`;
     const style = { width: size, height: size };
     return style;
 }
