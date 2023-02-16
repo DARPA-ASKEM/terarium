@@ -9,8 +9,13 @@
     </Teleport>
     <div class="container" @click="createNode()">
         <div class="column" v-for="node in nodes">
-            <div class="connection"></div>
-            <div class="inputs"></div>
+            <div class="junction">
+                <div :style="calcJunctionSize(node)"></div>
+            </div>
+            <div class="inputs">
+                <div class="wire" v-for="out in node.inputs">
+                </div>
+            </div>
             <div class="node" :id="node.id">
                 <div class="node-in" @click.stop="(event) => nodeSelected(event)"></div>
                 <div>{{ node.name }}</div>
@@ -39,13 +44,18 @@
     grid-row-start: 1;
 }
 
-.connection,
+.junction,
 .inputs,
 .node,
 .outputs {
     flex: 1;
     height: 100px;
-    min-width: 50px;
+}
+
+.inputs,
+.outputs {
+    display: flex;
+    align-items: center;
 }
 
 .node {
@@ -69,7 +79,19 @@
 }
 
 .wire {
-    height: 10px;
+    height: 1px;
+    width: 100%;
+    background-color: var(--gray-500);
+}
+
+.junction {
+    display: flex;
+    align-items: center;
+    flex: 0;
+}
+
+.junction div {
+    background-color: var(--gray-900);
 }
 </style>
 
@@ -187,5 +209,11 @@ function nodeSelected(event) {
         }
         isSelectingConnection.value = false;
     }
+}
+
+function calcJunctionSize(node: Node) {
+    const size = `${Math.max(node.inputs.length, node.outputs.length) * 1}px`;
+    const style = { width: size, height: size };
+    return style;
 }
 </script>
