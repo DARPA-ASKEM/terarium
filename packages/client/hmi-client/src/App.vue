@@ -7,6 +7,17 @@
 		:resourceType="resourceType"
 	/>
 	<main>
+		<slider-panel
+			v-if="isSidebarVisible && !isErrorState"
+			content-width="240px"
+			header="Resources"
+			direction="left"
+			class="sidebar"
+		>
+			<template v-slot:content>
+				<tera-resources-sidebar :project="project" />
+			</template>
+		</slider-panel>
 		<Sidebar
 			v-if="isSidebarVisible && !isErrorState"
 			class="sidebar"
@@ -28,8 +39,10 @@ import Sidebar from '@/components/Sidebar.vue';
 import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { Project as ProjectType } from '@/types/Project';
+import { ProjectType } from '@/types/Project';
 import { logBuffer } from '@/utils/logger';
+import SliderPanel from '@/components/widgets/slider-panel.vue';
+import TeraResourcesSidebar from '@/components/tera-resources-sidebar.vue';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
 

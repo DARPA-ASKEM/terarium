@@ -14,12 +14,12 @@ import SimulationResultSidebarPanel from '@/components/sidebar-panel/simulation-
 import SimulationPlanSidebarPanel from '@/components/sidebar-panel/simulation-plan-sidebar-panel.vue';
 
 import { RouteMetadata, RouteName } from '@/router/routes';
-import { Project } from '@/types/Project';
+import { ProjectType } from '@/types/Project';
 
 const router = useRouter();
 
 const props = defineProps<{
-	project: Project | null;
+	project: ProjectType | null;
 }>();
 
 // Manage Side Panel

@@ -30,7 +30,7 @@ export type SimpleProjectAssets = {
 	[ProjectAssetTypes.DATASETS]: (string | number)[];
 };
 
-export type Project = {
+export interface ProjectType {
 	id: string;
 	name: string;
 	title?: string;
@@ -41,4 +41,4 @@ export type Project = {
 	assets: SimpleProjectAssets;
 	relatedDocuments: DocumentType[];
 	username: string;
-};
+}
