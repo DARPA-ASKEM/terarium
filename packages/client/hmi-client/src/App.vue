@@ -13,7 +13,12 @@
 			data-test-id="sidebar"
 			:project="project"
 		/>
-		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
+		<router-view
+			class="page"
+			:project="project"
+			:projects="projects"
+			@resource-type-changed="updateResourceType"
+		/>
 	</main>
 	<footer>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />

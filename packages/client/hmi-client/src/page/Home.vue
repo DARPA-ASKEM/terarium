@@ -8,7 +8,6 @@ import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
-import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 import Button from 'primevue/button';
@@ -21,11 +20,15 @@ import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 
-const projects = ref<Project[]>([]);
+const props = defineProps<{
+	projects: Project[];
+}>();
+const projectsToDisplay = computed(() => props.projects);
+
 // Only display projects with at least one related document
 // Only display at most 5 projects
-const projectsToDisplay = computed(() =>
-	projects.value.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
+const projectsWithRelatedDocuments = computed(() =>
+	props.projects?.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
 );
 const relevantDocuments = ref<DocumentType[]>([]);
 const relevantSearchTerm = 'COVID-19';
@@ -45,9 +48,6 @@ onMounted(async () => {
 	// Clear all...
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
-
-	projects.value = (await API.get('/home')).data as Project[];
-
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
 	if (allDocuments) {
@@ -168,7 +168,11 @@ async function createNewProject() {
 						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
 						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 						<ul>
-							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
+							<li
+								v-for="(project, index) in projectsToDisplay?.slice().reverse()"
+								class="card"
+								:key="index"
+							>
 								<router-link
 									style="text-decoration: none; color: inherit"
 									:to="'/projects/' + project.id"
@@ -188,7 +192,7 @@ async function createNewProject() {
 			<header>
 				<h3>Papers related to your projects</h3>
 			</header>
-			<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
+			<div v-for="(project, index) in projectsWithRelatedDocuments" :key="index" class="carousel">
 				<p>{{ project.name }}</p>
 				<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
 				<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
