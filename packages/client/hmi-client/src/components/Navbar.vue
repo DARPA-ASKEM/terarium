@@ -152,6 +152,7 @@ watch(
 			props.projects?.forEach((project) => {
 				items.push({
 					label: project.name,
+					icon: 'pi pi-folder',
 					command: () =>
 						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
 				});
