@@ -14,7 +14,7 @@
 				{{ currentProjectName }}
 				<i class="pi pi-angle-down" />
 			</h1>
-			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" />
+			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
 			v-if="active"
@@ -152,7 +152,6 @@ watch(
 			props.projects?.forEach((project) => {
 				items.push({
 					label: project.name,
-					icon: 'pi pi-clone',
 					command: () =>
 						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
 				});
@@ -178,8 +177,19 @@ header {
 }
 
 h1 {
+	border-color: transparent;
+	border-style: solid;
+	border-radius: var(--border-radius);
+	border-width: 1px;
+	cursor: pointer;
 	font-size: var(--font-body-large);
 	font-weight: var(--font-weight-semibold);
+	padding: 0.5rem;
+}
+
+h1:hover,
+h1:focus {
+	border-color: var(--primary-color);
 }
 
 /* Search Bar */
@@ -233,7 +243,7 @@ h1 {
 }
 
 i {
-	margin-right: 0.5rem;
+	margin-left: 0.5rem;
 }
 
 /* Suggested terms */
@@ -258,5 +268,14 @@ i {
 .clear-search-terms:enabled:hover {
 	background-color: var(--surface-hover);
 	color: var(--text-color-secondary);
+}
+</style>
+<style>
+/* 
+ * On it's own style, because the pop-up happend outside of this component.
+ * To left align the content with the h1.
+ */
+.navigation-menu {
+	margin-left: -1rem;
 }
 </style>
