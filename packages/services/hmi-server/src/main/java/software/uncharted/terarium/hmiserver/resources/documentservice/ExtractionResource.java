@@ -37,7 +37,7 @@ public class ExtractionResource {
 	@APIResponses({
 		@APIResponse(responseCode = "500", description = "An error occurred retrieving extractions"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are extractions")})
-	public XDDResponse<XDDExtractionsResponseOK> searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass, @QueryParam("include_highlights") String include_highlights) {
+	public Response searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass, @QueryParam("include_highlights") String include_highlights) {
 
 
 		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
