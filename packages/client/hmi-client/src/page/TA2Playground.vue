@@ -7,10 +7,7 @@ import { defineComponent, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { useLogger } from 'vue-logger-plugin';
 import API from '@/api/api';
-
-const logger = useLogger();
 
 interface NodeData {
 	type: string;
@@ -206,7 +203,7 @@ let numWolves = 10;
 export default defineComponent({
 	name: 'TA2Playground',
 	async mounted() {
-		logger.info('TA2 Playground initialized');
+		console.log('TA2 Playground initialized');
 
 		const playground = document.getElementById('playground') as HTMLDivElement;
 		renderer = new SampleRenderer({
@@ -397,9 +394,7 @@ export default defineComponent({
 		async jsonOutput() {
 			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
-			logger.info(petriNetValidator(output));
-
-			logger.info(output);
+			console.log(output);
 
 			if (petriNetValidator(output) === true) {
 				modelA = output;
@@ -440,7 +435,7 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async addPlace() {
-			logger.info('add place');
+			console.log('add place');
 			placeCounter++;
 			const id = `p-${placeCounter}`;
 
@@ -467,7 +462,7 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async addTransition() {
-			logger.info('add transition');
+			console.log('add transition');
 			transitionCounter++;
 			const id = `t-${transitionCounter}`;
 
@@ -515,7 +510,6 @@ export default defineComponent({
 		renderResult(result: any) {
 			const el = d3.select('#solution');
 			el.selectAll('*').remove();
-			logger.info(result);
 
 			const svg = el.append('svg').style('width', '100%').style('height', '100%');
 
@@ -564,7 +558,7 @@ export default defineComponent({
 				this.stateNamesA.length < 1 ||
 				this.stateNamesB.length < 1
 			) {
-				logger.info('Not enough states');
+				console.log('Not enough states');
 				return;
 			}
 
@@ -576,14 +570,14 @@ export default defineComponent({
 					modelB: stateNamesArrayB[i].trim()
 				});
 			}
-			logger.info(modelA);
+			console.log(modelA);
 			const resp = await API.post(`model-service/models/model-composition`, {
 				modelA,
 				modelB,
 				statesToMerge
 			});
 			mergedModel = await resp.data;
-			logger.info(`Merged petrinet ${mergedModel}`);
+			console.log(`Merged petrinet ${mergedModel}`);
 
 			g3 = parsePetriNet2IGraph(mergedModel);
 			g3 = runDagreLayout(_.cloneDeep(g3));
@@ -606,7 +600,7 @@ export default defineComponent({
 
 				const modelData = await resp.data;
 				modelId = modelData.id;
-				logger.info(`Model ID: ${modelId}`); // currently required for testing
+				console.log(`Model ID: ${modelId}`); // currently required for testing
 
 				let modelServiceNodes: { name: string; type: string }[] = [];
 				let modelServiceEdges: { source: string; target: string }[] = [];
@@ -650,15 +644,15 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async stratify() {
-			logger.info('Start stratify');
+			console.log('Start stratify');
 			try {
 				const outputModel = await fetchStratificationResult(
 					this.stratifyModelA,
 					this.stratifyModelB,
 					this.stratifyTypeModel
 				);
-				logger.info('Result');
-				logger.info(outputModel);
+				console.log('Result');
+				console.log(outputModel);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
 				console.error(e.message);
