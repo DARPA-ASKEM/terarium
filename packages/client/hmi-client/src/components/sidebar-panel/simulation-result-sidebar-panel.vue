@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Project } from '@/types/Project';
+import { ProjectType } from '@/types/Project';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ArtifactList from './artifact-list.vue';
 
 const props = defineProps<{
-	project: Project;
+	project: ProjectType;
 }>();
 
 const router = useRouter();

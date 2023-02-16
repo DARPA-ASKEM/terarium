@@ -5,7 +5,7 @@ import IconTime32 from '@carbon/icons-vue/es/time/32';
 import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
 import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
-import { Project } from '@/types/Project';
+import { ProjectType } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
@@ -15,7 +15,7 @@ import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 
-const projects = ref<Project[]>([]);
+const projects = ref<ProjectType[]>([]);
 // Only display projects with at least one related document
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
@@ -34,7 +34,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await API.get('/home')).data as Project[];
+	projects.value = (await API.get('/home')).data as ProjectType[];
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);

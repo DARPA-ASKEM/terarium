@@ -38,7 +38,7 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
-import { Project, ProjectAssetTypes } from '@/types/Project';
+import { ProjectType, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
@@ -68,7 +68,7 @@ const resources = useResourcesStore();
 const contextMenu = ref();
 const validProject = computed(() => resources.activeProject);
 
-const projectsList = ref<Project[]>([]);
+const projectsList = ref<ProjectType[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const getMenuItemsForItem = (item: ResultType) => [

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Project } from '@/types/Project';
+import { ProjectType } from '@/types/Project';
 import { ref, nextTick } from 'vue';
 import ResourcesList from '@/components/resources/resources-list.vue';
 import InputText from 'primevue/inputtext';
@@ -9,7 +9,7 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
-	project: Project;
+	project: ProjectType;
 }>();
 
 const resources = useResourcesStore();
@@ -104,14 +104,11 @@ function showProjectMenu(event) {
 	</div>
 </template>
 
-<style scoped lang="scss">
-@import '@/assets/css/theme/variables';
-
+<style scoped>
 .flex-container {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	margin: 0.5rem;
 	background: white;
 }
 
@@ -160,7 +157,7 @@ section {
 }
 
 .related {
-	font-weight: $fontWeightSemiBold;
+	font-weight: var(--font-weight-semibold);
 }
 
 h3 {

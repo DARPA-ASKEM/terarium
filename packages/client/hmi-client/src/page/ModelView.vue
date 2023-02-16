@@ -4,7 +4,7 @@ import TabContainer from '@/components/tabs/TabContainer.vue';
 import { ref, watch, computed } from 'vue';
 import { Tab } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
-import { Project } from '@/types/Project';
+import { ProjectType } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
@@ -12,7 +12,7 @@ import ResourcesList from '@/components/resources/resources-list.vue';
 
 const props = defineProps<{
 	assetId?: string;
-	project: Project;
+	project: ProjectType;
 }>();
 
 const resourcesStore = useResourcesStore();

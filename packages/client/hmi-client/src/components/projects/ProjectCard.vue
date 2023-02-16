@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Project, ProjectAssetTypes } from '@/types/Project';
+import { ProjectType, ProjectAssetTypes } from '@/types/Project';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import { formatDdMmmYyyy } from '@/utils/date';
 
-defineProps<{ project: Project }>();
+defineProps<{ project: ProjectType }>();
 </script>
 
 <template>
