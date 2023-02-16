@@ -163,7 +163,7 @@ async function createNewProject() {
 				></Button>
 			</header>
 			<TabView>
-				<TabPanel header="Recents">
+				<TabPanel header="My projects">
 					<div class="carousel">
 						<div class="chevron-left">
 							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
@@ -184,7 +184,6 @@ async function createNewProject() {
 						</ul>
 					</div>
 				</TabPanel>
-				<TabPanel header="My projects"></TabPanel>
 				<TabPanel header="Shared projects"></TabPanel>
 			</TabView>
 		</section>
