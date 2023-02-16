@@ -528,12 +528,10 @@ onUnmounted(() => {
 <style scoped>
 .data-explorer-container {
 	display: flex;
-	background-color: var(--surface-ground);
-	position: relative;
 	flex-grow: 1;
 }
 
-.data-explorer-container .results-content {
+.results-content {
 	display: flex;
 	flex-direction: column;
 	flex: 1;

@@ -7,12 +7,6 @@
 		:resourceType="resourceType"
 	/>
 	<main>
-		<Sidebar
-			v-if="isSidebarVisible && !isErrorState"
-			class="sidebar"
-			data-test-id="sidebar"
-			:project="project"
-		/>
 		<slider-panel
 			v-if="isSidebarVisible && !isErrorState"
 			content-width="240px"
@@ -24,6 +18,12 @@
 				<tera-resources-sidebar :project="project" />
 			</template>
 		</slider-panel>
+		<Sidebar
+			v-if="isSidebarVisible && !isErrorState"
+			class="sidebar"
+			data-test-id="sidebar"
+			:project="project"
+		/>
 		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
 	</main>
 	<footer>
@@ -128,6 +128,7 @@ main {
 	isolation: isolate;
 	z-index: 1;
 	overflow: hidden;
+	position: relative;
 }
 
 .sidebar {
