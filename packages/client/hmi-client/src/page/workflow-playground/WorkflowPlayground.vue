@@ -8,7 +8,7 @@
         </Modal>
     </Teleport>
     <div class="container" @click="createNode()">
-        <div class="column" v-for="node in nodes" :style="node.gridPosition">
+        <div class="column" v-for="node in nodes" :style="node.gridStyle">
             <div class="junction">
                 <div :style="calcJunctionSize(node)"></div>
             </div>
@@ -34,8 +34,8 @@
     display: grid;
     height: 100%;
     width: 100%;
-    grid-auto-columns: auto;
-    grid-auto-rows: auto;
+    /* grid-auto-columns: auto; */
+    /* grid-auto-rows: auto; */
     background-color: var(--surface-ground);
 }
 
@@ -107,9 +107,8 @@ interface Node {
     name: string,
     inputs: Node[],
     outputs: Node[],
-    gridPosition: {
-        gridRow?: string,
-        gridColumn?: string
+    gridStyle: {
+        gridArea: string
     }
 }
 interface Connection {
@@ -140,8 +139,8 @@ function insertNode() {
         name: newNodeName.value,
         inputs: [],
         outputs: [],
-        gridPosition: {
-            gridColumn: "1"
+        gridStyle: {
+            gridArea: 'auto'
         }
     };
     nodes.value.push(newNode);
@@ -155,15 +154,17 @@ function invalidateConnection(reason?: string) {
 }
 
 function updateNodePositions() {
-    const nodes = [newConnection.value.in, newConnection.value.out];
-    nodes.forEach(n => {
+    nodes.value.forEach(n => {
         if (n?.inputs.length === 0) {
-            n.gridPosition.gridColumn = "1";
+            n.gridStyle.gridArea = "1 / 1";
         } else if (n?.outputs.length === 0) {
-            n.gridPosition.gridColumn = "none"
-            n.gridPosition.gridRow = "1";
+            n.gridStyle.gridArea = "1 / auto";
         }
     });
+}
+
+function isCircularConnection() {
+    return false;
 }
 
 function createConnection() {
@@ -211,6 +212,9 @@ function nodeSelected(event) {
                             invalidateConnection("Connection already exists");
                         }
                         newConnection.value.out = getNodeById(clickedNodeId);
+                        if (isCircularConnection()) {
+                            invalidateConnection("Cannot create circular connection");
+                        }
                         createConnection();
                     }
                 }
@@ -228,6 +232,9 @@ function nodeSelected(event) {
                             invalidateConnection("Connection already exists");
                         }
                         newConnection.value.in = getNodeById(clickedNodeId);
+                        if (isCircularConnection()) {
+                            invalidateConnection("Cannot create circular connection");
+                        }
                         createConnection();
                     }
                 }
