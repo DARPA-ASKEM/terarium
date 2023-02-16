@@ -4,6 +4,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 
+import javax.management.Query;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -21,7 +22,8 @@ public interface ExtractionProxy {
 		@QueryParam("doi") final String doi,
 		@QueryParam("query_all") final String queryAll,
 		@QueryParam("page") final Integer page,
-		@QueryParam("ASKEM_CLASS") String askemClass
+		@QueryParam("ASKEM_CLASS") String askemClass,
+		@QueryParam("include_highlights") String include_highlights
 	);
 
 	@GET
