@@ -63,6 +63,11 @@ To install package dependencies, run the command in the root directory
 yarn install
 ```
 
+## Dev UI
+
+Once your application is running locally, you can hit the dev UI at localhost:3000/q/dev. From here you can access lots
+of different tools and views, including our Swagger UI located http://localhost:3000/q/swagger-ui/
+
 ## Testing
 
 Start local dev server for Vue webapp, with Hot Module Replacement.
@@ -114,7 +119,6 @@ You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSH
 * HMI Server - 3000
 * Model Service - 3010
 * Data Service - 3020
-* Document Service - 3030
 
 ## Packaging and running the client
 
