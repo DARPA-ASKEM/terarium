@@ -24,6 +24,9 @@ dependencies {
 	implementation "io.quarkus:quarkus-hibernate-orm-panache"
 	annotationProcessor "io.quarkus:quarkus-panache-common"
 
+	// Caching
+	implementation "io.quarkus:quarkus-cache"
+	implementation "io.quarkus:quarkus-scheduler"
 
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client"

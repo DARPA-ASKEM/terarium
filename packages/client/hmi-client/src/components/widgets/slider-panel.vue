@@ -1,18 +1,18 @@
 <template>
-	<slider
+	<tera-slider
 		:content-width="contentWidth"
 		:tab-width="tabWidth"
 		:direction="direction"
 		:is-open="isOpen"
 	>
 		<template v-slot:content>
-			<div class="slider-header content">
+			<header class="slider-header content">
 				<i
 					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
 					@click="emit('update:isOpen', false)"
 				/>
 				<h4 class="slider-header-item">{{ header }}</h4>
-			</div>
+			</header>
 			<slot name="content"></slot>
 		</template>
 		<template v-slot:tab>
@@ -26,12 +26,12 @@
 			</div>
 			<slot name="tab"></slot>
 		</template>
-	</slider>
+	</tera-slider>
 </template>
 
 <script setup lang="ts">
 import Badge from 'primevue/badge';
-import Slider from './Slider.vue';
+import TeraSlider from './tera-slider.vue';
 
 defineProps({
 	// slider props
@@ -45,11 +45,11 @@ defineProps({
 	},
 	contentWidth: {
 		type: String,
-		default: '15rem'
+		default: '240px'
 	},
 	tabWidth: {
 		type: String,
-		default: '3rem'
+		default: '40px'
 	},
 	// slider-panel props
 	header: {

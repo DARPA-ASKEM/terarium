@@ -37,18 +37,20 @@ public class ExtractionResource {
 	@APIResponses({
 		@APIResponse(responseCode = "500", description = "An error occurred retrieving extractions"),
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are extractions")})
-	public Response searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass) {
+	public XDDResponse<XDDExtractionsResponseOK> searchExtractions(@QueryParam("term") final String term, @QueryParam("page") final Integer page, @QueryParam("ASKEM_CLASS") String askemClass, @QueryParam("include_highlights") String include_highlights) {
+
 
 		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
 
 		Boolean isDoi = matcher.find();
 
+
 		try {
 			XDDResponse<XDDExtractionsResponseOK> response;
 			if (isDoi) {
-				response = proxy.getExtractions(term, null, page, askemClass);
+				response = proxy.getExtractions(term, null, page, askemClass, include_highlights);
 			} else {
-				response = proxy.getExtractions(null, term, page, askemClass);
+				response = proxy.getExtractions(null, term, page, askemClass, include_highlights);
 			}
 
 			if (response.getErrorMessage() != null) {
@@ -71,6 +73,7 @@ public class ExtractionResource {
 		} catch (RuntimeException e) {
 			log.error("Unable to search in extractions. An error occurred", e);
 			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+
 		}
 
 

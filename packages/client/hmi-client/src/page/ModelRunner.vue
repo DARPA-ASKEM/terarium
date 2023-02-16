@@ -11,7 +11,7 @@
 import * as d3 from 'd3';
 import graphScaffolder from '@graph-scaffolder/index';
 import { moveTo } from '@graph-scaffolder/fn/move-to';
-import { runDagreLayout2, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref } from 'vue';
 import { parsePetriNet2IGraph } from '@/services/model';
 
@@ -136,7 +136,7 @@ onMounted(async () => {
 	renderer = new (SampleRenderer as any)({
 		el: playground,
 		useAStarRouting: true,
-		runLayout: runDagreLayout2,
+		runLayout: runDagreLayout,
 		useStableZoomPan: true
 	});
 
