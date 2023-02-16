@@ -64,7 +64,7 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 21.5;
+const SCROLL_INCREMENT_IN_REM = 21.5 * 5;
 const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
@@ -165,8 +165,12 @@ async function createNewProject() {
 			<TabView>
 				<TabPanel header="Recents">
 					<div class="carousel">
-						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
-						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+						<div class="chevron-left">
+							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+						</div>
+						<div class="chevron-right">
+							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+						</div>
 						<ul>
 							<li
 								v-for="(project, index) in projectsToDisplay?.slice().reverse()"
@@ -273,7 +277,8 @@ header svg {
 
 .carousel {
 	position: relative;
-	margin: 0 5rem;
+	display: flex;
+	align-items: flex-end;
 }
 
 .carousel ul {
@@ -281,34 +286,52 @@ header svg {
 	display: flex;
 	margin: 0.5rem 0.5rem 0 0.5rem;
 	padding-bottom: 0.5rem;
-	overflow: hidden;
+}
+
+.chevron-left,
+.chevron-right {
+	width: 4rem;
+	position: absolute;
+	/* visibility: hidden; */
+}
+
+.chevron-left,
+.chevron-right {
+	width: 4rem;
+	position: absolute;
+	z-index: 2;
+	cursor: pointer;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	height: 443px;
+}
+
+.chevron-left {
+	left: 0;
+}
+
+.chevron-right {
+	right: 0;
+}
+
+.chevron-left:hover > .pi-chevron-left,
+.chevron-right:hover > .pi-chevron-right {
+	color: var(--primary-color);
+	opacity: 100;
 }
 
 .pi-chevron-left,
 .pi-chevron-right {
-	/* 	see about making the right ones appear as required (by watching scrollbar position)
-		eg. if I am on the very left of the carousel don't show the left arrow
-	*/
-	cursor: pointer;
 	margin: 0 1rem;
-	position: absolute;
-	top: 50%;
-	visibility: visible;
-	z-index: 3;
 	font-size: 2rem;
+	opacity: 0;
+	transition: opacity 0.2s ease;
 }
 
 .pi-chevron-left:hover,
 .pi-chevron-right:hover {
 	color: var(--primary-color);
-}
-
-.pi-chevron-left {
-	left: -4rem;
-}
-
-.pi-chevron-right {
-	right: -4rem;
 }
 
 ul {
