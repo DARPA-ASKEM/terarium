@@ -276,6 +276,6 @@ i {
  * To left align the content with the h1.
  */
 .navigation-menu {
-	margin-left: -1rem;
+	margin-left: -0.5rem;
 }
 </style>
