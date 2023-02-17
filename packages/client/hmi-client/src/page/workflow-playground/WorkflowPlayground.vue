@@ -18,7 +18,7 @@
             </div>
             <div class="node" :id="node.id">
                 <div class="node-in" @click.stop="(event) => nodeSelected(event)"></div>
-                <div>{{ node.name }}</div>
+                <div>{{ node.name }} {{ node.gridStyle }} {{ node.root?.name }}</div>
                 <div class="node-out" @click.stop="(event) => nodeSelected(event)"></div>
             </div>
             <div class="outputs">
@@ -80,13 +80,18 @@
     background-color: var(--surface-secondary);
 }
 
+.node-in,
+.node-out {
+    min-width: 10px;
+}
+
 .wire {
     /* height: 1px; */
     width: 100%;
     background-color: var(--gray-500);
 }
 
-.junction {
+/* .junction {
     display: flex;
     align-items: center;
     flex: 0;
@@ -94,7 +99,7 @@
 
 .junction div {
     background-color: var(--gray-900);
-}
+} */
 </style>
 
 <script setup lang="ts">
@@ -153,12 +158,11 @@ function insertNode() {
 }
 
 function invalidateConnection(reason?: string) {
-    console.warn(`Invalid connection - ${reason}`);
+    console.info(`Invalid connection - ${reason}`);
     newConnection.value = {};
 }
 
 function updateNodePositions() {
-    // console.log(nodes.value.filter(n => n.inputs.length <= 0));
     nodes.value.filter(n =>
         n.inputs.length === 0
     ).forEach((n, index) => {
@@ -166,8 +170,8 @@ function updateNodePositions() {
     })
     nodes.value.forEach(n => {
         if (n?.inputs.length > 0) {
-            const firstInputNodeRow = n.inputs[0].gridStyle.gridRow;
-            n.gridStyle.gridRow = firstInputNodeRow;
+            const rootNodeRow = n.root?.gridStyle.gridRow;
+            n.gridStyle.gridRow = rootNodeRow;
             n.gridStyle.gridColumn = 'auto';
         }
     });
@@ -177,10 +181,24 @@ function isCircularConnection() {
     return false;
 }
 
+function iterativelyUpdateRoots(root: Node, nodes: Node[]) {
+    nodes.forEach(n => {
+        n.root = root;
+        iterativelyUpdateRoots(root, n.outputs);
+    })
+}
+
 function createConnection() {
-    if (newConnection.value.out && newConnection.value.in) {
-        newConnection.value.in.inputs.push(newConnection.value.out);
-        newConnection.value.out.outputs.push(newConnection.value.in);
+    const leftNode = newConnection.value.out;
+    const rightNode = newConnection.value.in;
+    if (leftNode && rightNode) {
+        rightNode.inputs.push(leftNode);
+        leftNode.outputs.push(rightNode);
+        if (leftNode.inputs.length === 0) {
+            leftNode.root = leftNode;
+        }
+        rightNode.root = leftNode.root;
+        iterativelyUpdateRoots(rightNode.root!, rightNode.outputs);
         updateNodePositions();
     }
     newConnection.value = {};
@@ -255,9 +273,9 @@ function nodeSelected(event) {
     }
 }
 
-function calcJunctionSize(node: Node) {
-    const size = `${Math.max(node.inputs.length, node.outputs.length) * wireSize}px`;
-    const style = { width: size, height: size };
-    return style;
-}
+// function calcJunctionSize(node: Node) {
+//     const size = `${Math.max(node.inputs.length, node.outputs.length) * wireSize}px`;
+//     const style = { width: size, height: size };
+//     return style;
+// }
 </script>
