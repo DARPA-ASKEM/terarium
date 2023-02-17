@@ -13,14 +13,16 @@
                 border-radius: $borderRadius;
                 transition: $listItemTransition;
                 padding: $treeNodeContentPadding;
+                cursor: pointer;
 
                 .p-tree-toggler {
-                    margin-right: $inlineSpacing;
+                    width: 0;
+                    // margin-right: $inlineSpacing;
                     // @include action-icon();
                 }
 
                 .p-treenode-icon {
-                    margin-right: $inlineSpacing;
+                    // margin-right: $inlineSpacing;
                     color: $treeNodeIconColor;
                 }
 
@@ -32,6 +34,18 @@
                             color: $textColor;
                         }
                     }
+                }
+
+                // Added for resource sidebar
+                .p-treenode-label {
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+
+                &:hover {
+                    background-color: var(--surface-highlight);
+                    background-color: var(--surface-hover);
                 }
 
                 &:focus {

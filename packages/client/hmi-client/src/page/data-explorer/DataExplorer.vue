@@ -551,11 +551,6 @@ onUnmounted(() => {
 	overflow-y: auto;
 }
 
-.slider {
-	z-index: 1;
-	background: var(--surface-card);
-}
-
 .p-button.p-button-secondary {
 	border: 1px solid var(--surface-border);
 	box-shadow: none;

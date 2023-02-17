@@ -9,21 +9,16 @@
 	<main>
 		<slider-panel
 			v-if="isSidebarVisible && !isErrorState"
+			v-model:is-open="isResourceSidebarOpen"
 			content-width="240px"
 			header="Resources"
 			direction="left"
-			class="sidebar"
 		>
 			<template v-slot:content>
-				<tera-resources-sidebar :project="project" />
+				<tera-resource-sidebar :project="project" />
 			</template>
 		</slider-panel>
-		<Sidebar
-			v-if="isSidebarVisible && !isErrorState"
-			class="sidebar"
-			data-test-id="sidebar"
-			:project="project"
-		/>
+		<Sidebar v-if="isSidebarVisible && !isErrorState" data-test-id="sidebar" :project="project" />
 		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
 	</main>
 	<footer>
@@ -42,7 +37,7 @@ import useResourcesStore from '@/stores/resources';
 import { ProjectType } from '@/types/Project';
 import { logBuffer } from '@/utils/logger';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
-import TeraResourcesSidebar from '@/components/tera-resources-sidebar.vue';
+import TeraResourceSidebar from '@/components/tera-resource-sidebar.vue';
 import { RoutePath, useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
 
@@ -58,6 +53,7 @@ const isSidebarVisible = computed(
 	() =>
 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
 );
+const isResourceSidebarOpen = ref(true);
 
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
@@ -129,10 +125,6 @@ main {
 	z-index: 1;
 	overflow: hidden;
 	position: relative;
-}
-
-.sidebar {
-	z-index: 2;
 }
 
 .page {
