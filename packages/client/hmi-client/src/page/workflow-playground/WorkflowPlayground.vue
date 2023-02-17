@@ -114,7 +114,7 @@ interface Node {
     outputs: Node[],
     gridStyle: {
         gridRow?: number | string,
-        gridColumn?: number | string,
+        gridColumn: number | string,
     },
     root?: Node
 }
@@ -129,6 +129,10 @@ const input = ref<HTMLInputElement | null>(null);
 const isSelectingConnection = ref(false);
 const newConnection = ref<Connection>({});
 const wireSize = 2;
+
+function isRoot(node: Node) {
+    return (node.root?.id === node.id);
+}
 
 async function createNode() {
     isSelectingConnection.value = false;
@@ -154,7 +158,7 @@ function insertNode() {
     nodes.value.push(newNode);
     modalVisible.value = false;
     newNodeName.value = '';
-    updateNodePositions();
+    updateNodeInitialPosition();
 }
 
 function invalidateConnection(reason?: string) {
@@ -162,17 +166,26 @@ function invalidateConnection(reason?: string) {
     newConnection.value = {};
 }
 
-function updateNodePositions() {
+function iterativelyUpdateNodePositions(node: Node) {
+    const rootNodeRow = node.root?.gridStyle.gridRow;
+    const previousNode = (node.inputs.length === 1) ? node.inputs[0] : null;
+    node.gridStyle.gridRow = rootNodeRow;
+    node.gridStyle.gridColumn = (previousNode) ? parseInt(node.inputs[0].gridStyle.gridColumn.toString()) + 1 : -1;
+    const nextNode = (node.outputs.length === 1) ? node.outputs[0] : null;
+    if (nextNode) {
+        iterativelyUpdateNodePositions(nextNode);
+    }
+}
+
+function updateNodeInitialPosition() {
     nodes.value.filter(n =>
         n.inputs.length === 0
     ).forEach((n, index) => {
         n.gridStyle.gridRow = index + 1;
     })
     nodes.value.forEach(n => {
-        if (n?.inputs.length > 0) {
-            const rootNodeRow = n.root?.gridStyle.gridRow;
-            n.gridStyle.gridRow = rootNodeRow;
-            n.gridStyle.gridColumn = 'auto';
+        if (isRoot(n) && n.outputs.length > 0) {
+            iterativelyUpdateNodePositions(n.outputs[0]);
         }
     });
 }
@@ -199,7 +212,7 @@ function createConnection() {
         }
         rightNode.root = leftNode.root;
         iterativelyUpdateRoots(rightNode.root!, rightNode.outputs);
-        updateNodePositions();
+        updateNodeInitialPosition();
     }
     newConnection.value = {};
 }
