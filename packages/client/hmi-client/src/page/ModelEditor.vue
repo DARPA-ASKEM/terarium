@@ -65,8 +65,13 @@ import _ from 'lodash';
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
-import { PetriNet } from '@/utils/petri-net-validator';
-import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType } from '@/services/model';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	NodeType
+} from '@/petrinet/petrinet-service';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
 import MetadataTable from '@/components/models/MetadataTable.vue';

@@ -1,12 +1,7 @@
-import { PetriNet } from '@/utils/petri-net-validator';
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
 import { Filters } from './Filter';
 
-// FIXME: other model content types will be supported depending on
-//	Model.framework
-export type ModelContent = PetriNet;
-
-export type Model = {
+export type Model<T> = {
 	id: string | number;
 	name: string;
 	description: string;
@@ -16,7 +11,7 @@ export type Model = {
 	timestamp: string | Date;
 	/* parameters: { [key: string]: string }; */
 	parameters: any; // FIXME
-	content: PetriNet;
+	content: T;
 
 	type: string;
 };

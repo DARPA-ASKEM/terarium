@@ -1,10 +1,9 @@
 <script lang="ts">
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
+import { petriNetValidator, PetriNet } from '@/petrinet/petrinet-service';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
-import { parsePetriNet2IGraph } from '@/services/model';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import API from '@/api/api';
