@@ -9,9 +9,9 @@
     </Teleport>
     <div class="container" @click="createNode()">
         <div class="column" v-for="node in nodes" :style="node.gridStyle">
-            <div class="junction">
+            <!-- <div class="junction">
                 <div :style="calcJunctionSize(node)"></div>
-            </div>
+            </div> -->
             <div class="inputs">
                 <div class="wire" :style="`height: ${wireSize}px`" v-for="out in node.inputs">
                 </div>
@@ -108,8 +108,10 @@ interface Node {
     inputs: Node[],
     outputs: Node[],
     gridStyle: {
-        gridArea: string
-    }
+        gridRow?: number | string,
+        gridColumn?: number | string,
+    },
+    root?: Node
 }
 interface Connection {
     in?: Node,
@@ -140,12 +142,14 @@ function insertNode() {
         inputs: [],
         outputs: [],
         gridStyle: {
-            gridArea: 'auto'
+            // gridRow: 1,
+            gridColumn: 1
         }
     };
     nodes.value.push(newNode);
     modalVisible.value = false;
     newNodeName.value = '';
+    updateNodePositions();
 }
 
 function invalidateConnection(reason?: string) {
@@ -154,11 +158,17 @@ function invalidateConnection(reason?: string) {
 }
 
 function updateNodePositions() {
+    // console.log(nodes.value.filter(n => n.inputs.length <= 0));
+    nodes.value.filter(n =>
+        n.inputs.length === 0
+    ).forEach((n, index) => {
+        n.gridStyle.gridRow = index + 1;
+    })
     nodes.value.forEach(n => {
-        if (n?.inputs.length === 0) {
-            n.gridStyle.gridArea = "1 / 1";
-        } else if (n?.outputs.length === 0) {
-            n.gridStyle.gridArea = "1 / auto";
+        if (n?.inputs.length > 0) {
+            const firstInputNodeRow = n.inputs[0].gridStyle.gridRow;
+            n.gridStyle.gridRow = firstInputNodeRow;
+            n.gridStyle.gridColumn = 'auto';
         }
     });
 }
