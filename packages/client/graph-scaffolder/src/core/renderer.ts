@@ -283,6 +283,18 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			});
 		});
 
+		svg.on('contextmenu', function (evt) {
+			evt.preventDefault();
+			const pointer = d3.pointer(evt);
+			const pointerCoords = d3.zoomTransform(svg.node() as SVGGElement).invert(pointer);
+			emit('background-contextmenu', evt, d3.select(this), renderer, {
+				x: pointerCoords[0],
+				y: pointerCoords[1],
+				clientX: pointer[0],
+				clientY: pointer[1]
+			});
+		});
+
 		const width = this.chartSize.width;
 		const height = this.chartSize.height;
 		const x = d3
