@@ -2,18 +2,17 @@
     <Teleport to="body">
         <Modal v-if="modalVisible" @modal-mask-clicked="modalVisible = false">
             <template #default>
-                <InputText ref="input" id="new-node-name" type="text" v-model="newNodeName"
-                    @keyup.enter="insertNode()" />
+                <InputText ref="input" id="new-node-name" type="text" v-model="newNodeName" @keyup.enter="insertNode()" />
             </template>
         </Modal>
     </Teleport>
     <div class="container" @click="createNode()">
         <div class="column" v-for="node in nodes" :style="node.gridStyle">
             <!-- <div class="junction">
-                <div :style="calcJunctionSize(node)"></div>
-            </div> -->
+                                                                                                                                                                             <div :style="calcJunctionSize(node)"></div>
+                                                                                                                                                                        </div> -->
             <div class="inputs">
-                <div class="wire" :style="`height: ${wireSize}px`" v-for="out in node.inputs">
+                <div class="edge" :style="inputEdgeStyle(node)" v-for="out in node.inputs">
                 </div>
             </div>
             <div class="node" :id="node.id">
@@ -22,11 +21,11 @@
                 <div class="node-out" @click.stop="(event) => nodeSelected(event)"></div>
             </div>
             <div class="outputs">
-                <div class="wire" :style="`height: ${wireSize}px`" v-for="out in node.outputs">
+                <div class="edge" :style="outputEdgeStyle(node)" v-for="out in node.outputs">
                 </div>
             </div>
         </div>
-    </div>
+</div>
 </template>
 
 <style scoped>
@@ -37,6 +36,7 @@
     /* grid-auto-columns: auto; */
     /* grid-auto-rows: auto; */
     background-color: var(--surface-ground);
+    grid-template-rows: repeat(auto-fill, 200px);
 }
 
 .column {
@@ -57,7 +57,7 @@
 .inputs,
 .outputs {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .node {
@@ -85,10 +85,9 @@
     min-width: 10px;
 }
 
-.wire {
-    /* height: 1px; */
+.edge {
+    position: relative;
     width: 100%;
-    background-color: var(--gray-500);
 }
 
 /* .junction {
@@ -113,8 +112,8 @@ interface Node {
     inputs: Node[],
     outputs: Node[],
     gridStyle: {
-        gridRow?: number | string,
-        gridColumn: number | string,
+        gridRow?: number,
+        gridColumn: number,
     },
     root?: Node
 }
@@ -128,7 +127,6 @@ const newNodeName = ref<string>('');
 const input = ref<HTMLInputElement | null>(null);
 const isSelectingConnection = ref(false);
 const newConnection = ref<Connection>({});
-const wireSize = 2;
 
 function isRoot(node: Node) {
     return (node.root?.id === node.id);
@@ -167,10 +165,12 @@ function invalidateConnection(reason?: string) {
 }
 
 function iterativelyUpdateNodePositions(node: Node) {
-    const rootNodeRow = node.root?.gridStyle.gridRow;
+    const rootNodeRow = node.root?.gridStyle.gridRow ?? 1;
     const previousNode = (node.inputs.length === 1) ? node.inputs[0] : null;
-    node.gridStyle.gridRow = rootNodeRow;
-    node.gridStyle.gridColumn = (previousNode) ? parseInt(node.inputs[0].gridStyle.gridColumn.toString()) + 1 : -1;
+    previousNode?.outputs.forEach((n, index) => {
+        n.gridStyle.gridRow = rootNodeRow + index;
+    });
+    node.gridStyle.gridColumn = (previousNode) ? previousNode.gridStyle.gridColumn + 1 : -1;
     const nextNode = (node.outputs.length === 1) ? node.outputs[0] : null;
     if (nextNode) {
         iterativelyUpdateNodePositions(nextNode);
@@ -185,7 +185,7 @@ function updateNodeInitialPosition() {
     })
     nodes.value.forEach(n => {
         if (isRoot(n) && n.outputs.length > 0) {
-            iterativelyUpdateNodePositions(n.outputs[0]);
+            n.outputs.forEach(n => iterativelyUpdateNodePositions(n));
         }
     });
 }
@@ -283,6 +283,26 @@ function nodeSelected(event) {
             default: break;
         }
         isSelectingConnection.value = false;
+    }
+}
+
+function inputEdgeStyle(node: Node) {
+    const rowOffset = ((node.gridStyle.gridRow ?? 1) - (node.inputs[0]?.gridStyle.gridRow ?? 0));
+    const height = 50 + 150 * rowOffset;
+    const top = -height + 50;
+    const borderLeft = (rowOffset > 0) ? `1px solid var(--gray-500)` : `none`;
+    return {
+        height: `${height}%`,
+        top: `${top}%`,
+        "border-bottom": `1px solid var(--gray-500)`,
+        "border-left": borderLeft
+    }
+}
+
+function outputEdgeStyle(node: Node) {
+    return {
+        height: `50%`,
+        "border-bottom": `1px solid var(--gray-500)`
     }
 }
 
