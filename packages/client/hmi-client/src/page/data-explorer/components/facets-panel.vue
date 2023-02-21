@@ -1,14 +1,8 @@
 <template>
-	<div class="facets-panel">
-		<div v-for="facet in formattedFacets" :key="facet.label">
-			<timeline-facet
-				v-if="facet.id === 'year'"
-				:data="facet.baseData"
-				:label="facet.label"
-			></timeline-facet>
+	<main>
+		<template v-for="facet in formattedFacets" :key="facet.id">
 			<numerical-facet
-				v-else-if="facet.isNumerical"
-				:key="facet.label"
+				v-if="facet.isNumerical || facet.id === 'year'"
 				:facet="facet.id"
 				:label="facet.label"
 				:base-data="facet.baseData"
@@ -16,39 +10,21 @@
 			/>
 			<categorical-facet
 				v-else
-				:key="facet.id"
 				:facet="facet.id"
 				:label="facet.label"
 				:base-data="facet.baseData"
 				:selected-data="facet.filteredData"
 				:rescale-after-select="true"
 			/>
-		</div>
-	</div>
+		</template>
+	</main>
 </template>
-
-<style scoped>
-.facet-blueprint-content {
-	background-color: var(--surface-a);
-}
-
-.slot-header {
-	padding: 2px 15px 0px 10px;
-}
-
-.slot-header,
-.slot-left,
-.slot-right {
-	background-color: var(--surface-a);
-}
-</style>
 
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
 
 import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
-import TimelineFacet from '@/components/facets/timeline-facet.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
@@ -108,3 +84,19 @@ const formattedFacets = computed(() => {
 	return facetList;
 });
 </script>
+
+<style scoped>
+.facet-blueprint-content {
+	background-color: var(--surface-a);
+}
+
+.slot-header {
+	padding: 2px 15px 0px 10px;
+}
+
+.slot-header,
+.slot-left,
+.slot-right {
+	background-color: var(--surface-a);
+}
+</style>
