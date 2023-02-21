@@ -12,7 +12,7 @@ import { logger } from '@/utils/logger';
  */
 async function getAll(): Promise<Dataset[] | null> {
 	const response = await API.get('/datasets').catch((error) => {
-		logger.error(`Error: ${error}`, true);
+		logger.error(`Error: ${error}`);
 	});
 	return response?.data ?? null;
 }

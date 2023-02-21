@@ -204,7 +204,7 @@ let numWolves = 10;
 export default defineComponent({
 	name: 'TA2Playground',
 	async mounted() {
-		logger.log('TA2 Playground initialized');
+		logger.info('TA2 Playground initialized');
 
 		const playground = document.getElementById('playground') as HTMLDivElement;
 		renderer = new SampleRenderer({
@@ -395,7 +395,7 @@ export default defineComponent({
 		async jsonOutput() {
 			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
-			logger.log(output);
+			logger.info(output);
 
 			if (petriNetValidator(output) === true) {
 				modelA = output;
@@ -436,7 +436,7 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async addPlace() {
-			console.log('add place');
+			logger.info('add place');
 			placeCounter++;
 			const id = `p-${placeCounter}`;
 
@@ -463,7 +463,7 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async addTransition() {
-			console.log('add transition');
+			logger.info('add transition');
 			transitionCounter++;
 			const id = `t-${transitionCounter}`;
 
@@ -559,7 +559,7 @@ export default defineComponent({
 				this.stateNamesA.length < 1 ||
 				this.stateNamesB.length < 1
 			) {
-				console.log('Not enough states');
+				logger.info('Not enough states');
 				return;
 			}
 
@@ -571,14 +571,14 @@ export default defineComponent({
 					modelB: stateNamesArrayB[i].trim()
 				});
 			}
-			console.log(modelA);
+			logger.info(modelA);
 			const resp = await API.post(`model-service/models/model-composition`, {
 				modelA,
 				modelB,
 				statesToMerge
 			});
 			mergedModel = await resp.data;
-			console.log(`Merged petrinet ${mergedModel}`);
+			logger.info(`Merged petrinet ${mergedModel}`);
 
 			g3 = parsePetriNet2IGraph(mergedModel);
 			g3 = runDagreLayout(_.cloneDeep(g3));
@@ -601,7 +601,7 @@ export default defineComponent({
 
 				const modelData = await resp.data;
 				modelId = modelData.id;
-				console.log(`Model ID: ${modelId}`); // currently required for testing
+				logger.info(`Model ID: ${modelId}`); // currently required for testing
 
 				let modelServiceNodes: { name: string; type: string }[] = [];
 				let modelServiceEdges: { source: string; target: string }[] = [];
@@ -645,18 +645,18 @@ export default defineComponent({
 			this.jsonOutput();
 		},
 		async stratify() {
-			console.log('Start stratify');
+			logger.info('Start stratify');
 			try {
 				const outputModel = await fetchStratificationResult(
 					this.stratifyModelA,
 					this.stratifyModelB,
 					this.stratifyTypeModel
 				);
-				console.log('Result');
-				console.log(outputModel);
+				logger.info('Result');
+				logger.info(outputModel);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
-				console.error(e.message);
+				logger.error(e.message);
 			}
 		},
 		// Used to create sample models for stratifying tests
