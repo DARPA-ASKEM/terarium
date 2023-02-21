@@ -85,7 +85,7 @@ const toggleContextMenu = (event, idx: number) => {
 };
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .invalid-project {
 	background-color: gray;
 	cursor: not-allowed;
