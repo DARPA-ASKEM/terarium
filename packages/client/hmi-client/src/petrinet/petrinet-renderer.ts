@@ -1,12 +1,12 @@
 import * as d3 from 'd3';
 import graphScaffolder from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { NodeData, EdgeData } from './petrinet-service';
+import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 
-export class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
+export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 
