@@ -9,7 +9,7 @@
     <div class="container" @click="createNode()">
         <div class="column" v-for="node in nodes" :style="node.gridStyle">
             <div class="inputs">
-                <div class="edge" :style="inputEdgeStyle(node, input)" v-for="(input) in node.inputs">
+                <div class="edge" :style="inputEdgeStyle(node, input, node.inputs.length)" v-for="(input) in node.inputs">
                 </div>
             </div>
             <div class="node" :id="node.id">
@@ -299,12 +299,14 @@ function nodeSelected(event) {
     }
 }
 
-function inputEdgeStyle(node: Node, input: Node) {
+function inputEdgeStyle(node: Node, input: Node, numEdges: number) {
     const inputIndex = input.outputs.findIndex(n => n.id === node.id);
-    const widthOffset = ((inputIndex > 1) ? inputIndex - 1 : 0) * 5;
+    const widthOffset = (inputIndex) * 5;
     const backgroundColor = edgeColors[input.gridStyle.gridRow! - 1][inputIndex];
     const height = 5;
+    const top = 2.5 * (numEdges - 1);
     return {
+        top: `${top}px`,
         height: `${height}px`,
         width: `calc(100% + ${widthOffset}px)`,
         right: `${widthOffset}px`,
@@ -315,7 +317,7 @@ function inputEdgeStyle(node: Node, input: Node) {
 function outputEdgeStyle(node: Node, output: Node, index: number, numEdges: number) {
     const height = 5;
     const outputIndex = output.inputs.findIndex(n => n.id === node.id);
-    const topAdditionalOffset = (outputIndex > 0) ? (output.inputs.length - 1) * 2.5 : 0;
+    const topAdditionalOffset = (outputIndex > 0) ? (output.inputs.length - 1) * 5 : 0;
     const top = 2.5 * (numEdges - 1) + topAdditionalOffset;
     const backgroundColor = edgeColors[node.gridStyle.gridRow! - 1][index];
     return {
