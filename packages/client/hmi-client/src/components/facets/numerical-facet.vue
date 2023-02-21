@@ -28,130 +28,79 @@
 	</facet-bars>
 </template>
 
-<script lang="ts">
-/* eslint-disable */
-// @ts-nocheck
-
-import { defineComponent } from 'vue';
-
+<script setup lang="ts">
+import { computed } from 'vue';
 import { isEqual } from 'lodash';
-
 import '@uncharted.software/facets-core';
 import '@uncharted.software/facets-plugins';
-
+import { FacetBucket } from '@/types/common';
 import filtersUtil from '@/utils/filters-util';
-
 import useQueryStore from '@/stores/query';
 
-/**
- * Facet 3 component - displays aggregated search terms and update query state.
- * Note facet does not filter itself, this is to allow term disjunction queries.
- * Properties
- * - label: facet label
- * - facet: field key
- * - selectedData: Array of selected bins
- * - baseData: Array of unfiltered bins
- */
-export default defineComponent({
-	name: 'NumericalFacet',
-	props: {
-		label: {
-			type: String,
-			default: 'Facet'
-		},
-		facet: {
-			type: String,
-			default: null
-		},
-		selectedData: {
-			type: Array,
-			default: () => []
-		},
-		baseData: {
-			type: Array,
-			default: () => []
-		}
-	},
-	setup(props) {
-		const query = useQueryStore();
-		return {
-			query
-		};
-	},
-	computed: {
-		max() {
-			const values = this.baseData.map((b) => b.value);
-			return Math.max(...values);
-		},
-		facetData() {
-			const values = this.baseData.map((b) => {
-				return {
-					ratio: b.value / this.max,
-					label: b.key,
-					tooltip: `${this.label}: ${b.key}\nCount: ${b.value}`
-				};
-			});
-			return {
-				label: this.label,
-				values
-			};
-		},
-		selection() {
-			const facetClause = filtersUtil.findPositiveFacetClause(this.query.filters, this.facet);
-			if (facetClause) {
-				const values = facetClause.values[0];
-				const selIndexes = this.baseData.reduce(
-					(a, b, i) => {
-						if (parseFloat(b.key) <= parseFloat(values[0])) {
-							a[0] = i; // largest matching index for the start
-						} else if (parseFloat(b.key) <= parseFloat(values[1])) {
-							a[1] = i; // largest matching index for the end
-						}
-						return a;
-					},
-					[null, null]
-				);
+const query = useQueryStore();
 
-				// if the largest key is still less than the last value or is a special string
-				// set to the max length of the baseData array
-				if (values[1] > this.baseData[this.baseData.length - 1].key || values[1] === '--') {
-					selIndexes[1] = this.baseData.length;
-				}
-				return selIndexes;
-			} else {
-				return [0, this.baseData.length];
-			}
-		},
-		subSelection() {
-			return this.selectedData ? this.selectedData.map((s) => s.value / this.max) : [];
-		}
-	},
-	methods: {
-		updateSelection(event) {
-			const facet = event.currentTarget;
-			if (
-				event.detail.changedProperties.get('selection') !== undefined &&
-				!isEqual(facet.selection, this.selection)
-			) {
-				if (facet.selection) {
-					const from = this.baseData[facet.selection[0]].key;
+const props = defineProps<{
+	label: string;
+	facet: string;
+	selectedData: FacetBucket[];
+	baseData: FacetBucket[];
+}>();
 
-					// HACK: numEvidence key has a custom filter expectation for 5+
-					const to =
-						this.facet === 'numEvidence' && facet.selection[1] >= 5
-							? '--'
-							: facet.selection[1] !== this.baseData.length
-							? this.baseData[facet.selection[1]].key
-							: (this.baseData[1].key - this.baseData[0].key) * this.baseData.length +
-							  this.baseData[0].key;
-					this.query.setSearchClause({ field: this.facet, values: [[from, to]] });
-				} else {
-					this.query.setSearchClause({ field: this.facet, values: [[0, this.baseData.length]] });
+const max = computed(() => Math.max(...props.baseData.map((b) => b.value)));
+
+const facetData = computed(() => {
+	const values = props.baseData.map((b) => ({
+		ratio: b.value / max.value,
+		label: b.key,
+		tooltip: `${props.label}: ${b.key}\nCount: ${b.value}`
+	}));
+	return {
+		label: props.label,
+		values
+	};
+});
+
+const selection = computed(() => {
+	const facetClause = filtersUtil.findPositiveFacetClause(query.clientFilters, props.facet);
+	if (facetClause) {
+		const values = facetClause.values[0];
+		const selIndexes = props.baseData.reduce(
+			(a, b, i) => {
+				if (parseFloat(b.key) <= parseFloat(values[0])) {
+					a[0] = i; // largest matching index for the start
+				} else if (parseFloat(b.key) <= parseFloat(values[1])) {
+					a[1] = i; // largest matching index for the end
 				}
-			}
+				return a;
+			},
+			[null, null] as [number | null, number | null]
+		);
+
+		// if the largest key is still less than the last value or is a special string
+		// set to the max length of the baseData array
+		if (values[1] > props.baseData[props.baseData.length - 1].key || values[1] === '--') {
+			selIndexes[1] = props.baseData?.length ?? 0;
+		}
+		return selIndexes;
+	}
+
+	return [0, props.baseData.length];
+});
+const subSelection = computed(() =>
+	props.selectedData ? props.selectedData.map((s) => s.value / max.value) : []
+);
+
+const updateSelection = (event) => {
+	const facet = event.currentTarget;
+	if (
+		event.detail.changedProperties.get('selection') !== undefined &&
+		!isEqual(facet.selection, selection)
+	) {
+		if (facet.selection) {
+			console.log('selection');
 		}
 	}
-});
+};
 </script>
 
 <style scoped>
