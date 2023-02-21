@@ -18,33 +18,33 @@ enum LogLevels {
 }
 
 /**
- * @interface ILoggerMessageOptions
+ * @interface LoggerMessageOptionsType
  */
-interface ILoggerMessageOptions {
+interface LoggerMessageOptionsType {
 	showToast?: boolean;
 	toastTitle?: string;
 	silent?: boolean; // do not transmit to backend
 }
 
 /**
- * @interface ILoggerHooks
+ * @interface LoggerHooksOptionsType
  */
-interface ILoggerHooks {
+interface LoggerHooksOptionsType {
 	before?: (level: string, message: string, callerInfo?: string) => void;
 	after?: (level: string, message: string, callerInfo?: string) => void;
 }
 
 /**
- * @interface ILoggerOptions
+ * @interface LoggerOptionsType
  */
-interface ILoggerOptions {
+interface LoggerOptionsType {
 	consoleEnabled: boolean;
 	callerInfoEnabled: boolean;
 	showToast: boolean;
-	hooks?: ILoggerHooks;
+	hooks?: LoggerHooksOptionsType;
 }
 
-const defaultOptions: ILoggerOptions = {
+const defaultOptions: LoggerOptionsType = {
 	consoleEnabled: !isProduction,
 	callerInfoEnabled: false,
 	showToast: false
@@ -56,13 +56,13 @@ const defaultOptions: ILoggerOptions = {
  * @class Logger
  */
 class Logger {
-	private options: ILoggerOptions;
+	private options: LoggerOptionsType;
 
 	private callerInfo: string;
 
 	private logBuffer: LogBuffer;
 
-	constructor(options: ILoggerOptions = defaultOptions) {
+	constructor(options: LoggerOptionsType = defaultOptions) {
 		this.options = { ...defaultOptions, ...options };
 		this.callerInfo = '';
 		this.logBuffer = new LogBuffer();
@@ -93,14 +93,14 @@ class Logger {
 	 *
 	 * @param {string} level "info" | "warn" | "error" | "debug"
 	 * @param {string} message message to
-	 * @param {ILoggerMessageOptions} [messageOptions]
+	 * @param {LoggerMessageOptionsType} [messageOptions]
 	 * @memberof Logger
 	 */
 
 	log(
 		level: string,
 		message: string,
-		messageOptions?: ILoggerMessageOptions,
+		messageOptions?: LoggerMessageOptionsType,
 		...optionalParams: any[]
 	): void {
 		if (this.options.hooks?.before) {
@@ -108,7 +108,7 @@ class Logger {
 		}
 
 		if (this.options.consoleEnabled) {
-			console.log(`[${level}] ${message} ${this.callerInfo}`, ...optionalParams);
+			console[level](`[${level}] ${message} ${this.callerInfo}`, ...optionalParams);
 		}
 
 		if (this.options.showToast && messageOptions?.showToast) {
@@ -126,19 +126,19 @@ class Logger {
 	/**
 	 *
 	 * @param {string} level
-	 * @param {*} msg
+	 * @param {*} message
 	 */
-	async queueLogs(level: string, msg: any) {
-		this.logBuffer.add({ level: level, message: msg });
+	async queueLogs(level: string, message: any) {
+		this.logBuffer.add({ level, message });
 	}
 
 	/**
 	 *
 	 * @param {*} message
-	 * @param {ILoggerMessageOptions} [messageOptions]
+	 * @param {LoggerMessageOptionsType} [messageOptions]
 	 * @memberof Logger
 	 */
-	info(message: any, messageOptions?: ILoggerMessageOptions, ...optionalParams: any[]): void {
+	info(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]): void {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.INFO, message, messageOptions, optionalParams);
 	}
@@ -146,10 +146,10 @@ class Logger {
 	/**
 	 *
 	 * @param {string} message message to
-	 * @param {ILoggerMessageOptions} [messageOptions]
+	 * @param {LoggerMessageOptionsType} [messageOptions]
 	 * @memberof Logger
 	 */
-	warn(message: any, messageOptions?: ILoggerMessageOptions, ...optionalParams: any[]) {
+	warn(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.WARN, message, messageOptions, optionalParams);
 	}
@@ -158,10 +158,10 @@ class Logger {
 	 *
 	 *
 	 * @param {string} message message to
-	 * @param {ILoggerMessageOptions} [messageOptions]
+	 * @param {LoggerMessageOptionsType} [messageOptions]
 	 * @memberof Logger
 	 */
-	debug(message: any, messageOptions?: ILoggerMessageOptions, ...optionalParams: any[]) {
+	debug(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.DEBUG, message, messageOptions, optionalParams);
 	}
@@ -170,10 +170,10 @@ class Logger {
 	 *
 	 *
 	 * @param {string} message message to
-	 * @param {ILoggerMessageOptions} [messageOptions]
+	 * @param {LoggerMessageOptionsType} [messageOptions]
 	 * @memberof Logger
 	 */
-	error(message: any, messageOptions?: ILoggerMessageOptions, ...optionalParams: any[]) {
+	error(message: any, messageOptions?: LoggerMessageOptionsType, ...optionalParams: any[]) {
 		this.callerInfo = this.getCallerInfo();
 		this.log(LogLevels.ERROR, message, messageOptions, optionalParams);
 	}
@@ -183,10 +183,10 @@ class Logger {
 	 * @private
 	 * @param {string} level
 	 * @param {string} message
-	 * @param {ILoggerMessageOptions} [messageOptions]
+	 * @param {LoggerMessageOptionsType} [messageOptions]
 	 * @memberof Logger
 	 */
-	private displayToast(level: string, message: string, messageOptions?: ILoggerMessageOptions) {
+	private displayToast(level: string, message: string, messageOptions?: LoggerMessageOptionsType) {
 		switch (level) {
 			case LogLevels.INFO:
 				toast.info(messageOptions?.toastTitle, message);
@@ -206,5 +206,5 @@ class Logger {
 export const logger = new Logger({
 	consoleEnabled: !isProduction,
 	callerInfoEnabled: true,
-	showToast: false
+	showToast: true
 });

@@ -1,6 +1,7 @@
 // import API from '@/api/api';
 import { useToastService } from '@/services/toast';
 import axios from 'axios';
+import { isEmpty } from 'lodash';
 import useAuthStore from '../stores/auth';
 
 const LOGS = axios.create({
@@ -22,20 +23,20 @@ LOGS.interceptors.request.use(
 		return config;
 	},
 	(error) => {
-		console.warn(error);
+		console.error(error);
 	}
 );
 
 const toast = useToastService();
 
-// LogDetails Interface
-interface LogDetails {
+// LogDetailsType Interface
+interface LogDetailsType {
 	level: string;
 	message: string;
 }
 
 export class LogBuffer {
-	logs: LogDetails[];
+	logs: LogDetailsType[];
 
 	constructor() {
 		this.logs = [];
@@ -45,18 +46,13 @@ export class LogBuffer {
 		this.logs = [];
 	};
 
-	add = (log: LogDetails) => {
+	add = (log: LogDetailsType) => {
 		this.logs.push(log);
 	};
 
-	isEmpty = (): boolean => {
-		if (this.logs.length > 0) {
-			return false;
-		}
-		return true;
-	};
+	isEmpty = (): boolean => isEmpty(this.logs.length);
 
-	getLogBuffer = (): LogDetails[] => this.logs;
+	getLogBuffer = (): LogDetailsType[] => this.logs;
 
 	startService = () => {
 		setInterval(() => {
@@ -75,7 +71,7 @@ export class LogBuffer {
 					this.clearLogs();
 				}
 			} catch (error: any) {
-				console.log(error);
+				console.error(error);
 				toast.error('Error Sending Logs', error);
 			}
 		}

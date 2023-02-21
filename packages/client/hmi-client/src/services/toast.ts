@@ -28,66 +28,54 @@ export const useToastService = () => {
 		life: number = 4000
 	) => {
 		ToastEventBus.emit('add', {
-			severity: severity,
-			summary: summary,
-			detail: detail,
-			life: life
+			severity,
+			summary,
+			detail,
+			life
 		});
 	};
 
-	const warn = (
-		summary: string | undefined,
-		detail: string,
-		duration: number = DEFAULT_DURATION
-	) => {
+	const warn = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.warn,
 			summary: summary || ToastSummaries.WARNING,
-			detail: detail,
-			life: duration,
-			group: ToastSeverity.warn
+			group: ToastSeverity.warn,
+			detail,
+			life
 		});
 	};
 
-	const error = (
-		summary: string | undefined,
-		detail: string,
-		duration: number = DEFAULT_DURATION
-	) => {
+	const error = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.error,
 			summary: summary || ToastSummaries.ERROR,
-			detail: detail,
-			life: duration,
-			group: ToastSeverity.error
+			group: ToastSeverity.error,
+			detail,
+			life
 		});
 	};
 
 	const success = (
 		summary: string | undefined,
 		detail: string,
-		duration: number = DEFAULT_DURATION
+		life: number = DEFAULT_DURATION
 	) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.success,
 			summary: summary || ToastSummaries.INFO,
-			detail: detail,
-			life: duration,
-			group: ToastSeverity.success
+			group: ToastSeverity.success,
+			detail,
+			life
 		});
 	};
 
-	const info = (
-		summary: string | undefined,
-		detail: string,
-		duration: number = DEFAULT_DURATION
-	) => {
+	const info = (summary: string | undefined, detail: string, life: number = DEFAULT_DURATION) => {
 		ToastEventBus.emit('add', {
 			severity: ToastSeverity.info,
 			summary: summary || ToastSummaries.INFO,
-			detail: detail,
-			life: duration,
-			group: ToastSeverity.info
+			group: ToastSeverity.info,
+			detail,
+			life
 		});
 	};
 
