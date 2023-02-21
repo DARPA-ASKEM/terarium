@@ -1,6 +1,6 @@
 import { expect, it, test } from 'vitest';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
-import { PetriNet } from '@/utils/petri-net-validator';
+import { PetriNet } from '@/petrinet/petrinet-service';
 
 // const SIRDModel: PetriNet = {
 // 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
