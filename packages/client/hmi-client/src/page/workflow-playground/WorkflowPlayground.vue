@@ -108,6 +108,7 @@
 import { ref, nextTick } from 'vue';
 import Modal from '@/components/Modal.vue';
 import InputText from 'primevue/inputtext';
+import { n } from 'vitest/dist/index-220c1d70';
 
 interface Node {
     id: string,
@@ -306,17 +307,22 @@ function nodeSelected(event) {
 
 function inputEdgeStyle(node: Node, input: Node) {
     const inputIndex = input.outputs.findIndex(n => n.id === node.id);
+    const widthOffset = ((inputIndex > 1) ? inputIndex - 1 : 0) * 5;
     const backgroundColor = edgeColors[inputIndex];
     const height = 5;
     return {
         height: `${height}px`,
+        width: `calc(100% + ${widthOffset}px)`,
+        right: `${widthOffset}px`,
         'background-color': backgroundColor
     }
 }
 
 function outputEdgeStyle(node: Node, output: Node, index: number, numEdges: number) {
     const height = 5;
-    const top = 2.5 * (numEdges - 1);
+    const outputIndex = output.inputs.findIndex(n => n.id === node.id);
+    const topAdditionalOffset = (outputIndex > 0) ? (output.inputs.length - 1) * 2.5 : 0;
+    const top = 2.5 * (numEdges - 1) + topAdditionalOffset;
     const backgroundColor = edgeColors[index];
     return {
         top: `${top}px`,
