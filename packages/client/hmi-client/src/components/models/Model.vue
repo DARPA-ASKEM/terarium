@@ -119,7 +119,7 @@ import Badge from 'primevue/badge';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
-import { Model } from '@/types/Model';
+import { IModel } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
 import { ProvenanceType } from '@/types/Provenance';
@@ -134,7 +134,7 @@ export interface ModelProps {
 const props = defineProps<ModelProps>();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
-const model = ref<Model<PetriNet> | null>(null);
+const model = ref<IModel<PetriNet> | null>(null);
 const isEditing = ref(false);
 
 const relatedTerariumModels = computed(

@@ -1,7 +1,7 @@
 import { CONCEPT_FACETS_DISPLAY_NAME, CONCEPT_FACETS_FIELD } from './Concept';
 import { Filters } from './Filter';
 
-export type Model<T> = {
+export type IModel<T> = {
 	id: string | number;
 	name: string;
 	description: string;
@@ -15,6 +15,9 @@ export type Model<T> = {
 
 	type: string;
 };
+
+// Generic Model
+export type Model = IModel<any>;
 
 export type ModelSearchParams = {
 	filters?: Filters;
