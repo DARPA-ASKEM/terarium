@@ -5,6 +5,10 @@ import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
+const pathFn = d3
+	.line<{ x: number; y: number }>()
+	.x((d) => d.x)
+	.y((d) => d.y);
 
 export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	setupDefs() {
