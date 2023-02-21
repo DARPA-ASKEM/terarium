@@ -101,12 +101,12 @@ const addResourcesToProject = async (projectId: string) => {
 	});
 };
 
-const addAssetsToProject = async (projectName?: string) => {
+const addAssetsToProject = async (projectName) => {
 	if (props.selectedSearchItems.length === 0) return;
 
 	let projectId = '';
-	if (projectName !== undefined && typeof projectName === 'string') {
-		const project = projectsList.value.find((p) => p.name === projectName);
+	if (projectName !== undefined && typeof projectName.value === 'string') {
+		const project = projectsList.value.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
 		if (!validProject.value) return;
