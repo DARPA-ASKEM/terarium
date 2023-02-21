@@ -23,10 +23,8 @@ import { deleteAsset } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { ProjectAssetTypes } from '@/types/Project';
 import { DocumentAsset } from '@/types/Document';
-import { useLogger } from 'vue-logger-plugin';
+import { logger } from '@/utils/logger';
 import ArtifactList from './artifact-list.vue';
-
-const logger = useLogger();
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
@@ -83,6 +81,7 @@ onMounted(() => {
 function exportIds() {
 	logger.info(
 		'List of xDD _gddid ',
+		{},
 		documents.value.map((document) => document)
 	);
 }
