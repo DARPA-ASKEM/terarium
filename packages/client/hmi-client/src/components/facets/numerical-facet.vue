@@ -6,7 +6,6 @@
 		class="facet-font"
 		@facet-element-updated="updateSelection"
 	>
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 		<div slot="header-label">
 			<span class="facet-font">{{ label }}</span>
 		</div>
@@ -18,15 +17,12 @@
 			class="facet-pointer"
 		/>
 
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 		<div v-else slot="content" />
 
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 		<div slot="footer" v-if="facetData.values.length > 0" class="facet-footer-container">
 			<facet-plugin-zoom-bar min-bar-width="8" auto-hide="true" round-caps="true" />
 		</div>
 
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 		<div v-else slot="footer" class="facet-footer-container">No Data Available</div>
 	</facet-bars>
 </template>

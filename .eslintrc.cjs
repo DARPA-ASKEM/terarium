@@ -10,6 +10,7 @@ module.exports = {
 	parser: 'vue-eslint-parser',
 	rules: {
 		'vue/multi-word-component-names': 'off',
+		'vue/no-deprecated-slot-attribute': 'off',
 		'class-methods-use-this': 'off',
 		'no-plusplus': 'off',
 		'prefer-destructuring': 'off',

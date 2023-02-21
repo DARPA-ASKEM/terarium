@@ -1,6 +1,5 @@
 <template>
 	<facet-timeline :data="timelineData" @facet-element-updated="updateSelection">
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute -->
 		<div slot="header">{{ label }}</div>
 	</facet-timeline>
 </template>

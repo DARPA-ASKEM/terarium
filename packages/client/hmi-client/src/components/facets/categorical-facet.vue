@@ -6,21 +6,17 @@
 		@facet-element-updated="updateSelection"
 		action-buttons="0"
 	>
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 		<div slot="header-label">
 			<span class="facet-font">{{ label }}</span>
 		</div>
 
 		<facet-template target="facet-terms-value" class="facet-pointer">
-			<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 			<div slot="label" class="facet-label-truncated facet-font" title="${label} - ${value}">
 				${label}
 			</div>
-			<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 			<div slot="value" class="facet-font">${value}</div>
 		</facet-template>
 
-		<!-- eslint-disable-next-line vue/no-deprecated-slot-attribute vue/first-attribute-linebreak -->
 		<div slot="footer" class="facet-footer-container">
 			<div class="facet-footer-more">
 				<div class="facet-footer-more-section">
