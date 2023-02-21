@@ -17,7 +17,7 @@ export interface TimelineData {
 
 const props = defineProps<{
 	data: FacetBucket[];
-	label?: string;
+	label: string;
 }>();
 
 const query = useQueryStore();
