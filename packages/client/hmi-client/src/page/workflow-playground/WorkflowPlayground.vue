@@ -108,7 +108,6 @@
 import { ref, nextTick } from 'vue';
 import Modal from '@/components/Modal.vue';
 import InputText from 'primevue/inputtext';
-import { n } from 'vitest/dist/index-220c1d70';
 
 interface Node {
     id: string,
@@ -120,7 +119,6 @@ interface Node {
         gridColumn: number,
     },
     root?: Node,
-    // edgeColor: string
 }
 interface Connection {
     in?: Node,
@@ -132,7 +130,8 @@ const newNodeName = ref<string>('');
 const input = ref<HTMLInputElement | null>(null);
 const isSelectingConnection = ref(false);
 const newConnection = ref<Connection>({});
-const edgeColors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet'];
+const edgeColors = [['indianred', 'lightcoral', 'salmon', 'darksalmon', 'lightsalmon', 'crimson'],
+['gold', 'yellow', 'lightyellow', 'lemonchiffon', 'lightgoldenrodyellow', 'papayawhip']];
 
 function isRoot(node: Node) {
     return (node.root?.id === node.id);
@@ -148,10 +147,6 @@ async function createNode() {
     input.value?.$el.focus();
 }
 
-function assignEdgeColor(id: number): string {
-    return edgeColors[id];
-}
-
 function insertNode() {
     const newNode: Node = {
         id: nodes.value.length.toString(),
@@ -162,7 +157,6 @@ function insertNode() {
             // gridRow: 1,
             gridColumn: 1
         },
-        // edgeColor: assignEdgeColor(nodes.value.length)
     };
     nodes.value.push(newNode);
     modalVisible.value = false;
@@ -308,7 +302,7 @@ function nodeSelected(event) {
 function inputEdgeStyle(node: Node, input: Node) {
     const inputIndex = input.outputs.findIndex(n => n.id === node.id);
     const widthOffset = ((inputIndex > 1) ? inputIndex - 1 : 0) * 5;
-    const backgroundColor = edgeColors[inputIndex];
+    const backgroundColor = edgeColors[input.gridStyle.gridRow! - 1][inputIndex];
     const height = 5;
     return {
         height: `${height}px`,
@@ -323,7 +317,7 @@ function outputEdgeStyle(node: Node, output: Node, index: number, numEdges: numb
     const outputIndex = output.inputs.findIndex(n => n.id === node.id);
     const topAdditionalOffset = (outputIndex > 0) ? (output.inputs.length - 1) * 2.5 : 0;
     const top = 2.5 * (numEdges - 1) + topAdditionalOffset;
-    const backgroundColor = edgeColors[index];
+    const backgroundColor = edgeColors[node.gridStyle.gridRow! - 1][index];
     return {
         top: `${top}px`,
         height: `${height}px`,
@@ -336,7 +330,7 @@ function verticalEdgeStyle(index: number) {
     if (index === 0) {
         return {};
     }
-    const backgroundColor = edgeColors[index];
+    const backgroundColor = edgeColors[0][index];
     const topOffset = -2.5 + (5 * index);
     return {
         width: `5px`,
