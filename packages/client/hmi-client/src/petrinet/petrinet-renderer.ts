@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import graphScaffolder from '@graph-scaffolder/index';
+import graphScaffolder, { INode } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
@@ -73,6 +73,55 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
+	}
+
+	startEdgeCreation(selection: D3SelectionINode<NodeData>) {
+		const chart = this.chart;
+		const svg = d3.select(this.svgEl);
+		const start: { x: number; y: number } = { x: 0, y: 0 };
+		const end: { x: number; y: number } = { x: 0, y: 0 };
+
+		let startData: INode<NodeData> | null = null;
+		let targetData: INode<NodeData> | null = null;
+
+		const createEdgeDrag = d3
+			.drag()
+			.on('start', async () => {
+				startData = selection.datum();
+				start.x = startData.x + 0.5 * startData.width;
+				start.y = startData.y + 0.5 * startData.height;
+			})
+			.on('drag', async (evt) => {
+				const pointerCoords = d3
+					.zoomTransform(svg.node() as Element)
+					.invert(d3.pointer(evt, svg.node()));
+
+				targetData = d3.select<SVGGElement, INode<NodeParameter>>(evt.sourceEvent.target).datum();
+				if (targetData) {
+					end.x = targetData.x + 0.5 * targetData.width;
+					end.y = targetData.y + 0.5 * targetData.height;
+				} else {
+					end.x = pointerCoords[0];
+					end.y = pointerCoords[1];
+				}
+
+				chart?.selectAll('.new-edge').remove();
+				chart
+					?.append('line')
+					.classed('new-edge', true)
+					.attr('x1', start.x)
+					.attr('y1', start.y)
+					.attr('x2', end.x)
+					.attr('y2', end.y)
+					.style('stroke', 'red');
+			})
+			.on('end', async () => {
+				chart.selectAll('.new-edge').remove();
+				if (targetData) {
+					this.emit('add-edge', {});
+				}
+			});
+		selection.call(createEdgeDrag as any);
 	}
 
 	addEdge(source: any, target: any) {

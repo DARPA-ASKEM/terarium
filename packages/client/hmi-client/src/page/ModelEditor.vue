@@ -590,7 +590,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 
 // Tracking variables
 let source: any = null;
-let target: any = null;
+// let target: any = null;
 let nameCounter: number = 0;
 
 const runPetri = () => {
@@ -721,6 +721,12 @@ onMounted(async () => {
 	});
 
 	renderer.on('node-click', (_evtName, evt, d) => {
+		// FIXME: Better interaction
+		if (evt.shiftKey) {
+			renderer?.startEdgeCreation(d);
+		}
+
+		/*
 		if (evt.shiftKey) {
 			if (source) {
 				target = d;
@@ -745,6 +751,7 @@ onMounted(async () => {
 			source = null;
 			target = null;
 		}
+		*/
 	});
 
 	renderer.on('node-mouse-enter', (_evtName, _evt, el) => {
