@@ -15,6 +15,7 @@ export enum RouteName {
 	ModelRoute = 'model',
 	ProjectRoute = 'project',
 	ProvenanceRoute = 'provenance',
+	ProjectResourcesRoute = 'resources',
 	SimulationRoute = 'simulation',
 	SimulationResultRoute = 'simulationResult',
 	DataExplorerRoute = 'dataExplorer',
@@ -56,6 +57,7 @@ export const RouteMetadata: {
 		projectAsset: ProjectAssetTypes.CODE
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
+	[RouteName.ProjectResourcesRoute]: { displayName: 'Project Resources', icon: '' },
 	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },
 	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: 'pi pi-compass' }
 };

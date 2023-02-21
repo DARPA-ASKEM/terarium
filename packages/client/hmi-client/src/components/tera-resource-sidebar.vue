@@ -1,6 +1,6 @@
 <template>
 	<nav>
-		<div @click="pp">
+		<div>
 			<Button icon="pi pi-file-edit" class="p-button-icon-only p-button-text p-button-rounded" />
 			<Button icon="pi pi-folder" class="p-button-icon-only p-button-text p-button-rounded" />
 			<Button
@@ -9,7 +9,7 @@
 			/>
 			<Button icon="pi pi-arrows-v" class="p-button-icon-only p-button-text p-button-rounded" />
 		</div>
-		<Tree :value="resources" selectionMode="single" v-on:node-select="pp">
+		<Tree :value="resources" selectionMode="single" v-on:node-select="openResource">
 			<template #default="slotProps">
 				{{ slotProps.node.label }}
 				<Chip :label="slotProps.node.data" />
@@ -23,11 +23,16 @@
 import { computed } from 'vue';
 import { isEmpty } from 'lodash';
 import { ProjectType } from '@/types/Project';
+import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
+import { useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 // import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
+
+const router = useRouter();
+const resourcesStore = useResourcesStore();
 
 const props = defineProps<{
 	project: ProjectType | null;
@@ -38,7 +43,7 @@ const props = defineProps<{
 // 		@remove-artifact="(id) => removeDocument(id as string)" />
 
 const resources = computed(() => {
-	const storedResources = useResourcesStore().activeProjectAssets ?? [];
+	const storedResources = resourcesStore.activeProjectAssets ?? [];
 	const projectAssetTypes = Object.keys(storedResources);
 	const resourceTreeNodes: any[] = [];
 
@@ -49,7 +54,7 @@ const resources = computed(() => {
 			const assets = Object.values(storedResources[projectAssetTypes[i]]) ?? [];
 			for (let j = 0; j < assets.length; j++) {
 				resourceTreeNodes.push({
-					key: assets[j]?.id,
+					key: projectAssetTypes[i] === 'publications' ? assets[j].xdd_uri : assets[j]?.id,
 					label: assets[j]?.name || assets[j]?.title,
 					data: projectAssetTypes[i],
 					selectable: true
@@ -60,8 +65,13 @@ const resources = computed(() => {
 	return resourceTreeNodes;
 });
 
-function pp() {
-	console.log(props.project, resources.value);
+function openResource(event: any) {
+	console.log(event);
+
+	router.push({
+		name: RouteName.ProjectResourcesRoute,
+		params: { projectId: props.project?.id, resourceType: event.data, assetId: event.key }
+	});
 }
 </script>
 

@@ -7,18 +7,6 @@
 		:resourceType="resourceType"
 	/>
 	<main>
-		<slider-panel
-			v-if="isSidebarVisible && !isErrorState"
-			v-model:is-open="isResourceSidebarOpen"
-			content-width="240px"
-			header="Resources"
-			direction="left"
-		>
-			<template v-slot:content>
-				<tera-resource-sidebar :project="project" />
-			</template>
-		</slider-panel>
-		<Sidebar v-if="isSidebarVisible && !isErrorState" data-test-id="sidebar" :project="project" />
 		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
 	</main>
 	<footer>
@@ -30,15 +18,14 @@
 import { computed, shallowRef, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
-import Sidebar from '@/components/Sidebar.vue';
+// import Sidebar from '@/components/Sidebar.vue';
 import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { ProjectType } from '@/types/Project';
 import { logBuffer } from '@/utils/logger';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
-import TeraResourceSidebar from '@/components/tera-resource-sidebar.vue';
-import { RoutePath, useCurrentRoute } from './router/index';
+
+import { useCurrentRoute } from './router/index'; // RoutePath,
 import { ResourceType } from './types/common';
 
 logBuffer.startService();
@@ -49,12 +36,10 @@ logBuffer.startService();
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
-const isSidebarVisible = computed(
-	() =>
-		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
-);
-const isResourceSidebarOpen = ref(true);
-
+// const isSidebarVisible = computed(
+// 	() =>
+// 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
+// );
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const resources = useResourcesStore();
@@ -131,6 +116,8 @@ main {
 	z-index: 1;
 	flex: 1;
 	min-width: 0;
+	display: flex;
+	flex-grow: 1;
 }
 
 footer {

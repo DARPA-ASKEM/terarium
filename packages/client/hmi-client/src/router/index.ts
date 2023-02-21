@@ -16,11 +16,13 @@ import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ModelEditorView from '@/page/ModelEditor.vue';
 import ModelRunnerView from '@/page/ModelRunner.vue';
+import ProjectResourcesView from '@/page/ProjectResources.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
 	Project = '/projects/:projectId',
+	Resource = '/projects/:projectId/resources/:resourceType/:assetId?',
 	Document = '/projects/:projectId/docs/:assetId?',
 	Model = '/projects/:projectId/model/:assetId?',
 	Dataset = '/projects/:projectId/dataset/:assetId?',
@@ -43,6 +45,12 @@ const routes = [
 	{ name: 'unauthorized', path: RoutePath.Unauthorized, component: UnauthorizedView },
 	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
+	{
+		name: RouteName.ProjectResourcesRoute,
+		path: RoutePath.Resource,
+		component: ProjectResourcesView,
+		props: true
+	},
 	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
 	{ name: RouteName.DatasetRoute, path: RoutePath.Dataset, component: DatasetView, props: true },
 	{ name: RouteName.ProjectRoute, path: RoutePath.Project, component: ProjectView },
