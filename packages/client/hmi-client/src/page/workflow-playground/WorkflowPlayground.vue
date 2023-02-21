@@ -9,7 +9,7 @@
     <div class="container" @click="createNode()">
         <div class="column" v-for="node in nodes" :style="node.gridStyle">
             <div class="inputs">
-                <div class="edge" :style="inputEdgeStyle(node, input)" v-for="(input, inIndex) in node.inputs">
+                <div class="edge" :style="inputEdgeStyle(node, input)" v-for="(input) in node.inputs">
                 </div>
             </div>
             <div class="node" :id="node.id">
@@ -18,8 +18,12 @@
                 <div class="node-out" @click.stop="(event) => nodeSelected(event)"></div>
             </div>
             <div class="outputs">
-                <div class="edge" :style="outputEdgeStyle(node, output, outIndex, node.outputs.length)"
-                    v-for="(output, outIndex) in node.outputs">
+                <div class="edge" :style="outputEdgeStyle(node, output, index, node.outputs.length)"
+                    v-for="(output, index) in node.outputs">
+                </div>
+            </div>
+            <div class="vertical-edges">
+                <div :style="verticalEdgeStyle(index)" v-for="(output, index) in node.outputs">
                 </div>
             </div>
         </div>
@@ -87,17 +91,17 @@
 .edge {
     position: relative;
     width: 100%;
-}
-
-/* .junction {
-    display: flex;
-    align-items: center;
-    flex: 0;
-}
-
-.junction div {
     background-color: var(--gray-900);
-} */
+}
+
+.vertical-edges {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.vertical-edges div {
+    position: relative;
+}
 </style>
 
 <script setup lang="ts">
@@ -114,7 +118,8 @@ interface Node {
         gridRow?: number,
         gridColumn: number,
     },
-    root?: Node
+    root?: Node,
+    // edgeColor: string
 }
 interface Connection {
     in?: Node,
@@ -126,6 +131,7 @@ const newNodeName = ref<string>('');
 const input = ref<HTMLInputElement | null>(null);
 const isSelectingConnection = ref(false);
 const newConnection = ref<Connection>({});
+const edgeColors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet'];
 
 function isRoot(node: Node) {
     return (node.root?.id === node.id);
@@ -141,6 +147,10 @@ async function createNode() {
     input.value?.$el.focus();
 }
 
+function assignEdgeColor(id: number): string {
+    return edgeColors[id];
+}
+
 function insertNode() {
     const newNode: Node = {
         id: nodes.value.length.toString(),
@@ -150,7 +160,8 @@ function insertNode() {
         gridStyle: {
             // gridRow: 1,
             gridColumn: 1
-        }
+        },
+        // edgeColor: assignEdgeColor(nodes.value.length)
     };
     nodes.value.push(newNode);
     modalVisible.value = false;
@@ -294,26 +305,38 @@ function nodeSelected(event) {
 }
 
 function inputEdgeStyle(node: Node, input: Node) {
-    const rowOffset = ((node.gridStyle.gridRow ?? 1) - (input.gridStyle.gridRow ?? 0));
+    const inputIndex = input.outputs.findIndex(n => n.id === node.id);
+    const backgroundColor = edgeColors[inputIndex];
     const height = 5;
-    // const top = -height + 5 * rowOffset;
-    const top = 0;
-    const borderLeft = (rowOffset > 0) ? `1px solid var(--gray-500)` : `none`;
     return {
         height: `${height}px`,
-        top: `${top}%`,
-        "border-top": `1px solid var(--gray-500)`,
-        "border-left": `none`
+        'background-color': backgroundColor
     }
 }
 
 function outputEdgeStyle(node: Node, output: Node, index: number, numEdges: number) {
     const height = 5;
-    const top = 2.5 * (numEdges - 1) + index * 5;
+    const top = 2.5 * (numEdges - 1);
+    const backgroundColor = edgeColors[index];
     return {
         top: `${top}px`,
         height: `${height}px`,
-        "border-top": `1px solid var(--gray-500)`
+        width: `calc(100% + ${numEdges * 5 - (5 * (index + 1))}px)`,
+        'background-color': backgroundColor
+    }
+}
+
+function verticalEdgeStyle(index: number) {
+    if (index === 0) {
+        return {};
+    }
+    const backgroundColor = edgeColors[index];
+    const topOffset = -2.5 + (5 * index);
+    return {
+        width: `5px`,
+        top: `calc(25% + ${topOffset}px)`,
+        height: `calc(${100 * index}% - ${5 * (index - 1)}px)`,
+        'background-color': backgroundColor
     }
 }
 
