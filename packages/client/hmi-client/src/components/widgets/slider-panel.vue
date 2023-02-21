@@ -12,10 +12,10 @@
 					@click="emit('update:isOpen', false)"
 				/>
 				<slot name="header"></slot>
-				<div class="column">
+				<section>
 					<h4 class="slider-header-item">{{ header }}</h4>
 					<slot name="subHeader"></slot>
-				</div>
+				</section>
 			</header>
 			<slot name="content"></slot>
 		</template>
@@ -91,7 +91,7 @@ i {
 	align-items: start;
 }
 
-.column {
+section {
 	display: flex;
 	flex-direction: column;
 }
