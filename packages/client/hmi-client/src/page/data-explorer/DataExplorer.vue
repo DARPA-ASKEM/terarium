@@ -76,6 +76,7 @@
 					<selected-resources-header-pane
 						:selected-search-items="selectedSearchItems"
 						@close="isSliderResourcesOpen = false"
+						@clear-selected="clearItemSelected"
 					/>
 				</template>
 				<template v-slot:subHeader>
@@ -475,6 +476,9 @@ const updateResultType = async (newResourceType: ResourceType) => {
 	}
 };
 
+const clearItemSelected = () => {
+	selectedSearchItems.value = [];
+};
 // const addPreviewItemToCart = () => {
 // 	if (previewItem.value) {
 // 		toggleDataItemSelected( {item: previewItem.value } );

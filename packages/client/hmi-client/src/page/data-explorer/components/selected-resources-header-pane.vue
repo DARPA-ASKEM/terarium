@@ -1,6 +1,10 @@
 <template>
 	<div class="breakdown-pane-container">
 		<div class="add-selected-buttons">
+			<Button class="p-button-secondary spacer" @click="emit('clear-selected')">
+				EMPTY CART
+			</Button>
+
 			<dropdown
 				v-if="selectedSearchItems.length > 0"
 				placeholder="ADD TO PROJECT"
@@ -21,6 +25,7 @@ import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
 import { Project, ProjectAssetTypes } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
 import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
 import { useRouter } from 'vue-router';
@@ -34,7 +39,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'clear-selected']);
 const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
@@ -111,28 +116,38 @@ const addAssetsToProject = async (projectName?: string) => {
 };
 
 onMounted(async () => {
-	const all = await ProjectService.getAll();
-	if (all !== null) {
-		projectsList.value = all;
+	const projects = await ProjectService.getAll();
+	if (projects !== null) {
+		projectsList.value = projects;
 	}
 });
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .invalid-project {
 	background-color: gray;
 	cursor: not-allowed;
 }
 
-::v-deep .p-dropdown .p-dropdown-label.p-placeholder {
+:deep(.p-dropdown .p-dropdown-label.p-placeholder) {
 	display: contents;
 	color: white;
 	font-size: small;
 }
-::v-deep .p-dropdown .p-dropdown-trigger {
+:deep .p-dropdown .p-dropdown-trigger {
 	color: white;
 }
-
+.p-button.p-button-secondary {
+	border: 1px solid var(--surface-border);
+	box-shadow: none;
+	font-weight: 600;
+	font-size: 14px;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.spacer {
+	margin-right: 20px;
+}
 .dropdown-button {
 	width: 156px;
 	height: 25px;
@@ -141,7 +156,7 @@ onMounted(async () => {
 
 .add-selected-buttons {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 }
 
 .add-selected-buttons button {
@@ -161,8 +176,6 @@ onMounted(async () => {
 }
 
 button {
-	border: none;
-	background-color: transparent;
 	height: min-content;
 	padding: 0;
 }
