@@ -96,7 +96,7 @@ onMounted(async () => {
 			if (!assetId) return;
 
 			// FIXME: siwtch to different simulation run result
-			logger.info('simulation id changed to', assetId);
+			logger.info(`simulation id changed to ${assetId}`);
 			const response = await API.get(`/simulations/plans/${assetId}`);
 
 			const newPlan = parseSimulationPlan2IGraph(response.data.content);
