@@ -11,7 +11,11 @@
 					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
 					@click="emit('update:isOpen', false)"
 				/>
-				<h4 class="slider-header-item">{{ header }}</h4>
+				<slot name="header"></slot>
+				<div class="column">
+					<h4 class="slider-header-item">{{ header }}</h4>
+					<slot name="subHeader"></slot>
+				</div>
 			</header>
 			<slot name="content"></slot>
 		</template>
@@ -84,7 +88,12 @@ i {
 
 .slider-header {
 	display: flex;
-	align-items: center;
+	align-items: start;
+}
+
+.column {
+	display: flex;
+	flex-direction: column;
 }
 
 .slider-header.content {
