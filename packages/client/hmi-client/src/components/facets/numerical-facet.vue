@@ -3,12 +3,10 @@
 		:data.prop="facetData"
 		:selection.prop="selection"
 		:subselection.prop="subSelection"
-		class="facet-font"
 		@facet-element-updated="updateSelection"
+		action-buttons="0"
 	>
-		<div slot="header-label">
-			<span class="facet-font">{{ label }}</span>
-		</div>
+		<div slot="header-label">{{ label }}</div>
 
 		<facet-template
 			v-if="facetData.values.length > 0"
@@ -16,14 +14,17 @@
 			title="${tooltip}"
 			class="facet-pointer"
 		/>
-
 		<div v-else slot="content" />
 
-		<div slot="footer" v-if="facetData.values.length > 0" class="facet-footer-container">
-			<facet-plugin-zoom-bar min-bar-width="8" auto-hide="true" round-caps="true" />
-		</div>
-
-		<div v-else slot="footer" class="facet-footer-container">No Data Available</div>
+		<footer slot="footer" class="facet-footer-container">
+			<facet-plugin-zoom-bar
+				v-if="facetData.values.length > 0"
+				min-bar-width="8"
+				auto-hide="true"
+				round-caps="true"
+			/>
+			<template v-else>No Data Available</template>
+		</footer>
 	</facet-bars>
 </template>
 

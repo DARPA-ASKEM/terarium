@@ -6,15 +6,11 @@
 		@facet-element-updated="updateSelection"
 		action-buttons="0"
 	>
-		<div slot="header-label">
-			<span class="facet-font">{{ label }}</span>
-		</div>
+		<div slot="header-label">{{ label }}</div>
 
 		<facet-template target="facet-terms-value" class="facet-pointer">
-			<div slot="label" class="facet-label-truncated facet-font" title="${label} - ${value}">
-				${label}
-			</div>
-			<div slot="value" class="facet-font">${value}</div>
+			<div slot="label" class="facet-label-truncated" title="${label} - ${value}">${label}</div>
+			<div slot="value">${value}</div>
 		</facet-template>
 
 		<div slot="footer" class="facet-footer-container">
