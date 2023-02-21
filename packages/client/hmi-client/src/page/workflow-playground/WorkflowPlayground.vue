@@ -8,11 +8,8 @@
     </Teleport>
     <div class="container" @click="createNode()">
         <div class="column" v-for="node in nodes" :style="node.gridStyle">
-            <!-- <div class="junction">
-                                                                                                                                                                             <div :style="calcJunctionSize(node)"></div>
-                                                                                                                                                                        </div> -->
             <div class="inputs">
-                <div class="edge" :style="inputEdgeStyle(node)" v-for="out in node.inputs">
+                <div class="edge" :style="inputEdgeStyle(node, input)" v-for="(input, inIndex) in node.inputs">
                 </div>
             </div>
             <div class="node" :id="node.id">
@@ -21,7 +18,8 @@
                 <div class="node-out" @click.stop="(event) => nodeSelected(event)"></div>
             </div>
             <div class="outputs">
-                <div class="edge" :style="outputEdgeStyle(node)" v-for="out in node.outputs">
+                <div class="edge" :style="outputEdgeStyle(node, output, outIndex, node.outputs.length)"
+                    v-for="(output, outIndex) in node.outputs">
                 </div>
             </div>
         </div>
@@ -57,7 +55,8 @@
 .inputs,
 .outputs {
     display: flex;
-    align-items: flex-start;
+    justify-content: center;
+    flex-direction: column;
 }
 
 .node {
@@ -165,16 +164,22 @@ function invalidateConnection(reason?: string) {
 }
 
 function iterativelyUpdateNodePositions(node: Node) {
+    // console.log(`current node ${node.name}`);
     const rootNodeRow = node.root?.gridStyle.gridRow ?? 1;
-    const previousNode = (node.inputs.length === 1) ? node.inputs[0] : null;
+    // console.log(node.root);
+    const previousNode = (node.inputs.length >= 1) ? node.inputs[0] : null;
+    // console.log(`previous node ${previousNode?.name}`);
     previousNode?.outputs.forEach((n, index) => {
+        // console.log(`${n.name} gridRow = ${rootNodeRow} + ${index}`);
         n.gridStyle.gridRow = rootNodeRow + index;
     });
-    node.gridStyle.gridColumn = (previousNode) ? previousNode.gridStyle.gridColumn + 1 : -1;
-    const nextNode = (node.outputs.length === 1) ? node.outputs[0] : null;
+    // console.log(`${node.name} gridColumn = ${previousNode?.gridStyle.gridColumn} + 1`);
+    node.gridStyle.gridColumn = (previousNode) ? previousNode.gridStyle.gridColumn + 1 : 1;
+    const nextNode = (node.outputs.length >= 1) ? node.outputs[0] : null;
     if (nextNode) {
         iterativelyUpdateNodePositions(nextNode);
     }
+    // console.log('====');
 }
 
 function updateNodeInitialPosition() {
@@ -210,7 +215,9 @@ function createConnection() {
         if (leftNode.inputs.length === 0) {
             leftNode.root = leftNode;
         }
-        rightNode.root = leftNode.root;
+        if (!(rightNode.root && rightNode.root.id !== rightNode.id)) {
+            rightNode.root = leftNode.root;
+        }
         iterativelyUpdateRoots(rightNode.root!, rightNode.outputs);
         updateNodeInitialPosition();
     }
@@ -286,23 +293,27 @@ function nodeSelected(event) {
     }
 }
 
-function inputEdgeStyle(node: Node) {
-    const rowOffset = ((node.gridStyle.gridRow ?? 1) - (node.inputs[0]?.gridStyle.gridRow ?? 0));
-    const height = 50 + 150 * rowOffset;
-    const top = -height + 50;
+function inputEdgeStyle(node: Node, input: Node) {
+    const rowOffset = ((node.gridStyle.gridRow ?? 1) - (input.gridStyle.gridRow ?? 0));
+    const height = 5;
+    // const top = -height + 5 * rowOffset;
+    const top = 0;
     const borderLeft = (rowOffset > 0) ? `1px solid var(--gray-500)` : `none`;
     return {
-        height: `${height}%`,
+        height: `${height}px`,
         top: `${top}%`,
-        "border-bottom": `1px solid var(--gray-500)`,
-        "border-left": borderLeft
+        "border-top": `1px solid var(--gray-500)`,
+        "border-left": `none`
     }
 }
 
-function outputEdgeStyle(node: Node) {
+function outputEdgeStyle(node: Node, output: Node, index: number, numEdges: number) {
+    const height = 5;
+    const top = 2.5 * (numEdges - 1) + index * 5;
     return {
-        height: `50%`,
-        "border-bottom": `1px solid var(--gray-500)`
+        top: `${top}px`,
+        height: `${height}px`,
+        "border-top": `1px solid var(--gray-500)`
     }
 }
 
