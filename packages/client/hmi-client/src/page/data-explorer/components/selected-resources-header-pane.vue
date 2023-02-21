@@ -1,7 +1,11 @@
 <template>
 	<div class="breakdown-pane-container">
 		<div class="add-selected-buttons">
-			<Button class="p-button-secondary spacer" @click="emit('clear-selected')">
+			<Button
+				v-if="selectedSearchItems.length > 0"
+				class="p-button-secondary spacer"
+				@click="emit('clear-selected')"
+			>
 				EMPTY CART
 			</Button>
 
