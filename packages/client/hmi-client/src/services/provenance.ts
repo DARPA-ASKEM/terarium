@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { useLogger } from 'vue-logger-plugin';
+import { logger } from '@/utils/logger';
 import { ResultType } from '@/types/common';
 import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
@@ -12,7 +12,7 @@ import { getBulkDatasets } from './dataset';
 import { getBulkDocumentAssets } from './external';
 import { getBulkModels } from './model';
 
-const logger = useLogger();
+//
 
 //
 // FIXME: currently related artifacts extracted from the provenance graph will be provided
@@ -40,7 +40,6 @@ async function getConnectedNodes(
 		root_id: Number(id),
 		root_type: rootType
 	};
-
 	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
 	);
