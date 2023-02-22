@@ -1,16 +1,13 @@
 <script lang="ts">
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { petriNetValidator, PetriNet } from '@/utils/petri-net-validator';
+import { parsePetriNet2IGraph, petriNetValidator, PetriNet } from '@/petrinet/petrinet-service';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
-import { parsePetriNet2IGraph } from '@/services/model';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
-import { useLogger } from 'vue-logger-plugin';
+import { logger } from '@/utils/logger';
 import API from '@/api/api';
-
-const logger = useLogger();
 
 interface NodeData {
 	type: string;
@@ -397,8 +394,6 @@ export default defineComponent({
 		async jsonOutput() {
 			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
-			logger.info(petriNetValidator(output));
-
 			logger.info(output);
 
 			if (petriNetValidator(output) === true) {
@@ -515,7 +510,6 @@ export default defineComponent({
 		renderResult(result: any) {
 			const el = d3.select('#solution');
 			el.selectAll('*').remove();
-			logger.info(result);
 
 			const svg = el.append('svg').style('width', '100%').style('height', '100%');
 
@@ -661,7 +655,7 @@ export default defineComponent({
 				logger.info(outputModel);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
-				console.error(e.message);
+				logger.error(e.message);
 			}
 		},
 		// Used to create sample models for stratifying tests

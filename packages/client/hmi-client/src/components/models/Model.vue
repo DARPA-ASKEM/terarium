@@ -97,7 +97,14 @@ import {
 	BaseComputionGraph,
 	pathFn
 } from '@/services/graph';
-import { parsePetriNet2IGraph, NodeData, EdgeData, NodeType, getModel } from '@/services/model';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	NodeType
+} from '@/petrinet/petrinet-service';
+import { getModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -112,7 +119,7 @@ import Badge from 'primevue/badge';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
-import { Model } from '@/types/Model';
+import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
 import { ProvenanceType } from '@/types/Provenance';
@@ -127,7 +134,7 @@ export interface ModelProps {
 const props = defineProps<ModelProps>();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
-const model = ref<Model | null>(null);
+const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref(false);
 
 const relatedTerariumModels = computed(

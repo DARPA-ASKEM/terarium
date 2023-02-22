@@ -6,7 +6,6 @@ import DatasetView from '@/page/DatasetView.vue';
 import ProjectView from '@/page/Project.vue';
 import ModelView from '@/page/ModelView.vue';
 import ResponsivePlayground from '@/page/ResponsivePlayground.vue';
-import SimulationPlanPlayground from '@/page/SimulationPlanPlayground.vue';
 import SimulationView from '@/page/Simulation.vue';
 import SimulationResultView from '@/page/SimulationResult.vue';
 import CodeView from '@/page/CodeView.vue';
@@ -36,7 +35,6 @@ export enum RoutePath {
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
-	SimulationPlanPlaygroundPath = '/simulation-plan-playground',
 	ModelEditor = '/model-editor',
 	ModelRunner = '/model-runner'
 }
@@ -72,7 +70,6 @@ const routes = [
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.SimulationPlanPlaygroundPath, component: SimulationPlanPlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView }
 ];

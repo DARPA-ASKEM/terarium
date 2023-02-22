@@ -66,17 +66,31 @@
 		class="resources-slider"
 		:content-width="sliderWidth"
 		direction="right"
-		header="Selected resources"
+		header="Cart"
 		v-model:is-open="isSliderResourcesOpen"
 		:indicator-value="selectedSearchItems.length"
 	>
+		<template v-slot:header>
+			<selected-resources-header-pane
+				:selected-search-items="selectedSearchItems"
+				@close="isSliderResourcesOpen = false"
+				@clear-selected="clearItemSelected"
+			/>
+		</template>
+		<template v-slot:subHeader>
+			<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
+				{{ selectedSearchItems.length }} item
+			</div>
+			<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
+				{{ selectedSearchItems.length }} items
+			</div>
+		</template>
 		<template v-slot:content>
 			<selected-resources-options-pane
 				:selected-search-items="selectedSearchItems"
 				@toggle-data-item-selected="toggleDataItemSelected"
 				@find-related-content="onFindRelatedContent"
 				@find-similar-content="onFindSimilarContent"
-				@close="isSliderResourcesOpen = false"
 			/>
 		</template>
 	</slider-panel>
@@ -106,6 +120,7 @@ import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import PreviewPanel from '@/page/data-explorer/components/preview-panel.vue';
 import SelectedResourcesOptionsPane from '@/page/data-explorer/components/selected-resources-options-pane.vue';
+import selectedResourcesHeaderPane from '@/page/data-explorer/components/selected-resources-header-pane.vue';
 import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
 import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
 
@@ -457,6 +472,9 @@ const updateResultType = async (newResourceType: ResourceType) => {
 	}
 };
 
+const clearItemSelected = () => {
+	selectedSearchItems.value = [];
+};
 // const addPreviewItemToCart = () => {
 // 	if (previewItem.value) {
 // 		toggleDataItemSelected( {item: previewItem.value } );
@@ -542,6 +560,17 @@ onUnmounted(() => {
 
 .facets-panel {
 	overflow-y: auto;
+}
+
+.resources-slider {
+	z-index: 1;
+}
+
+.sub-header-title {
+	font-size: var(--font-body-small);
+	text-align: center;
+	color: var(--text-color-subdued);
+	display: flex;
 }
 
 .p-button.p-button-secondary {
