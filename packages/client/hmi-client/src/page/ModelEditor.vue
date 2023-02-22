@@ -725,9 +725,10 @@ onMounted(async () => {
 		// el.append('text').attr('x', 50).attr('y', 15).attr('popup', true).text(metadataObj);
 		currentNodeMetadata.value = metadataObj;
 	});
-	// renderer.on('node-mouse-leave', (_evtName, _evt, el) => {
-	// 	el.selectAll('text[popup=true]').remove();
-	// });
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		console.log(d.source, d.target);
+	});
 
 	document.addEventListener('keyup', async (event) => {
 		if (event.key === 'Backspace' && renderer) {

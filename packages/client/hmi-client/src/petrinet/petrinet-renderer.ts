@@ -76,20 +76,24 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 	}
 
 	postRenderProcess() {
-		console.log('post rendering process');
 		const chart = this.chart;
 		const svg = d3.select(this.svgEl);
 		const start: { x: number; y: number } = { x: 0, y: 0 };
 		const end: { x: number; y: number } = { x: 0, y: 0 };
 
-		let startData: INode<NodeData> | null = null;
+		let sourceData: INode<NodeData> | null = null;
 		let targetData: INode<NodeData> | null = null;
 
+		// Reset all
+		this.removeAllEvents('node-drag-start');
+		this.removeAllEvents('node-drag-move');
+		this.removeAllEvents('node-drag-end');
+
+		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
-			console.log('debug start drag');
-			startData = selection.datum();
-			start.x = startData.x + 0.5 * startData.width;
-			start.y = startData.y + 0.5 * startData.height;
+			sourceData = selection.datum();
+			start.x = sourceData.x + 0.5 * sourceData.width;
+			start.y = sourceData.y + 0.5 * sourceData.height;
 		});
 
 		this.on(
@@ -107,22 +111,25 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					end.y = pointerCoords[1];
 				}
 				chart?.selectAll('.new-edge').remove();
+
+				const line = [
+					{ x: start.x, y: start.y },
+					{ x: end.x, y: end.y }
+				];
 				chart
-					?.append('line')
+					?.append('path')
 					.classed('new-edge', true)
-					.attr('x1', start.x)
-					.attr('y1', start.y)
-					.attr('x2', end.x)
-					.attr('y2', end.y)
-					.style('stroke', 'red');
+					.attr('d', pathFn(line))
+					.attr('marker-end', 'url(#arrowhead)')
+					.style('stroke', '#000');
 			}
 		);
 
 		this.on('node-drag-end', (/* _eventName, _event, _selection: D3SelectionINode<NodeData> */) => {
 			chart.selectAll('.new-edge').remove();
-			if (targetData) {
-				this.emit('add-edge', {});
-				startData = null;
+			if (targetData && sourceData) {
+				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
+				sourceData = null;
 				targetData = null;
 			}
 		});
