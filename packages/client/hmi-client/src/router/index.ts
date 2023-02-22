@@ -15,7 +15,7 @@ import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ModelEditorView from '@/page/ModelEditor.vue';
 import ModelRunnerView from '@/page/ModelRunner.vue';
-import ProjectResourcesView from '@/page/ProjectResources.vue';
+import ProjectResourcesView from '@/page/project-resources.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {

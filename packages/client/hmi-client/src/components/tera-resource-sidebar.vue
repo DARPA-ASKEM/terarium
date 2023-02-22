@@ -15,7 +15,6 @@
 				<Chip :label="slotProps.node.data" />
 			</template>
 		</Tree>
-		<!-- <ArtifactList :artifacts="documents" /> -->
 	</nav>
 </template>
 
@@ -29,7 +28,6 @@ import { useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
-// import ArtifactList from '@/components/sidebar-panel/artifact-list.vue';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
@@ -37,10 +35,6 @@ const resourcesStore = useResourcesStore();
 const props = defineProps<{
 	project: ProjectType | null;
 }>();
-
-// const documents = ref<DocumentAsset[]>([]);
-// @artifact-clicked="(id) => openDocumentPage(id as string)"
-// 		@remove-artifact="(id) => removeDocument(id as string)" />
 
 const resources = computed(() => {
 	const storedResources = resourcesStore.activeProjectAssets ?? [];
