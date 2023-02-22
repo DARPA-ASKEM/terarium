@@ -12,9 +12,7 @@ import { parseSimulationPlan2IGraph } from '@/services/simulation';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
 import { RouteName } from '@/router/routes';
-import { useLogger } from 'vue-logger-plugin';
-
-const logger = useLogger();
+import { logger } from '@/utils/logger';
 
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;
@@ -98,7 +96,7 @@ onMounted(async () => {
 			if (!assetId) return;
 
 			// FIXME: siwtch to different simulation run result
-			logger.info('simulation id changed to', assetId);
+			logger.info(`simulation id changed to ${assetId}`);
 			const response = await API.get(`/simulations/plans/${assetId}`);
 
 			const newPlan = parseSimulationPlan2IGraph(response.data.content);

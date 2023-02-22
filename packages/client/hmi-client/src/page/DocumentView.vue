@@ -71,7 +71,9 @@ const fetchAnnotations = async () => {
 			artifact_id: newDocumentId.value
 		}
 	});
-	annotations.value = response.data;
+	if (response) {
+		annotations.value = response.data;
+	}
 };
 
 const addAnnotation = async () => {
