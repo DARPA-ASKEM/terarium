@@ -715,7 +715,7 @@ onMounted(async () => {
 
 	renderer.on('background-click', () => {
 		source = null;
-		target = null;
+		// target = null;
 		renderer?.render();
 		currentNodeMetadata.value = null;
 	});

@@ -102,7 +102,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				const pointerCoords = d3
 					.zoomTransform(svg.node() as Element)
 					.invert(d3.pointer(event, svg.node()));
-				targetData = d3.select<SVGGElement, INode<NodeParameter>>(event.sourceEvent.target).datum();
+				targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
 				if (targetData) {
 					end.x = targetData.x + 0.5 * targetData.width;
 					end.y = targetData.y + 0.5 * targetData.height;
@@ -126,7 +126,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		);
 
 		this.on('node-drag-end', (/* _eventName, _event, _selection: D3SelectionINode<NodeData> */) => {
-			chart.selectAll('.new-edge').remove();
+			chart?.selectAll('.new-edge').remove();
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
 				sourceData = null;
