@@ -240,10 +240,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				}, 200);
 			});
 
-			node.on('mousedown', function (evt) {
-				emit('node-mouse-down', evt, d3.select(this), renderer);
-			});
-
 			node.on('mouseenter', function (evt) {
 				// Put the active element on top
 				const nodeElement = (node.node() as SVGGElement).parentNode;
