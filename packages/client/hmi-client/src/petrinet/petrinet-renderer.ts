@@ -90,7 +90,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		this.removeAllEvents('node-drag-end');
 
 		// (Re)create dragging listeners
-		this.on('node-drag-start', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
+			if (!event.sourceEvent.shiftKey) return;
 			sourceData = selection.datum();
 			start.x = sourceData.x + 0.5 * sourceData.width;
 			start.y = sourceData.y + 0.5 * sourceData.height;
@@ -99,6 +100,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		this.on(
 			'node-drag-move',
 			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
+				if (!event.sourceEvent.shiftKey) return;
 				const pointerCoords = d3
 					.zoomTransform(svg.node() as Element)
 					.invert(d3.pointer(event, svg.node()));
@@ -125,8 +127,9 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			}
 		);
 
-		this.on('node-drag-end', (/* _eventName, _event, _selection: D3SelectionINode<NodeData> */) => {
+		this.on('node-drag-end', (_eventName, event /* _selection: D3SelectionINode<NodeData> */) => {
 			chart?.selectAll('.new-edge').remove();
+			if (!event.sourceEvent.shiftKey) return;
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
 				sourceData = null;

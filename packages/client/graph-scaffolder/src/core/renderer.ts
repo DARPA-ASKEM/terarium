@@ -442,6 +442,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
 			nodeDraggingIds = [node.datum().id, ...childrenNodes.data().map((d) => d.id)];
 			sufficientlyMoved = false;
+			emitWrapper('node-drag-start', evt, node, renderer);
 		}
 
 		function nodeDragMove(evt: any) {
@@ -479,6 +480,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				}
 			}
 			updateEdgePoints();
+			emitWrapper('node-drag-move', evt, node, renderer);
 		}
 
 		function nodeDragEnd(evt: any): void {
@@ -506,6 +508,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 			// Clean up
 			nodeDraggingIds = [];
+			emitWrapper('node-drag-end', evt, node, renderer);
 		}
 
 		const nodeDrag = d3
