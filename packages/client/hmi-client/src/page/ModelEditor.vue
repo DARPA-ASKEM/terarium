@@ -744,7 +744,7 @@ onMounted(async () => {
 
 			renderer.render();
 			source = null;
-			target = null;
+			// target = null;
 		}
 
 		// FIXME: Hackathon
