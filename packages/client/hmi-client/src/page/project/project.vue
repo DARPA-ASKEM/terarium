@@ -9,8 +9,9 @@
 			<tera-resource-sidebar :project="project" />
 		</template>
 	</slider-panel>
-	<TabMenu :model="tabbedResources" />
 	<section>
+		<TabMenu :model="tabbedResources" />
+		<tera-project-overview :project="project" />
 		<document
 			v-if="resourceType === 'publications'"
 			:asset-id="assetId"
@@ -57,7 +58,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
-import TeraResourceSidebar from '@/components/tera-resource-sidebar.vue';
+import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
+import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';

@@ -1,3 +1,49 @@
+<template>
+	<div class="flex-container">
+		<header>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-rounded menu-button"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<InputText
+				v-model="newProjectName"
+				ref="inputElement"
+				class="project-name-input"
+				@keyup.enter="updateProjectName"
+				:class="{ isVisible: isEditingProject }"
+			>
+			</InputText>
+			<h3 :class="{ isVisible: !isEditingProject }">
+				{{ project?.name }}
+			</h3>
+
+			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
+		</header>
+		<section class="content-container">
+			<section class="summary">
+				<!-- This div is so that child elements will automatically collapse margins -->
+				<div>
+					<!-- Author -->
+					<section class="description">
+						<p>
+							{{ project?.description }}
+						</p>
+					</section>
+					<section class="contributors">
+						{{ project?.username }}
+						<Button label="+ Add contributor" />
+					</section>
+				</div>
+			</section>
+			<section class="detail">
+				<resources-list :project="project" />
+			</section>
+		</section>
+	</div>
+</template>
+
 <script setup lang="ts">
 import { ProjectType } from '@/types/Project';
 import { ref, nextTick } from 'vue';
@@ -58,52 +104,6 @@ function showProjectMenu(event) {
 }
 </script>
 
-<template>
-	<div class="flex-container">
-		<header>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-rounded menu-button"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			<InputText
-				v-model="newProjectName"
-				ref="inputElement"
-				class="project-name-input"
-				@keyup.enter="updateProjectName"
-				:class="{ isVisible: isEditingProject }"
-			>
-			</InputText>
-			<h3 :class="{ isVisible: !isEditingProject }">
-				{{ project?.name }}
-			</h3>
-
-			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
-		</header>
-		<section class="content-container">
-			<section class="summary">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<!-- Author -->
-					<section class="description">
-						<p>
-							{{ project?.description }}
-						</p>
-					</section>
-					<section class="contributors">
-						{{ project?.username }}
-						<Button label="+ Add contributor" />
-					</section>
-				</div>
-			</section>
-			<section class="detail">
-				<resources-list :project="project" />
-			</section>
-		</section>
-	</div>
-</template>
-
 <style scoped>
 .flex-container {
 	display: flex;
@@ -117,7 +117,6 @@ a {
 }
 
 .content-container {
-	margin-left: 1rem;
 	column-gap: 2rem;
 	flex-direction: row;
 }

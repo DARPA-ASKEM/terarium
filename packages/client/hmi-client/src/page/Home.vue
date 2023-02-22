@@ -1,3 +1,98 @@
+<template>
+	<main>
+		<section class="projects">
+			<header>
+				<h3>Projects</h3>
+				<Button
+					icon="pi pi-plus"
+					label="New project"
+					@click="isNewProjectModalVisible = true"
+				></Button>
+			</header>
+			<TabView>
+				<TabPanel header="My projects">
+					<div class="carousel">
+						<div class="chevron-left">
+							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+						</div>
+						<div class="chevron-right">
+							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+						</div>
+						<ul>
+							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
+								<project-card :project="project" @click="openProject(project)" />
+							</li>
+						</ul>
+					</div>
+				</TabPanel>
+				<TabPanel header="Shared projects"></TabPanel>
+			</TabView>
+		</section>
+		<section class="papers">
+			<header>
+				<h3>Papers related to your projects</h3>
+			</header>
+
+			<div v-for="(project, index) in projectsToDisplay" :key="index">
+				<p>{{ project.name }}</p>
+				<div class="carousel">
+					<div class="chevron-left">
+						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+					</div>
+					<div class="chevron-right">
+						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+					</div>
+					<ul>
+						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+							<DocumentCard :document="document" @click="selectDocument(document)" />
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+	</main>
+	<!-- modal window for showing selected document -->
+	<div v-if="selectedDocument !== undefined" class="selected-document-modal-mask" @click="close()">
+		<div class="selected-document-modal" @click.stop>
+			<div class="modal-header">
+				<h4>{{ selectedDocument.title }}</h4>
+				<IconClose32 class="close-button" @click="close()" />
+			</div>
+			<selected-document-pane
+				class="selected-document-pane"
+				:selected-document="selectedDocument"
+				@close="close()"
+			/>
+		</div>
+	</div>
+	<!-- New project modal -->
+	<Teleport to="body">
+		<Modal
+			v-if="isNewProjectModalVisible"
+			class="modal"
+			@modal-mask-clicked="isNewProjectModalVisible = false"
+		>
+			<template #default>
+				<form>
+					<label for="new-project-name">Project Name</label>
+					<InputText id="new-project-name" type="text" v-model="newProjectName" />
+
+					<label for="new-project-description">Project Purpose</label>
+					<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+				</form>
+			</template>
+			<template #footer>
+				<footer>
+					<Button @click="createNewProject">Create Project</Button>
+					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+						>Cancel</Button
+					>
+				</footer>
+			</template>
+		</Modal>
+	</Teleport>
+</template>
+
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
@@ -20,6 +115,7 @@ import Modal from '@/components/Modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
+import { RouteName } from '@/router/routes';
 
 const projects = ref<ProjectType[]>([]);
 // Only display projects with at least one related document
@@ -105,118 +201,21 @@ async function createNewProject() {
 		isNewProjectModalVisible.value = false;
 	}
 }
+
+function openProject(chosenProject: ProjectType) {
+	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
+}
 </script>
 
-<template>
-	<section>
-		<!-- modal window for showing selected document -->
-		<div
-			v-if="selectedDocument !== undefined"
-			class="selected-document-modal-mask"
-			@click="close()"
-		>
-			<div class="selected-document-modal" @click.stop>
-				<div class="modal-header">
-					<h4>{{ selectedDocument.title }}</h4>
-					<IconClose32 class="close-button" @click="close()" />
-				</div>
-				<selected-document-pane
-					class="selected-document-pane"
-					:selected-document="selectedDocument"
-					@close="close()"
-				/>
-			</div>
-		</div>
-		<!-- New project modal -->
-		<Teleport to="body">
-			<Modal
-				v-if="isNewProjectModalVisible"
-				class="modal"
-				@modal-mask-clicked="isNewProjectModalVisible = false"
-			>
-				<template #default>
-					<form>
-						<label for="new-project-name">Project Name</label>
-						<InputText id="new-project-name" type="text" v-model="newProjectName" />
-
-						<label for="new-project-description">Project Purpose</label>
-						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
-					</form>
-				</template>
-				<template #footer>
-					<footer>
-						<Button @click="createNewProject">Create Project</Button>
-						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
-							>Cancel</Button
-						>
-					</footer>
-				</template>
-			</Modal>
-		</Teleport>
-		<section class="projects">
-			<header>
-				<h3>Projects</h3>
-				<Button
-					icon="pi pi-plus"
-					label="New project"
-					@click="isNewProjectModalVisible = true"
-				></Button>
-			</header>
-			<TabView>
-				<TabPanel header="My projects">
-					<div class="carousel">
-						<div class="chevron-left">
-							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
-						</div>
-						<div class="chevron-right">
-							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
-						</div>
-						<ul>
-							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
-								<router-link
-									style="text-decoration: none; color: inherit"
-									:to="'/projects/' + project.id"
-									:projectId="project.id"
-								>
-									<ProjectCard :project="project"></ProjectCard>
-								</router-link>
-							</li>
-						</ul>
-					</div>
-				</TabPanel>
-				<TabPanel header="Shared projects"></TabPanel>
-			</TabView>
-		</section>
-		<section class="papers">
-			<header>
-				<h3>Papers related to your projects</h3>
-			</header>
-
-			<div v-for="(project, index) in projectsToDisplay" :key="index">
-				<p>{{ project.name }}</p>
-				<div class="carousel">
-					<div class="chevron-left">
-						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
-					</div>
-					<div class="chevron-right">
-						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
-					</div>
-					<ul>
-						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-							<DocumentCard :document="document" @click="selectDocument(document)" />
-						</li>
-					</ul>
-				</div>
-			</div>
-		</section>
-	</section>
-</template>
-
 <style scoped>
+main {
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
 section {
 	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
-	overflow-x: hidden;
 }
 
 .projects {

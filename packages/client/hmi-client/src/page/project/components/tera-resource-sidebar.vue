@@ -63,7 +63,7 @@ function openResource(event: any) {
 	console.log(event);
 
 	router.push({
-		name: RouteName.ProjectResourcesRoute,
+		name: RouteName.ProjectRoute,
 		params: { projectId: props.project?.id, resourceType: event.data, assetId: event.key }
 	});
 }

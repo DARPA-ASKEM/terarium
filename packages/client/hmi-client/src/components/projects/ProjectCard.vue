@@ -105,5 +105,6 @@ defineProps<{ project: ProjectType }>();
 
 .p-card {
 	width: 20rem;
+	cursor: pointer;
 }
 </style>

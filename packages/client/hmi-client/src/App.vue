@@ -1,9 +1,9 @@
 <template>
-	<!-- Sets the Toast notification groups and their respective levels-->
 	<Toast position="top-right" group="error" />
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
+	<!-- Sets the Toast notification groups and their respective levels-->
 	<Navbar
 		class="header"
 		:active="!isErrorState"
@@ -127,6 +127,7 @@ main {
 	flex: 1;
 	min-width: 0;
 	display: flex;
+	flex-direction: column;
 	flex-grow: 1;
 }
 

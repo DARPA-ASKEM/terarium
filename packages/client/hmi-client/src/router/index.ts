@@ -3,7 +3,6 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import DocumentView from '@/page/DocumentView.vue';
 import HomeView from '@/page/Home.vue';
 import DatasetView from '@/page/DatasetView.vue';
-import ProjectView from '@/page/Project.vue';
 import ModelView from '@/page/ModelView.vue';
 import ResponsivePlayground from '@/page/ResponsivePlayground.vue';
 import SimulationView from '@/page/Simulation.vue';
@@ -15,13 +14,12 @@ import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ModelEditorView from '@/page/ModelEditor.vue';
 import ModelRunnerView from '@/page/ModelRunner.vue';
-import ProjectResourcesView from '@/page/project-resources.vue';
+import ProjectView from '@/page/project/project.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Project = '/projects/:projectId',
-	Resource = '/projects/:projectId/resources/:resourceType/:assetId?',
+	Project = '/projects/:projectId/resources/:resourceType?/:assetId?',
 	Document = '/projects/:projectId/docs/:assetId?',
 	Model = '/projects/:projectId/model/:assetId?',
 	Dataset = '/projects/:projectId/dataset/:assetId?',
@@ -44,14 +42,13 @@ const routes = [
 	{ name: RouteName.DocumentRoute, path: RoutePath.Document, component: DocumentView, props: true },
 	{ name: RouteName.HomeRoute, path: RoutePath.Home, component: HomeView },
 	{
-		name: RouteName.ProjectResourcesRoute,
-		path: RoutePath.Resource,
-		component: ProjectResourcesView,
+		name: RouteName.ProjectRoute,
+		path: RoutePath.Project,
+		component: ProjectView,
 		props: true
 	},
 	{ name: RouteName.ModelRoute, path: RoutePath.Model, component: ModelView, props: true },
 	{ name: RouteName.DatasetRoute, path: RoutePath.Dataset, component: DatasetView, props: true },
-	{ name: RouteName.ProjectRoute, path: RoutePath.Project, component: ProjectView },
 	{ name: RouteName.SimulationRoute, path: RoutePath.Simulation, component: SimulationView },
 	{
 		name: RouteName.SimulationResultRoute,
