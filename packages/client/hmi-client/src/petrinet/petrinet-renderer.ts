@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import graphScaffolder, { INode } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
@@ -73,6 +74,19 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
+
+		const multiEdges = selection.filter((d) => d.data?.numEdges > 1);
+		multiEdges.each((_d, index, group) => {
+			const edgeSelection = d3.select(group[index]);
+			const point = pointOnPath(edgeSelection.select('path').node() as any, 0.5);
+			edgeSelection
+				.append('text')
+				.attr('x', point.x)
+				.attr('y', point.y)
+				.attr('stroke', null)
+				.attr('fill', '#000')
+				.text((d) => d.data.numEdges);
+		});
 	}
 
 	postRenderProcess() {
