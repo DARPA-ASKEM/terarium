@@ -9,6 +9,9 @@
     <div class="container" @click.stop="createNode()">
         <div class="node" :style="calcNodeStyle(node)" v-for="node in nodes" @click.stop="dragNode(node)">
         </div>
+        <svg stroke="black" stroke-width="2">
+            <path :d="drawLines()"></path>
+        </svg>
 </div>
 </template>
 
@@ -26,6 +29,11 @@
     background-color: var(--surface-section);
     border: 1px solid var(--gray-500);
     border-radius: 4px;
+}
+
+svg {
+    height: 100%;
+    width: 100%;
 }
 </style>
 
@@ -88,6 +96,11 @@ function calcNodeStyle(node: Node) {
         top: `${top}px`,
         left: `${left}px`
     }
+}
+
+function drawLines() {
+    return `M ${mouseX.value - 56} ${mouseY.value - 57}
+    L 100 100`;
 }
 
 function mouseUpdate(event) {
