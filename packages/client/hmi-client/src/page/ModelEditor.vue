@@ -720,40 +720,6 @@ onMounted(async () => {
 		currentNodeMetadata.value = null;
 	});
 
-	renderer.on('node-click', (_evtName, evt, d) => {
-		// FIXME: Better interaction
-		if (evt.shiftKey) {
-			renderer?.startEdgeCreation(d);
-		}
-
-		/*
-		if (evt.shiftKey) {
-			if (source) {
-				target = d;
-				target.select('.shape').style('stroke', '#000').style('stroke-width', 4);
-			} else {
-				source = d;
-				source.select('.shape').style('stroke', '#000').style('stroke-width', 4);
-			}
-		} else {
-			if (source) {
-				source.select('.shape').style('stroke', null).style('stroke-width', null);
-			}
-			if (target) {
-				target.select('.shape').style('stroke', null).style('stroke-width', null);
-			}
-			source = null;
-			target = null;
-		}
-
-		if (source && target) {
-			renderer?.addEdge(source, target);
-			source = null;
-			target = null;
-		}
-		*/
-	});
-
 	renderer.on('node-mouse-enter', (_evtName, _evt, el) => {
 		const metadataObj = TEST_META[el.datum().data.uid];
 		// el.append('text').attr('x', 50).attr('y', 15).attr('popup', true).text(metadataObj);

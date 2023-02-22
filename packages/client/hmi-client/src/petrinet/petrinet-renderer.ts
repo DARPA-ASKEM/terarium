@@ -75,7 +75,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('marker-end', 'url(#arrowhead)');
 	}
 
-	startEdgeCreation(selection: D3SelectionINode<NodeData>) {
+	postRenderProcess() {
+		console.log('post rendering process');
 		const chart = this.chart;
 		const svg = d3.select(this.svgEl);
 		const start: { x: number; y: number } = { x: 0, y: 0 };
@@ -84,19 +85,20 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		let startData: INode<NodeData> | null = null;
 		let targetData: INode<NodeData> | null = null;
 
-		const createEdgeDrag = d3
-			.drag()
-			.on('start', async () => {
-				startData = selection.datum();
-				start.x = startData.x + 0.5 * startData.width;
-				start.y = startData.y + 0.5 * startData.height;
-			})
-			.on('drag', async (evt) => {
+		this.on('node-drag-start', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log('debug start drag');
+			startData = selection.datum();
+			start.x = startData.x + 0.5 * startData.width;
+			start.y = startData.y + 0.5 * startData.height;
+		});
+
+		this.on(
+			'node-drag-move',
+			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
 				const pointerCoords = d3
 					.zoomTransform(svg.node() as Element)
-					.invert(d3.pointer(evt, svg.node()));
-
-				targetData = d3.select<SVGGElement, INode<NodeParameter>>(evt.sourceEvent.target).datum();
+					.invert(d3.pointer(event, svg.node()));
+				targetData = d3.select<SVGGElement, INode<NodeParameter>>(event.sourceEvent.target).datum();
 				if (targetData) {
 					end.x = targetData.x + 0.5 * targetData.width;
 					end.y = targetData.y + 0.5 * targetData.height;
@@ -104,7 +106,6 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					end.x = pointerCoords[0];
 					end.y = pointerCoords[1];
 				}
-
 				chart?.selectAll('.new-edge').remove();
 				chart
 					?.append('line')
@@ -114,14 +115,17 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					.attr('x2', end.x)
 					.attr('y2', end.y)
 					.style('stroke', 'red');
-			})
-			.on('end', async () => {
-				chart.selectAll('.new-edge').remove();
-				if (targetData) {
-					this.emit('add-edge', {});
-				}
-			});
-		selection.call(createEdgeDrag as any);
+			}
+		);
+
+		this.on('node-drag-end', (/* _eventName, _event, _selection: D3SelectionINode<NodeData> */) => {
+			chart.selectAll('.new-edge').remove();
+			if (targetData) {
+				this.emit('add-edge', {});
+				startData = null;
+				targetData = null;
+			}
+		});
 	}
 
 	addEdge(source: any, target: any) {
