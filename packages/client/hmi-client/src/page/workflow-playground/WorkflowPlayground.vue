@@ -169,23 +169,32 @@ function invalidateConnection(reason?: string) {
     newConnection.value = {};
 }
 
-function iterativelyUpdateNodePositions(node: Node, rowOffset: number) {
-    console.log(`current node ${node.name}`);
-    console.log(node.root);
-    const previousNode = (node.inputs.length >= 1) ? node.inputs[0] : null;
-    console.log(`previous node ${previousNode?.name}`);
-    previousNode?.outputs.forEach((n, index) => {
-        const rootNodeRow = n.root?.gridStyle.gridRow ?? 1;
-        n.gridStyle.gridRow = rootNodeRow + index + rowOffset;
-        console.log(`${n.name} gridRow = ${rootNodeRow} + ${index} + ${rowOffset}`);
+function iterativelyUpdateNodePositions(previousNode: Node, node: Node, index: number, rootRowOffset: number) {
+    const rootNodeRow = node.root?.gridStyle.gridRow ?? 1;
+    node.gridStyle.gridRow = rootNodeRow + index + rootRowOffset;
+    console.log(`${rootNodeRow}, ${index}, ${rootRowOffset}`);
+    node.gridStyle.gridColumn = previousNode.gridStyle.gridColumn + 1;
+    node.outputs.forEach((o, index) => {
+        console.log(`${node.name} updating ${o.name}`);
+        iterativelyUpdateNodePositions(node, o, index, (node.gridStyle.gridRow - node.root!.gridStyle.gridRow));
     });
-    console.log(`${node.name} gridColumn = ${previousNode?.gridStyle.gridColumn} + 1`);
-    node.gridStyle.gridColumn = (previousNode) ? previousNode.gridStyle.gridColumn + 1 : 1;
-    const nextNode = (node.outputs.length >= 1) ? node.outputs[0] : null;
-    if (nextNode) {
-        iterativelyUpdateNodePositions(nextNode, node.gridStyle.gridRow - 1);
-    }
-    console.log('====');
+    // console.log(`current node ${node.name}`);
+    // console.log(node.root);
+    // const previousNode = (node.inputs.length >= 1) ? node.inputs[0] : null;
+    // console.log(`previous node ${previousNode?.name}`);
+    // previousNode?.outputs.forEach((n, index) => {
+    //     const rootNodeRow = n.root?.gridStyle.gridRow ?? 1;
+    //     n.gridStyle.gridRow = rootNodeRow + index + rowOffset;
+    //     console.log(`${n.name} gridRow = ${rootNodeRow} + ${index} + ${rowOffset}`);
+    // });
+    // console.log(`${node.name} gridColumn = ${previousNode?.gridStyle.gridColumn} + 1`);
+    // node.gridStyle.gridColumn = (previousNode) ? previousNode.gridStyle.gridColumn + 1 : 1;
+    // const nextNode = (node.outputs.length >= 1) ? node.outputs[0] : null;
+    // if (nextNode) {
+    //     iterativelyUpdateNodePositions(nextNode, node.gridStyle.gridRow - 1);
+    // }
+    // console.log('====');
+
 }
 
 function updateNodeInitialPosition() {
@@ -196,7 +205,10 @@ function updateNodeInitialPosition() {
     })
     nodes.value.forEach(n => {
         if (isRoot(n) && n.outputs.length > 0) {
-            n.outputs.filter(o => o.root?.id === n.id).forEach(o => iterativelyUpdateNodePositions(o, n.gridStyle.gridRow - 1));
+            n.outputs.filter(o => o.root?.id === n.id).forEach((o, index) => {
+                console.log(`${n.name} updating ${o.name}`);
+                iterativelyUpdateNodePositions(n, o, index, 0);
+            });
         }
     });
 }
