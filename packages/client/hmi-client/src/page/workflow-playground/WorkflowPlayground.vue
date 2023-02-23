@@ -228,23 +228,23 @@ function createNodePath(node: Node, direction: number) {
 }
 
 function drawNewPath() {
-    const path = `M${newPathPosition.value?.x},${newPathPosition.value?.y}   
-    L${mouseX.value - 56},${mouseY.value - 57}`;
-
-    const smoothPath = newPathPosition.value ? `M${newPathPosition.value?.x},${newPathPosition.value?.y} 
+    const path = newPathPosition.value ? `M${newPathPosition.value?.x},${newPathPosition.value?.y} 
     h10
     C${newPathPosition.value?.x + 50 + 10},${newPathPosition.value?.y}
     ${mouseX.value - 56 - 50 - 10},${mouseY.value - 57} 
     ${mouseX.value - 56 + -10},${mouseY.value - 57} 
     h10` : 'M0,0';
-    // C${newPathPosition.value.x + 10 + 50},${newPathPosition.value.y} 
-    // ${mouseX.value - 56 - 10 + 50},${mouseY.value - 57} 
-    return smoothPath ?? 'M0,0';
+    return path ?? 'M0,0';
 }
 
 function drawPath(path: Path) {
-    return path.endPosition ? `M ${path.startPosition.x} ${path.startPosition.y}
-        L ${path.endPosition.x} ${path.endPosition.y}` : `M 0 0 L 0 0`;
+    const newPath = path.endPosition ? `M ${path.startPosition.x},${path.startPosition.y} 
+    h10
+    C${path.startPosition.x + 50},${path.startPosition.y} 
+    ${path.endPosition.x - 50 - 10} ${path.endPosition.y}
+    ${path.endPosition.x - 10} ${path.endPosition.y}
+    h10` : `M0,0`;
+    return newPath;
 }
 
 function mouseUpdate(event) {
