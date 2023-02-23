@@ -1,5 +1,7 @@
+import { useLogger } from 'vue-logger-plugin';
 import API from '@/api/api';
 
+const logger = useLogger();
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
 // TODO: Better error handling (models not found for example)
@@ -14,7 +16,7 @@ export async function fetchStratificationResult(modelA: string, modelB: string, 
 		const output = resp.data;
 		return output;
 	} catch (err) {
-		console.log(err);
+		logger.error(err);
 		return null;
 	}
 	// this.createModel(output, true);

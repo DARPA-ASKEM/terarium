@@ -52,9 +52,7 @@ public class Assets extends HashMap<String, List<Map<String, Object>>> implement
 	 * @param <T>
 	 * @return
 	 */
-	private <T extends ResourceType> List<T> getResourceType(Class<T> clazz, ResourceType.Type type) {
-
-
+	public <T extends ResourceType> List<T> getResourceType(Class<T> clazz, ResourceType.Type type) {
 		if (get(type.type).isEmpty())
 			return Collections.emptyList();
 

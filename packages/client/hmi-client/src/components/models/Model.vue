@@ -1,3 +1,92 @@
+<template>
+	<section class="asset">
+		<header>
+			<div class="framework">{{ model?.framework }}</div>
+			<div class="header-and-buttons">
+				<h4 v-html="title" />
+				<span v-if="isEditable">
+					<Button
+						@click="toggleEditMode"
+						:label="isEditing ? 'Save model' : 'Edit model'"
+						class="p-button-sm p-button-outlined"
+					/>
+					<Button
+						@click="goToSimulationPlanPage"
+						label="Open parameter space"
+						:disabled="isEditing"
+						class="p-button-sm"
+					/>
+				</span>
+			</div>
+			<!--contributor-->
+			<!--created on: date-->
+		</header>
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+			<AccordionTab header="Description">
+				<p v-html="description" />
+			</AccordionTab>
+			<AccordionTab header="Model diagram">
+				<div v-if="model" ref="graphElement" class="graph-element" />
+			</AccordionTab>
+			<template v-if="!isEditable">
+				<AccordionTab header="State variables">
+					<DataTable :value="model?.content.S">
+						<Column field="sname" header="Label"></Column>
+						<Column field="mira_ids" header="Name"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="mira_context" header="Concepts"></Column>
+						<Column field="definition" header="Definition"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab header="Parameters">
+					<DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
+			</template>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
+		<TabView v-if="isEditable">
+			<TabPanel>
+				<template #header>
+					<span>State variables</span>
+					<Badge :value="model?.content.S.length" />
+				</template>
+				<DataTable :value="model?.content.S">
+					<Column field="sname" header="Label"></Column>
+					<Column field="mira_ids" header="Name"></Column>
+					<Column field="units" header="Units"></Column>
+					<Column field="mira_context" header="Concepts"></Column>
+					<Column field="definition" header="Definition"></Column>
+				</DataTable>
+			</TabPanel>
+			<TabPanel>
+				<template #header>
+					<span>Parameters</span>
+					<Badge :value="model?.parameters.length" />
+				</template>
+				<DataTable :value="model?.parameters">
+					<Column field="name" header="Name"></Column>
+					<Column field="type" header="Type"></Column>
+					<Column field="default_value" header="Default"></Column>
+				</DataTable>
+			</TabPanel>
+		</TabView>
+	</section>
+</template>
+
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted } from 'vue';
@@ -17,6 +106,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import Badge from 'primevue/badge';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
@@ -28,12 +120,15 @@ import { Dataset } from '@/types/Dataset';
 
 export interface ModelProps {
 	assetId: string;
+	isEditable: boolean;
 	highlight?: string;
 }
 
 const props = defineProps<ModelProps>();
+
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const model = ref<Model | null>(null);
+const isEditing = ref(false);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -144,100 +239,22 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 
+function toggleEditMode() {
+	isEditing.value = !isEditing.value;
+}
+
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 </script>
 
-<template>
-	<section class="model">
-		<header>
-			<h3 v-html="title" />
-			<Button @click="goToSimulationPlanPage" label="Add to new workflow" />
-		</header>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]" class="accordion">
-			<AccordionTab header="Description">
-				<p v-html="description" />
-			</AccordionTab>
-			<AccordionTab header="Structure">
-				<div v-if="model" ref="graphElement" class="graph-element" />
-			</AccordionTab>
-			<AccordionTab header="Variables">
-				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Name"></Column>
-					<Column field="mira_ids" header="MIRA IDs"></Column>
-					<Column field="mira_context" header="MIRA context"></Column>
-				</DataTable>
-			</AccordionTab>
-			<AccordionTab header="Parameters">
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
-			</AccordionTab>
-		</Accordion>
-	</section>
-</template>
-
 <style scoped>
-.model {
-	padding: 10px;
-	display: flex;
-	flex-direction: column;
-	overflow-y: scroll;
-}
-
-header {
-	display: flex;
-	margin-bottom: 10px;
-	align-items: flex-start;
-}
-
-h3 {
-	flex: 1;
-	min-width: 0;
-}
-
-.description {
-	position: relative;
-}
-
-.description p {
-	max-width: 120ch;
-	max-height: 6rem;
-	overflow: hidden;
-}
-
-.description.is-expanded p {
-	max-height: none;
-}
-
-.description:not(.is-expanded) .less-more-button-container {
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	width: 100%;
-	background: linear-gradient(#ffffff00, #ffffff);
-	padding-top: 3rem;
-}
-
 .graph-element {
 	flex: 1;
 	height: 400px;
-	width: 400px;
+	width: 100%;
 	border: 1px solid var(--surface-border);
 	overflow: hidden;
+	border-radius: 0.25rem;
 }
 
 .slider .graph-element {
@@ -248,10 +265,5 @@ h3 {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.accordion {
-	margin-top: 1rem;
-	margin-bottom: 1rem;
 }
 </style>

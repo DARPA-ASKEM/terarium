@@ -1,5 +1,6 @@
 /* Reset */
 @import '@assets/css/reset.css';
+@import '@assets/css/asset.scss';
 
 /** 
  * PrimeVue
@@ -15,10 +16,14 @@
  */
 @import '@assets/css/theme/theme.scss';
 
+/*
+ * Facets Overrides
+ */
+@import '@assets/css/facets-overrides';
 
 :root {
-    /* Layout */
-    --navbar-outer-height: 51px;
+	/* Layout */
+	--navbar-outer-height: 51px;
 
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -31,20 +36,20 @@
 	font-size: var(--font-size);
 	font-style: normal;
 	font-synthesis: none;
-    font-weight: var(--font-weight);
+	font-weight: var(--font-weight);
 	text-rendering: optimizeLegibility;
 }
 
 /* Global */
 body {
-    background-color: inherit;
-    color: inherit;
-    font: inherit;
-    isolation: isolate;
+	background-color: inherit;
+	color: inherit;
+	font: inherit;
+	isolation: isolate;
 	min-width: 1000px;
 
 	display: grid;
-	grid-template-areas: 
+	grid-template-areas:
 		"header"
 		"main"
 		"footer";

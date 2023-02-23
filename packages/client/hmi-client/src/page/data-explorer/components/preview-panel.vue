@@ -1,53 +1,56 @@
 <template>
-	<slider
+	<tera-slider
 		class="preview-slider"
-		content-width="calc(35% - 48px)"
+		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<div class="slider-header content">
-				<span>{{ resourceType.toUpperCase() }}</span>
+			<header>
+				<span>{{ previewItemResourceType?.toUpperCase() }}</span>
 				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
-			</div>
-			<div class="selected-resources-pane">
-				<Document
-					v-if="resourceType === ResourceType.XDD"
+			</header>
+			<section>
+				<document
+					v-if="previewItemResourceType === ResourceType.XDD"
 					:asset-id="previewItemId"
 					:previewLineLimit="5"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
+					:is-editable="false"
 				/>
-				<Dataset
-					v-if="resourceType === ResourceType.DATASET"
+				<dataset
+					v-else-if="previewItemResourceType === ResourceType.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
+					:is-editable="false"
 				/>
-				<Model
-					v-if="resourceType === ResourceType.MODEL"
+				<model
+					v-else-if="previewItemResourceType === ResourceType.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
+					:is-editable="false"
 				/>
-				<footer>
-					<Button
-						v-if="!previewItemSelected"
-						label="Add to selected resources"
-						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="toggle-selection"
-					/>
-					<Button
-						v-else
-						label="Remove from Resources"
-						@click="emit('toggle-data-item-selected', { item: previewItem })"
-						class="toggle-selection p-button-secondary"
-					/>
-				</footer>
-			</div>
+			</section>
 		</template>
-	</slider>
+		<template v-slot:footerButtons>
+			<Button
+				v-if="!previewItemSelected"
+				label="Add to selected resources"
+				@click="emit('toggle-data-item-selected', { item: previewItem })"
+				class="toggle-selection"
+			/>
+			<Button
+				v-else
+				label="Remove from Resources"
+				@click="emit('toggle-data-item-selected', { item: previewItem })"
+				class="toggle-selection p-button-secondary"
+			/>
+		</template>
+	</tera-slider>
 </template>
 
 <script setup lang="ts">
@@ -59,7 +62,7 @@ import { isDocument } from '@/utils/data-util';
 import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
-import Slider from '@/components/widgets/Slider.vue';
+import TeraSlider from '@/components/widgets/tera-slider.vue';
 
 const resources = useResourcesStore();
 
@@ -88,7 +91,7 @@ const props = defineProps({
 		default: null
 	},
 	resourceType: {
-		type: String,
+		type: String as PropType<ResourceType>,
 		default: null
 	},
 	searchTerm: {
@@ -99,6 +102,7 @@ const props = defineProps({
 
 // store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
+const previewItemResourceType = ref<ResourceType | null>(null);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
@@ -107,6 +111,7 @@ watch(
 	(previewItem) => {
 		if (previewItem) {
 			previewItemState.value = previewItem;
+			previewItemResourceType.value = props.resourceType;
 		}
 	}
 );
@@ -125,13 +130,10 @@ const previewItemSelected = computed(() =>
 </script>
 
 <style scoped>
-.slider-header {
+header {
 	display: flex;
 	align-items: center;
 	margin: 1rem;
-}
-
-.slider-header.content {
 	font-size: 14px;
 	color: var(--text-color-subdued);
 	font-weight: bold;
@@ -140,21 +142,6 @@ const previewItemSelected = computed(() =>
 
 i {
 	cursor: pointer;
-}
-
-.slider-header.tab {
-	justify-content: center;
-}
-
-footer {
-	border-top: 1px solid var(--surface-border);
-	background-color: var(--surface-section);
-	position: fixed;
-	height: 5rem;
-	bottom: 3rem;
-	width: calc(35% - 48px);
-	display: flex;
-	align-items: center;
 }
 
 .toggle-selection {

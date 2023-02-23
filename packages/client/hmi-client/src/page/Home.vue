@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import ProjectCard from '@/components/projects/ProjectCard.vue';
-import NewProjectCard from '@/components/projects/NewProjectCard.vue';
-import DocumentsCard from '@/components/documents/DocumentsCard.vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
-import IconTime32 from '@carbon/icons-vue/es/time/32';
-import IconChevronLeft32 from '@carbon/icons-vue/es/chevron--left/32';
-import IconChevronRight32 from '@carbon/icons-vue/es/chevron--right/32';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { Project } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
@@ -15,6 +9,17 @@ import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import API from '@/api/api';
+import ProjectCard from '@/components/projects/ProjectCard.vue';
+import DocumentCard from '@/components/documents/DocumentCard.vue';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import Modal from '@/components/Modal.vue';
+import { useRouter } from 'vue-router';
+import * as ProjectService from '@/services/project';
+import useAuthStore from '@/stores/auth';
 
 const projects = ref<Project[]>([]);
 // Only display projects with at least one related document
@@ -29,6 +34,12 @@ const selectedDocument = ref<DocumentType>();
 
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
+const router = useRouter();
+const auth = useAuthStore();
+
+const isNewProjectModalVisible = ref(false);
+const newProjectName = ref('');
+const newProjectDescription = ref('');
 
 onMounted(async () => {
 	// Clear all...
@@ -53,8 +64,8 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 21;
-const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
+const SCROLL_INCREMENT_IN_REM = 21.5 * 5; // (card width + margin) * number of cards to display at once
+const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
 		chevronElement.nodeName === 'svg'
@@ -73,14 +84,27 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 	}
 
 	const marginLeftString =
-		cardListElement.style.marginLeft === '' ? '0' : cardListElement.style.marginLeft;
-	const currentMarginLeft = parseInt(marginLeftString, 10);
+		cardListElement.style.marginLeft === '' ? '0.5' : cardListElement.style.marginLeft;
+	const currentMarginLeft = parseFloat(marginLeftString);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
 	// Don't let the list scroll far enough left that we see space before the
 	//	first card.
-	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0 : newMarginLeft}rem`;
+	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
 };
+
+async function createNewProject() {
+	const author = auth.name ?? '';
+	const project = await ProjectService.create(
+		newProjectName.value,
+		newProjectDescription.value,
+		author
+	);
+	if (project) {
+		router.push(`/projects/${project.id}`);
+		isNewProjectModalVisible.value = false;
+	}
+}
 </script>
 
 <template>
@@ -103,84 +127,149 @@ const scroll = (direction: 'right' | 'left', event: PointerEvent) => {
 				/>
 			</div>
 		</div>
+		<!-- New project modal -->
+		<Teleport to="body">
+			<Modal
+				v-if="isNewProjectModalVisible"
+				class="modal"
+				@modal-mask-clicked="isNewProjectModalVisible = false"
+			>
+				<template #default>
+					<form>
+						<label for="new-project-name">Project Name</label>
+						<InputText id="new-project-name" type="text" v-model="newProjectName" />
 
-		<h4>Projects</h4>
-		<div class="carousel">
+						<label for="new-project-description">Project Purpose</label>
+						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+					</form>
+				</template>
+				<template #footer>
+					<footer>
+						<Button @click="createNewProject">Create Project</Button>
+						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+							>Cancel</Button
+						>
+					</footer>
+				</template>
+			</Modal>
+		</Teleport>
+		<section class="projects">
 			<header>
-				<component :is="IconTime32" />
-				<h5>Recent</h5>
+				<h3>Projects</h3>
+				<Button
+					icon="pi pi-plus"
+					label="New project"
+					@click="isNewProjectModalVisible = true"
+				></Button>
 			</header>
-			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
-			<ul>
-				<li class="card">
-					<NewProjectCard />
-				</li>
-				<!-- .slice() to copy the array, .reverse() to put new projects at the left of the list instead of the right -->
-				<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
-					<router-link
-						style="text-decoration: none; color: inherit"
-						:to="'/projects/' + project.id"
-						:projectId="project.id"
-					>
-						<ProjectCard :name="project.name" />
-					</router-link>
-				</li>
-			</ul>
-		</div>
-		<!-- Hot Topics carousel -->
-		<div class="carousel" v-if="relevantDocuments.length > 0">
+			<TabView>
+				<TabPanel header="My projects">
+					<div class="carousel">
+						<div class="chevron-left">
+							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+						</div>
+						<div class="chevron-right">
+							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+						</div>
+						<ul>
+							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
+								<router-link
+									style="text-decoration: none; color: inherit"
+									:to="'/projects/' + project.id"
+									:projectId="project.id"
+								>
+									<ProjectCard :project="project"></ProjectCard>
+								</router-link>
+							</li>
+						</ul>
+					</div>
+				</TabPanel>
+				<TabPanel header="Shared projects"></TabPanel>
+			</TabView>
+		</section>
+		<section class="papers">
 			<header>
-				<h5>Latest on {{ relevantSearchTerm }}</h5>
+				<h3>Papers related to your projects</h3>
 			</header>
-			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
-			<ul>
-				<li v-for="(document, index) in relevantDocuments" :key="index" class="card">
-					<DocumentsCard :document="document" @click="selectDocument(document)" />
-				</li>
-			</ul>
-		</div>
-		<!-- Show related documents for the top 5 projects -->
-		<div v-for="(project, index) in projectsToDisplay" :key="index" class="carousel">
-			<header>
-				<h5>Related to: {{ project.name }}</h5>
-			</header>
-			<IconChevronLeft32 class="chevron chevron-left" @click="scroll('left', $event)" />
-			<IconChevronRight32 class="chevron chevron-right" @click="scroll('right', $event)" />
-			<ul>
-				<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-					<DocumentsCard :document="document" @click="selectDocument(document)" />
-				</li>
-			</ul>
-		</div>
+
+			<div v-for="(project, index) in projectsToDisplay" :key="index">
+				<p>{{ project.name }}</p>
+				<div class="carousel">
+					<div class="chevron-left">
+						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+					</div>
+					<div class="chevron-right">
+						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+					</div>
+					<ul>
+						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+							<DocumentCard :document="document" @click="selectDocument(document)" />
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
 	</section>
 </template>
 
 <style scoped>
 section {
-	background-color: var(--surface-secondary);
+	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	overflow-y: scroll;
 	overflow-x: hidden;
 }
 
-header {
-	align-items: center;
+.projects {
+	background-color: var(--surface-section);
+	padding: 1rem;
+}
+
+.papers {
+	background-color: var(--surface-secondary);
+	padding: 1rem;
+}
+
+.papers p {
+	margin: 1rem 0 1rem 0rem;
+}
+
+h3 {
+	font-size: 24px;
+	color: var(--text-color-primary);
+}
+
+.projects header {
 	display: flex;
-	z-index: -1;
+	justify-content: space-between;
+	align-items: center;
 }
 
-h4 {
-	margin-left: 4rem;
+.p-tabview:deep(.p-tabview-panels) {
+	padding: 1rem 0 1rem 0;
 }
 
-h4,
-header {
-	margin-top: 1rem;
+.modal h4 {
+	margin-bottom: 1em;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.modal input,
+.modal textarea {
+	display: block;
+	margin-bottom: 2rem;
+	width: 100%;
+}
+
+.modal footer {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
 }
 
 header svg {
@@ -190,46 +279,66 @@ header svg {
 
 .carousel {
 	position: relative;
-	margin-left: 4rem;
+	display: flex;
+	align-items: flex-end;
 }
 
 .carousel ul {
 	align-items: center;
 	display: flex;
-	margin: 0.5rem 0;
+	margin: 0.5rem 0.5rem 0 0.5rem;
+	padding-bottom: 0.5rem;
 }
 
-.chevron {
-	/* 	see about making the right ones appear as required (by watching scrollbar position)
-		eg. if I am on the very left of the carousel don't show the left arrow
-	*/
-	cursor: pointer;
-	margin: 0 1rem;
+.chevron-left,
+.chevron-right {
+	width: 4rem;
 	position: absolute;
-	top: 50%;
-	visibility: visible;
-	z-index: 3;
-	background: var(--surface-secondary);
-	border-radius: 10rem;
 }
 
-.chevron:hover {
-	background-color: var(--surface-ground);
-	color: var(--primary-color);
+.chevron-left,
+.chevron-right {
+	width: 4rem;
+	position: absolute;
+	z-index: 2;
+	cursor: pointer;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	height: 443px;
 }
 
 .chevron-left {
-	left: -4rem;
+	left: 0;
 }
 
 .chevron-right {
-	right: 0rem;
+	right: 0;
+}
+
+.chevron-left:hover > .pi-chevron-left,
+.chevron-right:hover > .pi-chevron-right {
+	color: var(--primary-color);
+	opacity: 100;
+}
+
+.pi-chevron-left,
+.pi-chevron-right {
+	margin: 0 1rem;
+	font-size: 2rem;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.pi-chevron-left:hover,
+.pi-chevron-right:hover {
+	color: var(--primary-color);
 }
 
 ul {
 	align-items: center;
 	display: inline-flex;
-	gap: 0.5rem;
+	gap: 1.5rem;
 	transition: margin-left 0.2s;
 }
 
@@ -240,12 +349,7 @@ li {
 .card {
 	z-index: 1;
 	transition: 0.2s;
-	max-width: 21rem; /* See SCROLL_INCREMENT_IN_REM */
-}
-
-.card:hover {
-	transform: scale(1.2);
-	z-index: 2;
+	max-width: 21rem;
 }
 
 .carousel:last-of-type {

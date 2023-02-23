@@ -55,7 +55,7 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				content-width="calc(35% - 3rem)"
+				:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
@@ -66,7 +66,7 @@
 			/>
 			<slider-panel
 				class="resources-slider"
-				content-width="35%"
+				:content-width="sliderWidth"
 				direction="right"
 				header="Selected resources"
 				v-model:is-open="isSliderResourcesOpen"
@@ -145,7 +145,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
 //
-const resourceType = ref<string>(ResourceType.XDD);
+const resourceType = ref<ResourceType>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
@@ -154,6 +154,10 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
 	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+);
+
+const sliderWidth = computed(() =>
+	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
 );
 
 // close resources if preview opens
@@ -539,7 +543,7 @@ onUnmounted(() => {
 
 .results-content {
 	display: flex;
-	min-width: 0;
+	flex-grow: 1;
 	gap: 0.5rem;
 	margin: 0.5rem 0.5rem 0;
 }

@@ -281,9 +281,6 @@ export default defineComponent({
 			await rendererB?.render();
 			await rendererC?.setData(g3);
 			await rendererC?.render();
-
-			// console.log(g, g2, g3);
-			// console.log(modelA, modelB);
 		},
 		async LotkaVolterra() {
 			const resp = await API.put('model-service/models');
@@ -397,8 +394,6 @@ export default defineComponent({
 		async jsonOutput() {
 			const resp = await API.get(`model-service/models/${modelId}/json`);
 			const output = await resp.data;
-			console.log(petriNetValidator(output));
-
 			console.log(output);
 
 			if (petriNetValidator(output) === true) {
@@ -515,7 +510,6 @@ export default defineComponent({
 		renderResult(result: any) {
 			const el = d3.select('#solution');
 			el.selectAll('*').remove();
-			console.log(result);
 
 			const svg = el.append('svg').style('width', '100%').style('height', '100%');
 
@@ -583,7 +577,7 @@ export default defineComponent({
 				statesToMerge
 			});
 			mergedModel = await resp.data;
-			console.log('Merged petrinet', mergedModel);
+			console.log(`Merged petrinet ${mergedModel}`);
 
 			g3 = parsePetriNet2IGraph(mergedModel);
 			g3 = runDagreLayout(_.cloneDeep(g3));

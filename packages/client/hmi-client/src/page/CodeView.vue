@@ -31,8 +31,11 @@ import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
 import { ref } from 'vue';
+import { useLogger } from 'vue-logger-plugin';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
+
+const logger = useLogger();
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
 const content = ref(DEFAULT_TEXT);
@@ -57,7 +60,7 @@ async function onFileOpen(event) {
  * via TA1
  */
 async function onExtractModel() {
-	console.log(`Transforming: ${selectedText.value}`);
+	logger.info(`Transforming: ${selectedText.value}`);
 	const response = await API.post('/code', selectedText.value);
 	// eslint-disable-next-line
 	alert(JSON.stringify(response.data));
