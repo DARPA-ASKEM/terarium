@@ -12,8 +12,8 @@
             {{ node.name }}
             <div class="port-right" @click.stop="createNodePath(node, 1)"></div>
         </div>
-        <svg stroke="black" stroke-width="1">
-            <path v-if="isCreatingNodePath" :d="drawNewPath()"></path>
+        <svg stroke="black" stroke-width="1" fill="none">
+            <path v-if="isCreatingNodePath" :d="drawNewPath()" stroke-dasharray="4"></path>
             <path v-for="path in paths" :d="drawPath(path)"></path>
         </svg>
 </div>
@@ -228,8 +228,18 @@ function createNodePath(node: Node, direction: number) {
 }
 
 function drawNewPath() {
-    return `M ${newPathPosition.value?.x} ${newPathPosition.value?.y}
-        L ${mouseX.value - 56} ${mouseY.value - 57}`;
+    const path = `M${newPathPosition.value?.x},${newPathPosition.value?.y}   
+    L${mouseX.value - 56},${mouseY.value - 57}`;
+
+    const smoothPath = newPathPosition.value ? `M${newPathPosition.value?.x},${newPathPosition.value?.y} 
+    h10
+    C${newPathPosition.value?.x + 50 + 10},${newPathPosition.value?.y}
+    ${mouseX.value - 56 - 50 - 10},${mouseY.value - 57} 
+    ${mouseX.value - 56 + -10},${mouseY.value - 57} 
+    h10` : 'M0,0';
+    // C${newPathPosition.value.x + 10 + 50},${newPathPosition.value.y} 
+    // ${mouseX.value - 56 - 10 + 50},${mouseY.value - 57} 
+    return smoothPath ?? 'M0,0';
 }
 
 function drawPath(path: Path) {
