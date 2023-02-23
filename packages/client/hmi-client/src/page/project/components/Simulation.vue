@@ -14,6 +14,7 @@ import { curveBasis } from 'd3';
 import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { ProjectAssetTypes } from '@/types/Project';
+import NotebookCell from '@/components/NotebookCell.vue';
 
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;
@@ -202,6 +203,13 @@ const goToSimulationResultsPage = () => {
 				alt="slide 9"
 				@click="goToSimulationResultsPage"
 			/>
+
+			<notebook-cell
+				:style="{marginTop: '500px'}"
+				ref="simNotebook"
+				alt="notebook widget"
+			/>
+
 		</div>
 		<template v-else>
 			<div>Simulation page</div>

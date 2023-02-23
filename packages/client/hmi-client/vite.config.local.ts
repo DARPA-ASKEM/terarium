@@ -22,7 +22,23 @@ config.server.proxy = {
 			process.env.hmi_server_port || 3000
 		}`,
 		changeOrigin: true
-	}
+	},
+	'/notebook_ws': {
+		target: `ws://${process.env.jupyter_host || 'jupyter'}:${
+			process.env.jupyter_port || 8888
+		}`,
+		changeOrigin: true,
+		rewrite: (path) => path.replace(/^\/notebook_ws/, ''),
+		ws: true,
+	},
+	'/notebook': {
+		target: `http://${process.env.jupyter_host || 'jupyter'}:${
+			process.env.jupyter_port || 8888
+		}`,
+		changeOrigin: true,
+		rewrite: (path) => path.replace(/^\/notebook/, ''),
+		ws: true,
+	},
 };
 // Fix HMR port to match port set in docker compose. https://vitejs.dev/config/server-options.html#server-hmr
 config.server.hmr = {
