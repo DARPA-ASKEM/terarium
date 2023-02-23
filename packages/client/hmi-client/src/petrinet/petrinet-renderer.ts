@@ -152,6 +152,69 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		});
 	}
 
+	postRenderProcess() {
+		const chart = this.chart;
+		const svg = d3.select(this.svgEl);
+		const start: { x: number; y: number } = { x: 0, y: 0 };
+		const end: { x: number; y: number } = { x: 0, y: 0 };
+
+		let sourceData: INode<NodeData> | null = null;
+		let targetData: INode<NodeData> | null = null;
+
+		// Reset all
+		this.removeAllEvents('node-drag-start');
+		this.removeAllEvents('node-drag-move');
+		this.removeAllEvents('node-drag-end');
+
+		// (Re)create dragging listeners
+		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
+			if (!event.sourceEvent.shiftKey) return;
+			sourceData = selection.datum();
+			start.x = sourceData.x + 0.5 * sourceData.width;
+			start.y = sourceData.y + 0.5 * sourceData.height;
+		});
+
+		this.on(
+			'node-drag-move',
+			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
+				if (!event.sourceEvent.shiftKey) return;
+				const pointerCoords = d3
+					.zoomTransform(svg.node() as Element)
+					.invert(d3.pointer(event, svg.node()));
+				targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
+				if (targetData) {
+					end.x = targetData.x + 0.5 * targetData.width;
+					end.y = targetData.y + 0.5 * targetData.height;
+				} else {
+					end.x = pointerCoords[0];
+					end.y = pointerCoords[1];
+				}
+				chart?.selectAll('.new-edge').remove();
+
+				const line = [
+					{ x: start.x, y: start.y },
+					{ x: end.x, y: end.y }
+				];
+				chart
+					?.append('path')
+					.classed('new-edge', true)
+					.attr('d', pathFn(line))
+					.attr('marker-end', 'url(#arrowhead)')
+					.style('stroke', '#000');
+			}
+		);
+
+		this.on('node-drag-end', (_eventName, event /* _selection: D3SelectionINode<NodeData> */) => {
+			chart?.selectAll('.new-edge').remove();
+			if (!event.sourceEvent.shiftKey) return;
+			if (targetData && sourceData) {
+				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
+				sourceData = null;
+				targetData = null;
+			}
+		});
+	}
+
 	addEdge(source: any, target: any) {
 		this.graph.edges.push({
 			id: `${source.datum().id}_${target.datum().id}`,
