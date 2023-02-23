@@ -12,7 +12,7 @@
 		<Tree :value="resources" selectionMode="single" v-on:node-select="openResource">
 			<template #default="slotProps">
 				{{ slotProps.node.label }}
-				<Chip :label="slotProps.node.data" />
+				<Chip :label="slotProps.node.data.resourceType" />
 			</template>
 		</Tree>
 	</nav>
@@ -28,11 +28,14 @@ import { useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
+import { DocumentAsset } from '@/types/Document';
+import { Model } from '@/types/Model';
+import { Dataset } from '@/types/Dataset';
 
 const router = useRouter();
 const resourcesStore = useResourcesStore();
 
-const props = defineProps<{
+defineProps<{
 	project: ProjectType | null;
 }>();
 
@@ -45,12 +48,16 @@ const resources = computed(() => {
 
 	if (!isEmpty(storedResources)) {
 		for (let i = 0; i < projectAssetTypes.length; i++) {
-			const assets = Object.values(storedResources[projectAssetTypes[i]]) ?? [];
+			const assets: (DocumentAsset & Model & Dataset)[] =
+				Object.values(storedResources[projectAssetTypes[i]]) ?? [];
 			for (let j = 0; j < assets.length; j++) {
 				resourceTreeNodes.push({
-					key: projectAssetTypes[i] === 'publications' ? assets[j].xdd_uri : assets[j]?.id,
+					key: assets[j]?.name || assets[j]?.title,
 					label: assets[j]?.name || assets[j]?.title,
-					data: projectAssetTypes[i],
+					data: {
+						resourceType: projectAssetTypes[i],
+						assetId: projectAssetTypes[i] === 'publications' ? assets[j].xdd_uri : assets[j]?.id
+					},
 					selectable: true
 				});
 			}
@@ -64,7 +71,11 @@ function openResource(event: any) {
 
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { projectId: props.project?.id, resourceType: event.data, assetId: event.key }
+		params: {
+			resourceName: event.key,
+			assetId: event.data.assetId,
+			resourceType: event.data.resourceType
+		}
 	});
 }
 </script>

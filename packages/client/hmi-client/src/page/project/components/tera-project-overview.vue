@@ -108,8 +108,8 @@ function showProjectMenu(event) {
 .flex-container {
 	display: flex;
 	flex-direction: column;
-	width: 100%;
-	background: white;
+	flex: 1;
+	background: var(--surface-section);
 }
 
 a {

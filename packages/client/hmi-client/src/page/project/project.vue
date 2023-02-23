@@ -10,27 +10,36 @@
 		</template>
 	</slider-panel>
 	<section>
-		<TabMenu :model="tabbedResources" />
-		<tera-project-overview :project="project" />
-		<document
-			v-if="resourceType === 'publications'"
-			:asset-id="assetId"
-			:previewLineLimit="5"
-			:project="resources.activeProject"
-			:is-editable="true"
-		/>
-		<dataset
-			v-else-if="resourceType === 'datasets'"
-			:asset-id="assetId"
-			:project="resources.activeProject"
-			:is-editable="true"
-		/>
-		<model
-			v-else-if="resourceType === 'models'"
-			:asset-id="assetId"
-			:project="resources.activeProject"
-			:is-editable="true"
-		/>
+		<!-- <TabMenu :model="tabbedResources"> // https://github.com/tupilabs/vue-lumino consider better alternatives
+			<template #item="{ item }">
+				<a :to="item.to || ''" :projectId="project.id">
+					<Chip :label="item.to.params.resourceType" />
+					{{ item.label }}
+				</a>
+			</template>
+		</TabMenu> -->
+		<template v-if="assetId">
+			<document
+				v-if="resourceType === 'publications'"
+				:asset-id="assetId"
+				:previewLineLimit="5"
+				:project="resources.activeProject"
+				:is-editable="true"
+			/>
+			<dataset
+				v-else-if="resourceType === 'datasets'"
+				:asset-id="assetId"
+				:project="resources.activeProject"
+				:is-editable="true"
+			/>
+			<model
+				v-else-if="resourceType === 'models'"
+				:asset-id="assetId"
+				:project="resources.activeProject"
+				:is-editable="true"
+			/>
+		</template>
+		<tera-project-overview v-else :project="project" />
 	</section>
 	<slider-panel
 		class="slider"
@@ -63,17 +72,21 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
-import TabMenu from 'primevue/tabmenu';
+// import TabMenu from 'primevue/tabmenu';
+import Textarea from 'primevue/textarea';
+import Button from 'primevue/button';
+// import Chip from 'primevue/chip';
+import { RouteName } from '@/router/routes';
 import { ProjectType } from '@/types/Project';
 import { ResourceType, Annotation } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
 
 const props = defineProps<{
-	assetId: string;
-	resourceName: string;
-	resourceType?: string;
 	project: ProjectType;
+	resourceName?: string;
+	assetId?: string;
+	resourceType?: string;
 }>();
 
 const resources = useResourcesStore();
@@ -83,7 +96,20 @@ const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
-const tabbedResources = ref([]);
+const tabbedResources = ref<any>([
+	{
+		label: 'Overview',
+		icon: '',
+		to: {
+			name: RouteName.ProjectRoute,
+			params: {
+				resourceName: 'Overview',
+				assetId: null,
+				resourceType: null
+			}
+		}
+	}
+]);
 
 // FIXME:
 // - Need to establish terarium artifact types
@@ -119,6 +145,20 @@ watch(
 	() => [props.resourceName],
 	() => {
 		// If new name add to resource tab otherwise switch to tab
+		if (!tabbedResources.value.some(({ label }) => label === props.resourceName)) {
+			tabbedResources.value.push({
+				label: props.resourceName,
+				icon: '',
+				to: {
+					name: RouteName.ProjectRoute,
+					params: {
+						resourceName: props.resourceName,
+						assetId: props.assetId,
+						resourceType: props.resourceType
+					}
+				}
+			});
+		}
 	}
 );
 </script>
@@ -133,5 +173,22 @@ section {
 
 .asset {
 	padding-top: 1rem;
+}
+
+.p-tabmenu:deep(.p-tabmenuitem) {
+	display: inline;
+	max-width: 15rem;
+}
+
+.p-tabmenu:deep(.p-tabmenu-nav .p-tabmenuitem .p-menuitem-link) {
+	padding: 1rem;
+	text-decoration: none;
+}
+
+.p-tabmenu:deep(.p-menuitem-text) {
+	height: 1rem;
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 </style>

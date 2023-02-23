@@ -211,15 +211,12 @@ function openProject(chosenProject: ProjectType) {
 main {
 	overflow-y: auto;
 	overflow-x: hidden;
+	flex: 1;
 }
 
 section {
 	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
-}
-
-.projects {
-	background-color: var(--surface-section);
 	padding: 1rem;
 }
 
@@ -287,12 +284,6 @@ header svg {
 	display: flex;
 	margin: 0.5rem 0.5rem 0 0.5rem;
 	padding-bottom: 0.5rem;
-}
-
-.chevron-left,
-.chevron-right {
-	width: 4rem;
-	position: absolute;
 }
 
 .chevron-left,
