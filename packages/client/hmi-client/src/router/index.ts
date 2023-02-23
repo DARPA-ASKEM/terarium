@@ -5,16 +5,18 @@ import HomeView from '@/page/Home.vue';
 import DatasetView from '@/page/DatasetView.vue';
 import ProjectView from '@/page/Project.vue';
 import ModelView from '@/page/ModelView.vue';
-import ResponsivePlayground from '@/page/ResponsivePlayground.vue';
 import SimulationView from '@/page/Simulation.vue';
-import SimulationResultView from '@/page/SimulationResult.vue';
 import CodeView from '@/page/CodeView.vue';
-import TA2Playground from '@/page/TA2Playground.vue';
-import TheiaView from '@/page/theia.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
-import ModelEditorView from '@/page/ModelEditor.vue';
-import ModelRunnerView from '@/page/ModelRunner.vue';
+
+// Tests
+import ModelEditorView from '@/temp/ModelEditor.vue';
+import ModelRunnerView from '@/temp/ModelRunner.vue';
+import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
+import TA2Playground from '@/temp/TA2Playground.vue';
+import SimulationResultView from '@/temp/SimulationResult.vue';
+import TheiaView from '@/temp/theia.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -24,7 +26,6 @@ export enum RoutePath {
 	Model = '/projects/:projectId/model/:assetId?',
 	Dataset = '/projects/:projectId/dataset/:assetId?',
 	Simulation = '/projects/:projectId/simulations/:assetId?',
-	SimulationResult = '/projects/:projectId/simulation-results/:assetId?',
 	Code = '/projects/:projectId/code',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
@@ -34,7 +35,8 @@ export enum RoutePath {
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	ModelEditor = '/model-editor',
-	ModelRunner = '/model-runner'
+	ModelRunner = '/model-runner',
+	SimulationResult = '/projects/:projectId/simulation-results/:assetId?'
 }
 
 const routes = [
