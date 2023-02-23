@@ -12,8 +12,9 @@
             {{ node.name }}
             <div class="port-right" @click.stop="createNodePath(node, 1)"></div>
         </div>
-        <svg stroke="black" stroke-width="1" v-for="path in paths">
-            <path :d="drawPath(path)"></path>
+        <svg stroke="black" stroke-width="1">
+            <path v-if="isCreatingNodePath" :d="drawNewPath()"></path>
+            <path v-for="path in paths" :d="drawPath(path)"></path>
         </svg>
 </div>
 </template>
@@ -107,21 +108,31 @@ interface Path {
     endPosition?: Position
 }
 
+interface Edge {
+    origin?: Node,
+    destination?: Node
+}
+
 const modalVisible = ref(false);
 const newNodeName = ref<string>('');
 const input = ref<HTMLInputElement | null>(null);
 const nodes = ref<Node[]>([]);
 const paths = ref<Path[]>([])
 const isCreatingNodePath = ref(false);
-const activeNodePathIndex = ref<number>(0);
+const newEdge = ref<Edge>();
+const newPathPosition = ref<Position | null>();
 
 const mouseX = ref(0);
 const mouseY = ref(0);
 
+function cancelActivePath() {
+    newPathPosition.value = null;
+    isCreatingNodePath.value = false;
+}
+
 function clickBackground() {
     if (isCreatingNodePath.value) {
-        paths.value = paths.value.filter((p, i) => i !== activeNodePathIndex.value);
-        isCreatingNodePath.value = false;
+        cancelActivePath();
     } else {
         createNode();
     }
@@ -166,31 +177,64 @@ function calcNodeStyle(node: Node) {
     const left = mouseX.value - 56 - 50;
     return {
         top: `${top}px`,
-        left: `${left}px`
+        left: `${left}px`,
+        cursor: 'move'
     }
 }
 
 function createNodePath(node: Node, direction: number) {
     if (!isCreatingNodePath.value) {
-        const newPath: Path = {
-            startPosition: {
-                x: node.position.x + (50 * direction),
-                y: node.position.y
-            },
-        }
-        paths.value.push(newPath);
-        activeNodePathIndex.value = paths.value.length;
+        // const newPath: Path = {
+        //     startPosition: {
+        //         x: node.position.x + (50 * direction),
+        //         y: node.position.y
+        //     },
+        // }
+        // activeNodePathIndex.value = paths.value.length;
+        // paths.value.push(newPath);
+        newPathPosition.value = {
+            x: node.position.x + (50 * direction),
+            y: node.position.y
+        } as Position;
         isCreatingNodePath.value = true;
+        if (direction > 0) {
+            newEdge.value = {
+                origin: node
+            } as Edge;
+        } else {
+            newEdge.value = {
+                destination: node
+            } as Edge;
+        }
+    } else {
+        if (newEdge.value?.origin && direction > 0 ||
+            newEdge.value?.destination && direction < 0) {
+            cancelActivePath();
+        } else {
+            if (newPathPosition.value) {
+                newEdge.value = {};
+                const newPath: Path = {
+                    startPosition: newPathPosition.value,
+                    endPosition: {
+                        x: node.position.x + (50 * direction),
+                        y: node.position.y
+                    }
+                };
+                paths.value.push(newPath);
+                isCreatingNodePath.value = false;
+            }
+        }
     }
 }
 
-function drawPath(path: Path) {
-    if (isCreatingNodePath.value) {
-        return `M ${path.startPosition.x} ${path.startPosition.y}
+function drawNewPath() {
+    return `M ${newPathPosition.value?.x} ${newPathPosition.value?.y}
         L ${mouseX.value - 56} ${mouseY.value - 57}`;
-    } else {
-        return `M 0 0 L 0 0`;
-    }
+}
+
+function drawPath(path: Path) {
+    return path.endPosition ? `M ${path.startPosition.x} ${path.startPosition.y}
+        L ${path.endPosition.x} ${path.endPosition.y}` : `M 0 0 L 0 0`;
 }
 
 function mouseUpdate(event) {
