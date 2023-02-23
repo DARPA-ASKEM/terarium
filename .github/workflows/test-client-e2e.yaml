@@ -63,7 +63,7 @@ jobs:
         run: npx playwright install-deps
 
       - name: Run Playwright tests
-        run: yarn test:e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        run: yarn workspace hmi-client test:e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
       - name: Upload test artifacts on failure
         uses: actions/upload-artifact@v3
@@ -92,7 +92,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Run Playwright tests
-        run: yarn test:ct
+        run: yarn workspace hmi-client test:ct
 
       - name: Upload test artifacts on failure
         uses: actions/upload-artifact@v3
@@ -142,7 +142,7 @@ jobs:
         run: npx playwright install-deps
 
       - name: Run Playwright tests
-        run: yarn test:ct
+        run: yarn workspace hmi-client test:ct
 
       - name: Upload test artifacts on failure
         uses: actions/upload-artifact@v3

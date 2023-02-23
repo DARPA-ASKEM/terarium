@@ -6766,7 +6766,7 @@ cors@latest:
     pixi.js: 7.0.5
     primeflex: 3.3.0
     primeicons: 6.0.1
-    primevue: 3.21.0
+    primevue: 3.23.0
     sass: 1.56.1
     typescript: 4.8.4
     vite: 3.2.5
@@ -9775,13 +9775,13 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"primevue@npm:3.21.0":
-  version: 3.21.0
-  resolution: "primevue@npm:3.21.0"
+"primevue@npm:3.23.0":
+  version: 3.23.0
+  resolution: "primevue@npm:3.23.0"
   peerDependencies:
     primeicons: ^5.0.0 || ^6.0.0
     vue: ^3.0.0
-  checksum: 89362edc741803256e9724434772e74563f93e46743c7d936c321c90b8fdbba551cc0928fec6c38cfa87c001dd32c2fffda9a441afe88f14025aef95173a9382
+  checksum: 95f4a675c0048da8dd8f0f4cebe4e09b31a5c986581df21e1a35cc63c9a2eb172e2a5b7d3b6a34ce01e3cc1deebc45a2b2f137a20357c4e2cb165e8615dda8c8
   languageName: node
   linkType: hard
 
