@@ -13,7 +13,7 @@ import graphScaffolder from '@graph-scaffolder/index';
 import { moveTo } from '@graph-scaffolder/fn/move-to';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { onMounted, ref } from 'vue';
-import { parsePetriNet2IGraph } from '@/services/model';
+import { parsePetriNet2IGraph } from '@/petrinet/petrinet-service';
 
 import S from '@/assets/images/S_thumb.png';
 import I from '@/assets/images/I_thumb.png';

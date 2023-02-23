@@ -2,9 +2,7 @@ import { EventType } from '@/types/EventType';
 import API from '@/api/api';
 import { toQueryString } from '@/utils/query-string';
 import { Event } from '@/types/Event';
-import { useLogger } from 'vue-logger-plugin';
-
-const logger = useLogger();
+import { logger } from '@/utils/logger';
 
 /**
  * Gets a list of events from the given parameters

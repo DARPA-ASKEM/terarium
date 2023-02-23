@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { logger } from '@/utils/logger';
+import { ToastSummaries } from '@/services/toast';
 import useAuthStore from '../stores/auth';
 
 const API = axios.create({
@@ -20,7 +22,29 @@ API.interceptors.request.use(
 		return config;
 	},
 	(error) => {
-		console.error(error);
+		logger.error(error, { showToast: true, toastTitle: `Authentication Error` });
+	}
+);
+
+API.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		const msg = error.response.data;
+		const status = error.response.status;
+		switch (status) {
+			case 500:
+				logger.error(msg, {
+					showToast: true,
+					toastTitle: `${ToastSummaries.SERVICE_UNAVAILABLE} (${status})`
+				});
+				break;
+			default:
+				logger.error(msg, {
+					showToast: true,
+					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
+				});
+		}
+		return null; // return null
 	}
 );
 
