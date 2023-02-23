@@ -1,4 +1,4 @@
-import { devices, type PlaywrightTestConfig } from '@playwright/experimental-ct-vue';
+import { devices, defineConfig } from '@playwright/experimental-ct-vue';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 
