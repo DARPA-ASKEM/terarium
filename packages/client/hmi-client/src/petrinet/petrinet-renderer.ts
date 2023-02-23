@@ -75,9 +75,9 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
 
-		const multiEdges = selection.filter((d) => d.data?.numEdges > 1);
+		const multiEdges = selection.filter((d) => (d.data && d.data.numEdges > 1) as boolean);
 		multiEdges.each((_d, index, group) => {
-			const edgeSelection = d3.select(group[index]);
+			const edgeSelection = d3.select<any, INode<EdgeData>>(group[index]);
 			const point = pointOnPath(edgeSelection.select('path').node() as any, 0.5);
 			edgeSelection
 				.append('text')
@@ -167,7 +167,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					y: target.datum().y + target.datum().height * 0.5
 				}
 			],
-			data: { val: 1 }
+			data: { numEdges: 1 }
 		});
 		this.render();
 	}
