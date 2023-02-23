@@ -180,6 +180,8 @@ function calcNodeStyle(node: Node) {
     }
     const top = mouseY.value - 57 - 50;
     const left = mouseX.value - 56 - 50;
+    node.position.x = mouseX.value - 56;
+    node.position.y = mouseY.value - 57;
     return {
         top: `${top}px`,
         left: `${left}px`,
@@ -242,7 +244,7 @@ function drawPath(path: Path) {
     const bezierOffsetX = 50;
     const runwayX = 10;
     const nodeOffsetX = (50 * path.direction);
-    const newPath = (path.endNode && path.startNode) ? `M ${path.startNode.position.x + nodeOffsetX},${path.startPosition.y} 
+    const newPath = (path.endNode && path.startNode) ? `M ${path.startNode.position.x + nodeOffsetX},${path.startNode.position.y} 
     h10
     C${path.startNode.position.x + nodeOffsetX + bezierOffsetX},${path.startNode.position.y} 
     ${path.endNode.position.x - nodeOffsetX - bezierOffsetX - runwayX} ${path.endNode.position.y}
