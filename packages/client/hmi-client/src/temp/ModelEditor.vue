@@ -590,7 +590,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 
 // Tracking variables
 let source: any = null;
-let target: any = null;
+// let target: any = null;
 let nameCounter: number = 0;
 
 const runPetri = () => {
@@ -715,36 +715,9 @@ onMounted(async () => {
 
 	renderer.on('background-click', () => {
 		source = null;
-		target = null;
+		// target = null;
 		renderer?.render();
 		currentNodeMetadata.value = null;
-	});
-
-	renderer.on('node-click', (_evtName, evt, d) => {
-		if (evt.shiftKey) {
-			if (source) {
-				target = d;
-				target.select('.shape').style('stroke', '#000').style('stroke-width', 4);
-			} else {
-				source = d;
-				source.select('.shape').style('stroke', '#000').style('stroke-width', 4);
-			}
-		} else {
-			if (source) {
-				source.select('.shape').style('stroke', null).style('stroke-width', null);
-			}
-			if (target) {
-				target.select('.shape').style('stroke', null).style('stroke-width', null);
-			}
-			source = null;
-			target = null;
-		}
-
-		if (source && target) {
-			renderer?.addEdge(source, target);
-			source = null;
-			target = null;
-		}
 	});
 
 	renderer.on('node-mouse-enter', (_evtName, _evt, el) => {
@@ -752,9 +725,10 @@ onMounted(async () => {
 		// el.append('text').attr('x', 50).attr('y', 15).attr('popup', true).text(metadataObj);
 		currentNodeMetadata.value = metadataObj;
 	});
-	// renderer.on('node-mouse-leave', (_evtName, _evt, el) => {
-	// 	el.selectAll('text[popup=true]').remove();
-	// });
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		console.log(d.source, d.target);
+	});
 
 	document.addEventListener('keyup', async (event) => {
 		if (event.key === 'Backspace' && renderer) {
@@ -770,7 +744,7 @@ onMounted(async () => {
 
 			renderer.render();
 			source = null;
-			target = null;
+			// target = null;
 		}
 
 		// FIXME: Hackathon
