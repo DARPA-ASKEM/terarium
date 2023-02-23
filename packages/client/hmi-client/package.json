@@ -39,8 +39,8 @@
 	},
 	"devDependencies": {
 		"@pinia/testing": "0.0.14",
-		"@playwright/experimental-ct-vue": "1.27.1",
-		"@playwright/test": "1.27.1",
+		"@playwright/experimental-ct-vue": "1.31.1",
+		"@playwright/test": "1.31.1",
 		"@rushstack/eslint-patch": "1.2.0",
 		"@types/d3": "7.4.0",
 		"@types/lodash": "4.14.191",
