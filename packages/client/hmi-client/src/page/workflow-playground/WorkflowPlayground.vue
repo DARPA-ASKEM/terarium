@@ -105,7 +105,10 @@ interface Node {
 
 interface Path {
     startPosition: Position,
-    endPosition?: Position
+    endPosition?: Position,
+    startNode?: Node,
+    endNode?: Node,
+    direction: number
 }
 
 interface Edge {
@@ -121,18 +124,20 @@ const paths = ref<Path[]>([])
 const isCreatingNodePath = ref(false);
 const newEdge = ref<Edge>();
 const newPathPosition = ref<Position | null>();
+const newPath = ref<Path | null>();
 
 const mouseX = ref(0);
 const mouseY = ref(0);
 
-function cancelActivePath() {
+function cancelNewPath() {
     newPathPosition.value = null;
     isCreatingNodePath.value = false;
+    newPath.value = null;
 }
 
 function clickBackground() {
     if (isCreatingNodePath.value) {
-        cancelActivePath();
+        cancelNewPath();
     } else {
         createNode();
     }
@@ -184,18 +189,11 @@ function calcNodeStyle(node: Node) {
 
 function createNodePath(node: Node, direction: number) {
     if (!isCreatingNodePath.value) {
-        // const newPath: Path = {
-        //     startPosition: {
-        //         x: node.position.x + (50 * direction),
-        //         y: node.position.y
-        //     },
-        // }
-        // activeNodePathIndex.value = paths.value.length;
-        // paths.value.push(newPath);
         newPathPosition.value = {
             x: node.position.x + (50 * direction),
             y: node.position.y
         } as Position;
+        newPath.value = { startPosition: newPathPosition.value, startNode: node, direction };
         isCreatingNodePath.value = true;
         if (direction > 0) {
             newEdge.value = {
@@ -209,18 +207,21 @@ function createNodePath(node: Node, direction: number) {
     } else {
         if (newEdge.value?.origin && direction > 0 ||
             newEdge.value?.destination && direction < 0) {
-            cancelActivePath();
+            cancelNewPath();
         } else {
-            if (newPathPosition.value) {
+            if (newPathPosition.value && newPath.value) {
                 newEdge.value = {};
-                const newPath: Path = {
+                const path: Path = {
                     startPosition: newPathPosition.value,
                     endPosition: {
                         x: node.position.x + (50 * direction),
                         y: node.position.y
-                    }
+                    },
+                    startNode: newPath.value.startNode,
+                    endNode: node,
+                    direction: newPath.value.direction
                 };
-                paths.value.push(newPath);
+                paths.value.push(path);
                 isCreatingNodePath.value = false;
             }
         }
@@ -238,11 +239,14 @@ function drawNewPath() {
 }
 
 function drawPath(path: Path) {
-    const newPath = path.endPosition ? `M ${path.startPosition.x},${path.startPosition.y} 
+    const bezierOffsetX = 50;
+    const runwayX = 10;
+    const nodeOffsetX = (50 * path.direction);
+    const newPath = (path.endNode && path.startNode) ? `M ${path.startNode.position.x + nodeOffsetX},${path.startPosition.y} 
     h10
-    C${path.startPosition.x + 50},${path.startPosition.y} 
-    ${path.endPosition.x - 50 - 10} ${path.endPosition.y}
-    ${path.endPosition.x - 10} ${path.endPosition.y}
+    C${path.startNode.position.x + nodeOffsetX + bezierOffsetX},${path.startNode.position.y} 
+    ${path.endNode.position.x - nodeOffsetX - bezierOffsetX - runwayX} ${path.endNode.position.y}
+    ${path.endNode.position.x - nodeOffsetX - runwayX} ${path.endNode.position.y}
     h10` : `M0,0`;
     return newPath;
 }
