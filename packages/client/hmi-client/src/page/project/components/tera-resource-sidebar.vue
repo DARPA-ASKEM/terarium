@@ -8,20 +8,27 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 			/>
 			<Button icon="pi pi-arrows-v" class="p-button-icon-only p-button-text p-button-rounded" />
+			<Button
+				icon="pi pi-trash"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="removeAsset"
+			/>
 		</div>
-		<Tree :value="resources" selectionMode="single" v-on:node-select="openResource">
+		<Tree :value="resources" selectionMode="single" v-on:node-select="openAsset">
 			<template #default="slotProps">
 				{{ slotProps.node.label }}
-				<Chip :label="slotProps.node.data.resourceType" />
+				<Chip :label="slotProps.node.data.assetType" />
 			</template>
 		</Tree>
 	</nav>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+// import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { ProjectType } from '@/types/Project';
+import { ProjectType, ProjectAssetTypes } from '@/types/Project';
+import { deleteAsset } from '@/services/project';
 import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
 import { useRouter } from 'vue-router';
@@ -35,28 +42,33 @@ import { Dataset } from '@/types/Dataset';
 const router = useRouter();
 const resourcesStore = useResourcesStore();
 
+const chosenAsset = ref({ assetId: -1, assetType: ProjectAssetTypes.DOCUMENTS });
+
 defineProps<{
 	project: ProjectType | null;
 }>();
 
 const resources = computed(() => {
-	const storedResources = resourcesStore.activeProjectAssets ?? [];
-	const projectAssetTypes = Object.keys(storedResources);
+	const storedAssets = resourcesStore.activeProjectAssets ?? [];
+	const projectAssetTypes = Object.keys(storedAssets);
 	const resourceTreeNodes: any[] = [];
 
-	console.log(storedResources);
+	// console.log(storedAssets);
 
-	if (!isEmpty(storedResources)) {
+	if (!isEmpty(storedAssets)) {
 		for (let i = 0; i < projectAssetTypes.length; i++) {
 			const assets: (DocumentAsset & Model & Dataset)[] =
-				Object.values(storedResources[projectAssetTypes[i]]) ?? [];
+				Object.values(storedAssets[projectAssetTypes[i]]) ?? [];
 			for (let j = 0; j < assets.length; j++) {
 				resourceTreeNodes.push({
 					key: assets[j]?.name || assets[j]?.title,
-					label: assets[j]?.name || assets[j]?.title,
+					label: assets[j]?.name || assets[j]?.title || assets[j]?.id,
 					data: {
-						resourceType: projectAssetTypes[i],
-						assetId: projectAssetTypes[i] === 'publications' ? assets[j].xdd_uri : assets[j]?.id
+						assetType: projectAssetTypes[i],
+						assetId:
+							projectAssetTypes[i] === ProjectAssetTypes.DOCUMENTS
+								? assets[j].xdd_uri
+								: assets[j]?.id
 					},
 					selectable: true
 				});
@@ -66,18 +78,65 @@ const resources = computed(() => {
 	return resourceTreeNodes;
 });
 
-function openResource(event: any) {
-	console.log(event);
+// Remove an asset - will be adjusted later
+function removeAsset() {
+	const storedAssets = resourcesStore.activeProjectAssets ?? [];
+	const { assetId, assetType } = chosenAsset.value;
+
+	const asset = storedAssets[assetType].find((a) =>
+		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id === assetId
+	);
+
+	console.log(chosenAsset.value, asset, storedAssets[assetType]);
+
+	if (asset === undefined) {
+		console.error('Failed to remove asset');
+		return;
+	}
+	// remove the document from the project assets
+	if (resourcesStore.activeProject && storedAssets) {
+		deleteAsset(resourcesStore.activeProject.id, assetType, asset.id);
+
+		storedAssets[assetType] = storedAssets[assetType].filter(({ id }) => id !== asset.id);
+
+		// Remove also from the local cache - TO DO
+		// resourcesStore.activeProject.assets[assetType] =
+		// 	resourcesStore.activeProject.assets[assetType].filter(
+		// 		(docId) => docId !== asset.id
+		// 	);
+	}
+
+	// if the user deleted the currently selected asset, then clear its content from the view TO DO
+	// if (asset.xdd_uri === documentId.value) {
+	// 	router.push('/document'); // clear the doc ID as a URL param
+	// }
+
+	// look at model-sidebar-panel.vue in previous versions if you want to see about using the old tab system
+}
+
+function openAsset(event: any) {
+	chosenAsset.value = {
+		assetId: event.data.assetId,
+		assetType: event.data.assetType
+	};
 
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
 			resourceName: event.key,
 			assetId: event.data.assetId,
-			resourceType: event.data.resourceType
+			assetType: event.data.assetType
 		}
 	});
 }
+
+// function exportIds() {
+// 	logger.info(
+// 		'List of xDD _gddid ',
+// 		{},
+// 		documents.value.map((document) => document)
+// 	);
+// }
 </script>
 
 <style scoped>
@@ -94,8 +153,4 @@ nav {
 	border-radius: 0.5rem;
 	text-transform: uppercase;
 }
-
-/* nav div {
-    margin-left: -0.5rem;
-} */
 </style>

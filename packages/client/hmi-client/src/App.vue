@@ -1,9 +1,9 @@
 <template>
+	<!-- Sets the Toast notification groups and their respective levels-->
 	<Toast position="top-right" group="error" />
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<!-- Sets the Toast notification groups and their respective levels-->
 	<Navbar
 		class="header"
 		:active="!isErrorState"
@@ -25,12 +25,11 @@ import Toast from 'primevue/toast';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
-// import Sidebar from '@/components/Sidebar.vue';
 import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { ProjectType } from '@/types/Project';
-import { useCurrentRoute } from './router/index'; // RoutePath,
+import { useCurrentRoute } from './router/index'; //
 import { ResourceType } from './types/common';
 
 const toast = useToastService();
@@ -41,10 +40,6 @@ const toast = useToastService();
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
-// const isSidebarVisible = computed(
-// 	() =>
-// 		currentRoute.value.path !== RoutePath.Home && currentRoute.value.path !== RoutePath.DataExplorer
-// );
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const resources = useResourcesStore();

@@ -13,30 +13,41 @@
 		<!-- <TabMenu :model="tabbedResources"> // https://github.com/tupilabs/vue-lumino consider better alternatives
 			<template #item="{ item }">
 				<a :to="item.to || ''" :projectId="project.id">
-					<Chip :label="item.to.params.resourceType" />
+					<Chip :label="item.to.params.assetType" />
 					{{ item.label }}
 				</a>
 			</template>
 		</TabMenu> -->
-		<template v-if="assetId">
+		<code-component v-if="showCode" />
+		<template v-else-if="assetId">
 			<document
-				v-if="resourceType === 'publications'"
+				v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 				:asset-id="assetId"
 				:previewLineLimit="5"
 				:project="resources.activeProject"
 				:is-editable="true"
 			/>
 			<dataset
-				v-else-if="resourceType === 'datasets'"
+				v-else-if="assetType === ProjectAssetTypes.DATASETS"
 				:asset-id="assetId"
 				:project="resources.activeProject"
 				:is-editable="true"
 			/>
 			<model
-				v-else-if="resourceType === 'models'"
+				v-else-if="assetType === ProjectAssetTypes.MODELS"
 				:asset-id="assetId"
 				:project="resources.activeProject"
 				:is-editable="true"
+			/>
+			<simulation-plan
+				v-else-if="assetType === ProjectAssetTypes.PLANS"
+				:asset-id="assetId"
+				:project="resources.activeProject"
+			/>
+			<simulation-run
+				v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
+				:asset-id="assetId"
+				:project="resources.activeProject"
 			/>
 		</template>
 		<tera-project-overview v-else :project="project" />
@@ -72,12 +83,15 @@ import TeraProjectOverview from '@/page/project/components/tera-project-overview
 import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
+import SimulationPlan from '@/page/project/components/Simulation.vue';
+import SimulationRun from '@/page/project/components/SimulationResult.vue';
+import CodeComponent from '@/page/project/components/CodeView.vue';
 // import TabMenu from 'primevue/tabmenu';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 // import Chip from 'primevue/chip';
 import { RouteName } from '@/router/routes';
-import { ProjectType } from '@/types/Project';
+import { ProjectType, ProjectAssetTypes } from '@/types/Project';
 import { ResourceType, Annotation } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
@@ -86,10 +100,11 @@ const props = defineProps<{
 	project: ProjectType;
 	resourceName?: string;
 	assetId?: string;
-	resourceType?: string;
+	assetType?: string;
 }>();
 
 const resources = useResourcesStore();
+const showCode = false; // temp integration
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -105,7 +120,7 @@ const tabbedResources = ref<any>([
 			params: {
 				resourceName: 'Overview',
 				assetId: null,
-				resourceType: null
+				assetType: null
 			}
 		}
 	}
@@ -154,7 +169,7 @@ watch(
 					params: {
 						resourceName: props.resourceName,
 						assetId: props.assetId,
-						resourceType: props.resourceType
+						assetType: props.assetType
 					}
 				}
 			});
