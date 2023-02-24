@@ -42,7 +42,7 @@ function updateResources() {
 					route,
 					params: {
 						projectId,
-						assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
+						assetId: route === RouteName.ProjectRoute ? asset.xdd_uri : asset.id
 					},
 					name: displayName,
 					icon,
