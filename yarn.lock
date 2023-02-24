@@ -207,15 +207,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:^7.18.4":
-  version: 7.21.2
-  resolution: "@babel/parser@npm:7.21.2"
-  bin:
-    parser: ./bin/babel-parser.js
-  checksum: e2b89de2c63d4cdd2cafeaea34f389bba729727eec7a8728f736bc472a59396059e3e9fe322c9bed8fd126d201fb609712949dc8783f4cae4806acd9a73da6ff
-  languageName: node
-  linkType: hard
-
 "@babel/plugin-syntax-async-generators@npm:^7.8.4":
   version: 7.8.4
   resolution: "@babel/plugin-syntax-async-generators@npm:7.8.4"
@@ -1064,162 +1055,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lumino/algorithm@npm:^1.9.1, @lumino/algorithm@npm:^1.9.2":
-  version: 1.9.2
-  resolution: "@lumino/algorithm@npm:1.9.2"
-  checksum: a89e7c63504236119634858e271db1cc649684d30ced5a6ebe2788af7c0837f1e05a6fd3047d8525eb756c42ce137f76b3688f75fd3ef915b71cd4f213dfbb96
-  languageName: node
-  linkType: hard
-
-"@lumino/collections@npm:^1.9.3":
-  version: 1.9.3
-  resolution: "@lumino/collections@npm:1.9.3"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-  checksum: 1c87a12743eddd6f6b593e47945a5645e2f99ad61c5192499b0745e48ee9aff263c7145541e77dfeea4c9f50bdd017fddfa47bfc60e718de4f28533ce45bf8c3
-  languageName: node
-  linkType: hard
-
-"@lumino/commands@npm:^1.21.1":
-  version: 1.21.1
-  resolution: "@lumino/commands@npm:1.21.1"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-    "@lumino/coreutils": ^1.12.1
-    "@lumino/disposable": ^1.10.4
-    "@lumino/domutils": ^1.8.2
-    "@lumino/keyboard": ^1.8.2
-    "@lumino/signaling": ^1.11.1
-    "@lumino/virtualdom": ^1.14.3
-  checksum: 1e2ee7ce14b7241aee829df76f2bee6c046a82c2c137c6bb58049142c52a67f8ae74168fdcc4027b0d5a1c9f2ffa8b8f5231ef89f6f0ea8dcc4cab8d475e1ad4
-  languageName: node
-  linkType: hard
-
-"@lumino/coreutils@npm:^1.11.1, @lumino/coreutils@npm:^1.12.1":
-  version: 1.12.1
-  resolution: "@lumino/coreutils@npm:1.12.1"
-  peerDependencies:
-    crypto: 1.0.1
-  checksum: 55f1b87997f8dd0af28ff23c2d4b3aa252e515b9d3bc91b350a5c6c8526ceae61b14b55dc0d8d01691c69d42974b3d559f2b49bc7ced0f474b8f5dc52b3e83ed
-  languageName: node
-  linkType: hard
-
-"@lumino/datagrid@npm:^0.34.0":
-  version: 0.34.1
-  resolution: "@lumino/datagrid@npm:0.34.1"
-  dependencies:
-    "@lumino/algorithm": ^1.9.1
-    "@lumino/coreutils": ^1.11.1
-    "@lumino/disposable": ^1.10.1
-    "@lumino/domutils": ^1.8.1
-    "@lumino/dragdrop": ^1.13.1
-    "@lumino/keyboard": ^1.8.1
-    "@lumino/messaging": ^1.10.1
-    "@lumino/signaling": ^1.10.1
-    "@lumino/widgets": ^1.30.1
-  checksum: 5126728fa4196f59a6738b655f0199b7171d8afb1576da2f7f5ca22fd1392fc150afa260e4cffacc663f3bddd7efdac11fa7244c78560e6d8bdb30fb4b90f499
-  languageName: node
-  linkType: hard
-
-"@lumino/default-theme@npm:^0.20.1":
-  version: 0.20.2
-  resolution: "@lumino/default-theme@npm:0.20.2"
-  dependencies:
-    "@lumino/dragdrop": ^1.13.1
-    "@lumino/widgets": ^1.30.1
-  checksum: fa5278c2f029c18276dbdaa4508f6d31433e99793264e7d785c39a3b630b3e102c6a92b755fe39f9b468eab38c9ecd87963b722ca20c2f6220702ce678db659d
-  languageName: node
-  linkType: hard
-
-"@lumino/disposable@npm:^1.10.1, @lumino/disposable@npm:^1.10.4":
-  version: 1.10.4
-  resolution: "@lumino/disposable@npm:1.10.4"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-    "@lumino/signaling": ^1.11.1
-  checksum: b53e259830f1d3231455548e6b95c9ae0f4b91e1b501980a1d0bb9708322bf5469b5cbb4e5005653d6f33b549d4bb7e58ce02226477876f51c124ea755152a33
-  languageName: node
-  linkType: hard
-
-"@lumino/domutils@npm:^1.8.1, @lumino/domutils@npm:^1.8.2":
-  version: 1.8.2
-  resolution: "@lumino/domutils@npm:1.8.2"
-  checksum: 196f25316a17cd8df8f11dbe17f10cbd96e5ce166ea97aab6402307dc554382423d860859bb5d05226f05909748b781fb281bb9220690fe1f3ddc716072c2ed5
-  languageName: node
-  linkType: hard
-
-"@lumino/dragdrop@npm:^1.13.1, @lumino/dragdrop@npm:^1.14.4":
-  version: 1.14.4
-  resolution: "@lumino/dragdrop@npm:1.14.4"
-  dependencies:
-    "@lumino/coreutils": ^1.12.1
-    "@lumino/disposable": ^1.10.4
-  checksum: 5738502ead2e57462f94eb68dbb88f14c6775c902563621acbc91300002f85a1f9ce8dd91f21777558b931d3e19024c4115ab8093fb94517e45ad64bf7376b12
-  languageName: node
-  linkType: hard
-
-"@lumino/keyboard@npm:^1.8.1, @lumino/keyboard@npm:^1.8.2":
-  version: 1.8.2
-  resolution: "@lumino/keyboard@npm:1.8.2"
-  checksum: 30f8ced53ca0aa466dba33be3c9379a2a6abcf1c52485073d9f9d9bc119eb3327a7343fad764c2d63a8a30ae05c0047098c40ec605e60af215356f3edb9ab4a9
-  languageName: node
-  linkType: hard
-
-"@lumino/messaging@npm:^1.10.1, @lumino/messaging@npm:^1.10.3":
-  version: 1.10.3
-  resolution: "@lumino/messaging@npm:1.10.3"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-    "@lumino/collections": ^1.9.3
-  checksum: 1131e80379fa9b8a9b5d3418c90e25d4be48e2c92ec711518190772f9e8845a695bef45daddd06a129168cf6f158c8ad80ae86cb245f566e9195bbd9a0843b7a
-  languageName: node
-  linkType: hard
-
-"@lumino/properties@npm:^1.8.2":
-  version: 1.8.2
-  resolution: "@lumino/properties@npm:1.8.2"
-  checksum: 9a53709fe58d3abbc99062f0c0fda4d5f64a4c7dca509251f0f89cdcaf881fdf6172ee852dbfe70594ee34bb97255acca771a722d62e7e2150ba8cf6f7e7d15c
-  languageName: node
-  linkType: hard
-
-"@lumino/signaling@npm:^1.10.1, @lumino/signaling@npm:^1.11.1":
-  version: 1.11.1
-  resolution: "@lumino/signaling@npm:1.11.1"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-    "@lumino/properties": ^1.8.2
-  checksum: 3d822be705d9ba8adc46ec405a4422cd4f76ed774f94da5386a511f01df4325c3c8bfa288c9c812184c94cfd0c3ef7b1121dcc9c9489750ad6cfaa7ffb2a3a67
-  languageName: node
-  linkType: hard
-
-"@lumino/virtualdom@npm:^1.14.3":
-  version: 1.14.3
-  resolution: "@lumino/virtualdom@npm:1.14.3"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-  checksum: dd6acc5402eb7961ab05f5ce9afaebce4258eb92111f4d97b58ac87a6453686376d2b7d0a2041a54eef6e78091e36a430c74834c97b862fba31fa82ef43c72cb
-  languageName: node
-  linkType: hard
-
-"@lumino/widgets@npm:^1.30.0, @lumino/widgets@npm:^1.30.1":
-  version: 1.37.1
-  resolution: "@lumino/widgets@npm:1.37.1"
-  dependencies:
-    "@lumino/algorithm": ^1.9.2
-    "@lumino/commands": ^1.21.1
-    "@lumino/coreutils": ^1.12.1
-    "@lumino/disposable": ^1.10.4
-    "@lumino/domutils": ^1.8.2
-    "@lumino/dragdrop": ^1.14.4
-    "@lumino/keyboard": ^1.8.2
-    "@lumino/messaging": ^1.10.3
-    "@lumino/properties": ^1.8.2
-    "@lumino/signaling": ^1.11.1
-    "@lumino/virtualdom": ^1.14.3
-  checksum: dd44af8db15030cabe61b0d59c023c6f751695b6c6cd937f14097a0eb6ffbcaa36e9d6eb61980597d8aca327ed24f86bf6599b396674e30072c1e7e35e91c73a
-  languageName: node
-  linkType: hard
-
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -1620,19 +1455,6 @@ __metadata:
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
   checksum: ad87447820dd3f24825d2d947ebc03072b20a42bfc96cbafec16bff8bbda6c1a81fcb0be56d5b21968560c5359a0af4038a68ba150c3e1694fe4c109a063bed8
-  languageName: node
-  linkType: hard
-
-"@tupilabs/vue-lumino@npm:^1.1.4":
-  version: 1.1.4
-  resolution: "@tupilabs/vue-lumino@npm:1.1.4"
-  dependencies:
-    "@lumino/datagrid": ^0.34.0
-    "@lumino/default-theme": ^0.20.1
-    "@lumino/widgets": ^1.30.0
-    core-js: ^3.19.2
-    vue: ^2.6.14
-  checksum: 3b95c83eddac46c0898b383140f575bbc306611b8c236149333a15fe77c7770694a356e473a0a304ef1b7fcb40e57c3677292209d2fbfb9f2f94c91e350f2db3
   languageName: node
   linkType: hard
 
@@ -2523,17 +2345,6 @@ __metadata:
     "@vue/compiler-core": 3.2.47
     "@vue/shared": 3.2.47
   checksum: 1eced735f865e6df0c2d7fa041f9f27996ff4c0d4baf5fad0f67e65e623215f4394c49bba337b78427c6e71f2cc2db12b19ec6b865b4c057c0a15ccedeb20752
-  languageName: node
-  linkType: hard
-
-"@vue/compiler-sfc@npm:2.7.14":
-  version: 2.7.14
-  resolution: "@vue/compiler-sfc@npm:2.7.14"
-  dependencies:
-    "@babel/parser": ^7.18.4
-    postcss: ^8.4.14
-    source-map: ^0.6.1
-  checksum: 25e00abaecb311f1effbf539bc3e4fdeedb39d35f9c2947b2640187a047e6a7400e693fd7da1d3a98977b9078c5bf629ca47f8b9a59dc14a080c0a1e1dd06a49
   languageName: node
   linkType: hard
 
@@ -4029,13 +3840,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:^3.19.2":
-  version: 3.28.0
-  resolution: "core-js@npm:3.28.0"
-  checksum: 3155fd0ec16d0089106b145e9595280a4ea4bde0d7ff26aa14364cd4f1c203baf6620c3025acd284f363d08b9f21104101692766ca9a36ffeee7307bdf3e1881
-  languageName: node
-  linkType: hard
-
 "core-util-is@npm:~1.0.0":
   version: 1.0.3
   resolution: "core-util-is@npm:1.0.3"
@@ -4090,13 +3894,6 @@ cors@latest:
   version: 2.6.21
   resolution: "csstype@npm:2.6.21"
   checksum: 2ce8bc832375146eccdf6115a1f8565a27015b74cce197c35103b4494955e9516b246140425ad24103864076aa3e1257ac9bab25a06c8d931dd87a6428c9dccf
-  languageName: node
-  linkType: hard
-
-"csstype@npm:^3.1.0":
-  version: 3.1.1
-  resolution: "csstype@npm:3.1.1"
-  checksum: 1f7b4f5fdd955b7444b18ebdddf3f5c699159f13e9cf8ac9027ae4a60ae226aef9bbb14a6e12ca7dba3358b007cee6354b116e720262867c398de6c955ea451d
   languageName: node
   linkType: hard
 
@@ -9903,17 +9700,6 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.14":
-  version: 8.4.21
-  resolution: "postcss@npm:8.4.21"
-  dependencies:
-    nanoid: ^3.3.4
-    picocolors: ^1.0.0
-    source-map-js: ^1.0.2
-  checksum: e39ac60ccd1542d4f9d93d894048aac0d686b3bb38e927d8386005718e6793dbbb46930f0a523fe382f1bbd843c6d980aaea791252bf5e176180e5a4336d9679
-  languageName: node
-  linkType: hard
-
 "prelude-ls@npm:^1.2.1":
   version: 1.2.1
   resolution: "prelude-ls@npm:1.2.1"
@@ -11320,7 +11106,6 @@ send@latest:
   version: 0.0.0-use.local
   resolution: "terarium@workspace:."
   dependencies:
-    "@tupilabs/vue-lumino": ^1.1.4
     "@vue/eslint-config-airbnb-with-typescript": 7.0.0
     eslint: 8.33.0
     eslint-config-prettier: 8.5.0
@@ -12024,16 +11809,6 @@ send@latest:
     "@vue/server-renderer": 3.2.47
     "@vue/shared": 3.2.47
   checksum: 3b586f61fd2cdfdd24459a946a2831c0f164056993cc005badde4fea10d53e430f1cedf1b62d52a6992b58fe656fc5fc67b32f594a2832dfe440c6db46d6f158
-  languageName: node
-  linkType: hard
-
-"vue@npm:^2.6.14":
-  version: 2.7.14
-  resolution: "vue@npm:2.7.14"
-  dependencies:
-    "@vue/compiler-sfc": 2.7.14
-    csstype: ^3.1.0
-  checksum: 8b06da67cc40870c66a30b7a6bc2874950cd4383792c371eb30497dd14fc7b41cf308b1c4517368d8f0e7ac16198c08de19236f6a79fe43f4bdbc4a1d9d4ad07
   languageName: node
   linkType: hard
 

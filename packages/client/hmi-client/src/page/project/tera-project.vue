@@ -1,7 +1,7 @@
 <template>
 	<slider-panel
 		v-model:is-open="isResourcesSliderOpen"
-		content-width="240px"
+		content-width="300px"
 		header="Resources"
 		direction="left"
 	>

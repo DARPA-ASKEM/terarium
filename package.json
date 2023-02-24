@@ -36,8 +36,5 @@
 		"lint-staged": "13.0.4",
 		"prettier": "2.7.1",
 		"typescript": "4.8.4"
-	},
-	"dependencies": {
-		"@tupilabs/vue-lumino": "^1.1.4"
 	}
 }
