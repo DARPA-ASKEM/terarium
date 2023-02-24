@@ -4,6 +4,7 @@
 
 import API from '@/api/api';
 import { Project, ProjectAssets } from '@/types/Project';
+import { logger } from '@/utils/logger';
 
 /**
  * Create a project
@@ -22,7 +23,7 @@ async function create(
 		if (status !== 201) return null;
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }
@@ -37,7 +38,7 @@ async function update(project: Project): Promise<Project | null> {
 		}
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }
@@ -53,7 +54,7 @@ async function get(projectId: string): Promise<Project | null> {
 		if (status !== 200) return null;
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }
@@ -85,7 +86,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 		if (status !== 200) return null;
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }

@@ -280,4 +280,8 @@ export default defineComponent({
 .facet-footer-more-controls > span {
 	cursor: pointer;
 }
+
+.facet-font {
+	font-family: var(--font-family);
+}
 </style>

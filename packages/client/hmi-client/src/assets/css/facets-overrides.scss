@@ -1,61 +1,61 @@
 facet-terms {
-  // Hide the rectangle that appears to the left of an item on hover
-  --facet-terms-tick-color: transparent;
+	// Hide the rectangle that appears to the left of an item on hover
+	--facet-terms-tick-color: transparent;
 
-  // Faint background that includes the label and the bar
-  --facet-terms-selected-background: var(--surface-highlight);
+	// Faint background that includes the label and the bar
+	--facet-terms-selected-background: var(--surface-highlight);
 
-  // Bar 0 is the darker, "front", bar. Bar 1 is the lighter "behind" bar.
+	// Bar 0 is the darker, "front", bar. Bar 1 is the lighter "behind" bar.
 
-  // No item in the group is selected
-  // No item in the group is being hovered
-  --facet-terms-bar-0-normal: var(--primary-color);
-  // Another item in the group is being hovered
-  --facet-terms-bar-0-normal-contrast: var(--primary-color-light);
-  // This item is being hovered
-  --facet-terms-bar-0-normal-contrast-hover: var(--primary-color);
+	// No item in the group is selected
+	// No item in the group is being hovered
+	--facet-terms-bar-0-normal: var(--primary-color);
+	// Another item in the group is being hovered
+	--facet-terms-bar-0-normal-contrast: var(--primary-color);
+	// This item is being hovered
+	--facet-terms-bar-0-normal-contrast-hover: var(--primary-color);
 
-  // This item is selected
-  // No item in the group is being hovered
-  --facet-terms-bar-0-selected: var(--primary-color);
-  // Another item in the group is being hovered
-  --facet-terms-bar-0-selected-contrast: var(--primary-color-light);
-  // This item is being hovered
-  --facet-terms-bar-0-selected-contrast-hover: var(--primary-color);
+	// This item is selected
+	// No item in the group is being hovered
+	--facet-terms-bar-0-selected: var(--primary-color);
+	// Another item in the group is being hovered
+	--facet-terms-bar-0-selected-contrast: var(--primary-color);
+	// This item is being hovered
+	--facet-terms-bar-0-selected-contrast-hover: var(--primary-color);
 
-  // Another item in the group is selected
-  // This item is hovered
-  --facet-terms-bar-0-muted-contrast-hover: var(--primary-color);
-  --facet-terms-bar-1-muted-contrast-hover: var(--primary-color);
+	// Another item in the group is selected
+	// This item is hovered
+	--facet-terms-bar-0-muted-contrast-hover: var(--primary-color);
+	--facet-terms-bar-1-muted-contrast-hover: var(--primary-color);
 }
 
 facet-bars {
-  // Hide the rectangle that appears to the left of an item on hover
-  --facet-bars-tick-color: transparent;
-  --facet-bars-0-selected: var(--primary-color);
-  --facet-bars-0-selected-contrast: var(--primary-color-light);
-  --facet-bars-0-selected-contrast-hover: var(--primary-color);
-  --facet-bars-1-unselected-contrast-hover: var(--primary-color-lighter);
-  --facet-bars-0-unselected-contrast-hover:var(--primary-color);
-  
-  :deep(.facet-bars-selection-computed) {
-    border-color: var(--primary-color);
-    background-color: var(--surface-highlight);
-  }
+	// Hide the rectangle that appears to the left of an item on hover
+	--facet-bars-tick-color: transparent;
+	--facet-bars-0-selected: var(--primary-color);
+	--facet-bars-0-selected-contrast: var(--primary-color-light);
+	--facet-bars-0-selected-contrast-hover: var(--primary-color);
+	--facet-bars-1-unselected-contrast-hover: var(--primary-color-lighter);
+	--facet-bars-0-unselected-contrast-hover: var(--primary-color);
 
-  :deep(.facet-bars-selection-handle-left) {
-    border-right-color: var(--primary-color);
-  }
+	:deep(.facet-bars-selection-computed) {
+		border-color: var(--primary-color);
+		background-color: var(--surface-highlight);
+	}
 
-  :deep(.facet-bars-selection-handle-right) {
-    border-left-color: var(--primary-color);
-  }
+	:deep(.facet-bars-selection-handle-left) {
+		border-right-color: var(--primary-color);
+	}
 
-  :deep(.facet-bars-selection-clear-button) {
-    background-color: var(--primary-color);
-  }
+	:deep(.facet-bars-selection-handle-right) {
+		border-left-color: var(--primary-color);
+	}
 
-  :deep(.facet-bars-value-background) {
-    background-color: var(--surface-highlight);
-  }
+	:deep(.facet-bars-selection-clear-button) {
+		background-color: var(--primary-color);
+	}
+
+	:deep(.facet-bars-value-background) {
+		background-color: var(--surface-highlight);
+	}
 }

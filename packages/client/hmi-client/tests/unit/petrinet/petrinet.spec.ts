@@ -1,6 +1,5 @@
 import { assert, it, test } from 'vitest';
-import { parsePetriNet2IGraph } from '@/services/model';
-import { PetriNet } from '@/utils/petri-net-validator';
+import { parsePetriNet2IGraph, PetriNet } from '@/petrinet/petrinet-service';
 
 const SIRD: PetriNet = {
 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],

@@ -107,4 +107,8 @@ const updateSelection = (event) => {
 .facet-pointer {
 	cursor: pointer;
 }
+
+.facet-font {
+	font-family: var(--font-family);
+}
 </style>
