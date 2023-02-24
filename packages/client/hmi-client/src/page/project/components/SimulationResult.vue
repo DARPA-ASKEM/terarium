@@ -7,25 +7,25 @@ import { logger } from '@/utils/logger';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
 
-import run1 from './simulation-run-data/1/output.json';
-import run2 from './simulation-run-data/2/output.json';
-import run3 from './simulation-run-data/3/output.json';
-import run4 from './simulation-run-data/4/output.json';
-import run5 from './simulation-run-data/5/output.json';
-import run6 from './simulation-run-data/6/output.json';
-import run7 from './simulation-run-data/7/output.json';
-import run8 from './simulation-run-data/8/output.json';
-import run9 from './simulation-run-data/9/output.json';
+import run1 from '../../simulation-run-data/1/output.json';
+import run2 from '../../simulation-run-data/2/output.json';
+import run3 from '../../simulation-run-data/3/output.json';
+import run4 from '../../simulation-run-data/4/output.json';
+import run5 from '../../simulation-run-data/5/output.json';
+import run6 from '../../simulation-run-data/6/output.json';
+import run7 from '../../simulation-run-data/7/output.json';
+import run8 from '../../simulation-run-data/8/output.json';
+import run9 from '../../simulation-run-data/9/output.json';
 
-import run1Description from './simulation-run-data/1/description.json';
-import run2Description from './simulation-run-data/2/description.json';
-import run3Description from './simulation-run-data/3/description.json';
-import run4Description from './simulation-run-data/4/description.json';
-import run5Description from './simulation-run-data/5/description.json';
-import run6Description from './simulation-run-data/6/description.json';
-import run7Description from './simulation-run-data/7/description.json';
-import run8Description from './simulation-run-data/8/description.json';
-import run9Description from './simulation-run-data/9/description.json';
+import run1Description from '../../simulation-run-data/1/description.json';
+import run2Description from '../../simulation-run-data/2/description.json';
+import run3Description from '../../simulation-run-data/3/description.json';
+import run4Description from '../../simulation-run-data/4/description.json';
+import run5Description from '../../simulation-run-data/5/description.json';
+import run6Description from '../../simulation-run-data/6/description.json';
+import run7Description from '../../simulation-run-data/7/description.json';
+import run8Description from '../../simulation-run-data/8/description.json';
+import run9Description from '../../simulation-run-data/9/description.json';
 
 const route = useRoute();
 

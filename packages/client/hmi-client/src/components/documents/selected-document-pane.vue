@@ -20,7 +20,7 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
-import { Project, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
@@ -37,7 +37,7 @@ const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
 
-const projectsList = ref<Project[]>([]);
+const projectsList = ref<IProject[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {

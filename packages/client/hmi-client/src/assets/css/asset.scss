@@ -2,6 +2,7 @@
 .asset {
     display: flex;
     flex-direction: column;
+    background-color: var(--surface-section);
 
     div,
     span {

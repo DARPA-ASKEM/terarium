@@ -60,12 +60,12 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import { ResourceType } from '@/types/common';
-import { Project as ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 
 const props = defineProps<{
 	active: boolean;
-	currentProjectId: ProjectType['id'] | null;
-	projects: ProjectType[] | null;
+	currentProjectId: IProject['id'] | null;
+	projects: IProject[] | null;
 	resourceType: string;
 }>();
 
@@ -272,7 +272,7 @@ i {
 }
 </style>
 <style>
-/* 
+/*
  * On it's own style, because the pop-up happend outside of this component.
  * To left align the content with the h1.
  */
