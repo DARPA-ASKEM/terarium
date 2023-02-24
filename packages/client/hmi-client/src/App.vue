@@ -29,7 +29,7 @@ import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
-import { useCurrentRoute } from './router/index'; //
+import { useCurrentRoute } from './router/index';
 import { ResourceType } from './types/common';
 
 const toast = useToastService();
