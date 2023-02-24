@@ -22,7 +22,7 @@ import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { DocumentType } from '@/types/Document';
-import { Project } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import { Dataset } from '@/types/Dataset';
 import Menu from 'primevue/menu';
@@ -43,7 +43,7 @@ const emit = defineEmits([
 
 const contextMenu = ref();
 
-const projectsList = ref<Project[]>([]);
+const projectsList = ref<IProject[]>([]);
 
 const getMenuItemsForItem = (item: ResultType) => [
 	{
