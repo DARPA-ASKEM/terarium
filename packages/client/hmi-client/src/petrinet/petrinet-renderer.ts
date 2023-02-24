@@ -93,7 +93,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				.attr('y', point.y)
 				.attr('stroke', null)
 				.attr('fill', '#000')
-				.text((d) => d.data.numEdges);
+				.text((d) => d.data?.numEdges as number);
 		});
 	}
 
