@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { ref, nextTick } from 'vue';
 import ResourcesList from '@/components/resources/resources-list.vue';
 import InputText from 'primevue/inputtext';
@@ -55,7 +55,7 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
-	project: ProjectType;
+	project: IProject;
 }>();
 
 const resources = useResourcesStore();

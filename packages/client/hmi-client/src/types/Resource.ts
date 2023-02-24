@@ -1,4 +1,4 @@
-import { ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { RouteName } from '@/router/routes';
 import { RouteParamsRaw } from 'vue-router';
 
@@ -7,5 +7,5 @@ export type Resource = {
 	params: RouteParamsRaw;
 	name: string;
 	icon: any;
-	projectAsset: ProjectType;
+	projectAsset: IProject;
 };

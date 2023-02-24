@@ -97,7 +97,7 @@
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
 import IconClose32 from '@carbon/icons-vue/es/close/16';
-import { ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
@@ -117,7 +117,7 @@ import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 
-const projects = ref<ProjectType[]>([]);
+const projects = ref<IProject[]>([]);
 // Only display projects with at least one related document
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
@@ -142,7 +142,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await API.get('/home')).data as ProjectType[];
+	projects.value = (await API.get('/home')).data as IProject[];
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
@@ -202,7 +202,7 @@ async function createNewProject() {
 	}
 }
 
-function openProject(chosenProject: ProjectType) {
+function openProject(chosenProject: IProject) {
 	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
 }
 </script>

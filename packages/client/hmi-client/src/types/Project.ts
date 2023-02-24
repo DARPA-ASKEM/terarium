@@ -30,7 +30,7 @@ export type SimpleProjectAssets = {
 	[ProjectAssetTypes.DATASETS]: (string | number)[];
 };
 
-export interface ProjectType {
+export interface IProject {
 	id: string;
 	name: string;
 	title?: string;

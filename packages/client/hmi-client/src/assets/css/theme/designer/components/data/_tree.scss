@@ -36,13 +36,6 @@
                     }
                 }
 
-                // Added for resource sidebar
-                .p-treenode-label {
-                    text-overflow: ellipsis;
-                    overflow: hidden;
-                    white-space: nowrap;
-                }
-
                 &:hover {
                     background-color: var(--surface-highlight);
                     background-color: var(--surface-hover);

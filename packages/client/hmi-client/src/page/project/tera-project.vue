@@ -25,19 +25,19 @@
 				:asset-id="assetId"
 				:previewLineLimit="5"
 				:project="resources.activeProject"
-				:is-editable="true"
+				is-editable
 			/>
 			<dataset
 				v-else-if="assetType === ProjectAssetTypes.DATASETS"
 				:asset-id="assetId"
 				:project="resources.activeProject"
-				:is-editable="true"
+				is-editable
 			/>
 			<model
 				v-else-if="assetType === ProjectAssetTypes.MODELS"
 				:asset-id="assetId"
 				:project="resources.activeProject"
-				:is-editable="true"
+				is-editable
 			/>
 			<simulation-plan
 				v-else-if="assetType === ProjectAssetTypes.PLANS"
@@ -91,13 +91,13 @@ import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 // import Chip from 'primevue/chip';
 import { RouteName } from '@/router/routes';
-import { ProjectType, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { ResourceType, Annotation } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import API from '@/api/api';
 
 const props = defineProps<{
-	project: ProjectType;
+	project: IProject;
 	resourceName?: string;
 	assetId?: string;
 	assetType?: string;

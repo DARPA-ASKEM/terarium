@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ProjectType, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { Resource } from '@/types/Resource';
 import ResourceCard from '@/components/resources/ResourceCard.vue';
@@ -8,7 +8,7 @@ import { RouteParamsRaw, useRouter } from 'vue-router';
 import { ref } from 'vue';
 
 const props = defineProps<{
-	project: ProjectType | null;
+	project: IProject | null;
 	resourceRoute?: RouteName;
 	// maybe add list size later
 }>();

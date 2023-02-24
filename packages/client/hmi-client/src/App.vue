@@ -28,7 +28,7 @@ import API from '@/api/api';
 import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { useCurrentRoute } from './router/index'; //
 import { ResourceType } from './types/common';
 
@@ -51,8 +51,8 @@ const resourceType = ref<string>(ResourceType.XDD);
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const project = shallowRef<ProjectType | null>(null);
-const projects = shallowRef<ProjectType[] | null>(null);
+const project = shallowRef<IProject | null>(null);
+const projects = shallowRef<IProject[] | null>(null);
 
 function updateResourceType(newResourceType) {
 	resourceType.value = newResourceType;

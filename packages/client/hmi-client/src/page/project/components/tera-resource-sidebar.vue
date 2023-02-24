@@ -1,6 +1,6 @@
 <template>
 	<nav>
-		<div>
+		<header>
 			<Button icon="pi pi-file-edit" class="p-button-icon-only p-button-text p-button-rounded" />
 			<Button icon="pi pi-folder" class="p-button-icon-only p-button-text p-button-rounded" />
 			<Button
@@ -13,7 +13,7 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="removeAsset"
 			/>
-		</div>
+		</header>
 		<Tree :value="resources" selectionMode="single" v-on:node-select="openAsset">
 			<template #default="slotProps">
 				{{ slotProps.node.label }}
@@ -27,7 +27,7 @@
 import { computed, ref } from 'vue';
 // import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { ProjectType, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { deleteAsset } from '@/services/project';
 import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
@@ -45,7 +45,7 @@ const resourcesStore = useResourcesStore();
 const chosenAsset = ref({ assetId: -1, assetType: ProjectAssetTypes.DOCUMENTS });
 
 defineProps<{
-	project: ProjectType | null;
+	project: IProject | null;
 }>();
 
 const resources = computed(() => {
@@ -152,5 +152,11 @@ nav {
 	padding: 0 0.5rem;
 	border-radius: 0.5rem;
 	text-transform: uppercase;
+}
+
+.p-tree:deep(.p-treenode-label) {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
 }
 </style>

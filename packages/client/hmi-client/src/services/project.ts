@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { ProjectType, ProjectAssets } from '@/types/Project';
+import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
 
 /**
@@ -13,10 +13,10 @@ import { logger } from '@/utils/logger';
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
-	name: ProjectType['name'],
-	description: ProjectType['description'] = '',
-	username: ProjectType['username'] = ''
-): Promise<ProjectType | null> {
+	name: IProject['name'],
+	description: IProject['description'] = '',
+	username: IProject['username'] = ''
+): Promise<IProject | null> {
 	try {
 		const response = await API.post(`/projects`, { name, description, username });
 		const { status, data } = response;
@@ -28,7 +28,7 @@ async function create(
 	}
 }
 
-async function update(project: ProjectType): Promise<ProjectType | null> {
+async function update(project: IProject): Promise<IProject | null> {
 	try {
 		const { id, name, description, active, username } = project;
 		const response = await API.put(`/projects/${id}`, { id, name, description, active, username });
@@ -47,7 +47,7 @@ async function update(project: ProjectType): Promise<ProjectType | null> {
  * Get a project per id
  * @return Project|null - the appropriate project, or null if none returned by API
  */
-async function get(projectId: string): Promise<ProjectType | null> {
+async function get(projectId: string): Promise<IProject | null> {
 	try {
 		const response = await API.get(`/projects/${projectId}`);
 		const { status, data } = response;
@@ -63,7 +63,7 @@ async function get(projectId: string): Promise<ProjectType | null> {
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
-async function getAll(): Promise<ProjectType[] | null> {
+async function getAll(): Promise<IProject[] | null> {
 	const response = await API.get('/projects');
 	return response?.data ?? null;
 }

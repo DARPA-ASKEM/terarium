@@ -27,7 +27,7 @@ import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
 import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
-import { ProjectType, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import * as ProjectService from '@/services/project';
@@ -48,7 +48,7 @@ const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
 
-const projectsList = ref<ProjectType[]>([]);
+const projectsList = ref<IProject[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {
