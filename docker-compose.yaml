@@ -28,6 +28,8 @@ services:
       - terarium-db-port=5432
       - data-service-host=data-service
       - data-service-port=8000
+      - model-service-host=model-service
+      - model-service-port=8888
   terarium-db:
     image: postgres:14.4-alpine
     expose:
@@ -89,6 +91,12 @@ services:
       - POSTGRES_PASSWORD=dev
       - POSTGRES_USER=dev
       - POSTGRES_DB=askem
+  model-service:
+    image: ghcr.io/darpa-askem/model-service:latest
+    expose:
+      - "8888"
+    ports:
+      - "3010:8888"
 volumes:
   terarium-db-storage:
   minio-data:
