@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Data
 @Accessors(chain = true)
@@ -17,7 +17,7 @@ public class Dataset extends ResourceType implements Serializable {
 
 	private String description;
 
-	private Instant timestamp;
+	private LocalDateTime timestamp;
 
 	private Boolean deprecated;
 
