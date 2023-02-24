@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -29,6 +30,8 @@ public class Extraction implements Serializable {
 
 	private Number xddRegistrant;
 
+	private List<String> highlight;
+
 
 	@JsonbProperty("ASKEM_CLASS")
 	public void setAskemClass(String askemClass) {
@@ -48,6 +51,11 @@ public class Extraction implements Serializable {
 	@JsonbProperty("_xdd_registrant")
 	public void setXddRegistrant(Number xddRegistrant) {
 		this.xddRegistrant = xddRegistrant;
+	}
+
+	@JsonbProperty("_highlight")
+	public void setHighlight(List<String> highlight) {
+		this.highlight = highlight;
 	}
 
 }

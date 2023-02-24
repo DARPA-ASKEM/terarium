@@ -4,6 +4,7 @@
 
 import API from '@/api/api';
 import { Dataset } from '@/types/Dataset';
+import { logger } from '@/utils/logger';
 
 /**
  * Get all datasets
@@ -11,7 +12,7 @@ import { Dataset } from '@/types/Dataset';
  */
 async function getAll(): Promise<Dataset[] | null> {
 	const response = await API.get('/datasets').catch((error) => {
-		console.error('Error: ', error);
+		logger.error(`Error: ${error}`);
 	});
 	return response?.data ?? null;
 }
@@ -22,7 +23,7 @@ async function getAll(): Promise<Dataset[] | null> {
  */
 async function getDataset(datasetId: string): Promise<Dataset | null> {
 	const response = await API.get(`/datasets/${datasetId}`).catch((error) => {
-		console.error(`Error: data-service was not able to retreive the dataset ${datasetId}`, error);
+		logger.error(`Error: data-service was not able to retreive the dataset ${datasetId} ${error}`);
 	});
 	return response?.data ?? null;
 }
@@ -54,7 +55,7 @@ async function downloadRawFile(datasetId: string): Promise<string | null> {
 	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
 	const URL = `/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`;
 	const response = await API.get(URL).catch((error) => {
-		console.error(`Error: data-service was not able to retrieve the dataset's rawfile`, error);
+		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
 	return response?.data ?? null;
 }

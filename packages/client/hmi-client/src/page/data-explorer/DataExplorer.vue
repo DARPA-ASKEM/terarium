@@ -2,7 +2,7 @@
 	<div class="data-explorer-container">
 		<div class="facets-and-results-container">
 			<slider-panel
-				content-width="15rem"
+				content-width="240px"
 				direction="left"
 				header="Facets"
 				v-model:is-open="isSliderFacetsOpen"
@@ -55,7 +55,7 @@
 			</div>
 			<preview-panel
 				class="preview-slider"
-				:content-width="`${sliderWidth.slice(0, -1)} - 3rem)`"
+				:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
 				tab-width="0"
 				direction="right"
 				v-model:preview-item="previewItem"
@@ -68,17 +68,31 @@
 				class="resources-slider"
 				:content-width="sliderWidth"
 				direction="right"
-				header="Selected resources"
+				header="Cart"
 				v-model:is-open="isSliderResourcesOpen"
 				:indicator-value="selectedSearchItems.length"
 			>
+				<template v-slot:header>
+					<selected-resources-header-pane
+						:selected-search-items="selectedSearchItems"
+						@close="isSliderResourcesOpen = false"
+						@clear-selected="clearItemSelected"
+					/>
+				</template>
+				<template v-slot:subHeader>
+					<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
+						{{ selectedSearchItems.length }} item
+					</div>
+					<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
+						{{ selectedSearchItems.length }} items
+					</div>
+				</template>
 				<template v-slot:content>
 					<selected-resources-options-pane
 						:selected-search-items="selectedSearchItems"
 						@toggle-data-item-selected="toggleDataItemSelected"
 						@find-related-content="onFindRelatedContent"
 						@find-similar-content="onFindSimilarContent"
-						@close="isSliderResourcesOpen = false"
 					/>
 				</template>
 			</slider-panel>
@@ -110,6 +124,7 @@ import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import PreviewPanel from '@/page/data-explorer/components/preview-panel.vue';
 import SelectedResourcesOptionsPane from '@/page/data-explorer/components/selected-resources-options-pane.vue';
+import selectedResourcesHeaderPane from '@/page/data-explorer/components/selected-resources-header-pane.vue';
 import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
 import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
 
@@ -156,7 +171,9 @@ const xddDataset = computed(() =>
 	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
 );
 
-const sliderWidth = computed(() => (isSliderFacetsOpen.value ? 'calc(50% - 7.5rem)' : 'calc(50%)'));
+const sliderWidth = computed(() =>
+	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
+);
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -459,6 +476,9 @@ const updateResultType = async (newResourceType: ResourceType) => {
 	}
 };
 
+const clearItemSelected = () => {
+	selectedSearchItems.value = [];
+};
 // const addPreviewItemToCart = () => {
 // 	if (previewItem.value) {
 // 		toggleDataItemSelected( {item: previewItem.value } );
@@ -603,5 +623,11 @@ onUnmounted(() => {
 
 .slider {
 	background: var(--surface-card);
+}
+.sub-header-title {
+	font-size: var(--font-body-small);
+	text-align: center;
+	color: var(--text-color-subdued);
+	display: flex;
 }
 </style>

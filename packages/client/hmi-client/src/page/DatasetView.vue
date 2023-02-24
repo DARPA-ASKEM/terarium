@@ -9,9 +9,7 @@ import { RouteName } from '@/router/routes';
 import { useTabStore } from '@/stores/tabs';
 import { isEmpty } from 'lodash';
 import ResourcesList from '@/components/resources/resources-list.vue';
-import { useLogger } from 'vue-logger-plugin';
-
-const logger = useLogger();
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	assetId?: string;
@@ -61,7 +59,8 @@ watch(newDatasetId, (id) => {
 		const newTab = {
 			name: getDocumentName(id),
 			props: {
-				assetId: id
+				assetId: id,
+				isEditable: true
 			}
 		} as Tab;
 		// Would have loved to use a Set here instead of an array, but equality does not work as expected for objects

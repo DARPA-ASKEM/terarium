@@ -18,9 +18,7 @@ import {
 import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
-import { useLogger } from 'vue-logger-plugin';
-
-const logger = useLogger();
+import { logger } from '@/utils/logger';
 
 // FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server

@@ -1,20 +1,5 @@
 <template>
 	<div class="breakdown-pane-container">
-		<div class="selected-title">{{ selectedSearchItems.length }} selected</div>
-		<div class="add-selected-buttons">
-			<Button
-				@click="addAssetsToProject()"
-				:class="{ 'invalid-project': !validProject || selectedSearchItems.length === 0 }"
-				label="Add to current project"
-			/>
-			<dropdown-button
-				v-if="selectedSearchItems.length > 0"
-				:inner-button-label="'Add to another project'"
-				:is-dropdown-left-aligned="false"
-				:items="projectsNames"
-				@item-selected="addAssetsToProject"
-			/>
-		</div>
 		<ul>
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
 				<asset-card
@@ -32,25 +17,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, PropType, ref } from 'vue';
+import { onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
-import { DocumentAsset, DocumentType } from '@/types/Document';
-import useResourcesStore from '@/stores/resources';
-import { Project, ProjectAssetTypes } from '@/types/Project';
-import DropdownButton from '@/components/widgets/dropdown-button.vue';
+import { DocumentType } from '@/types/Document';
+import { Project } from '@/types/Project';
 import * as ProjectService from '@/services/project';
-import { addDocuments } from '@/services/external';
 import { Dataset } from '@/types/Dataset';
-import { useRouter } from 'vue-router';
-import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 
-const router = useRouter();
-
-const props = defineProps({
+defineProps({
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
 		required: true
@@ -58,18 +36,14 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-	'close',
 	'toggle-data-item-selected',
 	'find-related-content',
 	'find-similar-content'
 ]);
-const resources = useResourcesStore();
 
 const contextMenu = ref();
-const validProject = computed(() => resources.activeProject);
 
 const projectsList = ref<Project[]>([]);
-const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const getMenuItemsForItem = (item: ResultType) => [
 	{
@@ -99,74 +73,6 @@ const getType = (item: ResultType) => {
 	return ResourceType.ALL;
 };
 
-const addResourcesToProject = async (projectId: string) => {
-	// send selected items to the store
-	props.selectedSearchItems.forEach(async (selectedItem) => {
-		if (isDocument(selectedItem)) {
-			const body: DocumentAsset = {
-				xdd_uri: (selectedItem as DocumentType).gddId,
-				title: (selectedItem as DocumentType).title
-			};
-
-			// FIXME: handle cases where assets is already added to the project
-
-			// first, insert into the proper table/collection
-			const res = await addDocuments(body);
-			if (res) {
-				const documentId = res.id;
-
-				// then, link and store in the project assets
-				const assetsType = ProjectAssetTypes.DOCUMENTS;
-				await ProjectService.addAsset(projectId, assetsType, documentId);
-
-				// update local copy of project assets
-				validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
-				resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
-			}
-		}
-		if (isModel(selectedItem)) {
-			// FIXME: handle cases where assets is already added to the project
-			const modelId = selectedItem.id;
-			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.MODELS;
-			await ProjectService.addAsset(projectId, assetsType, modelId);
-
-			// update local copy of project assets
-			validProject.value?.assets.models.push(modelId);
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
-		}
-		if (isDataset(selectedItem)) {
-			// FIXME: handle cases where assets is already added to the project
-			const datasetId = selectedItem.id;
-			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.DATASETS;
-			await ProjectService.addAsset(projectId, assetsType, datasetId);
-
-			// update local copy of project assets
-			validProject.value?.assets.datasets.push(datasetId);
-			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
-		}
-	});
-};
-
-const addAssetsToProject = async (projectName?: string) => {
-	if (props.selectedSearchItems.length === 0) return;
-
-	let projectId = '';
-	if (projectName !== undefined && typeof projectName === 'string') {
-		const project = projectsList.value.find((p) => p.name === projectName);
-		projectId = project?.id as string;
-	} else {
-		if (!validProject.value) return;
-		projectId = validProject.value.id;
-	}
-
-	addResourcesToProject(projectId);
-
-	emit('close');
-	router.push(`/projects/${projectId}`);
-};
-
 onMounted(async () => {
 	const all = await ProjectService.getAll();
 	if (all !== null) {
@@ -183,14 +89,6 @@ const toggleContextMenu = (event, idx: number) => {
 .invalid-project {
 	background-color: gray;
 	cursor: not-allowed;
-}
-
-.selected-title {
-	margin-bottom: 5px;
-	font-size: larger;
-	text-align: center;
-	font-weight: bold;
-	color: var(--primary-color);
 }
 
 .add-selected-buttons {

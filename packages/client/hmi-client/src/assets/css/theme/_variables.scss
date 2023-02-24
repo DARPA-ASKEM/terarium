@@ -489,7 +489,7 @@ $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 1rem !default;
 $tableHeaderCellBg: #ffffff !default;
-$tableHeaderCellTextColor: $textColor !default;
+$tableHeaderCellTextColor: var(--text-color-subdued) !default;
 $tableHeaderCellFontWeight: 500 !default;
 $tableHeaderCellBorder: 1px solid #e4e4e4 !default;
 $tableHeaderCellBorderWidth: 0 0 1px 0 !default;
@@ -903,5 +903,4 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--focus-ring: #{$focusShadow};
 	--maskbg: #{$maskBg};
 	color-scheme: light;
-	--primary-color:#{$primaryColor};
 }

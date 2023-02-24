@@ -3,6 +3,9 @@ package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
+
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocument;
@@ -46,6 +49,9 @@ public class HomeResource {
 	DocumentProxy documentProxy;
 
 	@GET
+	@APIResponses({
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving projects"),
+		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no projects")})
 	/*
 	 * 1) Get all projects
 	 * 2) get all assets for each project
@@ -59,12 +65,11 @@ public class HomeResource {
 		} catch (RuntimeException e) {
 			log.error("Unable to get projects", e);
 			return Response
-				.status(Response.Status.NO_CONTENT)
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
 				.build();
 
 		}
-
 		//Get project's related documents and add them to the project.
 		//Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
 		//TODO: Make this smarter than grabbing first publication and then its related
@@ -95,12 +100,18 @@ public class HomeResource {
 				project.setRelatedDocuments(relatedDocuments);
 			}
 		}
+		if (allProjects.isEmpty()) {
+			return Response
+				.noContent()
+				.build();
+		} else {
+			return Response
+				.status(Response.Status.OK)
+				.entity(allProjects)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
 
-		return Response
-			.status(Response.Status.OK)
-			.entity(allProjects)
-			.type(MediaType.APPLICATION_JSON)
-			.build();
 	}
 
 }
