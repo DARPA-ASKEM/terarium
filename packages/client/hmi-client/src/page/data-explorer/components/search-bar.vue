@@ -29,7 +29,28 @@
 			</span>
 			<!-- <i class="pi pi-history" title="Search history" /> -->
 			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
+			<Button
+				class="p-button-secondary"
+				icon="pi pi-file"
+				@click="isSearchByExampleVisible = !isSearchByExampleVisible"
+			></Button>
 		</div>
+		<section v-if="isSearchByExampleVisible" class="search-by-example">
+			<header>
+				<h4>Search by example</h4>
+				<Button
+					class="p-button-rounded"
+					icon="pi pi-times"
+					@click="isSearchByExampleVisible = !isSearchByExampleVisible"
+				></Button>
+			</header>
+			<section class="search-drag-drop-area">
+				<section>
+					<i class="pi pi-file" style="font-size: 3rem" />
+					Drag a paper, model, or dataset here or upload a file
+				</section>
+			</section>
+		</section>
 	</section>
 </template>
 
@@ -42,6 +63,7 @@ import { getRelatedTerms, getAutocomplete } from '@/services/data';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/EventType';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -56,6 +78,8 @@ const resources = useResourcesStore();
 const query = ref<string>('');
 const searchBarRef = ref();
 const autocompleteMenuItems = ref<string[]>([]);
+
+const isSearchByExampleVisible = ref(false);
 
 function clearQuery() {
 	query.value = '';
@@ -149,6 +173,10 @@ watch(
 	border-bottom-color: transparent;
 }
 
+*:deep(.p-autocomplete-panel) {
+	width: 686px;
+}
+
 .p-input-icon-left {
 	margin-right: 1rem;
 	flex: 1;
@@ -182,6 +210,55 @@ i {
 
 .clear-search.hidden {
 	visibility: hidden;
+}
+
+.search-by-example {
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	top: 4rem;
+	width: 70rem;
+	height: 20rem;
+	background-color: var(--surface-section);
+	border-radius: 2rem;
+	border: 1px solid var(--surface-border);
+	z-index: 2;
+}
+
+.search-by-example header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.search-by-example header * {
+	margin: 2rem 2rem 0rem 2rem;
+}
+
+.search-by-example header .p-button {
+	color: var(--text-color-secondary);
+	background-color: transparent;
+}
+
+.search-by-example header .p-button:hover {
+	background-color: var(--surface-hover);
+}
+
+.search-drag-drop-area {
+	height: 100%;
+	padding: 2rem;
+}
+
+.search-drag-drop-area section {
+	border: 1px dashed var(--surface-border);
+	border-radius: 1rem;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+h4 {
+	font-weight: 600;
 }
 
 /* 
