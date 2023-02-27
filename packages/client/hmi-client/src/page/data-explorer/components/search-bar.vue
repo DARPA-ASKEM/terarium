@@ -45,9 +45,24 @@
 				></Button>
 			</header>
 			<section class="search-drag-drop-area">
-				<section>
-					<i class="pi pi-file" style="font-size: 3rem" />
-					Drag a paper, model, or dataset here or upload a file
+				<section
+					@dragenter="isDraggedOver = true"
+					@dragleave="isDraggedOver = false"
+					@drop="onDrop()"
+					@dragover.prevent
+					@dragenter.prevent
+					:style="dragOverStyle"
+				>
+					<asset-card
+						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
+						:asset="searchByExampleSelectedAsset"
+						:resourceType="searchByExampleSelectedResourceType"
+					>
+					</asset-card>
+					<span v-else>
+						<i class="pi pi-file" style="font-size: 3rem" />
+						Drag a paper, model, or dataset here or upload a file</span
+					>
 				</section>
 			</section>
 		</section>
@@ -55,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import AutoComplete from 'primevue/autocomplete';
 import { RouteName } from '@/router/routes';
@@ -64,6 +79,8 @@ import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/EventType';
 import Button from 'primevue/button';
+import { useDragEvent } from '@/utils/drag-drop';
+import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 
 const props = defineProps<{
 	showSuggestions: boolean;
@@ -80,6 +97,9 @@ const searchBarRef = ref();
 const autocompleteMenuItems = ref<string[]>([]);
 
 const isSearchByExampleVisible = ref(false);
+const isDraggedOver = ref(false);
+const searchByExampleSelectedAsset = ref();
+const searchByExampleSelectedResourceType = ref();
 
 function clearQuery() {
 	query.value = '';
@@ -115,6 +135,29 @@ const fillAutocomplete = async () => {
 		searchBarRef.value?.$el.focus();
 	});
 };
+
+const dragOverStyle = computed(() => {
+	if (isDraggedOver.value) {
+		if (searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value) {
+			return {
+				border: `1px dashed var(--primary-color)`,
+				'background-color': 'var(--surface-secondary)'
+			};
+		}
+		return {
+			border: `1px solid var(--text-color-subdued)`,
+			'background-color': 'var(--surface-hover)'
+		};
+	}
+	return {};
+});
+
+const { getDragData } = useDragEvent();
+
+function onDrop() {
+	searchByExampleSelectedAsset.value = getDragData('asset');
+	searchByExampleSelectedResourceType.value = getDragData('resourceType');
+}
 
 onMounted(() => {
 	const { q } = route.query;
@@ -245,7 +288,7 @@ i {
 
 .search-drag-drop-area {
 	height: 100%;
-	padding: 2rem;
+	padding: 1rem 2rem 2rem 2rem;
 }
 
 .search-drag-drop-area section {
@@ -255,6 +298,7 @@ i {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	padding: 1rem;
 }
 
 h4 {
