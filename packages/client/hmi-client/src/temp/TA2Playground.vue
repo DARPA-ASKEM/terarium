@@ -672,7 +672,7 @@ export default defineComponent({
 				console.log(outputModel);
 				this.createModel(outputModel, true);
 			} catch (e: any) {
-				logger.error(e.message);
+				console.error(e.message);
 			}
 		},
 		// Used to create sample models for stratifying tests
