@@ -12,7 +12,7 @@ services:
     volumes:
       - ./packages/client/hmi-client/src:/hmi-client/src
     ports:
-      - 8080:8080
+      - 8078:8080
   hmi-server:
     build:
       context: '.'
@@ -31,7 +31,7 @@ services:
       - model-service-host=model-service
       - model-service-port=8888
   terarium-db:
-    image: postgres:14.4-alpine
+    image: postgres:15.1
     expose:
       - "5432"
     environment:
@@ -51,6 +51,7 @@ services:
       SQL_USER: dev
       SQL_PASSWORD: dev
       NEO4J_ENABLED:
+      NEO4J_driver: neo4j://neo4j:7687
       AWS_ACCESS_KEY_ID: miniouser
       AWS_SECRET_ACCESS_KEY: miniopass
     depends_on:
@@ -72,7 +73,7 @@ services:
     volumes:
       - minio-data:/data
   neo4j:
-    image: ghcr.io/darpa-askem/neo4j:latest
+    image: ghcr.io/darpa-askem/data-service-graphdb:5.3.0.3
     expose:
       - 7474
       - 7687
@@ -81,6 +82,8 @@ services:
       - apoc.import.file.enabled=true
       - NEO4J_AUTH=neo4j/password
       - NEO4J_dbms_memory_pagecache_size=512M
+      - PG_HOST=data-service-dev-db
+      - PG_PORT=5432
     depends_on:
       - data-service-dev-db
   data-service-dev-db:
