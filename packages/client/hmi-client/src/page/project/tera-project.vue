@@ -84,7 +84,7 @@ import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
-import SimulationRun from '@/page/project/components/SimulationResult.vue';
+import SimulationRun from '@/temp/SimulationResult.vue';
 import CodeComponent from '@/page/project/components/CodeView.vue';
 // import TabMenu from 'primevue/tabmenu';
 import Textarea from 'primevue/textarea';

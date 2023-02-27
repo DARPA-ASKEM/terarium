@@ -21,5 +21,8 @@ module.exports = {
 		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 		'no-plusplus': 'off',
 		"import/prefer-default-export": "off",
-	}
+	},
+	"ignorePatterns": [
+		"**/src/temp/*"
+	]
 };

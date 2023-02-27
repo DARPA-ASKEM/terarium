@@ -1,14 +1,16 @@
 import { computed } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '@/page/Home.vue';
-import ResponsivePlayground from '@/page/ResponsivePlayground.vue';
-import TA2Playground from '@/page/TA2Playground.vue';
-import TheiaView from '@/page/theia.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
-import ModelEditorView from '@/page/ModelEditor.vue';
-import ModelRunnerView from '@/page/ModelRunner.vue';
 import ProjectView from '@/page/project/tera-project.vue';
+
+// These are test/experiment pages
+import ModelEditorView from '@/temp/ModelEditor.vue';
+import ModelRunnerView from '@/temp/ModelRunner.vue';
+import TA2Playground from '@/temp/TA2Playground.vue';
+import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
+import TheiaView from '@/temp/theia.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -16,6 +18,7 @@ export enum RoutePath {
 	Project = '/projects/:projectId/:assetType?/:resourceName?/:assetId?',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
+
 	// Playground and experiments, these components are testing-only
 	Theia = '/theia',
 	Ta2Playground = '/ta2-playground',
