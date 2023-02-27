@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +17,9 @@ public class Model extends ResourceType implements Serializable {
 
 	private String description;
 
-	private ModelFramework framework;
+	private String framework;
 
-	private Instant timestamp;
+	private LocalDateTime timestamp;
 
 	private ModelContent content;
 
