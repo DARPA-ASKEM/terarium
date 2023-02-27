@@ -93,16 +93,16 @@ export const PAGES = 'pages'; // Document' page numbers within the issue
 export const YEAR = 'year'; // Year of document
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
-	[TYPE]: 'Document Type',
-	[TITLE]: 'Article Title',
-	[JOURNAL]: 'Journal Name',
-	[VOL]: 'Journal Volume',
-	[NUMBER]: 'Journal Issue Number',
+	[TYPE]: 'Document type',
+	[TITLE]: 'Article title',
+	[JOURNAL]: 'Journal name',
+	[VOL]: 'Journal bolume',
+	[NUMBER]: 'Journal issue number',
 	[AUTHORS]: 'Authors',
 	[PUBLISHER]: 'Publisher',
-	[DOCUMENT_NAME]: 'Document Name',
-	[PAGES]: 'Number of Pages',
-	[YEAR]: 'Publication Year'
+	[DOCUMENT_NAME]: 'Document name',
+	[PAGES]: 'Number of pages',
+	[YEAR]: 'Publication year'
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
