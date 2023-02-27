@@ -1,6 +1,12 @@
 <script lang="ts">
 import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
-import { parsePetriNet2IGraph, petriNetValidator, PetriNet } from '@/petrinet/petrinet-service';
+import {
+	parsePetriNet2IGraph,
+	petriNetValidator,
+	PetriNet,
+	NodeData,
+	EdgeData
+} from '@/petrinet/petrinet-service';
 import * as d3 from 'd3';
 import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
@@ -9,12 +15,6 @@ import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/g
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 
-interface NodeData {
-	type: string;
-}
-interface EdgeData {
-	val: number;
-}
 enum NodeType {
 	Species = 'S',
 	Transition = 'T'
@@ -341,30 +341,48 @@ export default defineComponent({
 				data: { type: 'transition' }
 			});
 
-			g.edges.push({ id: '1', source: 'wolves', target: 'death', points: [], data: { val: 1 } });
+			g.edges.push({
+				id: '1',
+				source: 'wolves',
+				target: 'death',
+				points: [],
+				data: { numEdges: 1 }
+			});
 			g.edges.push({
 				id: '2',
 				source: 'predation',
 				target: 'wolves',
 				points: [],
-				data: { val: 1 }
+				data: { numEdges: 1 }
 			});
 			g.edges.push({
 				id: '3',
 				source: 'wolves',
 				target: 'predation',
 				points: [],
-				data: { val: 1 }
+				data: { numEdges: 1 }
 			});
 			g.edges.push({
 				id: '4',
 				source: 'rabbits',
 				target: 'predation',
 				points: [],
-				data: { val: 1 }
+				data: { numEdges: 1 }
 			});
-			g.edges.push({ id: '5', source: 'rabbits', target: 'birth', points: [], data: { val: 1 } });
-			g.edges.push({ id: '6', source: 'birth', target: 'rabbits', points: [], data: { val: 1 } });
+			g.edges.push({
+				id: '5',
+				source: 'rabbits',
+				target: 'birth',
+				points: [],
+				data: { numEdges: 1 }
+			});
+			g.edges.push({
+				id: '6',
+				source: 'birth',
+				target: 'rabbits',
+				points: [],
+				data: { numEdges: 1 }
+			});
 
 			g = runDagreLayout(_.cloneDeep(g));
 
@@ -419,7 +437,7 @@ export default defineComponent({
 						y: target.datum().y + target.datum().height * 0.5
 					}
 				],
-				data: { val: 1 }
+				data: { numEdges: 1 }
 			});
 
 			API.post(`model-service/models/${modelId}`, {
