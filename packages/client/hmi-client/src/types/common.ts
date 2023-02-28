@@ -52,7 +52,7 @@ export type FullSearchResults = {
 export type SearchByExampleOptions = {
 	similarContent: boolean;
 	forwardCitation: boolean;
-	bakcwardCitation: boolean;
+	backwardCitation: boolean;
 	relatedContent: boolean;
 };
 

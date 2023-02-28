@@ -1,5 +1,5 @@
 <template>
-	<div class="asset-card" draggable @dragstart="startDrag(asset, resourceType)">
+	<div class="asset-card" draggable="true" @dragstart="startDrag(asset, resourceType)">
 		<main>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}

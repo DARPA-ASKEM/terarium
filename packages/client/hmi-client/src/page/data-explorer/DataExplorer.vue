@@ -127,6 +127,7 @@ import SelectedResourcesOptionsPane from '@/page/data-explorer/components/select
 import selectedResourcesHeaderPane from '@/page/data-explorer/components/selected-resources-header-pane.vue';
 import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
 import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
+import { useSearchByExampleOptions } from './search-by-example';
 
 // FIXME: page count is not taken into consideration
 const emit = defineEmits(['resource-type-changed']);
@@ -135,12 +136,7 @@ const route = useRoute();
 const queryStore = useQueryStore();
 const resources = useResourcesStore();
 
-const searchByExampleOptions = ref<SearchByExampleOptions>({
-	similarContent: false,
-	forwardCitation: false,
-	bakcwardCitation: false,
-	relatedContent: false
-});
+const { searchByExampleOptions } = useSearchByExampleOptions();
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
@@ -401,7 +397,7 @@ const onFindRelatedContent = (item: ResultType) => {
 	const searchOptions: SearchByExampleOptions = {
 		similarContent: false,
 		forwardCitation: false,
-		bakcwardCitation: false,
+		backwardCitation: false,
 		relatedContent: true
 	};
 	searchByExampleOptions.value = searchOptions;
@@ -415,7 +411,7 @@ const onFindSimilarContent = (item: ResultType) => {
 	const searchOptions: SearchByExampleOptions = {
 		similarContent: true,
 		forwardCitation: false,
-		bakcwardCitation: false,
+		backwardCitation: false,
 		relatedContent: false
 	};
 	searchByExampleOptions.value = searchOptions;
@@ -624,6 +620,7 @@ onUnmounted(() => {
 .slider {
 	background: var(--surface-card);
 }
+
 .sub-header-title {
 	font-size: var(--font-body-small);
 	text-align: center;

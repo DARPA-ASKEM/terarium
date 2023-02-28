@@ -65,6 +65,33 @@
 					>
 				</section>
 			</section>
+			<footer v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType">
+				<div class="field-checkbox">
+					<Checkbox name="similarContent" binary v-model="searchByExampleOptions.similarContent" />
+					<label for="similarContent">Similar Content</label>
+				</div>
+				<div class="field-checkbox">
+					<Checkbox
+						name="forwardCitation"
+						binary
+						v-model="searchByExampleOptions.forwardCitation"
+					/>
+					<label for="forwardCitation">Forward Citation</label>
+				</div>
+				<div class="field-checkbox">
+					<Checkbox
+						name="backwardCitation"
+						binary
+						v-model="searchByExampleOptions.backwardCitation"
+					/>
+					<label for="forwardCitation">Backward Citation</label>
+				</div>
+				<div class="field-checkbox">
+					<Checkbox name="relatedContent" binary v-model="searchByExampleOptions.relatedContent" />
+					<label for="relatedContent">Models and Datasets</label>
+				</div>
+				<Button label="SEARCH" @click="initiateSearchByExample"></Button>
+			</footer>
 		</section>
 	</section>
 </template>
@@ -81,12 +108,14 @@ import { EventType } from '@/types/EventType';
 import Button from 'primevue/button';
 import { useDragEvent } from '@/utils/drag-drop';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';
+import Checkbox from 'primevue/checkbox';
+import { useSearchByExampleOptions } from '../search-by-example';
 
 const props = defineProps<{
 	showSuggestions: boolean;
 }>();
 
-const emit = defineEmits(['query-changed', 'toggle-search-by-example']);
+const emit = defineEmits(['query-changed', 'do-search-by-example']);
 
 const route = useRoute();
 const router = useRouter();
@@ -100,6 +129,7 @@ const isSearchByExampleVisible = ref(false);
 const isDraggedOver = ref(false);
 const searchByExampleSelectedAsset = ref();
 const searchByExampleSelectedResourceType = ref();
+const { searchByExampleOptions } = useSearchByExampleOptions();
 
 function clearQuery() {
 	query.value = '';
@@ -111,6 +141,10 @@ const initiateSearch = () => {
 	router.push({ name: RouteName.DataExplorerRoute, query: { q: query.value } });
 	EventService.create(EventType.Search, resources.activeProject?.id, query.value);
 };
+
+function initiateSearchByExample() {
+	emit('do-search-by-example', searchByExampleSelectedAsset, searchByExampleOptions);
+}
 
 function addToQuery(term: string) {
 	query.value = query.value ? query.value.trim().concat(' ').concat(term).trim() : term;
@@ -138,17 +172,18 @@ const fillAutocomplete = async () => {
 
 const dragOverStyle = computed(() => {
 	if (isDraggedOver.value) {
-		if (searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value) {
-			return {
-				border: `1px dashed var(--primary-color)`,
-				'background-color': 'var(--surface-secondary)'
-			};
-		}
 		return {
 			border: `1px solid var(--text-color-subdued)`,
 			'background-color': 'var(--surface-hover)'
 		};
 	}
+	if (searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value) {
+		return {
+			border: `1px dashed var(--primary-color)`,
+			'background-color': 'var(--surface-secondary)'
+		};
+	}
+
 	return {};
 });
 
@@ -157,6 +192,7 @@ const { getDragData } = useDragEvent();
 function onDrop() {
 	searchByExampleSelectedAsset.value = getDragData('asset');
 	searchByExampleSelectedResourceType.value = getDragData('resourceType');
+	isDraggedOver.value = false;
 }
 
 onMounted(() => {
@@ -261,11 +297,13 @@ i {
 	position: absolute;
 	top: 4rem;
 	width: 70rem;
-	height: 20rem;
+	min-height: 16rem;
 	background-color: var(--surface-section);
 	border-radius: 2rem;
 	border: 1px solid var(--surface-border);
 	z-index: 2;
+	row-gap: 1rem;
+	padding: 0 1.5rem 2rem 1.5rem;
 }
 
 .search-by-example header {
@@ -274,7 +312,7 @@ i {
 }
 
 .search-by-example header * {
-	margin: 2rem 2rem 0rem 2rem;
+	margin-top: 1.5rem;
 }
 
 .search-by-example header .p-button {
@@ -288,17 +326,22 @@ i {
 
 .search-drag-drop-area {
 	height: 100%;
-	padding: 1rem 2rem 2rem 2rem;
+	/* margin: 0 2rem 0 2rem; */
 }
 
 .search-drag-drop-area section {
 	border: 1px dashed var(--surface-border);
 	border-radius: 1rem;
-	height: 100%;
+	min-height: 9rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 1rem;
+}
+
+.search-by-example footer {
+	display: flex;
+	justify-content: space-between;
 }
 
 h4 {
