@@ -91,7 +91,7 @@ svg {
 </style>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted, computed } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import Modal from '@/components/Modal.vue';
 import InputText from 'primevue/inputtext';
 
@@ -156,7 +156,7 @@ function clickBackground() {
 async function createNode() {
 	modalVisible.value = true;
 	await nextTick();
-	input.value?.$el.focus();
+	// input.value?.$el.focus();
 }
 
 function insertNode() {
