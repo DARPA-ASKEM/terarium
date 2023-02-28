@@ -11,8 +11,8 @@ import ModelRunnerView from '@/temp/ModelRunner.vue';
 import TA2Playground from '@/temp/TA2Playground.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
+import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
 import { RouteName } from './routes';
-import WorkflowPlayground from '@/page/workflow-playground/WorkflowPlayground.vue'
 
 export enum RoutePath {
 	Home = '/',
