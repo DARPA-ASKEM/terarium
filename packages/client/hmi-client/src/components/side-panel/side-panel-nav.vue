@@ -16,7 +16,7 @@
 					:src="getImgUrl(tab.imgSrc)"
 					alt=""
 				/>
-				<component :is="tab.icon" />
+				<component :is="toRaw(tab.icon)" />
 				<span v-if="tab.badgeCount !== undefined && tab.badgeCount > 0" class="counter-badge">
 					{{ tab.badgeCount }}
 				</span>
@@ -25,41 +25,38 @@
 	</ul>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed, PropType, toRaw } from 'vue';
 import { SidePanelTab } from '@/types/common';
 
-export default defineComponent({
-	name: 'SidePanelNav',
-	props: {
-		tabs: {
-			type: Array as PropType<SidePanelTab[]>,
-			default: () => []
-		},
-		currentTabName: {
-			type: String,
-			default: () => ''
-		}
+const props = defineProps({
+	tabs: {
+		type: Array as PropType<SidePanelTab[]>,
+		default: () => []
 	},
-	emits: ['set-active'],
-	computed: {
-		allTabsAreClosed(): boolean {
-			return this.tabs.find((tab) => tab.name === this.currentTabName) === undefined;
-		}
-	},
-	methods: {
-		toggleActive(tabName: string) {
-			// If the tab is currently selected, pass '' to signify it should be
-			//  unselected. Otherwise, pass the tab's name to select it
-			this.$emit('set-active', tabName === this.currentTabName ? '' : tabName);
-		},
-		getImgUrl(imgSrc: string) {
-			// @ts-ignore: Unreachable code error
-			const assetFolder = require.context('@/assets/');
-			return assetFolder(`./${imgSrc}`);
-		}
+	currentTabName: {
+		type: String,
+		default: () => ''
 	}
 });
+
+const emit = defineEmits(['set-active']);
+
+const allTabsAreClosed = computed(
+	() => props.tabs.find((tab) => tab.name === props.currentTabName) === undefined
+);
+
+const toggleActive = (tabName: string) => {
+	// If the tab is currently selected, pass '' to signify it should be
+	//  unselected. Otherwise, pass the tab's name to select it
+	emit('set-active', tabName === props.currentTabName ? '' : tabName);
+};
+
+const getImgUrl = (imgSrc: string) => {
+	// @ts-ignore: Unreachable code error
+	const assetFolder = require.context('@/assets/');
+	return assetFolder(`./${imgSrc}`);
+};
 </script>
 
 <style scoped>
@@ -80,7 +77,7 @@ li {
 	border-bottom-right-radius: 3px;
 	color: rgba(0, 0, 0, 0.61);
 	margin-bottom: 5px;
-	background: var(--background-light-1-faded);
+	background: var(--gray-0);
 	transform: translateX(-25%);
 	transition: transform 0.1s ease;
 }
@@ -96,7 +93,7 @@ li::before {
 	z-index: -1;
 	/* // Overlap the tab slightly to cover tiny gaps during animation */
 	right: calc(100% - 1px);
-	background: var(--background-light-1);
+	background: var(--gray-0);
 }
 
 li button {
@@ -111,7 +108,6 @@ li button {
 li button .counter-badge {
 	display: inline-block;
 	padding: 3px 7px;
-	font-size: var(--font-size-small);
 	font-weight: bold;
 	color: white;
 	line-height: 1;
@@ -134,14 +130,14 @@ li img {
 }
 
 li:not(.active):hover {
-	background-color: var(--background-light-1);
+	background-color: var(--gray-0);
 	color: #000;
 }
 
 li.active {
 	transform: translateX(0);
-	background-color: var(--background-light-1);
-	color: var(--un-color-accent-dark);
+	background-color: var(--gray-0);
+	color: var(--primary-color-dark);
 }
 
 li:hover {

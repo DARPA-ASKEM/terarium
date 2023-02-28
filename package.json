@@ -9,8 +9,10 @@
 		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
 		"dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
 		"serve": "yarn workspace hmi-client run build",
-		"lint": "eslint . --ext .ts,.vue --fix",
+		"lint": "eslint . --ext .ts,.vue --fix --cache",
 		"lint:ci": "eslint . --ext .ts,.vue",
+		"lint:clear-cache": "rm .eslintcache",
+		"typecheck": "yarn workspaces foreach --parallel --interlaced --verbose --topological run typecheck",
 		"test": "yarn workspaces foreach --parallel --verbose run test:ci",
 		"test:e2e": "yarn workspaces foreach --parallel --verbose run test:e2e",
 		"test:ct": "yarn workspaces foreach --parallel --verbose run test:ct",
@@ -27,11 +29,11 @@
 	},
 	"devDependencies": {
 		"@vue/eslint-config-airbnb-with-typescript": "7.0.0",
-		"eslint": "8.27.0",
+		"eslint": "8.33.0",
 		"eslint-config-prettier": "8.5.0",
 		"eslint-plugin-vue": "9.7.0",
-		"husky": "8.0.1",
-		"lint-staged": "13.0.3",
+		"husky": "8.0.3",
+		"lint-staged": "13.0.4",
 		"prettier": "2.7.1",
 		"typescript": "4.8.4"
 	}

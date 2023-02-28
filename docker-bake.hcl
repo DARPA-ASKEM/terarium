@@ -29,6 +29,11 @@ group "prod" {
   targets = ["hmi-client", "hmi-server", "hmi-server-native"]
 }
 
+# Simplified build without the `native` version for quicker turnaround staging deployments
+group "staging" {
+  targets = ["hmi-client", "hmi-server"]
+}
+
 group "default" {
   targets = ["hmi-client-base", "hmi-server-base"]
 }

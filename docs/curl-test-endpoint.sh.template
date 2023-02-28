@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Variables
+
+CLIENT_ID=
+CLIENT_SECRET=
+USERNAME=
+PASSWORD=
+ACCESS_TOKEN_URL=
+
+# Ensure the script errors and stops if a variable is not set
+set -e
+set -u
+
+# Functions
+checkParameters() {
+    while [[ $# -gt 0 ]]; do
+        case ${1} in
+            --client-id)
+                CLIENT_ID="$2"
+                shift
+                ;;
+            --client-secret)
+                CLIENT_SECRET="$2"
+                shift
+                ;;
+            --username)
+                USERNAME="$2"
+                shift
+                ;;
+            --password)
+                PASSWORD="$2"
+                shift
+                ;;
+            --access-token-url)
+                ACCESS_TOKEN_URL="$2"
+                shift
+                ;;
+            -d|--debug)
+                DEBUG="-v"
+                ;;
+            -h|--help)
+                help
+                ;;
+            *)
+                URL="$1"
+                ;;
+        esac
+        shift
+    done
+}
+
+help() {
+    echo "
+$0
+
+  Command:
+    URL                 The endpoint url to test
+                        eg: http://localhost:3020/test
+
+  Options: 
+    --client-id         Override the client id
+    --client-secrete    Override the client secret
+    --username          Override the username
+    --password          Override the password
+    --access-token-url  Override the url to aquire an access token
+    -d|--debug          Debug the cURL command testing the endpoint
+    
+
+  ${0} [options] URL
+    "
+    exit 0
+}
+
+checkParameters "$@"
+
+if [[ ! -n ${URL:-} ]]; then
+    help
+fi
+
+# Get an access token
+ACCESS_TOKEN=$(curl -d "client_id=${CLIENT_ID}" -d "client_secret=${CLIENT_SECRET}" -d "username=${USERNAME}" -d "password=${PASSWORD}" -d "grant_type=password" "${ACCESS_TOKEN_URL}" 2>/dev/null | jq -r '.access_token')
+AUTHORIZATION_HEADER="Authorization: Bearer ${ACCESS_TOKEN}"
+
+# Call the end point to test
+curl ${DEBUG:-} -H "${AUTHORIZATION_HEADER}" ${URL}

@@ -158,12 +158,11 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.facet-font {
-	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-}
-
 .facet-pointer {
 	cursor: pointer;
+}
+
+.facet-font {
+	font-family: var(--font-family);
 }
 </style>

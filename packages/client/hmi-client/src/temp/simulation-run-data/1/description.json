@@ -1,0 +1,3 @@
+{
+    "description": "Baseline scenario (see Fig. 2): \n        Day 1, before the introduction of any public health measures (R0 = 2.38); \n        Day 4, introduction of basic public health recommendations and government school closures (R0 = 1.66); \n        Day 12, policy of limiting screening to symptomatic individuals only (R0 = 1.80);\n        Day 22: introduction of incomplete lockdown (R0 = 1.60);\n        Day 28: fully operational lockdown with strict measures, working is no longer a good reason for going out: gradually, non-indispensable activities are stopped (R0 = 0.99);\n        Day 38: wider testing campaign is launched (R0 = 0.85)."
+}

@@ -193,9 +193,17 @@ export default defineComponent({
 			});
 
 			if (this.rescaleAfterSelect) {
-				baseClone.sort((a, b) => b.selectedValue - a.selectedValue);
+				if (this.label === 'Publication Year') {
+					baseClone.sort((a, b) => a.selectedValue - b.selectedValue);
+				} else {
+					baseClone.sort((a, b) => b.selectedValue - a.selectedValue);
+				}
 			} else {
-				baseClone.sort((a, b) => b.value - a.value);
+				if (this.label === 'Publication Year') {
+					baseClone.sort((a, b) => a.selectedValue - b.selectedValue);
+				} else {
+					baseClone.sort((a, b) => b.value - a.value);
+				}
 			}
 
 			return baseClone;
@@ -235,11 +243,6 @@ export default defineComponent({
 <style scoped>
 .facet-pointer {
 	cursor: pointer;
-}
-
-.facet-font {
-	font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
 }
 
 .facet-label-truncated {
@@ -288,5 +291,9 @@ export default defineComponent({
 
 .facet-footer-more-controls > span {
 	cursor: pointer;
+}
+
+.facet-font {
+	font-family: var(--font-family);
 }
 </style>

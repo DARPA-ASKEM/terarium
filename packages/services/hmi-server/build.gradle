@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-	implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+	implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusVersion}")
 
 	// REST server
 	implementation "io.quarkus:quarkus-resteasy"
@@ -18,12 +18,25 @@ dependencies {
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 
+	// Persistence
+	implementation "io.quarkus:quarkus-hibernate-orm"
+	implementation "io.quarkus:quarkus-jdbc-postgresql"
+	implementation "io.quarkus:quarkus-hibernate-orm-panache"
+	annotationProcessor "io.quarkus:quarkus-panache-common"
+
+	// Caching
+	implementation "io.quarkus:quarkus-cache"
+	implementation "io.quarkus:quarkus-scheduler"
+
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client"
 
 	// Auth dependencies
 	implementation "io.quarkus:quarkus-oidc"
 	implementation "io.quarkus:quarkus-keycloak-authorization"
+
+	// Misc
+	implementation "org.apache.commons:commons-text:1.10.0"
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"

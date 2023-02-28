@@ -1,0 +1,20 @@
+---
+# This workflow runs all client tests
+
+name: Client Tests
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+  push:
+    branches: ['main']
+    paths:
+      - 'packages/client/**'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'packages/client/**'
+
+jobs:
+  unit-tests:
+    name: Client Unit Tests
+    uses: ./.github/workflows/test-client-unit.yaml

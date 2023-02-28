@@ -10,11 +10,12 @@ type AsyncFunction<A, O> = (args: A) => Promise<O>;
 type AsyncLayoutFunction<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 type LayoutFunction<V, E> = (args: IGraph<V, E>) => IGraph<V, E>;
 
-interface Options {
+export interface Options {
 	el?: HTMLDivElement | null;
 	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
 
 	useZoom?: boolean;
+	zoomRange?: [number, number];
 	useStableLayout?: boolean;
 
 	// Attempt to use the same set of zoom parameters across layout changes
@@ -23,6 +24,9 @@ interface Options {
 	// This is getting around algorithms that do not provide stand-alone routing capabilities, in
 	// which case we can internally route using A-star
 	useAStarRouting?: boolean;
+
+	// Whether to show grid
+	useGrid?: boolean;
 }
 
 export const pathFn = d3
@@ -171,10 +175,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		this.chart?.selectAll('.node-ui').call(this.enableNodeInteraction as any, this);
 		this.enableSVGInteraction(this);
 
-		// Enable dragging nodes
 		this.enableNodeDragging(this);
 
 		this.isGraphDirty = false;
+
+		this.postRenderProcess();
 	}
 
 	updateEdgePoints(): void {
@@ -226,12 +231,12 @@ export abstract class Renderer<V, E> extends EventEmitter {
 				emit('node-dbl-click', evt, d3.select(this), renderer);
 			});
 
-			node.on('click', function (evt) {
+			node.on('click', function (evt, d) {
 				evt.stopPropagation();
 				const e = d3.select(this);
 				window.clearTimeout(renderer.clickTimer);
 				renderer.clickTimer = window.setTimeout(() => {
-					emit('node-click', evt, e, renderer);
+					emit('node-click', evt, e, renderer, d);
 				}, 200);
 			});
 
@@ -279,11 +284,81 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			});
 		});
 
+		svg.on('contextmenu', function (evt) {
+			evt.preventDefault();
+			const pointer = d3.pointer(evt);
+			const pointerCoords = d3.zoomTransform(svg.node() as SVGGElement).invert(pointer);
+			emit('background-contextmenu', evt, d3.select(this), renderer, {
+				x: pointerCoords[0],
+				y: pointerCoords[1],
+				clientX: pointer[0],
+				clientY: pointer[1]
+			});
+		});
+
+		const width = this.chartSize.width;
+		const height = this.chartSize.height;
+		const x = d3
+			.scaleLinear()
+			.domain([-1, width + 1])
+			.range([-1, width + 1]);
+		const y = d3
+			.scaleLinear()
+			.domain([-1, height + 1])
+			.range([-1, height + 1]);
+
+		svg.selectAll('.grid').remove();
+		const gX = svg.append('g').attr('class', 'axis axis--x').classed('grid', true);
+		const gY = svg.append('g').attr('class', 'axis axis--y').classed('grid', true);
+		const xAxis = d3
+			.axisBottom(x)
+			.ticks(((width + 2) / (height + 2)) * 10)
+			.tickSize(height)
+			.tickPadding(8 - height);
+
+		const yAxis = d3
+			.axisRight(y)
+			.ticks(10)
+			.tickSize(width)
+			.tickPadding(8 - width);
+
+		if (this.options.useGrid) {
+			gX?.call(xAxis);
+			gY?.call(yAxis);
+			svg.selectAll('.axis').selectAll('.domain').remove();
+			svg
+				.selectAll('.axis')
+				.selectAll('line')
+				.style('opacity', 0.1)
+				.style('pointer-events', 'none');
+			svg
+				.selectAll('.axis')
+				.selectAll('text')
+				.style('opacity', 0.5)
+				.style('pointer-events', 'none');
+		}
+
 		// Zoom control
 		// FIXME: evt type
 		const zoomed = (evt: any) => {
 			if (this.options.useZoom === false) return;
 			if (chart) chart.attr('transform', evt.transform);
+
+			if (this.options.useGrid) {
+				gX.call(xAxis.scale(evt.transform.rescaleX(x)));
+				gY.call(yAxis.scale(evt.transform.rescaleY(y)));
+				svg.selectAll('.axis').selectAll('.domain').remove();
+				svg
+					.selectAll('.axis')
+					.selectAll('line')
+					.style('opacity', 0.1)
+					.style('pointer-events', 'none');
+				svg
+					.selectAll('.axis')
+					.selectAll('text')
+					.style('opacity', 0.5)
+					.style('pointer-events', 'none');
+			}
 		};
 		const zoomEnd = () => {
 			if (!this.graph || !chart) return;
@@ -294,7 +369,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		const minZoom = 0.05;
 		const maxZoom = Math.max(2, Math.floor((this.graph.width as number) / this.chartSize.width));
 		let zoomLevel = Math.min(1, 1 / ((this.graph.height as number) / this.chartSize.height));
-		this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
+
+		if (this.options.zoomRange) {
+			this.zoom = d3
+				.zoom()
+				.scaleExtent(this.options.zoomRange)
+				.on('zoom', zoomed)
+				.on('end', zoomEnd);
+		} else {
+			this.zoom = d3.zoom().scaleExtent([minZoom, maxZoom]).on('zoom', zoomed).on('end', zoomEnd);
+		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
 		let zoomX =
@@ -350,9 +434,13 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
-			const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
-			nodeDraggingIds = [node.datum().label, ...childrenNodes.data().map((d) => d.label)];
 
+			if (evt.sourceEvent.shiftKey) {
+				emitWrapper('node-drag-start', evt, node, renderer);
+				return;
+			}
+			const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
+			nodeDraggingIds = [node.datum().id, ...childrenNodes.data().map((d) => d.id)];
 			sufficientlyMoved = false;
 			emitWrapper('node-drag-start', evt, node, renderer);
 		}
@@ -362,6 +450,10 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			const dy = evt.dy;
 
 			if (!node) return;
+			if (evt.sourceEvent.shiftKey) {
+				emitWrapper('node-drag-move', evt, node, renderer);
+				return;
+			}
 
 			sufficientlyMoved = true;
 
@@ -392,6 +484,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		function nodeDragEnd(evt: any): void {
+			if (evt.sourceEvent.shiftKey) {
+				emitWrapper('node-drag-end', evt, node, renderer);
+				return;
+			}
+
 			if (options.useAStarRouting && sufficientlyMoved) {
 				for (let i = 0; i < edges.length; i++) {
 					const edge = edges[i];
@@ -424,6 +521,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	/* eslint-disable */
 	setupDefs(): void {}
+	postRenderProcess(): void {}
 
 	// Need to implement
 	abstract setupNodes(): void;

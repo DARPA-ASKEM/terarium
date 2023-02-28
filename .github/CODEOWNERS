@@ -7,17 +7,16 @@
 # precedence.
 
 # Global Owners. Unless a later match takes precedence
-* @dgauldie @mwdchang @YohannParis @bencodrington
+* @dgauldie @chris-dickson @mwdchang @YohannParis
 
 # Client code owners
-/packages/client/ @bencodrington @mwdchang @YohannParis
-/packages/shared/ @bencodrington @mwdchang @YohannParis
+/packages/client/ @YohannParis @mwdchang
 
-# Backend server owners
-/packages/server/ @mwdchang @dgauldie @bigglesandginger
+# Backend services owners
+/packages/services/ @dgauldie @dvince2
 
 # Documentation owners
-docs/*  @dgauldie @pascaleproulx @YohannParis
+docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2
 
 # CODEOWNERS prevent renovate automerge since it will automatically ask for review
 # See documentation for more details: https://docs.renovatebot.com/key-concepts/automerge/#codeowners

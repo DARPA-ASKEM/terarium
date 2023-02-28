@@ -1,25 +1,33 @@
 import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
+import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
+import {
+	Dataset,
+	FACET_FIELDS as DATASET_FACET_FIELDS,
+	DISPLAY_NAMES as DATASET_DISPLAY_NAMES
+} from '@/types/Dataset';
 import {
 	Model,
 	FACET_FIELDS as MODEL_FACET_FIELDS,
-	DISPLAY_NAMES as MODEL_DISPLAY_NAMES
+	DISPLAY_NAMES as MODEL_DISPLAY_NAMES,
+	ID
 } from '@/types/Model';
 import {
-	XDDArticle,
-	FACET_FIELDS as XDD_FACET_FIELDS,
-	DISPLAY_NAMES as XDD_DISPLAY_NAMES
+	DISPLAY_NAMES as XDD_DISPLAY_NAMES,
+	FACET_FIELDS as DOCUMENT_FACET_FIELDS
 } from '@/types/XDD';
+import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
-// FIXME:
-// XDD does not support Facets natively, so we will perform aggregations on the fly to build facets from XDD data
-// ideally, this should be done by the server side or at least cached as a hook or composoable
-export const getXDDFacets = (articles: XDDArticle[]) => {
-	const facets = {} as Facets;
+import { logger } from '@/utils/logger';
+
+// FIXME: this client-side computation of facets from "models" data should be done //////////////////no point in editing//////////////////
+//        at the HMI server
+export const getModelFacets = (models: Model[], conceptFacets: ConceptFacets | null) => {
+	// utility function for manually calculating facet aggregation from model results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
-		const articlesMap = articles.map((art) => art[fieldName as keyof XDDArticle]);
-		const grouped = groupBy(articlesMap);
+		const modelsMap = models.map((model) => model[fieldName as keyof Model]);
+		const grouped = groupBy(modelsMap);
 		Object.keys(grouped).forEach((gKey) => {
 			if (gKey !== '') {
 				aggs.push({ key: gKey, value: grouped[gKey].length });
@@ -28,21 +36,43 @@ export const getXDDFacets = (articles: XDDArticle[]) => {
 		return aggs;
 	};
 
-	XDD_FACET_FIELDS.forEach((field) => {
-		const facetForField = aggField(field);
-		if (facetForField.length > 0) {
-			facets[field] = facetForField;
+	const facets = {} as Facets;
+
+	// create facet for concepts
+	if (conceptFacets) {
+		// Note that creating facets for concepts should ensure align with the list of model results
+		// Unfortunately, concept facets are always returned from the backend without taking into consideration any applied filters
+		// As a result, we need to check and update the aggregates as necessary
+		facets[CONCEPT_FACETS_FIELD] = [];
+		const conceptKeys = Object.keys(conceptFacets.facets.concepts);
+		conceptKeys.forEach((conceptKey) => {
+			const concept = conceptFacets?.facets.concepts[conceptKey];
+			facets[CONCEPT_FACETS_FIELD].push({ key: concept.name ?? conceptKey, value: concept.count });
+		});
+	}
+
+	// create facets from specific model fields
+	MODEL_FACET_FIELDS.forEach((field) => {
+		// exclude model ID as a facet since it is created from mapping concepts
+		if (field !== ID) {
+			const facetForField = aggField(field);
+			if (facetForField.length > 0) {
+				facets[field] = facetForField;
+			}
 		}
 	});
+
 	return facets;
 };
 
-export const getModelFacets = (articles: Model[]) => {
-	const facets = {} as Facets;
+// FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
+//        at the HMI server
+export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFacets | null) => {
+	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
-		const articlesMap = articles.map((art) => art[fieldName as keyof Model]);
-		const grouped = groupBy(articlesMap);
+		const datasetsMap = datasets.map((model) => model[fieldName as keyof Dataset]);
+		const grouped = groupBy(datasetsMap);
 		Object.keys(grouped).forEach((gKey) => {
 			if (gKey !== '') {
 				aggs.push({ key: gKey, value: grouped[gKey].length });
@@ -51,12 +81,64 @@ export const getModelFacets = (articles: Model[]) => {
 		return aggs;
 	};
 
-	MODEL_FACET_FIELDS.forEach((field) => {
-		const facetForField = aggField(field);
-		if (facetForField.length > 0) {
-			facets[field] = facetForField;
+	const facets = {} as Facets;
+
+	// create facet for concepts
+	if (conceptFacets) {
+		// Note that creating facets for concepts should ensure align with the list of dataset results
+		// Unfortunately, concept facets are always returned from the backend without taking into consideration any applied filters
+		// As a result, we need to check and update the aggregates as necessary
+		facets[CONCEPT_FACETS_FIELD] = [];
+		const conceptKeys = Object.keys(conceptFacets.facets.concepts);
+		conceptKeys.forEach((conceptKey) => {
+			const concept = conceptFacets?.facets.concepts[conceptKey];
+			facets[CONCEPT_FACETS_FIELD].push({ key: concept.name ?? conceptKey, value: concept.count });
+		});
+	}
+
+	// create facets from specific dataset fields
+	DATASET_FACET_FIELDS.forEach((field) => {
+		// exclude dataset ID as a facet since it is created from mapping concepts
+		if (field !== ID) {
+			const facetForField = aggField(field);
+			if (facetForField.length > 0) {
+				facets[field] = facetForField;
+			}
 		}
 	});
+
+	return facets;
+};
+
+// FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
+//        at the HMI server
+export const getDocumentFacets = (documents: DocumentType[]) => {
+	// utility function for manually calculating facet aggregation from dataset results
+	const aggField = (fieldName: string) => {
+		const aggs: FacetBucket[] = [];
+		const documentsMap = documents.map((document) => document[fieldName as keyof DocumentType]);
+		const grouped = groupBy(documentsMap);
+		Object.keys(grouped).forEach((gKey) => {
+			if (gKey !== '' && gKey !== 'undefined') {
+				aggs.push({ key: gKey, value: grouped[gKey].length });
+			}
+		});
+		return aggs;
+	};
+
+	const facets = {} as Facets;
+
+	// create facets from specific dataset fields
+	DOCUMENT_FACET_FIELDS.forEach((field) => {
+		// exclude dataset ID as a facet since it is created from mapping concepts
+		if (field !== ID) {
+			const facetForField = aggField(field);
+			if (facetForField.length > 0) {
+				facets[field] = facetForField;
+			}
+		}
+	});
+
 	return facets;
 };
 
@@ -72,7 +154,7 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 	// return null;
 }
 
-export const getFacets = (results: SearchResults[], resultType: string) => {
+export const getFacets = (results: SearchResults[], resultType: ResourceType | string) => {
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
@@ -80,15 +162,12 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 				// extract facets based on the result type
 				// because we would have different facets for different result types
 				// e.g., XDD will have facets that leverage the XDD fields and stats
-				if (resultsObj.searchSubsystem === ResourceType.XDD) {
-					const xddResults = resultsObj.results as XDDArticle[];
-					const xddFacets = getXDDFacets(xddResults);
-					facets = mergeWith(facets, xddFacets, mergeCustomizer);
-				}
-				if (resultsObj.searchSubsystem === ResourceType.MODEL) {
-					const modelResults = resultsObj.results as Model[];
-					const modelFacets = getModelFacets(modelResults);
-					facets = mergeWith(facets, modelFacets, mergeCustomizer);
+				if (
+					resultsObj.searchSubsystem === ResourceType.XDD ||
+					resultsObj.searchSubsystem === ResourceType.MODEL ||
+					resultsObj.searchSubsystem === ResourceType.DATASET
+				) {
+					facets = mergeWith(facets, resultsObj.facets, mergeCustomizer);
 				}
 			}
 		});
@@ -97,25 +176,33 @@ export const getFacets = (results: SearchResults[], resultType: string) => {
 };
 
 export const getFacetsDisplayNames = (resultType: string, key: string) => {
-	if (resultType === ResourceType.XDD) {
-		return XDD_DISPLAY_NAMES[key];
+	let hits = 0;
+
+	switch (resultType) {
+		case ResourceType.XDD:
+			return XDD_DISPLAY_NAMES[key];
+		case ResourceType.MODEL:
+			return MODEL_DISPLAY_NAMES[key];
+		case ResourceType.DATASET:
+			return DATASET_DISPLAY_NAMES[key];
+		case ResourceType.ALL:
+			// merge display names from all results types,
+			//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
+			//  and attempt to return the display-name based on the input key
+			[MODEL_DISPLAY_NAMES, XDD_DISPLAY_NAMES].forEach((d) => {
+				if (d[key] !== undefined) hits += 1;
+			});
+			if (hits === 1) {
+				const displayName = {
+					...MODEL_DISPLAY_NAMES,
+					...MODEL_DISPLAY_NAMES,
+					...XDD_DISPLAY_NAMES
+				}[key];
+				logger.info(displayName);
+				return displayName;
+			}
+			return key;
+		default:
+			return key;
 	}
-	if (resultType === ResourceType.MODEL) {
-		return MODEL_DISPLAY_NAMES[key];
-	}
-	if (resultType === ResourceType.ALL) {
-		// merge display names from all results types,
-		//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
-		//  and attempt to return the display-name based on the input key
-		const allDisplayNames = [MODEL_DISPLAY_NAMES, XDD_DISPLAY_NAMES];
-		let hits = 0;
-		allDisplayNames.forEach((d) => {
-			if (d[key] !== undefined) hits += 1;
-		});
-		if (hits === 1) {
-			const displayName = { ...MODEL_DISPLAY_NAMES, ...XDD_DISPLAY_NAMES }[key];
-			return displayName;
-		}
-	}
-	return key;
 };
