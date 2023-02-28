@@ -178,8 +178,8 @@ function insertNode() {
 
 function dragNode(node: Node) {
 	node.style.top = `${mouseY.value - 57 - 50}px`;
-	node.style.left = `${mouseX.value - 56 - 50}px`;
-	node.position.x = mouseX.value - 56;
+	node.style.left = `${mouseX.value - 0 - 50}px`;
+	node.position.x = mouseX.value - 0;
 	node.position.y = mouseY.value - 57;
 	node.isDragging = !node.isDragging;
 }
@@ -189,8 +189,8 @@ function calcNodeStyle(node: Node) {
 		return node.style;
 	}
 	const top = mouseY.value - 57 - 50;
-	const left = mouseX.value - 56 - 50;
-	node.position.x = mouseX.value - 56;
+	const left = mouseX.value - 0 - 50;
+	node.position.x = mouseX.value - 0;
 	node.position.y = mouseY.value - 57;
 	return {
 		top: `${top}px`,
@@ -241,11 +241,11 @@ function createNodePath(node: Node, direction: number) {
 
 function drawNewPath() {
 	const path = newPathPosition.value
-		? `M${newPathPosition.value?.x},${newPathPosition.value?.y} 
+		? `M${newPathPosition.value?.x},${newPathPosition.value?.y}
     h10
     C${newPathPosition.value?.x + 50 + 10},${newPathPosition.value?.y}
-    ${mouseX.value - 56 - 50 - 10},${mouseY.value - 57} 
-    ${mouseX.value - 56 + -10},${mouseY.value - 57} 
+    ${mouseX.value - 0 - 50 - 10},${mouseY.value - 57}
+    ${mouseX.value - 0 + -10},${mouseY.value - 57}
     h10`
 		: 'M0,0';
 	return path ?? 'M0,0';
@@ -257,9 +257,9 @@ function drawPath(path: Path) {
 	const nodeOffsetX = 50 * path.direction;
 	const newPath =
 		path.endNode && path.startNode
-			? `M ${path.startNode.position.x + nodeOffsetX},${path.startNode.position.y} 
+			? `M ${path.startNode.position.x + nodeOffsetX},${path.startNode.position.y}
     h10
-    C${path.startNode.position.x + nodeOffsetX + bezierOffsetX},${path.startNode.position.y} 
+    C${path.startNode.position.x + nodeOffsetX + bezierOffsetX},${path.startNode.position.y}
     ${path.endNode.position.x - nodeOffsetX - bezierOffsetX - runwayX} ${path.endNode.position.y}
     ${path.endNode.position.x - nodeOffsetX - runwayX} ${path.endNode.position.y}
     h10`
