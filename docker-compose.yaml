@@ -1,0 +1,106 @@
+version: '3'
+services:
+  hmi-client:
+    build:
+      context: ./packages/client
+      dockerfile: hmi-client/docker/Dockerfile.dev
+    environment:
+      - BYPASS_KEYCLOAK=true
+      - VITE_BYPASS_KEYCLOAK=true
+      - hmi_server_host=hmi-server
+      - hmi_server_port=3000
+    volumes:
+      - ./packages/client/hmi-client/src:/hmi-client/src
+    ports:
+      - 8078:8080
+  hmi-server:
+    build:
+      context: '.'
+      dockerfile: packages/services/hmi-server/docker/Dockerfile.dev
+    ports:
+      - 3000:3000
+    environment:
+      - QUARKUS_OIDC_ENABLED=false
+      - QUARKUS_KEYCLOAK_POLICY_ENFORCER_ENABLE=false
+      - QUARKUS_SECURITY_AUTH_ENABLED_IN_DEV_MODE=false
+      - QUARKUS_HTTP_HOST=0.0.0.0
+      - terarium-db-host=terarium-db
+      - terarium-db-port=5432
+      - data-service-host=data-service
+      - data-service-port=8000
+      - model-service-host=model-service
+      - model-service-port=8888
+  terarium-db:
+    image: postgres:15.1
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: terarium
+      POSTGRES_PASSWORD: terarium123
+      POSTGRES_DB: terarium
+    volumes:
+      - terarium-db-storage:/var/lib/postgresql/data
+  data-service:
+    image: ghcr.io/darpa-askem/data-service:latest
+    environment:
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      STORAGE_HOST: http://minio:9000
+      OPENAI_KEY: sk
+      SQL_URL: data-service-dev-db
+      SQL_PORT: 5432
+      SQL_USER: dev
+      SQL_PASSWORD: dev
+      NEO4J_ENABLED:
+      NEO4J_driver: neo4j://neo4j:7687
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+    depends_on:
+      - minio
+      - neo4j
+      - data-service-dev-db
+    ports:
+      - "8000:8000"
+  minio:
+    image: ghcr.io/darpa-askem/data-service-storage:latest
+    environment:
+      MINIO_ROOT_USER: miniouser
+      MINIO_ROOT_PASSWORD: miniopass
+    expose:
+      - 9000
+      - 9001
+    entrypoint: ""
+    command: ["minio", "server", "/data"]
+    volumes:
+      - minio-data:/data
+  neo4j:
+    image: ghcr.io/darpa-askem/data-service-graphdb:5.3.0.3
+    expose:
+      - 7474
+      - 7687
+    environment:
+      - NEO4J_PLUGINS=["apoc"]
+      - apoc.import.file.enabled=true
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_dbms_memory_pagecache_size=512M
+      - PG_HOST=data-service-dev-db
+      - PG_PORT=5432
+    depends_on:
+      - data-service-dev-db
+  data-service-dev-db:
+    image: ghcr.io/darpa-askem/data-service-dev-db:latest
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_USER=dev
+      - POSTGRES_DB=askem
+  model-service:
+    image: ghcr.io/darpa-askem/model-service:latest
+    expose:
+      - "8888"
+    ports:
+      - "3010:8888"
+volumes:
+  terarium-db-storage:
+  minio-data:
+    driver: local

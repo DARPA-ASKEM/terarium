@@ -137,6 +137,7 @@ $passwordStrongBg: #689F38 !default;
 $buttonPadding: 0.714rem 1rem !default;
 $buttonIconOnlyWidth: 2rem !default;
 $buttonIconOnlyPadding: 0.5rem !default;
+$buttonIconOnlyColor: var(--text-color-subdued);
 $buttonBg: $primaryColor !default;
 $buttonTextColor: $primaryTextColor !default;
 $buttonBorder: 0 none !default;
@@ -489,7 +490,7 @@ $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 1rem !default;
 $tableHeaderCellBg: #ffffff !default;
-$tableHeaderCellTextColor: $textColor !default;
+$tableHeaderCellTextColor: var(--text-color-subdued) !default;
 $tableHeaderCellFontWeight: 500 !default;
 $tableHeaderCellBorder: 1px solid #e4e4e4 !default;
 $tableHeaderCellBorderWidth: 0 0 1px 0 !default;
@@ -547,8 +548,8 @@ $fullCalendarEventBorder: 1px solid $highlightBg !default;
 $fullCalendarEventTextColor: $highlightTextColor !default;
 
 //tree
-$treeNodePadding: .25rem !default;
-$treeNodeContentPadding: .5rem !default;
+$treeNodePadding: 0 !default;
+$treeNodeContentPadding: .2rem .5rem !default;
 $treeNodeChildrenPadding: 0 0 0 1rem !default;
 $treeNodeIconColor: $textSecondaryColor !default;
 
@@ -903,5 +904,4 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--focus-ring: #{$focusShadow};
 	--maskbg: #{$maskBg};
 	color-scheme: light;
-	--primary-color:#{$primaryColor};
 }

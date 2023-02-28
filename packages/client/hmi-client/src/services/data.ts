@@ -39,10 +39,12 @@ const getXDDSets = async () => {
 
 const getXDDDictionaries = async () => {
 	const res = await API.get('/dictionaries');
-	const rawdata: XDDResult = res.data;
-	if (rawdata.success) {
-		const { data } = rawdata.success;
-		return data;
+	if (res) {
+		const rawdata: XDDResult = res.data;
+		if (rawdata && rawdata.success) {
+			const { data } = rawdata.success;
+			return data;
+		}
 	}
 	return [] as XDDDictionary[];
 };
@@ -330,6 +332,7 @@ const getAssets = async (params: GetAssetsParams) => {
 const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
 	let url = '/document/extractions?';
 	url += `term=${term}`;
+	url += '&include_highlights=true';
 
 	if (extractionTypes) {
 		url += '&ASKEM_CLASS=';
@@ -339,9 +342,10 @@ const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType
 	}
 
 	const res = await API.get(url);
-	const rawdata: XDDResult = res.data;
-
-	if (rawdata.success) return rawdata.success.data as XDDArtifact[];
+	if (res) {
+		const rawdata: XDDResult = res.data;
+		if (rawdata && rawdata.success) return rawdata.success.data as XDDArtifact[];
+	}
 
 	return [] as XDDArtifact[];
 };
@@ -362,17 +366,19 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	const url = `/document/related/document?docid=${docid}&set=${dataset}`;
 
 	const res = await API.get(url);
-	const rawdata: XDDResult = res.data;
+	if (res) {
+		const rawdata: XDDResult = res.data;
 
-	if (rawdata.data) {
-		const documentsRaw = rawdata.data.map((a) => a.bibjson);
+		if (rawdata && rawdata.data) {
+			const documentsRaw = rawdata.data.map((a) => a.bibjson);
 
-		const documents = documentsRaw.map((a) => ({
-			...a,
-			abstractText: a.abstract
-		}));
+			const documents = documentsRaw.map((a) => ({
+				...a,
+				abstractText: a.abstract
+			}));
 
-		return documents;
+			return documents;
+		}
 	}
 	return [] as DocumentType[];
 };
@@ -390,9 +396,8 @@ async function getRelatedTerms(query?: string, dataset?: string | null): Promise
 const getAutocomplete = async (searchTerm: string) => {
 	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
-	const data = response.data.suggest['entity-suggest-fuzzy'][0].options;
-	const terms = data.map((d) => d.text);
-	return terms;
+	if (response.status === 204) return [];
+	return response.data?.map((d) => d.text) ?? [];
 };
 
 const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {

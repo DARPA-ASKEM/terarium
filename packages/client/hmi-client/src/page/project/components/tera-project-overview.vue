@@ -1,5 +1,51 @@
+<template>
+	<div class="flex-container">
+		<header>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-rounded menu-button"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<InputText
+				v-model="newProjectName"
+				ref="inputElement"
+				class="project-name-input"
+				@keyup.enter="updateProjectName"
+				:class="{ isVisible: isEditingProject }"
+			>
+			</InputText>
+			<h3 :class="{ isVisible: !isEditingProject }">
+				{{ project?.name }}
+			</h3>
+
+			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
+		</header>
+		<section class="content-container">
+			<section class="summary">
+				<!-- This div is so that child elements will automatically collapse margins -->
+				<div>
+					<!-- Author -->
+					<section class="description">
+						<p>
+							{{ project?.description }}
+						</p>
+					</section>
+					<section class="contributors">
+						{{ project?.username }}
+						<Button label="+ Add contributor" />
+					</section>
+				</div>
+			</section>
+			<section class="detail">
+				<resources-list :project="project" />
+			</section>
+		</section>
+	</div>
+</template>
+
 <script setup lang="ts">
-import { Project } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { ref, nextTick } from 'vue';
 import ResourcesList from '@/components/resources/resources-list.vue';
 import InputText from 'primevue/inputtext';
@@ -9,7 +55,7 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
-	project: Project;
+	project: IProject;
 }>();
 
 const resources = useResourcesStore();
@@ -58,61 +104,12 @@ function showProjectMenu(event) {
 }
 </script>
 
-<template>
-	<div class="flex-container">
-		<header>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-rounded menu-button"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
-			<InputText
-				v-model="newProjectName"
-				ref="inputElement"
-				class="project-name-input"
-				@keyup.enter="updateProjectName"
-				:class="{ isVisible: isEditingProject }"
-			>
-			</InputText>
-			<h3 :class="{ isVisible: !isEditingProject }">
-				{{ project?.name }}
-			</h3>
-
-			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
-		</header>
-		<section class="content-container">
-			<section class="summary">
-				<!-- This div is so that child elements will automatically collapse margins -->
-				<div>
-					<!-- Author -->
-					<section class="description">
-						<p>
-							{{ project?.description }}
-						</p>
-					</section>
-					<section class="contributors">
-						{{ project?.username }}
-						<Button label="+ Add contributor" />
-					</section>
-				</div>
-			</section>
-			<section class="detail">
-				<resources-list :project="project" />
-			</section>
-		</section>
-	</div>
-</template>
-
-<style scoped lang="scss">
-@import '@/assets/css/theme/variables';
-
+<style scoped>
 .flex-container {
 	display: flex;
 	flex-direction: column;
-	width: 100%;
-	margin: 0.5rem;
-	background: white;
+	flex: 1;
+	background: var(--surface-section);
 }
 
 a {
@@ -120,7 +117,6 @@ a {
 }
 
 .content-container {
-	margin-left: 1rem;
 	column-gap: 2rem;
 	flex-direction: row;
 }
@@ -160,7 +156,7 @@ section {
 }
 
 .related {
-	font-weight: $fontWeightSemiBold;
+	font-weight: var(--font-weight-semibold);
 }
 
 h3 {

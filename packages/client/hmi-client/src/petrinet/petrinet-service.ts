@@ -1,3 +1,5 @@
+import { IGraph } from '@graph-scaffolder/types';
+
 export interface PetriNet {
 	S: State[]; // List of state names
 	T: Transition[]; // List of transition names
@@ -87,4 +89,123 @@ export const petriNetValidator = (petrinet: PetriNet): string | true => {
 	} while (potentialConnections.length > 0);
 
 	return true; // All checks have been successfully passed
+};
+
+export interface NodeData {
+	type: string;
+	uid?: string | number;
+}
+
+export interface EdgeData {
+	numEdges: number;
+}
+export enum NodeType {
+	State = 'S',
+	Transition = 'T'
+}
+
+/**
+ * Given a petrinet model convert to an IGraph representation g
+ * for the renderer
+ * First add each node found in S and T, then add each edge found in I and O
+ */
+export const parsePetriNet2IGraph = (model: PetriNet) => {
+	const result: IGraph<NodeData, EdgeData> = {
+		width: 500,
+		height: 500,
+		nodes: [],
+		edges: []
+	};
+
+	// Reset current Graph.
+	result.nodes = [];
+	result.edges = [];
+	const nodeHeight = 20;
+	const nodeWidth = 20;
+	let nodeX = 10;
+	let nodeY = 10;
+	// add each nodes in S
+	for (let i = 0; i < model.S.length; i++) {
+		const aNode = model.S[i];
+		nodeX += 30;
+		nodeY += 30;
+		result.nodes.push({
+			id: `s-${i + 1}`,
+			label: aNode.sname,
+			x: nodeX,
+			y: nodeY,
+			height: nodeHeight,
+			width: nodeWidth,
+			data: { type: NodeType.State, uid: aNode.uid },
+			nodes: []
+		});
+	}
+	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
+	nodeY = 10;
+	// Add each node found in T
+	for (let i = 0; i < model.T.length; i++) {
+		const aTransition = model.T[i];
+		nodeX += 30;
+		nodeY += 30;
+		result.nodes.push({
+			id: `t-${i + 1}`,
+			label: aTransition.tname,
+			x: nodeX,
+			y: nodeY,
+			height: nodeHeight,
+			width: nodeWidth,
+			data: { type: NodeType.Transition, uid: aTransition.uid },
+			nodes: []
+		});
+	} // end T
+
+	// Edges found in I
+	for (let i = 0; i < model.I.length; i++) {
+		const iEdges = model.I[i];
+		const sourceId = `s-${iEdges.is}`;
+		const targetId = `t-${iEdges.it}`;
+
+		// Collapse hyper edges
+		const existingEdge = result.edges.find(
+			(edge) => edge.source === sourceId && edge.target === targetId
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+			continue;
+		}
+
+		result.edges.push({
+			source: sourceId,
+			target: targetId,
+			points: [],
+			data: {
+				numEdges: 1
+			}
+		});
+	}
+	// Edges found in O
+	for (let i = 0; i < model.O.length; i++) {
+		const oEdges = model.O[i];
+		const sourceId = `t-${oEdges.ot}`;
+		const targetId = `s-${oEdges.os}`;
+
+		// Collapse hyper edges
+		const existingEdge = result.edges.find(
+			(edge) => edge.source === sourceId && edge.target === targetId
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+			continue;
+		}
+
+		result.edges.push({
+			source: sourceId,
+			target: targetId,
+			points: [],
+			data: {
+				numEdges: 1
+			}
+		});
+	}
+	return result;
 };

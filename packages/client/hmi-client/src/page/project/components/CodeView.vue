@@ -31,11 +31,9 @@ import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
 import { ref } from 'vue';
-import { useLogger } from 'vue-logger-plugin';
+import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
-
-const logger = useLogger();
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
 const content = ref(DEFAULT_TEXT);
@@ -85,8 +83,12 @@ async function initialize(editorInstance) {
 </script>
 <style>
 .code {
-	padding: 20px 0;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	padding-top: 1rem;
 }
+
 .controls {
 	margin-left: 40px;
 	margin-bottom: 10px;

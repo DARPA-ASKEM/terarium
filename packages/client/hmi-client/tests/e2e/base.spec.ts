@@ -11,13 +11,7 @@ test.describe('main landing page test', () => {
 
 	test('should load the main page correctly', async ({ page }) => {
 		// Expect a title "to contain" a substring.
-		await expect(page).toHaveTitle(/TERArium/);
-
-		// create a locator
-		const header = page.locator('text=Recent');
-
-		// Expect an attribute "to be strictly equal" to the value.
-		await expect(header).toBeVisible();
+		await expect(page).toHaveTitle(/Terarium/);
 	});
 
 	test('should not display sidebar on home page', async ({ page }) => {

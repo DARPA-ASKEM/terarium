@@ -3,7 +3,8 @@
  */
 
 import API from '@/api/api';
-import { Project, ProjectAssets } from '@/types/Project';
+import { IProject, ProjectAssets } from '@/types/Project';
+import { logger } from '@/utils/logger';
 
 /**
  * Create a project
@@ -12,22 +13,22 @@ import { Project, ProjectAssets } from '@/types/Project';
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function create(
-	name: Project['name'],
-	description: Project['description'] = '',
-	username: Project['username'] = ''
-): Promise<Project | null> {
+	name: IProject['name'],
+	description: IProject['description'] = '',
+	username: IProject['username'] = ''
+): Promise<IProject | null> {
 	try {
 		const response = await API.post(`/projects`, { name, description, username });
 		const { status, data } = response;
 		if (status !== 201) return null;
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }
 
-async function update(project: Project): Promise<Project | null> {
+async function update(project: IProject): Promise<IProject | null> {
 	try {
 		const { id, name, description, active, username } = project;
 		const response = await API.put(`/projects/${id}`, { id, name, description, active, username });
@@ -37,7 +38,7 @@ async function update(project: Project): Promise<Project | null> {
 		}
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }
@@ -46,14 +47,14 @@ async function update(project: Project): Promise<Project | null> {
  * Get a project per id
  * @return Project|null - the appropriate project, or null if none returned by API
  */
-async function get(projectId: string): Promise<Project | null> {
+async function get(projectId: string): Promise<IProject | null> {
 	try {
 		const response = await API.get(`/projects/${projectId}`);
 		const { status, data } = response;
 		if (status !== 200) return null;
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }
@@ -62,7 +63,7 @@ async function get(projectId: string): Promise<Project | null> {
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
-async function getAll(): Promise<Project[] | null> {
+async function getAll(): Promise<IProject[] | null> {
 	const response = await API.get('/projects');
 	return response?.data ?? null;
 }
@@ -85,7 +86,7 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 		if (status !== 200) return null;
 		return data ?? null;
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		return null;
 	}
 }

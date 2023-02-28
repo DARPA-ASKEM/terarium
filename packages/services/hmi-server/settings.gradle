@@ -1,0 +1,16 @@
+pluginManagement {
+	repositories {
+		mavenCentral()
+		gradlePluginPortal()
+		mavenLocal()
+	}
+	plugins {
+		id "${quarkusPluginId}" version "${quarkusVersion}"
+	}
+}
+
+rootProject.name = "terarium"
+
+include "packages:services:hmi-server"
+include "packages:services:document-service"
+

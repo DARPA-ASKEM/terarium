@@ -24,6 +24,7 @@ export type XDDArtifact = {
 	askemId: string;
 	xddCreated: Date;
 	xddRegistrant: number;
+	highlight: string[];
 };
 
 export type XDDUrlExtraction = {

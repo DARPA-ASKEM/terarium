@@ -96,7 +96,7 @@ jobs:
 
       - name: Validate GradleW JAR
         if: matrix.target != 'hmi-client'
-        uses: gradle/wrapper-validation-action@dabb1b52d35733fde278c288e4781d4336d4c29c
+        uses: gradle/wrapper-validation-action@9c75b4d3d1e1ab9cf779938de55702cde22cd29f
 
       - name: Setup Java v17
         if: matrix.target != 'hmi-client'
