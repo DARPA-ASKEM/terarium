@@ -159,6 +159,7 @@ const initiateSearch = () => {
 
 function initiateSearchByExample() {
 	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
+	isSearchByExampleVisible.value = false;
 }
 
 function addToQuery(term: string) {
