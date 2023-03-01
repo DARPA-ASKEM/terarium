@@ -14,7 +14,12 @@
 				@click="removeAsset"
 			/>
 		</header>
-		<Tree :value="resources" selectionMode="single" v-on:node-select="openAsset">
+		<Tree
+			v-if="!isEmpty(resources)"
+			:value="resources"
+			selectionMode="single"
+			v-on:node-select="openAsset"
+		>
 			<template #default="slotProps">
 				<span
 					:active="
@@ -27,6 +32,9 @@
 				</span>
 			</template>
 		</Tree>
+		<div v-else class="loading-spinner">
+			<div><i class="pi pi-spin pi-spinner" style="font-size: 4rem" /></div>
+		</div>
 	</nav>
 </template>
 
@@ -156,6 +164,7 @@ nav {
 	margin: 0.75rem;
 	margin-top: 0;
 	gap: 1rem;
+	min-height: 75%;
 }
 
 .p-chip {
@@ -173,5 +182,13 @@ nav {
 .p-tree:deep(.p-treenode-content:has(span[active='true'])),
 .p-tree:deep(.p-treenode-content.p-treenode-selectable:not(.p-highlight):hover:has(span[active='true'])) {
 	background-color: var(--surface-highlight);
+}
+
+.loading-spinner {
+	display: flex;
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	color: var(--primary-color);
 }
 </style>
