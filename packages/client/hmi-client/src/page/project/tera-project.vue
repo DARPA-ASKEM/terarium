@@ -10,16 +10,14 @@
 		</template>
 	</slider-panel>
 	<section>
-		<!-- <TabMenu :model="tabbedResources"> // https://github.com/tupilabs/vue-lumino consider better alternatives
-			<template #item="{ item }">
-				<a :to="item.to || ''" :projectId="project.id">
-					<Chip :label="item.to.params.assetType" />
-					{{ item.label }}
-				</a>
-			</template>
-		</TabMenu> -->
-		<code-component v-if="showCode" />
-		<template v-else-if="assetId">
+		<tera-tab-group
+			v-if="!isEmpty(openTabs)"
+			:tabs="openTabs"
+			:active-tab-index="activeTabIndex"
+			@close-tab="removeClosedTab"
+			@select-tab="selectAsset"
+		/>
+		<template v-if="assetId && !isEmpty(openTabs)">
 			<document
 				v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 				:asset-id="assetId"
@@ -50,6 +48,7 @@
 				:project="resources.activeProject"
 			/>
 		</template>
+		<code-component v-else-if="assetType === ProjectAssetTypes.CODE" />
 		<tera-project-overview v-else :project="project" />
 	</section>
 	<slider-panel
@@ -76,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
@@ -86,45 +85,71 @@ import Model from '@/components/models/Model.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult.vue';
 import CodeComponent from '@/page/project/components/CodeView.vue';
-// import TabMenu from 'primevue/tabmenu';
+import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
+import { Tab, ResourceType, Annotation } from '@/types/common';
+import { isEmpty } from 'lodash';
+import { useTabStore } from '@/stores/tabs';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
-// import Chip from 'primevue/chip';
 import { RouteName } from '@/router/routes';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { ResourceType, Annotation } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
+import { useRouter } from 'vue-router';
 import API from '@/api/api';
 
 const props = defineProps<{
 	project: IProject;
-	resourceName?: string;
+	assetName?: string;
 	assetId?: string;
-	assetType?: string;
+	assetType?: ProjectAssetTypes;
 }>();
 
 const resources = useResourcesStore();
-const showCode = false; // temp integration
+const tabStore = useTabStore();
+const router = useRouter();
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
-const tabbedResources = ref<any>([
-	{
-		label: 'Overview',
-		icon: '',
-		to: {
-			name: RouteName.ProjectRoute,
-			params: {
-				resourceName: 'Overview',
-				assetId: null,
-				assetType: null
-			}
+// Associated with tab storage
+const tabContext = props.project?.id.toString();
+const openTabs = ref<Tab[]>([]);
+const activeTabIndex = ref(0);
+
+tabStore.$subscribe((/* _mutation, _state */) => {
+	// Sync with storage, not sure why computed doesn't work for these
+	openTabs.value = tabStore.getTabs(tabContext);
+	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
+	tabStore.setTabs(tabContext, openTabs.value);
+	tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
+});
+
+function selectAsset(tab: Tab) {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: {
+			assetName: tab.label,
+			assetId: tab.assetId,
+			assetType: tab.assetType
 		}
-	}
-]);
+	});
+}
+
+function addTabFromRoute() {
+	tabStore.addTab(tabContext, {
+		label: props.assetName || '',
+		icon: '',
+		assetId: props.assetId || '',
+		assetType: props.assetType || undefined
+	});
+}
+
+function removeClosedTab(tabIndexToRemove: number) {
+	tabStore.removeTab(tabContext, tabIndexToRemove);
+	if (!isEmpty(openTabs.value)) selectAsset(openTabs.value[activeTabIndex.value]);
+}
 
 // FIXME:
 // - Need to establish terarium artifact types
@@ -156,23 +181,24 @@ const addAnnotation = async () => {
 
 const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
+onMounted(() => {
+	if (!isEmpty(openTabs.value) && props.assetName) {
+		// chooses proper route
+		selectAsset(openTabs.value[activeTabIndex.value]);
+	}
+});
+
 watch(
-	() => [props.resourceName],
+	() => [props.assetName],
 	() => {
-		// If new name add to resource tab otherwise switch to tab
-		if (!tabbedResources.value.some(({ label }) => label === props.resourceName)) {
-			tabbedResources.value.push({
-				label: props.resourceName,
-				icon: '',
-				to: {
-					name: RouteName.ProjectRoute,
-					params: {
-						resourceName: props.resourceName,
-						assetId: props.assetId,
-						assetType: props.assetType
-					}
-				}
-			});
+		// If new name, its a new asset so add a new tab
+		if (!openTabs.value.some(({ label }) => label === props.assetName) || isEmpty(openTabs)) {
+			addTabFromRoute();
+		}
+		// Tab switch
+		else {
+			const index = openTabs.value.findIndex(({ label }) => label === props.assetName);
+			tabStore.setActiveTabIndex(tabContext, index);
 		}
 	}
 );

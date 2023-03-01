@@ -22,7 +22,7 @@
 		</template>
 	</div>
 	<div v-if="isLoading" class="explorer-status loading-spinner">
-		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
+		<div><i class="pi pi-spin pi-spinner" /></div>
 	</div>
 	<div v-else-if="resultsCount === 0" class="explorer-status">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -201,6 +201,10 @@ ul {
 
 .loading-spinner {
 	color: var(--primary-color);
+}
+
+.pi-spinner {
+	font-size: 5rem;
 }
 
 .no-results-found {

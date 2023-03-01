@@ -3,6 +3,7 @@ import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
 import { XDDArtifact, DocumentType } from './Document';
+import { ProjectAssetTypes } from './Project';
 
 export type Annotation = {
 	artifact_id: string;
@@ -79,6 +80,8 @@ export type SidePanelTab = {
 
 // Tabs
 export type Tab = {
-	name: string;
-	props?: Object;
+	label: string;
+	icon: string;
+	assetId?: string | number;
+	assetType?: ProjectAssetTypes;
 };

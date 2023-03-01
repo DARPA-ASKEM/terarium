@@ -14,24 +14,40 @@
 				@click="removeAsset"
 			/>
 		</header>
-		<Tree :value="resources" selectionMode="single" v-on:node-select="openAsset">
+		<tree
+			v-if="!isEmpty(resources)"
+			:value="resources"
+			selectionMode="single"
+			v-on:node-select="openAsset"
+		>
 			<template #default="slotProps">
-				{{ slotProps.node.label }}
-				<Chip :label="slotProps.node.data.assetType" />
+				<span
+					:active="
+						route.params.assetId === slotProps.node.data.assetId &&
+						route.params.assetType === slotProps.node.data.assetType
+					"
+				>
+					{{ slotProps.node.label }}
+					<Chip :label="slotProps.node.data.assetType" />
+				</span>
 			</template>
-		</Tree>
+		</tree>
+		<div v-else class="loading-spinner">
+			<div><i class="pi pi-spin pi-spinner" /></div>
+		</div>
 	</nav>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 // import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { deleteAsset } from '@/services/project';
 import { RouteName } from '@/router/routes';
+
 import useResourcesStore from '@/stores/resources';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
@@ -40,12 +56,11 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 
 const router = useRouter();
+const route = useRoute();
 const resourcesStore = useResourcesStore();
 
-const chosenAsset = ref({ assetId: -1, assetType: ProjectAssetTypes.DOCUMENTS });
-
 defineProps<{
-	project: IProject | null;
+	project: IProject;
 }>();
 
 const resources = computed(() => {
@@ -53,12 +68,21 @@ const resources = computed(() => {
 	const projectAssetTypes = Object.keys(storedAssets);
 	const resourceTreeNodes: any[] = [];
 
-	// console.log(storedAssets);
-
 	if (!isEmpty(storedAssets)) {
+		// Basic new code file (temp)
+		resourceTreeNodes.push({
+			key: 'New file',
+			label: 'New file',
+			data: {
+				assetType: ProjectAssetTypes.CODE
+			},
+			selectable: true
+		});
+
 		for (let i = 0; i < projectAssetTypes.length; i++) {
 			const assets: (DocumentAsset & Model & Dataset)[] =
 				Object.values(storedAssets[projectAssetTypes[i]]) ?? [];
+
 			for (let j = 0; j < assets.length; j++) {
 				resourceTreeNodes.push({
 					key: assets[j]?.name || assets[j]?.title,
@@ -68,7 +92,7 @@ const resources = computed(() => {
 						assetId:
 							projectAssetTypes[i] === ProjectAssetTypes.DOCUMENTS
 								? assets[j].xdd_uri
-								: assets[j]?.id
+								: assets[j]?.id.toString()
 					},
 					selectable: true
 				});
@@ -81,13 +105,12 @@ const resources = computed(() => {
 // Remove an asset - will be adjusted later
 function removeAsset() {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const { assetId, assetType } = chosenAsset.value;
+	const assetId = route.params.assetId;
+	const assetType = route.params.assetType as ProjectAssetTypes;
 
 	const asset = storedAssets[assetType].find((a) =>
 		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id === assetId
 	);
-
-	console.log(chosenAsset.value, asset, storedAssets[assetType]);
 
 	if (asset === undefined) {
 		console.error('Failed to remove asset');
@@ -115,15 +138,10 @@ function removeAsset() {
 }
 
 function openAsset(event: any) {
-	chosenAsset.value = {
-		assetId: event.data.assetId,
-		assetType: event.data.assetType
-	};
-
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			resourceName: event.key,
+			assetName: event.key,
 			assetId: event.data.assetId,
 			assetType: event.data.assetType
 		}
@@ -146,6 +164,7 @@ nav {
 	margin: 0.75rem;
 	margin-top: 0;
 	gap: 1rem;
+	min-height: 75%;
 }
 
 .p-chip {
@@ -158,5 +177,22 @@ nav {
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
+}
+
+.p-tree:deep(.p-treenode-content:has(span[active='true'])),
+.p-tree:deep(.p-treenode-content:hover:has(span[active='true'])) {
+	background-color: var(--surface-highlight);
+}
+
+.loading-spinner {
+	display: flex;
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	color: var(--primary-color);
+}
+
+.pi-spinner {
+	font-size: 4rem;
 }
 </style>
