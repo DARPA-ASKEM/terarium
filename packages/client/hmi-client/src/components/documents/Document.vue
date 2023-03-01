@@ -96,7 +96,7 @@
 					References<span class="artifact-amount">({{ doc.citationList.length }})</span>
 				</template>
 				<ul>
-					<li v-for="(citation, key) of doc.citationList" :Key="key">
+					<li v-for="(citation, key) of doc.citationList" :key="key">
 						<template v-if="!isEmpty(formatCitation(citation))">
 							{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
 						</template>
@@ -105,9 +105,8 @@
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)">
 				<template #header>
-					Associated resources<span class="artifact-amount"
-						>({{ relatedTerariumArtifacts.length }})</span
-					>
+					Associated resources
+					<span class="artifact-amount">({{ relatedTerariumArtifacts.length }})</span>
 				</template>
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
