@@ -11,13 +11,13 @@
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
-				:label="`${facet.field.charAt(0).toUpperCase() + facet.field.slice(1)}: ${value}`"
 				:key="index"
 				icon="pi pi-filter"
 				removable
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
 			>
+				{{ facet.field.charAt(0).toUpperCase() + facet.field.slice(1) }}:<span>{{ value }}</span>
 			</Chip>
 		</template>
 	</div>
@@ -240,6 +240,11 @@ ul {
 .p-chip {
 	background-color: var(--surface-section);
 	font-weight: 400;
+}
+
+.p-chip span {
+	color: var(--text-color-primary);
+	margin-left: 0.25rem;
 }
 
 .search-container {
