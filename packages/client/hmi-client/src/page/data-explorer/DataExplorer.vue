@@ -605,4 +605,8 @@ onUnmounted(() => {
 	background-color: var(--surface-highlight);
 	color: var(--text-color-subdued);
 }
+
+.p-button.p-button-sm {
+	padding: 0.5rem 0.75rem;
+}
 </style>
