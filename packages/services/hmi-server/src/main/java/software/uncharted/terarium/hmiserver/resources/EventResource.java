@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.util.JsonString;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -15,6 +16,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
 @Path("/api/events")
 @Authenticated
@@ -55,7 +57,11 @@ public class EventResource {
 	@POST
 	@Transactional
 	public Response postEvent(final Event event) {
-		log.info("Event | " + securityIdentity.getPrincipal().getName() + " | " + event);
+		log.info(JsonString.write(Map.of(
+			"log_message", "EVENT",
+			"user", securityIdentity.getPrincipal().getName(),
+			"event", event
+		)));
 
 		// Do not save the event to the database if the type is not specified as persistent
 		if (!event.getType().isPersistent()) {
