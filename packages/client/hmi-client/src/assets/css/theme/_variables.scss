@@ -107,7 +107,7 @@ $inputListPadding: 0 !default;
 $inputListItemPadding: 0.5rem 1rem !default;
 $inputListItemBg: transparent !default;
 $inputListItemTextColor: $textColor !default;
-$inputListItemHoverBg: rgba(0, 0, 0, .04) !default;
+$inputListItemHoverBg: var(--surface-hover) !default;
 $inputListItemTextHoverColor: $textColor !default;
 $inputListItemFocusBg: rgba(0, 0, 0, .12) !default;
 $inputListItemTextFocusColor: $textColor !default;

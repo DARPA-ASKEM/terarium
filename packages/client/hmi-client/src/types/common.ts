@@ -79,6 +79,8 @@ export type SidePanelTab = {
 
 // Tabs
 export type Tab = {
-	name: string;
-	props?: Object;
+	label: string;
+	icon: string;
+	assetId?: string | number;
+	assetType?: string; // Change to AssetType later
 };
