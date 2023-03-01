@@ -21,7 +21,7 @@
 			<document
 				v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 				:asset-id="assetId"
-				:previewLineLimit="5"
+				:previewLineLimit="10"
 				:project="resources.activeProject"
 				is-editable
 			/>
