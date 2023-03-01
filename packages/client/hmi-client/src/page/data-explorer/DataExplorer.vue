@@ -526,6 +526,11 @@ watch(
 	() => executeNewQuery()
 );
 
+watch(
+	() => searchByExampleOptions.value,
+	() => console.log(searchByExampleOptions.value)
+);
+
 // Default query on reload
 onMounted(async () => {
 	xddDatasets.value = await getXDDSets();

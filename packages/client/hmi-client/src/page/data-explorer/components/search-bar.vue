@@ -67,30 +67,38 @@
 			</section>
 			<footer v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType">
 				<div class="field-checkbox">
-					<Checkbox name="similarContent" binary v-model="searchByExampleOptions.similarContent" />
-					<label for="similarContent">Similar Content</label>
+					<Checkbox
+						name="similarContent"
+						binary
+						v-model="selectedSearchByExampleOptions.similarContent"
+					/>
+					<label for="similarContent">SIMILAR<br />CONTENT</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
 						name="forwardCitation"
 						binary
-						v-model="searchByExampleOptions.forwardCitation"
+						v-model="selectedSearchByExampleOptions.forwardCitation"
 					/>
-					<label for="forwardCitation">Forward Citation</label>
+					<label for="forwardCitation">FORWARD<br />CITATION</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
 						name="backwardCitation"
 						binary
-						v-model="searchByExampleOptions.backwardCitation"
+						v-model="selectedSearchByExampleOptions.backwardCitation"
 					/>
-					<label for="forwardCitation">Backward Citation</label>
+					<label for="forwardCitation">BACKWARD<br />CITATION</label>
 				</div>
 				<div class="field-checkbox">
-					<Checkbox name="relatedContent" binary v-model="searchByExampleOptions.relatedContent" />
-					<label for="relatedContent">Models and Datasets</label>
+					<Checkbox
+						name="relatedContent"
+						binary
+						v-model="selectedSearchByExampleOptions.relatedContent"
+					/>
+					<label for="relatedContent">MODELS AND<br />DATASETS</label>
 				</div>
-				<Button label="SEARCH" @click="initiateSearchByExample"></Button>
+				<Button label="SEARCH" @click="initiateSearchByExample()"></Button>
 			</footer>
 		</section>
 	</section>
@@ -109,13 +117,14 @@ import Button from 'primevue/button';
 import { useDragEvent } from '@/utils/drag-drop';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 import Checkbox from 'primevue/checkbox';
+import { SearchByExampleOptions } from '@/types/common';
 import { useSearchByExampleOptions } from '../search-by-example';
 
 const props = defineProps<{
 	showSuggestions: boolean;
 }>();
 
-const emit = defineEmits(['query-changed', 'do-search-by-example']);
+const emit = defineEmits(['query-changed']);
 
 const route = useRoute();
 const router = useRouter();
@@ -129,6 +138,12 @@ const isSearchByExampleVisible = ref(false);
 const isDraggedOver = ref(false);
 const searchByExampleSelectedAsset = ref();
 const searchByExampleSelectedResourceType = ref();
+const selectedSearchByExampleOptions = ref<SearchByExampleOptions>({
+	similarContent: false,
+	forwardCitation: false,
+	backwardCitation: false,
+	relatedContent: false
+});
 const { searchByExampleOptions } = useSearchByExampleOptions();
 
 function clearQuery() {
@@ -143,7 +158,8 @@ const initiateSearch = () => {
 };
 
 function initiateSearchByExample() {
-	emit('do-search-by-example', searchByExampleSelectedAsset, searchByExampleOptions);
+	console.log('test');
+	searchByExampleOptions.value = selectedSearchByExampleOptions.value;
 }
 
 function addToQuery(term: string) {
@@ -342,6 +358,10 @@ i {
 .search-by-example footer {
 	display: flex;
 	justify-content: space-between;
+}
+
+footer :deep(.field-checkbox) {
+	margin-bottom: 0;
 }
 
 h4 {
