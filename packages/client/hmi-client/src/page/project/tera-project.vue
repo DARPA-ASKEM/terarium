@@ -117,8 +117,6 @@ const annotationContent = ref<string>('');
 const tabContext = props.project?.id.toString();
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
-// const openTabs = computed(() => tabStore.getTabs(tabContext));
-// const activeTabIndex = computed(() => tabStore.getActiveTabIndex(tabContext));
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -131,7 +129,7 @@ function tabStorageSync() {
 	// Sync with storage, not sure why computed doesn't work for these
 	openTabs.value = tabStore.getTabs(tabContext);
 	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
-	// console.log(openTabs.value, activeTabIndex.value)
+	console.log(openTabs.value, activeTabIndex.value);
 }
 
 function selectAsset(tab: Tab) {
@@ -192,7 +190,10 @@ const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
 onMounted(() => {
 	tabStorageSync();
-	if (!isEmpty(openTabs.value)) selectAsset(openTabs.value[activeTabIndex.value]); // chooses proper route
+	if (!isEmpty(openTabs.value) && props.assetName) {
+		// chooses proper route
+		selectAsset(openTabs.value[activeTabIndex.value]);
+	}
 });
 
 watch(
@@ -210,16 +211,6 @@ watch(
 		tabStorageSync();
 	}
 );
-
-// watch(() => openTabs.value.length, () => {
-// 	if (isEmpty(openTabs.value)) {
-// 		selectAsset({
-// 			label: 'Overview',
-// 			icon: ''
-// 		});
-// 		tabStorageSync();
-// 	}
-// });
 </script>
 
 <style scoped>

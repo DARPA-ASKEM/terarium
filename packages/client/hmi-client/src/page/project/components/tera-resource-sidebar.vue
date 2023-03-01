@@ -33,7 +33,7 @@
 			</template>
 		</Tree>
 		<div v-else class="loading-spinner">
-			<div><i class="pi pi-spin pi-spinner" style="font-size: 4rem" /></div>
+			<div><i class="pi pi-spin pi-spinner" /></div>
 		</div>
 	</nav>
 </template>
@@ -180,7 +180,7 @@ nav {
 }
 
 .p-tree:deep(.p-treenode-content:has(span[active='true'])),
-.p-tree:deep(.p-treenode-content.p-treenode-selectable:not(.p-highlight):hover:has(span[active='true'])) {
+.p-tree:deep(.p-treenode-content:hover:has(span[active='true'])) {
 	background-color: var(--surface-highlight);
 }
 
@@ -190,5 +190,9 @@ nav {
 	justify-content: center;
 	align-items: center;
 	color: var(--primary-color);
+}
+
+.pi-spinner {
+	font-size: 4rem;
 }
 </style>
