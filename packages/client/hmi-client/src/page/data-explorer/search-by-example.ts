@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { SearchByExampleOptions } from '@/types/common';
+import { ResultType, SearchByExampleOptions } from '@/types/common';
 
 const searchByExampleOptions = ref<SearchByExampleOptions>({
 	similarContent: false,
@@ -7,6 +7,7 @@ const searchByExampleOptions = ref<SearchByExampleOptions>({
 	backwardCitation: false,
 	relatedContent: false
 });
+const searchByExampleItem = ref<ResultType | null>(null);
 export function useSearchByExampleOptions() {
-	return { searchByExampleOptions };
+	return { searchByExampleOptions, searchByExampleItem };
 }

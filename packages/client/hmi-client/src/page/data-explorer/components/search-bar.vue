@@ -144,7 +144,7 @@ const selectedSearchByExampleOptions = ref<SearchByExampleOptions>({
 	backwardCitation: false,
 	relatedContent: false
 });
-const { searchByExampleOptions } = useSearchByExampleOptions();
+const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
 
 function clearQuery() {
 	query.value = '';
@@ -158,8 +158,7 @@ const initiateSearch = () => {
 };
 
 function initiateSearchByExample() {
-	console.log('test');
-	searchByExampleOptions.value = selectedSearchByExampleOptions.value;
+	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
 }
 
 function addToQuery(term: string) {
@@ -208,6 +207,7 @@ const { getDragData } = useDragEvent();
 function onDrop() {
 	searchByExampleSelectedAsset.value = getDragData('asset');
 	searchByExampleSelectedResourceType.value = getDragData('resourceType');
+	searchByExampleItem.value = searchByExampleSelectedAsset.value;
 	isDraggedOver.value = false;
 }
 
