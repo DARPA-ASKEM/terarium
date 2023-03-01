@@ -80,8 +80,8 @@ export type SidePanelTab = {
 
 // Tabs
 export type Tab = {
-	label: string;
-	icon: string;
+	assetName: string;
+	icon?: string;
 	assetId?: string | number;
 	assetType?: ProjectAssetTypes;
 };

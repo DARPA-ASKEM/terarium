@@ -37,7 +37,7 @@ function calcTabWidthPercentage() {
 				<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
 					<span class="name">
 						<Chip :label="tab.assetType" />
-						{{ tab.label }}
+						{{ tab.assetName }}
 					</span>
 					<span>
 						<Button

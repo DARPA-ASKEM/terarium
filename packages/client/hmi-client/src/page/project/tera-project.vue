@@ -15,7 +15,7 @@
 			:tabs="openTabs"
 			:active-tab-index="activeTabIndex"
 			@close-tab="removeClosedTab"
-			@select-tab="selectAsset"
+			@select-tab="openAsset"
 		/>
 		<template v-if="assetId && !isEmpty(openTabs)">
 			<document
@@ -48,7 +48,7 @@
 				:project="resources.activeProject"
 			/>
 		</template>
-		<code-component v-else-if="assetType === ProjectAssetTypes.CODE" />
+		<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
 		<tera-project-overview v-else :project="project" />
 	</section>
 	<slider-panel
@@ -84,7 +84,7 @@ import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult.vue';
-import CodeComponent from '@/page/project/components/CodeView.vue';
+import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
 import { isEmpty } from 'lodash';
@@ -118,37 +118,30 @@ const tabContext = props.project?.id.toString();
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 
+function openAsset(selectedTab?: Tab) {
+	const assetToOpen = selectedTab ??
+		openTabs.value[activeTabIndex.value] ?? { assetName: 'Overview' };
+	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
+}
+
 tabStore.$subscribe((/* _mutation, _state */) => {
 	// Sync with storage, not sure why computed doesn't work for these
 	openTabs.value = tabStore.getTabs(tabContext);
 	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
 	tabStore.setTabs(tabContext, openTabs.value);
-	tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
+	openAsset();
 });
-
-function selectAsset(tab: Tab) {
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: tab.label,
-			assetId: tab.assetId,
-			assetType: tab.assetType
-		}
-	});
-}
 
 function addTabFromRoute() {
 	tabStore.addTab(tabContext, {
-		label: props.assetName || '',
-		icon: '',
-		assetId: props.assetId || '',
-		assetType: props.assetType || undefined
+		assetName: props.assetName || '',
+		assetId: props.assetId,
+		assetType: props.assetType
 	});
 }
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(tabContext, tabIndexToRemove);
-	if (!isEmpty(openTabs.value)) selectAsset(openTabs.value[activeTabIndex.value]);
 }
 
 // FIXME:
@@ -181,27 +174,35 @@ const addAnnotation = async () => {
 
 const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
-onMounted(() => {
-	if (!isEmpty(openTabs.value) && props.assetName) {
-		// chooses proper route
-		selectAsset(openTabs.value[activeTabIndex.value]);
-	}
-});
+// Start at proper route
+onMounted(() => openAsset());
 
+// Updates on new route
 watch(
-	() => [props.assetName],
+	() => props.assetName,
 	() => {
 		// If new name, its a new asset so add a new tab
-		if (!openTabs.value.some(({ label }) => label === props.assetName) || isEmpty(openTabs)) {
+		if (
+			!openTabs.value.some(({ assetName }) => assetName === props.assetName) ||
+			isEmpty(openTabs)
+		) {
 			addTabFromRoute();
 		}
 		// Tab switch
 		else {
-			const index = openTabs.value.findIndex(({ label }) => label === props.assetName);
+			const index = openTabs.value.findIndex(({ assetName }) => assetName === props.assetName);
 			tabStore.setActiveTabIndex(tabContext, index);
 		}
 	}
 );
+
+// watch(() => openTabs.value.length, async () => {
+// 	console.log(openTabs.value.length)
+// 	if (props.assetName && isEmpty(openTabs.value)) {
+// 		await openAsset();
+// 		addTabFromRoute();
+// 	}
+// });
 </script>
 
 <style scoped>
