@@ -101,7 +101,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: string;
+	assetType?: ProjectAssetTypes;
 }>();
 
 const resources = useResourcesStore();
@@ -142,7 +142,7 @@ function addTabFromRoute() {
 		label: props.assetName || '',
 		icon: '',
 		assetId: props.assetId || '',
-		assetType: props.assetType || ''
+		assetType: props.assetType || undefined
 	});
 }
 
