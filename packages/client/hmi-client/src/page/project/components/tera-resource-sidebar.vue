@@ -14,7 +14,7 @@
 				@click="removeAsset"
 			/>
 		</header>
-		<Tree
+		<tree
 			v-if="!isEmpty(resources)"
 			:value="resources"
 			selectionMode="single"
@@ -31,7 +31,7 @@
 					<Chip :label="slotProps.node.data.assetType" />
 				</span>
 			</template>
-		</Tree>
+		</tree>
 		<div v-else class="loading-spinner">
 			<div><i class="pi pi-spin pi-spinner" /></div>
 		</div>

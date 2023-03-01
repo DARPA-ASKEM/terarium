@@ -118,19 +118,13 @@ const tabContext = props.project?.id.toString();
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-tabStore.$subscribe((mutation, state) => {
-	tabStore.setTabs(tabContext, openTabs.value);
-	tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
-});
-
-function tabStorageSync() {
+tabStore.$subscribe((/* _mutation, _state */) => {
 	// Sync with storage, not sure why computed doesn't work for these
 	openTabs.value = tabStore.getTabs(tabContext);
 	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
-	console.log(openTabs.value, activeTabIndex.value);
-}
+	tabStore.setTabs(tabContext, openTabs.value);
+	tabStore.setActiveTabIndex(tabContext, activeTabIndex.value);
+});
 
 function selectAsset(tab: Tab) {
 	router.push({
@@ -154,7 +148,6 @@ function addTabFromRoute() {
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(tabContext, tabIndexToRemove);
-	tabStorageSync();
 	if (!isEmpty(openTabs.value)) selectAsset(openTabs.value[activeTabIndex.value]);
 }
 
@@ -189,7 +182,6 @@ const addAnnotation = async () => {
 const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
 onMounted(() => {
-	tabStorageSync();
 	if (!isEmpty(openTabs.value) && props.assetName) {
 		// chooses proper route
 		selectAsset(openTabs.value[activeTabIndex.value]);
@@ -208,7 +200,6 @@ watch(
 			const index = openTabs.value.findIndex(({ label }) => label === props.assetName);
 			tabStore.setActiveTabIndex(tabContext, index);
 		}
-		tabStorageSync();
 	}
 );
 </script>
