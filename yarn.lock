@@ -1794,6 +1794,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/draggabilly@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "@types/draggabilly@npm:2.1.3"
+  checksum: 21a90ac7167a31183017cdbb29505edcdb86fa0b99bbcab06cecc1dea7741357d247c0183af192e8fea64b545055c80a4b7b10a55cab57758fa941a3382325ba
+  languageName: node
+  linkType: hard
+
 "@types/earcut@npm:^2.1.0":
   version: 2.1.1
   resolution: "@types/earcut@npm:2.1.1"
@@ -4459,6 +4466,16 @@ cors@latest:
   languageName: node
   linkType: hard
 
+"draggabilly@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "draggabilly@npm:3.0.0"
+  dependencies:
+    get-size: ^3.0.0
+    unidragger: ^3.0.0
+  checksum: 9e865d007f0249d5d5a367894093e3086c9758d3a0318fabe627495782f823c39ad6920504783135fa9da50cc72c2d3f3c6172d7b11563433a1559fa8a923b5d
+  languageName: node
+  linkType: hard
+
 "duplexer@npm:~0.1.1":
   version: 0.1.2
   resolution: "duplexer@npm:0.1.2"
@@ -5703,6 +5720,13 @@ cors@latest:
   languageName: node
   linkType: hard
 
+"ev-emitter@npm:^2.0.0":
+  version: 2.1.2
+  resolution: "ev-emitter@npm:2.1.2"
+  checksum: 1102823ef040684869256100e19a6c6aeeecd422d09a267d7c74e77023136eede2ee86ee475ad1019d30d1f7917557d74542d5665e9f91c398bd5814260af6b3
+  languageName: node
+  linkType: hard
+
 "event-stream@npm:3.3.4":
   version: 3.3.4
   resolution: "event-stream@npm:3.3.4"
@@ -6336,6 +6360,13 @@ cors@latest:
   languageName: node
   linkType: hard
 
+"get-size@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "get-size@npm:3.0.0"
+  checksum: 9a475bce9a718322b80c20a9651a7b09c8ddb85d094131fda7d32ffe272442c3d0621df6a61b543a23ca741c261f96841078927e17acfc88957c2a6029ba5b34
+  languageName: node
+  linkType: hard
+
 "get-stream@npm:^4.0.0":
   version: 4.1.0
   resolution: "get-stream@npm:4.1.0"
@@ -6731,6 +6762,7 @@ cors@latest:
     "@playwright/test": 1.27.1
     "@rushstack/eslint-patch": 1.2.0
     "@types/d3": 7.4.0
+    "@types/draggabilly": ^2.1.3
     "@types/lodash": 4.14.191
     "@types/node": 18.11.18
     "@uncharted.software/design-tokens": 1.1.0
@@ -6742,6 +6774,7 @@ cors@latest:
     chroma-js: 2.4.2
     d3: 7.6.1
     dagre: 0.8.5
+    draggabilly: ^3.0.0
     eslint-import-resolver-typescript: 3.5.3
     graph-scaffolder: "*"
     lodash: 4.17.21
@@ -11397,6 +11430,15 @@ send@latest:
   version: 0.1.2
   resolution: "unc-path-regex@npm:0.1.2"
   checksum: a05fa2006bf4606051c10fc7968f08ce7b28fa646befafa282813aeb1ac1a56f65cb1b577ca7851af2726198d59475bb49b11776036257b843eaacee2860a4ec
+  languageName: node
+  linkType: hard
+
+"unidragger@npm:^3.0.0":
+  version: 3.0.1
+  resolution: "unidragger@npm:3.0.1"
+  dependencies:
+    ev-emitter: ^2.0.0
+  checksum: c7dcfca17bfc49c1ef1f7006bb7c56cc4a03a82e7c0e1f14c10f0e2172b1fac796df1b9274c7312fded167fe9987e20d45b86599d9344a2d861c8aaa7f361cba
   languageName: node
   linkType: hard
 
