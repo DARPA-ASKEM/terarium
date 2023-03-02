@@ -133,14 +133,9 @@ const queryStore = useQueryStore();
 const resources = useResourcesStore();
 
 const { searchByExampleOptions, searchByExampleItem } = useSearchByExampleOptions();
-// const searchByExampleOptions = computed(() => {
-// 	console.log('compute');
-// 	return getSearchByExampleOptions()
-// });
 const dataItems = ref<SearchResults[]>([]);
 const dataItemsUnfiltered = ref<SearchResults[]>([]);
 const selectedSearchItems = ref<ResultType[]>([]);
-// const searchByExampleItem = ref<ResultType | null>(null);
 const executeSearchByExample = ref(false);
 const previewItem = ref<ResultType | null>(null);
 const searchTerm = ref('');
@@ -371,7 +366,6 @@ const disableSearchByExample = () => {
 };
 
 const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
-	console.log(searchOptions);
 	// user has requested a search by example, so re-fetch data
 	dirtyResults.value[resourceType.value] = true;
 

@@ -32,7 +32,7 @@
 				icon="pi pi-file"
 				@click="isSearchByExampleVisible = !isSearchByExampleVisible"
 				:active="isSearchByExampleVisible"
-			></Button>
+			/>
 		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
 			<header>
@@ -97,7 +97,7 @@
 					/>
 					<label for="relatedContent">MODELS AND<br />DATASETS</label>
 				</div>
-				<Button label="SEARCH" @click="initiateSearchByExample()"></Button>
+				<Button label="SEARCH" @click="initiateSearchByExample()" />
 			</footer>
 		</section>
 	</section>
@@ -396,38 +396,7 @@ i {
 	color: var(--text-color-subdued);
 }
 
-footer :deep(.field-checkbox) {
-	margin-bottom: 0;
-}
-
 h4 {
-	font-weight: 600;
+	font-weight: var(--font-weight-semibold);
 }
-
-/* .search-option-buttons {
-	height: 3rem;
-	border: solid 1px var(--surface-border);
-	border-top-right-radius: 1.5rem;
-	border-bottom-right-radius: 1.5rem;
-	border-left: none;
-	display: flex;
-	align-items: center;
-	padding-right: 1rem;
-} */
-
-/* 
-.pi-history {
-	color: var(--text-color-secondary);
-}
-
-.pi-image {
-	color: var(--text-color-secondary);
-	margin-left: 1rem;
-}
-
-.pi-image:hover {
-	color: var(--text-color-primary);
-	cursor: pointer;
-} 
-*/
 </style>
