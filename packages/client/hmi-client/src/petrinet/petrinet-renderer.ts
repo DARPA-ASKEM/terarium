@@ -64,6 +64,14 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.append('text')
 			.attr('y', -5)
 			.text((d) => d.label);
+
+		selection
+			.append('circle')
+			.classed('vim-vim', true)
+			.attr('cx', 40)
+			.attr('cy', 40)
+			.attr('r', 15)
+			.attr('fill', '#000');
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -113,7 +121,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
-			if (!event.sourceEvent.shiftKey) return;
+			if (!this.customDrag) return;
 			sourceData = selection.datum();
 			start.x = sourceData.x + 0.5 * sourceData.width;
 			start.y = sourceData.y + 0.5 * sourceData.height;
@@ -123,7 +131,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			'node-drag-move',
 			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
 				this.updateMultiEdgeLabels();
-				if (!event.sourceEvent.shiftKey) return;
+				if (!this.customDrag) return;
 				const pointerCoords = d3
 					.zoomTransform(svg.node() as Element)
 					.invert(d3.pointer(event, svg.node()));
@@ -150,9 +158,9 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			}
 		);
 
-		this.on('node-drag-end', (_eventName, event /* _selection: D3SelectionINode<NodeData> */) => {
+		this.on('node-drag-end', (/* eventName, event, selection: D3SelectionINode<NodeData> */) => {
 			chart?.selectAll('.new-edge').remove();
-			if (!event.sourceEvent.shiftKey) return;
+			if (!this.customDrag) return;
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
 				sourceData = null;

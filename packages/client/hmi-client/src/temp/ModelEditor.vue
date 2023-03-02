@@ -710,7 +710,8 @@ onMounted(async () => {
 		el: playground,
 		useAStarRouting: false, // People get distracted with squiggly connectors - Jan 2023
 		runLayout: runDagreLayout,
-		useStableZoomPan: true
+		useStableZoomPan: true,
+		dragSelector: 'vim-vim'
 	});
 
 	renderer.on('background-click', () => {

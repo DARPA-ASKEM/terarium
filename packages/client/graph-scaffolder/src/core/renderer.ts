@@ -27,6 +27,9 @@ export interface Options {
 
 	// Whether to show grid
 	useGrid?: boolean;
+
+	// The css class for custom dragging event
+	dragSelector?: string;
 }
 
 export const pathFn = d3
@@ -67,6 +70,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 	zoom: d3.ZoomBehavior<Element, unknown> | null = null;
 
 	zoomTransformObject: d3.ZoomTransform | null = null;
+
+	customDrag = false;
 
 	constructor(options: Options) {
 		super(); // Event emitter
@@ -410,6 +415,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		let sufficientlyMoved = false;
 
+		const dragSelector = this.options.dragSelector || null;
+
 		function collisionFn(p: IPoint) {
 			const buffer = 10;
 			for (let i = 0; i < nodes.length; i++) {
@@ -429,13 +436,16 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			return false;
 		}
 
-		function nodeDragStart(evt: any): void {
+		function nodeDragStart(evt: d3.D3DragEvent<any, any, any>): void {
 			evt.sourceEvent.stopPropagation();
 
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
 
-			if (evt.sourceEvent.shiftKey) {
+			renderer.customDrag = (dragSelector &&
+				d3.select(evt.sourceEvent.target).classed(dragSelector)) as boolean;
+
+			if (renderer.customDrag) {
 				emitWrapper('node-drag-start', evt, node, renderer);
 				return;
 			}
@@ -450,7 +460,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			const dy = evt.dy;
 
 			if (!node) return;
-			if (evt.sourceEvent.shiftKey) {
+
+			if (renderer.customDrag) {
 				emitWrapper('node-drag-move', evt, node, renderer);
 				return;
 			}
@@ -484,11 +495,13 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		function nodeDragEnd(evt: any): void {
-			if (evt.sourceEvent.shiftKey) {
+			if (renderer.customDrag) {
 				emitWrapper('node-drag-end', evt, node, renderer);
+				renderer.customDrag = false;
 				return;
 			}
 
+			renderer.customDrag = false;
 			if (options.useAStarRouting && sufficientlyMoved) {
 				for (let i = 0; i < edges.length; i++) {
 					const edge = edges[i];
