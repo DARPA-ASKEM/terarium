@@ -3,7 +3,6 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { select, scaleOrdinal } from 'd3';
 import { mix } from 'chroma-js';
-import { logger } from '@/utils/logger';
 import ResponsiveMatrix from '@/components/responsive-matrix/matrix.vue';
 import { CellData } from '@/types/ResponsiveMatrix';
 
@@ -35,7 +34,7 @@ watch(
 		if (!assetId) return;
 
 		// FIXME: siwtch to different simulation run result
-		logger.info(`simulation run id changed to ${assetId}`);
+		console.log(`simulation run id changed to ${assetId}`);
 	},
 	{ immediate: true }
 );
@@ -340,7 +339,6 @@ onMounted(() => {
 	width: 100%;
 	padding: 10px;
 	background: var(--surface-ground);
-	margin: 10px;
 }
 
 .result {

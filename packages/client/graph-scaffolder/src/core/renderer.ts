@@ -10,7 +10,7 @@ type AsyncFunction<A, O> = (args: A) => Promise<O>;
 type AsyncLayoutFunction<V, E> = AsyncFunction<IGraph<V, E>, IGraph<V, E>>;
 type LayoutFunction<V, E> = (args: IGraph<V, E>) => IGraph<V, E>;
 
-interface Options {
+export interface Options {
 	el?: HTMLDivElement | null;
 	runLayout: AsyncLayoutFunction<any, any> | LayoutFunction<any, any>;
 
@@ -175,10 +175,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		this.chart?.selectAll('.node-ui').call(this.enableNodeInteraction as any, this);
 		this.enableSVGInteraction(this);
 
-		// Enable dragging nodes
 		this.enableNodeDragging(this);
 
 		this.isGraphDirty = false;
+
+		this.postRenderProcess();
 	}
 
 	updateEdgePoints(): void {
@@ -433,9 +434,13 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
+
+			if (evt.sourceEvent.shiftKey) {
+				emitWrapper('node-drag-start', evt, node, renderer);
+				return;
+			}
 			const childrenNodes = node.selectAll('.node') as D3SelectionINode<V>;
 			nodeDraggingIds = [node.datum().id, ...childrenNodes.data().map((d) => d.id)];
-
 			sufficientlyMoved = false;
 			emitWrapper('node-drag-start', evt, node, renderer);
 		}
@@ -445,6 +450,10 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			const dy = evt.dy;
 
 			if (!node) return;
+			if (evt.sourceEvent.shiftKey) {
+				emitWrapper('node-drag-move', evt, node, renderer);
+				return;
+			}
 
 			sufficientlyMoved = true;
 
@@ -475,6 +484,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		function nodeDragEnd(evt: any): void {
+			if (evt.sourceEvent.shiftKey) {
+				emitWrapper('node-drag-end', evt, node, renderer);
+				return;
+			}
+
 			if (options.useAStarRouting && sufficientlyMoved) {
 				for (let i = 0; i < edges.length; i++) {
 					const edge = edges[i];
@@ -507,6 +521,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	/* eslint-disable */
 	setupDefs(): void {}
+	postRenderProcess(): void {}
 
 	// Need to implement
 	abstract setupNodes(): void;

@@ -29,6 +29,12 @@ export default class EventEmitter {
 		}
 	}
 
+	removeAllEvents(eventName: EventName): void {
+		if (this.listeners.has(eventName)) {
+			this.listeners.delete(eventName);
+		}
+	}
+
 	emit(eventName: EventName, ...args: any[]): boolean {
 		const fns = this.listeners.get(eventName);
 		if (!fns) return false;

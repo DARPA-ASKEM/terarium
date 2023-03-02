@@ -161,4 +161,8 @@ export default defineComponent({
 .facet-pointer {
 	cursor: pointer;
 }
+
+.facet-font {
+	font-family: var(--font-family);
+}
 </style>
