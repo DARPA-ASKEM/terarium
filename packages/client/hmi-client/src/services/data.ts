@@ -314,7 +314,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		const newFacets: Facets = getDocumentFacets(returnResults);
 		results.allDataFilteredWithFacets = {
 			results: returnResults,
-			xddExtractions: xddResults.xddExtractions,
+			xddExtractions: xddResults?.xddExtractions,
 			searchSubsystem: resourceType,
 			facets: newFacets,
 			rawConceptFacets: conceptFacets
@@ -604,10 +604,10 @@ const fetchData = async (
 
 	if (resourceType) {
 		if (
-			searchParam?.xdd?.similar_search_enabled ||
-			searchParam?.xdd?.related_search_enabled ||
-			searchParam?.model?.related_search_enabled ||
-			searchParam?.dataset?.related_search_enabled
+			searchParam?.[AssetType.DOCUMENT]?.similar_search_enabled ||
+			searchParam?.[AssetType.DOCUMENT]?.related_search_enabled ||
+			searchParam?.[AssetType.MODEL]?.related_search_enabled ||
+			searchParam?.[AssetType.DATASET]?.related_search_enabled
 		) {
 			let relatedArtifacts: ResultType[] = [];
 			//
@@ -619,11 +619,11 @@ const fetchData = async (
 
 			// are we executing a search-by-example
 			// (i.e., to find similar documents or related artifacts for a given document)?
-			if (searchParam.xdd && searchParam?.xdd.dataset) {
-				if (searchParam?.xdd.similar_search_enabled) {
+			if (searchParam?.[AssetType.DOCUMENT] && searchParam?.[AssetType.DOCUMENT].dataset) {
+				if (searchParam?.[AssetType.DOCUMENT].similar_search_enabled) {
 					const relatedDocuments = await getRelatedDocuments(
-						searchParam?.xdd.related_search_id as string,
-						searchParam?.xdd.dataset
+						searchParam?.[AssetType.DOCUMENT].related_search_id as string,
+						searchParam?.[AssetType.DOCUMENT].dataset
 					);
 					const similarDocumentsSearchResults = {
 						results: relatedDocuments,
@@ -632,16 +632,16 @@ const fetchData = async (
 					finalResponse.allData.push(similarDocumentsSearchResults);
 					finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
 				}
-				if (searchParam?.xdd.related_search_enabled) {
+				if (searchParam?.[AssetType.DOCUMENT].related_search_enabled) {
 					// FIXME:
-					//   searchParam?.xdd.related_search_id will be equal to a document docid/gddid which is an xDD ID
+					//   searchParam?.[AssetType.DOCUMENT].related_search_id will be equal to a document docid/gddid which is an xDD ID
 					//   However, getRelatedArtifacts expects an ID that represents the internal ID for TDS artifacts
 					//   which we do not have at the moment. Furthermore, there is no guarantee that such as TDS-compatible ID for the given document would exist becuase documents are external artifact by definition.
 					//
 					//   One way to simplify the issue is to query the /external/documents API path to search TDS for the internal artifact ID for a given xDD document using the document gddid/docid as input.
 					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
-						searchParam?.xdd.related_search_id as string,
+						searchParam?.[AssetType.DOCUMENT].related_search_id as string,
 						ProvenanceType.Document
 					);
 				}
@@ -649,18 +649,18 @@ const fetchData = async (
 
 			// are we executing a search-by-example
 			// (i.e., to find related artifacts for a given model)?
-			if (searchParam?.model && searchParam?.model.related_search_id) {
+			if (searchParam?.[AssetType.MODEL] && searchParam?.[AssetType.MODEL].related_search_id) {
 				relatedArtifacts = await getRelatedArtifacts(
-					searchParam?.model.related_search_id,
+					searchParam?.[AssetType.MODEL].related_search_id,
 					ProvenanceType.Model
 				);
 			}
 
 			// are we executing a search-by-example
 			// (i.e., to find related artifacts for a given dataset)?
-			if (searchParam?.dataset && searchParam?.dataset.related_search_id) {
+			if (searchParam?.[AssetType.DATASET] && searchParam?.[AssetType.DATASET].related_search_id) {
 				relatedArtifacts = await getRelatedArtifacts(
-					searchParam?.dataset.related_search_id,
+					searchParam?.[AssetType.DATASET].related_search_id,
 					ProvenanceType.Dataset
 				);
 			}

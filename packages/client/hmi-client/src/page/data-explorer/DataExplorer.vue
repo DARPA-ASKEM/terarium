@@ -266,30 +266,30 @@ const executeSearch = async () => {
 		//
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
-		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
+		if (isDocument(searchByExampleItem.value) && searchParams[AssetType.DOCUMENT]) {
 			if (searchByExampleOptions.value.similarContent) {
-				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
+				searchParams[AssetType.DOCUMENT].similar_search_enabled = executeSearchByExample.value;
 			}
 			if (searchByExampleOptions.value.relatedContent) {
-				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
+				searchParams[AssetType.DOCUMENT].related_search_enabled = executeSearchByExample.value;
 			}
-			searchParams.xdd.related_search_id = id;
+			searchParams[AssetType.DOCUMENT].related_search_id = id;
 			searchType = AssetType.DOCUMENT;
 		}
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isModel(searchByExampleItem.value) && searchParams.model) {
-			searchParams.model.related_search_enabled = executeSearchByExample.value;
-			searchParams.model.related_search_id = id;
+		if (isModel(searchByExampleItem.value) && searchParams[AssetType.MODEL]) {
+			searchParams[AssetType.MODEL].related_search_enabled = executeSearchByExample.value;
+			searchParams[AssetType.MODEL].related_search_id = id;
 			searchType = AssetType.MODEL;
 		}
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
-			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
-			searchParams.dataset.related_search_id = id;
+		if (isDataset(searchByExampleItem.value) && searchParams[AssetType.DATASET]) {
+			searchParams[AssetType.DATASET].related_search_enabled = executeSearchByExample.value;
+			searchParams[AssetType.DATASET].related_search_id = id;
 			searchType = AssetType.DATASET;
 		}
 	}
@@ -340,9 +340,9 @@ const executeSearch = async () => {
 	}
 
 	// update search parameters object
-	searchParamsWithFacetFilters.xdd = xddSearchParams;
-	searchParamsWithFacetFilters.model = modelSearchParams;
-	searchParamsWithFacetFilters.dataset = datasetSearchParams;
+	searchParamsWithFacetFilters[AssetType.DOCUMENT] = xddSearchParams;
+	searchParamsWithFacetFilters[AssetType.MODEL] = modelSearchParams;
+	searchParamsWithFacetFilters[AssetType.DATASET] = datasetSearchParams;
 
 	// fetch the data
 	const { allData, allDataFilteredWithFacets } = await fetchData(
