@@ -28,7 +28,7 @@ import { computed, PropType } from 'vue';
 import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
 
-import { Facets, FacetBucket, ResourceType } from '@/types/common';
+import { Facets, FacetBucket, AssetType } from '@/types/common';
 import { getFacetsDisplayNames } from '@/utils/facets';
 
 const props = defineProps({
@@ -42,7 +42,7 @@ const props = defineProps({
 	},
 	resultType: {
 		type: String,
-		default: ResourceType.ALL
+		default: AssetType.ALL
 	}
 });
 

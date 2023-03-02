@@ -86,7 +86,7 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult.vue';
 import CodeComponent from '@/page/project/components/CodeView.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
-import { Tab, ResourceType, Annotation } from '@/types/common';
+import { Tab, AssetType, Annotation } from '@/types/common';
 import { isEmpty } from 'lodash';
 import { useTabStore } from '@/stores/tabs';
 import Textarea from 'primevue/textarea';
@@ -157,7 +157,7 @@ function removeClosedTab(tabIndexToRemove: number) {
 const fetchAnnotations = async () => {
 	const response = await API.get('/annotations', {
 		params: {
-			artifact_type: ResourceType.XDD,
+			artifact_type: AssetType.DOCUMENT,
 			artifact_id: props.assetId
 		}
 	});
@@ -171,7 +171,7 @@ const addAnnotation = async () => {
 	await API.post('/annotations', {
 		content,
 		artifact_id: props.assetId,
-		artifact_type: ResourceType.XDD
+		artifact_type: AssetType.DOCUMENT
 	});
 	annotationContent.value = '';
 

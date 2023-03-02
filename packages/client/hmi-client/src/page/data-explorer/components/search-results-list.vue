@@ -35,7 +35,7 @@
 				:asset="(asset as DocumentType & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
-				:resourceType="(resultType as ResourceType)"
+				:resourceType="(resultType as AssetType)"
 				:searchTerm="searchTerm"
 				@toggle-selected-asset="updateSelection(asset)"
 				@toggle-asset-preview="togglePreview(asset)"
@@ -51,7 +51,7 @@ import { DocumentType } from '@/types/Document';
 import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { Facets, SearchResults, ResourceType, ResultType } from '@/types/common';
+import { Facets, SearchResults, AssetType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import SearchItem from './search-item.vue';
@@ -71,7 +71,7 @@ const props = defineProps({
 	},
 	resultType: {
 		type: String,
-		default: ResourceType.ALL
+		default: AssetType.ALL
 	},
 	searchTerm: {
 		type: String,
@@ -116,7 +116,7 @@ const filteredAssets = computed(() => {
 	const searchResults = props.dataItems.find((res) => res.searchSubsystem === props.resultType);
 
 	if (searchResults) {
-		if (props.resultType === ResourceType.XDD) {
+		if (props.resultType === AssetType.DOCUMENT) {
 			let documentsFromExtractions: DocumentType[] = [];
 
 			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
@@ -148,7 +148,7 @@ const filteredAssets = computed(() => {
 
 			return [...documentsFromExtractions, ...documentSearchResults];
 		}
-		if (props.resultType === ResourceType.MODEL || props.resultType === ResourceType.DATASET) {
+		if (props.resultType === AssetType.MODEL || props.resultType === AssetType.DATASET) {
 			return searchResults.results;
 		}
 	}
@@ -157,7 +157,7 @@ const filteredAssets = computed(() => {
 
 const resultsCount = computed(() => {
 	let total = 0;
-	if (props.resultType === ResourceType.ALL) {
+	if (props.resultType === AssetType.ALL) {
 		// count the results from all subsystems
 		props.dataItems.forEach((res) => {
 			const count = res?.hits ?? res?.results.length;

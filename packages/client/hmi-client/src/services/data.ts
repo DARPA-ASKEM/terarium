@@ -2,7 +2,7 @@ import { cloneDeep, uniq, uniqBy, isEmpty } from 'lodash';
 import {
 	Facets,
 	FullSearchResults,
-	ResourceType,
+	AssetType,
 	ResultType,
 	SearchParameters,
 	SearchResults
@@ -51,14 +51,14 @@ const getXDDDictionaries = async () => {
 
 const filterAssets = <T extends Model | Dataset>(
 	allAssets: T[],
-	resourceType: ResourceType,
+	resourceType: AssetType,
 	conceptFacets: ConceptFacets | null,
 	term: string
 ) => {
 	if (term.length > 0) {
 		// simulate applying filters
 		const AssetFilterAttributes: string[] =
-			resourceType === ResourceType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
+			resourceType === AssetType.MODEL ? MODEL_FILTER_FIELDS : DATASET_FILTER_FIELDS; // maybe turn into switch case when other resource types have to go through here
 
 		let finalAssets: T[] = [];
 
@@ -95,7 +95,7 @@ const filterAssets = <T extends Model | Dataset>(
 
 interface GetAssetsParams {
 	term: string;
-	resourceType: ResourceType;
+	resourceType: AssetType;
 	searchParam: ModelSearchParams & DatasetSearchParams & XDDSearchParams;
 }
 
@@ -113,15 +113,15 @@ const getAssets = async (params: GetAssetsParams) => {
 	let xddResults;
 
 	switch (resourceType) {
-		case ResourceType.MODEL:
+		case AssetType.MODEL:
 			assetList = (await getAllModelDescriptions()) || ([] as Model[]);
 			projectAssetType = ProjectAssetTypes.MODELS;
 			break;
-		case ResourceType.DATASET:
+		case AssetType.DATASET:
 			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
 			projectAssetType = ProjectAssetTypes.DATASETS;
 			break;
-		case ResourceType.XDD:
+		case AssetType.DOCUMENT:
 			// @ts-ignore
 			xddResults =
 				(await searchXDDDocuments(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
@@ -153,21 +153,21 @@ const getAssets = async (params: GetAssetsParams) => {
 	// This is going to calculate facets aggregations from the list of results
 
 	let assetResults =
-		resourceType === ResourceType.XDD
+		resourceType === AssetType.DOCUMENT
 			? allAssets
 			: filterAssets(allAssets, resourceType, conceptFacets, term);
 
 	let assetFacets: Facets;
 	switch (resourceType) {
-		case ResourceType.MODEL:
+		case AssetType.MODEL:
 			assetResults = assetResults as Model[];
 			assetFacets = getModelFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
-		case ResourceType.DATASET:
+		case AssetType.DATASET:
 			assetResults = assetResults as Dataset[];
 			assetFacets = getDatasetFacets(assetResults, conceptFacets); // will be moved to HMI server - keep this for now
 			break;
-		case ResourceType.XDD:
+		case AssetType.DOCUMENT:
 			assetResults = assetResults as DocumentType[];
 			assetFacets = getDocumentFacets(assetResults); // will be moved to HMI server - keep this for now
 			break;
@@ -183,7 +183,7 @@ const getAssets = async (params: GetAssetsParams) => {
 	};
 
 	// apply facet filters
-	if (resourceType === ResourceType.MODEL || resourceType === ResourceType.DATASET) {
+	if (resourceType === AssetType.MODEL || resourceType === AssetType.DATASET) {
 		// Filtering for model/dataset data
 		if (searchParam && searchParam.filters && !isEmpty(searchParam?.filters?.clauses)) {
 			// modelSearchParam currently represent facets filters that can be applied
@@ -259,10 +259,10 @@ const getAssets = async (params: GetAssetsParams) => {
 			// This is going to calculate facets aggregations from the list of results
 			let assetFacetsFiltered: Facets;
 			switch (resourceType) {
-				case ResourceType.MODEL:
+				case AssetType.MODEL:
 					assetFacetsFiltered = getModelFacets(assetResults as Model[], conceptFacets);
 					break;
-				case ResourceType.DATASET:
+				case AssetType.DATASET:
 					assetFacetsFiltered = getDatasetFacets(assetResults as Dataset[], conceptFacets);
 					break;
 				default:
@@ -278,7 +278,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		} else {
 			results.allDataFilteredWithFacets = results.allData;
 		}
-	} else if (resourceType === ResourceType.XDD) {
+	} else if (resourceType === AssetType.DOCUMENT) {
 		// Filtering for Documents
 		const allResults = assetResults as DocumentType[];
 		let returnResults = allResults;
@@ -519,7 +519,7 @@ const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams
 			results: documents,
 			facets: formattedFacets,
 			xddExtractions: extractionsSearchResults,
-			searchSubsystem: ResourceType.XDD,
+			searchSubsystem: AssetType.DOCUMENT,
 			hits,
 			hasMore: scrollId !== null && scrollId !== '',
 			nextPage
@@ -528,7 +528,7 @@ const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams
 
 	return {
 		results: [] as DocumentType[],
-		searchSubsystem: ResourceType.XDD,
+		searchSubsystem: AssetType.DOCUMENT,
 		hits: 0
 	};
 };
@@ -565,7 +565,7 @@ const getBulkDocuments = async (docIDs: string[]) => {
 
 const fetchResource = async (
 	term: string,
-	resourceType: ResourceType,
+	resourceType: AssetType,
 	searchParamWithFacetFilters?: SearchParameters
 ): Promise<FullSearchResults> =>
 	// eslint-disable-next-line no-async-promise-executor
@@ -627,7 +627,7 @@ const fetchData = async (
 					);
 					const similarDocumentsSearchResults = {
 						results: relatedDocuments,
-						searchSubsystem: ResourceType.XDD
+						searchSubsystem: AssetType.DOCUMENT
 					};
 					finalResponse.allData.push(similarDocumentsSearchResults);
 					finalResponse.allDataFilteredWithFacets.push(similarDocumentsSearchResults);
@@ -673,7 +673,7 @@ const fetchData = async (
 				const relatedModels = relatedArtifacts.filter((a) => isModel(a));
 				const relatedModelsSearchResults: SearchResults = {
 					results: relatedModels,
-					searchSubsystem: ResourceType.MODEL
+					searchSubsystem: AssetType.MODEL
 				};
 				finalResponse.allData.push(relatedModelsSearchResults);
 				finalResponse.allDataFilteredWithFacets.push(relatedModelsSearchResults);
@@ -684,7 +684,7 @@ const fetchData = async (
 				const relatedDatasets = relatedArtifacts.filter((a) => isDataset(a));
 				const relatedDatasetSearchResults: SearchResults = {
 					results: relatedDatasets,
-					searchSubsystem: ResourceType.DATASET
+					searchSubsystem: AssetType.DATASET
 				};
 				finalResponse.allData.push(relatedDatasetSearchResults);
 				finalResponse.allDataFilteredWithFacets.push(relatedDatasetSearchResults);
@@ -695,7 +695,7 @@ const fetchData = async (
 				const relatedDocuments = relatedArtifacts.filter((a) => isDocument(a));
 				const relatedDocumentsSearchResults: SearchResults = {
 					results: relatedDocuments,
-					searchSubsystem: ResourceType.XDD
+					searchSubsystem: AssetType.DOCUMENT
 				};
 				finalResponse.allData.push(relatedDocumentsSearchResults);
 				finalResponse.allDataFilteredWithFacets.push(relatedDocumentsSearchResults);
@@ -707,16 +707,14 @@ const fetchData = async (
 		//
 		// normal search flow continue here
 		//
-		if (resourceType === ResourceType.ALL) {
-			Object.entries(ResourceType).forEach(async ([key]) => {
-				if (ResourceType[key] !== ResourceType.ALL) {
-					promiseList.push(fetchResource(term, ResourceType[key], searchParamWithFacetFilters));
+		if (resourceType === AssetType.ALL) {
+			Object.entries(AssetType).forEach(async ([key]) => {
+				if (AssetType[key] !== AssetType.ALL) {
+					promiseList.push(fetchResource(term, AssetType[key], searchParamWithFacetFilters));
 				}
 			});
-		} else if ((<any>Object).values(ResourceType).includes(resourceType)) {
-			promiseList.push(
-				fetchResource(term, resourceType as ResourceType, searchParamWithFacetFilters)
-			);
+		} else if ((<any>Object).values(AssetType).includes(resourceType)) {
+			promiseList.push(fetchResource(term, resourceType as AssetType, searchParamWithFacetFilters));
 		}
 	}
 

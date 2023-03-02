@@ -20,7 +20,7 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:showSuggestions="resourceType === ResourceType.XDD"
+			:showSuggestions="resourceType === AssetType.DOCUMENT"
 			@query-changed="updateRelatedTerms"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -58,7 +58,7 @@ import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
-import { ResourceType } from '@/types/common';
+import { AssetType } from '@/types/common';
 import { IProject } from '@/types/Project';
 import { MenuItem } from 'primevue/menuitem';
 

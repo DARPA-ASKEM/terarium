@@ -19,17 +19,21 @@ export enum ViewType {
 	GRAPH = 'graph'
 }
 
-export enum ResourceType {
-	XDD = 'xdd',
+export enum AssetType {
+	DOCUMENT = 'document',
 	MODEL = 'model',
 	DATASET = 'dataset',
+	INTERMEDIATE = 'intermediate',
+	SIMULATION_PLAN = 'simulation plan',
+	SIMULATION_RUN = 'simulation run',
+	CODE = 'code',
 	ALL = 'all'
 }
 
 export type SearchParameters = {
-	[ResourceType.XDD]?: XDDSearchParams;
-	[ResourceType.MODEL]?: ModelSearchParams;
-	[ResourceType.DATASET]?: DatasetSearchParams;
+	[AssetType.DOCUMENT]?: XDDSearchParams;
+	[AssetType.MODEL]?: ModelSearchParams;
+	[AssetType.DATASET]?: DatasetSearchParams;
 };
 
 export type ResultType = Model | Dataset | DocumentType;

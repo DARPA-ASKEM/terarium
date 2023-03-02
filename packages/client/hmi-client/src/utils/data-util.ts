@@ -1,4 +1,4 @@
-import { ResourceType, ResultType } from '@/types/common';
+import { AssetType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model, FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
@@ -12,18 +12,14 @@ import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
 
-export const applyFacetFilters = <T>(
-	results: T[],
-	filters: Filters,
-	resourceType: ResourceType
-) => {
+export const applyFacetFilters = <T>(results: T[], filters: Filters, resourceType: AssetType) => {
 	if (isEmpty(filters) || isEmpty(results)) {
 		return;
 	}
 
 	const { clauses } = filters;
 	const ASSET_FACET_FIELDS: string[] =
-		resourceType === ResourceType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
+		resourceType === AssetType.MODEL ? MODEL_FACET_FIELDS : DATASET_FACET_FIELDS;
 
 	clauses.forEach((clause) => {
 		const filterField: string = clause.field; // the field to filter on
@@ -45,13 +41,13 @@ export const applyFacetFilters = <T>(
 	});
 };
 
-export const getResourceTypeIcon = (type: string) => {
+export const getAssetTypeIcon = (type: string) => {
 	switch (type) {
-		case ResourceType.MODEL:
+		case AssetType.MODEL:
 			return IconMachineLearningModel20;
-		case ResourceType.DATASET:
+		case AssetType.DATASET:
 			return IconTableSplit20;
-		case ResourceType.XDD:
+		case AssetType.DOCUMENT:
 			return IconDocumentBlank20;
 		default:
 			return IconDocument20;

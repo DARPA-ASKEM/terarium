@@ -20,24 +20,24 @@
 			<span class="p-buttonset">
 				<Button
 					class="p-button-secondary p-button-sm"
-					:active="resourceType === ResourceType.XDD"
+					:active="resourceType === AssetType.DOCUMENT"
 					label="Documents"
 					icon="pi pi-file"
-					@click="updateResultType(ResourceType.XDD)"
+					@click="updateResultType(AssetType.DOCUMENT)"
 				/>
 				<Button
 					class="p-button-secondary p-button-sm"
-					:active="resourceType === ResourceType.MODEL"
+					:active="resourceType === AssetType.MODEL"
 					label="Models"
 					icon="pi pi-share-alt"
-					@click="updateResultType(ResourceType.MODEL)"
+					@click="updateResultType(AssetType.MODEL)"
 				/>
 				<Button
 					class="p-button-secondary p-button-sm"
-					:active="resourceType === ResourceType.DATASET"
+					:active="resourceType === AssetType.DATASET"
 					label="Datasets"
 					icon="pi pi-database"
-					@click="updateResultType(ResourceType.DATASET)"
+					@click="updateResultType(AssetType.DATASET)"
 				/>
 			</span>
 		</div>
@@ -102,7 +102,7 @@ import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
-	ResourceType,
+	AssetType,
 	ResultType,
 	SearchByExampleOptions,
 	SearchParameters,
@@ -156,7 +156,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
 //
-const resourceType = ref<ResourceType>(ResourceType.XDD);
+const resourceType = ref<AssetType>(AssetType.DOCUMENT);
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
@@ -164,7 +164,7 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
 const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
-	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+	resourceType.value === AssetType.DOCUMENT ? resources.xddDataset : 'TERArium'
 );
 
 const sliderWidth = computed(() =>
@@ -239,10 +239,10 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		[ResourceType.XDD]: {
+		[AssetType.DOCUMENT]: {
 			dict: dictNames.value,
 			dataset:
-				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
+				xddDataset.value === AssetType.ALL || xddDataset.value === 'TERArium'
 					? null
 					: xddDataset.value,
 			max: pageSize.value,
@@ -274,7 +274,7 @@ const executeSearch = async () => {
 				searchParams.xdd.related_search_enabled = executeSearchByExample.value;
 			}
 			searchParams.xdd.related_search_id = id;
-			searchType = ResourceType.XDD;
+			searchType = AssetType.DOCUMENT;
 		}
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
@@ -282,7 +282,7 @@ const executeSearch = async () => {
 		if (isModel(searchByExampleItem.value) && searchParams.model) {
 			searchParams.model.related_search_enabled = executeSearchByExample.value;
 			searchParams.model.related_search_id = id;
-			searchType = ResourceType.MODEL;
+			searchType = AssetType.MODEL;
 		}
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
@@ -290,7 +290,7 @@ const executeSearch = async () => {
 		if (isDataset(searchByExampleItem.value) && searchParams.dataset) {
 			searchParams.dataset.related_search_enabled = executeSearchByExample.value;
 			searchParams.dataset.related_search_id = id;
-			searchType = ResourceType.DATASET;
+			searchType = AssetType.DATASET;
 		}
 	}
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
@@ -298,7 +298,7 @@ const executeSearch = async () => {
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.[ResourceType.XDD] || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.[AssetType.DOCUMENT] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -327,14 +327,14 @@ const executeSearch = async () => {
 	});
 
 	let modelSearchParams;
-	if (searchParamsWithFacetFilters?.[ResourceType.MODEL]?.filters) {
-		modelSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+	if (searchParamsWithFacetFilters?.[AssetType.MODEL]?.filters) {
+		modelSearchParams = searchParamsWithFacetFilters[AssetType.MODEL];
 	} else {
 		modelSearchParams = { filters: clientFilters.value };
 	}
 	let datasetSearchParams;
-	if (searchParamsWithFacetFilters?.[ResourceType.DATASET]?.filters) {
-		datasetSearchParams = searchParamsWithFacetFilters[ResourceType.MODEL];
+	if (searchParamsWithFacetFilters?.[AssetType.DATASET]?.filters) {
+		datasetSearchParams = searchParamsWithFacetFilters[AssetType.MODEL];
 	} else {
 		datasetSearchParams = { filters: clientFilters.value };
 	}
@@ -449,9 +449,9 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	}
 };
 
-const updateResultType = async (newResourceType: ResourceType) => {
-	if (resourceType.value !== newResourceType) {
-		resourceType.value = newResourceType;
+const updateResultType = async (newAssetType: AssetType) => {
+	if (resourceType.value !== newAssetType) {
+		resourceType.value = newAssetType;
 
 		if (executeSearchByExample.value === false) {
 			// if no data currently exist for the selected tab,
@@ -489,7 +489,7 @@ async function executeNewQuery() {
 	disableSearchByExample();
 
 	// initially, all search results are dirty; need re-fetch
-	Object.values(ResourceType).forEach((key) => {
+	Object.values(AssetType).forEach((key) => {
 		dirtyResults.value[key as string] = true;
 	});
 
@@ -500,8 +500,8 @@ async function executeNewQuery() {
 	dirtyResults.value[resourceType.value] = false;
 }
 
-watch(resourceType, (newResourceType) => {
-	emit('resource-type-changed', newResourceType);
+watch(resourceType, (newAssetType) => {
+	emit('resource-type-changed', newAssetType);
 });
 
 // this is called whenever the user apply some facet filter(s)
@@ -531,7 +531,7 @@ onMounted(async () => {
 	xddDatasets.value = await getXDDSets();
 	if (!isEmpty(xddDatasets.value) && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
-		xddDatasets.value.push(ResourceType.ALL);
+		xddDatasets.value.push(AssetType.ALL);
 	}
 	executeNewQuery();
 });

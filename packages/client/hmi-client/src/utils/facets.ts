@@ -1,4 +1,4 @@
-import { Facets, SearchResults, FacetBucket, ResourceType } from '@/types/common';
+import { Facets, SearchResults, FacetBucket, AssetType } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import {
 	Dataset,
@@ -154,18 +154,18 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 	// return null;
 }
 
-export const getFacets = (results: SearchResults[], resultType: ResourceType | string) => {
+export const getFacets = (results: SearchResults[], resultType: AssetType | string) => {
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
-			if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {
+			if (resultsObj.searchSubsystem === resultType || resultType === AssetType.ALL) {
 				// extract facets based on the result type
 				// because we would have different facets for different result types
 				// e.g., XDD will have facets that leverage the XDD fields and stats
 				if (
-					resultsObj.searchSubsystem === ResourceType.XDD ||
-					resultsObj.searchSubsystem === ResourceType.MODEL ||
-					resultsObj.searchSubsystem === ResourceType.DATASET
+					resultsObj.searchSubsystem === AssetType.DOCUMENT ||
+					resultsObj.searchSubsystem === AssetType.MODEL ||
+					resultsObj.searchSubsystem === AssetType.DATASET
 				) {
 					facets = mergeWith(facets, resultsObj.facets, mergeCustomizer);
 				}
@@ -179,13 +179,13 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 	let hits = 0;
 
 	switch (resultType) {
-		case ResourceType.XDD:
+		case AssetType.DOCUMENT:
 			return XDD_DISPLAY_NAMES[key];
-		case ResourceType.MODEL:
+		case AssetType.MODEL:
 			return MODEL_DISPLAY_NAMES[key];
-		case ResourceType.DATASET:
+		case AssetType.DATASET:
 			return DATASET_DISPLAY_NAMES[key];
-		case ResourceType.ALL:
+		case AssetType.ALL:
 			// merge display names from all results types,
 			//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
 			//  and attempt to return the display-name based on the input key
