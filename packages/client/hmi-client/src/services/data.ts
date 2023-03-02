@@ -314,7 +314,7 @@ const getAssets = async (params: GetAssetsParams) => {
 		const newFacets: Facets = getDocumentFacets(returnResults);
 		results.allDataFilteredWithFacets = {
 			results: returnResults,
-			xddExtractions: xddResults?.xddExtractions,
+			xddExtractions: xddResults.xddExtractions,
 			searchSubsystem: resourceType,
 			facets: newFacets,
 			rawConceptFacets: conceptFacets
@@ -619,7 +619,7 @@ const fetchData = async (
 
 			// are we executing a search-by-example
 			// (i.e., to find similar documents or related artifacts for a given document)?
-			if (searchParam?.[AssetType.DOCUMENT] && searchParam?.[AssetType.DOCUMENT].dataset) {
+			if (searchParam[AssetType.DOCUMENT] && searchParam?.[AssetType.DOCUMENT].dataset) {
 				if (searchParam?.[AssetType.DOCUMENT].similar_search_enabled) {
 					const relatedDocuments = await getRelatedDocuments(
 						searchParam?.[AssetType.DOCUMENT].related_search_id as string,
