@@ -4,6 +4,7 @@
 	"version": "0.0.0",
 	"scripts": {
 		"dev": "yarn install && vite --host",
+		"local": "yarn install && vite --host --config vite.config.local.ts",
 		"build": "vue-tsc --noEmit && vite build",
 		"typecheck": "yarn workspace graph-scaffolder tsc --build && vue-tsc --noEmit",
 		"preview": "vite preview",
@@ -38,7 +39,7 @@
 		"vue3-ace-editor": "2.2.2"
 	},
 	"devDependencies": {
-		"@pinia/testing": "0.0.14",
+		"@pinia/testing": "0.0.15",
 		"@playwright/experimental-ct-vue": "1.27.1",
 		"@playwright/test": "1.27.1",
 		"@rushstack/eslint-patch": "1.2.0",

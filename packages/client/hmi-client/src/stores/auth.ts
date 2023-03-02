@@ -43,46 +43,54 @@ const useAuthStore = defineStore('auth', {
 		 * Retrieve access tokens from Keycloak
 		 */
 		async fetchSSO() {
-			// Fetch or refresh the access token
-			const response =
-				this.userToken !== null
-					? await fetch(
-							`/app/redirect_uri?refresh=/silent-check-sso.html&access_token=${this.userToken}`
-					  )
-					: await fetch('/silent-check-sso.html');
+			// In development mode, bypass Keycloak setting the user to be anonymous
+			if (import.meta.env.VITE_BYPASS_KEYCLOAK === 'true') {
+				console.log(import.meta.env);
+				this.userToken = null;
+				this.name = 'Dev User';
+				this.email = 'dev@terarium.ai';
+			} else {
+				// Fetch or refresh the access token
+				const response =
+					this.userToken !== null
+						? await fetch(
+								`/app/redirect_uri?refresh=/silent-check-sso.html&access_token=${this.userToken}`
+						  )
+						: await fetch('/silent-check-sso.html');
 
-			if (!response.ok) {
-				this.logout();
-				const error = new Error('Authentication Failed');
-				throw error;
-			}
-
-			const accessToken = response.headers.get('OIDC_access_token');
-			const expirationTimestamp =
-				+(response?.headers?.get('OIDC_access_token_expires') ?? 0) * 1000;
-
-			this.userToken = accessToken;
-
-			if (accessToken) {
-				try {
-					const tokenInfo = decode(accessToken);
-
-					this.name = tokenInfo.name;
-					this.email = tokenInfo.email;
-				} catch (error) {
-					console.error('Unable to decode authentication token for additional user information');
-					this.name = null;
-					this.email = null;
+				if (!response.ok) {
+					this.logout();
+					const error = new Error('Authentication Failed');
+					throw error;
 				}
 
-				// TODO: other info we can gather
-				// preferred_username, given_name, family_name, realm_access.roles etc
-			}
+				const accessToken = response.headers.get('OIDC_access_token');
+				const expirationTimestamp =
+					+(response?.headers?.get('OIDC_access_token_expires') ?? 0) * 1000;
 
-			const expiresIn = expirationTimestamp - new Date().getTime();
-			timer = setTimeout(() => {
-				this.autoRenew();
-			}, expiresIn);
+				this.userToken = accessToken;
+
+				if (accessToken) {
+					try {
+						const tokenInfo = decode(accessToken);
+
+						this.name = tokenInfo.name;
+						this.email = tokenInfo.email;
+					} catch (error) {
+						console.error('Unable to decode authentication token for additional user information');
+						this.name = null;
+						this.email = null;
+					}
+
+					// TODO: other info we can gather
+					// preferred_username, given_name, family_name, realm_access.roles etc
+				}
+
+				const expiresIn = expirationTimestamp - new Date().getTime();
+				timer = setTimeout(() => {
+					this.autoRenew();
+				}, expiresIn);
+			}
 		},
 		logout() {
 			this.userId = null;

@@ -6,9 +6,9 @@
 name: Client E2E Tests
 # yamllint disable-line rule:truthy
 on:
-  # schedule tests to run every day at 3pm UTC (10am eastern)
+  # schedule tests to run every day at 3pm UTC (10am eastern) monday-friday
   schedule:
-    - cron: '0 15 * * *'
+    - cron: '0 15 * * 1-5'
 
 jobs:
   e2e-tests:

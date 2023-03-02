@@ -1102,14 +1102,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pinia/testing@npm:0.0.14":
-  version: 0.0.14
-  resolution: "@pinia/testing@npm:0.0.14"
+"@pinia/testing@npm:0.0.15":
+  version: 0.0.15
+  resolution: "@pinia/testing@npm:0.0.15"
   dependencies:
     vue-demi: "*"
   peerDependencies:
-    pinia: ">=2.0.19"
-  checksum: 314dfa5f0eb8efe8055152ea1409f709c3a06614cdc15aaae8f92d424371bdaae844531358235d2ad922456c54059df96ac9da84298fd8b72be0d6a1b65459af
+    pinia: ">=2.0.31"
+  checksum: 5b328de675b39667ac9c99da5fae557ffa419fb95609a0c84b203cf828ae95754b877b3c2c9842ab5e84f021da318b686c93d243f2aa2ea34638a865f30b248c
   languageName: node
   linkType: hard
 
@@ -6726,7 +6726,7 @@ cors@latest:
   resolution: "hmi-client@workspace:packages/client/hmi-client"
   dependencies:
     "@carbon/icons-vue": 10.60.0
-    "@pinia/testing": 0.0.14
+    "@pinia/testing": 0.0.15
     "@playwright/experimental-ct-vue": 1.27.1
     "@playwright/test": 1.27.1
     "@rushstack/eslint-patch": 1.2.0

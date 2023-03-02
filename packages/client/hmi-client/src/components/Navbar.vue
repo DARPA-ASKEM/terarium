@@ -59,13 +59,13 @@ import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
 import { ResourceType } from '@/types/common';
-import { Project as ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { MenuItem } from 'primevue/menuitem';
 
 const props = defineProps<{
 	active: boolean;
-	currentProjectId: ProjectType['id'] | null;
-	projects: ProjectType[] | null;
+	currentProjectId: IProject['id'] | null;
+	projects: IProject[] | null;
 	resourceType: string;
 }>();
 

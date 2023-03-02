@@ -11,18 +11,18 @@
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
-				:label="`${facet.field.charAt(0).toUpperCase() + facet.field.slice(1)}: ${value}`"
 				:key="index"
 				icon="pi pi-filter"
 				removable
 				@remove="removeFacetValue(facet.field, facet.values, value)"
 				remove-icon="pi pi-times"
 			>
+				{{ facet.field.charAt(0).toUpperCase() + facet.field.slice(1) }}:<span>{{ value }}</span>
 			</Chip>
 		</template>
 	</div>
 	<div v-if="isLoading" class="explorer-status loading-spinner">
-		<div><i class="pi pi-spin pi-spinner" style="font-size: 5rem" /></div>
+		<div><i class="pi pi-spin pi-spinner" /></div>
 	</div>
 	<div v-else-if="resultsCount === 0" class="explorer-status">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -203,6 +203,10 @@ ul {
 	color: var(--primary-color);
 }
 
+.pi-spinner {
+	font-size: 5rem;
+}
+
 .no-results-found {
 	font-weight: var(--font-weight);
 	margin-top: 1.5rem;
@@ -236,6 +240,11 @@ ul {
 .p-chip {
 	background-color: var(--surface-section);
 	font-weight: 400;
+}
+
+.p-chip span {
+	color: var(--text-color-primary);
+	margin-left: 0.25rem;
 }
 
 .search-container {

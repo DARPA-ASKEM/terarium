@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Project, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { Resource } from '@/types/Resource';
 import ResourceCard from '@/components/resources/ResourceCard.vue';
@@ -8,7 +8,7 @@ import { RouteParamsRaw, useRouter } from 'vue-router';
 import { ref } from 'vue';
 
 const props = defineProps<{
-	project: Project | null;
+	project: IProject | null;
 	resourceRoute?: RouteName;
 	// maybe add list size later
 }>();
@@ -42,7 +42,7 @@ function updateResources() {
 					route,
 					params: {
 						projectId,
-						assetId: route === RouteName.DocumentRoute ? asset.xdd_uri : asset.id
+						assetId: route === RouteName.ProjectRoute ? asset.xdd_uri : asset.id
 					},
 					name: displayName,
 					icon,

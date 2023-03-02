@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
-import graphScaffolder, { INode } from '@graph-scaffolder/index';
+import graphScaffolder, { INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
@@ -73,6 +74,27 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.style('stroke', '#000')
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
+
+		this.updateMultiEdgeLabels();
+	}
+
+	updateMultiEdgeLabels() {
+		const selection = this.chart?.selectAll('.edge') as D3SelectionIEdge<EdgeData>;
+		const multiEdges = selection.filter((d) => (d.data && d.data.numEdges > 1) as boolean);
+		multiEdges.selectAll('.multi-edge-label').remove();
+
+		multiEdges.each((_d, index, group) => {
+			const edgeSelection = d3.select<any, IEdge<EdgeData>>(group[index]);
+			const point = pointOnPath(edgeSelection.select('path').node() as any, 0.5);
+			edgeSelection
+				.append('text')
+				.classed('multi-edge-label', true)
+				.attr('x', point.x)
+				.attr('y', point.y)
+				.attr('stroke', null)
+				.attr('fill', '#000')
+				.text((d) => d.data?.numEdges as number);
+		});
 	}
 
 	postRenderProcess() {
@@ -100,6 +122,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		this.on(
 			'node-drag-move',
 			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
+				this.updateMultiEdgeLabels();
 				if (!event.sourceEvent.shiftKey) return;
 				const pointerCoords = d3
 					.zoomTransform(svg.node() as Element)
@@ -153,7 +176,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					y: target.datum().y + target.datum().height * 0.5
 				}
 			],
-			data: { val: 1 }
+			data: { numEdges: 1 }
 		});
 		this.render();
 	}
