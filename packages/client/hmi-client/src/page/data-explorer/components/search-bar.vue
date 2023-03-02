@@ -27,12 +27,11 @@
 				</AutoComplete>
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
-			<!-- <i class="pi pi-history" title="Search history" /> -->
-			<!-- <i class="pi pi-image" title="Search by Example" @click="toggleSearchByExample" /> -->
 			<Button
-				class="p-button-secondary"
+				class="p-button-secondary search-by-example-button"
 				icon="pi pi-file"
 				@click="isSearchByExampleVisible = !isSearchByExampleVisible"
+				:active="isSearchByExampleVisible"
 			></Button>
 		</div>
 		<section v-if="isSearchByExampleVisible" class="search-by-example">
@@ -296,16 +295,21 @@ i {
 	margin-left: auto;
 }
 
+.pi.pi-times.clear-search {
+	right: 4rem;
+}
+
 .clear-search:hover {
 	background-color: var(--surface-hover);
 	padding: 0.5rem;
 	border-radius: 1rem;
 	top: 1rem;
-	right: 0.5rem;
+	right: 4rem;
 }
 
 .clear-search.hidden {
 	visibility: hidden;
+	right: 4rem;
 }
 
 .search-by-example {
@@ -343,7 +347,6 @@ i {
 
 .search-drag-drop-area {
 	height: 100%;
-	/* margin: 0 2rem 0 2rem; */
 }
 
 .search-drag-drop-area section {
@@ -361,6 +364,38 @@ i {
 	justify-content: space-between;
 }
 
+.p-button.search-by-example-button {
+	right: 4rem;
+}
+
+.p-button[active='false'].search-by-example-button,
+.p-button[active='false'].search-by-example-button:focus,
+.p-button[active='false'].search-by-example-button:enabled {
+	background-color: var(--surface-section);
+	border: 1px solid var(--surface-border);
+	color: var(--text-color-subdued);
+}
+
+.p-button[active='false'].search-by-example-button:hover {
+	background-color: var(--surface-100);
+	border: 1px solid var(--surface-border);
+	color: var(--text-color-subdued);
+}
+
+.p-button[active='true'].search-by-example-button,
+.p-button[active='true'].search-by-example-button:focus,
+.p-button[active='true'].search-by-example-button:enabled {
+	background-color: var(--surface-highlight);
+	border: 1px solid var(--surface-border);
+	color: var(--text-color-subdued);
+}
+
+.p-button[active='true'].search-by-example-button:hover {
+	background-color: var(--surface-highlight);
+	border: 1px solid var(--surface-border);
+	color: var(--text-color-subdued);
+}
+
 footer :deep(.field-checkbox) {
 	margin-bottom: 0;
 }
@@ -368,6 +403,17 @@ footer :deep(.field-checkbox) {
 h4 {
 	font-weight: 600;
 }
+
+/* .search-option-buttons {
+	height: 3rem;
+	border: solid 1px var(--surface-border);
+	border-top-right-radius: 1.5rem;
+	border-bottom-right-radius: 1.5rem;
+	border-left: none;
+	display: flex;
+	align-items: center;
+	padding-right: 1rem;
+} */
 
 /* 
 .pi-history {
