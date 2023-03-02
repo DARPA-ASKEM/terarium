@@ -138,7 +138,7 @@ const isDraggedOver = ref(false);
 const searchByExampleSelectedAsset = ref();
 const searchByExampleSelectedResourceType = ref();
 const selectedSearchByExampleOptions = ref<SearchByExampleOptions>({
-	similarContent: false,
+	similarContent: true,
 	forwardCitation: false,
 	backwardCitation: false,
 	relatedContent: false
