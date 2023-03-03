@@ -1,77 +1,79 @@
 <template>
-	<slider-panel
-		v-model:is-open="isResourcesSliderOpen"
-		content-width="300px"
-		header="Resources"
-		direction="left"
-	>
-		<template v-slot:content>
-			<tera-resource-sidebar />
-		</template>
-	</slider-panel>
-	<section>
-		<tera-tab-group
-			v-if="!isEmpty(tabs)"
-			:tabs="tabs"
-			:active-tab-index="activeTabIndex"
-			@close-tab="removeClosedTab"
-			@select-tab="openAsset"
-		/>
-		<template v-if="assetId && !isEmpty(tabs)">
-			<document
-				v-if="assetType === ProjectAssetTypes.DOCUMENTS"
-				:asset-id="assetId"
-				:previewLineLimit="10"
-				:project="resources.activeProject"
-				is-editable
+	<main>
+		<slider-panel
+			v-model:is-open="isResourcesSliderOpen"
+			content-width="300px"
+			header="Resources"
+			direction="left"
+		>
+			<template v-slot:content>
+				<tera-resource-sidebar />
+			</template>
+		</slider-panel>
+		<section>
+			<tera-tab-group
+				v-if="!isEmpty(tabs)"
+				:tabs="tabs"
+				:active-tab-index="activeTabIndex"
+				@close-tab="removeClosedTab"
+				@select-tab="openAsset"
 			/>
-			<dataset
-				v-else-if="assetType === ProjectAssetTypes.DATASETS"
-				:asset-id="assetId"
-				:project="resources.activeProject"
-				is-editable
-			/>
-			<model
-				v-else-if="assetType === ProjectAssetTypes.MODELS"
-				:asset-id="assetId"
-				:project="resources.activeProject"
-				is-editable
-			/>
-			<simulation-plan
-				v-else-if="assetType === ProjectAssetTypes.PLANS"
-				:asset-id="assetId"
-				:project="resources.activeProject"
-			/>
-			<simulation-run
-				v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-				:asset-id="assetId"
-				:project="resources.activeProject"
-			/>
-		</template>
-		<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
-		<tera-project-overview v-else :project="project" />
-	</section>
-	<slider-panel
-		class="slider"
-		content-width="300px"
-		direction="right"
-		header="Notes"
-		v-model:is-open="isNotesSliderOpen"
-	>
-		<template v-slot:content>
-			<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
-				<p class="annotation-content">{{ annotation.content }}</p>
-				<div class="annotation-footer">
-					<div>{{ annotation.username }}</div>
-					<div>{{ formatDate(annotation.timestampMillis) }}</div>
+			<template v-if="assetId && !isEmpty(tabs)">
+				<document
+					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
+					:asset-id="assetId"
+					:previewLineLimit="10"
+					:project="resources.activeProject"
+					is-editable
+				/>
+				<dataset
+					v-else-if="assetType === ProjectAssetTypes.DATASETS"
+					:asset-id="assetId"
+					:project="resources.activeProject"
+					is-editable
+				/>
+				<model
+					v-else-if="assetType === ProjectAssetTypes.MODELS"
+					:asset-id="assetId"
+					:project="resources.activeProject"
+					is-editable
+				/>
+				<simulation-plan
+					v-else-if="assetType === ProjectAssetTypes.PLANS"
+					:asset-id="assetId"
+					:project="resources.activeProject"
+				/>
+				<simulation-run
+					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
+					:asset-id="assetId"
+					:project="resources.activeProject"
+				/>
+			</template>
+			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
+			<tera-project-overview v-else :project="project" />
+		</section>
+		<slider-panel
+			class="slider"
+			content-width="300px"
+			direction="right"
+			header="Notes"
+			v-model:is-open="isNotesSliderOpen"
+		>
+			<template v-slot:content>
+				<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
+					<p class="annotation-content">{{ annotation.content }}</p>
+					<div class="annotation-footer">
+						<div>{{ annotation.username }}</div>
+						<div>{{ formatDate(annotation.timestampMillis) }}</div>
+					</div>
 				</div>
-			</div>
-			<div class="annotation-panel">
-				<Textarea v-model="annotationContent" rows="5" cols="30" aria-labelledby="annotation" />
-				<Button @click="addAnnotation()" label="Add note" />
-			</div>
-		</template>
-	</slider-panel>
+				<div class="annotation-panel">
+					<Textarea v-model="annotationContent" rows="5" cols="30" aria-labelledby="annotation" />
+					<Button @click="addAnnotation()" label="Add note" />
+				</div>
+			</template>
+		</slider-panel>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -114,7 +116,7 @@ const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
 // Associated with tab storage
-const tabContext = props.project.id.toString();
+const tabContext = props.project?.id.toString();
 const tabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 

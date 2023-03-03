@@ -9,11 +9,11 @@
 		:active="!isErrorState"
 		:current-project-id="project?.id ?? null"
 		:projects="projects"
-		:resourceType="pageRef?.resourceType"
+		:resourceType="pageRef?.resourceType ?? ResourceType.XDD"
 	/>
 	<main>
-		<router-view class="page" v-slot="{ Component }" :project="project">
-			<component ref="pageRef" :is="Component" />
+		<router-view v-slot="{ Component }">
+			<component class="page" ref="pageRef" :is="Component" :project="project" />
 		</router-view>
 	</main>
 	<footer>
@@ -31,6 +31,7 @@ import Navbar from '@/components/Navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
+import { ResourceType } from '@/types/common';
 import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
@@ -118,7 +119,6 @@ main {
 	flex: 1;
 	min-width: 0;
 	display: flex;
-	flex-direction: column;
 	flex-grow: 1;
 }
 
