@@ -9,10 +9,12 @@
 		:active="!isErrorState"
 		:current-project-id="project?.id ?? null"
 		:projects="projects"
-		:resourceType="resourceType"
+		:resourceType="pageRef?.resourceType"
 	/>
 	<main>
-		<router-view class="page" :project="project" @resource-type-changed="updateResourceType" />
+		<router-view class="page" v-slot="{ Component }" :project="project">
+			<component ref="pageRef" :is="Component" />
+		</router-view>
 	</main>
 	<footer>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
@@ -30,10 +32,8 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { useCurrentRoute } from './router/index';
-import { ResourceType } from './types/common';
 
 const toast = useToastService();
-
 /**
  * Router
  */
@@ -43,7 +43,7 @@ const currentRoute = useCurrentRoute();
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
 const resources = useResourcesStore();
-const resourceType = ref<string>(ResourceType.XDD);
+const pageRef = ref();
 
 /**
  * Project
@@ -53,10 +53,6 @@ const resourceType = ref<string>(ResourceType.XDD);
  */
 const project = shallowRef<IProject | null>(null);
 const projects = shallowRef<IProject[] | null>(null);
-
-function updateResourceType(newResourceType) {
-	resourceType.value = newResourceType;
-}
 
 API.interceptors.response.use(
 	(response) => response,

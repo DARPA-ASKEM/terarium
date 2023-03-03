@@ -66,7 +66,7 @@ const props = defineProps<{
 	active: boolean;
 	currentProjectId: IProject['id'] | null;
 	projects: IProject[] | null;
-	resourceType: string;
+	resourceType: ResourceType;
 }>();
 
 /*
@@ -142,6 +142,13 @@ function searchByExampleModalToggled() {
  */
 const currentProjectName = computed(
 	() => props.projects?.find((project) => project.id === props.currentProjectId?.toString())?.name
+);
+
+watch(
+	() => searchBarRef.value,
+	() => {
+		console.log(searchBarRef.value);
+	}
 );
 
 watch(

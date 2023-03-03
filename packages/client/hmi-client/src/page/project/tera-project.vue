@@ -6,18 +6,18 @@
 		direction="left"
 	>
 		<template v-slot:content>
-			<tera-resource-sidebar :project="project" />
+			<tera-resource-sidebar />
 		</template>
 	</slider-panel>
 	<section>
 		<tera-tab-group
-			v-if="!isEmpty(openTabs)"
-			:tabs="openTabs"
+			v-if="!isEmpty(tabs)"
+			:tabs="tabs"
 			:active-tab-index="activeTabIndex"
 			@close-tab="removeClosedTab"
 			@select-tab="openAsset"
 		/>
-		<template v-if="assetId && !isEmpty(openTabs)">
+		<template v-if="assetId && !isEmpty(tabs)">
 			<document
 				v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 				:asset-id="assetId"
@@ -114,13 +114,12 @@ const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
 // Associated with tab storage
-const tabContext = props.project?.id.toString();
-const openTabs = ref<Tab[]>([]);
+const tabContext = props.project.id.toString();
+const tabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 
 function openAsset(selectedTab?: Tab) {
-	const assetToOpen = selectedTab ??
-		openTabs.value[activeTabIndex.value] ?? { assetName: 'Overview' };
+	const assetToOpen = selectedTab ?? tabs.value[activeTabIndex.value] ?? { assetName: 'Overview' };
 
 	// if (props.assetName) // rethink on open behavior
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
@@ -128,23 +127,42 @@ function openAsset(selectedTab?: Tab) {
 
 tabStore.$subscribe((/* _mutation, _state */) => {
 	// Sync with storage, not sure why computed doesn't work for these
-	openTabs.value = tabStore.getTabs(tabContext);
+	tabs.value = tabStore.getTabs(tabContext);
 	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
-	tabStore.setTabs(tabContext, openTabs.value);
 	openAsset();
 });
-
-function addTabFromRoute() {
-	tabStore.addTab(tabContext, {
-		assetName: props.assetName || '',
-		assetId: props.assetId,
-		assetType: props.assetType
-	});
-}
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(tabContext, tabIndexToRemove);
 }
+
+const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
+
+// Start at proper route
+onMounted(() => {
+	openAsset();
+	console.log(resources.activeProject, props.project);
+});
+
+// Updates on new route
+watch(
+	() => props,
+	() => {
+		// If new name, its a new asset so add a new tab
+		if (!tabs.value.some(({ assetName }) => assetName === props.assetName) || isEmpty(tabs)) {
+			tabStore.addTab(tabContext, {
+				assetName: props.assetName || '',
+				assetId: props.assetId,
+				assetType: props.assetType
+			});
+		}
+		// Tab switch
+		else {
+			const index = tabs.value.findIndex(({ assetName }) => assetName === props.assetName);
+			tabStore.setActiveTabIndex(tabContext, index);
+		}
+	}
+);
 
 // FIXME:
 // - Need to establish terarium artifact types
@@ -173,38 +191,6 @@ const addAnnotation = async () => {
 	// Refresh
 	await fetchAnnotations();
 };
-
-const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
-
-// Start at proper route
-onMounted(() => openAsset());
-
-// Updates on new route
-watch(
-	() => props.assetName,
-	() => {
-		// If new name, its a new asset so add a new tab
-		if (
-			!openTabs.value.some(({ assetName }) => assetName === props.assetName) ||
-			isEmpty(openTabs)
-		) {
-			addTabFromRoute();
-		}
-		// Tab switch
-		else {
-			const index = openTabs.value.findIndex(({ assetName }) => assetName === props.assetName);
-			tabStore.setActiveTabIndex(tabContext, index);
-		}
-	}
-);
-
-// watch(() => openTabs.value.length, async () => {
-// 	console.log(openTabs.value.length)
-// 	if (props.assetName && isEmpty(openTabs.value)) {
-// 		await openAsset();
-// 		addTabFromRoute();
-// 	}
-// });
 </script>
 
 <style scoped>
