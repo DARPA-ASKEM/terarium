@@ -10,7 +10,6 @@
 		</template>
 	</slider-panel>
 	<section>
-		<!-- <ChromeTabs :ref="setTabRef" :tabs="openTabs" v-model="openTabs[activeTabIndex].assetName" /> -->
 		<tera-tab-group
 			v-if="!isEmpty(openTabs)"
 			:tabs="openTabs"
@@ -87,7 +86,6 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
-// import ChromeTabs from '@/components/widgets/vue3-tabs-chrome.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
 import { isEmpty } from 'lodash';
 import { useTabStore } from '@/stores/tabs';
@@ -119,30 +117,6 @@ const annotationContent = ref<string>('');
 const tabContext = props.project?.id.toString();
 const openTabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
-
-// TEST
-
-// const tabRef = ref();
-
-// const setTabRef = (el: HTMLElement) => {
-// 	tabRef.value = el
-// }
-
-// const handleAdd = () => {
-// 	const key = 'tab' + Date.now()
-// 	tabRef.value.addTab({
-// 		label: 'New Tab',
-// 		key
-// 	})
-
-// 	openTabs.value[activeTabIndex.value].assetName = key
-// }
-
-// const handleRemove = () => {
-// 	tabRef.value.removeTab(openTabs.value[activeTabIndex.value].assetName)
-// }
-
-// TEST
 
 function openAsset(selectedTab?: Tab) {
 	const assetToOpen = selectedTab ??
