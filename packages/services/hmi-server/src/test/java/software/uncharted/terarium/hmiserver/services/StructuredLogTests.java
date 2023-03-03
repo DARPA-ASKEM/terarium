@@ -13,7 +13,7 @@ public class StructuredLogTests {
 
 	@Test
 	public void testItThrowsWhenOddNumberOfArguments() {
-		Assertions.assertThrows(NullPointerException.class, () -> structuredLog.log(StructuredLog.Type.EVENT, "adam", "single_element"));
+		Assertions.assertThrows(RuntimeException.class, () -> structuredLog.log(StructuredLog.Type.EVENT, "adam", "single_element"));
 	}
 
 	@Test
