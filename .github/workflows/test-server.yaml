@@ -17,5 +17,5 @@ on:
 
 jobs:
   unit-tests:
-    name: Client Unit Tests
-    uses: ./.github/workflows/test-client-unit.yaml
+    name: Server Unit Tests
+    uses: ./.github/workflows/test-server-unit.yaml
