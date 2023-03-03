@@ -1,33 +1,24 @@
 import { DocumentType, DocumentAsset } from '@/types/Document';
+import { AssetType } from '@/types/common';
 import { Model } from './Model';
 
-export enum ProjectAssetTypes {
-	DOCUMENTS = 'publications',
-	INTERMEDIATES = 'intermediates',
-	MODELS = 'models',
-	PLANS = 'plans',
-	SIMULATION_RUNS = 'simulation_runs',
-	DATASETS = 'datasets',
-	CODE = 'code'
-}
-
 export type ProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
-	[ProjectAssetTypes.INTERMEDIATES]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.MODELS]: Model[];
-	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.DATASETS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.CODE]: any[];
+	[AssetType.DOCUMENT]: DocumentAsset[];
+	[AssetType.INTERMEDIATE]: any[]; // FIXME: add proper type
+	[AssetType.MODEL]: Model[];
+	[AssetType.SIMULATION_PLAN]: any[]; // FIXME: add proper type
+	[AssetType.SIMULATION_RUN]: any[]; // FIXME: add proper type
+	[AssetType.DATASET]: any[]; // FIXME: add proper type
+	[AssetType.CODE]: any[];
 };
 
 export type SimpleProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: (string | number)[];
-	[ProjectAssetTypes.INTERMEDIATES]: (string | number)[];
-	[ProjectAssetTypes.MODELS]: (string | number)[];
-	[ProjectAssetTypes.PLANS]: (string | number)[];
-	[ProjectAssetTypes.SIMULATION_RUNS]: (string | number)[];
-	[ProjectAssetTypes.DATASETS]: (string | number)[];
+	[AssetType.DOCUMENT]: (string | number)[];
+	[AssetType.INTERMEDIATE]: (string | number)[];
+	[AssetType.MODEL]: (string | number)[];
+	[AssetType.SIMULATION_PLAN]: (string | number)[];
+	[AssetType.SIMULATION_RUN]: (string | number)[];
+	[AssetType.DATASET]: (string | number)[];
 };
 
 export interface IProject {

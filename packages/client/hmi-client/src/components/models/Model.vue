@@ -120,9 +120,8 @@ import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import { ITypedModel, Model } from '@/types/Model';
-import { ResultType } from '@/types/common';
+import { ResultType, AssetType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
-import { ProjectAssetTypes } from '@/types/Project';
 import { ProvenanceType } from '@/types/Provenance';
 import { Dataset } from '@/types/Dataset';
 
@@ -243,7 +242,7 @@ const goToSimulationPlanPage = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetType: ProjectAssetTypes.PLANS
+			assetType: AssetType.SIMULATION_PLAN
 		}
 	});
 };

@@ -42,10 +42,10 @@
 import { computed } from 'vue';
 // import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { deleteAsset } from '@/services/project';
 import { RouteName } from '@/router/routes';
-
+import { AssetType } from '@/types/common';
 import useResourcesStore from '@/stores/resources';
 import { useRoute, useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
@@ -74,7 +74,7 @@ const resources = computed(() => {
 			key: 'New file',
 			label: 'New file',
 			data: {
-				assetType: ProjectAssetTypes.CODE
+				assetType: AssetType.CODE
 			},
 			selectable: true
 		});
@@ -90,7 +90,7 @@ const resources = computed(() => {
 					data: {
 						assetType: projectAssetTypes[i],
 						assetId:
-							projectAssetTypes[i] === ProjectAssetTypes.DOCUMENTS
+							projectAssetTypes[i] === AssetType.DOCUMENT
 								? assets[j].xdd_uri
 								: assets[j]?.id.toString()
 					},
@@ -106,10 +106,10 @@ const resources = computed(() => {
 function removeAsset() {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
 	const assetId = route.params.assetId;
-	const assetType = route.params.assetType as ProjectAssetTypes;
+	const assetType = route.params.assetType as AssetType;
 
 	const asset = storedAssets[assetType].find((a) =>
-		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id === assetId
+		assetType === AssetType.DOCUMENT ? a.xdd_uri === assetId : a.id === assetId
 	);
 
 	if (asset === undefined) {

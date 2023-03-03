@@ -11,7 +11,6 @@ import API from '@/api/api';
 import { getDatasetFacets, getModelFacets, getDocumentFacets } from '@/utils/facets';
 import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
-import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
@@ -109,17 +108,17 @@ const getAssets = async (params: GetAssetsParams) => {
 
 	// fetch list of model or datasets data from the HMI server
 	let assetList: Model[] | Dataset[] | DocumentType[] = [];
-	let projectAssetType: ProjectAssetTypes;
+	let projectAssetType: AssetType;
 	let xddResults;
 
 	switch (resourceType) {
 		case AssetType.MODEL:
 			assetList = (await getAllModelDescriptions()) || ([] as Model[]);
-			projectAssetType = ProjectAssetTypes.MODELS;
+			projectAssetType = AssetType.MODEL;
 			break;
 		case AssetType.DATASET:
 			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
-			projectAssetType = ProjectAssetTypes.DATASETS;
+			projectAssetType = AssetType.DATASET;
 			break;
 		case AssetType.DOCUMENT:
 			// @ts-ignore
@@ -127,7 +126,7 @@ const getAssets = async (params: GetAssetsParams) => {
 				(await searchXDDDocuments(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
 				([] as DocumentType[]);
 			assetList = xddResults.results;
-			projectAssetType = ProjectAssetTypes.DOCUMENTS;
+			projectAssetType = AssetType.DOCUMENT;
 			break;
 		default:
 			return results; // error or make new resource type compatible

@@ -256,8 +256,8 @@ const executeSearch = async () => {
 			additional_fields: 'title,abstract',
 			known_entities: 'url_extractions'
 		},
-		model: {},
-		dataset: {}
+		[AssetType.MODEL]: {},
+		[AssetType.DATASET]: {}
 	};
 
 	// handle the search-by-example for finding related documents, models, and/or datasets
@@ -266,7 +266,7 @@ const executeSearch = async () => {
 		//
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
-		if (isDocument(searchByExampleItem.value) && searchParams?.[AssetType.DOCUMENT]) {
+		if (isDocument(searchByExampleItem.value) && searchParams[AssetType.DOCUMENT]) {
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams[AssetType.DOCUMENT].similar_search_enabled = executeSearchByExample.value;
 			}
@@ -279,7 +279,7 @@ const executeSearch = async () => {
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isModel(searchByExampleItem.value) && searchParams?.[AssetType.MODEL]) {
+		if (isModel(searchByExampleItem.value) && searchParams[AssetType.MODEL]) {
 			searchParams[AssetType.MODEL].related_search_enabled = executeSearchByExample.value;
 			searchParams[AssetType.MODEL].related_search_id = id;
 			searchType = AssetType.MODEL;

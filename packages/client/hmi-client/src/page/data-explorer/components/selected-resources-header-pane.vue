@@ -24,10 +24,10 @@
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
-import { ResultType } from '@/types/common';
+import { ResultType, AssetType } from '@/types/common';
 import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import * as ProjectService from '@/services/project';
@@ -68,35 +68,35 @@ const addResourcesToProject = async (projectId: string) => {
 				const documentId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = ProjectAssetTypes.DOCUMENTS;
+				const assetsType = AssetType.DOCUMENT;
 				await ProjectService.addAsset(projectId, assetsType, documentId);
 
 				// update local copy of project assets
-				validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
-				resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
+				validProject.value?.assets?.[AssetType.DOCUMENT].push(documentId);
+				resources.activeProjectAssets?.[AssetType.DOCUMENT].push(body);
 			}
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.MODELS;
+			const assetsType = AssetType.MODEL;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 
 			// update local copy of project assets
-			validProject.value?.assets.models.push(modelId);
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
+			validProject.value?.assets.model.push(modelId);
+			resources.activeProjectAssets?.[AssetType.MODEL].push(selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = ProjectAssetTypes.DATASETS;
+			const assetsType = AssetType.DATASET;
 			await ProjectService.addAsset(projectId, assetsType, datasetId);
 
 			// update local copy of project assets
-			validProject.value?.assets.datasets.push(datasetId);
-			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
+			validProject.value?.assets.dataset.push(datasetId);
+			resources.activeProjectAssets?.[AssetType.DATASET].push(selectedItem);
 		}
 	});
 };

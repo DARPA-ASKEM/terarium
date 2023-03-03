@@ -19,36 +19,36 @@
 		/>
 		<template v-if="assetId && !isEmpty(openTabs)">
 			<document
-				v-if="assetType === ProjectAssetTypes.DOCUMENTS"
+				v-if="assetType === AssetType.DOCUMENT"
 				:asset-id="assetId"
 				:previewLineLimit="10"
 				:project="resources.activeProject"
 				is-editable
 			/>
 			<dataset
-				v-else-if="assetType === ProjectAssetTypes.DATASETS"
+				v-else-if="assetType === AssetType.DATASET"
 				:asset-id="assetId"
 				:project="resources.activeProject"
 				is-editable
 			/>
 			<model
-				v-else-if="assetType === ProjectAssetTypes.MODELS"
+				v-else-if="assetType === AssetType.MODEL"
 				:asset-id="assetId"
 				:project="resources.activeProject"
 				is-editable
 			/>
 			<simulation-plan
-				v-else-if="assetType === ProjectAssetTypes.PLANS"
+				v-else-if="assetType === AssetType.SIMULATION_PLAN"
 				:asset-id="assetId"
 				:project="resources.activeProject"
 			/>
 			<simulation-run
-				v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
+				v-else-if="assetType === AssetType.SIMULATION_RUN"
 				:asset-id="assetId"
 				:project="resources.activeProject"
 			/>
 		</template>
-		<code-component v-else-if="assetType === ProjectAssetTypes.CODE" />
+		<code-component v-else-if="assetType === AssetType.CODE" />
 		<tera-project-overview v-else :project="project" />
 	</section>
 	<slider-panel
@@ -92,7 +92,7 @@ import { useTabStore } from '@/stores/tabs';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import { RouteName } from '@/router/routes';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import useResourcesStore from '@/stores/resources';
 import { useRouter } from 'vue-router';
 import API from '@/api/api';
@@ -101,7 +101,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes;
+	assetType?: AssetType;
 }>();
 
 const resources = useResourcesStore();

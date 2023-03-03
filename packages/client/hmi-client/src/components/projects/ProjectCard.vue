@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import { formatDdMmmYyyy } from '@/utils/date';
+import { AssetType } from '@/types/common';
 
 defineProps<{ project: IProject }>();
 </script>
@@ -14,15 +15,15 @@ defineProps<{ project: IProject }>();
 				<div title="Contributors"><i class="pi pi-user"></i> 1</div>
 				<div title="Models">
 					<i class="pi pi-share-alt"></i>
-					{{ project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0 }}
+					{{ project?.assets?.[AssetType.MODEL]?.length ?? 0 }}
 				</div>
 				<div title="Datasets">
 					<i class="pi pi-sliders-v"></i>
-					{{ project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0 }}
+					{{ project?.assets?.[AssetType.DATASET]?.length ?? 0 }}
 				</div>
 				<div title="Papers">
 					<i class="pi pi-file"></i>
-					{{ project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0 }}
+					{{ project?.assets?.[AssetType.DOCUMENT]?.length ?? 0 }}
 				</div>
 			</header>
 		</template>

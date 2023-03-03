@@ -12,8 +12,8 @@ import { parseSimulationPlan2IGraph } from '@/services/simulation';
 import API from '@/api/api';
 import { curveBasis } from 'd3';
 import { RouteName } from '@/router/routes';
+import { AssetType } from '@/types/common';
 import { logger } from '@/utils/logger';
-import { ProjectAssetTypes } from '@/types/Project';
 
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;
@@ -139,7 +139,7 @@ const goToSimulationResultsPage = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetType: ProjectAssetTypes.SIMULATION_RUNS
+			assetType: AssetType.SIMULATION_RUN
 		}
 	});
 };

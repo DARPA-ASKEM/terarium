@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { Resource } from '@/types/Resource';
+import { AssetType } from '@/types/common';
 import ResourceCard from '@/components/resources/ResourceCard.vue';
 import useResourcesStore from '@/stores/resources';
 import { RouteParamsRaw, useRouter } from 'vue-router';
@@ -21,7 +22,7 @@ const filteredRouteMetadata: {
 	route: RouteName;
 	displayName: string;
 	icon: any;
-	projectAsset?: ProjectAssetTypes;
+	projectAsset?: AssetType;
 }[] = props.resourceRoute
 	? [{ route: props.resourceRoute, ...RouteMetadata[props.resourceRoute] }]
 	: Object.entries(RouteMetadata)
