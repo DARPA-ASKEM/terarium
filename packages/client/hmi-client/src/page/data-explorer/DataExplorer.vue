@@ -471,7 +471,6 @@ const updateAssetType = async (newResourceType: ResourceType) => {
 			}
 		}
 	}
-	// emit('resource-type-changed', newResourceType);
 };
 
 const clearItemSelected = () => {

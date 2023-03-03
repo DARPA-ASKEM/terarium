@@ -145,13 +145,6 @@ const currentProjectName = computed(
 );
 
 watch(
-	() => searchBarRef.value,
-	() => {
-		console.log(searchBarRef.value);
-	}
-);
-
-watch(
 	() => props.projects,
 	() => {
 		if (props.projects) {
