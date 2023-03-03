@@ -23,30 +23,30 @@
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 					:asset-id="assetId"
 					:previewLineLimit="10"
-					:project="resources.activeProject"
+					:project="project"
 					is-editable
 				/>
 				<dataset
 					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
-					:project="resources.activeProject"
+					:project="project"
 					is-editable
 				/>
 				<model
 					v-else-if="assetType === ProjectAssetTypes.MODELS"
 					:asset-id="assetId"
-					:project="resources.activeProject"
+					:project="project"
 					is-editable
 				/>
 				<simulation-plan
 					v-else-if="assetType === ProjectAssetTypes.PLANS"
 					:asset-id="assetId"
-					:project="resources.activeProject"
+					:project="project"
 				/>
 				<simulation-run
 					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
 					:asset-id="assetId"
-					:project="resources.activeProject"
+					:project="project"
 				/>
 			</template>
 			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
@@ -95,7 +95,6 @@ import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import { RouteName } from '@/router/routes';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import useResourcesStore from '@/stores/resources';
 import { useRouter } from 'vue-router';
 import API from '@/api/api';
 
@@ -106,7 +105,6 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes;
 }>();
 
-const resources = useResourcesStore();
 const tabStore = useTabStore();
 const router = useRouter();
 
@@ -116,7 +114,7 @@ const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
 // Associated with tab storage
-const tabContext = props.project?.id.toString();
+const projectContext = props.project?.id.toString();
 const tabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
 
@@ -129,13 +127,15 @@ function openAsset(selectedTab?: Tab) {
 
 tabStore.$subscribe((/* _mutation, _state */) => {
 	// Sync with storage, not sure why computed doesn't work for these
-	tabs.value = tabStore.getTabs(tabContext);
-	activeTabIndex.value = tabStore.getActiveTabIndex(tabContext);
+	tabs.value = tabStore.getTabs(projectContext);
+	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext);
+	tabStore.setTabs(projectContext, tabs.value); // What makes this line so special??
+	console.log(props.project, 0);
 	openAsset();
 });
 
 function removeClosedTab(tabIndexToRemove: number) {
-	tabStore.removeTab(tabContext, tabIndexToRemove);
+	tabStore.removeTab(projectContext, tabIndexToRemove);
 }
 
 const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
@@ -143,25 +143,25 @@ const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 // Start at proper route
 onMounted(() => {
 	openAsset();
-	console.log(resources.activeProject, props.project);
 });
 
 // Updates on new route
 watch(
-	() => props,
+	() => props.assetName,
 	() => {
 		// If new name, its a new asset so add a new tab
 		if (!tabs.value.some(({ assetName }) => assetName === props.assetName) || isEmpty(tabs)) {
-			tabStore.addTab(tabContext, {
+			tabStore.addTab(projectContext, {
 				assetName: props.assetName || '',
 				assetId: props.assetId,
 				assetType: props.assetType
 			});
+			console.log(props.project, 0, tabs.value, tabStore.getTabs(projectContext));
 		}
 		// Tab switch
 		else {
 			const index = tabs.value.findIndex(({ assetName }) => assetName === props.assetName);
-			tabStore.setActiveTabIndex(tabContext, index);
+			tabStore.setActiveTabIndex(projectContext, index);
 		}
 	}
 );
