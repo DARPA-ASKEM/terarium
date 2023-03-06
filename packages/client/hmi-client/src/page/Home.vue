@@ -18,7 +18,12 @@
 						<div class="chevron-right">
 							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 						</div>
-						<ul>
+						<ul v-if="isLoadingProjects">
+							<li v-for="(i, index) in [0, 1, 2, 3, 4]" class="card" :key="index">
+								<project-card :loading="true" />
+							</li>
+						</ul>
+						<ul v-else>
 							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
 								<project-card :project="project" @click="openProject(project)" />
 							</li>
@@ -42,7 +47,8 @@
 					<div class="chevron-right">
 						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 					</div>
-					<ul>
+					<ul v-if="isLoadingProjects"></ul>
+					<ul v-else>
 						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
 							<DocumentCard :document="document" @click="selectDocument(document)" />
 						</li>
@@ -136,6 +142,7 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
+const isLoadingProjects = computed(() => projects.value.length < 1);
 
 onMounted(async () => {
 	// Clear all...

@@ -3,12 +3,13 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import { formatDdMmmYyyy } from '@/utils/date';
+import Skeleton from 'primevue/skeleton';
 
-defineProps<{ project: IProject }>();
+defineProps<{ project?: IProject }>();
 </script>
 
 <template>
-	<Card>
+	<Card v-if="project">
 		<template #header>
 			<header class="project-stats">
 				<div title="Contributors"><i class="pi pi-user"></i> 1</div>
@@ -42,6 +43,36 @@ defineProps<{ project: IProject }>();
 			</div>
 		</template>
 	</Card>
+	<Card v-else>
+		<template #header>
+			<header class="project-stats skeleton">
+				<Skeleton />
+				<Skeleton />
+				<Skeleton />
+				<Skeleton />
+			</header>
+		</template>
+		<template #title>
+			<div class="project-img skeleton">
+				<Skeleton height="100%" />
+			</div>
+			<div class="project-title skeleton">
+				<Skeleton height="2rem" width="60%" />
+			</div>
+		</template>
+		<template #content>
+			<div class="project-description skeleton">
+				<Skeleton />
+				<Skeleton />
+				<Skeleton width="60%" />
+			</div>
+		</template>
+		<template #footer>
+			<div class="project-footer skeleton">
+				<Skeleton />
+			</div>
+		</template>
+	</Card>
 </template>
 
 <style scoped>
@@ -49,6 +80,12 @@ defineProps<{ project: IProject }>();
 	display: flex;
 	justify-content: space-between;
 	padding: 0 1rem 0 1rem;
+}
+
+.project-stats.skeleton {
+	gap: 1rem;
+	height: 1rem;
+	margin-top: 1rem;
 }
 
 .project-stats div {
@@ -63,13 +100,14 @@ defineProps<{ project: IProject }>();
 	border-radius: 1rem;
 	margin-bottom: 1rem;
 	transition: opacity 0.3s ease, height 0.3s ease;
-}
-
-.project-img {
 	position: relative;
 }
 
-.p-card:hover .project-img {
+.project-img.skeleton {
+	background-color: transparent;
+}
+
+.p-card:hover .project-img:not(.skeleton) {
 	opacity: 0;
 	height: 17px;
 }
@@ -81,7 +119,11 @@ defineProps<{ project: IProject }>();
 	overflow: hidden;
 }
 
-.project-description {
+.project-title.skeleton {
+	height: 100%;
+}
+
+.project-description:not(.skeleton) {
 	display: inline-block;
 	overflow: hidden;
 	opacity: 0;
@@ -91,9 +133,16 @@ defineProps<{ project: IProject }>();
 	color: var(--text-color-secondary);
 }
 
-.p-card:hover .project-description {
+.p-card:hover .project-description:not(.skeleton) {
 	opacity: 100;
 	height: 190px;
+}
+
+.project-description.skeleton {
+	height: 73px;
+	display: flex;
+	flex-direction: column;
+	row-gap: 0.5rem;
 }
 
 .project-footer {
@@ -101,6 +150,11 @@ defineProps<{ project: IProject }>();
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
+}
+
+.project-footer.skeleton {
+	align-items: flex-end;
+	height: 2rem;
 }
 
 .p-card {
