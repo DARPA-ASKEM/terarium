@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
@@ -114,9 +114,9 @@ const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
 // Associated with tab storage
-const projectContext = props.project?.id.toString();
 const tabs = ref<Tab[]>([]);
 const activeTabIndex = ref(0);
+const projectContext = computed(() => props.project?.id.toString());
 
 function openAsset(selectedTab?: Tab) {
 	const assetToOpen = selectedTab ?? tabs.value[activeTabIndex.value] ?? { assetName: 'Overview' };
@@ -125,24 +125,21 @@ function openAsset(selectedTab?: Tab) {
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
 }
 
-tabStore.$subscribe((_mutation, _state) => {
-	// Sync with storage, not sure why computed doesn't work for these
-	tabs.value = tabStore.getTabs(projectContext);
-	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext);
-	tabStore.setTabs(projectContext, tabs.value); // What makes this line so special??
-	console.log(props.project, _state);
+tabStore.$subscribe((/* _mutation, _state */) => {
+	tabs.value = tabStore.getTabs(projectContext.value);
+	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	openAsset();
 });
 
 function removeClosedTab(tabIndexToRemove: number) {
-	tabStore.removeTab(projectContext, tabIndexToRemove);
+	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 }
 
 const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
 // Start at proper route
 onMounted(() => {
-	openAsset();
+	// openAsset();
 });
 
 // Once the route name changes, add/switch to another tab
@@ -150,18 +147,17 @@ watch(
 	() => props.assetName,
 	() => {
 		// If new name, its a new asset so add a new tab
-		if (!tabs.value.some(({ assetName }) => assetName === props.assetName) || isEmpty(tabs)) {
-			tabStore.addTab(projectContext, {
+		if (!tabs.value.some(({ assetName }) => assetName === props.assetName) || isEmpty(tabs.value)) {
+			tabStore.addTab(projectContext.value, {
 				assetName: props.assetName || '',
 				assetId: props.assetId,
 				assetType: props.assetType
 			});
-			// console.log(props.project, 0, tabs.value, tabStore.getTabs(projectContext));
 		}
 		// Tab switch
 		else {
 			const index = tabs.value.findIndex(({ assetName }) => assetName === props.assetName);
-			tabStore.setActiveTabIndex(projectContext, index);
+			tabStore.setActiveTabIndex(projectContext.value, index);
 		}
 	}
 );
