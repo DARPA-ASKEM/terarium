@@ -1,9 +1,12 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice.responses;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
@@ -16,38 +19,38 @@ public class XDDSearchPayload implements Serializable {
 	private String dataset; // dataset/collection name
 
 	// Comma-separated list of dictionary names
-	@JsonbProperty("dict")
+	@JsonAlias("dict")
 	private String dictNames;
 
 	// No value required
-	@JsonbProperty("full_results")
+	@JsonAlias("full_results")
 	private Object fullResults;
 
 	// Maximum number of results to include in one response.
 	// Applies to full_results pagination or single-page requests
-	@JsonbProperty("per_page")
+	@JsonAlias("per_page")
 	private Number perPage;
 
 	// Maximum number of articles to return
 	private Number max;
 
-	@JsonbProperty("include_score")
+	@JsonAlias("include_score")
 	private Boolean includeScore;
 
-	@JsonbProperty("include_highlights")
+	@JsonAlias("include_highlights")
 	private Boolean includeHighlights;
 
-	@JsonbProperty("min_published")
+	@JsonAlias("min_published")
 	private String minPublished; // Date
 
-	@JsonbProperty("max_published")
+	@JsonAlias("max_published")
 	private String maxPublished; // Date
 
 	private String pubname;
 
 	private String publisher;
 
-	@JsonbProperty("additional_fields")
+	@JsonAlias("additional_fields")
 	private Boolean additionalFields;
 
 	private Boolean match;
@@ -56,6 +59,6 @@ public class XDDSearchPayload implements Serializable {
 	private String type;
 
 	// Extraction-specific fields
-	@JsonbProperty("ignore_bytes")
+	@JsonAlias("ignore_bytes")
 	private Boolean ignoreBytes;
 };

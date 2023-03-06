@@ -1,10 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.documentservice.autocomplete;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.util.List;
 
@@ -13,11 +15,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Suggest implements Serializable {
 
+	@JsonAlias("entity-suggest-fuzzy")
 	private List<EntitySuggestFuzzy> entitySuggestFuzzy;
 
-	@JsonbProperty("entity-suggest-fuzzy")
-	public void setEntitySuggestFuzzy(List<EntitySuggestFuzzy> entitySuggestFuzzy) {
-		this.entitySuggestFuzzy = entitySuggestFuzzy;
-	}
 
 }

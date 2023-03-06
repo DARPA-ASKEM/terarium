@@ -1,9 +1,14 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -13,13 +18,15 @@ import java.util.Map;
  */
 @Data
 @Accessors(chain = true)
+@NoArgsConstructor
 public class Document implements Serializable {
 
+	@JsonAlias("_gddid")
 	private String gddId;
 
 	private String title;
 
-	@JsonbProperty("abstract")
+	@JsonProperty("abstract")
 	private String abstractText;
 
 	private String journal;
@@ -41,47 +48,25 @@ public class Document implements Serializable {
 	private List<Map<String, String>> author;
 
 	private List<Map<String, String>> identifier;
+
+	@JsonAlias("known_terms")
 	private Map<String, List<String>> knownTerms;
+
+	@JsonAlias("_highlight")
 	private List<String> highlight;
 
+	@JsonAlias("related_documents")
 	private List<Document> relatedDocuments;
 
+	@JsonAlias("related_extractions")
 	private List<Extraction> relatedExtractions;
+
+	@JsonAlias("known_entities")
 	private KnownEntities knownEntities;
 
-	@JsonbProperty("_gddid")
-	public void setID(String id) {
-		this.gddId = id;
-	}
-
+	@JsonAlias("citation_list")
 	private List<Map<String, String>> citationList;
 
-	public String getID() {
-		return this.gddId;
-	}
-
-	@JsonbProperty("known_terms")
-	public void setKnownTerms(Map<String, List<String>> knownTerms) {
-		this.knownTerms = knownTerms;
-	}
-
-	@JsonbProperty("_highlight")
-	public void setHighlight(List<String> highlight) {
-		this.highlight = highlight;
-	}
-
-	@JsonbProperty("known_entities")
-	public void setKnownEntities(KnownEntities knownEntities) {
-		this.knownEntities = knownEntities;
-	}
-
-	@JsonbProperty("citation_list")
-	public void setCitationList(List<Map<String, String>> v) {
-		this.citationList = v;
-	}
-
-	public Document() {
-	} //Default constructor for @Data
 
 }
 

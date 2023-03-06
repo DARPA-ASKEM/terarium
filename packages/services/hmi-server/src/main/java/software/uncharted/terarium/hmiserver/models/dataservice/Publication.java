@@ -1,9 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
@@ -11,10 +13,10 @@ import java.io.Serializable;
 public class Publication extends ResourceType implements Serializable {
 
 
-	@JsonbProperty("xdd_uri")
+	@JsonAlias("xdd_uri")
 	private String xddUri;
 
-	@JsonbProperty("title")
+	@JsonAlias("title")
 	private String title;
 
 }

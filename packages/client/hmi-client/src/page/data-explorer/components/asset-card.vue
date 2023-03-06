@@ -95,7 +95,7 @@
 						</span>
 						<i class="pi pi-arrow-right" @click.stop="previewMovement(1)"></i>
 					</span>
-					<template v-else> No {{ chosenExtractionFilter }}s </template>
+					<template v-else> No {{ chosenExtractionFilter }}s</template>
 				</div>
 			</figure>
 			<slot name="default"></slot>
@@ -145,7 +145,7 @@ const urlExtractions = computed(() => {
 		const documentsWithUrls = props.asset.relatedExtractions.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Document &&
-				ex.properties.documentBibjson.knownEntities !== undefined &&
+				ex.properties.documentBibjson.knownEntities != null &&
 				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
 		);
 

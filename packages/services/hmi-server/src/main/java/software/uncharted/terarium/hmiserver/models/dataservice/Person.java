@@ -1,9 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
@@ -16,11 +19,11 @@ public class Person implements Serializable {
 
 	private String email;
 
-	@JsonbProperty("org")
+	@JsonAlias("org")
 	private String organization;
 
 	private String website;
 
-	@JsonbProperty("is_registered")
+	@JsonAlias("is_registered")
 	private Boolean isRegistered;
 }

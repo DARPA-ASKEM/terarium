@@ -1,22 +1,24 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
 public class ProvenanceQueryParameters implements Serializable {
 
-	@JsonbProperty("root_id")
+	@JsonAlias("root_id")
 	private Number root_id;
 
-	@JsonbProperty("root_type")
+	@JsonAlias("root_type")
 	private String root_type; // use ProvenanceType
 
-	@JsonbProperty("user_id")
+	@JsonAlias("user_id")
 	private Number user_id;
 
 	// private String curie;
