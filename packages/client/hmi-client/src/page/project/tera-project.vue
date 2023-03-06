@@ -125,12 +125,12 @@ function openAsset(selectedTab?: Tab) {
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
 }
 
-tabStore.$subscribe((/* _mutation, _state */) => {
+tabStore.$subscribe((_mutation, _state) => {
 	// Sync with storage, not sure why computed doesn't work for these
 	tabs.value = tabStore.getTabs(projectContext);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext);
 	tabStore.setTabs(projectContext, tabs.value); // What makes this line so special??
-	console.log(props.project, 0);
+	console.log(props.project, _state);
 	openAsset();
 });
 
@@ -145,7 +145,7 @@ onMounted(() => {
 	openAsset();
 });
 
-// Updates on new route
+// Once the route name changes, add/switch to another tab
 watch(
 	() => props.assetName,
 	() => {
@@ -156,7 +156,7 @@ watch(
 				assetId: props.assetId,
 				assetType: props.assetType
 			});
-			console.log(props.project, 0, tabs.value, tabStore.getTabs(projectContext));
+			// console.log(props.project, 0, tabs.value, tabStore.getTabs(projectContext));
 		}
 		// Tab switch
 		else {
