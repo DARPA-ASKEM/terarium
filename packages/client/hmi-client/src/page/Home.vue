@@ -306,11 +306,20 @@ header svg {
 }
 
 .chevron-left {
-	left: 0;
+	left: -1rem;
+	top: 0.5rem;
+	height: 279.5px;
 }
 
 .chevron-right {
-	right: 0;
+	right: -1rem;
+	top: 0.5rem;
+	height: 279.5px;
+}
+
+.chevron-left:hover,
+.chevron-right:hover {
+	background-color: var(--chevron-hover);
 }
 
 .chevron-left:hover > .pi-chevron-left,
@@ -336,7 +345,7 @@ ul {
 	align-items: center;
 	display: inline-flex;
 	gap: 1.5rem;
-	transition: margin-left 0.2s;
+	transition: margin-left 0.8s;
 }
 
 li {
