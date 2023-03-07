@@ -80,7 +80,7 @@ const fillAutocomplete = async () => {
 	const appendToQuery = query.value[query.value.length - 1] === ' ' && props.showSuggestions;
 
 	const promise: Promise<string[]> = appendToQuery
-		? getRelatedTerms(query.value.trim(), resources.xddDataset) // Appends to what you're typing
+		? getRelatedTerms(query.value.trim(), resources.xddDataset) // Appends to what you're typing while searching for an xdd document
 		: getAutocomplete(query.value); // Replaces what you're typing
 
 	promise.then((response) => {

@@ -9,7 +9,7 @@
 		:active="!isErrorState"
 		:current-project-id="project?.id ?? null"
 		:projects="projects"
-		:resourceType="pageRef?.resourceType ?? ResourceType.XDD"
+		:show-suggestions="showSuggestions"
 	/>
 	<main>
 		<router-view v-slot="{ Component }">
@@ -41,10 +41,17 @@ const toast = useToastService();
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
+
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
-const resources = useResourcesStore();
+// This pageRef is used to grab the assetType being searched for in data-explorer.vue, it is accessed using defineExpose
 const pageRef = ref();
+// For navbar.vue -> search-bar.vue
+// Later the asset type searched for in the data explorer should be in the route so we won't have to pass this from here
+const showSuggestions = computed(() => {
+	const assetType = pageRef.value?.resourceType ?? ResourceType.XDD;
+	return assetType === ResourceType.XDD;
+});
 
 /**
  * Project
@@ -52,6 +59,7 @@ const pageRef = ref();
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
+const resources = useResourcesStore();
 const project = shallowRef<IProject | null>(null);
 const projects = shallowRef<IProject[] | null>(null);
 

@@ -22,8 +22,7 @@ const props = defineProps<{
 const emit = defineEmits(['select-tab', 'close-tab']);
 
 function calcTabWidthPercentage() {
-	if (props.tabs.length <= 5) return 20;
-	return 100 / props.tabs.length;
+	return props.tabs.length <= 5 ? 20 : 100 / props.tabs.length;
 }
 </script>
 
