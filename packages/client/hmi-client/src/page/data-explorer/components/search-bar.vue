@@ -113,7 +113,7 @@ import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/EventType';
 import Button from 'primevue/button';
-import { useDragEvent } from '@/utils/drag-drop';
+import { useDragEvent } from '@/services/drag-drop';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
