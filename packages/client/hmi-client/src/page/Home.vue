@@ -19,7 +19,7 @@
 							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 						</div>
 						<ul v-if="isLoadingProjects">
-							<li v-for="(i, index) in [0, 1, 2, 3, 4]" class="card" :key="index">
+							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
 								<project-card :loading="true" />
 							</li>
 						</ul>
@@ -167,7 +167,7 @@ const close = () => {
 	selectedDocument.value = undefined;
 };
 
-const SCROLL_INCREMENT_IN_REM = 21.5 * 5; // (card width + margin) * number of cards to display at once
+const SCROLL_INCREMENT_IN_REM = 18.5 * 6; // (card width + margin) * number of cards to display at once
 const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
