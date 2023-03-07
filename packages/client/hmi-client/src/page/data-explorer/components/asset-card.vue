@@ -5,7 +5,7 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === AssetType.DOCUMENT && asset.relatedExtractions"
+					v-if="resourceType === IAsset.DOCUMENT && asset.relatedExtractions"
 				>
 					<template
 						v-for="icon in [
@@ -23,8 +23,8 @@
 						/>
 					</template>
 				</div>
-				<div v-else-if="resourceType === AssetType.MODEL">{{ asset.framework }}</div>
-				<div v-else-if="resourceType === AssetType.DATASET && asset.simulationRun === true">
+				<div v-else-if="resourceType === IAsset.MODEL">{{ asset.framework }}</div>
+				<div v-else-if="resourceType === IAsset.DATASET && asset.simulationRun === true">
 					Simulation run
 				</div>
 			</div>
@@ -34,19 +34,19 @@
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
 			<div class="description" v-html="highlightSearchTerms(asset.description)" />
-			<div class="parameters" v-if="resourceType === AssetType.MODEL && asset.parameters">
+			<div class="parameters" v-if="resourceType === IAsset.MODEL && asset.parameters">
 				PARAMETERS:
 				{{ asset.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
-			<div class="features" v-else-if="resourceType === AssetType.DATASET">
+			<div class="features" v-else-if="resourceType === IAsset.DATASET">
 				FEATURES:
 				<span v-for="(feature, index) in formatFeatures()" :key="index"> {{ feature }}, </span>
 			</div>
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
 		<aside class="preview-and-options">
-			<figure v-if="resourceType === AssetType.DOCUMENT && asset.relatedExtractions">
+			<figure v-if="resourceType === IAsset.DOCUMENT && asset.relatedExtractions">
 				<template v-if="relatedAsset">
 					<img
 						v-if="relatedAsset.properties.image"
@@ -110,7 +110,7 @@ import { XDDExtractionType } from '@/types/XDD';
 import { XDDArtifact, XDDUrlExtraction, DocumentType } from '@/types/Document';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { AssetType } from '@/types/common';
+import { IAsset } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
 
@@ -122,7 +122,7 @@ type UrlExtraction = {
 
 const props = defineProps<{
 	asset: DocumentType & Model & Dataset;
-	resourceType: AssetType;
+	resourceType: IAsset;
 	highlight?: string;
 }>();
 
@@ -185,7 +185,7 @@ const snippets = computed(() =>
 	props.asset.highlight ? Array.from(props.asset.highlight).splice(0, 3) : null
 );
 const title = computed(() => {
-	const value = props.resourceType === AssetType.DOCUMENT ? props.asset.title : props.asset.name;
+	const value = props.resourceType === IAsset.DOCUMENT ? props.asset.title : props.asset.name;
 	return highlightSearchTerms(value);
 });
 
@@ -228,14 +228,14 @@ function updateExtractionFilter(extractionType: XDDExtractionType) {
 // Return formatted author, year, journal
 // Return formatted author, year, journal
 const formatDetails = computed(() => {
-	if (props.resourceType === AssetType.DOCUMENT) {
+	if (props.resourceType === IAsset.DOCUMENT) {
 		const details = `${props.asset.author.map((a) => a.name).join(', ')} (${props.asset.year}) ${
 			props.asset.journal
 		}`;
 		return highlightSearchTerms(details);
 	}
 
-	if (props.resourceType === AssetType.DATASET) {
+	if (props.resourceType === IAsset.DATASET) {
 		return props.asset?.url;
 	}
 

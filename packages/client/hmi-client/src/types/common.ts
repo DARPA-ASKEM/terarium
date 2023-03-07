@@ -18,7 +18,7 @@ export enum ViewType {
 	GRAPH = 'graph'
 }
 
-export enum AssetType {
+export enum IAsset {
 	DOCUMENT = 'document',
 	MODEL = 'model',
 	DATASET = 'dataset',
@@ -30,9 +30,9 @@ export enum AssetType {
 }
 
 export type SearchParameters = {
-	[AssetType.DOCUMENT]?: XDDSearchParams;
-	[AssetType.MODEL]?: ModelSearchParams;
-	[AssetType.DATASET]?: DatasetSearchParams;
+	[IAsset.DOCUMENT]?: XDDSearchParams;
+	[IAsset.MODEL]?: ModelSearchParams;
+	[IAsset.DATASET]?: DatasetSearchParams;
 };
 
 export type ResultType = Model | Dataset | DocumentType;
@@ -86,5 +86,5 @@ export type Tab = {
 	assetName: string;
 	icon?: string;
 	assetId?: string | number;
-	assetType?: AssetType;
+	assetType?: IAsset;
 };

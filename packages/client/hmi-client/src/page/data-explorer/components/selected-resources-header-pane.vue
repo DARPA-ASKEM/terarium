@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
-import { ResultType, AssetType } from '@/types/common';
+import { ResultType, IAsset } from '@/types/common';
 import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
@@ -68,35 +68,35 @@ const addResourcesToProject = async (projectId: string) => {
 				const documentId = res.id;
 
 				// then, link and store in the project assets
-				const assetsType = AssetType.DOCUMENT;
+				const assetsType = IAsset.DOCUMENT;
 				await ProjectService.addAsset(projectId, assetsType, documentId);
 
 				// update local copy of project assets
-				validProject.value?.assets?.[AssetType.DOCUMENT].push(documentId);
-				resources.activeProjectAssets?.[AssetType.DOCUMENT].push(body);
+				validProject.value?.assets?.[IAsset.DOCUMENT].push(documentId);
+				resources.activeProjectAssets?.[IAsset.DOCUMENT].push(body);
 			}
 		}
 		if (isModel(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const modelId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = AssetType.MODEL;
+			const assetsType = IAsset.MODEL;
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 
 			// update local copy of project assets
 			validProject.value?.assets.model.push(modelId);
-			resources.activeProjectAssets?.[AssetType.MODEL].push(selectedItem);
+			resources.activeProjectAssets?.[IAsset.MODEL].push(selectedItem);
 		}
 		if (isDataset(selectedItem)) {
 			// FIXME: handle cases where assets is already added to the project
 			const datasetId = selectedItem.id;
 			// then, link and store in the project assets
-			const assetsType = AssetType.DATASET;
+			const assetsType = IAsset.DATASET;
 			await ProjectService.addAsset(projectId, assetsType, datasetId);
 
 			// update local copy of project assets
 			validProject.value?.assets.dataset.push(datasetId);
-			resources.activeProjectAssets?.[AssetType.DATASET].push(selectedItem);
+			resources.activeProjectAssets?.[IAsset.DATASET].push(selectedItem);
 		}
 	});
 };

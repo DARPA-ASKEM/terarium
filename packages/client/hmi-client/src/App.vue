@@ -32,7 +32,7 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { useCurrentRoute } from './router/index';
-import { AssetType } from './types/common';
+import { IAsset } from './types/common';
 
 const toast = useToastService();
 /**
@@ -49,8 +49,8 @@ const pageRef = ref();
 // For navbar.vue -> search-bar.vue
 // Later the asset type searched for in the data explorer should be in the route so we won't have to pass this from here
 const showSuggestions = computed(() => {
-	const assetType = pageRef.value?.resourceType ?? AssetType.DOCUMENT;
-	return assetType === AssetType.DOCUMENT;
+	const assetType = pageRef.value?.resourceType ?? IAsset.DOCUMENT;
+	return assetType === IAsset.DOCUMENT;
 });
 
 /**

@@ -13,7 +13,7 @@
 			</header>
 			<section>
 				<document
-					v-if="previewItemAssetType === AssetType.DOCUMENT"
+					v-if="previewItemAssetType === IAsset.DOCUMENT"
 					:asset-id="previewItemId"
 					:previewLineLimit="3"
 					:project="resources.activeProject"
@@ -21,14 +21,14 @@
 					:is-editable="false"
 				/>
 				<dataset
-					v-else-if="previewItemAssetType === AssetType.DATASET"
+					v-else-if="previewItemAssetType === IAsset.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 					:is-editable="false"
 				/>
 				<model
-					v-else-if="previewItemAssetType === AssetType.MODEL"
+					v-else-if="previewItemAssetType === IAsset.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
@@ -57,7 +57,7 @@
 import Button from 'primevue/button';
 import { PropType, computed, ref, watch } from 'vue';
 import useResourcesStore from '@/stores/resources';
-import { ResultType, AssetType } from '@/types/common';
+import { ResultType, IAsset } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
 import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
@@ -91,7 +91,7 @@ const props = defineProps({
 		default: null
 	},
 	resourceType: {
-		type: String as PropType<AssetType>,
+		type: String as PropType<IAsset>,
 		default: null
 	},
 	searchTerm: {
@@ -102,7 +102,7 @@ const props = defineProps({
 
 // store and use copy of previewItem to disconnect it from prop for persistence
 const previewItemState = ref(props.previewItem);
-const previewItemAssetType = ref<AssetType | null>(null);
+const previewItemAssetType = ref<IAsset | null>(null);
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 

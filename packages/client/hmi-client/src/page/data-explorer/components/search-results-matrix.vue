@@ -45,7 +45,7 @@ import { computed, PropType, ref } from 'vue';
 import { Model } from '@/types/Model';
 import { PUBLISHER } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
-import { SearchResults, AssetType, ResultType } from '@/types/common';
+import { SearchResults, IAsset, ResultType } from '@/types/common';
 import { groupBy, omit, orderBy, uniq } from 'lodash';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { Dataset } from '@/types/Dataset';
@@ -74,7 +74,7 @@ const props = defineProps({
 	},
 	resultType: {
 		type: String,
-		default: AssetType.ALL
+		default: IAsset.ALL
 	}
 });
 
@@ -117,7 +117,7 @@ const isDataItemSelected = (item: ResultType) =>
 
 const modelsMap = computed(() => {
 	const modelMap: { [modelId: string]: Model } = {};
-	const resList = props.dataItems.find((res) => res.searchSubsystem === AssetType.MODEL);
+	const resList = props.dataItems.find((res) => res.searchSubsystem === IAsset.MODEL);
 	if (resList) {
 		const models = resList.results as Model[];
 		models.forEach((model) => {
@@ -129,7 +129,7 @@ const modelsMap = computed(() => {
 
 const datasetsMap = computed(() => {
 	const datsetMap: { [datasetId: string]: Dataset } = {};
-	const resList = props.dataItems.find((res) => res.searchSubsystem === AssetType.DATASET);
+	const resList = props.dataItems.find((res) => res.searchSubsystem === IAsset.DATASET);
 	if (resList) {
 		const datasets = resList.results as Dataset[];
 		datasets.forEach((dataset) => {
@@ -140,7 +140,7 @@ const datasetsMap = computed(() => {
 });
 
 const filteredDocuments = computed(() => {
-	const resList = props.dataItems.find((res) => res.searchSubsystem === AssetType.DOCUMENT);
+	const resList = props.dataItems.find((res) => res.searchSubsystem === IAsset.DOCUMENT);
 	if (resList) {
 		return resList.results as DocumentType[];
 	}
@@ -159,7 +159,7 @@ const getConceptNameFromCurie = (curie: string) =>
 	rawConceptFacets.value?.facets.concepts[curie].name ?? curie;
 
 const formatColumnName = (v: string) => {
-	if (props.resultType === AssetType.MODEL || props.resultType === AssetType.DATASET) {
+	if (props.resultType === IAsset.MODEL || props.resultType === IAsset.DATASET) {
 		v = getConceptNameFromCurie(v);
 	}
 	const maxColumnNameChars = 24;
@@ -167,7 +167,7 @@ const formatColumnName = (v: string) => {
 };
 
 const formatFullColumnName = (v: string) => {
-	if (props.resultType === AssetType.MODEL || props.resultType === AssetType.DATASET) {
+	if (props.resultType === IAsset.MODEL || props.resultType === IAsset.DATASET) {
 		v = getConceptNameFromCurie(v);
 	}
 	return v;
@@ -177,7 +177,7 @@ const clustersInfo = computed(() => {
 	const res = [] as ResultsCluster[];
 	const vars = [] as string[];
 
-	if (props.resultType === AssetType.MODEL || props.resultType === AssetType.DATASET) {
+	if (props.resultType === IAsset.MODEL || props.resultType === IAsset.DATASET) {
 		const clusters = [] as ResultsCluster[];
 		// concepts are columns or cluter variables
 		const concepts = rawConceptFacets.value?.facets.concepts ?? {};
@@ -188,7 +188,7 @@ const clustersInfo = computed(() => {
 		const getConceptsForItem = (item) =>
 			rawConceptFacets.value?.results.filter((c) => c.id === item.id) ?? [];
 
-		const rowItemsMap = props.resultType === AssetType.MODEL ? modelsMap : datasetsMap;
+		const rowItemsMap = props.resultType === IAsset.MODEL ? modelsMap : datasetsMap;
 		const rowItems = Object.values(rowItemsMap.value);
 
 		// cluster models/datasets the share the same set of concepts
@@ -206,7 +206,7 @@ const clustersInfo = computed(() => {
 				// FIXME: this is not reflected in the facets panel
 				const isClusterSelected = clusterItemsRaw.every((clusterItem) =>
 					isDataItemSelected(
-						props.resultType === AssetType.MODEL
+						props.resultType === IAsset.MODEL
 							? modelsMap.value[clusterItem.id]
 							: datasetsMap.value[clusterItem.id]
 					)
@@ -245,7 +245,7 @@ const clustersInfo = computed(() => {
 		res.push(...sortedClusters);
 	}
 
-	if (props.resultType === AssetType.DOCUMENT) {
+	if (props.resultType === IAsset.DOCUMENT) {
 		// cluster by known_terms, e.g., genes, and if not available then by some default field
 		let clusterVariable = PUBLISHER;
 		let documentsToCluster = filteredDocuments.value;

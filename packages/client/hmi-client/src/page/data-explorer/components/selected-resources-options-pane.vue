@@ -4,7 +4,7 @@
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
 				<asset-card
 					:asset="(asset as DocumentType & Model & Dataset)"
-					:resourceType="(getType(asset) as AssetType)"
+					:resourceType="(getType(asset) as IAsset)"
 				>
 					<button type="button" @click.stop="(e) => toggleContextMenu(e, idx)">
 						<i class="pi pi-ellipsis-v" />
@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
-import { AssetType, ResultType } from '@/types/common';
+import { IAsset, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
 import { DocumentType } from '@/types/Document';
 import { IProject } from '@/types/Project';
@@ -68,9 +68,9 @@ const getType = (item: ResultType) => {
 		return (item as Dataset).type;
 	}
 	if (isDocument(item)) {
-		return AssetType.DOCUMENT;
+		return IAsset.DOCUMENT;
 	}
-	return AssetType.ALL;
+	return IAsset.ALL;
 };
 
 onMounted(async () => {

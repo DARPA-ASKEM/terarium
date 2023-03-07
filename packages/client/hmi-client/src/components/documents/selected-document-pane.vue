@@ -24,7 +24,7 @@ import { IProject } from '@/types/Project';
 import DropdownButton from '@/components/widgets/dropdown-button.vue';
 import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
-import { AssetType } from '@/types/common';
+import { IAsset } from '@/types/common';
 
 const props = defineProps({
 	selectedDocument: {
@@ -56,12 +56,12 @@ const addResourcesToProject = async (projectId: string) => {
 		const documentId = res.id;
 
 		// then, link and store in the project assets
-		const assetsType = AssetType.DOCUMENT;
+		const assetsType = IAsset.DOCUMENT;
 		await ProjectService.addAsset(projectId, assetsType, documentId);
 
 		// update local copy of project assets
-		validProject.value?.assets?.[AssetType.DOCUMENT].push(documentId);
-		resources.activeProjectAssets?.[AssetType.DOCUMENT].push(body);
+		validProject.value?.assets?.[IAsset.DOCUMENT].push(documentId);
+		resources.activeProjectAssets?.[IAsset.DOCUMENT].push(body);
 	}
 };
 

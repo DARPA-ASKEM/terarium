@@ -21,13 +21,13 @@ import Button from 'primevue/button';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isDocument, isDataset, isModel } from '@/utils/data-util';
-import { ResultType, AssetType } from '@/types/common';
+import { ResultType, IAsset } from '@/types/common';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 
 const props = defineProps<{
 	asset: DocumentType & Model & Dataset;
 	isPreviewed: boolean;
-	resourceType: AssetType;
+	resourceType: IAsset;
 	selectedSearchItems: ResultType[];
 	searchTerm?: string;
 }>();

@@ -1,4 +1,4 @@
-import { Facets, SearchResults, FacetBucket, AssetType } from '@/types/common';
+import { Facets, SearchResults, FacetBucket, IAsset } from '@/types/common';
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import {
 	Dataset,
@@ -154,18 +154,18 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 	// return null;
 }
 
-export const getFacets = (results: SearchResults[], resultType: AssetType | string) => {
+export const getFacets = (results: SearchResults[], resultType: IAsset | string) => {
 	let facets = {} as Facets;
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
-			if (resultsObj.searchSubsystem === resultType || resultType === AssetType.ALL) {
+			if (resultsObj.searchSubsystem === resultType || resultType === IAsset.ALL) {
 				// extract facets based on the result type
 				// because we would have different facets for different result types
 				// e.g., XDD will have facets that leverage the XDD fields and stats
 				if (
-					resultsObj.searchSubsystem === AssetType.DOCUMENT ||
-					resultsObj.searchSubsystem === AssetType.MODEL ||
-					resultsObj.searchSubsystem === AssetType.DATASET
+					resultsObj.searchSubsystem === IAsset.DOCUMENT ||
+					resultsObj.searchSubsystem === IAsset.MODEL ||
+					resultsObj.searchSubsystem === IAsset.DATASET
 				) {
 					facets = mergeWith(facets, resultsObj.facets, mergeCustomizer);
 				}
@@ -179,13 +179,13 @@ export const getFacetsDisplayNames = (resultType: string, key: string) => {
 	let hits = 0;
 
 	switch (resultType) {
-		case AssetType.DOCUMENT:
+		case IAsset.DOCUMENT:
 			return XDD_DISPLAY_NAMES[key];
-		case AssetType.MODEL:
+		case IAsset.MODEL:
 			return MODEL_DISPLAY_NAMES[key];
-		case AssetType.DATASET:
+		case IAsset.DATASET:
 			return DATASET_DISPLAY_NAMES[key];
-		case AssetType.ALL:
+		case IAsset.ALL:
 			// merge display names from all results types,
 			//  exclude fields that exist in more than once (e.g., 'type' for models and XDD documents),
 			//  and attempt to return the display-name based on the input key

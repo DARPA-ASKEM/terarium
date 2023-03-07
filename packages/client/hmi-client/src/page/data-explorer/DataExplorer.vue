@@ -21,24 +21,24 @@
 				<span class="p-buttonset">
 					<Button
 						class="p-button-secondary p-button-sm"
-						:active="resourceType === AssetType.DOCUMENT"
+						:active="resourceType === IAsset.DOCUMENT"
 						label="Documents"
 						icon="pi pi-file"
-						@click="updateResultType(AssetType.DOCUMENT)"
+						@click="updateAssetType(IAsset.DOCUMENT)"
 					/>
 					<Button
 						class="p-button-secondary p-button-sm"
-						:active="resourceType === AssetType.MODEL"
+						:active="resourceType === IAsset.MODEL"
 						label="Models"
 						icon="pi pi-share-alt"
-						@click="updateResultType(AssetType.MODEL)"
+						@click="updateAssetType(IAsset.MODEL)"
 					/>
 					<Button
 						class="p-button-secondary p-button-sm"
-						:active="resourceType === AssetType.DATASET"
+						:active="resourceType === IAsset.DATASET"
 						label="Datasets"
 						icon="pi pi-database"
-						@click="updateResultType(AssetType.DATASET)"
+						@click="updateAssetType(IAsset.DATASET)"
 					/>
 				</span>
 			</div>
@@ -104,7 +104,7 @@ import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
-	AssetType,
+	IAsset,
 	ResultType,
 	SearchByExampleOptions,
 	SearchParameters,
@@ -152,7 +152,7 @@ const rankedResults = ref(true); // disable sorted/ranked results to enable pagi
 const facets = ref<Facets>({});
 const filteredFacets = ref<Facets>({});
 //
-const resourceType = ref<AssetType>(AssetType.DOCUMENT);
+const resourceType = ref<IAsset>(IAsset.DOCUMENT);
 const viewType = ref<string>(ViewType.LIST);
 const isLoading = ref<boolean>(false);
 // optimize search performance: only fetch as needed
@@ -160,7 +160,7 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
 const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
-	resourceType.value === AssetType.DOCUMENT ? resources.xddDataset : 'TERArium'
+	resourceType.value === IAsset.DOCUMENT ? resources.xddDataset : 'TERArium'
 );
 
 const sliderWidth = computed(() =>
@@ -237,10 +237,10 @@ const executeSearch = async () => {
 
 	// start with initial search parameters
 	const searchParams: SearchParameters = {
-		[AssetType.DOCUMENT]: {
+		[IAsset.DOCUMENT]: {
 			dict: dictNames.value,
 			dataset:
-				xddDataset.value === AssetType.ALL || xddDataset.value === 'TERArium'
+				xddDataset.value === IAsset.ALL || xddDataset.value === 'TERArium'
 					? null
 					: xddDataset.value,
 			max: pageSize.value,
@@ -254,8 +254,8 @@ const executeSearch = async () => {
 			additional_fields: 'title,abstract',
 			known_entities: 'url_extractions'
 		},
-		[AssetType.MODEL]: {},
-		[AssetType.DATASET]: {}
+		[IAsset.MODEL]: {},
+		[IAsset.DATASET]: {}
 	};
 
 	// handle the search-by-example for finding related documents, models, and/or datasets
@@ -264,31 +264,31 @@ const executeSearch = async () => {
 		//
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
-		if (isDocument(searchByExampleItem.value) && searchParams[AssetType.DOCUMENT]) {
+		if (isDocument(searchByExampleItem.value) && searchParams[IAsset.DOCUMENT]) {
 			if (searchByExampleOptions.value.similarContent) {
-				searchParams[AssetType.DOCUMENT].similar_search_enabled = executeSearchByExample.value;
+				searchParams[IAsset.DOCUMENT].similar_search_enabled = executeSearchByExample.value;
 			}
 			if (searchByExampleOptions.value.relatedContent) {
-				searchParams[AssetType.DOCUMENT].related_search_enabled = executeSearchByExample.value;
+				searchParams[IAsset.DOCUMENT].related_search_enabled = executeSearchByExample.value;
 			}
-			searchParams[AssetType.DOCUMENT].related_search_id = id;
-			searchType = AssetType.DOCUMENT;
+			searchParams[IAsset.DOCUMENT].related_search_id = id;
+			searchType = IAsset.DOCUMENT;
 		}
 		//
 		// find related models (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isModel(searchByExampleItem.value) && searchParams[AssetType.MODEL]) {
-			searchParams[AssetType.MODEL].related_search_enabled = executeSearchByExample.value;
-			searchParams[AssetType.MODEL].related_search_id = id;
-			searchType = AssetType.MODEL;
+		if (isModel(searchByExampleItem.value) && searchParams[IAsset.MODEL]) {
+			searchParams[IAsset.MODEL].related_search_enabled = executeSearchByExample.value;
+			searchParams[IAsset.MODEL].related_search_id = id;
+			searchType = IAsset.MODEL;
 		}
 		//
 		// find related datasets (which utilizes the TDS provenance API through the HMI server)
 		//
-		if (isDataset(searchByExampleItem.value) && searchParams?.[AssetType.DATASET]) {
-			searchParams[AssetType.DATASET].related_search_enabled = executeSearchByExample.value;
-			searchParams[AssetType.DATASET].related_search_id = id;
-			searchType = AssetType.DATASET;
+		if (isDataset(searchByExampleItem.value) && searchParams?.[IAsset.DATASET]) {
+			searchParams[IAsset.DATASET].related_search_enabled = executeSearchByExample.value;
+			searchParams[IAsset.DATASET].related_search_id = id;
+			searchType = IAsset.DATASET;
 		}
 	}
 	const searchParamsWithFacetFilters = cloneDeep(searchParams);
@@ -296,7 +296,7 @@ const executeSearch = async () => {
 	//
 	// extend search parameters by converting facet filters into proper search parameters
 	//
-	const xddSearchParams = searchParamsWithFacetFilters?.[AssetType.DOCUMENT] || {};
+	const xddSearchParams = searchParamsWithFacetFilters?.[IAsset.DOCUMENT] || {};
 	// transform facet filters into xdd search parameters
 	clientFilters.value.clauses.forEach((clause) => {
 		if (XDD_FACET_FIELDS.includes(clause.field)) {
@@ -325,22 +325,22 @@ const executeSearch = async () => {
 	});
 
 	let modelSearchParams;
-	if (searchParamsWithFacetFilters?.[AssetType.MODEL]?.filters) {
-		modelSearchParams = searchParamsWithFacetFilters[AssetType.MODEL];
+	if (searchParamsWithFacetFilters?.[IAsset.MODEL]?.filters) {
+		modelSearchParams = searchParamsWithFacetFilters[IAsset.MODEL];
 	} else {
 		modelSearchParams = { filters: clientFilters.value };
 	}
 	let datasetSearchParams;
-	if (searchParamsWithFacetFilters?.[AssetType.DATASET]?.filters) {
-		datasetSearchParams = searchParamsWithFacetFilters[AssetType.MODEL];
+	if (searchParamsWithFacetFilters?.[IAsset.DATASET]?.filters) {
+		datasetSearchParams = searchParamsWithFacetFilters[IAsset.MODEL];
 	} else {
 		datasetSearchParams = { filters: clientFilters.value };
 	}
 
 	// update search parameters object
-	searchParamsWithFacetFilters[AssetType.DOCUMENT] = xddSearchParams;
-	searchParamsWithFacetFilters[AssetType.MODEL] = modelSearchParams;
-	searchParamsWithFacetFilters[AssetType.DATASET] = datasetSearchParams;
+	searchParamsWithFacetFilters[IAsset.DOCUMENT] = xddSearchParams;
+	searchParamsWithFacetFilters[IAsset.MODEL] = modelSearchParams;
+	searchParamsWithFacetFilters[IAsset.DATASET] = datasetSearchParams;
 
 	// fetch the data
 	const { allData, allDataFilteredWithFacets } = await fetchData(
@@ -447,7 +447,7 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	}
 };
 
-const updateResultType = async (newAssetType: AssetType) => {
+const updateAssetType = async (newAssetType: IAsset) => {
 	if (resourceType.value !== newAssetType) {
 		resourceType.value = newAssetType;
 
@@ -487,7 +487,7 @@ async function executeNewQuery() {
 	disableSearchByExample();
 
 	// initially, all search results are dirty; need re-fetch
-	Object.values(AssetType).forEach((key) => {
+	Object.values(IAsset).forEach((key) => {
 		dirtyResults.value[key as string] = true;
 	});
 
@@ -527,7 +527,7 @@ onMounted(async () => {
 	xddDatasets.value = await getXDDSets();
 	if (!isEmpty(xddDatasets.value) && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
-		xddDatasets.value.push(AssetType.ALL);
+		xddDatasets.value.push(IAsset.ALL);
 	}
 	executeNewQuery();
 });

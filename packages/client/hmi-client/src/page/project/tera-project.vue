@@ -20,36 +20,36 @@
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
 				<document
-					v-if="assetType === AssetType.DOCUMENT"
+					v-if="assetType === IAsset.DOCUMENT"
 					:asset-id="assetId"
 					:previewLineLimit="10"
 					:project="project"
 					is-editable
 				/>
 				<dataset
-					v-else-if="assetType === AssetType.DATASET"
+					v-else-if="assetType === IAsset.DATASET"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
 				/>
 				<model
-					v-else-if="assetType === AssetType.MODEL"
+					v-else-if="assetType === IAsset.MODEL"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
 				/>
 				<simulation-plan
-					v-else-if="assetType === AssetType.SIMULATION_PLAN"
+					v-else-if="assetType === IAsset.SIMULATION_PLAN"
 					:asset-id="assetId"
 					:project="project"
 				/>
 				<simulation-run
-					v-else-if="assetType === AssetType.SIMULATION_RUN"
+					v-else-if="assetType === IAsset.SIMULATION_RUN"
 					:asset-id="assetId"
 					:project="project"
 				/>
 			</template>
-			<code-editor v-else-if="assetType === AssetType.CODE" />
+			<code-editor v-else-if="assetType === IAsset.CODE" />
 			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
 		</section>
 		<slider-panel
@@ -88,7 +88,7 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
-import { Tab, AssetType, Annotation } from '@/types/common';
+import { Tab, IAsset, Annotation } from '@/types/common';
 import { isEmpty } from 'lodash';
 import { useTabStore } from '@/stores/tabs';
 import Textarea from 'primevue/textarea';
@@ -103,7 +103,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: AssetType;
+	assetType?: IAsset;
 }>();
 
 const tabStore = useTabStore();
@@ -170,7 +170,7 @@ const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 const fetchAnnotations = async () => {
 	const response = await API.get('/annotations', {
 		params: {
-			artifact_type: AssetType.DOCUMENT,
+			artifact_type: IAsset.DOCUMENT,
 			artifact_id: props.assetId
 		}
 	});
@@ -184,7 +184,7 @@ const addAnnotation = async () => {
 	await API.post('/annotations', {
 		content,
 		artifact_id: props.assetId,
-		artifact_type: AssetType.DOCUMENT
+		artifact_type: IAsset.DOCUMENT
 	});
 	annotationContent.value = '';
 

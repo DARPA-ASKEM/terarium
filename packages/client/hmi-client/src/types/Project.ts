@@ -1,24 +1,24 @@
 import { DocumentType, DocumentAsset } from '@/types/Document';
-import { AssetType } from '@/types/common';
+import { IAsset } from '@/types/common';
 import { Model } from './Model';
 
 export type ProjectAssets = {
-	[AssetType.DOCUMENT]: DocumentAsset[];
-	[AssetType.INTERMEDIATE]: any[]; // FIXME: add proper type
-	[AssetType.MODEL]: Model[];
-	[AssetType.SIMULATION_PLAN]: any[]; // FIXME: add proper type
-	[AssetType.SIMULATION_RUN]: any[]; // FIXME: add proper type
-	[AssetType.DATASET]: any[]; // FIXME: add proper type
-	[AssetType.CODE]: any[];
+	[IAsset.DOCUMENT]: DocumentAsset[];
+	[IAsset.INTERMEDIATE]: any[]; // FIXME: add proper type
+	[IAsset.MODEL]: Model[];
+	[IAsset.SIMULATION_PLAN]: any[]; // FIXME: add proper type
+	[IAsset.SIMULATION_RUN]: any[]; // FIXME: add proper type
+	[IAsset.DATASET]: any[]; // FIXME: add proper type
+	[IAsset.CODE]: any[];
 };
 
 export type SimpleProjectAssets = {
-	[AssetType.DOCUMENT]: (string | number)[];
-	[AssetType.INTERMEDIATE]: (string | number)[];
-	[AssetType.MODEL]: (string | number)[];
-	[AssetType.SIMULATION_PLAN]: (string | number)[];
-	[AssetType.SIMULATION_RUN]: (string | number)[];
-	[AssetType.DATASET]: (string | number)[];
+	[IAsset.DOCUMENT]: (string | number)[];
+	[IAsset.INTERMEDIATE]: (string | number)[];
+	[IAsset.MODEL]: (string | number)[];
+	[IAsset.SIMULATION_PLAN]: (string | number)[];
+	[IAsset.SIMULATION_RUN]: (string | number)[];
+	[IAsset.DATASET]: (string | number)[];
 };
 
 export interface IProject {
