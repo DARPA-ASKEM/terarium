@@ -9,10 +9,12 @@
 		:active="!isErrorState"
 		:current-project-id="project?.id ?? null"
 		:projects="projects"
-		:resourceType="resourceType"
+		:show-suggestions="showSuggestions"
 	/>
 	<main>
-		<router-view class="page" :project="project" @resource-type-changed="updateAssetType" />
+		<router-view v-slot="{ Component }">
+			<component class="page" ref="pageRef" :is="Component" :project="project" />
+		</router-view>
 	</main>
 	<footer>
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
@@ -33,17 +35,23 @@ import { useCurrentRoute } from './router/index';
 import { AssetType } from './types/common';
 
 const toast = useToastService();
-
 /**
  * Router
  */
 const route = useRoute();
 const router = useRouter();
 const currentRoute = useCurrentRoute();
+
 const isErrorState = computed(() => currentRoute.value.name === 'unauthorized');
 
-const resources = useResourcesStore();
-const resourceType = ref<string>(AssetType.DOCUMENT);
+// This pageRef is used to grab the assetType being searched for in data-explorer.vue, it is accessed using defineExpose
+const pageRef = ref();
+// For navbar.vue -> search-bar.vue
+// Later the asset type searched for in the data explorer should be in the route so we won't have to pass this from here
+const showSuggestions = computed(() => {
+	const assetType = pageRef.value?.resourceType ?? AssetType.DOCUMENT;
+	return assetType === AssetType.DOCUMENT;
+});
 
 /**
  * Project
@@ -51,12 +59,9 @@ const resourceType = ref<string>(AssetType.DOCUMENT);
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
+const resources = useResourcesStore();
 const project = shallowRef<IProject | null>(null);
 const projects = shallowRef<IProject[] | null>(null);
-
-function updateAssetType(newAssetType) {
-	resourceType.value = newAssetType;
-}
 
 API.interceptors.response.use(
 	(response) => response,
@@ -122,7 +127,6 @@ main {
 	flex: 1;
 	min-width: 0;
 	display: flex;
-	flex-direction: column;
 	flex-grow: 1;
 }
 

@@ -20,7 +20,7 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:showSuggestions="resourceType === AssetType.DOCUMENT"
+			:show-suggestions="showSuggestions"
 			@query-changed="updateRelatedTerms"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -58,7 +58,6 @@ import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
-import { AssetType } from '@/types/common';
 import { IProject } from '@/types/Project';
 import { MenuItem } from 'primevue/menuitem';
 
@@ -66,7 +65,7 @@ const props = defineProps<{
 	active: boolean;
 	currentProjectId: IProject['id'] | null;
 	projects: IProject[] | null;
-	resourceType: string;
+	showSuggestions: boolean;
 }>();
 
 /*

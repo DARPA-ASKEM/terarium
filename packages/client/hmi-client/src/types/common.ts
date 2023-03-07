@@ -56,7 +56,7 @@ export type FullSearchResults = {
 export type SearchByExampleOptions = {
 	similarContent: boolean;
 	forwardCitation: boolean;
-	bakcwardCitation: boolean;
+	backwardCitation: boolean;
 	relatedContent: boolean;
 };
 
@@ -83,8 +83,8 @@ export type SidePanelTab = {
 
 // Tabs
 export type Tab = {
-	label: string;
-	icon: string;
+	assetName: string;
+	icon?: string;
 	assetId?: string | number;
 	assetType?: AssetType;
 };
