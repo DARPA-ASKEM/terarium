@@ -23,8 +23,8 @@ export enum IAsset {
 	MODEL = 'model',
 	DATASET = 'dataset',
 	INTERMEDIATE = 'intermediate',
-	SIMULATION_PLAN = 'simulation plan',
-	SIMULATION_RUN = 'simulation run',
+	SIMULATION_PLAN = 'simulation_plan',
+	SIMULATION_RUN = 'simulation_run',
 	CODE = 'code',
 	ALL = 'all'
 }

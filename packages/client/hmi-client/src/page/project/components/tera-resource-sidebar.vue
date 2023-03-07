@@ -59,12 +59,12 @@ const route = useRoute();
 const resourcesStore = useResourcesStore();
 
 const resources = computed(() => {
-	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	console.log(storedAssets);
-	const projectAssetTypes = Object.keys(storedAssets);
+	const storedAssets = resourcesStore.activeProjectAssets; // Maybe get this from App.vue?
 	const resourceTreeNodes: any[] = [];
 
-	if (!isEmpty(storedAssets)) {
+	if (storedAssets) {
+		const projectAssetTypes = Object.keys(storedAssets);
+
 		// Basic new code file (temp)
 		resourceTreeNodes.push({
 			key: 'New file',

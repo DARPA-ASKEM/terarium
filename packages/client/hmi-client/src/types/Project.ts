@@ -4,11 +4,11 @@ import { Model } from './Model';
 
 export type ProjectAssets = {
 	[IAsset.DOCUMENT]: DocumentAsset[];
-	[IAsset.INTERMEDIATE]: any[]; // FIXME: add proper type
 	[IAsset.MODEL]: Model[];
+	[IAsset.DATASET]: any[]; // FIXME: add proper type
 	[IAsset.SIMULATION_PLAN]: any[]; // FIXME: add proper type
 	[IAsset.SIMULATION_RUN]: any[]; // FIXME: add proper type
-	[IAsset.DATASET]: any[]; // FIXME: add proper type
+	[IAsset.INTERMEDIATE]: any[]; // FIXME: add proper type
 	[IAsset.CODE]: any[];
 };
 

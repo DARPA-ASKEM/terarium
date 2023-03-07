@@ -5,6 +5,7 @@
 import API from '@/api/api';
 import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import { IAsset } from '@/types/common';
 
 /**
  * Create a project
@@ -84,6 +85,35 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200) return null;
+
+		// Temporary solution for key conversion - next step is to change the keys in the backend
+		if (data) {
+			// Here is how the old keys looked:
+			// 	export enum ProjectAssetTypes {
+			// 	DOCUMENTS = 'publications',
+			// 	INTERMEDIATES = 'intermediates',
+			// 	MODELS = 'models',
+			// 	PLANS = 'plans',
+			// 	SIMULATION_RUNS = 'simulation_runs',
+			// 	DATASETS = 'datasets',
+			// 	CODE = 'code'
+			// }
+
+			const dataWithProperKeys = {
+				[IAsset.DOCUMENT]: data.publications,
+				[IAsset.MODEL]: data.models,
+				[IAsset.DATASET]: data.datasets,
+				[IAsset.SIMULATION_PLAN]: data.plans,
+				[IAsset.SIMULATION_RUN]: data.simulation_runs,
+				[IAsset.INTERMEDIATE]: data.intermediates,
+				[IAsset.CODE]: [] // The only one that's the same
+			};
+
+			console.log(data, dataWithProperKeys);
+
+			return dataWithProperKeys;
+		}
+
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
