@@ -23,6 +23,7 @@ enum NodeType {
 let g: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
 let g2: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
 let g3: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
+let g4: IGraph<NodeData, EdgeData> = { width: 500, height: 500, nodes: [], edges: [] };
 
 export const pathFn = d3
 	.line<{ x: number; y: number }>()
@@ -36,6 +37,8 @@ const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 let modelA: PetriNet = { T: [], S: [], I: [], O: [] };
 let modelB: PetriNet = { T: [], S: [], I: [], O: [] };
 let mergedModel: PetriNet = { T: [], S: [], I: [], O: [] };
+
+let selectedOntology;
 
 // Possible models to spawn
 const petrinets: PetriNet[] = [
@@ -81,8 +84,12 @@ const petrinets: PetriNet[] = [
 	},
 	// typeModel
 	{
-		T: [{ tname: 'infect' }, { tname: 'disease' }, { tname: 'strata' }],
-		S: [{ sname: 'Pop' }],
+		T: [
+			{ tname: 'infect', ontology: 'inf' },
+			{ tname: 'disease', ontology: 'disease' },
+			{ tname: 'strata', ontology: 'strata' }
+		],
+		S: [{ sname: 'Pop', ontology: 'Population' }],
 		I: [
 			{ it: 1, is: 1 },
 			{ it: 1, is: 1 },
@@ -144,10 +151,24 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const species = selection.filter(
-			(d) => d.data.type === 'species' || d.data.type === NodeType.Species
+			(d) =>
+				d.data.type === 'species' ||
+				(d.data.type === NodeType.Species && d.data.ontology === undefined)
+		);
+		const typedSpecies = selection.filter(
+			(d) =>
+				d.data.type === 'species' ||
+				(d.data.type === NodeType.Species && d.data.ontology !== undefined)
 		);
 		const transitions = selection.filter(
-			(d) => d.data.type === 'transition' || d.data.type === NodeType.Transition
+			(d) =>
+				d.data.type === 'transition' ||
+				(d.data.type === NodeType.Transition && d.data.ontology === undefined)
+		);
+		const typedTransitions = selection.filter(
+			(d) =>
+				d.data.type === 'transition' ||
+				(d.data.type === NodeType.Transition && d.data.ontology !== undefined)
 		);
 
 		transitions
@@ -155,10 +176,26 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 			.classed('shape', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
-			.style('fill', '#88C')
+			.style('fill', '#88A')
+			.style('stroke', '#888');
+
+		typedTransitions
+			.append('rect')
+			.classed('shape', true)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.style('fill', '#88E')
 			.style('stroke', '#888');
 
 		species
+			.append('circle')
+			.classed('shape', true)
+			.attr('cx', (d) => d.width * 0.5)
+			.attr('cy', (d) => d.height * 0.5)
+			.attr('r', (d) => d.width * 0.5)
+			.attr('fill', '#f30');
+
+		typedSpecies
 			.append('circle')
 			.classed('shape', true)
 			.attr('cx', (d) => d.width * 0.5)
@@ -184,11 +221,13 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 }
 
 let renderer: SampleRenderer | null = null;
+let rendererOntology: SampleRenderer | null = null;
 let rendererB: SampleRenderer | null = null;
 let rendererC: SampleRenderer | null = null;
 g = runDagreLayout(_.cloneDeep(g));
 g2 = runDagreLayout(_.cloneDeep(g2));
 g3 = runDagreLayout(_.cloneDeep(g3));
+g4 = runDagreLayout(_.cloneDeep(g4));
 
 let placeCounter = 0;
 let transitionCounter = 0;
@@ -210,6 +249,12 @@ export default defineComponent({
 			useAStarRouting: true,
 			runLayout: runDagreLayout
 		});
+		const ontologyPlayground = document.getElementById('ontology-playground') as HTMLDivElement;
+		rendererOntology = new SampleRenderer({
+			el: ontologyPlayground ?? undefined,
+			useAStarRouting: true,
+			runLayout: runDagreLayout
+		});
 
 		const playgroundB = document.getElementById('modelB') as HTMLDivElement;
 		rendererB = new SampleRenderer({
@@ -226,7 +271,21 @@ export default defineComponent({
 		});
 
 		renderer.on('node-click', (_evtName, evt, d) => {
-			if (evt.shiftKey) {
+			if (evt.altKey) {
+				if (selectedOntology) {
+					d.datum().data.ontology = selectedOntology;
+					console.log('Done');
+					//Rerender
+					renderer?.setData(g);
+					renderer?.render();
+					// let solutionOutput = g.nodes;
+					// console.log("Solution output:");
+					// console.log(solutionOutput);
+					// d3.select('#solution').text(JSON.stringify(solutionOutput, null, 2));
+				} else {
+					console.log('No selected ontology found');
+				}
+			} else if (evt.shiftKey) {
 				if (source) {
 					target = d;
 					target.select('.shape').style('stroke', '#000').style('stroke-width', 4);
@@ -249,6 +308,14 @@ export default defineComponent({
 				this.addEdge(source, target);
 				source = null;
 				target = null;
+			}
+		});
+
+		rendererOntology.on('node-click', (_evtName, evt, d) => {
+			if (evt.altKey) {
+				console.log(d.datum());
+				selectedOntology = d.datum().data.ontology;
+				console.log(selectedOntology);
 			}
 		});
 
@@ -276,10 +343,13 @@ export default defineComponent({
 		async refresh() {
 			await renderer?.setData(g);
 			await renderer?.render();
+			await rendererOntology?.setData(g4);
+			await rendererOntology?.render();
 			await rendererB?.setData(g2);
 			await rendererB?.render();
 			await rendererC?.setData(g3);
 			await rendererC?.render();
+			console.log(selectedOntology);
 		},
 		async LotkaVolterra() {
 			const resp = await API.put('model-service/models');
@@ -418,7 +488,8 @@ export default defineComponent({
 				this.refresh();
 			}
 
-			d3.select('#output').text(JSON.stringify(output, null, 2));
+			// d3.select('#output').text(JSON.stringify(output, null, 2));
+			d3.select('#solution').text(JSON.stringify(g, null, 2));
 		},
 		// eslint-disable-next-line
 		async addEdge(source: any, target: any) {
@@ -674,6 +745,7 @@ export default defineComponent({
 			} catch (e: any) {
 				console.error(e.message);
 			}
+			d3.select('#solution').text('Hello'); //JSON.stringify(output, null, 2));
 		},
 		// Used to create sample models for stratifying tests
 		// Will not be requried in the long run as we will be moving to storing these in DB
@@ -702,6 +774,13 @@ export default defineComponent({
 			g2 = { width: 500, height: 500, nodes: [], edges: [] };
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
+		},
+		loadOntology() {
+			let model = petrinets[3];
+			g4 = parsePetriNet2IGraph(model);
+			g4 = runDagreLayout(_.cloneDeep(g4));
+			this.refresh();
+			this.jsonOutput();
 		},
 		async createSampleModels() {
 			// TODO: Add Petri Net type to this when merged with other PR
@@ -776,7 +855,7 @@ export default defineComponent({
 			<label for="stratify">
 				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
 				<input v-model="stratifyModelB" type="text" placeholder="Model B" />
-				<input v-model="stratifyTypeModel" type="text" placeholder="Type Model" />
+				<input v-model="stratifyTypeModel" type="textbox" placeholder="Connection JSON" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
 		</form>
@@ -796,11 +875,13 @@ export default defineComponent({
 				</label>
 				&nbsp;
 				<button type="button" @click="clearA">Clear Model A</button>
+				<button type="button" @click="loadOntology">Load Ontology</button>
 			</div>
 		</div>
 
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
+			<div id="ontology-playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
 			<div id="output" class="playground-panel"></div>
 		</div>
@@ -846,12 +927,14 @@ export default defineComponent({
 <style scoped>
 .playground {
 	margin: 10px;
+	overflow: auto;
 }
 
 .playground-panel {
 	width: 500px;
 	height: 500px;
 	border: 1px solid #888;
+	overflow: auto;
 }
 
 .model-titles {

@@ -9,10 +9,12 @@ export interface PetriNet {
 
 interface State {
 	sname: string;
+	ontology?: string;
 	uid?: string | number;
 }
 interface Transition {
 	tname: string;
+	ontology?: string;
 	uid?: string | number;
 }
 interface Input {
@@ -93,6 +95,7 @@ export const petriNetValidator = (petrinet: PetriNet): string | true => {
 
 export interface NodeData {
 	type: string;
+	ontology?: string;
 	uid?: string | number;
 }
 
@@ -136,7 +139,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			y: nodeY,
 			height: nodeHeight,
 			width: nodeWidth,
-			data: { type: NodeType.State, uid: aNode.uid },
+			data: { type: NodeType.State, ontology: aNode?.ontology, uid: aNode.uid },
 			nodes: []
 		});
 	}
@@ -154,7 +157,7 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			y: nodeY,
 			height: nodeHeight,
 			width: nodeWidth,
-			data: { type: NodeType.Transition, uid: aTransition.uid },
+			data: { type: NodeType.Transition, ontology: aTransition?.ontology, uid: aTransition.uid },
 			nodes: []
 		});
 	} // end T
