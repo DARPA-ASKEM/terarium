@@ -136,8 +136,8 @@ watch(
 	],
 	() => {
 		if (projectContext.value) {
+			// If name isn't recognized, its a new asset so add a new tab
 			if (
-				// If name isn't recognized, its a new asset so add a new tab
 				(props.assetName &&
 					!isEmpty(tabs.value) &&
 					!tabs.value.some(({ assetName }) => assetName === props.assetName)) ||
