@@ -9,8 +9,6 @@ on:
   # schedule tests to run every day at 3pm UTC (10am eastern) monday-friday
   schedule:
     - cron: '0 15 * * 1-5'
-  pull_request:
-    branches: ['main']
 
 jobs:
   e2e-tests:
