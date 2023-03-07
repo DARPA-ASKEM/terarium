@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -11,8 +10,9 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class SimulationRun extends ResourceType implements Serializable {
+public class SimulationRun implements Serializable {
 
+	private Long id;
 
 	@JsonAlias("simulator_id")
 	private String simulatorId;

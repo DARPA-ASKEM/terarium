@@ -3,8 +3,6 @@ package software.uncharted.terarium.hmiserver.models.documentservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -21,6 +19,8 @@ import java.util.List;
 @JsonFormat(with = JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_PROPERTIES)
 
 public class Extraction implements Serializable {
+
+	private Long id;
 
 	@JsonAlias("ASKEM_CLASS")
 	private String askemClass;

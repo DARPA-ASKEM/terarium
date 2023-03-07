@@ -80,6 +80,7 @@ const resources = computed(() => {
 		});
 
 		for (let i = 0; i < projectAssetTypes.length; i++) {
+			if (projectAssetTypes[i] == null || storedAssets[projectAssetTypes[i]] == null) continue;
 			const assets: (DocumentAsset & Model & Dataset)[] =
 				Object.values(storedAssets[projectAssetTypes[i]]) ?? [];
 

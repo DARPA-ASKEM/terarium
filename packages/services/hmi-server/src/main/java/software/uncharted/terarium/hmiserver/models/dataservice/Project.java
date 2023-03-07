@@ -9,7 +9,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
@@ -32,7 +31,7 @@ public class Project implements Serializable {
 
 	private Concept concept;
 
-	private Map<String, List<String>> assets;
+	private Assets assets;
 
 	private String username;
 

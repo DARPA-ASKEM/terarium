@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -11,7 +9,9 @@ import java.time.LocalDateTime;
 
 @Data
 @Accessors(chain = true)
-public class Dataset extends ResourceType implements Serializable {
+public class Dataset implements Serializable {
+
+	private Long id;
 
 	private String name;
 
@@ -33,7 +33,8 @@ public class Dataset extends ResourceType implements Serializable {
 	@JsonAlias("geospatial_resolution")
 	private String geospatialResolution;
 
-	private String annotations;
+	//TODO not an object?
+	private Object annotations;
 
 	private String maintainer;
 
