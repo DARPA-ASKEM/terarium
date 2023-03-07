@@ -98,6 +98,7 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import API from '@/api/api';
 
+// Asset props are extracted from route
 const props = defineProps<{
 	project: IProject;
 	assetName?: string;
@@ -118,26 +119,26 @@ const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value));
 const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
 
-function openAsset(selectedTab?: Tab) {
-	const assetToOpen = selectedTab ?? tabs.value[activeTabIndex.value];
+function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value]) {
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
 }
-
-tabStore.$subscribe(() => openAsset());
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 }
 
+// When a new tab is chosen, reflect that by opening its associated route
+tabStore.$subscribe(() => openAsset());
+
 watch(
 	() => [
 		props.assetName, // Once the route name changes, add/switch to another tab
-		projectContext.value // Get previous tabs that were open from the proper project
+		projectContext.value // Make sure we are in the proper project context before opening assets
 	],
 	() => {
 		if (projectContext.value) {
-			// If name isn't recognized, its a new asset so add a new tab
 			if (
+				// If name isn't recognized, its a new asset so add a new tab
 				(props.assetName &&
 					!isEmpty(tabs.value) &&
 					!tabs.value.some(({ assetName }) => assetName === props.assetName)) ||
@@ -145,7 +146,7 @@ watch(
 				isEmpty(tabs.value)
 			) {
 				tabStore.addTab(projectContext.value, {
-					assetName: props.assetName || 'Overview',
+					assetName: props.assetName ?? 'Overview',
 					assetId: props.assetId,
 					assetType: props.assetType
 				});
