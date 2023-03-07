@@ -22,10 +22,7 @@ const props = defineProps<{
 const emit = defineEmits(['select-tab', 'close-tab']);
 
 function calcTabWidthPercentage() {
-	if (props.tabs.length <= 5) {
-		return 20;
-	}
-	return 100 / props.tabs.length;
+	return props.tabs.length <= 5 ? 20 : 100 / props.tabs.length;
 }
 </script>
 
@@ -37,7 +34,7 @@ function calcTabWidthPercentage() {
 				<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
 					<span class="name">
 						<Chip :label="tab.assetType" />
-						{{ tab.label }}
+						{{ tab.assetName }}
 					</span>
 					<span>
 						<Button

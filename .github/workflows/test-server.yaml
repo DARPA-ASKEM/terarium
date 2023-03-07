@@ -1,0 +1,20 @@
+---
+# This workflow runs all server tests
+
+name: Server Tests
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+  push:
+    branches: ['main']
+    paths:
+      - 'packages/services/hmi-server/**'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'packages/services/hmi-server/**'
+
+jobs:
+  unit-tests:
+    name: Server Unit Tests
+    uses: ./.github/workflows/test-server-unit.yaml
