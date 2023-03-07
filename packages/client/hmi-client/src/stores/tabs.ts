@@ -44,6 +44,9 @@ export const useTabStore = defineStore('tabs', {
 		},
 		setActiveTabIndex(context: string, index: number) {
 			this.activeTabIndexMap.set(context, index);
+		},
+		getActiveTab(context: string): Tab {
+			return this.getTabs(context)[this.getActiveTabIndex(context)];
 		}
 	}
 });

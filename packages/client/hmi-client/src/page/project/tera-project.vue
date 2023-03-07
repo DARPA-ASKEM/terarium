@@ -12,13 +12,13 @@
 		</slider-panel>
 		<section>
 			<tera-tab-group
-				v-if="!isEmpty(tabs)"
-				:tabs="tabs"
-				:active-tab-index="activeTabIndex"
+				v-if="!isEmpty(tabStore.getTabs(projectContext))"
+				:tabs="tabStore.getTabs(projectContext)"
+				:active-tab-index="tabStore.getActiveTabIndex(projectContext)"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
 			/>
-			<template v-if="assetId && !isEmpty(tabs)">
+			<template v-if="assetId && !isEmpty(tabStore.getTabs(projectContext))">
 				<document
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 					:asset-id="assetId"
@@ -50,7 +50,7 @@
 				/>
 			</template>
 			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
-			<tera-project-overview v-else :project="project" />
+			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
 		</section>
 		<slider-panel
 			class="slider"
@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import SliderPanel from '@/components/widgets/slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
@@ -113,54 +113,60 @@ const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
-// Associated with tab storage
-const tabs = ref<Tab[]>([]);
-const activeTabIndex = ref(0);
 const projectContext = computed(() => props.project?.id.toString());
 
 function openAsset(selectedTab?: Tab) {
-	const assetToOpen = selectedTab ?? tabs.value[activeTabIndex.value] ?? { assetName: 'Overview' };
+	const assetToOpen = selectedTab ?? tabStore.getActiveTab(projectContext.value);
 
-	// if (props.assetName) // rethink on open behavior
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
 }
 
-tabStore.$subscribe((/* _mutation, _state */) => {
-	tabs.value = tabStore.getTabs(projectContext.value);
-	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
-	openAsset();
-});
+tabStore.$subscribe(() => openAsset());
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 }
 
-const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
-
-// Start at proper route
-onMounted(() => {
-	// openAsset();
-});
-
-// Once the route name changes, add/switch to another tab
 watch(
-	() => props.assetName,
+	() => [
+		props.assetName, // Once the route name changes, add/switch to another tab
+		projectContext.value // Get previous tabs that were open from the proper project
+	],
 	() => {
-		// If new name, its a new asset so add a new tab
-		if (!tabs.value.some(({ assetName }) => assetName === props.assetName) || isEmpty(tabs.value)) {
-			tabStore.addTab(projectContext.value, {
-				assetName: props.assetName || '',
-				assetId: props.assetId,
-				assetType: props.assetType
-			});
-		}
-		// Tab switch
-		else {
-			const index = tabs.value.findIndex(({ assetName }) => assetName === props.assetName);
-			tabStore.setActiveTabIndex(projectContext.value, index);
+		console.log(projectContext.value, tabStore.getTabs(projectContext.value));
+		if (projectContext.value) {
+			if (
+				// If name isn't recognized, its a new asset so add a new tab
+				(props.assetName &&
+					!isEmpty(tabStore.getTabs(projectContext.value)) &&
+					!tabStore
+						.getTabs(projectContext.value)
+						.some(({ assetName }) => assetName === props.assetName)) ||
+				// An overview tab is added if there are no tabs
+				isEmpty(tabStore.getTabs(projectContext.value))
+			) {
+				console.log('add');
+				tabStore.addTab(projectContext.value, {
+					assetName: props.assetName || 'Overview',
+					assetId: props.assetId,
+					assetType: props.assetType
+				});
+			}
+			// Tab switch
+			else if (props.assetName) {
+				console.log('switch');
+				const index = tabStore
+					.getTabs(projectContext.value)
+					.findIndex(({ assetName }) => assetName === props.assetName);
+				tabStore.setActiveTabIndex(projectContext.value, index);
+			}
+			// Goes to tab from previous session
+			else openAsset();
 		}
 	}
 );
+
+const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
 // FIXME:
 // - Need to establish terarium artifact types
