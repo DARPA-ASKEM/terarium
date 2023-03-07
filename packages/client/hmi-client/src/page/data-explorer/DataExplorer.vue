@@ -1,99 +1,101 @@
 <template>
-	<slider-panel
-		content-width="240px"
-		direction="left"
-		header="Facets"
-		v-model:is-open="isSliderFacetsOpen"
-	>
-		<template v-slot:content>
-			<facets-panel
-				v-if="viewType === ViewType.LIST"
-				class="facets-panel"
-				:facets="facets"
-				:filtered-facets="filteredFacets"
+	<main>
+		<slider-panel
+			content-width="240px"
+			direction="left"
+			header="Facets"
+			v-model:is-open="isSliderFacetsOpen"
+		>
+			<template v-slot:content>
+				<facets-panel
+					v-if="viewType === ViewType.LIST"
+					class="facets-panel"
+					:facets="facets"
+					:filtered-facets="filteredFacets"
+					:result-type="resourceType"
+				/>
+			</template>
+		</slider-panel>
+		<div class="results-content">
+			<div class="secondary-header">
+				<span class="p-buttonset">
+					<Button
+						class="p-button-secondary p-button-sm"
+						:active="resourceType === ResourceType.XDD"
+						label="Documents"
+						icon="pi pi-file"
+						@click="updateAssetType(ResourceType.XDD)"
+					/>
+					<Button
+						class="p-button-secondary p-button-sm"
+						:active="resourceType === ResourceType.MODEL"
+						label="Models"
+						icon="pi pi-share-alt"
+						@click="updateAssetType(ResourceType.MODEL)"
+					/>
+					<Button
+						class="p-button-secondary p-button-sm"
+						:active="resourceType === ResourceType.DATASET"
+						label="Datasets"
+						icon="pi pi-database"
+						@click="updateAssetType(ResourceType.DATASET)"
+					/>
+				</span>
+			</div>
+			<search-results-list
+				:data-items="dataItems"
+				:facets="filteredFacets"
 				:result-type="resourceType"
+				:selected-search-items="selectedSearchItems"
+				:search-term="searchTerm"
+				:is-loading="isLoading"
+				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
-		</template>
-	</slider-panel>
-	<div class="results-content">
-		<div class="secondary-header">
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					:active="resourceType === ResourceType.XDD"
-					label="Documents"
-					icon="pi pi-file"
-					@click="updateResultType(ResourceType.XDD)"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					:active="resourceType === ResourceType.MODEL"
-					label="Models"
-					icon="pi pi-share-alt"
-					@click="updateResultType(ResourceType.MODEL)"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					:active="resourceType === ResourceType.DATASET"
-					label="Datasets"
-					icon="pi pi-database"
-					@click="updateResultType(ResourceType.DATASET)"
-				/>
-			</span>
 		</div>
-		<search-results-list
-			:data-items="dataItems"
-			:facets="filteredFacets"
-			:result-type="resourceType"
+		<preview-panel
+			class="preview-slider"
+			:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
+			tab-width="0"
+			direction="right"
+			v-model:preview-item="previewItem"
+			:resource-type="resourceType"
 			:selected-search-items="selectedSearchItems"
 			:search-term="searchTerm"
-			:is-loading="isLoading"
 			@toggle-data-item-selected="toggleDataItemSelected"
 		/>
-	</div>
-	<preview-panel
-		class="preview-slider"
-		:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
-		tab-width="0"
-		direction="right"
-		v-model:preview-item="previewItem"
-		:resource-type="resourceType"
-		:selected-search-items="selectedSearchItems"
-		:search-term="searchTerm"
-		@toggle-data-item-selected="toggleDataItemSelected"
-	/>
-	<slider-panel
-		class="resources-slider"
-		:content-width="sliderWidth"
-		direction="right"
-		header="Cart"
-		v-model:is-open="isSliderResourcesOpen"
-		:indicator-value="selectedSearchItems.length"
-	>
-		<template v-slot:header>
-			<selected-resources-header-pane
-				:selected-search-items="selectedSearchItems"
-				@close="isSliderResourcesOpen = false"
-				@clear-selected="clearItemSelected"
-			/>
-		</template>
-		<template v-slot:subHeader>
-			<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
-				{{ selectedSearchItems.length }} item
-			</div>
-			<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
-				{{ selectedSearchItems.length }} items
-			</div>
-		</template>
-		<template v-slot:content>
-			<selected-resources-options-pane
-				:selected-search-items="selectedSearchItems"
-				@toggle-data-item-selected="toggleDataItemSelected"
-				@find-related-content="onFindRelatedContent"
-				@find-similar-content="onFindSimilarContent"
-			/>
-		</template>
-	</slider-panel>
+		<slider-panel
+			class="resources-slider"
+			:content-width="sliderWidth"
+			direction="right"
+			header="Cart"
+			v-model:is-open="isSliderResourcesOpen"
+			:indicator-value="selectedSearchItems.length"
+		>
+			<template v-slot:header>
+				<selected-resources-header-pane
+					:selected-search-items="selectedSearchItems"
+					@close="isSliderResourcesOpen = false"
+					@clear-selected="clearItemSelected"
+				/>
+			</template>
+			<template v-slot:subHeader>
+				<div v-if="selectedSearchItems.length == 1" class="sub-header-title">
+					{{ selectedSearchItems.length }} item
+				</div>
+				<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
+					{{ selectedSearchItems.length }} items
+				</div>
+			</template>
+			<template v-slot:content>
+				<selected-resources-options-pane
+					:selected-search-items="selectedSearchItems"
+					@toggle-data-item-selected="toggleDataItemSelected"
+					@find-related-content="onFindRelatedContent"
+					@find-similar-content="onFindSimilarContent"
+				/>
+			</template>
+		</slider-panel>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -125,7 +127,6 @@ import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
 import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
 
 // FIXME: page count is not taken into consideration
-const emit = defineEmits(['resource-type-changed']);
 
 const route = useRoute();
 const queryStore = useQueryStore();
@@ -170,6 +171,8 @@ const xddDataset = computed(() =>
 const sliderWidth = computed(() =>
 	isSliderFacetsOpen.value ? 'calc(50% - 120px)' : 'calc(50% - 20px)'
 );
+
+defineExpose({ resourceType });
 
 // close resources if preview opens
 watch(isSliderResourcesOpen, () => {
@@ -449,7 +452,7 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	}
 };
 
-const updateResultType = async (newResourceType: ResourceType) => {
+const updateAssetType = async (newResourceType: ResourceType) => {
 	if (resourceType.value !== newResourceType) {
 		resourceType.value = newResourceType;
 
@@ -499,10 +502,6 @@ async function executeNewQuery() {
 	// done with initial fetch for the currently selected tab, so reset
 	dirtyResults.value[resourceType.value] = false;
 }
-
-watch(resourceType, (newResourceType) => {
-	emit('resource-type-changed', newResourceType);
-});
 
 // this is called whenever the user apply some facet filter(s)
 watch(clientFilters, async (n, o) => {

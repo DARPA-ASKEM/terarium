@@ -4,7 +4,6 @@ import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/project/tera-project.vue';
-
 // These are test/experiment pages
 import ModelEditorView from '@/temp/ModelEditor.vue';
 import ModelRunnerView from '@/temp/ModelRunner.vue';
@@ -40,8 +39,7 @@ const routes = [
 	{
 		name: RouteName.DataExplorerRoute,
 		path: RoutePath.DataExplorer,
-		component: DataExplorerView,
-		props: (route) => ({ query: route.query.q })
+		component: DataExplorerView
 	},
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
