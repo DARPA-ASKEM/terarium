@@ -12,13 +12,13 @@
 		</slider-panel>
 		<section>
 			<tera-tab-group
-				v-if="!isEmpty(tabStore.getTabs(projectContext))"
-				:tabs="tabStore.getTabs(projectContext)"
-				:active-tab-index="tabStore.getActiveTabIndex(projectContext)"
+				v-if="!isEmpty(tabs)"
+				:tabs="tabs"
+				:active-tab-index="activeTabIndex"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
 			/>
-			<template v-if="assetId && !isEmpty(tabStore.getTabs(projectContext))">
+			<template v-if="assetId && !isEmpty(tabs)">
 				<document
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 					:asset-id="assetId"
@@ -113,11 +113,13 @@ const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
+// Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
+const tabs = computed(() => tabStore.getTabs(projectContext.value));
+const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
 
 function openAsset(selectedTab?: Tab) {
-	const assetToOpen = selectedTab ?? tabStore.getActiveTab(projectContext.value);
-
+	const assetToOpen = selectedTab ?? tabs.value[activeTabIndex.value];
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
 }
 
@@ -133,19 +135,15 @@ watch(
 		projectContext.value // Get previous tabs that were open from the proper project
 	],
 	() => {
-		console.log(projectContext.value, tabStore.getTabs(projectContext.value));
 		if (projectContext.value) {
 			if (
 				// If name isn't recognized, its a new asset so add a new tab
 				(props.assetName &&
-					!isEmpty(tabStore.getTabs(projectContext.value)) &&
-					!tabStore
-						.getTabs(projectContext.value)
-						.some(({ assetName }) => assetName === props.assetName)) ||
+					!isEmpty(tabs.value) &&
+					!tabs.value.some(({ assetName }) => assetName === props.assetName)) ||
 				// An overview tab is added if there are no tabs
-				isEmpty(tabStore.getTabs(projectContext.value))
+				isEmpty(tabs.value)
 			) {
-				console.log('add');
 				tabStore.addTab(projectContext.value, {
 					assetName: props.assetName || 'Overview',
 					assetId: props.assetId,
@@ -154,10 +152,7 @@ watch(
 			}
 			// Tab switch
 			else if (props.assetName) {
-				console.log('switch');
-				const index = tabStore
-					.getTabs(projectContext.value)
-					.findIndex(({ assetName }) => assetName === props.assetName);
+				const index = tabs.value.findIndex(({ assetName }) => assetName === props.assetName);
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
 			// Goes to tab from previous session
