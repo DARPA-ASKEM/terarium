@@ -10,7 +10,7 @@ defineProps<{ project?: IProject }>();
 
 <template>
 	<Card v-if="project">
-		<template #header>
+		<template #content>
 			<header class="project-stats">
 				<div title="Contributors"><i class="pi pi-user"></i> 1</div>
 				<div title="Models">
@@ -26,17 +26,11 @@ defineProps<{ project?: IProject }>();
 					{{ project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0 }}
 				</div>
 			</header>
-		</template>
-		<template #title>
 			<div class="project-img">
 				<img src="@assets/images/project-card.png" alt="Project image" />
 			</div>
 			<div class="project-title">{{ project.name }}</div>
-		</template>
-		<template #content>
 			<div class="project-description">{{ project.description }}</div>
-		</template>
-		<template #footer>
 			<div class="project-footer">
 				<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
 				<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
@@ -44,30 +38,21 @@ defineProps<{ project?: IProject }>();
 		</template>
 	</Card>
 	<Card v-else>
-		<template #header>
+		<template #content>
 			<header class="project-stats skeleton">
-				<Skeleton />
-				<Skeleton />
-				<Skeleton />
-				<Skeleton />
+				<Skeleton height="100%" />
+				<Skeleton height="100%" />
+				<Skeleton height="100%" />
+				<Skeleton height="100%" />
 			</header>
-		</template>
-		<template #title>
 			<div class="project-img skeleton">
 				<Skeleton height="100%" />
 			</div>
-			<div class="project-title skeleton">
-				<Skeleton height="2rem" width="60%" />
-			</div>
-		</template>
-		<template #content>
 			<div class="project-description skeleton">
 				<Skeleton />
 				<Skeleton />
 				<Skeleton width="60%" />
 			</div>
-		</template>
-		<template #footer>
 			<div class="project-footer skeleton">
 				<Skeleton />
 			</div>
@@ -76,31 +61,36 @@ defineProps<{ project?: IProject }>();
 </template>
 
 <style scoped>
+.p-card {
+	width: 17rem;
+}
+
 .project-stats {
 	display: flex;
 	justify-content: space-between;
-	padding: 0 1rem 0 1rem;
 }
 
 .project-stats.skeleton {
 	gap: 1rem;
-	height: 1rem;
-	margin-top: 1rem;
+	height: 17px;
 }
 
 .project-stats div {
-	padding-top: 1rem;
 	color: var(--text-color-secondary);
 }
 
 .project-img {
-	width: 248px;
-	height: 190px;
+	height: 8.75rem;
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
-	margin-bottom: 1rem;
 	transition: opacity 0.3s ease, height 0.3s ease;
 	position: relative;
+	margin: 0.5rem 0 0.5rem 0;
+}
+
+.project-img img {
+	height: 100%;
+	width: 100%;
 }
 
 .project-img.skeleton {
@@ -109,14 +99,14 @@ defineProps<{ project?: IProject }>();
 
 .p-card:hover .project-img:not(.skeleton) {
 	opacity: 0;
-	height: 17px;
+	height: 0;
 }
 
 .project-title {
 	display: inline-block;
-	height: 77px;
-	width: 248px;
+	height: 3.75rem;
 	overflow: hidden;
+	font-weight: var(--font-weight-semibold);
 }
 
 .project-title.skeleton {
@@ -124,41 +114,39 @@ defineProps<{ project?: IProject }>();
 }
 
 .project-description:not(.skeleton) {
-	display: inline-block;
 	overflow: hidden;
 	opacity: 0;
-	height: 17px;
-	width: 248px;
+	height: 0;
 	transition: opacity 0.3s ease, height 0.3s ease;
 	color: var(--text-color-secondary);
 }
 
 .p-card:hover .project-description:not(.skeleton) {
 	opacity: 100;
-	height: 190px;
+	height: 8.75rem;
 }
 
 .project-description.skeleton {
-	height: 73px;
 	display: flex;
 	flex-direction: column;
 	row-gap: 0.5rem;
 }
 
 .project-footer {
-	align-items: baseline;
+	height: 3rem;
+	align-items: center;
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-color-secondary);
+	padding-top: 0.5rem;
 }
 
 .project-footer.skeleton {
 	align-items: flex-end;
-	height: 2rem;
 }
 
-.p-card {
-	width: 20rem;
-	cursor: pointer;
+.p-button.p-button-icon-only.p-button-rounded {
+	height: 3rem;
+	width: 3rem;
 }
 </style>
