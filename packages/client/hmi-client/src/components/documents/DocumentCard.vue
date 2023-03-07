@@ -1,32 +1,30 @@
 <template>
 	<Card>
-		<template #header>
-			<section class="content">
-				<div class="image">
-					<img
-						v-if="images.length > 0"
-						class="card-image"
-						:src="'data:image/jpeg;base64,' + shownImage"
-						alt="Paper image"
-					/>
-					<img
-						v-else
-						class="card-image"
-						:src="'data:image/jpeg;base64,' + getRandomImage()"
-						alt="Paper image"
-					/>
-				</div>
-				<section class="journal">
-					<span class="journal-name">{{ document.journal }}</span> | {{ document.year }}
-				</section>
-				<section class="title">
-					{{ document.title }}
-				</section>
-				<section class="authors">
-					<ul>
-						<li v-for="(author, index) in document.author" :key="index">{{ author.name }}</li>
-					</ul>
-				</section>
+		<template #content>
+			<div class="image">
+				<img
+					v-if="images.length > 0"
+					class="card-image"
+					:src="'data:image/jpeg;base64,' + shownImage"
+					alt="Paper image"
+				/>
+				<img
+					v-else
+					class="card-image"
+					:src="'data:image/jpeg;base64,' + getRandomImage()"
+					alt="Paper image"
+				/>
+			</div>
+			<section class="journal">
+				<span class="journal-name">{{ document.journal }}</span> | {{ document.year }}
+			</section>
+			<section class="title">
+				{{ document.title }}
+			</section>
+			<section class="authors">
+				<ul>
+					<li v-for="(author, index) in document.author" :key="index">{{ author.name }}</li>
+				</ul>
 			</section>
 		</template>
 	</Card>
@@ -71,17 +69,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.content {
-	padding: 0 1rem 0 1rem;
-}
-
 .image {
-	width: calc(280px - 2rem);
-	height: 190px;
-	margin: 1rem 0 1rem 0;
+	height: 8.75rem;
+	margin-bottom: 0.5rem;
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
-	display: inline-block;
 }
 
 .image img {
@@ -90,7 +82,7 @@ onMounted(async () => {
 }
 
 .journal {
-	margin: 0 0 1rem 0;
+	margin-bottom: 0.5rem;
 	height: 2.4rem;
 }
 
@@ -99,22 +91,19 @@ onMounted(async () => {
 }
 
 .title {
-	font-size: 1.5rem;
-	font-weight: 700;
-	height: 77px;
-	display: inline-block;
+	height: 3.75rem;
+	font-weight: var(--font-weight-semibold);
 	overflow: hidden;
-	text-overflow: ellipsis;
+	margin-bottom: 0.5rem;
 }
 
 .authors {
-	display: inline-block;
 	overflow: hidden;
-	height: 3.6rem;
+	height: 3.75rem;
 }
 
 .p-card {
-	width: 20rem;
+	width: 17rem;
 }
 
 li {
