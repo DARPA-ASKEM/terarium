@@ -27,6 +27,7 @@
 		"eslint-import-resolver-typescript": "3.5.3",
 		"graph-scaffolder": "*",
 		"lodash": "4.17.21",
+		"mathlive": "0.89.2",
 		"pinia": "2.0.30",
 		"pixi-viewport": "4.37.0",
 		"pixi.js": "7.0.5",

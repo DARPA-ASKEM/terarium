@@ -6745,6 +6745,7 @@ cors@latest:
     eslint-import-resolver-typescript: 3.5.3
     graph-scaffolder: "*"
     lodash: 4.17.21
+    mathlive: 0.89.2
     pinia: 2.0.30
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
@@ -8636,6 +8637,13 @@ cors@latest:
     lazy-cache: ^2.0.1
     resolve-dir: ^0.1.0
   checksum: d961f00558c41aa6becdbe67f82e7c40f7cf0bbdc10d78ffe0c42461b07af29c24b2307ee4c1bd19f77d80318cb186f8b9f95c5953814683df6fe9af0fc5b90a
+  languageName: node
+  linkType: hard
+
+"mathlive@npm:0.89.2":
+  version: 0.89.2
+  resolution: "mathlive@npm:0.89.2"
+  checksum: f00e62fec9ebdcf40cb75fa849212d5dfa239e0bc4af9a9f324f5670be138e4c3707cc3ab3caa3357eb62409af751013dff70ce057a5f7804bbad54c0684fa1d
   languageName: node
   linkType: hard
 
