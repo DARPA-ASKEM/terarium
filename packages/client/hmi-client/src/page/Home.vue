@@ -264,6 +264,7 @@ function openProject(chosenProject: IProject) {
 	overflow-y: auto;
 	overflow-x: hidden;
 	flex: 1;
+	padding: 0;
 }
 
 section {
@@ -353,13 +354,19 @@ header svg {
 .chevron-left {
 	left: -1rem;
 	top: 1.4rem;
-	height: 279.5px;
+	height: 20rem;
 }
 
 .chevron-right {
 	right: -1rem;
 	top: 1.4rem;
-	height: 279.5px;
+	height: 20rem;
+}
+
+.papers .chevron-left,
+.papers .chevron-right {
+	height: 22rem;
+	top: 0.4rem;
 }
 
 .chevron-left:hover,
