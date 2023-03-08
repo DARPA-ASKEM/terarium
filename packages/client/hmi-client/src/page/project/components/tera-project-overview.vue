@@ -1,5 +1,5 @@
 <template>
-	<div class="flex-container">
+	<main>
 		<header>
 			<Button
 				icon="pi pi-ellipsis-v"
@@ -41,7 +41,7 @@
 				<resources-list :project="project" />
 			</section>
 		</section>
-	</div>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -105,10 +105,11 @@ function showProjectMenu(event) {
 </script>
 
 <style scoped>
-.flex-container {
+main {
 	display: flex;
 	flex-direction: column;
-	flex: 1;
+	/* flex: 1; */
+	/* flex-grow: 1; */
 	background: var(--surface-section);
 }
 

@@ -1,56 +1,62 @@
 <template>
 	<main>
-		<slider-panel
-			v-model:is-open="isResourcesSliderOpen"
-			content-width="300px"
-			header="Resources"
-			direction="left"
-		>
-			<template v-slot:content>
-				<tera-resource-sidebar />
-			</template>
-		</slider-panel>
 		<section>
-			<tera-tab-group
-				v-if="!isEmpty(tabs)"
-				:tabs="tabs"
-				:active-tab-index="activeTabIndex"
-				@close-tab="removeClosedTab"
-				@select-tab="openAsset"
-			/>
-			<template v-if="assetId && !isEmpty(tabs)">
-				<document
-					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
-					:asset-id="assetId"
-					:previewLineLimit="10"
-					:project="project"
-					is-editable
-				/>
-				<dataset
-					v-else-if="assetType === ProjectAssetTypes.DATASETS"
-					:asset-id="assetId"
-					:project="project"
-					is-editable
-				/>
-				<model
-					v-else-if="assetType === ProjectAssetTypes.MODELS"
-					:asset-id="assetId"
-					:project="project"
-					is-editable
-				/>
-				<simulation-plan
-					v-else-if="assetType === ProjectAssetTypes.PLANS"
-					:asset-id="assetId"
-					:project="project"
-				/>
-				<simulation-run
-					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-					:asset-id="assetId"
-					:project="project"
-				/>
-			</template>
-			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
-			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
+			<Splitter style="height: 100%">
+				<SplitterPanel :size="20">
+					<slider-panel
+						v-model:is-open="isResourcesSliderOpen"
+						is-splitter-panel
+						header="Resources"
+						direction="left"
+					>
+						<template v-slot:content>
+							<tera-resource-sidebar />
+						</template>
+					</slider-panel>
+				</SplitterPanel>
+				<SplitterPanel :size="100">
+					<tera-tab-group
+						v-if="!isEmpty(tabs)"
+						:tabs="tabs"
+						:active-tab-index="activeTabIndex"
+						@close-tab="removeClosedTab"
+						@select-tab="openAsset"
+					/>
+					<template v-if="assetId && !isEmpty(tabs)">
+						<document
+							v-if="assetType === ProjectAssetTypes.DOCUMENTS"
+							:asset-id="assetId"
+							:previewLineLimit="10"
+							:project="project"
+							is-editable
+						/>
+						<dataset
+							v-else-if="assetType === ProjectAssetTypes.DATASETS"
+							:asset-id="assetId"
+							:project="project"
+							is-editable
+						/>
+						<model
+							v-else-if="assetType === ProjectAssetTypes.MODELS"
+							:asset-id="assetId"
+							:project="project"
+							is-editable
+						/>
+						<simulation-plan
+							v-else-if="assetType === ProjectAssetTypes.PLANS"
+							:asset-id="assetId"
+							:project="project"
+						/>
+						<simulation-run
+							v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
+							:asset-id="assetId"
+							:project="project"
+						/>
+					</template>
+					<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
+					<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
+				</SplitterPanel>
+			</Splitter>
 		</section>
 		<slider-panel
 			class="slider"
@@ -91,6 +97,8 @@ import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
 import { isEmpty } from 'lodash';
 import { useTabStore } from '@/stores/tabs';
+import Splitter from 'primevue/splitter';
+import SplitterPanel from 'primevue/splitterpanel';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import { RouteName } from '@/router/routes';
@@ -198,7 +206,18 @@ section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	height: 100%;
+}
+
+.asset {
 	overflow: auto;
+}
+
+.p-splitter {
+	border: none;
+	background: none;
+	border-radius: none;
+	color: none;
 }
 
 .asset {
@@ -220,5 +239,10 @@ section {
 	display: inline-block;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.p-inputtext,
+.p-button {
+	margin-left: 1rem;
 }
 </style>

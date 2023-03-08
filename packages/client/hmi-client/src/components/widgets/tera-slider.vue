@@ -1,9 +1,12 @@
 <template>
 	<aside
 		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
-		:style="{ width: isOpen ? contentWidth : tabWidth }"
+		:style="!isSplitterPanel ? { width: isOpen ? contentWidth : tabWidth } : {}"
 	>
-		<div class="slider-content-container" :style="{ width: contentWidth }">
+		<div
+			class="slider-content-container"
+			:style="isSplitterPanel && isOpen ? { position: 'static' } : { width: contentWidth }"
+		>
 			<section class="slider-content" :style="sidePanelContentStyle">
 				<slot name="content" />
 			</section>
@@ -24,6 +27,10 @@ const props = defineProps({
 	isOpen: {
 		type: Boolean,
 		default: true
+	},
+	isSplitterPanel: {
+		type: Boolean,
+		default: false
 	},
 	direction: {
 		type: String,
@@ -64,6 +71,10 @@ const sidePanelTabStyle = computed(
 </script>
 
 <style scoped>
+aside {
+	height: 100%;
+}
+
 .slider,
 .slider-content,
 .slider-tab {
@@ -100,8 +111,8 @@ const sidePanelTabStyle = computed(
 
 .slider-content {
 	background-color: var(--surface-section);
-	position: relative;
-	width: 100%;
+	/* position: relative; */
+	/* width: 100%; */
 	height: 100%;
 	overflow-y: auto;
 }
@@ -111,7 +122,7 @@ footer {
 	border-top: 1px solid var(--surface-border);
 	background-color: var(--surface-section);
 	height: 5rem;
-	width: 100%;
+	/* width: 100%; */
 	display: flex;
 	align-items: center;
 }

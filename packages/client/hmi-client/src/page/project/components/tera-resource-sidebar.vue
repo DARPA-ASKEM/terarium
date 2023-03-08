@@ -161,6 +161,7 @@ nav {
 	margin-top: 0;
 	gap: 1rem;
 	min-height: 75%;
+	min-width: 240px;
 }
 
 .p-chip {
@@ -170,9 +171,12 @@ nav {
 }
 
 .p-tree:deep(.p-treenode-label) {
-	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 1;
+	white-space: pre-line;
+	-webkit-box-orient: vertical;
 	overflow: hidden;
-	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .p-tree:deep(.p-treenode-content:has(span[active='true'])),

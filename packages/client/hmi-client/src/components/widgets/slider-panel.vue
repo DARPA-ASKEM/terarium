@@ -1,6 +1,7 @@
 <template>
 	<tera-slider
 		:content-width="contentWidth"
+		:is-splitter-panel="isSplitterPanel"
 		:tab-width="tabWidth"
 		:direction="direction"
 		:is-open="isOpen"
@@ -42,6 +43,10 @@ defineProps({
 	isOpen: {
 		type: Boolean,
 		default: true
+	},
+	isSplitterPanel: {
+		type: Boolean,
+		default: false
 	},
 	direction: {
 		type: String,
