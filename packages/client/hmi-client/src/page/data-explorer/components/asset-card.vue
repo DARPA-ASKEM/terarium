@@ -1,5 +1,5 @@
 <template>
-	<div class="asset-card">
+	<div class="asset-card" draggable="true" @dragstart="startDrag(asset, resourceType)">
 		<main>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
@@ -112,6 +112,7 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
 import * as textUtil from '@/utils/text';
+import { useDragEvent } from '@/services/drag-drop';
 
 // This type is for easy frontend integration with the rest of the extraction types (just for use here)
 type UrlExtraction = {
@@ -249,6 +250,13 @@ const formatFeatures = () => {
 	const max = 5;
 	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
 };
+
+const { setDragData } = useDragEvent();
+
+function startDrag(asset, resourceType) {
+	setDragData('asset', asset);
+	setDragData('resourceType', resourceType);
+}
 </script>
 
 <style scoped>
