@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
@@ -32,6 +33,7 @@ import java.util.UUID;
 @Table(indexes = {
 	@Index(columnList = "artifactType, artifactId")
 })
+@EqualsAndHashCode(callSuper = true)
 public class Annotation extends PanacheEntityBase implements Serializable {
 	@Id
 	private String id = UUID.randomUUID().toString();
