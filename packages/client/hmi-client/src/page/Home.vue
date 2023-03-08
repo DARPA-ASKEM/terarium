@@ -41,11 +41,11 @@
 			<div v-for="(project, index) in projectsToDisplay" :key="index">
 				<p>{{ project.name }}</p>
 				<div class="carousel">
-					<div class="chevron-left">
-						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+					<div class="chevron-left" @click="scroll('left', $event)">
+						<i class="pi pi-chevron-left" />
 					</div>
-					<div class="chevron-right">
-						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+					<div class="chevron-right" @click="scroll('right', $event)">
+						<i class="pi pi-chevron-right" />
 					</div>
 					<ul>
 						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
