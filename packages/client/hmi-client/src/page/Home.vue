@@ -63,20 +63,20 @@
 			@click="close()"
 		>
 			<div class="selected-document-modal" @click.stop>
-				<div class="modal-header">
-					<header class="modal-header-text">Document</header>
-					<IconClose32 class="close-button" @click="close()" />
-				</div>
-				<subheader class="modal-subheader-text">
+				<header class="modal-header">
+					Document
+					<i class="pi pi-times close-button" @click="close()" />
+				</header>
+				<div class="modal-subheader-text">
 					<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
-					<span class="green-text">{{ selectedDocument.journal }}</span>
+					<em>{{ selectedDocument.journal }}</em>
 					{{ ', ' + selectedDocument.year + ' ' + selectedDocument.volume }}
-				</subheader>
+				</div>
 				<h3>{{ selectedDocument.title }}</h3>
 				<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
-				<subheader class="modal-subheader-text green-text">
-					{{ listAuthorNames(selectedDocument.author) }}</subheader
-				>
+				<div class="modal-subheader-text">
+					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
+				</div>
 				<selected-document-pane
 					class="selected-document-pane"
 					:selected-document="selectedDocument"
@@ -116,7 +116,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
-import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
@@ -174,7 +173,6 @@ onMounted(async () => {
 const selectDocument = (item: DocumentType) => {
 	const itemID = item as DocumentType;
 	selectedDocument.value = itemID;
-	console.log(selectedDocument);
 };
 
 const close = () => {
@@ -228,14 +226,7 @@ function openProject(chosenProject: IProject) {
 }
 
 function listAuthorNames(authors) {
-	console.log(authors);
-	let outputString = '';
-	for (let i = 0; i < authors.length - 1; i++) {
-		outputString += `${authors[i].name} , `;
-	}
-	// Add last one outside of loop to not end with a comma
-	outputString += ` ${authors[authors.length - 1].name}`;
-	return outputString;
+	return authors.map((author) => author.name).join(', ');
 }
 </script>
 
@@ -378,10 +369,6 @@ li {
 	padding: 1rem;
 }
 
-.modal-header {
-	display: flex;
-	justify-content: space-between;
-}
 .modal h3 {
 	margin-bottom: 1em;
 	font-weight: 400;
@@ -408,16 +395,21 @@ li {
 	margin-top: 2rem;
 }
 
-.modal-header-text {
+.modal header {
 	font-weight: 500;
 	font-size: 12px;
 	line-height: 12px;
 	color: var(--text-color-subdued);
 }
+
+.selected-document-modal header {
+	display: flex;
+	justify-content: space-between;
+}
 .modal-subheader-text {
 	color: var(--text-color-subdued);
 }
-.green-text {
+.modal-subheader-text em {
 	color: var(--primary-color);
 }
 .close-button {
