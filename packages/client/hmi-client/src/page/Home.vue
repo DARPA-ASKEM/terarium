@@ -1,135 +1,146 @@
 <template>
 	<main>
-		<section class="projects">
-			<header>
-				<h3>Projects</h3>
-				<Button
-					icon="pi pi-plus"
-					label="New project"
-					@click="isNewProjectModalVisible = true"
-				></Button>
-			</header>
-			<TabView>
-				<TabPanel header="My projects">
-					<section v-if="projects && projects?.length < 1" class="no-projects">
-						<img src="@assets/svg/seed.svg" alt="" />
-						<h3>Welcome to Terarium</h3>
-						<p>
-							Get started by creating a <a @click="isNewProjectModalVisible = true">new project</a>.
-							Your projects will be displayed on this page.
-						</p>
-					</section>
-					<div v-else class="carousel">
+		<section class="menu">
+			<section class="projects">
+				<header>
+					<h3>Projects</h3>
+					<Button
+						icon="pi pi-plus"
+						label="New project"
+						@click="isNewProjectModalVisible = true"
+					></Button>
+				</header>
+				<TabView>
+					<TabPanel header="My projects">
+						<section v-if="projects && projects?.length < 1" class="no-projects">
+							<img src="@assets/svg/seed.svg" alt="" />
+							<h3>Welcome to Terarium</h3>
+							<p>
+								Get started by creating a
+								<a @click="isNewProjectModalVisible = true">new project</a>. Your projects will be
+								displayed on this page.
+							</p>
+						</section>
+						<div v-else class="carousel">
+							<div class="chevron-left" @click="scroll('left', $event)">
+								<i class="pi pi-chevron-left" />
+							</div>
+							<div class="chevron-right" @click="scroll('right', $event)">
+								<i class="pi pi-chevron-right" />
+							</div>
+							<ul v-if="isLoadingProjects">
+								<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
+									<project-card />
+								</li>
+							</ul>
+							<ul v-else>
+								<li
+									v-for="(project, index) in projects?.slice().reverse()"
+									class="card"
+									:key="index"
+								>
+									<project-card :project="project" @click="openProject(project)" />
+								</li>
+								<li>
+									<section class="new-project-card" @click="isNewProjectModalVisible = true">
+										<div>
+											<img src="@assets/svg/plus.svg" alt="" />
+										</div>
+										<p>New project</p>
+									</section>
+								</li>
+							</ul>
+						</div>
+					</TabPanel>
+					<TabPanel header="Shared projects">
+						<section class="no-projects">
+							<img src="@assets/svg/plants.svg" alt="" />
+							<h3>You don't have any shared projects</h3>
+							<p>Shared projects will be displayed on this page</p>
+						</section>
+					</TabPanel>
+				</TabView>
+			</section>
+			<section class="papers" v-if="!(projects && projects?.length < 1)">
+				<header>
+					<h3>Papers related to your projects</h3>
+				</header>
+
+				<div v-for="(project, index) in projectsToDisplay" :key="index">
+					<p>{{ project.name }}</p>
+					<div class="carousel">
 						<div class="chevron-left" @click="scroll('left', $event)">
 							<i class="pi pi-chevron-left" />
 						</div>
 						<div class="chevron-right" @click="scroll('right', $event)">
 							<i class="pi pi-chevron-right" />
 						</div>
-						<ul v-if="isLoadingProjects">
+						<ul>
+							<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+								<DocumentCard :document="document" @click="selectDocument(document)" />
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div v-if="isLoadingProjects">
+					<p>
+						<Skeleton width="6rem" />
+					</p>
+					<div class="carousel">
+						<ul>
 							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
-								<project-card />
-							</li>
-						</ul>
-						<ul v-else>
-							<li v-for="(project, index) in projects?.slice().reverse()" class="card" :key="index">
-								<project-card :project="project" @click="openProject(project)" />
-							</li>
-							<li>
-								<section class="new-project-card" @click="isNewProjectModalVisible = true">
-									<div>
-										<img src="@assets/svg/plus.svg" alt="" />
-									</div>
-									<p>New project</p>
-								</section>
+								<DocumentCard />
 							</li>
 						</ul>
 					</div>
-				</TabPanel>
-				<TabPanel header="Shared projects">
-					<section class="no-projects">
-						<img src="@assets/svg/plants.svg" alt="" />
-						<h3>You don't have any shared projects</h3>
-						<p>Shared projects will be displayed on this page</p>
-					</section>
-				</TabPanel>
-			</TabView>
-		</section>
-		<section class="papers" v-if="!(projects && projects?.length < 1)">
-			<header>
-				<h3>Papers related to your projects</h3>
-			</header>
+				</div>
+			</section>
+			<!-- modal window for showing selected document -->
+			<div
+				v-if="selectedDocument !== undefined"
+				class="selected-document-modal-mask"
+				@click="close()"
+			>
+				<div class="selected-document-modal" @click.stop>
+					<div class="modal-header">
+						<h4>{{ selectedDocument.title }}</h4>
+						<IconClose32 class="close-button" @click="close()" />
+					</div>
+					<selected-document-pane
+						class="selected-document-pane"
+						:selected-document="selectedDocument"
+						@close="close()"
+					/>
+				</div>
+			</div>
+			<!-- New project modal -->
+			<Teleport to="body">
+				<Modal
+					v-if="isNewProjectModalVisible"
+					class="modal"
+					@modal-mask-clicked="isNewProjectModalVisible = false"
+				>
+					<template #default>
+						<form>
+							<label for="new-project-name">Project Name</label>
+							<InputText id="new-project-name" type="text" v-model="newProjectName" />
 
-			<div v-for="(project, index) in projectsToDisplay" :key="index">
-				<p>{{ project.name }}</p>
-				<div class="carousel">
-					<div class="chevron-left" @click="scroll('left', $event)">
-						<i class="pi pi-chevron-left" />
-					</div>
-					<div class="chevron-right" @click="scroll('right', $event)">
-						<i class="pi pi-chevron-right" />
-					</div>
-					<ul>
-						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-							<DocumentCard :document="document" @click="selectDocument(document)" />
-						</li>
-					</ul>
-				</div>
-			</div>
-			<div v-if="isLoadingProjects">
-				<p>
-					<Skeleton width="6rem" />
-				</p>
-				<div class="carousel">
-					<ul>
-						<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
-							<DocumentCard />
-						</li>
-					</ul>
-				</div>
-			</div>
+							<label for="new-project-description">Project Purpose</label>
+							<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+						</form>
+					</template>
+					<template #footer>
+						<footer>
+							<Button @click="createNewProject">Create Project</Button>
+							<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+								>Cancel</Button
+							>
+						</footer>
+					</template>
+				</Modal>
+			</Teleport>
 		</section>
 	</main>
-	<!-- modal window for showing selected document -->
-	<div v-if="selectedDocument !== undefined" class="selected-document-modal-mask" @click="close()">
-		<div class="selected-document-modal" @click.stop>
-			<div class="modal-header">
-				<h4>{{ selectedDocument.title }}</h4>
-				<IconClose32 class="close-button" @click="close()" />
-			</div>
-			<selected-document-pane
-				class="selected-document-pane"
-				:selected-document="selectedDocument"
-				@close="close()"
-			/>
-		</div>
-	</div>
-	<!-- New project modal -->
-	<Teleport to="body">
-		<Modal
-			v-if="isNewProjectModalVisible"
-			class="modal"
-			@modal-mask-clicked="isNewProjectModalVisible = false"
-		>
-			<template #default>
-				<form>
-					<label for="new-project-name">Project Name</label>
-					<InputText id="new-project-name" type="text" v-model="newProjectName" />
-
-					<label for="new-project-description">Project Purpose</label>
-					<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
-				</form>
-			</template>
-			<template #footer>
-				<footer>
-					<Button @click="createNewProject">Create Project</Button>
-					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
-						>Cancel</Button
-					>
-				</footer>
-			</template>
-		</Modal>
-	</Teleport>
 </template>
 
 <script setup lang="ts">
@@ -249,7 +260,7 @@ function openProject(chosenProject: IProject) {
 </script>
 
 <style scoped>
-main {
+.menu {
 	overflow-y: auto;
 	overflow-x: hidden;
 	flex: 1;
