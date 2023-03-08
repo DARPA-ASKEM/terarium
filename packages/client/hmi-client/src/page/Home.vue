@@ -52,7 +52,6 @@
 							<DocumentCard :document="document" @click="selectDocument(document)" />
 						</li>
 					</ul>
-					<DocumentCard />
 				</div>
 			</div>
 			<div v-if="isLoadingProjects">
