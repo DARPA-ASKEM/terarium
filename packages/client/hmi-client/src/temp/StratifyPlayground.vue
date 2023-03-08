@@ -248,9 +248,10 @@ export default defineComponent({
 			if (evt.altKey) {
 				if (selectedOntology) {
 					d.datum().data.ontology = selectedOntology;
-					console.log('Done');
-					//Rerender
-					renderer?.setData(g);
+					this.typeMapping =
+						this.typeMapping +
+						//Rerender
+						renderer?.setData(g);
 					renderer?.render();
 					// let solutionOutput = g.nodes;
 					// console.log("Solution output:");
@@ -301,10 +302,12 @@ export default defineComponent({
 		const stratifyModelA = ref('');
 		const stratifyModelB = ref('');
 		const stratifyTypeModel = ref('');
+		const typeMapping = ref('');
 		return {
 			stratifyModelA,
 			stratifyModelB,
-			stratifyTypeModel
+			stratifyTypeModel,
+			typeMapping
 		};
 	},
 	methods: {
@@ -327,7 +330,8 @@ export default defineComponent({
 			}
 
 			// d3.select('#output').text(JSON.stringify(output, null, 2));
-			d3.select('#solution').text(JSON.stringify(g, null, 2));
+			// d3.select('#solution').text(JSON.stringify(g, null, 2));
+			d3.select('#solution').text(this.typeMapping);
 		},
 		// eslint-disable-next-line
 
@@ -367,6 +371,13 @@ export default defineComponent({
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
 			this.jsonOutput();
+		},
+		typeModel() {
+			console.log('Start typing model');
+			//Model 1 =
+			//Ontology Model =
+			//Mapping =
+			//Api Call
 		}
 	}
 });
@@ -401,6 +412,7 @@ export default defineComponent({
 				&nbsp;
 				<button type="button" @click="clearA">Clear Model A</button>
 				<button type="button" @click="loadOntology">Load Ontology</button>
+				<button type="button" @click="typeModel">Type Model</button>
 			</div>
 		</div>
 
