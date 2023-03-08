@@ -8,7 +8,6 @@ import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
-export type D3SelectionHandles<T> = d3.Selection<d3.BaseType, unknown, d3.BaseType, INode<T>>;
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW_PATH = 'M 0,-3.25 L 5 ,0 L 0,3.25';

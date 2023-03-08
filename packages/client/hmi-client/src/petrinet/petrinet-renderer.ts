@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import graphScaffolder, { INode, IEdge } from '@graph-scaffolder/index';
-import { D3SelectionINode, D3SelectionIEdge, D3SelectionHandles } from '@/services/graph';
+import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
@@ -12,7 +12,7 @@ const pathFn = d3
 	.y((d) => d.y);
 
 export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
-	displayedHandles: D3SelectionHandles<NodeData> | null = null;
+	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
@@ -246,15 +246,15 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			// hide any handles which are already open
-			this.displayedHandles?.style('opacity', 0).style('visibility', 'hidden');
+			this.nodeSelection?.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
 
-			const handles = selection.selectAll('.no-drag');
-			handles
+			selection
+				.selectAll('.no-drag')
 				.transition('ease-out')
 				.duration(200)
 				.style('opacity', 1)
 				.style('visibility', 'visible');
-			this.displayedHandles = handles;
+			this.nodeSelection = selection;
 		});
 	}
 
