@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -18,9 +18,9 @@ import java.util.List;
 public class CodeRequest implements Serializable {
 	private List<String> files = List.of("test");
 	private List<String> blobs;
-	@JsonAlias("system_name")
+	@JsonProperty("system_name")
 	private String systemName = "";
-	@JsonAlias("root_name")
+	@JsonProperty("root_name")
 	private String rootName = "";
 
 	public CodeRequest(final String code) {

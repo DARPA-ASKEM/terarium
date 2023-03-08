@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -16,11 +16,11 @@ public class Person implements Serializable {
 
 	private String email;
 
-	@JsonAlias("org")
+	@JsonProperty("org")
 	private String organization;
 
 	private String website;
 
-	@JsonAlias("is_registered")
+	@JsonProperty("is_registered")
 	private Boolean isRegistered;
 }

@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -17,6 +17,6 @@ public class Software implements Serializable {
 
 	private String source;
 
-	@JsonAlias("storage_uri")
+	@JsonProperty("storage_uri")
 	private String storageUri;
 }

@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.entities;
 
-
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import lombok.Data;
@@ -50,10 +49,10 @@ public class Annotation extends PanacheEntityBase implements Serializable {
 	@Column(nullable = false)
 	private String username;
 
-	@JsonAlias("artifact_id")
+	@JsonProperty("artifact_id")
 	private String artifactId;
 
-	@JsonAlias("artifact_type")
+	@JsonProperty("artifact_type")
 	private String artifactType;
 
 	/**

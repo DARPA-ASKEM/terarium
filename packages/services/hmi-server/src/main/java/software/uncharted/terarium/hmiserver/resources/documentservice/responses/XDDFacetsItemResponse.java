@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice.responses;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -12,10 +12,10 @@ import java.util.Map;
 @Accessors(chain = true)
 public class XDDFacetsItemResponse implements Serializable {
 
-	@JsonAlias("doc_count_error_upper_bound")
+	@JsonProperty("doc_count_error_upper_bound")
 	private Number docCountErrorUpperBound;
 
-	@JsonAlias("sum_other_doc_count")
+	@JsonProperty("sum_other_doc_count")
 	private Number sumOtherDocCount;
 
 	// The 'Object' in question here is a Number, however, sometimes they are coming in as Big numbers, and the

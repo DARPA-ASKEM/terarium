@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -12,13 +12,13 @@ public class Qualifier implements Serializable {
 
 	private String id;
 
-	@JsonAlias("dataset_id")
+	@JsonProperty("dataset_id")
 	private String datasetId;
 
 	private String description;
 
 	private String name;
 
-	@JsonAlias("value_type")
+	@JsonProperty("value_type")
 	private ValueType valueType;
 }

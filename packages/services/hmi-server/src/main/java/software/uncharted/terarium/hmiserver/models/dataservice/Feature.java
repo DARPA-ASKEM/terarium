@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -12,16 +12,16 @@ public class Feature implements Serializable {
 
 	private String id;
 
-	@JsonAlias("dataset_id")
+	@JsonProperty("dataset_id")
 	private String datasetId;
 
 	private String description;
 
-	@JsonAlias("display_name")
+	@JsonProperty("display_name")
 	private String displayName;
 
 	private String name;
 
-	@JsonAlias("value_type")
+	@JsonProperty("value_type")
 	private ValueType valueType;
 }

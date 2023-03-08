@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -17,7 +16,7 @@ public class Concept implements Serializable {
 
 	private ResourceType.Type type;
 
-	@JsonAlias("object_id")
+	@JsonProperty("object_id")
 	private String objectID;
 
 	private OntologicalField status;

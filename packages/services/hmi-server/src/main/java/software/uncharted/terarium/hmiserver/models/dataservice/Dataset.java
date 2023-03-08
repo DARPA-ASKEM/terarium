@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -27,10 +27,10 @@ public class Dataset implements Serializable {
 
 	private String quality;
 
-	@JsonAlias("temporal_resolution")
+	@JsonProperty("temporal_resolution")
 	private String temporalResolution;
 
-	@JsonAlias("geospatial_resolution")
+	@JsonProperty("geospatial_resolution")
 	private String geospatialResolution;
 
 	//TODO not an object?
@@ -38,6 +38,6 @@ public class Dataset implements Serializable {
 
 	private String maintainer;
 
-	@JsonAlias("simulation_run")
+	@JsonProperty("simulation_run")
 	private Boolean simulationRun;
 }

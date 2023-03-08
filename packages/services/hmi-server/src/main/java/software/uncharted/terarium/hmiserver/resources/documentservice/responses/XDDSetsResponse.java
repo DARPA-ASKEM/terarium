@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice.responses;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -12,7 +12,7 @@ public class XDDSetsResponse {
 
 	private String description;
 
-	@JsonAlias("available_sets")
+	@JsonProperty("available_sets")
 	private List<String> availableSets;
 
 }

@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -14,13 +14,13 @@ public class SimulationRun implements Serializable {
 
 	private Long id;
 
-	@JsonAlias("simulator_id")
+	@JsonProperty("simulator_id")
 	private String simulatorId;
 
-	@JsonAlias("timestamp")
+	@JsonProperty("timestamp")
 	private Instant startTimestamp;
 
-	@JsonAlias("completed_at")
+	@JsonProperty("completed_at")
 	private Instant endTimestamp;
 
 	private Boolean success;
