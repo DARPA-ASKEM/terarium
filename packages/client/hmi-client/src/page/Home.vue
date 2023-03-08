@@ -20,7 +20,7 @@
 						</div>
 						<ul v-if="isLoadingProjects">
 							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
-								<project-card :loading="true" />
+								<project-card />
 							</li>
 						</ul>
 						<ul v-else>
@@ -47,10 +47,22 @@
 					<div class="chevron-right">
 						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
 					</div>
-					<ul v-if="isLoadingProjects"></ul>
-					<ul v-else>
+					<ul>
 						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
 							<DocumentCard :document="document" @click="selectDocument(document)" />
+						</li>
+					</ul>
+					<DocumentCard />
+				</div>
+			</div>
+			<div v-if="isLoadingProjects">
+				<p>
+					<Skeleton width="6rem" />
+				</p>
+				<div class="carousel">
+					<ul>
+						<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
+							<DocumentCard />
 						</li>
 					</ul>
 				</div>
@@ -122,6 +134,7 @@ import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
+import Skeleton from 'primevue/skeleton';
 
 const projects = ref<IProject[]>([]);
 // Only display projects with at least one related document

@@ -1,5 +1,5 @@
 <template>
-	<Card>
+	<Card v-if="document">
 		<template #content>
 			<div class="image">
 				<img
@@ -16,14 +16,36 @@
 				/>
 			</div>
 			<section class="journal">
-				<span class="journal-name">{{ document.journal }}</span> | {{ document.year }}
+				<span class="journal-name">{{ document?.journal }}</span> | {{ document?.year }}
 			</section>
 			<section class="title">
-				{{ document.title }}
+				{{ document?.title }}
 			</section>
 			<section class="authors">
 				<ul>
-					<li v-for="(author, index) in document.author" :key="index">{{ author.name }}</li>
+					<li v-for="(author, index) in document?.author" :key="index">{{ author.name }}</li>
+				</ul>
+			</section>
+		</template>
+	</Card>
+	<Card v-else>
+		<template #content>
+			<div class="image skeleton">
+				<Skeleton height="100%" width="100%" />
+			</div>
+			<section class="journal">
+				<Skeleton />
+			</section>
+			<section class="title skeleton">
+				<Skeleton />
+				<Skeleton />
+				<Skeleton width="60%" />
+			</section>
+			<section class="authors">
+				<ul class="skeleton">
+					<li v-for="(i, index) in [0, 1, 2, 3, 4, 5, 6]" :key="index">
+						<Skeleton width="4rem" />
+					</li>
 				</ul>
 			</section>
 		</template>
@@ -38,8 +60,9 @@ import { getDocumentDoi } from '@/utils/data-util';
 import Card from 'primevue/card';
 import { onMounted, ref, computed } from 'vue';
 import * as stockImages from '@/assets/images/homePageStockImages';
+import Skeleton from 'primevue/skeleton';
 
-const props = defineProps<{ document: DocumentType }>();
+const props = defineProps<{ document?: DocumentType }>();
 const artifacts = ref<XDDArtifact[]>([]);
 const extractionType = ref('');
 const images = computed(() => artifacts.value.map((a) => a.properties.image));
@@ -60,10 +83,12 @@ function getRandomImage() {
 }
 
 onMounted(async () => {
-	const doi = await getDocumentDoi(props.document);
-	await fetchArtifacts(doi);
-	if (artifacts.value.length > 0) {
-		extractionType.value = artifacts.value[0].askemClass;
+	if (props.document) {
+		const doi = await getDocumentDoi(props.document);
+		await fetchArtifacts(doi);
+		if (artifacts.value.length > 0) {
+			extractionType.value = artifacts.value[0].askemClass;
+		}
 	}
 });
 </script>
@@ -74,6 +99,10 @@ onMounted(async () => {
 	margin-bottom: 0.5rem;
 	background-color: var(--surface-ground);
 	border-radius: 1rem;
+}
+
+.image.skeleton {
+	background-color: transparent;
 }
 
 .image img {
@@ -97,6 +126,12 @@ onMounted(async () => {
 	margin-bottom: 0.5rem;
 }
 
+.title.skeleton {
+	display: flex;
+	flex-direction: column;
+	row-gap: 0.3rem;
+}
+
 .authors {
 	overflow: hidden;
 	height: 3.75rem;
@@ -104,6 +139,12 @@ onMounted(async () => {
 
 .p-card {
 	width: 17rem;
+}
+
+ul.skeleton {
+	display: flex;
+	flex-wrap: wrap;
+	row-gap: 0.3rem;
 }
 
 li {
