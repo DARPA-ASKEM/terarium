@@ -1,9 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.documentservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.time.Instant;
 
@@ -11,33 +12,20 @@ import java.time.Instant;
 @Accessors(chain = true)
 public class Dictionary implements Serializable {
 
+	@JsonProperty("dict_id")
 	private Number dictId;
 
 	private String name;
+
+	@JsonProperty("base_classification")
 	private String baseClassification;
 
 	private String source;
+
+	@JsonProperty("case_sensitive")
 	private Boolean caseSensitive;
+
+	@JsonProperty("last_updated")
 	private Instant lastUpdated;
-
-	@JsonbProperty("dict_id")
-	public void setDictId(Number dictId) {
-		this.dictId = dictId;
-	}
-
-	@JsonbProperty("base_classification")
-	public void setBaseClassification(String baseClassification) {
-		this.baseClassification = baseClassification;
-	}
-
-	@JsonbProperty("case_sensitive")
-	public void setCaseSensitive(Boolean caseSensitive) {
-		this.caseSensitive = caseSensitive;
-	}
-
-	@JsonbProperty("last_updated")
-	public void setLastUpdated(Instant lastUpdated) {
-		this.lastUpdated = lastUpdated;
-	}
 
 }

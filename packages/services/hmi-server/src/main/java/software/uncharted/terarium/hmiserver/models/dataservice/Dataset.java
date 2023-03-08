@@ -1,15 +1,17 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
 @Accessors(chain = true)
-public class Dataset extends ResourceType implements Serializable {
+public class Dataset implements Serializable {
+
+	private Long id;
 
 	private String name;
 
@@ -25,16 +27,17 @@ public class Dataset extends ResourceType implements Serializable {
 
 	private String quality;
 
-	@JsonbProperty("temporal_resolution")
+	@JsonProperty("temporal_resolution")
 	private String temporalResolution;
 
-	@JsonbProperty("geospatial_resolution")
+	@JsonProperty("geospatial_resolution")
 	private String geospatialResolution;
 
-	private String annotations;
+	//TODO not an object?
+	private Object annotations;
 
 	private String maintainer;
 
-	@JsonbProperty("simulation_run")
+	@JsonProperty("simulation_run")
 	private Boolean simulationRun;
 }

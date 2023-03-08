@@ -41,7 +41,7 @@ public class SetResource {
 		try {
 			XDDSetsResponse response = proxy.getAvailableSets();
 
-			if (response.getAvailable_sets() == null || response.getAvailable_sets().isEmpty())
+			if (response.getAvailableSets() == null || response.getAvailableSets().isEmpty())
 				return Response.noContent().build();
 
 			return Response
