@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -12,10 +13,9 @@ public class Publication implements Serializable {
 
 	private Long id;
 
-	@JsonAlias("xdd_uri")
+	@JsonProperty("xdd_uri")
 	private String xddUri;
-
-	@JsonAlias("title")
+	
 	private String title;
 
 }
