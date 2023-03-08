@@ -2,7 +2,7 @@
 	<main>
 		<section>
 			<Splitter style="height: 100%">
-				<SplitterPanel :size="20">
+				<SplitterPanel :size="resourceSliderSize">
 					<slider-panel
 						v-model:is-open="isResourcesSliderOpen"
 						is-splitter-panel
@@ -14,7 +14,7 @@
 						</template>
 					</slider-panel>
 				</SplitterPanel>
-				<SplitterPanel :size="100">
+				<SplitterPanel :size="assetPageSize">
 					<tera-tab-group
 						v-if="!isEmpty(tabs)"
 						:tabs="tabs"
@@ -118,7 +118,10 @@ const tabStore = useTabStore();
 const router = useRouter();
 
 const isResourcesSliderOpen = ref(true);
+const resourceSliderSize = ref(15);
+const assetPageSize = ref(85);
 const isNotesSliderOpen = ref(false);
+
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 
@@ -137,6 +140,17 @@ function removeClosedTab(tabIndexToRemove: number) {
 
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
+
+// Get rid of this probably and hardcode widths in html again
+watch(
+	() => [resourceSliderSize.value, isResourcesSliderOpen.value],
+	() => {
+		// resourceSliderSize.value = isResourcesSliderOpen.value ? 15 : 0;
+		// assetPageSize.value = isResourcesSliderOpen.value ? 85 : 100;
+
+		console.log(resourceSliderSize.value, assetPageSize.value);
+	}
+);
 
 watch(
 	() => [

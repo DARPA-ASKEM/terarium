@@ -7,7 +7,7 @@
 		:is-open="isOpen"
 	>
 		<template v-slot:content>
-			<header class="slider-header content">
+			<header class="slider-header">
 				<i
 					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
 					@click="emit('update:isOpen', false)"
@@ -101,7 +101,7 @@ section {
 	flex-direction: column;
 }
 
-.slider-header.content {
+.slider-header {
 	flex-direction: row-reverse;
 	justify-content: space-between;
 	padding: 1rem;
