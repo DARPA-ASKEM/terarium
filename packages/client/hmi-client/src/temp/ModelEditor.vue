@@ -633,8 +633,8 @@ const addVariable = (vType: string) => {
 		label: id,
 		x: 200,
 		y: 200,
-		width: 20,
-		height: 20,
+		width: 40,
+		height: 40,
 		data: {
 			type: vType
 		},
@@ -671,12 +671,13 @@ watch(
 
 // If no edges at all, grid whatever data we have
 const gridData = async () => {
+	const nodeLayoutSpacing = 140;
 	// FIXME: Hackathon
 	if (renderer?.graph.edges.length === 0) {
 		let c = 0;
 		renderer?.graph.nodes.forEach((n) => {
-			n.x = 60 + Math.round(c / 5) * 50;
-			n.y = 80 + 50 * (c % 5);
+			n.x = 60 + nodeLayoutSpacing * Math.round(c / 5);
+			n.y = 80 + nodeLayoutSpacing * (c % 5);
 			c++;
 		});
 		await renderer.render();
@@ -710,8 +711,7 @@ onMounted(async () => {
 		el: playground,
 		useAStarRouting: false, // People get distracted with squiggly connectors - Jan 2023
 		runLayout: runDagreLayout,
-		useStableZoomPan: true,
-		dragSelector: 'vim-vim'
+		useStableZoomPan: true
 	});
 
 	renderer.on('background-click', () => {
@@ -728,7 +728,7 @@ onMounted(async () => {
 	});
 
 	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		console.log(d.source, d.target);
+		renderer?.addEdge(d.source, d.target);
 	});
 
 	document.addEventListener('keyup', async (event) => {
@@ -803,17 +803,6 @@ onMounted(async () => {
 	const g = parsePetriNet2IGraph(SIRD);
 	await renderer.setData(g);
 	await renderer.render();
-
-	// FIXME: Hackathon
-	if (renderer.graph.edges.length === 0) {
-		let c = 0;
-		renderer?.graph.nodes.forEach((n) => {
-			n.x = 60 + Math.round(c / 5) * 50;
-			n.y = 80 + 50 * (c % 5);
-			c++;
-		});
-		await renderer.render();
-	}
 
 	gridData();
 

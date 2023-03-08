@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import graphScaffolder, { INode, IEdge } from '@graph-scaffolder/index';
-import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { D3SelectionINode, D3SelectionIEdge, D3SelectionHandles } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
@@ -12,6 +12,8 @@ const pathFn = d3
 	.y((d) => d.y);
 
 export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
+	displayedHandles: D3SelectionHandles<NodeData> | null = null;
+
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 
@@ -44,34 +46,108 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			(d) => d.data.type === 'T' || d.data.type === NodeType.Transition
 		);
 
+		// transitions
 		transitions
 			.append('rect')
 			.classed('shape', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
-			.style('fill', '#89BEFF')
-			.style('stroke', '#888');
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('x', (d) => -d.width * 0.5)
+			.style('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2);
+
+		// transitions drag handles
+		transitions
+			.append('circle')
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cx', (d) => d.width * 1.2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
+
+		transitions
+			.append('circle')
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cy', (d) => d.height * 1.2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
+
+		transitions
+			.append('circle')
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cx', (d) => -d.width * 1.2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
+
+		// transitions text
+		transitions
+			.append('text')
+			.attr('y', (d) => -d.height * 0.5 - 5)
+			.attr('x', (d) => -d.width * 0.5)
+			.text((d) => d.label);
+
+		// species
+		species
+			.append('circle')
+			.classed('shape', true)
+			.attr('r', (d) => d.width * 1.4)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2);
+
+		// species drag handles
+		species
+			.append('circle')
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cx', (d) => d.width * 2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
 
 		species
 			.append('circle')
 			.classed('shape', true)
-			.attr('cx', (d) => d.width * 0.5)
-			.attr('cy', (d) => d.height * 0.5)
-			.attr('r', (d) => d.width * 0.8)
-			.attr('fill', '#FF90A9');
+			.classed('no-drag', true)
+			.attr('cy', (d) => d.height * 2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
 
-		selection
-			.append('text')
-			.attr('y', -5)
-			.text((d) => d.label);
-
-		selection
+		species
 			.append('circle')
-			.classed('vim-vim', true)
-			.attr('cx', 40)
-			.attr('cy', 40)
-			.attr('r', 15)
-			.attr('fill', '#000');
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cx', (d) => -d.width * 2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
+
+		// species text
+		species
+			.append('text')
+			.attr('y', (d) => -d.height * 1.4 - 5)
+			.attr('x', (d) => -d.width * 1.4)
+			.text((d) => d.label);
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -120,25 +196,25 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		this.removeAllEvents('node-drag-end');
 
 		// (Re)create dragging listeners
-		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
-			if (!this.customDrag) return;
+		this.on('node-drag-start', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
-			start.x = sourceData.x + 0.5 * sourceData.width;
-			start.y = sourceData.y + 0.5 * sourceData.height;
+			start.x = sourceData.x;
+			start.y = sourceData.y;
 		});
 
 		this.on(
 			'node-drag-move',
 			(_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
 				this.updateMultiEdgeLabels();
-				if (!this.customDrag) return;
+				if (!this.isDragEnabled) return;
 				const pointerCoords = d3
 					.zoomTransform(svg.node() as Element)
 					.invert(d3.pointer(event, svg.node()));
 				targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
 				if (targetData) {
-					end.x = targetData.x + 0.5 * targetData.width;
-					end.y = targetData.y + 0.5 * targetData.height;
+					end.x = targetData.x;
+					end.y = targetData.y;
 				} else {
 					end.x = pointerCoords[0];
 					end.y = pointerCoords[1];
@@ -160,29 +236,67 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 		this.on('node-drag-end', (/* eventName, event, selection: D3SelectionINode<NodeData> */) => {
 			chart?.selectAll('.new-edge').remove();
-			if (!this.customDrag) return;
+			if (!this.isDragEnabled) return;
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
 				sourceData = null;
 				targetData = null;
 			}
 		});
+
+		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			// hide any handles which are already open
+			this.displayedHandles?.style('opacity', 0).style('visibility', 'hidden');
+
+			const handles = selection.selectAll('.no-drag');
+			handles
+				.transition('ease-out')
+				.duration(200)
+				.style('opacity', 1)
+				.style('visibility', 'visible');
+			this.displayedHandles = handles;
+		});
+	}
+
+	getShapeOffset(node: any, angle: number) {
+		switch (node.data.type) {
+			case 'T': {
+				// transitions -> squares
+				return { x: node.x, y: node.y };
+			}
+			case 'S': {
+				// species -> circles with multiplier
+				const radius = node.width * 1.5;
+				return { x: node.x + radius * Math.cos(angle), y: node.y + radius * Math.sin(angle) };
+			}
+			default:
+				return { x: node.x, y: node.y };
+		}
 	}
 
 	addEdge(source: any, target: any) {
+		let quadrant = 0;
+		if (target.x - source.x < 0 && target.y - source.y > 0) {
+			quadrant = 1;
+		}
+		if (target.x - source.x < 0 && target.y - source.y < 0) {
+			quadrant = 2;
+		}
+		if (target.x - source.x > 0 && target.y - source.y < 0) {
+			quadrant = 3;
+		}
+
+		const edgeVectorAngle =
+			(quadrant * Math.PI) / 2 + Math.abs(Math.atan((target.y - source.y) / (target.x - source.x)));
+		// console.log(edgeVectorAngle / 2 / Math.PI * 360);
+
 		this.graph.edges.push({
-			id: `${source.datum().id}_${target.datum().id}`,
-			source: source.datum().id,
-			target: target.datum().id,
+			id: `${source.id}_${target.id}`,
+			source: source.id,
+			target: target.id,
 			points: [
-				{
-					x: source.datum().x + source.datum().width * 0.5,
-					y: source.datum().y + source.datum().height * 0.5
-				},
-				{
-					x: target.datum().x + target.datum().width * 0.5,
-					y: target.datum().y + target.datum().height * 0.5
-				}
+				this.getShapeOffset(source, edgeVectorAngle),
+				this.getShapeOffset(target, (edgeVectorAngle + Math.PI) % (Math.PI * 2))
 			],
 			data: { numEdges: 1 }
 		});

@@ -120,15 +120,16 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	// Reset current Graph.
 	result.nodes = [];
 	result.edges = [];
-	const nodeHeight = 20;
-	const nodeWidth = 20;
+	const nodeHeight = 40;
+	const nodeWidth = 40;
+	const nodeLayoutSpacing = 140;
 	let nodeX = 10;
 	let nodeY = 10;
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
 		const aNode = model.S[i];
-		nodeX += 30;
-		nodeY += 30;
+		nodeX += nodeLayoutSpacing;
+		nodeY += nodeLayoutSpacing;
 		result.nodes.push({
 			id: `s-${i + 1}`,
 			label: aNode.sname,
@@ -145,8 +146,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
-		nodeX += 30;
-		nodeY += 30;
+		nodeX += nodeLayoutSpacing;
+		nodeY += nodeLayoutSpacing;
 		result.nodes.push({
 			id: `t-${i + 1}`,
 			label: aTransition.tname,

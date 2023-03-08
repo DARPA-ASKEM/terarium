@@ -8,6 +8,7 @@ import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
+export type D3SelectionHandles<T> = d3.Selection<d3.BaseType, unknown, d3.BaseType, INode<T>>;
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
 const ARROW_PATH = 'M 0,-3.25 L 5 ,0 L 0,3.25';
@@ -88,12 +89,6 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	}
 
 	dagre.layout(g);
-
-	g.nodes().forEach((n) => {
-		const node = g.node(n);
-		node.x -= node.width * 0.5;
-		node.y -= node.height * 0.5;
-	});
 
 	graphScaffolder.traverseGraph(graphData, (node) => {
 		const n = g.node(node.id);

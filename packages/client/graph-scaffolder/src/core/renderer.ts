@@ -71,7 +71,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	zoomTransformObject: d3.ZoomTransform | null = null;
 
-	customDrag = false;
+	isDragEnabled: boolean = false;
 
 	constructor(options: Options) {
 		super(); // Event emitter
@@ -442,10 +442,9 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
 
-			renderer.customDrag = (dragSelector &&
-				d3.select(evt.sourceEvent.target).classed(dragSelector)) as boolean;
+			renderer.isDragEnabled = d3.select(evt.sourceEvent.target).classed(dragSelector ?? 'no-drag');
 
-			if (renderer.customDrag) {
+			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-start', evt, node, renderer);
 				return;
 			}
@@ -461,7 +460,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 			if (!node) return;
 
-			if (renderer.customDrag) {
+			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-move', evt, node, renderer);
 				return;
 			}
@@ -495,13 +494,13 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		function nodeDragEnd(evt: any): void {
-			if (renderer.customDrag) {
+			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-end', evt, node, renderer);
-				renderer.customDrag = false;
+				renderer.isDragEnabled = false;
 				return;
 			}
 
-			renderer.customDrag = false;
+			renderer.isDragEnabled = false;
 			if (options.useAStarRouting && sufficientlyMoved) {
 				for (let i = 0; i < edges.length; i++) {
 					const edge = edges[i];
