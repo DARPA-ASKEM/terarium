@@ -13,9 +13,9 @@ import java.util.Map;
 public class KnownEntities implements Serializable {
 
 	@JsonAlias("url_extractions")
-	public List<XDDUrlExtraction> urlExtractions;
+	private List<XDDUrlExtraction> urlExtractions;
 
-	public Map<String, Map<String, String>> summaries;
+	private Map<String, Map<String, String>> summaries;
 
 
 }
