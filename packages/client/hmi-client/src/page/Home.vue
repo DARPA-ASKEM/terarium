@@ -11,12 +11,20 @@
 			</header>
 			<TabView>
 				<TabPanel header="My projects">
-					<div class="carousel">
-						<div class="chevron-left">
-							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+					<section v-if="projects && projects?.length < 1" class="no-projects">
+						<img src="@assets/svg/seed.svg" alt="" />
+						<h3>Welcome to Terarium</h3>
+						<p>
+							Get started by creating a <a @click="isNewProjectModalVisible = true">new project</a>.
+							Your projects will be displayed on this page.
+						</p>
+					</section>
+					<div v-else class="carousel">
+						<div class="chevron-left" @click="scroll('left', $event)">
+							<i class="pi pi-chevron-left" />
 						</div>
-						<div class="chevron-right">
-							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+						<div class="chevron-right" @click="scroll('right', $event)">
+							<i class="pi pi-chevron-right" />
 						</div>
 						<ul v-if="isLoadingProjects">
 							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
@@ -24,16 +32,22 @@
 							</li>
 						</ul>
 						<ul v-else>
-							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
+							<li v-for="(project, index) in projects?.slice().reverse()" class="card" :key="index">
 								<project-card :project="project" @click="openProject(project)" />
 							</li>
 						</ul>
 					</div>
 				</TabPanel>
-				<TabPanel header="Shared projects"></TabPanel>
+				<TabPanel header="Shared projects">
+					<section class="no-projects">
+						<img src="@assets/svg/plants.svg" alt="" />
+						<h3>You don't have any shared projects</h3>
+						<p>Shared projects will be displayed on this page</p>
+					</section>
+				</TabPanel>
 			</TabView>
 		</section>
-		<section class="papers">
+		<section class="papers" v-if="!(projects && projects?.length < 1)">
 			<header>
 				<h3>Papers related to your projects</h3>
 			</header>
@@ -135,11 +149,11 @@ import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 
-const projects = ref<IProject[]>([]);
+const projects = ref<IProject[]>();
 // Only display projects with at least one related document
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
-	projects.value.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
+	projects.value?.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
 );
 const relevantDocuments = ref<DocumentType[]>([]);
 const relevantSearchTerm = 'COVID-19';
@@ -154,7 +168,7 @@ const auth = useAuthStore();
 const isNewProjectModalVisible = ref(false);
 const newProjectName = ref('');
 const newProjectDescription = ref('');
-const isLoadingProjects = computed(() => projects.value.length < 1);
+const isLoadingProjects = computed(() => !projects.value);
 
 onMounted(async () => {
 	// Clear all...
@@ -295,7 +309,7 @@ header svg {
 .carousel {
 	position: relative;
 	display: flex;
-	align-items: flex-end;
+	height: 319px;
 }
 
 .carousel ul {
@@ -319,13 +333,13 @@ header svg {
 
 .chevron-left {
 	left: -1rem;
-	top: 0.5rem;
+	top: 1.4rem;
 	height: 279.5px;
 }
 
 .chevron-right {
 	right: -1rem;
-	top: 0.5rem;
+	top: 1.4rem;
 	height: 279.5px;
 }
 
@@ -370,10 +384,6 @@ li {
 	max-width: 21rem;
 }
 
-.carousel:last-of-type {
-	margin-bottom: 3rem;
-}
-
 .selected-document-modal-mask {
 	position: fixed;
 	z-index: 9998;
@@ -416,5 +426,19 @@ li {
 
 .selected-document-pane {
 	margin: 2rem 0;
+}
+
+.no-projects > * {
+	margin: auto;
+	margin-top: 1rem;
+	text-align: center;
+}
+
+.no-projects > img {
+	height: 203px;
+}
+
+a {
+	color: var(--primary-color);
 }
 </style>
