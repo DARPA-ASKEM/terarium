@@ -157,7 +157,7 @@ function openAsset(event: any) {
 nav {
 	display: flex;
 	flex-direction: column;
-	margin: 0.75rem;
+	padding: 0.75rem;
 	margin-top: 0;
 	gap: 1rem;
 	min-height: 75%;
