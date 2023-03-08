@@ -139,6 +139,7 @@ onMounted(async () => {
 
 .p-card {
 	width: 17rem;
+	height: 20rem;
 }
 
 ul.skeleton {

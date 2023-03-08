@@ -63,6 +63,7 @@ defineProps<{ project?: IProject }>();
 <style scoped>
 .p-card {
 	width: 17rem;
+	height: 20rem;
 }
 
 .project-stats {

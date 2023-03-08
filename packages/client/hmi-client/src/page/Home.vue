@@ -35,6 +35,14 @@
 							<li v-for="(project, index) in projects?.slice().reverse()" class="card" :key="index">
 								<project-card :project="project" @click="openProject(project)" />
 							</li>
+							<li>
+								<section class="new-project-card" @click="isNewProjectModalVisible = true">
+									<div>
+										<img src="@assets/svg/plus.svg" alt="" />
+									</div>
+									<p>New project</p>
+								</section>
+							</li>
 						</ul>
 					</div>
 				</TabPanel>
@@ -440,5 +448,31 @@ li {
 
 a {
 	color: var(--primary-color);
+}
+
+.new-project-card {
+	width: 17rem;
+	height: 20rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1rem;
+	border-radius: 4px;
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.new-project-card > p {
+	text-align: center;
+	color: var(--primary-color);
+}
+
+.new-project-card img {
+	margin: auto;
+}
+
+.new-project-card:hover {
+	background-color: var(--surface-hover);
+	box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px 0 rgb(0 0 0 / 14%),
+		0 1px 3px 0 rgb(0 0 0 / 12%);
 }
 </style>
