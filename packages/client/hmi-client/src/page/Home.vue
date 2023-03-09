@@ -204,7 +204,6 @@ onMounted(async () => {
 	queryStore.reset(); // Facets queries.
 
 	projects.value = (await API.get('/home')).data as IProject[];
-	projects.value = projects.value.slice(1);
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
