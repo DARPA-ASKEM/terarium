@@ -32,7 +32,8 @@ const useAuthStore = defineStore('auth', {
 		userToken: null as string | null,
 		expires: null as number | null,
 		name: null as string | null,
-		email: null as string | null
+		email: null as string | null,
+		roles: null as [] | null
 	}),
 	getters: {
 		token: (state) => state.userToken,
@@ -69,6 +70,7 @@ const useAuthStore = defineStore('auth', {
 
 					this.name = tokenInfo.name;
 					this.email = tokenInfo.email;
+					this.roles = tokenInfo.realm_access.roles;
 				} catch (error) {
 					console.error('Unable to decode authentication token for additional user information');
 					this.name = null;

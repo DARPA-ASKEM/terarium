@@ -34,6 +34,39 @@
 					<Button label="Ok" @click="auth.logout" />
 				</template>
 			</Dialog>
+			<Dialog header="Admin" v-model:visible="isAdminDialog">
+				<p></p>
+				<DataTable
+					:value="adminTableData"
+					v-model:selection="selectedAdminRow"
+					selectionMode="single"
+					dataKey="id"
+					@rowSelect="onAdminRowSelect"
+					stripedRows
+					responsiveLayout="scroll"
+				>
+					<Column field="email" header="EMail"></Column>
+					<Column field="firstName" header="First Name"></Column>
+					<Column field="lastName" header="First Name"></Column>
+					<Column header="Roles">
+						<template #body="slotProps">
+							{{ getRoleNames(slotProps.data.roles) }}
+						</template>
+					</Column>
+				</DataTable>
+				<template #footer>
+					<Dropdown
+						v-model="selectedRole"
+						:options="systemRoles"
+						optionLabel="name"
+						optionValue="name"
+						placeholder="Select a Role"
+					/>
+
+					<Button label="Add Role" class="p-button-secondary" @click="addRole" />
+					<Button label="Remove Role" class="p-button-secondary" @click="removeRole" />
+				</template>
+			</Dialog>
 		</section>
 		<aside class="suggested-terms" v-if="!isEmpty(terms)">
 			Suggested terms:
@@ -53,6 +86,9 @@ import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Dropdown from 'primevue/dropdown';
 import SearchBar from '@/page/data-explorer/components/search-bar.vue';
 import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
@@ -61,6 +97,7 @@ import useAuthStore from '@/stores/auth';
 import { ResourceType } from '@/types/common';
 import { Project as ProjectType } from '@/types/Project';
 import { MenuItem } from 'primevue/menuitem';
+import API from '@/api/api';
 
 const props = defineProps<{
 	active: boolean;
@@ -90,14 +127,96 @@ const showNavigationMenu = (event) => {
 const auth = useAuthStore();
 const userMenu = ref();
 const isLogoutDialog = ref(false);
+const isAdminDialog = ref(false);
+let systemRoles = ref([]);
+let adminTableData = ref();
+const selectedRole = ref();
+let selectedId = ref();
+const selectedAdminRow = ref();
+
+const getRoles = async () => {
+	systemRoles = ref([]);
+	const response = await API({ url: '/roles', baseURL: '/adminapi' });
+	if (response.status === 200) {
+		response.data.forEach((role) => {
+			systemRoles.value.push({ name: role.name });
+		});
+	}
+};
+
+const getUsers = async () => {
+	const response = await API({ url: '/users', baseURL: '/adminapi' });
+	if (response.status === 200) {
+		adminTableData = ref(response.data);
+		isAdminDialog.value = true;
+	}
+};
+
 const userMenuItems = ref([
 	{
 		label: 'Logout',
 		command: () => {
 			isLogoutDialog.value = true;
 		}
+	},
+	{
+		label: 'Admin',
+		visible: auth.roles.includes('admin'),
+		command: async () => {
+			getRoles();
+			getUsers();
+		}
 	}
 ]);
+
+const onAdminRowSelect = (event) => {
+	selectedId = ref(event.data.id);
+};
+
+const addRole = async () => {
+	if (selectedId.value && selectedRole.value) {
+		const response = await API({
+			url: `/user/${selectedId.value}/roles?name=${selectedRole.value}`,
+			baseURL: '/adminapi',
+			method: 'POST',
+			validateStatus(status) {
+				return status < 400; //
+			}
+		});
+		if (response.status === 200) {
+			getUsers();
+		}
+	}
+};
+
+const removeRole = async () => {
+	if (selectedId.value && selectedRole.value) {
+		const response = await API({
+			url: `/user/${selectedId.value}/roles?name=${selectedRole.value}`,
+			baseURL: '/adminapi',
+			method: 'DELETE',
+			validateStatus(status) {
+				return status < 400; //
+			}
+		});
+		if (response.status === 200) {
+			getUsers();
+		}
+	}
+};
+
+const getRoleNames = (roles) => {
+	let names = '';
+	if (roles) {
+		roles.forEach((role) => {
+			if (names.length > 0) {
+				names += ', ';
+			}
+			names += role.name;
+		});
+	}
+	return names;
+};
 
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
