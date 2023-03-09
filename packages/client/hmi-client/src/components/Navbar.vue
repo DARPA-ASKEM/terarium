@@ -79,6 +79,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty } from 'lodash';
 import Avatar from 'primevue/avatar';
@@ -127,7 +128,7 @@ const auth = useAuthStore();
 const userMenu = ref();
 const isLogoutDialog = ref(false);
 const isAdminDialog = ref(false);
-let systemRoles = ref([]);
+let systemRoles: Ref<Object[]> = ref([]);
 let adminTableData = ref();
 const selectedRole = ref();
 let selectedId = ref();
@@ -160,7 +161,7 @@ const userMenuItems = ref([
 	},
 	{
 		label: 'Admin',
-		visible: auth.roles.includes('admin'),
+		visible: auth?.roles?.includes('admin') ?? false,
 		command: async () => {
 			getRoles();
 			getUsers();

@@ -33,7 +33,7 @@ const useAuthStore = defineStore('auth', {
 		expires: null as number | null,
 		name: null as string | null,
 		email: null as string | null,
-		roles: null as [] | null
+		roles: null as Object[] | null
 	}),
 	getters: {
 		token: (state) => state.userToken,
