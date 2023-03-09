@@ -95,6 +95,7 @@ generateTypeScript {
 	enumMemberCasing = 'PascalCase'
 	mapEnum = 'asEnum'
 	nonConstEnums = 'true'
+	noFileComment = 'true'
 	outputFile = '../../client/hmi-client/src/types/Types.ts'
 	outputKind = 'module'
 	outputFileType = 'implementationFile'
