@@ -2,6 +2,7 @@
 .asset {
     display: flex;
     flex-direction: column;
+    background-color: var(--surface-section);
 
     div,
     span {
@@ -43,6 +44,12 @@
     .p-accordion {
         margin: 1rem 0.5rem;
         margin-top: 1rem;
+
+        .artifact-amount {
+            font-size: var(--font-caption);
+            color: var(--text-color-subdued);
+            margin-left: 0.25rem;
+        }
 
         ul {
             list-style: none;

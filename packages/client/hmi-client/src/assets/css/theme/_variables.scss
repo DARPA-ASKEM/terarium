@@ -107,7 +107,7 @@ $inputListPadding: 0 !default;
 $inputListItemPadding: 0.5rem 1rem !default;
 $inputListItemBg: transparent !default;
 $inputListItemTextColor: $textColor !default;
-$inputListItemHoverBg: rgba(0, 0, 0, .04) !default;
+$inputListItemHoverBg: var(--surface-hover) !default;
 $inputListItemTextHoverColor: $textColor !default;
 $inputListItemFocusBg: rgba(0, 0, 0, .12) !default;
 $inputListItemTextFocusColor: $textColor !default;
@@ -137,6 +137,7 @@ $passwordStrongBg: #689F38 !default;
 $buttonPadding: 0.714rem 1rem !default;
 $buttonIconOnlyWidth: 2rem !default;
 $buttonIconOnlyPadding: 0.5rem !default;
+$buttonIconOnlyColor: var(--text-color-subdued);
 $buttonBg: $primaryColor !default;
 $buttonTextColor: $primaryTextColor !default;
 $buttonBorder: 0 none !default;
@@ -384,7 +385,7 @@ $accordionSpacing: 0 !default;
 $accordionHeaderBorder: 0 none !default;
 $accordionHeaderBg: #ffffff !default;
 $accordionHeaderTextColor: $textColor !default;
-$accordionHeaderFontWeight: $fontWeightSemiBold !default;
+$accordionHeaderFontWeight: $fontWeight !default;
 $accordionHeaderFontSize: $fontBodyMedium !default;
 $accordionHeaderPadding: .5rem !default;
 
@@ -547,8 +548,8 @@ $fullCalendarEventBorder: 1px solid $highlightBg !default;
 $fullCalendarEventTextColor: $highlightTextColor !default;
 
 //tree
-$treeNodePadding: .25rem !default;
-$treeNodeContentPadding: .5rem !default;
+$treeNodePadding: 0 !default;
+$treeNodeContentPadding: .2rem .5rem !default;
 $treeNodeChildrenPadding: 0 0 0 1rem !default;
 $treeNodeIconColor: $textSecondaryColor !default;
 

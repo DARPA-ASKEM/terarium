@@ -1,14 +1,14 @@
 package software.uncharted.terarium.hmiserver.entities;
 
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import io.quarkus.panache.common.Sort;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -23,7 +23,6 @@ import java.util.UUID;
 /**
  * Definition for user annotations. An annotation can be applied to TERARium artiacts (e.g. document, model, dataset ...) as additional
  * user-generated metadata. Note to uniquely identify an artifact in TERARium we need a composite key (artifactType, artifactId).
- *
  **/
 
 @Entity
@@ -31,8 +30,9 @@ import java.util.UUID;
 @Accessors(chain = true)
 @NoArgsConstructor
 @Table(indexes = {
-@Index(columnList = "artifactType, artifactId")
+	@Index(columnList = "artifactType, artifactId")
 })
+@EqualsAndHashCode(callSuper = true)
 public class Annotation extends PanacheEntityBase implements Serializable {
 	@Id
 	private String id = UUID.randomUUID().toString();
@@ -43,16 +43,16 @@ public class Annotation extends PanacheEntityBase implements Serializable {
 	@Column(nullable = true)
 	private Long projectId;
 
-	@Column(columnDefinition="TEXT")
+	@Column(columnDefinition = "TEXT")
 	private String content;
 
 	@Column(nullable = false)
 	private String username;
 
-	@JsonbProperty("artifact_id")
+	@JsonProperty("artifact_id")
 	private String artifactId;
 
-	@JsonbProperty("artifact_type")
+	@JsonProperty("artifact_type")
 	private String artifactType;
 
 	/**

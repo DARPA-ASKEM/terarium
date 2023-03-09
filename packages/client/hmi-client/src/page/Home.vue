@@ -1,8 +1,122 @@
+<template>
+	<main>
+		<section class="menu">
+			<section class="projects">
+				<header>
+					<h3>Projects</h3>
+					<Button
+						icon="pi pi-plus"
+						label="New project"
+						@click="isNewProjectModalVisible = true"
+					></Button>
+				</header>
+				<TabView>
+					<TabPanel header="My projects">
+						<div class="carousel">
+							<div class="chevron-left">
+								<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+							</div>
+							<div class="chevron-right">
+								<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+							</div>
+							<ul>
+								<li
+									v-for="(project, index) in projects.slice().reverse()"
+									class="card"
+									:key="index"
+								>
+									<project-card :project="project" @click="openProject(project)" />
+								</li>
+							</ul>
+						</div>
+					</TabPanel>
+					<TabPanel header="Shared projects"></TabPanel>
+				</TabView>
+			</section>
+			<section class="papers">
+				<header>
+					<h3>Papers related to your projects</h3>
+				</header>
+
+				<div v-for="(project, index) in projectsToDisplay" :key="index">
+					<p>{{ project.name }}</p>
+					<div class="carousel">
+						<div class="chevron-left">
+							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
+						</div>
+						<div class="chevron-right">
+							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
+						</div>
+						<ul>
+							<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+								<DocumentCard :document="document" @click="selectDocument(document)" />
+							</li>
+						</ul>
+					</div>
+				</div>
+			</section>
+		</section>
+		<!-- modal window for showing selected document -->
+		<div
+			v-if="selectedDocument !== undefined"
+			class="selected-document-modal-mask"
+			@click="close()"
+		>
+			<div class="selected-document-modal" @click.stop>
+				<header class="modal-header">
+					Document
+					<i class="pi pi-times close-button" @click="close()" />
+				</header>
+				<div class="modal-subheader-text">
+					<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
+					<em>{{ selectedDocument.journal }}</em>
+					{{ ', ' + selectedDocument.year + ' ' + selectedDocument.volume }}
+				</div>
+				<h3>{{ selectedDocument.title }}</h3>
+				<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
+				<div class="modal-subheader-text">
+					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
+				</div>
+				<selected-document-pane
+					class="selected-document-pane"
+					:selected-document="selectedDocument"
+					@close="close()"
+				/>
+			</div>
+		</div>
+		<!-- New project modal -->
+		<Teleport to="body">
+			<Modal
+				v-if="isNewProjectModalVisible"
+				class="modal"
+				@modal-mask-clicked="isNewProjectModalVisible = false"
+			>
+				<template #default>
+					<form>
+						<label for="new-project-name">Project Name</label>
+						<InputText id="new-project-name" type="text" v-model="newProjectName" />
+
+						<label for="new-project-description">Project Purpose</label>
+						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+					</form>
+				</template>
+				<template #footer>
+					<footer>
+						<Button @click="createNewProject">Create Project</Button>
+						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+							>Cancel</Button
+						>
+					</footer>
+				</template>
+			</Modal>
+		</Teleport>
+	</main>
+</template>
+
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
-import IconClose32 from '@carbon/icons-vue/es/close/16';
-import { Project } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
@@ -20,8 +134,9 @@ import Modal from '@/components/Modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
+import { RouteName } from '@/router/routes';
 
-const projects = ref<Project[]>([]);
+const projects = ref<IProject[]>([]);
 // Only display projects with at least one related document
 // Only display at most 5 projects
 const projectsToDisplay = computed(() =>
@@ -46,7 +161,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await API.get('/home')).data as Project[];
+	projects.value = (await API.get('/home')).data as IProject[];
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
@@ -105,122 +220,26 @@ async function createNewProject() {
 		isNewProjectModalVisible.value = false;
 	}
 }
+
+function openProject(chosenProject: IProject) {
+	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
+}
+
+function listAuthorNames(authors) {
+	return authors.map((author) => author.name).join(', ');
+}
 </script>
 
-<template>
-	<section>
-		<!-- modal window for showing selected document -->
-		<div
-			v-if="selectedDocument !== undefined"
-			class="selected-document-modal-mask"
-			@click="close()"
-		>
-			<div class="selected-document-modal" @click.stop>
-				<div class="modal-header">
-					<h4>{{ selectedDocument.title }}</h4>
-					<IconClose32 class="close-button" @click="close()" />
-				</div>
-				<selected-document-pane
-					class="selected-document-pane"
-					:selected-document="selectedDocument"
-					@close="close()"
-				/>
-			</div>
-		</div>
-		<!-- New project modal -->
-		<Teleport to="body">
-			<Modal
-				v-if="isNewProjectModalVisible"
-				class="modal"
-				@modal-mask-clicked="isNewProjectModalVisible = false"
-			>
-				<template #default>
-					<form>
-						<label for="new-project-name">Project Name</label>
-						<InputText id="new-project-name" type="text" v-model="newProjectName" />
-
-						<label for="new-project-description">Project Purpose</label>
-						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
-					</form>
-				</template>
-				<template #footer>
-					<footer>
-						<Button @click="createNewProject">Create Project</Button>
-						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
-							>Cancel</Button
-						>
-					</footer>
-				</template>
-			</Modal>
-		</Teleport>
-		<section class="projects">
-			<header>
-				<h3>Projects</h3>
-				<Button
-					icon="pi pi-plus"
-					label="New project"
-					@click="isNewProjectModalVisible = true"
-				></Button>
-			</header>
-			<TabView>
-				<TabPanel header="My projects">
-					<div class="carousel">
-						<div class="chevron-left">
-							<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
-						</div>
-						<div class="chevron-right">
-							<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
-						</div>
-						<ul>
-							<li v-for="(project, index) in projects.slice().reverse()" class="card" :key="index">
-								<router-link
-									style="text-decoration: none; color: inherit"
-									:to="'/projects/' + project.id"
-									:projectId="project.id"
-								>
-									<ProjectCard :project="project"></ProjectCard>
-								</router-link>
-							</li>
-						</ul>
-					</div>
-				</TabPanel>
-				<TabPanel header="Shared projects"></TabPanel>
-			</TabView>
-		</section>
-		<section class="papers">
-			<header>
-				<h3>Papers related to your projects</h3>
-			</header>
-
-			<div v-for="(project, index) in projectsToDisplay" :key="index">
-				<p>{{ project.name }}</p>
-				<div class="carousel">
-					<div class="chevron-left">
-						<i class="pi pi-chevron-left" @click="scroll('left', $event)" />
-					</div>
-					<div class="chevron-right">
-						<i class="pi pi-chevron-right" @click="scroll('right', $event)" />
-					</div>
-					<ul>
-						<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
-							<DocumentCard :document="document" @click="selectDocument(document)" />
-						</li>
-					</ul>
-				</div>
-			</div>
-		</section>
-	</section>
-</template>
-
 <style scoped>
+.menu {
+	overflow-y: auto;
+	overflow-x: hidden;
+	flex: 1;
+}
+
 section {
 	background-color: var(--surface-section);
 	color: var(--text-color-secondary);
-	overflow-x: hidden;
-}
-
-.projects {
-	background-color: var(--surface-section);
 	padding: 1rem;
 }
 
@@ -248,30 +267,6 @@ h3 {
 	padding: 1rem 0 1rem 0;
 }
 
-.modal h4 {
-	margin-bottom: 1em;
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
-}
-
-.modal footer {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 1rem;
-	justify-content: end;
-	margin-top: 2rem;
-}
-
 header svg {
 	color: var(--primary-color);
 	margin-right: 0.5rem;
@@ -288,12 +283,6 @@ header svg {
 	display: flex;
 	margin: 0.5rem 0.5rem 0 0.5rem;
 	padding-bottom: 0.5rem;
-}
-
-.chevron-left,
-.chevron-right {
-	width: 4rem;
-	position: absolute;
 }
 
 .chevron-left,
@@ -370,24 +359,62 @@ li {
 
 .selected-document-modal {
 	position: relative;
-	width: 500px;
+	width: 65%;
 	margin: 0px auto;
 	background-color: var(--surface-section);
-	border-radius: 2px;
+	border-radius: 16px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	overflow-y: auto;
 	max-height: 75%;
 	padding: 1rem;
 }
 
-.modal-header {
+.modal h3 {
+	margin-bottom: 1em;
+	font-weight: 400;
+	font-size: 24px;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.modal input,
+.modal textarea {
+	display: block;
+	margin-bottom: 2rem;
+	width: 100%;
+}
+
+.modal footer {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
+}
+
+.modal header {
+	font-weight: 500;
+	font-size: 12px;
+	line-height: 12px;
+	color: var(--text-color-subdued);
+}
+
+.selected-document-modal header {
 	display: flex;
 	justify-content: space-between;
 }
-
+.modal-subheader-text {
+	color: var(--text-color-subdued);
+}
+.modal-subheader-text em {
+	color: var(--primary-color);
+}
 .close-button {
-	width: 2rem;
-	height: 2rem;
+	width: 14px;
+	height: 14px;
 	cursor: pointer;
 	opacity: 50%;
 }
