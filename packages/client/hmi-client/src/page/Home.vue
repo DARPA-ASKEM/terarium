@@ -32,7 +32,7 @@
 								<i class="pi pi-chevron-right" />
 							</div>
 							<ul v-if="isLoadingProjects">
-								<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" :key="index">
+								<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
 									<project-card />
 								</li>
 							</ul>
@@ -87,7 +87,7 @@
 					</p>
 					<div class="carousel">
 						<ul>
-							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" :key="index">
+							<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
 								<DocumentCard />
 							</li>
 						</ul>
