@@ -7,11 +7,11 @@ keycloak. Follow these steps to get yourself up and running.
    with them, so consider doing this too.
 2. Under **My Workspace** click Import, then drag and drop the
    file [terarium.postman_globals](../terarium.postman_globals.json) file into the UI.
-3. Clicking on **Environments** you should now see an entry called TERArium Local.
+3. Clicking on **Environments** you should now see an entry called Terarium Local.
 
 ![](Postman_toolbar.png)
 
-4. Ensure that your environment is set to **<span style="color:#FF0000">TERArium Local</span>** and then click on
+4. Ensure that your environment is set to **<span style="color:#FF0000">Terarium Local</span>** and then click on
    the **<span style="color:#00FF00">+</span>** to create a new request.
 5. Under the URL, enter `localhost:3000/YOURAPIPATH`. For example, `localhost:3000/api/projects`.
 6. Click on **Authorization** and then enter the following values (if a value is missing here assume it is
@@ -31,8 +31,8 @@ keycloak. Follow these steps to get yourself up and running.
 * Scope: `{{Scope}}`
 * Client Authentication: `Send as Basic Auth header`
 
-7. Once entered, click the **Get New Access Token** button. This will open TERArium in your browser of choice.
-8. Log into TERArium.  **You will likely notice your browser block a popup at this time. Click through this warning
+7. Once entered, click the **Get New Access Token** button. This will open Terarium in your browser of choice.
+8. Log into Terarium.  **You will likely notice your browser block a popup at this time. Click through this warning
    banner to allow popups from this page.**
 9. This will bring you back to Postman where you can confirm the token acquired.
 10. You should now be able to hit the **Send** button to send your request.
