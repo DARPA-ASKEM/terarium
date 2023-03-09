@@ -1,17 +1,17 @@
-import Axios from 'axios';
+import axios, { AxiosRequestHeaders } from 'axios';
 import { setupCache, buildWebStorage } from 'axios-cache-interceptor';
 import { logger } from '@/utils/logger';
 import { ToastSummaries } from '@/services/toast';
 import useAuthStore from '../stores/auth';
 
-// Setup Caching for API calls, leveraging localStorage
-// By default the caching is 5 minutes
-const axios = setupCache(Axios, {
-	storage: buildWebStorage(localStorage, 'api-cache:')
-});
-
 const API = axios.create({
 	baseURL: '/api'
+});
+
+// Setup Caching for API calls, leveraging localStorage
+// By default the caching is 5 minutes
+setupCache(API, {
+	storage: buildWebStorage(localStorage, 'api-cache:')
 });
 
 // Hook in bearer tokens
@@ -24,7 +24,7 @@ API.interceptors.request.use(
 		if (config.headers) {
 			config.headers.Authorization = `Bearer ${auth.token}`;
 		} else {
-			config.headers = { Authorization: `Bearer ${auth.token}` };
+			config.headers = { Authorization: `Bearer ${auth.token}` } as AxiosRequestHeaders;
 		}
 		return config;
 	},
