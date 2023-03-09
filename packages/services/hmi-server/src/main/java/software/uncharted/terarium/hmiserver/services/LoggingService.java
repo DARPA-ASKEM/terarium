@@ -15,6 +15,8 @@ import java.io.Serializable;
 public class LoggingService implements Serializable {
     private List<JsonObject> logs;
 
+		
+
     public void echoLogs(String name){
         this.logs.forEach(l -> logMessage(l, name));
     }
