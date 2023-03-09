@@ -275,6 +275,11 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 	}
 
 	addEdge(source: any, target: any) {
+		// prevent nodes with same type from being linked with each other
+		if (source.data.type === target.data.type) {
+			return;
+		}
+
 		let quadrant = 0;
 		if (target.x - source.x < 0 && target.y - source.y > 0) {
 			quadrant = 1;
