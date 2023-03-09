@@ -43,7 +43,7 @@
 			</section>
 			<section class="authors">
 				<ul class="skeleton">
-					<li v-for="(i, index) in [0, 1, 2, 3, 4, 5, 6]" :key="index">
+					<li v-for="i in [0, 1, 2, 3, 4, 5, 6]" :key="i">
 						<Skeleton width="4rem" />
 					</li>
 				</ul>
