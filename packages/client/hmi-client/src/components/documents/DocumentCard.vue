@@ -69,15 +69,6 @@ const images = computed(() => artifacts.value.map((a) => a.properties.image));
 const shownImage = computed(() => images.value.find((element) => element !== undefined));
 const backupImages = stockImages.backupImagesTwo;
 
-async function fetchArtifacts(doi) {
-	if (doi !== '') {
-		const allArtifacts = await getXDDArtifacts(doi);
-		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
-	} else {
-		artifacts.value = [];
-	}
-}
-
 function getRandomImage() {
 	return backupImages[Math.floor(Math.random() * backupImages.length)];
 }
@@ -85,7 +76,12 @@ function getRandomImage() {
 onMounted(async () => {
 	if (props.document) {
 		const doi = await getDocumentDoi(props.document);
-		await fetchArtifacts(doi);
+		if (doi !== '') {
+			const allArtifacts = await getXDDArtifacts(doi);
+			artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
+		} else {
+			artifacts.value = [];
+		}
 		if (artifacts.value.length > 0) {
 			extractionType.value = artifacts.value[0].askemClass;
 		}

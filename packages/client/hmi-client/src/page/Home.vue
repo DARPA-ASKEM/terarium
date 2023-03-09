@@ -12,14 +12,17 @@
 				</header>
 				<TabView>
 					<TabPanel header="My projects">
-						<section v-if="projects && projects?.length < 1" class="no-projects">
+						<section v-if="projects && isEmpty(projects)" class="no-projects">
 							<img src="@assets/svg/seed.svg" alt="" />
 							<h3>Welcome to Terarium</h3>
-							<p>
+							<div>
 								Get started by creating a
-								<a @click="isNewProjectModalVisible = true">new project</a>. Your projects will be
-								displayed on this page.
-							</p>
+								<Button
+									label="new project"
+									class="p-button-text new-project-button"
+									@click="isNewProjectModalVisible = true"
+								/>. Your projects will be displayed on this page.
+							</div>
 						</section>
 						<div v-else class="carousel">
 							<div class="chevron-left" @click="scroll('left', $event)">
@@ -29,16 +32,12 @@
 								<i class="pi pi-chevron-right" />
 							</div>
 							<ul v-if="isLoadingProjects">
-								<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
+								<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" :key="index">
 									<project-card />
 								</li>
 							</ul>
 							<ul v-else>
-								<li
-									v-for="(project, index) in projects?.slice().reverse()"
-									class="card"
-									:key="index"
-								>
+								<li v-for="(project, index) in projects?.slice().reverse()" :key="index">
 									<project-card :project="project" @click="openProject(project)" />
 								</li>
 								<li>
@@ -61,7 +60,7 @@
 					</TabPanel>
 				</TabView>
 			</section>
-			<section class="papers" v-if="!(projects && projects?.length < 1)">
+			<section class="papers" v-if="!(projects && isEmpty(projects))">
 				<header>
 					<h3>Papers related to your projects</h3>
 				</header>
@@ -76,7 +75,7 @@
 							<i class="pi pi-chevron-right" />
 						</div>
 						<ul>
-							<li v-for="(document, j) in project.relatedDocuments" :key="j" class="card">
+							<li v-for="(document, j) in project.relatedDocuments" :key="j">
 								<DocumentCard :document="document" @click="selectDocument(document)" />
 							</li>
 						</ul>
@@ -88,7 +87,7 @@
 					</p>
 					<div class="carousel">
 						<ul>
-							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" class="card" :key="index">
+							<li v-for="(i, index) in [0, 1, 2, 3, 4, 5]" :key="index">
 								<DocumentCard />
 							</li>
 						</ul>
@@ -176,6 +175,7 @@ import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
+import { isEmpty } from 'lodash';
 
 const projects = ref<IProject[]>();
 // Only display projects with at least one related document
@@ -204,6 +204,7 @@ onMounted(async () => {
 	queryStore.reset(); // Facets queries.
 
 	projects.value = (await API.get('/home')).data as IProject[];
+	projects.value = projects.value.slice(1);
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
@@ -393,12 +394,6 @@ li {
 	list-style: none;
 }
 
-.card {
-	z-index: 1;
-	transition: 0.2s;
-	max-width: 21rem;
-}
-
 .selected-document-modal-mask {
 	position: fixed;
 	z-index: 9998;
@@ -522,5 +517,9 @@ a {
 	background-color: var(--surface-hover);
 	box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px 0 rgb(0 0 0 / 14%),
 		0 1px 3px 0 rgb(0 0 0 / 12%);
+}
+
+.new-project-button {
+	padding: 0;
 }
 </style>
