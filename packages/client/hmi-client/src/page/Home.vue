@@ -63,9 +63,19 @@
 			@click="close()"
 		>
 			<div class="selected-document-modal" @click.stop>
-				<div class="modal-header">
-					<h4>{{ selectedDocument.title }}</h4>
-					<IconClose32 class="close-button" @click="close()" />
+				<header class="modal-header">
+					Document
+					<i class="pi pi-times close-button" @click="close()" />
+				</header>
+				<div class="modal-subheader-text">
+					<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
+					<em>{{ selectedDocument.journal }}</em>
+					{{ ', ' + selectedDocument.year + ' ' + selectedDocument.volume }}
+				</div>
+				<h3>{{ selectedDocument.title }}</h3>
+				<!-- TODO: Should change green text to be a link to search for this author's other work (XDD doesnt do this i dont think atm)-->
+				<div class="modal-subheader-text">
+					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
 				</div>
 				<selected-document-pane
 					class="selected-document-pane"
@@ -106,7 +116,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
-import IconClose32 from '@carbon/icons-vue/es/close/16';
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
@@ -215,6 +224,10 @@ async function createNewProject() {
 function openProject(chosenProject: IProject) {
 	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
 }
+
+function listAuthorNames(authors) {
+	return authors.map((author) => author.name).join(', ');
+}
 </script>
 
 <style scoped>
@@ -252,30 +265,6 @@ h3 {
 
 .p-tabview:deep(.p-tabview-panels) {
 	padding: 1rem 0 1rem 0;
-}
-
-.modal h4 {
-	margin-bottom: 1em;
-}
-
-.modal label {
-	display: block;
-	margin-bottom: 0.5em;
-}
-
-.modal input,
-.modal textarea {
-	display: block;
-	margin-bottom: 2rem;
-	width: 100%;
-}
-
-.modal footer {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 1rem;
-	justify-content: end;
-	margin-top: 2rem;
 }
 
 header svg {
@@ -370,24 +359,62 @@ li {
 
 .selected-document-modal {
 	position: relative;
-	width: 500px;
+	width: 65%;
 	margin: 0px auto;
 	background-color: var(--surface-section);
-	border-radius: 2px;
+	border-radius: 16px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 	overflow-y: auto;
 	max-height: 75%;
 	padding: 1rem;
 }
 
-.modal-header {
+.modal h3 {
+	margin-bottom: 1em;
+	font-weight: 400;
+	font-size: 24px;
+}
+
+.modal label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.modal input,
+.modal textarea {
+	display: block;
+	margin-bottom: 2rem;
+	width: 100%;
+}
+
+.modal footer {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
+}
+
+.modal header {
+	font-weight: 500;
+	font-size: 12px;
+	line-height: 12px;
+	color: var(--text-color-subdued);
+}
+
+.selected-document-modal header {
 	display: flex;
 	justify-content: space-between;
 }
-
+.modal-subheader-text {
+	color: var(--text-color-subdued);
+}
+.modal-subheader-text em {
+	color: var(--primary-color);
+}
 .close-button {
-	width: 2rem;
-	height: 2rem;
+	width: 14px;
+	height: 14px;
 	cursor: pointer;
 	opacity: 50%;
 }
