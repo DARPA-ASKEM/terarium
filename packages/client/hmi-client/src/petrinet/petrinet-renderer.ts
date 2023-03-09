@@ -92,11 +92,22 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('stroke-width', 2)
 			.style('opacity', 0);
 
+		transitions
+			.append('circle')
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cy', (d) => -d.height * 1.2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
+
 		// transitions text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height * 0.5 - 5)
-			.attr('x', (d) => -d.width * 0.5)
+			.attr('y', () => 4)
+			.style('text-anchor', 'middle')
 			.text((d) => d.label);
 
 		// species
@@ -142,11 +153,22 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('stroke-width', 2)
 			.style('opacity', 0);
 
+		species
+			.append('circle')
+			.classed('shape', true)
+			.classed('no-drag', true)
+			.attr('cy', (d) => -d.height * 2)
+			.attr('r', (d) => d.width * 0.2)
+			.attr('fill', '#FFF')
+			.attr('stroke', '#AAA')
+			.attr('stroke-width', 2)
+			.style('opacity', 0);
+
 		// species text
 		species
 			.append('text')
-			.attr('y', (d) => -d.height * 1.4 - 5)
-			.attr('x', (d) => -d.width * 1.4)
+			.attr('y', () => 2)
+			.style('text-anchor', 'middle')
 			.text((d) => d.label);
 	}
 
