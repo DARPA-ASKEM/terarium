@@ -137,7 +137,7 @@ const selectedAdminRow = ref();
 const getRoles = async () => {
 	systemRoles = ref([]);
 	const response = await API({ url: '/roles', baseURL: '/adminapi' });
-	if (response.status === 200) {
+	if (response.status >= 200 && response.status < 300) {
 		response.data.forEach((role) => {
 			systemRoles.value.push({ name: role.name });
 		});
@@ -146,7 +146,7 @@ const getRoles = async () => {
 
 const getUsers = async () => {
 	const response = await API({ url: '/users', baseURL: '/adminapi' });
-	if (response.status === 200) {
+	if (response.status >= 200 && response.status < 300) {
 		adminTableData = ref(response.data);
 		isAdminDialog.value = true;
 	}
@@ -183,7 +183,7 @@ const addRole = async () => {
 				return status < 400; //
 			}
 		});
-		if (response.status === 200) {
+		if (response.status >= 200 && response.status < 300) {
 			getUsers();
 		}
 	}
@@ -199,7 +199,7 @@ const removeRole = async () => {
 				return status < 400; //
 			}
 		});
-		if (response.status === 200) {
+		if (response.status >= 200 && response.status < 300) {
 			getUsers();
 		}
 	}
