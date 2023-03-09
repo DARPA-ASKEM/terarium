@@ -9,6 +9,7 @@
 	"scripts": {
 		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
 		"dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
+		"generateTypes": "yarn workspaces foreach --parallel --interlaced --verbose run generateTypes",
 		"serve": "yarn workspace hmi-client run build",
 		"lint": "eslint . --ext .ts,.vue --fix --cache",
 		"lint:ci": "eslint . --ext .ts,.vue",

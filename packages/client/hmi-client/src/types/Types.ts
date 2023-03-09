@@ -1,6 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// Generated using typescript-generator version 3.1.1185 on 2023-03-09 16:22:59.
+// Generated using typescript-generator version 3.1.1185 on 2023-03-09 16:47:10.
 
 export interface Event {
 	id?: string;
