@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.loggingservice;
+package software.uncharted.terarium.hmiserver.services;
 
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
