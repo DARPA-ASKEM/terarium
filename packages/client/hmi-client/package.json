@@ -4,6 +4,7 @@
 	"version": "0.0.0",
 	"scripts": {
 		"dev": "yarn install && vite --host",
+		"local": "yarn install && vite --host --config vite.config.local.ts",
 		"build": "vue-tsc --noEmit && vite build",
 		"typecheck": "yarn workspace graph-scaffolder tsc --build && vue-tsc --noEmit",
 		"preview": "vite preview",
@@ -31,16 +32,16 @@
 		"pixi.js": "7.0.5",
 		"primeflex": "3.3.0",
 		"primeicons": "6.0.1",
-		"primevue": "3.21.0",
+		"primevue": "3.23.0",
 		"sass": "1.56.1",
 		"vue": "3.2.47",
 		"vue-router": "4.1.6",
 		"vue3-ace-editor": "2.2.2"
 	},
 	"devDependencies": {
-		"@pinia/testing": "0.0.14",
-		"@playwright/experimental-ct-vue": "1.27.1",
-		"@playwright/test": "1.27.1",
+		"@pinia/testing": "0.0.15",
+		"@playwright/experimental-ct-vue": "1.31.1",
+		"@playwright/test": "1.31.1",
 		"@rushstack/eslint-patch": "1.2.0",
 		"@types/d3": "7.4.0",
 		"@types/lodash": "4.14.191",

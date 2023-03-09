@@ -1,9 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
@@ -16,7 +17,7 @@ public class OntologyConcept implements Serializable {
 
 	private TaggableType type;
 
-	@JsonbProperty("object_id")
+	@JsonProperty("object_id")
 	private Long objectId;
 
 	private OntologicalField status;

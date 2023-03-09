@@ -126,7 +126,7 @@ async function getRelatedArtifacts(
 	}
 
 	// NOTE: performing a provenance search returns
-	//        a list of TERArium artifacts, which means different types of artifacts
+	//        a list of Terarium artifacts, which means different types of artifacts
 	//        are returned and the explorer view would have to decide to display them
 	return response;
 }

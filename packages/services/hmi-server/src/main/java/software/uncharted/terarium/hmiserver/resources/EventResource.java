@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import software.uncharted.terarium.hmiserver.entities.Event;
 import software.uncharted.terarium.hmiserver.models.EventType;
+import software.uncharted.terarium.hmiserver.services.StructuredLog;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -23,6 +24,9 @@ import javax.ws.rs.core.Response;
 public class EventResource {
 	@Inject
 	SecurityIdentity securityIdentity;
+
+	@Inject
+	StructuredLog structuredLog;
 
 	/**
 	 * Gets a list of events sorted by timestamp descending
@@ -55,7 +59,7 @@ public class EventResource {
 	@POST
 	@Transactional
 	public Response postEvent(final Event event) {
-		log.info("Event | " + securityIdentity.getPrincipal().getName() + " | " + event);
+		structuredLog.log(StructuredLog.Type.EVENT, securityIdentity.getPrincipal().getName(), "event", event);
 
 		// Do not save the event to the database if the type is not specified as persistent
 		if (!event.getType().isPersistent()) {

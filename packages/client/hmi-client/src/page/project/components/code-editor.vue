@@ -83,8 +83,12 @@ async function initialize(editorInstance) {
 </script>
 <style>
 .code {
-	padding: 20px 0;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	padding-top: 1rem;
 }
+
 .controls {
 	margin-left: 40px;
 	margin-bottom: 10px;

@@ -122,6 +122,7 @@ import { isEmpty } from 'lodash';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
+import { ProjectAssetTypes } from '@/types/Project';
 import { ProvenanceType } from '@/types/Provenance';
 import { Dataset } from '@/types/Dataset';
 
@@ -239,7 +240,12 @@ watch([model, graphElement], async () => {
 // FIXME: update after Dec 8 demo
 const router = useRouter();
 const goToSimulationPlanPage = () => {
-	router.push({ name: RouteName.SimulationRoute });
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: {
+			assetType: ProjectAssetTypes.PLANS
+		}
+	});
 };
 
 onMounted(async () => {

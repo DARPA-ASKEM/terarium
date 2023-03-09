@@ -1,16 +1,16 @@
-# TERArium Contributing Guide
+# Terarium Contributing Guide
 
-Hi! We're really excited that you're interested in contributing to TERArium! Before submitting your contribution, please
+Hi! We're really excited that you're interested in contributing to Terarium! Before submitting your contribution, please
 read through the following guide.
 
 ## Repository Setup
 
-The TERArium repo is a mixed repo using yarn workspaces and Java backend components. The package managers used to
+The Terarium repo is a mixed repo using yarn workspaces and Java backend components. The package managers used to
 install and link dependencies are [yarn](https://yarnpkg.com/getting-started) and [gradle](https://gradle.org/).
 
 To develop and test the core application:
 
-1. Stand up the TERArium services by running the `deploy-terarium.sh up` script from within the
+1. Stand up the Terarium services by running the `deploy-terarium.sh up` script from within the
    [Orchestration](https://github.com/DARPA-ASKEM/orchestration) repository
 2. To stop a pod from running in kubernetes so that you can run locally to debug, run the following commands from the
    orchestration repo's `kubernetes/local` directory. Replace `[NAME]` with the name of the service you would like to
@@ -101,7 +101,7 @@ tag.
 Each package contains a `tests` directory which may contain one or both of `e2e` and `ct` subdirectories. The tests are
 run using [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/).
 
-Before running the tests, make sure that TERArium has installed dependencies and has been built.
+Before running the tests, make sure that Terarium has installed dependencies and has been built.
 
 - `yarn test:e2e` by default runs every integration across all 3 browsers (Chromium, FireFox, WebKit)
 - `yarn test:ct` runs component specific tests
