@@ -4,6 +4,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -98,5 +99,12 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createModel(
 		Model model
+	);
+
+	@POST
+	@Path("/opts/copy")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response updateModelAsNewVersion(
+			ModeOperationCopy modelOperationCopy
 	);
 }
