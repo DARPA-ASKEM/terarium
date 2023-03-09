@@ -3,7 +3,8 @@
 	"packageManager": "yarn@3.2.4",
 	"private": true,
 	"workspaces": [
-		"packages/client/*"
+		"packages/client/*",
+		"packages/services/hmi-server"
 	],
 	"scripts": {
 		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",

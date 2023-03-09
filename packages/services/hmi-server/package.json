@@ -1,0 +1,11 @@
+{
+  "name": "hmi-server",
+  "version": "1.0.0",
+  "description": "This project uses Quarkus, the Supersonic Subatomic Java Framework.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "../../../gradlew -t generateTypeScript"
+  },
+  "author": "",
+  "license": "ISC"
+}

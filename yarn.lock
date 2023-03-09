@@ -6778,6 +6778,12 @@ cors@latest:
   languageName: unknown
   linkType: soft
 
+"hmi-server@workspace:packages/services/hmi-server":
+  version: 0.0.0-use.local
+  resolution: "hmi-server@workspace:packages/services/hmi-server"
+  languageName: unknown
+  linkType: soft
+
 "homedir-polyfill@npm:^1.0.0":
   version: 1.0.3
   resolution: "homedir-polyfill@npm:1.0.3"
