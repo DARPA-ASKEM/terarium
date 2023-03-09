@@ -6,6 +6,7 @@ import io.quarkus.panache.common.Sort;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.ClientModel;
 import software.uncharted.terarium.hmiserver.annotations.TypescriptOptional;
 import software.uncharted.terarium.hmiserver.models.EventType;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 @Entity
 @Data
+@ClientModel
 @Accessors(chain = true)
 @NoArgsConstructor
 @Table(indexes = {

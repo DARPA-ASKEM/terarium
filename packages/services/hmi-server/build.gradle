@@ -82,9 +82,8 @@ compileTestJava {
 
 generateTypeScript {
 	jsonLibrary = 'jackson2'
-	classPatterns = [
-		'software.uncharted.terarium.hmiserver.models.**',
-		'software.uncharted.terarium.hmiserver.entities.**'
+	classesWithAnnotations = [
+		'software.uncharted.terarium.hmiserver.annotations.ClientModel'
 	]
 	excludeClasses = [
 	    'io.vertx.core.shareddata.impl.ClusterSerializable',
