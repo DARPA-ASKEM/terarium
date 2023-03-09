@@ -14,10 +14,10 @@ dependencies {
 	// REST server
 	implementation "io.quarkus:quarkus-resteasy"
 	implementation "io.quarkus:quarkus-resteasy-jackson"
-	implementation "io.quarkus:quarkus-resteasy-jsonb"
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
+
 
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"

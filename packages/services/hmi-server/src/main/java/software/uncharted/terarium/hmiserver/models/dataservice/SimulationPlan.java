@@ -1,23 +1,25 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 
 @Data
 @Accessors(chain = true)
-public class SimulationPlan extends ResourceType implements Serializable {
+public class SimulationPlan implements Serializable {
 
-	@JsonbProperty("model_id")
+	private Long id;
+
+	@JsonProperty("model_id")
 	private String modelId;
 
 	private String simulator;
 
 	private String query;
 
-	private String content;
+	private Object content;
 
 	private Concept concept;
 }

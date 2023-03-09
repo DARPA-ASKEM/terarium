@@ -34,7 +34,7 @@ import { getRelatedArtifacts } from './provenance';
 const getXDDSets = async () => {
 	const res = await API.get('/document/sets');
 	const response: XDDResult = res.data;
-	return response.available_sets || ([] as string[]);
+	return response.availableSets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
@@ -397,7 +397,7 @@ const getAutocomplete = async (searchTerm: string) => {
 	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
 	if (response.status === 204) return [];
-	return response.data?.map((d) => d.text) ?? [];
+	return response.data ?? [];
 };
 
 const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {
