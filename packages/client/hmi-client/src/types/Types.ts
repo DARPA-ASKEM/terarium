@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 export interface Event {
-    id?: string; 
+    id?: string;
     timestampMillis?: number;
     projectId?: number;
     username?: string;
