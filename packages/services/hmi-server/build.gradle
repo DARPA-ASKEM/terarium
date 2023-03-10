@@ -83,7 +83,7 @@ compileTestJava {
 generateTypeScript {
 	jsonLibrary = 'jackson2'
 	classesWithAnnotations = [
-		'software.uncharted.terarium.hmiserver.annotations.ClientModel'
+		'software.uncharted.terarium.hmiserver.annotations.TSModel'
 	]
 	excludeClasses = [
 	    'io.vertx.core.shareddata.impl.ClusterSerializable',
@@ -93,7 +93,7 @@ generateTypeScript {
 		'io.quarkus.**'
 	]
 	excludePropertyAnnotations = [
-	    'software.uncharted.terarium.hmiserver.annotations.TypescriptExcluded'
+	    'software.uncharted.terarium.hmiserver.annotations.TSIgnore'
 	]
 	enumMemberCasing = 'PascalCase'
 	mapEnum = 'asEnum'
@@ -103,6 +103,6 @@ generateTypeScript {
 	outputKind = 'module'
 	outputFileType = 'implementationFile'
 	optionalAnnotations = [
-	    'software.uncharted.terarium.hmiserver.annotations.TypescriptOptional'
+	    'software.uncharted.terarium.hmiserver.annotations.TSOptional'
 	]
 }
