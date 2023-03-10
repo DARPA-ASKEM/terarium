@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 
@@ -92,13 +93,13 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateModel(
 		@PathParam("id") String id,
-		Model model
+		ModelStub model
 	);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createModel(
-		Model model
+		ModelStub model
 	);
 
 	@POST
