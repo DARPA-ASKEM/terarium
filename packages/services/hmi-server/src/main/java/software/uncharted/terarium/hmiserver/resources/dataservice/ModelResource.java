@@ -129,11 +129,6 @@ public class ModelResource {
 		@PathParam("id") final String id,
 		final ModelStub model
 	) {
-		System.out.println("");
-		System.out.println("");
-		System.out.println(model);
-		System.out.println("");
-		System.out.println("");
 		return proxy.updateModel(id, model);
 	}
 
@@ -142,11 +137,6 @@ public class ModelResource {
 	public Response createModel(
 		final ModelStub model
 	) {
-		System.out.println("");
-		System.out.println("");
-		System.out.println(model);
-		System.out.println("");
-		System.out.println("");
 		return proxy.createModel(model);
 	}
 
