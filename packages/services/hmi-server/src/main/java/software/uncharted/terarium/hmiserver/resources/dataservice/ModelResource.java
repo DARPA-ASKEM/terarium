@@ -6,6 +6,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 
 import javax.inject.Inject;
@@ -137,5 +138,28 @@ public class ModelResource {
 		final Model model
 	) {
 		return proxy.createModel(model);
+	}
+
+	@POST
+	@Path("/{id}/model-edit")
+	public Response saveAsNewModel(
+		@PathParam("id") final String id,
+		final ModelOperationCopy modelOperationCopy) {
+
+		System.out.println("\n\n Debug start " + id);
+
+		// 1. Call proxy to create a new model and log the action
+		Response r1 = null;
+
+		try {
+			r1 = proxy.copyModel(modelOperationCopy);
+		} catch (Exception e) {
+			System.out.println("Dohhhhhhhhhhhhhhhhhhhhhhh\n\n");
+			e.printStackTrace();
+		}
+		System.out.println("");
+
+		return r1;
+		// 2. Post the content to the new model
 	}
 }

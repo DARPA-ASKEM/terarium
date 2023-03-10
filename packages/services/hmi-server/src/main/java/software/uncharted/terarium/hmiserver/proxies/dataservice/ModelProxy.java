@@ -104,7 +104,7 @@ public interface ModelProxy {
 	@POST
 	@Path("/opts/copy")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response updateModelAsNewVersion(
-			ModeOperationCopy modelOperationCopy
+	Response copyModel(
+			ModelOperationCopy modelOperationCopy
 	);
 }

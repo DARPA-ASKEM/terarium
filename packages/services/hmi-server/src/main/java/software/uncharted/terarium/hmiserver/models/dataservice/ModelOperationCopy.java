@@ -9,9 +9,8 @@ import java.io.Serializable;
 @Accessors(chain = true)
 public class ModelOperationCopy implements Serializable {
 	private Long left;
+	private String name;
 	private String description;
 	private String framework;
-
-	// Not in use
 	private String content;
 }
