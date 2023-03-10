@@ -160,7 +160,7 @@ const dirtyResults = ref<{ [resourceType: string]: boolean }>({});
 
 const clientFilters = computed(() => queryStore.clientFilters);
 const xddDataset = computed(() =>
-	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'TERArium'
+	resourceType.value === ResourceType.XDD ? resources.xddDataset : 'Terarium'
 );
 
 const sliderWidth = computed(() =>
@@ -240,7 +240,7 @@ const executeSearch = async () => {
 		[ResourceType.XDD]: {
 			dict: dictNames.value,
 			dataset:
-				xddDataset.value === ResourceType.ALL || xddDataset.value === 'TERArium'
+				xddDataset.value === ResourceType.ALL || xddDataset.value === 'Terarium'
 					? null
 					: xddDataset.value,
 			max: pageSize.value,

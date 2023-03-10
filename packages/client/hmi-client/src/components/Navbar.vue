@@ -6,9 +6,9 @@
 					v-if="currentProjectId"
 					src="@assets/svg/terarium-icon.svg"
 					height="36"
-					alt="TERArium icon"
+					alt="Terarium icon"
 				/>
-				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="Terarium logo" />
 			</router-link>
 			<h1 v-if="currentProjectId" @click="showNavigationMenu">
 				{{ currentProjectName }}
@@ -271,7 +271,7 @@ i {
 }
 </style>
 <style>
-/* 
+/*
  * On it's own style, because the pop-up happend outside of this component.
  * To left align the content with the h1.
  */
