@@ -111,7 +111,7 @@ import { RouteName } from '@/router/routes';
 import { getRelatedTerms, getAutocomplete } from '@/services/data';
 import * as EventService from '@/services/event';
 import useResourcesStore from '@/stores/resources';
-import { EventType } from '@/types/EventType';
+import { EventType } from '@/types/Types';
 import Button from 'primevue/button';
 import { useDragEvent } from '@/services/drag-drop';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';

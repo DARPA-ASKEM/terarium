@@ -3,11 +3,13 @@
 	"packageManager": "yarn@3.2.4",
 	"private": true,
 	"workspaces": [
-		"packages/client/*"
+		"packages/client/*",
+		"packages/services/hmi-server"
 	],
 	"scripts": {
 		"build": "yarn workspaces foreach --parallel --interlaced --verbose --topological run build",
 		"dev": "yarn workspaces foreach --parallel --interlaced --verbose run dev",
+		"generateTypes": "yarn workspaces foreach --parallel --interlaced --verbose run generateTypes",
 		"serve": "yarn workspace hmi-client run build",
 		"lint": "eslint . --ext .ts,.vue --fix --cache",
 		"lint:ci": "eslint . --ext .ts,.vue",
@@ -22,7 +24,7 @@
 		"postinstall": "husky install"
 	},
 	"lint-staged": {
-		"*.{ts,vue}": [
+		"!(Types.ts).{ts,vue}": [
 			"eslint --fix",
 			"prettier --write"
 		]

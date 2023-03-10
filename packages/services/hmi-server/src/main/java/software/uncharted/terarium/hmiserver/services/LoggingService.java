@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.loggingservice;
+package software.uncharted.terarium.hmiserver.services;
 
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
@@ -14,6 +14,8 @@ import java.io.Serializable;
 @Accessors(chain = true)
 public class LoggingService implements Serializable {
     private List<JsonObject> logs;
+
+		
 
     public void echoLogs(String name){
         this.logs.forEach(l -> logMessage(l, name));

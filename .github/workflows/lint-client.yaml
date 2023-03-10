@@ -33,6 +33,13 @@ jobs:
           node-version: 18.8.0
           cache: 'yarn'
 
+      - name: Setup Java v17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: gradle
+
       - name: Install packages
         run: yarn install --immutable
 
@@ -44,3 +51,13 @@ jobs:
 
       - name: Run Typechecks
         run: yarn typecheck
+
+      - name: Check Generated Types
+        run: |
+          ./gradlew generateTypeScript
+          MODIFIED_FILES=`git status -s | grep "Types.ts" | wc -l`
+          if (( MODIFIED_FILES > 0 )); then
+            echo "Error! Generated file Types.ts must be generated and committed"
+            git status -s
+          fi
+          exit $MODIFIED_FILES
