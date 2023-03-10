@@ -145,16 +145,6 @@ public class ModelResource {
 	public Response saveAsNewModel(
 		@PathParam("id") final String id,
 		final ModelOperationCopy modelOperationCopy) {
-
-		String contentJSONStr = "";
-
-		// 1. Call proxy to create a new model and log the action
-		Response r1 = null;
-		try {
-			r1 = proxy.copyModel(modelOperationCopy);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return r1;
+		return proxy.copyModel(modelOperationCopy);
 	}
 }
