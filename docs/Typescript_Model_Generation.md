@@ -48,7 +48,9 @@ export enum DataRequestType {
 
 ## Annotations and Notes
 `@TSModel`: The model class should have a corresponding generated interface
+
 `@TSIgnore`: The field should be excluded from the generated model interface
+
 `@TSOptional`: The field should be optional in the generated interface
 
 An important point is that any class or type that is included in a `@TSModel` annotated class will be pulled in as well
@@ -58,6 +60,13 @@ regardless of whether or not that class is annotated with `@TSModel`
 Model files are watched by default when running `yarn dev`.  If a model file is changed that requires a TS type
 it will be automatically rebuilt and thus will subsequently trigger a Vite rebuild. 
 tl;dr `yarn dev` and the rest is handled.
+
+The generated types are added to `packages/client/hmi-client/src/types/Types.ts` and can be imported as follows:
+```typescript
+import { EventType } from '@/types/Types';
+
+EventService.create(EventType.Search, resources.activeProject?.id, query.value);
+```
 
 If you are running _only_ the HMI server, you must manually run:
 ```bash
