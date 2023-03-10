@@ -42,7 +42,7 @@
 import { computed } from 'vue';
 // import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { ProjectAssetTypes } from '@/types/Project';
 import { deleteAsset } from '@/services/project';
 import { RouteName } from '@/router/routes';
 
@@ -58,10 +58,6 @@ import { Dataset } from '@/types/Dataset';
 const router = useRouter();
 const route = useRoute();
 const resourcesStore = useResourcesStore();
-
-defineProps<{
-	project: IProject;
-}>();
 
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
@@ -80,6 +76,7 @@ const resources = computed(() => {
 		});
 
 		for (let i = 0; i < projectAssetTypes.length; i++) {
+			if (projectAssetTypes[i] == null || storedAssets[projectAssetTypes[i]] == null) continue;
 			const assets: (DocumentAsset & Model & Dataset)[] =
 				Object.values(storedAssets[projectAssetTypes[i]]) ?? [];
 

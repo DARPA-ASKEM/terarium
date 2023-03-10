@@ -11,7 +11,9 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class Model extends ResourceType implements Serializable {
+public class Model implements Serializable {
+
+	private Long id;
 
 	private String name;
 

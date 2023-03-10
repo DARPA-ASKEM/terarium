@@ -42,7 +42,7 @@ export type XDDResult = {
 	};
 	// XDD Sets
 	description?: string;
-	available_sets?: string[];
+	availableSets?: string[];
 	// related docs
 	data?: { bibjson: DocumentType; score: number }[];
 };
