@@ -141,25 +141,18 @@ public class ModelResource {
 	}
 
 	@POST
-	@Path("/{id}/model-edit")
+	@Path("/{id}/operation-copy")
 	public Response saveAsNewModel(
 		@PathParam("id") final String id,
 		final ModelOperationCopy modelOperationCopy) {
 
-		System.out.println("\n\n Debug start " + id);
-
 		// 1. Call proxy to create a new model and log the action
 		Response r1 = null;
-
 		try {
 			r1 = proxy.copyModel(modelOperationCopy);
 		} catch (Exception e) {
-			System.out.println("Dohhhhhhhhhhhhhhhhhhhhhhh\n\n");
 			e.printStackTrace();
 		}
-		System.out.println("");
-
 		return r1;
-		// 2. Post the content to the new model
 	}
 }
