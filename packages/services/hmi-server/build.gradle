@@ -92,6 +92,9 @@ generateTypeScript {
 	excludeClassPatterns = [
 		'io.quarkus.**'
 	]
+	excludePropertyAnnotations = [
+	    'software.uncharted.terarium.hmiserver.annotations.TypescriptExcluded'
+	]
 	enumMemberCasing = 'PascalCase'
 	mapEnum = 'asEnum'
 	nonConstEnums = 'true'

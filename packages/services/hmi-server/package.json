@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "../../../gradlew -t generateTypeScript",
-		"generateTypes": "../../../gradlew -t generateTypeScript"
-	},
+    "generateTypes": "../../../gradlew -t generateTypeScript"
+  },
   "author": "",
   "license": "ISC"
 }
