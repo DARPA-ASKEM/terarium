@@ -59,45 +59,27 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('stroke-width', 2);
 
 		// transitions drag handles
-		transitions
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cx', (d) => d.width * 1.2)
-			.attr('r', (d) => d.width * 0.2)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
-			.style('opacity', 0);
+		const transitionsHandles = [
+			...transitions
+				.append('circle')
+				.attr('cx', (d) => d.width * 1.2)
+				.attr('r', (d) => d.width * 0.2),
+			...transitions
+				.append('circle')
+				.attr('cy', (d) => d.height * 1.2)
+				.attr('r', (d) => d.width * 0.2),
+			...transitions
+				.append('circle')
+				.attr('cx', (d) => -d.width * 1.2)
+				.attr('r', (d) => d.width * 0.2),
+			...transitions
+				.append('circle')
+				.attr('cy', (d) => -d.height * 1.2)
+				.attr('r', (d) => d.width * 0.2)
+		];
 
-		transitions
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cy', (d) => d.height * 1.2)
-			.attr('r', (d) => d.width * 0.2)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
-			.style('opacity', 0);
-
-		transitions
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cx', (d) => -d.width * 1.2)
-			.attr('r', (d) => d.width * 0.2)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
-			.style('opacity', 0);
-
-		transitions
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cy', (d) => -d.height * 1.2)
-			.attr('r', (d) => d.width * 0.2)
+		d3.selectAll(transitionsHandles)
+			.classed('shape no-drag', true)
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2)
@@ -120,45 +102,27 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('stroke-width', 2);
 
 		// species drag handles
-		species
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cx', (d) => d.width * 2)
-			.attr('r', (d) => d.width * 0.2)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
-			.style('opacity', 0);
+		const speciesHandles = [
+			...species
+				.append('circle')
+				.attr('cx', (d) => d.width * 2)
+				.attr('r', (d) => d.width * 0.2),
+			...species
+				.append('circle')
+				.attr('cy', (d) => d.height * 2)
+				.attr('r', (d) => d.width * 0.2),
+			...species
+				.append('circle')
+				.attr('cx', (d) => -d.width * 2)
+				.attr('r', (d) => d.width * 0.2),
+			...species
+				.append('circle')
+				.attr('cy', (d) => -d.height * 2)
+				.attr('r', (d) => d.width * 0.2)
+		];
 
-		species
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cy', (d) => d.height * 2)
-			.attr('r', (d) => d.width * 0.2)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
-			.style('opacity', 0);
-
-		species
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cx', (d) => -d.width * 2)
-			.attr('r', (d) => d.width * 0.2)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
-			.style('opacity', 0);
-
-		species
-			.append('circle')
-			.classed('shape', true)
-			.classed('no-drag', true)
-			.attr('cy', (d) => -d.height * 2)
-			.attr('r', (d) => d.width * 0.2)
+		d3.selectAll(speciesHandles)
+			.classed('shape no-drag', true)
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2)
