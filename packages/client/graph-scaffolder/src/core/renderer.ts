@@ -442,7 +442,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			// @ts-ignore: D3 "this"
 			node = d3.select(this) as D3SelectionINode<V>;
 
-			renderer.isDragEnabled = d3.select(evt.sourceEvent.target).classed(dragSelector ?? 'no-drag');
+			if (dragSelector)
+				renderer.isDragEnabled = d3.select(evt.sourceEvent.target).classed(dragSelector);
 
 			if (renderer.isDragEnabled) {
 				emitWrapper('node-drag-start', evt, node, renderer);

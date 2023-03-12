@@ -711,7 +711,8 @@ onMounted(async () => {
 		el: playground,
 		useAStarRouting: false, // People get distracted with squiggly connectors - Jan 2023
 		runLayout: runDagreLayout,
-		useStableZoomPan: true
+		useStableZoomPan: true,
+		dragSelector: 'no-drag'
 	});
 
 	renderer.on('background-click', () => {
