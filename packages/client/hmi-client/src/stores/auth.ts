@@ -18,11 +18,11 @@ const decode = (token: string) => {
 
 	// decode the token
 	const decodedToken = window.atob(infoToken);
-	// const decodedToken = base64Decoder(infoToken);
 	return JSON.parse(decodedToken);
 };
 
 let timer: NodeJS.Timeout;
+
 /**
  * Main store used for authentication
  */
@@ -32,6 +32,7 @@ const useAuthStore = defineStore('auth', {
 		userToken: null as string | null,
 		expires: null as number | null,
 		name: null as string | null,
+		initials: null as string | null,
 		email: null as string | null,
 		roles: null as Object[] | null
 	}),
@@ -76,11 +77,16 @@ const useAuthStore = defineStore('auth', {
 						const tokenInfo = decode(accessToken);
 
 						this.name = tokenInfo.name;
+						this.initials = tokenInfo.name
+							.split(' ')
+							.map((n) => n[0])
+							.join('');
 						this.email = tokenInfo.email;
 						this.roles = tokenInfo.realm_access.roles;
 					} catch (error) {
 						console.error('Unable to decode authentication token for additional user information');
 						this.name = null;
+						this.initials = null;
 						this.email = null;
 						this.roles = null;
 					}

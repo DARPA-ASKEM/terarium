@@ -25,7 +25,7 @@
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
 		<section v-if="active" class="header-right">
-			<Avatar :label="userInitials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+			<Avatar :label="auth.initials" class="avatar m-2" shape="circle" @click="showUserMenu" />
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 			<Dialog header="Logout" v-model:visible="isLogoutDialog">
 				<p>You will be returned to the login screen.</p>
@@ -221,12 +221,6 @@ const getRoleNames = (roles) => {
 const showUserMenu = (event) => {
 	userMenu.value.toggle(event);
 };
-
-const userInitials = computed(() =>
-	auth.name
-		?.split(' ')
-		.reduce((accumulator, currentValue) => accumulator.concat(currentValue.substring(0, 1)), '')
-);
 
 function closeLogoutDialog() {
 	isLogoutDialog.value = false;
