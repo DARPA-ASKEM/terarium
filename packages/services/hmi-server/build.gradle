@@ -1,7 +1,18 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath group: 'cz.habarta.typescript-generator', name: 'typescript-generator-gradle-plugin', version: '3.1.1185'
+	}
+}
+
 plugins {
 	id "java"
 	id "io.quarkus"
 }
+
+apply plugin: 'cz.habarta.typescript-generator'
 
 repositories {
 	mavenCentral()
@@ -67,4 +78,31 @@ compileJava {
 
 compileTestJava {
 	options.encoding = "UTF-8"
+}
+
+generateTypeScript {
+	jsonLibrary = 'jackson2'
+	classesWithAnnotations = [
+		'software.uncharted.terarium.hmiserver.annotations.TSModel'
+	]
+	excludeClasses = [
+	    'io.vertx.core.shareddata.impl.ClusterSerializable',
+		'java.io.Serializable'
+	]
+	excludeClassPatterns = [
+		'io.quarkus.**'
+	]
+	excludePropertyAnnotations = [
+	    'software.uncharted.terarium.hmiserver.annotations.TSIgnore'
+	]
+	enumMemberCasing = 'PascalCase'
+	mapEnum = 'asEnum'
+	nonConstEnums = 'true'
+	noFileComment = 'true'
+	outputFile = '../../client/hmi-client/src/types/Types.ts'
+	outputKind = 'module'
+	outputFileType = 'implementationFile'
+	optionalAnnotations = [
+	    'software.uncharted.terarium.hmiserver.annotations.TSOptional'
+	]
 }
