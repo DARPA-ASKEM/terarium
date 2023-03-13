@@ -4,10 +4,12 @@
 			<div id="playground"></div>
 			<metadata-table :data="currentNodeMetadata" />
 		</div>
-		<Button @click="runPetri()">Run simulation</Button>
-		<Button @click="addVariable('S')">Add state</Button>
-		<Button @click="addVariable('T')">Add transition</Button>
-		<Button @click="onDownload()">Download Petri</Button>
+		<div>
+			<Button style="margin-left: 5px" @click="runPetri()">Run simulation</Button>
+			<Button style="margin-left: 5px" @click="addVariable('S')">Add state</Button>
+			<Button style="margin-left: 5px" @click="addVariable('T')">Add transition</Button>
+			<Button style="margin-left: 5px" @click="onDownload()">Download Petri</Button>
+		</div>
 
 		<div>States</div>
 		<table>
@@ -633,8 +635,8 @@ const addVariable = (vType: string) => {
 		label: id,
 		x: 200,
 		y: 200,
-		width: 20,
-		height: 20,
+		width: 40,
+		height: 40,
 		data: {
 			type: vType
 		},
@@ -671,12 +673,13 @@ watch(
 
 // If no edges at all, grid whatever data we have
 const gridData = async () => {
+	const nodeLayoutSpacing = 140;
 	// FIXME: Hackathon
 	if (renderer?.graph.edges.length === 0) {
 		let c = 0;
 		renderer?.graph.nodes.forEach((n) => {
-			n.x = 60 + Math.round(c / 5) * 50;
-			n.y = 80 + 50 * (c % 5);
+			n.x = 60 + nodeLayoutSpacing * Math.round(c / 5);
+			n.y = 80 + nodeLayoutSpacing * (c % 5);
 			c++;
 		});
 		await renderer.render();
@@ -710,7 +713,8 @@ onMounted(async () => {
 		el: playground,
 		useAStarRouting: false, // People get distracted with squiggly connectors - Jan 2023
 		runLayout: runDagreLayout,
-		useStableZoomPan: true
+		useStableZoomPan: true,
+		dragSelector: 'no-drag'
 	});
 
 	renderer.on('background-click', () => {
@@ -727,7 +731,7 @@ onMounted(async () => {
 	});
 
 	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		console.log(d.source, d.target);
+		renderer?.addEdge(d.source, d.target);
 	});
 
 	document.addEventListener('keyup', async (event) => {
@@ -803,17 +807,6 @@ onMounted(async () => {
 	await renderer.setData(g);
 	await renderer.render();
 
-	// FIXME: Hackathon
-	if (renderer.graph.edges.length === 0) {
-		let c = 0;
-		renderer?.graph.nodes.forEach((n) => {
-			n.x = 60 + Math.round(c / 5) * 50;
-			n.y = 80 + 50 * (c % 5);
-			c++;
-		});
-		await renderer.render();
-	}
-
 	gridData();
 
 	renderer.graph.nodes.forEach((n) => {
@@ -830,6 +823,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+section {
+	display: flex;
+	flex-direction: column;
+}
+
 #playground {
 	width: 800px;
 	height: 350px;
