@@ -3,9 +3,8 @@
  */
 
 import API from '@/api/api';
-import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssets } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { placeholder, IPlaceholderArgs } from '@/utils/project-card';
 
 /**
  * Create a project
@@ -69,16 +68,6 @@ async function getAll(): Promise<IProject[] | null> {
 		const response = await API.get('/projects');
 		const { status, data } = response;
 		if (status !== 200 || !data) return null;
-		(data as IProject[]).forEach((project) => {
-			const args: IPlaceholderArgs = {
-				contributors: 1,
-				models: project.assets[ProjectAssetTypes.MODELS].length ?? 0,
-				datasets: project.assets[ProjectAssetTypes.DATASETS].length ?? 0,
-				papers: project.assets[ProjectAssetTypes.DOCUMENTS].length ?? 0
-			};
-
-			project.placeholder = placeholder(args);
-		});
 		return data;
 	} catch (error) {
 		logger.error(error);

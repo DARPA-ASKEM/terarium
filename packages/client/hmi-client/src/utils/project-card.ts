@@ -11,7 +11,7 @@ interface Renderer extends p5.Renderer {
 	toDataURL(): string;
 }
 
-export interface IPlaceholderArgs {
+interface IPlaceholderArgs {
 	contributors: number;
 	models: number;
 	datasets: number;
