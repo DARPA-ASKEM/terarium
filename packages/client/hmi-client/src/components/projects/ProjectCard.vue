@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import Card from 'primevue/card';
 import Button from 'primevue/button';
+import Card from 'primevue/card';
+import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
-import Skeleton from 'primevue/skeleton';
 
 const props = defineProps<{ project?: IProject }>();
 
@@ -24,10 +24,10 @@ const image = stats ? placeholder(stats) : undefined;
 	<Card v-if="project">
 		<template #content>
 			<header class="project-stats">
-				<span title="Contributors"><i class="pi pi-user" /> {{ stats.contributors }}</span>
-				<span title="Models"><i class="pi pi-share-alt" /> {{ stats.models }}</span>
-				<span title="Datasets"><i class="pi pi-sliders-v" /> {{ stats.datasets }}</span>
-				<span title="Papers"><i class="pi pi-file" /> {{ stats.papers }}</span>
+				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
+				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
+				<span title="Datasets"><i class="pi pi-sliders-v" /> {{ stats?.datasets }}</span>
+				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 			</header>
 			<div class="project-img">
 				<img :src="image" alt="Artistic representation of the Project statistics" />
