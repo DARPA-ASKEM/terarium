@@ -41,4 +41,5 @@ export interface IProject {
 	assets: SimpleProjectAssets;
 	relatedDocuments: DocumentType[];
 	username: string;
+	placeholder?: string;
 }

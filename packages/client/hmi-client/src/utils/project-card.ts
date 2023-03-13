@@ -11,7 +11,7 @@ interface Renderer extends p5.Renderer {
 	toDataURL(): string;
 }
 
-interface Iargs {
+export interface IPlaceholderArgs {
 	contributors: number;
 	models: number;
 	datasets: number;
@@ -189,7 +189,7 @@ const sketch = (p: p5): p5 => {
 	return p;
 };
 
-export default function (args: Iargs): string {
+export function placeholder(args: IPlaceholderArgs): string {
 	// Set the value for each datum
 	contributors = args.contributors;
 	models = args.models;
