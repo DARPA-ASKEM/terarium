@@ -64,8 +64,15 @@ async function get(projectId: string): Promise<IProject | null> {
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
 async function getAll(): Promise<IProject[] | null> {
-	const response = await API.get('/projects');
-	return response?.data ?? null;
+	try {
+		const response = await API.get('/projects');
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
 }
 
 /**
