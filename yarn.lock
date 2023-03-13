@@ -6761,6 +6761,7 @@ cors@latest:
     eslint-import-resolver-typescript: 3.5.3
     graph-scaffolder: "*"
     lodash: 4.17.21
+    p5: 1.6.0
     pinia: 2.0.30
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
@@ -9426,6 +9427,13 @@ opn@latest:
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
   checksum: f8a8e9a7693659383f06aec604ad5ead237c7a261c18048a6e1b5b85a5f8a067e469aa24f5bc009b991ea3b058a87f5065ef4176793a200d4917349881216cae
+  languageName: node
+  linkType: hard
+
+"p5@npm:1.6.0":
+  version: 1.6.0
+  resolution: "p5@npm:1.6.0"
+  checksum: 080dddca10e71831d275747f06e49a4196cabd3aa0399d50409034b6a312f003e77ee7244eb1c5e21fe2022fbba8581ce43f487c2c1f81c8033346c597f4b18f
   languageName: node
   linkType: hard
 
