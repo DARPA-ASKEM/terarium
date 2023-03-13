@@ -2047,6 +2047,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/p5@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@types/p5@npm:1.5.0"
+  checksum: b2c2a7516e387b06ed70a8f9dc372d863942614b547cf7a116eb824b24f6f0266b79eae03a11c32dd1b8d52c980f9a93bfda888bf8b7e3ef59056f48cfe3ea36
+  languageName: node
+  linkType: hard
+
 "@types/prettier@npm:^2.1.5":
   version: 2.7.1
   resolution: "@types/prettier@npm:2.7.1"
@@ -6749,6 +6756,7 @@ cors@latest:
     "@types/d3": 7.4.0
     "@types/lodash": 4.14.191
     "@types/node": 18.11.18
+    "@types/p5": 1.5.0
     "@uncharted.software/design-tokens": 1.1.0
     "@uncharted.software/facets-core": 3.2.6
     "@uncharted.software/facets-plugins": 3.2.5
