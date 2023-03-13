@@ -4,10 +4,12 @@
 			<div id="playground"></div>
 			<metadata-table :data="currentNodeMetadata" />
 		</div>
-		<Button @click="runPetri()">Run simulation</Button>
-		<Button @click="addVariable('S')">Add state</Button>
-		<Button @click="addVariable('T')">Add transition</Button>
-		<Button @click="onDownload()">Download Petri</Button>
+		<div>
+			<Button style="margin-left: 5px" @click="runPetri()">Run simulation</Button>
+			<Button style="margin-left: 5px" @click="addVariable('S')">Add state</Button>
+			<Button style="margin-left: 5px" @click="addVariable('T')">Add transition</Button>
+			<Button style="margin-left: 5px" @click="onDownload()">Download Petri</Button>
+		</div>
 
 		<div>States</div>
 		<table>
@@ -821,6 +823,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+section {
+	display: flex;
+	flex-direction: column;
+}
+
 #playground {
 	width: 800px;
 	height: 350px;
