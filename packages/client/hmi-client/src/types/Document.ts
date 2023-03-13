@@ -77,7 +77,7 @@ export type DocumentType = {
 	highlight: string[];
 	knownEntities?: DocumentKnownEntity;
 
-	// We don not know exactly what is in citatinList - DC Jan 2023
+	// We don't know exactly what is in citationList - DC Jan 2023
 	citationList: { [key: string]: string }[];
 
 	// additional-client-side fields

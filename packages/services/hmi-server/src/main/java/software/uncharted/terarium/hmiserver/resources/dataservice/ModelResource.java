@@ -5,7 +5,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 
 import javax.inject.Inject;
@@ -13,7 +15,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
-
 
 @Path("/api/models")
 @Authenticated
@@ -126,7 +127,7 @@ public class ModelResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response updateModel(
 		@PathParam("id") final String id,
-		final Model model
+		final ModelStub model
 	) {
 		return proxy.updateModel(id, model);
 	}
@@ -134,8 +135,16 @@ public class ModelResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModel(
-		final Model model
+		final ModelStub model
 	) {
 		return proxy.createModel(model);
+	}
+
+	@POST
+	@Path("/{id}/operation-copy")
+	public Response saveAsNewModel(
+		@PathParam("id") final String id,
+		final ModelOperationCopy modelOperationCopy) {
+		return proxy.copyModel(modelOperationCopy);
 	}
 }

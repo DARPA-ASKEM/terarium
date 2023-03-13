@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.time.Instant;
 
@@ -17,6 +17,6 @@ public class Software implements Serializable {
 
 	private String source;
 
-	@JsonbProperty("storage_uri")
+	@JsonProperty("storage_uri")
 	private String storageUri;
 }

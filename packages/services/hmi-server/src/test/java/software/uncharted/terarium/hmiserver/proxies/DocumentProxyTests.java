@@ -22,8 +22,8 @@ public class DocumentProxyTests {
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNotNull(response.getDescription());
-		Assertions.assertNotNull(response.getAvailable_sets());
-		Assertions.assertTrue(response.getAvailable_sets().size() > 0);
+		Assertions.assertNotNull(response.getAvailableSets());
+		Assertions.assertTrue(response.getAvailableSets().size() > 0);
 	}
 
 	@Test
@@ -49,7 +49,7 @@ public class DocumentProxyTests {
 		Assertions.assertNotNull(response.getSuccess());
 		Assertions.assertNotNull(response.getSuccess().getData());
 		Assertions.assertEquals(1, response.getSuccess().getData().size());
-		Assertions.assertEquals(TARGET_ID, response.getSuccess().getData().get(0).getID());
+		Assertions.assertEquals(TARGET_ID, response.getSuccess().getData().get(0).getGddId());
 	}
 
 	@Test

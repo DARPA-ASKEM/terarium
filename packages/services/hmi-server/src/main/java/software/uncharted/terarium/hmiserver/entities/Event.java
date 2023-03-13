@@ -6,6 +6,8 @@ import io.quarkus.panache.common.Sort;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.EventType;
 
 import javax.persistence.Column;
@@ -20,6 +22,7 @@ import java.util.UUID;
 
 @Entity
 @Data
+@TSModel
 @Accessors(chain = true)
 @NoArgsConstructor
 @Table(indexes = {
@@ -31,20 +34,25 @@ import java.util.UUID;
 })
 public class Event extends PanacheEntityBase implements Serializable {
 	@Id
+	@TSOptional
 	private String id = UUID.randomUUID().toString();
 
 	@Column(nullable = false)
+	@TSOptional
 	private Long timestampMillis = Instant.now().toEpochMilli();
 
+	@TSOptional
 	private Long projectId;
 
 	@Column(nullable = false)
+	@TSOptional
 	private String username;
 
 	@Column(nullable = false)
 	private EventType type;
 
 	@Column(length = 2047)
+	@TSOptional
 	private String value;
 
 	/**

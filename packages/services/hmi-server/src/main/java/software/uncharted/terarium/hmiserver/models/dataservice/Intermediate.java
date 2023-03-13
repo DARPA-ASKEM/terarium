@@ -1,10 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 @Data
@@ -13,7 +14,7 @@ public class Intermediate implements Serializable {
 
 	private String id;
 
-	private Instant timestamp;
+	private LocalDateTime timestamp;
 
 	private IntermediateSource source;
 
@@ -23,9 +24,13 @@ public class Intermediate implements Serializable {
 }
 
 enum IntermediateFormat {
+	@JsonAlias("bilayer")
 	BILAYER("bilayer"),
+	@JsonAlias("gromet")
 	GROMET("gromet"),
+	@JsonAlias("other")
 	OTHER("other"),
+	@JsonAlias("sbml")
 	SBML("sbml");
 
 	public final String type;
@@ -49,7 +54,9 @@ enum IntermediateFormat {
 }
 
 enum IntermediateSource {
+	@JsonAlias("mrepresentationa")
 	MREPRESENTATIONA("mrepresentationa"),
+	@JsonAlias("skema")
 	SKEMA("skema");
 
 	public final String type;

@@ -37,8 +37,8 @@
 			"enabled": true
 		}
 	],
-	"name": "TERArium Local",
-	"_postman_variable_scope": "TERArium Local",
+	"name": "Terarium Local",
+	"_postman_variable_scope": "Terarium Local",
 	"_postman_exported_at": "2022-11-15T18:16:39.989Z",
 	"_postman_exported_using": "Postman/10.1.2"
 }

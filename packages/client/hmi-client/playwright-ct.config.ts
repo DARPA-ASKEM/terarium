@@ -1,11 +1,11 @@
-import { devices, type PlaywrightTestConfig } from '@playwright/experimental-ct-vue';
+import { devices, defineConfig } from '@playwright/experimental-ct-vue';
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-const config: PlaywrightTestConfig = {
+export default defineConfig({
 	testDir: './tests/component',
 	/* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot and toHaveScreenshot. */
 	snapshotDir: './tests/component/__snapshots__',
@@ -68,6 +68,4 @@ const config: PlaywrightTestConfig = {
 			}
 		}
 	]
-};
-
-export default config;
+});
