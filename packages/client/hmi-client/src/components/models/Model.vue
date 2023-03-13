@@ -180,7 +180,8 @@ watch([model, graphElement], async () => {
 	const renderer = new PetrinetRenderer({
 		el: graphElement.value as HTMLDivElement,
 		useAStarRouting: true,
-		runLayout: runDagreLayout
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
 	});
 
 	// Render graph
