@@ -480,6 +480,14 @@ li {
 	margin: 2rem 0;
 }
 
+.no-projects {
+	background-color: #ffffff;
+	background-image: radial-gradient(#eeeeee 10%, transparent 11%);
+	background-size: 12px 12px;
+	background-position: 0 0;
+	background-repeat: repeat;
+}
+
 .no-projects > * {
 	margin: auto;
 	margin-top: 1rem;
