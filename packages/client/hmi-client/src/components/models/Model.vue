@@ -3,7 +3,7 @@
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" />
+				<h4 v-html="title" @click="printModel" />
 				<span v-if="isEditable">
 					<Button
 						@click="toggleEditMode"
@@ -29,6 +29,13 @@
 				<div v-if="model" ref="graphElement" class="graph-element" />
 			</AccordionTab>
 			<template v-if="!isEditable">
+				<AccordionTab header="Parameters">
+					<DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
 				<AccordionTab header="State variables">
 					<DataTable :value="model?.content.S">
 						<Column field="sname" header="Label"></Column>
@@ -36,13 +43,6 @@
 						<Column field="units" header="Units"></Column>
 						<Column field="mira_context" header="Concepts"></Column>
 						<Column field="definition" header="Definition"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
 					</DataTable>
 				</AccordionTab>
 			</template>
@@ -57,8 +57,84 @@
 					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
+			<template v-if="isEditable">
+				<AccordionTab>
+					<template #header>
+						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
+					</template>
+					<DataTable class="parameters_header">
+						<ColumnGroup type="header">
+							<Row>
+								<Column header="Label" />
+								<Column header="Name" />
+								<Column header="Units" />
+								<Column header="Concept" />
+								<Column header="Definition" />
+							</Row>
+						</ColumnGroup>
+					</DataTable>
+					<ul>
+						<li v-for="(param_row, index) in model?.parameters" :key="index">
+							<section class="parameters_row">
+								<DataTable
+									v-model:editing-rows="editingRows"
+									:value="[param_row]"
+									editMode="row"
+									@row-edit-save="onRowEditSave"
+									tableClass="editable-cells-table"
+								>
+									<Column field="label">
+										<template #editor="{ data, field }">
+											<InputText v-model="data[field]" />
+										</template>
+									</Column>
+									<Column field="name">
+										<template #editor="{ data, field }">
+											<InputText v-model="data[field]" />
+										</template>
+									</Column>
+									<Column field="units">
+										<template #editor="{ data, field }">
+											<InputText v-model="data[field]" />
+										</template>
+									</Column>
+									<Column field="concept">
+										<template #editor="{ data, field }">
+											<InputText v-model="data[field]" />
+										</template>
+									</Column>
+									<Column field="definition">
+										<template #editor="{ data, field }">
+											<InputText v-model="data[field]" />
+										</template>
+									</Column>
+								</DataTable>
+							</section>
+							<div>stuff</div>
+						</li>
+						<footer>
+							<Button label="Add parameter" icon="pi pi-plus" />
+							<Button label="Extract from a dataset" icon="pi pi-file-export" />
+						</footer>
+					</ul>
+
+					<!-- <Column field="default_value" header="Default"></Column> -->
+				</AccordionTab>
+			</template>
 		</Accordion>
-		<TabView v-if="isEditable">
+
+		<!-- <span>Variables</span>
+			 <Badge :value="model?.content.S.length" /> 
+			<DataTable :value="model?.content.S">
+				<Column field="slabel" header="Label"></Column>
+				<Column field="sname" header="Name"></Column>
+				<Column field="units" header="Units"></Column>
+				<Column field="mira_context" header="Concept"></Column>
+				<Column field="definition" header="Definition"></Column>
+				<Column field="default_value" header="Default"></Column>
+			</DataTable> -->
+
+		<!-- <TabView>
 			<TabPanel>
 				<template #header>
 					<span>State variables</span>
@@ -83,7 +159,7 @@
 					<Column field="default_value" header="Default"></Column>
 				</DataTable>
 			</TabPanel>
-		</TabView>
+		</TabView> -->
 	</section>
 </template>
 
@@ -101,10 +177,12 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
+import ColumnGroup from 'primevue/columngroup';
 import Column from 'primevue/column';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
-import Badge from 'primevue/badge';
+import Row from 'primevue/row';
+// import TabView from 'primevue/tabview';
+// import TabPanel from 'primevue/tabpanel';
+// import Badge from 'primevue/badge';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
@@ -127,6 +205,9 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref(false);
 
+// row editing
+const editingRows = ref();
+
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
 );
@@ -145,6 +226,14 @@ const fetchRelatedTerariumArtifacts = async () => {
 		relatedTerariumArtifacts.value = [];
 	}
 };
+
+function onRowEditSave() {
+	console.log(0);
+}
+
+function printModel() {
+	console.log(model.value);
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -224,6 +313,45 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 .slider .graph-element {
 	pointer-events: none;
+}
+
+.p-datatable:deep(.p-datatable-thead > tr > th),
+.p-datatable:deep(.p-datatable-tbody > tr > td) {
+	border: none;
+}
+
+.p-datatable.parameters_header:deep(tbody),
+.parameters_row .p-datatable:deep(thead) {
+	display: none;
+}
+
+ul {
+	background-color: var(--surface-ground);
+	border-radius: 0.75rem;
+	padding: 0.75rem;
+}
+
+ul .p-button {
+	color: var(--primary-color);
+	background-color: transparent;
+}
+
+ul .p-button:hover,
+ul .p-button:focus {
+	color: var(--primary-color);
+	background-color: var(--surface-hover);
+}
+
+li {
+	background-color: var(--surface-section);
+	border-radius: 0.5rem;
+	padding: 0.5rem;
+}
+
+footer {
+	display: flex;
+	gap: 1rem;
+	margin-left: 1rem;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
