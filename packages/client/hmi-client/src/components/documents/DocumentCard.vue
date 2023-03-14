@@ -23,7 +23,7 @@
 			</section>
 			<section class="authors">
 				<ul>
-					<li v-for="(author, index) in document?.author" :key="index">{{ author.name }}</li>
+					<li v-for="(author, index) in document?.author" :key="index">{{ author.name }},</li>
 				</ul>
 			</section>
 		</template>
@@ -107,8 +107,9 @@ onMounted(async () => {
 }
 
 .journal {
-	margin-bottom: 0.5rem;
+	margin-bottom: 0.25rem;
 	height: 2.4rem;
+	font-size: var(--font-caption);
 }
 
 .journal-name {
@@ -130,7 +131,8 @@ onMounted(async () => {
 
 .authors {
 	overflow: hidden;
-	height: 3.75rem;
+	height: 3.25rem;
+	font-size: var(--font-caption);
 }
 
 .p-card {
@@ -147,7 +149,7 @@ ul.skeleton {
 li {
 	list-style: none;
 	display: inline;
-	margin-right: 0.5rem;
+	margin-right: 0.25rem;
 	color: var(--text-color-secondary);
 }
 </style>
