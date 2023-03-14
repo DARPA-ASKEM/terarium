@@ -501,8 +501,9 @@ a {
 	flex-direction: column;
 	justify-content: center;
 	gap: 1rem;
-	border-radius: 4px;
+	border-radius: 8px;
 	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+	cursor: pointer;
 }
 
 .new-project-card > p {
@@ -515,9 +516,8 @@ a {
 }
 
 .new-project-card:hover {
-	background-color: var(--surface-hover);
-	box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px 0 rgb(0 0 0 / 14%),
-		0 1px 3px 0 rgb(0 0 0 / 12%);
+	background-color: var(--surface);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
 .new-project-button {
