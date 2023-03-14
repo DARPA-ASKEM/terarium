@@ -55,7 +55,7 @@ const statusIcon = computed(() => (isSelected() ? 'pi-check' : 'pi-plus'));
 </script>
 
 <style scoped>
-.p-button:deep(.pi-plus) {
-	color: var(--text-color-primary);
+.p-button:deep(.pi-check) {
+	color: var(--primary-color);
 }
 </style>

@@ -1,18 +1,23 @@
 <template>
 	<div class="selected-document-pane">
+		<subheader>
+			<p>Publisher: {{ selectedDocument.publisher }}</p>
+			<p>Journal: {{ selectedDocument.journal }}</p>
+			<p>Doc ID: {{ selectedDocument.gddId }}</p>
+		</subheader>
+		<div>
+			Abstract:
+			<p class="textblock" v-html="formatAbstract(selectedDocument)"></p>
+		</div>
 		<div class="add-selected-buttons">
-			<dropdown-button
-				:inner-button-label="'Add to a project'"
-				:is-dropdown-left-aligned="true"
-				:items="projectsNames"
-				@item-selected="addAssetsToProject"
+			<dropdown
+				placeholder="ADD TO PROJECT"
+				class="p-button dropdown-button"
+				:is-dropdown-left-aligned="false"
+				:options="projectsNames"
+				v-on:change="addAssetsToProject"
 			/>
 		</div>
-		<div>Publisher: {{ selectedDocument.publisher }}</div>
-		<div>Author: {{ selectedDocument.author.map((a) => a.name).join(', ') }}</div>
-		<div v-html="formatAbstract(selectedDocument)"></div>
-		<div>Journal: {{ selectedDocument.journal }}</div>
-		<div>Doc ID:: {{ selectedDocument.gddId }}</div>
 	</div>
 </template>
 
@@ -20,10 +25,10 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { DocumentAsset, DocumentType } from '@/types/Document';
 import useResourcesStore from '@/stores/resources';
-import { Project, ProjectAssetTypes } from '@/types/Project';
-import DropdownButton from '@/components/widgets/dropdown-button.vue';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import { addDocuments } from '@/services/external';
+import dropdown from 'primevue/dropdown';
 
 const props = defineProps({
 	selectedDocument: {
@@ -37,7 +42,7 @@ const resources = useResourcesStore();
 
 const validProject = computed(() => resources.activeProject);
 
-const projectsList = ref<Project[]>([]);
+const projectsList = ref<IProject[]>([]);
 const projectsNames = computed(() => projectsList.value.map((p) => p.name));
 
 const addResourcesToProject = async (projectId: string) => {
@@ -65,7 +70,7 @@ const addResourcesToProject = async (projectId: string) => {
 };
 
 const formatAbstract = (item: DocumentType) =>
-	item.abstract !== undefined ? `Abstract: ${item.abstract}` : 'Abstract: [no abstract]';
+	item.abstract !== undefined ? item.abstract : '[no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
 	let projectId = '';
@@ -103,9 +108,51 @@ onMounted(async () => {
 .add-selected-buttons {
 	display: flex;
 	margin-bottom: 2rem;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	align-items: center;
+	padding: 16px 22px 16px 0px;
+	gap: 8px;
 }
 
 .add-selected-buttons button {
 	margin-bottom: 2px;
+}
+
+.textblock {
+	padding: 0px 0px 5px 15px;
+}
+/* TODO: All of this dropdown styling has been used before. If all dropdowns are green with white text and rounded we should export this into a styling component likely */
+
+.dropdown-button {
+	width: 156px;
+	height: 25px;
+	border-radius: 6px;
+}
+
+subheader {
+	color: var(--text-color-subdued);
+	font-weight: 400;
+	font-size: 12px;
+	padding-bottom: 5px;
+}
+
+:deep(.p-dropdown .p-dropdown-label.p-placeholder) {
+	display: contents;
+	color: white;
+	font-size: small;
+}
+
+:deep .p-dropdown .p-dropdown-trigger {
+	color: white;
+}
+.p-button.p-button-secondary {
+	border: 1px solid var(--surface-border);
+	box-shadow: none;
+	font-weight: 600;
+	font-size: 14px;
+	padding-right: 10px;
+	padding-left: 10px;
 }
 </style>

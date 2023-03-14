@@ -97,7 +97,7 @@ export interface NodeData {
 }
 
 export interface EdgeData {
-	val: number;
+	numEdges: number;
 }
 export enum NodeType {
 	State = 'S',
@@ -110,48 +110,39 @@ export enum NodeType {
  * First add each node found in S and T, then add each edge found in I and O
  */
 export const parsePetriNet2IGraph = (model: PetriNet) => {
-	const g: IGraph<NodeData, EdgeData> = {
+	const result: IGraph<NodeData, EdgeData> = {
 		width: 500,
 		height: 500,
 		nodes: [],
 		edges: []
 	};
 
-	// Reset current Graph.
-	g.nodes = [];
-	g.edges = [];
-	const nodeHeight = 20;
-	const nodeWidth = 20;
-	let nodeX = 10;
-	let nodeY = 10;
+	const nodeHeight = 40;
+	const nodeWidth = 40;
+
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
 		const aNode = model.S[i];
-		nodeX += 30;
-		nodeY += 30;
-		g.nodes.push({
+		result.nodes.push({
 			id: `s-${i + 1}`,
 			label: aNode.sname,
-			x: nodeX,
-			y: nodeY,
+			x: 0,
+			y: 0,
 			height: nodeHeight,
 			width: nodeWidth,
 			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
 	}
-	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
-	nodeY = 10;
+
 	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
-		nodeX += 30;
-		nodeY += 30;
-		g.nodes.push({
+		result.nodes.push({
 			id: `t-${i + 1}`,
 			label: aTransition.tname,
-			x: nodeX,
-			y: nodeY,
+			x: 0,
+			y: 0,
 			height: nodeHeight,
 			width: nodeWidth,
 			data: { type: NodeType.Transition, uid: aTransition.uid },
@@ -162,24 +153,50 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	// Edges found in I
 	for (let i = 0; i < model.I.length; i++) {
 		const iEdges = model.I[i];
-		const sourceID = `s-${iEdges.is}`;
-		const transitionID = `t-${iEdges.it}`;
-		g.edges.push({
-			source: sourceID,
-			target: transitionID,
-			points: []
+		const sourceId = `s-${iEdges.is}`;
+		const targetId = `t-${iEdges.it}`;
+
+		// Collapse hyper edges
+		const existingEdge = result.edges.find(
+			(edge) => edge.source === sourceId && edge.target === targetId
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+			continue;
+		}
+
+		result.edges.push({
+			source: sourceId,
+			target: targetId,
+			points: [],
+			data: {
+				numEdges: 1
+			}
 		});
 	}
 	// Edges found in O
 	for (let i = 0; i < model.O.length; i++) {
 		const oEdges = model.O[i];
-		const sourceID = `t-${oEdges.ot}`;
-		const transitionID = `s-${oEdges.os}`;
-		g.edges.push({
-			source: sourceID,
-			target: transitionID,
-			points: []
+		const sourceId = `t-${oEdges.ot}`;
+		const targetId = `s-${oEdges.os}`;
+
+		// Collapse hyper edges
+		const existingEdge = result.edges.find(
+			(edge) => edge.source === sourceId && edge.target === targetId
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+			continue;
+		}
+
+		result.edges.push({
+			source: sourceId,
+			target: targetId,
+			points: [],
+			data: {
+				numEdges: 1
+			}
 		});
 	}
-	return { ...g };
+	return result;
 };

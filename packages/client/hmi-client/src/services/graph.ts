@@ -89,12 +89,6 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 	dagre.layout(g);
 
-	g.nodes().forEach((n) => {
-		const node = g.node(n);
-		node.x -= node.width * 0.5;
-		node.y -= node.height * 0.5;
-	});
-
 	graphScaffolder.traverseGraph(graphData, (node) => {
 		const n = g.node(node.id);
 		node.width = n.width;

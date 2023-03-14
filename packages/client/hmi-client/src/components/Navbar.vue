@@ -6,9 +6,9 @@
 					v-if="currentProjectId"
 					src="@assets/svg/terarium-icon.svg"
 					height="36"
-					alt="TERArium icon"
+					alt="Terarium icon"
 				/>
-				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="TERArium logo" />
+				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="Terarium logo" />
 			</router-link>
 			<h1 v-if="currentProjectId" @click="showNavigationMenu">
 				{{ currentProjectName }}
@@ -20,7 +20,7 @@
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
-			:showSuggestions="resourceType === ResourceType.XDD"
+			:show-suggestions="showSuggestions"
 			@query-changed="updateRelatedTerms"
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
@@ -58,15 +58,14 @@ import { RoutePath } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
-import { ResourceType } from '@/types/common';
-import { Project as ProjectType } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { MenuItem } from 'primevue/menuitem';
 
 const props = defineProps<{
 	active: boolean;
-	currentProjectId: ProjectType['id'] | null;
-	projects: ProjectType[] | null;
-	resourceType: string;
+	currentProjectId: IProject['id'] | null;
+	projects: IProject[] | null;
+	showSuggestions: boolean;
 }>();
 
 /*
@@ -272,7 +271,7 @@ i {
 }
 </style>
 <style>
-/* 
+/*
  * On it's own style, because the pop-up happend outside of this component.
  * To left align the content with the h1.
  */

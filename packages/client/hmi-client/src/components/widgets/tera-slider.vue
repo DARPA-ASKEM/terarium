@@ -75,20 +75,21 @@ const sidePanelTabStyle = computed(
 	border-right: 1px solid var(--surface-border);
 }
 
-/* .slider.right.closed .slider-tab,
+.slider.right.closed .slider-tab,
 .slider.right.open .slider-content {
-	
-} */
+	border-left: 1px solid var(--surface-border);
+}
 
 .slider-content-container {
 	position: absolute;
 	height: 100%;
-	border-left: 1px solid var(--surface-border);
 }
 
 .slider-tab {
 	position: relative;
 	height: 100%;
+	background-color: var(--surface-section);
+	z-index: 1;
 }
 
 .slider.open .slider-tab,
@@ -102,7 +103,6 @@ const sidePanelTabStyle = computed(
 	position: relative;
 	width: 100%;
 	height: 100%;
-	min-height: 90%;
 	overflow-y: auto;
 }
 

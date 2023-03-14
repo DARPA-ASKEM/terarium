@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import javax.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
@@ -16,20 +16,20 @@ public class Provenance implements Serializable {
 
 	private Instant timestamp;
 
-	@JsonbProperty("relation_type")
+	@JsonProperty("relation_type")
 	private RelationType relationType;
 
 	private String left;
 
-	@JsonbProperty("left_type")
+	@JsonProperty("left_type")
 	private ResourceType.Type leftType;
 
 	private String right;
 
-	@JsonbProperty("right_type")
+	@JsonProperty("right_type")
 	private ResourceType.Type rightType;
 
-	@JsonbProperty("user_id")
+	@JsonProperty("user_id")
 	private String userId;
 }
 

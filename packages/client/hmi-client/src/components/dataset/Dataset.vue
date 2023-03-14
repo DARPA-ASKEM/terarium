@@ -16,12 +16,15 @@
 			/></AccordionTab>
 			<AccordionTab v-if="annotations" header="URL"><span v-html="dataset?.url" /></AccordionTab>
 			<AccordionTab v-if="annotations" header="Geospatial Resolution"
-				><span v-html="dataset?.geospatialResolution"
-			/></AccordionTab>
+				><span v-html="dataset?.geospatialResolution" />
+			</AccordionTab>
 			<AccordionTab v-if="annotations" header="Temporal Resolution"
 				><span v-html="dataset?.temporalResolution" />
 			</AccordionTab>
-			<AccordionTab v-if="annotations" :header="`Annotations (${annotations.feature.length})`">
+			<AccordionTab v-if="annotations">
+				<template #header>
+					Annotations<span class="artifact-amount">({{ annotations.feature.length }})</span>
+				</template>
 				Geo Annotations:
 				<div v-for="annotation in annotations?.geo" :key="annotation.name">
 					<strong v-html="annotation.name" />: <strong>Description:</strong>
@@ -36,10 +39,12 @@
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
-			<AccordionTab
-				v-if="annotations"
-				:header="`Features (${annotations.geo.length + annotations.date.length})`"
-			>
+			<AccordionTab v-if="annotations">
+				<template #header>
+					Features<span class="artifact-amount"
+						>({{ annotations.geo.length + annotations.date.length }})</span
+					>
+				</template>
 				<div v-for="(feature, index) of annotations.feature" :key="index">
 					<div>Name: <span v-html="feature.display_name || feature.name" /></div>
 					<div>Type: <span v-html="feature.feature_type" /></div>

@@ -2,7 +2,7 @@ package software.uncharted.terarium.hmiserver.resources.loggingservice;
 
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
-import software.uncharted.terarium.hmiserver.models.loggingservice.LoggingService;
+import software.uncharted.terarium.hmiserver.services.LoggingService;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import javax.inject.Inject;

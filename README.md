@@ -1,14 +1,14 @@
-[![Build and Publish](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
+[![Build and Publish](https://github.com/DARPA-ASKEM/Terarium/actions/workflows/publish.yaml/badge.svg?event=push)](https://github.com/DARPA-ASKEM/TERArium/actions/workflows/publish.yaml)
 
-# TERArium
+# Terarium
 
-TERArium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
+Terarium is the client application for the ASKEM program providing capabilities to create, modify, simulate, and publish
 machine extracted models.
 
 ## Install and dependencies
 
-The TERArium client is built with Typescript and Vue3. The TERArium server is built with Java and Quarkus. To run and
-develop TERArium, you will need these as a prerequisite:
+The Terarium client is built with Typescript and Vue3. The Terarium server is built with Java and Quarkus. To run and
+develop Terarium, you will need these as a prerequisite:
 
 - [Yarn 2](https://yarnpkg.com/getting-started/install)
 - [NodeJS 18](https://nodejs.org/en/download/current/)
@@ -128,7 +128,7 @@ You can then execute your native executable with: `./build/terarium-1.0.0-SNAPSH
 # Docker build
 docker build . -t <image_name>
 
-# Run, make TERArium available on http://localhost:3000
+# Run, make Terarium available on http://localhost:3000
 docker run -p 3000:3000 -ti <image_name>
 ```
 
