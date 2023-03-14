@@ -19,6 +19,6 @@ public class Assets implements Serializable {
 	List<Intermediate> intermediates;
 	List<Model> models;
 	List<SimulationPlan> plans;
-	List<Publication> publications;
+	List<DocumentAsset> publications;
 	List<SimulationRun> simulationRuns;
 }
