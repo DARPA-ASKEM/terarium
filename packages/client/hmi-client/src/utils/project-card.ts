@@ -51,9 +51,9 @@ function drawContributors(p: p5) {
 				p.fill(p.lerpColor(from, to, iY / imageHeight));
 				p.circle(iX, iY, dotSize);
 				// diffuse white glow
-				for (let glow = 2; glow < dotSize/1.25; glow++) {
-					p.fill(0,0,100,0.05);
-					p.ellipse(iX, iY, (iY/imageHeight) * glow, (iY/imageHeight) * glow); 
+				for (let glow = 2; glow < dotSize / 1.25; glow++) {
+					p.fill(0, 0, 100, 0.05);
+					p.ellipse(iX, iY, (iY / imageHeight) * glow, (iY / imageHeight) * glow);
 				}
 			}
 
