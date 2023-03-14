@@ -28,8 +28,8 @@
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
 			<Button
-				class="p-button-secondary search-by-example-button"
-				icon="pi pi-file"
+				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small search-by-example-button"
+				icon="pi pi-upload"
 				@click="isSearchByExampleVisible = !isSearchByExampleVisible"
 				:active="isSearchByExampleVisible"
 			/>
@@ -372,13 +372,12 @@ i {
 .p-button[active='false'].search-by-example-button:focus,
 .p-button[active='false'].search-by-example-button:enabled {
 	background-color: var(--surface-section);
-	border: 1px solid var(--surface-border);
+	border-radius: 1rem;
 	color: var(--text-color-subdued);
 }
 
 .p-button[active='false'].search-by-example-button:hover {
 	background-color: var(--surface-100);
-	border: 1px solid var(--surface-border);
 	color: var(--text-color-subdued);
 }
 
@@ -386,13 +385,11 @@ i {
 .p-button[active='true'].search-by-example-button:focus,
 .p-button[active='true'].search-by-example-button:enabled {
 	background-color: var(--surface-highlight);
-	border: 1px solid var(--surface-border);
 	color: var(--text-color-subdued);
 }
 
 .p-button[active='true'].search-by-example-button:hover {
 	background-color: var(--surface-highlight);
-	border: 1px solid var(--surface-border);
 	color: var(--text-color-subdued);
 }
 
