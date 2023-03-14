@@ -5,11 +5,12 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { ResultType } from '@/types/common';
+import { DocumentAsset } from '@/types/Types';
 import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
 import { getBulkDocuments } from './data';
 import { getBulkDatasets } from './dataset';
-import { getBulkDocumentAssets } from './external';
+import { getBulkDocumentAssets, getDocument } from './external';
 import { getBulkModels } from './model';
 
 //
@@ -28,16 +29,19 @@ const MAX_RELATED_ARTIFACT_COUNT = 5;
 /**
  For a document, find similar content
 	Find related documents (xDD)
-*/
+ */
 
 // API helper function for fetching provenance data
 async function getConnectedNodes(
-	id: string | number,
+	id: string,
 	rootType: ProvenanceType
 ): Promise<ProvenanceResult | null> {
+	const publication: DocumentAsset | null = await getDocument(id);
+	if (!publication) return null;
+
 	// FIXME: all underscore naming should be fixed
 	const body: ProvenanceQueryParam = {
-		root_id: Number(id),
+		root_id: publication.id,
 		root_type: rootType
 	};
 	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
@@ -53,10 +57,7 @@ async function getConnectedNodes(
  * @id: id to be used as the root
  * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
  */
-async function getRelatedArtifacts(
-	id: string | number,
-	rootType: ProvenanceType
-): Promise<ResultType[]> {
+async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
 	const connectedNodes = await getConnectedNodes(id, rootType);
