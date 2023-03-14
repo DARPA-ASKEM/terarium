@@ -9,7 +9,6 @@
 				<a
 					:href="`https://doi.org/${doi}`"
 					rel="noreferrer noopener"
-					target="_blank"
 					v-html="highlightSearchTerms(doi)"
 				/>
 			</div>
@@ -80,15 +79,13 @@
 								icon="pi pi-cloud-download"
 								@click="openCodeBrowser(url)"
 							/>
-							<a :href="url.html_url" target="_blank" rel="noreferrer noopener">{{
-								url.html_url
-							}}</a>
+							<a :href="url.html_url" rel="noreferrer noopener">{{ url.html_url }}</a>
 						</li>
 					</template>
 					<li v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
+							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
 					</li>
 				</ul>

@@ -59,7 +59,6 @@
 							v-if="relatedAsset.properties.documentBibjson.link"
 							:href="relatedAsset.properties.documentBibjson.link[0].url"
 							@click.stop
-							target="_blank"
 							rel="noreferrer noopener"
 						>
 							{{ relatedAsset.properties.documentBibjson.link[0].url }}
@@ -68,19 +67,13 @@
 							v-else
 							:href="`https://doi.org/${relatedAsset.properties.DOI}`"
 							@click.stop
-							target="_blank"
 							rel="noreferrer noopener"
 						>
 							{{ `https://doi.org/${relatedAsset.properties.DOI}` }}
 						</a>
 					</div>
 					<div class="link" v-else-if="relatedAsset.urlExtraction">
-						<a
-							:href="relatedAsset.urlExtraction.url"
-							@click.stop
-							target="_blank"
-							rel="noreferrer noopener"
-						>
+						<a :href="relatedAsset.urlExtraction.url" @click.stop rel="noreferrer noopener">
 							{{ relatedAsset.urlExtraction.resourceTitle }}
 						</a>
 					</div>
