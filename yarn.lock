@@ -1543,32 +1543,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/experimental-ct-vue@npm:1.31.1":
-  version: 1.31.1
-  resolution: "@playwright/experimental-ct-vue@npm:1.31.1"
+"@playwright/experimental-ct-vue@npm:1.31.2":
+  version: 1.31.2
+  resolution: "@playwright/experimental-ct-vue@npm:1.31.2"
   dependencies:
-    "@playwright/test": 1.31.1
+    "@playwright/test": 1.31.2
     "@vitejs/plugin-vue": ^4.0.0
     vite: ^4.1.1
   bin:
     playwright: cli.js
-  checksum: 0b0923f2d512c8eaf7ddbc88628f2355b86a215ecc931d38dbf49c1e20db78d0bb3620aaa53105d143e831a2da1a0fcf05cf5cee2b9e14cfed51bef76f22366b
+  checksum: bce963468d033a109e036f863c414b3d5612a7191c81c85a10929c4e605420f852e50c8f83fe067a498ed4beabb99856300a109861c7ad11c8d0c33e2f6df508
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.31.1":
-  version: 1.31.1
-  resolution: "@playwright/test@npm:1.31.1"
+"@playwright/test@npm:1.31.2":
+  version: 1.31.2
+  resolution: "@playwright/test@npm:1.31.2"
   dependencies:
     "@types/node": "*"
     fsevents: 2.3.2
-    playwright-core: 1.31.1
+    playwright-core: 1.31.2
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 9e3364034c1390658d05f7dc0b0bbbae1464267331b738f986f37bef2630d7689446dabef8de0aa1b5acbdf3f5654114e07b8b2e3828917e1c0a6664eb37f145
+  checksum: 5459ee0ce15b9a54337f4c26e2ee2d29c11e67e6207c167158eb180a4bea6659c988a2897f51dbebf591fc879f0d81f417e70936b9d8a001448c957939882588
   languageName: node
   linkType: hard
 
@@ -2568,6 +2568,13 @@ __metadata:
   version: 6.4.5
   resolution: "@vue/devtools-api@npm:6.4.5"
   checksum: 40c5adc8788cb283972ce09ba7ce105fa894f4decec9168829cc8e6211462763402442e6c31be76f9da62b0e74ae724971b924571367b4ac89b94dc6894e2d07
+  languageName: node
+  linkType: hard
+
+"@vue/devtools-api@npm:^6.5.0":
+  version: 6.5.0
+  resolution: "@vue/devtools-api@npm:6.5.0"
+  checksum: ec819ef3a426e91d09e9cfefd2827e9ed8ec9d62bb3b3e0674f3da8c7e92a4b879c3b777dc7329172ca6fe2670b62dd5580d23160339208f0f5ae038f2e504ad
   languageName: node
   linkType: hard
 
@@ -6750,8 +6757,8 @@ cors@latest:
   dependencies:
     "@carbon/icons-vue": 10.60.0
     "@pinia/testing": 0.0.15
-    "@playwright/experimental-ct-vue": 1.31.1
-    "@playwright/test": 1.31.1
+    "@playwright/experimental-ct-vue": 1.31.2
+    "@playwright/test": 1.31.2
     "@rushstack/eslint-patch": 1.2.0
     "@types/d3": 7.4.0
     "@types/lodash": 4.14.191
@@ -6770,7 +6777,7 @@ cors@latest:
     graph-scaffolder: "*"
     lodash: 4.17.21
     p5: 1.6.0
-    pinia: 2.0.30
+    pinia: 2.0.33
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
     primeflex: 3.3.0
@@ -9617,11 +9624,11 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"pinia@npm:2.0.30":
-  version: 2.0.30
-  resolution: "pinia@npm:2.0.30"
+"pinia@npm:2.0.33":
+  version: 2.0.33
+  resolution: "pinia@npm:2.0.33"
   dependencies:
-    "@vue/devtools-api": ^6.4.5
+    "@vue/devtools-api": ^6.5.0
     vue-demi: "*"
   peerDependencies:
     "@vue/composition-api": ^1.4.0
@@ -9632,7 +9639,7 @@ opn@latest:
       optional: true
     typescript:
       optional: true
-  checksum: 2522d3700e2d23f184ae65c36d764973ae4680e2fefbc7ca808524c706f5988ced1633606bfedae8c2a44042026528bac105a9437764d026d6323ddc40610e89
+  checksum: efd9cf1d61521ab2a4549f93ada6e2c1b9feeb6c8f2f482281a53c0079e0008f02adaebb07a782865ccfe896876ac60447ef4586fc6eeaeaf17d634767e22638
   languageName: node
   linkType: hard
 
@@ -9701,12 +9708,12 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.31.1":
-  version: 1.31.1
-  resolution: "playwright-core@npm:1.31.1"
+"playwright-core@npm:1.31.2":
+  version: 1.31.2
+  resolution: "playwright-core@npm:1.31.2"
   bin:
     playwright: cli.js
-  checksum: 8add37db15e607c11c356c82dd65926813d116bbea513bfb18f4d89c03e8d9c2b36b86ca980c8754f4e90b3d6ecbff3f4fd1165cd828e73de986ab3f53238362
+  checksum: bf1257b7d80b9d027c99cbfa7ab9d47a2110ec804422b3e3d623bbb3c43e06df7bec4764ca1d852a6d62c76e35c8776efb19941f42ce738db9bc92e7f1b6281c
   languageName: node
   linkType: hard
 
