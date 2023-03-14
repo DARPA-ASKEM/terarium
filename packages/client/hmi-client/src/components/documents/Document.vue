@@ -204,14 +204,12 @@ onMounted(async () => {
 });
 
 async function openCodeBrowser(url) {
-	// console.log(url)
 	isModalVisible.value = true;
 	chosenRepositoryName.value = url.full_name;
 	filesToSelect.value = await getGithubRepositoryContent(url.contents_url.slice(0, -8));
 }
 
 async function openCode(url) {
-	console.log(url);
 	if (url.download_url === null) {
 		chosenRepositoryName.value = `${chosenRepositoryName.value}/${url.name}`;
 		filesToSelect.value = await getGithubRepositoryContent(url.url);
