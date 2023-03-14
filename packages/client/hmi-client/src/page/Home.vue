@@ -293,6 +293,7 @@ section {
 }
 
 .papers p {
+	color: var(--text-color-primary);
 	margin: 1rem 0 1rem 0rem;
 }
 
