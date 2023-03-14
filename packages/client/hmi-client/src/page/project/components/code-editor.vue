@@ -5,7 +5,7 @@
 				label="Extract Model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
-			></Button>
+			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -30,15 +30,26 @@ import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
+import { isEmpty } from 'lodash';
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
-const content = ref(DEFAULT_TEXT);
+const content = ref<string>(DEFAULT_TEXT);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
+
+const props = defineProps<{
+	importedGithubCode?: string;
+}>();
+
+onMounted(() => {
+	if (!isEmpty(props.importedGithubCode) && props.importedGithubCode) {
+		content.value = props.importedGithubCode;
+	}
+});
 
 /**
  * File open/add event handler.  Immediately render the contents of the file to the editor

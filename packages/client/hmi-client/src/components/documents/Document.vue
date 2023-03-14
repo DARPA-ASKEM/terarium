@@ -67,15 +67,28 @@
 					/>
 				</div>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(urlArtifacts)">
+			<AccordionTab v-if="!isEmpty(urlArtifacts) && !isEmpty(githubUrls)">
 				<template #header>
 					URLs<span class="artifact-amount">({{ urlArtifacts.length }})</span>
 				</template>
 				<ul>
+					<template v-if="isEditable">
+						<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
+							<Button
+								label="Import"
+								class="p-button-sm p-button-outlined"
+								icon="pi pi-cloud-download"
+								@click="openCodeBrowser(url)"
+							/>
+							<a :href="url.html_url" target="_blank" rel="noreferrer noopener">{{
+								url.html_url
+							}}</a>
+						</li>
+					</template>
 					<li v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
-							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
+							<a :href="ex.url" target="_blank" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
 					</li>
 				</ul>
@@ -119,6 +132,22 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+		<Teleport to="body">
+			<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
+				<template #header>
+					<h5>Choose file to open from {{ chosenRepositoryName }}</h5>
+				</template>
+				<template #default>
+					<ul class="repository-content">
+						<li v-for="(content, index) in filesToSelect" :key="index" @click="openCode(content)">
+							<i v-if="content.download_url === null" class="pi pi-folder" />
+							<i v-else class="pi pi-file" />
+							{{ content.name }}
+						</li>
+					</ul>
+				</template>
+			</modal>
+		</Teleport>
 	</section>
 </template>
 
@@ -140,9 +169,10 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
+import { getGithubUrls, getGithubRepositoryContent, getGithubCode } from '@/utils/github-import';
+import modal from '@/components/widgets/Modal.vue';
+import { ProjectAssetTypes } from '@/types/Project';
 import * as textUtil from '@/utils/text';
-
-const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
@@ -151,7 +181,15 @@ const props = defineProps<{
 	previewLineLimit?: number;
 }>();
 
+const emit = defineEmits(['open-asset']);
+
+const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
+
+const githubUrls = ref();
+const isModalVisible = ref(false);
+const chosenRepositoryName = ref('');
+const filesToSelect = ref();
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -159,6 +197,33 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
+}
+
+onMounted(async () => {
+	githubUrls.value = await getGithubUrls();
+});
+
+async function openCodeBrowser(url) {
+	// console.log(url)
+	isModalVisible.value = true;
+	chosenRepositoryName.value = url.full_name;
+	filesToSelect.value = await getGithubRepositoryContent(url.contents_url.slice(0, -8));
+}
+
+async function openCode(url) {
+	console.log(url);
+	if (url.download_url === null) {
+		chosenRepositoryName.value = `${chosenRepositoryName.value}/${url.name}`;
+		filesToSelect.value = await getGithubRepositoryContent(url.url);
+		return;
+	}
+
+	emit(
+		'open-asset',
+		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE },
+		// { assetName: url.name, assetId: url.name, assetType: ProjectAssetTypes.CODE },
+		await getGithubCode(url.download_url)
+	);
 }
 
 watch(
@@ -293,3 +358,23 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 </script>
+
+<style scoped>
+.repository-content {
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	margin-top: 1rem;
+}
+
+.repository-content li {
+	padding: 0.25rem;
+	cursor: pointer;
+	border-radius: 0.5rem;
+}
+
+.repository-content li:hover {
+	background-color: var(--surface-hover);
+}
+</style>
