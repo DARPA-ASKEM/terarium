@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
+import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
+import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Software;
 
 import javax.ws.rs.*;
@@ -11,6 +13,7 @@ import javax.ws.rs.core.Response;
 @RegisterRestClient(configKey = "data-service")
 @Path("/external")
 @Produces(MediaType.APPLICATION_JSON)
+@RegisterProvider(HmiResponseExceptionMapper.class)
 public interface ExternalProxy {
 
 	@GET
@@ -48,6 +51,6 @@ public interface ExternalProxy {
 	@Path("/publications")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createPublication(
-		Publication publication
+		DocumentAsset publication
 	);
 }

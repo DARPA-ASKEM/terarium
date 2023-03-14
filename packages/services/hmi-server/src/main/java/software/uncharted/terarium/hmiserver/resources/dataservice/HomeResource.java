@@ -10,7 +10,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocument;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
+import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
@@ -82,7 +82,7 @@ public class HomeResource {
 				continue;
 			}
 
-			List<Publication> currentProjectPublications = assets.getPublications();
+			List<DocumentAsset> currentProjectPublications = assets.getPublications();
 
 			if (currentProjectPublications.size() > 0) {
 
