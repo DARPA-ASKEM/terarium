@@ -42,12 +42,12 @@ const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 
 const props = defineProps<{
-	importedGithubCode?: string;
+	code?: string;
 }>();
 
 onMounted(() => {
-	if (!isEmpty(props.importedGithubCode) && props.importedGithubCode) {
-		content.value = props.importedGithubCode;
+	if (!isEmpty(props.code) && props.code) {
+		content.value = props.code;
 	}
 });
 

@@ -50,10 +50,7 @@
 					:project="project"
 				/>
 			</template>
-			<code-editor
-				v-else-if="assetType === ProjectAssetTypes.CODE"
-				:imported-github-code="importedGithubCode"
-			/>
+			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :imported-github-code="code" />
 			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
 		</section>
 		<slider-panel
@@ -117,19 +114,16 @@ const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
-const importedGithubCode = ref<string>();
+const code = ref<string>();
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value));
 const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
 
-function openAsset(
-	assetToOpen: Tab = tabs.value[activeTabIndex.value],
-	newImportedGithubCode?: string
-) {
+function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
-	if (newImportedGithubCode) importedGithubCode.value = newImportedGithubCode;
+	if (newCode) code.value = newCode;
 }
 
 function removeClosedTab(tabIndexToRemove: number) {
