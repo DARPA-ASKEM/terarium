@@ -69,6 +69,12 @@ defineProps<{ project?: IProject }>();
 .project-stats {
 	display: flex;
 	justify-content: space-between;
+	font-size: var(--font-caption);
+	vertical-align: bottom;
+}
+
+.pi {
+	vertical-align: bottom;
 }
 
 .project-stats.skeleton {
@@ -140,6 +146,7 @@ defineProps<{ project?: IProject }>();
 	justify-content: space-between;
 	color: var(--text-color-secondary);
 	padding-top: 0.5rem;
+	font-size: var(--font-caption);
 }
 
 .project-footer.skeleton {
@@ -147,7 +154,7 @@ defineProps<{ project?: IProject }>();
 }
 
 .p-button.p-button-icon-only.p-button-rounded {
-	height: 3rem;
-	width: 3rem;
+	height: 2rem;
+	width: 2rem;
 }
 </style>
