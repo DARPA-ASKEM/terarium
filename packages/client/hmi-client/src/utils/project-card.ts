@@ -32,7 +32,7 @@ let papers: number;
 
 function drawContributors(p: p5) {
 	const maxContributors = 20;
-	const scaleFactor = 10;
+	const scaleFactor = 15;
 	let spacerX = maxContributors - (contributors / maxContributors) * scaleFactor;
 	let spacerY = maxContributors - (contributors / maxContributors) * scaleFactor;
 	const dotSize = spacerX / 2;
@@ -47,14 +47,13 @@ function drawContributors(p: p5) {
 
 		for (let iY = 10; iY < imageHeight; iY += spacerY) {
 			for (let iX = imageWidth / 2; iX < imageWidth && iX > -imageWidth; iX += spacerX * side) {
+				// base
 				p.fill(p.lerpColor(from, to, iY / imageHeight));
 				p.circle(iX, iY, dotSize);
-
-				for (let h = dotSize; h > 2; h--) {
-					p.fill(
-						p.lerpColor(p.lerpColor(from, to, iY / imageHeight), p.color(0, 0, 100, 0.1), 0.25)
-					);
-					p.ellipse(iX - dotSize / 10, iY - dotSize / 10, h * 0.8, h * 0.8);
+				// diffuse white glow
+				for (let glow = 2; glow < dotSize/1.25; glow++) {
+					p.fill(0,0,100,0.05);
+					p.ellipse(iX, iY, (iY/imageHeight) * glow, (iY/imageHeight) * glow); 
 				}
 			}
 
