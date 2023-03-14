@@ -287,8 +287,9 @@ section {
 }
 
 .papers {
-	background-color: var(--surface-secondary);
+	background: linear-gradient(180deg, var(--chevron-hover), #d5e8e5);
 	padding: 1rem;
+	border-top: 1px solid var(--gray-100);
 }
 
 .papers p {
@@ -307,7 +308,7 @@ h3 {
 }
 
 .p-tabview:deep(.p-tabview-panels) {
-	padding: 1rem 0 1rem 0;
+	padding: 0 0 0 0;
 }
 
 header svg {
