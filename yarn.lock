@@ -1543,32 +1543,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/experimental-ct-vue@npm:1.31.1":
-  version: 1.31.1
-  resolution: "@playwright/experimental-ct-vue@npm:1.31.1"
+"@playwright/experimental-ct-vue@npm:1.31.2":
+  version: 1.31.2
+  resolution: "@playwright/experimental-ct-vue@npm:1.31.2"
   dependencies:
-    "@playwright/test": 1.31.1
+    "@playwright/test": 1.31.2
     "@vitejs/plugin-vue": ^4.0.0
     vite: ^4.1.1
   bin:
     playwright: cli.js
-  checksum: 0b0923f2d512c8eaf7ddbc88628f2355b86a215ecc931d38dbf49c1e20db78d0bb3620aaa53105d143e831a2da1a0fcf05cf5cee2b9e14cfed51bef76f22366b
+  checksum: bce963468d033a109e036f863c414b3d5612a7191c81c85a10929c4e605420f852e50c8f83fe067a498ed4beabb99856300a109861c7ad11c8d0c33e2f6df508
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.31.1":
-  version: 1.31.1
-  resolution: "@playwright/test@npm:1.31.1"
+"@playwright/test@npm:1.31.2":
+  version: 1.31.2
+  resolution: "@playwright/test@npm:1.31.2"
   dependencies:
     "@types/node": "*"
     fsevents: 2.3.2
-    playwright-core: 1.31.1
+    playwright-core: 1.31.2
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 9e3364034c1390658d05f7dc0b0bbbae1464267331b738f986f37bef2630d7689446dabef8de0aa1b5acbdf3f5654114e07b8b2e3828917e1c0a6664eb37f145
+  checksum: 5459ee0ce15b9a54337f4c26e2ee2d29c11e67e6207c167158eb180a4bea6659c988a2897f51dbebf591fc879f0d81f417e70936b9d8a001448c957939882588
   languageName: node
   linkType: hard
 
@@ -6743,8 +6743,8 @@ cors@latest:
   dependencies:
     "@carbon/icons-vue": 10.60.0
     "@pinia/testing": 0.0.15
-    "@playwright/experimental-ct-vue": 1.31.1
-    "@playwright/test": 1.31.1
+    "@playwright/experimental-ct-vue": 1.31.2
+    "@playwright/test": 1.31.2
     "@rushstack/eslint-patch": 1.2.0
     "@types/d3": 7.4.0
     "@types/lodash": 4.14.191
@@ -9693,12 +9693,12 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.31.1":
-  version: 1.31.1
-  resolution: "playwright-core@npm:1.31.1"
+"playwright-core@npm:1.31.2":
+  version: 1.31.2
+  resolution: "playwright-core@npm:1.31.2"
   bin:
     playwright: cli.js
-  checksum: 8add37db15e607c11c356c82dd65926813d116bbea513bfb18f4d89c03e8d9c2b36b86ca980c8754f4e90b3d6ecbff3f4fd1165cd828e73de986ab3f53238362
+  checksum: bf1257b7d80b9d027c99cbfa7ab9d47a2110ec804422b3e3d623bbb3c43e06df7bec4764ca1d852a6d62c76e35c8776efb19941f42ce738db9bc92e7f1b6281c
   languageName: node
   linkType: hard
 
