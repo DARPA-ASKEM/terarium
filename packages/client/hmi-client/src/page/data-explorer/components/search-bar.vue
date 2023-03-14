@@ -296,6 +296,9 @@ i {
 }
 
 .pi.pi-times.clear-search {
+	padding: 0.5rem;
+	border-radius: 1rem;
+	top: 1rem;
 	right: 4rem;
 }
 
