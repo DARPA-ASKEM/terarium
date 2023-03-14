@@ -6762,6 +6762,7 @@ cors@latest:
     graph-scaffolder: "*"
     lodash: 4.17.21
     mathlive: 0.89.2
+    mathml-to-latex: 1.2.0
     pinia: 2.0.30
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
@@ -6773,6 +6774,7 @@ cors@latest:
     vite: 3.2.5
     vitest: 0.24.5
     vue: 3.2.47
+    vue-mathjax-next: 0.0.4
     vue-router: 4.1.6
     vue-tsc: 1.0.24
     vue3-ace-editor: 2.2.2
@@ -8666,6 +8668,15 @@ cors@latest:
   version: 0.89.2
   resolution: "mathlive@npm:0.89.2"
   checksum: f00e62fec9ebdcf40cb75fa849212d5dfa239e0bc4af9a9f324f5670be138e4c3707cc3ab3caa3357eb62409af751013dff70ce057a5f7804bbad54c0684fa1d
+  languageName: node
+  linkType: hard
+
+"mathml-to-latex@npm:1.2.0":
+  version: 1.2.0
+  resolution: "mathml-to-latex@npm:1.2.0"
+  dependencies:
+    xmldom: ^0.4.0
+  checksum: 3e559f189bf61ebcf4c04456d4eee7d6e29ede590361b9528d49656c8e0611a1dd1cdc2f57b0945e94474c2db4d980e0ec8917eb9c3d13a794b32b7f386c8cc6
   languageName: node
   linkType: hard
 
@@ -11803,6 +11814,13 @@ send@latest:
   languageName: node
   linkType: hard
 
+"vue-mathjax-next@npm:0.0.4":
+  version: 0.0.4
+  resolution: "vue-mathjax-next@npm:0.0.4"
+  checksum: 760bf9e5be1b6d9dafeab050b7f3bcfa454dd8231f1527ee17d82c33bff113526754d7b55da8ddb8a6cc490fbfccfc95d6db5824b3f8a6bd3699d0436dddf9e7
+  languageName: node
+  linkType: hard
+
 "vue-router@npm:4.1.6":
   version: 4.1.6
   resolution: "vue-router@npm:4.1.6"
@@ -12043,6 +12061,13 @@ send@latest:
   version: 4.0.0
   resolution: "xml-name-validator@npm:4.0.0"
   checksum: af100b79c29804f05fa35aa3683e29a321db9b9685d5e5febda3fa1e40f13f85abc40f45a6b2bf7bee33f68a1dc5e8eaef4cec100a304a9db565e6061d4cb5ad
+  languageName: node
+  linkType: hard
+
+"xmldom@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "xmldom@npm:0.4.0"
+  checksum: ea975a7bd87109542ce24b19a70e50a3d64d20c757affa1a6c8cf906cbb39f0071a1bea9016beb5532388bc61dcbefddb92f3db2197dceee2b4c46343348ab3c
   languageName: node
   linkType: hard
 

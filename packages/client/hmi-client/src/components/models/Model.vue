@@ -44,14 +44,26 @@
 									:size="20"
 									:minSize="20"
 								>
-									<section class="mathml">
-										<MathMlEditor
-											ref="formula"
+									<section class="math-editor">
+										<!-- eventually remove -->
+										<section class="dev-options">
+											<div style="align-self: center">[Math Renderer]</div>
+											<div class="math-options">
+												<label>
+													<input type="radio" v-model="mathmode" value="mathJAX" />
+													MathJAX
+												</label>
+												<label>
+													<input type="radio" v-model="mathmode" value="mathLIVE" />
+													MathLIVE
+												</label>
+											</div>
+										</section>
+										<math-editor
 											:value="equation"
-											:highlight-formula="highlightFormula"
+											:mathmode="mathmode"
 											@formula-updated="updateFormula"
-											@mathml="mathml"
-										></MathMlEditor>
+										></math-editor>
 									</section>
 								</SplitterPanel>
 							</Splitter>
@@ -65,8 +77,8 @@
 					<DataTable
 						:value="model?.content.S"
 						selectionMode="single"
-						v-model:selected="selectedRow"
-						@click="onClick($event)"
+						@row-select="onRowClick"
+						@row-unselect="onRowClick"
 					>
 						<Column field="sname" header="Label"></Column>
 						<Column field="mira_ids" header="Name"></Column>
@@ -104,10 +116,10 @@
 				<DataTable
 					:value="model?.content.S"
 					selectionMode="single"
-					v-model:selected="selectedRow"
-					@row-click="onClick"
-					@mouseenter="onHover"
-					@focus="onHover"
+					v-model:selection="selectedRow"
+					@row-select="onRowClick"
+					@row-unselect="onRowClick"
+					:metaKeySelection="false"
 				>
 					<Column field="sname" header="Label"></Column>
 					<Column field="mira_ids" header="Name"></Column>
@@ -144,7 +156,7 @@ import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable, { DataTableRowEditCancelEvent } from 'primevue/datatable';
+import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -158,42 +170,15 @@ import { DocumentType } from '@/types/Document';
 import { ProjectAssetTypes } from '@/types/Project';
 import { ProvenanceType } from '@/types/Provenance';
 import { Dataset } from '@/types/Dataset';
-import MathMlEditor from '@/components/mathml/mathml-editor.vue';
+import MathEditor from '@/components/mathml/math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { MathfieldElement } from 'mathlive';
 
 export interface ModelProps {
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
 }
-
-// function highlightVar(inputString: string, variable: string, replacementCharacter: string): string {
-// 	// Use a regular expression to replace all occurrences of the input character with the replacement character
-// 	const regex = new RegExp(variable, 'g');
-// 	const resultString = inputString.replace(regex, replacementCharacter);
-
-// 	return resultString;
-// }
-
-// const mathml = `<math xmlns = "http://www.w3.org/1998/Math/MathML">
-//    <mrow>
-//       <mrow>
-//          <msup> <mi>x</mi> <mn>2</mn> </msup> <mo>+</mo>
-//          <mrow>
-//             <mn>4</mn>
-//             <mo>⁢</mo>
-//             <mi>x</mi>
-//          </mrow>
-//          <mo>+</mo>
-//          <mn>4</mn>
-//       </mrow>
-
-//       <mo>=</mo>
-//       <mn>0</mn>
-//    </mrow>
-// </math>`;
 
 const props = defineProps<ModelProps>();
 
@@ -202,35 +187,40 @@ const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
 
 const equation = ref<string>('');
-const formula = ref<MathfieldElement | null>(null);
-const selectedRow = ref(null);
-const highlightFormula = ref<boolean>(true);
+const selectedRow = ref();
 const height = ref(400);
-let startY = 0;
 
-const latexList = [
-	String.raw`\frac{\color{red}{dS}}{dt} = -\beta IS \frac{dI}{dt} = \
-	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`
-];
+let draggableY = 0;
 
-// const highlightMap = {
-// 	S: String.raw`\frac{\color{red}{dS}}{dt} = {\color{red}{-\beta IS} \frac{dI}{dt} = \
-// 	{\color{red}{\beta IS} - \gamma I \frac{dR}{dt} = \gamma I`
+const mathmode = ref('mathJAX');
+
+// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
+const modelMath = String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
+ 	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`;
+
+// Another experiment using a map to automatically select highlighted version of the latex formula
+// this would require the backend service to provide a map of the eq.  Might be a little challenging.
+// const equationMap = {
+// 	default: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
+// 	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`,
+// 	S: String.raw`\frac{d\colorbox{red}{S}}{dt} = -\beta I{\color{red}{S}} \frac{dI}{dt} = \
+// 	\beta I{\color{red}{S}} - \gamma I \frac{dR}{dt} = \gamma I`,
+// 	I: String.raw`\frac{dS}{dt} = -\beta {\color{red}I}S \frac{dI}{dt} = \
+// 	\beta {\color{red}I}S - \gamma {\color{red}I} \frac{dR}{dt} = \gamma {\color{red}I}`,
+// 	R: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
+// 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
 // };
 
-const onClick = (event: DataTableRowEditCancelEvent): void => {
-	console.log(event);
-	console.log(selectedRow.value);
-	highlightFormula.value = !highlightFormula.value;
-};
-
-const onHover = (event: Event) => {
-	console.log(event);
-	console.log(selectedRow.value);
-};
-
-const mathml = (mathml_string: string) => {
-	console.log(mathml_string);
+// DataTable click handler for State Variables.  Currently used to do the highlighting.
+const onRowClick = () => {
+	if (selectedRow.value) {
+		equation.value = modelMath.replaceAll(
+			selectedRow.value.sname,
+			String.raw`{\color{red}${selectedRow.value.sname}}`
+		);
+	} else {
+		equation.value = modelMath;
+	}
 };
 
 const updateFormula = (formula_string: string) => {
@@ -238,8 +228,8 @@ const updateFormula = (formula_string: string) => {
 };
 
 const resize = (event: MouseEvent) => {
-	height.value += event.clientY - startY;
-	startY = event.clientY;
+	height.value += event.clientY - draggableY;
+	draggableY = event.clientY;
 };
 
 const stopResize = () => {
@@ -248,7 +238,7 @@ const stopResize = () => {
 };
 
 const startResize = (event: MouseEvent) => {
-	startY = event.clientY;
+	draggableY = event.clientY;
 	document.addEventListener('mousemove', resize);
 	document.addEventListener('mouseup', stopResize);
 };
@@ -288,7 +278,7 @@ watch(
 			const result = await getModel(props.assetId);
 			model.value = result;
 			fetchRelatedTerariumArtifacts();
-			equation.value = latexList[Math.floor(Math.random() * latexList.length)];
+			equation.value = modelMath;
 		} else {
 			equation.value = '';
 			model.value = null;
@@ -378,10 +368,11 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	pointer-events: none;
 }
 
-.mathml {
+.math-editor {
 	display: flex;
 	max-height: 100%;
 	flex-grow: 1;
+	flex-direction: column;
 }
 
 .model_diagram {
@@ -392,6 +383,21 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 .p-splitter .p-splitter-gutter {
 	color: red;
+}
+
+.dev-options {
+	display: flex;
+	flex-direction: column;
+	align-self: center;
+	width: 100%;
+	font-size: 0.75em;
+	font-family: monospace;
+}
+
+.math-options {
+	display: flex;
+	flex-direction: row;
+	align-self: center;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
