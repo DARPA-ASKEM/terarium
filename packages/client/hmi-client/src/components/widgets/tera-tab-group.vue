@@ -32,14 +32,14 @@ function calcTabWidthPercentage() {
 		<template v-for="(tab, index) in tabs" :key="index">
 			<header :style="`width: ${calcTabWidthPercentage()}%`">
 				<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
+					<Chip :label="tab.assetType" />
 					<span class="name">
-						<Chip :label="tab.assetType" />
 						{{ tab.assetName }}
 					</span>
 					<span>
 						<Button
 							icon="pi pi-times"
-							class="p-button-icon-only p-button-text p-button-rounded"
+							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 							@click.stop="emit('close-tab', index)"
 						/>
 					</span>
@@ -77,7 +77,7 @@ header {
 .tab {
 	display: inline-flex;
 	cursor: pointer;
-	padding: 0.5rem;
+	padding: 0.25rem 0.5rem 0.25rem 0.5rem;
 	border-top-left-radius: 0.5rem;
 	border-top-right-radius: 0.5rem;
 	background-color: transparent;
@@ -85,6 +85,7 @@ header {
 	position: relative;
 	justify-content: space-between;
 	animation: show-tab 0.15s ease forwards;
+	align-items: center;
 }
 
 .tab[active='true'] {
@@ -105,6 +106,9 @@ span {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+	font-size: var(--font-caption);
+	display: inline-block;
+	margin-bottom: 1px;
 }
 
 .icon {
