@@ -10,11 +10,12 @@
 
     .p-chip-text,
     span {
-        line-height: 2;
+        line-height: 1.75;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         overflow: hidden;
+        font-size: .6rem;
     }
 
     span {
