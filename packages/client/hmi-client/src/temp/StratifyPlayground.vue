@@ -225,6 +225,7 @@ g2 = runDagreLayout(_.cloneDeep(g2));
 let modelId = ''; // The session model
 let source: any = null;
 let target: any = null;
+let typeMapping: string[] = [];
 
 export default defineComponent({
 	name: 'TA2Playground',
@@ -248,11 +249,12 @@ export default defineComponent({
 			if (evt.altKey) {
 				if (selectedOntology) {
 					d.datum().data.ontology = selectedOntology;
-					this.typeMapping =
-						this.typeMapping +
-						//Rerender
-						renderer?.setData(g);
+					console.log(d.datum().label);
+					typeMapping.push('{' + d.datum().label.toString() + ': ' + selectedOntology + '}');
+					//Rerender
+					renderer?.setData(g);
 					renderer?.render();
+					d3.select('#solution').text(typeMapping.join(', \n'));
 					// let solutionOutput = g.nodes;
 					// console.log("Solution output:");
 					// console.log(solutionOutput);
@@ -302,12 +304,10 @@ export default defineComponent({
 		const stratifyModelA = ref('');
 		const stratifyModelB = ref('');
 		const stratifyTypeModel = ref('');
-		const typeMapping = ref('');
 		return {
 			stratifyModelA,
 			stratifyModelB,
-			stratifyTypeModel,
-			typeMapping
+			stratifyTypeModel
 		};
 	},
 	methods: {
@@ -331,7 +331,7 @@ export default defineComponent({
 
 			// d3.select('#output').text(JSON.stringify(output, null, 2));
 			// d3.select('#solution').text(JSON.stringify(g, null, 2));
-			d3.select('#solution').text(this.typeMapping);
+			d3.select('#solution').text(typeMapping.join(', \n'));
 		},
 		// eslint-disable-next-line
 
@@ -371,6 +371,7 @@ export default defineComponent({
 			g2 = runDagreLayout(_.cloneDeep(g2));
 			this.refresh();
 			this.jsonOutput();
+			console.log(model);
 		},
 		typeModel() {
 			console.log('Start typing model');
@@ -378,6 +379,18 @@ export default defineComponent({
 			//Ontology Model =
 			//Mapping =
 			//Api Call
+		},
+		async testStratify() {
+			console.log('Start stratify');
+			try {
+				const resp = await API.get(`model-service/models/testStratify`);
+				const output = resp.data;
+				console.log('Done Stratify');
+				//TODO
+				console.log(output);
+			} catch (e: any) {
+				console.error(e.message);
+			}
 		}
 	}
 });
@@ -413,6 +426,7 @@ export default defineComponent({
 				<button type="button" @click="clearA">Clear Model A</button>
 				<button type="button" @click="loadOntology">Load Ontology</button>
 				<button type="button" @click="typeModel">Type Model</button>
+				<button type="button" @click="testStratify">Test Stratify</button>
 			</div>
 		</div>
 
