@@ -11,9 +11,26 @@ import java.util.List;
 public interface MitProxy {
 	@POST
 	@Path("/petri/get_places")
-	List<String> getPetriPlaces(@QueryParam("code") final String code, @QueryParam("gpt_key") final String key);
+	List<String> getPlaces(
+		@QueryParam("code") final String code,
+		@QueryParam("gpt_key") final String key);
 
 	@POST
 	@Path("/petri/get_transitions")
-	List<String> getPetriTransitions(@QueryParam("code") final String code, @QueryParam("gpt_key") final String key);
+	List<String> getTransitions(
+		@QueryParam("code") final String code,
+		@QueryParam("gpt_key") final String key);
+
+	@POST
+	@Path("/petri/get_arcs")
+	List<List<String>> getArcs(
+		@QueryParam("code") final String code,
+		@QueryParam("gpt_key") final String key);
+
+	@POST
+	@Path("/petri/get_pyacset")
+	List<List<String>> getPyAcset(@QueryParam("places") final String places,
+																	 @QueryParam("transitions") final String transitions,
+																	 @QueryParam("arcs") final String arcs,
+																	 @QueryParam("gpt_key") final String key);
 }

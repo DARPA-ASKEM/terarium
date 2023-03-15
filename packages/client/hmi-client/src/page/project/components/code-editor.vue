@@ -59,7 +59,7 @@ async function onFileOpen(event) {
 }
 
 async function onExtractPetrinet() {
-	const response = await API.post(`code/to_petri_net_places?code=${selectedText.value}`);
+	const response = await API.post(`code/to_petri?code=${selectedText.value}`);
 	alert(JSON.stringify(response.data));
 }
 

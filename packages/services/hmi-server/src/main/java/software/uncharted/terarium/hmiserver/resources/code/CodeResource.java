@@ -68,23 +68,16 @@ public class CodeResource {
 	}
 
 	@POST
-	@Path("/to_petri_places")
-	public Response toPetriPlaces(@QueryParam("code") final String code) {
+	@Path("/to_petri")
+	public Response toPetriNet(@QueryParam("code") final String code) {
 		String key = "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";
-		List<String> petriPlaces = mitProxy.getPetriPlaces(code, key);
-		return Response.ok(Response.Status.OK)
-			.entity(petriPlaces)
-			.type(MediaType.APPLICATION_JSON)
-			.build();
-	}
+		List<String> places = mitProxy.getPlaces(code, key);
+//		List<String> transitions = mitProxy.getTransitions(code, key);
+//		List<List<String>> arcs = mitProxy.getArcs(code, key);
+		System.out.print(places.toString());
 
-	@POST
-	@Path("/to_petri_transitions")
-	public Response toPetriTransitions(@QueryParam("code") final String code) {
-		String key = "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";
-		List<String> petriTransitions = mitProxy.getPetriTransitions(code, key);
 		return Response.ok(Response.Status.OK)
-			.entity(petriTransitions)
+			.entity(places)
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
