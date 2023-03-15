@@ -62,17 +62,15 @@
 					<template #header>
 						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
 					</template>
-					<DataTable class="parameters_header">
-						<ColumnGroup type="header">
-							<Row>
-								<Column header="Label" />
-								<Column header="Name" />
-								<Column header="Units" />
-								<Column header="Concept" />
-								<Column header="Definition" />
-							</Row>
-						</ColumnGroup>
-					</DataTable>
+					<table>
+						<tr class="parameters_header">
+							<th>Label</th>
+							<th>Name</th>
+							<th>Units</th>
+							<th>Concept</th>
+							<th>Definition</th>
+						</tr>
+					</table>
 					<ul>
 						<li v-for="(param_row, index) in model?.parameters" :key="index">
 							<section class="parameters_row">
@@ -82,6 +80,7 @@
 									editMode="row"
 									@row-edit-save="onRowEditSave"
 									tableClass="editable-cells-table"
+									:data-key="id"
 								>
 									<Column field="label">
 										<template #editor="{ data, field }">
@@ -176,10 +175,6 @@ import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import DataTable from 'primevue/datatable';
-import ColumnGroup from 'primevue/columngroup';
-import Column from 'primevue/column';
-import Row from 'primevue/row';
 // import TabView from 'primevue/tabview';
 // import TabPanel from 'primevue/tabpanel';
 // import Badge from 'primevue/badge';
@@ -206,7 +201,7 @@ const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref(false);
 
 // row editing
-const editingRows = ref();
+const editingRows = ref([]);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -313,6 +308,14 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 .slider .graph-element {
 	pointer-events: none;
+}
+
+table {
+	width: 100%;
+}
+
+table th {
+	text-align: left;
 }
 
 .p-datatable:deep(.p-datatable-thead > tr > th),
