@@ -51,7 +51,7 @@ import { useRoute, useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
-import { DocumentAsset } from '@/types/Document';
+import { DocumentAsset } from '@/types/Types';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 

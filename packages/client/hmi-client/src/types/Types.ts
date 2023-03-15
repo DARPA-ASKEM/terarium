@@ -10,6 +10,12 @@ export interface Event {
     value?: string;
 }
 
+export interface DocumentAsset {
+    id?: number;
+    title: string;
+    xdd_uri: string;
+}
+
 export enum EventType {
     Search = "SEARCH",
 }
