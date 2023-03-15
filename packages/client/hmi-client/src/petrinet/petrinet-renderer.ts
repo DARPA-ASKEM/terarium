@@ -169,6 +169,22 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		});
 	}
 
+	selectNode(selection: D3SelectionINode<NodeData>) {
+		selection.selectAll('circle').attr('stroke-width', 4);
+	}
+
+	deselectNode(selection: D3SelectionINode<NodeData>) {
+		selection.selectAll('circle').attr('stroke-width', 1);
+	}
+
+	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
+		selection.selectAll('path').style('stroke-width', 4);
+	}
+
+	deselectEdge(selection: D3SelectionIEdge<EdgeData>) {
+		selection.selectAll('path').style('stroke-width', 2);
+	}
+
 	postRenderProcess() {
 		const chart = this.chart;
 		const svg = d3.select(this.svgEl);
@@ -234,7 +250,10 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			// hide any handles which are already open
-			this.nodeSelection?.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
+			if (this.nodeSelection) {
+				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
+				this.deselectNode(this.nodeSelection);
+			}
 
 			selection
 				.selectAll('.no-drag')
@@ -243,15 +262,26 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				.style('opacity', 1)
 				.style('visibility', 'visible');
 			this.nodeSelection = selection;
+			this.selectNode(this.nodeSelection);
 		});
 
 		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
+			if (this.edgeSelection) {
+				this.deselectEdge(this.edgeSelection);
+			}
 			this.edgeSelection = selection;
+			this.selectEdge(this.edgeSelection);
 		});
 
 		this.on('background-click', () => {
-			this.edgeSelection = null;
-			this.nodeSelection = null;
+			if (this.edgeSelection) {
+				this.deselectEdge(this.edgeSelection);
+				this.edgeSelection = null;
+			}
+			if (this.nodeSelection) {
+				this.deselectNode(this.nodeSelection);
+				this.nodeSelection = null;
+			}
 		});
 	}
 
@@ -292,16 +322,23 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			(quadrant * Math.PI) / 2 + Math.abs(Math.atan((target.y - source.y) / (target.x - source.x)));
 		// console.log(edgeVectorAngle / 2 / Math.PI * 360);
 
-		this.graph.edges.push({
-			id: `${source.id}_${target.id}`,
-			source: source.id,
-			target: target.id,
-			points: [
-				this.getShapeOffset(source, edgeVectorAngle),
-				this.getShapeOffset(target, (edgeVectorAngle + Math.PI) % (Math.PI * 2))
-			],
-			data: { numEdges: 1 }
-		});
+		const existingEdge = this.graph.edges.find(
+			(edge) => edge.source === source.id && edge.target === target.id
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+		} else {
+			this.graph.edges.push({
+				id: `${source.id}_${target.id}`,
+				source: source.id,
+				target: target.id,
+				points: [
+					this.getShapeOffset(source, edgeVectorAngle),
+					this.getShapeOffset(target, (edgeVectorAngle + Math.PI) % (Math.PI * 2))
+				],
+				data: { numEdges: 1 }
+			});
+		}
 		this.render();
 	}
 }

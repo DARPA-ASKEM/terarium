@@ -156,8 +156,10 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 			// Julia index starts at 1
 			ot++;
 			os++;
-			if (os > 0 && ot > 0) {
-				result.O.push({ os, ot });
+			if (os > 0 && ot > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.O.push({ os, ot });
+				}
 			}
 		} else {
 			// I
@@ -176,8 +178,10 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 			// Julia index starts at 1
 			it++;
 			is++;
-			if (is > 0 && it > 0) {
-				result.I.push({ is, it });
+			if (is > 0 && it > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.I.push({ is, it });
+				}
 			}
 		}
 	});
