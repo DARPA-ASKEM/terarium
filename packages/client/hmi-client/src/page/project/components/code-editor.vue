@@ -16,7 +16,7 @@
 			/>
 		</div>
 		<v-ace-editor
-			v-model:value="content"
+			v-model:value="code"
 			@init="initialize"
 			lang="python"
 			theme="chrome"
@@ -30,26 +30,23 @@ import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
-import { isEmpty } from 'lodash';
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
-const content = ref<string>(DEFAULT_TEXT);
-const editor = ref<VAceEditorInstance['_editor'] | null>(null);
-const selectedText = ref('');
 
-const props = defineProps<{
-	code?: string;
-}>();
-
-onMounted(() => {
-	if (!isEmpty(props.code) && props.code) {
-		content.value = props.code;
+const props = defineProps({
+	initialCode: {
+		type: String,
+		default: '# Paste some python code here or import from the controls above'
 	}
 });
+
+const code = ref(props.initialCode);
+const editor = ref<VAceEditorInstance['_editor'] | null>(null);
+const selectedText = ref('');
 
 /**
  * File open/add event handler.  Immediately render the contents of the file to the editor
@@ -60,7 +57,7 @@ async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(event.files[0], 'UTF-8');
 	reader.onload = (evt) => {
-		content.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
+		code.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
 	};
 }
 
@@ -92,6 +89,7 @@ async function initialize(editorInstance) {
 	editorInstance.setShowPrintMargin(false);
 }
 </script>
+
 <style>
 .code {
 	display: flex;
