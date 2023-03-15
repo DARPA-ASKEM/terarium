@@ -58,9 +58,17 @@
 						:resourceType="searchByExampleSelectedResourceType"
 					>
 					</asset-card>
-					<span v-else>
-						<i class="pi pi-file" style="font-size: 3rem" />
-						Drag a paper, model, or dataset here or upload a file</span
+					<Button
+						label="Clear"
+						size="small"
+						text
+						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
+						class="clear-search-by-example"
+					>
+					</Button>
+					<span v-else class="drop-zone">
+						<i class="pi pi-upload" style="font-size: 2.5rem" />
+						Drag and drop a paper, model, or dataset here</span
 					>
 				</section>
 			</section>
@@ -188,14 +196,14 @@ const fillAutocomplete = async () => {
 const dragOverStyle = computed(() => {
 	if (isDraggedOver.value) {
 		return {
-			border: `1px solid var(--text-color-subdued)`,
-			'background-color': 'var(--surface-hover)'
+			border: `2px solid var(--primary-color)`,
+			'background-color': 'var(--surface-highlight)'
 		};
 	}
 	if (searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value) {
 		return {
-			border: `1px dashed var(--primary-color)`,
-			'background-color': 'var(--surface-secondary)'
+			border: `2px solid var(--surface-border)`,
+			'background-color': 'var(--surface-highlight)'
 		};
 	}
 
@@ -360,9 +368,21 @@ i {
 	border-radius: 1rem;
 	min-height: 9rem;
 	display: flex;
-	align-items: center;
+	align-items: top;
 	justify-content: center;
 	padding: 1rem;
+	background-color: var(--gray-50);
+	gap: 1rem;
+}
+
+.drop-zone {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.clear-search-by-example {
+	height: fit-content;
 }
 
 .search-by-example footer {
