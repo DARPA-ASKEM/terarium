@@ -14,6 +14,8 @@ const pathFn = d3
 export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
+	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
+
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 
@@ -241,6 +243,15 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				.style('opacity', 1)
 				.style('visibility', 'visible');
 			this.nodeSelection = selection;
+		});
+
+		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
+			this.edgeSelection = selection;
+		});
+
+		this.on('background-click', () => {
+			this.edgeSelection = null;
+			this.nodeSelection = null;
 		});
 	}
 
