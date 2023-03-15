@@ -319,8 +319,9 @@ i {
 	display: flex;
 	flex-direction: column;
 	position: absolute;
-	top: 4rem;
-	width: 70rem;
+	top: 0.5rem;
+	max-width: 58rem;
+	width: 47%;
 	min-height: 16rem;
 	background-color: var(--surface-section);
 	border-radius: 2rem;
@@ -328,6 +329,8 @@ i {
 	z-index: 2;
 	row-gap: 1rem;
 	padding: 0 1.5rem 2rem 1.5rem;
+	margin-right: 3rem;
+	box-shadow: 0px 4px 6px -1px rgb(0 0 0 / 8%), 0px 2px 4px -1px rgb(0 0 0 / 6%);
 }
 
 .search-by-example header {
@@ -336,7 +339,7 @@ i {
 }
 
 .search-by-example header * {
-	margin-top: 1.5rem;
+	margin-top: 1rem;
 }
 
 .search-by-example header .p-button {
