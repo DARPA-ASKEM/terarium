@@ -30,6 +30,7 @@ import { Mathfield } from 'mathlive';
 import Mathml2latex from 'mathml-to-latex';
 import { logger } from '@/utils/logger';
 import Textarea from 'primevue/textarea';
+import VueMathjax from 'vue-mathjax-next';
 
 const mf = ref<Mathfield | null>(null);
 const formula = ref<string | undefined>('');
