@@ -6,12 +6,16 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
+import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/api/code")
 @Authenticated
@@ -23,11 +27,15 @@ public class CodeResource {
 	@RestClient
 	SkemaRustProxy skemaRustProxy;
 
+	@RestClient
+	MitProxy mitProxy;
+
 	/**
 	 * Stores a model from a code snippit
-	 * @param code	the python code snippit
-	 * @return			a {@link StoredModel} instance containing the model id, inputs, and outputs of the model
-	 * 							derived from the code input
+	 *
+	 * @param code the python code snippit
+	 * @return a {@link StoredModel} instance containing the model id, inputs, and outputs of the model
+	 * derived from the code input
 	 */
 	@POST
 	public Response transformCode(final String code) {
@@ -40,7 +48,7 @@ public class CodeResource {
 		// "{\"hello\": \"world\" .... }"
 		// We must remove the leading and trailing quotes, and un-escape the json in order to pass it on to the
 		// service that will store the model as it expects application/json and not a string
-		final String unesescapedSkemaResponseStr = StringEscapeUtils.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length()-1));
+		final String unesescapedSkemaResponseStr = StringEscapeUtils.unescapeJson(skemaResponseStr.substring(1, skemaResponseStr.length() - 1));
 
 		// Store the model
 		final Response addModelResponse = skemaRustProxy.addModel(unesescapedSkemaResponseStr);
@@ -57,5 +65,27 @@ public class CodeResource {
 			.setInputs(odiResponseStr)
 			.setOutputs(odoResponseStr)
 		).build();
+	}
+
+	@POST
+	@Path("/to_petri_places")
+	public Response toPetriPlaces(@QueryParam("code") final String code) {
+		String key = "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";
+		List<String> petriPlaces = mitProxy.getPetriPlaces(code, key);
+		return Response.ok(Response.Status.OK)
+			.entity(petriPlaces)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
+	}
+
+	@POST
+	@Path("/to_petri_transitions")
+	public Response toPetriTransitions(@QueryParam("code") final String code) {
+		String key = "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";
+		List<String> petriTransitions = mitProxy.getPetriTransitions(code, key);
+		return Response.ok(Response.Status.OK)
+			.entity(petriTransitions)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
 	}
 }

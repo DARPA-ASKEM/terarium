@@ -14,6 +14,11 @@
 				auto
 				chooseLabel="Load File"
 			/>
+			<Button
+				label="Extract petri net"
+				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
+				@click="onExtractPetrinet"
+			></Button>
 		</div>
 		<v-ace-editor
 			v-model:value="content"
@@ -51,6 +56,11 @@ async function onFileOpen(event) {
 	reader.onload = (evt) => {
 		content.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
 	};
+}
+
+async function onExtractPetrinet() {
+	const response = await API.post(`code/to_petri_net_places?code=${selectedText.value}`);
+	alert(JSON.stringify(response.data));
 }
 
 /**
