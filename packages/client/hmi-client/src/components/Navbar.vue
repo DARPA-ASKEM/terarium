@@ -166,7 +166,7 @@ watch(
 <style scoped>
 header {
 	background-color: var(--surface-section);
-	border-bottom: 1px solid var(--surface-border);
+	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
 	display: grid;
 	column-gap: 0.5rem;
