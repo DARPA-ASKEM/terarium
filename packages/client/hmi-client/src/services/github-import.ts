@@ -13,12 +13,12 @@ export async function getGithubUrls(query: string = 'SIR model') {
 	// Search for potential repositories
 	try {
 		const response = await fetch(
-			`https://api.github.com/search/repositories?q=${query}`, // {&page,per_page,sort,order}
+			`https://api.github.com/search/repositories?q=${query}&per_page=3`, // &page,per_page,sort,order} Just show 3 for the prototype{
 			requestOptions
 		);
 		const result = await response.json();
 		if (!response.ok) return null;
-		return result.items.slice(0, 3); // Just show 3 for the prototype
+		return result.items;
 	} catch (error) {
 		logger.error(error);
 		return null;
