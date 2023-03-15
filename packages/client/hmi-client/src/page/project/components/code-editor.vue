@@ -35,8 +35,6 @@ import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
 
-const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
-
 const props = defineProps({
 	initialCode: {
 		type: String,
@@ -57,7 +55,7 @@ async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(event.files[0], 'UTF-8');
 	reader.onload = (evt) => {
-		code.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
+		code.value = evt?.target?.result?.toString() ?? props.initialCode;
 	};
 }
 
