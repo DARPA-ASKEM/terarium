@@ -71,52 +71,15 @@
 							<th>Definition</th>
 						</tr>
 					</table>
-					<ul>
-						<li v-for="(param_row, index) in model?.parameters" :key="index">
-							<section class="parameters_row">
-								<DataTable
-									v-model:editing-rows="editingRows"
-									:value="[param_row]"
-									editMode="row"
-									@row-edit-save="onRowEditSave"
-									tableClass="editable-cells-table"
-									:data-key="id"
-								>
-									<Column field="label">
-										<template #editor="{ data, field }">
-											<InputText v-model="data[field]" />
-										</template>
-									</Column>
-									<Column field="name">
-										<template #editor="{ data, field }">
-											<InputText v-model="data[field]" />
-										</template>
-									</Column>
-									<Column field="units">
-										<template #editor="{ data, field }">
-											<InputText v-model="data[field]" />
-										</template>
-									</Column>
-									<Column field="concept">
-										<template #editor="{ data, field }">
-											<InputText v-model="data[field]" />
-										</template>
-									</Column>
-									<Column field="definition">
-										<template #editor="{ data, field }">
-											<InputText v-model="data[field]" />
-										</template>
-									</Column>
-								</DataTable>
-							</section>
-							<div>stuff</div>
+					<ul class="model-value-list">
+						<li v-for="(paramRow, index) in model?.parameters" :key="index">
+							<model-parameter-list-item :param-row="paramRow" />
 						</li>
 						<footer>
 							<Button label="Add parameter" icon="pi pi-plus" />
 							<Button label="Extract from a dataset" icon="pi pi-file-export" />
 						</footer>
 					</ul>
-
 					<!-- <Column field="default_value" header="Default"></Column> -->
 				</AccordionTab>
 			</template>
@@ -175,10 +138,10 @@ import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-// import TabView from 'primevue/tabview';
-// import TabPanel from 'primevue/tabpanel';
-// import Badge from 'primevue/badge';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import * as textUtil from '@/utils/text';
+import ModelParameterListItem from '@/components/models/model-parameter-list-item.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import { ITypedModel, Model } from '@/types/Model';
@@ -200,9 +163,6 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref(false);
 
-// row editing
-const editingRows = ref([]);
-
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
 );
@@ -221,10 +181,6 @@ const fetchRelatedTerariumArtifacts = async () => {
 		relatedTerariumArtifacts.value = [];
 	}
 };
-
-function onRowEditSave() {
-	console.log(0);
-}
 
 function printModel() {
 	console.log(model.value);
@@ -310,39 +266,10 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	pointer-events: none;
 }
 
-table {
-	width: 100%;
-}
-
-table th {
-	text-align: left;
-}
-
-.p-datatable:deep(.p-datatable-thead > tr > th),
-.p-datatable:deep(.p-datatable-tbody > tr > td) {
-	border: none;
-}
-
-.p-datatable.parameters_header:deep(tbody),
-.parameters_row .p-datatable:deep(thead) {
-	display: none;
-}
-
 ul {
 	background-color: var(--surface-ground);
 	border-radius: 0.75rem;
 	padding: 0.75rem;
-}
-
-ul .p-button {
-	color: var(--primary-color);
-	background-color: transparent;
-}
-
-ul .p-button:hover,
-ul .p-button:focus {
-	color: var(--primary-color);
-	background-color: var(--surface-hover);
 }
 
 li {
@@ -355,6 +282,17 @@ footer {
 	display: flex;
 	gap: 1rem;
 	margin-left: 1rem;
+}
+
+footer .p-button {
+	color: var(--primary-color);
+	background-color: transparent;
+}
+
+footer .p-button:hover,
+footer .p-button:focus {
+	color: var(--primary-color);
+	background-color: var(--surface-hover);
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
