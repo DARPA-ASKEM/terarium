@@ -30,20 +30,12 @@
 					<div class="resizable" :style="{ height: height + 'px' }">
 						<div class="content">
 							<Splitter class="mb-5 model-panel">
-								<SplitterPanel
-									class="flex align-items-center justify-content-center"
-									:size="80"
-									:minSize="50"
-								>
+								<SplitterPanel class="tera-split-panel" :size="80" :minSize="50">
 									<section class="graph-element">
 										<div v-if="model" ref="graphElement" class="graph-element" />
 									</section>
 								</SplitterPanel>
-								<SplitterPanel
-									class="flex align-items-center justify-content-center"
-									:size="20"
-									:minSize="20"
-								>
+								<SplitterPanel class="tera-split-panel" :size="20" :minSize="20">
 									<section class="math-editor">
 										<!-- eventually remove -->
 										<section class="dev-options">
@@ -59,6 +51,7 @@
 												</label>
 											</div>
 										</section>
+										<!-- eventually remove -->
 										<math-editor
 											:value="equation"
 											:mathmode="mathmode"
@@ -347,7 +340,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	width: 100%;
 	height: 5px;
 	cursor: ns-resize;
-	background-color: #1c857764;
+	background-color: var(--primary-color);
 	border-radius: 0.25rem;
 }
 
@@ -356,7 +349,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	width: 100%;
 }
 .graph-element {
-	background-color: #f9fafb;
+	background-color: var(--surface-secondary);
 	height: 100%;
 	max-height: 100%;
 	flex-grow: 1;
@@ -398,6 +391,12 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	display: flex;
 	flex-direction: row;
 	align-self: center;
+}
+
+.tera-split-panel {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
