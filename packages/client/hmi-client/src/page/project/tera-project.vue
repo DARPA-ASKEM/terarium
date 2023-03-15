@@ -50,7 +50,7 @@
 					:project="project"
 				/>
 			</template>
-			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :imported-github-code="code" />
+			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :code="code" />
 			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
 		</section>
 		<slider-panel
