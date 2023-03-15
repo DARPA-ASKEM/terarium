@@ -65,7 +65,7 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout } from '@/services/graph';
-import { onMounted, ref, computed, watch, render } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import Button from 'primevue/button';
@@ -591,7 +591,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 };
 
 // Tracking variables
-let source: any = null;
+// let source: any = null;
 // let target: any = null;
 let nameCounter: number = 0;
 
