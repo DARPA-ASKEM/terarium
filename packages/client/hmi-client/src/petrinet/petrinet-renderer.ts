@@ -254,6 +254,10 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
 				this.deselectNode(this.nodeSelection);
 			}
+			if (this.edgeSelection) {
+				this.deselectEdge(this.edgeSelection);
+				this.edgeSelection = null;
+			}
 
 			selection
 				.selectAll('.no-drag')
@@ -269,6 +273,12 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
 			}
+			if (this.nodeSelection) {
+				this.deselectNode(this.nodeSelection);
+				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
+				this.nodeSelection = null;
+			}
+
 			this.edgeSelection = selection;
 			this.selectEdge(this.edgeSelection);
 		});

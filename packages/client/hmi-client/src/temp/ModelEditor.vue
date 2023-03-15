@@ -65,7 +65,7 @@
 import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout } from '@/services/graph';
-import { onMounted, ref, computed, watch } from 'vue';
+import { onMounted, ref, computed, watch, render } from 'vue';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import Button from 'primevue/button';
@@ -735,20 +735,37 @@ onMounted(async () => {
 	});
 
 	document.addEventListener('keyup', async (event) => {
+		// if (event.key === 'Backspace' && renderer) {
+		// 	if (source) {
+		// 		_.remove(
+		// 			renderer.graph.edges,
+		// 			(e) => e.source === source.datum().id || e.target === source.datum().id
+		// 		);
+		// 	}
+		// 	_.remove(renderer.graph.nodes, (n) => n.id === source.datum().id);
+		// 	variablesRef.value = variablesRef.value.filter((v) => v.id !== source.datum().id);
+		// 	renderer.render();
+		// 	source = null;
+		// 	// target = null;
+		// }
+
 		if (event.key === 'Backspace' && renderer) {
-			if (source) {
+			if (renderer.nodeSelection) {
+				const nodeData = renderer.nodeSelection.datum();
+				_.remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
+				_.remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+				variablesRef.value = variablesRef.value.filter((v) => v.id !== nodeData.id);
+				renderer.render();
+			}
+
+			if (renderer.edgeSelection) {
+				const edgeData = renderer.edgeSelection.datum();
 				_.remove(
 					renderer.graph.edges,
-					(e) => e.source === source.datum().id || e.target === source.datum().id
+					(e) => e.source === edgeData.source || e.target === edgeData.target
 				);
+				renderer.render();
 			}
-			_.remove(renderer.graph.nodes, (n) => n.id === source.datum().id);
-
-			variablesRef.value = variablesRef.value.filter((v) => v.id !== source.datum().id);
-
-			renderer.render();
-			source = null;
-			// target = null;
 		}
 
 		// FIXME: Hackathon
