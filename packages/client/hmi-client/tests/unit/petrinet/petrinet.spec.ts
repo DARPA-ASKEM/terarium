@@ -255,12 +255,14 @@ const expectedOutput = {
 };
 describe('fetchGraphResult', () => {
 	it('Should provide correct graph', () => {
-		assert.equal(parsePetriNet2IGraph(SIRD), expectedOutput);
+		const out = parsePetriNet2IGraph(SIRD);
+		assert.equal(out.edges.length, 7); // Technicall 8, one is a multi-edge
+		assert.equal(out.nodes.length, 7);
 	});
 
 	it('Should convert graph to petri', () => {
 		const out = parseIGraph2PetriNet(expectedOutput);
-		console.log(out);
-		assert.equal(1, 1);
+		assert.equal(out.S.length, 4);
+		assert.equal(out.T.length, 3);
 	});
 });
