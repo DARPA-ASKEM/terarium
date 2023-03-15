@@ -25,7 +25,8 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { DocumentAsset, DocumentType } from '@/types/Document';
+import { DocumentType } from '@/types/Document';
+import { DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import dropdown from 'primevue/dropdown';

@@ -1,33 +1,36 @@
 <script setup lang="ts">
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import Card from 'primevue/card';
 import Button from 'primevue/button';
-import { formatDdMmmYyyy } from '@/utils/date';
+import Card from 'primevue/card';
 import Skeleton from 'primevue/skeleton';
+import { formatDdMmmYyyy } from '@/utils/date';
+import { placeholder } from '@/utils/project-card';
 
-defineProps<{ project?: IProject }>();
+const props = defineProps<{ project?: IProject }>();
+
+const stats = !props.project
+	? null
+	: {
+			contributors: 1,
+			models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
+			datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
+			papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
+	  };
+
+const image = stats ? placeholder(stats) : undefined;
 </script>
 
 <template>
 	<Card v-if="project">
 		<template #content>
 			<header class="project-stats">
-				<div title="Contributors"><i class="pi pi-user"></i> 1</div>
-				<div title="Models">
-					<i class="pi pi-share-alt"></i>
-					{{ project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0 }}
-				</div>
-				<div title="Datasets">
-					<i class="pi pi-sliders-v"></i>
-					{{ project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0 }}
-				</div>
-				<div title="Papers">
-					<i class="pi pi-file"></i>
-					{{ project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0 }}
-				</div>
+				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
+				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
+				<span title="Datasets"><i class="pi pi-sliders-v" /> {{ stats?.datasets }}</span>
+				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 			</header>
 			<div class="project-img">
-				<img src="@assets/images/project-card.png" alt="Project image" />
+				<img :src="image" alt="Artistic representation of the Project statistics" />
 			</div>
 			<div class="project-title">{{ project.name }}</div>
 			<div class="project-description">{{ project.description }}</div>
@@ -67,17 +70,20 @@ defineProps<{ project?: IProject }>();
 }
 
 .project-stats {
+	color: var(--text-color-secondary);
 	display: flex;
 	justify-content: space-between;
+	font-size: var(--font-caption);
+	vertical-align: bottom;
+}
+
+.pi {
+	vertical-align: bottom;
 }
 
 .project-stats.skeleton {
 	gap: 1rem;
 	height: 17px;
-}
-
-.project-stats div {
-	color: var(--text-color-secondary);
 }
 
 .project-img {
@@ -140,6 +146,7 @@ defineProps<{ project?: IProject }>();
 	justify-content: space-between;
 	color: var(--text-color-secondary);
 	padding-top: 0.5rem;
+	font-size: var(--font-caption);
 }
 
 .project-footer.skeleton {
@@ -147,7 +154,7 @@ defineProps<{ project?: IProject }>();
 }
 
 .p-button.p-button-icon-only.p-button-rounded {
-	height: 3rem;
-	width: 3rem;
+	height: 2rem;
+	width: 2rem;
 }
 </style>

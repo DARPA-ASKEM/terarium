@@ -12,7 +12,7 @@ import java.util.Arrays;
 @Accessors(chain = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-	@JsonSubTypes.Type(value = Publication.class, name = "publication"),
+	@JsonSubTypes.Type(value = DocumentAsset.class, name = "publication"),
 	@JsonSubTypes.Type(value = Model.class, name = "model"),
 })
 public class ResourceType implements Serializable {

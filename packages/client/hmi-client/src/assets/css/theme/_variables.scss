@@ -41,6 +41,7 @@ $fontWeightSemiBold: 600;
 $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
+$bigBorderRadius: 8px !default;
 $transitionDuration: .2s !default;
 $formElementTransition: background-color $transitionDuration, border-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration, background-size 0.2s cubic-bezier(0.64, 0.09, 0.08, 1) !default;
 $actionIconTransition: background-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration !default;
@@ -408,7 +409,7 @@ $accordionContentPadding: 0.5rem !default;
 
 //tabview
 $tabviewNavBorder: solid rgba(0, 0, 0, .12) !default;
-$tabviewNavBorderWidth: 0 0 1px 0 !default;
+$tabviewNavBorderWidth: 0 0 0 0 !default;
 $tabviewNavBg: #ffffff !default;
 
 $tabviewHeaderSpacing: 0 !default;
@@ -450,7 +451,8 @@ $cardSubTitleFontWeight: 400 !default;
 $cardSubTitleColor: $textSecondaryColor !default;
 $cardContentPadding: 0 0 !default;
 $cardFooterPadding: 1rem 0 0 0 !default;
-$cardShadow: 0 2px 1px -1px rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 1px 3px 0 rgba(0, 0, 0, .12) !default;
+$cardShadow: 0 2px 4px 0 rgba(0,0,0,0.10) !default;
+$cardShadowHover: 0 4px 8px 0 rgba(0,0,0,0.10) !default;
 
 //editor
 $editorToolbarBg: $panelHeaderBg !default;
