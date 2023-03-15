@@ -166,7 +166,7 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Provenance';
-import { getGithubUrls, getGithubRepositoryContent, getGithubCode } from '@/utils/github-import';
+import { getGithubUrls, getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import * as textUtil from '@/utils/text';

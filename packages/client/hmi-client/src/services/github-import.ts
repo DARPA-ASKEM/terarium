@@ -1,9 +1,10 @@
-const header = {
-	Authorization: `Bearer ${import.meta.env.VITE_CR_PAT}`
-};
+// A header might be necessary depending on the request frequency
+// const header = {
+// 	Authorization: `Bearer ${import.meta.env.VITE_CR_PAT}`
+// };
 const requestOptions = {
-	method: 'GET',
-	header
+	method: 'GET'
+	// header
 };
 
 export async function getGithubUrls(query: string = 'SIR model') {
@@ -22,13 +23,8 @@ export async function getGithubRepositoryContent(contentsUrl: string) {
 
 	const result = await response.json();
 
-	// console.log(result, contentsUrl);
 	return result;
 }
-
-// `https://api.github.com/repos/DARPA-ASKEM/Terarium/contents`
-// `https://api.github.com/search/code?q=${query}`
-// Choose or a repo you're interested in or maybe for now just grab all the content paths?
 
 export async function getGithubCode(downloadUrl: string) {
 	const jsdelivrUrl = downloadUrl
