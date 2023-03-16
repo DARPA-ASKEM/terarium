@@ -6,6 +6,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
+import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
@@ -71,14 +72,29 @@ public class CodeResource {
 	@Path("/to_petri")
 	public Response toPetriNet(@QueryParam("code") final String code) {
 		String key = "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";
-		List<String> places = mitProxy.getPlaces(code, key);
-//		List<String> transitions = mitProxy.getTransitions(code, key);
-//		List<List<String>> arcs = mitProxy.getArcs(code, key);
-		System.out.print(places.toString());
+		String places = convertPetriComponentListToString(mitProxy.getPlaces(code, key));
+		String transitions = convertPetriComponentListToString(mitProxy.getTransitions(code, key));
+		String arcs = convertPetriComponentListToString(mitProxy.getArcs(code, key));
 
+		PetriNet pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
 		return Response.ok(Response.Status.OK)
-			.entity(places)
+			.entity(pyAcset)
 			.type(MediaType.APPLICATION_JSON)
 			.build();
+	}
+
+	private String convertPetriComponentListToString(List list){
+		StringBuilder stringBuilder = new StringBuilder("[");
+		String previousSeparator = "";
+		for(Object element : list) {
+			if (element instanceof List){
+				stringBuilder.append(previousSeparator).append(convertPetriComponentListToString((List)element));
+			} else {
+				stringBuilder.append(previousSeparator).append('\"').append(element).append('\"');
+			}
+			previousSeparator =",";
+		}
+		stringBuilder.append(']');
+		return stringBuilder.toString();
 	}
 }

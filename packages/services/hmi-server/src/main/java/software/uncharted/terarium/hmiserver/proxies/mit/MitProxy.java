@@ -1,10 +1,12 @@
 package software.uncharted.terarium.hmiserver.proxies.mit;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 @RegisterRestClient(configKey = "mit")
@@ -29,8 +31,7 @@ public interface MitProxy {
 
 	@POST
 	@Path("/petri/get_pyacset")
-	List<List<String>> getPyAcset(@QueryParam("places") final String places,
-																	 @QueryParam("transitions") final String transitions,
-																	 @QueryParam("arcs") final String arcs,
-																	 @QueryParam("gpt_key") final String key);
+	PetriNet getPyAcset(@QueryParam("places_str") final String places,
+											@QueryParam("transitions_str") final String transitions,
+											@QueryParam("arcs_str") final String arcs);
 }
