@@ -4,7 +4,7 @@ import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.ProvenanceQueryParameters;
+import software.uncharted.terarium.hmiserver.models.dataservice.ProvenanceQueryParam;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProvenanceProxy;
 
 import javax.inject.Inject;
@@ -39,7 +39,7 @@ public class ProvenanceResource {
 	@Path("/connected_nodes")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response searchConnectedNodes(
-		final ProvenanceQueryParameters body,
+		final ProvenanceQueryParam body,
 		@QueryParam("search_type") @DefaultValue("connected_nodes") String searchType
 	) {
 		return proxy.search(body, searchType);

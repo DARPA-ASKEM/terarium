@@ -145,9 +145,8 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { ProvenanceType } from '@/types/Provenance';
 import { getGithubUrls } from '@/services/github-import';
-
+import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 
 const props = defineProps<{
@@ -257,7 +256,7 @@ const fetchDocumentArtifacts = async () => {
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (doc.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Document);
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];
