@@ -9,7 +9,6 @@
 				<a
 					:href="`https://doi.org/${doi}`"
 					rel="noreferrer noopener"
-					target="_blank"
 					v-html="highlightSearchTerms(doi)"
 				/>
 			</div>
@@ -67,11 +66,17 @@
 					/>
 				</div>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(urlArtifacts)">
+			<AccordionTab v-if="!isEmpty(urlArtifacts) && !isEmpty(githubUrls)">
 				<template #header>
 					URLs<span class="artifact-amount">({{ urlArtifacts.length }})</span>
 				</template>
 				<ul>
+					<template v-if="isEditable">
+						<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
+							<import-code-button :url="url" @open-asset="openAsset" />
+							<a :href="url.html_url" rel="noreferrer noopener">{{ url.html_url }}</a>
+						</li>
+					</template>
 					<li v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -134,15 +139,15 @@ import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { XDDArtifact, DocumentType } from '@/types/Document';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType } from '@/types/common';
+import { ResultType, Tab } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
+import { getGithubUrls } from '@/services/github-import';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
-
-const sectionElem = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
 	assetId: string;
@@ -151,7 +156,20 @@ const props = defineProps<{
 	previewLineLimit?: number;
 }>();
 
+const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
+
+const githubUrls = ref(); // this is will hold github urls temporarily, later we they will be in the document urls
+
+onMounted(async () => {
+	githubUrls.value = await getGithubUrls();
+});
+
+const emit = defineEmits(['open-asset']);
+
+function openAsset(assetToOpen: Tab, newCode?: string) {
+	emit('open-asset', assetToOpen, newCode);
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
