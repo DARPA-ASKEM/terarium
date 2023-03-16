@@ -94,7 +94,7 @@ export const petriNetValidator = (petrinet: PetriNet): string | true => {
 };
 
 export interface NodeData {
-	type: string;
+	type: NodeType;
 	ontology?: string;
 	uid?: string | number;
 }

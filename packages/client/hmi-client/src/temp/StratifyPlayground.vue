@@ -1,5 +1,5 @@
 <script lang="ts">
-import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph, INode } from '@graph-scaffolder/index';
 import {
 	parsePetriNet2IGraph,
 	petriNetValidator,
@@ -8,11 +8,11 @@ import {
 	EdgeData
 } from '@/petrinet/petrinet-service';
 import * as d3 from 'd3';
-import _ from 'lodash';
 import { defineComponent, ref } from 'vue';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import API from '@/api/api';
+import _ from 'lodash';
 
 enum NodeType {
 	Species = 'S',
@@ -391,6 +391,127 @@ export default defineComponent({
 			} catch (e: any) {
 				console.error(e.message);
 			}
+		},
+		/*
+		Inputs:
+			Petrinet 
+			Petrinet
+		Output:
+			(Graph/Petrinet)
+		*/
+		async blindStratification() {
+			console.log('Starting blind Stratification:');
+			let petrinetOne = petrinets[4]; //Hard code SIRD for now
+			let petrinetTwo = petrinets[2]; //Hard code QNQ for now
+			console.log(petrinetOne);
+			console.log('As Graph:');
+			let graphOne = parsePetriNet2IGraph(petrinetOne);
+			let graphTwo = parsePetriNet2IGraph(petrinetTwo);
+			let resultGraph: IGraph<NodeData, EdgeData>;
+			console.log(graphOne);
+			console.log(graphTwo);
+
+			////Add States
+			//For each node in graph two, clone graph one.
+			resultGraph = this.cloneGraphTimes(graphOne, graphTwo);
+
+			//Add Edges:
+
+			//This will criss cross all intersections
+			//S,Q -> inf,Q AND inf,NQ
+			// for (let i = 0; i < graphOne.edges.length; i++){
+			// 	let currentSource = graphOne.edges[i].source;
+			// 	let currentTarget = graphOne.edges[i].target;
+			// 	//Find all nodes in result that start with currentSource
+			// 	for (let j = 0; j < resultGraph.nodes.length; j++){
+			// 		if (resultGraph.nodes[j].id.split(",")[0] == currentSource){
+			// 			// console.log("New Source: ");
+			// 			// console.log(resultGraph.nodes[j])
+			// 			let newSource = resultGraph.nodes[j].id;
+			// 			for (let j = 0; j < resultGraph.nodes.length; j++){
+			// 				if (resultGraph.nodes[j].id.split(",")[0] == currentTarget){
+			// 					let newTarget = resultGraph.nodes[j].id;
+			// 					resultGraph.edges.push( {source: newSource, target: newTarget });
+			// 				}
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			//This will create 2 distinct graphs following the form of graphOne
+			for (let i = 0; i < graphOne.edges.length; i++) {
+				// if (graphOne.nodes[i].type != 'T'){ break; }
+				for (let j = 0; j < graphTwo.nodes.length; j++) {
+					if (graphTwo.nodes[j].data.type != 'S') {
+						break;
+					}
+					// console.log("Old Source: ");
+					// console.log(graphOne.edges[i].source)
+					// console.log("New source: ");
+					// console.log(graphOne.edges[i].source + "," + graphTwo.nodes[j].id)
+					let newSource = graphOne.edges[i].source + ',' + graphTwo.nodes[j].id;
+					let newTarget = graphOne.edges[i].target + ',' + graphTwo.nodes[j].id;
+					resultGraph.edges.push({ source: newSource, target: newTarget });
+				}
+			}
+
+			//Makes the structure of model 2 within the new model.
+			for (let i = 0; i < graphTwo.edges.length; i++) {
+				for (let j = 0; j < graphOne.nodes.length; j++) {
+					if (graphOne.nodes[j].data.type != 'S') {
+						break;
+					}
+					// console.log("Transition Info:");
+					// console.log(graphTwo.edges[i]);
+					// console.log(graphOne.nodes[j]);
+					let newSource = graphOne.nodes[j].id + ',' + graphTwo.edges[i].source;
+					let newTarget = graphOne.nodes[j].id + ',' + graphTwo.edges[i].target;
+					resultGraph.edges.push({ source: newSource, target: newTarget });
+				}
+			}
+
+			console.log('Result Graph:');
+			console.log(resultGraph);
+			console.log('End Blind Stratification');
+			resultGraph.width = 500;
+			resultGraph.height = 500;
+			await renderer?.setData(resultGraph);
+			await renderer?.render();
+		},
+		/*
+		Given two IGraphs, clone the first X times where X is the length of nodes of the 2nd one.
+		return a graph
+		*/
+		cloneGraphTimes(
+			graphOne: IGraph<INode<NodeData>, EdgeData>,
+			graphTwo: IGraph<NodeData, EdgeData>
+		) {
+			let resultGraph: IGraph<INode<NodeData>, EdgeData> = { nodes: [], edges: [] };
+			for (let i = 0; i < graphTwo.nodes.length; i++) {
+				//TODO: make this more legible for PR.
+				// if (graphTwo.nodes[i].data.type != 'S'){ //TODO: make this more readable. Dont multiply 2nd graph's transitions, just the nodes.
+				// 	break;
+				// }
+				let tempList: INode<NodeData>[] = _.cloneDeep(graphOne.nodes);
+				//Append Graph 2's ids and labels to this clone's label
+				for (let j = 0; j < tempList.length; j++) {
+					//TODO make this cleaner.
+					//This makes S,quarantine a transition.
+					let tempType = 'T';
+					if (tempList[j].data.type == 'S' && graphTwo.nodes[i].data.type == 'S') {
+						tempType = 'S';
+					}
+					if (tempList[j].data.type == 'T' && graphTwo.nodes[i].data.type == 'T') {
+						console.log('Should this exist?');
+						console.log(tempList[j].id + ',' + graphTwo.nodes[i].id);
+					}
+					tempList[j].id = tempList[j].id + ',' + graphTwo.nodes[i].id;
+					tempList[j].label = tempList[j].label + ',' + graphTwo.nodes[i].label;
+					tempList[j].data.type = tempType; //graphTwo.nodes[i].data.type;
+				}
+				resultGraph.nodes.push(...tempList);
+			}
+			return resultGraph;
 		}
 	}
 });
@@ -426,15 +547,16 @@ export default defineComponent({
 				<button type="button" @click="clearA">Clear Model A</button>
 				<button type="button" @click="loadOntology">Load Ontology</button>
 				<button type="button" @click="typeModel">Type Model</button>
-				<button type="button" @click="testStratify">Test Stratify</button>
+				<button type="button" @click="testStratify">Test Type_Product</button>
+				<button type="button" @click="blindStratification">Blind Stratification</button>
 			</div>
 		</div>
 
 		<div style="display: flex">
 			<div id="playground" class="playground-panel"></div>
-			<div id="ontology-playground" class="playground-panel"></div>
+			<!-- <div id="ontology-playground" class="playground-panel"></div>
 			<div id="solution" class="playground-panel"></div>
-			<div id="output" class="playground-panel"></div>
+			<div id="output" class="playground-panel"></div> -->
 		</div>
 	</section>
 </template>
@@ -446,8 +568,8 @@ export default defineComponent({
 }
 
 .playground-panel {
-	width: 500px;
-	height: 500px;
+	width: 900px;
+	height: 700px;
 	border: 1px solid #888;
 	overflow: auto;
 }
