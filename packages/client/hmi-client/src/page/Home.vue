@@ -169,7 +169,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Modal from '@/components/Modal.vue';
+import Modal from '@/components/widgets/Modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
@@ -287,11 +287,13 @@ section {
 }
 
 .papers {
-	background-color: var(--surface-secondary);
+	background: linear-gradient(180deg, var(--chevron-hover), #d5e8e5);
 	padding: 1rem;
+	border-top: 1px solid var(--gray-100);
 }
 
 .papers p {
+	color: var(--text-color-primary);
 	margin: 1rem 0 1rem 0rem;
 }
 
@@ -307,7 +309,7 @@ h3 {
 }
 
 .p-tabview:deep(.p-tabview-panels) {
-	padding: 1rem 0 1rem 0;
+	padding: 0 0 0 0;
 }
 
 header svg {
@@ -499,8 +501,9 @@ a {
 	flex-direction: column;
 	justify-content: center;
 	gap: 1rem;
-	border-radius: 4px;
+	border-radius: 8px;
 	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+	cursor: pointer;
 }
 
 .new-project-card > p {
@@ -513,9 +516,8 @@ a {
 }
 
 .new-project-card:hover {
-	background-color: var(--surface-hover);
-	box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px 0 rgb(0 0 0 / 14%),
-		0 1px 3px 0 rgb(0 0 0 / 12%);
+	background-color: var(--surface);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
 .new-project-button {
