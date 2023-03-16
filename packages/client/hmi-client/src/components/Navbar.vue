@@ -5,7 +5,7 @@
 				<img
 					v-if="currentProjectId"
 					src="@assets/svg/terarium-icon.svg"
-					height="36"
+					height="32"
 					alt="Terarium icon"
 				/>
 				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="Terarium logo" />
