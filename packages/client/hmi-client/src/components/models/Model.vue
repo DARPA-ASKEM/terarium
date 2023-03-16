@@ -73,7 +73,7 @@
 					</table>
 					<ul class="model-value-list">
 						<li v-for="(paramRow, index) in model?.parameters" :key="index">
-							<model-parameter-list-item :param-row="paramRow" />
+							<model-parameter-list-item :initial-param-row="paramRow" />
 						</li>
 						<footer>
 							<Button label="Add parameter" icon="pi pi-plus" />
@@ -270,12 +270,6 @@ ul {
 	background-color: var(--surface-ground);
 	border-radius: 0.75rem;
 	padding: 0.75rem;
-}
-
-li {
-	background-color: var(--surface-section);
-	border-radius: 0.5rem;
-	padding: 0.5rem;
 }
 
 footer {
