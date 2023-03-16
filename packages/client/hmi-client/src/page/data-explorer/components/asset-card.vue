@@ -269,7 +269,7 @@ function startDrag(asset, resourceType) {
 	justify-content: space-between;
 	margin: 1px;
 	min-height: 5rem;
-	padding: 1rem;
+	padding: 0.5rem 0.625rem 0.625rem;
 }
 
 .asset-card:hover {
@@ -285,6 +285,7 @@ function startDrag(asset, resourceType) {
 	display: flex;
 	align-items: center;
 	gap: 2rem;
+	font-size: 0.75rem;
 }
 
 .preview-and-options {
@@ -363,11 +364,11 @@ function startDrag(asset, resourceType) {
 .title {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-medium);
-	margin: 0.5rem 0 0.25rem 0;
+	margin: 0.1rem 0 0.1rem 0;
 }
 
 .details {
-	margin: 0.25rem 0 0.5rem 0;
+	margin: 0rem 0 0.25rem 0;
 	font-size: var(--font-size);
 }
 
