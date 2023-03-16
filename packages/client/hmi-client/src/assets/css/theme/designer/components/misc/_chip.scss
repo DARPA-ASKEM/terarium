@@ -15,7 +15,8 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         overflow: hidden;
-        font-size: .6rem;
+        font-size: 12px;
+        font-weight: 400;
     }
 
     span {
@@ -44,4 +45,9 @@
             @include focused();
         }
     }
+}
+
+.p-chip:hover {
+    color: var(--text-color-primary);
+    background-color: var(--surface-200);
 }

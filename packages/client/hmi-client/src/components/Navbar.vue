@@ -8,7 +8,7 @@
 					height="32"
 					alt="Terarium icon"
 				/>
-				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="Terarium logo" />
+				<img v-else src="@assets/svg/terarium-logo.svg" height="32" alt="Terarium logo" />
 			</router-link>
 			<h1 v-if="currentProjectId" @click="showNavigationMenu">
 				{{ currentProjectName }}
@@ -249,7 +249,7 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
-	font-weight: var(--font-weight-semibold);
+	font-weight: 400;
 	color: var(--text-color-subdued);
 	display: flex;
 	column-gap: 0.5rem;
