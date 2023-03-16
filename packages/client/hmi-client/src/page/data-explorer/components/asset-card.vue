@@ -330,6 +330,11 @@ function startDrag(asset, resourceType) {
 	text-align: center;
 }
 
+.pi-arrow-left,
+.pi-arrow-right {
+	border-radius: 24px;
+	font-size: 10px;
+}
 .asset-nav-arrows .asset-pages {
 	display: flex;
 	justify-content: space-between;
@@ -341,7 +346,7 @@ function startDrag(asset, resourceType) {
 }
 
 .asset-nav-arrows .asset-count-text {
-	color: var(--text-color-primary);
+	color: var(--text-color-subdued);
 }
 
 .title,
