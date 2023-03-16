@@ -1,18 +1,25 @@
 <template>
 	<header>
 		<section class="header-left">
-			<router-link :to="RoutePath.Home">
+			<span v-if="currentProjectId">
+				<router-link :to="RoutePath.Home">
+					<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
+				</router-link>
+			</span>
+			<span v-else @click="showNavigationMenu">
 				<img
-					v-if="currentProjectId"
-					src="@assets/svg/terarium-icon.svg"
+					src="@assets/svg/terarium-logo.svg"
 					height="30"
-					alt="Terarium icon"
+					alt="Terarium icon with name"
+					class="terariumLogo"
 				/>
-				<img v-else src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
-			</router-link>
+			</span>
 			<h1 v-if="currentProjectId" @click="showNavigationMenu">
 				{{ currentProjectName }}
-				<i class="pi pi-angle-down" />
+				<i
+					class="pi pi-angle-down"
+					style="vertical-align: bottom; color: var(--text-color-subdued)"
+				/>
 			</h1>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
@@ -182,14 +189,18 @@ h1 {
 	border-radius: var(--border-radius);
 	border-width: 1px;
 	cursor: pointer;
-	font-size: var(--font-body-large);
+	font-size: var(--font-body-small);
 	font-weight: var(--font-weight-semibold);
 	padding: 0.5rem;
 }
 
 h1:hover,
 h1:focus {
-	border-color: var(--primary-color);
+	background-color: var(--surface-ground);
+}
+
+.terariumLogo {
+	cursor: pointer;
 }
 
 /* Search Bar */
@@ -225,7 +236,7 @@ h1:focus {
 .header-left {
 	align-items: center;
 	display: flex;
-	gap: 1rem;
+	gap: 0.75rem;
 	grid-area: header-left;
 	height: 100%;
 }
@@ -276,6 +287,6 @@ i {
  * To left align the content with the h1.
  */
 .navigation-menu {
-	margin-left: -0.5rem;
+	margin-top: 0.25rem;
 }
 </style>
