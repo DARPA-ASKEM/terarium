@@ -5,8 +5,8 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { ResultType } from '@/types/common';
-import { DocumentAsset } from '@/types/Types';
-import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
+import { DocumentAsset, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import { ProvenanceResult } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
 import { getBulkDocuments } from './data';
 import { getBulkDatasets } from './dataset';
@@ -39,10 +39,9 @@ async function getConnectedNodes(
 	const publication: DocumentAsset | null = await getDocument(id);
 	if (!publication) return null;
 
-	// FIXME: all underscore naming should be fixed
 	const body: ProvenanceQueryParam = {
-		root_id: publication.id,
-		root_type: rootType
+		rootId: publication.id,
+		rootType
 	};
 	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
@@ -79,7 +78,7 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.result.nodes.forEach((node) => {
-			if (rootType !== ProvenanceType.Document) {
+			if (rootType !== ProvenanceType.Publication) {
 				if (
 					node.type === ProvenanceType.SimulationRun &&
 					simulationRunIDs.length < MAX_RELATED_ARTIFACT_COUNT
@@ -87,7 +86,7 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 					simulationRunIDs.push(node.id.toString());
 				}
 				if (
-					node.type === ProvenanceType.Document &&
+					node.type === ProvenanceType.Publication &&
 					documentIDs.length < MAX_RELATED_ARTIFACT_COUNT
 				) {
 					documentIDs.push(node.id.toString());
