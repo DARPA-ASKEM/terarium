@@ -5,10 +5,10 @@
 				<img
 					v-if="currentProjectId"
 					src="@assets/svg/terarium-icon.svg"
-					height="32"
+					height="30"
 					alt="Terarium icon"
 				/>
-				<img v-else src="@assets/svg/terarium-logo.svg" height="32" alt="Terarium logo" />
+				<img v-else src="@assets/svg/terarium-logo.svg" height="30" alt="Terarium logo" />
 			</router-link>
 			<h1 v-if="currentProjectId" @click="showNavigationMenu">
 				{{ currentProjectName }}

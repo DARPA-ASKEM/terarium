@@ -67,7 +67,10 @@
 					>
 					</Button>
 					<span v-else class="drop-zone">
-						<i class="pi pi-upload" style="font-size: 2.5rem" />
+						<i
+							class="pi pi-upload"
+							style="font-size: 2.5rem; color: var(--primary-color-lighter)"
+						/>
 						Drag and drop a paper, model, or dataset here</span
 					>
 				</section>
