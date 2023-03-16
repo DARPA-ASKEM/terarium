@@ -25,11 +25,11 @@
 			<div class="facet-footer-more">
 				<div class="facet-footer-more-section">
 					<div class="facet-footer-more-count">
-						<span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
+						<span v-if="facetMoreCount > 0">+{{ facetMoreCount }} more</span>
 					</div>
 					<div class="facet-footer-more-controls">
-						<span v-if="hasLess" class="less" @click="viewLess"> <IconChevronUp16 />less </span>
-						<span v-if="hasMore" class="more" @click="viewMore"> <IconChevronDown16 />more </span>
+						<span v-if="hasLess" class="less" @click="viewLess">Show less </span>
+						<span v-if="hasMore" class="more" @click="viewMore">Show more </span>
 					</div>
 				</div>
 			</div>
@@ -255,7 +255,7 @@ export default defineComponent({
 	min-height: 12px;
 	padding: 6px 12px 5px;
 	font-size: 12px;
-	font-weight: 600;
+	font-weight: 400;
 	line-height: 16px;
 }
 
@@ -270,6 +270,7 @@ export default defineComponent({
 	justify-content: flex-start;
 	align-content: stretch;
 	align-items: flex-start;
+	color: var(--text-color-subdued);
 }
 
 .facet-footer-more-count {
@@ -287,8 +288,15 @@ export default defineComponent({
 .more,
 .less {
 	display: inline-flex;
+	margin-left: 16px;
 }
 
+.more:hover {
+	color: var(--text-color-primary);
+}
+.less:hover {
+	color: var(--text-color-primary);
+}
 .facet-footer-more-controls > span {
 	cursor: pointer;
 }
