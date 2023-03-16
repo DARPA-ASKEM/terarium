@@ -45,11 +45,23 @@
         margin: 1rem 0.5rem;
         margin-top: 1rem;
 
+        .artifact-amount {
+            font-size: var(--font-caption);
+            color: var(--text-color-subdued);
+            margin-left: 0.25rem;
+        }
+
         ul {
             list-style: none;
 
             li {
                 margin-bottom: 0.5rem;
+            }
+
+            .github-link {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
             }
         }
 

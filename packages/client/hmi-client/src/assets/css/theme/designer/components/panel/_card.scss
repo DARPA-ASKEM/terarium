@@ -2,7 +2,11 @@
     background: $panelContentBg;
     color: $panelContentTextColor;
     box-shadow: $cardShadow;
-    border-radius: $borderRadius;
+    border-radius: $bigBorderRadius;
+    transition: box-shadow 0.1s ease, border 0.1s ease;
+    border: solid 1px var(--gray-50);
+    cursor: pointer;
+
 
     .p-card-body {
         padding: $cardBodyPadding;
@@ -27,4 +31,10 @@
     .p-card-footer {
         padding: $cardFooterPadding;
     }
+}
+
+
+.p-card:hover {
+    box-shadow: $cardShadowHover;
+    border: solid 1px var(--surface-border);
 }

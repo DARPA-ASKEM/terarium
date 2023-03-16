@@ -10,11 +10,11 @@ import java.util.Optional;
 @Data
 @Accessors(chain = true)
 public class ModelContent implements Serializable {
-	public Map<String, String>[] S;
+	private Map<String, String>[] S;
 
-	public Map<String, Optional<String>>[] T;
+	private Map<String, Optional<String>>[] T;
 
-	public Map<String, Number>[] I;
+	private Map<String, Number>[] I;
 
-	public Map<String, Number>[] O;
+	private Map<String, Number>[] O;
 }

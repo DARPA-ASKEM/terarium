@@ -339,7 +339,6 @@ onMounted(() => {
 	width: 100%;
 	padding: 10px;
 	background: var(--surface-ground);
-	margin: 10px;
 }
 
 .result {

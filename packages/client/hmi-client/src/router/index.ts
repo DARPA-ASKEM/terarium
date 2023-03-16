@@ -4,18 +4,18 @@ import HomeView from '@/page/Home.vue';
 import DataExplorerView from '@/page/data-explorer/DataExplorer.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/project/tera-project.vue';
-
 // These are test/experiment pages
 import ModelEditorView from '@/temp/ModelEditor.vue';
 import ModelRunnerView from '@/temp/ModelRunner.vue';
 import TA2Playground from '@/temp/TA2Playground.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
+import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Project = '/projects/:projectId/:assetType?/:resourceName?/:assetId?',
+	Project = '/projects/:projectId/:assetType?/:assetName?/:assetId?',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
@@ -39,15 +39,15 @@ const routes = [
 	{
 		name: RouteName.DataExplorerRoute,
 		path: RoutePath.DataExplorer,
-		component: DataExplorerView,
-		props: (route) => ({ query: route.query.q })
+		component: DataExplorerView
 	},
 	// Playground and experiments, these components are testing-only
 	{ path: RoutePath.Theia, component: TheiaView },
 	{ path: RoutePath.Ta2Playground, component: TA2Playground },
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
-	{ path: RoutePath.ModelRunner, component: ModelRunnerView }
+	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
+	{ path: '/workflow-playground', component: WorkflowPlayground }
 ];
 
 const router = createRouter({

@@ -5,7 +5,7 @@
 				label="Extract Model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
-			></Button>
+			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -16,7 +16,7 @@
 			/>
 		</div>
 		<v-ace-editor
-			v-model:value="content"
+			v-model:value="code"
 			@init="initialize"
 			lang="python"
 			theme="chrome"
@@ -35,8 +35,14 @@ import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
 
-const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
-const content = ref(DEFAULT_TEXT);
+const props = defineProps({
+	initialCode: {
+		type: String,
+		default: '# Paste some python code here or import from the controls above'
+	}
+});
+
+const code = ref(props.initialCode);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 
@@ -49,7 +55,7 @@ async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(event.files[0], 'UTF-8');
 	reader.onload = (evt) => {
-		content.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
+		code.value = evt?.target?.result?.toString() ?? props.initialCode;
 	};
 }
 
@@ -81,6 +87,7 @@ async function initialize(editorInstance) {
 	editorInstance.setShowPrintMargin(false);
 }
 </script>
+
 <style>
 .code {
 	display: flex;

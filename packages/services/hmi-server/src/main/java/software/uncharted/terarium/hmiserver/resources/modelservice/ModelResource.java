@@ -46,7 +46,7 @@ public class ModelResource {
 	@Path("/{modelId}/json")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Get JSON representation of model")
-	public Response addModelParts(
+	public Response getModelJSON(
 		@PathParam("modelId") final String modelId
 	) {
 		return proxy.getModelJSON(modelId);

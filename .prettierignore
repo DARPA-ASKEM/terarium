@@ -2,3 +2,4 @@
 **/dist
 **/assets
 **/node_modules
+packages/client/hmi-client/src/types/Types.ts

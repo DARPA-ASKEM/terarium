@@ -105,6 +105,90 @@ export enum NodeType {
 }
 
 /**
+ * Convert a PetriNet graph representation to PetriNet ACset representation
+ *
+ * We don't necessarily index-parity in the conversion, that being
+ *   X === parseIGraph2PetriNet(parsePetriNet2IGraph(X))
+ *
+ * Because the index positions could have changed, however it should have parity in terms of semantics.
+ */
+export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
+	const result: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+
+	const findNodeById = (id: string) => graph.nodes.find((n) => n.id === id);
+
+	// States and transitions
+	graph.nodes.forEach((node) => {
+		if (node.data.type === NodeType.State) {
+			result.S.push({ sname: node.label });
+		} else {
+			result.T.push({ tname: node.label });
+		}
+	});
+
+	// Edges
+	graph.edges.forEach((edge) => {
+		const target = edge.target;
+		const source = edge.source;
+
+		// This means the edge from transition => state
+		const targetInS = target.startsWith('s');
+
+		if (targetInS) {
+			// O
+			let ot = -1;
+			let os = -1;
+
+			const otNode = findNodeById(target);
+			if (otNode) {
+				ot = result.S.findIndex((d) => d.sname === otNode.label);
+			}
+			const osNode = findNodeById(source);
+			if (osNode) {
+				os = result.T.findIndex((d) => d.tname === osNode.label);
+			}
+
+			// Julia index starts at 1
+			ot++;
+			os++;
+			if (os > 0 && ot > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.O.push({ os, ot });
+				}
+			}
+		} else {
+			// I
+			let it = -1;
+			let is = -1;
+			const itNode = findNodeById(target);
+			if (itNode) {
+				it = result.T.findIndex((d) => d.tname === itNode.label);
+			}
+
+			const isNode = findNodeById(source);
+			if (isNode) {
+				is = result.S.findIndex((d) => d.sname === isNode.label);
+			}
+
+			// Julia index starts at 1
+			it++;
+			is++;
+			if (is > 0 && it > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.I.push({ is, it });
+				}
+			}
+		}
+	});
+	return result;
+};
+
+/**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
  * First add each node found in S and T, then add each edge found in I and O
@@ -117,41 +201,32 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		edges: []
 	};
 
-	// Reset current Graph.
-	result.nodes = [];
-	result.edges = [];
-	const nodeHeight = 20;
-	const nodeWidth = 20;
-	let nodeX = 10;
-	let nodeY = 10;
+	const nodeHeight = 40;
+	const nodeWidth = 40;
+
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
 		const aNode = model.S[i];
-		nodeX += 30;
-		nodeY += 30;
 		result.nodes.push({
 			id: `s-${i + 1}`,
 			label: aNode.sname,
-			x: nodeX,
-			y: nodeY,
+			x: 0,
+			y: 0,
 			height: nodeHeight,
 			width: nodeWidth,
 			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
 	}
-	nodeX = 100; // Move Transitions 100 to the right of S. This is a very poor way to display graphs but will have to do for now.
-	nodeY = 10;
+
 	// Add each node found in T
 	for (let i = 0; i < model.T.length; i++) {
 		const aTransition = model.T[i];
-		nodeX += 30;
-		nodeY += 30;
 		result.nodes.push({
 			id: `t-${i + 1}`,
 			label: aTransition.tname,
-			x: nodeX,
-			y: nodeY,
+			x: 0,
+			y: 0,
 			height: nodeHeight,
 			width: nodeWidth,
 			data: { type: NodeType.Transition, uid: aTransition.uid },

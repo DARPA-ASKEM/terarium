@@ -15,7 +15,7 @@
 				<document
 					v-if="previewItemResourceType === ResourceType.XDD"
 					:asset-id="previewItemId"
-					:previewLineLimit="5"
+					:previewLineLimit="3"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
 					:is-editable="false"

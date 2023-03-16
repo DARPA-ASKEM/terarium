@@ -10,7 +10,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.documentservice.RelatedDocument;
 import software.uncharted.terarium.hmiserver.models.dataservice.Assets;
-import software.uncharted.terarium.hmiserver.models.dataservice.Publication;
+import software.uncharted.terarium.hmiserver.models.dataservice.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResourceType;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ProjectProxy;
 import software.uncharted.terarium.hmiserver.models.dataservice.Project;
@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Path("/api/home")
@@ -74,25 +73,21 @@ public class HomeResource {
 		//Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
 		//TODO: Make this smarter than grabbing first publication and then its related
 		for (Project project : allProjects) {
-			Assets assets = new Assets();
+			Assets assets;
 			try {
 				assets = projectProxy.getAssets(project.getProjectID(), Arrays.asList(ResourceType.Type.PUBLICATIONS.type, ResourceType.Type.MODELS.type, ResourceType.Type.DATASETS.type));
-				Map<String, List<String>> projectAssets = new HashMap<>();
-				projectAssets.put(ResourceType.Type.MODELS.type, assets.getModels().stream().map(ResourceType::getId).collect(Collectors.toList()));
-				projectAssets.put(ResourceType.Type.DATASETS.type, assets.getDatasets().stream().map(ResourceType::getId).collect(Collectors.toList()));
-				projectAssets.put(ResourceType.Type.PUBLICATIONS.type, assets.getPublications().stream().map(ResourceType::getId).collect(Collectors.toList()));
-				project.setAssets(projectAssets);
+				project.setAssets(assets);
 			} catch (RuntimeException e) {
-				log.warn("Unable to access publications for project " + project.getProjectID());
+				log.warn("Unable to access publications for project " + project.getProjectID(), e);
 				continue;
 			}
 
-			List<Publication> currentProjectPublications = assets.getPublications();
+			List<DocumentAsset> currentProjectPublications = assets.getPublications();
 
 			if (currentProjectPublications.size() > 0) {
 
 				XDDRelatedDocumentsResponse relatedDocumentResponse = documentProxy.getRelatedDocuments(DEFAULT_DOC, currentProjectPublications.get(0).getXddUri());
-				List<Document> relatedDocuments = new ArrayList();
+				List<Document> relatedDocuments = new ArrayList<>();
 				for (RelatedDocument relatedDocument : relatedDocumentResponse.getData()) {
 					relatedDocuments.add(relatedDocument.getDocument());
 				}

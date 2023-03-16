@@ -90,20 +90,9 @@
 <script setup lang="ts">
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted } from 'vue';
-import {
-	runDagreLayout,
-	D3SelectionINode,
-	D3SelectionIEdge,
-	BaseComputionGraph,
-	pathFn
-} from '@/services/graph';
-import {
-	parsePetriNet2IGraph,
-	PetriNet,
-	NodeData,
-	EdgeData,
-	NodeType
-} from '@/petrinet/petrinet-service';
+import { runDagreLayout } from '@/services/graph';
+import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
+import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { getModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
@@ -123,7 +112,7 @@ import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
 import { ProjectAssetTypes } from '@/types/Project';
-import { ProvenanceType } from '@/types/Provenance';
+import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 
 export interface ModelProps {
@@ -165,44 +154,6 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-class ModelPlanRenderer extends BaseComputionGraph<NodeData, EdgeData> {
-	renderNodes(selection: D3SelectionINode<NodeData>) {
-		const state = selection.filter((d) => d.data.type === NodeType.State);
-		const transitions = selection.filter((d) => d.data.type === NodeType.Transition);
-
-		transitions
-			.append('rect')
-			.classed('shape', true)
-			.attr('width', (d) => d.width)
-			.attr('height', (d) => d.height)
-			.style('fill', '#88C')
-			.style('stroke', '#888');
-
-		state
-			.append('circle')
-			.classed('shape', true)
-			.attr('cx', (d) => d.width * 0.5)
-			.attr('cy', (d) => d.height * 0.5)
-			.attr('r', (d) => d.width * 0.5)
-			.attr('fill', '#f80');
-
-		selection
-			.append('text')
-			.attr('y', -5)
-			.text((d) => d.label);
-	}
-
-	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
-		selection
-			.append('path')
-			.attr('d', (d) => pathFn(d.points))
-			.style('fill', 'none')
-			.style('stroke', '#000')
-			.style('stroke-width', 2)
-			.attr('marker-end', `url(#${this.EDGE_ARROW_ID})`);
-	}
-}
-
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.assetId],
@@ -226,10 +177,11 @@ watch([model, graphElement], async () => {
 	// Convert petri net into a graph
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content);
 	// Create renderer
-	const renderer = new ModelPlanRenderer({
+	const renderer = new PetrinetRenderer({
 		el: graphElement.value as HTMLDivElement,
 		useAStarRouting: true,
-		runLayout: runDagreLayout
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
 	});
 
 	// Render graph

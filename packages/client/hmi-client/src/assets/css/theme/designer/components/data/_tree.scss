@@ -36,11 +36,6 @@
                     }
                 }
 
-                &:hover {
-                    background-color: var(--surface-highlight);
-                    background-color: var(--surface-hover);
-                }
-
                 &:focus {
                     @include focused-listitem();
                 }
@@ -60,7 +55,7 @@
                 }
 
                 &.p-treenode-selectable:not(.p-highlight):hover {
-                    background: $inputListItemHoverBg;
+                    background-color: $inputListItemHoverBg;
                     color: $inputListItemTextHoverColor;
                 }
             }

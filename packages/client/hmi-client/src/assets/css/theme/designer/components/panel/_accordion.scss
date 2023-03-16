@@ -12,6 +12,7 @@
 
 			.p-accordion-toggle-icon {
 				margin-right: $inlineSpacing;
+				color: var(--text-color-subdued);
 			}
 
 			&:focus {
@@ -54,7 +55,7 @@
 		}
 
 		a:hover {
-			font-weight: $fontWeightSemiBold;
+			font-weight: $accordionHeaderFontWeight;
 			text-decoration: none;
 		}
 

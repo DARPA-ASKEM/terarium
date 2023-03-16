@@ -14,7 +14,7 @@ import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
-import { ProvenanceType } from '@/types/Provenance';
+import { ProvenanceType } from '@/types/Types';
 import { DocumentType, XDDArtifact } from '@/types/Document';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
@@ -34,7 +34,7 @@ import { getRelatedArtifacts } from './provenance';
 const getXDDSets = async () => {
 	const res = await API.get('/document/sets');
 	const response: XDDResult = res.data;
-	return response.available_sets || ([] as string[]);
+	return response.availableSets || ([] as string[]);
 };
 
 const getXDDDictionaries = async () => {
@@ -397,7 +397,7 @@ const getAutocomplete = async (searchTerm: string) => {
 	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
 	const response = await API.get(url);
 	if (response.status === 204) return [];
-	return response.data?.map((d) => d.text) ?? [];
+	return response.data ?? [];
 };
 
 const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {
@@ -642,7 +642,7 @@ const fetchData = async (
 					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
 						searchParam?.xdd.related_search_id as string,
-						ProvenanceType.Document
+						ProvenanceType.Publication
 					);
 				}
 			}
