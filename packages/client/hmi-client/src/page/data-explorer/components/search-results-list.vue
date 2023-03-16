@@ -224,7 +224,7 @@ ul {
 }
 
 .result-count {
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
 	white-space: nowrap;
 }
 
