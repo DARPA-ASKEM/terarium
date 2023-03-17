@@ -169,7 +169,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Modal from '@/components/Modal.vue';
+import Modal from '@/components/widgets/Modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
