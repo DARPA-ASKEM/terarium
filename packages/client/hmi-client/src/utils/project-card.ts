@@ -21,16 +21,11 @@ interface IPlaceholderArgs {
 	papers: number;
 }
 
-// Define variables
-let placeholderCanvas: p5 | null = null;
+// Define dimensions
 const imageHeight = 133;
 const imageWidth = 208;
-let contributors: number;
-let models: number;
-let datasets: number;
-let papers: number;
 
-function drawContributors(p: p5) {
+function drawContributors(p: p5, contributors: number) {
 	const maxContributors = 20;
 	const scaleFactor = 15;
 	let spacerX = maxContributors - (contributors / maxContributors) * scaleFactor;
@@ -64,7 +59,7 @@ function drawContributors(p: p5) {
 }
 
 // Squiggly lines across the screen for each dataset
-function drawDatasets(p: p5) {
+function drawDatasets(p: p5, datasets: number) {
 	function squigglyLine(y, number, lineNumber) {
 		// draws a squiggly line across the screen at position y
 		// color changes according to y position
@@ -132,7 +127,7 @@ function drawDatasets(p: p5) {
 }
 
 // Cone-shaped slashes at random places across screen for each model
-function drawModels(p: p5) {
+function drawModels(p: p5, models: number) {
 	for (let i = 1; i <= models; i++) {
 		p.colorMode('hsb');
 		const strokeHue = p.random(180, 360);
@@ -149,7 +144,7 @@ function drawModels(p: p5) {
 }
 
 // Circles at random heights for each paper, decreasing in size as number increases
-function drawPapers(p: p5) {
+function drawPapers(p: p5, papers: number) {
 	function drawCircle(cx, cy, circleSize) {
 		p.noStroke();
 		p.colorMode('hsb');
@@ -179,39 +174,35 @@ function drawPapers(p: p5) {
 	}
 }
 
-// Setup the instance mode of p5
-// https://p5js.org/reference/#/p5/p5
-const sketch = (p: p5) => {
-	// Create the canvas
-	p.setup = () => {
-		p.createCanvas(imageWidth, imageHeight);
-		p.noCanvas(); // Do not display the canvas in the DOM
-		p.noLoop();
-		p.background(240);
-	};
-
-	p.draw = (): string => {
-		drawContributors(p);
-		if (models > 0) drawModels(p);
-		if (datasets > 0) drawDatasets(p);
-		if (papers > 0) drawPapers(p);
-		return (p as Ip5).canvas.toDataURL();
-	};
-};
-
 export function placeholder(args: IPlaceholderArgs): string {
 	// Set the value for each datum.
 	// Limit to 25 to keep the graph tidy.
-	contributors = Math.min(args.contributors, 25);
-	models = Math.min(args.models, 25);
-	datasets = Math.min(args.datasets, 25);
-	papers = Math.min(args.papers, 25);
+	const contributors = Math.min(args.contributors, 25);
+	const models = Math.min(args.models, 25);
+	const datasets = Math.min(args.datasets, 25);
+	const papers = Math.min(args.papers, 25);
 
 	// Create the p5 sketch
-	if (!placeholderCanvas) {
-		placeholderCanvas = new p5(sketch); /* eslint-disable-line new-cap */
-	}
+	// Setup the instance mode of p5 - https://p5js.org/reference/#/p5/p5
+	/* eslint-disable-next-line new-cap */
+	const sketch = new p5((p: p5) => {
+		// Create the canvas
+		p.setup = () => {
+			p.createCanvas(imageWidth, imageHeight);
+			p.noCanvas(); // Do not display the canvas in the DOM
+			p.noLoop();
+			p.background(240);
+		};
+
+		p.draw = (): string => {
+			drawContributors(p, contributors);
+			if (models > 0) drawModels(p, models);
+			if (datasets > 0) drawDatasets(p, datasets);
+			if (papers > 0) drawPapers(p, papers);
+			return (p as Ip5).canvas.toDataURL();
+		};
+	});
 
 	// Add all of this within the canvas and export the base64 image
-	return placeholderCanvas.draw() as unknown as string;
+	return sketch.draw() as unknown as string;
 }

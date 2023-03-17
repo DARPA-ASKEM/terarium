@@ -14,7 +14,7 @@ import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
 import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
-import { ProvenanceType } from '@/types/Provenance';
+import { ProvenanceType } from '@/types/Types';
 import { DocumentType, XDDArtifact } from '@/types/Document';
 import { ID, Model, ModelSearchParams, MODEL_FILTER_FIELDS } from '../types/Model';
 import {
@@ -642,7 +642,7 @@ const fetchData = async (
 					//   If such ID exists, then it can be used to retrieve related artifacts
 					relatedArtifacts = await getRelatedArtifacts(
 						searchParam?.xdd.related_search_id as string,
-						ProvenanceType.Document
+						ProvenanceType.Publication
 					);
 				}
 			}

@@ -9,13 +9,13 @@
 		},
 		{
 			"key": "Auth URL",
-			"value": "http://localhost:8079/realms/Uncharted/protocol/openid-connect/auth",
+			"value": "http://localhost:8079/realms/Terarium/protocol/openid-connect/auth",
 			"type": "default",
 			"enabled": true
 		},
 		{
 			"key": "Access Token URL",
-			"value": "http://localhost:8079/realms/Uncharted/protocol/openid-connect/token",
+			"value": "http://localhost:8079/realms/Terarium/protocol/openid-connect/token",
 			"type": "default",
 			"enabled": true
 		},

@@ -148,7 +148,7 @@ import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
 import { ProjectAssetTypes } from '@/types/Project';
-import { ProvenanceType } from '@/types/Provenance';
+import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 
 export interface ModelProps {

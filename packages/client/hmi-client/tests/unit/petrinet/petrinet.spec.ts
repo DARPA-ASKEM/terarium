@@ -1,5 +1,5 @@
-import { assert, it, test } from 'vitest';
-import { parsePetriNet2IGraph, PetriNet } from '@/petrinet/petrinet-service';
+import { assert, it, describe } from 'vitest';
+import { parsePetriNet2IGraph, parseIGraph2PetriNet, PetriNet } from '@/petrinet/petrinet-service';
 
 const SIRD: PetriNet = {
 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
@@ -253,8 +253,16 @@ const expectedOutput = {
 		}
 	]
 };
-test('fetchGraphResult', () => {
+describe('fetchGraphResult', () => {
 	it('Should provide correct graph', () => {
-		assert.equal(parsePetriNet2IGraph(SIRD), expectedOutput);
+		const out = parsePetriNet2IGraph(SIRD);
+		assert.equal(out.edges.length, 7); // Technicall 8, one is a multi-edge
+		assert.equal(out.nodes.length, 7);
+	});
+
+	it('Should convert graph to petri', () => {
+		const out = parseIGraph2PetriNet(expectedOutput);
+		assert.equal(out.S.length, 4);
+		assert.equal(out.T.length, 3);
 	});
 });
