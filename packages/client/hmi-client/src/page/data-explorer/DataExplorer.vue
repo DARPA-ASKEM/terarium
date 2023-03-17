@@ -67,7 +67,7 @@
 			class="resources-slider"
 			:content-width="sliderWidth"
 			direction="right"
-			header="Cart"
+			header="Selected resources"
 			v-model:is-open="isSliderResourcesOpen"
 			:indicator-value="selectedSearchItems.length"
 		>
@@ -85,8 +85,17 @@
 				<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
 					{{ selectedSearchItems.length }} items
 				</div>
+				<div v-if="selectedSearchItems.length == 0">
+					<div class="sub-header-title">Empty</div>
+				</div>
 			</template>
 			<template v-slot:content>
+				<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
+					<div class="empty-cart-image">
+						<img src="src/assets/svg/seed.svg" alt="Picture of a seed" />
+					</div>
+					<p>Selected resources will appear here</p>
+				</div>
 				<selected-resources-options-pane
 					:selected-search-items="selectedSearchItems"
 					@toggle-data-item-selected="toggleDataItemSelected"
@@ -563,7 +572,7 @@ onUnmounted(() => {
 }
 
 .sub-header-title {
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
 	text-align: center;
 	color: var(--text-color-subdued);
 	display: flex;
@@ -604,5 +613,19 @@ onUnmounted(() => {
 
 .p-button.p-button-sm {
 	padding: 0.5rem 0.75rem;
+}
+
+.empty-cart-image-container {
+	justify-content: center;
+	display: flex;
+	flex-direction: column;
+	margin-top: 12rem;
+	align-items: center;
+	gap: 2rem;
+	color: var(--text-color-secondary);
+	font-size: var(--font-body-small);
+}
+.empty-cart-image {
+	margin: auto;
 }
 </style>
