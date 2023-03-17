@@ -131,17 +131,28 @@
 				@modal-mask-clicked="isNewProjectModalVisible = false"
 			>
 				<template #default>
+					<div class="new-project-modal-header">Create project</div>
 					<form>
-						<label for="new-project-name">Project Name</label>
-						<InputText id="new-project-name" type="text" v-model="newProjectName" />
+						<label for="new-project-name">Name</label>
+						<InputText
+							id="new-project-name"
+							type="text"
+							v-model="newProjectName"
+							placeholder="What do you want to call your project?"
+						/>
 
-						<label for="new-project-description">Project Purpose</label>
-						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+						<label for="new-project-description">Description</label>
+						<Textarea
+							id="new-project-description"
+							rows="5"
+							v-model="newProjectDescription"
+							placeholder="Add a short description"
+						/>
 					</form>
 				</template>
 				<template #footer>
 					<footer>
-						<Button @click="createNewProject">Create Project</Button>
+						<Button @click="createNewProject">Create</Button>
 						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
 							>Cancel</Button
 						>
@@ -516,7 +527,7 @@ a {
 
 .new-project-card > p {
 	text-align: center;
-	color: var(--primary-color);
+	color: var(--text-color-primary);
 }
 
 .new-project-card img {
@@ -530,5 +541,18 @@ a {
 
 .new-project-button {
 	padding: 0;
+}
+
+.new-project-modal-header {
+	font-size: var(--font-body-large);
+	font-weight: var(--font-weight-semibold);
+	color: var(--text-color-primary);
+	padding-bottom: 1rem;
+	width: 50rem;
+}
+
+#new-project-name,
+#new-project-description {
+	border-color: var(--surface-border);
 }
 </style>
