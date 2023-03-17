@@ -509,7 +509,7 @@ a {
 	flex-direction: column;
 	justify-content: center;
 	gap: 1rem;
-	border-radius: 8px;
+	border-radius: var(--border-radius-big);
 	transition: background-color 0.2s ease, box-shadow 0.2s ease;
 	cursor: pointer;
 }
