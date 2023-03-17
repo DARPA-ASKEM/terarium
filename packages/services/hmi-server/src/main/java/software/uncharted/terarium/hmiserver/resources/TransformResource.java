@@ -30,18 +30,15 @@ public class TransformResource {
 	ModelServiceProxy modelServiceProxy;
 
 	@POST
-	@Path("mathml-to-acset")
+	@Path("/mathml-to-acset")
 	public Response mathML2ACSet(List<String> list) {
 		return skemaProxy.convertMathML2ACSet(list);
 	}
 
 
 	@POST
-	@Path("acset-to-latex")
+	@Path("/acset-to-latex")
 	public Response acet2Latex(PetriNet content) {
-		System.out.println("!!!");
-		System.out.println(content);
-		System.out.println("!!!");
 		return modelServiceProxy.petrinetToLatex(content);
 	}
 }
