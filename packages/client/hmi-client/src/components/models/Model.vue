@@ -204,7 +204,6 @@ const items = ref([
 		label: 'Add State',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
-			console.log('add state');
 			if (renderer) {
 				renderer.addNode('S', 'test', { x: eventX, y: eventY });
 			}
@@ -214,7 +213,6 @@ const items = ref([
 		label: 'Add Transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
-			console.log('add transition');
 			if (renderer) {
 				renderer.addNode('T', 'test', { x: eventX, y: eventY });
 			}
@@ -246,6 +244,7 @@ watch([model, graphElement], async () => {
 	});
 
 	renderer.on('background-contextmenu', (evtName, evt, _selection, _renderer, pos: any) => {
+		if (renderer?.editMode) return;
 		eventX = pos.x;
 		eventY = pos.y;
 		menu.value.toggle(evt);
