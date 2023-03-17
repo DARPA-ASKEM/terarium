@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.resources;
 
+import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
+import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -23,9 +25,23 @@ public class TransformResource {
 	@RestClient
 	SkemaRustProxy skemaProxy;
 
+	@Inject
+	@RestClient
+	ModelServiceProxy modelServiceProxy;
+
 	@POST
-	@Path("mathml-2-acset")
+	@Path("mathml-to-acset")
 	public Response mathML2ACSet(List<String> list) {
 		return skemaProxy.convertMathML2ACSet(list);
+	}
+
+
+	@POST
+	@Path("acset-to-latex")
+	public Response acet2Latex(PetriNet content) {
+		System.out.println("!!!");
+		System.out.println(content);
+		System.out.println("!!!");
+		return modelServiceProxy.petrinetToLatex(content);
 	}
 }
