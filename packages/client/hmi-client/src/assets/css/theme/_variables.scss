@@ -28,6 +28,7 @@ $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
 
 // font
+$fontTiny: 10 px;
 $fontCaption: 12px;
 $fontBodySmall: 14px;
 $fontBodyMedium: 16px;
@@ -42,6 +43,7 @@ $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
 $bigBorderRadius: 8px !default;
+$biggerBorderRadius: 16px !default;
 $transitionDuration: .2s !default;
 $formElementTransition: background-color $transitionDuration, border-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration, background-size 0.2s cubic-bezier(0.64, 0.09, 0.08, 1) !default;
 $actionIconTransition: background-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration !default;
@@ -848,6 +850,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 :root {
 	--border-radius: #{$borderRadius};
 	--border-radius-big: #{$bigBorderRadius};
+	--border-radius-bigger: #{$biggerBorderRadius};
 	--chevron-hover: #8bd4af1a;
 	--content-padding: #{$panelContentPadding};
 	--focus-ring: #{$focusShadow};
@@ -855,6 +858,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--font-body-medium: #{$fontBodyMedium};
 	--font-body-small: #{$fontBodySmall};
 	--font-caption: #{$fontCaption};
+	--font-tiny: #{$fontTiny};
 	--font-family: #{$fontFamily};
 	--font-size: #{$fontSize};
 	--font-weight: #{$fontWeight};

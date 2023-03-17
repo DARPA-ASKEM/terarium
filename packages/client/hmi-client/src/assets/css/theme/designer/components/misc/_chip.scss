@@ -15,11 +15,16 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         overflow: hidden;
-        font-size: .6rem;
+        font-size: var(--font-tiny);
+        font-weight: 400;
     }
 
     span {
         cursor: pointer;
+    }
+
+    span:hover {
+        color:var(--text-color-primary);
     }
 
     .p-chip-icon {
@@ -44,4 +49,8 @@
             @include focused();
         }
     }
+    .p-chip-remove-icon:hover {
+        color:var(--text-color-primary);
+    }
+
 }
