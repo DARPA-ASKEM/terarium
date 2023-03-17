@@ -59,10 +59,10 @@ const updateMathLiveValue = () => {
 const getLaTeX = (formulaString: string): string => {
 	if (isMathML(formulaString)) {
 		try {
-			formula.value = Mathml2latex.convert(formulaString);
+			return Mathml2latex.convert(formulaString);
 		} catch (error) {
 			logger.error(error, { showToast: false, silent: true });
-			return 'Error';
+			return '';
 		}
 	}
 
@@ -79,13 +79,19 @@ onUpdated(() => {
 	}
 });
 
+const updateFormula = () => {
+	if (props.mathmode === 'mathLive') {
+		mf.value?.setValue(formula.value, { suppressChangeNotifications: true });
+	} else if (props.mathmode === 'mathJAX') {
+		jaxFormula.value = formula.value;
+	}
+};
+
 watch(
 	() => props.mathmode,
-	() => {
-		if (props.mathmode === 'mathLive') {
-			mf.value?.setValue(formula.value, { suppressChangeNotifications: true });
-		} else if (props.mathmode === 'mathJAX') {
-			jaxFormula.value = formula.value;
+	(newValue, oldValue) => {
+		if (newValue !== oldValue) {
+			updateFormula();
 		}
 	}
 );
@@ -95,11 +101,7 @@ watch(
 	(newValue, oldValue) => {
 		if (newValue !== oldValue) {
 			formula.value = getLaTeX(newValue);
-		}
-		if (props.mathmode === 'mathLive') {
-			mf.value?.setValue(formula.value, { suppressChangeNotifications: true });
-		} else if (props.mathmode === 'mathJAX') {
-			jaxFormula.value = formula.value;
+			updateFormula();
 		}
 	}
 );
@@ -109,7 +111,7 @@ watch(
 math-field {
 	background-color: beige;
 	border-radius: 4px;
-	border: 1px solid black;
+	border: 1px solid var(--gray-1000);
 	padding: 5px;
 	min-height: 100%;
 	padding: 5px;
