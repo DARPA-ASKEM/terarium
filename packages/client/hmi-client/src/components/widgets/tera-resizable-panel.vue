@@ -1,29 +1,26 @@
-<!--
-TeraResizablePanel: AVertically resizable panel with a handle along the bottom
--->
-
 <template>
-	<div class="container" :style="containerStyle">
-		<div class="content">
-			<slot></slot>
-		</div>
+	<section class="container" :style="{ height: containerHeight + 'px' }">
+		<main class="content">
+			<slot />
+		</main>
 		<div class="resize-handle" @mousedown="startResize"></div>
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+/*
 
-const minHeight = ref(300);
+TeraResizablePanel: A Vertically resizable panel with a handle along the bottom
+*/
+
+import { ref, onUnmounted } from 'vue';
+
+// const minHeight = ref(300);
 const containerHeight = ref(400);
 const draggedY = ref(0);
 
-const containerStyle = computed(() => ({
-	height:
-		containerHeight.value <= minHeight.value ? `${minHeight.value}px` : `${containerHeight.value}px`
-}));
-
 const resize = (event: MouseEvent) => {
+	console.log('resizing');
 	containerHeight.value += event.clientY - draggedY.value;
 	draggedY.value = event.clientY;
 };
@@ -51,6 +48,14 @@ onUnmounted(() => {
 	width: 100%;
 	border: 1px solid #ccc;
 	overflow: hidden;
+	height: 100%;
+}
+
+section {
+	min-height: 300px;
+}
+
+main {
 	height: 100%;
 }
 
