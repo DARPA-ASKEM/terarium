@@ -27,7 +27,7 @@
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<div v-if="model" ref="graphElement" class="graph-element" />
-				<ContextMenu ref="menu" :model="items" @item-click="testItem" />
+				<ContextMenu ref="menu" :model="items" />
 			</AccordionTab>
 			<template v-if="!isEditable">
 				<AccordionTab header="State variables">
@@ -243,7 +243,7 @@ watch([model, graphElement], async () => {
 		renderer?.addEdge(d.source, d.target);
 	});
 
-	renderer.on('background-contextmenu', (evtName, evt, _selection, _renderer, pos: any) => {
+	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
 		if (renderer?.editMode) return;
 		eventX = pos.x;
 		eventY = pos.y;
