@@ -70,7 +70,7 @@ const image = stats ? placeholder(stats) : undefined;
 }
 
 .project-stats {
-	color: var(--text-color-secondary);
+	color: var(--text-color-light);
 	display: flex;
 	justify-content: space-between;
 	font-size: var(--font-caption);
