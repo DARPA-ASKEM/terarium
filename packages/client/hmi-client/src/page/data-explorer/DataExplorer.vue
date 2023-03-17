@@ -628,4 +628,12 @@ onUnmounted(() => {
 .empty-cart-image {
 	margin: auto;
 }
+.breakdown-pane-container {
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
+}
+
+.cart-item {
+	list-style-type: none;
+}
 </style>
