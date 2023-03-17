@@ -1,5 +1,5 @@
 <template>
-	<main :draggable="isDraggable">
+	<main :draggable="isDraggable" @dragstart="handleDragStart" @dragend="handleDragEnd">
 		<section>
 			<i
 				class="pi pi-sort-alt grab"
@@ -17,7 +17,7 @@
 							type="text"
 							class="p-inputtext-sm"
 						/>
-						<span v-else></span>
+						<span v-else>{{ paramRow.label }}</span>
 					</td>
 					<td>
 						<InputText
@@ -105,12 +105,19 @@ function toggleEditMode() {
 	isEditing.value = !isEditing.value;
 }
 
+function handleDragStart(event, item) {
+	console.log(item);
+	event.dataTransfer.dropEffect = 'move';
+	event.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+	console.log(e);
+	// this.style.opacity = '1';
+}
+
 // function updateParamRow() {
 
-// }
-
-// function startDrag(paramRow) {
-// 	setDragData(paramRow)
 // }
 </script>
 <style scoped>
