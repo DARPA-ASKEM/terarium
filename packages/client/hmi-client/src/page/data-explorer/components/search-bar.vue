@@ -82,7 +82,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.similarContent"
 					/>
-					<label for="similarContent">SIMILAR<br />CONTENT</label>
+					<label for="similarContent">Similar<br />content</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -90,7 +90,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.forwardCitation"
 					/>
-					<label for="forwardCitation">FORWARD<br />CITATION</label>
+					<label for="forwardCitation">Forward<br />citations</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -98,7 +98,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.backwardCitation"
 					/>
-					<label for="forwardCitation">BACKWARD<br />CITATION</label>
+					<label for="forwardCitation">Backward<br />citations</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -106,7 +106,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.relatedContent"
 					/>
-					<label for="relatedContent">MODELS AND<br />DATASETS</label>
+					<label for="relatedContent">Models and<br />datasets</label>
 				</div>
 				<Button label="SEARCH" @click="initiateSearchByExample()" />
 			</footer>
@@ -315,6 +315,7 @@ i {
 
 .clear-search:hover {
 	background-color: var(--surface-hover);
+	color: var(--text-color-primary);
 	padding: 0.5rem;
 	border-radius: 1rem;
 	top: 1rem;
@@ -360,6 +361,7 @@ i {
 
 .search-by-example header .p-button:hover {
 	background-color: var(--surface-hover);
+	color: var(--text-color-primary);
 }
 
 .search-drag-drop-area {
@@ -382,15 +384,26 @@ i {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
+	pointer-events: none;
 }
 
 .clear-search-by-example {
 	height: fit-content;
+	color: var(--text-color-subdued) !important;
+}
+.clear-search-by-example:hover {
+	color: var(--text-color-primary) !important;
 }
 
 .search-by-example footer {
 	display: flex;
 	justify-content: space-between;
+}
+
+.field-checkbox {
+	font-size: var(--font-caption);
+	font-color: var(--text-color-primary);
+	align-items: flex-start;
 }
 
 .p-button.search-by-example-button {
