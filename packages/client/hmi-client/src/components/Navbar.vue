@@ -3,15 +3,15 @@
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
 				<img
-					v-if="currentProjectId"
+					v-if="currentProjectId || isDataExplorer"
 					src="@assets/svg/terarium-icon.svg"
 					height="36"
 					alt="Terarium icon"
 				/>
 				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="Terarium logo" />
 			</router-link>
-			<h1 v-if="currentProjectId" @click="showNavigationMenu">
-				{{ currentProjectName }}
+			<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
+				{{ currentProjectName ?? 'Explorer' }}
 				<i class="pi pi-angle-down" />
 			</h1>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
@@ -55,7 +55,7 @@ import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
 import SearchBar from '@/page/data-explorer/components/search-bar.vue';
-import { RoutePath } from '@/router/index';
+import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
@@ -87,6 +87,8 @@ const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
 const showNavigationMenu = (event) => {
 	navigationMenu.value.toggle(event);
 };
+const currentRoute = useCurrentRoute();
+const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorerRoute);
 
 /*
  * User Menu
