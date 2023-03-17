@@ -116,12 +116,11 @@ button {
 	border: none;
 	background-color: transparent;
 	height: min-content;
-	padding: 0;
 }
 
 i {
-	padding: 0.2rem;
-	border-radius: var(--border-radius);
+	padding: 0.25rem;
+	border-radius: var(--border-radius-bigger);
 }
 
 i:hover {
