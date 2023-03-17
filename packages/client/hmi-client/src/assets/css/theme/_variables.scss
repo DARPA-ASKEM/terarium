@@ -847,6 +847,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 
 :root {
 	--border-radius: #{$borderRadius};
+	--border-radius-big: #{$bigBorderRadius};
 	--chevron-hover: #8bd4af1a;
 	--content-padding: #{$panelContentPadding};
 	--focus-ring: #{$focusShadow};
