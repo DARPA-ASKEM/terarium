@@ -89,7 +89,7 @@ const image = stats ? placeholder(stats) : undefined;
 .project-img {
 	height: 8.75rem;
 	background-color: var(--surface-ground);
-	border-radius: 1rem;
+	border-radius: var(--border-radius-big);
 	transition: opacity 0.3s ease, height 0.3s ease;
 	position: relative;
 	margin: 0.5rem 0 0.5rem 0;
@@ -98,6 +98,7 @@ const image = stats ? placeholder(stats) : undefined;
 .project-img img {
 	height: 100%;
 	width: 100%;
+	border-radius: var(--border-radius-big);
 }
 
 .project-img.skeleton {
