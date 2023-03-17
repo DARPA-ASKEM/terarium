@@ -298,7 +298,7 @@ section {
 }
 
 .papers {
-	background: linear-gradient(180deg, var(--chevron-hover), #d5e8e5);
+	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
 	padding: 1rem;
 	border-top: 1px solid var(--gray-100);
 }
