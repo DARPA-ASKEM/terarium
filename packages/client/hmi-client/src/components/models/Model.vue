@@ -170,16 +170,23 @@ watch(
 );
 
 const graphElement = ref<HTMLDivElement | null>(null);
+
+let renderer: PetrinetRenderer | null = null;
+
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch([model, graphElement], async () => {
 	if (model.value === null || graphElement.value === null) return;
 	// Convert petri net into a graph
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content);
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
 	// Create renderer
-	const renderer = new PetrinetRenderer({
+	renderer = new PetrinetRenderer({
 		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: true,
+		useAStarRouting: false,
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
 	});
@@ -204,9 +211,10 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 
-function toggleEditMode() {
+const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
-}
+	renderer.setEditMode(isEditing.value);
+};
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));

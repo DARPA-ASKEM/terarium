@@ -16,6 +16,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
 
+	editMode: boolean = false;
+
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 
@@ -42,6 +44,17 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.style('stroke', 'none');
 	}
 
+	setEditMode(v: boolean) {
+		this.editMode = v;
+
+		const svg = d3.select(this.svgEl);
+		if (this.editMode) {
+			svg.style('background-color', '#EE8');
+		} else {
+			svg.style('background-color', null);
+		}
+	}
+
 	renderNodes(selection: D3SelectionINode<NodeData>) {
 		const species = selection.filter((d) => d.data.type === 'S' || d.data.type === NodeType.State);
 		const transitions = selection.filter(
@@ -64,19 +77,19 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		const transitionsHandles = [
 			...transitions
 				.append('circle')
-				.attr('cx', (d) => d.width * 1.2)
+				.attr('cx', (d) => d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...transitions
 				.append('circle')
-				.attr('cy', (d) => d.height * 1.2)
+				.attr('cy', (d) => d.height)
 				.attr('r', (d) => d.width * 0.2),
 			...transitions
 				.append('circle')
-				.attr('cx', (d) => -d.width * 1.2)
+				.attr('cx', (d) => -d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...transitions
 				.append('circle')
-				.attr('cy', (d) => -d.height * 1.2)
+				.attr('cy', (d) => -d.height)
 				.attr('r', (d) => d.width * 0.2)
 		];
 
@@ -85,6 +98,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2)
+			.style('cursor', 'pointer')
 			.style('opacity', 0);
 
 		// transitions text
@@ -98,7 +112,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		species
 			.append('circle')
 			.classed('shape', true)
-			.attr('r', (d) => d.width * 1.4)
+			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2);
@@ -107,19 +121,19 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		const speciesHandles = [
 			...species
 				.append('circle')
-				.attr('cx', (d) => d.width * 2)
+				.attr('cx', (d) => d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...species
 				.append('circle')
-				.attr('cy', (d) => d.height * 2)
+				.attr('cy', (d) => d.height)
 				.attr('r', (d) => d.width * 0.2),
 			...species
 				.append('circle')
-				.attr('cx', (d) => -d.width * 2)
+				.attr('cx', (d) => -d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...species
 				.append('circle')
-				.attr('cy', (d) => -d.height * 2)
+				.attr('cy', (d) => -d.height)
 				.attr('r', (d) => d.width * 0.2)
 		];
 
@@ -128,6 +142,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2)
+			.style('cursor', 'pointer')
 			.style('opacity', 0);
 
 		// species text
@@ -170,15 +185,15 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 	}
 
 	selectNode(selection: D3SelectionINode<NodeData>) {
-		selection.selectAll('circle').attr('stroke-width', 4);
+		selection.selectAll('.no-drag').attr('stroke-width', 3);
 	}
 
 	deselectNode(selection: D3SelectionINode<NodeData>) {
-		selection.selectAll('circle').attr('stroke-width', 1);
+		selection.selectAll('.no-drag').attr('stroke-width', 1);
 	}
 
 	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
-		selection.selectAll('path').style('stroke-width', 4);
+		selection.selectAll('path').style('stroke-width', 3);
 	}
 
 	deselectEdge(selection: D3SelectionIEdge<EdgeData>) {
@@ -234,7 +249,9 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					.classed('new-edge', true)
 					.attr('d', pathFn(line))
 					.attr('marker-end', 'url(#arrowhead)')
-					.style('stroke', '#000');
+					.style('stroke-dasharray', '4')
+					.style('stroke-width', 3)
+					.style('stroke', '#888');
 			}
 		);
 
@@ -290,6 +307,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			}
 			if (this.nodeSelection) {
 				this.deselectNode(this.nodeSelection);
+				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
 				this.nodeSelection = null;
 			}
 		});
@@ -312,6 +330,33 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 	}
 
 	addEdge(source: any, target: any) {
+		// prevent nodes with same type from being linked with each other
+		if (source.data.type === target.data.type) {
+			return;
+		}
+
+		const existingEdge = this.graph.edges.find(
+			(edge) => edge.source === source.id && edge.target === target.id
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+		} else {
+			this.graph.edges.push({
+				id: `${source.id}_${target.id}`,
+				source: source.id,
+				target: target.id,
+				points: [
+					{ x: source.x, y: source.y },
+					{ x: target.x, y: target.y }
+				],
+				data: { numEdges: 1 }
+			});
+		}
+		this.render();
+	}
+
+	// Test adding edge to one of four quadrants on the target
+	addEdgeTest(source: any, target: any) {
 		// prevent nodes with same type from being linked with each other
 		if (source.data.type === target.data.type) {
 			return;
