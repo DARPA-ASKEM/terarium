@@ -20,14 +20,15 @@ $overlayColor: #000000 !default;
 
 $primaryColorRGB: 45, 142, 45;
 $primaryColor: #1B8073;
-$primaryColorLighter: #a1c8c3;
-$primaryColorLight: #6fb1a8;
-$primaryColorDark: #12564D;
+$primaryColorLighter: #ABEFE6;
+$primaryColorLight: #67d2c3;
+$primaryColorDark: #166359;
 $primaryTextColor: #ffffff !default;
 $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
 
 // font
+$fontTiny: 10 px;
 $fontCaption: 12px;
 $fontBodySmall: 14px;
 $fontBodyMedium: 16px;
@@ -42,6 +43,7 @@ $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
 $bigBorderRadius: 8px !default;
+$biggerBorderRadius: 16px !default;
 $transitionDuration: .2s !default;
 $formElementTransition: background-color $transitionDuration, border-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration, background-size 0.2s cubic-bezier(0.64, 0.09, 0.08, 1) !default;
 $actionIconTransition: background-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration !default;
@@ -673,12 +675,11 @@ $menuitemIconActiveColor: $textSecondaryColor !default;
 $menuitemActiveBg: rgba(0, 0, 0, .04) !default;
 $menuitemSubmenuIconFontSize: .875rem !default;
 $submenuHeaderMargin: 0 !default;
-$submenuHeaderPadding: 1rem 1rem 0.5rem !default;
+$submenuHeaderPadding: 1rem !default;
 $submenuHeaderBg: #ffffff !default;
 $submenuHeaderTextColor: $textSecondaryColor !default;
 $submenuHeaderBorderRadius: 0 !default;
 $submenuHeaderFontWeight: 400 !default;
-$submenuHeaderFontSize: var(--font-caption) !default;
 $overlayMenuBg: $menuBg !default;
 $overlayMenuBorder: 0 none !default;
 $overlayMenuShadow: 0 2px 4px -1px rgba(0, 0, 0, .2), 0 4px 5px 0 rgba(0, 0, 0, .14), 0 1px 10px 0 rgba(0, 0, 0, .12) !default;
@@ -786,7 +787,7 @@ $avatarBg: rgba(0, 0, 0, .12) !default;
 $avatarTextColor: $textColor !default;
 
 //chip
-$chipBg: var(--surface-100) !default;
+$chipBg: var(--surface-200) !default;
 $chipTextColor: var(--text-color-subdued) !default;
 $chipBorderRadius: 16px !default;
 $chipFocusBg: rgba(0, 0, 0, .24) !default;
@@ -848,13 +849,16 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 
 :root {
 	--border-radius: #{$borderRadius};
-	--chevron-hover: #8bd4af1a;
+	--border-radius-big: #{$bigBorderRadius};
+	--border-radius-bigger: #{$biggerBorderRadius};
+	--chevron-hover: #eeeeeeAA;
 	--content-padding: #{$panelContentPadding};
 	--focus-ring: #{$focusShadow};
 	--font-body-large: #{$fontBodyLarge};
 	--font-body-medium: #{$fontBodyMedium};
 	--font-body-small: #{$fontBodySmall};
 	--font-caption: #{$fontCaption};
+	--font-tiny: #{$fontTiny};
 	--font-family: #{$fontFamily};
 	--font-size: #{$fontSize};
 	--font-weight: #{$fontWeight};
@@ -908,5 +912,6 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--text-color-primary: #{$textColor};
 	--text-color-secondary: #{$textSecondaryColor};
 	--text-color-subdued: rgb(102, 112, 133);
+	--text-color-light: rgb(152, 154, 160);
 	color-scheme: light;
 }
