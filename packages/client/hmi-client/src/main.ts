@@ -4,6 +4,7 @@ import { createPinia } from 'pinia';
 import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
 import { MathfieldElement } from 'mathlive';
+import VueMathjax from 'vue-mathjax-next';
 import useAuthStore from './stores/auth';
 import router from './router';
 import App from './App.vue';
@@ -15,6 +16,7 @@ app.use(ToastService);
 app.use(createPinia());
 app.use(router);
 app.use(PrimeVue, { ripple: true });
+app.use(VueMathjax); // we need to intialize this vue mathjax component this way
 app.component('math-field', MathfieldElement);
 
 const auth = useAuthStore();

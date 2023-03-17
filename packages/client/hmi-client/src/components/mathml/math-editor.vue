@@ -9,28 +9,28 @@
 				><slot v-if="props.mathmode === 'mathLIVE'"></slot
 			></math-field>
 		</section>
-		<section class="mathjax-container" v-if="props.mathmode === 'mathJAX'">
-			<vue-mathjax :formula="`$$${formula}$$`"></vue-mathjax>
+		<section class="mathjax-container" v-else-if="props.mathmode === 'mathJAX'">
 			<Textarea
 				v-model="jaxFormula"
 				class="mathjax"
 				id="mathjax"
 				type="text"
-				@change="updateMathJaxValue"
 				rows="2"
 				aria-label="mathjax"
+				@blur="onBlur"
 			/>
+			<div><vue-mathjax :formula="`$$${formula}$$`" /></div>
 		</section>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onUpdated } from 'vue';
+import { ref, watch, onUpdated } from 'vue';
 import { Mathfield } from 'mathlive';
 import Mathml2latex from 'mathml-to-latex';
 import { logger } from '@/utils/logger';
 import Textarea from 'primevue/textarea';
-import VueMathjax from 'vue-mathjax-next';
+import { isMathML } from '@/utils/math';
 
 const mf = ref<Mathfield | null>(null);
 const formula = ref<string | undefined>('');
@@ -56,58 +56,49 @@ const updateMathLiveValue = () => {
 	emit('formula-updated', formula.value);
 };
 
-const updateMathJaxValue = () => {
+const getLaTeX = (formulaString: string): string => {
+	if (isMathML(formulaString)) {
+		try {
+			formula.value = Mathml2latex.convert(formulaString);
+		} catch (error) {
+			logger.error(error, { showToast: false, silent: true });
+			return 'Error';
+		}
+	}
+
+	return formulaString;
+};
+
+const onBlur = () => {
 	emit('formula-updated', jaxFormula.value);
 };
 
-// simple check to test if it's a mathml string
-const isMathML = (val: string): boolean => {
-	const regex = /<math[>\s][\s\S]*?<\/math>/s;
-	return regex.test(val);
-};
-
-const setPropsFormula = () => {
-	if (isMathML(props.value)) {
-		try {
-			formula.value = Mathml2latex.convert(props.value);
-		} catch (error) {
-			logger.error(error, { showToast: false, silent: true });
-		}
-	} else {
-		formula.value = props.value;
-	}
-};
-
 onUpdated(() => {
-	setPropsFormula();
-	if (props.mathmode === 'mathLIVE') {
-		mf.value?.setValue(formula.value);
-	}
-});
-
-onMounted(() => {
-	setPropsFormula();
 	if (props.mathmode === 'mathLIVE') {
 		mf.value?.setValue(formula.value);
 	}
 });
 
 watch(
-	() => props.value,
-	(newValue) => {
-		formula.value = newValue;
-		mf.value?.setValue(newValue, { suppressChangeNotifications: true });
+	() => props.mathmode,
+	() => {
+		if (props.mathmode === 'mathLive') {
+			mf.value?.setValue(formula.value, { suppressChangeNotifications: true });
+		} else if (props.mathmode === 'mathJAX') {
+			jaxFormula.value = formula.value;
+		}
 	}
 );
 
 watch(
-	() => formula.value,
+	() => props.value,
 	(newValue, oldValue) => {
 		if (newValue !== oldValue) {
-			setPropsFormula();
-			if (props.mathmode === 'mathLIVE') {
-				mf.value?.setValue(formula.value);
-			}
+			formula.value = getLaTeX(newValue);
+		}
+		if (props.mathmode === 'mathLive') {
+			mf.value?.setValue(formula.value, { suppressChangeNotifications: true });
+		} else if (props.mathmode === 'mathJAX') {
 			jaxFormula.value = formula.value;
 		}
 	}
@@ -118,7 +109,7 @@ watch(
 math-field {
 	background-color: beige;
 	border-radius: 4px;
-	border: 1px solid rgba(0, 0, 0, 0.3);
+	border: 1px solid black;
 	padding: 5px;
 	min-height: 100%;
 	padding: 5px;
@@ -127,9 +118,8 @@ math-field {
 }
 
 math-field:focus-within {
-	outline: 1px solid #1b8073;
+	outline: 1px solid var(--primary-color-light);
 	border-radius: 4px;
-	background: rgba(251, 187, 182, 0.1);
 }
 
 .equation {
@@ -154,6 +144,6 @@ math-field:focus-within {
 
 .mathjax-container {
 	display: flex;
-	flex-direction: column-reverse;
+	flex-direction: column;
 }
 </style>

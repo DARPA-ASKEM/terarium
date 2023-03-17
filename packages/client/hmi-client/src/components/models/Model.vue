@@ -27,7 +27,7 @@
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
-					<div class="resizable" :style="{ height: height + 'px' }">
+					<TeraResizablePanel>
 						<div class="content">
 							<Splitter class="mb-5 model-panel">
 								<SplitterPanel class="tera-split-panel" :size="80" :minSize="50">
@@ -61,8 +61,7 @@
 								</SplitterPanel>
 							</Splitter>
 						</div>
-						<div class="resizer" @mousedown="startResize"></div>
-					</div>
+					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
 			<template v-if="!isEditable">
@@ -166,6 +165,7 @@ import { Dataset } from '@/types/Dataset';
 import MathEditor from '@/components/mathml/math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 export interface ModelProps {
 	assetId: string;
@@ -181,15 +181,15 @@ const isEditing = ref<boolean>(false);
 
 const equation = ref<string>('');
 const selectedRow = ref();
-const height = ref(400);
-
-let draggableY = 0;
-
-const mathmode = ref('mathJAX');
+const mathmode = ref('mathLIVE');
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-const modelMath = String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
- 	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`;
+const modelMath = ref(String.raw`\begin{align}
+\frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
+\frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
+\frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
+\frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
+\end{align}`);
 
 // Another experiment using a map to automatically select highlighted version of the latex formula
 // this would require the backend service to provide a map of the eq.  Might be a little challenging.
@@ -207,33 +207,18 @@ const modelMath = String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
 // DataTable click handler for State Variables.  Currently used to do the highlighting.
 const onRowClick = () => {
 	if (selectedRow.value) {
-		equation.value = modelMath.replaceAll(
+		equation.value = modelMath.value.replaceAll(
 			selectedRow.value.sname,
 			String.raw`{\color{red}${selectedRow.value.sname}}`
 		);
 	} else {
-		equation.value = modelMath;
+		equation.value = modelMath.value;
 	}
 };
 
-const updateFormula = (formula_string: string) => {
-	equation.value = formula_string;
-};
-
-const resize = (event: MouseEvent) => {
-	height.value += event.clientY - draggableY;
-	draggableY = event.clientY;
-};
-
-const stopResize = () => {
-	document.removeEventListener('mousemove', resize);
-	document.removeEventListener('mouseup', stopResize);
-};
-
-const startResize = (event: MouseEvent) => {
-	draggableY = event.clientY;
-	document.addEventListener('mousemove', resize);
-	document.addEventListener('mouseup', stopResize);
+const updateFormula = (formulaString: string) => {
+	equation.value = formulaString;
+	modelMath.value = formulaString;
 };
 
 const relatedTerariumModels = computed(
@@ -271,7 +256,7 @@ watch(
 			const result = await getModel(props.assetId);
 			model.value = result;
 			fetchRelatedTerariumArtifacts();
-			equation.value = modelMath;
+			equation.value = modelMath.value;
 		} else {
 			equation.value = '';
 			model.value = null;
@@ -327,22 +312,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 .model-panel {
 	height: 100%;
 }
-.resizable {
-	position: relative;
-	height: 100%;
-	width: 100%;
-	min-height: 200px;
-	border: 1px solid #ccc;
-	overflow: hidden;
-}
-
-.resizer {
-	width: 100%;
-	height: 5px;
-	cursor: ns-resize;
-	background-color: var(--primary-color);
-	border-radius: 0.25rem;
-}
 
 .content {
 	height: 99%;
@@ -355,10 +324,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	flex-grow: 1;
 	overflow: hidden;
 	border-radius: 0.25rem;
-}
-
-.slider .graph-element {
-	pointer-events: none;
 }
 
 .math-editor {
