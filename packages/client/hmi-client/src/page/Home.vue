@@ -481,8 +481,8 @@ li {
 }
 
 .no-projects {
-	background-color: #ffffff;
-	background-image: radial-gradient(#eeeeee 10%, transparent 11%);
+	background-color: var(--gray-0);
+	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
 	background-size: 12px 12px;
 	background-position: 0 0;
 	background-repeat: repeat;
