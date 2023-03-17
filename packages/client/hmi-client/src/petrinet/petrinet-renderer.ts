@@ -11,6 +11,9 @@ const pathFn = d3
 	.x((d) => d.x)
 	.y((d) => d.y);
 
+const EDGE_COLOR = '#333333';
+const EDGE_OPACITY = 0.5;
+
 export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
@@ -34,13 +37,14 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('refX', 2)
 			.attr('refY', 0)
 			.attr('orient', 'auto')
-			.attr('markerWidth', 15)
-			.attr('markerHeight', 15)
+			.attr('markerWidth', 20)
+			.attr('markerHeight', 20)
 			.attr('markerUnits', 'userSpaceOnUse')
 			.attr('xoverflow', 'visible')
 			.append('svg:path')
 			.attr('d', ARROW)
-			.style('fill', '#000')
+			.style('fill', EDGE_COLOR)
+			.style('fill-opacity', EDGE_OPACITY)
 			.style('stroke', 'none');
 	}
 
@@ -158,7 +162,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
-			.style('stroke', '#000')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
 
@@ -180,6 +185,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				.attr('y', point.y)
 				.attr('stroke', null)
 				.attr('fill', '#000')
+				.style('font-size', 18)
 				.text((d) => d.data?.numEdges as number);
 		});
 	}
@@ -266,6 +272,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		});
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			if (!this.editMode) return;
+
 			// hide any handles which are already open
 			if (this.nodeSelection) {
 				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
@@ -287,6 +295,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		});
 
 		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
+			if (!this.editMode) return;
+
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
 			}
@@ -327,6 +337,25 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			default:
 				return { x: node.x, y: node.y };
 		}
+	}
+
+	addNode(type: string, name: string, pos: { x: number; y: number }) {
+		// FIXME: hardwired sizing
+		const size = type === 'S' ? 60 : 30;
+		this.graph.nodes.push({
+			id: `s-${this.graph.nodes.length + 1}`,
+			label: name,
+			x: pos.x,
+			y: pos.y,
+			width: size,
+			height: size,
+			nodes: [],
+			data: {
+				type
+			}
+		});
+
+		this.render();
 	}
 
 	addEdge(source: any, target: any) {

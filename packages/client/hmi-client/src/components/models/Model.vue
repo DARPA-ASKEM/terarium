@@ -27,6 +27,7 @@
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<div v-if="model" ref="graphElement" class="graph-element" />
+				<ContextMenu ref="menu" :model="items" @item-click="testItem" />
 			</AccordionTab>
 			<template v-if="!isEditable">
 				<AccordionTab header="State variables">
@@ -88,8 +89,9 @@
 </template>
 
 <script setup lang="ts">
+import _, { isEmpty } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
@@ -105,9 +107,9 @@ import Column from 'primevue/column';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 import Badge from 'primevue/badge';
+import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
-import { isEmpty } from 'lodash';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
@@ -124,6 +126,8 @@ export interface ModelProps {
 const props = defineProps<ModelProps>();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const menu = ref();
+
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref(false);
 
@@ -172,6 +176,51 @@ watch(
 const graphElement = ref<HTMLDivElement | null>(null);
 
 let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
+
+const keyHandler = (event: KeyboardEvent) => {
+	if (event.key === 'Backspace' && renderer) {
+		if (renderer && renderer.nodeSelection) {
+			const nodeData = renderer.nodeSelection.datum();
+			_.remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
+			_.remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+			renderer.render();
+		}
+
+		if (renderer && renderer.edgeSelection) {
+			const edgeData = renderer.edgeSelection.datum();
+			_.remove(
+				renderer.graph.edges,
+				(e) => e.source === edgeData.source || e.target === edgeData.target
+			);
+			renderer.render();
+		}
+	}
+};
+
+const items = ref([
+	{
+		label: 'Add State',
+		icon: 'pi pi-fw pi-circle',
+		command: () => {
+			console.log('add state');
+			if (renderer) {
+				renderer.addNode('S', 'test', { x: eventX, y: eventY });
+			}
+		}
+	},
+	{
+		label: 'Add Transition',
+		icon: 'pi pi-fw pi-stop',
+		command: () => {
+			console.log('add transition');
+			if (renderer) {
+				renderer.addNode('T', 'test', { x: eventX, y: eventY });
+			}
+		}
+	}
+]);
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
@@ -187,8 +236,19 @@ watch([model, graphElement], async () => {
 	renderer = new PetrinetRenderer({
 		el: graphElement.value as HTMLDivElement,
 		useAStarRouting: false,
+		useStableZoomPan: true,
 		runLayout: runDagreLayout,
 		dragSelector: 'no-drag'
+	});
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		renderer?.addEdge(d.source, d.target);
+	});
+
+	renderer.on('background-contextmenu', (evtName, evt, _selection, _renderer, pos: any) => {
+		eventX = pos.x;
+		eventY = pos.y;
+		menu.value.toggle(evt);
 	});
 
 	// Render graph
@@ -209,11 +269,16 @@ const goToSimulationPlanPage = () => {
 
 onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
+	document.addEventListener('keyup', keyHandler);
+});
+
+onUnmounted(() => {
+	document.removeEventListener('keyup', keyHandler);
 });
 
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
-	renderer.setEditMode(isEditing.value);
+	renderer?.setEditMode(isEditing.value);
 };
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
