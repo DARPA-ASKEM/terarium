@@ -98,7 +98,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.backwardCitation"
 					/>
-					<label for="forwardCitation">Backward<br />citations</label>
+					<label for="backwardCitation">Backward<br />citation</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -106,7 +106,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.relatedContent"
 					/>
-					<label for="relatedContent">Models and<br />datasets</label>
+					<label for="relatedContent">Related<br />resources</label>
 				</div>
 				<Button label="SEARCH" @click="initiateSearchByExample()" />
 			</footer>
