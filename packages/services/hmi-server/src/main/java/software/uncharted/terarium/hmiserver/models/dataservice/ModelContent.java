@@ -49,8 +49,11 @@ public class ModelContent implements Serializable {
 	 * 		]
 	 */
 	public String curieResolver(final String key, final String value) {
-		if (!["mira_ids", "mira_context"].contains(key))
+		// Only resolve for specific Species keys
+		String[] validKey = new String[] {"mira_ids", "mira_context"};
+		if (!validKey.contains(key))
 			return null;
+
 		// TODO - how to parse a string to Java Object
 		return value;
 	}
