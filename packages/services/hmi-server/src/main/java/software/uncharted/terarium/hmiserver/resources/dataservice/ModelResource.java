@@ -5,6 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
@@ -141,6 +142,17 @@ public class ModelResource {
 
 		if (model == null) {
 			return Response.noContent().build();
+		}
+
+		// Grab the species within the concept of the model
+		ModelConcept concept = model.getConcept();
+		Map<String, String>[] s = concept.getS();
+
+		if (!s.isEmpty()) {
+			// for now only check for the keys 'mira_ids' and 'mira_context'
+			s.computeIfPresent('mira_ids', ModelConcept.curieResolver());
+			s.computeIfPresent('mira_context', ModelConcept.curieResolver());
+			concept.setS(s);
 		}
 
 		// Return the model
