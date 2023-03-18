@@ -80,10 +80,8 @@ public class ModelResource {
 	@GET
 	@Path("/descriptions")
 	public Response getDescriptions(
-
 		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
-
 	) {
 		return proxy.getDescriptions(pageSize, page);
 	}
@@ -116,10 +114,41 @@ public class ModelResource {
 
 	@GET
 	@Path("/{id}")
+	@APIResponses({
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving the model"),
+		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no model with this id")
+	})
+	/**
+	 * Get a Model from the data-service.
+	 * Resolve Ontologie Curies if needed.
+	 * Return Model.
+	 */
 	public Response getModel(
 		@PathParam("id") final String id
 	) {
-		return proxy.getModel(id);
+		Model model;
+
+		// Feth the model from the data-service
+		try {
+			model = proxy.getModel(id);
+		} catch (RuntimeException e) {
+			log.error("Unable to get the model" + id, e);
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+		if (model == null) {
+			return Response.noContent().build();
+		}
+
+		// Return the model
+		return Response
+			.status(Response.Status.OK)
+			.entity(model)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
 	}
 
 	@POST
