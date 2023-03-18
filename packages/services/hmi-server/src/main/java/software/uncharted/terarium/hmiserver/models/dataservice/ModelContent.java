@@ -20,7 +20,8 @@ public class ModelContent implements Serializable {
 
 	/**
 	 * Resolve species curies
-	 * @param species A PetriNet Species
+	 * @param key A Species (S) key
+	 * @param value A Species (S) value
 	 * @return a species as String, with resolved curies
 	 *
 	 * Example:
@@ -47,8 +48,10 @@ public class ModelContent implements Serializable {
 	 * 			}
 	 * 		]
 	 */
-	public String curieResolver(final String species) {
+	public String curieResolver(final String key, final String value) {
+		if (!['mira_ids', 'mira_context'].contains(key))
+			return null;
 		// TODO - how to parse a string to Java Object
-		return species;
+		return value;
 	}
 }
