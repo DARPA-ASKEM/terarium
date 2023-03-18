@@ -67,10 +67,7 @@
 					>
 					</Button>
 					<span v-else class="drop-zone">
-						<i
-							class="pi pi-upload"
-							style="font-size: 2.5rem; color: var(--primary-color-lighter)"
-						/>
+						<i class="pi pi-upload big-icon" />
 						Drag and drop a paper, model, or dataset here</span
 					>
 				</section>
@@ -308,7 +305,7 @@ i {
 
 .pi.pi-times.clear-search {
 	padding: 0.5rem;
-	border-radius: 1rem;
+	border-radius: var(--border-radius-bigger);
 	top: 1rem;
 	right: 4rem;
 }
@@ -317,7 +314,7 @@ i {
 	background-color: var(--surface-hover);
 	color: var(--text-color-primary);
 	padding: 0.5rem;
-	border-radius: 1rem;
+	border-radius: var(--border-radius-bigger);
 	top: 1rem;
 	right: 4rem;
 }
@@ -380,6 +377,11 @@ i {
 	gap: 1rem;
 }
 
+.big-icon {
+	font-size: 2.5rem;
+	color: var(--primary-color-light);
+}
+
 .drop-zone {
 	display: flex;
 	align-items: center;
@@ -389,10 +391,6 @@ i {
 
 .clear-search-by-example {
 	height: fit-content;
-	color: var(--text-color-subdued) !important;
-}
-.clear-search-by-example:hover {
-	color: var(--text-color-primary) !important;
 }
 
 .search-by-example footer {
@@ -414,7 +412,7 @@ i {
 .p-button[active='false'].search-by-example-button:focus,
 .p-button[active='false'].search-by-example-button:enabled {
 	background-color: var(--surface-section);
-	border-radius: 1rem;
+	border-radius: var(--border-radius-bigger);
 	color: var(--text-color-subdued);
 }
 
