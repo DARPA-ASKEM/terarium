@@ -79,7 +79,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.similarContent"
 					/>
-					<label for="similarContent">SIMILAR<br />CONTENT</label>
+					<label for="similarContent">Similar<br />content</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -87,7 +87,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.forwardCitation"
 					/>
-					<label for="forwardCitation">FORWARD<br />CITATION</label>
+					<label for="forwardCitation">Forward<br />citation</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -95,7 +95,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.backwardCitation"
 					/>
-					<label for="forwardCitation">BACKWARD<br />CITATION</label>
+					<label for="backwardCitation">Backward<br />citation</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -103,7 +103,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.relatedContent"
 					/>
-					<label for="relatedContent">MODELS AND<br />DATASETS</label>
+					<label for="relatedContent">Related<br />resources</label>
 				</div>
 				<Button label="SEARCH" @click="initiateSearchByExample()" />
 			</footer>
