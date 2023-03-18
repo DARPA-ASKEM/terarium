@@ -200,11 +200,11 @@ ul {
 }
 
 .loading-spinner {
-	color: var(--primary-color);
+	color: var(--surface-highlight);
 }
 
 .pi-spinner {
-	font-size: 5rem;
+	font-size: 8rem;
 }
 
 .no-results-found {
