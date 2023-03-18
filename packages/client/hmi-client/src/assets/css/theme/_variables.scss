@@ -589,10 +589,10 @@ $inlineMessageBorderWidth: 1px !default;
 //toast
 $toastIconFontSize: 2rem !default;
 $toastMessageTextMargin: 0 0 0 1rem !default;
-$toastMargin: 0 0 1rem 0 !default;
-$toastPadding: 1.5rem !default;
+$toastMargin: 0 0 0 0 !default;
+$toastPadding: 1rem 0.5rem !default;
 $toastBorderWidth: 0 0 0 0 !default;
-$toastShadow: 0 5px 5px -3px rgba(0, 0, 0, .2), 0 8px 10px 1px rgba(0, 0, 0, .14), 0 3px 14px 2px rgba(0, 0, 0, .12) !default;
+$toastShadow: 0 3px 6px -3px rgba(0, 0, 0, .1), 0 8px 10px 1px rgba(0, 0, 0, .08), 0 3px 14px 2px rgba(0, 0, 0, .06) !default;
 $toastOpacity: .9 !default;
 $toastTitleFontWeight: 700 !default;
 $toastDetailMargin: $inlineSpacing 0 0 0 !default;
