@@ -49,7 +49,7 @@ public class ModelContent implements Serializable {
 	 * 		]
 	 */
 	public String curieResolver(final String key, final String value) {
-		if (!['mira_ids', 'mira_context'].contains(key))
+		if (!["mira_ids", "mira_context"].contains(key))
 			return null;
 		// TODO - how to parse a string to Java Object
 		return value;

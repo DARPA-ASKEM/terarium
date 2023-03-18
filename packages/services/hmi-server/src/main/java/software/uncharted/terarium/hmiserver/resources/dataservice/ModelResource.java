@@ -150,8 +150,8 @@ public class ModelResource {
 
 		if (!s.isEmpty()) {
 			// for now only check for the keys 'mira_ids' and 'mira_context'
-			s.computeIfPresent('mira_ids', ModelConcept.curieResolver);
-			s.computeIfPresent('mira_context', ModelConcept.curieResolver);
+			s.computeIfPresent("mira_ids", ModelConcept.curieResolver);
+			s.computeIfPresent("mira_context", ModelConcept.curieResolver);
 			concept.setS(s);
 		}
 
