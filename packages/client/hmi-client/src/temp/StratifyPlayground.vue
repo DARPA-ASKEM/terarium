@@ -393,7 +393,7 @@ export default defineComponent({
 			}
 		},
 		/*
-		TODO: Fix ID Issue -> Currently there can be ID overlap as we just concat 2 Ids together to get a new one
+		TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
 		Inputs:
 			Petrinet 
 			Petrinet
@@ -451,7 +451,7 @@ export default defineComponent({
 
 		return a graph
 
-		TODO: Worry about how to create new IDs correctly
+		TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
 		*/
 		cloneFirstGraph(
 			graphOne: IGraph<INode<NodeData>, EdgeData>,
