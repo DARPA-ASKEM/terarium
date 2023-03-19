@@ -216,7 +216,7 @@ class SampleRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
 	}
 }
 
-let renderer: SampleRenderer | null = null;
+let renderer: SampleRenderer | null = null; //Petrinet renderer
 let rendererOntology: SampleRenderer | null = null;
 
 g = runDagreLayout(_.cloneDeep(g));
@@ -393,80 +393,47 @@ export default defineComponent({
 			}
 		},
 		/*
+		TODO: Fix ID Issue -> Currently there can be ID overlap as we just concat 2 Ids together to get a new one
 		Inputs:
 			Petrinet 
 			Petrinet
 		Output:
 			(Graph/Petrinet)
 		*/
-		async blindStratification() {
-			console.log('Starting blind Stratification:');
-			let petrinetOne = petrinets[4]; //Hard code SIRD for now
-			let petrinetTwo = petrinets[2]; //Hard code QNQ for now
-			console.log(petrinetOne);
-			console.log('As Graph:');
+		async blindStratification(modelA, modelB) {
+			let petrinetOne = petrinets[modelA]; //Hard code SIRD for now
+			let petrinetTwo = petrinets[modelB]; //Hard code QNQ for now
+
 			let graphOne = parsePetriNet2IGraph(petrinetOne);
 			let graphTwo = parsePetriNet2IGraph(petrinetTwo);
 			let resultGraph: IGraph<NodeData, EdgeData>;
-			console.log(graphOne);
-			console.log(graphTwo);
 
-			////Add States
-			//For each node in graph two, clone graph one.
-			resultGraph = this.cloneGraphTimes(graphOne, graphTwo);
+			resultGraph = this.cloneFirstGraph(graphOne, graphTwo);
 
-			//Add Edges:
-
-			//This will criss cross all intersections
-			//S,Q -> inf,Q AND inf,NQ
-			// for (let i = 0; i < graphOne.edges.length; i++){
-			// 	let currentSource = graphOne.edges[i].source;
-			// 	let currentTarget = graphOne.edges[i].target;
-			// 	//Find all nodes in result that start with currentSource
-			// 	for (let j = 0; j < resultGraph.nodes.length; j++){
-			// 		if (resultGraph.nodes[j].id.split(",")[0] == currentSource){
-			// 			// console.log("New Source: ");
-			// 			// console.log(resultGraph.nodes[j])
-			// 			let newSource = resultGraph.nodes[j].id;
-			// 			for (let j = 0; j < resultGraph.nodes.length; j++){
-			// 				if (resultGraph.nodes[j].id.split(",")[0] == currentTarget){
-			// 					let newTarget = resultGraph.nodes[j].id;
-			// 					resultGraph.edges.push( {source: newSource, target: newTarget });
-			// 				}
-			// 			}
-			// 		}
-			// 	}
-			// }
-
-			//This will create 2 distinct graphs following the form of graphOne
-			for (let i = 0; i < graphOne.edges.length; i++) {
-				// if (graphOne.nodes[i].type != 'T'){ break; }
-				for (let j = 0; j < graphTwo.nodes.length; j++) {
-					if (graphTwo.nodes[j].data.type != 'S') {
-						break;
-					}
-					// console.log("Old Source: ");
-					// console.log(graphOne.edges[i].source)
-					// console.log("New source: ");
-					// console.log(graphOne.edges[i].source + "," + graphTwo.nodes[j].id)
-					let newSource = graphOne.edges[i].source + ',' + graphTwo.nodes[j].id;
-					let newTarget = graphOne.edges[i].target + ',' + graphTwo.nodes[j].id;
-					resultGraph.edges.push({ source: newSource, target: newTarget });
-				}
-			}
-
-			//Makes the structure of model 2 within the new model.
+			//Add graphTwo's shape to connect everything
 			for (let i = 0; i < graphTwo.edges.length; i++) {
 				for (let j = 0; j < graphOne.nodes.length; j++) {
-					if (graphOne.nodes[j].data.type != 'S') {
-						break;
+					if (graphOne.nodes[j].data.type == 'S') {
+						if (graphTwo.nodes[i].data.type == 'T') {
+							//Create new transition: (Example, inf,Q)
+							let newTransitionId = graphOne.nodes[j].id + ',' + graphTwo.nodes[i].id;
+							let newTransitionLabel = graphOne.nodes[j].label + ',' + graphTwo.nodes[i].label;
+							resultGraph.nodes.push({
+								id: newTransitionId,
+								label: newTransitionLabel,
+								data: { type: NodeType.Transition },
+								height: graphOne.nodes[j].height,
+								width: graphOne.nodes[j].width,
+								x: graphOne.nodes[j].x,
+								y: graphOne.nodes[j].y,
+								nodes: []
+							});
+						}
+						//Create this transition's edge(s)
+						let newSource = graphOne.nodes[j].id + ',' + graphTwo.edges[i].source;
+						let newTarget = graphOne.nodes[j].id + ',' + graphTwo.edges[i].target;
+						resultGraph.edges.push({ source: newSource, target: newTarget });
 					}
-					// console.log("Transition Info:");
-					// console.log(graphTwo.edges[i]);
-					// console.log(graphOne.nodes[j]);
-					let newSource = graphOne.nodes[j].id + ',' + graphTwo.edges[i].source;
-					let newTarget = graphOne.nodes[j].id + ',' + graphTwo.edges[i].target;
-					resultGraph.edges.push({ source: newSource, target: newTarget });
 				}
 			}
 
@@ -480,36 +447,31 @@ export default defineComponent({
 		},
 		/*
 		Given two IGraphs, clone the first X times where X is the length of nodes of the 2nd one.
+			Example, SIR + QNQ leads to two distinct SIR graphs. One with Q and one with NQ
+
 		return a graph
+
+		TODO: Worry about how to create new IDs correctly
 		*/
-		cloneGraphTimes(
+		cloneFirstGraph(
 			graphOne: IGraph<INode<NodeData>, EdgeData>,
 			graphTwo: IGraph<NodeData, EdgeData>
 		) {
 			let resultGraph: IGraph<INode<NodeData>, EdgeData> = { nodes: [], edges: [] };
 			for (let i = 0; i < graphTwo.nodes.length; i++) {
-				//TODO: make this more legible for PR.
-				// if (graphTwo.nodes[i].data.type != 'S'){ //TODO: make this more readable. Dont multiply 2nd graph's transitions, just the nodes.
-				// 	break;
-				// }
-				let tempList: INode<NodeData>[] = _.cloneDeep(graphOne.nodes);
-				//Append Graph 2's ids and labels to this clone's label
-				for (let j = 0; j < tempList.length; j++) {
-					//TODO make this cleaner.
-					//This makes S,quarantine a transition.
-					let tempType = 'T';
-					if (tempList[j].data.type == 'S' && graphTwo.nodes[i].data.type == 'S') {
-						tempType = 'S';
-					}
-					if (tempList[j].data.type == 'T' && graphTwo.nodes[i].data.type == 'T') {
-						console.log('Should this exist?');
-						console.log(tempList[j].id + ',' + graphTwo.nodes[i].id);
-					}
-					tempList[j].id = tempList[j].id + ',' + graphTwo.nodes[i].id;
-					tempList[j].label = tempList[j].label + ',' + graphTwo.nodes[i].label;
-					tempList[j].data.type = tempType; //graphTwo.nodes[i].data.type;
+				if (graphTwo.nodes[i].data.type == 'S') {
+					let tempGraph = _.cloneDeep(graphOne);
+					tempGraph.nodes.forEach((node) => {
+						node.id = node.id + ',' + graphTwo.nodes[i].id;
+						node.label = node.label + ',' + graphTwo.nodes[i].label;
+						resultGraph.nodes.push(node);
+					});
+					tempGraph.edges.forEach((edge) => {
+						edge.source = edge.source + ',' + graphTwo.nodes[i].id;
+						edge.target = edge.target + ',' + graphTwo.nodes[i].id;
+						resultGraph.edges.push(edge);
+					});
 				}
-				resultGraph.nodes.push(...tempList);
 			}
 			return resultGraph;
 		}
@@ -521,14 +483,14 @@ export default defineComponent({
 		<p>A playground for testing TA2 API integrations.</p>
 		<!-- <button type="button" @click="createSampleModels">Create Sample Models</button> -->
 		&nbsp;
-		<form>
+		<!-- <form>
 			<label for="stratify">
 				<input v-model="stratifyModelA" type="text" placeholder="Model A ID" />
 				<input v-model="stratifyModelB" type="text" placeholder="Model B" />
 				<input v-model="stratifyTypeModel" type="textbox" placeholder="Connection JSON" />
 			</label>
 			<button type="button" @click="stratify">Stratify</button>
-		</form>
+		</form> -->
 		<br />
 		<div class="model-titles">
 			<div>
@@ -548,7 +510,28 @@ export default defineComponent({
 				<button type="button" @click="loadOntology">Load Ontology</button>
 				<button type="button" @click="typeModel">Type Model</button>
 				<button type="button" @click="testStratify">Test Type_Product</button>
-				<button type="button" @click="blindStratification">Blind Stratification</button>
+				<form>
+					<label for="stratify">
+						<select v-model="stratifyModelA" type="text">
+							<option :value="0">generic</option>
+							<option :value="1">generic2</option>
+							<option :value="2">QNotQModel</option>
+							<option :value="3">typeModel</option>
+							<option :value="4">SIRD</option>
+						</select>
+						<select v-model="stratifyModelB" type="text">
+							<option :value="0">generic</option>
+							<option :value="1">generic2</option>
+							<option :value="2">QNotQModel</option>
+							<option :value="3">typeModel</option>
+							<option :value="4">SIRD</option>
+						</select>
+					</label>
+					<button type="button" @click="blindStratification(stratifyModelA, stratifyModelB)">
+						Blind Stratification
+					</button>
+				</form>
+				<!-- <button type="button" @click="blindStratification">Blind Stratification</button> -->
 			</div>
 		</div>
 
