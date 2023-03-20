@@ -49,7 +49,10 @@
 					:project="project"
 				/>
 			</template>
-			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" />
+			<code-editor
+				v-else-if="assetType === ProjectAssetTypes.CODE"
+				@on-model-created="openNewModelFromCode"
+			/>
 			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
 		</section>
 		<slider-panel
@@ -125,6 +128,19 @@ function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value]) {
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
+}
+
+async function openNewModelFromCode(modelId, modelName) {
+	console.log(modelId);
+	console.log(modelName);
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: {
+			assetName: modelName,
+			assetId: modelId,
+			assetType: ProjectAssetTypes.MODELS
+		}
+	});
 }
 
 // When a new tab is chosen, reflect that by opening its associated route

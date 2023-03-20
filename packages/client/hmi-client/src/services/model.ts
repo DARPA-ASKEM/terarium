@@ -1,7 +1,7 @@
 import API from '@/api/api';
 import { Model } from '@/types/Model';
 
-export async function createModel(model: Model): Promise<Model | null> {
+export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
 }

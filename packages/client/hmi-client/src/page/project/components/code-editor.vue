@@ -86,6 +86,8 @@ watch([graphElement], async () => {
 	await renderer?.render();
 });
 
+const emit = defineEmits(['on-model-created']);
+
 /**
  * File open/add event handler.  Immediately render the contents of the file to the editor
  * content
@@ -196,13 +198,16 @@ async function initialize(editorInstance) {
 }
 
 async function createModelFromCode() {
+	const modelName = 'New model';
 	const newModel = {
 		name: 'New model',
 		framework: 'Petri Net',
 		content: JSON.stringify(acset.value)
 	};
-	const response = await createModel(newModel);
-	console.log(response);
+	const model = await createModel(newModel);
+	if (model) {
+		emit('on-model-created', model.id, modelName);
+	}
 }
 </script>
 <style>
