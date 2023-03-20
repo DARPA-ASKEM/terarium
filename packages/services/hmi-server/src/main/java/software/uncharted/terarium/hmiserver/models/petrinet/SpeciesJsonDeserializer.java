@@ -26,17 +26,21 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 		final Matcher miraIdsMatcher = pattern.matcher(node.get("mira_ids").asText());
 		species.setMiraIds(new ArrayList<>());
 		int i = miraIdsMatcher.groupCount();
-		while (miraIdsMatcher.find()) {
-			species.getMiraIds().add(new Ontology(miraIdsMatcher.group(i)));
-			i++;
+		if (i > 0) {
+			while (miraIdsMatcher.find()) {
+				species.getMiraIds().add(new Ontology(miraIdsMatcher.group(i)));
+				i++;
+			}
 		}
 
 		final Matcher miraContextMatcher = pattern.matcher(node.get("mira_context").asText());
 		species.setMiraContext(new ArrayList<>());
 		i = miraContextMatcher.groupCount();
-		while (miraContextMatcher.find()) {
-			species.getMiraContext().add(new Ontology(miraContextMatcher.group(i)));
-			i++;
+		if (i > 0) {
+			while (miraContextMatcher.find()) {
+				species.getMiraContext().add(new Ontology(miraContextMatcher.group(i)));
+				i++;
+			}
 		}
 
 		return species;
