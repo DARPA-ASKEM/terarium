@@ -1,5 +1,5 @@
 <template>
-	<main :draggable="isDraggable" @dragstart="handleDragStart" @dragend="handleDragEnd">
+	<main>
 		<section>
 			<i
 				class="pi pi-sort-alt grab"
@@ -60,15 +60,24 @@
 			<template v-if="!isEditing">
 				<Chip label="extractions" />
 				<Button icon="pi pi-eye" class="p-button-icon-only p-button-text p-button-rounded" />
+				<Menu ref="contextMenu" :model="parameterMenuItems" :popup="true" />
 			</template>
 			<template v-else>
-				<Button icon="pi pi-times" class="p-button-icon-only p-button-text p-button-rounded" />
-				<Button icon="pi pi-check" class="p-button-icon-only p-button-text p-button-rounded" />
+				<Button
+					icon="pi pi-times"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="cancelParameterEdits"
+				/>
+				<Button
+					icon="pi pi-check"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleEditMode"
+				/>
 			</template>
 			<Button
 				icon="pi pi-ellipsis-v"
 				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="toggleEditMode"
+				@click="toggleContextMenu"
 			/>
 		</section>
 		<section class="tile-container"></section>
@@ -77,14 +86,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 import InputText from 'primevue/inputtext';
 import Chip from 'primevue/chip';
-// import { useDragEvent } from '@/services/drag-drop';
-
-// const { setDragData } = useDragEvent();
 
 const props = defineProps<{
 	initialParamRow: {
+		id: number | string;
 		label: string;
 		name: string;
 		units: string;
@@ -95,30 +103,23 @@ const props = defineProps<{
 
 const isEditing = ref(false);
 const isDraggable = ref(false);
+const prevParamRow = ref(props.initialParamRow);
 const paramRow = ref(props.initialParamRow);
-
-// function onRowEditSave() {
-//     console.log(0);
-// }
+const contextMenu = ref();
 
 function toggleEditMode() {
+	prevParamRow.value = paramRow.value;
 	isEditing.value = !isEditing.value;
 }
+const parameterMenuItems = [{ label: 'Edit', command: () => toggleEditMode() }];
+const toggleContextMenu = (event) => {
+	contextMenu.value.toggle(event);
+};
 
-function handleDragStart(event, item) {
-	console.log(item);
-	event.dataTransfer.dropEffect = 'move';
-	event.dataTransfer.effectAllowed = 'move';
+function cancelParameterEdits() {
+	isEditing.value = !isEditing.value;
+	paramRow.value = prevParamRow.value;
 }
-
-function handleDragEnd(e) {
-	console.log(e);
-	// this.style.opacity = '1';
-}
-
-// function updateParamRow() {
-
-// }
 </script>
 <style scoped>
 main {
@@ -129,6 +130,8 @@ main {
 
 section {
 	display: flex;
+	align-items: center;
+	min-height: 2.25rem;
 	gap: 0.5rem;
 	margin: 0 0 0.5rem 0;
 }
@@ -152,6 +155,11 @@ table td span:empty:before {
 table:has(.parameters_header) {
 	margin-left: 3rem;
 	width: 80%;
+}
+
+.p-inputtext.p-inputtext-sm {
+	padding: 0.25rem 0.5rem;
+	font-size: 1rem;
 }
 
 .tile-container {

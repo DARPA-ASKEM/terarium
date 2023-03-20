@@ -62,31 +62,12 @@
 					<template #header>
 						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
 					</template>
-					<table>
-						<tr class="parameters_header">
-							<th>Label</th>
-							<th>Name</th>
-							<th>Units</th>
-							<th>Concept</th>
-							<th>Definition</th>
-						</tr>
-					</table>
-					<ul class="model-value-list">
-						<li v-for="(paramRow, index) in model?.parameters" :key="index">
-							<model-parameter-list-item :initial-param-row="paramRow" />
-						</li>
-						<footer>
-							<Button label="Add parameter" icon="pi pi-plus" />
-							<Button label="Extract from a dataset" icon="pi pi-file-export" />
-						</footer>
-					</ul>
-					<!-- <Column field="default_value" header="Default"></Column> -->
+					<model-parameter-list :parameters="model?.parameters" />
 				</AccordionTab>
 			</template>
 		</Accordion>
-
 		<!-- <span>Variables</span>
-			 <Badge :value="model?.content.S.length" /> 
+			 <Badge :value="model?.content.S.length" /> :draggable="true"	@dragstart="handleDragStart" @dragend="handleDragEnd"
 			<DataTable :value="model?.content.S">
 				<Column field="slabel" header="Label"></Column>
 				<Column field="sname" header="Name"></Column>
@@ -141,7 +122,7 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as textUtil from '@/utils/text';
-import ModelParameterListItem from '@/components/models/model-parameter-list-item.vue';
+import ModelParameterList from '@/components/models/model-parameter-list.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { isEmpty } from 'lodash';
 import { ITypedModel, Model } from '@/types/Model';
@@ -264,29 +245,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 .slider .graph-element {
 	pointer-events: none;
-}
-
-ul {
-	background-color: var(--surface-ground);
-	border-radius: 0.75rem;
-	padding: 0.75rem;
-}
-
-footer {
-	display: flex;
-	gap: 1rem;
-	margin-left: 1rem;
-}
-
-footer .p-button {
-	color: var(--primary-color);
-	background-color: transparent;
-}
-
-footer .p-button:hover,
-footer .p-button:focus {
-	color: var(--primary-color);
-	background-color: var(--surface-hover);
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
