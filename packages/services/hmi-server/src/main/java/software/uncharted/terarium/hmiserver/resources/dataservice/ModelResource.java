@@ -145,7 +145,7 @@ public class ModelResource {
 		if (model == null) {
 			return Response.noContent().build();
 		}
-		
+
 		// Return the model
 		return Response
 			.status(Response.Status.OK)
