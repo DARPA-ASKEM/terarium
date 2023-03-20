@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.petrinet;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.models.Ontology;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(using = SpeciesJsonDeserializer.class)
 public class Species implements Serializable {
 
 	/*
