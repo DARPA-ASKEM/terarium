@@ -94,7 +94,13 @@ import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
-import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	parseIGraph2PetriNet
+} from '@/petrinet/petrinet-service';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
@@ -278,9 +284,8 @@ onUnmounted(() => {
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value) {
-		console.log(`Saving model id: ${model.value?.id}`);
-		console.log(JSON.stringify(model.value?.content));
+	if (!isEditing.value && model.value) {
+		model.value.content = parseIGraph2PetriNet(renderer?.graph);
 		updateModel(model.value);
 	}
 };

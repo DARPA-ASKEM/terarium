@@ -39,7 +39,6 @@ export async function getAllModelDescriptions(): Promise<Model[] | null> {
 }
 
 export async function updateModel(model) {
-	console.log(JSON.stringify(model.content));
 	const response = await API.post(`/models/${model.id}`, {
 		name: model.name,
 		description: model.description,
@@ -50,7 +49,6 @@ export async function updateModel(model) {
 }
 
 export async function createModel(model) {
-	console.log(JSON.stringify(model.content));
 	const response = await API.post(`/models`, {
 		name: model.name,
 		description: model.description,
