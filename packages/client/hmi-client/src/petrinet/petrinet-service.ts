@@ -1,4 +1,5 @@
 import { IGraph } from '@graph-scaffolder/types';
+import API from '@/api/api';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -297,4 +298,16 @@ export const parsePetriNet2IGraph = (
 		});
 	}
 	return result;
+};
+
+// Transform list of mathML strings to a petrinet ascet
+export const mathmlToPetri = async (mathml: string[]) => {
+	const response = await API.post('/transforms/mathml-to-acset', mathml);
+	return response.data;
+};
+
+// Transfrom a petrinet into latex
+export const petriToLatex = async (petri: PetriNet) => {
+	const response = await API.post('/transforms/acset-to-latex', petri);
+	return response.data;
 };

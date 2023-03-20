@@ -66,7 +66,14 @@ import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
-import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	mathmlToPetri,
+	petriToLatex
+} from '@/petrinet/petrinet-service';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
@@ -708,6 +715,40 @@ const onDownload = () => {
 
 // Entry point
 onMounted(async () => {
+	// Testing
+	mathmlToPetri([
+		'<math display="block" style="display:inline-block;"><mrow><mfrac><mrow><mi>d</mi><mi>S</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mo>−</mo><mi>β</mi><mi>S</mi><mi>I</mi></mrow></math>',
+		'<math display="block" style="display:inline-block;"><mrow><mfrac><mrow><mi>d</mi><mi>I</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mi>β</mi><mi>S</mi><mi>I</mi><mo>−</mo><mi>γ</mi><mi>I</mi></mrow></math>',
+		'<math display="block" style="display:inline-block;"><mrow><mfrac><mrow><mi>d</mi><mi>R</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mi>γ</mi><mi>I</mi></mrow></math>'
+	]).then((data) => {
+		console.log('!!!!!!!!!!!!! MathML to Petri !!!!!!!!!!!!!!!!!!!');
+		console.log(data);
+		console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+		console.log('');
+	});
+
+	petriToLatex({
+		T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+		S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 1, is: 2 },
+			{ it: 2, is: 2 },
+			{ it: 3, is: 2 }
+		],
+		O: [
+			{ ot: 1, os: 2 },
+			{ ot: 1, os: 2 },
+			{ ot: 2, os: 3 },
+			{ ot: 3, os: 4 }
+		]
+	}).then((data) => {
+		console.log('!!!!!!!!!!!!! Petri to Latex !!!!!!!!!!!!!!!!!!!');
+		console.log(data);
+		console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+		console.log('');
+	});
+
 	const playground = document.getElementById('playground') as HTMLDivElement;
 	renderer = new PetrinetRenderer({
 		el: playground,
