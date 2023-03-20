@@ -1,4 +1,5 @@
 import { IGraph } from '@graph-scaffolder/types';
+import _ from 'lodash';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -212,3 +213,76 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	}
 	return result;
 };
+
+/*
+Given two IGraphs, clone the first X times where X is the length of nodes of the 2nd one.
+	Example, SIR + QNQ leads to two distinct SIR graphs. One with Q and one with NQ
+
+return a graph
+
+TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
+*/
+function cloneFirstGraph(
+	graphOne: IGraph<NodeData, EdgeData>,
+	graphTwo: IGraph<NodeData, EdgeData>
+) {
+	const resultGraph: IGraph<NodeData, EdgeData> = { nodes: [], edges: [] };
+	for (let i = 0; i < graphTwo.nodes.length; i++) {
+		if (graphTwo.nodes[i].data.type === 'S') {
+			const tempGraph = _.cloneDeep(graphOne);
+			tempGraph.nodes.forEach((node) => {
+				node.id = `${node.id},${graphTwo.nodes[i].id}`;
+				node.label = `${node.label},${graphTwo.nodes[i].label}`;
+				resultGraph.nodes.push(node);
+			});
+			tempGraph.edges.forEach((edge) => {
+				edge.source = `${edge.source},${graphTwo.nodes[i].id}`;
+				edge.target = `${edge.target},${graphTwo.nodes[i].id}`;
+				resultGraph.edges.push(edge);
+			});
+		}
+	}
+	return resultGraph;
+}
+
+/*
+TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
+Inputs:
+	Petrinet 
+	Petrinet
+Output:
+	(Graph/Petrinet)
+*/
+export function blindStratification(petrinetOne, petrinetTwo) {
+	const graphOne = parsePetriNet2IGraph(petrinetOne);
+	const graphTwo = parsePetriNet2IGraph(petrinetTwo);
+	const resultGraph: IGraph<NodeData, EdgeData> = cloneFirstGraph(graphOne, graphTwo);
+
+	// Add graphTwo's shape to connect everything
+	for (let i = 0; i < graphTwo.edges.length; i++) {
+		for (let j = 0; j < graphOne.nodes.length; j++) {
+			if (graphOne.nodes[j].data.type === 'S') {
+				if (graphTwo.nodes[i].data.type === 'T') {
+					// Create new transition: (Example, S,quarantine)
+					const newTransitionId = `${graphOne.nodes[j].id},${graphTwo.nodes[i].id}`;
+					const newTransitionLabel = `${graphOne.nodes[j].label},${graphTwo.nodes[i].label}`;
+					resultGraph.nodes.push({
+						id: newTransitionId,
+						label: newTransitionLabel,
+						data: { type: NodeType.Transition },
+						height: graphOne.nodes[j].height,
+						width: graphOne.nodes[j].width,
+						x: graphOne.nodes[j].x,
+						y: graphOne.nodes[j].y,
+						nodes: []
+					});
+				}
+				// Create this transition's edge(s)
+				const newSource = `${graphOne.nodes[j].id},${graphTwo.edges[i].source}`;
+				const newTarget = `${graphOne.nodes[j].id},${graphTwo.edges[i].target}`;
+				resultGraph.edges.push({ source: newSource, target: newTarget, points: [] });
+			}
+		}
+	}
+	return resultGraph;
+}

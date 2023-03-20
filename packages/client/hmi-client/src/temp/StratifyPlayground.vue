@@ -1,11 +1,12 @@
 <script lang="ts">
-import graphScaffolder, { IGraph, INode } from '@graph-scaffolder/index';
+import graphScaffolder, { IGraph } from '@graph-scaffolder/index';
 import {
 	parsePetriNet2IGraph,
 	petriNetValidator,
 	PetriNet,
 	NodeData,
-	EdgeData
+	EdgeData,
+	blindStratification
 } from '@/petrinet/petrinet-service';
 import * as d3 from 'd3';
 import { defineComponent, ref } from 'vue';
@@ -392,51 +393,10 @@ export default defineComponent({
 				console.error(e.message);
 			}
 		},
-		/*
-		TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
-		Inputs:
-			Petrinet 
-			Petrinet
-		Output:
-			(Graph/Petrinet)
-		*/
-		async blindStratification(modelA, modelB) {
+		async blindStratificationWrapper(modelA, modelB) {
 			let petrinetOne = petrinets[modelA]; //Hard code SIRD for now
 			let petrinetTwo = petrinets[modelB]; //Hard code QNQ for now
-
-			let graphOne = parsePetriNet2IGraph(petrinetOne);
-			let graphTwo = parsePetriNet2IGraph(petrinetTwo);
-			let resultGraph: IGraph<NodeData, EdgeData>;
-
-			resultGraph = this.cloneFirstGraph(graphOne, graphTwo);
-
-			//Add graphTwo's shape to connect everything
-			for (let i = 0; i < graphTwo.edges.length; i++) {
-				for (let j = 0; j < graphOne.nodes.length; j++) {
-					if (graphOne.nodes[j].data.type == 'S') {
-						if (graphTwo.nodes[i].data.type == 'T') {
-							//Create new transition: (Example, inf,Q)
-							let newTransitionId = graphOne.nodes[j].id + ',' + graphTwo.nodes[i].id;
-							let newTransitionLabel = graphOne.nodes[j].label + ',' + graphTwo.nodes[i].label;
-							resultGraph.nodes.push({
-								id: newTransitionId,
-								label: newTransitionLabel,
-								data: { type: NodeType.Transition },
-								height: graphOne.nodes[j].height,
-								width: graphOne.nodes[j].width,
-								x: graphOne.nodes[j].x,
-								y: graphOne.nodes[j].y,
-								nodes: []
-							});
-						}
-						//Create this transition's edge(s)
-						let newSource = graphOne.nodes[j].id + ',' + graphTwo.edges[i].source;
-						let newTarget = graphOne.nodes[j].id + ',' + graphTwo.edges[i].target;
-						resultGraph.edges.push({ source: newSource, target: newTarget });
-					}
-				}
-			}
-
+			let resultGraph = blindStratification(petrinetOne, petrinetTwo);
 			console.log('Result Graph:');
 			console.log(resultGraph);
 			console.log('End Blind Stratification');
@@ -444,36 +404,6 @@ export default defineComponent({
 			resultGraph.height = 500;
 			await renderer?.setData(resultGraph);
 			await renderer?.render();
-		},
-		/*
-		Given two IGraphs, clone the first X times where X is the length of nodes of the 2nd one.
-			Example, SIR + QNQ leads to two distinct SIR graphs. One with Q and one with NQ
-
-		return a graph
-
-		TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
-		*/
-		cloneFirstGraph(
-			graphOne: IGraph<INode<NodeData>, EdgeData>,
-			graphTwo: IGraph<NodeData, EdgeData>
-		) {
-			let resultGraph: IGraph<INode<NodeData>, EdgeData> = { nodes: [], edges: [] };
-			for (let i = 0; i < graphTwo.nodes.length; i++) {
-				if (graphTwo.nodes[i].data.type == 'S') {
-					let tempGraph = _.cloneDeep(graphOne);
-					tempGraph.nodes.forEach((node) => {
-						node.id = node.id + ',' + graphTwo.nodes[i].id;
-						node.label = node.label + ',' + graphTwo.nodes[i].label;
-						resultGraph.nodes.push(node);
-					});
-					tempGraph.edges.forEach((edge) => {
-						edge.source = edge.source + ',' + graphTwo.nodes[i].id;
-						edge.target = edge.target + ',' + graphTwo.nodes[i].id;
-						resultGraph.edges.push(edge);
-					});
-				}
-			}
-			return resultGraph;
 		}
 	}
 });
@@ -527,7 +457,7 @@ export default defineComponent({
 							<option :value="4">SIRD</option>
 						</select>
 					</label>
-					<button type="button" @click="blindStratification(stratifyModelA, stratifyModelB)">
+					<button type="button" @click="blindStratificationWrapper(stratifyModelA, stratifyModelB)">
 						Blind Stratification
 					</button>
 				</form>
