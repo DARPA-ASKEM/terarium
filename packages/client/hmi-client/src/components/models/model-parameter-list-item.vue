@@ -6,65 +6,69 @@
 					<td>
 						<InputText
 							v-if="isEditing"
-							v-model="paramRow.label"
+							v-model="editedParameterRow.label"
 							type="text"
 							class="p-inputtext-sm"
 						/>
-						<span v-else>{{ paramRow.label }}</span>
+						<span v-else>{{ parameterRow.label }}</span>
 					</td>
 					<td>
 						<InputText
 							v-if="isEditing"
-							v-model="paramRow.name"
+							v-model="editedParameterRow.name"
 							type="text"
 							class="p-inputtext-sm"
 						/>
-						<span v-else>{{ paramRow.name }}</span>
+						<span v-else>{{ parameterRow.name }}</span>
 					</td>
 					<td>
 						<InputText
 							v-if="isEditing"
-							v-model="paramRow.units"
+							v-model="editedParameterRow.units"
 							type="text"
 							class="p-inputtext-sm"
 						/>
-						<span v-else>{{ paramRow.units }}</span>
+						<span v-else>{{ parameterRow.units }}</span>
 					</td>
 					<td>
 						<InputText
 							v-if="isEditing"
-							v-model="paramRow.concept"
+							v-model="editedParameterRow.concept"
 							type="text"
 							class="p-inputtext-sm"
 						/>
-						<span v-else>{{ paramRow.concept }}</span>
+						<span v-else>{{ parameterRow.concept }}</span>
 					</td>
 					<td>
 						<InputText
 							v-if="isEditing"
-							v-model="paramRow.definition"
+							v-model="editedParameterRow.definition"
 							type="text"
 							class="p-inputtext-sm"
 						/>
-						<span v-else>{{ paramRow.definition }}</span>
+						<span v-else>{{ parameterRow.definition }}</span>
 					</td>
 				</tr>
 			</table>
 			<template v-if="!isEditing">
 				<Chip label="extractions" />
-				<Button icon="pi pi-eye" class="p-button-icon-only p-button-text p-button-rounded" />
+				<Button
+					:icon="showRange ? 'pi pi-eye' : 'pi pi-eye-slash'"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="showRange = !showRange"
+				/>
 				<Menu ref="contextMenu" :model="parameterMenuItems" :popup="true" />
 			</template>
 			<template v-else>
 				<Button
 					icon="pi pi-times"
 					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="cancelParameterEdits"
+					@click="isEditing = false"
 				/>
 				<Button
 					icon="pi pi-check"
 					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleEditMode"
+					@click="applyParameterEdits"
 				/>
 			</template>
 			<Button
@@ -73,7 +77,10 @@
 				@click="toggleContextMenu"
 			/>
 		</section>
-		<section class="tile-container"></section>
+		<section>
+			<section v-if="showRange" class="range"></section>
+			<section class="tile-container"></section>
+		</section>
 	</main>
 </template>
 <script setup lang="ts">
@@ -84,7 +91,7 @@ import InputText from 'primevue/inputtext';
 import Chip from 'primevue/chip';
 
 const props = defineProps<{
-	initialParamRow: {
+	parameterRow: {
 		id: number | string;
 		label: string;
 		name: string;
@@ -94,23 +101,31 @@ const props = defineProps<{
 	};
 }>();
 
+const emit = defineEmits(['update-parameter-row']);
+
 const isEditing = ref(false);
-const prevParamRow = ref(props.initialParamRow);
-const paramRow = ref(props.initialParamRow);
+const showRange = ref(false);
 const contextMenu = ref();
+const editedParameterRow = ref({ ...props.parameterRow });
 
-function toggleEditMode() {
-	prevParamRow.value = paramRow.value;
-	isEditing.value = !isEditing.value;
-}
-const parameterMenuItems = [{ label: 'Edit', command: () => toggleEditMode() }];
-const toggleContextMenu = (event) => {
+const parameterMenuItems = [
+	{
+		label: 'Edit',
+		command: () => {
+			editedParameterRow.value = { ...props.parameterRow };
+			isEditing.value = true;
+		}
+	}
+];
+
+function toggleContextMenu(event) {
+	console.log(contextMenu.value);
 	contextMenu.value.toggle(event);
-};
+}
 
-function cancelParameterEdits() {
-	isEditing.value = !isEditing.value;
-	paramRow.value = prevParamRow.value;
+function applyParameterEdits() {
+	emit('update-parameter-row', editedParameterRow.value);
+	isEditing.value = false;
 }
 </script>
 <style scoped>
@@ -158,7 +173,12 @@ table td span:empty:before {
 	font-size: 1rem;
 }
 
+.range {
+	width: 6rem;
+}
+
 .tile-container {
+	width: 100%;
 	height: 6rem;
 	background-color: var(--surface-ground);
 	border: 1px solid var(--surface-border);

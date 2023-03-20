@@ -3,7 +3,7 @@
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" @click="printModel" />
+				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
 						@click="toggleEditMode"
@@ -62,14 +62,19 @@
 					<template #header>
 						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
 					</template>
-					<model-parameter-list :parameters="model?.parameters" />
+					<model-parameter-list
+						:parameters="model?.parameters"
+						attribute="parameters"
+						@update-parameter-row="updateParamaterRow"
+					/>
 				</AccordionTab>
-				<AccordionTab>
+				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
 					<template #header>
-						States<span class="artifact-amount">({{ model?.content.S.length }})</span>
+						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
 					</template>
-					<model-parameter-list :parameters="model?.content.S" />
-				</AccordionTab>
+					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
+						@update-parameterRow="updateParamaterRow" />
+				</AccordionTab> -->
 			</template>
 		</Accordion>
 	</section>
@@ -132,8 +137,11 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
-function printModel() {
-	console.log(model.value);
+function updateParamaterRow(attribute: string, newParameterRow) {
+	if (model.value && model.value[attribute]) {
+		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
+		model.value[attribute][rowIndex] = { ...newParameterRow };
+	}
 }
 
 // Highlight strings based on props.highlight

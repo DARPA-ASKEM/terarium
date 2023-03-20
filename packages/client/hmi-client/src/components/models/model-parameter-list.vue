@@ -13,7 +13,8 @@
 			<li v-for="parameterRow in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
 					class="model-parameter-list-item"
-					:initial-param-row="parameterRow"
+					:parameter-row="parameterRow"
+					@update-parameter-row="updateParamaterRow"
 				/>
 			</li>
 			<footer>
@@ -28,9 +29,16 @@
 import Button from 'primevue/button';
 import ModelParameterListItem from '@/components/models/model-parameter-list-item.vue';
 
-defineProps<{
-	parameters: any;
+const props = defineProps<{
+	parameters: any; // Temporary - this is also any in ITypeModel
+	attribute: string;
 }>();
+
+const emit = defineEmits(['update-parameter-row']);
+
+function updateParamaterRow(newParameterRow: any) {
+	emit('update-parameter-row', props.attribute, newParameterRow);
+}
 </script>
 
 <style scoped>
@@ -75,6 +83,6 @@ footer .p-button {
 footer .p-button:hover,
 footer .p-button:focus {
 	color: var(--primary-color);
-	background-color: var(--surface-hover);
+	background-color: var(--surface-highlight);
 }
 </style>
