@@ -1,11 +1,12 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelConcept;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
@@ -16,6 +17,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
+
+import static io.smallrye.jwt.config.ConfigLogging.log;
 
 @Path("/api/models")
 @Authenticated
@@ -120,16 +123,15 @@ public class ModelResource {
 		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no model with this id")
 	})
 	/**
-	 * Get a Model from the data-service.
-	 * Resolve Ontologie Curies if needed.
-	 * Return Model.
+	 * Get a Model from the data-service
+	 * Return Model
 	 */
 	public Response getModel(
 		@PathParam("id") final String id
 	) {
 		Model model;
 
-		// Feth the model from the data-service
+		// Fetch the model from the data-service
 		try {
 			model = proxy.getModel(id);
 		} catch (RuntimeException e) {
@@ -143,18 +145,7 @@ public class ModelResource {
 		if (model == null) {
 			return Response.noContent().build();
 		}
-
-		// Grab the species within the concept of the model
-		ModelConcept concept = model.getConcept();
-		Map<String, String>[] s = concept.getS();
-
-		if (!s.isEmpty()) {
-			// for now only check for the keys 'mira_ids' and 'mira_context'
-			s.computeIfPresent("mira_ids", ModelConcept.curieResolver);
-			s.computeIfPresent("mira_context", ModelConcept.curieResolver);
-			concept.setS(s);
-		}
-
+		
 		// Return the model
 		return Response
 			.status(Response.Status.OK)
