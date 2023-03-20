@@ -14,13 +14,6 @@
 				<model-parameter-list-item
 					class="model-parameter-list-item"
 					:initial-param-row="parameterRow"
-					:draggable="true"
-					@dragstart="handleDragStart($event)"
-					@dragenter="handleDragEnter($event)"
-					@dragleave="handleDragLeave($event)"
-					@dragend="handleDragEnd($event)"
-					@drop="handleDrop($event)"
-					@dragover.prevent
 				/>
 			</li>
 			<footer>
@@ -32,52 +25,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import Button from 'primevue/button';
 import ModelParameterListItem from '@/components/models/model-parameter-list-item.vue';
-import { useDragEvent } from '@/services/drag-drop';
-
-const { setDragData, getDragData } = useDragEvent();
 
 defineProps<{
 	parameters: any;
 }>();
-
-const draggedListItem = ref();
-
-function handleDrop(e) {
-	if (e.stopPropagation) {
-		e.stopPropagation();
-	}
-	if (
-		draggedListItem.value !== e.target &&
-		e.target.classList.contains('model-parameter-list-item')
-	) {
-		draggedListItem.value.innerHTML = e.target.innerHTML;
-		e.target.innerHTML = getDragData('dragged-list-item');
-	}
-	return false;
-}
-
-function handleDragStart(e) {
-	draggedListItem.value = e.target;
-	e.dataTransfer.effectAllowed = 'move';
-	setDragData('dragged-list-item', draggedListItem.value.innerHTML);
-	// draggedListItem.value.style.opacity = '0.4';
-}
-
-function handleDragEnter(e) {
-	e.target.classList.add('over');
-}
-
-function handleDragLeave(e) {
-	e.target.classList.remove('over');
-}
-
-function handleDragEnd(e) {
-	console.log(e);
-	// this.style.opacity = '1';
-}
 </script>
 
 <style scoped>
@@ -88,7 +41,7 @@ ul {
 }
 
 table {
-	margin: 0.5rem 2rem;
+	margin: 0.5rem 1.5rem;
 	text-transform: uppercase;
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
@@ -101,6 +54,7 @@ table tr {
 
 table tr th {
 	font-weight: normal;
+	width: 20%;
 }
 
 .over {

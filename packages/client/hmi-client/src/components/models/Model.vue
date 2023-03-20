@@ -64,45 +64,14 @@
 					</template>
 					<model-parameter-list :parameters="model?.parameters" />
 				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						States<span class="artifact-amount">({{ model?.content.S.length }})</span>
+					</template>
+					<model-parameter-list :parameters="model?.content.S" />
+				</AccordionTab>
 			</template>
 		</Accordion>
-		<!-- <span>Variables</span>
-			 <Badge :value="model?.content.S.length" /> :draggable="true"	@dragstart="handleDragStart" @dragend="handleDragEnd"
-			<DataTable :value="model?.content.S">
-				<Column field="slabel" header="Label"></Column>
-				<Column field="sname" header="Name"></Column>
-				<Column field="units" header="Units"></Column>
-				<Column field="mira_context" header="Concept"></Column>
-				<Column field="definition" header="Definition"></Column>
-				<Column field="default_value" header="Default"></Column>
-			</DataTable> -->
-
-		<!-- <TabView>
-			<TabPanel>
-				<template #header>
-					<span>State variables</span>
-					<Badge :value="model?.content.S.length" />
-				</template>
-				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Label"></Column>
-					<Column field="mira_ids" header="Name"></Column>
-					<Column field="units" header="Units"></Column>
-					<Column field="mira_context" header="Concepts"></Column>
-					<Column field="definition" header="Definition"></Column>
-				</DataTable>
-			</TabPanel>
-			<TabPanel>
-				<template #header>
-					<span>Parameters</span>
-					<Badge :value="model?.parameters.length" />
-				</template>
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</TabPanel>
-		</TabView> -->
 	</section>
 </template>
 

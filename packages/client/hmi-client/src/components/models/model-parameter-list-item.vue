@@ -1,13 +1,6 @@
 <template>
 	<main>
 		<section>
-			<i
-				class="pi pi-sort-alt grab"
-				@mouseover="isDraggable = true"
-				@focusin="isDraggable = true"
-				@mouseleave="isDraggable = false"
-				@focusout="isDraggable = false"
-			/>
 			<table>
 				<tr>
 					<td>
@@ -102,7 +95,6 @@ const props = defineProps<{
 }>();
 
 const isEditing = ref(false);
-const isDraggable = ref(false);
 const prevParamRow = ref(props.initialParamRow);
 const paramRow = ref(props.initialParamRow);
 const contextMenu = ref();
@@ -146,15 +138,19 @@ section {
 
 table {
 	width: 100%;
+	margin-left: 0.5rem;
+}
+
+table tr {
+	display: flex;
+}
+
+table tr td {
+	width: 20%;
 }
 
 table td span:empty:before {
 	content: '--';
-}
-
-table:has(.parameters_header) {
-	margin-left: 3rem;
-	width: 80%;
 }
 
 .p-inputtext.p-inputtext-sm {
