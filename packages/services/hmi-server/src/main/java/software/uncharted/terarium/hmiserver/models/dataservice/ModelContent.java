@@ -18,6 +18,13 @@ public class ModelContent implements Serializable {
 
 	@JsonAlias("S")
 	private List<Map<String, Object>> species;
+	/* Example:
+		{
+			"sname": "S",
+			"mira_ids": "[('identity', 'ido:0000514')]",
+			"mira_context": "[]"
+		}
+	 */
 
 	@JsonAlias("T")
 	private List<Map<String, Optional<String>>> transitions;
