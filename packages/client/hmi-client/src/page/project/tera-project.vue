@@ -51,7 +51,7 @@
 				/>
 			</template>
 			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code" />
-			<tera-project-overview v-else-if="assetName === 'Overview'" :project="project" />
+			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
 		</section>
 		<slider-panel
 			class="slider"
@@ -104,7 +104,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes;
+	assetType?: ProjectAssetTypes | 'overview' | '';
 }>();
 
 const tabStore = useTabStore();
@@ -149,9 +149,9 @@ watch(
 				isEmpty(tabs.value)
 			) {
 				tabStore.addTab(projectContext.value, {
-					assetName: props.assetName ?? 'Overview',
+					assetName: props.assetName === '' || !props.assetName ? 'Overview' : props.assetName,
 					assetId: props.assetId,
-					assetType: props.assetType
+					assetType: props.assetType === '' || !props.assetType ? 'overview' : props.assetType
 				});
 			}
 			// Tab switch

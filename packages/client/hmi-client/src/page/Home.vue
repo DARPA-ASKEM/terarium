@@ -38,7 +38,7 @@
 							</ul>
 							<ul v-else>
 								<li v-for="(project, index) in projects?.slice().reverse()" :key="index">
-									<project-card :project="project" @click="openProject(project)" />
+									<project-card :project="project" @click="openProject(project.id)" />
 								</li>
 								<li>
 									<section class="new-project-card" @click="isNewProjectModalVisible = true">
@@ -261,6 +261,10 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
 };
 
+function openProject(projectId: string) {
+	router.push({ name: RouteName.ProjectRoute, params: { projectId } });
+}
+
 async function createNewProject() {
 	const author = auth.name ?? '';
 	const project = await ProjectService.create(
@@ -269,13 +273,9 @@ async function createNewProject() {
 		author
 	);
 	if (project) {
-		router.push(`/projects/${project.id}`);
+		openProject(project.id);
 		isNewProjectModalVisible.value = false;
 	}
-}
-
-function openProject(chosenProject: IProject) {
-	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
 }
 
 function listAuthorNames(authors) {

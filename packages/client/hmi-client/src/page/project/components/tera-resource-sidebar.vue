@@ -1,15 +1,16 @@
 <template>
 	<nav>
 		<header>
-			<Button icon="pi pi-file-edit" class="p-button-icon-only p-button-text p-button-rounded" />
+			<!-- <Button icon="pi pi-file-edit" class="p-button-icon-only p-button-text p-button-rounded" />
 			<Button icon="pi pi-folder" class="p-button-icon-only p-button-text p-button-rounded" />
 			<Button
 				icon="pi pi-sort-amount-down"
 				class="p-button-icon-only p-button-text p-button-rounded"
 			/>
-			<Button icon="pi pi-arrows-v" class="p-button-icon-only p-button-text p-button-rounded" />
+			<Button icon="pi pi-arrows-v" class="p-button-icon-only p-button-text p-button-rounded" /> -->
 			<Button
 				icon="pi pi-trash"
+				v-tooltip="'Delete chosen asset'"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="removeAsset"
 			/>
@@ -51,6 +52,7 @@ import { useRoute, useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
+
 import { DocumentAsset } from '@/types/Types';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
