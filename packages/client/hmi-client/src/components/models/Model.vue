@@ -245,7 +245,7 @@ watch([model, graphElement], async () => {
 	});
 
 	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (renderer?.editMode) return;
+		if (!renderer?.editMode) return;
 		eventX = pos.x;
 		eventY = pos.y;
 		menu.value.toggle(evt);
