@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -27,6 +28,8 @@ public class ExtractionResource {
 	// source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 	private static final Pattern DOI_VALIDATION_PATTERN = Pattern.compile("^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
+	@ConfigProperty(name = "xdd_api_key")
+	String key;
 	@RestClient
 	ExtractionProxy proxy;
 
@@ -48,9 +51,9 @@ public class ExtractionResource {
 		try {
 			XDDResponse<XDDExtractionsResponseOK> response;
 			if (isDoi) {
-				response = proxy.getExtractions(term, null, page, askemClass, include_highlights);
+				response = proxy.getExtractions(term, null, page, askemClass, include_highlights, key);
 			} else {
-				response = proxy.getExtractions(null, term, page, askemClass, include_highlights);
+				response = proxy.getExtractions(null, term, page, askemClass, include_highlights, key);
 			}
 
 			if (response.getErrorMessage() != null) {

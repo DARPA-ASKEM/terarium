@@ -8,15 +8,11 @@ import software.uncharted.terarium.hmiserver.resources.documentservice.responses
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 
 import javax.management.Query;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@RegisterRestClient(configKey = "xdd-extraction-service")
+@RegisterRestClient(configKey = "xdd-document-service")
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface ExtractionProxy {
@@ -27,7 +23,8 @@ public interface ExtractionProxy {
 		@QueryParam("query_all") final String queryAll,
 		@QueryParam("page") final Integer page,
 		@QueryParam("ASKEM_CLASS") String askemClass,
-		@QueryParam("include_highlights") String include_highlights
+		@QueryParam("include_highlights") String include_highlights,
+		@QueryParam("api_key") String apiKey
 	);
 
 	@GET
