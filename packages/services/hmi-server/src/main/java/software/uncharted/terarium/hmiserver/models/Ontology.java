@@ -18,7 +18,6 @@ public class Ontology implements Serializable {
 
 		// API Call
 
-
 		this.title = "title";
 		this.description = "description";
 		try {
