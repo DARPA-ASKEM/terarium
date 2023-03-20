@@ -28,22 +28,58 @@
 			style="height: 100%; width: 100%"
 		/>
 	</div>
+	<Dialog
+		v-model:visible="codeExtractionDialogVisible"
+		modal
+		header="Confirm extraction"
+		:style="{ width: '50vw' }"
+	>
+		<div ref="graphElement" class="graph-element" />
+	</Dialog>
 </template>
+
 <script setup lang="ts">
 import { VAceEditor } from 'vue3-ace-editor';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
+import Dialog from 'primevue/dialog';
+
+import { runDagreLayout } from '@/services/graph';
+import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
+import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
+import { IGraph } from '@graph-scaffolder/index';
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
 const content = ref(DEFAULT_TEXT);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
+const codeExtractionDialogVisible = ref(false);
+const petriNet = ref<PetriNet | null>(null);
+const graphElement = ref<HTMLDivElement | null>(null);
+// Render graph whenever a new model is fetched or whenever the HTML element
+//	that we render the graph to changes.
+watch([graphElement], async () => {
+	if (petriNet.value === null || graphElement.value === null) return;
+	// Convert petri net into a graph
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(petriNet.value);
+	// Create renderer
+	const renderer = new PetrinetRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: true,
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
+	});
+
+	// Render graph
+	await renderer?.setData(g);
+	await renderer?.render();
+});
 
 /**
  * File open/add event handler.  Immediately render the contents of the file to the editor
@@ -59,8 +95,71 @@ async function onFileOpen(event) {
 }
 
 async function onExtractPetrinet() {
-	const response = await API.post(`code/to_petri?code=${selectedText.value}`);
-	alert(JSON.stringify(response.data));
+	// const response = await API.post(`code/to_petri?code=${selectedText.value}`);
+	const response = {
+		S: [
+			{ sname: 'S', uid: 1 },
+			{ sname: 'I', uid: 2 },
+			{ sname: 'D', uid: 3 },
+			{ sname: 'A', uid: 4 },
+			{ sname: 'R', uid: 5 },
+			{ sname: 'T', uid: 6 },
+			{ sname: 'H', uid: 7 },
+			{ sname: 'E', uid: 8 }
+		],
+		T: [
+			{ tname: 'alpha', uid: 10 },
+			{ tname: ' beta', uid: 11 },
+			{ tname: ' gamma', uid: 12 },
+			{ tname: ' delta', uid: 13 },
+			{ tname: ' epsilon', uid: 14 },
+			{ tname: ' mu', uid: 15 },
+			{ tname: ' zeta', uid: 16 },
+			{ tname: ' lamda', uid: 17 },
+			{ tname: ' eta', uid: 18 },
+			{ tname: ' rho', uid: 19 },
+			{ tname: ' theta', uid: 20 },
+			{ tname: ' kappa', uid: 21 },
+			{ tname: ' nu', uid: 22 },
+			{ tname: ' xi', uid: 23 },
+			{ tname: ' sigma', uid: 24 },
+			{ tname: ' tau', uid: 25 }
+		],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 2, is: 2 },
+			{ it: 3, is: 2 },
+			{ it: 4, is: 2 },
+			{ it: 5, is: 3 },
+			{ it: 6, is: 4 },
+			{ it: 7, is: 4 },
+			{ it: 8, is: 5 },
+			{ it: 9, is: 6 },
+			{ it: 10, is: 2 },
+			{ it: 11, is: 3 },
+			{ it: 12, is: 4 },
+			{ it: 13, is: 5 },
+			{ it: 14, is: 6 }
+		],
+		O: [
+			{ ot: 1, os: 2 },
+			{ ot: 2, os: 3 },
+			{ ot: 3, os: 4 },
+			{ ot: 4, os: 5 },
+			{ ot: 5, os: 8 },
+			{ ot: 6, os: 5 },
+			{ ot: 7, os: 6 },
+			{ ot: 8, os: 7 },
+			{ ot: 9, os: 7 },
+			{ ot: 10, os: 7 },
+			{ ot: 11, os: 7 },
+			{ ot: 12, os: 7 },
+			{ ot: 13, os: 7 },
+			{ ot: 14, os: 8 }
+		]
+	};
+	petriNet.value = response;
+	codeExtractionDialogVisible.value = true;
 }
 
 /**
@@ -104,5 +203,14 @@ async function initialize(editorInstance) {
 	margin-bottom: 10px;
 	display: flex;
 	gap: 10px;
+}
+
+.graph-element {
+	flex: 1;
+	height: 400px;
+	width: 100%;
+	border: 1px solid var(--surface-border);
+	overflow: hidden;
+	border-radius: 0.25rem;
 }
 </style>
