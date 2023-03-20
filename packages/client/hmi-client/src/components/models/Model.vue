@@ -95,7 +95,7 @@ import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
-import { getModel } from '@/services/model';
+import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -278,6 +278,11 @@ onUnmounted(() => {
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
+	if (!isEditing.value) {
+		console.log(`Saving model id: ${model.value?.id}`);
+		console.log(JSON.stringify(model.value?.content));
+		updateModel(model.value);
+	}
 };
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
