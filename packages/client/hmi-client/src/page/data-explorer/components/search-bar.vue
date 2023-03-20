@@ -28,8 +28,8 @@
 				<i class="pi pi-times clear-search" :class="{ hidden: !query }" @click="clearQuery" />
 			</span>
 			<Button
-				class="p-button-secondary search-by-example-button"
-				icon="pi pi-file"
+				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small search-by-example-button"
+				icon="pi pi-upload"
 				@click="isSearchByExampleVisible = !isSearchByExampleVisible"
 				:active="isSearchByExampleVisible"
 			/>
@@ -58,9 +58,17 @@
 						:resourceType="searchByExampleSelectedResourceType"
 					>
 					</asset-card>
-					<span v-else>
-						<i class="pi pi-file" style="font-size: 3rem" />
-						Drag a paper, model, or dataset here or upload a file</span
+					<Button
+						label="Clear"
+						size="small"
+						text
+						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
+						class="clear-search-by-example"
+					>
+					</Button>
+					<span v-else class="drop-zone">
+						<i class="pi pi-upload big-icon" />
+						Drag and drop a paper, model, or dataset here</span
 					>
 				</section>
 			</section>
@@ -71,7 +79,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.similarContent"
 					/>
-					<label for="similarContent">SIMILAR<br />CONTENT</label>
+					<label for="similarContent">Similar<br />content</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -79,7 +87,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.forwardCitation"
 					/>
-					<label for="forwardCitation">FORWARD<br />CITATION</label>
+					<label for="forwardCitation">Forward<br />citation</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -87,7 +95,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.backwardCitation"
 					/>
-					<label for="forwardCitation">BACKWARD<br />CITATION</label>
+					<label for="backwardCitation">Backward<br />citation</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -95,7 +103,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.relatedContent"
 					/>
-					<label for="relatedContent">MODELS AND<br />DATASETS</label>
+					<label for="relatedContent">Related<br />resources</label>
 				</div>
 				<Button label="SEARCH" @click="initiateSearchByExample()" />
 			</footer>
@@ -188,14 +196,14 @@ const fillAutocomplete = async () => {
 const dragOverStyle = computed(() => {
 	if (isDraggedOver.value) {
 		return {
-			border: `1px solid var(--text-color-subdued)`,
-			'background-color': 'var(--surface-hover)'
+			border: `2px solid var(--primary-color)`,
+			'background-color': 'var(--surface-highlight)'
 		};
 	}
 	if (searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value) {
 		return {
-			border: `1px dashed var(--primary-color)`,
-			'background-color': 'var(--surface-secondary)'
+			border: `2px solid var(--surface-border)`,
+			'background-color': 'var(--surface-highlight)'
 		};
 	}
 
@@ -296,13 +304,16 @@ i {
 }
 
 .pi.pi-times.clear-search {
+	padding: 0.5rem;
+	border-radius: var(--border-radius-bigger);
+	top: 1rem;
 	right: 4rem;
 }
 
 .clear-search:hover {
 	background-color: var(--surface-hover);
 	padding: 0.5rem;
-	border-radius: 1rem;
+	border-radius: var(--border-radius-bigger);
 	top: 1rem;
 	right: 4rem;
 }
@@ -316,8 +327,9 @@ i {
 	display: flex;
 	flex-direction: column;
 	position: absolute;
-	top: 4rem;
-	width: 70rem;
+	top: 0.5rem;
+	max-width: 58rem;
+	width: 47%;
 	min-height: 16rem;
 	background-color: var(--surface-section);
 	border-radius: 2rem;
@@ -325,6 +337,8 @@ i {
 	z-index: 2;
 	row-gap: 1rem;
 	padding: 0 1.5rem 2rem 1.5rem;
+	margin-right: 3rem;
+	box-shadow: 0px 4px 6px -1px rgb(0 0 0 / 8%), 0px 2px 4px -1px rgb(0 0 0 / 6%);
 }
 
 .search-by-example header {
@@ -333,7 +347,7 @@ i {
 }
 
 .search-by-example header * {
-	margin-top: 1.5rem;
+	margin-top: 1rem;
 }
 
 .search-by-example header .p-button {
@@ -354,9 +368,26 @@ i {
 	border-radius: 1rem;
 	min-height: 9rem;
 	display: flex;
-	align-items: center;
+	align-items: top;
 	justify-content: center;
 	padding: 1rem;
+	background-color: var(--gray-50);
+	gap: 1rem;
+}
+
+.big-icon {
+	font-size: 2.5rem;
+	color: var(--primary-color-light);
+}
+
+.drop-zone {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.clear-search-by-example {
+	height: fit-content;
 }
 
 .search-by-example footer {
@@ -372,13 +403,12 @@ i {
 .p-button[active='false'].search-by-example-button:focus,
 .p-button[active='false'].search-by-example-button:enabled {
 	background-color: var(--surface-section);
-	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius-bigger);
 	color: var(--text-color-subdued);
 }
 
 .p-button[active='false'].search-by-example-button:hover {
 	background-color: var(--surface-100);
-	border: 1px solid var(--surface-border);
 	color: var(--text-color-subdued);
 }
 
@@ -386,13 +416,11 @@ i {
 .p-button[active='true'].search-by-example-button:focus,
 .p-button[active='true'].search-by-example-button:enabled {
 	background-color: var(--surface-highlight);
-	border: 1px solid var(--surface-border);
 	color: var(--text-color-subdued);
 }
 
 .p-button[active='true'].search-by-example-button:hover {
 	background-color: var(--surface-highlight);
-	border: 1px solid var(--surface-border);
 	color: var(--text-color-subdued);
 }
 

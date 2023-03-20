@@ -133,7 +133,7 @@ main {
 footer {
 	align-items: center;
 	background-color: var(--surface-section);
-	border-top: 1px solid var(--surface-border);
+	border-top: 1px solid var(--surface-border-light);
 	display: flex;
 	grid-area: footer;
 	height: 3rem;
