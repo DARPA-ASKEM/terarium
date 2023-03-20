@@ -103,7 +103,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-parameter-row']);
 
-const isEditing = ref(false);
+const isEditing = ref(true);
 const showRange = ref(false);
 const contextMenu = ref();
 const editedParameterRow = ref({ ...props.parameterRow });
@@ -119,7 +119,6 @@ const parameterMenuItems = [
 ];
 
 function toggleContextMenu(event) {
-	console.log(contextMenu.value);
 	contextMenu.value.toggle(event);
 }
 
