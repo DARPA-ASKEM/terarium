@@ -1,6 +1,11 @@
 import API from '@/api/api';
 import { Model } from '@/types/Model';
 
+export async function createModel(model: Model): Promise<Model | null> {
+	const response = await API.post(`/models`, model);
+	return response?.data ?? null;
+}
+
 /**
  * Get Model from the data service
  * @return Model|null - the model, or null if none returned by API

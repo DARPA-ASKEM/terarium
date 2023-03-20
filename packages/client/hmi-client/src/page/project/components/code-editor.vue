@@ -17,7 +17,7 @@
 			<Button
 				label="Extract petri net"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
-				@click="onExtractPetrinet"
+				@click="onExtractGraph"
 			></Button>
 		</div>
 		<v-ace-editor
@@ -35,6 +35,10 @@
 		:style="{ width: '50vw' }"
 	>
 		<div ref="graphElement" class="graph-element" />
+		<template #footer>
+			<Button label="Cancel" @click="codeExtractionDialogVisible = false" text />
+			<Button label="Create model" @click="createModelFromCode()" />
+		</template>
 	</Dialog>
 </template>
 
@@ -54,20 +58,21 @@ import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
+import { createModel } from '@/services/model';
 
 const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
 const content = ref(DEFAULT_TEXT);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const codeExtractionDialogVisible = ref(false);
-const petriNet = ref<PetriNet | null>(null);
+const acset = ref<PetriNet | null>(null);
 const graphElement = ref<HTMLDivElement | null>(null);
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch([graphElement], async () => {
-	if (petriNet.value === null || graphElement.value === null) return;
+	if (acset.value === null || graphElement.value === null) return;
 	// Convert petri net into a graph
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(petriNet.value);
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(acset.value);
 	// Create renderer
 	const renderer = new PetrinetRenderer({
 		el: graphElement.value as HTMLDivElement,
@@ -94,8 +99,8 @@ async function onFileOpen(event) {
 	};
 }
 
-async function onExtractPetrinet() {
-	// const response = await API.post(`code/to_petri?code=${selectedText.value}`);
+async function onExtractGraph() {
+	// const response = await API.post(`code/to_acset?code=${selectedText.value}`);
 	const response = {
 		S: [
 			{ sname: 'S', uid: 1 },
@@ -158,7 +163,7 @@ async function onExtractPetrinet() {
 			{ ot: 14, os: 8 }
 		]
 	};
-	petriNet.value = response;
+	acset.value = response;
 	codeExtractionDialogVisible.value = true;
 }
 
@@ -188,6 +193,16 @@ async function initialize(editorInstance) {
 	editor.value = editorInstance;
 	editorInstance.session.selection.on('changeSelection', onSelectedTextChange);
 	editorInstance.setShowPrintMargin(false);
+}
+
+async function createModelFromCode() {
+	const newModel = {
+		name: 'New model',
+		framework: 'Petri Net',
+		content: JSON.stringify(acset.value)
+	};
+	const response = await createModel(newModel);
+	console.log(response);
 }
 </script>
 <style>
