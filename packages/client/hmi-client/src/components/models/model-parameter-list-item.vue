@@ -103,7 +103,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-parameter-row']);
 
-const isEditing = ref(true);
+const isEditing = ref(false);
 const showRange = ref(false);
 const contextMenu = ref();
 const editedParameterRow = ref({ ...props.parameterRow });
