@@ -146,7 +146,7 @@ public class ModelResource {
 			return Response.noContent().build();
 		}
 
-		// Fluff the ontologie by resolving the curie
+		// Fluff the ontology by resolving the curie
 		model.getContent().curieResolver();
 
 		// Return the model
