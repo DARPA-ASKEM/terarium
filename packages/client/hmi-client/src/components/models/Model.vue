@@ -27,7 +27,7 @@
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<div v-if="model" ref="graphElement" class="graph-element" />
-				<ContextMenu ref="menu" :model="items" />
+				<ContextMenu ref="menu" :model="contextMenuItems" />
 			</AccordionTab>
 			<template v-if="!isEditable">
 				<AccordionTab header="State variables">
@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { isEmpty } from 'lodash';
+import { remove, isEmpty } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -179,18 +179,18 @@ let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
 
-const keyHandler = (event: KeyboardEvent) => {
+const editorKeyHandler = (event: KeyboardEvent) => {
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
-			_.remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
-			_.remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
+			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
 			renderer.render();
 		}
 
 		if (renderer && renderer.edgeSelection) {
 			const edgeData = renderer.edgeSelection.datum();
-			_.remove(
+			remove(
 				renderer.graph.edges,
 				(e) => e.source === edgeData.source || e.target === edgeData.target
 			);
@@ -199,7 +199,8 @@ const keyHandler = (event: KeyboardEvent) => {
 	}
 };
 
-const items = ref([
+// Model editor context menu
+const contextMenuItems = ref([
 	{
 		label: 'Add State',
 		icon: 'pi pi-fw pi-circle',
@@ -255,7 +256,6 @@ watch([model, graphElement], async () => {
 	await renderer?.render();
 });
 
-// FIXME: update after Dec 8 demo
 const router = useRouter();
 const goToSimulationPlanPage = () => {
 	router.push({
@@ -268,11 +268,11 @@ const goToSimulationPlanPage = () => {
 
 onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
-	document.addEventListener('keyup', keyHandler);
+	document.addEventListener('keyup', editorKeyHandler);
 });
 
 onUnmounted(() => {
-	document.removeEventListener('keyup', keyHandler);
+	document.removeEventListener('keyup', editorKeyHandler);
 });
 
 const toggleEditMode = () => {
