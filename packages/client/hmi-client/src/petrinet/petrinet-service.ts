@@ -262,10 +262,14 @@ export function blindStratification(petrinetOne, petrinetTwo) {
 	for (let i = 0; i < graphTwo.edges.length; i++) {
 		for (let j = 0; j < graphOne.nodes.length; j++) {
 			if (graphOne.nodes[j].data.type === 'S') {
-				if (graphTwo.nodes[i].data.type === 'T') {
-					// Create new transition: (Example, S,quarantine)
-					const newTransitionId = `${graphOne.nodes[j].id},${graphTwo.nodes[i].id}`;
-					const newTransitionLabel = `${graphOne.nodes[j].label},${graphTwo.nodes[i].label}`;
+				// Find the edges source that type as transition.
+				const graphTwoSourceNode = graphTwo.nodes.find(
+					(node) => node.id === graphTwo.edges[i].source && node.data.type === 'T'
+				);
+				if (graphTwoSourceNode) {
+					// Create the (S,transition) nodes (Example: S,unquarantine)
+					const newTransitionId = `${graphOne.nodes[j].id},${graphTwoSourceNode.id}`;
+					const newTransitionLabel = `${graphOne.nodes[j].label},${graphTwoSourceNode.label}`;
 					resultGraph.nodes.push({
 						id: newTransitionId,
 						label: newTransitionLabel,
@@ -277,7 +281,7 @@ export function blindStratification(petrinetOne, petrinetTwo) {
 						nodes: []
 					});
 				}
-				// Create this transition's edge(s)
+				// Create the edges for (S,transition)
 				const newSource = `${graphOne.nodes[j].id},${graphTwo.edges[i].source}`;
 				const newTarget = `${graphOne.nodes[j].id},${graphTwo.edges[i].target}`;
 				resultGraph.edges.push({ source: newSource, target: newTarget, points: [] });
