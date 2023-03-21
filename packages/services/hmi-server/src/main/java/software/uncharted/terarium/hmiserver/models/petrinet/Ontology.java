@@ -5,6 +5,7 @@ import software.uncharted.terarium.hmiserver.proxies.mira.MiraProxy;
 
 import lombok.Data;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.Serializable;
 import java.net.URL;
@@ -21,6 +22,7 @@ public class Ontology implements Serializable {
 	private String description;
 	private URL url;
 
+	@Inject
 	@RestClient
 	MiraProxy proxy;
 
