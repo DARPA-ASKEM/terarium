@@ -13,15 +13,10 @@
 			v-if="!isEmpty(resources)"
 			:value="resources"
 			selectionMode="single"
-			v-on:node-select="openAsset"
+			v-on:node-select="emit('open-asset', $event.data)"
 		>
 			<template #default="slotProps">
-				<span
-					:active="
-						route.params.assetId === slotProps.node.data.assetId &&
-						route.params.assetType === slotProps.node.data.assetType
-					"
-				>
+				<span :active="route.params.assetName === slotProps.node.label">
 					{{ slotProps.node.label }}
 					<Chip :label="slotProps.node.data.assetType" />
 				</span>
@@ -41,7 +36,7 @@
 					</h5>
 				</template>
 				<template #footer>
-					<Button label="Yes" @click="removeAsset" />
+					<Button label="Yes" @click="removeAsset()" />
 					<Button
 						label="No"
 						class="p-button-secondary"
@@ -55,13 +50,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-// import { logger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset } from '@/services/project';
-import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
@@ -70,11 +65,13 @@ import { DocumentAsset } from '@/types/Types';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 
-defineProps<{
+const props = defineProps<{
 	project: IProject;
+	tabs: Tab[];
 }>();
 
-const router = useRouter();
+const emit = defineEmits(['open-asset', 'close-tab']);
+
 const route = useRoute();
 const resourcesStore = useResourcesStore();
 
@@ -86,6 +83,15 @@ const resources = computed(() => {
 	const resourceTreeNodes: any[] = [];
 
 	if (!isEmpty(storedAssets)) {
+		resourceTreeNodes.push({
+			key: 'Overview',
+			label: 'Overview',
+			data: {
+				assetType: 'overview'
+			},
+			selectable: true
+		});
+
 		// Basic new code file (temp)
 		resourceTreeNodes.push({
 			key: 'New file',
@@ -103,9 +109,11 @@ const resources = computed(() => {
 
 			for (let j = 0; j < assets.length; j++) {
 				resourceTreeNodes.push({
-					key: assets[j]?.name || assets[j]?.title,
+					key: j.toString(),
 					label: assets[j]?.name || assets[j]?.title || assets[j]?.id,
 					data: {
+						// Matches Tab type
+						assetName: assets[j]?.name || assets[j]?.title || assets[j]?.id,
 						assetType: projectAssetTypes[i],
 						assetId:
 							projectAssetTypes[i] === ProjectAssetTypes.DOCUMENTS
@@ -120,52 +128,43 @@ const resources = computed(() => {
 	return resourceTreeNodes;
 });
 
-// Remove an asset - will be adjusted later
-function removeAsset() {
-	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const assetId = route.params.assetId;
-	const assetType = route.params.assetType as ProjectAssetTypes;
+function removeAsset(
+	assetToRemove: Tab = {
+		assetName: route.params.assetName as string,
+		assetId: route.params.assetId as string,
+		assetType: route.params.assetType as ProjectAssetTypes | 'overview'
+	}
+) {
+	const { assetId, assetType } = assetToRemove;
 
-	const asset = storedAssets[assetType].find((a) =>
-		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id === assetId
+	if (!assetType || !resourcesStore.activeProject || !resourcesStore.activeProjectAssets) {
+		return; // See about removing this check somehow, it may be best to pass the resourceStore from App.vue
+	}
+
+	const asset = resourcesStore.activeProjectAssets[assetType].find((a) =>
+		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id.toString() === assetId
 	);
 
-	if (asset === undefined) {
-		console.error('Failed to remove asset');
+	if (!asset) {
+		logger.error('Failed to remove asset');
 		return;
 	}
-	// remove the document from the project assets
-	if (resourcesStore.activeProject && storedAssets) {
-		deleteAsset(resourcesStore.activeProject.id, assetType, asset.id);
 
-		storedAssets[assetType] = storedAssets[assetType].filter(({ id }) => id !== asset.id);
+	// Remove asset from resource storage
+	deleteAsset(resourcesStore.activeProject.id, assetType, asset.id);
+	resourcesStore.activeProjectAssets[assetType] = resourcesStore.activeProjectAssets[
+		assetType
+	].filter(({ id }) => id !== asset.id);
+	// Remove also from the local cache
+	resourcesStore.activeProject.assets[assetType] = resourcesStore.activeProject.assets[
+		assetType
+	].filter((id: string | number) => id !== asset.id);
 
-		// Remove also from the local cache - TO DO
-		// resourcesStore.activeProject.assets[assetType] =
-		// 	resourcesStore.activeProject.assets[assetType].filter(
-		// 		(docId) => docId !== asset.id
-		// 	);
-	}
+	// If asset to be removed is open in a tab, close it
+	const tabIndex = props.tabs.findIndex((tab: Tab) => tab === assetToRemove);
+	if (tabIndex) emit('close-tab', tabIndex);
 
 	isConfirmRemovalModalVisible.value = false;
-
-	// if the user deleted the currently selected asset, then clear its content from the view TO DO
-	// if (asset.xdd_uri === documentId.value) {
-	// 	router.push('/document'); // clear the doc ID as a URL param
-	// }
-
-	// look at model-sidebar-panel.vue in previous versions if you want to see about using the old tab system
-}
-
-function openAsset(event: any) {
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: event.key,
-			assetId: event.data.assetId,
-			assetType: event.data.assetType
-		}
-	});
 }
 
 // function exportIds() {

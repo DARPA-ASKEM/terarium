@@ -7,7 +7,12 @@
 			direction="left"
 		>
 			<template v-slot:content>
-				<tera-resource-sidebar :project="project" />
+				<tera-resource-sidebar
+					:tabs="tabs"
+					:project="project"
+					@open-asset="openAsset"
+					@close-tab="removeClosedTab"
+				/>
 			</template>
 		</slider-panel>
 		<section>
@@ -118,7 +123,7 @@ const code = ref<string>();
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
-const tabs = computed(() => tabStore.getTabs(projectContext.value));
+const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
 
 function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
