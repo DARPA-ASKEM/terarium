@@ -284,8 +284,8 @@ onUnmounted(() => {
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && model.value) {
-		model.value.content = parseIGraph2PetriNet(renderer?.graph);
+	if (!isEditing.value && model.value && renderer) {
+		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
 	}
 };
