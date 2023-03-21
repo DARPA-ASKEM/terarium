@@ -24,15 +24,4 @@ public class Species implements Serializable {
 
 	@JsonAlias("mira_context")
 	private List<Ontology> miraContext;
-
-	/**
-	 * Returns all the curies of all ontologies within the Species.
-	 * @return List of curies
-	 */
-	public List<String> getAllCuries() {
-		return Stream.concat(
-			miraIds.stream().map(Ontology::getCurie),
-			miraContext.stream().map(Ontology::getCurie)
-		).toList();
-	}
 }

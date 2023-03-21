@@ -21,21 +21,24 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 	@Override
 	public Species deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JacksonException {
 		JsonNode node = p.getCodec().readTree(p);
-		final Species species = new Species();
 
-		// Set the properties
+		final Species species = new Species();
 		species.setName(node.get("sname").asText());
-		species.setMiraIds(new ArrayList<>());
-		species.setMiraContext(new ArrayList<>());
 
 		final String[] mira_ids = node.get("mira_ids").asText().split("\\), \\(");
-		for (String ontology : mira_ids) {
-			species.getMiraIds().add(new Ontology(ontology));
+		if (mira_ids.length > 0) {
+			species.setMiraIds(new ArrayList<>());
+			for (String ontology : mira_ids) {
+				species.getMiraIds().add(new Ontology(ontology));
+			}
 		}
 
 		final String[] mira_context = node.get("mira_context").asText().split("\\), \\(");
-		for (String ontology : mira_context) {
-			species.getMiraContext().add(new Ontology(ontology));
+		if (mira_context.length > 0) {
+			species.setMiraContext(new ArrayList<>());
+			for (String ontology : mira_context) {
+				species.getMiraContext().add(new Ontology(ontology));
+			}
 		}
 
 		return species;

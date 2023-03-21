@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.security.Authenticated;
+import org.apache.http.util.EntityUtils;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -10,6 +14,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
 import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
@@ -160,14 +165,18 @@ public class ModelResource {
 
 		// Get the curies from all species
 		final String curies = species.stream()
-			.map(Species::getAllCuries)
-			.flatMap(Collection::stream)
+			.flatMap(s -> Stream.concat(
+				s.getMiraIds().stream().map(Ontology::getCurie),
+				s.getMiraContext().stream().map(Ontology::getCurie)
+				))
 			.filter(Objects::nonNull)
 			.collect(Collectors.joining(","));
 
 			try {
-				final Response entities = dkgProxy.getEntities(curies);
-				log.debug(entities);
+				final List<DKG> entities = dkgProxy.getEntities(curies);
+				if (!entities.isEmpty()) {
+					log.debug(entities);
+				}
 			} catch (RuntimeException e) {
 				log.error("Unable to get the ontology entity for curies" + curies, e);
 			}
