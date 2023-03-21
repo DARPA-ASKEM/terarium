@@ -8,7 +8,8 @@ export enum RouteName {
 	ProjectRoute = 'project',
 	ProvenanceRoute = 'provenance',
 	DataExplorerRoute = 'dataExplorer',
-	CodeRoute = 'code'
+	CodeRoute = 'code',
+	JupyterTestRoute = 'jupyter',
 }
 
 export const RouteMetadata: {
@@ -22,5 +23,6 @@ export const RouteMetadata: {
 	},
 	[RouteName.ProvenanceRoute]: { displayName: 'Provenance', icon: IconFlow32 },
 	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },
-	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: 'pi pi-compass' }
+	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: 'pi pi-compass' },
+	[RouteName.JupyterTestRoute]: {displayName: 'Jupyter cell testing', icon: 'pi pi-compass' },
 };

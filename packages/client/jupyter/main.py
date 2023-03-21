@@ -40,7 +40,7 @@ class ExampleHandler(ExtensionHandlerJinjaMixin, ExtensionHandlerMixin, JupyterH
             # Use camelCase here, since that's what the lab components expect
             "appVersion": version,
             "baseUrl": base_url,
-            "wsUrl": 'ws://localhost:8080/notebook_ws/',
+            "wsUrl": 'ws://localhost:8078/notebook_ws/',
             "token": self.settings["token"],
             "fullStaticUrl": ujoin(base_url, "static", self.name),
             "frontendUrl": ujoin(base_url),

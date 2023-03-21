@@ -27,14 +27,13 @@ RUN pip install jupyterlab jupyterlab_server pandas matplotlib xarray numpy
 USER 1000
 
 # Install Julia requirements
-RUN julia -e ' \
-    packages = [ \
-        "Catlab", "AlgebraicPetri", "DataSets", "EasyModelAnalysis", "XLSX", "Plots", "Downloads", \
-        "DataFrames", "ModelingToolkit", "Symbolics", \
-    ]; \
-    using Pkg; \
-    for p in packages; Pkg.add(p); \
-    end;'
+# RUN julia -e ' \
+#     packages = [ \
+#         "Catlab", "AlgebraicPetri", "DataSets", "EasyModelAnalysis", "XLSX", "Plots", "Downloads", \
+#         "DataFrames", "ModelingToolkit", "Symbolics", \
+#     ]; \
+#     using Pkg; \
+#     Pkg.add(packages);'
 
 # Copy src code over
 COPY --chown=1000:1000 . /jupyter

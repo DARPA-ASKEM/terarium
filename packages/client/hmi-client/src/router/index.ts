@@ -12,6 +12,7 @@ import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
 import { RouteName } from './routes';
+import JupyterTest from '@/page/JupyterTest.vue';
 
 export enum RoutePath {
 	Home = '/',
@@ -24,7 +25,7 @@ export enum RoutePath {
 	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	ModelEditor = '/model-editor',
-	ModelRunner = '/model-runner'
+	ModelRunner = '/model-runner',
 }
 
 const routes = [
@@ -47,7 +48,8 @@ const routes = [
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
-	{ path: '/workflow-playground', component: WorkflowPlayground }
+	{ path: '/workflow-playground', component: WorkflowPlayground },
+	{ path: '/jupyter', component: JupyterTest},
 ];
 
 const router = createRouter({

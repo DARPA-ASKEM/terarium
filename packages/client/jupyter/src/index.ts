@@ -43,6 +43,8 @@ import { CommandRegistry } from '@lumino/commands';
 
 import { BoxPanel, Widget } from '@lumino/widgets';
 
+import { getCodeBlock } from './askemlib';
+
 function main(): void {
   const kernelManager = new KernelManager();
   const specsManager = new KernelSpecManager();
@@ -92,25 +94,16 @@ function main(): void {
       cellWidget.model.mimeType = mimeType;
 
       // TODO: Make the setup code more dynamic
-      let setupCode = ''
+      // let setupCode = ''
 
-      if (lang.name == "julia") {
-        setupCode = `
-using Catlab
-using Catlab.CategoricalAlgebra 
-using Catlab.Programs
-using Catlab.WiringDiagrams
-using Catlab.Graphics.Graphviz
-using AlgebraicPetri 
-        `
-      }
-      else if (lang.name == "python") {
-        setupCode = `
-import pandas as pd
-import numpy as np
-import xarray as xr
-        `;
-      }
+      // if (lang.name == "julia") {
+      //   setupCode = askemFile.julia.init;
+      // }
+      // else if (lang.name == "python") {
+      //   setupCode = askemFile.python.init;
+      // }
+      let setupCode = getCodeBlock(lang.name);
+      console.log(setupCode);
 
       const future = kernel?.requestExecute({
         code: setupCode, 
