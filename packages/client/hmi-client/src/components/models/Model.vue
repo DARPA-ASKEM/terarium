@@ -32,8 +32,8 @@
 							<Splitter class="mb-5 model-panel">
 								<SplitterPanel class="tera-split-panel" :size="80" :minSize="50">
 									<section class="graph-element">
-				            <div v-if="model" ref="graphElement" class="graph-element" />
-				            <ContextMenu ref="menu" :model="contextMenuItems" />
+										<div v-if="model" ref="graphElement" class="graph-element" />
+										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
 								</SplitterPanel>
 								<SplitterPanel class="tera-split-panel" :size="20" :minSize="20">
