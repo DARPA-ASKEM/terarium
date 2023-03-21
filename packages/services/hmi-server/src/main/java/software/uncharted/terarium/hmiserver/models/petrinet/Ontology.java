@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models;
+package software.uncharted.terarium.hmiserver.models.petrinet;
 
 import lombok.Data;
 
@@ -7,9 +7,11 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.smallrye.jwt.config.ConfigLogging.log;
+
 @Data
 public class Ontology implements Serializable {
-	private final String type;
+	private final String name;
 	private final String curie;
 	private String title;
 	private String description;
@@ -18,13 +20,15 @@ public class Ontology implements Serializable {
 	public Ontology (String input) {
 		// input = "('identity', 'ido:0000514')"
 		final Matcher matcher = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)").matcher(input);
+		final Boolean result = matcher.find();
 		int i = matcher.groupCount();
-		if (i > 0) {
-			this.type = matcher.group(1);
+		if (result && i > 0) {
+			this.name = matcher.group(1);
 			this.curie = matcher.group(2);
 		} else {
-			this.type = this.curie = "test";
+			this.name = this.curie = null;
 		}
+
 		// API Call
 
 		this.title = "title";
@@ -32,7 +36,7 @@ public class Ontology implements Serializable {
 		try {
 			this.url = new URL("github.io");
 		} catch (Exception e) {
-			this.url = null;
+			log.error(e);
 		}
 	}
 }
