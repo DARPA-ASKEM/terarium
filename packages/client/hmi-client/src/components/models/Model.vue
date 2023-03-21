@@ -142,7 +142,7 @@ const fetchRelatedTerariumArtifacts = async () => {
 };
 
 function updateParamaterRow(attribute: string, newParameterRow) {
-	if (model.value && model.value[attribute]) {
+	if (model?.value?.[attribute]) {
 		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
 		model.value[attribute][rowIndex] = { ...newParameterRow };
 	}
