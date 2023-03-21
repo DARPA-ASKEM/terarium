@@ -1,4 +1,5 @@
 import { IGraph } from '@graph-scaffolder/types';
+import API from '@/api/api';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -105,20 +106,118 @@ export enum NodeType {
 }
 
 /**
+ * Convert a PetriNet graph representation to PetriNet ACset representation
+ *
+ * We don't necessarily index-parity in the conversion, that being
+ *   X === parseIGraph2PetriNet(parsePetriNet2IGraph(X))
+ *
+ * Because the index positions could have changed, however it should have parity in terms of semantics.
+ */
+export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
+	const result: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+
+	const findNodeById = (id: string) => graph.nodes.find((n) => n.id === id);
+
+	// States and transitions
+	graph.nodes.forEach((node) => {
+		if (node.data.type === NodeType.State) {
+			result.S.push({ sname: node.label });
+		} else {
+			result.T.push({ tname: node.label });
+		}
+	});
+
+	// Edges
+	graph.edges.forEach((edge) => {
+		const target = edge.target;
+		const source = edge.source;
+
+		// This means the edge from transition => state
+		const targetInS = target.startsWith('s');
+
+		if (targetInS) {
+			// O
+			let ot = -1;
+			let os = -1;
+
+			const otNode = findNodeById(target);
+			if (otNode) {
+				ot = result.S.findIndex((d) => d.sname === otNode.label);
+			}
+			const osNode = findNodeById(source);
+			if (osNode) {
+				os = result.T.findIndex((d) => d.tname === osNode.label);
+			}
+
+			// Julia index starts at 1
+			ot++;
+			os++;
+			if (os > 0 && ot > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.O.push({ os, ot });
+				}
+			}
+		} else {
+			// I
+			let it = -1;
+			let is = -1;
+			const itNode = findNodeById(target);
+			if (itNode) {
+				it = result.T.findIndex((d) => d.tname === itNode.label);
+			}
+
+			const isNode = findNodeById(source);
+			if (isNode) {
+				is = result.S.findIndex((d) => d.sname === isNode.label);
+			}
+
+			// Julia index starts at 1
+			it++;
+			is++;
+			if (is > 0 && it > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.I.push({ is, it });
+				}
+			}
+		}
+	});
+	return result;
+};
+
+/**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
  * First add each node found in S and T, then add each edge found in I and O
  */
-export const parsePetriNet2IGraph = (model: PetriNet) => {
+interface PetriSizeConfig {
+	S: {
+		width: number;
+		height: number;
+	};
+	T: {
+		width: number;
+		height: number;
+	};
+}
+const defaultSizeConfig: PetriSizeConfig = {
+	S: { width: 40, height: 40 },
+	T: { width: 40, height: 40 }
+};
+export const parsePetriNet2IGraph = (
+	model: PetriNet,
+	config: PetriSizeConfig = defaultSizeConfig
+) => {
 	const result: IGraph<NodeData, EdgeData> = {
 		width: 500,
 		height: 500,
 		nodes: [],
 		edges: []
 	};
-
-	const nodeHeight = 40;
-	const nodeWidth = 40;
 
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
@@ -128,8 +227,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			label: aNode.sname,
 			x: 0,
 			y: 0,
-			height: nodeHeight,
-			width: nodeWidth,
+			height: config.S.height,
+			width: config.S.width,
 			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
@@ -143,8 +242,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			label: aTransition.tname,
 			x: 0,
 			y: 0,
-			height: nodeHeight,
-			width: nodeWidth,
+			height: config.T.height,
+			width: config.T.width,
 			data: { type: NodeType.Transition, uid: aTransition.uid },
 			nodes: []
 		});
@@ -199,4 +298,16 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 	return result;
+};
+
+// Transform list of mathML strings to a petrinet ascet
+export const mathmlToPetri = async (mathml: string[]) => {
+	const response = await API.post('/transforms/mathml-to-acset', mathml);
+	return response.data;
+};
+
+// Transfrom a petrinet into latex
+export const petriToLatex = async (petri: PetriNet) => {
+	const response = await API.post('/transforms/acset-to-latex', petri);
+	return response.data;
 };

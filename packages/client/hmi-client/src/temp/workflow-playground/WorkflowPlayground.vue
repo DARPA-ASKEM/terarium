@@ -92,7 +92,7 @@ svg {
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onUnmounted } from 'vue';
-import Modal from '@/components/Modal.vue';
+import Modal from '@/components/widgets/Modal.vue';
 import InputText from 'primevue/inputtext';
 
 interface Position {

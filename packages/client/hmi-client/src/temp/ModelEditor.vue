@@ -66,7 +66,14 @@ import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { runDagreLayout } from '@/services/graph';
 import { onMounted, ref, computed, watch } from 'vue';
-import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	mathmlToPetri,
+	petriToLatex
+} from '@/petrinet/petrinet-service';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
@@ -591,7 +598,7 @@ const graph2petri = (graph: IGraph<NodeData, EdgeData>) => {
 };
 
 // Tracking variables
-let source: any = null;
+// let source: any = null;
 // let target: any = null;
 let nameCounter: number = 0;
 
@@ -708,6 +715,40 @@ const onDownload = () => {
 
 // Entry point
 onMounted(async () => {
+	// Testing
+	mathmlToPetri([
+		'<math display="block" style="display:inline-block;"><mrow><mfrac><mrow><mi>d</mi><mi>S</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mo>−</mo><mi>β</mi><mi>S</mi><mi>I</mi></mrow></math>',
+		'<math display="block" style="display:inline-block;"><mrow><mfrac><mrow><mi>d</mi><mi>I</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mi>β</mi><mi>S</mi><mi>I</mi><mo>−</mo><mi>γ</mi><mi>I</mi></mrow></math>',
+		'<math display="block" style="display:inline-block;"><mrow><mfrac><mrow><mi>d</mi><mi>R</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mi>γ</mi><mi>I</mi></mrow></math>'
+	]).then((data) => {
+		console.log('!!!!!!!!!!!!! MathML to Petri !!!!!!!!!!!!!!!!!!!');
+		console.log(data);
+		console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+		console.log('');
+	});
+
+	petriToLatex({
+		T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],
+		S: [{ sname: 'S' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
+		I: [
+			{ it: 1, is: 1 },
+			{ it: 1, is: 2 },
+			{ it: 2, is: 2 },
+			{ it: 3, is: 2 }
+		],
+		O: [
+			{ ot: 1, os: 2 },
+			{ ot: 1, os: 2 },
+			{ ot: 2, os: 3 },
+			{ ot: 3, os: 4 }
+		]
+	}).then((data) => {
+		console.log('!!!!!!!!!!!!! Petri to Latex !!!!!!!!!!!!!!!!!!!');
+		console.log(data);
+		console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+		console.log('');
+	});
+
 	const playground = document.getElementById('playground') as HTMLDivElement;
 	renderer = new PetrinetRenderer({
 		el: playground,
@@ -718,7 +759,7 @@ onMounted(async () => {
 	});
 
 	renderer.on('background-click', () => {
-		source = null;
+		// source = null;
 		// target = null;
 		renderer?.render();
 		currentNodeMetadata.value = null;
@@ -735,20 +776,37 @@ onMounted(async () => {
 	});
 
 	document.addEventListener('keyup', async (event) => {
+		// if (event.key === 'Backspace' && renderer) {
+		// 	if (source) {
+		// 		_.remove(
+		// 			renderer.graph.edges,
+		// 			(e) => e.source === source.datum().id || e.target === source.datum().id
+		// 		);
+		// 	}
+		// 	_.remove(renderer.graph.nodes, (n) => n.id === source.datum().id);
+		// 	variablesRef.value = variablesRef.value.filter((v) => v.id !== source.datum().id);
+		// 	renderer.render();
+		// 	source = null;
+		// 	// target = null;
+		// }
+
 		if (event.key === 'Backspace' && renderer) {
-			if (source) {
+			if (renderer.nodeSelection) {
+				const nodeData = renderer.nodeSelection.datum();
+				_.remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
+				_.remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+				variablesRef.value = variablesRef.value.filter((v) => v.id !== nodeData.id);
+				renderer.render();
+			}
+
+			if (renderer.edgeSelection) {
+				const edgeData = renderer.edgeSelection.datum();
 				_.remove(
 					renderer.graph.edges,
-					(e) => e.source === source.datum().id || e.target === source.datum().id
+					(e) => e.source === edgeData.source || e.target === edgeData.target
 				);
+				renderer.render();
 			}
-			_.remove(renderer.graph.nodes, (n) => n.id === source.datum().id);
-
-			variablesRef.value = variablesRef.value.filter((v) => v.id !== source.datum().id);
-
-			renderer.render();
-			source = null;
-			// target = null;
 		}
 
 		// FIXME: Hackathon
