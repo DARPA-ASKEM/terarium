@@ -13,21 +13,18 @@ import java.util.List;
 public interface MitProxy {
 	@POST
 	@Path("/petri/get_places")
-	List<String> getPlaces(
-		@QueryParam("code") final String code,
-		@QueryParam("gpt_key") final String key);
+	String getPlaces(
+		@QueryParam("code") final String code);
 
 	@POST
 	@Path("/petri/get_transitions")
-	List<String> getTransitions(
-		@QueryParam("code") final String code,
-		@QueryParam("gpt_key") final String key);
+	String getTransitions(
+		@QueryParam("code") final String code);
 
 	@POST
 	@Path("/petri/get_arcs")
-	List<List<String>> getArcs(
-		@QueryParam("code") final String code,
-		@QueryParam("gpt_key") final String key);
+	String getArcs(
+		@QueryParam("code") final String code);
 
 	@POST
 	@Path("/petri/get_pyacset")

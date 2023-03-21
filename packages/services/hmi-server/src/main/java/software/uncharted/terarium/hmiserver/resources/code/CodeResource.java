@@ -69,12 +69,11 @@ public class CodeResource {
 	}
 
 	@POST
-	@Path("/to_petri")
-	public Response toPetriNet(@QueryParam("code") final String code) {
-		String key = "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";
-		String places = convertPetriComponentListToString(mitProxy.getPlaces(code, key));
-		String transitions = convertPetriComponentListToString(mitProxy.getTransitions(code, key));
-		String arcs = convertPetriComponentListToString(mitProxy.getArcs(code, key));
+	@Path("/to_acset")
+	public Object toAcset(@QueryParam("code") final String code) {
+		String places = mitProxy.getPlaces(code);
+		String transitions = mitProxy.getTransitions(code);
+		String arcs = mitProxy.getArcs(code);
 
 		PetriNet pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
 		return Response.ok(Response.Status.OK)
