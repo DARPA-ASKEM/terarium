@@ -28,15 +28,5 @@ public class Ontology implements Serializable {
 		} else {
 			this.name = this.curie = null;
 		}
-
-		if (this.curie == null) return;
-
-		this.title = "title";
-		this.description = "description";
-		try {
-			this.url = new URL("github.io");
-		} catch (Exception e) {
-			log.error(e);
-		}
 	}
 }
