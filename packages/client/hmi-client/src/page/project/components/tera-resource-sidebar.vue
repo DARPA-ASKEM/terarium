@@ -1,18 +1,12 @@
 <template>
 	<nav>
 		<header>
-			<!-- <Button icon="pi pi-file-edit" class="p-button-icon-only p-button-text p-button-rounded" />
-			<Button icon="pi pi-folder" class="p-button-icon-only p-button-text p-button-rounded" />
-			<Button
-				icon="pi pi-sort-amount-down"
-				class="p-button-icon-only p-button-text p-button-rounded"
-			/>
-			<Button icon="pi pi-arrows-v" class="p-button-icon-only p-button-text p-button-rounded" /> -->
 			<Button
 				icon="pi pi-trash"
-				v-tooltip="'Delete chosen asset'"
+				:disabled="!route.params.assetId || route.params.assetId === ''"
+				v-tooltip="`Remove ${route.params.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="removeAsset"
+				@click="isConfirmRemovalModalVisible = true"
 			/>
 		</header>
 		<tree
@@ -36,30 +30,55 @@
 		<div v-else class="loading-spinner">
 			<div><i class="pi pi-spin pi-spinner" /></div>
 		</div>
+		<Teleport to="body">
+			<modal
+				v-if="isConfirmRemovalModalVisible"
+				@modal-mask-clicked="isConfirmRemovalModalVisible = false"
+			>
+				<template #header>
+					<h5>
+						Are you sure you want remove "{{ route.params.assetName }}" from {{ project.name }}?
+					</h5>
+				</template>
+				<template #footer>
+					<Button label="Yes" @click="removeAsset" />
+					<Button
+						label="No"
+						class="p-button-secondary"
+						@click="isConfirmRemovalModalVisible = false"
+					/>
+				</template>
+			</modal>
+		</Teleport>
 	</nav>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 // import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { ProjectAssetTypes } from '@/types/Project';
+import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset } from '@/services/project';
 import { RouteName } from '@/router/routes';
-
 import useResourcesStore from '@/stores/resources';
 import { useRoute, useRouter } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
-
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { DocumentAsset } from '@/types/Types';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 
+defineProps<{
+	project: IProject;
+}>();
+
 const router = useRouter();
 const route = useRoute();
 const resourcesStore = useResourcesStore();
+
+const isConfirmRemovalModalVisible = ref(false);
 
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
@@ -127,6 +146,8 @@ function removeAsset() {
 		// 		(docId) => docId !== asset.id
 		// 	);
 	}
+
+	isConfirmRemovalModalVisible.value = false;
 
 	// if the user deleted the currently selected asset, then clear its content from the view TO DO
 	// if (asset.xdd_uri === documentId.value) {

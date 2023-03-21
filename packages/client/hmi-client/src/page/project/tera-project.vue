@@ -7,7 +7,7 @@
 			direction="left"
 		>
 			<template v-slot:content>
-				<tera-resource-sidebar />
+				<tera-resource-sidebar :project="project" />
 			</template>
 		</slider-panel>
 		<section>
