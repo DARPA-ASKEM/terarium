@@ -7,7 +7,6 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -16,8 +15,6 @@ public class Species implements Serializable {
 
 	@JsonAlias("sname")
 	private String name;
-
-	private int uid;
 
 	@JsonAlias("mira_ids")
 	private List<Ontology> miraIds;

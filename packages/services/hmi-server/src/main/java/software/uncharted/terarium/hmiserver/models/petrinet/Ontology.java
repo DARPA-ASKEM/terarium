@@ -2,9 +2,7 @@ package software.uncharted.terarium.hmiserver.models.petrinet;
 
 import lombok.Data;
 
-import javax.ws.rs.core.Response;
 import java.io.Serializable;
-import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,7 +14,7 @@ public class Ontology implements Serializable {
 	private final String curie;
 	private String title;
 	private String description;
-	private URL url;
+	private String link;
 
 	public Ontology (String input) {
 		final Matcher matcher = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)").matcher(input);

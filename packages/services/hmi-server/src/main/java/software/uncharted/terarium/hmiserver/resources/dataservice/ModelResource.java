@@ -1,10 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.security.Authenticated;
-import org.apache.http.util.EntityUtils;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -24,8 +20,8 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URL;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -170,16 +166,48 @@ public class ModelResource {
 				s.getMiraContext().stream().map(Ontology::getCurie)
 				))
 			.filter(Objects::nonNull)
+			.distinct()
 			.collect(Collectors.joining(","));
 
-			try {
-				final List<DKG> entities = dkgProxy.getEntities(curies);
-				if (!entities.isEmpty()) {
-					log.debug(entities);
-				}
-			} catch (RuntimeException e) {
-				log.error("Unable to get the ontology entity for curies" + curies, e);
-			}
+		// Fetch the ontology information from the DKG
+		List<DKG> entities = new ArrayList<>();
+		try {
+			entities = dkgProxy.getEntities(curies);
+		} catch (RuntimeException e) {
+			log.error("Unable to get the ontology entity for curies: " + curies, e);
+		}
+
+		if (!entities.isEmpty()) {
+			// FIXME - For now we need to resolve ourselves this link, HMS will fix this
+			// I don't know how to read application.properties to get that URL directly
+			final String metaRegistyURL = "http://34.230.33.149:8772/";
+			entities.forEach(entity -> entity.setLink(metaRegistyURL + entity.getCurie()));
+
+			// Transform the entities to a Map
+			Map<String, DKG> ontologies =
+				entities.stream().collect(Collectors.toMap(DKG::getCurie, entity -> entity));
+
+			// Now add the ontologies to each species mira_ids and mira_context
+			species.forEach(s -> {
+				s.getMiraIds().forEach(miraId -> {
+					if (ontologies.containsKey(miraId.getCurie())) {
+						final DKG ontology = ontologies.get(miraId.getCurie());
+						miraId.setTitle(ontology.getName());
+						miraId.setDescription(ontology.getDescription());
+						miraId.setLink(ontology.getLink());
+					}
+				});
+
+				s.getMiraContext().forEach(context -> {
+					if (ontologies.containsKey(context.getCurie())) {
+						final DKG ontology = ontologies.get(context.getCurie());
+						context.setTitle(ontology.getName());
+						context.setDescription(ontology.getDescription());
+						context.setLink(ontology.getLink());
+					}
+				});
+			});
+		}
 
 		// Return the model
 		return Response
