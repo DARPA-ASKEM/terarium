@@ -13,12 +13,12 @@
 			v-if="!isEmpty(resources)"
 			:value="resources"
 			selectionMode="single"
-			v-on:node-select="emit('open-asset', $event.data)"
+			v-on:node-select="emit('open-asset', $event.asset)"
 		>
 			<template #default="slotProps">
 				<span :active="route.params.assetName === slotProps.node.label">
 					{{ slotProps.node.label }}
-					<Chip :label="slotProps.node.data.assetType" />
+					<Chip :label="slotProps.node.asset.assetType" />
 				</span>
 			</template>
 		</tree>
@@ -86,8 +86,10 @@ const resources = computed(() => {
 		resourceTreeNodes.push({
 			key: 'Overview',
 			label: 'Overview',
-			data: {
-				assetType: 'overview'
+			asset: {
+				assetName: 'Overview',
+				assetType: 'overview',
+				assetId: ''
 			},
 			selectable: true
 		});
@@ -96,8 +98,10 @@ const resources = computed(() => {
 		resourceTreeNodes.push({
 			key: 'New file',
 			label: 'New file',
-			data: {
-				assetType: ProjectAssetTypes.CODE
+			asset: {
+				assetName: 'New file',
+				assetType: ProjectAssetTypes.CODE,
+				assetId: ''
 			},
 			selectable: true
 		});
@@ -111,7 +115,7 @@ const resources = computed(() => {
 				resourceTreeNodes.push({
 					key: j.toString(),
 					label: assets[j]?.name || assets[j]?.title || assets[j]?.id,
-					data: {
+					asset: {
 						// Matches Tab type
 						assetName: assets[j]?.name || assets[j]?.title || assets[j]?.id,
 						assetType: projectAssetTypes[i],
