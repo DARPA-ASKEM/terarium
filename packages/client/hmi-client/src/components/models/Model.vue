@@ -6,6 +6,12 @@
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
+						v-if="isEditing"
+						@click="cancelEdit"
+						label="Cancel"
+						class="p-button-sm p-button-outlined"
+					/>
+					<Button
 						@click="toggleEditMode"
 						:label="isEditing ? 'Save model' : 'Edit model'"
 						class="p-button-sm p-button-outlined"
@@ -374,6 +380,25 @@ const toggleEditMode = () => {
 	if (!isEditing.value && model.value && renderer) {
 		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
+	}
+};
+
+// Cancel existing edits, currently this will:
+// - Resets changs to the model structure
+const cancelEdit = async () => {
+	isEditing.value = false;
+
+	// Convert petri net into a graph with raw input data
+	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
+	if (renderer) {
+		renderer.setEditMode(false);
+		await renderer.setData(g);
+		renderer.isGraphDirty = true;
+		await renderer.render();
 	}
 };
 
