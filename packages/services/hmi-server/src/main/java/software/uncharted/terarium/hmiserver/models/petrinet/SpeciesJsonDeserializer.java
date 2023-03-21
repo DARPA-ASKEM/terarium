@@ -14,6 +14,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
+	/*
+		{
+			"sname": "S",
+			"mira_ids": "[('identity', 'ido:0000514'), ('identity', 'ido:0000511')]",
+			"mira_context": [('identity', 'ido:0000514')]",
+		}
+	 */
+
 
 	@Override
 	public Species deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JacksonException {
@@ -21,7 +29,7 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 		final Species species = new Species();
 		species.setName(node.get("sname").asText());
 
-		final Pattern pattern = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)");
+		final Pattern pattern = Pattern.compile("\\(\\'\\w+\\', \\'\\w+:\\d+\\'\\)");
 
 		final Matcher miraIdsMatcher = pattern.matcher(node.get("mira_ids").asText());
 		species.setMiraIds(new ArrayList<>());

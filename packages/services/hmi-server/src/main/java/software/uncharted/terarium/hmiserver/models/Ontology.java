@@ -18,10 +18,13 @@ public class Ontology implements Serializable {
 	public Ontology (String input) {
 		// input = "('identity', 'ido:0000514')"
 		final Matcher matcher = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)").matcher(input);
-
-		this.type = matcher.group(1);
-		this.curie = matcher.group(2);
-
+		int i = matcher.groupCount();
+		if (i > 0) {
+			this.type = matcher.group(1);
+			this.curie = matcher.group(2);
+		} else {
+			this.type = this.curie = "test";
+		}
 		// API Call
 
 		this.title = "title";

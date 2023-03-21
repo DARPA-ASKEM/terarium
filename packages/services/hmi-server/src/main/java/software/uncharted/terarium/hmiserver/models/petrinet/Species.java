@@ -14,14 +14,6 @@ import java.util.List;
 @JsonDeserialize(using = SpeciesJsonDeserializer.class)
 public class Species implements Serializable {
 
-	/*
-		{
-			"sname": "S",
-			"mira_ids": "[('identity', 'ido:0000514'), ('identity', 'ido:0000511')]",
-			"mira_context": [('identity', 'ido:0000514')]",
-		}
-	 */
-
 	@JsonAlias("sname")
 	private String name;
 
