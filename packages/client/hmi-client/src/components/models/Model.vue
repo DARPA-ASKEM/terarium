@@ -26,24 +26,65 @@
 				<p v-html="description" />
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
-				<div v-if="model" ref="graphElement" class="graph-element" />
-				<ContextMenu ref="menu" :model="contextMenuItems" />
+				<section class="model_diagram">
+					<TeraResizablePanel>
+						<div class="content">
+							<Splitter class="mb-5 model-panel">
+								<SplitterPanel class="tera-split-panel" :size="80" :minSize="50">
+									<section class="graph-element">
+										<div v-if="model" ref="graphElement" class="graph-element" />
+										<ContextMenu ref="menu" :model="contextMenuItems" />
+									</section>
+								</SplitterPanel>
+								<SplitterPanel class="tera-split-panel" :size="20" :minSize="20">
+									<section class="math-editor">
+										<!-- eventually remove -->
+										<section class="dev-options">
+											<div style="align-self: center">[Math Renderer]</div>
+											<div class="math-options">
+												<label>
+													<input type="radio" v-model="mathmode" value="mathJAX" />
+													MathJAX
+												</label>
+												<label>
+													<input type="radio" v-model="mathmode" value="mathLIVE" />
+													MathLIVE
+												</label>
+											</div>
+										</section>
+										<!-- eventually remove -->
+										<math-editor
+											:value="equation"
+											:mathmode="mathmode"
+											@formula-updated="updateFormula"
+										></math-editor>
+									</section>
+								</SplitterPanel>
+							</Splitter>
+						</div>
+					</TeraResizablePanel>
+				</section>
 			</AccordionTab>
 			<template v-if="!isEditable">
-				<AccordionTab header="State variables">
-					<DataTable :value="model?.content.S">
-						<Column field="sname" header="Label"></Column>
-						<Column field="mira_ids" header="Name"></Column>
-						<Column field="units" header="Units"></Column>
-						<Column field="mira_context" header="Concepts"></Column>
-						<Column field="definition" header="Definition"></Column>
-					</DataTable>
-				</AccordionTab>
 				<AccordionTab header="Parameters">
 					<DataTable :value="model?.parameters">
 						<Column field="name" header="Name"></Column>
 						<Column field="type" header="Type"></Column>
 						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab header="State variables">
+					<DataTable
+						:value="model?.content.S"
+						selectionMode="single"
+						@row-select="onRowClick"
+						@row-unselect="onRowClick"
+					>
+						<Column field="sname" header="Label"></Column>
+						<Column field="mira_ids" header="Name"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="mira_context" header="Concepts"></Column>
+						<Column field="definition" header="Definition"></Column>
 					</DataTable>
 				</AccordionTab>
 			</template>
@@ -58,33 +99,26 @@
 					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
+			<template v-if="isEditable">
+				<AccordionTab>
+					<template #header>
+						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
+					</template>
+					<model-parameter-list
+						:parameters="model?.parameters"
+						attribute="parameters"
+						@update-parameter-row="updateParamaterRow"
+					/>
+				</AccordionTab>
+				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
+					<template #header>
+						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
+					</template>
+					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
+						@update-parameterRow="updateParamaterRow" />
+				</AccordionTab> -->
+			</template>
 		</Accordion>
-		<TabView v-if="isEditable">
-			<TabPanel>
-				<template #header>
-					<span>State variables</span>
-					<Badge :value="model?.content.S.length" />
-				</template>
-				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Label"></Column>
-					<Column field="mira_ids" header="Name"></Column>
-					<Column field="units" header="Units"></Column>
-					<Column field="mira_context" header="Concepts"></Column>
-					<Column field="definition" header="Definition"></Column>
-				</DataTable>
-			</TabPanel>
-			<TabPanel>
-				<template #header>
-					<span>Parameters</span>
-					<Badge :value="model?.parameters.length" />
-				</template>
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</TabPanel>
-		</TabView>
 	</section>
 </template>
 
@@ -94,8 +128,14 @@ import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
-import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
-import { getModel } from '@/services/model';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	parseIGraph2PetriNet
+} from '@/petrinet/petrinet-service';
+import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -104,11 +144,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
-import Badge from 'primevue/badge';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
+import ModelParameterList from '@/components/models/model-parameter-list.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -116,6 +154,10 @@ import { DocumentType } from '@/types/Document';
 import { ProjectAssetTypes } from '@/types/Project';
 import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
+import MathEditor from '@/components/mathml/math-editor.vue';
+import Splitter from 'primevue/splitter';
+import SplitterPanel from 'primevue/splitterpanel';
+import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 export interface ModelProps {
 	assetId: string;
@@ -129,7 +171,49 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
-const isEditing = ref(false);
+const isEditing = ref<boolean>(false);
+
+const equation = ref<string>('');
+const selectedRow = ref();
+const mathmode = ref('mathLIVE');
+
+// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
+const modelMath = ref(String.raw`\begin{align}
+\frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
+\frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
+\frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
+\frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
+\end{align}`);
+
+// Another experiment using a map to automatically select highlighted version of the latex formula
+// this would require the backend service to provide a map of the eq.  Might be a little challenging.
+// const equationMap = {
+// 	default: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
+// 	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`,
+// 	S: String.raw`\frac{d\colorbox{red}{S}}{dt} = -\beta I{\color{red}{S}} \frac{dI}{dt} = \
+// 	\beta I{\color{red}{S}} - \gamma I \frac{dR}{dt} = \gamma I`,
+// 	I: String.raw`\frac{dS}{dt} = -\beta {\color{red}I}S \frac{dI}{dt} = \
+// 	\beta {\color{red}I}S - \gamma {\color{red}I} \frac{dR}{dt} = \gamma {\color{red}I}`,
+// 	R: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
+// 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
+// };
+
+// DataTable click handler for State Variables.  Currently used to do the highlighting.
+const onRowClick = () => {
+	if (selectedRow.value) {
+		equation.value = modelMath.value.replaceAll(
+			selectedRow.value.sname,
+			String.raw`{\color{red}${selectedRow.value.sname}}`
+		);
+	} else {
+		equation.value = modelMath.value;
+	}
+};
+
+const updateFormula = (formulaString: string) => {
+	equation.value = formulaString;
+	modelMath.value = formulaString;
+};
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -150,6 +234,13 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
+function updateParamaterRow(attribute: string, newParameterRow) {
+	if (model?.value?.[attribute]) {
+		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
+		model.value[attribute][rowIndex] = { ...newParameterRow };
+	}
+}
+
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -166,7 +257,9 @@ watch(
 			const result = await getModel(props.assetId);
 			model.value = result;
 			fetchRelatedTerariumArtifacts();
+			equation.value = modelMath.value;
 		} else {
+			equation.value = '';
 			model.value = null;
 		}
 	},
@@ -278,6 +371,10 @@ onUnmounted(() => {
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
+	if (!isEditing.value && model.value && renderer) {
+		model.value.content = parseIGraph2PetriNet(renderer.graph);
+		updateModel(model.value);
+	}
 };
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
@@ -285,17 +382,59 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 </script>
 
 <style scoped>
-.graph-element {
-	flex: 1;
-	height: 400px;
+.model-panel {
+	height: 100%;
+}
+
+.content {
+	height: 99%;
 	width: 100%;
-	border: 1px solid var(--surface-border);
+}
+.graph-element {
+	background-color: var(--surface-secondary);
+	height: 100%;
+	max-height: 100%;
+	flex-grow: 1;
 	overflow: hidden;
 	border-radius: 0.25rem;
 }
 
-.slider .graph-element {
-	pointer-events: none;
+.math-editor {
+	display: flex;
+	max-height: 100%;
+	flex-grow: 1;
+	flex-direction: column;
+}
+
+.model_diagram {
+	display: flex;
+	height: v-bind('height');
+	min-height: v-bind('height');
+}
+
+.p-splitter .p-splitter-gutter {
+	color: red;
+}
+
+.dev-options {
+	display: flex;
+	flex-direction: column;
+	align-self: center;
+	width: 100%;
+	font-size: 0.75em;
+	font-family: monospace;
+}
+
+.math-options {
+	display: flex;
+	flex-direction: row;
+	align-self: center;
+}
+
+.tera-split-panel {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
