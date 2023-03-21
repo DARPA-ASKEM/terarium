@@ -66,6 +66,13 @@
 				</section>
 			</AccordionTab>
 			<template v-if="!isEditable">
+				<AccordionTab header="Parameters">
+					<DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
 				<AccordionTab header="State variables">
 					<DataTable
 						:value="model?.content.S"
@@ -80,13 +87,6 @@
 						<Column field="definition" header="Definition"></Column>
 					</DataTable>
 				</AccordionTab>
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable>
-				</AccordionTab>
 			</template>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
@@ -99,40 +99,26 @@
 					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
+			<template v-if="isEditable">
+				<AccordionTab>
+					<template #header>
+						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
+					</template>
+					<model-parameter-list
+						:parameters="model?.parameters"
+						attribute="parameters"
+						@update-parameter-row="updateParamaterRow"
+					/>
+				</AccordionTab>
+				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
+					<template #header>
+						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
+					</template>
+					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
+						@update-parameterRow="updateParamaterRow" />
+				</AccordionTab> -->
+			</template>
 		</Accordion>
-		<TabView v-if="isEditable">
-			<TabPanel>
-				<template #header>
-					<span>State variables</span>
-					<Badge :value="model?.content.S.length" />
-				</template>
-				<DataTable
-					:value="model?.content.S"
-					selectionMode="single"
-					v-model:selection="selectedRow"
-					@row-select="onRowClick"
-					@row-unselect="onRowClick"
-					:metaKeySelection="false"
-				>
-					<Column field="sname" header="Label"></Column>
-					<Column field="mira_ids" header="Name"></Column>
-					<Column field="units" header="Units"></Column>
-					<Column field="mira_context" header="Concepts"></Column>
-					<Column field="definition" header="Definition"></Column>
-				</DataTable>
-			</TabPanel>
-			<TabPanel>
-				<template #header>
-					<span>Parameters</span>
-					<Badge :value="model?.parameters.length" />
-				</template>
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</TabPanel>
-		</TabView>
 	</section>
 </template>
 
@@ -142,8 +128,14 @@ import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
-import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
-import { getModel } from '@/services/model';
+import {
+	parsePetriNet2IGraph,
+	PetriNet,
+	NodeData,
+	EdgeData,
+	parseIGraph2PetriNet
+} from '@/petrinet/petrinet-service';
+import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -152,11 +144,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
-import Badge from 'primevue/badge';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
+import ModelParameterList from '@/components/models/model-parameter-list.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -243,6 +233,13 @@ const fetchRelatedTerariumArtifacts = async () => {
 		relatedTerariumArtifacts.value = [];
 	}
 };
+
+function updateParamaterRow(attribute: string, newParameterRow) {
+	if (model?.value?.[attribute]) {
+		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
+		model.value[attribute][rowIndex] = { ...newParameterRow };
+	}
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -374,6 +371,10 @@ onUnmounted(() => {
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
+	if (!isEditing.value && model.value && renderer) {
+		model.value.content = parseIGraph2PetriNet(renderer.graph);
+		updateModel(model.value);
+	}
 };
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
