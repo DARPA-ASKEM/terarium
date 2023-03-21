@@ -346,7 +346,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		// Zoom control
 		// FIXME: evt type
 		const zoomed = (evt: any) => {
-			console.log('zoomed................');
 			if (this.options.useZoom === false) return;
 			if (chart) chart.attr('transform', evt.transform);
 
