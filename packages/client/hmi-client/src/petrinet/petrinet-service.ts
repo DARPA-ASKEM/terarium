@@ -228,7 +228,7 @@ function cloneFirstGraph(
 ) {
 	const resultGraph: IGraph<NodeData, EdgeData> = { nodes: [], edges: [] };
 	for (let i = 0; i < graphTwo.nodes.length; i++) {
-		if (graphTwo.nodes[i].data.type === 'S') {
+		if (graphTwo.nodes[i].data.type === NodeType.State) {
 			const tempGraph = _.cloneDeep(graphOne);
 			tempGraph.nodes.forEach((node) => {
 				node.id = `${node.id},${graphTwo.nodes[i].id}`;
@@ -261,10 +261,10 @@ export function blindStratification(petrinetOne, petrinetTwo) {
 	// Add graphTwo's shape to connect everything
 	for (let i = 0; i < graphTwo.edges.length; i++) {
 		for (let j = 0; j < graphOne.nodes.length; j++) {
-			if (graphOne.nodes[j].data.type === 'S') {
+			if (graphOne.nodes[j].data.type === NodeType.State) {
 				// Find the edges source that type as transition.
 				const graphTwoSourceNode = graphTwo.nodes.find(
-					(node) => node.id === graphTwo.edges[i].source && node.data.type === 'T'
+					(node) => node.id === graphTwo.edges[i].source && node.data.type === NodeType.Transition
 				);
 				if (graphTwoSourceNode) {
 					// Create the (S,transition) nodes (Example: S,unquarantine)
