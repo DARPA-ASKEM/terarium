@@ -159,7 +159,7 @@ public class ModelResource {
 		// Resolve the ontology curies
 		final List<Species> species = model.getContent().getSpecies();
 
-		// Get the curies from all species
+		// Get the curies from all species, as one string, comma separated without duplicate
 		final String curies = species.stream()
 			.flatMap(s -> Stream.concat(
 				s.getMiraIds().stream().map(Ontology::getCurie),
@@ -192,18 +192,20 @@ public class ModelResource {
 				s.getMiraIds().forEach(miraId -> {
 					if (ontologies.containsKey(miraId.getCurie())) {
 						final DKG ontology = ontologies.get(miraId.getCurie());
-						miraId.setTitle(ontology.getName());
-						miraId.setDescription(ontology.getDescription());
-						miraId.setLink(ontology.getLink());
+						miraId
+							.setTitle(ontology.getName())
+							.setDescription(ontology.getDescription())
+							.setLink(ontology.getLink());
 					}
 				});
 
 				s.getMiraContext().forEach(context -> {
 					if (ontologies.containsKey(context.getCurie())) {
 						final DKG ontology = ontologies.get(context.getCurie());
-						context.setTitle(ontology.getName());
-						context.setDescription(ontology.getDescription());
-						context.setLink(ontology.getLink());
+						context
+							.setTitle(ontology.getName())
+							.setDescription(ontology.getDescription())
+							.setLink(ontology.getLink());
 					}
 				});
 			});
