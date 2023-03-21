@@ -1,7 +1,11 @@
 package software.uncharted.terarium.hmiserver.models.petrinet;
 
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.proxies.mira.MiraProxy;
+
 import lombok.Data;
 
+import javax.ws.rs.core.Response;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -17,6 +21,9 @@ public class Ontology implements Serializable {
 	private String description;
 	private URL url;
 
+	@RestClient
+	MiraProxy proxy;
+
 	public Ontology (String input) {
 		// input = "('identity', 'ido:0000514')"
 		final Matcher matcher = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)").matcher(input);
@@ -29,7 +36,7 @@ public class Ontology implements Serializable {
 			this.name = this.curie = null;
 		}
 
-		// API Call
+		Response entity = proxy.getEntity(this.curie);
 
 		this.title = "title";
 		this.description = "description";
