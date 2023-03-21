@@ -6824,7 +6824,7 @@ cors@latest:
     lodash: 4.17.21
     mathlive: 0.89.2
     mathml-to-latex: 1.2.0
-    p5: 1.6.
+    p5: 1.6.0
     pinia: 2.0.33
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
