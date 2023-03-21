@@ -81,19 +81,4 @@ public class CodeResource {
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
-
-	private String convertPetriComponentListToString(List list){
-		StringBuilder stringBuilder = new StringBuilder("[");
-		String previousSeparator = "";
-		for(Object element : list) {
-			if (element instanceof List){
-				stringBuilder.append(previousSeparator).append(convertPetriComponentListToString((List)element));
-			} else {
-				stringBuilder.append(previousSeparator).append('\"').append(element).append('\"');
-			}
-			previousSeparator =",";
-		}
-		stringBuilder.append(']');
-		return stringBuilder.toString();
-	}
 }
