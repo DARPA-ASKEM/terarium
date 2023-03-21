@@ -5,7 +5,8 @@ import {
 	petriNetValidator,
 	PetriNet,
 	NodeData,
-	EdgeData
+	EdgeData,
+	blindStratification
 } from '@/petrinet/petrinet-service';
 import * as d3 from 'd3';
 import _ from 'lodash';
@@ -752,6 +753,18 @@ export default defineComponent({
 				]
 			};
 			await this.createModel(typeModel, true);
+		},
+		async blindStratificationWrapper(modelA, modelB) {
+			let petrinetOne = petrinets[modelA]; //Hard code SIRD for now
+			let petrinetTwo = petrinets[modelB]; //Hard code QNQ for now
+			let resultGraph = blindStratification(petrinetOne, petrinetTwo);
+			console.log('Result Graph:');
+			console.log(resultGraph);
+			console.log('End Blind Stratification');
+			resultGraph.width = 500;
+			resultGraph.height = 500;
+			await renderer?.setData(resultGraph);
+			await renderer?.render();
 		}
 	}
 });
@@ -766,6 +779,28 @@ export default defineComponent({
 		<button type="button" @click="simulate">Simulate</button>
 		<button type="button" @click="createSampleModels">Create Sample Models</button>
 		&nbsp;
+		<form>
+			<label for="stratify">
+				<select v-model="stratifyModelA" type="text">
+					<option :value="0">generic</option>
+					<option :value="1">generic2</option>
+					<option :value="2">QNotQModel</option>
+					<option :value="3">typeModel</option>
+					<option :value="4">SIRD</option>
+				</select>
+				<select v-model="stratifyModelB" type="text">
+					<option :value="0">generic</option>
+					<option :value="1">generic2</option>
+					<option :value="2">QNotQModel</option>
+					<option :value="3">typeModel</option>
+					<option :value="4">SIRD</option>
+				</select>
+			</label>
+			<button type="button" @click="blindStratificationWrapper(stratifyModelA, stratifyModelB)">
+				Blind Stratification
+			</button>
+		</form>
+
 		<form>
 			<label for="loadModel">
 				<input v-model="loadModelID" type="text" placeholder="Model ID" />
