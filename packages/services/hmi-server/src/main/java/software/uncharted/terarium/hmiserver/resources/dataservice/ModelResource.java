@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
+import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
@@ -18,7 +19,10 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Map;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
@@ -152,14 +156,21 @@ public class ModelResource {
 		}
 
 		// Resolve the ontology curies
+		final List<Species> species = model.getContent().getSpecies();
 
-		final String curie;
-		curie = null;
-		try {
-			final Response entity = dkgProxy.getEntity(curie);
-		} catch (RuntimeException e) {
-			log.error("Unable to get the ontology entity for curie" + curie, e);
-		}
+		// Get the curies from all species
+		final String curies = species.stream()
+			.map(Species::getAllCuries)
+			.flatMap(Collection::stream)
+			.filter(Objects::nonNull)
+			.collect(Collectors.joining(","));
+
+			try {
+				final Response entities = dkgProxy.getEntities(curies);
+				log.debug(entities);
+			} catch (RuntimeException e) {
+				log.error("Unable to get the ontology entity for curies" + curies, e);
+			}
 
 		// Return the model
 		return Response

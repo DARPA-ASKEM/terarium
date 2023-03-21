@@ -23,6 +23,7 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 		JsonNode node = p.getCodec().readTree(p);
 		final Species species = new Species();
 
+		// Set the properties
 		species.setName(node.get("sname").asText());
 		species.setMiraIds(new ArrayList<>());
 		species.setMiraContext(new ArrayList<>());
