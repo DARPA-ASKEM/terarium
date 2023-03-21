@@ -25,9 +25,8 @@ public class Ontology implements Serializable {
 	MiraProxy proxy;
 
 	public Ontology (String input) {
-		// input = "('identity', 'ido:0000514')"
 		final Matcher matcher = Pattern.compile("\\(\\'(.+?)\\', \\'(.+?)\\'\\)").matcher(input);
-		final Boolean result = matcher.find();
+		final boolean result = matcher.find();
 		int i = matcher.groupCount();
 		if (result && i > 0) {
 			this.name = matcher.group(1);
@@ -36,7 +35,13 @@ public class Ontology implements Serializable {
 			this.name = this.curie = null;
 		}
 
-		Response entity = proxy.getEntity(this.curie);
+		if (this.curie == null) return;
+
+		try {
+			final Response entity = proxy.getEntity(this.curie);
+		} catch (RuntimeException e) {
+			log.error("Unable to get the ontology entity for curie" + this.curie, e);
+		}
 
 		this.title = "title";
 		this.description = "description";
