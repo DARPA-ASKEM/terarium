@@ -146,11 +146,11 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 
 			const otNode = findNodeById(target);
 			if (otNode) {
-				ot = result.S.findIndex((d) => d.sname === otNode.label);
+				os = result.S.findIndex((d) => d.sname === otNode.label);
 			}
 			const osNode = findNodeById(source);
 			if (osNode) {
-				os = result.T.findIndex((d) => d.tname === osNode.label);
+				ot = result.T.findIndex((d) => d.tname === osNode.label);
 			}
 
 			// Julia index starts at 1
