@@ -1,4 +1,5 @@
 import { IGraph } from '@graph-scaffolder/types';
+import API from '@/api/api';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -193,16 +194,30 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
  * for the renderer
  * First add each node found in S and T, then add each edge found in I and O
  */
-export const parsePetriNet2IGraph = (model: PetriNet) => {
+interface PetriSizeConfig {
+	S: {
+		width: number;
+		height: number;
+	};
+	T: {
+		width: number;
+		height: number;
+	};
+}
+const defaultSizeConfig: PetriSizeConfig = {
+	S: { width: 40, height: 40 },
+	T: { width: 40, height: 40 }
+};
+export const parsePetriNet2IGraph = (
+	model: PetriNet,
+	config: PetriSizeConfig = defaultSizeConfig
+) => {
 	const result: IGraph<NodeData, EdgeData> = {
 		width: 500,
 		height: 500,
 		nodes: [],
 		edges: []
 	};
-
-	const nodeHeight = 40;
-	const nodeWidth = 40;
 
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
@@ -212,8 +227,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			label: aNode.sname,
 			x: 0,
 			y: 0,
-			height: nodeHeight,
-			width: nodeWidth,
+			height: config.S.height,
+			width: config.S.width,
 			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
@@ -227,8 +242,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			label: aTransition.tname,
 			x: 0,
 			y: 0,
-			height: nodeHeight,
-			width: nodeWidth,
+			height: config.T.height,
+			width: config.T.width,
 			data: { type: NodeType.Transition, uid: aTransition.uid },
 			nodes: []
 		});
@@ -283,4 +298,16 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 		});
 	}
 	return result;
+};
+
+// Transform list of mathML strings to a petrinet ascet
+export const mathmlToPetri = async (mathml: string[]) => {
+	const response = await API.post('/transforms/mathml-to-acset', mathml);
+	return response.data;
+};
+
+// Transfrom a petrinet into latex
+export const petriToLatex = async (petri: PetriNet) => {
+	const response = await API.post('/transforms/acset-to-latex', petri);
+	return response.data;
 };
