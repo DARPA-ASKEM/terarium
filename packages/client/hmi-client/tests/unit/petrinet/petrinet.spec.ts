@@ -19,7 +19,7 @@ const SIR = {
 describe('fetchGraphResult', () => {
 	it('Should provide correct graph', () => {
 		const out = parsePetriNet2IGraph(SIR);
-		assert.equal(out.edges.length, 5); // Technicall 8, one is a multi-edge
+		assert.equal(out.edges.length, 5);
 		assert.equal(out.nodes.length, 5);
 	});
 
