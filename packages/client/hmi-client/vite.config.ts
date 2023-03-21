@@ -44,7 +44,7 @@ export default defineConfig({
 				compilerOptions: {
 					// treat all components starting with `facet` as custom elements
 					// ignore facets as custom elements
-					isCustomElement: (tag) => tag.startsWith('facet-')
+					isCustomElement: (tag) => tag.startsWith('facet-') || tag === 'math-field'
 				}
 			}
 		})
