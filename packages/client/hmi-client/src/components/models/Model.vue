@@ -80,7 +80,7 @@
 						@row-select="onRowClick"
 						@row-unselect="onRowClick"
 					>
-						<Column field="name" header="Label" />
+						<Column field="sname" header="Label" />
 						<Column field="miraIds" header="Name">
 							<template #body="slotProps">
 								<ul>
