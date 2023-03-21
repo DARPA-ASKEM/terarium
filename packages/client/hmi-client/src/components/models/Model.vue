@@ -30,6 +30,13 @@
 				<ContextMenu ref="menu" :model="contextMenuItems" />
 			</AccordionTab>
 			<template v-if="!isEditable">
+				<AccordionTab header="Parameters">
+					<DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable>
+				</AccordionTab>
 				<AccordionTab header="State variables">
 					<DataTable :value="model?.content.S">
 						<Column field="sname" header="Label"></Column>
@@ -37,13 +44,6 @@
 						<Column field="units" header="Units"></Column>
 						<Column field="mira_context" header="Concepts"></Column>
 						<Column field="definition" header="Definition"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
 					</DataTable>
 				</AccordionTab>
 			</template>
@@ -58,33 +58,26 @@
 					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
+			<template v-if="isEditable">
+				<AccordionTab>
+					<template #header>
+						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
+					</template>
+					<model-parameter-list
+						:parameters="model?.parameters"
+						attribute="parameters"
+						@update-parameter-row="updateParamaterRow"
+					/>
+				</AccordionTab>
+				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
+					<template #header>
+						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
+					</template>
+					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
+						@update-parameterRow="updateParamaterRow" />
+				</AccordionTab> -->
+			</template>
 		</Accordion>
-		<TabView v-if="isEditable">
-			<TabPanel>
-				<template #header>
-					<span>State variables</span>
-					<Badge :value="model?.content.S.length" />
-				</template>
-				<DataTable :value="model?.content.S">
-					<Column field="sname" header="Label"></Column>
-					<Column field="mira_ids" header="Name"></Column>
-					<Column field="units" header="Units"></Column>
-					<Column field="mira_context" header="Concepts"></Column>
-					<Column field="definition" header="Definition"></Column>
-				</DataTable>
-			</TabPanel>
-			<TabPanel>
-				<template #header>
-					<span>Parameters</span>
-					<Badge :value="model?.parameters.length" />
-				</template>
-				<DataTable :value="model?.parameters">
-					<Column field="name" header="Name"></Column>
-					<Column field="type" header="Type"></Column>
-					<Column field="default_value" header="Default"></Column>
-				</DataTable>
-			</TabPanel>
-		</TabView>
 	</section>
 </template>
 
@@ -104,11 +97,9 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
-import Badge from 'primevue/badge';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
+import ModelParameterList from '@/components/models/model-parameter-list.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -149,6 +140,13 @@ const fetchRelatedTerariumArtifacts = async () => {
 		relatedTerariumArtifacts.value = [];
 	}
 };
+
+function updateParamaterRow(attribute: string, newParameterRow) {
+	if (model?.value?.[attribute]) {
+		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
+		model.value[attribute][rowIndex] = { ...newParameterRow };
+	}
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
