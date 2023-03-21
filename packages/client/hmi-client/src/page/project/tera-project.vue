@@ -112,6 +112,9 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes | 'overview' | '';
 }>();
 
+// if I have two models with the same name, they won't open in separate tabs
+// they will just replace the existing tab with the same name
+
 const tabStore = useTabStore();
 const router = useRouter();
 

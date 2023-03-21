@@ -3,8 +3,8 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!route.params.assetId || route.params.assetId === ''"
-				v-tooltip="`Remove ${route.params.assetName}`"
+				:disabled="!openedAsset.assetId || openedAsset.assetId === ''"
+				v-tooltip="`Remove ${openedAsset.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isConfirmRemovalModalVisible = true"
 			/>
@@ -16,7 +16,7 @@
 			v-on:node-select="emit('open-asset', $event.asset)"
 		>
 			<template #default="slotProps">
-				<span :active="route.params.assetName === slotProps.node.label">
+				<span :active="isEqual(openedAsset, slotProps.node.asset)">
 					{{ slotProps.node.label }}
 					<Chip :label="slotProps.node.asset.assetType" />
 				</span>
@@ -32,7 +32,8 @@
 			>
 				<template #header>
 					<h5>
-						Are you sure you want remove "{{ route.params.assetName }}" from {{ project.name }}?
+						<!--openedAsset.assetName only makes sense in the case that the selected asset is the one to be deleted-->
+						Are you sure you want remove "{{ openedAsset.assetName }}" from {{ project.name }}?
 					</h5>
 				</template>
 				<template #footer>
@@ -51,7 +52,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { logger } from '@/utils/logger';
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset } from '@/services/project';
@@ -76,6 +77,13 @@ const route = useRoute();
 const resourcesStore = useResourcesStore();
 
 const isConfirmRemovalModalVisible = ref(false);
+
+// Move this to parent?
+const openedAsset = computed<Tab>(() => ({
+	assetName: route.params.assetName as string,
+	assetType: route.params.assetType as ProjectAssetTypes | 'overview',
+	assetId: route.params.assetId as string
+}));
 
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
@@ -132,13 +140,7 @@ const resources = computed(() => {
 	return resourceTreeNodes;
 });
 
-function removeAsset(
-	assetToRemove: Tab = {
-		assetName: route.params.assetName as string,
-		assetId: route.params.assetId as string,
-		assetType: route.params.assetType as ProjectAssetTypes | 'overview'
-	}
-) {
+function removeAsset(assetToRemove: Tab = openedAsset.value) {
 	const { assetId, assetType } = assetToRemove;
 
 	if (!assetType || !resourcesStore.activeProject || !resourcesStore.activeProjectAssets) {
@@ -165,7 +167,7 @@ function removeAsset(
 	].filter((id: string | number) => id !== asset.id);
 
 	// If asset to be removed is open in a tab, close it
-	const tabIndex = props.tabs.findIndex((tab: Tab) => tab === assetToRemove);
+	const tabIndex = props.tabs.findIndex((tab: Tab) => isEqual(tab, assetToRemove));
 	if (tabIndex) emit('close-tab', tabIndex);
 
 	isConfirmRemovalModalVisible.value = false;
