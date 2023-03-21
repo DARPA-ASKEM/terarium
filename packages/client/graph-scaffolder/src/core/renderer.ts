@@ -346,6 +346,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		// Zoom control
 		// FIXME: evt type
 		const zoomed = (evt: any) => {
+			console.log('zoomed................');
 			if (this.options.useZoom === false) return;
 			if (chart) chart.attr('transform', evt.transform);
 
@@ -373,7 +374,6 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		const minZoom = 0.05;
 		const maxZoom = Math.max(2, Math.floor((this.graph.width as number) / this.chartSize.width));
-		let zoomLevel = Math.min(1, 1 / ((this.graph.height as number) / this.chartSize.height));
 
 		if (this.options.zoomRange) {
 			this.zoom = d3
@@ -386,17 +386,28 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
-		let zoomX =
-			(-((this.graph.width as number) * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel;
-		let zoomY =
-			(-((this.graph.height as number) * zoomLevel * 0.5) + 0.5 * this.chartSize.height) /
-			zoomLevel;
+		// let zoomX =
+		// 	(-((this.graph.width as number) * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel;
+		// let zoomY =
+		// 	(-((this.graph.height as number) * zoomLevel * 0.5) + 0.5 * this.chartSize.height) /
+		// 	zoomLevel;
+
+		// Align the zoom to the height of the container, then try to center against the width
+		let zoomLevel = 1;
+		let zoomX = 0;
+		let zoomY = 0;
+		if (this.chart) {
+			const graphRect: DOMRect = (this.chart.node() as SVGGElement).getBoundingClientRect();
+			zoomLevel = Math.min(1, this.chartSize.height / (graphRect.height + 1)); // Div by zero
+			zoomX = -(graphRect.width * zoomLevel - this.chartSize.width) * 0.5;
+		}
 
 		if (this.options.useStableZoomPan === true && this.zoomTransformObject !== null) {
 			zoomLevel = this.zoomTransformObject.k;
 			zoomX = this.zoomTransformObject.x / zoomLevel;
 			zoomY = this.zoomTransformObject.y / zoomLevel;
 		}
+
 		svg.call(
 			this.zoom.transform as any,
 			d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
