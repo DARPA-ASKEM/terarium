@@ -453,8 +453,8 @@ $cardSubTitleFontWeight: 400 !default;
 $cardSubTitleColor: $textSecondaryColor !default;
 $cardContentPadding: 0 0 !default;
 $cardFooterPadding: 1rem 0 0 0 !default;
-$cardShadow: 0 2px 4px 0 rgba(0,0,0,0.10) !default;
-$cardShadowHover: 0 4px 8px 0 rgba(0,0,0,0.10) !default;
+$cardShadow: 0 2px 4px 0 rgba(0, 0, 0, 0.10) !default;
+$cardShadowHover: 0 4px 8px 0 rgba(0, 0, 0, 0.10) !default;
 
 //editor
 $editorToolbarBg: $panelHeaderBg !default;
@@ -874,6 +874,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--gray-700: #616161;
 	--gray-800: #424242;
 	--gray-900: #212121;
+	--gray-1000: #000000;
 	--inline-spacing: #{$inlineSpacing};
 	--maskbg: #{$maskBg};
 	--primary-color: #{$primaryColor};

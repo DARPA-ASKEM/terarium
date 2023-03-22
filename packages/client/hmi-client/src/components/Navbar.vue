@@ -62,7 +62,7 @@ import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
 import SearchBar from '@/page/data-explorer/components/search-bar.vue';
-import { RoutePath } from '@/router/index';
+import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
@@ -85,10 +85,19 @@ const homeItem: MenuItem = {
 	icon: RouteMetadata[RouteName.HomeRoute].icon,
 	command: () => router.push(RoutePath.Home)
 };
-const navMenuItems = ref<MenuItem[]>([homeItem]);
+const explorerItem: MenuItem = {
+	label: RouteMetadata[RouteName.DataExplorerRoute].displayName,
+	icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
+	command: () => router.push(RoutePath.DataExplorer)
+};
+const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
 const showNavigationMenu = (event) => {
 	navigationMenu.value.toggle(event);
 };
+const currentRoute = useCurrentRoute();
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorerRoute);
 
 /*
  * User Menu
@@ -163,7 +172,7 @@ watch(
 						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
 				});
 			});
-			navMenuItems.value = [homeItem, { label: 'Projects', items }];
+			navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
 		}
 	},
 	{ immediate: true }
