@@ -323,7 +323,6 @@ function cloneFirstGraph(
 	graphOne: IGraph<NodeData, EdgeData>,
 	graphTwo: IGraph<NodeData, EdgeData>
 ) {
-	console.log('Start clone first graph');
 	const resultGraph: IGraph<NodeData, EdgeData> = { nodes: [], edges: [] };
 	for (let i = 0; i < graphTwo.nodes.length; i++) {
 		if (graphTwo.nodes[i].data.type === NodeType.State) {
@@ -355,7 +354,6 @@ export function blindStratification(petrinetOne: PetriNet, petrinetTwo: PetriNet
 	const graphOne = parsePetriNet2IGraph(petrinetOne);
 	const graphTwo = parsePetriNet2IGraph(petrinetTwo);
 	const resultGraph: IGraph<NodeData, EdgeData> = cloneFirstGraph(graphOne, graphTwo);
-	console.log('Done clone first graph');
 	// Add graphTwo's shape to connect everything
 	for (let i = 0; i < graphTwo.edges.length; i++) {
 		for (let j = 0; j < graphOne.nodes.length; j++) {

@@ -758,9 +758,7 @@ export default defineComponent({
 			let petrinetOne = petrinets[modelA]; //Hard code SIRD for now
 			let petrinetTwo = petrinets[modelB]; //Hard code QNQ for now
 			let resultGraph = blindStratification(petrinetOne, petrinetTwo);
-			console.log('Result Graph:');
-			console.log(resultGraph);
-			console.log('End Blind Stratification');
+
 			resultGraph.width = 500;
 			resultGraph.height = 500;
 			await renderer?.setData(resultGraph);
