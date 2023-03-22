@@ -49,8 +49,6 @@ import '@uncharted.software/facets-core';
 import filtersUtil from '@/utils/filters-util';
 
 import useQueryStore from '@/stores/query';
-import IconChevronDown16 from '@carbon/icons-vue/es/chevron--down/16';
-import IconChevronUp16 from '@carbon/icons-vue/es/chevron--up/16';
 
 const FACET_DEFAULT_SIZE = 5;
 
@@ -65,10 +63,7 @@ const FACET_DEFAULT_SIZE = 5;
  */
 export default defineComponent({
 	name: 'CategoricalFacet',
-	components: {
-		IconChevronDown16,
-		IconChevronUp16
-	},
+	components: {},
 	props: {
 		baseData: {
 			type: Array,

@@ -260,7 +260,6 @@ i {
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
-	font-weight: 400;
 	color: var(--text-color-subdued);
 	display: flex;
 	column-gap: 0.5rem;
