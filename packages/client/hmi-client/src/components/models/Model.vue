@@ -93,7 +93,7 @@
 							</template>
 						</Column>
 						<Column field="units" header="Units" />
-						<Column field="miraContext" header="Name">
+						<Column field="miraContext" header="Concepts">
 							<template #body="slotProps">
 								<ul>
 									<li v-for="ontology in slotProps.data.miraContext" :key="ontology.curie">
