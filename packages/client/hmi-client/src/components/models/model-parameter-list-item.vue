@@ -103,6 +103,15 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-parameter-row']);
 
+const modelExtractionsDummy = {
+	codeComments: ['hospitalized_rate', 'Hospitalized Rate'],
+	documentation: ['Hospitalization % (total infections)'],
+	papers: ['age-specific hospitalization rates', 'hospitalizations per 100,00'],
+	model: ['hospitalized_rate']
+};
+
+console.log(modelExtractionsDummy);
+
 const isEditing = ref(false);
 const showRange = ref(false);
 const contextMenu = ref();
