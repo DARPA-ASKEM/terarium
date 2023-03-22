@@ -38,7 +38,7 @@
 							</ul>
 							<ul v-else>
 								<li v-for="(project, index) in projects?.slice().reverse()" :key="index">
-									<project-card :project="project" @click="openProject(project)" />
+									<project-card :project="project" @click="openProject(project.id)" />
 								</li>
 								<li>
 									<section class="new-project-card" @click="isNewProjectModalVisible = true">
@@ -130,8 +130,10 @@
 				class="modal"
 				@modal-mask-clicked="isNewProjectModalVisible = false"
 			>
+				<template #header>
+					<h4>Create project</h4>
+				</template>
 				<template #default>
-					<div class="new-project-modal-header">Create project</div>
 					<form>
 						<label for="new-project-name">Name</label>
 						<InputText
@@ -151,12 +153,10 @@
 					</form>
 				</template>
 				<template #footer>
-					<footer>
-						<Button @click="createNewProject">Create</Button>
-						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
-							>Cancel</Button
-						>
-					</footer>
+					<Button @click="createNewProject">Create</Button>
+					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+						>Cancel</Button
+					>
 				</template>
 			</Modal>
 		</Teleport>
@@ -261,6 +261,10 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
 };
 
+function openProject(projectId: string) {
+	router.push({ name: RouteName.ProjectRoute, params: { projectId } });
+}
+
 async function createNewProject() {
 	const author = auth.name ?? '';
 	const project = await ProjectService.create(
@@ -269,13 +273,9 @@ async function createNewProject() {
 		author
 	);
 	if (project) {
-		router.push(`/projects/${project.id}`);
+		openProject(project.id);
 		isNewProjectModalVisible.value = false;
 	}
-}
-
-function openProject(chosenProject: IProject) {
-	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
 }
 
 function listAuthorNames(authors) {
@@ -430,12 +430,6 @@ li {
 	padding: 1rem;
 }
 
-.modal h3 {
-	margin-bottom: 1em;
-	font-weight: 400;
-	font-size: 24px;
-}
-
 .modal label {
 	display: block;
 	margin-bottom: 0.5em;
@@ -446,21 +440,6 @@ li {
 	display: block;
 	margin-bottom: 2rem;
 	width: 100%;
-}
-
-.modal footer {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 1rem;
-	justify-content: end;
-	margin-top: 2rem;
-}
-
-.modal header {
-	font-weight: 500;
-	font-size: 12px;
-	line-height: 12px;
-	color: var(--text-color-subdued);
 }
 
 .selected-document-modal header {
@@ -541,14 +520,6 @@ a {
 
 .new-project-button {
 	padding: 0;
-}
-
-.new-project-modal-header {
-	font-size: var(--font-body-large);
-	font-weight: var(--font-weight-semibold);
-	color: var(--text-color-primary);
-	padding-bottom: 1rem;
-	width: 50rem;
 }
 
 #new-project-name,
