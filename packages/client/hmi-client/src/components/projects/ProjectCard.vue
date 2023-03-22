@@ -1,25 +1,3 @@
-<script setup lang="ts">
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import Button from 'primevue/button';
-import Card from 'primevue/card';
-import Skeleton from 'primevue/skeleton';
-import { formatDdMmmYyyy } from '@/utils/date';
-import { placeholder } from '@/utils/project-card';
-
-const props = defineProps<{ project?: IProject }>();
-
-const stats = !props.project
-	? null
-	: {
-			contributors: 1,
-			models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
-			datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
-			papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
-	  };
-
-const image = stats ? placeholder(stats) : undefined;
-</script>
-
 <template>
 	<Card v-if="project">
 		<template #content>
@@ -62,6 +40,28 @@ const image = stats ? placeholder(stats) : undefined;
 		</template>
 	</Card>
 </template>
+
+<script setup lang="ts">
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import Skeleton from 'primevue/skeleton';
+import { formatDdMmmYyyy } from '@/utils/date';
+import { placeholder } from '@/utils/project-card';
+
+const props = defineProps<{ project?: IProject }>();
+
+const stats = !props.project
+	? null
+	: {
+			contributors: 1,
+			models: props.project?.assets?.[ProjectAssetTypes.MODELS]?.length ?? 0,
+			datasets: props.project?.assets?.[ProjectAssetTypes.DATASETS]?.length ?? 0,
+			papers: props.project?.assets?.[ProjectAssetTypes.DOCUMENTS]?.length ?? 0
+	  };
+
+const image = stats ? placeholder(stats) : undefined;
+</script>
 
 <style scoped>
 .p-card {
