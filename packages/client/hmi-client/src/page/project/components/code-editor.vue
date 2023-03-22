@@ -5,7 +5,7 @@
 				label="Extract Model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
-			></Button>
+			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -22,7 +22,7 @@
 			></Button>
 		</div>
 		<v-ace-editor
-			v-model:value="content"
+			v-model:value="code"
 			@init="initialize"
 			lang="python"
 			theme="chrome"
@@ -73,8 +73,14 @@ import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/p
 import { IGraph } from '@graph-scaffolder/index';
 import { createModel } from '@/services/model';
 
-const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
-const content = ref(DEFAULT_TEXT);
+const props = defineProps({
+	initialCode: {
+		type: String,
+		default: '# Paste some python code here or import from the controls above'
+	}
+});
+
+const code = ref(props.initialCode);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const codeExtractionDialogVisible = ref(false);
@@ -405,7 +411,7 @@ async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(event.files[0], 'UTF-8');
 	reader.onload = (evt) => {
-		content.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
+		code.value = evt?.target?.result?.toString() ?? props.initialCode;
 	};
 }
 
@@ -464,6 +470,7 @@ async function createModelFromCode() {
 	}
 }
 </script>
+
 <style>
 .code {
 	display: flex;

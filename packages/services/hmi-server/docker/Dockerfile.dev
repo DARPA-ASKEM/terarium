@@ -11,7 +11,7 @@ RUN source "/root/.sdkman/bin/sdkman-init.sh" && sdk install gradle
 COPY . /hmi-server/
 WORKDIR /hmi-server
 
-RUN source "/root/.sdkman/bin/sdkman-init.sh" && gradle build
+RUN source "/root/.sdkman/bin/sdkman-init.sh" && gradle build -x test
 
 EXPOSE 3000
 

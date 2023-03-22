@@ -2,9 +2,11 @@ package software.uncharted.terarium.hmiserver.proxies.skema;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
@@ -39,4 +41,10 @@ public interface SkemaRustProxy {
 	@GET
 	@Path("/models/{modelId}/named_opos")
 	Response getModelNamedOpos(@PathParam("modelId") String modelId);
+
+
+	@PUT
+	@Path("/mathml/acset")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response convertMathML2ACSet(List<String> mathML);
 }
