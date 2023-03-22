@@ -399,7 +399,6 @@ const onFindRelatedContent = (item: ResultType) => {
 		relatedContent: true
 	};
 	searchByExampleOptions.value = searchOptions;
-	onSearchByExample(searchByExampleOptions.value);
 };
 
 // helper function to bypass the search-by-example modal
@@ -413,7 +412,6 @@ const onFindSimilarContent = (item: ResultType) => {
 		relatedContent: false
 	};
 	searchByExampleOptions.value = searchOptions;
-	onSearchByExample(searchByExampleOptions.value);
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
