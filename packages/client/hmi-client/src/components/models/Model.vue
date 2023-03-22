@@ -35,14 +35,14 @@
 				<section class="model_diagram">
 					<TeraResizablePanel>
 						<div class="content">
-							<Splitter class="mb-5 model-panel">
-								<SplitterPanel class="tera-split-panel" :size="80" :minSize="50">
+							<Splitter class="mb-5 model-panel" layout="vertical">
+								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
 									<section class="graph-element">
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
 								</SplitterPanel>
-								<SplitterPanel class="tera-split-panel" :size="20" :minSize="20">
+								<SplitterPanel class="tera-split-panel" :size="40" :minSize="30">
 									<section class="math-editor">
 										<!-- eventually remove -->
 										<section class="dev-options">
@@ -63,6 +63,7 @@
 											:value="equation"
 											:mathmode="mathmode"
 											@formula-updated="updateFormula"
+											@mathml="updatePetriFromMathML"
 										></math-editor>
 									</section>
 								</SplitterPanel>
@@ -83,8 +84,8 @@
 					<DataTable
 						:value="model?.content.S"
 						selectionMode="single"
-						@row-select="onRowClick"
-						@row-unselect="onRowClick"
+						@row-select="onVariableSelected"
+						@row-unselect="onVariableSelected"
 					>
 						<Column field="sname" header="Label"></Column>
 						<Column field="mira_ids" header="Name"></Column>
@@ -114,6 +115,7 @@
 						:parameters="model?.parameters"
 						attribute="parameters"
 						@update-parameter-row="updateParamaterRow"
+						@parameter-click="onVariableSelected"
 					/>
 				</AccordionTab>
 				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
@@ -139,7 +141,8 @@ import {
 	PetriNet,
 	NodeData,
 	EdgeData,
-	parseIGraph2PetriNet
+	parseIGraph2PetriNet,
+	petriToLatex
 } from '@/petrinet/petrinet-service';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -180,16 +183,17 @@ const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
 
 const equation = ref<string>('');
-const selectedRow = ref();
+const equationOriginal = ref<string>('');
+const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-const modelMath = ref(String.raw`\begin{align}
-\frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-\frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-\frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-\frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-\end{align}`);
+// const modelMath = ref(String.raw`\begin{align}
+// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
+// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
+// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
+// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
+// \end{align}`);
 
 // Another experiment using a map to automatically select highlighted version of the latex formula
 // this would require the backend service to provide a map of the eq.  Might be a little challenging.
@@ -204,21 +208,21 @@ const modelMath = ref(String.raw`\begin{align}
 // 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
 // };
 
-// DataTable click handler for State Variables.  Currently used to do the highlighting.
-const onRowClick = () => {
-	if (selectedRow.value) {
-		equation.value = modelMath.value.replaceAll(
-			selectedRow.value.sname,
-			String.raw`{\color{red}${selectedRow.value.sname}}`
+const onVariableSelected = (variable: string) => {
+	if (variable && !isSelected.value) {
+		equation.value = equationOriginal.value.replaceAll(
+			variable,
+			String.raw`{\color{red}${variable}}`
 		);
 	} else {
-		equation.value = modelMath.value;
+		equation.value = equationOriginal.value;
 	}
+	isSelected.value = !isSelected.value;
 };
 
 const updateFormula = (formulaString: string) => {
 	equation.value = formulaString;
-	modelMath.value = formulaString;
+	equationOriginal.value = formulaString;
 };
 
 const relatedTerariumModels = computed(
@@ -263,7 +267,12 @@ watch(
 			const result = await getModel(props.assetId);
 			model.value = result;
 			fetchRelatedTerariumArtifacts();
-			equation.value = modelMath.value;
+			if (model.value) {
+				const data = await petriToLatex(model.value.content);
+				if (data) {
+					updateFormula(data);
+				}
+			}
 		} else {
 			equation.value = '';
 			model.value = null;
@@ -322,38 +331,46 @@ const contextMenuItems = ref([
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
-watch([model, graphElement], async () => {
-	if (model.value === null || graphElement.value === null) return;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+watch(
+	[model, graphElement],
+	async () => {
+		if (model.value === null || graphElement.value === null) return;
+		// Convert petri net into a graph
+		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+			S: { width: 60, height: 60 },
+			T: { width: 40, height: 40 }
+		});
 
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
+		// Create renderer
+		renderer = new PetrinetRenderer({
+			el: graphElement.value as HTMLDivElement,
+			useAStarRouting: false,
+			useStableZoomPan: true,
+			runLayout: runDagreLayout,
+			dragSelector: 'no-drag'
+		});
 
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
+		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+			renderer?.addEdge(d.source, d.target);
+		});
 
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
+		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+			if (!renderer?.editMode) return;
+			eventX = pos.x;
+			eventY = pos.y;
+			menu.value.toggle(evt);
+		});
 
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
-});
+		// Render graph
+		await renderer?.setData(graphData);
+		await renderer?.render();
+		const latexFormula = await petriToLatex(model.value.content);
+		if (latexFormula) {
+			updateFormula(latexFormula);
+		}
+	},
+	{ deep: true }
+);
 
 const router = useRouter();
 const goToSimulationPlanPage = () => {

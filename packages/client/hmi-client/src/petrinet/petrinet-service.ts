@@ -1,4 +1,6 @@
 import { IGraph } from '@graph-scaffolder/types';
+import { AxiosError } from 'axios';
+import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import _ from 'lodash';
 
@@ -303,14 +305,53 @@ export const parsePetriNet2IGraph = (
 
 // Transform list of mathML strings to a petrinet ascet
 export const mathmlToPetri = async (mathml: string[]) => {
-	const response = await API.post('/transforms/mathml-to-acset', mathml);
-	return response.data;
+	try {
+		const response = await API.post('/transforms/mathml-to-acset', mathml);
+
+		if (response.data && typeof response.data === 'string') {
+			return response.data;
+		}
+		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
+	} catch (error: unknown) {
+		if ((error as AxiosError).isAxiosError) {
+			const axiosError = error as AxiosError;
+			logger.error('mathmlToPetri Error: ', axiosError.response?.data || axiosError.message, {
+				showToast: false
+			});
+		} else {
+			logger.error(error, { showToast: false });
+		}
+	}
+	return null;
 };
 
 // Transfrom a petrinet into latex
-export const petriToLatex = async (petri: PetriNet) => {
-	const response = await API.post('/transforms/acset-to-latex', petri);
-	return response.data;
+export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
+	try {
+		const payloadPetri = {
+			S: petri.S.map((s) => ({ sname: s.sname })),
+			T: petri.T.map((t) => ({ tname: t.tname })),
+			I: petri.I,
+			O: petri.O
+		};
+		const response = await API.post('/transforms/acset-to-latex', payloadPetri);
+
+		if (response.data && typeof response.data === 'string') {
+			return response.data;
+		}
+
+		logger.error('petriToLatex: Server did not provide a correct response', { showToast: false });
+	} catch (error: unknown) {
+		if ((error as AxiosError).isAxiosError) {
+			const axiosError = error as AxiosError;
+			logger.error('petriToLatex Error:', axiosError.response?.data || axiosError.message, {
+				showToast: false
+			});
+		} else {
+			logger.error(error, { showToast: false });
+		}
+	}
+	return null;
 };
 
 /**
