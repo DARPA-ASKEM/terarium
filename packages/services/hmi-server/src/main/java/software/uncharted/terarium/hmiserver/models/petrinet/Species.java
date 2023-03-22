@@ -11,9 +11,9 @@ import java.util.List;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonDeserialize(using = SJsonDeserializer.class)
+@JsonDeserialize(using = SpeciesJsonDeserializer.class)
 @Accessors(chain = true)
-public class S implements Serializable {
+public class Species implements Serializable {
 
 	private String sname;
 

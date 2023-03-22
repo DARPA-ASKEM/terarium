@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class SJsonDeserializer extends JsonDeserializer<S> {
+public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 	/*
 		{
 			"sname": "S",
@@ -18,10 +18,10 @@ public class SJsonDeserializer extends JsonDeserializer<S> {
 	 */
 
 	@Override
-	public S deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
+	public Species deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
 		JsonNode node = p.getCodec().readTree(p);
 
-		final S species = new S();
+		final Species species = new Species();
 		species
 			.setSname(node.get("sname").asText())
 			.setMiraIds(new ArrayList<>())
