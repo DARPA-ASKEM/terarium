@@ -8,8 +8,9 @@
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
-					:tabs="tabs"
 					:project="project"
+					:tabs="tabs"
+					:opened-asset-route="openedAssetRoute"
 					@open-asset="openAsset"
 					@close-tab="removeClosedTab"
 				/>
@@ -57,6 +58,10 @@
 			</template>
 			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code" />
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
+			<section v-else class="no-open-tabs">
+				<img src="@assets/svg/seed.svg" alt="Seed" />
+				<h5>Open resources from the resource panel.</h5>
+			</section>
 		</section>
 		<slider-panel
 			class="slider"
@@ -95,7 +100,7 @@ import SimulationRun from '@/temp/SimulationResult.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual } from 'lodash';
 import { useTabStore } from '@/stores/tabs';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
@@ -112,9 +117,6 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes | 'overview' | '';
 }>();
 
-// if I have two models with the same name, they won't open in separate tabs
-// they will just replace the existing tab with the same name
-
 const tabStore = useTabStore();
 const router = useRouter();
 
@@ -128,6 +130,11 @@ const code = ref<string>();
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
+const openedAssetRoute = computed<Tab>(() => ({
+	assetName: props.assetName ?? '',
+	assetType: props.assetType,
+	assetId: props.assetId
+}));
 
 function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
@@ -141,30 +148,26 @@ function removeClosedTab(tabIndexToRemove: number) {
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
 
+// Nice to have: Show overview tab on mount if no tabs were open in the previous session
+
 watch(
 	() => [
-		props.assetName, // Once the route name changes, add/switch to another tab
+		openedAssetRoute.value, // Once route attributes change, add/switch to another tab
 		projectContext.value // Make sure we are in the proper project context before opening assets
 	],
 	() => {
 		if (projectContext.value) {
+			// If name isn't recognized, its a new asset so add a new tab
 			if (
-				// If name isn't recognized, its a new asset so add a new tab
-				(props.assetName &&
-					!isEmpty(tabs.value) &&
-					!tabs.value.some(({ assetName }) => assetName === props.assetName)) ||
-				// An overview tab is added if there are no tabs
-				isEmpty(tabs.value)
+				props.assetName &&
+				props.assetType &&
+				!tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value))
 			) {
-				tabStore.addTab(projectContext.value, {
-					assetName: props.assetName === '' || !props.assetName ? 'Overview' : props.assetName,
-					assetId: props.assetId,
-					assetType: props.assetType === '' || !props.assetType ? 'overview' : props.assetType
-				});
+				tabStore.addTab(projectContext.value, openedAssetRoute.value);
 			}
 			// Tab switch
 			else if (props.assetName) {
-				const index = tabs.value.findIndex(({ assetName }) => assetName === props.assetName);
+				const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
 			// Goes to tab from previous session
@@ -210,6 +213,14 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow: auto;
+}
+
+.no-open-tabs {
+	justify-content: center;
+	gap: 2rem;
+	margin-bottom: 8rem;
+	align-items: center;
+	color: var(--text-color-subdued);
 }
 
 .asset {

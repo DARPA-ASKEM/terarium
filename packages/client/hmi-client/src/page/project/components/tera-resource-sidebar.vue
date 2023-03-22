@@ -3,8 +3,8 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!openedAsset.assetId || openedAsset.assetId === ''"
-				v-tooltip="`Remove ${openedAsset.assetName}`"
+				:disabled="!openedAssetRoute.assetId"
+				v-tooltip="`Remove ${openedAssetRoute.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isConfirmRemovalModalVisible = true"
 			/>
@@ -16,7 +16,7 @@
 			v-on:node-select="emit('open-asset', $event.asset)"
 		>
 			<template #default="slotProps">
-				<span :active="isEqual(openedAsset, slotProps.node.asset)">
+				<span :active="isEqual(openedAssetRoute, slotProps.node.asset)">
 					{{ slotProps.node.label }}
 					<Chip :label="slotProps.node.asset.assetType" />
 				</span>
@@ -33,7 +33,7 @@
 				<template #header>
 					<h5>
 						<!--openedAsset.assetName only makes sense in the case that the selected asset is the one to be deleted-->
-						Are you sure you want remove "{{ openedAsset.assetName }}" from {{ project.name }}?
+						Are you sure you want remove "{{ openedAssetRoute.assetName }}" from {{ project.name }}?
 					</h5>
 				</template>
 				<template #footer>
@@ -57,7 +57,6 @@ import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { useRoute } from 'vue-router';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
@@ -68,22 +67,15 @@ import { Dataset } from '@/types/Dataset';
 
 const props = defineProps<{
 	project: IProject;
+	openedAssetRoute: Tab;
 	tabs: Tab[];
 }>();
 
 const emit = defineEmits(['open-asset', 'close-tab']);
 
-const route = useRoute();
 const resourcesStore = useResourcesStore();
 
 const isConfirmRemovalModalVisible = ref(false);
-
-// Move this to parent?
-const openedAsset = computed<Tab>(() => ({
-	assetName: route.params.assetName as string,
-	assetType: route.params.assetType as ProjectAssetTypes | 'overview',
-	assetId: route.params.assetId as string
-}));
 
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
@@ -97,7 +89,7 @@ const resources = computed(() => {
 			asset: {
 				assetName: 'Overview',
 				assetType: 'overview',
-				assetId: ''
+				assetId: undefined
 			},
 			selectable: true
 		});
@@ -109,7 +101,7 @@ const resources = computed(() => {
 			asset: {
 				assetName: 'New file',
 				assetType: ProjectAssetTypes.CODE,
-				assetId: ''
+				assetId: undefined
 			},
 			selectable: true
 		});
@@ -140,8 +132,8 @@ const resources = computed(() => {
 	return resourceTreeNodes;
 });
 
-function removeAsset(assetToRemove: Tab = openedAsset.value) {
-	const { assetId, assetType } = assetToRemove;
+function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
+	const { assetName, assetId, assetType } = assetToRemove;
 
 	if (!assetType || !resourcesStore.activeProject || !resourcesStore.activeProjectAssets) {
 		return; // See about removing this check somehow, it may be best to pass the resourceStore from App.vue
@@ -171,6 +163,7 @@ function removeAsset(assetToRemove: Tab = openedAsset.value) {
 	if (tabIndex) emit('close-tab', tabIndex);
 
 	isConfirmRemovalModalVisible.value = false;
+	logger.info(`${assetName} was removed.`);
 }
 
 // function exportIds() {
