@@ -22,7 +22,7 @@ API.interceptors.request.use(
 		return config;
 	},
 	(error) => {
-		logger.error(error, { showToast: true, toastTitle: `Authentication Error` });
+		logger.error(error, { showToast: false, toastTitle: `Authentication Error` });
 	}
 );
 
@@ -34,13 +34,13 @@ API.interceptors.response.use(
 		switch (status) {
 			case 500:
 				logger.error(msg, {
-					showToast: true,
+					showToast: false,
 					toastTitle: `${ToastSummaries.SERVICE_UNAVAILABLE} (${status})`
 				});
 				break;
 			default:
 				logger.error(msg, {
-					showToast: true,
+					showToast: false,
 					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
 				});
 		}

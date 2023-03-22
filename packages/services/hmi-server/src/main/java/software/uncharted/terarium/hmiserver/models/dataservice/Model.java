@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -27,6 +28,6 @@ public class Model implements Serializable {
 
 	private Concept concept;
 
-	private Map<String, Object> parameters = new HashMap<>();
+	private List<Object> parameters;
 }
 
