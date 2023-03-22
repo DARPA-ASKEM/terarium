@@ -160,7 +160,7 @@ function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 
 	// If asset to be removed is open in a tab, close it
 	const tabIndex = props.tabs.findIndex((tab: Tab) => isEqual(tab, assetToRemove));
-	if (tabIndex) emit('close-tab', tabIndex);
+	if (tabIndex !== undefined) emit('close-tab', tabIndex);
 
 	isConfirmRemovalModalVisible.value = false;
 	logger.info(`${assetName} was removed.`);
