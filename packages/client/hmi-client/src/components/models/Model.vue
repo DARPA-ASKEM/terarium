@@ -408,8 +408,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 .model_diagram {
 	display: flex;
-	height: v-bind('height');
-	min-height: v-bind('height');
+	height: 100%;
 }
 
 .p-splitter .p-splitter-gutter {
