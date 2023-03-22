@@ -30,7 +30,6 @@ const plan = {
 describe('basic tests to make sure it all works', () => {
 	it('test', () => {
 		const graph = parseSimulationPlan(plan);
-		console.log(graph);
 		expect(graph).deep.eq({
 			nodes: [
 				{ id: '0', name: 'box1', boxType: '123' },
