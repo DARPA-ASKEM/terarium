@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.petrinet;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -9,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
+public class SJsonDeserializer extends JsonDeserializer<S> {
 	/*
 		{
 			"sname": "S",
@@ -19,10 +18,10 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 	 */
 
 	@Override
-	public Species deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException, JacksonException {
+	public S deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
 		JsonNode node = p.getCodec().readTree(p);
 
-		final Species species = new Species();
+		final S species = new S();
 		species.setSname(node.get("sname").asText());
 		species.setMiraIds(new ArrayList<>());
 		species.setMiraContext(new ArrayList<>());

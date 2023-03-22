@@ -12,7 +12,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
-import software.uncharted.terarium.hmiserver.models.petrinet.Species;
+import software.uncharted.terarium.hmiserver.models.petrinet.S;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
@@ -157,7 +157,7 @@ public class ModelResource {
 		}
 
 		// Resolve the ontology curies
-		final List<Species> species = model.getContent().getSpecies();
+		final List<S> species = model.getContent().getS();
 
 		// Get the curies from all species, as one string, comma separated without duplicate
 		final String curies = species.stream()

@@ -75,7 +75,7 @@
 				</AccordionTab>
 				<AccordionTab header="State variables">
 					<DataTable
-						:value="model?.content?.species"
+						:value="model?.content?.S"
 						selectionMode="single"
 						@row-select="onRowClick"
 						@row-unselect="onRowClick"
