@@ -5,7 +5,7 @@
 				label="Extract Model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
-			></Button>
+			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -22,7 +22,7 @@
 			></Button>
 		</div>
 		<v-ace-editor
-			v-model:value="content"
+			v-model:value="code"
 			@init="initialize"
 			lang="python"
 			theme="chrome"
@@ -72,9 +72,16 @@ import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import { createModel } from '@/services/model';
+import { Model } from '@/types/Model';
 
-const DEFAULT_TEXT = '# Paste some python code here or import from the controls above';
-const content = ref(DEFAULT_TEXT);
+const props = defineProps({
+	initialCode: {
+		type: String,
+		default: '# Paste some python code here or import from the controls above'
+	}
+});
+
+const code = ref(props.initialCode);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
 const selectedText = ref('');
 const codeExtractionDialogVisible = ref(false);
@@ -405,16 +412,16 @@ async function onFileOpen(event) {
 	const reader = new FileReader();
 	reader.readAsText(event.files[0], 'UTF-8');
 	reader.onload = (evt) => {
-		content.value = evt?.target?.result?.toString() ?? DEFAULT_TEXT;
+		code.value = evt?.target?.result?.toString() ?? props.initialCode;
 	};
 }
 
 async function onExtractGraph() {
 	extractPetrinetLoading.value = true;
-	const response = await API.post(`code/to_acset?code=${selectedText.value}`);
+	// const response = await API.post(`code/to_acset?code=${selectedText.value}`);
 	extractPetrinetLoading.value = false;
-	acset.value = response.data;
-	// acset.value = mockAcset;
+	// acset.value = response.data;
+	acset.value = mockAcset;
 	codeExtractionDialogVisible.value = true;
 }
 
@@ -456,14 +463,15 @@ async function createModelFromCode() {
 	const newModel = {
 		name: 'New model',
 		framework: 'Petri Net',
-		content: JSON.stringify({ ...acset.value, ...mockAnnotations })
-	};
+		content: JSON.stringify({ ...acset.value, metadata: mockAnnotations })
+	} as Model;
 	const model = await createModel(newModel);
 	if (model) {
 		emit('on-model-created', model.id, modelName);
 	}
 }
 </script>
+
 <style>
 .code {
 	display: flex;

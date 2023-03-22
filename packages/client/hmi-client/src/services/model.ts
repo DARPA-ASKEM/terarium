@@ -1,11 +1,6 @@
 import API from '@/api/api';
 import { Model } from '@/types/Model';
 
-export async function createModel(model): Promise<Model | null> {
-	const response = await API.post(`/models`, model);
-	return response?.data ?? null;
-}
-
 /**
  * Get Model from the data service
  * @return Model|null - the model, or null if none returned by API
@@ -40,5 +35,20 @@ export async function getBulkModels(modelIDs: string[]) {
  */
 export async function getAllModelDescriptions(): Promise<Model[] | null> {
 	const response = await API.get('/models/descriptions');
+	return response?.data ?? null;
+}
+
+export async function updateModel(model: Model) {
+	const response = await API.post(`/models/${model.id}`, {
+		name: model.name,
+		description: model.description,
+		framework: model.framework,
+		content: JSON.stringify(model.content)
+	});
+	return response?.data ?? null;
+}
+
+export async function createModel(model): Promise<Model | null> {
+	const response = await API.post(`/models`, model);
 	return response?.data ?? null;
 }
