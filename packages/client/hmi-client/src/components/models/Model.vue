@@ -3,7 +3,7 @@
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" />
+				<h4 v-html="title" @click="print" />
 				<span v-if="isEditable">
 					<Button
 						v-if="isEditing"
@@ -216,6 +216,10 @@ const onRowClick = () => {
 	}
 };
 
+function print() {
+	console.log(model.value);
+}
+
 const updateFormula = (formulaString: string) => {
 	equation.value = formulaString;
 	modelMath.value = formulaString;
@@ -262,7 +266,6 @@ watch(
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
-			console.log(result);
 			fetchRelatedTerariumArtifacts();
 			equation.value = modelMath.value;
 		} else {

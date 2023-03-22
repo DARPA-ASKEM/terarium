@@ -52,8 +52,9 @@
 			</table>
 			<template v-if="!isEditing">
 				<Chip
+					ref="extractionChip"
 					v-tooltip.top="{
-						value: `<span>sa</span>`,
+						value: `${tooltipContent}`,
 						escape: true,
 						class: 'extractions'
 					}"
@@ -89,16 +90,13 @@
 			<section class="tile-container"></section>
 		</section>
 		<section>
-			<ul>
-				<li v-for="(value, key) in modelExtractionsDummy" :key="key">
+			<ul ref="tooltipContent" @click="print">
+				<li v-for="(value, key) in example[exampleIndex]" :key="key">
 					<span class="extraction-type">
-						{{
-							// keys are camelCase, regex applys spaces, css makes everything uppercase
-							key.replace(/([A-Z])/g, ' $1')
-						}}
+						{{ startCase(key.toString()) }}
 					</span>
 					<ul class="extraction-values">
-						<li v-for="(text, index) in value" :key="index">
+						<li v-for="(text, index) in [value].flat()" :key="index">
 							{{ text }}
 						</li>
 					</ul>
@@ -109,10 +107,12 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
+import { startCase } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import InputText from 'primevue/inputtext';
 import Chip from 'primevue/chip';
+import { example } from './example-model-extraction';
 
 const props = defineProps<{
 	parameterRow: {
@@ -123,21 +123,21 @@ const props = defineProps<{
 		concept: string;
 		definition: string;
 	};
+	exampleIndex: string;
 }>();
 
 const emit = defineEmits(['update-parameter-row']);
-
-const modelExtractionsDummy = {
-	codeComments: ['hospitalized_rate', 'Hospitalized Rate'],
-	documentation: ['Hospitalization % (total infections)'],
-	papers: ['age-specific hospitalization rates', 'hospitalizations per 100,00'],
-	model: ['hospitalized_rate']
-};
 
 const isEditing = ref(false);
 const showRange = ref(false);
 const contextMenu = ref();
 const editedParameterRow = ref({ ...props.parameterRow });
+const extractionChip = ref();
+const tooltipContent = ref();
+
+function print() {
+	console.log(tooltipContent.value, extractionChip.value);
+}
 
 const parameterMenuItems = [
 	{
@@ -207,7 +207,7 @@ table td span:empty:before {
 	width: 6rem;
 }
 
-.extractions.p-tooltip-up {
+.extractions .p-tooltip-text {
 	background-color: var(--surface-section);
 	color: var(--text-color-primary);
 }
@@ -215,7 +215,7 @@ table td span:empty:before {
 .extraction-type {
 	color: var(--text-color-subdued);
 	text-transform: uppercase;
-	width: 10rem;
+	width: 14rem;
 	text-align: right;
 }
 
