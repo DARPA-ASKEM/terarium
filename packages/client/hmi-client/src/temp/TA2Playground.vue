@@ -780,18 +780,18 @@ export default defineComponent({
 		<form>
 			<label for="stratify">
 				<select v-model="stratifyModelA" type="text">
-					<option :value="0">generic</option>
-					<option :value="1">generic2</option>
-					<option :value="2">QNotQModel</option>
-					<option :value="3">typeModel</option>
-					<option :value="4">SIRD</option>
+					<option value="0">generic</option>
+					<option value="1">generic2</option>
+					<option value="2">QNotQModel</option>
+					<option value="3">typeModel</option>
+					<option value="4">SIRD</option>
 				</select>
 				<select v-model="stratifyModelB" type="text">
-					<option :value="0">generic</option>
-					<option :value="1">generic2</option>
-					<option :value="2">QNotQModel</option>
-					<option :value="3">typeModel</option>
-					<option :value="4">SIRD</option>
+					<option value="0">generic</option>
+					<option value="1">generic2</option>
+					<option value="2">QNotQModel</option>
+					<option value="3">typeModel</option>
+					<option value="4">SIRD</option>
 				</select>
 			</label>
 			<button type="button" @click="blindStratificationWrapper(stratifyModelA, stratifyModelB)">
