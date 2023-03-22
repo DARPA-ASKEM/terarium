@@ -28,6 +28,8 @@
 		"eslint-import-resolver-typescript": "3.5.3",
 		"graph-scaffolder": "*",
 		"lodash": "4.17.21",
+		"mathlive": "0.89.2",
+		"mathml-to-latex": "1.2.0",
 		"p5": "1.6.0",
 		"pinia": "2.0.33",
 		"pixi-viewport": "4.37.0",
@@ -37,6 +39,7 @@
 		"primevue": "3.25.0",
 		"sass": "1.56.1",
 		"vue": "3.2.47",
+		"vue-mathjax-next": "0.0.4",
 		"vue-router": "4.1.6",
 		"vue3-ace-editor": "2.2.2"
 	},
