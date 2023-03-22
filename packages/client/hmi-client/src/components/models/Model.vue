@@ -387,6 +387,7 @@ const toggleEditMode = () => {
 // - Resets changs to the model structure
 const cancelEdit = async () => {
 	isEditing.value = false;
+	if (!model.value) return;
 
 	// Convert petri net into a graph with raw input data
 	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
