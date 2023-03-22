@@ -54,9 +54,8 @@
 				<Chip
 					ref="extractionChip"
 					v-tooltip.top="{
-						value: tooltipContent?.outerHTML ?? '',
-						escape: true,
-						class: 'extractions'
+						value: tooltipContent?.outerHTML ?? ``,
+						escape: true
 					}"
 					label="extractions"
 				/>
@@ -202,16 +201,16 @@ table td span:empty:before {
 	width: 6rem;
 }
 
-.extractions .p-tooltip-text {
-	background-color: var(--surface-section);
-	color: var(--text-color-primary);
-}
-
 .extraction-type {
 	color: var(--text-color-subdued);
 	text-transform: uppercase;
-	width: 14rem;
+	width: 13rem;
 	text-align: right;
+}
+
+ul {
+	color: var(--text-color-primary);
+	white-space: nowrap;
 }
 
 li,
