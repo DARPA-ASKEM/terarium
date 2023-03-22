@@ -21,6 +21,17 @@
 				/>
 			</div>
 			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+			<Dialog :header="`Remove ${project.name}`" v-model:visible="isRemoveDialog">
+				<p>
+					You are about to remove project <em>{{ project.name }}</em
+					>.
+				</p>
+				<p>Are you sure?</p>
+				<template #footer>
+					<Button label="Cancel" class="p-button-secondary" @click="closeRemoveDialog" />
+					<Button label="Remove project" @click="removeProject" />
+				</template>
+			</Dialog>
 		</template>
 	</Card>
 	<Card v-else>
@@ -51,6 +62,7 @@ import { ref } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
+import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
@@ -59,6 +71,9 @@ import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 
 const props = defineProps<{ project?: IProject }>();
+const emit = defineEmits<{
+	(e: 'removed', projectId: IProject['id']): void;
+}>();
 
 const stats = !props.project
 	? null
@@ -71,22 +86,31 @@ const stats = !props.project
 
 const image = stats ? placeholder(stats) : undefined;
 
-async function removeProject() {
-	if (!props.project) return;
-	const isDeleted = await ProjectService.remove(props.project?.id);
-	if (isDeleted) {
-		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
-	} else {
-		logger.error(`Unable to delete the project ${props.project?.name}`, { showToast: true });
-	}
-}
-
 /*
  * User Menu
  */
+const isRemoveDialog = ref(false);
+const openRemoveDialog = () => {
+	isRemoveDialog.value = true;
+};
+const closeRemoveDialog = () => {
+	isRemoveDialog.value = false;
+};
 const projectMenu = ref();
-const projectMenuItems = ref([{ label: 'Remove', command: removeProject }]);
+const projectMenuItems = ref([{ label: 'Remove', command: openRemoveDialog }]);
 const showProjectMenu = (event) => projectMenu.value.toggle(event);
+
+const removeProject = async () => {
+	if (!props.project) return;
+	const isDeleted = await ProjectService.remove(props.project?.id);
+	closeRemoveDialog();
+	if (isDeleted) {
+		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
+		emit('removed', props.project.id);
+	} else {
+		logger.error(`Unable to delete the project ${props.project?.name}`, { showToast: true });
+	}
+};
 </script>
 
 <style scoped>
@@ -183,5 +207,9 @@ const showProjectMenu = (event) => projectMenu.value.toggle(event);
 .p-button.p-button-icon-only.p-button-rounded {
 	height: 2rem;
 	width: 2rem;
+}
+
+.p-dialog em {
+	font-weight: var(--font-weight-semibold);
 }
 </style>

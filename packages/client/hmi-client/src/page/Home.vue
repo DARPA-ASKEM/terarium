@@ -37,8 +37,12 @@
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="(project, index) in projects?.slice().reverse()" :key="index">
-									<project-card :project="project" @click="openProject(project.id)" />
+								<li v-for="project in projects" :key="project.id">
+									<project-card
+										:project="project"
+										@click="openProject(project.id)"
+										@removed="removeProject"
+									/>
 								</li>
 								<li>
 									<section class="new-project-card" @click="isNewProjectModalVisible = true">
@@ -213,7 +217,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await ProjectService.home()) ?? [];
+	projects.value = ((await ProjectService.home()) ?? []).slice().reverse();
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
@@ -280,6 +284,10 @@ async function createNewProject() {
 function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
+
+const removeProject = (projectId: IProject['id']) => {
+	projects.value = projects.value?.filter((project) => project.id !== projectId);
+};
 </script>
 
 <style scoped>
