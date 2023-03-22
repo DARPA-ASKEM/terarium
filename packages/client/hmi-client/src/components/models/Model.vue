@@ -3,7 +3,7 @@
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4>{{ title }}</h4>
+				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
 						v-if="isEditing"
@@ -325,7 +325,7 @@ const contextMenuItems = ref([
 watch([model, graphElement], async () => {
 	if (model.value === null || graphElement.value === null) return;
 	// Convert petri net into a graph
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
 		S: { width: 60, height: 60 },
 		T: { width: 40, height: 40 }
 	});
@@ -351,7 +351,7 @@ watch([model, graphElement], async () => {
 	});
 
 	// Render graph
-	await renderer?.setData(g);
+	await renderer?.setData(graphData);
 	await renderer?.render();
 });
 
@@ -390,14 +390,14 @@ const cancelEdit = async () => {
 	if (!model.value) return;
 
 	// Convert petri net into a graph with raw input data
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
 		S: { width: 60, height: 60 },
 		T: { width: 40, height: 40 }
 	});
 
 	if (renderer) {
 		renderer.setEditMode(false);
-		await renderer.setData(g);
+		await renderer.setData(graphData);
 		renderer.isGraphDirty = true;
 		await renderer.render();
 	}
