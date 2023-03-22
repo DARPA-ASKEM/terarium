@@ -385,13 +385,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
-		// let zoomX =
-		// 	(-((this.graph.width as number) * zoomLevel * 0.5) + 0.5 * this.chartSize.width) / zoomLevel;
-		// let zoomY =
-		// 	(-((this.graph.height as number) * zoomLevel * 0.5) + 0.5 * this.chartSize.height) /
-		// 	zoomLevel;
-
 		// Align the zoom to the height of the container, then try to center against the width
+		// FIXME: expose default positioning strategy as option
 		let zoomLevel = 1;
 		let zoomX = 0;
 		let zoomY = 0;
