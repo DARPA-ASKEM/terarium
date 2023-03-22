@@ -11,8 +11,8 @@
 						class="p-button-sm p-button-outlined"
 					/>
 					<Button
-						@click="goToSimulationPlanPage"
-						label="Open parameter space"
+						@click="goToSimulationRunPage"
+						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
 					/>
@@ -151,7 +151,6 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
-import { ProjectAssetTypes } from '@/types/Project';
 import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 import MathEditor from '@/components/mathml/math-editor.vue';
@@ -350,11 +349,19 @@ watch([model, graphElement], async () => {
 });
 
 const router = useRouter();
-const goToSimulationPlanPage = () => {
+const goToSimulationRunPage = () => {
+	// router.push({
+	// 	name: RouteName.ProjectRoute,
+	// 	params: {
+	// 		assetType: ProjectAssetTypes.PLANS
+	// 	}
+	// });
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetType: ProjectAssetTypes.PLANS
+			assetId: model.value?.id ?? 0 + 1000,
+			assetName: highlightSearchTerms(model.value?.name ?? ''),
+			assetType: 'simulation_runs'
 		}
 	});
 };
