@@ -262,6 +262,7 @@ watch(
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
+			console.log(result);
 			fetchRelatedTerariumArtifacts();
 			equation.value = modelMath.value;
 		} else {
@@ -416,6 +417,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	height: 99%;
 	width: 100%;
 }
+
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;

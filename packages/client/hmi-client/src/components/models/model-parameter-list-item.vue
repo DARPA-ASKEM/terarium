@@ -51,7 +51,14 @@
 				</tr>
 			</table>
 			<template v-if="!isEditing">
-				<Chip label="extractions" />
+				<Chip
+					v-tooltip.top="{
+						value: `<span>sa</span>`,
+						escape: true,
+						class: 'extractions'
+					}"
+					label="extractions"
+				/>
 				<Button
 					:icon="showRange ? 'pi pi-eye' : 'pi pi-eye-slash'"
 					class="p-button-icon-only p-button-text p-button-rounded"
@@ -81,6 +88,23 @@
 			<section v-if="showRange" class="range"></section>
 			<section class="tile-container"></section>
 		</section>
+		<section>
+			<ul>
+				<li v-for="(value, key) in modelExtractionsDummy" :key="key">
+					<span class="extraction-type">
+						{{
+							// keys are camelCase, regex applys spaces, css makes everything uppercase
+							key.replace(/([A-Z])/g, ' $1')
+						}}
+					</span>
+					<ul class="extraction-values">
+						<li v-for="(text, index) in value" :key="index">
+							{{ text }}
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</section>
 	</main>
 </template>
 <script setup lang="ts">
@@ -109,8 +133,6 @@ const modelExtractionsDummy = {
 	papers: ['age-specific hospitalization rates', 'hospitalizations per 100,00'],
 	model: ['hospitalized_rate']
 };
-
-console.log(modelExtractionsDummy);
 
 const isEditing = ref(false);
 const showRange = ref(false);
@@ -183,6 +205,29 @@ table td span:empty:before {
 
 .range {
 	width: 6rem;
+}
+
+.extractions.p-tooltip-up {
+	background-color: var(--surface-section);
+	color: var(--text-color-primary);
+}
+
+.extraction-type {
+	color: var(--text-color-subdued);
+	text-transform: uppercase;
+	width: 10rem;
+	text-align: right;
+}
+
+li,
+.extraction-values {
+	display: flex;
+	gap: 1rem;
+}
+
+.extraction-values li:not(:last-child):after {
+	content: '|';
+	color: var(--text-color-light);
 }
 
 .tile-container {
