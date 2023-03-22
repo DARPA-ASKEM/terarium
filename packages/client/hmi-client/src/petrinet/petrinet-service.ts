@@ -1,5 +1,6 @@
 import { IGraph } from '@graph-scaffolder/types';
 import API from '@/api/api';
+import _ from 'lodash';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -311,3 +312,78 @@ export const petriToLatex = async (petri: PetriNet) => {
 	const response = await API.post('/transforms/acset-to-latex', petri);
 	return response.data;
 };
+
+/**
+ * @description: clone graphOne X times where X is the length of nodes in graphTwo.
+ * 				Example, SIR + QNQ leads to two distinct SIR graphs. One labelled for Q and one labelled for NQ
+ * @param: graphOne, IGraph, a graph you want to clone
+ * @param: graphTwo -> IGraph, a graph you want to clone
+ * @return IGraph
+ * @todo: https://github.com/DARPA-ASKEM/Terarium/issues/868
+ */
+
+function cloneFirstGraph(
+	graphOne: IGraph<NodeData, EdgeData>,
+	graphTwo: IGraph<NodeData, EdgeData>
+) {
+	const resultGraph: IGraph<NodeData, EdgeData> = { nodes: [], edges: [] };
+	for (let i = 0; i < graphTwo.nodes.length; i++) {
+		if (graphTwo.nodes[i].data.type === NodeType.State) {
+			const tempGraph = _.cloneDeep(graphOne);
+			tempGraph.nodes.forEach((node) => {
+				node.id = `${node.id},${graphTwo.nodes[i].id}`;
+				node.label = `${node.label},${graphTwo.nodes[i].label}`;
+				resultGraph.nodes.push(node);
+			});
+			tempGraph.edges.forEach((edge) => {
+				edge.source = `${edge.source},${graphTwo.nodes[i].id}`;
+				edge.target = `${edge.target},${graphTwo.nodes[i].id}`;
+				resultGraph.edges.push(edge);
+			});
+		}
+	}
+	return resultGraph;
+}
+
+/**
+ * @description: Take 2 PetriNets and stratify them without any typing or ontology
+ * @return IGraph of result for easy graphing
+ * @todo: https://github.com/DARPA-ASKEM/Terarium/issues/868
+ */
+
+export function blindStratification(petrinetOne: PetriNet, petrinetTwo: PetriNet) {
+	const graphOne = parsePetriNet2IGraph(petrinetOne);
+	const graphTwo = parsePetriNet2IGraph(petrinetTwo);
+	const resultGraph: IGraph<NodeData, EdgeData> = cloneFirstGraph(graphOne, graphTwo);
+	// Add graphTwo's shape to connect everything
+	for (let i = 0; i < graphTwo.edges.length; i++) {
+		for (let j = 0; j < graphOne.nodes.length; j++) {
+			if (graphOne.nodes[j].data.type === NodeType.State) {
+				// Find the edges source that type as transition.
+				const graphTwoSourceNode = graphTwo.nodes.find(
+					(node) => node.id === graphTwo.edges[i].source && node.data.type === NodeType.Transition
+				);
+				if (graphTwoSourceNode) {
+					// Create the (S,transition) nodes (Example: S,unquarantine)
+					const newTransitionId = `${graphOne.nodes[j].id},${graphTwoSourceNode.id}`;
+					const newTransitionLabel = `${graphOne.nodes[j].label},${graphTwoSourceNode.label}`;
+					resultGraph.nodes.push({
+						id: newTransitionId,
+						label: newTransitionLabel,
+						data: { type: NodeType.Transition },
+						height: graphOne.nodes[j].height,
+						width: graphOne.nodes[j].width,
+						x: graphOne.nodes[j].x,
+						y: graphOne.nodes[j].y,
+						nodes: []
+					});
+				}
+				// Create the edges for (S,transition)
+				const newSource = `${graphOne.nodes[j].id},${graphTwo.edges[i].source}`;
+				const newTarget = `${graphOne.nodes[j].id},${graphTwo.edges[i].target}`;
+				resultGraph.edges.push({ source: newSource, target: newTarget, points: [] });
+			}
+		}
+	}
+	return resultGraph;
+}
