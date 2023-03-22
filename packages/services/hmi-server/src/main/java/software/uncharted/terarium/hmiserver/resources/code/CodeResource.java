@@ -81,4 +81,15 @@ public class CodeResource {
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
+
+	@POST
+	@Path("/annotation/find_text_vars")
+	public Object findTextVars(@QueryParam("text") final String text){
+		String textVars = mitProxy.findTextVars(text);
+		return Response.ok(Response.Status.OK)
+			.entity(textVars)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
+	}
+
 }

@@ -31,4 +31,10 @@ public interface MitProxy {
 	PetriNet getPyAcset(@QueryParam("places_str") final String places,
 											@QueryParam("transitions_str") final String transitions,
 											@QueryParam("arcs_str") final String arcs);
+
+	@POST
+	@Path("/annotation/find_text_vars")
+	String findTextVars(
+		@QueryParam("text") final String text);
+
 }
