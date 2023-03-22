@@ -6,6 +6,12 @@
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
+						v-if="isEditing"
+						@click="cancelEdit"
+						label="Cancel"
+						class="p-button-sm p-button-outlined"
+					/>
+					<Button
 						@click="toggleEditMode"
 						:label="isEditing ? 'Save model' : 'Edit model'"
 						class="p-button-sm p-button-outlined"
@@ -339,7 +345,7 @@ const contextMenuItems = ref([
 watch([model, graphElement], async () => {
 	if (model.value === null || graphElement.value === null) return;
 	// Convert petri net into a graph
-	const g: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
 		S: { width: 60, height: 60 },
 		T: { width: 40, height: 40 }
 	});
@@ -365,7 +371,7 @@ watch([model, graphElement], async () => {
 	});
 
 	// Render graph
-	await renderer?.setData(g);
+	await renderer?.setData(graphData);
 	await renderer?.render();
 });
 
@@ -394,6 +400,26 @@ const toggleEditMode = () => {
 	if (!isEditing.value && model.value && renderer) {
 		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
+	}
+};
+
+// Cancel existing edits, currently this will:
+// - Resets changs to the model structure
+const cancelEdit = async () => {
+	isEditing.value = false;
+	if (!model.value) return;
+
+	// Convert petri net into a graph with raw input data
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
+	if (renderer) {
+		renderer.setEditMode(false);
+		await renderer.setData(graphData);
+		renderer.isGraphDirty = true;
+		await renderer.render();
 	}
 };
 
