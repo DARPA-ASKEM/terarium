@@ -3,7 +3,7 @@
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" />
+				<h4>{{ title }}</h4>
 				<span v-if="isEditable">
 					<Button
 						v-if="isEditing"
