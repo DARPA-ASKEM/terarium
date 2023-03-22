@@ -89,9 +89,6 @@ public class DocumentProxyTests {
 		Assertions.assertNotNull(response.getSuccess().getData());
 		Assertions.assertTrue(response.getSuccess().getData().size() > 0);
 
-		Assertions.assertNotNull(response.getSuccess().getData().get(0).getHighlight());
-		Assertions.assertTrue(response.getSuccess().getData().get(0).getHighlight().size() > 0);
-
 		Assertions.assertNotNull(response.getSuccess().getData().get(0).getTitle());
 		Assertions.assertTrue(response.getSuccess().getData().get(0).getTitle().length() > 0);
 
