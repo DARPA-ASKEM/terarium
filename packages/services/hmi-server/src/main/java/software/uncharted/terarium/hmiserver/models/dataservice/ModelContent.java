@@ -1,20 +1,31 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 
 import java.io.Serializable;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Data
 @Accessors(chain = true)
 public class ModelContent implements Serializable {
-	private Map<String, String>[] S;
 
-	private Map<String, Optional<String>>[] T;
+	@JsonAlias("S")
+	@JsonSetter("S")
+	private List<Species> S;
 
-	private Map<String, Number>[] I;
+	@JsonAlias("T")
+	@JsonSetter("T")
+	private List<Map<String, Optional<String>>> T;
 
-	private Map<String, Number>[] O;
+	@JsonAlias("I")
+	@JsonSetter("I")
+	private List<Map<String, Number>> I;
+
+	@JsonAlias("O")
+	@JsonSetter("O")
+	private List<Map<String, Number>> O;
 }
