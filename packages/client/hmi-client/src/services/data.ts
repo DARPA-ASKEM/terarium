@@ -457,6 +457,10 @@ const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams
 		searchParams += '&facets=true';
 	}
 
+	if (xddSearchParam?.githubUrls) {
+		searchParams += `&github_url=${xddSearchParam.githubUrls}`;
+	}
+
 	// search title and abstract when performing term-based search if requested
 	if (term !== '' && xddSearchParam?.additional_fields) {
 		searchParams += `&additional_fields=${xddSearchParam?.additional_fields}`;

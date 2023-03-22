@@ -42,7 +42,7 @@ public class DocumentProxyTests {
 		final String TARGET_ID = "607182f63f2ac7e701921c92";
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments(
 			TARGET_ID, null, null, null, null, null, null, null, null, null, null, null, null,
-			null, null, null, null, null, null, "url_extractions,summaries");
+			null, null, null, null, null, null, "url_extractions,summaries", null);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());
@@ -56,7 +56,7 @@ public class DocumentProxyTests {
 	public void testItCanSearchForADocByTerm() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments(
 			null, null, null, "COVID-19", "xdd-covid-19", "true", "true", null, null, "100", "2", null, "true",
-			null, null, null, null, "title,abstract", "true", "url_extractions");
+			null, null, null, null, "title,abstract", "true", "url_extractions", null);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());
@@ -69,6 +69,28 @@ public class DocumentProxyTests {
 
 		Assertions.assertNotNull(response.getSuccess().getData().get(0).getAbstractText());
 		Assertions.assertTrue(response.getSuccess().getData().get(0).getAbstractText().length() > 0);
+
+		Assertions.assertNotNull(response.getSuccess().getData().get(0).getTitle());
+		Assertions.assertTrue(response.getSuccess().getData().get(0).getTitle().length() > 0);
+
+		Assertions.assertNotNull(response.getSuccess().getFacets());
+		Assertions.assertTrue(response.getSuccess().getFacets().size() > 0);
+	}
+
+	@Test
+	public void testItCanSearchForGithubURL() {
+		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments(
+			null, null, null, null, null, "true", "true", null, null, "100", "2", null, "true",
+			null, null, null, null, "title,abstract", "true", "url_extractions", "https://github.com/ieee8023/covid-chestxray-dataset");
+
+		Assertions.assertNotNull(response);
+		Assertions.assertNull(response.getError());
+		Assertions.assertNotNull(response.getSuccess());
+		Assertions.assertNotNull(response.getSuccess().getData());
+		Assertions.assertTrue(response.getSuccess().getData().size() > 0);
+
+		Assertions.assertNotNull(response.getSuccess().getData().get(0).getHighlight());
+		Assertions.assertTrue(response.getSuccess().getData().get(0).getHighlight().size() > 0);
 
 		Assertions.assertNotNull(response.getSuccess().getData().get(0).getTitle());
 		Assertions.assertTrue(response.getSuccess().getData().get(0).getTitle().length() > 0);

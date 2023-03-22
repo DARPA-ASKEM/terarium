@@ -75,6 +75,7 @@ export type DocumentType = {
 	year: string;
 	gddId: string;
 	highlight: string[];
+	githubUrls: string[];
 	knownEntities?: DocumentKnownEntity;
 
 	// We don't know exactly what is in citationList - DC Jan 2023
@@ -83,10 +84,4 @@ export type DocumentType = {
 	// additional-client-side fields
 	relatedDocuments?: Document[];
 	relatedExtractions?: XDDArtifact[];
-};
-
-export type DocumentAsset = {
-	id?: string;
-	xdd_uri: string; // FIXME: this is the internal XDD id known as "docid" NOT "doi"
-	title: string;
 };
