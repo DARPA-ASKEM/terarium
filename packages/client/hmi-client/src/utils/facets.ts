@@ -13,7 +13,8 @@ import {
 } from '@/types/Model';
 import {
 	DISPLAY_NAMES as XDD_DISPLAY_NAMES,
-	FACET_FIELDS as DOCUMENT_FACET_FIELDS
+	FACET_FIELDS as DOCUMENT_FACET_FIELDS,
+	GITHUB_URL
 } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
 import { groupBy, mergeWith, isArray } from 'lodash';
@@ -117,7 +118,21 @@ export const getDocumentFacets = (documents: DocumentType[]) => {
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
 		const documentsMap = documents.map((document) => document[fieldName as keyof DocumentType]);
-		const grouped = groupBy(documentsMap);
+		// convert lists inside these fields to individual entries
+		const unListedDocumentsMap: any[] = [];
+		documentsMap.forEach((entry) => {
+			if (entry) {
+				if (Array.isArray(entry)) {
+					entry.forEach((subEntry) => {
+						unListedDocumentsMap.push(subEntry);
+					});
+				} else {
+					unListedDocumentsMap.push(entry);
+				}
+			}
+		});
+
+		const grouped = groupBy(unListedDocumentsMap);
 		Object.keys(grouped).forEach((gKey) => {
 			if (gKey !== '' && gKey !== 'undefined') {
 				aggs.push({ key: gKey, value: grouped[gKey].length });
@@ -130,12 +145,9 @@ export const getDocumentFacets = (documents: DocumentType[]) => {
 
 	// create facets from specific dataset fields
 	DOCUMENT_FACET_FIELDS.forEach((field) => {
-		// exclude dataset ID as a facet since it is created from mapping concepts
-		if (field !== ID) {
-			const facetForField = aggField(field);
-			if (facetForField.length > 0) {
-				facets[field] = facetForField;
-			}
+		const facetForField = aggField(field);
+		if (facetForField.length > 0) {
+			facets[field] = facetForField;
 		}
 	});
 
@@ -173,6 +185,19 @@ export const getFacets = (results: SearchResults[], resultType: ResourceType | s
 		});
 	}
 	return facets;
+};
+
+export const getFacetNameFormatter: Function = (resultType: string, key: string) => {
+	if (resultType === ResourceType.XDD && key === GITHUB_URL) {
+		return function format(label: string) {
+			// @ts-ignore
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const [url, ...rest] = label.split('github.com/');
+			return rest;
+		};
+	}
+
+	return null;
 };
 
 export const getFacetsDisplayNames = (resultType: string, key: string) => {
