@@ -54,7 +54,7 @@
 				<Chip
 					ref="extractionChip"
 					v-tooltip.top="{
-						value: `${tooltipContent}`,
+						value: tooltipContent?.outerHTML ?? '',
 						escape: true,
 						class: 'extractions'
 					}"
@@ -89,8 +89,8 @@
 			<section v-if="showRange" class="range"></section>
 			<section class="tile-container"></section>
 		</section>
-		<section>
-			<ul ref="tooltipContent" @click="print">
+		<section style="display: none">
+			<ul ref="tooltipContent">
 				<li v-for="(value, key) in example[exampleIndex]" :key="key">
 					<span class="extraction-type">
 						{{ startCase(key.toString()) }}
@@ -132,12 +132,7 @@ const isEditing = ref(false);
 const showRange = ref(false);
 const contextMenu = ref();
 const editedParameterRow = ref({ ...props.parameterRow });
-const extractionChip = ref();
 const tooltipContent = ref();
-
-function print() {
-	console.log(tooltipContent.value, extractionChip.value);
-}
 
 const parameterMenuItems = [
 	{
