@@ -87,30 +87,19 @@
 						@row-unselect="onRowClick"
 					>
 						<Column field="sname" header="Label" />
-						<Column field="miraIds" header="Name">
+						<Column field="miraIds" header="Concepts">
 							<template #body="slotProps">
 								<ul>
-									<li v-for="ontology in slotProps.data.miraIds" :key="ontology.curie">
-										<a :href="ontology.link" :title="ontology.description">
-											{{ ontology.title }}
-										</a>
+									<li
+										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
+										:key="ontology.curie"
+									>
+										<a :href="ontology.link">{{ ontology.title }}</a
+										><br />{{ ontology.description }}
 									</li>
 								</ul>
 							</template>
 						</Column>
-						<Column field="units" header="Units" />
-						<Column field="miraContext" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li v-for="ontology in slotProps.data.miraContext" :key="ontology.curie">
-										<a :href="ontology.link" :title="ontology.description">
-											{{ ontology.title }}
-										</a>
-									</li>
-								</ul>
-							</template>
-						</Column>
-						<Column field="definition" header="Definition"></Column>
 					</DataTable>
 				</AccordionTab>
 			</template>
