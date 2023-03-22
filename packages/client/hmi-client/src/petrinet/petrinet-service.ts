@@ -313,12 +313,15 @@ export const petriToLatex = async (petri: PetriNet) => {
 	return response.data;
 };
 
-/*
-Given two IGraphs, clone the first X times where X is the length of nodes of the 2nd one.
-	Example, SIR + QNQ leads to two distinct SIR graphs. One with Q and one with NQ
-return a graph
-TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
-*/
+/**
+ * @description: clone graphOne X times where X is the length of nodes in graphTwo.
+ * 				Example, SIR + QNQ leads to two distinct SIR graphs. One labelled for Q and one labelled for NQ
+ * @param: graphOne, IGraph, a graph you want to clone
+ * @param: graphTwo -> IGraph, a graph you want to clone
+ * @return IGraph
+ * @todo: https://github.com/DARPA-ASKEM/Terarium/issues/868
+ */
+
 function cloneFirstGraph(
 	graphOne: IGraph<NodeData, EdgeData>,
 	graphTwo: IGraph<NodeData, EdgeData>
@@ -342,14 +345,12 @@ function cloneFirstGraph(
 	return resultGraph;
 }
 
-/*
-TODO: https://github.com/DARPA-ASKEM/Terarium/issues/868
-Inputs:
-	Petrinet 
-	Petrinet
-Output:
-	(Graph/Petrinet)
-*/
+/**
+ * @description: Take 2 PetriNets and stratify them without any typing or ontology
+ * @return IGraph of result for easy graphing
+ * @todo: https://github.com/DARPA-ASKEM/Terarium/issues/868
+ */
+
 export function blindStratification(petrinetOne: PetriNet, petrinetTwo: PetriNet) {
 	const graphOne = parsePetriNet2IGraph(petrinetOne);
 	const graphTwo = parsePetriNet2IGraph(petrinetTwo);
