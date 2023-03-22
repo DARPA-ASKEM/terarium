@@ -14,8 +14,13 @@
 			<div class="project-description">{{ project.description }}</div>
 			<div class="project-footer">
 				<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
-				<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-rounded p-button-secondary"
+					@click.stop="showProjectMenu"
+				/>
 			</div>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
 		</template>
 	</Card>
 	<Card v-else>
@@ -42,12 +47,16 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
+import Menu from 'primevue/menu';
 import Skeleton from 'primevue/skeleton';
 import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
+import { logger } from '@/utils/logger';
+import * as ProjectService from '@/services/project';
 
 const props = defineProps<{ project?: IProject }>();
 
@@ -61,6 +70,23 @@ const stats = !props.project
 	  };
 
 const image = stats ? placeholder(stats) : undefined;
+
+async function removeProject() {
+	if (!props.project) return;
+	const isDeleted = await ProjectService.remove(props.project?.id);
+	if (isDeleted) {
+		logger.info(`The project ${props.project?.name} was removed`, { showToast: true });
+	} else {
+		logger.error(`Unable to delete the project ${props.project?.name}`, { showToast: true });
+	}
+}
+
+/*
+ * User Menu
+ */
+const projectMenu = ref();
+const projectMenuItems = ref([{ label: 'Remove', command: removeProject }]);
+const showProjectMenu = (event) => projectMenu.value.toggle(event);
 </script>
 
 <style scoped>

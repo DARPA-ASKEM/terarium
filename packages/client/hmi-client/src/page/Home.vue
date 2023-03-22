@@ -32,7 +32,7 @@
 								<i class="pi pi-chevron-right" />
 							</div>
 							<ul v-if="isLoadingProjects">
-								<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
+								<li v-for="i in [0, 1, 2]" :key="i">
 									<project-card />
 								</li>
 							</ul>
@@ -172,7 +172,6 @@ import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
-import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 import Button from 'primevue/button';
@@ -214,7 +213,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await API.get('/home')).data as IProject[];
+	projects.value = (await ProjectService.home()) ?? [];
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
