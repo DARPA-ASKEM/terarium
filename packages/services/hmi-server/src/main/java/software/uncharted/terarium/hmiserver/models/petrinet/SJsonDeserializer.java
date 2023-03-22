@@ -22,9 +22,10 @@ public class SJsonDeserializer extends JsonDeserializer<S> {
 		JsonNode node = p.getCodec().readTree(p);
 
 		final S species = new S();
-		species.setSname(node.get("sname").asText());
-		species.setMiraIds(new ArrayList<>());
-		species.setMiraContext(new ArrayList<>());
+		species
+			.setSname(node.get("sname").asText())
+			.setMiraIds(new ArrayList<>())
+			.setMiraContext(new ArrayList<>());
 
 		final String nodeMiraIds = node.get("mira_ids").asText();
 		if (nodeMiraIds.length() > 3) {
