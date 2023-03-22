@@ -80,8 +80,8 @@ public class DocumentProxyTests {
 	@Test
 	public void testItCanSearchForGithubURL() {
 		final XDDResponse<DocumentsResponseOK> response = documentProxy.getDocuments(
-			null, null, null, null, null, "true", "true", null, null, "100", "2", null, "true",
-			null, null, null, null, "title,abstract", "true", "url_extractions", "https://github.com/ieee8023/covid-chestxray-dataset");
+			null, null, null, null, null, null, null, null, null, "100", "2", null, "true",
+			null, null, null, null, null, null, null, "https://github.com/ieee8023/covid-chestxray-dataset");
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());
