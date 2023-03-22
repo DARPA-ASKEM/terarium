@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import graphScaffolder, { INode, IEdge } from '@graph-scaffolder/index';
+import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
@@ -14,7 +14,7 @@ const pathFn = d3
 const EDGE_COLOR = '#333333';
 const EDGE_OPACITY = 0.5;
 
-export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
+export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
