@@ -18,9 +18,13 @@
 	<Transition name="modal">
 		<aside @click.self="$emit('modalMaskClicked')">
 			<main>
-				<slot name="header"></slot>
+				<header>
+					<slot name="header"></slot>
+				</header>
 				<slot></slot>
-				<slot name="footer"> </slot>
+				<footer>
+					<slot name="footer"></slot>
+				</footer>
 			</main>
 		</aside>
 	</Transition>
@@ -49,6 +53,18 @@ main {
 	transition: all 0.1s ease;
 	min-width: max-content;
 	width: 30rem;
+}
+
+header {
+	margin-bottom: 1rem;
+}
+
+footer {
+	display: flex;
+	flex-direction: row-reverse;
+	gap: 1rem;
+	justify-content: end;
+	margin-top: 2rem;
 }
 
 .modal-enter-from,
