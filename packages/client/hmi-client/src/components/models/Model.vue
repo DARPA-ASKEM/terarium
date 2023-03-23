@@ -327,6 +327,11 @@ let eventX = 0;
 let eventY = 0;
 
 const editorKeyHandler = (event: KeyboardEvent) => {
+	// Ignore backspace if the current focus is a text/input box
+	if ((event.target as HTMLElement).tagName === 'INPUT') {
+		return;
+	}
+
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
