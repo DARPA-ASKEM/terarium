@@ -16,6 +16,7 @@
 					:parameter-row="parameterRow"
 					:example-index="(index + 1).toString()"
 					@update-parameter-row="updateParamaterRow"
+					@click="variableClick($event, parameterRow.name)"
 				/>
 			</li>
 			<footer>
@@ -35,7 +36,11 @@ const props = defineProps<{
 	attribute: string;
 }>();
 
-const emit = defineEmits(['update-parameter-row']);
+const emit = defineEmits(['update-parameter-row', 'parameter-click']);
+
+const variableClick = (_event: Event, variable: any) => {
+	emit('parameter-click', variable);
+};
 
 function updateParamaterRow(newParameterRow: any) {
 	emit('update-parameter-row', props.attribute, newParameterRow);

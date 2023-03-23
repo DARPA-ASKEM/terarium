@@ -15,12 +15,10 @@ TeraResizablePanel: A Vertically resizable panel with a handle along the bottom
 
 import { ref, onUnmounted } from 'vue';
 
-// const minHeight = ref(300);
-const containerHeight = ref(400);
+const containerHeight = ref(600);
 const draggedY = ref(0);
 
 const resize = (event: MouseEvent) => {
-	console.log('resizing');
 	containerHeight.value += event.clientY - draggedY.value;
 	draggedY.value = event.clientY;
 };
@@ -52,7 +50,7 @@ onUnmounted(() => {
 }
 
 section {
-	min-height: 300px;
+	min-height: 600px;
 }
 
 main {
