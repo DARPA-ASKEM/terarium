@@ -2,7 +2,7 @@
 	<section class="asset" v-if="doc" ref="sectionElem">
 		<header>
 			<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-			<h4 v-html="highlightSearchTerms(doc.title)" />
+			<h4 v-html="highlightSearchTerms(doc.title)" @click="print" />
 			<div class="authors" v-html="formatDocumentAuthors(doc)" />
 			<div v-if="docLink || doi">
 				DOI:
@@ -73,8 +73,8 @@
 				<ul>
 					<template v-if="isEditable">
 						<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
-							<import-code-button :url="url" @open-asset="openAsset" />
-							<a :href="url.html_url" rel="noreferrer noopener">{{ url.html_url }}</a>
+							<import-code-button :urlString="url" @open-asset="openAsset" />
+							<a :href="url" rel="noreferrer noopener">{{ url }}</a>
 						</li>
 					</template>
 					<li v-for="ex in urlArtifacts" :key="ex.url">
@@ -145,7 +145,6 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { getGithubUrls } from '@/services/github-import';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 
@@ -159,11 +158,7 @@ const props = defineProps<{
 const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
 
-const githubUrls = ref(); // this is will hold github urls temporarily, later we they will be in the document urls
-
-onMounted(async () => {
-	githubUrls.value = await getGithubUrls();
-});
+const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 
 const emit = defineEmits(['open-asset']);
 
@@ -179,6 +174,10 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
+function print() {
+	console.log(doc.value);
+}
+
 watch(
 	props,
 	async () => {
@@ -188,7 +187,6 @@ watch(
 			const d = await getDocumentById(id);
 			if (d) {
 				doc.value = d;
-				console.log(d);
 			}
 		} else {
 			doc.value = null;

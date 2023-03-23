@@ -3,7 +3,7 @@
 		label="Import"
 		class="p-button-sm p-button-outlined"
 		icon="pi pi-cloud-download"
-		@click="openCodeBrowser(url)"
+		@click="openCodeBrowser"
 	/>
 	<Teleport to="body">
 		<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
@@ -28,10 +28,14 @@ import { ref } from 'vue';
 import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
-import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
+import {
+	getGithubRepositoryContent,
+	getGithubCode,
+	getGithubRepositoryAttributes
+} from '@/services/github-import';
 
-defineProps<{
-	url: Object;
+const props = defineProps<{
+	urlString: string;
 }>();
 
 const emit = defineEmits(['open-asset']);
@@ -40,13 +44,19 @@ const chosenRepositoryName = ref('');
 const filesToSelect = ref();
 const isModalVisible = ref(false);
 
-async function openCodeBrowser(url) {
+async function openCodeBrowser() {
 	isModalVisible.value = true;
-	chosenRepositoryName.value = url.full_name;
-	filesToSelect.value = await getGithubRepositoryContent(url.contents_url.slice(0, -8));
+
+	const splitUrl = props.urlString.split('/');
+	const ownerRepo = `${splitUrl[splitUrl.length - 2]}/${splitUrl[splitUrl.length - 1]}`;
+	chosenRepositoryName.value = ownerRepo;
+
+	const repoAttributes = await getGithubRepositoryAttributes(ownerRepo);
+	filesToSelect.value = await getGithubRepositoryContent(repoAttributes.contents_url.slice(0, -8));
 }
 
 async function openCode(url) {
+	// If a folder is chosen
 	if (url.download_url === null) {
 		chosenRepositoryName.value = `${chosenRepositoryName.value}/${url.name}`;
 		filesToSelect.value = await getGithubRepositoryContent(url.url);
