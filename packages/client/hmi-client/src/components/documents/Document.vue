@@ -2,7 +2,7 @@
 	<section class="asset" v-if="doc" ref="sectionElem">
 		<header>
 			<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-			<h4 v-html="highlightSearchTerms(doc.title)" @click="print" />
+			<h4 v-html="highlightSearchTerms(doc.title)" />
 			<div class="authors" v-html="formatDocumentAuthors(doc)" />
 			<div v-if="docLink || doi">
 				DOI:
@@ -172,10 +172,6 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
-}
-
-function print() {
-	console.log(doc.value);
 }
 
 watch(
