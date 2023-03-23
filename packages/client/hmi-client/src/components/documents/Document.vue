@@ -188,6 +188,7 @@ watch(
 			const d = await getDocumentById(id);
 			if (d) {
 				doc.value = d;
+				console.log(d);
 			}
 		} else {
 			doc.value = null;
