@@ -27,7 +27,7 @@
 			<!--contributor-->
 			<!--created on: date-->
 		</header>
-		<Accordion :multiple="true" :active-index="[4]">
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-html="description" />
 			</AccordionTab>
