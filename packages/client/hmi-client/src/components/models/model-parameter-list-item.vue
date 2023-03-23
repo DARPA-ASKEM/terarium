@@ -86,7 +86,21 @@
 		</section>
 		<section>
 			<section v-if="showRange" class="range"></section>
-			<section class="tile-container"></section>
+			<ul>
+				<li v-for="(value, key) in parameterRow" :key="key">
+					<span class="extraction-type">
+						{{ startCase(key.toString()) }}
+					</span>
+					<ul class="extraction-values">
+						<li>
+							{{ value.toString() }}
+						</li>
+					</ul>
+				</li>
+			</ul>
+			<!-- <section class="tile-container">
+				
+			</section> -->
 		</section>
 		<section style="display: none">
 			<ul ref="tooltipContent">
