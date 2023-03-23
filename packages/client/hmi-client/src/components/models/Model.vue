@@ -3,7 +3,7 @@
 		<header>
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" @click="print" />
+				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
 						v-if="isEditing"
@@ -224,10 +224,6 @@ const onRowClick = () => {
 		equation.value = modelMath.value;
 	}
 };
-
-function print() {
-	console.log(model.value);
-}
 
 const updateFormula = (formulaString: string) => {
 	equation.value = formulaString;
