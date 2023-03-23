@@ -350,12 +350,6 @@ watch([model, graphElement], async () => {
 
 const router = useRouter();
 const goToSimulationRunPage = () => {
-	// router.push({
-	// 	name: RouteName.ProjectRoute,
-	// 	params: {
-	// 		assetType: ProjectAssetTypes.PLANS
-	// 	}
-	// });
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
