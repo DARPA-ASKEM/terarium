@@ -56,7 +56,11 @@
 					:project="project"
 				/>
 			</template>
-			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code" />
+			<code-editor
+				v-else-if="assetType === ProjectAssetTypes.CODE"
+				:initial-code="code"
+				@on-model-created="openNewModelFromCode"
+			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -108,6 +112,10 @@ import { RouteName } from '@/router/routes';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import API from '@/api/api';
+import * as ProjectService from '@/services/project';
+import useResourcesStore from '@/stores/resources';
+import { getModel } from '@/services/model';
+import { logger } from '@/utils/logger';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -119,6 +127,7 @@ const props = defineProps<{
 
 const tabStore = useTabStore();
 const router = useRouter();
+const resources = useResourcesStore();
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -143,6 +152,26 @@ function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
+}
+
+async function openNewModelFromCode(modelId, modelName) {
+	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
+	const model = await getModel(modelId);
+	console.log(model);
+	if (model) {
+		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+	} else {
+		logger.warn('Could not add new model to project.');
+	}
+
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: {
+			assetName: modelName,
+			assetId: modelId,
+			assetType: ProjectAssetTypes.MODELS
+		}
+	});
 }
 
 // When a new tab is chosen, reflect that by opening its associated route
