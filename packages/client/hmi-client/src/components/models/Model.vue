@@ -72,15 +72,8 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<template v-if="!isEditable">
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab header="State variables">
+			<AccordionTab header="State variables">
+				<template v-if="!isEditable">
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
@@ -103,21 +96,8 @@
 							</template>
 						</Column>
 					</DataTable>
-				</AccordionTab>
-			</template>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
-			</AccordionTab>
-			<template v-if="isEditable">
-				<AccordionTab header="State variables">
+				</template>
+				<template v-else>
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
@@ -139,26 +119,35 @@
 							</template>
 						</Column>
 					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
-					</template>
+				</template>
+			</AccordionTab>
+			<AccordionTab :header="`Parameters ${model?.parameters.length}`">
+				<template v-if="!isEditable"
+					><DataTable :value="model?.parameters">
+						<Column field="name" header="Name"></Column>
+						<Column field="type" header="Type"></Column>
+						<Column field="default_value" header="Default"></Column>
+					</DataTable> </template
+				><template v-else>
 					<model-parameter-list
 						:parameters="betterParams"
 						attribute="parameters"
 						@update-parameter-row="updateParamaterRow"
 						@parameter-click="onVariableSelected"
 					/>
-				</AccordionTab>
-				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
-					<template #header>
-						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
-					</template>
-					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
-						@update-parameterRow="updateParamaterRow" />
-				</AccordionTab> -->
-			</template>
+				</template>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
 		</Accordion>
 	</section>
 </template>
