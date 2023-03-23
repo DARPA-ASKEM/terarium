@@ -67,8 +67,15 @@ public class HomeResource {
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
 				.build();
-
 		}
+
+		// Remove non active (soft-deleted) projects
+		// TODO - this should be done in the data-service
+		allProjects = allProjects
+			.stream()
+			.filter(Project::getActive)
+			.toList();
+		
 		//Get project's related documents and add them to the project.
 		//Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
 		//TODO: Make this smarter than grabbing first publication and then its related

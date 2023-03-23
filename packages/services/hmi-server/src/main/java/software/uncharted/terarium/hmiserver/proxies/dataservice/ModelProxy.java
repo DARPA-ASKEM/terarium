@@ -84,7 +84,7 @@ public interface ModelProxy {
 
 	@GET
 	@Path("/{id}")
-	Response getModel(
+	Model getModel(
 		@PathParam("id") String id
 	);
 

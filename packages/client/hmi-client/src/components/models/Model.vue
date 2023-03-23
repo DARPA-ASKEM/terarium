@@ -82,17 +82,26 @@
 				</AccordionTab>
 				<AccordionTab header="State variables">
 					<DataTable
-						:value="model?.content.S"
+						:value="model?.content?.S"
 						selectionMode="single"
 						v-model:selection="selectedRow"
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
 					>
-						<Column field="sname" header="Label"></Column>
-						<Column field="mira_ids" header="Name"></Column>
-						<Column field="units" header="Units"></Column>
-						<Column field="mira_context" header="Concepts"></Column>
-						<Column field="definition" header="Definition"></Column>
+						<Column field="sname" header="Label" />
+						<Column field="miraIds" header="Concepts">
+							<template #body="slotProps">
+								<ul>
+									<li
+										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
+										:key="ontology.curie"
+									>
+										<a :href="ontology.link">{{ ontology.title }}</a
+										><br />{{ ontology.description }}
+									</li>
+								</ul>
+							</template>
+						</Column>
 					</DataTable>
 				</AccordionTab>
 			</template>
