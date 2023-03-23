@@ -12,6 +12,9 @@ import * as path from 'path';
 // See: https://vitejs.dev/config/
 // See: https://vitejs.dev/config/server-options.html#server-proxy
 export default defineConfig({
+	optimizeDeps: {
+		exclude: ['mathlive']
+	},
 	// Syntax sugar for specifying imports
 	resolve: {
 		alias: {
