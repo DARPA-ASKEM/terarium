@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import graphScaffolder, { INode, IEdge } from '@graph-scaffolder/index';
+import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
@@ -9,12 +9,13 @@ const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
-	.y((d) => d.y);
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
 
 const EDGE_COLOR = '#333333';
 const EDGE_OPACITY = 0.5;
 
-export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
+export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
@@ -192,10 +193,28 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 	selectNode(selection: D3SelectionINode<NodeData>) {
 		selection.selectAll('.no-drag').attr('stroke-width', 3);
+		selection.select('text').style('fill-opacity', 0);
+
+		// Add in a input textbox to change the name
+		const w = selection.datum().width;
+		const h = selection.datum().width;
+		selection
+			.append('foreignObject')
+			.attr('x', -0.5 * w)
+			.attr('y', -0.25 * h)
+			.attr('width', w)
+			.attr('height', h)
+			.append('xhtml:input')
+			.attr('type', 'text')
+			.attr('value', selection.datum().label);
 	}
 
 	deselectNode(selection: D3SelectionINode<NodeData>) {
 		selection.selectAll('.no-drag').attr('stroke-width', 1);
+		const newLabel = (selection.select('input').node() as HTMLInputElement).value;
+		selection.datum().label = newLabel;
+		selection.select('text').text(newLabel).style('fill-opacity', 1.0);
+		selection.select('foreignObject').remove();
 	}
 
 	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
@@ -273,6 +292,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			if (!this.editMode) return;
+			if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) return;
 
 			// hide any handles which are already open
 			if (this.nodeSelection) {

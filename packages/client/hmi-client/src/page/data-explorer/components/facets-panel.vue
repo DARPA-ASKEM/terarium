@@ -17,6 +17,7 @@
 				:base-data="facet.baseData"
 				:selected-data="facet.filteredData"
 				:rescale-after-select="true"
+				:formatter-fn="facet.formatter"
 			/>
 		</div>
 	</div>
@@ -29,7 +30,7 @@ import CategoricalFacet from '@/components/facets/categorical-facet.vue';
 import NumericalFacet from '@/components/facets/numerical-facet.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
-import { getFacetsDisplayNames } from '@/utils/facets';
+import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
 
 const props = defineProps({
 	facets: {
@@ -79,6 +80,7 @@ const formattedFacets = computed(() => {
 			id: key,
 			label: getFacetsDisplayNames(props.resultType, key),
 			isNumerical: false,
+			formatter: getFacetNameFormatter(props.resultType, key),
 			baseData,
 			filteredData
 		};
