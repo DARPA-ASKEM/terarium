@@ -72,8 +72,8 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<AccordionTab header="State variables">
-				<template v-if="!isEditable">
+			<AccordionTab :header="`State variables ${model?.content?.S.length}`">
+				<template v-if="true || !isEditable">
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
@@ -243,7 +243,6 @@ const betterParams = computed(() => {
 			}
 		});
 	});
-
 	return params;
 });
 
