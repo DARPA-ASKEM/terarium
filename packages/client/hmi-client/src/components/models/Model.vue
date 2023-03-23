@@ -117,12 +117,35 @@
 				</DataTable>
 			</AccordionTab>
 			<template v-if="isEditable">
+				<AccordionTab header="State variables">
+					<DataTable
+						:value="model?.content?.S"
+						selectionMode="single"
+						@row-select="onStateVariableClick"
+						@row-unselect="onStateVariableClick"
+					>
+						<Column field="sname" header="Label" />
+						<Column field="miraIds" header="Concepts">
+							<template #body="slotProps">
+								<ul>
+									<li
+										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
+										:key="ontology.curie"
+									>
+										<a :href="ontology.link">{{ ontology.title }}</a
+										><br />{{ ontology.description }}
+									</li>
+								</ul>
+							</template>
+						</Column>
+					</DataTable>
+				</AccordionTab>
 				<AccordionTab>
 					<template #header>
 						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
 					</template>
 					<model-parameter-list
-						:parameters="model?.parameters"
+						:parameters="betterParams"
 						attribute="parameters"
 						@update-parameter-row="updateParamaterRow"
 						@parameter-click="onVariableSelected"
@@ -220,6 +243,22 @@ const mathmode = ref('mathLIVE');
 // 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
 // };
 
+const betterParams = computed(() => {
+	const params = model.value?.parameters;
+	const transitions: any[] = model.value?.content?.T ?? [];
+
+	transitions.forEach((transition) => {
+		params.forEach((param) => {
+			if (param.name === transition?.parameter_name) {
+				param.tname = transition?.tname;
+				param.template_type = transition?.template_type;
+			}
+		});
+	});
+
+	return params;
+});
+
 const onVariableSelected = (variable: string) => {
 	if (variable && !isSelected.value) {
 		equation.value = equationOriginal.value.replaceAll(
@@ -313,6 +352,11 @@ let eventX = 0;
 let eventY = 0;
 
 const editorKeyHandler = (event: KeyboardEvent) => {
+	// Ignore backspace if the current focus is a text/input box
+	if ((event.target as HTMLElement).tagName === 'INPUT') {
+		return;
+	}
+
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
@@ -467,6 +511,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	height: 99%;
 	width: 100%;
 }
+
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;

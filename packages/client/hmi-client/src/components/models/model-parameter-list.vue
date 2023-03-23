@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<table>
+		<!-- <table>
 			<tr class="parameters_header">
 				<th>Label</th>
 				<th>Name</th>
@@ -8,12 +8,13 @@
 				<th>Concept</th>
 				<th>Definition</th>
 			</tr>
-		</table>
+		</table> -->
 		<ul>
-			<li v-for="parameterRow in parameters" :key="parameterRow.id">
+			<li v-for="(parameterRow, index) in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
 					class="model-parameter-list-item"
 					:parameter-row="parameterRow"
+					:example-index="(index + 1).toString()"
 					@update-parameter-row="updateParamaterRow"
 					@click="variableClick($event, parameterRow.name)"
 				/>
