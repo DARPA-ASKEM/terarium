@@ -96,7 +96,7 @@ import Document from '@/components/documents/Document.vue';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Model from '@/components/models/Model.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
-import SimulationRun from '@/temp/SimulationResult.vue';
+import SimulationRun from '@/temp/SimulationResult2.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
