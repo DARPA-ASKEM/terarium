@@ -115,6 +115,19 @@ const resourcesStore = useResourcesStore();
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
 	const storedPapers = storedAssets[ProjectAssetTypes.DOCUMENTS];
+	if (storedPapers) {
+		const first =
+			'Modelling the COVID-19 epidemic and implementation of population-wide interventions in Italy';
+		storedPapers.sort((x, y) => {
+			if (x.title === first) {
+				return -1;
+			}
+			if (y.title === first) {
+				return 1;
+			}
+			return 0;
+		});
+	}
 	return storedPapers;
 });
 // @ts-ignore
@@ -426,6 +439,13 @@ async function onExtractGraph() {
 	acset.value = mockAcset;
 	codeExtractionDialogVisible.value = true;
 }
+
+watch(
+	() => resources.value,
+	() => {
+		selectedPaper.value = resources.value[0];
+	}
+);
 
 /**
  * Send the selected contents of the editor to the backend for persistence and model extraction
