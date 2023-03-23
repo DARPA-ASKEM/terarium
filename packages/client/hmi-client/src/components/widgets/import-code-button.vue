@@ -11,8 +11,12 @@
 				<h5>Choose file to open from {{ chosenRepositoryName }}</h5>
 			</template>
 			<template #default>
-				<ul class="repository-content">
-					<li v-for="(content, index) in filesToSelect" :key="index" @click="openCode(content)">
+				<ul>
+					<li v-if="isInFolder" @click="openContent()">
+						<i class="pi pi-folder-open" />
+						<b> ..</b>
+					</li>
+					<li v-for="(content, index) in filesToSelect" :key="index" @click="openContent(content)">
 						<i v-if="content.download_url === null" class="pi pi-folder" />
 						<i v-else class="pi pi-file" />
 						{{ content.name }}
@@ -24,14 +28,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import {
+	getGithubRepositoryAttributes,
 	getGithubRepositoryContent,
-	getGithubCode,
-	getGithubRepositoryAttributes
+	getGithubCode
 } from '@/services/github-import';
 
 const props = defineProps<{
@@ -44,50 +48,72 @@ const chosenRepositoryName = ref('');
 const filesToSelect = ref();
 const isModalVisible = ref(false);
 
+const isInFolder = computed(() => chosenRepositoryName.value.split('/').length > 2);
+
 async function openCodeBrowser() {
 	isModalVisible.value = true;
 
 	const splitUrl = props.urlString.split('/');
-	const ownerRepo = `${splitUrl[splitUrl.length - 2]}/${splitUrl[splitUrl.length - 1]}`;
-	chosenRepositoryName.value = ownerRepo;
+	chosenRepositoryName.value = `${splitUrl[splitUrl.length - 2]}/${splitUrl[splitUrl.length - 1]}`;
 
-	const repoAttributes = await getGithubRepositoryAttributes(ownerRepo);
+	const repoAttributes = await getGithubRepositoryAttributes(chosenRepositoryName.value);
 	filesToSelect.value = await getGithubRepositoryContent(repoAttributes.contents_url.slice(0, -8));
 }
 
-async function openCode(url) {
-	// If a folder is chosen
-	if (url.download_url === null) {
-		chosenRepositoryName.value = `${chosenRepositoryName.value}/${url.name}`;
-		filesToSelect.value = await getGithubRepositoryContent(url.url);
+// Content as in file or folder
+async function openContent(content?) {
+	// Go to parent folder
+	if (!content) {
+		const directoryPathArray = chosenRepositoryName.value.split('/');
+		directoryPathArray.pop();
+		chosenRepositoryName.value = directoryPathArray.join('/');
+
+		console.log(chosenRepositoryName.value);
+		const repoAttributes = await getGithubRepositoryAttributes(chosenRepositoryName.value);
+		console.log(repoAttributes);
+		filesToSelect.value = await getGithubRepositoryContent(
+			repoAttributes.contents_url.slice(0, -8)
+		);
 		return;
 	}
 
+	console.log(content);
+
+	// If a folder is chosen
+	if (content.download_url === null) {
+		chosenRepositoryName.value = `${chosenRepositoryName.value}/${content.name}`;
+		filesToSelect.value = await getGithubRepositoryContent(content.url);
+		return;
+	}
+
+	// Open file in code view
 	emit(
 		'open-asset',
 		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE },
 		// { assetName: url.name, assetId: url.name, assetType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
-		await getGithubCode(url.download_url)
+		await getGithubCode(content.download_url)
 	);
 }
 </script>
 
-<style>
-.repository-content {
+<style scoped>
+ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
-	margin-top: 1rem;
+	min-width: 40vw;
+	height: 50vh;
+	overflow-y: auto;
 }
 
-.repository-content li {
+ul li {
 	padding: 0.25rem;
 	cursor: pointer;
 	border-radius: 0.5rem;
 }
 
-.repository-content li:hover {
+ul li:hover {
 	background-color: var(--surface-hover);
 }
 </style>
