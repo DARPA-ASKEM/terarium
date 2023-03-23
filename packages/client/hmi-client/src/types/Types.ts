@@ -22,6 +22,20 @@ export interface ProvenanceQueryParam {
     userId?: number;
 }
 
+export interface Ontology {
+    name: string;
+    curie: string;
+    title?: string;
+    description?: string;
+    link?: string;
+}
+
+export interface Species {
+    sname: string;
+    miraIds?: Ontology[];
+    miraContext?: Ontology[];
+}
+
 export enum EventType {
     Search = "SEARCH",
 }

@@ -2,6 +2,8 @@ package software.uncharted.terarium.hmiserver.models.petrinet;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.io.Serializable;
 import java.util.regex.Matcher;
@@ -10,12 +12,19 @@ import java.util.regex.Pattern;
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
 @Data
+@TSModel
 @Accessors(chain = true)
 public class Ontology implements Serializable {
 	private final String name;
 	private final String curie;
+
+	@TSOptional
 	private String title;
+
+	@TSOptional
 	private String description;
+
+	@TSOptional
 	private String link;
 
 	public Ontology (String input) {
