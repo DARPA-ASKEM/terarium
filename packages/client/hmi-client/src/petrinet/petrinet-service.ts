@@ -308,7 +308,7 @@ export const mathmlToPetri = async (mathml: string[]) => {
 	try {
 		const response = await API.post('/transforms/mathml-to-acset', mathml);
 
-		if (response.data && typeof response.data === 'string') {
+		if (response.data) {
 			return response.data;
 		}
 		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });

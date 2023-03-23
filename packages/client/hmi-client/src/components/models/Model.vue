@@ -35,7 +35,7 @@
 				<section class="model_diagram">
 					<TeraResizablePanel>
 						<div class="content">
-							<Splitter class="mb-5 model-panel" layout="vertical">
+							<Splitter class="mb-5 model-panel" :layout="layout">
 								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
 									<section class="graph-element">
 										<div v-if="model" ref="graphElement" class="graph-element" />
@@ -84,8 +84,9 @@
 					<DataTable
 						:value="model?.content.S"
 						selectionMode="single"
-						@row-select="onVariableSelected"
-						@row-unselect="onVariableSelected"
+						v-model:selection="selectedRow"
+						@row-select="onStateVariableClick"
+						@row-unselect="onStateVariableClick"
 					>
 						<Column field="sname" header="Label"></Column>
 						<Column field="mira_ids" header="Name"></Column>
@@ -142,6 +143,7 @@ import {
 	NodeData,
 	EdgeData,
 	parseIGraph2PetriNet,
+	mathmlToPetri,
 	petriToLatex
 } from '@/petrinet/petrinet-service';
 import { getModel, updateModel } from '@/services/model';
@@ -181,6 +183,7 @@ const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
+const selectedRow = ref<any>(null);
 
 const equation = ref<string>('');
 const equationOriginal = ref<string>('');
@@ -220,10 +223,23 @@ const onVariableSelected = (variable: string) => {
 	isSelected.value = !isSelected.value;
 };
 
+const onStateVariableClick = () => {
+	if (selectedRow.value) {
+		equation.value = equationOriginal.value.replaceAll(
+			selectedRow.value.sname,
+			String.raw`{\color{red}${selectedRow.value.sname}}`
+		);
+	} else {
+		equation.value = equationOriginal.value;
+	}
+};
+
 const updateFormula = (formulaString: string) => {
 	equation.value = formulaString;
 	equationOriginal.value = formulaString;
 };
+
+const layout = computed(() => (!props.isEditable ? 'vertical' : 'horizontal'));
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -371,6 +387,15 @@ watch(
 	},
 	{ deep: true }
 );
+
+const updatePetriFromMathML = async (mathmlString: string) => {
+	// No bueno - doesn't work right now.
+	const newPetri = await mathmlToPetri([mathmlString]);
+	if (model.value && newPetri) {
+		model.value.content = newPetri;
+		updateModel(model.value);
+	}
+};
 
 const router = useRouter();
 const goToSimulationPlanPage = () => {
