@@ -240,11 +240,11 @@ const betterParams = computed(() => {
 	const params = model.value?.parameters;
 	const transitions: any[] = model.value?.content?.T ?? [];
 
-	for (let i = 0; i < transitions.length; i++) {
-		for (let j = 0; j < params.length; j++) {
-			if (params[j].name === transitions[i]?.parameter_name) {
-				params[j].tname = transitions[i]?.tname;
-				params[j].template_type = transitions[i]?.template_type;
+	transitions.forEach(transition => {
+		params.forEach(param => {
+			if (param.name === transition?.parameter_name) {
+				param.tname = transition?.tname;
+				param.template_type = transition?.template_type;
 			}
 		}
 	}
