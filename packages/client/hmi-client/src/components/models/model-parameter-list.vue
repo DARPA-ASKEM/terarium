@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<table>
+		<!-- <table>
 			<tr class="parameters_header">
 				<th>Label</th>
 				<th>Name</th>
@@ -8,7 +8,7 @@
 				<th>Concept</th>
 				<th>Definition</th>
 			</tr>
-		</table>
+		</table> -->
 		<ul>
 			<li v-for="(parameterRow, index) in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
