@@ -70,6 +70,10 @@
     }
 }
 
+.p-submenu-header {
+    font-size: var(--font-caption);
+}
+
 @media screen and (max-width: 960px) {
     .p-menubar {
         position: relative;
