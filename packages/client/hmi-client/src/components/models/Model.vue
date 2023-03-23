@@ -17,8 +17,8 @@
 						class="p-button-sm p-button-outlined"
 					/>
 					<Button
-						@click="goToSimulationPlanPage"
-						label="Open parameter space"
+						@click="goToSimulationRunPage"
+						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
 					/>
@@ -35,14 +35,14 @@
 				<section class="model_diagram">
 					<TeraResizablePanel>
 						<div class="content">
-							<Splitter class="mb-5 model-panel">
-								<SplitterPanel class="tera-split-panel" :size="80" :minSize="50">
+							<Splitter class="mb-5 model-panel" :layout="layout">
+								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
 									<section class="graph-element">
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
 								</SplitterPanel>
-								<SplitterPanel class="tera-split-panel" :size="20" :minSize="20">
+								<SplitterPanel class="tera-split-panel" :size="40" :minSize="30">
 									<section class="math-editor">
 										<!-- eventually remove -->
 										<section class="dev-options">
@@ -63,6 +63,7 @@
 											:value="equation"
 											:mathmode="mathmode"
 											@formula-updated="updateFormula"
+											@mathml="updatePetriFromMathML"
 										></math-editor>
 									</section>
 								</SplitterPanel>
@@ -83,8 +84,9 @@
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
-						@row-select="onRowClick"
-						@row-unselect="onRowClick"
+						v-model:selection="selectedRow"
+						@row-select="onStateVariableClick"
+						@row-unselect="onStateVariableClick"
 					>
 						<Column field="sname" header="Label" />
 						<Column field="miraIds" header="Concepts">
@@ -119,8 +121,8 @@
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
-						@row-select="onRowClick"
-						@row-unselect="onRowClick"
+						@row-select="onStateVariableClick"
+						@row-unselect="onStateVariableClick"
 					>
 						<Column field="sname" header="Label" />
 						<Column field="miraIds" header="Concepts">
@@ -146,6 +148,7 @@
 						:parameters="betterParams"
 						attribute="parameters"
 						@update-parameter-row="updateParamaterRow"
+						@parameter-click="onVariableSelected"
 					/>
 				</AccordionTab>
 				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
@@ -171,7 +174,9 @@ import {
 	PetriNet,
 	NodeData,
 	EdgeData,
-	parseIGraph2PetriNet
+	parseIGraph2PetriNet,
+	mathmlToPetri,
+	petriToLatex
 } from '@/petrinet/petrinet-service';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -189,7 +194,6 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
-import { ProjectAssetTypes } from '@/types/Project';
 import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 import MathEditor from '@/components/mathml/math-editor.vue';
@@ -210,18 +214,20 @@ const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
+const selectedRow = ref<any>(null);
 
 const equation = ref<string>('');
-const selectedRow = ref();
+const equationOriginal = ref<string>('');
+const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-const modelMath = ref(String.raw`\begin{align}
-\frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-\frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-\frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-\frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-\end{align}`);
+// const modelMath = ref(String.raw`\begin{align}
+// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
+// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
+// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
+// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
+// \end{align}`);
 
 // Another experiment using a map to automatically select highlighted version of the latex formula
 // this would require the backend service to provide a map of the eq.  Might be a little challenging.
@@ -252,22 +258,35 @@ const betterParams = computed(() => {
 	return params;
 });
 
-// DataTable click handler for State Variables.  Currently used to do the highlighting.
-const onRowClick = () => {
+const onVariableSelected = (variable: string) => {
+	if (variable && !isSelected.value) {
+		equation.value = equationOriginal.value.replaceAll(
+			variable,
+			String.raw`{\color{red}${variable}}`
+		);
+	} else {
+		equation.value = equationOriginal.value;
+	}
+	isSelected.value = !isSelected.value;
+};
+
+const onStateVariableClick = () => {
 	if (selectedRow.value) {
-		equation.value = modelMath.value.replaceAll(
+		equation.value = equationOriginal.value.replaceAll(
 			selectedRow.value.sname,
 			String.raw`{\color{red}${selectedRow.value.sname}}`
 		);
 	} else {
-		equation.value = modelMath.value;
+		equation.value = equationOriginal.value;
 	}
 };
 
 const updateFormula = (formulaString: string) => {
 	equation.value = formulaString;
-	modelMath.value = formulaString;
+	equationOriginal.value = formulaString;
 };
+
+const layout = computed(() => (!props.isEditable ? 'vertical' : 'horizontal'));
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -311,7 +330,12 @@ watch(
 			const result = await getModel(props.assetId);
 			model.value = result;
 			fetchRelatedTerariumArtifacts();
-			equation.value = modelMath.value;
+			if (model.value) {
+				const data = await petriToLatex(model.value.content);
+				if (data) {
+					updateFormula(data);
+				}
+			}
 		} else {
 			equation.value = '';
 			model.value = null;
@@ -327,6 +351,11 @@ let eventX = 0;
 let eventY = 0;
 
 const editorKeyHandler = (event: KeyboardEvent) => {
+	// Ignore backspace if the current focus is a text/input box
+	if ((event.target as HTMLElement).tagName === 'INPUT') {
+		return;
+	}
+
 	if (event.key === 'Backspace' && renderer) {
 		if (renderer && renderer.nodeSelection) {
 			const nodeData = renderer.nodeSelection.datum();
@@ -370,45 +399,64 @@ const contextMenuItems = ref([
 
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
-watch([model, graphElement], async () => {
-	if (model.value === null || graphElement.value === null) return;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
+watch(
+	[model, graphElement],
+	async () => {
+		if (model.value === null || graphElement.value === null) return;
+		// Convert petri net into a graph
+		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+			S: { width: 60, height: 60 },
+			T: { width: 40, height: 40 }
+		});
 
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
+		// Create renderer
+		renderer = new PetrinetRenderer({
+			el: graphElement.value as HTMLDivElement,
+			useAStarRouting: false,
+			useStableZoomPan: true,
+			runLayout: runDagreLayout,
+			dragSelector: 'no-drag'
+		});
 
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
+		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+			renderer?.addEdge(d.source, d.target);
+		});
 
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
+		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+			if (!renderer?.editMode) return;
+			eventX = pos.x;
+			eventY = pos.y;
+			menu.value.toggle(evt);
+		});
 
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
-});
+		// Render graph
+		await renderer?.setData(graphData);
+		await renderer?.render();
+		const latexFormula = await petriToLatex(model.value.content);
+		if (latexFormula) {
+			updateFormula(latexFormula);
+		}
+	},
+	{ deep: true }
+);
+
+const updatePetriFromMathML = async (mathmlString: string) => {
+	// No bueno - doesn't work right now.
+	const newPetri = await mathmlToPetri([mathmlString]);
+	if (model.value && newPetri) {
+		model.value.content = newPetri;
+		updateModel(model.value);
+	}
+};
 
 const router = useRouter();
-const goToSimulationPlanPage = () => {
+const goToSimulationRunPage = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetType: ProjectAssetTypes.PLANS
+			assetId: model.value?.id ?? 0 + 1000,
+			assetName: highlightSearchTerms(model.value?.name ?? ''),
+			assetType: 'simulation_runs'
 		}
 	});
 };
