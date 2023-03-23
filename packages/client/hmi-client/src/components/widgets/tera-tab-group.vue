@@ -32,7 +32,7 @@ function calcTabWidthPercentage() {
 		<template v-for="(tab, index) in tabs" :key="index">
 			<header :style="`width: ${calcTabWidthPercentage()}%`">
 				<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
-					<Chip :label="tab.assetType" />
+					<Chip v-if="tab.assetType !== 'overview'" :label="tab.assetType" />
 					<span class="name">
 						{{ tab.assetName }}
 					</span>

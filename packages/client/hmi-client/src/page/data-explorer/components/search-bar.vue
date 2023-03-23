@@ -16,6 +16,14 @@
 					@complete="fillAutocomplete"
 					@keyup.enter="initiateSearch"
 					@item-select="initiateSearch"
+					@dragover.prevent
+					@dragenter.prevent
+					@drop="
+						{
+							isSearchByExampleVisible = true;
+							onDrop();
+						}
+					"
 				>
 					<template #option="prop">
 						<span class="auto-complete-term">
@@ -64,6 +72,7 @@
 						text
 						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
 						class="clear-search-by-example"
+						@click="searchByExampleSelectedAsset = null"
 					>
 					</Button>
 					<span v-else class="drop-zone">

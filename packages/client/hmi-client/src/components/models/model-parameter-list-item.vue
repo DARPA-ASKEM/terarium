@@ -51,7 +51,14 @@
 				</tr>
 			</table>
 			<template v-if="!isEditing">
-				<Chip label="extractions" />
+				<Chip
+					ref="extractionChip"
+					v-tooltip.top="{
+						value: tooltipContent?.outerHTML ?? ``,
+						escape: true
+					}"
+					label="extractions"
+				/>
 				<Button
 					:icon="showRange ? 'pi pi-eye' : 'pi pi-eye-slash'"
 					class="p-button-icon-only p-button-text p-button-rounded"
@@ -79,16 +86,46 @@
 		</section>
 		<section>
 			<section v-if="showRange" class="range"></section>
-			<section class="tile-container"></section>
+			<ul>
+				<li v-for="(value, key) in parameterRow" :key="key">
+					<span class="extraction-type">
+						{{ startCase(key.toString()) }}
+					</span>
+					<ul class="extraction-values">
+						<li>
+							{{ value.toString() }}
+						</li>
+					</ul>
+				</li>
+			</ul>
+			<!-- <section class="tile-container">
+				
+			</section> -->
+		</section>
+		<section style="display: none">
+			<ul ref="tooltipContent">
+				<li v-for="(value, key) in example[exampleIndex]" :key="key">
+					<span class="extraction-type">
+						{{ startCase(key.toString()) }}
+					</span>
+					<ul class="extraction-values">
+						<li v-for="(text, index) in [value].flat()" :key="index">
+							{{ text }}
+						</li>
+					</ul>
+				</li>
+			</ul>
 		</section>
 	</main>
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
+import { startCase } from 'lodash';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import InputText from 'primevue/inputtext';
 import Chip from 'primevue/chip';
+import { example } from './example-model-extraction';
 
 const props = defineProps<{
 	parameterRow: {
@@ -99,6 +136,7 @@ const props = defineProps<{
 		concept: string;
 		definition: string;
 	};
+	exampleIndex: string;
 }>();
 
 const emit = defineEmits(['update-parameter-row']);
@@ -107,6 +145,7 @@ const isEditing = ref(false);
 const showRange = ref(false);
 const contextMenu = ref();
 const editedParameterRow = ref({ ...props.parameterRow });
+const tooltipContent = ref();
 
 const parameterMenuItems = [
 	{
@@ -174,6 +213,29 @@ table td span:empty:before {
 
 .range {
 	width: 6rem;
+}
+
+.extraction-type {
+	color: var(--text-color-subdued);
+	text-transform: uppercase;
+	width: 13rem;
+	text-align: right;
+}
+
+ul {
+	color: var(--text-color-primary);
+	white-space: nowrap;
+}
+
+li,
+.extraction-values {
+	display: flex;
+	gap: 1rem;
+}
+
+.extraction-values li:not(:last-child):after {
+	content: '|';
+	color: var(--text-color-light);
 }
 
 .tile-container {

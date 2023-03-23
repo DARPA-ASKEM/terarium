@@ -54,11 +54,12 @@ public class DocumentResource {
 		@QueryParam("publisher") String publisher,
 		@QueryParam("additional_fields") String additional_fields,
 		@QueryParam("match") String match,
-		@QueryParam("known_entities") String known_entities
+		@QueryParam("known_entities") String known_entities,
+		@QueryParam("github_url") String github_url
 	) {
 
 		// only go ahead with the query if at least one param is present
-		if (docid != null || doi != null || term != null) {
+		if (docid != null || doi != null || term != null || github_url != null) {
 			// for a more direct search, if doi is valid, then make sure other params are null
 			if (docid != null || doi != null) {
 				title = null;
@@ -81,7 +82,7 @@ public class DocumentResource {
 			try {
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, known_entities);
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url);
 
 
 				if (doc.getErrorMessage() != null) {

@@ -274,6 +274,7 @@ const executeSearch = async () => {
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
 		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
+			searchParams.xdd.dataset = xddDataset.value;
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
 			}
@@ -386,6 +387,7 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
 	//         if a model/dataset/document is selected then find related artifacts from TDS
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
+		isSliderFacetsOpen.value = false;
 		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
 		executeSearchByExample.value = true;
@@ -399,30 +401,26 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 
 // helper function to bypass the search-by-example modal
 //  by executing a search by example and refreshing the output
-const onFindRelatedContent = (item: ResultType) => {
-	searchByExampleItem.value = item;
-	const searchOptions: SearchByExampleOptions = {
+const onFindRelatedContent = (item) => {
+	searchByExampleItem.value = item.item;
+	searchByExampleOptions.value = {
 		similarContent: false,
 		forwardCitation: false,
 		backwardCitation: false,
 		relatedContent: true
 	};
-	searchByExampleOptions.value = searchOptions;
-	onSearchByExample(searchByExampleOptions.value);
 };
 
 // helper function to bypass the search-by-example modal
 //  by executing a search by example and refreshing the output
-const onFindSimilarContent = (item: ResultType) => {
-	searchByExampleItem.value = item;
-	const searchOptions: SearchByExampleOptions = {
+const onFindSimilarContent = (item) => {
+	searchByExampleItem.value = item.item;
+	searchByExampleOptions.value = {
 		similarContent: true,
 		forwardCitation: false,
 		backwardCitation: false,
 		relatedContent: false
 	};
-	searchByExampleOptions.value = searchOptions;
-	onSearchByExample(searchByExampleOptions.value);
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -537,6 +535,8 @@ onMounted(async () => {
 	if (!isEmpty(xddDatasets.value) && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
 		xddDatasets.value.push(ResourceType.ALL);
+	} else {
+		resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
 	}
 	executeNewQuery();
 });
