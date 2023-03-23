@@ -27,7 +27,7 @@
 			<!--contributor-->
 			<!--created on: date-->
 		</header>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+		<Accordion :multiple="true" :active-index="[4]">
 			<AccordionTab header="Description">
 				<p v-html="description" />
 			</AccordionTab>
@@ -81,7 +81,17 @@
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
 					>
-						<Column field="sname" header="Label" />
+						<Column field="sname" header="Name" />
+						<Column header="Type">
+							<template #body="slotProps">
+								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.type }}
+							</template>
+						</Column>
+						<Column header="Default">
+							<template #body="slotProps">
+								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.default_value }}
+							</template>
+						</Column>
 						<Column field="miraIds" header="Concepts">
 							<template #body="slotProps">
 								<ul>
@@ -121,14 +131,15 @@
 					</DataTable>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Parameters ${model?.parameters.length}`">
-				<template v-if="!isEditable"
-					><DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable> </template
-				><template v-else>
+			<AccordionTab :header="`Parameters ${betterParams.length}`">
+				<template v-if="true || !isEditable">
+					<DataTable :value="betterParams">
+						<Column field="name" header="Name" />
+						<Column field="type" header="Type" />
+						<Column field="default_value" header="Default" />
+					</DataTable>
+				</template>
+				<template v-else>
 					<model-parameter-list
 						:parameters="betterParams"
 						attribute="parameters"
@@ -136,6 +147,52 @@
 						@parameter-click="onVariableSelected"
 					/>
 				</template>
+			</AccordionTab>
+			<AccordionTab :header="`Extractions ${extractions.length}`">
+				<DataTable :value="extractions">
+					<Column field="name" header="Name" />
+					<Column field="id" header="ID" />
+					<Column field="text_annotations" header="Text">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.text_annotations" :key="key">
+									{{ text }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="dkg_annotations" header="Concepts">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
+									{{ `${text[0]}: ${text[1]}` }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="data_annotations" header="Data">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.data_annotations" :key="key">
+									{{ `${text[0]}: ${text[1]}` }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="file" header="File" />
+					<Column field="doi" header="doi">
+						<template #body="slotProps">
+							<a :href="slotProps.data.doi">{{ slotProps.data.doi }}</a>
+						</template>
+					</Column>
+					<Column field="equation_annotations" header="Equations">
+						<template #body="slotProps">
+							<div style="word-wrap: break-word">
+								{{ slotProps.data.equation_annotations }}
+							</div>
+						</template>
+					</Column>
+				</DataTable>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
@@ -189,12 +246,15 @@ import MathEditor from '@/components/mathml/math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
 export interface ModelProps {
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
 }
+
+const extractions = ref(Object.values(example));
 
 const props = defineProps<ModelProps>();
 
@@ -232,7 +292,7 @@ const mathmode = ref('mathLIVE');
 // };
 
 const betterParams = computed(() => {
-	const params = model.value?.parameters;
+	const params = model.value?.parameters.filter((p) => !p.state_variable);
 	const transitions: any[] = model.value?.content?.T ?? [];
 
 	transitions.forEach((transition) => {
