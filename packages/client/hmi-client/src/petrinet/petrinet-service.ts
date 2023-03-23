@@ -306,10 +306,10 @@ export const parsePetriNet2IGraph = (
 // Transform list of mathML strings to a petrinet ascet
 export const mathmlToPetri = async (mathml: string[]) => {
 	try {
-		const response = await API.post('/transforms/mathml-to-acset', mathml);
+		const { status, data } = await API.post('/transforms/mathml-to-acset', mathml);
 
-		if (response.data) {
-			return response.data;
+		if (status === 200 && data) {
+			return data;
 		}
 		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
 	} catch (error: unknown) {
@@ -334,10 +334,11 @@ export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
 			I: petri.I,
 			O: petri.O
 		};
-		const response = await API.post('/transforms/acset-to-latex', payloadPetri);
 
-		if (response.data && typeof response.data === 'string') {
-			return response.data;
+		const { status, data } = await API.post('/transforms/acset-to-latex', payloadPetri);
+
+		if (status === 200 && data && typeof data === 'string') {
+			return data;
 		}
 
 		logger.error('petriToLatex: Server did not provide a correct response', { showToast: false });
