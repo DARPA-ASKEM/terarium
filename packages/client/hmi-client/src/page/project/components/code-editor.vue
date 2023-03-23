@@ -40,7 +40,7 @@
 			Terarium can extract metadata about this model from related papers. Select the papers you
 			would like to use.
 		</h6>
-		<DataTable v-model:selection="selectedPaper" :value="paperList" dataKey="id">
+		<DataTable v-model:selection="selectedPaper" :value="resources" dataKey="id">
 			<Column selectionMode="multiple"></Column>
 			<Column field="title" header="Title"></Column>
 			<Column field="authors" header="Authors"></Column>
@@ -59,19 +59,21 @@ import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import API from '@/api/api';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import useResourcesStore from '@/stores/resources';
 
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import { createModel } from '@/services/model';
+import { ProjectAssetTypes } from '@/types/Project';
 
 const props = defineProps({
 	initialCode: {
@@ -105,29 +107,28 @@ watch([graphElement], async () => {
 	await renderer?.render();
 });
 const emit = defineEmits(['on-model-created']);
-const paperList = ref([
-	{
-		id: '1',
-		title: 'Paper name paper name',
-		authors: 'Author name author name',
-		year: '2023'
-	}
-]);
+
 const selectedPaper = ref();
 const createModelLoading = ref(false);
 const extractPetrinetLoading = ref(false);
+const resourcesStore = useResourcesStore();
+const resources = computed(() => {
+	const storedAssets = resourcesStore.activeProjectAssets ?? [];
+	const storedPapers = storedAssets[ProjectAssetTypes.DOCUMENTS];
+	return storedPapers;
+});
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockAcset = {
 	S: [
-		{ sname: 'S', uid: 1 },
-		{ sname: 'I', uid: 2 },
-		{ sname: 'D', uid: 3 },
-		{ sname: 'A', uid: 4 },
-		{ sname: 'R', uid: 5 },
-		{ sname: 'T', uid: 6 },
-		{ sname: 'H', uid: 7 },
-		{ sname: 'E', uid: 8 }
+		{ sname: 'S', uid: 1, mira_ids: '', mira_context: '' },
+		{ sname: 'I', uid: 2, mira_ids: '', mira_context: '' },
+		{ sname: 'D', uid: 3, mira_ids: '', mira_context: '' },
+		{ sname: 'A', uid: 4, mira_ids: '', mira_context: '' },
+		{ sname: 'R', uid: 5, mira_ids: '', mira_context: '' },
+		{ sname: 'T', uid: 6, mira_ids: '', mira_context: '' },
+		{ sname: 'H', uid: 7, mira_ids: '', mira_context: '' },
+		{ sname: 'E', uid: 8, mira_ids: '', mira_context: '' }
 	],
 	T: [
 		{ tname: 'alpha', uid: 10 },
@@ -222,6 +223,8 @@ const mockPaperText =
 	'otherwise. Tese parameters can be increased thanks to improved treatments' +
 	'and acquisition of immunity against the virus';
 
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockAnnotations = [
 	{
 		type: 'variable',
@@ -417,10 +420,10 @@ async function onFileOpen(event) {
 
 async function onExtractGraph() {
 	extractPetrinetLoading.value = true;
-	const response = await API.post(`code/to_acset?code=${selectedText.value}`);
+	// const response = await API.post(`code/to_acset?code=${selectedText.value}`);
 	extractPetrinetLoading.value = false;
-	acset.value = response.data;
-	// acset.value = mockAcset;
+	// acset.value = response.data;
+	acset.value = mockAcset;
 	codeExtractionDialogVisible.value = true;
 }
 
@@ -454,17 +457,18 @@ async function initialize(editorInstance) {
 
 async function createModelFromCode() {
 	if (selectedPaper.value) {
-		createModelLoading.value = true;
+		// createModelLoading.value = true;
 		// const response = await API.post(`/code/annotation/find_text_vars?text=${mockPaperText}`);
-		createModelLoading.value = false;
+		// createModelLoading.value = false;
 	}
 	const modelName = 'New model';
 	const newModel = {
 		name: 'New model',
 		framework: 'Petri Net',
-		content: JSON.stringify({ ...acset.value, ...mockAnnotations })
+		content: JSON.stringify(acset.value)
 	};
 	const model = await createModel(newModel);
+	console.log(model);
 	if (model) {
 		emit('on-model-created', model.id, modelName);
 	}

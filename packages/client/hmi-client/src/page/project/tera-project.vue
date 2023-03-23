@@ -157,6 +157,7 @@ function removeClosedTab(tabIndexToRemove: number) {
 async function openNewModelFromCode(modelId, modelName) {
 	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 	const model = await getModel(modelId);
+	console.log(model);
 	if (model) {
 		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
 	} else {
