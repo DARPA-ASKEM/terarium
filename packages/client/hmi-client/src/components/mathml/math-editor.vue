@@ -17,7 +17,7 @@
 				type="text"
 				rows="2"
 				aria-label="mathjax"
-				@blur="onBlur"
+				@blur="updateMathJaxValue"
 			/>
 			<div><vue-mathjax :formula="`$$${formula}$$`" /></div>
 		</section>
@@ -54,6 +54,7 @@ const props = defineProps({
 const updateMathLiveValue = () => {
 	formula.value = mf.value?.getValue('latex-unstyled');
 	emit('formula-updated', formula.value);
+	emit('mathml', mf.value?.getValue('math-ml'));
 };
 
 const getLaTeX = (formulaString: string): string => {
@@ -69,7 +70,7 @@ const getLaTeX = (formulaString: string): string => {
 	return formulaString;
 };
 
-const onBlur = () => {
+const updateMathJaxValue = () => {
 	emit('formula-updated', jaxFormula.value);
 };
 
@@ -116,7 +117,7 @@ math-field {
 	min-height: 100%;
 	padding: 5px;
 	margin: 10px;
-	font-size: 1.5em;
+	font-size: 1.3em;
 }
 
 math-field:focus-within {
