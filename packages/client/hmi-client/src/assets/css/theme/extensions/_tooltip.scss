@@ -1,7 +1,17 @@
 .p-tooltip {
+    // background: red; // To understand what the tooltip is covering apply a background
+    max-width: none;
+
     .p-tooltip-text {
         box-shadow: none;
-        font-size: .875rem;
+        font-size: var(--font-size);
+        width: fit-content;
+    }
+
+    .p-tooltip-text:has(ul) {
+        background: var(--surface-section);
+        border: 1px solid var(--surface-border);
+        box-shadow: $cardShadow;
     }
 
     .p-tooltip-arrow {

@@ -32,13 +32,17 @@
 								<i class="pi pi-chevron-right" />
 							</div>
 							<ul v-if="isLoadingProjects">
-								<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
+								<li v-for="i in [0, 1, 2]" :key="i">
 									<project-card />
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="(project, index) in projects?.slice().reverse()" :key="index">
-									<project-card :project="project" @click="openProject(project.id)" />
+								<li v-for="project in projects" :key="project.id">
+									<project-card
+										:project="project"
+										@click="openProject(project.id)"
+										@removed="removeProject"
+									/>
 								</li>
 								<li>
 									<section class="new-project-card" @click="isNewProjectModalVisible = true">
@@ -172,7 +176,6 @@ import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
-import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 import Button from 'primevue/button';
@@ -214,7 +217,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await API.get('/home')).data as IProject[];
+	projects.value = ((await ProjectService.home()) ?? []).slice().reverse();
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
@@ -281,6 +284,10 @@ async function createNewProject() {
 function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
+
+const removeProject = (projectId: IProject['id']) => {
+	projects.value = projects.value?.filter((project) => project.id !== projectId);
+};
 </script>
 
 <style scoped>

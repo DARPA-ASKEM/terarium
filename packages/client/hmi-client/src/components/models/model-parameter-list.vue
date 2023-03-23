@@ -10,10 +10,11 @@
 			</tr>
 		</table>
 		<ul>
-			<li v-for="parameterRow in parameters" :key="parameterRow.id">
+			<li v-for="(parameterRow, index) in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
 					class="model-parameter-list-item"
 					:parameter-row="parameterRow"
+					:example-index="(index + 1).toString()"
 					@update-parameter-row="updateParamaterRow"
 				/>
 			</li>
