@@ -326,6 +326,7 @@ function highlightSearchTerms(text: string | undefined): string {
 watch(
 	() => [props.assetId],
 	async () => {
+		updateFormula('');
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
@@ -337,7 +338,6 @@ watch(
 				}
 			}
 		} else {
-			equation.value = '';
 			model.value = null;
 		}
 	},
@@ -435,6 +435,8 @@ watch(
 		const latexFormula = await petriToLatex(model.value.content);
 		if (latexFormula) {
 			updateFormula(latexFormula);
+		} else {
+			updateFormula('');
 		}
 	},
 	{ deep: true }
