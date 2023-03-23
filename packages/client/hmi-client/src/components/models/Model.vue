@@ -425,6 +425,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	height: 99%;
 	width: 100%;
 }
+
 .graph-element {
 	background-color: var(--surface-secondary);
 	height: 100%;
