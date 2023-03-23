@@ -131,7 +131,7 @@
 					</DataTable>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Parameters ${betterParams.length}`">
+			<AccordionTab :header="`Parameters ${betterParams?.length}`">
 				<template v-if="true || !isEditable">
 					<DataTable :value="betterParams">
 						<Column field="name" header="Name" />
@@ -148,7 +148,7 @@
 					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Extractions ${extractions.length}`">
+			<AccordionTab :header="`Extractions ${extractions?.length}`">
 				<DataTable :value="extractions">
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
