@@ -43,8 +43,8 @@
 		<DataTable v-model:selection="selectedPaper" :value="resources" dataKey="id">
 			<Column selectionMode="multiple"></Column>
 			<Column field="title" header="Title"></Column>
-			<Column field="authors" header="Authors"></Column>
-			<Column field="year" header="Year"></Column>
+			<!-- <Column field="authors" header="Authors"></Column> -->
+			<!-- <Column field="year" header="Year"></Column> -->
 		</DataTable>
 		<template #footer>
 			<Button label="Cancel" @click="codeExtractionDialogVisible = false" text />
