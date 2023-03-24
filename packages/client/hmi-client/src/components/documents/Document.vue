@@ -72,7 +72,7 @@
 				</template>
 				<ul>
 					<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
-						<import-code-button v-if="isEditable" :urlString="url" @open-asset="openAsset" />
+						<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
 						<a :href="url" rel="noreferrer noopener">{{ url }}</a>
 					</li>
 				</ul>
@@ -165,7 +165,7 @@ const doc = ref<DocumentType | null>(null);
 
 const emit = defineEmits(['open-asset']);
 
-function openAsset(assetToOpen: Tab, newCode?: string) {
+function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
 }
 
@@ -186,7 +186,6 @@ watch(
 			const d = await getDocumentById(id);
 			if (d) {
 				doc.value = d;
-				console.log(d);
 			}
 		} else {
 			doc.value = null;

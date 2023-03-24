@@ -42,7 +42,7 @@ const props = defineProps<{
 	urlString: string;
 }>();
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-code']);
 
 const chosenRepositoryName = ref('');
 const filesToSelect = ref();
@@ -86,12 +86,14 @@ async function openContent(content?) {
 		return;
 	}
 
+	const code = await getGithubCode(content.download_url);
+
 	// Open file in code view
 	emit(
-		'open-asset',
-		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE },
+		'open-code',
+		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
 		// { assetName: url.name, assetId: url.name, assetType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
-		await getGithubCode(content.download_url)
+		code
 	);
 }
 </script>
