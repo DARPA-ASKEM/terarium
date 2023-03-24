@@ -22,10 +22,10 @@ export async function getGithubRepositoryAttributes(repositoryName: string) {
 	}
 }
 
-export async function getGithubRepositoryContent(repositoryName: string, currentDirectory: string) {
+export async function getGithubRepositoryContent(repositoryName: string, path: string) {
 	try {
 		const response = await fetch(
-			`https://api.github.com/repos/${repositoryName}/contents/${currentDirectory}`,
+			`https://api.github.com/repos/${repositoryName}/contents/${path}`,
 			requestOptions
 		);
 		const result = await response.json();
@@ -37,14 +37,13 @@ export async function getGithubRepositoryContent(repositoryName: string, current
 	}
 }
 
-export async function getGithubCode(downloadUrl: string) {
+export async function getGithubCode(repositoryName: string, path: string) {
 	try {
-		const jsdelivrUrl = downloadUrl
-			.replace('https://raw.githubusercontent.com', 'https://cdn.jsdelivr.net/gh') // Switch to jsdeliver since it's a proper CDN
-			.replace('/master', '@latest')
-			.replace('/main', '@latest'); // Get latest version
-		const response = await fetch(jsdelivrUrl, requestOptions); // Grab the chosen file
-		const result = await response.text(); // Once a file is chosen from a repository copy its contents into the editor
+		const response = await fetch(
+			`https://cdn.jsdelivr.net/gh/${repositoryName}@latest/${path}`,
+			requestOptions
+		);
+		const result = await response.text();
 		if (!response.ok) return null;
 		return result;
 	} catch (error) {

@@ -91,7 +91,7 @@ async function openContent(content?) {
 	}
 
 	// Open file in code view
-	const code = await getGithubCode(content.download_url);
+	const code = await getGithubCode(repositoryName.value, content.path); // Will be pasted into the code editor
 	emit(
 		'open-code',
 		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
