@@ -198,6 +198,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// Add in a input textbox to change the name
 		const w = selection.datum().width;
 		const h = selection.datum().width;
+
 		selection
 			.append('foreignObject')
 			.attr('x', -0.5 * w)
@@ -341,6 +342,18 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				this.nodeSelection = null;
 			}
 		});
+
+		// restore prior selection state, if applicable
+		if (this.nodeSelection && this.chart) {
+			const id = this.nodeSelection.datum().id;
+			this.nodeSelection = this.chart
+				.selectAll('.node-ui')
+				.filter((d: any) => d.id === id) as D3SelectionINode<NodeData>;
+
+			if (this.nodeSelection) {
+				this.selectNode(this.nodeSelection);
+			}
+		}
 	}
 
 	getShapeOffset(node: any, angle: number) {
