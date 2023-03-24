@@ -92,7 +92,7 @@
 			<template v-slot:content>
 				<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
 					<div class="empty-cart-image">
-						<img src="src/assets/svg/seed.svg" alt="Picture of a seed" />
+						<img src="@/assets/svg/seed.svg" alt="Picture of a seed" />
 					</div>
 					<p>Selected resources will appear here</p>
 				</div>
