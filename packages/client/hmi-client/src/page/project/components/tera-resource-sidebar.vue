@@ -29,6 +29,7 @@
 			<modal
 				v-if="isConfirmRemovalModalVisible"
 				@modal-mask-clicked="isConfirmRemovalModalVisible = false"
+				class="remove-modal"
 			>
 				<template #header>
 					<h4>
@@ -37,13 +38,13 @@
 					</h4>
 				</template>
 				<template #default>
-					<p class="modal-message">
-						Deleting <span class="semi-bold">{{ openedAssetRoute.assetName }}</span> will
-						permanently remove it from {{ project.name }}.
+					<p>
+						Removing <em>{{ openedAssetRoute.assetName }}</em> will permanently remove it from
+						{{ project.name }}.
 					</p>
 				</template>
 				<template #footer>
-					<Button label="Delete" class="p-button-danger" @click="removeAsset()" />
+					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
 					<Button
 						label="Cancel"
 						class="p-button-secondary"
@@ -220,11 +221,11 @@ nav {
 	font-size: 4rem;
 }
 
-.modal-message {
+.remove-modal p {
 	max-width: 40rem;
 }
 
-.semi-bold {
+.remove-modal em {
 	font-weight: var(--font-weight-semibold);
 }
 </style>
