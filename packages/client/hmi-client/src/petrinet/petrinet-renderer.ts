@@ -348,7 +348,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			const id = this.nodeSelection.datum().id;
 			this.nodeSelection = this.chart
 				.selectAll('.node-ui')
-				.filter((d) => d.id === id) as D3SelectionINode<NodeData>;
+				.filter((d: any) => d.id === id) as D3SelectionINode<NodeData>;
 
 			if (this.nodeSelection) {
 				this.selectNode(this.nodeSelection);
