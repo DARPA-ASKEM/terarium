@@ -64,7 +64,8 @@
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
-				<h5>Open resources from the resource panel.</h5>
+				<p>You can open resources from the resource panel.</p>
+				<Button label="Open project overview" />
 			</section>
 		</section>
 		<slider-panel
