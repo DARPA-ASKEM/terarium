@@ -27,7 +27,7 @@
 			<!--contributor-->
 			<!--created on: date-->
 		</header>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-html="description" />
 			</AccordionTab>
@@ -72,19 +72,45 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<template v-if="!isEditable">
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab header="State variables">
+			<AccordionTab :header="`State variables ${model?.content?.S.length}`">
+				<template v-if="true || !isEditable">
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
 						v-model:selection="selectedRow"
+						@row-select="onStateVariableClick"
+						@row-unselect="onStateVariableClick"
+					>
+						<Column field="sname" header="Name" />
+						<Column header="Type">
+							<template #body="slotProps">
+								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.type }}
+							</template>
+						</Column>
+						<Column header="Default">
+							<template #body="slotProps">
+								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.default_value }}
+							</template>
+						</Column>
+						<Column field="miraIds" header="Concepts">
+							<template #body="slotProps">
+								<ul>
+									<li
+										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
+										:key="ontology.curie"
+									>
+										<a :href="ontology.link">{{ ontology.title }}</a
+										><br />{{ ontology.description }}
+									</li>
+								</ul>
+							</template>
+						</Column>
+					</DataTable>
+				</template>
+				<template v-else>
+					<DataTable
+						:value="model?.content?.S"
+						selectionMode="single"
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
 					>
@@ -103,8 +129,71 @@
 							</template>
 						</Column>
 					</DataTable>
-				</AccordionTab>
-			</template>
+				</template>
+			</AccordionTab>
+			<AccordionTab :header="`Parameters ${betterParams?.length}`">
+				<template v-if="true || !isEditable">
+					<DataTable :value="betterParams">
+						<Column field="name" header="Name" />
+						<Column field="type" header="Type" />
+						<Column field="default_value" header="Default" />
+					</DataTable>
+				</template>
+				<template v-else>
+					<model-parameter-list
+						:parameters="betterParams"
+						attribute="parameters"
+						@update-parameter-row="updateParamaterRow"
+						@parameter-click="onVariableSelected"
+					/>
+				</template>
+			</AccordionTab>
+			<AccordionTab :header="`Extractions ${extractions?.length}`">
+				<DataTable :value="extractions">
+					<Column field="name" header="Name" />
+					<Column field="id" header="ID" />
+					<Column field="text_annotations" header="Text">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.text_annotations" :key="key">
+									{{ text }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="dkg_annotations" header="Concepts">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
+									{{ `${text[0]}: ${text[1]}` }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="data_annotations" header="Data">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.data_annotations" :key="key">
+									{{ `${text[0]}: ${text[1]}` }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="file" header="File" />
+					<Column field="doi" header="doi">
+						<template #body="slotProps">
+							<a :href="slotProps.data.doi">{{ slotProps.data.doi }}</a>
+						</template>
+					</Column>
+					<Column field="equation_annotations" header="Equations">
+						<template #body="slotProps">
+							<div style="word-wrap: break-word">
+								{{ slotProps.data.equation_annotations }}
+							</div>
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
@@ -116,49 +205,6 @@
 					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
-			<template v-if="isEditable">
-				<AccordionTab header="State variables">
-					<DataTable
-						:value="model?.content?.S"
-						selectionMode="single"
-						@row-select="onStateVariableClick"
-						@row-unselect="onStateVariableClick"
-					>
-						<Column field="sname" header="Label" />
-						<Column field="miraIds" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li
-										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
-										:key="ontology.curie"
-									>
-										<a :href="ontology.link">{{ ontology.title }}</a
-										><br />{{ ontology.description }}
-									</li>
-								</ul>
-							</template>
-						</Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
-					</template>
-					<model-parameter-list
-						:parameters="betterParams"
-						attribute="parameters"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</AccordionTab>
-				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
-					<template #header>
-						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
-					</template>
-					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
-						@update-parameterRow="updateParamaterRow" />
-				</AccordionTab> -->
-			</template>
 		</Accordion>
 	</section>
 </template>
@@ -200,12 +246,15 @@ import MathEditor from '@/components/mathml/math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
 export interface ModelProps {
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
 }
+
+const extractions = ref(Object.values(example));
 
 const props = defineProps<ModelProps>();
 
@@ -243,7 +292,7 @@ const mathmode = ref('mathLIVE');
 // };
 
 const betterParams = computed(() => {
-	const params = model.value?.parameters;
+	const params = model.value?.parameters.filter((p) => !p.state_variable);
 	const transitions: any[] = model.value?.content?.T ?? [];
 
 	transitions.forEach((transition) => {
@@ -254,7 +303,6 @@ const betterParams = computed(() => {
 			}
 		});
 	});
-
 	return params;
 });
 
@@ -326,6 +374,7 @@ function highlightSearchTerms(text: string | undefined): string {
 watch(
 	() => [props.assetId],
 	async () => {
+		updateFormula('');
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
@@ -337,7 +386,6 @@ watch(
 				}
 			}
 		} else {
-			equation.value = '';
 			model.value = null;
 		}
 	},
@@ -435,6 +483,8 @@ watch(
 		const latexFormula = await petriToLatex(model.value.content);
 		if (latexFormula) {
 			updateFormula(latexFormula);
+		} else {
+			updateFormula('');
 		}
 	},
 	{ deep: true }

@@ -117,7 +117,7 @@ math-field {
 	min-height: 100%;
 	padding: 5px;
 	margin: 10px;
-	font-size: 1.5em;
+	font-size: 1.3em;
 }
 
 math-field:focus-within {
