@@ -166,7 +166,7 @@ onMounted(async () => {
 .dropdown-button {
 	width: 156px;
 	height: 3rem;
-	border-radius: 4px;
+	border-radius: var(--border-radius);
 	gap: 16px;
 }
 

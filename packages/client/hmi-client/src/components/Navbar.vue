@@ -1,26 +1,22 @@
 <template>
 	<header>
 		<section class="header-left">
-			<span v-if="currentProjectId">
-				<router-link :to="RoutePath.Home">
-					<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
-				</router-link>
-			</span>
-			<span v-else @click="showNavigationMenu">
+			<router-link :to="RoutePath.Home">
+				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
+			</router-link>
+			<div @click="showNavigationMenu">
+				<h1 v-if="currentProjectId || isDataExplorer">
+					{{ currentProjectName ?? 'Explorer' }}
+				</h1>
 				<img
-					src="@assets/svg/terarium-logo.svg"
-					height="30"
+					v-else
+					src="@assets/svg/terarium-wordmark.svg"
+					height="20"
 					alt="Terarium icon with name"
 					class="terariumLogo"
 				/>
-			</span>
-			<h1 v-if="currentProjectId" @click="showNavigationMenu">
-				{{ currentProjectName }}
-				<i
-					class="pi pi-angle-down"
-					style="vertical-align: bottom; color: var(--text-color-subdued)"
-				/>
-			</h1>
+				<i class="pi pi-angle-down" />
+			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
@@ -254,6 +250,12 @@ h1:focus {
 	padding-right: 0;
 }
 
+.header-left > div {
+	align-items: center;
+	cursor: pointer;
+	display: flex;
+}
+
 .p-dropdown {
 	border: 0;
 }
@@ -263,7 +265,9 @@ h1:focus {
 }
 
 i {
+	color: var(--text-color-subdued);
 	margin-left: 0.5rem;
+	vertical-align: bottom;
 }
 
 /* Suggested terms */
