@@ -4,8 +4,8 @@
 			<router-link :to="RoutePath.Home">
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
-			<span @click="showNavigationMenu">
-				<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
+			<div @click="showNavigationMenu">
+				<h1 v-if="currentProjectId || isDataExplorer">
 					{{ currentProjectName ?? 'Explorer' }}
 				</h1>
 				<img
@@ -16,7 +16,7 @@
 					class="terariumLogo"
 				/>
 				<i class="pi pi-angle-down" />
-			</span>
+			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
@@ -248,6 +248,12 @@ h1:focus {
 
 .header-left:deep(.p-dropdown-label.p-inputtext) {
 	padding-right: 0;
+}
+
+.header-left > div {
+	align-items: center;
+	cursor: pointer;
+	display: flex;
 }
 
 .p-dropdown {
