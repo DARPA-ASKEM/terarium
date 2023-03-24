@@ -1,19 +1,9 @@
 <template>
 	<header>
 		<section class="header-left">
-			<span v-if="currentProjectId">
-				<router-link :to="RoutePath.Home">
-					<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
-				</router-link>
-			</span>
-			<span v-else @click="showNavigationMenu">
-				<img
-					src="@assets/svg/terarium-logo.svg"
-					height="30"
-					alt="Terarium icon with name"
-					class="terariumLogo"
-				/>
-			</span>
+			<router-link :to="RoutePath.Home">
+				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
+			</router-link>
 			<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
 				{{ currentProjectName ?? 'Explorer' }}
 				<i
@@ -21,6 +11,14 @@
 					style="vertical-align: bottom; color: var(--text-color-subdued)"
 				/>
 			</h1>
+			<img
+				v-else
+				src="@assets/svg/terarium-wordmark.svg"
+				height="30"
+				alt="Terarium icon with name"
+				class="terariumLogo"
+				@click="showNavigationMenu"
+			/>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
