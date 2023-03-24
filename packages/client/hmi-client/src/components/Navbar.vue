@@ -14,8 +14,8 @@
 					class="terariumLogo"
 				/>
 			</span>
-			<h1 v-if="currentProjectId" @click="showNavigationMenu">
-				{{ currentProjectName }}
+			<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
+				{{ currentProjectName ?? 'Explorer' }}
 				<i
 					class="pi pi-angle-down"
 					style="vertical-align: bottom; color: var(--text-color-subdued)"
