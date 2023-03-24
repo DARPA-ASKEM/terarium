@@ -675,7 +675,7 @@ $menuitemIconActiveColor: $textSecondaryColor !default;
 $menuitemActiveBg: rgba(0, 0, 0, .04) !default;
 $menuitemSubmenuIconFontSize: .875rem !default;
 $submenuHeaderMargin: 0 !default;
-$submenuHeaderPadding: 1rem !default;
+$submenuHeaderPadding: 1rem 1rem 0.5rem !default;
 $submenuHeaderBg: #ffffff !default;
 $submenuHeaderTextColor: $textSecondaryColor !default;
 $submenuHeaderBorderRadius: 0 !default;
