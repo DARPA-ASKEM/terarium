@@ -6,18 +6,18 @@
 			</router-link>
 			<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
 				{{ currentProjectName ?? 'Explorer' }}
-				<i
-					class="pi pi-angle-down"
-					style="vertical-align: bottom; color: var(--text-color-subdued)"
-				/>
 			</h1>
 			<img
 				v-else
 				src="@assets/svg/terarium-wordmark.svg"
-				height="30"
+				height="20"
 				alt="Terarium icon with name"
 				class="terariumLogo"
 				@click="showNavigationMenu"
+			/>
+			<i
+				class="pi pi-angle-down"
+				style="vertical-align: bottom; color: var(--text-color-subdued)"
 			/>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
