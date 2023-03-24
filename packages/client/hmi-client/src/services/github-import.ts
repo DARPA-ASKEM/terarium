@@ -9,9 +9,10 @@ const requestOptions = {
 	// header
 };
 
-export async function getGithubRepositoryAttributes(ownerRepo: string) {
+// Might be useful if we want to display some other information about the repository
+export async function getGithubRepositoryAttributes(repositoryName: string) {
 	try {
-		const response = await fetch(`https://api.github.com/repos/${ownerRepo}`, requestOptions);
+		const response = await fetch(`https://api.github.com/repos/${repositoryName}`, requestOptions);
 		const result = await response.json();
 		if (!response.ok) return null;
 		return result;
@@ -21,9 +22,12 @@ export async function getGithubRepositoryAttributes(ownerRepo: string) {
 	}
 }
 
-export async function getGithubRepositoryContent(contentsUrl: string) {
+export async function getGithubRepositoryContent(repositoryName: string, currentDirectory: string) {
 	try {
-		const response = await fetch(contentsUrl, requestOptions);
+		const response = await fetch(
+			`https://api.github.com/repos/${repositoryName}/contents/${currentDirectory}`,
+			requestOptions
+		);
 		const result = await response.json();
 		if (!response.ok) return null;
 		return result;

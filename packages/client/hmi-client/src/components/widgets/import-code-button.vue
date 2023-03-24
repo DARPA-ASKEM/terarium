@@ -3,21 +3,28 @@
 		label="Import"
 		class="p-button-sm p-button-outlined"
 		icon="pi pi-cloud-download"
-		@click="openCodeBrowser"
+		@click="initializeCodeBrowser"
 	/>
 	<Teleport to="body">
 		<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 			<template #header>
-				<h5>Choose file to open from {{ chosenRepositoryName }}</h5>
+				<h5>
+					Choose file to open from {{ repositoryName
+					}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
+				</h5>
 			</template>
 			<template #default>
 				<ul>
-					<li v-if="isInFolder" @click="openContent()">
+					<li v-if="isInDirectory" @click="openContent()">
 						<i class="pi pi-folder-open" />
 						<b> ..</b>
 					</li>
-					<li v-for="(content, index) in filesToSelect" :key="index" @click="openContent(content)">
-						<i v-if="content.download_url === null" class="pi pi-folder" />
+					<li
+						v-for="(content, index) in directoryContents"
+						:key="index"
+						@click="openContent(content)"
+					>
+						<i v-if="content.type === 'dir'" class="pi pi-folder" />
 						<i v-else class="pi pi-file" />
 						{{ content.name }}
 					</li>
@@ -32,11 +39,8 @@ import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
-import {
-	getGithubRepositoryAttributes,
-	getGithubRepositoryContent,
-	getGithubCode
-} from '@/services/github-import';
+import { isEmpty } from 'lodash';
+import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
 
 const props = defineProps<{
 	urlString: string;
@@ -44,51 +48,50 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-code']);
 
-const chosenRepositoryName = ref('');
-const filesToSelect = ref();
+const repositoryName = ref('');
+const currentDirectory = ref('');
+const directoryContents = ref();
 const isModalVisible = ref(false);
 
-const isInFolder = computed(() => chosenRepositoryName.value.split('/').length > 2);
+const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
 
-async function openCodeBrowser() {
+async function initializeCodeBrowser() {
+	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
-
 	const splitUrl = props.urlString.split('/');
-	chosenRepositoryName.value = `${splitUrl[splitUrl.length - 2]}/${splitUrl[splitUrl.length - 1]}`;
-
-	const repoAttributes = await getGithubRepositoryAttributes(chosenRepositoryName.value);
-	filesToSelect.value = await getGithubRepositoryContent(repoAttributes.contents_url.slice(0, -8));
+	repositoryName.value = `${splitUrl[splitUrl.length - 2]}/${splitUrl[splitUrl.length - 1]}`; // owner/repo
+	directoryContents.value = await getGithubRepositoryContent(
+		repositoryName.value,
+		currentDirectory.value
+	);
 }
 
-// Content as in file or folder
+// Content as in file or directory
 async function openContent(content?) {
-	// Go to parent folder
+	// Go to parent directory
 	if (!content) {
-		const directoryPathArray = chosenRepositoryName.value.split('/');
+		const directoryPathArray = currentDirectory.value.split('/');
 		directoryPathArray.pop();
-		chosenRepositoryName.value = directoryPathArray.join('/');
-
-		console.log(chosenRepositoryName.value);
-		const repoAttributes = await getGithubRepositoryAttributes(chosenRepositoryName.value);
-		console.log(repoAttributes);
-		filesToSelect.value = await getGithubRepositoryContent(
-			repoAttributes.contents_url.slice(0, -8)
+		currentDirectory.value = directoryPathArray.join('/');
+		directoryContents.value = await getGithubRepositoryContent(
+			repositoryName.value,
+			currentDirectory.value
 		);
 		return;
 	}
 
-	console.log(content);
-
-	// If a folder is chosen
-	if (content.download_url === null) {
-		chosenRepositoryName.value = `${chosenRepositoryName.value}/${content.name}`;
-		filesToSelect.value = await getGithubRepositoryContent(content.url);
+	// Open directory
+	if (content.type === 'dir') {
+		currentDirectory.value = content.path;
+		directoryContents.value = await getGithubRepositoryContent(
+			repositoryName.value,
+			currentDirectory.value
+		);
 		return;
 	}
 
-	const code = await getGithubCode(content.download_url);
-
 	// Open file in code view
+	const code = await getGithubCode(content.download_url);
 	emit(
 		'open-code',
 		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },

@@ -65,7 +65,16 @@
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
-				<Button label="Open project overview" />
+				<Button
+					label="Open project overview"
+					@click="
+						openAsset({
+							assetName: 'Overview',
+							assetType: 'overview',
+							assetId: undefined
+						})
+					"
+				/>
 			</section>
 		</section>
 		<slider-panel
@@ -148,8 +157,17 @@ const openedAssetRoute = computed<Tab>(() => ({
 
 function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
 	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
-	if (newCode) code.value = newCode;
+
+	if (newCode) {
+		code.value = newCode;
+		// addCreatedAsset(assetToOpen);
+	}
 }
+
+// Adding a code asset isn't supported yet
+// async function addCreatedAsset(newProjectAsset: Tab) {
+// 	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.CODE, 1);
+// }
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
