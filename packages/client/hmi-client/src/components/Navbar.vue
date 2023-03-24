@@ -250,6 +250,12 @@ h1:focus {
 	padding-right: 0;
 }
 
+.header-left > div {
+	align-items: center;
+	cursor: pointer;
+	display: flex;
+}
+
 .p-dropdown {
 	border: 0;
 }
