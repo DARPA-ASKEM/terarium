@@ -4,21 +4,19 @@
 			<router-link :to="RoutePath.Home">
 				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
-			<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
-				{{ currentProjectName ?? 'Explorer' }}
-			</h1>
-			<img
-				v-else
-				src="@assets/svg/terarium-wordmark.svg"
-				height="20"
-				alt="Terarium icon with name"
-				class="terariumLogo"
-				@click="showNavigationMenu"
-			/>
-			<i
-				class="pi pi-angle-down"
-				style="vertical-align: bottom; color: var(--text-color-subdued)"
-			/>
+			<span @click="showNavigationMenu">
+				<h1 v-if="currentProjectId || isDataExplorer" @click="showNavigationMenu">
+					{{ currentProjectName ?? 'Explorer' }}
+				</h1>
+				<img
+					v-else
+					src="@assets/svg/terarium-wordmark.svg"
+					height="20"
+					alt="Terarium icon with name"
+					class="terariumLogo"
+				/>
+				<i class="pi pi-angle-down" />
+			</span>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
@@ -261,7 +259,9 @@ h1:focus {
 }
 
 i {
+	color: var(--text-color-subdued);
 	margin-left: 0.5rem;
+	vertical-align: bottom;
 }
 
 /* Suggested terms */
