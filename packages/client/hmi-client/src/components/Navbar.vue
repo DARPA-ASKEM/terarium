@@ -43,7 +43,6 @@
 				</template>
 			</Dialog>
 			<Dialog header="Admin" v-model:visible="isAdminDialog">
-				<p></p>
 				<DataTable
 					:value="adminTableData"
 					v-model:selection="selectedAdminRow"
