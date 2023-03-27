@@ -32,13 +32,17 @@
 								<i class="pi pi-chevron-right" />
 							</div>
 							<ul v-if="isLoadingProjects">
-								<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
+								<li v-for="i in [0, 1, 2]" :key="i">
 									<project-card />
 								</li>
 							</ul>
 							<ul v-else>
-								<li v-for="(project, index) in projects?.slice().reverse()" :key="index">
-									<project-card :project="project" @click="openProject(project)" />
+								<li v-for="project in projects" :key="project.id">
+									<project-card
+										:project="project"
+										@click="openProject(project.id)"
+										@removed="removeProject"
+									/>
 								</li>
 								<li>
 									<section class="new-project-card" @click="isNewProjectModalVisible = true">
@@ -130,22 +134,33 @@
 				class="modal"
 				@modal-mask-clicked="isNewProjectModalVisible = false"
 			>
+				<template #header>
+					<h4>Create project</h4>
+				</template>
 				<template #default>
 					<form>
-						<label for="new-project-name">Project Name</label>
-						<InputText id="new-project-name" type="text" v-model="newProjectName" />
+						<label for="new-project-name">Name</label>
+						<InputText
+							id="new-project-name"
+							type="text"
+							v-model="newProjectName"
+							placeholder="What do you want to call your project?"
+						/>
 
-						<label for="new-project-description">Project Purpose</label>
-						<Textarea id="new-project-description" rows="5" v-model="newProjectDescription" />
+						<label for="new-project-description">Description</label>
+						<Textarea
+							id="new-project-description"
+							rows="5"
+							v-model="newProjectDescription"
+							placeholder="Add a short description"
+						/>
 					</form>
 				</template>
 				<template #footer>
-					<footer>
-						<Button @click="createNewProject">Create Project</Button>
-						<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
-							>Cancel</Button
-						>
-					</footer>
+					<Button @click="createNewProject">Create</Button>
+					<Button class="p-button-secondary" @click="isNewProjectModalVisible = false"
+						>Cancel</Button
+					>
 				</template>
 			</Modal>
 		</Teleport>
@@ -161,7 +176,6 @@ import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
-import API from '@/api/api';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 import Button from 'primevue/button';
@@ -169,7 +183,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Modal from '@/components/Modal.vue';
+import Modal from '@/components/widgets/Modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
@@ -203,7 +217,7 @@ onMounted(async () => {
 	resourcesStore.reset(); // Project related resources saved.
 	queryStore.reset(); // Facets queries.
 
-	projects.value = (await API.get('/home')).data as IProject[];
+	projects.value = ((await ProjectService.home()) ?? []).slice().reverse();
 
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
@@ -250,6 +264,10 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
 };
 
+function openProject(projectId: string) {
+	router.push({ name: RouteName.ProjectRoute, params: { projectId } });
+}
+
 async function createNewProject() {
 	const author = auth.name ?? '';
 	const project = await ProjectService.create(
@@ -258,18 +276,18 @@ async function createNewProject() {
 		author
 	);
 	if (project) {
-		router.push(`/projects/${project.id}`);
+		openProject(project.id);
 		isNewProjectModalVisible.value = false;
 	}
-}
-
-function openProject(chosenProject: IProject) {
-	router.push({ name: RouteName.ProjectRoute, params: { projectId: chosenProject.id } });
 }
 
 function listAuthorNames(authors) {
 	return authors.map((author) => author.name).join(', ');
 }
+
+const removeProject = (projectId: IProject['id']) => {
+	projects.value = projects.value?.filter((project) => project.id !== projectId);
+};
 </script>
 
 <style scoped>
@@ -287,11 +305,13 @@ section {
 }
 
 .papers {
-	background-color: var(--surface-secondary);
+	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
 	padding: 1rem;
+	border-top: 1px solid var(--gray-100);
 }
 
 .papers p {
+	color: var(--text-color-primary);
 	margin: 1rem 0 1rem 0rem;
 }
 
@@ -307,7 +327,7 @@ h3 {
 }
 
 .p-tabview:deep(.p-tabview-panels) {
-	padding: 1rem 0 1rem 0;
+	padding: 0 0 0 0;
 }
 
 header svg {
@@ -417,12 +437,6 @@ li {
 	padding: 1rem;
 }
 
-.modal h3 {
-	margin-bottom: 1em;
-	font-weight: 400;
-	font-size: 24px;
-}
-
 .modal label {
 	display: block;
 	margin-bottom: 0.5em;
@@ -433,21 +447,6 @@ li {
 	display: block;
 	margin-bottom: 2rem;
 	width: 100%;
-}
-
-.modal footer {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 1rem;
-	justify-content: end;
-	margin-top: 2rem;
-}
-
-.modal header {
-	font-weight: 500;
-	font-size: 12px;
-	line-height: 12px;
-	color: var(--text-color-subdued);
 }
 
 .selected-document-modal header {
@@ -478,6 +477,14 @@ li {
 	margin: 2rem 0;
 }
 
+.no-projects {
+	background-color: var(--gray-0);
+	background-image: radial-gradient(var(--gray-200) 10%, transparent 11%);
+	background-size: 12px 12px;
+	background-position: 0 0;
+	background-repeat: repeat;
+}
+
 .no-projects > * {
 	margin: auto;
 	margin-top: 1rem;
@@ -499,13 +506,14 @@ a {
 	flex-direction: column;
 	justify-content: center;
 	gap: 1rem;
-	border-radius: 4px;
+	border-radius: var(--border-radius-big);
 	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+	cursor: pointer;
 }
 
 .new-project-card > p {
 	text-align: center;
-	color: var(--primary-color);
+	color: var(--text-color-primary);
 }
 
 .new-project-card img {
@@ -513,12 +521,16 @@ a {
 }
 
 .new-project-card:hover {
-	background-color: var(--surface-hover);
-	box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px 0 rgb(0 0 0 / 14%),
-		0 1px 3px 0 rgb(0 0 0 / 12%);
+	background-color: var(--surface);
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 }
 
 .new-project-button {
 	padding: 0;
+}
+
+#new-project-name,
+#new-project-description {
+	border-color: var(--surface-border);
 }
 </style>

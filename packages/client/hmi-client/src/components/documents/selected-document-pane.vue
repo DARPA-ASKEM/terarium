@@ -23,7 +23,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { DocumentAsset, DocumentType } from '@/types/Document';
+import { DocumentType } from '@/types/Document';
+import { DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import * as ProjectService from '@/services/project';
@@ -123,6 +124,7 @@ onMounted(async () => {
 .textblock {
 	padding: 0px 0px 5px 15px;
 }
+
 /* TODO: All of this dropdown styling has been used before. If all dropdowns are green with white text and rounded we should export this into a styling component likely */
 
 .dropdown-button {
@@ -147,6 +149,7 @@ subheader {
 :deep .p-dropdown .p-dropdown-trigger {
 	color: white;
 }
+
 .p-button.p-button-secondary {
 	border: 1px solid var(--surface-border);
 	box-shadow: none;

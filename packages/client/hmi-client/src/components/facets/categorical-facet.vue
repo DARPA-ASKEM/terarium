@@ -25,11 +25,11 @@
 			<div class="facet-footer-more">
 				<div class="facet-footer-more-section">
 					<div class="facet-footer-more-count">
-						<span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
+						<span v-if="facetMoreCount > 0">+{{ facetMoreCount }} more</span>
 					</div>
 					<div class="facet-footer-more-controls">
-						<span v-if="hasLess" class="less" @click="viewLess"> <IconChevronUp16 />less </span>
-						<span v-if="hasMore" class="more" @click="viewMore"> <IconChevronDown16 />more </span>
+						<span v-if="hasLess" class="less" @click="viewLess">Show less </span>
+						<span v-if="hasMore" class="more" @click="viewMore">Show more </span>
 					</div>
 				</div>
 			</div>
@@ -49,8 +49,6 @@ import '@uncharted.software/facets-core';
 import filtersUtil from '@/utils/filters-util';
 
 import useQueryStore from '@/stores/query';
-import IconChevronDown16 from '@carbon/icons-vue/es/chevron--down/16';
-import IconChevronUp16 from '@carbon/icons-vue/es/chevron--up/16';
 
 const FACET_DEFAULT_SIZE = 5;
 
@@ -65,10 +63,7 @@ const FACET_DEFAULT_SIZE = 5;
  */
 export default defineComponent({
 	name: 'CategoricalFacet',
-	components: {
-		IconChevronDown16,
-		IconChevronUp16
-	},
+	components: {},
 	props: {
 		baseData: {
 			type: Array,
@@ -255,7 +250,7 @@ export default defineComponent({
 	min-height: 12px;
 	padding: 6px 12px 5px;
 	font-size: 12px;
-	font-weight: 600;
+	font-weight: 400;
 	line-height: 16px;
 }
 
@@ -270,6 +265,7 @@ export default defineComponent({
 	justify-content: flex-start;
 	align-content: stretch;
 	align-items: flex-start;
+	color: var(--text-color-subdued);
 }
 
 .facet-footer-more-count {
@@ -287,8 +283,15 @@ export default defineComponent({
 .more,
 .less {
 	display: inline-flex;
+	margin-left: 16px;
 }
 
+.more:hover {
+	color: var(--text-color-primary);
+}
+.less:hover {
+	color: var(--text-color-primary);
+}
 .facet-footer-more-controls > span {
 	cursor: pointer;
 }

@@ -1,4 +1,8 @@
 import { IGraph } from '@graph-scaffolder/types';
+import { AxiosError } from 'axios';
+import { logger } from '@/utils/logger';
+import API from '@/api/api';
+import _ from 'lodash';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -105,20 +109,118 @@ export enum NodeType {
 }
 
 /**
+ * Convert a PetriNet graph representation to PetriNet ACset representation
+ *
+ * We don't necessarily index-parity in the conversion, that being
+ *   X === parseIGraph2PetriNet(parsePetriNet2IGraph(X))
+ *
+ * Because the index positions could have changed, however it should have parity in terms of semantics.
+ */
+export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
+	const result: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+
+	const findNodeById = (id: string) => graph.nodes.find((n) => n.id === id);
+
+	// States and transitions
+	graph.nodes.forEach((node) => {
+		if (node.data.type === NodeType.State) {
+			result.S.push({ sname: node.label });
+		} else {
+			result.T.push({ tname: node.label });
+		}
+	});
+
+	// Edges
+	graph.edges.forEach((edge) => {
+		const target = edge.target;
+		const source = edge.source;
+
+		// This means the edge from transition => state
+		const targetInS = target.startsWith('s');
+
+		if (targetInS) {
+			// O
+			let ot = -1;
+			let os = -1;
+
+			const otNode = findNodeById(target);
+			if (otNode) {
+				os = result.S.findIndex((d) => d.sname === otNode.label);
+			}
+			const osNode = findNodeById(source);
+			if (osNode) {
+				ot = result.T.findIndex((d) => d.tname === osNode.label);
+			}
+
+			// Julia index starts at 1
+			ot++;
+			os++;
+			if (os > 0 && ot > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.O.push({ os, ot });
+				}
+			}
+		} else {
+			// I
+			let it = -1;
+			let is = -1;
+			const itNode = findNodeById(target);
+			if (itNode) {
+				it = result.T.findIndex((d) => d.tname === itNode.label);
+			}
+
+			const isNode = findNodeById(source);
+			if (isNode) {
+				is = result.S.findIndex((d) => d.sname === isNode.label);
+			}
+
+			// Julia index starts at 1
+			it++;
+			is++;
+			if (is > 0 && it > 0 && edge.data) {
+				for (let i = 0; i < edge.data.numEdges; i++) {
+					result.I.push({ is, it });
+				}
+			}
+		}
+	});
+	return result;
+};
+
+/**
  * Given a petrinet model convert to an IGraph representation g
  * for the renderer
  * First add each node found in S and T, then add each edge found in I and O
  */
-export const parsePetriNet2IGraph = (model: PetriNet) => {
+interface PetriSizeConfig {
+	S: {
+		width: number;
+		height: number;
+	};
+	T: {
+		width: number;
+		height: number;
+	};
+}
+const defaultSizeConfig: PetriSizeConfig = {
+	S: { width: 40, height: 40 },
+	T: { width: 40, height: 40 }
+};
+export const parsePetriNet2IGraph = (
+	model: PetriNet,
+	config: PetriSizeConfig = defaultSizeConfig
+) => {
 	const result: IGraph<NodeData, EdgeData> = {
 		width: 500,
 		height: 500,
 		nodes: [],
 		edges: []
 	};
-
-	const nodeHeight = 40;
-	const nodeWidth = 40;
 
 	// add each nodes in S
 	for (let i = 0; i < model.S.length; i++) {
@@ -128,8 +230,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			label: aNode.sname,
 			x: 0,
 			y: 0,
-			height: nodeHeight,
-			width: nodeWidth,
+			height: config.S.height,
+			width: config.S.width,
 			data: { type: NodeType.State, uid: aNode.uid },
 			nodes: []
 		});
@@ -143,8 +245,8 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 			label: aTransition.tname,
 			x: 0,
 			y: 0,
-			height: nodeHeight,
-			width: nodeWidth,
+			height: config.T.height,
+			width: config.T.width,
 			data: { type: NodeType.Transition, uid: aTransition.uid },
 			nodes: []
 		});
@@ -200,3 +302,130 @@ export const parsePetriNet2IGraph = (model: PetriNet) => {
 	}
 	return result;
 };
+
+// Transform list of mathML strings to a petrinet ascet
+export const mathmlToPetri = async (mathml: string[]) => {
+	try {
+		const { status, data } = await API.post('/transforms/mathml-to-acset', mathml);
+
+		if (status === 200 && data) {
+			return data;
+		}
+		logger.error('mathmlToPetri: Server did not provide a correct response', { showToast: false });
+	} catch (error: unknown) {
+		if ((error as AxiosError).isAxiosError) {
+			const axiosError = error as AxiosError;
+			logger.error('mathmlToPetri Error: ', axiosError.response?.data || axiosError.message, {
+				showToast: false
+			});
+		} else {
+			logger.error(error, { showToast: false });
+		}
+	}
+	return null;
+};
+
+// Transfrom a petrinet into latex
+export const petriToLatex = async (petri: PetriNet): Promise<string | null> => {
+	try {
+		const payloadPetri = {
+			S: petri.S.map((s) => ({ sname: s.sname })),
+			T: petri.T.map((t) => ({ tname: t.tname })),
+			I: petri.I,
+			O: petri.O
+		};
+
+		const { status, data } = await API.post('/transforms/acset-to-latex', payloadPetri);
+
+		if (status === 200 && data && typeof data === 'string') {
+			return data;
+		}
+
+		logger.error('petriToLatex: Server did not provide a correct response', { showToast: false });
+	} catch (error: unknown) {
+		if ((error as AxiosError).isAxiosError) {
+			const axiosError = error as AxiosError;
+			logger.error('petriToLatex Error:', axiosError.response?.data || axiosError.message, {
+				showToast: false
+			});
+		} else {
+			logger.error(error, { showToast: false });
+		}
+	}
+	return null;
+};
+
+/**
+ * @description: clone graphOne X times where X is the length of nodes in graphTwo.
+ * 				Example, SIR + QNQ leads to two distinct SIR graphs. One labelled for Q and one labelled for NQ
+ * @param: graphOne, IGraph, a graph you want to clone
+ * @param: graphTwo -> IGraph, a graph you want to clone
+ * @return IGraph
+ * @todo: https://github.com/DARPA-ASKEM/Terarium/issues/868
+ */
+
+function cloneFirstGraph(
+	graphOne: IGraph<NodeData, EdgeData>,
+	graphTwo: IGraph<NodeData, EdgeData>
+) {
+	const resultGraph: IGraph<NodeData, EdgeData> = { nodes: [], edges: [] };
+	for (let i = 0; i < graphTwo.nodes.length; i++) {
+		if (graphTwo.nodes[i].data.type === NodeType.State) {
+			const tempGraph = _.cloneDeep(graphOne);
+			tempGraph.nodes.forEach((node) => {
+				node.id = `${node.id},${graphTwo.nodes[i].id}`;
+				node.label = `${node.label},${graphTwo.nodes[i].label}`;
+				resultGraph.nodes.push(node);
+			});
+			tempGraph.edges.forEach((edge) => {
+				edge.source = `${edge.source},${graphTwo.nodes[i].id}`;
+				edge.target = `${edge.target},${graphTwo.nodes[i].id}`;
+				resultGraph.edges.push(edge);
+			});
+		}
+	}
+	return resultGraph;
+}
+
+/**
+ * @description: Take 2 PetriNets and stratify them without any typing or ontology
+ * @return IGraph of result for easy graphing
+ * @todo: https://github.com/DARPA-ASKEM/Terarium/issues/868
+ */
+
+export function blindStratification(petrinetOne: PetriNet, petrinetTwo: PetriNet) {
+	const graphOne = parsePetriNet2IGraph(petrinetOne);
+	const graphTwo = parsePetriNet2IGraph(petrinetTwo);
+	const resultGraph: IGraph<NodeData, EdgeData> = cloneFirstGraph(graphOne, graphTwo);
+	// Add graphTwo's shape to connect everything
+	for (let i = 0; i < graphTwo.edges.length; i++) {
+		for (let j = 0; j < graphOne.nodes.length; j++) {
+			if (graphOne.nodes[j].data.type === NodeType.State) {
+				// Find the edges source that type as transition.
+				const graphTwoSourceNode = graphTwo.nodes.find(
+					(node) => node.id === graphTwo.edges[i].source && node.data.type === NodeType.Transition
+				);
+				if (graphTwoSourceNode) {
+					// Create the (S,transition) nodes (Example: S,unquarantine)
+					const newTransitionId = `${graphOne.nodes[j].id},${graphTwoSourceNode.id}`;
+					const newTransitionLabel = `${graphOne.nodes[j].label},${graphTwoSourceNode.label}`;
+					resultGraph.nodes.push({
+						id: newTransitionId,
+						label: newTransitionLabel,
+						data: { type: NodeType.Transition },
+						height: graphOne.nodes[j].height,
+						width: graphOne.nodes[j].width,
+						x: graphOne.nodes[j].x,
+						y: graphOne.nodes[j].y,
+						nodes: []
+					});
+				}
+				// Create the edges for (S,transition)
+				const newSource = `${graphOne.nodes[j].id},${graphTwo.edges[i].source}`;
+				const newTarget = `${graphOne.nodes[j].id},${graphTwo.edges[i].target}`;
+				resultGraph.edges.push({ source: newSource, target: newTarget, points: [] });
+			}
+		}
+	}
+	return resultGraph;
+}

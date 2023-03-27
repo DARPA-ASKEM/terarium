@@ -60,12 +60,34 @@ async function get(projectId: string): Promise<IProject | null> {
 }
 
 /**
+ * Remove a project (soft-delete)
+ * @param projectId {IProject["id"]} - the id of the project to be removed
+ * @return boolean - if the removal was succesful
+ */
+async function remove(projectId: IProject['id']): Promise<boolean> {
+	try {
+		const { status } = await API.delete(`/projects/${projectId}`);
+		return status === 200;
+	} catch (error) {
+		logger.error(error);
+		return false;
+	}
+}
+
+/**
  * Get all projects
  * @return Array<Project>|null - the list of all projects, or null if none returned by API
  */
 async function getAll(): Promise<IProject[] | null> {
-	const response = await API.get('/projects');
-	return response?.data ?? null;
+	try {
+		const response = await API.get('/projects');
+		const { status, data } = response;
+		if (status !== 200 || !data) return null;
+		return data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
 }
 
 /**
@@ -119,4 +141,19 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	return response?.data ?? null;
 }
 
-export { create, update, get, getAll, addAsset, deleteAsset, getAssets };
+/**
+ * Get all informations for the homepage
+ */
+async function home(): Promise<IProject[] | null> {
+	try {
+		const response = await API.get('/home');
+		const { status, data } = response;
+		if (status !== 200 || !data) return null;
+		return data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export { create, update, get, remove, getAll, addAsset, deleteAsset, getAssets, home };

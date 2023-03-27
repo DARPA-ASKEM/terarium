@@ -2,18 +2,21 @@
 	<header>
 		<section class="header-left">
 			<router-link :to="RoutePath.Home">
-				<img
-					v-if="currentProjectId"
-					src="@assets/svg/terarium-icon.svg"
-					height="36"
-					alt="Terarium icon"
-				/>
-				<img v-else src="@assets/svg/terarium-logo.svg" height="36" alt="Terarium logo" />
+				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
 			</router-link>
-			<h1 v-if="currentProjectId" @click="showNavigationMenu">
-				{{ currentProjectName }}
+			<div class="navigation-dropdown" @click="showNavigationMenu">
+				<h1 v-if="currentProjectId || isDataExplorer">
+					{{ currentProjectName ?? 'Explorer' }}
+				</h1>
+				<img
+					v-else
+					src="@assets/svg/terarium-wordmark.svg"
+					height="16"
+					alt="Terarium icon with name"
+					class="terariumLogo"
+				/>
 				<i class="pi pi-angle-down" />
-			</h1>
+			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
@@ -25,7 +28,12 @@
 			@toggle-search-by-example="searchByExampleModalToggled"
 		/>
 		<section v-if="active" class="header-right">
-			<Avatar :label="auth.initials" class="avatar m-2" shape="circle" @click="showUserMenu" />
+			<Avatar
+				:label="auth.initials ?? undefined"
+				class="avatar m-2"
+				shape="circle"
+				@click="showUserMenu"
+			/>
 			<Menu ref="userMenu" :model="userMenuItems" :popup="true" />
 			<Dialog header="Logout" v-model:visible="isLogoutDialog">
 				<p>You will be returned to the login screen.</p>
@@ -91,7 +99,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import SearchBar from '@/page/data-explorer/components/search-bar.vue';
-import { RoutePath } from '@/router/index';
+import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';
 import useAuthStore from '@/stores/auth';
@@ -116,10 +124,19 @@ const homeItem: MenuItem = {
 	icon: RouteMetadata[RouteName.HomeRoute].icon,
 	command: () => router.push(RoutePath.Home)
 };
-const navMenuItems = ref<MenuItem[]>([homeItem]);
+const explorerItem: MenuItem = {
+	label: RouteMetadata[RouteName.DataExplorerRoute].displayName,
+	icon: RouteMetadata[RouteName.DataExplorerRoute].icon,
+	command: () => router.push(RoutePath.DataExplorer)
+};
+const navMenuItems = ref<MenuItem[]>([homeItem, explorerItem]);
 const showNavigationMenu = (event) => {
 	navigationMenu.value.toggle(event);
 };
+const currentRoute = useCurrentRoute();
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorerRoute);
 
 /*
  * User Menu
@@ -270,7 +287,7 @@ watch(
 						router.push({ name: RouteName.ProjectRoute, params: { projectId: project.id } })
 				});
 			});
-			navMenuItems.value = [homeItem, { label: 'Projects', items }];
+			navMenuItems.value = [homeItem, explorerItem, { label: 'Projects', items }];
 		}
 	},
 	{ immediate: true }
@@ -280,7 +297,7 @@ watch(
 <style scoped>
 header {
 	background-color: var(--surface-section);
-	border-bottom: 1px solid var(--surface-border);
+	border-bottom: 1px solid var(--surface-border-light);
 	padding: 0.5rem 1rem;
 	display: grid;
 	column-gap: 0.5rem;
@@ -290,20 +307,24 @@ header {
 	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
 }
 
-h1 {
+.navigation-dropdown {
 	border-color: transparent;
 	border-style: solid;
 	border-radius: var(--border-radius);
 	border-width: 1px;
 	cursor: pointer;
-	font-size: var(--font-body-large);
+	font-size: var(--font-body-medium);
 	font-weight: var(--font-weight-semibold);
 	padding: 0.5rem;
 }
 
-h1:hover,
-h1:focus {
-	border-color: var(--primary-color);
+.navigation-dropdown:hover,
+.navigation-dropdown:focus {
+	background-color: var(--surface-ground);
+}
+
+.terariumLogo {
+	cursor: pointer;
 }
 
 /* Search Bar */
@@ -339,13 +360,19 @@ h1:focus {
 .header-left {
 	align-items: center;
 	display: flex;
-	gap: 1rem;
+	gap: 0.15rem;
 	grid-area: header-left;
 	height: 100%;
 }
 
 .header-left:deep(.p-dropdown-label.p-inputtext) {
 	padding-right: 0;
+}
+
+.header-left > div {
+	align-items: center;
+	cursor: pointer;
+	display: flex;
 }
 
 .p-dropdown {
@@ -357,13 +384,14 @@ h1:focus {
 }
 
 i {
+	color: var(--text-color-subdued);
 	margin-left: 0.5rem;
+	vertical-align: bottom;
 }
 
 /* Suggested terms */
 .suggested-terms {
 	align-items: center;
-	font-weight: var(--font-weight-semibold);
 	color: var(--text-color-subdued);
 	display: flex;
 	column-gap: 0.5rem;
@@ -390,6 +418,6 @@ i {
  * To left align the content with the h1.
  */
 .navigation-menu {
-	margin-left: -0.5rem;
+	margin-top: 0.25rem;
 }
 </style>

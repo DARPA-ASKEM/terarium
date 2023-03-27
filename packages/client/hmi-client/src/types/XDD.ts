@@ -73,6 +73,7 @@ export type XDDSearchParams = {
 	related_search_enabled?: boolean; // if true, then perform a search by example by finding related artifacts
 	similar_search_enabled?: boolean; // if true, then perform a search by example by finding similar documents
 	related_search_id?: string | number;
+	githubUrls?: string;
 };
 
 export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
@@ -91,19 +92,21 @@ export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the do
 export const DOCUMENT_NAME = 'pubname';
 export const PAGES = 'pages'; // Document' page numbers within the issue
 export const YEAR = 'year'; // Year of document
+export const GITHUB_URL = 'githubUrls';
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
 	[TYPE]: 'Document type',
 	[TITLE]: 'Article title',
 	[JOURNAL]: 'Journal name',
-	[VOL]: 'Journal bolume',
+	[VOL]: 'Journal volume',
 	[NUMBER]: 'Journal issue number',
 	[AUTHORS]: 'Authors',
 	[PUBLISHER]: 'Publisher',
 	[DOCUMENT_NAME]: 'Document name',
 	[PAGES]: 'Number of pages',
-	[YEAR]: 'Publication year'
+	[YEAR]: 'Publication year',
+	[GITHUB_URL]: 'Github Repositories'
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
-export const FACET_FIELDS: string[] = [YEAR, PUBLISHER, JOURNAL];
+export const FACET_FIELDS: string[] = [YEAR, PUBLISHER, JOURNAL, GITHUB_URL];

@@ -5,11 +5,12 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { ResultType } from '@/types/common';
-import { ProvenanceResult, ProvenanceQueryParam, ProvenanceType } from '@/types/Provenance';
+import { DocumentAsset, ProvenanceQueryParam, ProvenanceType } from '@/types/Types';
+import { ProvenanceResult } from '@/types/Provenance';
 // eslint-disable-next-line import/no-cycle
 import { getBulkDocuments } from './data';
 import { getBulkDatasets } from './dataset';
-import { getBulkDocumentAssets } from './external';
+import { getBulkDocumentAssets, getDocument } from './external';
 import { getBulkModels } from './model';
 
 //
@@ -28,17 +29,19 @@ const MAX_RELATED_ARTIFACT_COUNT = 5;
 /**
  For a document, find similar content
 	Find related documents (xDD)
-*/
+ */
 
 // API helper function for fetching provenance data
 async function getConnectedNodes(
-	id: string | number,
+	id: string,
 	rootType: ProvenanceType
 ): Promise<ProvenanceResult | null> {
-	// FIXME: all underscore naming should be fixed
+	const publication: DocumentAsset | null = await getDocument(id);
+	if (!publication) return null;
+
 	const body: ProvenanceQueryParam = {
-		root_id: Number(id),
-		root_type: rootType
+		rootId: publication.id,
+		rootType
 	};
 	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
@@ -53,10 +56,7 @@ async function getConnectedNodes(
  * @id: id to be used as the root
  * @return ResultType[]|null - the list of all artifacts, or null if none returned by API
  */
-async function getRelatedArtifacts(
-	id: string | number,
-	rootType: ProvenanceType
-): Promise<ResultType[]> {
+async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promise<ResultType[]> {
 	const response: ResultType[] = [];
 
 	const connectedNodes = await getConnectedNodes(id, rootType);
@@ -78,7 +78,7 @@ async function getRelatedArtifacts(
 
 		// parse the response (sub)graph and extract relevant artifacts
 		connectedNodes.result.nodes.forEach((node) => {
-			if (rootType !== ProvenanceType.Document) {
+			if (rootType !== ProvenanceType.Publication) {
 				if (
 					node.type === ProvenanceType.SimulationRun &&
 					simulationRunIDs.length < MAX_RELATED_ARTIFACT_COUNT
@@ -86,7 +86,7 @@ async function getRelatedArtifacts(
 					simulationRunIDs.push(node.id.toString());
 				}
 				if (
-					node.type === ProvenanceType.Document &&
+					node.type === ProvenanceType.Publication &&
 					documentIDs.length < MAX_RELATED_ARTIFACT_COUNT
 				) {
 					documentIDs.push(node.id.toString());
@@ -98,12 +98,14 @@ async function getRelatedArtifacts(
 				// but the fetch service expects IDs as string(s)
 				datasetIDs.push(node.id.toString());
 			}
-			if (
-				node.type === ProvenanceType.ModelRevision &&
-				modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
-			) {
-				modelRevisionIDs.push(node.id.toString());
-			}
+
+			// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/880
+			// if (
+			// 	node.type === ProvenanceType.ModelRevision &&
+			// 	modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
+			// ) {
+			// 	modelRevisionIDs.push(node.id.toString());
+			// }
 		});
 
 		//

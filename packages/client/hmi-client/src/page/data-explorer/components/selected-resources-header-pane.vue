@@ -6,12 +6,12 @@
 				class="p-button-secondary spacer"
 				@click="emit('clear-selected')"
 			>
-				EMPTY CART
+				Remove all
 			</Button>
 
 			<dropdown
 				v-if="selectedSearchItems.length > 0"
-				placeholder="ADD TO PROJECT"
+				placeholder="Add to project"
 				class="p-button dropdown-button"
 				:is-dropdown-left-aligned="false"
 				:options="projectsNames"
@@ -25,7 +25,8 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { DocumentAsset, DocumentType } from '@/types/Document';
+import { DocumentType } from '@/types/Document';
+import { DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
@@ -144,22 +145,33 @@ onMounted(async () => {
 }
 
 .p-button.p-button-secondary {
-	border: 1px solid var(--surface-border);
 	box-shadow: none;
-	font-weight: 600;
+	color: var(--text-color-subdued);
+	background-color: var(--surface-0);
+	font-weight: 400;
 	font-size: 14px;
-	padding-right: 10px;
-	padding-left: 10px;
+	padding-right: 16px;
+	padding-left: 16px;
+	height: 3rem;
+}
+
+.p-button.p-button-secondary:hover {
+	background-color: var(--surface-highlight) !important;
 }
 
 .spacer {
-	margin-right: 20px;
+	margin-right: 16px;
 }
 
 .dropdown-button {
 	width: 156px;
-	height: 25px;
-	border-radius: 6px;
+	height: 3rem;
+	border-radius: var(--border-radius);
+	gap: 16px;
+}
+
+.dropdown-button:hover {
+	background-color: var(--primary-color-dark);
 }
 
 .add-selected-buttons {

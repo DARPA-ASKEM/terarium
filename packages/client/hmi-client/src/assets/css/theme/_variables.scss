@@ -20,14 +20,15 @@ $overlayColor: #000000 !default;
 
 $primaryColorRGB: 45, 142, 45;
 $primaryColor: #1B8073;
-$primaryColorLighter: #ABEFE6;
-$primaryColorLight: #67d2c3;
-$primaryColorDark: #12564D;
+$primaryColorLighter: #bceae4;
+$primaryColorLight: #86d3c9;
+$primaryColorDark: #166359;
 $primaryTextColor: #ffffff !default;
 $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
 
 // font
+$fontTiny: 10 px;
 $fontCaption: 12px;
 $fontBodySmall: 14px;
 $fontBodyMedium: 16px;
@@ -41,6 +42,8 @@ $fontWeightSemiBold: 600;
 $textColor: rgb(16, 24, 40);
 $textSecondaryColor: $emphasis-medium !default;
 $borderRadius: 4px !default;
+$bigBorderRadius: 8px !default;
+$biggerBorderRadius: 16px !default;
 $transitionDuration: .2s !default;
 $formElementTransition: background-color $transitionDuration, border-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration, background-size 0.2s cubic-bezier(0.64, 0.09, 0.08, 1) !default;
 $actionIconTransition: background-color $transitionDuration, color $transitionDuration, box-shadow $transitionDuration !default;
@@ -215,7 +218,7 @@ $helpButtonFocusShadow: none !default;
 $dangerButtonBg: #D32F2F !default;
 $dangerButtonTextColor: #ffffff !default;
 $dangerButtonBorder: 0 none !default;
-$dangerButtonHoverBg: rgba(#D32F2F, .92) !default;
+$dangerButtonHoverBg: #971414 !default;
 $dangerButtonTextHoverColor: #ffffff !default;
 $dangerButtonHoverBorderColor: transparent !default;
 $dangerButtonActiveBg: rgba(#D32F2F, .68) !default;
@@ -408,7 +411,7 @@ $accordionContentPadding: 0.5rem !default;
 
 //tabview
 $tabviewNavBorder: solid rgba(0, 0, 0, .12) !default;
-$tabviewNavBorderWidth: 0 0 1px 0 !default;
+$tabviewNavBorderWidth: 0 0 0 0 !default;
 $tabviewNavBg: #ffffff !default;
 
 $tabviewHeaderSpacing: 0 !default;
@@ -450,7 +453,8 @@ $cardSubTitleFontWeight: 400 !default;
 $cardSubTitleColor: $textSecondaryColor !default;
 $cardContentPadding: 0 0 !default;
 $cardFooterPadding: 1rem 0 0 0 !default;
-$cardShadow: 0 2px 1px -1px rgba(0, 0, 0, .2), 0 1px 1px 0 rgba(0, 0, 0, .14), 0 1px 3px 0 rgba(0, 0, 0, .12) !default;
+$cardShadow: 0 2px 4px 0 rgba(0, 0, 0, 0.10) !default;
+$cardShadowHover: 0 4px 8px 0 rgba(0, 0, 0, 0.10) !default;
 
 //editor
 $editorToolbarBg: $panelHeaderBg !default;
@@ -585,10 +589,10 @@ $inlineMessageBorderWidth: 1px !default;
 //toast
 $toastIconFontSize: 2rem !default;
 $toastMessageTextMargin: 0 0 0 1rem !default;
-$toastMargin: 0 0 1rem 0 !default;
-$toastPadding: 1.5rem !default;
+$toastMargin: 0 0 0 0 !default;
+$toastPadding: 1rem 0.5rem !default;
 $toastBorderWidth: 0 0 0 0 !default;
-$toastShadow: 0 5px 5px -3px rgba(0, 0, 0, .2), 0 8px 10px 1px rgba(0, 0, 0, .14), 0 3px 14px 2px rgba(0, 0, 0, .12) !default;
+$toastShadow: 0 3px 6px -3px rgba(0, 0, 0, .1), 0 8px 10px 1px rgba(0, 0, 0, .08), 0 3px 14px 2px rgba(0, 0, 0, .06) !default;
 $toastOpacity: .9 !default;
 $toastTitleFontWeight: 700 !default;
 $toastDetailMargin: $inlineSpacing 0 0 0 !default;
@@ -671,7 +675,7 @@ $menuitemIconActiveColor: $textSecondaryColor !default;
 $menuitemActiveBg: rgba(0, 0, 0, .04) !default;
 $menuitemSubmenuIconFontSize: .875rem !default;
 $submenuHeaderMargin: 0 !default;
-$submenuHeaderPadding: 1rem !default;
+$submenuHeaderPadding: 1rem 1rem 0.5rem !default;
 $submenuHeaderBg: #ffffff !default;
 $submenuHeaderTextColor: $textSecondaryColor !default;
 $submenuHeaderBorderRadius: 0 !default;
@@ -845,13 +849,16 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 
 :root {
 	--border-radius: #{$borderRadius};
-	--chevron-hover: #8bd4af1a;
+	--border-radius-big: #{$bigBorderRadius};
+	--border-radius-bigger: #{$biggerBorderRadius};
+	--chevron-hover: #eeeeeeAA;
 	--content-padding: #{$panelContentPadding};
 	--focus-ring: #{$focusShadow};
 	--font-body-large: #{$fontBodyLarge};
 	--font-body-medium: #{$fontBodyMedium};
 	--font-body-small: #{$fontBodySmall};
 	--font-caption: #{$fontCaption};
+	--font-tiny: #{$fontTiny};
 	--font-family: #{$fontFamily};
 	--font-size: #{$fontSize};
 	--font-weight: #{$fontWeight};
@@ -867,6 +874,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--gray-700: #616161;
 	--gray-800: #424242;
 	--gray-900: #212121;
+	--gray-1000: #000000;
 	--inline-spacing: #{$inlineSpacing};
 	--maskbg: #{$maskBg};
 	--primary-color: #{$primaryColor};
@@ -888,6 +896,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--surface-a: #ffffff;
 	--surface-b: #fafafa;
 	--surface-border: #D0D5DD;
+	--surface-border-light: #EAEAEA;
 	--surface-c: rgba(0, 0, 0, .04);
 	--surface-card: #ffffff;
 	--surface-d: rgba(0, 0, 0, .12);
@@ -896,7 +905,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--surface-overlay: #ffffff;
 	--surface-ground: var(--gray-100);
 	--surface-highlight: #E3EFE4;
-	--surface-hover: var(--gray-200);
+	--surface-hover: var(--gray-100);
 	--surface-secondary: #F9FAFB;
 	--surface-section: #ffffff;
 	--text-color: #{$textColor};
@@ -904,5 +913,6 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--text-color-primary: #{$textColor};
 	--text-color-secondary: #{$textSecondaryColor};
 	--text-color-subdued: rgb(102, 112, 133);
+	--text-color-light: rgb(152, 154, 160);
 	color-scheme: light;
 }

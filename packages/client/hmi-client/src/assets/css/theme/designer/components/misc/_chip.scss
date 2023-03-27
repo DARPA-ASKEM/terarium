@@ -7,18 +7,25 @@
     font-weight: $fontWeightSemiBold;
     font-size: $fontCaption;
     padding: 0 0.75rem;
+    border: solid 1px var(--surface-border-light);
 
     .p-chip-text,
     span {
-        line-height: 2;
+        line-height: 1.75;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         overflow: hidden;
+        font-size: var(--font-tiny);
+        font-weight: 400;
     }
 
     span {
         cursor: pointer;
+    }
+
+    span:hover {
+        color:var(--text-color-primary);
     }
 
     .p-chip-icon {
@@ -43,4 +50,8 @@
             @include focused();
         }
     }
+    .p-chip-remove-icon:hover {
+        color:var(--text-color-primary);
+    }
+
 }
