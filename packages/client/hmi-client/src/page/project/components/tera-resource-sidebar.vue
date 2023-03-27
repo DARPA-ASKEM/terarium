@@ -8,6 +8,18 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isConfirmRemovalModalVisible = true"
 			/>
+			<Button
+				icon="pi pi-file"
+				v-tooltip="`New code file`"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="
+					emit('open-asset', {
+						assetName: 'New file',
+						assetType: ProjectAssetTypes.CODE,
+						assetId: undefined
+					})
+				"
+			/>
 		</header>
 		<tree
 			v-if="!isEmpty(resources)"
@@ -96,18 +108,6 @@ const resources = computed(() => {
 			asset: {
 				assetName: 'Overview',
 				assetType: 'overview',
-				assetId: undefined
-			},
-			selectable: true
-		});
-
-		// Basic new code file (temp)
-		resourceTreeNodes.push({
-			key: 'New file',
-			label: 'New file',
-			asset: {
-				assetName: 'New file',
-				assetType: ProjectAssetTypes.CODE,
 				assetId: undefined
 			},
 			selectable: true
