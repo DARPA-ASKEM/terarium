@@ -70,8 +70,7 @@
 					@click="
 						openAsset({
 							assetName: 'Overview',
-							assetType: 'overview',
-							assetId: undefined
+							assetType: 'overview'
 						})
 					"
 				/>
@@ -163,11 +162,6 @@ function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?
 		// addCreatedAsset(assetToOpen);
 	}
 }
-
-// Adding a code asset isn't supported yet
-// async function addCreatedAsset(newProjectAsset: Tab) {
-// 	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.CODE, 1);
-// }
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);

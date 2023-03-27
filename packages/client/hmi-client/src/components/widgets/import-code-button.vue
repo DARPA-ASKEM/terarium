@@ -58,8 +58,7 @@ const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
 async function initializeCodeBrowser() {
 	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
-	const splitUrl = props.urlString.split('/');
-	repositoryName.value = `${splitUrl[splitUrl.length - 2]}/${splitUrl[splitUrl.length - 1]}`; // owner/repo
+	repositoryName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
 	directoryContents.value = await getGithubRepositoryContent(
 		repositoryName.value,
 		currentDirectory.value
