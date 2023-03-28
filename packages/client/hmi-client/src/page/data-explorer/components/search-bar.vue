@@ -64,6 +64,7 @@
 						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
 						:asset="searchByExampleSelectedAsset"
 						:resourceType="searchByExampleSelectedResourceType"
+						class="asset-card-in-searchByExample-dropzone"
 					>
 					</asset-card>
 					<Button
@@ -397,7 +398,9 @@ i {
 	gap: 0.75rem;
 	pointer-events: none;
 }
-
+.asset-card-in-searchByExample-dropzone {
+	width: 100%;
+}
 .clear-search-by-example {
 	height: fit-content;
 }
