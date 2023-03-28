@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<slider-panel
+		<tera-slider-panel
 			v-model:is-open="isResourcesSliderOpen"
 			content-width="300px"
 			header="Resources"
@@ -15,7 +15,7 @@
 					@close-tab="removeClosedTab"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 		<section>
 			<tera-tab-group
 				v-if="!isEmpty(tabs)"
@@ -76,7 +76,7 @@
 				/>
 			</section>
 		</section>
-		<slider-panel
+		<tera-slider-panel
 			class="slider"
 			content-width="300px"
 			direction="right"
@@ -96,13 +96,13 @@
 					<Button @click="addAnnotation()" label="Add note" />
 				</div>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import Document from '@/components/documents/Document.vue';
