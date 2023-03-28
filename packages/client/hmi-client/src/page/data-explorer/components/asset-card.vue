@@ -255,7 +255,8 @@ function startDrag(asset, resourceType) {
 <style scoped>
 .asset-card {
 	background-color: var(--surface-a);
-	border: 1px solid transparent;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 	color: var(--text-color-subdued);
 	display: flex;
 	font-size: var(--font-caption);
