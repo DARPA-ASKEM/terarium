@@ -422,7 +422,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			const edgeData = renderer.edgeSelection.datum();
 			remove(
 				renderer.graph.edges,
-				(e) => e.source === edgeData.source || e.target === edgeData.target
+				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
 			renderer.render();
 		}
