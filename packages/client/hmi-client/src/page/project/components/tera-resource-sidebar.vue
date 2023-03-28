@@ -29,8 +29,8 @@
 		>
 			<template #default="slotProps">
 				<span :active="isEqual(openedAssetRoute, slotProps.node.asset)">
-					{{ slotProps.node.label }}
-					<Chip :label="slotProps.node.asset.assetType" />
+					<i :class="iconClassname(slotProps.node.asset.assetType as ProjectAssetTypes ?? null)" />
+					{{ slotProps.node.label ?? 'default' }}
 				</span>
 			</template>
 		</tree>
@@ -74,11 +74,11 @@ import { logger } from '@/utils/logger';
 import { isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
-import { deleteAsset } from '@/services/project';
+import { deleteAsset, iconClassname } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Tree from 'primevue/tree';
 import Button from 'primevue/button';
-import Chip from 'primevue/chip';
+// import Chip from 'primevue/chip';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { DocumentAsset } from '@/types/Types';
 import { Model } from '@/types/Model';

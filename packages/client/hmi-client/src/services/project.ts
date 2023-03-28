@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { IProject, ProjectAssets } from '@/types/Project';
+import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 
 /**
@@ -156,4 +156,34 @@ async function home(): Promise<IProject[] | null> {
 	}
 }
 
-export { create, update, get, remove, getAll, addAsset, deleteAsset, getAssets, home };
+/**
+ * Get the icon associated with an Asset
+ */
+const icons = new Map([
+	[ProjectAssetTypes.DOCUMENTS, 'file'],
+	[ProjectAssetTypes.MODELS, 'share-alt'],
+	[ProjectAssetTypes.DATASETS, 'sliders-v'],
+	[ProjectAssetTypes.SIMULATIONS, 'cog'],
+	[ProjectAssetTypes.SIMULATION_RUNS, 'eye'],
+	[ProjectAssetTypes.CODE, 'code'],
+	['overview', 'inbox']
+]);
+function iconClassname(type: ProjectAssetTypes | string | null): string {
+	if (type && icons.has(type)) {
+		return `pi pi-${icons.get(type)}`;
+	}
+	return '';
+}
+
+export {
+	create,
+	update,
+	get,
+	remove,
+	getAll,
+	addAsset,
+	deleteAsset,
+	getAssets,
+	home,
+	iconClassname
+};

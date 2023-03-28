@@ -1,38 +1,10 @@
-<script setup lang="ts">
-/**
- * A container to render a component in a tabbed view
- * @prop {Tab[]} tabs - array of tab data
- * @prop {Object} icon - optional - an icon to display next to the name of each tab
- * @prop {number} activeTabIndex - tab to make active
- *
- * @typedef {Object} Tab
- * @property {string} tabName - name to display in tab header
- *
- */
-import { Tab } from '@/types/common';
-import Button from 'primevue/button';
-import Chip from 'primevue/chip';
-
-const props = defineProps<{
-	tabs: Tab[];
-	icon?: Object;
-	activeTabIndex: number;
-}>();
-
-const emit = defineEmits(['select-tab', 'close-tab']);
-
-function calcTabWidthPercentage() {
-	return props.tabs.length <= 5 ? 20 : 100 / props.tabs.length;
-}
-</script>
-
 <template>
 	<!-- This div is so that child tabs can be positioned absolutely relative to the div -->
 	<nav>
 		<template v-for="(tab, index) in tabs" :key="index">
 			<header :style="`width: ${calcTabWidthPercentage()}%`">
 				<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
-					<Chip v-if="tab.assetType !== 'overview'" :label="tab.assetType" />
+					<i :class="iconClassname(tab.assetType ?? null)" />
 					<span class="name">
 						{{ tab.assetName }}
 					</span>
@@ -48,6 +20,29 @@ function calcTabWidthPercentage() {
 		</template>
 	</nav>
 </template>
+
+<script setup lang="ts">
+/**
+ * A container to render a component in a tabbed view
+ * @prop {Tab[]} tabs - array of tab data
+ * @prop {Object} icon - optional - an icon to display next to the name of each tab
+ * @prop {number} activeTabIndex - tab to make active
+ */
+import { Tab } from '@/types/common';
+import Button from 'primevue/button';
+import { iconClassname } from '@/services/project';
+
+const props = defineProps<{
+	tabs: Tab[];
+	activeTabIndex: number;
+}>();
+
+const emit = defineEmits(['select-tab', 'close-tab']);
+
+function calcTabWidthPercentage() {
+	return props.tabs.length <= 5 ? 20 : 100 / props.tabs.length;
+}
+</script>
 
 <style scoped>
 nav {

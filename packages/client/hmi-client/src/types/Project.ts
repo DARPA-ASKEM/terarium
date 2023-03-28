@@ -7,6 +7,7 @@ export enum ProjectAssetTypes {
 	INTERMEDIATES = 'intermediates',
 	MODELS = 'models',
 	PLANS = 'plans',
+	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
 	DATASETS = 'datasets',
 	CODE = 'code'
