@@ -28,7 +28,7 @@ public interface MitProxy {
 
 	@POST
 	@Path("/petri/get_pyacset")
-	PetriNet getPyAcset(@QueryParam("places_str") final String places,
+	String getPyAcset(@QueryParam("places_str") final String places,
 											@QueryParam("transitions_str") final String transitions,
 											@QueryParam("arcs_str") final String arcs);
 

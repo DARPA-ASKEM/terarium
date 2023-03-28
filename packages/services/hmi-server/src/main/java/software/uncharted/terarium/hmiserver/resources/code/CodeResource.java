@@ -74,8 +74,7 @@ public class CodeResource {
 		String places = mitProxy.getPlaces(code);
 		String transitions = mitProxy.getTransitions(code);
 		String arcs = mitProxy.getArcs(code);
-
-		PetriNet pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
+		String pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
 		return Response.ok(Response.Status.OK)
 			.entity(pyAcset)
 			.type(MediaType.APPLICATION_JSON)
