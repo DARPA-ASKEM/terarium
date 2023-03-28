@@ -2,10 +2,11 @@
 	<div class="code">
 		<div class="controls">
 			<Button
-				label="Extract Model"
+				label="Extract model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
-			/>
+				:loading="extractPetrinetLoading"
+			></Button>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -14,12 +15,6 @@
 				auto
 				chooseLabel="Load File"
 			/>
-			<Button
-				label="Extract petri net"
-				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
-				@click="onExtractGraph"
-				:loading="extractPetrinetLoading"
-			></Button>
 		</div>
 		<v-ace-editor
 			v-model:value="code"
@@ -146,23 +141,12 @@ async function onFileOpen(event) {
 	};
 }
 
-async function onExtractGraph() {
+async function onExtractModel() {
 	extractPetrinetLoading.value = true;
 	const response = await API.post(`code/to_acset?code=${selectedText.value}`);
 	extractPetrinetLoading.value = false;
 	acset.value = response.data;
 	codeExtractionDialogVisible.value = true;
-}
-
-/**
- * Send the selected contents of the editor to the backend for persistence and model extraction
- * via TA1
- */
-async function onExtractModel() {
-	logger.info(`Transforming: ${selectedText.value}`);
-	const response = await API.post('/code', selectedText.value);
-	// eslint-disable-next-line
-	alert(JSON.stringify(response.data));
 }
 
 /**
