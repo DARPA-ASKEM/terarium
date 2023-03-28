@@ -45,6 +45,7 @@ aside {
 }
 
 main {
+	max-height: 80vh;
 	background-color: #fff;
 	border-radius: 0.5rem;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);

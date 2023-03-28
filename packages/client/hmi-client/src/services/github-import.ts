@@ -9,25 +9,10 @@ const requestOptions = {
 	// header
 };
 
-export async function getGithubUrls(query: string = 'SIR model') {
-	// Search for potential repositories
+// Might be useful if we want to display some other information about the repository
+export async function getGithubRepositoryAttributes(repositoryName: string) {
 	try {
-		const response = await fetch(
-			`https://api.github.com/search/repositories?q=${query}&per_page=3`, // &page,per_page,sort,order} Just show 3 for the prototype{
-			requestOptions
-		);
-		const result = await response.json();
-		if (!response.ok) return null;
-		return result.items;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
-export async function getGithubRepositoryContent(contentsUrl: string) {
-	try {
-		const response = await fetch(contentsUrl, requestOptions);
+		const response = await fetch(`https://api.github.com/repos/${repositoryName}`, requestOptions);
 		const result = await response.json();
 		if (!response.ok) return null;
 		return result;
@@ -37,14 +22,28 @@ export async function getGithubRepositoryContent(contentsUrl: string) {
 	}
 }
 
-export async function getGithubCode(downloadUrl: string) {
+export async function getGithubRepositoryContent(repositoryName: string, path: string) {
 	try {
-		const jsdelivrUrl = downloadUrl
-			.replace('https://raw.githubusercontent.com', 'https://cdn.jsdelivr.net/gh') // Switch to jsdeliver since it's a proper CDN
-			.replace('/master', '@latest')
-			.replace('/main', '@latest'); // Get latest version
-		const response = await fetch(jsdelivrUrl, requestOptions); // Grab the chosen file
-		const result = await response.text(); // Once a file is chosen from a repository copy its contents into the editor
+		const response = await fetch(
+			`https://api.github.com/repos/${repositoryName}/contents/${path}`,
+			requestOptions
+		);
+		const result = await response.json();
+		if (!response.ok) return null;
+		return result;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function getGithubCode(repositoryName: string, path: string) {
+	try {
+		const response = await fetch(
+			`https://cdn.jsdelivr.net/gh/${repositoryName}@latest/${path}`,
+			requestOptions
+		);
+		const result = await response.text();
 		if (!response.ok) return null;
 		return result;
 	} catch (error) {
