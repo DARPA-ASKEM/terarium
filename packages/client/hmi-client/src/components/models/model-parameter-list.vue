@@ -1,14 +1,14 @@
 <template>
 	<main>
-		<!-- <table>
-			<tr class="parameters_header">
+		<table>
+			<tr>
 				<th>Label</th>
 				<th>Name</th>
 				<th>Units</th>
-				<th>Concept</th>
+				<th>Concepts</th>
 				<th>Definition</th>
 			</tr>
-		</table> -->
+		</table>
 		<ul>
 			<li v-for="(parameterRow, index) in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import Button from 'primevue/button';
 import ModelParameterListItem from '@/components/models/model-parameter-list-item.vue';
 
@@ -35,6 +36,10 @@ const props = defineProps<{
 	parameters: any; // Temporary - this is also any in ITypeModel
 	attribute: string;
 }>();
+
+onMounted(() => {
+	console.log(props.parameters);
+});
 
 const emit = defineEmits(['update-parameter-row', 'parameter-click']);
 
@@ -55,6 +60,7 @@ ul {
 }
 
 table {
+	width: 80%;
 	margin: 0.5rem 1.5rem;
 	text-transform: uppercase;
 	font-size: var(--font-caption);
@@ -63,12 +69,12 @@ table {
 
 table tr {
 	display: flex;
-	gap: 10rem;
 }
 
 table tr th {
+	min-width: 10%;
+	text-align: left;
 	font-weight: normal;
-	width: 20%;
 }
 
 .over {
