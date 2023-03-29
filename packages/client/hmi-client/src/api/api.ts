@@ -48,4 +48,119 @@ API.interceptors.response.use(
 	}
 );
 
+// eslint-disable-next-line no-promise-executor-return
+const timeout = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const NOOP = () => {};
+
+export enum PollerState {
+	Done = 'done',
+	Failed = 'failed',
+	ExceedThreshold = 'ExceedThreshold'
+}
+
+// FIXME: need to refine based on actual needs
+interface PollResponse<T> {
+	error: any;
+	progress: any;
+	data: T;
+}
+
+interface PollerResult<T> {
+	state: PollerState;
+	data: T | null;
+}
+export class Poller<T> {
+	pollingInterval = 2000;
+
+	pollingThreshold = 10;
+
+	keepGoing = false;
+
+	poll: Function = NOOP;
+
+	progressAction: Function = NOOP;
+
+	numPolls = 0;
+
+	setInterval(v: number) {
+		this.pollingInterval = v;
+		return this;
+	}
+
+	setThreshold(v: number) {
+		this.pollingThreshold = v;
+		return this;
+	}
+
+	setPollAction(f: Function) {
+		this.poll = f;
+		return this;
+	}
+
+	setProgressAction(f: Function) {
+		this.progressAction = f;
+		return this;
+	}
+
+	// Start polling, there are 4 foreseeable exit conditions
+	// 1. Done, we have the result
+	// 2. Failed, request returned with 4xx or 5xx status
+	// 3. Failed, any unexpected errors
+	// 4. ExceedThreshold, took longer than allotted time
+	async start(): Promise<PollerResult<T>> {
+		this.keepGoing = true;
+		this.numPolls = 0;
+
+		let response: PollResponse<T> | null = null;
+
+		while (this.numPolls < this.pollingThreshold) {
+			this.numPolls++;
+			if (!this.keepGoing) {
+				break;
+			}
+
+			try {
+				// eslint-disable-next-line no-await-in-loop
+				response = (await this.poll()) as PollResponse<T>;
+				const { error, progress, data } = response;
+
+				if (error) {
+					return {
+						state: PollerState.Failed,
+						data: null
+					};
+				}
+
+				if (data) {
+					return {
+						state: PollerState.Done,
+						data
+					};
+				}
+
+				// We are still in progress
+				this.progressAction(progress, this.numPolls, this.pollingThreshold);
+			} catch (error) {
+				return {
+					state: PollerState.Failed,
+					data: null
+				};
+			}
+
+			// eslint-disable-next-line no-await-in-loop
+			await timeout(this.pollingInterval);
+		}
+
+		return {
+			state: PollerState.ExceedThreshold,
+			data: null
+		};
+	}
+
+	// Not really a fluent API, but convienent
+	stop() {
+		this.keepGoing = false;
+	}
+}
+
 export default API;
