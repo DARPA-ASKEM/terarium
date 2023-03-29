@@ -349,6 +349,7 @@ section {
 .annotation-header .p-button.p-button-secondary {
 	background-color: var(--surface);
 }
+
 .annotation-panel {
 	margin: 1rem;
 	margin-left: 0.5rem;
@@ -384,6 +385,7 @@ section {
 	border-radius: var(--border-radius);
 	background-color: var(--gray-50);
 }
+
 .annotation-input-box {
 	padding: 1rem;
 	padding-left: 0.5rem;
@@ -395,6 +397,7 @@ section {
 	min-width: 100%;
 	margin-bottom: 0.25rem;
 }
+
 .annotation-input-box .p-inputtext:hover {
 	border-color: var(--primary-color) !important;
 }

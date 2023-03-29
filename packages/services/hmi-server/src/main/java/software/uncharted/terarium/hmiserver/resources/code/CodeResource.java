@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -85,7 +86,7 @@ public class CodeResource {
 	@POST
 	@Path("/annotation/find_text_vars")
 	public Object findTextVars(@QueryParam("text") final String text){
-		String textVars = mitProxy.findTextVars(text);
+		String textVars = mitProxy.findTextVars("true",text);
 		return Response.ok(Response.Status.OK)
 			.entity(textVars)
 			.type(MediaType.APPLICATION_JSON)
@@ -101,6 +102,16 @@ public class CodeResource {
 		String metadata = mitProxy.linkAnnotationsToAcset(pyacset, annotations, info);
 		return Response.ok(Response.Status.OK)
 			.entity(metadata)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
+	}
+
+	@GET
+	@Path("/response")
+	public Object getResponse(@QueryParam("id") final String id){
+		String response = mitProxy.getResponse(id);
+		return Response.ok(Response.Status.OK)
+			.entity(response)
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}

@@ -57,7 +57,7 @@ import '@node_modules/ace-builds/src-noconflict/theme-chrome';
 import { ref, watch, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import API from '@/api/api';
+import API, { Poller } from '@/api/api';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -171,14 +171,28 @@ async function createModelFromCode() {
 	if (selectedPaper.value) {
 		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
 		if (paperToExtractMetadata) {
-			const response = await API.post(
-				`/code/annotation/find_text_vars?text=${paperToExtractMetadata.abstract}`
+			const textVars = await API.post(
+				`/code/annotation/find_text_vars?text=${paperToExtractMetadata.abstractText}`
 			);
+			const poller = new Poller<object>()
+				.setInterval(2000)
+				.setThreshold(90)
+				.setPollAction(async () => {
+					const response = await API.get(`/code/response?id=${textVars.data}`);
+					if (response) {
+						console.log('yes');
+						return {
+							data: response.data
+						};
+					}
+					return { error: logger.info(`Polling...`) };
+				});
+			const metadata = await poller.start();
 			const newModelName = 'New model';
 			const newModel = {
 				name: newModelName,
 				framework: 'Petri Net',
-				content: JSON.stringify({ ...acset.value, ...response.data })
+				content: JSON.stringify({ ...acset.value, ...metadata.data })
 			};
 			const model = await createModel(newModel);
 			if (model) {
