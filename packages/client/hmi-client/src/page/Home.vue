@@ -296,6 +296,8 @@ const removeProject = (projectId: IProject['id']) => {
 	overflow-x: hidden;
 	flex: 1;
 	padding: 0;
+	display: flex;
+	flex-direction: column;
 }
 
 section {
@@ -308,6 +310,7 @@ section {
 	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
 	padding: 1rem;
 	border-top: 1px solid var(--gray-100);
+	flex-grow: 1;
 }
 
 .papers p {

@@ -1,26 +1,22 @@
 <template>
 	<header>
 		<section class="header-left">
-			<span v-if="currentProjectId">
-				<router-link :to="RoutePath.Home">
-					<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
-				</router-link>
-			</span>
-			<span v-else @click="showNavigationMenu">
+			<router-link :to="RoutePath.Home">
+				<img src="@assets/svg/terarium-icon.svg" height="30" alt="Terarium icon" />
+			</router-link>
+			<div class="navigation-dropdown" @click="showNavigationMenu">
+				<h1 v-if="currentProjectId || isDataExplorer">
+					{{ currentProjectName ?? 'Explorer' }}
+				</h1>
 				<img
-					src="@assets/svg/terarium-logo.svg"
-					height="30"
+					v-else
+					src="@assets/svg/terarium-wordmark.svg"
+					height="16"
 					alt="Terarium icon with name"
 					class="terariumLogo"
 				/>
-			</span>
-			<h1 v-if="currentProjectId" @click="showNavigationMenu">
-				{{ currentProjectName }}
-				<i
-					class="pi pi-angle-down"
-					style="vertical-align: bottom; color: var(--text-color-subdued)"
-				/>
-			</h1>
+				<i class="pi pi-angle-down" />
+			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
 		<SearchBar
@@ -192,19 +188,19 @@ header {
 	grid-template-columns: minMax(max-content, 25%) auto minMax(min-content, 25%);
 }
 
-h1 {
+.navigation-dropdown {
 	border-color: transparent;
 	border-style: solid;
 	border-radius: var(--border-radius);
 	border-width: 1px;
 	cursor: pointer;
-	font-size: var(--font-body-small);
+	font-size: var(--font-body-medium);
 	font-weight: var(--font-weight-semibold);
 	padding: 0.5rem;
 }
 
-h1:hover,
-h1:focus {
+.navigation-dropdown:hover,
+.navigation-dropdown:focus {
 	background-color: var(--surface-ground);
 }
 
@@ -245,13 +241,19 @@ h1:focus {
 .header-left {
 	align-items: center;
 	display: flex;
-	gap: 0.75rem;
+	gap: 0.15rem;
 	grid-area: header-left;
 	height: 100%;
 }
 
 .header-left:deep(.p-dropdown-label.p-inputtext) {
 	padding-right: 0;
+}
+
+.header-left > div {
+	align-items: center;
+	cursor: pointer;
+	display: flex;
 }
 
 .p-dropdown {
@@ -263,7 +265,9 @@ h1:focus {
 }
 
 i {
+	color: var(--text-color-subdued);
 	margin-left: 0.5rem;
+	vertical-align: bottom;
 }
 
 /* Suggested terms */

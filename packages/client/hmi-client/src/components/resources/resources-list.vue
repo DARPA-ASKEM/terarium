@@ -61,14 +61,10 @@ resourcesStore.$subscribe(() => {
 function openResource(name: RouteName, params: RouteParamsRaw) {
 	router.push({ name, params });
 }
-
-const openDataExplorer = () => {
-	router.push({ name: RouteName.DataExplorerRoute });
-};
 </script>
 
 <template>
-	<h3>Recent Resources</h3>
+	<h4>Resources</h4>
 	<ul v-if="resources.length > 0">
 		<li
 			v-for="(resource, index) in resources"
@@ -78,10 +74,6 @@ const openDataExplorer = () => {
 			<resource-card :resource="resource" />
 		</li>
 	</ul>
-	<p>
-		Find Models, Datasets, or Documents with the
-		<a @click="openDataExplorer()"> Data Explorer </a>
-	</p>
 </template>
 
 <style scoped>

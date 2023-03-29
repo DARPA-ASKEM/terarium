@@ -8,6 +8,18 @@
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isConfirmRemovalModalVisible = true"
 			/>
+			<Button
+				icon="pi pi-file"
+				v-tooltip="`New code file`"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="
+					emit('open-asset', {
+						assetName: 'New file',
+						assetType: ProjectAssetTypes.CODE,
+						assetId: undefined
+					})
+				"
+			/>
 		</header>
 		<tree
 			v-if="!isEmpty(resources)"
@@ -29,17 +41,24 @@
 			<modal
 				v-if="isConfirmRemovalModalVisible"
 				@modal-mask-clicked="isConfirmRemovalModalVisible = false"
+				class="remove-modal"
 			>
 				<template #header>
-					<h5>
+					<h4>
 						<!--openedAsset.assetName only makes sense in the case that the selected asset is the one to be deleted-->
-						Are you sure you want remove "{{ openedAssetRoute.assetName }}" from {{ project.name }}?
-					</h5>
+						Confirm remove
+					</h4>
+				</template>
+				<template #default>
+					<p>
+						Removing <em>{{ openedAssetRoute.assetName }}</em> will permanently remove it from
+						{{ project.name }}.
+					</p>
 				</template>
 				<template #footer>
-					<Button label="Yes" @click="removeAsset()" />
+					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
 					<Button
-						label="No"
+						label="Cancel"
 						class="p-button-secondary"
 						@click="isConfirmRemovalModalVisible = false"
 					/>
@@ -89,18 +108,6 @@ const resources = computed(() => {
 			asset: {
 				assetName: 'Overview',
 				assetType: 'overview',
-				assetId: undefined
-			},
-			selectable: true
-		});
-
-		// Basic new code file (temp)
-		resourceTreeNodes.push({
-			key: 'New file',
-			label: 'New file',
-			asset: {
-				assetName: 'New file',
-				assetType: ProjectAssetTypes.CODE,
 				assetId: undefined
 			},
 			selectable: true
@@ -212,5 +219,13 @@ nav {
 
 .pi-spinner {
 	font-size: 4rem;
+}
+
+.remove-modal p {
+	max-width: 40rem;
+}
+
+.remove-modal em {
+	font-weight: var(--font-weight-semibold);
 }
 </style>

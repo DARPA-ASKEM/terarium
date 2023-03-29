@@ -66,17 +66,22 @@
 					/>
 				</div>
 			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(urlArtifacts) && !isEmpty(githubUrls)">
+			<AccordionTab v-if="!isEmpty(githubUrls)">
+				<template #header>
+					Github URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
+				</template>
+				<ul>
+					<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
+						<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+						<a :href="url" rel="noreferrer noopener">{{ url }}</a>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(urlArtifacts)">
 				<template #header>
 					URLs<span class="artifact-amount">({{ urlArtifacts.length }})</span>
 				</template>
 				<ul>
-					<template v-if="isEditable">
-						<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
-							<import-code-button :url="url" @open-asset="openAsset" />
-							<a :href="url.html_url" rel="noreferrer noopener">{{ url.html_url }}</a>
-						</li>
-					</template>
 					<li v-for="ex in urlArtifacts" :key="ex.url">
 						<b>{{ ex.resourceTitle }}</b>
 						<div>
@@ -129,7 +134,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { isEmpty } from 'lodash';
+import { isEmpty, isEqual, uniqWith } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
@@ -145,7 +150,6 @@ import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { getGithubUrls } from '@/services/github-import';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 
@@ -159,15 +163,9 @@ const props = defineProps<{
 const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
 
-const githubUrls = ref(); // this is will hold github urls temporarily, later we they will be in the document urls
-
-onMounted(async () => {
-	githubUrls.value = await getGithubUrls();
-});
-
 const emit = defineEmits(['open-asset']);
 
-function openAsset(assetToOpen: Tab, newCode?: string) {
+function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
 }
 
@@ -227,10 +225,10 @@ const equationArtifacts = computed(
 );
 const urlArtifacts = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
-		? doc.value.knownEntities.urlExtractions
+		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
-
+const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherArtifacts = computed(() => {
 	const exclusion = [
 		XDDExtractionType.URL,

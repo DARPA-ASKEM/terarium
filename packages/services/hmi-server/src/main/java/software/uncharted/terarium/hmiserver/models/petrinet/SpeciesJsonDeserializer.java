@@ -27,17 +27,21 @@ public class SpeciesJsonDeserializer extends JsonDeserializer<Species> {
 			.setMiraIds(new ArrayList<>())
 			.setMiraContext(new ArrayList<>());
 
-		final String nodeMiraIds = node.get("mira_ids").asText();
-		if (nodeMiraIds.length() > 3) {
-			for (String ontology : nodeMiraIds.split("\\), \\(")) {
-				species.getMiraIds().add(new Ontology(ontology));
+		if (node.get("mira_ids") != null) {
+			final String nodeMiraIds = node.get("mira_ids").asText();
+			if (nodeMiraIds.length() > 3) {
+				for (String ontology : nodeMiraIds.split("\\), \\(")) {
+					species.getMiraIds().add(new Ontology(ontology));
+				}
 			}
 		}
 
-		final String nodeMiraContext = node.get("mira_context").asText();
-		if (nodeMiraContext.length() > 3) {
-			for (String ontology : nodeMiraContext.split("\\), \\(")) {
-				species.getMiraContext().add(new Ontology(ontology));
+		if (node.get("mira_context") != null) {
+			final String nodeMiraContext = node.get("mira_context").asText();
+			if (nodeMiraContext.length() > 3) {
+				for (String ontology : nodeMiraContext.split("\\), \\(")) {
+					species.getMiraContext().add(new Ontology(ontology));
+				}
 			}
 		}
 
