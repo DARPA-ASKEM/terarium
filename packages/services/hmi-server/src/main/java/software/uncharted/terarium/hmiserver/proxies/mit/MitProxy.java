@@ -37,4 +37,12 @@ public interface MitProxy {
 	String findTextVars(
 		@QueryParam("text") final String text);
 
+	@POST
+	@Path("/annotation/link_annos_to_pyacset")
+	String linkAnnotationsToAcset(
+		@QueryParam("pyacset_str") final String pyacset,
+		@QueryParam("annotations_str") final String annotations,
+		@QueryParam("info_str") final String info);
+
+
 }

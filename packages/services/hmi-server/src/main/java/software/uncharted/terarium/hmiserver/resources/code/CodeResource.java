@@ -17,6 +17,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 
 @Path("/api/code")
 @Authenticated
@@ -91,4 +92,16 @@ public class CodeResource {
 			.build();
 	}
 
+	@POST
+	@Path("/annotation/link_annos_to_pyacset")
+	public Object linkAnnotationsToAcset(final Map<String,String> data){
+		String pyacset = data.get("pyacset");
+		String annotations = data.get("annotations");
+		String info = data.get("info");
+		String metadata = mitProxy.linkAnnotationsToAcset(pyacset, annotations, info);
+		return Response.ok(Response.Status.OK)
+			.entity(metadata)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
+	}
 }
