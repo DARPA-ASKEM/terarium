@@ -261,7 +261,6 @@ const selectedVariable = ref('');
 
 const equation = ref<string>('');
 const equationOriginal = ref<string>('');
-const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
@@ -316,8 +315,8 @@ const betterParams = computed(() => {
 });
 
 const onVariableSelected = (variable: string) => {
-	selectedVariable.value = variable;
-	if (variable && !isSelected.value) {
+	if (variable) {
+		selectedVariable.value = variable;
 		equation.value = equationOriginal.value.replaceAll(
 			variable,
 			String.raw`{\color{red}${variable}}`
@@ -325,7 +324,6 @@ const onVariableSelected = (variable: string) => {
 	} else {
 		equation.value = equationOriginal.value;
 	}
-	isSelected.value = !isSelected.value;
 };
 
 const onStateVariableClick = () => {
