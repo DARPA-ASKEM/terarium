@@ -64,17 +64,36 @@ const launch = async () => {
 		O: props.model.content.O
 	};
 
-	console.log(initialValues.value);
-	console.log(parameterValues.value);
-	console.log(cleanedModel);
-
-	const abc = await makeForecast({
+	const payload = {
 		petri: JSON.stringify(cleanedModel),
 		initials: initialValues.value,
-		parameters: parameterValues.value,
+		params: parameterValues.value,
 		tspan: [0, 50]
-	});
-	console.log(abc);
+	};
+
+	const run = await makeForecast(payload);
+
+	// FIXME: Cache into sessionStorage
+	const storage = window.sessionStorage;
+	const key = `${props.model.id}`;
+	const modelItemStr = storage.getItem(key);
+	if (!modelItemStr) {
+		const modelItem = [
+			{
+				id: run.id,
+				input: payload
+			}
+		];
+		storage.setItem(key, JSON.stringify(modelItem));
+	} else {
+		const modelItem: any[] = JSON.parse(modelItemStr);
+		modelItem.push({
+			id: run.id,
+			input: payload
+		});
+		storage.setItem(key, JSON.stringify(modelItem));
+	}
+	emit('launch-forecast');
 };
 
 const close = () => {

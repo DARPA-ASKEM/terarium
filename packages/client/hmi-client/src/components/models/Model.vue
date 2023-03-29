@@ -212,6 +212,7 @@
 				v-if="showForecastLauncher"
 				:model="model"
 				@close="showForecastLauncher = false"
+				@launch-forecast="goToSimulationRunPage"
 			/>
 		</Teleport>
 	</section>
@@ -234,8 +235,8 @@ import {
 } from '@/petrinet/petrinet-service';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
-// import { useRouter } from 'vue-router';
-// import { RouteName } from '@/router/routes';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -514,9 +515,9 @@ const launchForecast = () => {
 	showForecastLauncher.value = true;
 };
 
-/*
 const router = useRouter();
 const goToSimulationRunPage = () => {
+	showForecastLauncher.value = false;
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
@@ -526,7 +527,6 @@ const goToSimulationRunPage = () => {
 		}
 	});
 };
-*/
 
 onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
