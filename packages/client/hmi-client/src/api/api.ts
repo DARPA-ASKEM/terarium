@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import { logger } from '@/utils/logger';
 import { ToastSummaries } from '@/services/toast';
 import useAuthStore from '../stores/auth';
@@ -58,13 +58,18 @@ export enum PollerState {
 	ExceedThreshold = 'ExceedThreshold'
 }
 
+// FIXME: need to refine based on actual needs
+interface PollResponse<T> {
+	error: any;
+	progress: any;
+	data: T;
+}
+
 interface PollerResult<T> {
 	state: PollerState;
 	data: T | null;
 }
 export class Poller<T> {
-	pollingId = 0;
-
 	pollingInterval = 2000;
 
 	pollingThreshold = 10;
@@ -72,8 +77,6 @@ export class Poller<T> {
 	keepGoing = false;
 
 	poll: Function = NOOP;
-
-	successCheck: Function = NOOP;
 
 	progressAction: Function = NOOP;
 
@@ -89,8 +92,8 @@ export class Poller<T> {
 		return this;
 	}
 
-	setSuccessCheck(f: Function) {
-		this.successCheck = f;
+	setPollAction(f: Function) {
+		this.poll = f;
 		return this;
 	}
 
@@ -108,7 +111,7 @@ export class Poller<T> {
 		this.keepGoing = true;
 		this.numPolls = 0;
 
-		let response: AxiosResponse<T, any>;
+		let response: PollResponse<T> | null = null;
 
 		while (this.numPolls < this.pollingThreshold) {
 			this.numPolls++;
@@ -118,18 +121,17 @@ export class Poller<T> {
 
 			try {
 				// eslint-disable-next-line no-await-in-loop
-				response = (await this.poll()) as AxiosResponse<T, any>;
-				const { status, data } = response;
-				console.log(status, data);
+				response = (await this.poll()) as PollResponse<T>;
+				const { error, progress, data } = response;
 
-				if (status >= 400) {
+				if (error) {
 					return {
 						state: PollerState.Failed,
 						data: null
 					};
 				}
 
-				if (this.successCheck(data)) {
+				if (data) {
 					return {
 						state: PollerState.Done,
 						data
@@ -137,7 +139,7 @@ export class Poller<T> {
 				}
 
 				// We are still in progress
-				this.progressAction(data, this.numPolls, this.pollingThreshold);
+				this.progressAction(progress, this.numPolls, this.pollingThreshold);
 			} catch (error) {
 				return {
 					state: PollerState.Failed,
