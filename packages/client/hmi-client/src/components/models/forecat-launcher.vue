@@ -33,6 +33,7 @@ import { PetriNet } from '@/petrinet/petrinet-service';
 import Modal from '@/components/widgets/Modal.vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import { makeForecast } from '@/services/models/simulation-service';
 
 interface NumericValueMap {
 	[key: string]: number;
@@ -54,9 +55,26 @@ props.model.content.T.forEach((s) => {
 
 const emit = defineEmits(['close', 'launch-forecast']);
 
-const launch = () => {
+const launch = async () => {
+	// FIXME: current need to strip out metadata
+	const cleanedModel: PetriNet = {
+		S: props.model.content.S.map((s) => ({ sname: s.sname })),
+		T: props.model.content.T.map((t) => ({ tname: t.tname })),
+		I: props.model.content.I,
+		O: props.model.content.O
+	};
+
 	console.log(initialValues.value);
 	console.log(parameterValues.value);
+	console.log(cleanedModel);
+
+	const abc = await makeForecast({
+		petri: JSON.stringify(cleanedModel),
+		initials: initialValues.value,
+		parameters: parameterValues.value,
+		tspan: [0, 50]
+	});
+	console.log(abc);
 };
 
 const close = () => {
