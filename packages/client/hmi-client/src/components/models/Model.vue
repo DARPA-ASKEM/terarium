@@ -17,7 +17,7 @@
 						class="p-button-sm p-button-outlined"
 					/>
 					<Button
-						@click="goToSimulationRunPage"
+						@click="launchForecast"
 						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
@@ -206,6 +206,14 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+
+		<Teleport to="body">
+			<ForecastLauncher
+				v-if="showForecastLauncher"
+				:model="model"
+				@close="showForecastLauncher = false"
+			/>
+		</Teleport>
 	</section>
 </template>
 
@@ -226,8 +234,8 @@ import {
 } from '@/petrinet/petrinet-service';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
-import { useRouter } from 'vue-router';
-import { RouteName } from '@/router/routes';
+// import { useRouter } from 'vue-router';
+// import { RouteName } from '@/router/routes';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -236,6 +244,7 @@ import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ModelParameterList from '@/components/models/model-parameter-list.vue';
+import ForecastLauncher from '@/components/models/forecat-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -269,6 +278,8 @@ const equation = ref<string>('');
 const equationOriginal = ref<string>('');
 const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
+
+const showForecastLauncher = ref(false);
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
 // const modelMath = ref(String.raw`\begin{align}
@@ -499,6 +510,11 @@ const updatePetriFromMathML = async (mathmlString: string) => {
 	}
 };
 
+const launchForecast = () => {
+	showForecastLauncher.value = true;
+};
+
+/*
 const router = useRouter();
 const goToSimulationRunPage = () => {
 	router.push({
@@ -510,6 +526,7 @@ const goToSimulationRunPage = () => {
 		}
 	});
 };
+*/
 
 onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
