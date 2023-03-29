@@ -180,12 +180,11 @@ async function createModelFromCode() {
 				.setPollAction(async () => {
 					const response = await API.get(`/code/response?id=${textVars.data}`);
 					if (response) {
-						console.log('yes');
 						return {
-							data: response.data
+							data: response.data.data
 						};
 					}
-					return { error: logger.info(`Polling...`) };
+					return { error: logger.info(`Linking metadata to model...`) };
 				});
 			const metadata = await poller.start();
 			const newModelName = 'New model';
