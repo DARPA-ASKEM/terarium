@@ -834,10 +834,10 @@ $dockPadding: .5rem .5rem !default;
 $dockBorderRadius: .5rem !default;
 
 //image
-$imageMaskBg: rgba(0, 0, 0, 0.9) !default;
+$imageMaskBg: rgba(0, 0, 0, 0.75) !default;
 $imagePreviewToolbarPadding: 1rem !default;
-$imagePreviewIndicatorColor: #f8f9fa !default;
-$imagePreviewIndicatorBg: rgba(0, 0, 0, 0.5) !default;
+$imagePreviewIndicatorColor: var(--text-color) !default;
+$imagePreviewIndicatorBg: #1b807332 !default;
 $imagePreviewActionIconBg: transparent !default;
 $imagePreviewActionIconColor: #f8f9fa !default;
 $imagePreviewActionIconHoverBg: rgba(255, 255, 255, 0.1) !default;
@@ -904,7 +904,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--surface-f: #ffffff;
 	--surface-overlay: #ffffff;
 	--surface-ground: var(--gray-100);
-	--surface-highlight: #E3EFE4;
+	--surface-highlight: #EBF4F3;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #F9FAFB;
 	--surface-section: #ffffff;
