@@ -21,6 +21,9 @@
 				"
 			/>
 		</header>
+		<Accordion :multiple="true" :active-index="[0, 1]">
+			<AccordionTab> </AccordionTab>
+		</Accordion>
 		<tree
 			v-if="!isEmpty(resources)"
 			:value="resources"
@@ -30,7 +33,7 @@
 			<template #default="slotProps">
 				<span :active="isEqual(openedAssetRoute, slotProps.node.asset)">
 					<i :class="iconClassname(slotProps.node.asset.assetType as ProjectAssetTypes ?? null)" />
-					{{ slotProps.node.label ?? 'default' }}
+					{{ slotProps.node.label }}
 				</span>
 			</template>
 		</tree>
@@ -76,9 +79,10 @@ import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset, iconClassname } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import Tree from 'primevue/tree';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-// import Chip from 'primevue/chip';
+import Tree from 'primevue/tree';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { DocumentAsset } from '@/types/Types';
 import { Model } from '@/types/Model';
@@ -98,6 +102,7 @@ const isConfirmRemovalModalVisible = ref(false);
 
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
+	console.log(storedAssets);
 	const projectAssetTypes = Object.keys(storedAssets);
 	const resourceTreeNodes: any[] = [];
 
@@ -172,14 +177,6 @@ function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 	isConfirmRemovalModalVisible.value = false;
 	logger.info(`${assetName} was removed.`);
 }
-
-// function exportIds() {
-// 	logger.info(
-// 		'List of xDD _gddid ',
-// 		{},
-// 		documents.value.map((document) => document)
-// 	);
-// }
 </script>
 
 <style scoped>
