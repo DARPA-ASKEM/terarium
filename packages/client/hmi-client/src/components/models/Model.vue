@@ -114,6 +114,7 @@
 					<model-parameter-list
 						:parameters="betterStates"
 						attribute="parameters"
+						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
 						@parameter-click="onVariableSelected"
 					/>
@@ -134,6 +135,7 @@
 					<model-parameter-list
 						:parameters="betterParams"
 						attribute="parameters"
+						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
 						@parameter-click="onVariableSelected"
 					/>
@@ -255,6 +257,7 @@ const menu = ref();
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
 const selectedRow = ref<any>(null);
+const selectedVariable = ref('');
 
 const equation = ref<string>('');
 const equationOriginal = ref<string>('');
@@ -313,6 +316,7 @@ const betterParams = computed(() => {
 });
 
 const onVariableSelected = (variable: string) => {
+	selectedVariable.value = variable;
 	if (variable && !isSelected.value) {
 		equation.value = equationOriginal.value.replaceAll(
 			variable,

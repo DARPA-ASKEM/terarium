@@ -9,6 +9,7 @@
 							v-model="editedParameterRow.label"
 							type="text"
 							class="p-inputtext-sm"
+							@click.stop
 						/>
 						<span
 							:class="editedParameterRow.state_variable ? 'label state' : 'label transition'"
@@ -22,6 +23,7 @@
 							v-model="editedParameterRow.name"
 							type="text"
 							class="p-inputtext-sm"
+							@click.stop
 						/>
 						<span v-else>{{ parameterRow.name }}</span>
 					</td>
@@ -31,6 +33,7 @@
 							v-model="editedParameterRow.units"
 							type="text"
 							class="p-inputtext-sm"
+							@click.stop
 						/>
 						<span v-else>{{ parameterRow.units }}</span>
 					</td>
@@ -44,31 +47,17 @@
 							</li>
 						</ul>
 					</td>
-					<td>
-						<InputText
-							v-if="isEditing"
-							v-model="editedParameterRow.definition"
-							type="text"
-							class="p-inputtext-sm"
-						/>
-						<span v-else>{{ parameterRow.definition }}</span>
-					</td>
 				</tr>
 			</table>
 			<aside>
 				<template v-if="!isEditing">
-					<Chip
-						ref="extractionChip"
-						v-tooltip="{
-							value: tooltipContent?.outerHTML ?? ``,
-							escape: true
-						}"
-						label="extractions"
-					/>
+					<Chip label="extractions" @click.stop="showExtractions = !showExtractions" />
+					<!-- <Button :icon="showRange ? 'pi pi-eye' : 'pi pi-eye-slash'"
+						class="p-button-icon-only p-button-text p-button-rounded" @click="showRange = !showRange" /> -->
 					<Button
-						:icon="showRange ? 'pi pi-eye' : 'pi pi-eye-slash'"
+						icon="pi pi-ellipsis-v"
 						class="p-button-icon-only p-button-text p-button-rounded"
-						@click="showRange = !showRange"
+						@click.stop="toggleContextMenu"
 					/>
 					<Menu ref="contextMenu" :model="parameterMenuItems" :popup="true" />
 				</template>
@@ -77,71 +66,57 @@
 						<Button
 							icon="pi pi-times"
 							class="p-button-icon-only p-button-text p-button-rounded"
-							@click="isEditing = false"
+							@click.stop="isEditing = false"
 						/>
 						<span class="divider">|</span>
 						<Button
 							icon="pi pi-check"
 							class="p-button-icon-only p-button-text p-button-rounded"
-							@click="applyParameterEdits"
+							@click.stop="applyParameterEdits"
 						/>
 					</span>
 				</template>
-				<Button
-					v-if="!isEditing"
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded"
-					@click="toggleContextMenu"
-				/>
 			</aside>
 		</section>
-		<!-- <section> Move this to its own component
-			<section v-if="showRange" class="range"></section>
-			<ul>
-				<li v-for="(value, key) in parameterRow" :key="key">
-					<span class="extraction-type">
-						{{ startCase(key.toString()) }}
-					</span>
-					<ul class="extraction-values">
-						<li>
-							{{ value.toString() }}
+		<section v-if="showExtractions">
+			<ul class="extractions">
+				<template v-for="(value, key) in example[exampleIndex]">
+					<!--temporary lazy filtering-->
+					<template
+						v-if="
+							key.toString() !== 'id' &&
+							key.toString() !== 'name' &&
+							key.toString() !== 'type' &&
+							key.toString() !== 'text_annotations'
+						"
+					>
+						<li :key="key">
+							<span class="extraction-type">
+								{{ key.toString().split('_')[0] }}
+							</span>
+							<ul class="extraction-values">
+								<li v-for="(ex, index) in [value].flat()" :key="index">
+									<a v-if="key.toString() === 'doi'" :href="ex">{{ ex }}</a>
+									<a
+										v-else-if="key.toString() === 'dkg_annotations'"
+										:href="`http://34.230.33.149:8772/${ex[0]}`"
+										>{{ ex[1] }}</a
+									>
+									<template v-else-if="key.toString() === 'data_annotations'">
+										{{ ex[0] }}: {{ ex[1] }}
+									</template>
+									<vue-mathjax
+										v-else-if="key.toString() === 'equation_annotations'"
+										:formula="String.raw`$$${Object.keys(ex)[0]}$$`"
+									/>
+									<template v-else>
+										{{ ex }}
+									</template>
+								</li>
+							</ul>
 						</li>
-					</ul>
-				</li>
-			</ul>
-			<section class="tile-container">
-			</section>
-		</section>-->
-		<section style="display: none">
-			<ul class="extractions" ref="tooltipContent">
-				<li v-for="(value, key) in example[exampleIndex]" :key="key">
-					<span class="extraction-type">
-						{{ key.toString().split('_')[0] }}
-					</span>
-					<ul class="extraction-values">
-						<li v-for="(ex, index) in [value].flat()" :key="index">
-							<template v-if="key.toString() === 'doi'">
-								<a :href="ex">{{ ex }}</a>
-							</template>
-							<template v-else-if="key.toString() === 'dkg_annotations'">
-								<a :href="`http://34.230.33.149:8772/${ex[0]}`">{{ ex[1] }}</a>
-							</template>
-							<template v-else-if="key.toString() === 'data_annotations'">
-								{{ ex[0] }}: {{ ex[1] }}
-							</template>
-							<template v-else-if="key.toString() === 'equation_annotations'">
-								<!--
-									It seems this refuses to format within the tooltip.
-									In fact once I go to the edit mode and then back it its formatted correctly...maybe I need to wait for something
-								-->
-								<vue-mathjax :formula="String.raw`$$${Object.keys(ex)[0]}$$`" />
-							</template>
-							<template v-else>
-								{{ ex }}
-							</template>
-						</li>
-					</ul>
-				</li>
+					</template>
+				</template>
 			</ul>
 		</section>
 	</main>
@@ -170,10 +145,9 @@ const props = defineProps<{
 const emit = defineEmits(['update-parameter-row']);
 
 const isEditing = ref(false);
-const showRange = ref(false);
+const showExtractions = ref(false);
 const contextMenu = ref();
 const editedParameterRow = ref({ ...props.parameterRow });
-const tooltipContent = ref();
 
 const parameterMenuItems = [
 	{
@@ -208,6 +182,7 @@ main {
 	background-color: var(--surface-section);
 	border-radius: 0.5rem;
 	padding: 0.5rem;
+	overflow: hidden;
 }
 
 .label {
@@ -255,17 +230,26 @@ table tr {
 }
 
 table tr td {
-	min-width: 10%;
+	min-width: 13rem;
 }
 
 table span {
 	display: block;
-	color: var(--primary-color);
+	/* color: var(--primary-color); */
 }
 
 table td span:empty:before,
 table td ul:empty:before {
 	content: '--';
+}
+
+table ul {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
+
+table a {
+	color: var(--text-color-primary);
 }
 
 .p-inputtext.p-inputtext-sm {
@@ -313,7 +297,6 @@ aside {
 .extractions li {
 	display: flex;
 	gap: 1rem;
-	margin-bottom: 0.25rem;
 }
 
 .p-chip {
