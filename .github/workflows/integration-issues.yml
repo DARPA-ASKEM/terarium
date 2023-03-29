@@ -9,6 +9,8 @@ on:
     types:
       - reopened
       - opened
+      - labeled
+      - edited
 
 jobs:
   add-to-project:
