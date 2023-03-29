@@ -317,14 +317,14 @@ const betterParams = computed(() => {
 const onVariableSelected = (variable: string) => {
 	if (variable) {
 		if (variable === selectedVariable.value) {
+			selectedVariable.value = '';
+			equation.value = equationOriginal.value;
+		} else {
 			selectedVariable.value = variable;
 			equation.value = equationOriginal.value.replaceAll(
 				selectedVariable.value,
 				String.raw`{\color{red}${variable}}`
 			);
-		} else {
-			selectedVariable.value = '';
-			equation.value = equationOriginal.value;
 		}
 	} else {
 		equation.value = equationOriginal.value;
