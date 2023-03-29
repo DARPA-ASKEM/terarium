@@ -29,7 +29,9 @@
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" />
+				<div class="constrain-width">
+					<p v-html="description" />
+				</div>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -613,5 +615,9 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.constrain-width {
+	max-width: 60rem;
 }
 </style>
