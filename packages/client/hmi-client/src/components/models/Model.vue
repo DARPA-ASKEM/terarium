@@ -72,7 +72,7 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<AccordionTab :header="`State variables ${model?.content?.S.length}`">
+			<AccordionTab :header="`State variables (${model?.content?.S.length})`">
 				<template v-if="true || !isEditable">
 					<DataTable
 						:value="model?.content?.S"
@@ -80,7 +80,17 @@
 						v-model:selection="selectedRow"
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
+						v-model:filters="stateFilter"
+						filterDisplay="row"
 					>
+						<template #header>
+							<div class="flex justify-content-start">
+								<span class="p-input-icon-left">
+									<i class="pi pi-search" />
+									<InputText v-model="stateFilter['global'].value" placeholder="Keyword Search" />
+								</span>
+							</div>
+						</template>
 						<Column field="sname" header="Name" />
 						<Column header="Type">
 							<template #body="slotProps">
@@ -131,9 +141,20 @@
 					</DataTable>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Parameters ${betterParams?.length}`">
+			<AccordionTab :header="`Parameters (${betterParams?.length})`">
 				<template v-if="true || !isEditable">
-					<DataTable :value="betterParams">
+					<DataTable :value="betterParams" v-model:filters="parameterFilter" filterDisplay="row">
+						<template #header>
+							<div class="flex justify-content-start">
+								<span class="p-input-icon-left">
+									<i class="pi pi-search" />
+									<InputText
+										v-model="parameterFilter['global'].value"
+										placeholder="Keyword Search"
+									/>
+								</span>
+							</div>
+						</template>
 						<Column field="name" header="Name" />
 						<Column field="type" header="Type" />
 						<Column field="default_value" header="Default" />
@@ -148,8 +169,19 @@
 					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Extractions ${extractions?.length}`">
-				<DataTable :value="extractions">
+			<AccordionTab :header="`Extractions (${extractions?.length})`">
+				<DataTable :value="extractions" v-model:filters="ExtractionsFilter" filterDisplay="row">
+					<template #header>
+						<div class="flex justify-content-start">
+							<span class="p-input-icon-left">
+								<i class="pi pi-search" />
+								<InputText
+									v-model="ExtractionsFilter['global'].value"
+									placeholder="Keyword Search"
+								/>
+							</span>
+						</div>
+					</template>
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
 					<Column field="text_annotations" header="Text">
@@ -245,6 +277,8 @@ import { Dataset } from '@/types/Dataset';
 import MathEditor from '@/components/mathml/math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import { FilterMatchMode } from 'primevue/api';
+import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
@@ -269,6 +303,18 @@ const equation = ref<string>('');
 const equationOriginal = ref<string>('');
 const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
+
+const stateFilter = ref({
+	global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+
+const parameterFilter = ref({
+	global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+
+const ExtractionsFilter = ref({
+	global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
 // const modelMath = ref(String.raw`\begin{align}
