@@ -807,8 +807,8 @@ $skeletonBg: rgba(0, 0, 0, .08) !default;
 $skeletonAnimationBg: rgba(255, 255, 255, 0.4) !default;
 
 //splitter
-$splitterGutterBg: rgba(0, 0, 0, .04) !default;
-$splitterGutterHandleBg: rgba(0, 0, 0, .12) !default;
+$splitterGutterBg: var(--surface-border-light) !default;
+$splitterGutterHandleBg: var(--surface-border-light) !default;
 
 //speeddial
 $speedDialButtonWidth: 4rem !default;

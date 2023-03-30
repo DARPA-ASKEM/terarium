@@ -23,7 +23,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	editMode: boolean = false;
 
 	setupDefs() {
-		const svg = d3.select(this.svgEl);
+		const svg = d3
+			.select(this.svgEl)
+			.style('border', '2px solid transparent')
+			.style('border-radius', '8px 0px 0px 8px');
 
 		// Clean up
 		svg.select('defs').selectAll('.edge-marker-end').remove();
@@ -54,9 +57,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const svg = d3.select(this.svgEl);
 		if (this.editMode) {
-			svg.style('background-color', '#EE8');
+			svg.style('border', '2px solid var(--primary-color)');
 		} else {
-			svg.style('background-color', null);
+			svg.style('border', '2px solid transparent');
 		}
 	}
 

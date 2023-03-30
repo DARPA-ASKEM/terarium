@@ -588,10 +588,13 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 <style scoped>
 .model-panel {
 	height: 100%;
+	border-radius: var(--border-radius-big);
+	border: solid 1px var(--surface-border);
+	overflow: hidden;
 }
 
 .content {
-	height: 99%;
+	height: 100%;
 	width: 100%;
 }
 
@@ -601,7 +604,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	max-height: 100%;
 	flex-grow: 1;
 	overflow: hidden;
-	border-radius: 0.25rem;
+	border: none;
 }
 
 .math-editor {
@@ -614,10 +617,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 .model_diagram {
 	display: flex;
 	height: 100%;
-}
-
-.p-splitter .p-splitter-gutter {
-	color: red;
 }
 
 .dev-options {
