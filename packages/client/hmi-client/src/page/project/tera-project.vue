@@ -101,7 +101,7 @@
 					<div class="annotation-content">
 						<div class="annotation-author-date">
 							<div>{{ annotation.username }}</div>
-							<div>{{ formatDate(annotation.timestampMillis) }}</div>
+							<div>{{ formatMillisToDate(annotation.timestampMillis) }}</div>
 						</div>
 						<p>{{ annotation.content }}</p>
 					</div>
@@ -149,30 +149,31 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { isEmpty, isEqual } from 'lodash';
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import Textarea from 'primevue/textarea';
+import API from '@/api/api';
+import Dataset from '@/components/dataset/Dataset.vue';
+import Document from '@/components/documents/Document.vue';
+import Model from '@/components/models/Model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
+import CodeEditor from '@/page/project/components/code-editor.vue';
+import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import Document from '@/components/documents/Document.vue';
-import Dataset from '@/components/dataset/Dataset.vue';
-import Model from '@/components/models/Model.vue';
-import SimulationPlan from '@/page/project/components/Simulation.vue';
-import SimulationRun from '@/temp/SimulationResult2.vue';
-import CodeEditor from '@/page/project/components/code-editor.vue';
-import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
-import Dropdown from 'primevue/dropdown';
-import { Tab, ResourceType, Annotation } from '@/types/common';
-import { isEmpty, isEqual } from 'lodash';
-import { useTabStore } from '@/stores/tabs';
-import Textarea from 'primevue/textarea';
-import Button from 'primevue/button';
 import { RouteName } from '@/router/routes';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { useRouter } from 'vue-router';
-import API from '@/api/api';
+import { getModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { getModel } from '@/services/model';
+import { useTabStore } from '@/stores/tabs';
+import SimulationRun from '@/temp/SimulationResult2.vue';
+import { Tab, ResourceType, Annotation } from '@/types/common';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import { formatMillisToDate } from '@/utils/date';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -239,8 +240,6 @@ async function openNewModelFromCode(modelId, modelName) {
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
 
-// Nice to have: Show overview tab on mount if no tabs were open in the previous session
-
 watch(
 	() => [
 		openedAssetRoute.value, // Once route attributes change, add/switch to another tab
@@ -267,11 +266,10 @@ watch(
 	}
 );
 
-const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
-
 // FIXME:
 // - Need to establish terarium artifact types
 // - Move to service layer
+// - Those should be named `notes` not `annotations`
 const fetchAnnotations = async () => {
 	const response = await API.get('/annotations', {
 		params: {

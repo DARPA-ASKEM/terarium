@@ -5,3 +5,7 @@ export function formatDdMmmYyyy(timestamp) {
 		day: 'numeric'
 	});
 }
+
+export function formatMillisToDate(millis: number) {
+	return new Date(millis).toLocaleDateString();
+}
