@@ -72,7 +72,8 @@
 					@click="
 						openAsset({
 							assetName: 'Overview',
-							assetType: 'overview'
+							assetType: 'overview',
+							assetId: undefined
 						})
 					"
 				/>
