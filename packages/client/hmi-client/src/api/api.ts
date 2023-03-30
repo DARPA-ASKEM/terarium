@@ -50,7 +50,6 @@ API.interceptors.response.use(
 
 // eslint-disable-next-line no-promise-executor-return
 const timeout = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const NOOP = () => {};
 
 export enum PollerState {
 	Done = 'done',
@@ -66,6 +65,7 @@ interface PollResponse<T> {
 }
 
 type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
+type ProgressCallback = (progressData: any, current: number, max: number) => void;
 
 interface PollerResult<T> {
 	state: PollerState;
@@ -81,12 +81,13 @@ export class Poller<T> {
 
 	poll: PollerCallback<T> | null;
 
-	progressAction: Function = NOOP;
+	progressAction: ProgressCallback | null;
 
 	numPolls = 0;
 
 	constructor() {
 		this.poll = null;
+		this.progressAction = null;
 	}
 
 	setInterval(v: number) {
@@ -99,12 +100,12 @@ export class Poller<T> {
 		return this;
 	}
 
-	setPollAction(f: Function) {
+	setPollAction(f: PollerCallback<T>) {
 		this.poll = f;
 		return this;
 	}
 
-	setProgressAction(f: Function) {
+	setProgressAction(f: ProgressCallback) {
 		this.progressAction = f;
 		return this;
 	}
@@ -151,7 +152,9 @@ export class Poller<T> {
 				}
 
 				// We are still in progress
-				this.progressAction(progress, this.numPolls, this.pollingThreshold);
+				if (this.progressAction) {
+					this.progressAction(progress, this.numPolls, this.pollingThreshold);
+				}
 			} catch (error) {
 				return {
 					state: PollerState.Failed,
