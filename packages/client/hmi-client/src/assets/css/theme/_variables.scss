@@ -847,6 +847,13 @@ $imagePreviewActionIconHeight: 3rem !default;
 $imagePreviewActionIconFontSize: 1.5rem !default;
 $imagePreviewActionIconBorderRadius: 50% !default;
 
+//petrinet
+$petri-nodeBorder: var(--gray-700);
+$petri-nodeFill: var(--surface);
+$petri-lineColor: var(--gray-500);
+$petri-inputBox: var(--gray-100);
+
+
 :root {
 	--border-radius: #{$borderRadius};
 	--border-radius-big: #{$bigBorderRadius};
@@ -916,4 +923,8 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--text-color-light: rgb(152, 154, 160);
 	--constrain-width: 55rem;
 	color-scheme: light;
+	--petri-nodeBorder: #{$petri-nodeBorder};
+	--petri-nodeFill: var(--surface);
+	--petri-lineColor: #{$petri-lineColor};
+	--petri-inputBox: #{$petri-inputBox};
 }
