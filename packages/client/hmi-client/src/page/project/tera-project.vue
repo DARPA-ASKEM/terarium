@@ -13,6 +13,7 @@
 					:opened-asset-route="openedAssetRoute"
 					@open-asset="openAsset"
 					@close-tab="removeClosedTab"
+					@click="fetchAnnotations()"
 				/>
 			</template>
 		</slider-panel>
@@ -23,6 +24,7 @@
 				:active-tab-index="activeTabIndex"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
+				@click="fetchAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
 				<document
@@ -70,7 +72,8 @@
 					@click="
 						openAsset({
 							assetName: 'Overview',
-							assetType: 'overview'
+							assetType: 'overview',
+							assetId: undefined
 						})
 					"
 				/>
@@ -82,18 +85,62 @@
 			direction="right"
 			header="Notes"
 			v-model:is-open="isNotesSliderOpen"
+			@click="fetchAnnotations()"
 		>
 			<template v-slot:content>
 				<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
-					<p class="annotation-content">{{ annotation.content }}</p>
-					<div class="annotation-footer">
-						<div>{{ annotation.username }}</div>
-						<div>{{ formatDate(annotation.timestampMillis) }}</div>
+					<div class="annotation-header">
+						<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
+						<Dropdown
+							placeholder="Unassigned"
+							class="p-button p-button-text notes-dropdown-button"
+						/>
+						<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
+						<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
+					</div>
+					<div class="annotation-content">
+						<div class="annotation-author-date">
+							<div>{{ annotation.username }}</div>
+							<div>{{ formatDate(annotation.timestampMillis) }}</div>
+						</div>
+						<p>{{ annotation.content }}</p>
 					</div>
 				</div>
-				<div class="annotation-panel">
-					<Textarea v-model="annotationContent" rows="5" cols="30" aria-labelledby="annotation" />
-					<Button @click="addAnnotation()" label="Add note" />
+				<div class="annotation-input-box">
+					<div v-if="isAnnotationInputOpen">
+						<Textarea
+							v-model="annotationContent"
+							ref="annotationTextInput"
+							rows="5"
+							cols="30"
+							aria-labelledby="annotation"
+						/>
+						<div class="save-cancel-buttons">
+							<Button
+								@click="
+									addAnnotation();
+									toggleAnnotationInput();
+								"
+								label="Save"
+								class="p-button"
+								size="small"
+							/>
+							<Button
+								@click="toggleAnnotationInput()"
+								label="Cancel"
+								class="p-button p-button-secondary"
+								size="small"
+							/>
+						</div>
+					</div>
+					<div v-else>
+						<Button
+							@click="toggleAnnotationInput()"
+							icon="pi pi-plus"
+							label="Add note"
+							class="p-button-text p-button-flat"
+						/>
+					</div>
 				</div>
 			</template>
 		</slider-panel>
@@ -112,6 +159,7 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult2.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
+import Dropdown from 'primevue/dropdown';
 import { Tab, ResourceType, Annotation } from '@/types/common';
 import { isEmpty, isEqual } from 'lodash';
 import { useTabStore } from '@/stores/tabs';
@@ -143,6 +191,7 @@ const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 const code = ref<string>();
+const isAnnotationInputOpen = ref(false);
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
@@ -247,6 +296,13 @@ const addAnnotation = async () => {
 	// Refresh
 	await fetchAnnotations();
 };
+
+function toggleAnnotationInput() {
+	isAnnotationInputOpen.value = !isAnnotationInputOpen.value;
+	if (isAnnotationInputOpen.value === false) {
+		annotationContent.value = '';
+	}
+}
 </script>
 
 <style scoped>
@@ -284,5 +340,71 @@ section {
 	display: inline-block;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.annotation-header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.annotation-header .p-button.p-button-secondary {
+	background-color: var(--surface);
+}
+
+.annotation-panel {
+	margin: 1rem;
+	margin-left: 0.5rem;
+}
+
+.notes-dropdown-button {
+	color: var(--text-color-subdued);
+	padding: 0rem;
+}
+
+:deep(span.p-dropdown-label) {
+	padding: 0.25rem 0.25rem 0.25rem 0.5rem !important;
+}
+
+.annotation-panel .p-dropdown:not(.p-disabled).p-focus {
+	box-shadow: none;
+	background-color: var(--surface-hover);
+}
+
+.annotation-author-date {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	display: flex;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding-top: 0.25rem;
+	padding-right: 1rem;
+}
+
+.annotation-content {
+	padding: 0.5rem;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background-color: var(--gray-50);
+}
+
+.annotation-input-box {
+	padding: 1rem;
+	padding-left: 0.5rem;
+}
+
+.annotation-input-box .p-inputtext {
+	border-color: var(--surface-border);
+	max-width: 100%;
+	min-width: 100%;
+	margin-bottom: 0.25rem;
+}
+
+.annotation-input-box .p-inputtext:hover {
+	border-color: var(--primary-color) !important;
+}
+
+.annotation-input-box .save-cancel-buttons {
+	display: flex;
+	gap: 0.5rem;
 }
 </style>
