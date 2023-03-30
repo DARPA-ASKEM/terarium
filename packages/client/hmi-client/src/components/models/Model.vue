@@ -58,7 +58,7 @@
 											:latex-equation="equationLatex"
 											:show-dev-options="true"
 											:is-editable="isEditable"
-											:math-mode="MathEditorModes.JAX"
+											:math-mode="MathEditorModes.LIVE"
 											@equation-updated="updateLatexFormula"
 											@mathml-updated="updatePetriFromMathML"
 										></tera-math-editor>
