@@ -10,7 +10,7 @@ on:
       - reopened
       - opened
       - labeled
-      - edited      
+      - edited
 
 jobs:
   add-to-project:
