@@ -57,38 +57,40 @@ const getStatus = async () => {
 	const { assetId } = route.params;
 	const assetString = sessionStorage.getItem(assetId as string);
 	const assetObj = JSON.parse(assetString as string);
-	const newRunIdList = assetObj.map(asset => asset.id);
+	const newRunIdList = assetObj.map((asset) => asset.id);
 	const newRunStatus = await Promise.all(newRunIdList.map(getRunStatus));
 
-	if(!isEqual(newRunStatus, runStatus)) {
+	if (!isEqual(newRunStatus, runStatus)) {
 		runIdList.value = newRunStatus.reduce((finishedRuns, runStatus, runIdx) => {
-			if(runStatus.status === PollerState.Done) {
+			if (runStatus.status === PollerState.Done) {
 				finishedRuns.push(newRunIdList[runIdx]);
 			}
 			return finishedRuns;
-		},[]);
+		}, []);
 		runStatus = newRunStatus;
 	}
 
 	// recursively call until all runs retrieved
-	if(runStatus.some(status => status === false)) {
+	if (runStatus.some((status) => status === false)) {
 		setTimeout(getStatus, 3000);
 	}
-}
+};
 getStatus();
 
 watch(
 	() => runIdList.value,
 	async (runIdList) => {
 		const newRunResults = {};
-		await Promise.all(runIdList.map(async (runId) => {
-			if(runResults[runId]) {
-				newRunResults[runId] = runResults[runId];
-			} else {
-				const resultCsv = await getRunResult(runId);
-				newRunResults[runId] = csvParse(resultCsv);
-			}
-		}));
+		await Promise.all(
+			runIdList.map(async (runId) => {
+				if (runResults[runId]) {
+					newRunResults[runId] = runResults[runId];
+				} else {
+					const resultCsv = await getRunResult(runId);
+					newRunResults[runId] = csvParse(resultCsv);
+				}
+			})
+		);
 		runResults = newRunResults;
 
 		// process data retrieved
@@ -96,19 +98,19 @@ watch(
 		// assume that the state variables for all runs will be identical
 		// take first run and parse it for state variables
 		stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
-			.filter(key => key !== 'timestamp')
-			.map(key => ({code: key}));
+			.filter((key) => key !== 'timestamp')
+			.map((key) => ({ code: key }));
 		selectedVariable.value = stateVariablesList[0];
 		runList = runIdList.map((runId, index) => ({ code: runId, index }));
 		selectedRun.value = runList[0];
-	},
+	}
 );
 
 const renderGraph = ([{ code }]) => {
 	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map(datum => Number(datum.timestamp)),
+		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestamp)),
 		datasets: runIdList.value
-			.map(runId => runResults[runId])
+			.map((runId) => runResults[runId])
 			.map((run, runIdx) => {
 				const dataset = {
 					data: run.map(
