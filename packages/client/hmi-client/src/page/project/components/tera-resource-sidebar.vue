@@ -21,22 +21,31 @@
 				"
 			/>
 		</header>
-		<Accordion :multiple="true" :active-index="[0, 1]">
-			<AccordionTab> </AccordionTab>
+		<Button
+			class="asset-button"
+			label="Overview"
+			:icon="iconClassname('overview')"
+			plain
+			text
+			size="small"
+			@click="emit('open-asset', { type: 'overview' })"
+		/>
+		<Accordion v-if="!isEmpty(project?.assets)" :multiple="true">
+			<AccordionTab v-for="(assets, type) in project.assets" :key="type" :header="capitalize(type)">
+				<Button
+					v-for="asset in assets"
+					:key="asset.id"
+					class="asset-button"
+					:icon="iconClassname(type)"
+					:label="(asset?.name || asset?.title || asset?.id).toString()"
+					:title="asset?.name || asset?.title"
+					plain
+					text
+					size="small"
+					@click="emit('open-asset', asset)"
+				/>
+			</AccordionTab>
 		</Accordion>
-		<tree
-			v-if="!isEmpty(resources)"
-			:value="resources"
-			selectionMode="single"
-			v-on:node-select="emit('open-asset', $event.asset)"
-		>
-			<template #default="slotProps">
-				<span :active="isEqual(openedAssetRoute, slotProps.node.asset)">
-					<i :class="iconClassname(slotProps.node.asset.assetType as ProjectAssetTypes ?? null)" />
-					{{ slotProps.node.label }}
-				</span>
-			</template>
-		</tree>
 		<div v-else class="loading-spinner">
 			<div><i class="pi pi-spin pi-spinner" /></div>
 		</div>
@@ -69,9 +78,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { logger } from '@/utils/logger';
-import { isEmpty, isEqual } from 'lodash';
+import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset, iconClassname } from '@/services/project';
@@ -79,11 +88,7 @@ import useResourcesStore from '@/stores/resources';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import Tree from 'primevue/tree';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { DocumentAsset } from '@/types/Types';
-import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
 
 const props = defineProps<{
 	project: IProject;
@@ -97,11 +102,8 @@ const resourcesStore = useResourcesStore();
 
 const isConfirmRemovalModalVisible = ref(false);
 
+/*
 const resources = computed(() => {
-	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const projectAssetTypes = Object.keys(storedAssets);
-	const resourceTreeNodes: any[] = [];
-
 	if (!isEmpty(storedAssets)) {
 		resourceTreeNodes.push({
 			key: 'Overview',
@@ -137,8 +139,8 @@ const resources = computed(() => {
 			}
 		}
 	}
-	return resourceTreeNodes;
 });
+*/
 
 function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 	const { assetName, assetId, assetType } = assetToRemove;
@@ -179,21 +181,36 @@ function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 nav {
 	display: flex;
 	flex-direction: column;
-	margin: 0.75rem;
-	margin-top: 0;
 	gap: 1rem;
-	min-height: 75%;
 }
 
-.p-tree:deep(.p-treenode-label) {
-	text-overflow: ellipsis;
+header {
+	padding: 0 0.5rem;
+}
+
+::v-deep(.p-accordion .p-accordion-content) {
+	display: flex;
+	flex-direction: column;
+	padding: 0 0 1rem;
+}
+
+::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	font-size: var(--font-body-small);
+	gap: 1rem;
+	padding: 0.5rem 1rem;
+}
+
+::v-deep(.asset-button.p-button) {
+	display: inline-flex;
 	overflow: hidden;
-	white-space: nowrap;
+	padding: 0.375rem 1rem;
 }
 
-.p-tree:deep(.p-treenode-content:has(span[active='true'])),
-.p-tree:deep(.p-treenode-content:hover:has(span[active='true'])) {
-	background-color: var(--surface-highlight);
+::v-deep(.asset-button.p-button .p-button-label) {
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .loading-spinner {
