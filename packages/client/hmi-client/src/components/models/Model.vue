@@ -202,7 +202,7 @@
 
 		<Teleport to="body">
 			<ForecastLauncher
-				v-if="showForecastLauncher"
+				v-if="showForecastLauncher && model"
 				:model="model"
 				@close="showForecastLauncher = false"
 				@launch-forecast="goToSimulationRunPage"
