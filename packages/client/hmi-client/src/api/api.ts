@@ -60,8 +60,8 @@ export enum PollerState {
 
 interface PollResponse<T> {
 	error: any;
-	progress: any;
-	data: T;
+	progress?: any;
+	data: T | null;
 }
 
 type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
