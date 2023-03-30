@@ -4,7 +4,7 @@
 			<!-- initial values -->
 			<h4>Initial values</h4>
 			<section>
-				<div v-for="(s, i) of props.model.content.S" :key="i" class="row">
+				<div v-for="(s, i) of props.model?.content.S" :key="i" class="row">
 					<span>{{ s.sname }}</span>
 					<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
 				</div>
@@ -13,7 +13,7 @@
 			<!-- params -->
 			<h4>Parameter values</h4>
 			<section>
-				<div v-for="(t, i) of props.model.content.T" :key="i" class="row">
+				<div v-for="(t, i) of props.model?.content.T" :key="i" class="row">
 					<span>{{ t.tname }}</span>
 					<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
 				</div>
@@ -50,10 +50,10 @@ const props = defineProps<{
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
-props.model.content.S.forEach((s) => {
+props.model?.content.S.forEach((s) => {
 	initialValues.value[s.sname] = `${1}`;
 });
-props.model.content.T.forEach((s) => {
+props.model?.content.T.forEach((s) => {
 	parameterValues.value[s.tname] = `${0.5}`;
 });
 
@@ -62,10 +62,10 @@ const emit = defineEmits(['close', 'launch-forecast']);
 const launch = async () => {
 	// FIXME: current need to strip out metadata
 	const cleanedModel: PetriNet = {
-		S: props.model.content.S.map((s) => ({ sname: s.sname })),
-		T: props.model.content.T.map((t) => ({ tname: t.tname })),
-		I: props.model.content.I,
-		O: props.model.content.O
+		S: props.model?.content.S.map((s) => ({ sname: s.sname })),
+		T: props.model?.content.T.map((t) => ({ tname: t.tname })),
+		I: props.model?.content.I,
+		O: props.model?.content.O
 	};
 
 	const initials: NumericValueMap = {};
@@ -90,7 +90,7 @@ const launch = async () => {
 
 	// FIXME: Cache into sessionStorage, should be DB
 	const storage = window.sessionStorage;
-	const key = `${props.model.id}`;
+	const key = `${props.model?.id}`;
 	const modelItemStr = storage.getItem(key);
 	if (!modelItemStr) {
 		const modelItem = [
