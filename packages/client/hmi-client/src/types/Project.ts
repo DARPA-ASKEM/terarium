@@ -4,7 +4,6 @@ import { Model } from './Model';
 
 export enum ProjectAssetTypes {
 	DOCUMENTS = 'publications',
-	INTERMEDIATES = 'intermediates',
 	MODELS = 'models',
 	PLANS = 'plans',
 	SIMULATIONS = 'simulations',
@@ -15,7 +14,6 @@ export enum ProjectAssetTypes {
 
 export type ProjectAssets = {
 	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
-	[ProjectAssetTypes.INTERMEDIATES]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.MODELS]: Model[];
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type

@@ -184,7 +184,7 @@ function iconClassname(type: ProjectAssetTypes | string | null): string {
 	if (type && icons.has(type)) {
 		return `pi pi-${icons.get(type)}`;
 	}
-	return '';
+	return 'pi pi-circle';
 }
 
 export {
