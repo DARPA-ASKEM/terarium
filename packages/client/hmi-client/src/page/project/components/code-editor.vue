@@ -198,12 +198,10 @@ async function createModelFromCode() {
 				linkAnnotationData
 			);
 			const newModelName = 'New model';
-			console.log(linkedMetadata.data);
-			console.log(JSON.stringify({ ...acset.value, ...linkedMetadata.data }));
 			const newModel = {
 				name: newModelName,
 				framework: 'Petri Net',
-				content: JSON.stringify({ ...acset.value, ...linkedMetadata.data })
+				content: JSON.stringify({ ...acset.value, metadata: linkedMetadata.data })
 			};
 			const model = await createModel(newModel);
 			if (model) {
