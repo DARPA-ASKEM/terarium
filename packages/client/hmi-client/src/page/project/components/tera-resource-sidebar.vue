@@ -31,14 +31,19 @@
 			@click="emit('open-asset', { type: 'overview' })"
 		/>
 		<Accordion v-if="!isEmpty(project?.assets)" :multiple="true">
-			<AccordionTab v-for="(assets, type) in project.assets" :key="type" :header="capitalize(type)">
+			<AccordionTab
+				v-for="(assets, type) in project.assets"
+				:key="type"
+				:header="capitalize(type)"
+				:disabled="isEmpty(assets)"
+			>
 				<Button
 					v-for="asset in assets"
 					:key="asset.id"
-					class="asset-button"
 					:icon="iconClassname(type)"
 					:label="(asset?.name || asset?.title || asset?.id).toString()"
 					:title="asset?.name || asset?.title"
+					class="asset-button"
 					plain
 					text
 					size="small"
@@ -219,6 +224,7 @@ header {
 	justify-content: center;
 	align-items: center;
 	color: var(--primary-color);
+	flex-grow: 1;
 }
 
 .pi-spinner {
