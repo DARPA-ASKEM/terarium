@@ -60,7 +60,7 @@ props.model.content.T.forEach((s) => {
 const emit = defineEmits(['close', 'launch-forecast']);
 
 const launch = async () => {
-	// FIXME: current need to strip out metadata
+	// FIXME: current need to strip out metadata, should do serverside
 	const cleanedModel: PetriNet = {
 		S: [],
 		T: [],
