@@ -55,20 +55,23 @@ const NOOP = () => {};
 export enum PollerState {
 	Done = 'done',
 	Failed = 'failed',
-	ExceedThreshold = 'ExceedThreshold'
+	ExceedThreshold = 'ExceedThreshold',
+	Cancelled = 'Cancelled'
 }
 
-// FIXME: need to refine based on actual needs
 interface PollResponse<T> {
 	error: any;
 	progress: any;
 	data: T;
 }
 
+type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
+
 interface PollerResult<T> {
 	state: PollerState;
 	data: T | null;
 }
+
 export class Poller<T> {
 	pollingInterval = 2000;
 
@@ -76,11 +79,15 @@ export class Poller<T> {
 
 	keepGoing = false;
 
-	poll: Function = NOOP;
+	poll: PollerCallback<T> | null;
 
 	progressAction: Function = NOOP;
 
 	numPolls = 0;
+
+	constructor() {
+		this.poll = null;
+	}
 
 	setInterval(v: number) {
 		this.pollingInterval = v;
@@ -113,10 +120,15 @@ export class Poller<T> {
 
 		let response: PollResponse<T> | null = null;
 
+		if (!this.poll) throw new Error('Poll callback undefined');
+
 		while (this.numPolls < this.pollingThreshold) {
 			this.numPolls++;
 			if (!this.keepGoing) {
-				break;
+				return {
+					state: PollerState.Cancelled,
+					data: null
+				};
 			}
 
 			try {
