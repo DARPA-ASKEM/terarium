@@ -485,7 +485,7 @@ $paginatorElementMargin: .143rem !default;
 $paginatorElementPadding: 0 !default;
 
 //table
-$tableHeaderBorder: 1px solid #e4e4e4 !default;
+$tableHeaderBorder: 1px solid var(--surface-border-light) !default;
 $tableHeaderBorderWidth: 0 0 1px 0 !default;
 $tableHeaderBg: #ffffff !default;
 $tableHeaderTextColor: $textColor !default;
@@ -494,13 +494,13 @@ $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 1rem !default;
 $tableHeaderCellBg: #ffffff !default;
-$tableHeaderCellTextColor: var(--text-color-subdued) !default;
+$tableHeaderCellTextColor: var(--text-color-primary) !default;
 $tableHeaderCellFontWeight: 500 !default;
-$tableHeaderCellBorder: 1px solid #e4e4e4 !default;
+$tableHeaderCellBorder: 1px solid var(--surface-border-light) !default;
 $tableHeaderCellBorderWidth: 0 0 1px 0 !default;
 $tableHeaderCellHoverBg: rgba(0, 0, 0, .04) !default;
 $tableHeaderCellTextHoverColor: $textColor !default;
-$tableHeaderCellIconColor: $textSecondaryColor !default;
+$tableHeaderCellIconColor: var(--text-color-subdued) !default;
 $tableHeaderCellIconHoverColor: $textSecondaryColor !default;
 $tableHeaderCellHighlightBg: #ffffff !default;
 $tableHeaderCellHighlightTextColor: $textColor !default;
@@ -513,7 +513,7 @@ $tableBodyRowTextColor: $textColor !default;
 $tableBodyRowEvenBg: rgba(0, 0, 0, .02) !default;
 $tableBodyRowHoverBg: rgba(0, 0, 0, .04) !default;
 $tableBodyRowTextHoverColor: $textColor !default;
-$tableBodyCellBorder: 1px solid #e4e4e4 !default;
+$tableBodyCellBorder: 1px solid var(--surface-border-light) !default;
 $tableBodyCellBorderWidth: 0 0 1px 0 !default;
 $tableBodyCellPadding: 1rem 1rem !default;
 
@@ -521,11 +521,11 @@ $tableFooterCellPadding: 1rem 1rem !default;
 $tableFooterCellBg: #ffffff !default;
 $tableFooterCellTextColor: $textColor !default;
 $tableFooterCellFontWeight: 500 !default;
-$tableFooterCellBorder: 1px solid #e4e4e4 !default;
+$tableFooterCellBorder: 1px solid var(--surface-border-light) !default;
 $tableFooterCellBorderWidth: 0 0 1px 0 !default;
 $tableResizerHelperBg: $primaryColor !default;
 
-$tableFooterBorder: 1px solid #e4e4e4 !default;
+$tableFooterBorder: 1px solid var(--surface-border-light) !default;
 $tableFooterBorderWidth: 0 0 1px 0 !default;
 $tableFooterBg: #ffffff !default;
 $tableFooterTextColor: $textColor !default;

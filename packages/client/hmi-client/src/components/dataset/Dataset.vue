@@ -4,34 +4,50 @@
 			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
 			<h4 v-html="dataset?.name" />
 		</header>
-		<Accordion :multiple="true">
-			<AccordionTab v-if="annotations" header="Description"
-				><span v-html="dataset?.description"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="Maintainer"
-				><span v-html="dataset?.maintainer"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="Quality"
-				><span v-html="dataset?.quality"
-			/></AccordionTab>
-			<AccordionTab v-if="annotations" header="URL"><span v-html="dataset?.url" /></AccordionTab>
-			<AccordionTab v-if="annotations" header="Geospatial Resolution"
-				><span v-html="dataset?.geospatialResolution" />
-			</AccordionTab>
-			<AccordionTab v-if="annotations" header="Temporal Resolution"
-				><span v-html="dataset?.temporalResolution" />
-			</AccordionTab>
+
+		<div class="description">
+			<span v-html="dataset?.description" />
+		</div>
+
+		<div class="metadata">
+			<div class="key-value-pair">
+				<div class="key">Maintainer</div>
+				<div class="value" v-html="dataset?.maintainer || '-'" />
+			</div>
+			<div class="key-value-pair">
+				<div class="key">Quality</div>
+				<div class="value" v-html="dataset?.quality || '-'" />
+			</div>
+			<div class="key-value-pair">
+				<div class="key">URL</div>
+				<div class="value" v-html="dataset?.url || '-'" />
+			</div>
+			<div class="key-value-pair">
+				<div class="key">Geospatial resolution</div>
+				<div class="value" v-html="dataset?.geospatialResolution || '-'" />
+			</div>
+			<div class="key-value-pair">
+				<div class="key">Temporal resolution</div>
+				<div class="value" v-html="dataset?.temporalResolution || '-'" />
+			</div>
+			<div class="key-value-pair">
+				<div class="key">Number of records</div>
+				<div class="value" v-html="csvContent.length" />
+			</div>
+		</div>
+
+		<Accordion :multiple="true" :activeIndex="[2]">
 			<AccordionTab v-if="annotations">
 				<template #header>
 					Annotations<span class="artifact-amount">({{ annotations.feature.length }})</span>
 				</template>
-				Geo Annotations:
+				Geospatial annotations:
 				<div v-for="annotation in annotations?.geo" :key="annotation.name">
 					<strong v-html="annotation.name" />: <strong>Description:</strong>
 					<span v-html="annotation.description" /> <strong>GADM Level: </strong>
 					<span v-html="annotation.gadm_level" />
 				</div>
-				Temporal Annotations:
+				<br />Temporal annotations:
 				<div v-for="annotation in annotations.date" :key="annotation.name">
 					<strong v-html="annotation.name" />: <strong>Description:</strong>
 					<span v-html="annotation.description" /> <strong>Time Format:</strong>
@@ -42,43 +58,38 @@
 			<AccordionTab v-if="annotations">
 				<template #header>
 					Features<span class="artifact-amount"
-						>({{ annotations.geo.length + annotations.date.length }})</span
+						>({{ annotations.geo.length + annotations.feature.length }})</span
 					>
 				</template>
-				<div v-for="(feature, index) of annotations.feature" :key="index">
-					<div>Name: <span v-html="feature.display_name || feature.name" /></div>
-					<div>Type: <span v-html="feature.feature_type" /></div>
-				</div>
+				<ol class="numbered-list">
+					<li v-for="(feature, index) of annotations.feature" :key="index">
+						<span v-html="feature.display_name || feature.name" /> :
+						<span v-html="feature.feature_type" class="feature-type" />
+					</li>
+				</ol>
 			</AccordionTab>
 			<!-- <AccordionTab header="Associated Objects"></AccordionTab> -->
+			<AccordionTab>
+				<template #header>
+					Data preview<span class="artifact-amount">({{ csvContent.length }} rows)</span>
+				</template>
+				<DataTable
+					tableStyle="min-width: 50rem"
+					class="p-datatable-sm"
+					:value="csvContent"
+					removableSort
+					showGridlines
+				>
+					<Column
+						v-for="colName of rawColumnNames"
+						:key="colName"
+						:field="colName"
+						:header="colName"
+						sortable
+					></Column>
+				</DataTable>
+			</AccordionTab>
 		</Accordion>
-
-		<!-- table preview of the data -->
-		Dataset Records: {{ csvContent.length }}
-		<div class="table-fixed-head">
-			<table>
-				<thead>
-					<tr class="tr-item">
-						<th v-for="colName in rawColumnNames" :key="colName">{{ colName }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="(row, rowIndex) in csvContent" :key="rowIndex.toString()" class="tr-item">
-						<td
-							v-for="(_, colIndex) in row"
-							:key="colIndex.toString()"
-							class="title-and-abstract-col"
-						>
-							<div class="title-and-abstract-layout">
-								<div class="content">
-									<div class="text-bold">{{ csvContent[rowIndex][colIndex] }}</div>
-								</div>
-							</div>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
 	</section>
 </template>
 
@@ -91,6 +102,8 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 const props = defineProps<{
 	assetId: string;
@@ -143,42 +156,42 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 </script>
 
 <style scoped>
-table {
-	border-collapse: collapse;
-	width: 100%;
-	vertical-align: top;
+.metadata {
+	margin: 1rem;
+	margin-bottom: 0.5rem;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background-color: var(--gray-50);
+	padding: 1rem;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
 }
 
-td {
-	padding: 8px 16px;
-	background: var(--gray-0);
-	vertical-align: top;
+.numbered-list {
+	list-style: numbered-list;
+	margin-left: 1rem;
 }
 
-tbody tr {
-	border-top: 2px solid var(--gray-300);
-	cursor: pointer;
+.feature-type {
+	color: var(--text-color-subdued);
+}
+ol.numbered-list li::marker {
+	color: var(--text-color-subdued);
 }
 
-tbody tr:first-child {
-	border-top-width: 0;
+.description {
+	padding: 1rem;
+}
+.key-value-pair .key {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+}
+.key-value-pair .value {
+	font-size: var(--font-body-small);
 }
 
-.table-fixed-head thead th {
-	position: sticky;
-	top: -1px;
-	z-index: 1;
-	background-color: aliceblue;
-}
-
-.tr-item {
-	height: 50px;
-}
-
-.table-fixed-head {
-	overflow-y: auto;
-	overflow-x: auto;
-	min-height: 200px;
-	width: 100%;
+.p-sortable-column-icon {
+	color: red !important;
 }
 </style>
