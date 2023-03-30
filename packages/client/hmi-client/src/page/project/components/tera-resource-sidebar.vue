@@ -28,7 +28,7 @@
 			plain
 			text
 			size="small"
-			@click="emit('open-asset', { type: 'overview' })"
+			@click="emit('open-asset', { assetName: 'Overview', assetType: 'overview' } as Tab)"
 		/>
 		<Accordion v-if="!isEmpty(project?.assets)" :multiple="true">
 			<AccordionTab
@@ -47,7 +47,13 @@
 					plain
 					text
 					size="small"
-					@click="emit('open-asset', asset)"
+					@click="
+						emit('open-asset', {
+							assetName: (asset?.name || asset?.title || asset?.id).toString(),
+							assetType: type,
+							assetId: asset.id
+						} as Tab)
+					"
 				/>
 			</AccordionTab>
 		</Accordion>
