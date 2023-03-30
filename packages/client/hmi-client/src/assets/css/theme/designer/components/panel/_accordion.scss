@@ -9,6 +9,7 @@
 			font-size: $accordionHeaderFontSize;
 			border-radius: $borderRadius;
 			transition: $listItemTransition;
+			align-items: baseline;
 
 			.p-accordion-toggle-icon {
 				margin-right: $inlineSpacing;

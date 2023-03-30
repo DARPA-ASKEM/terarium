@@ -2,7 +2,7 @@
 	<section class="asset">
 		<header>
 			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
-			<h4 v-html="dataset?.name" />
+			<h4 v-html="dataset?.name" class="model-name" />
 		</header>
 
 		<div class="description">
@@ -10,27 +10,27 @@
 		</div>
 
 		<div class="metadata">
-			<div class="key-value-pair">
+			<div class="key-value-pair col-2">
 				<div class="key">Maintainer</div>
 				<div class="value" v-html="dataset?.maintainer || '-'" />
 			</div>
-			<div class="key-value-pair">
+			<div class="key-value-pair col-2">
 				<div class="key">Quality</div>
 				<div class="value" v-html="dataset?.quality || '-'" />
 			</div>
-			<div class="key-value-pair">
+			<div class="key-value-pair col-2">
 				<div class="key">URL</div>
 				<div class="value" v-html="dataset?.url || '-'" />
 			</div>
-			<div class="key-value-pair">
+			<div class="key-value-pair col-2">
 				<div class="key">Geospatial resolution</div>
 				<div class="value" v-html="dataset?.geospatialResolution || '-'" />
 			</div>
-			<div class="key-value-pair">
+			<div class="key-value-pair col-2">
 				<div class="key">Temporal resolution</div>
 				<div class="value" v-html="dataset?.temporalResolution || '-'" />
 			</div>
-			<div class="key-value-pair">
+			<div class="key-value-pair col-2">
 				<div class="key">Number of records</div>
 				<div class="value" v-html="csvContent.length" />
 			</div>
@@ -41,17 +41,39 @@
 				<template #header>
 					Annotations<span class="artifact-amount">({{ annotations.feature.length }})</span>
 				</template>
-				Geospatial annotations:
-				<div v-for="annotation in annotations?.geo" :key="annotation.name">
-					<strong v-html="annotation.name" />: <strong>Description:</strong>
-					<span v-html="annotation.description" /> <strong>GADM Level: </strong>
-					<span v-html="annotation.gadm_level" />
+				<div class="annotation-subheader">Geospatial annotations</div>
+				<div class="annotation-group">
+					<div v-for="annotation in annotations?.geo" :key="annotation.name" class="annotation-row">
+						<div class="key-value-pair col-2">
+							<div class="key">Name</div>
+							<div class="value" v-html="annotation.name" />
+						</div>
+						<div class="key-value-pair col-2">
+							<div class="key">Description</div>
+							<div class="value" v-html="annotation.description" />
+						</div>
+						<div class="key-value-pair col-2">
+							<div class="key">GADM level</div>
+							<div class="value" v-html="annotation.gadm_level" />
+						</div>
+					</div>
 				</div>
-				<br />Temporal annotations:
-				<div v-for="annotation in annotations.date" :key="annotation.name">
-					<strong v-html="annotation.name" />: <strong>Description:</strong>
-					<span v-html="annotation.description" /> <strong>Time Format:</strong>
-					<span v-html="annotation.time_format" />
+				<div class="annotation-subheader">Temporal annotations</div>
+				<div class="annotation-group">
+					<div v-for="annotation in annotations.date" :key="annotation.name" class="annotation-row">
+						<div class="key-value-pair col-2">
+							<div class="key">Name</div>
+							<div class="value" v-html="annotation.name" />
+						</div>
+						<div class="key-value-pair col-2">
+							<div class="key">Description</div>
+							<div class="value" v-html="annotation.description" />
+						</div>
+						<div class="key-value-pair col-2">
+							<div class="key">Time format</div>
+							<div class="value" v-html="annotation.time_format" />
+						</div>
+					</div>
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
@@ -156,16 +178,19 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 </script>
 
 <style scoped>
+.model-name {
+	max-width: var(--constrain-width);
+}
+
 .metadata {
 	margin: 1rem;
 	margin-bottom: 0.5rem;
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	background-color: var(--gray-50);
-	padding: 1rem;
+	padding: 0.25rem;
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
 }
 
 .numbered-list {
@@ -182,6 +207,8 @@ ol.numbered-list li::marker {
 
 .description {
 	padding: 1rem;
+	padding-bottom: 0.5rem;
+	max-width: var(--constrain-width);
 }
 .key-value-pair .key {
 	font-size: var(--font-caption);
@@ -191,7 +218,30 @@ ol.numbered-list li::marker {
 	font-size: var(--font-body-small);
 }
 
-.p-sortable-column-icon {
-	color: red !important;
+.annotation-group {
+	padding: 0.25rem;
+	border: solid 1px var(--surface-border-light);
+	background-color: var(--gray-50);
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	max-width: var(--constrain-width);
+}
+
+.annotation-subheader {
+	font-weight: var(--font-weight-semibold);
+}
+
+.annotation-row {
+	display: flex;
+	flex-direction: row;
+	gap: 3rem;
+}
+
+.layout-topbar {
+	top: 20px;
+	background-color: red;
 }
 </style>

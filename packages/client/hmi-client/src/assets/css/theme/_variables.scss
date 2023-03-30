@@ -914,5 +914,6 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--text-color-secondary: #{$textSecondaryColor};
 	--text-color-subdued: rgb(102, 112, 133);
 	--text-color-light: rgb(152, 154, 160);
+	--constrain-width: 50rem;
 	color-scheme: light;
 }
