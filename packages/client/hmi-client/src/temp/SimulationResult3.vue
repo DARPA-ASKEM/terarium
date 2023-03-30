@@ -114,7 +114,7 @@ const renderGraph = ([{ code }]) => {
 			.map((run, runIdx) => {
 				const dataset = {
 					data: run.map(
-						(datum: any, timeIdx) => datum[code] // - runResults[selectedRun.value.code][timeIdx][code]
+						(datum: any, _timeIdx) => datum[code] // - runResults[selectedRun.value.code][timeIdx][code]
 					),
 					label: runIdList.value[runIdx],
 					fill: false,

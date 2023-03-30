@@ -1,10 +1,10 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 
-interface ForecastParametersType {
+export interface ForecastParametersType {
 	petri: string;
 	initials: { [key: string]: number };
-	tspan: [number, number];
+	tspan: number[];
 	params: { [key: string]: number };
 }
 

@@ -33,10 +33,10 @@ import { PetriNet } from '@/petrinet/petrinet-service';
 import Modal from '@/components/widgets/Modal.vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import { makeForecast } from '@/services/models/simulation-service';
+import { makeForecast, ForecastParametersType } from '@/services/models/simulation-service';
 
 interface NumericValueMap {
-	[key: string]: number;
+	[key: string]: string;
 }
 
 const props = defineProps<{
@@ -64,7 +64,7 @@ const launch = async () => {
 		O: props.model.content.O
 	};
 
-	const payload = {
+	const payload: ForecastParametersType = {
 		petri: JSON.stringify(cleanedModel),
 		initials: initialValues.value,
 		params: parameterValues.value,
@@ -73,7 +73,7 @@ const launch = async () => {
 
 	const run = await makeForecast(payload);
 
-	// FIXME: Cache into sessionStorage
+	// FIXME: Cache into sessionStorage, should be DB
 	const storage = window.sessionStorage;
 	const key = `${props.model.id}`;
 	const modelItemStr = storage.getItem(key);
