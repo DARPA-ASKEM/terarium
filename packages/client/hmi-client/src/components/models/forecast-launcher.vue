@@ -6,7 +6,7 @@
 			<section>
 				<div v-for="(s, i) of props.model.content.S" :key="i" class="row">
 					<span>{{ s.sname }}</span>
-					<InputText type="text" class="p-inputtext-sm" v-model.number="initialValues[s.sname]" />
+					<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
 				</div>
 			</section>
 
@@ -15,7 +15,7 @@
 			<section>
 				<div v-for="(t, i) of props.model.content.T" :key="i" class="row">
 					<span>{{ t.tname }}</span>
-					<InputText type="text" class="p-inputtext-sm" v-model.number="parameterValues[t.tname]" />
+					<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
 				</div>
 			</section>
 		</template>
@@ -35,22 +35,26 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { makeForecast, ForecastParametersType } from '@/services/models/simulation-service';
 
-interface NumericValueMap {
+interface StringValueMap {
 	[key: string]: string;
+}
+
+interface NumericValueMap {
+	[key: string]: number;
 }
 
 const props = defineProps<{
 	model: ITypedModel<PetriNet>;
 }>();
 
-const initialValues = ref<NumericValueMap>({});
-const parameterValues = ref<NumericValueMap>({});
+const initialValues = ref<StringValueMap>({});
+const parameterValues = ref<StringValueMap>({});
 
 props.model.content.S.forEach((s) => {
-	initialValues.value[s.sname] = 1;
+	initialValues.value[s.sname] = `${1}`;
 });
 props.model.content.T.forEach((s) => {
-	parameterValues.value[s.tname] = 0.5;
+	parameterValues.value[s.tname] = `${0.5}`;
 });
 
 const emit = defineEmits(['close', 'launch-forecast']);
@@ -64,10 +68,21 @@ const launch = async () => {
 		O: props.model.content.O
 	};
 
+	const initials: NumericValueMap = {};
+	const params: NumericValueMap = {};
+
+	Object.keys(initialValues.value).forEach((key) => {
+		initials[key] = +initialValues.value[key];
+	});
+
+	Object.keys(parameterValues.value).forEach((key) => {
+		params[key] = +parameterValues.value[key];
+	});
+
 	const payload: ForecastParametersType = {
 		petri: JSON.stringify(cleanedModel),
-		initials: initialValues.value,
-		params: parameterValues.value,
+		initials,
+		params,
 		tspan: [0, 50]
 	};
 
