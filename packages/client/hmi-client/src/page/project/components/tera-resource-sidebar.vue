@@ -47,10 +47,7 @@
 				class="remove-modal"
 			>
 				<template #header>
-					<h4>
-						<!--openedAsset.assetName only makes sense in the case that the selected asset is the one to be deleted-->
-						Confirm remove
-					</h4>
+					<h4>Confirm remove</h4>
 				</template>
 				<template #default>
 					<p>
@@ -102,7 +99,6 @@ const isConfirmRemovalModalVisible = ref(false);
 
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	console.log(storedAssets);
 	const projectAssetTypes = Object.keys(storedAssets);
 	const resourceTreeNodes: any[] = [];
 
@@ -187,12 +183,6 @@ nav {
 	margin-top: 0;
 	gap: 1rem;
 	min-height: 75%;
-}
-
-.p-chip {
-	padding: 0 0.5rem;
-	border-radius: 0.5rem;
-	text-transform: uppercase;
 }
 
 .p-tree:deep(.p-treenode-label) {
