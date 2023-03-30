@@ -72,7 +72,7 @@ public class CodeResource {
 
 	@POST
 	@Path("/to_acset")
-	public Object toAcset(@QueryParam("code") final String code) {
+	public Object toAcset(final String code) {
 		String places = mitProxy.getPlaces(code);
 		String transitions = mitProxy.getTransitions(code);
 		String arcs = mitProxy.getArcs(code);
@@ -85,7 +85,7 @@ public class CodeResource {
 
 	@POST
 	@Path("/annotation/find_text_vars")
-	public Object findTextVars(@QueryParam("text") final String text){
+	public Object findTextVars(final String text){
 		String textVars = mitProxy.findTextVars("true",text);
 		return Response.ok(Response.Status.OK)
 			.entity(textVars)

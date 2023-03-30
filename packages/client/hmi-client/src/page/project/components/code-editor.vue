@@ -143,7 +143,7 @@ async function onFileOpen(event) {
 
 async function onExtractModel() {
 	extractPetrinetLoading.value = true;
-	const response = await API.post(`code/to_acset?code=${selectedText.value}`);
+	const response = await API.post(`code/to_acset`, selectedText.value);
 	extractPetrinetLoading.value = false;
 	acset.value = response.data;
 	codeExtractionDialogVisible.value = true;
@@ -173,7 +173,8 @@ async function createModelFromCode() {
 		if (paperToExtractMetadata) {
 			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
 			const textVars = await API.post(
-				`/code/annotation/find_text_vars?text=${paperToExtractMetadata.abstractText}`
+				`/code/annotation/find_text_vars`,
+				paperToExtractMetadata.abstractText
 			);
 			const poller = new Poller<object>()
 				.setInterval(2000)
