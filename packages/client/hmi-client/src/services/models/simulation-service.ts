@@ -3,9 +3,9 @@ import API from '@/api/api';
 
 export interface ForecastParametersType {
 	petri: string;
-	initials: { [key: string]: number };
+	initials: { [key: string]: string };
 	tspan: number[];
-	params: { [key: string]: number };
+	params: { [key: string]: string };
 }
 
 export async function makeForecast(simulationParam: ForecastParametersType) {
