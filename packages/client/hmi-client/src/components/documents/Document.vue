@@ -114,6 +114,7 @@
 									:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 									:lines="previewLineLimit"
 								/>
+								<hr class="horizontal-row" />
 							</div>
 						</div>
 					</AccordionTab>
@@ -135,6 +136,7 @@
 									:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 									:lines="previewLineLimit"
 								/>
+								<hr class="horizontal-row" />
 							</div>
 						</div>
 					</AccordionTab>
@@ -156,6 +158,7 @@
 									:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 									:lines="previewLineLimit"
 								/>
+								<hr class="horizontal-row" />
 							</div>
 						</div>
 					</AccordionTab>
@@ -198,6 +201,7 @@
 								<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
 								<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 							</div>
+							<hr class="horizontal-row" />
 						</div>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(doc.citationList)" id="References">
@@ -486,14 +490,19 @@ onMounted(async () => {
 }
 
 .constrain-width {
-	max-width: 60rem;
+	max-width: var(--constrain-width);
 }
 
 .extracted-image {
 	max-width: 30rem;
+	border: 1px solid var(--surface-border-light);
+	padding: 1rem;
+	border-radius: var(--border-radius);
 }
 
-.asset .p-accordion .extracted-item {
-	margin-bottom: 2rem;
+hr.horizontal-row {
+	border-top: 1px solid var(--surface-border-light);
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 }
 </style>

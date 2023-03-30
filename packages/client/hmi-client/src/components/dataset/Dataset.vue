@@ -20,7 +20,7 @@
 			</div>
 			<div class="key-value-pair col-2">
 				<div class="key">URL</div>
-				<div class="value" v-html="dataset?.url || '-'" />
+				<a class="value" v-bind:href="dataset?.url" v-html="dataset?.url || '-'" />
 			</div>
 			<div class="key-value-pair col-2">
 				<div class="key">Geospatial resolution</div>
@@ -32,59 +32,71 @@
 			</div>
 			<div class="key-value-pair col-2">
 				<div class="key">Number of records</div>
-				<div class="value" v-html="csvContent.length" />
+				<div class="value" v-html="csvContent?.length" />
 			</div>
 		</div>
 
-		<Accordion :multiple="true" :activeIndex="[2]">
-			<AccordionTab v-if="annotations">
+		<Accordion :multiple="true" :activeIndex="[showAccordion]">
+			<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
 				<template #header>
-					Annotations<span class="artifact-amount">({{ annotations.feature.length }})</span>
+					Annotations<span class="artifact-amount"
+						>({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})</span
+					>
 				</template>
-				<div class="annotation-subheader">Geospatial annotations</div>
-				<div class="annotation-group">
-					<div v-for="annotation in annotations?.geo" :key="annotation.name" class="annotation-row">
-						<div class="key-value-pair col-2">
-							<div class="key">Name</div>
-							<div class="value" v-html="annotation.name" />
-						</div>
-						<div class="key-value-pair col-2">
-							<div class="key">Description</div>
-							<div class="value" v-html="annotation.description" />
-						</div>
-						<div class="key-value-pair col-2">
-							<div class="key">GADM level</div>
-							<div class="value" v-html="annotation.gadm_level" />
+				<div v-if="annotations?.geo">
+					<div class="annotation-subheader">Geospatial annotations</div>
+					<div class="annotation-group">
+						<div
+							v-for="annotation in annotations?.geo"
+							:key="annotation.name"
+							class="annotation-row"
+						>
+							<div class="key-value-pair col-2">
+								<div class="key">Name</div>
+								<div class="value" v-html="annotation.name" />
+							</div>
+							<div class="key-value-pair col-2">
+								<div class="key">Description</div>
+								<div class="value" v-html="annotation.description" />
+							</div>
+							<div class="key-value-pair col-2">
+								<div class="key">GADM level</div>
+								<div class="value" v-html="annotation.gadm_level" />
+							</div>
 						</div>
 					</div>
 				</div>
-				<div class="annotation-subheader">Temporal annotations</div>
-				<div class="annotation-group">
-					<div v-for="annotation in annotations.date" :key="annotation.name" class="annotation-row">
-						<div class="key-value-pair col-2">
-							<div class="key">Name</div>
-							<div class="value" v-html="annotation.name" />
-						</div>
-						<div class="key-value-pair col-2">
-							<div class="key">Description</div>
-							<div class="value" v-html="annotation.description" />
-						</div>
-						<div class="key-value-pair col-2">
-							<div class="key">Time format</div>
-							<div class="value" v-html="annotation.time_format" />
+				<div v-if="annotations?.date">
+					<div class="annotation-subheader">Temporal annotations</div>
+					<div class="annotation-group">
+						<div
+							v-for="annotation in annotations?.date"
+							:key="annotation.name"
+							class="annotation-row"
+						>
+							<div class="key-value-pair col-2">
+								<div class="key">Name</div>
+								<div class="value" v-html="annotation.name" />
+							</div>
+							<div class="key-value-pair col-2">
+								<div class="key">Description</div>
+								<div class="value" v-html="annotation.description" />
+							</div>
+							<div class="key-value-pair col-2">
+								<div class="key">Time format</div>
+								<div class="value" v-html="annotation.time_format" />
+							</div>
 						</div>
 					</div>
 				</div>
 			</AccordionTab>
 			<!-- <AccordionTab header="Concepts"></AccordionTab> -->
-			<AccordionTab v-if="annotations">
+			<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
 				<template #header>
-					Features<span class="artifact-amount"
-						>({{ annotations.geo.length + annotations.feature.length }})</span
-					>
+					Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
 				</template>
 				<ol class="numbered-list">
-					<li v-for="(feature, index) of annotations.feature" :key="index">
+					<li v-for="(feature, index) of annotations?.feature" :key="index">
 						<span v-html="feature.display_name || feature.name" /> :
 						<span v-html="feature.feature_type" class="feature-type" />
 					</li>
@@ -93,7 +105,7 @@
 			<!-- <AccordionTab header="Associated Objects"></AccordionTab> -->
 			<AccordionTab>
 				<template #header>
-					Data preview<span class="artifact-amount">({{ csvContent.length }} rows)</span>
+					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
 				<DataTable
 					tableStyle="min-width: 50rem"
@@ -175,6 +187,9 @@ watch(
 );
 
 const annotations = computed(() => dataset.value?.annotations.annotations);
+const showAccordion = computed(() =>
+	dataset.value?.annotations.annotations.date && dataset.value?.annotations.annotations.geo ? 2 : 0
+);
 </script>
 
 <style scoped>
@@ -197,11 +212,11 @@ const annotations = computed(() => dataset.value?.annotations.annotations);
 	list-style: numbered-list;
 	margin-left: 1rem;
 }
-
-.feature-type {
+ol.numbered-list li::marker {
 	color: var(--text-color-subdued);
 }
-ol.numbered-list li::marker {
+
+.feature-type {
 	color: var(--text-color-subdued);
 }
 
