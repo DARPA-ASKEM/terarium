@@ -44,22 +44,6 @@ async function update(project: IProject): Promise<IProject | null> {
 }
 
 /**
- * Get a project per id
- * @return Project|null - the appropriate project, or null if none returned by API
- */
-async function get(projectId: string): Promise<IProject | null> {
-	try {
-		const response = await API.get(`/projects/${projectId}`);
-		const { status, data } = response;
-		if (status !== 200) return null;
-		return data ?? null;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
-/**
  * Remove a project (soft-delete)
  * @param projectId {IProject["id"]} - the id of the project to be removed
  * @return boolean - if the removal was succesful
@@ -139,6 +123,34 @@ async function deleteAsset(projectId: string, assetsType: string, assetId) {
 	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
 	const response = await API.delete(url);
 	return response?.data ?? null;
+}
+
+/**
+ * Get a project per id
+ * @return Project|null - the appropriate project, or null if none returned by API
+ */
+async function get(
+	projectId: string,
+	containingAssetsInfomation: boolean = false
+): Promise<IProject | null> {
+	try {
+		const response = await API.get(`/projects/${projectId}`);
+		const { status, data } = response;
+		if (status !== 200) return null;
+		const project = data as IProject;
+
+		if (project && containingAssetsInfomation) {
+			const assets = await getAssets(projectId);
+			if (assets) {
+				project.assets = assets;
+			}
+		}
+
+		return project ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
 }
 
 /**

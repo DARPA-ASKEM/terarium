@@ -23,15 +23,6 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.CODE]: any[];
 };
 
-export type SimpleProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: (string | number)[];
-	[ProjectAssetTypes.INTERMEDIATES]: (string | number)[];
-	[ProjectAssetTypes.MODELS]: (string | number)[];
-	[ProjectAssetTypes.PLANS]: (string | number)[];
-	[ProjectAssetTypes.SIMULATION_RUNS]: (string | number)[];
-	[ProjectAssetTypes.DATASETS]: (string | number)[];
-};
-
 export interface IProject {
 	id: string;
 	name: string;
@@ -40,7 +31,7 @@ export interface IProject {
 	timestamp: string;
 	active: boolean;
 	concept: string | null;
-	assets: SimpleProjectAssets;
+	assets: ProjectAssets | null;
 	relatedDocuments: DocumentType[];
 	username: string;
 }

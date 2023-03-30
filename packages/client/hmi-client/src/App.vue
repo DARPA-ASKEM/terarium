@@ -86,9 +86,9 @@ watch(
 		if (projectId && !!projectId) {
 			const id = projectId as string;
 			// fetch project metadata
-			project.value = await ProjectService.get(id);
+			project.value = await ProjectService.get(id, true);
 			// fetch basic metadata about project assets and save them into a global store/cache
-			resourcesStore.activeProjectAssets = await ProjectService.getAssets(id);
+			resourcesStore.activeProjectAssets = project.value?.assets ?? null;
 			resourcesStore.setActiveProject(project.value);
 		} else {
 			project.value = null;
