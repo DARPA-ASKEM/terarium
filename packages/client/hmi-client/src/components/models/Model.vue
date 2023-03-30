@@ -6,17 +6,6 @@
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
-						v-if="isEditing"
-						@click="cancelEdit"
-						label="Cancel"
-						class="p-button-sm p-button-outlined"
-					/>
-					<Button
-						@click="toggleEditMode"
-						:label="isEditing ? 'Save model' : 'Edit model'"
-						class="p-button-sm p-button-outlined"
-					/>
-					<Button
 						@click="goToSimulationRunPage"
 						label="Open simulation space"
 						:disabled="isEditing"
@@ -34,37 +23,45 @@
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
 					<TeraResizablePanel>
-						<div class="content">
-							<Splitter class="mb-5 model-panel" :layout="layout">
-								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
+						<div ref="splitterContainer" class="splitter-container">
+							<Splitter :gutterSize="5" :layout="layout">
+								<SplitterPanel
+									class="tera-split-panel"
+									:size="equationPanelSize"
+									:minSize="equationPanelMinSize"
+									:maxSize="equationPanelMaxSize"
+								>
 									<section class="graph-element">
+										<Button
+											v-if="isEditing"
+											@click="cancelEdit"
+											label="Cancel"
+											class="p-button-sm p-button-outlined floating-edit-button cancel-edit-button"
+										/>
+										<Button
+											@click="toggleEditMode"
+											:label="isEditing ? 'Save model' : 'Edit model'"
+											class="p-button-sm p-button-outlined floating-edit-button"
+										/>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
 								</SplitterPanel>
-								<SplitterPanel class="tera-split-panel" :size="40" :minSize="30">
-									<section class="math-editor">
-										<!-- eventually remove -->
-										<section class="dev-options">
-											<div style="align-self: center">[Math Renderer]</div>
-											<div class="math-options">
-												<label>
-													<input type="radio" v-model="mathmode" value="mathJAX" />
-													MathJAX
-												</label>
-												<label>
-													<input type="radio" v-model="mathmode" value="mathLIVE" />
-													MathLIVE
-												</label>
-											</div>
-										</section>
-										<!-- eventually remove -->
-										<math-editor
-											:value="equation"
-											:mathmode="mathmode"
-											@formula-updated="updateFormula"
-											@mathml="updatePetriFromMathML"
-										></math-editor>
+								<SplitterPanel
+									class="tera-split-panel"
+									:size="mathPanelSize"
+									:minSize="mathPanelMinSize"
+									:maxSize="mathPanelMaxSize"
+								>
+									<section class="math-editor-container">
+										<tera-math-editor
+											:latex-equation="equationLatex"
+											:show-dev-options="true"
+											:is-editable="isEditable"
+											:math-mode="MathEditorModes.JAX"
+											@equation-updated="updateLatexFormula"
+											@mathml-updated="updatePetriFromMathML"
+										></tera-math-editor>
 									</section>
 								</SplitterPanel>
 							</Splitter>
@@ -188,7 +185,9 @@
 					<Column field="equation_annotations" header="Equations">
 						<template #body="slotProps">
 							<div style="word-wrap: break-word">
-								{{ slotProps.data.equation_annotations }}
+								<vue-mathjax
+									:formula="mathJaxEq(slotProps.data.equation_annotations)"
+								></vue-mathjax>
 							</div>
 						</template>
 					</Column>
@@ -224,6 +223,7 @@ import {
 	mathmlToPetri,
 	petriToLatex
 } from '@/petrinet/petrinet-service';
+import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
@@ -242,7 +242,7 @@ import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
 import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
-import MathEditor from '@/components/mathml/math-editor.vue';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
@@ -265,32 +265,46 @@ const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
 const selectedRow = ref<any>(null);
 
-const equation = ref<string>('');
+const equationLatex = ref<string>('');
+const equationML = ref<string>('');
 const equationOriginal = ref<string>('');
 const isSelected = ref<boolean>(false);
-const mathmode = ref('mathLIVE');
 
-// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-// const modelMath = ref(String.raw`\begin{align}
-// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-// \end{align}`);
+const splitterContainer = ref<HTMLElement | null>(null);
+const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 
-// Another experiment using a map to automatically select highlighted version of the latex formula
-// this would require the backend service to provide a map of the eq.  Might be a little challenging.
-// const equationMap = {
-// 	default: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
-// 	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`,
-// 	S: String.raw`\frac{d\colorbox{red}{S}}{dt} = -\beta I{\color{red}{S}} \frac{dI}{dt} = \
-// 	\beta I{\color{red}{S}} - \gamma I \frac{dR}{dt} = \gamma I`,
-// 	I: String.raw`\frac{dS}{dt} = -\beta {\color{red}I}S \frac{dI}{dt} = \
-// 	\beta {\color{red}I}S - \gamma {\color{red}I} \frac{dR}{dt} = \gamma {\color{red}I}`,
-// 	R: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
-// 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
-// };
+const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
+const equationPanelSize = ref<number>(50);
+const equationPanelMinSize = ref<number>(30);
+const equationPanelMaxSize = ref<number>(50);
+
+const mathPanelSize = ref<number>(50);
+const mathPanelMinSize = ref<number>(40);
+const mathPanelMaxSize = ref<number>(70);
+
+const updateLayout = () => {
+	if (splitterContainer.value) {
+		layout.value =
+			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
+			window.innerWidth < 800
+				? 'vertical'
+				: 'horizontal';
+	}
+};
+
+const handleResize = () => {
+	updateLayout();
+};
+
+onMounted(() => {
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	window.removeEventListener('resize', handleResize);
+});
 const betterParams = computed(() => {
 	const params = model.value?.parameters.filter((p) => !p.state_variable);
 	const transitions: any[] = model.value?.content?.T ?? [];
@@ -308,33 +322,31 @@ const betterParams = computed(() => {
 
 const onVariableSelected = (variable: string) => {
 	if (variable && !isSelected.value) {
-		equation.value = equationOriginal.value.replaceAll(
+		equationLatex.value = equationOriginal.value.replaceAll(
 			variable,
 			String.raw`{\color{red}${variable}}`
 		);
 	} else {
-		equation.value = equationOriginal.value;
+		equationLatex.value = equationOriginal.value;
 	}
 	isSelected.value = !isSelected.value;
 };
 
 const onStateVariableClick = () => {
 	if (selectedRow.value) {
-		equation.value = equationOriginal.value.replaceAll(
+		equationLatex.value = equationOriginal.value.replaceAll(
 			selectedRow.value.sname,
 			String.raw`{\color{red}${selectedRow.value.sname}}`
 		);
 	} else {
-		equation.value = equationOriginal.value;
+		equationLatex.value = equationOriginal.value;
 	}
 };
 
-const updateFormula = (formulaString: string) => {
-	equation.value = formulaString;
+const updateLatexFormula = (formulaString: string) => {
+	equationLatex.value = formulaString;
 	equationOriginal.value = formulaString;
 };
-
-const layout = computed(() => (!props.isEditable ? 'vertical' : 'horizontal'));
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -374,7 +386,7 @@ function highlightSearchTerms(text: string | undefined): string {
 watch(
 	() => [props.assetId],
 	async () => {
-		updateFormula('');
+		updateLatexFormula('');
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
@@ -382,7 +394,7 @@ watch(
 			if (model.value) {
 				const data = await petriToLatex(model.value.content);
 				if (data) {
-					updateFormula(data);
+					updateLatexFormula(data);
 				}
 			}
 		} else {
@@ -482,22 +494,30 @@ watch(
 		await renderer?.render();
 		const latexFormula = await petriToLatex(model.value.content);
 		if (latexFormula) {
-			updateFormula(latexFormula);
+			updateLatexFormula(latexFormula);
 		} else {
-			updateFormula('');
+			updateLatexFormula('');
 		}
 	},
 	{ deep: true }
 );
 
-const updatePetriFromMathML = async (mathmlString: string) => {
-	// No bueno - doesn't work right now.
-	const newPetri = await mathmlToPetri([mathmlString]);
-	if (model.value && newPetri) {
-		model.value.content = newPetri;
-		updateModel(model.value);
-	}
+const updatePetriFromMathML = (mathmlString: string) => {
+	equationML.value = mathmlString;
 };
+
+// update petri if the mathml has changed - should only happen when something is updated
+watch(
+	() => [equationML.value],
+	async (newValue, oldValue) => {
+		if (newValue !== oldValue && oldValue[0] !== '') {
+			const cleanedMathML = separateEquations(newValue[0] as string);
+			const newPetri = await mathmlToPetri(cleanedMathML);
+			// TODO: update model
+			console.log('cleanedMathML', cleanedMathML, newPetri);
+		}
+	}
+);
 
 const router = useRouter();
 const goToSimulationRunPage = () => {
@@ -551,16 +571,34 @@ const cancelEdit = async () => {
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
+
+const mathJaxEq = (eq) => {
+	if (eq) {
+		return String.raw`$$${Object.keys(eq)[0]}$$`;
+	}
+	return '';
+};
 </script>
 
 <style scoped>
-.model-panel {
-	height: 100%;
+section math-editor {
+	justify-content: center;
 }
 
-.content {
-	height: 99%;
-	width: 100%;
+.floating-edit-button {
+	background-color: var(--surface-0);
+	margin-top: 10px;
+	position: absolute;
+	right: 10px;
+	z-index: 10;
+}
+
+.cancel-edit-button {
+	right: 110px;
+}
+
+.splitter-container {
+	height: 100%;
 }
 
 .graph-element {
@@ -570,11 +608,13 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	flex-grow: 1;
 	overflow: hidden;
 	border-radius: 0.25rem;
+	position: relative;
 }
 
-.math-editor {
+.math-editor-container {
 	display: flex;
 	max-height: 100%;
+	width: 100%;
 	flex-grow: 1;
 	flex-direction: column;
 }
@@ -584,29 +624,21 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	height: 100%;
 }
 
-.p-splitter .p-splitter-gutter {
-	color: red;
-}
-
-.dev-options {
-	display: flex;
-	flex-direction: column;
-	align-self: center;
-	width: 100%;
-	font-size: 0.75em;
-	font-family: monospace;
-}
-
-.math-options {
-	display: flex;
-	flex-direction: row;
-	align-self: center;
+.p-splitter {
+	height: 100%;
 }
 
 .tera-split-panel {
+	height: 100%;
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	flex-direction: column;
+	align-content: center;
+}
+
+.splitter-container {
+	height: 100%;
+	width: 100%;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */

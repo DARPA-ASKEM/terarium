@@ -128,3 +128,69 @@ toast.showToast(
    5000
   );
 ```
+
+## TERA-MATH-EDITOR
+
+Terrarium uses [mathlive](https://cortexjs.io/docs/mathlive/) & [mathjax 2.7.2](https://docs.mathjax.org/en/v2.7-latest/start.html) via a the `vue-mathjax-next` component to create a custom component: `tera-math-editor`
+
+This component `<tera-math-editor>` can display a `LaTeX` formatted formula using either renderer by setting `:mathmode` to a `MathEditorModes.JAX | MathEditorModes.LIVE`.
+
+## Props
+
+| Prop Name | Type | Required | Default Value | Description |
+| --- | --- | --- | --- | --- |
+| `latexEquation` | `String` | `true` | N/A | The formula to be rendered. |
+| `mathMode` | `String` | `false` | `MathEditorModes.LIVE` | The math renderer mode. |
+| `isEditable` | `Boolean` | `false` | `true` | Whether to show the edit equation button. |
+| `showDevOptions` | `Boolean` | `false` | `false` | Whether to show the renderer selection box. |
+
+### `latexEquation`
+
+The formula to be rendered, specified as a LaTeX string. This prop is required and must be a non-empty string.
+
+### `mathMode`
+
+The math renderer mode to use. This prop is optional and defaults to `MathEditorModes.LIVE`. Possible values are:
+
+* `MathEditorModes.LIVE`: Renders the formula MathLive.
+* `MathEditorModes.JAX`: Renders the formula using MathJax.
+
+### `isEditable`
+
+Whether to show an edit button for the formula. This prop is optional and defaults to `true`. Set to `false` to hide the edit equation button.  Emits `equation-updated`
+
+### `showDevOptions`
+
+Whether to show the math renderer selection box. This prop is optional and defaults to `false`. Set to `true` to show the selection box.
+
+## Emits
+
+| Event Name | Arguments | Description |
+| --- | --- | --- |
+| `equation-updated` | `updatedEquation: string` | Emitted when the equation is `saved` from the `edit` button. |
+| `mathml-updated` | `updatedMathML: string` | Emitted when the MathML for the equation is updated. |
+
+### `equation-updated`
+
+Emitted when the equation is updated, with the updated equation passed as a string argument.  Currently called by Edit button.
+
+### `mathml-updated`
+
+Emitted when the MathML for the equation is updated, with the updated MathML passed as a string argument.
+
+## Usage
+
+```html
+<template>
+  <div>
+    <math-formula-renderer
+      :latex-equation="latexEquation"
+      :math-mode="mathMode"
+      :is-editable="isEditable"
+      :show-dev-options="showDevOptions"
+      @equation-updated="handleEquationUpdated"
+      @mathml-updated="handleMathMLUpdated"
+    />
+  </div>
+</template>
+```
