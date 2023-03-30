@@ -92,4 +92,12 @@ public class CodeResource {
 			.build();
 	}
 
+	@POST
+	@Path("/get_repo_content")
+	public String getGithubRepositoryContent(final String repositoryName) {
+		System.out.println(repositoryName);
+		return repositoryName;
+
+	
+	}
 }

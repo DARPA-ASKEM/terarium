@@ -40,6 +40,7 @@ import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
+// import API from '@/api/api';
 import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
 
 const props = defineProps<{
@@ -63,6 +64,8 @@ async function initializeCodeBrowser() {
 		repositoryName.value,
 		currentDirectory.value
 	);
+	// const res = await API.post(`https://api.github.com/repos/${repositoryName.value}/contents/${currentDirectory.value}`);
+	// console.log({ res })
 }
 
 // Content as in file or directory
@@ -72,6 +75,7 @@ async function openContent(content?) {
 		const directoryPathArray = currentDirectory.value.split('/');
 		directoryPathArray.pop();
 		currentDirectory.value = directoryPathArray.join('/');
+
 		directoryContents.value = await getGithubRepositoryContent(
 			repositoryName.value,
 			currentDirectory.value
