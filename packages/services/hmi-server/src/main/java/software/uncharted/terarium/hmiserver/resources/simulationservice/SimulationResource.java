@@ -29,8 +29,6 @@ public class SimulationResource {
 	public Response makeForecastRun(
 		final SimulationParams simulationParams
 	) {
-		System.out.println(simulationParams);
-		System.out.println(proxy);
 		return proxy.makeForecastRun(simulationParams);
 	}
 
