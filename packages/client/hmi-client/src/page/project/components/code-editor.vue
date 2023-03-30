@@ -197,12 +197,13 @@ async function createModelFromCode() {
 				`/code/annotation/link_annos_to_pyacset`,
 				linkAnnotationData
 			);
-			console.log(linkedMetadata);
 			const newModelName = 'New model';
+			console.log(linkedMetadata.data);
+			console.log(JSON.stringify({ ...acset.value, ...linkedMetadata.data }));
 			const newModel = {
 				name: newModelName,
 				framework: 'Petri Net',
-				content: JSON.stringify({ ...acset.value, ...linkedMetadata })
+				content: JSON.stringify({ ...acset.value, ...linkedMetadata.data })
 			};
 			const model = await createModel(newModel);
 			if (model) {
