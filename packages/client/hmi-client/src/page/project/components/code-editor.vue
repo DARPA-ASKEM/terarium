@@ -62,7 +62,6 @@ import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import useResourcesStore from '@/stores/resources';
-
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
@@ -71,6 +70,7 @@ import { createModel } from '@/services/model';
 import { ProjectAssetTypes } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
 import { DocumentAsset } from '@/types/Types';
+import { getDocumentDoi } from '@/utils/data-util';
 
 const props = defineProps({
 	initialCode: {
@@ -171,6 +171,7 @@ async function createModelFromCode() {
 	if (selectedPaper.value) {
 		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
 		if (paperToExtractMetadata) {
+			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
 			const textVars = await API.post(
 				`/code/annotation/find_text_vars?text=${paperToExtractMetadata.abstractText}`
 			);
@@ -187,11 +188,21 @@ async function createModelFromCode() {
 					return { error: logger.info(`Linking metadata to model...`) };
 				});
 			const metadata = await poller.start();
+			const linkAnnotationData = {
+				pyacset: JSON.stringify(acset.value),
+				annotations: JSON.stringify(metadata.data),
+				info: JSON.stringify(info)
+			};
+			const linkedMetadata = await API.post(
+				`/code/annotation/link_annos_to_pyacset`,
+				linkAnnotationData
+			);
+			console.log(linkedMetadata);
 			const newModelName = 'New model';
 			const newModel = {
 				name: newModelName,
 				framework: 'Petri Net',
-				content: JSON.stringify({ ...acset.value, ...metadata.data })
+				content: JSON.stringify({ ...acset.value, ...linkedMetadata })
 			};
 			const model = await createModel(newModel);
 			if (model) {
