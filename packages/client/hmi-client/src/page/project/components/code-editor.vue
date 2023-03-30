@@ -57,7 +57,6 @@ import '@node_modules/ace-builds/src-noconflict/theme-chrome';
 import { ref, watch, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import API, { Poller } from '@/api/api';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -71,6 +70,7 @@ import { ProjectAssetTypes } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
 import { DocumentAsset } from '@/types/Types';
 import { getDocumentDoi } from '@/utils/data-util';
+import { codeToAcset, findVarsFromText, getlinkedAnnotations } from '@/services/mit-askem';
 
 const props = defineProps({
 	initialCode: {
@@ -143,9 +143,9 @@ async function onFileOpen(event) {
 
 async function onExtractModel() {
 	extractPetrinetLoading.value = true;
-	const response = await API.post(`code/to_acset`, selectedText.value);
+	const response = await codeToAcset(selectedText.value);
 	extractPetrinetLoading.value = false;
-	acset.value = response.data;
+	acset.value = response;
 	codeExtractionDialogVisible.value = true;
 }
 
@@ -172,37 +172,18 @@ async function createModelFromCode() {
 		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
 		if (paperToExtractMetadata) {
 			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
-			const textVars = await API.post(
-				`/code/annotation/find_text_vars`,
-				paperToExtractMetadata.abstractText
-			);
-			const poller = new Poller<object>()
-				.setInterval(2000)
-				.setThreshold(90)
-				.setPollAction(async () => {
-					const response = await API.get(`/code/response?id=${textVars.data}`);
-					if (response) {
-						return {
-							data: response.data.data
-						};
-					}
-					return { error: logger.info(`Linking metadata to model...`) };
-				});
-			const metadata = await poller.start();
+			const metadata = await findVarsFromText(paperToExtractMetadata.abstractText);
 			const linkAnnotationData = {
 				pyacset: JSON.stringify(acset.value),
-				annotations: JSON.stringify(metadata.data),
+				annotations: JSON.stringify(metadata),
 				info: JSON.stringify(info)
 			};
-			const linkedMetadata = await API.post(
-				`/code/annotation/link_annos_to_pyacset`,
-				linkAnnotationData
-			);
+			const linkedMetadata = await getlinkedAnnotations(linkAnnotationData);
 			const newModelName = 'New model';
 			const newModel = {
 				name: newModelName,
 				framework: 'Petri Net',
-				content: JSON.stringify({ ...acset.value, metadata: linkedMetadata.data })
+				content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
 			};
 			const model = await createModel(newModel);
 			if (model) {

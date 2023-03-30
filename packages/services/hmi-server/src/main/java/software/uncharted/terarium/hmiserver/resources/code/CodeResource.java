@@ -11,10 +11,7 @@ import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -23,6 +20,7 @@ import java.util.Map;
 @Path("/api/code")
 @Authenticated
 @Tag(name = "Code REST Endpoint")
+@Produces(MediaType.APPLICATION_JSON)
 public class CodeResource {
 	@RestClient
 	SkemaProxy skemaProxy;
@@ -79,7 +77,6 @@ public class CodeResource {
 		String pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
 		return Response.ok(Response.Status.OK)
 			.entity(pyAcset)
-			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
 
@@ -89,7 +86,6 @@ public class CodeResource {
 		String textVars = mitProxy.findTextVars("true",text);
 		return Response.ok(Response.Status.OK)
 			.entity(textVars)
-			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
 
@@ -102,7 +98,6 @@ public class CodeResource {
 		String metadata = mitProxy.linkAnnotationsToAcset(pyacset, annotations, info);
 		return Response.ok(Response.Status.OK)
 			.entity(metadata)
-			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
 
@@ -112,7 +107,6 @@ public class CodeResource {
 		String response = mitProxy.getResponse(id);
 		return Response.ok(Response.Status.OK)
 			.entity(response)
-			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
 }
