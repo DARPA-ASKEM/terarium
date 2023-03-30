@@ -44,7 +44,7 @@ interface NumericValueMap {
 }
 
 const props = defineProps<{
-	model: ITypedModel<PetriNet>;
+	model: ITypedModel<PetriNet> | null;
 }>();
 
 const initialValues = ref<StringValueMap>({});
