@@ -49,4 +49,27 @@ describe('API utilities test', () => {
 		const result = await poller.start();
 		expect(result.state).eq('ExceedThreshold');
 	});
+
+	it('polling can be cancelled', async () => {
+		let c = 0;
+		const poller = new Poller<number[]>()
+			.setInterval(1000)
+			.setThreshold(10)
+			.setPollAction(async () => {
+				c++;
+				if (c <= 99) {
+					return { data: null, error: null };
+				}
+				return { data: [1, 2, 3], error: null };
+			});
+
+		// Cancel between 2nd and 3rd iteration
+		setTimeout(() => {
+			poller.stop();
+		}, 2500);
+		const result = await poller.start();
+		expect(result.state).eq('Cancelled');
+		expect(c).gt(1);
+		expect(c).lt(4);
+	});
 });
