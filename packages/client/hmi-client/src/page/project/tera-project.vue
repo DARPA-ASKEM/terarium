@@ -223,7 +223,6 @@ function removeClosedTab(tabIndexToRemove: number) {
 async function openNewModelFromCode(modelId, modelName) {
 	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 	const model = await getModel(modelId);
-	console.log(model);
 	if (model) {
 		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
 	} else {
@@ -249,7 +248,7 @@ async function removeAsset(asset: Tab) {
 
 		if (isRemoved) {
 			emit('update-project', props.project.id);
-			removeClosedTab(Number.parseInt(assetId, 10));
+			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
 			logger.info(`${assetName} was removed.`, { showToast: true });
 			return;
 		}

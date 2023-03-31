@@ -30,11 +30,7 @@
 			size="small"
 			@click="emit('open-asset', { assetName: 'Overview', assetType: 'overview' } as Tab)"
 		/>
-		<Accordion
-			v-if="!isEmpty(assets)"
-			:multiple="true"
-			:active-index="[...Array(assets.size ?? 0).keys()]"
-		>
+		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type" :header="capitalize(type)">
 				<Button
 					v-for="tab in tabs"
