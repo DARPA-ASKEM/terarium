@@ -6,7 +6,7 @@
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
 				:loading="extractPetrinetLoading"
-			></Button>
+			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -222,15 +222,16 @@ async function createModelFromCode() {
 	gap: 1rem;
 }
 
-.outline-upload-button {
-	background-color: var(--surface) !important;
-	color: var(--text-color-primary) !important;
-	border: 1px solid var(--surface-border) !important;
+.p-fileupload-choose.p-button.outline-upload-button {
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	color: var(--text-color-primary);
 	width: 100%;
 	font-size: var(--font-body-small);
 }
-.outline-upload-button:hover {
-	background-color: var(--surface-hover) !important;
+.p-fileupload-choose.p-button.p-button.outline-upload-button:hover {
+	background-color: var(--surface-hover);
+	color: var(--text-color-primary);
 }
 
 .ace-editor {
