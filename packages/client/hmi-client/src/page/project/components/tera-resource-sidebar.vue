@@ -30,30 +30,20 @@
 			size="small"
 			@click="emit('open-asset', { assetName: 'Overview', assetType: 'overview' } as Tab)"
 		/>
-		<Accordion v-if="!isEmpty(project?.assets)" :multiple="true">
-			<AccordionTab
-				v-for="(assets, type) in project.assets"
-				:key="type"
-				:header="capitalize(type)"
-				:disabled="isEmpty(assets)"
-			>
+		<Accordion v-if="!isEmpty(assets)" :multiple="true">
+			<AccordionTab v-for="[type, tabs] in assets" :key="type" :header="capitalize(type)">
 				<Button
-					v-for="asset in assets"
-					:key="asset.id"
-					:icon="iconClassname(type)"
-					:label="(asset?.name || asset?.title || asset?.id).toString()"
-					:title="asset?.name || asset?.title"
+					v-for="tab in tabs"
+					:key="tab.assetId"
+					:active="isEqual(tab, openedAssetRoute)"
+					:icon="iconClassname(tab.assetType?.toString() ?? null)"
+					:label="tab.assetName"
+					:title="tab.assetName"
 					class="asset-button"
 					plain
 					text
 					size="small"
-					@click="
-						emit('open-asset', {
-							assetName: (asset?.name || asset?.title || asset?.id).toString(),
-							assetType: type,
-							assetId: asset.id
-						} as Tab)
-					"
+					@click="emit('open-asset', tab as Tab)"
 				/>
 			</AccordionTab>
 		</Accordion>
@@ -89,17 +79,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { logger } from '@/utils/logger';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
 import { deleteAsset, iconClassname } from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+
+type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
@@ -109,53 +100,38 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-asset', 'close-tab']);
 
-const resourcesStore = useResourcesStore();
-
 const isConfirmRemovalModalVisible = ref(false);
 
-/*
-const resources = computed(() => {
-	if (!isEmpty(storedAssets)) {
-		resourceTreeNodes.push({
-			key: 'Overview',
-			label: 'Overview',
-			asset: {
-				assetName: 'Overview',
-				assetType: 'overview',
-				assetId: undefined
-			},
-			selectable: true
-		});
+const assets = computed((): IProjectAssetTabs => {
+	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
 
-		for (let i = 0; i < projectAssetTypes.length; i++) {
-			if (projectAssetTypes[i] == null || storedAssets[projectAssetTypes[i]] == null) continue;
-			const assets: (DocumentAsset & Model & Dataset)[] =
-				Object.values(storedAssets[projectAssetTypes[i]]) ?? [];
+	const projectAssets = props.project?.assets;
+	if (!projectAssets) return tabs;
 
-			for (let j = 0; j < assets.length; j++) {
-				resourceTreeNodes.push({
-					key: j.toString(),
-					label: assets[j]?.name || assets[j]?.title || assets[j]?.id,
-					asset: {
-						// Matches Tab type
-						assetName: assets[j]?.name || assets[j]?.title || assets[j]?.id,
-						assetType: projectAssetTypes[i],
-						assetId:
-							projectAssetTypes[i] === ProjectAssetTypes.DOCUMENTS
-								? assets[j].xdd_uri
-								: assets[j]?.id.toString()
-					},
-					selectable: true
-				});
-			}
+	// Run through all the assets type within the project
+	Object.keys(projectAssets).forEach((type) => {
+		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
+			const projectAssetType = type as ProjectAssetTypes;
+			const typeAssets = projectAssets[projectAssetType].map((asset) => {
+				const assetName = (asset?.name || asset?.title || asset.id).toString();
+				const assetType = asset?.type ?? projectAssetType;
+				const assetId =
+					projectAssetType === ProjectAssetTypes.DOCUMENTS ? asset.xdd_uri : asset?.id.toString();
+				return { assetName, assetType, assetId };
+			}) as Tab[];
+			tabs.set(projectAssetType, new Set(typeAssets));
 		}
-	}
+	});
+
+	console.log(tabs);
+	return tabs;
 });
-*/
 
 function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 	const { assetName, assetId, assetType } = assetToRemove;
+	deleteAsset(props.project.id, assetType as string, assetId);
 
+	/*
 	if (!assetType || !resourcesStore.activeProject || !resourcesStore.activeProjectAssets) {
 		return; // See about removing this check somehow, it may be best to pass the resourceStore from App.vue
 	}
@@ -170,7 +146,7 @@ function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 	}
 
 	// Remove asset from resource storage
-	deleteAsset(resourcesStore.activeProject.id, assetType, asset.id);
+	
 	resourcesStore.activeProjectAssets[assetType] = resourcesStore.activeProjectAssets[
 		assetType
 	].filter(({ id }) => id !== asset.id);
@@ -178,7 +154,7 @@ function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
 	resourcesStore.activeProject.assets[assetType] = resourcesStore.activeProject.assets[
 		assetType
 	].filter((id: string | number) => id !== asset.id);
-
+	*/
 	// If asset to be removed is open in a tab, close it
 	const tabIndex = props.tabs.findIndex((tab: Tab) => isEqual(tab, assetToRemove));
 	if (tabIndex !== undefined) emit('close-tab', tabIndex);
