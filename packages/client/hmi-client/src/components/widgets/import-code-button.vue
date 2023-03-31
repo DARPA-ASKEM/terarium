@@ -9,7 +9,7 @@
 		<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 			<template #header>
 				<h5>
-					Choose file to open from {{ repositoryName
+					Choose file to open from {{ repoOwnerAndName
 					}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
 				</h5>
 			</template>
@@ -20,7 +20,7 @@
 						<b> ..</b>
 					</li>
 					<li
-						v-for="(content, index) in directoryContents"
+						v-for="(content, index) in directoryContent"
 						:key="index"
 						@click="openContent(content)"
 					>
@@ -48,9 +48,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-code']);
 
-const repositoryName = ref('');
+const repoOwnerAndName = ref('');
 const currentDirectory = ref('');
-const directoryContents = ref();
+const directoryContent = ref();
 const isModalVisible = ref(false);
 
 const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
@@ -58,9 +58,9 @@ const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
 async function initializeCodeBrowser() {
 	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
-	repositoryName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
-	directoryContents.value = await getGithubRepositoryContent(
-		repositoryName.value,
+	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
+	directoryContent.value = await getGithubRepositoryContent(
+		repoOwnerAndName.value,
 		currentDirectory.value
 	);
 }
@@ -72,8 +72,8 @@ async function openContent(content?) {
 		const directoryPathArray = currentDirectory.value.split('/');
 		directoryPathArray.pop();
 		currentDirectory.value = directoryPathArray.join('/');
-		directoryContents.value = await getGithubRepositoryContent(
-			repositoryName.value,
+		directoryContent.value = await getGithubRepositoryContent(
+			repoOwnerAndName.value,
 			currentDirectory.value
 		);
 		return;
@@ -82,15 +82,17 @@ async function openContent(content?) {
 	// Open directory
 	if (content.type === 'dir') {
 		currentDirectory.value = content.path;
-		directoryContents.value = await getGithubRepositoryContent(
-			repositoryName.value,
+		directoryContent.value = await getGithubRepositoryContent(
+			repoOwnerAndName.value,
 			currentDirectory.value
 		);
 		return;
 	}
 
 	// Open file in code view
-	const code = await getGithubCode(repositoryName.value, content.path); // Will be pasted into the code editor
+	const code = await getGithubCode(repoOwnerAndName.value, content.path);
+
+	// Will be pasted into the code editor
 	emit(
 		'open-code',
 		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
