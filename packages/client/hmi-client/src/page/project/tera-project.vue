@@ -12,6 +12,7 @@
 					:tabs="tabs"
 					:opened-asset-route="openedAssetRoute"
 					@open-asset="openAsset"
+					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
 					@click="fetchAnnotations()"
 					@remove-asset="removeAsset"
@@ -68,16 +69,7 @@
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
-				<Button
-					label="Open project overview"
-					@click="
-						openAsset({
-							assetName: 'Overview',
-							assetType: 'overview',
-							assetId: undefined
-						})
-					"
-				/>
+				<Button label="Open project overview" @click="openOverview" />
 			</section>
 		</section>
 		<tera-slider-panel
@@ -207,14 +199,16 @@ const openedAssetRoute = computed<Tab>(() => ({
 	assetId: props.assetId
 }));
 
-function openAsset(assetToOpen: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
-	router.push({ name: RouteName.ProjectRoute, params: assetToOpen });
+function openAsset(asset: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
+	router.push({ name: RouteName.ProjectRoute, params: asset });
 
 	if (newCode) {
 		code.value = newCode;
 		// addCreatedAsset(assetToOpen);
 	}
 }
+const openOverview = () =>
+	openAsset({ assetName: 'Overview', assetType: 'overview', assetId: undefined });
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
@@ -366,7 +360,7 @@ section {
 }
 
 .annotation-header .p-button.p-button-secondary {
-	background-color: var(--surface);
+	background-color: var(--surface-section);
 }
 
 .annotation-panel {

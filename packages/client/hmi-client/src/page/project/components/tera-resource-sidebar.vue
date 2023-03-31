@@ -24,11 +24,12 @@
 		<Button
 			class="asset-button"
 			label="Overview"
+			:active="openedAssetRoute.assetType === 'overview'"
 			:icon="iconClassname('overview')"
 			plain
 			text
 			size="small"
-			@click="emit('open-asset', { assetName: 'Overview', assetType: 'overview' } as Tab)"
+			@click="emit('open-overview')"
 		/>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
@@ -94,7 +95,7 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'remove-asset', 'close-tab']);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
 const isRemovalModal = ref(false);
 
