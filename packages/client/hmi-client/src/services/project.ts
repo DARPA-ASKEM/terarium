@@ -135,19 +135,20 @@ async function deleteAsset(
 
 /**
  * Get a project per id
+ * @param projectId - string
+ * @param containingAssetsInformation - boolean - Add the assets information during the same call
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function get(
 	projectId: string,
-	containingAssetsInfomation: boolean = false
+	containingAssetsInformation: boolean = false
 ): Promise<IProject | null> {
 	try {
-		const response = await API.get(`/projects/${projectId}`);
-		const { status, data } = response;
+		const { status, data } = await API.get(`/projects/${projectId}`);
 		if (status !== 200) return null;
 		const project = data as IProject;
 
-		if (project && containingAssetsInfomation) {
+		if (project && containingAssetsInformation) {
 			const assets = await getAssets(projectId);
 			if (assets) {
 				project.assets = assets;
@@ -166,8 +167,7 @@ async function get(
  */
 async function home(): Promise<IProject[] | null> {
 	try {
-		const response = await API.get('/home');
-		const { status, data } = response;
+		const { status, data } = await API.get('/home');
 		if (status !== 200 || !data) return null;
 		return data;
 	} catch (error) {
