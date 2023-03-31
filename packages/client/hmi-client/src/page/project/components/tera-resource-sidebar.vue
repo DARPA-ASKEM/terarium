@@ -31,7 +31,11 @@
 			@click="emit('open-asset', { assetName: 'Overview', assetType: 'overview' } as Tab)"
 		/>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
-			<AccordionTab v-for="[type, tabs] in assets" :key="type" :header="capitalize(type)">
+			<AccordionTab v-for="[type, tabs] in assets" :key="type">
+				<template #header>
+					{{ capitalize(type) }}
+					<aside>({{ tabs.size }})</aside>
+				</template>
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
@@ -143,8 +147,13 @@ header {
 
 ::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
 	font-size: var(--font-body-small);
-	gap: 1rem;
 	padding: 0.5rem 1rem;
+}
+
+::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	margin-left: 0.25rem;
 }
 
 ::v-deep(.asset-button.p-button) {
