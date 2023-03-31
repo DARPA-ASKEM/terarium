@@ -108,10 +108,11 @@
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
 				<DataTable
-					tableStyle="min-width: 50rem"
+					tableStyle="width:auto"
 					class="p-datatable-sm"
 					:value="csvContent"
 					removableSort
+					resizable-columns
 					showGridlines
 				>
 					<Column
@@ -210,7 +211,8 @@ const showAccordion = computed(() =>
 
 .numbered-list {
 	list-style: numbered-list;
-	margin-left: 1rem;
+	margin-left: 2rem;
+	list-style-position: outside;
 }
 ol.numbered-list li::marker {
 	color: var(--text-color-subdued);

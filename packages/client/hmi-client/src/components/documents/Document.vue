@@ -54,10 +54,12 @@
 				</div>
 
 				<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
+				<!--- 
 				<div class="p-input-icon-left">
 					<i class="pi pi-search" />
 					<InputText placeholder="Find in page" class="find-in-page" />
 				</div>
+				-->
 			</div>
 			<div v-bind:class="{ 'main-content': isEditable === true }">
 				<header>
@@ -114,7 +116,6 @@
 									:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 									:lines="previewLineLimit"
 								/>
-								<hr class="horizontal-row" />
 							</div>
 						</div>
 					</AccordionTab>
@@ -136,7 +137,6 @@
 									:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 									:lines="previewLineLimit"
 								/>
-								<hr class="horizontal-row" />
 							</div>
 						</div>
 					</AccordionTab>
@@ -158,7 +158,6 @@
 									:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
 									:lines="previewLineLimit"
 								/>
-								<hr class="horizontal-row" />
 							</div>
 						</div>
 					</AccordionTab>
@@ -168,7 +167,11 @@
 						</template>
 						<div class="constrain-width">
 							<ul>
-								<li class="github-link" v-for="(url, index) in githubUrls" :key="index">
+								<li
+									class="github-link extracted-item"
+									v-for="(url, index) in githubUrls"
+									:key="index"
+								>
 									<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
 									<a :href="url" rel="noreferrer noopener">{{ url }}</a>
 								</li>
@@ -181,7 +184,7 @@
 						</template>
 						<div class="constrain-width">
 							<ul>
-								<li v-for="ex in urlArtifacts" :key="ex.url">
+								<li v-for="ex in urlArtifacts" :key="ex.url" class="extracted-item">
 									<b>{{ ex.resourceTitle }}</b>
 									<div>
 										<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
@@ -201,7 +204,6 @@
 								<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
 								<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 							</div>
-							<hr class="horizontal-row" />
 						</div>
 					</AccordionTab>
 					<AccordionTab v-if="!isEmpty(doc.citationList)" id="References">
@@ -260,7 +262,7 @@ import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
-import InputText from 'primevue/inputtext';
+// import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 const props = defineProps<{
 	assetId: string;
@@ -405,10 +407,14 @@ const openPDF = () => {
 const formatCitation = (obj: { [key: string]: string }) => {
 	let citation: string;
 	if (Object.keys(obj).length <= 1) {
-		citation = obj.unstructured_citation ?? '';
-		citation = citation.replace(/\bhttps?:\/\/\S+/, `<a href=$&>$&</a>`);
+		citation =
+			obj?.unstructured_citation?.replace(/\bhttps?:\/\/\S+/, `<a href=$&>$&</a>`) ??
+			`<a href="https://doi.org/${obj.doi}">${obj.doi}</a>`;
 	} else {
-		citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}, ${obj.doi}`;
+		citation = `${obj.author}, ${obj.year}, "${obj.title}", ${obj.journal}`;
+		if (obj.doi !== undefined) {
+			citation += `, <a href="https://doi.org/${obj.doi}">${obj.doi}</a>`;
+		}
 	}
 	return highlightSearchTerms(citation);
 };
@@ -493,16 +499,12 @@ onMounted(async () => {
 	max-width: var(--constrain-width);
 }
 
-.extracted-image {
-	max-width: 30rem;
+.extracted-item {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
 	border-radius: var(--border-radius);
 }
-
-hr.horizontal-row {
-	border-top: 1px solid var(--surface-border-light);
-	margin-top: 1rem;
-	margin-bottom: 1rem;
+.extracted-image {
+	max-width: 30rem;
 }
 </style>

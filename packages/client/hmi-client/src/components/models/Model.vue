@@ -29,9 +29,7 @@
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<div class="constrain-width">
-					<p v-html="description" />
-				</div>
+				<p v-html="description" class="constrain-width" />
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
