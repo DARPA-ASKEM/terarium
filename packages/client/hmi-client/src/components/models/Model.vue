@@ -200,6 +200,15 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+
+		<Teleport to="body">
+			<ForecastLauncher
+				v-if="showForecastLauncher && model"
+				:model="model"
+				@close="showForecastLauncher = false"
+				@launch-forecast="goToSimulationRunPage"
+			/>
+		</Teleport>
 	</section>
 </template>
 
@@ -232,6 +241,7 @@ import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ModelParameterList from '@/components/models/model-parameter-list.vue';
+import ForecastLauncher from '@/components/models/forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -270,6 +280,15 @@ const isMathMLValid = ref<boolean>(true);
 
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
+const showForecastLauncher = ref(false);
+
+// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
+// const modelMath = ref(String.raw`\begin{align}
+// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
+// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
+// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
+// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
+// \end{align}`);
 
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
@@ -601,6 +620,7 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 
 const router = useRouter();
 const goToSimulationRunPage = () => {
+	showForecastLauncher.value = false;
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {

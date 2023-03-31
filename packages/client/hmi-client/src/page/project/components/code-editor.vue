@@ -2,10 +2,11 @@
 	<div class="code">
 		<div class="controls">
 			<Button
-				label="Extract Model"
+				label="Extract model"
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
-			/>
+				:loading="extractPetrinetLoading"
+			></Button>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
@@ -14,12 +15,6 @@
 				auto
 				chooseLabel="Load File"
 			/>
-			<Button
-				label="Extract petri net"
-				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
-				@click="onExtractGraph"
-				:loading="extractPetrinetLoading"
-			></Button>
 		</div>
 		<v-ace-editor
 			v-model:value="code"
@@ -62,18 +57,20 @@ import '@node_modules/ace-builds/src-noconflict/theme-chrome';
 import { ref, watch, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import API from '@/api/api';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import useResourcesStore from '@/stores/resources';
-
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
 import { createModel } from '@/services/model';
 import { ProjectAssetTypes } from '@/types/Project';
+import { getDocumentById } from '@/services/data';
+import { DocumentAsset } from '@/types/Types';
+import { getDocumentDoi } from '@/utils/data-util';
+import { codeToAcset, findVarsFromText, getlinkedAnnotations } from '@/services/mit-askem';
 
 const props = defineProps({
 	initialCode: {
@@ -108,13 +105,13 @@ watch([graphElement], async () => {
 });
 const emit = defineEmits(['on-model-created']);
 
-const selectedPaper = ref();
+const selectedPaper = ref<DocumentAsset>();
 const createModelLoading = ref(false);
 const extractPetrinetLoading = ref(false);
 const resourcesStore = useResourcesStore();
 const resources = computed(() => {
 	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const storedPapers = storedAssets[ProjectAssetTypes.DOCUMENTS];
+	const storedPapers: DocumentAsset[] = storedAssets[ProjectAssetTypes.DOCUMENTS];
 	if (storedPapers) {
 		const first =
 			'Modelling the COVID-19 epidemic and implementation of population-wide interventions in Italy';
@@ -130,293 +127,6 @@ const resources = computed(() => {
 	}
 	return storedPapers;
 });
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const mockAcset = {
-	S: [
-		{ sname: 'S', uid: 1, mira_ids: '', mira_context: '' },
-		{ sname: 'I', uid: 2, mira_ids: '', mira_context: '' },
-		{ sname: 'D', uid: 3, mira_ids: '', mira_context: '' },
-		{ sname: 'A', uid: 4, mira_ids: '', mira_context: '' },
-		{ sname: 'R', uid: 5, mira_ids: '', mira_context: '' },
-		{ sname: 'T', uid: 6, mira_ids: '', mira_context: '' },
-		{ sname: 'H', uid: 7, mira_ids: '', mira_context: '' },
-		{ sname: 'E', uid: 8, mira_ids: '', mira_context: '' }
-	],
-	T: [
-		{ tname: 'alpha', uid: 10 },
-		{ tname: ' beta', uid: 11 },
-		{ tname: ' gamma', uid: 12 },
-		{ tname: ' delta', uid: 13 },
-		{ tname: ' epsilon', uid: 14 },
-		{ tname: ' mu', uid: 15 },
-		{ tname: ' zeta', uid: 16 },
-		{ tname: ' lamda', uid: 17 },
-		{ tname: ' eta', uid: 18 },
-		{ tname: ' rho', uid: 19 },
-		{ tname: ' theta', uid: 20 },
-		{ tname: ' kappa', uid: 21 },
-		{ tname: ' nu', uid: 22 },
-		{ tname: ' xi', uid: 23 },
-		{ tname: ' sigma', uid: 24 },
-		{ tname: ' tau', uid: 25 }
-	],
-	I: [
-		{ it: 1, is: 1 },
-		{ it: 2, is: 2 },
-		{ it: 3, is: 2 },
-		{ it: 4, is: 2 },
-		{ it: 5, is: 3 },
-		{ it: 6, is: 4 },
-		{ it: 7, is: 4 },
-		{ it: 8, is: 5 },
-		{ it: 9, is: 6 },
-		{ it: 10, is: 2 },
-		{ it: 11, is: 3 },
-		{ it: 12, is: 4 },
-		{ it: 13, is: 5 },
-		{ it: 14, is: 6 }
-	],
-	O: [
-		{ ot: 1, os: 2 },
-		{ ot: 2, os: 3 },
-		{ ot: 3, os: 4 },
-		{ ot: 4, os: 5 },
-		{ ot: 5, os: 8 },
-		{ ot: 6, os: 5 },
-		{ ot: 7, os: 6 },
-		{ ot: 8, os: 7 },
-		{ ot: 9, os: 7 },
-		{ ot: 10, os: 7 },
-		{ ot: 11, os: 7 },
-		{ ot: 12, os: 7 },
-		{ ot: 13, os: 7 },
-		{ ot: 14, os: 8 }
-	]
-};
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const mockPaperText =
-	'Graphical scheme representing the interactions among different stages of infection in the mathematical model SIDARTHE: S,' +
-	'susceptible (uninfected); I, infected (asymptomatic or pauci-symptomatic infected, undetected); D, diagnosed (asymptomatic infected, detected); A,' +
-	'ailing (symptomatic infected, undetected); R, recognized (symptomatic infected, detected); T, threatened (infected with life-threatening symptoms,' +
-	'detected); H, healed (recovered); E, extinct (dead).' +
-	'α, β, γ and δ respectively denote the transmission rate (the probability of' +
-	'disease transmission in a single contact multiplied by the average number' +
-	'of contacts per person) due to contacts between a susceptible subject and an' +
-	'infected, a diagnosed, an ailing or a recognized subject. Typically, α is larger' +
-	'than γ (assuming that people tend to avoid contacts with subjects showing' +
-	'symptoms, even though diagnosis has not been made yet), which in turn is' +
-	'larger than β and δ (assuming that subjects who have been diagnosed are' +
-	'properly isolated). Tese parameters can be modifed by social-distancing' +
-	'policies (for example, closing schools, remote working, lockdown). Te risk' +
-	'of contagion due to threatened subjects, treated in proper ICUs, is assumed' +
-	'negligible.' +
-	'ε and θ capture the probability rate of detection, relative to asymptomatic and' +
-	'symptomatic cases, respectively. Tese parameters, also modifable, refect' +
-	'the level of attention on the disease and the number of tests performed over' +
-	'the population: they can be increased by enforcing a massive contact tracing' +
-	'and testing campaign28. Note that θ is typically larger than ε, as a symptomatic' +
-	'individual is more likely to be tested.' +
-	'ζ and η denote the probability rate at which an infected subject, respectively' +
-	'not aware and aware of being infected, develops clinically relevant symptoms,' +
-	'and are comparable in the absence of specifc treatment. Tese parameters are' +
-	'disease-dependent, but may be partially reduced by improved therapies and' +
-	'acquisition of immunity against the virus.' +
-	'µ and ν respectively denote the rate at which undetected and detected infected' +
-	'subjects develop life-threatening symptoms; they are comparable if there is' +
-	'no known specifc treatment that is efective against the disease, otherwise µ' +
-	'may be larger. Conversely, ν may be larger because infected individuals with' +
-	'more acute symptoms, who have a higher risk of worsening, are more likely to' +
-	'have been diagnosed. Tese parameters can be reduced by means of improved' +
-	'therapies and acquisition of immunity against the virus.' +
-	'τ denotes the mortality rate (for infected subjects with life-threatening symptoms) and can be reduced by means of improved therapies.' +
-	'λ, κ, ξ, ρ and σ denote the rate of recovery for the fve classes of infected subjects; they may difer signifcantly if an appropriate treatment for the disease' +
-	'is known and adopted for diagnosed patients, but are probably comparable' +
-	'otherwise. Tese parameters can be increased thanks to improved treatments' +
-	'and acquisition of immunity against the virus';
-
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const mockAnnotations = [
-	{
-		type: 'variable',
-		name: 'S',
-		id: 'v0',
-		text_annotations: [' Susceptible (uninfected)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'I',
-		id: 'v1',
-		text_annotations: [' Infected (asymptomatic or pauci-symptomatic infected, undetected)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'D',
-		id: 'v2',
-		text_annotations: [' Diagnosed (asymptomatic infected, detected)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'A',
-		id: 'v3',
-		text_annotations: [' Ailing (symptomatic infected, undetected)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'R',
-		id: 'v4',
-		text_annotations: [' Recognized (symptomatic infected, detected)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'T',
-		id: 'v5',
-		text_annotations: [' Threatened (infected with life-threatening symptoms, detected)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'H',
-		id: 'v6',
-		text_annotations: [' Healed (recovered)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'E',
-		id: 'v7',
-		text_annotations: [' Extinct (dead)'],
-		dkg_annotations: [['']]
-	},
-	{
-		type: 'variable',
-		name: 'α',
-		id: 'v8',
-		text_annotations: [
-			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)'
-		],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'β',
-		id: 'v9',
-		text_annotations: [
-			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)'
-		],
-		dkg_annotations: [
-			['doid:0080928', 'dialysis-related amyloidosis'],
-			['vo:0005114', 'β-propiolactone-inactivated SARS-CoV vaccine']
-		]
-	},
-	{
-		type: 'variable',
-		name: 'γ',
-		id: 'v10',
-		text_annotations: [
-			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)'
-		],
-		dkg_annotations: [
-			['askemo:0000013', 'recovery rate'],
-			['vo:0004915', 'vaccine specific interferon-γ immune response']
-		]
-	},
-	{
-		type: 'variable',
-		name: 'δ',
-		id: 'v11',
-		text_annotations: [
-			' Transmission rate (the probability of disease transmission in a single contact multiplied by the average number of contacts per person)ε'
-		],
-		dkg_annotations: [
-			['askemo:0000011', 'progression rate'],
-			['vo:0005123', 'VSVΔG-MERS vaccine']
-		]
-	},
-	{
-		type: 'variable',
-		name: 'θ',
-		id: 'v12',
-		text_annotations: [' probability rate of detection relative to symptomatic cases'],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'ζ',
-		id: 'v13',
-		text_annotations: [
-			' probability rate at which an infected subject not aware of being infected develops clinically relevant symptoms'
-		],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'η',
-		id: 'v14',
-		text_annotations: [
-			' probability rate at which an infected subject aware of being infected develops clinically relevant symptomsμ'
-		],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'ν',
-		id: 'v15',
-		text_annotations: [
-			' Rate at which detected infected subjects develop life-threatening symptoms'
-		],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'τ',
-		id: 'v16',
-		text_annotations: [' Mortality rate for infected subjects with life-threatening symptoms'],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'λ',
-		id: 'v17',
-		text_annotations: [' Rate of recovery for infected subjects'],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'κ',
-		id: 'v18',
-		text_annotations: [' Rate of recovery for infected subjects'],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'ξ',
-		id: 'v19',
-		text_annotations: [' Rate of recovery for infected subjects'],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'ρ',
-		id: 'v20',
-		text_annotations: [' Rate of recovery for infected subjects'],
-		dkg_annotations: []
-	},
-	{
-		type: 'variable',
-		name: 'σ',
-		id: 'v21',
-		text_annotations: [' Rate of recovery for infected subjectsNone'],
-		dkg_annotations: []
-	}
-];
 
 /**
  * File open/add event handler.  Immediately render the contents of the file to the editor
@@ -431,31 +141,12 @@ async function onFileOpen(event) {
 	};
 }
 
-async function onExtractGraph() {
-	extractPetrinetLoading.value = true;
-	// const response = await API.post(`code/to_acset?code=${selectedText.value}`);
-	extractPetrinetLoading.value = false;
-	// acset.value = response.data;
-	acset.value = mockAcset;
-	codeExtractionDialogVisible.value = true;
-}
-
-watch(
-	() => resources.value,
-	() => {
-		selectedPaper.value = resources.value[0];
-	}
-);
-
-/**
- * Send the selected contents of the editor to the backend for persistence and model extraction
- * via TA1
- */
 async function onExtractModel() {
-	logger.info(`Transforming: ${selectedText.value}`);
-	const response = await API.post('/code', selectedText.value);
-	// eslint-disable-next-line
-	alert(JSON.stringify(response.data));
+	extractPetrinetLoading.value = true;
+	const response = await codeToAcset(selectedText.value);
+	extractPetrinetLoading.value = false;
+	acset.value = response;
+	codeExtractionDialogVisible.value = true;
 }
 
 /**
@@ -476,22 +167,33 @@ async function initialize(editorInstance) {
 }
 
 async function createModelFromCode() {
+	createModelLoading.value = true;
 	if (selectedPaper.value) {
-		// createModelLoading.value = true;
-		// const response = await API.post(`/code/annotation/find_text_vars?text=${mockPaperText}`);
-		// createModelLoading.value = false;
+		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
+		if (paperToExtractMetadata) {
+			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
+			const metadata = await findVarsFromText(paperToExtractMetadata.abstractText);
+			const linkAnnotationData = {
+				pyacset: JSON.stringify(acset.value),
+				annotations: JSON.stringify(metadata),
+				info: JSON.stringify(info)
+			};
+			const linkedMetadata = await getlinkedAnnotations(linkAnnotationData);
+			const newModelName = 'New model';
+			const newModel = {
+				name: newModelName,
+				framework: 'Petri Net',
+				content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
+			};
+			const model = await createModel(newModel);
+			if (model) {
+				emit('on-model-created', model.id, newModelName);
+			} else {
+				logger.error(`Something went wrong.`);
+			}
+		}
 	}
-	const modelName = 'New model';
-	const newModel = {
-		name: 'New model',
-		framework: 'Petri Net',
-		content: JSON.stringify(acset.value)
-	};
-	const model = await createModel(newModel);
-	console.log(model);
-	if (model) {
-		emit('on-model-created', model.id, modelName);
-	}
+	createModelLoading.value = false;
 }
 </script>
 
