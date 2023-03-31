@@ -1,25 +1,28 @@
 <template>
 	<div class="code">
 		<div class="controls">
-			<Button
-				label="Extract Model"
-				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
-				@click="onExtractModel"
-			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
 				@uploader="onFileOpen"
 				mode="basic"
 				auto
-				chooseLabel="Load File"
+				chooseLabel="Load file"
+				class="p-button-secondary outline-upload-button"
 			/>
-			<Button
-				label="Extract petri net"
-				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
-				@click="onExtractGraph"
-				:loading="extractPetrinetLoading"
-			></Button>
+			<div class="control-group">
+				<Button
+					label="Extract model"
+					:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
+					@click="onExtractModel"
+				/>
+				<Button
+					label="Extract Petri net"
+					:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
+					@click="onExtractGraph"
+					:loading="extractPetrinetLoading"
+				></Button>
+			</div>
 		</div>
 		<v-ace-editor
 			v-model:value="code"
@@ -27,6 +30,7 @@
 			lang="python"
 			theme="chrome"
 			style="height: 100%; width: 100%"
+			class="ace-editor"
 		/>
 	</div>
 	<Dialog
@@ -501,13 +505,36 @@ async function createModelFromCode() {
 	flex-direction: column;
 	flex: 1;
 	padding-top: 1rem;
+	background-color: var(--surface-0);
 }
 
 .controls {
-	margin-left: 40px;
-	margin-bottom: 10px;
+	margin-left: 3rem;
+	margin-right: 1rem;
+	margin-bottom: 1rem;
 	display: flex;
 	gap: 10px;
+	justify-content: space-between;
+}
+
+.control-group {
+	display: flex;
+	gap: 1rem;
+}
+
+.outline-upload-button {
+	background-color: var(--surface) !important;
+	color: var(--text-color-primary) !important;
+	border: 1px solid var(--surface-border) !important;
+	width: 100%;
+	font-size: var(--font-body-small);
+}
+.outline-upload-button:hover {
+	background-color: var(--surface-hover) !important;
+}
+
+.ace-editor {
+	border-top: 1px solid var(--surface-border-light);
 }
 
 .graph-element {
