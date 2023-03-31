@@ -1,5 +1,4 @@
 import API, { Poller } from '@/api/api';
-import { logger } from '@/utils/logger';
 
 export async function codeToAcset(code: string) {
 	const response = await API.post(`code/to_acset`, code);
@@ -20,7 +19,6 @@ export async function findVarsFromText(text: string) {
 					error: null
 				};
 			}
-			logger.info(`Extracting variable metadata from text...`);
 			return {
 				data: null,
 				progress: null,
