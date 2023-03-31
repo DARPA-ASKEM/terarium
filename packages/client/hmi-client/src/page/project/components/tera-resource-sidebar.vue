@@ -3,8 +3,8 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!openedAssetRoute.assetId || openedAssetRoute.assetName === 'overview'"
-				v-tooltip="`Remove ${openedAssetRoute.assetName}`"
+				:disabled="!activeTab.assetId || activeTab.assetName === 'overview'"
+				v-tooltip="`Remove ${activeTab.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isRemovalModal = true"
 			/>
@@ -24,7 +24,7 @@
 		<Button
 			class="asset-button"
 			label="Overview"
-			:active="openedAssetRoute.assetType === 'overview'"
+			:active="activeTab.assetType === 'overview'"
 			:icon="iconClassname('overview')"
 			plain
 			text
@@ -40,7 +40,7 @@
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="isEqual(tab, openedAssetRoute)"
+					:active="isEqual(tab, activeTab)"
 					:icon="iconClassname(tab.assetType?.toString() ?? null)"
 					:label="tab.assetName"
 					:title="tab.assetName"
@@ -48,7 +48,7 @@
 					plain
 					text
 					size="small"
-					@click="emit('open-asset', tab as Tab)"
+					@click="emit('open-asset', tab)"
 				/>
 			</AccordionTab>
 		</Accordion>
@@ -63,7 +63,7 @@
 				</template>
 				<template #default>
 					<p>
-						Removing <em>{{ openedAssetRoute.assetName }}</em> will permanently remove it from
+						Removing <em>{{ activeTab.assetName }}</em> will permanently remove it from
 						{{ project.name }}.
 					</p>
 				</template>
@@ -91,7 +91,7 @@ type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
-	openedAssetRoute: Tab;
+	activeTab: Tab;
 	tabs: Tab[];
 }>();
 
@@ -123,7 +123,7 @@ const assets = computed((): IProjectAssetTabs => {
 	return tabs;
 });
 
-function removeAsset(asset = props.openedAssetRoute) {
+function removeAsset(asset = props.activeTab) {
 	emit('remove-asset', asset);
 	isRemovalModal.value = false;
 }
