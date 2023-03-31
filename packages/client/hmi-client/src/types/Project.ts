@@ -12,7 +12,7 @@ export enum ProjectAssetTypes {
 	CODE = 'code'
 }
 
-export const isProjectAssetTypes = (type: string): boolean =>
+export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
 	Object.values(ProjectAssetTypes).includes(type as ProjectAssetTypes);
 
 export type ProjectAssets = {

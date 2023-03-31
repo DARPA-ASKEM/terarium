@@ -14,6 +14,7 @@
 					@open-asset="openAsset"
 					@close-tab="removeClosedTab"
 					@click="fetchAnnotations()"
+					@remove-asset="removeAsset"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -171,7 +172,7 @@ import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult2.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { formatMillisToDate } from '@/utils/date';
 
@@ -237,6 +238,24 @@ async function openNewModelFromCode(modelId, modelName) {
 	});
 }
 
+async function removeAsset(asset: Tab) {
+	const { assetName, assetId, assetType } = asset;
+
+	// Delete only Asset with an ID and of ProjectAssetType
+	if (assetId && assetType && isProjectAssetTypes(assetType) && assetType !== 'overview') {
+		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
+
+		if (isRemoved) {
+			// TODO - Refetch the project to update the list
+			removeClosedTab(Number.parseInt(assetId, 10));
+			logger.info(`${assetName} was removed.`, { showToast: true });
+			return;
+		}
+	}
+
+	logger.error(`Failed to remove ${assetName}`, { showToast: true });
+}
+
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
 
@@ -269,7 +288,6 @@ watch(
 // FIXME:
 // - Need to establish terarium artifact types
 // - Move to service layer
-// - Those should be named `notes` not `annotations`
 const fetchAnnotations = async () => {
 	const response = await API.get('/annotations', {
 		params: {

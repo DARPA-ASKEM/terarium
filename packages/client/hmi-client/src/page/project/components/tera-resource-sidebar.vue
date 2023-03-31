@@ -3,10 +3,10 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!openedAssetRoute.assetId"
+				:disabled="!openedAssetRoute.assetId || openedAssetRoute.assetName === 'overview'"
 				v-tooltip="`Remove ${openedAssetRoute.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="isConfirmRemovalModalVisible = true"
+				@click="isRemovalModal = true"
 			/>
 			<Button
 				icon="pi pi-file"
@@ -47,13 +47,10 @@
 				/>
 			</AccordionTab>
 		</Accordion>
-		<div v-else class="loading-spinner">
-			<div><i class="pi pi-spin pi-spinner" /></div>
-		</div>
 		<Teleport to="body">
 			<modal
-				v-if="isConfirmRemovalModalVisible"
-				@modal-mask-clicked="isConfirmRemovalModalVisible = false"
+				v-if="isRemovalModal"
+				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
 			>
 				<template #header>
@@ -67,11 +64,7 @@
 				</template>
 				<template #footer>
 					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
-					<Button
-						label="Cancel"
-						class="p-button-secondary"
-						@click="isConfirmRemovalModalVisible = false"
-					/>
+					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
 				</template>
 			</modal>
 		</Teleport>
@@ -80,11 +73,10 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { logger } from '@/utils/logger';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
-import { deleteAsset, iconClassname } from '@/services/project';
+import { iconClassname } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -98,9 +90,9 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'close-tab']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'close-tab']);
 
-const isConfirmRemovalModalVisible = ref(false);
+const isRemovalModal = ref(false);
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -123,44 +115,11 @@ const assets = computed((): IProjectAssetTabs => {
 		}
 	});
 
-	console.log(tabs);
 	return tabs;
 });
 
-function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
-	const { assetName, assetId, assetType } = assetToRemove;
-	deleteAsset(props.project.id, assetType as string, assetId);
-
-	/*
-	if (!assetType || !resourcesStore.activeProject || !resourcesStore.activeProjectAssets) {
-		return; // See about removing this check somehow, it may be best to pass the resourceStore from App.vue
-	}
-
-	const asset = resourcesStore.activeProjectAssets[assetType].find((a) =>
-		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id.toString() === assetId
-	);
-
-	if (!asset) {
-		logger.error('Failed to remove asset');
-		return;
-	}
-
-	// Remove asset from resource storage
-	
-	resourcesStore.activeProjectAssets[assetType] = resourcesStore.activeProjectAssets[
-		assetType
-	].filter(({ id }) => id !== asset.id);
-	// Remove also from the local cache
-	resourcesStore.activeProject.assets[assetType] = resourcesStore.activeProject.assets[
-		assetType
-	].filter((id: string | number) => id !== asset.id);
-	*/
-	// If asset to be removed is open in a tab, close it
-	const tabIndex = props.tabs.findIndex((tab: Tab) => isEqual(tab, assetToRemove));
-	if (tabIndex !== undefined) emit('close-tab', tabIndex);
-
-	isConfirmRemovalModalVisible.value = false;
-	logger.info(`${assetName} was removed.`);
+function removeAsset(asset = props.openedAssetRoute) {
+	emit('remove-asset', asset);
 }
 </script>
 

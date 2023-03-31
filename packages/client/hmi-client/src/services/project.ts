@@ -113,16 +113,24 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 
 /**
  * Delete a project asset
- * @projectId string - represents the project id wherein the asset will be added
- * @assetType string - represents the type of asset to be added, e.g., 'documents'
- * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
- * @return any|null - some result if success, or null if none returned by API
+ * @projectId IProject["id"] - represents the project id wherein the asset will be added
+ * @assetType ProjectAssetTypes - represents the type of asset to be added, e.g., 'documents'
+ * @assetId string | number - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
+ * @return boolean
  */
-async function deleteAsset(projectId: string, assetsType: string, assetId) {
-	// FIXME: handle cases where asset does not exist
-	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
-	const response = await API.delete(url);
-	return response?.data ?? null;
+async function deleteAsset(
+	projectId: IProject['id'],
+	assetsType: ProjectAssetTypes,
+	assetId: string | number
+): Promise<boolean> {
+	try {
+		const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
+		const { status } = await API.delete(url);
+		return status >= 200 && status < 300;
+	} catch (error) {
+		logger.error(error);
+		return false;
+	}
 }
 
 /**
