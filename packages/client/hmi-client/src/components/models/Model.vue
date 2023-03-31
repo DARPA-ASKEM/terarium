@@ -55,12 +55,14 @@
 								>
 									<section class="math-editor-container">
 										<tera-math-editor
-											:latex-equation="equationLatex"
-											:show-dev-options="true"
 											:is-editable="isEditable"
+											:latex-equation="equationLatex"
+											:is-editing-eq="isEditingEQ"
+											:is-math-ml-valid="isMathMLValid"
 											:math-mode="MathEditorModes.LIVE"
-											@equation-updated="updateLatexFormula"
-											@mathml-updated="updatePetriFromMathML"
+											@cancel-editing="cancelEditng"
+											@equation-updated="setNewLatexFormula"
+											@validate-mathml="validateMathML"
 										></tera-math-editor>
 									</section>
 								</SplitterPanel>
@@ -202,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty } from 'lodash';
+import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -221,6 +223,7 @@ import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -256,12 +259,14 @@ const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
+const isEditingEQ = ref<boolean>(false);
 const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
 const equationLatex = ref<string>('');
-const equationML = ref<string>('');
-const equationOriginal = ref<string>('');
+const equationLatexOriginal = ref<string>('');
+const equationLatexNew = ref<string>('');
+const isMathMLValid = ref<boolean>(true);
 
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
@@ -269,12 +274,12 @@ const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
 const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(30);
-const equationPanelMaxSize = ref<number>(50);
+const equationPanelMinSize = ref<number>(1);
+const equationPanelMaxSize = ref<number>(99);
 
 const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(40);
-const mathPanelMaxSize = ref<number>(70);
+const mathPanelMinSize = ref<number>(1);
+const mathPanelMaxSize = ref<number>(99);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -332,33 +337,43 @@ const onVariableSelected = (variable: string) => {
 	if (variable) {
 		if (variable === selectedVariable.value) {
 			selectedVariable.value = '';
-			equationLatex.value = equationOriginal.value;
+			equationLatex.value = equationLatexOriginal.value;
 		} else {
 			selectedVariable.value = variable;
-			equationLatex.value = equationOriginal.value.replaceAll(
+			equationLatex.value = equationLatexOriginal.value.replaceAll(
 				selectedVariable.value,
 				String.raw`{\color{red}${variable}}`
 			);
 		}
 	} else {
-		equationLatex.value = equationOriginal.value;
+		equationLatex.value = equationLatexOriginal.value;
 	}
 };
 
 const onStateVariableClick = () => {
 	if (selectedRow.value) {
-		equationLatex.value = equationOriginal.value.replaceAll(
+		equationLatex.value = equationLatexOriginal.value.replaceAll(
 			selectedRow.value.sname,
 			String.raw`{\color{red}${selectedRow.value.sname}}`
 		);
 	} else {
-		equationLatex.value = equationOriginal.value;
+		equationLatex.value = equationLatexOriginal.value;
 	}
+};
+
+const setNewLatexFormula = (formulaString: string) => {
+	equationLatexNew.value = formulaString;
 };
 
 const updateLatexFormula = (formulaString: string) => {
 	equationLatex.value = formulaString;
-	equationOriginal.value = formulaString;
+	equationLatexOriginal.value = formulaString;
+};
+
+const cancelEditng = () => {
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
+	// updateLatexFormula(equationLatexOriginal.value);
 };
 
 const relatedTerariumModels = computed(
@@ -515,22 +530,74 @@ watch(
 	{ deep: true }
 );
 
-const updatePetriFromMathML = (mathmlString: string) => {
-	equationML.value = mathmlString;
+const updatePetri = async (m: PetriNet) => {
+	// equationML.value = mathmlString;
+	// Convert petri net into a graph
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
+	// Create renderer
+	renderer = new PetrinetRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: false,
+		useStableZoomPan: true,
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
+	});
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		renderer?.addEdge(d.source, d.target);
+	});
+
+	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+		if (!renderer?.editMode) return;
+		eventX = pos.x;
+		eventY = pos.y;
+		menu.value.toggle(evt);
+	});
+
+	// Render graph
+	await renderer?.setData(graphData);
+	await renderer?.render();
+	updateLatexFormula(equationLatexNew.value);
 };
 
-// update petri if the mathml has changed - should only happen when something is updated
-watch(
-	() => [equationML.value],
-	async (newValue, oldValue) => {
-		if (newValue !== oldValue && oldValue[0] !== '') {
-			const cleanedMathML = separateEquations(newValue[0] as string);
+const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
+	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
+	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
+};
+
+const validateMathML = async (mathMlString: string, editMode: boolean) => {
+	isEditingEQ.value = true;
+	isMathMLValid.value = false;
+	const cleanedMathML = separateEquations(mathMlString);
+	if (mathMlString === '') {
+		logger.error(
+			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
+		);
+	}
+	if (!editMode) {
+		try {
 			const newPetri = await mathmlToPetri(cleanedMathML);
-			// TODO: update model
-			console.log('cleanedMathML', cleanedMathML, newPetri);
+			if (
+				(isArray(newPetri) && newPetri.length > 0) ||
+				(!isArray(newPetri) && Object.keys(newPetri).length > 0 && hasNoEmptyKeys(newPetri))
+			) {
+				isMathMLValid.value = true;
+				isEditingEQ.value = false;
+				updatePetri(newPetri);
+			} else {
+				logger.error(
+					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
+				);
+			}
+		} catch (e) {
+			isMathMLValid.value = false;
 		}
 	}
-);
+};
 
 const router = useRouter();
 const goToSimulationRunPage = () => {

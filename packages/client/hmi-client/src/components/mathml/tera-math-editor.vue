@@ -2,20 +2,20 @@
 	<section class="controls">
 		<span v-if="props.isEditable" class="equation-edit-button">
 			<Button
-				v-if="isEditingEQ"
+				v-if="isEditingEq"
 				@click="cancelEditEquation"
 				label="Cancel"
 				class="p-button-sm p-button-outlined edit-button"
 			/>
 			<Button
-				@click="toggleEditEquationMode"
-				:label="isEditingEQ ? 'Save equation' : 'Edit equation'"
+				@click="toggleEditEquation"
+				:label="isEditingEq ? 'Save equation' : 'Edit equation'"
 				class="p-button-sm p-button-outlined edit-button"
 			/>
 		</span>
 	</section>
 	<section class="math-editor">
-		<section v-if="props.showDevOptions" class="dev-options">
+		<section v-if="showDevOptions" class="dev-options">
 			<div style="align-self: center">[Math Renderer]</div>
 			<div class="math-options">
 				<label>
@@ -33,8 +33,9 @@
 				class="mathlive-equation"
 				ref="mathLiveField"
 				virtual-keyboard-mode="false"
-				:disabled="!isEditingEQ"
-				><slot v-if="props.mathMode === MathEditorModes.LIVE"></slot
+				:disabled="!isEditingEq"
+				:style="{ borderColor: isMathMlValid ? 'inherit' : 'red' }"
+				><slot v-if="mathMode === MathEditorModes.LIVE"></slot
 			></math-field>
 		</section>
 		<section class="mathjax-container" v-else-if="mathMode === MathEditorModes.JAX">
@@ -45,7 +46,7 @@
 				type="text"
 				rows="2"
 				aria-label="mathjax"
-				:disabled="!isEditingEQ"
+				:disabled="!isEditingEq"
 				autoResize
 			/>
 			<div><vue-mathjax :formula="jaxEquationString" /></div>
@@ -65,14 +66,13 @@ import Button from 'primevue/button';
 const mathLiveField = ref<Mathfield | null>(null);
 const latexEquation = ref<string | undefined>('');
 const jaxEquation = ref<string | undefined>('');
-const isEditingEQ = ref<boolean>(false);
 const mathMode = ref<string | null>(null);
 
 const jaxEquationString = computed((): string =>
 	latexEquation.value ? `$$${latexEquation.value}$$` : ''
 );
 
-const emit = defineEmits(['equation-updated', 'mathml-updated']);
+const emit = defineEmits(['equation-updated', 'validate-mathml', 'cancel-editing']);
 
 const props = defineProps({
 	// LaTeX formula to be populated
@@ -90,21 +90,22 @@ const props = defineProps({
 		type: Boolean,
 		default: true
 	},
+	// Show edit button
+	isEditingEq: {
+		type: Boolean,
+		default: true
+	},
 	// Show the renderer selection box
 	showDevOptions: {
 		type: Boolean,
 		default: false
+	},
+	// check if the mathml is valid
+	isMathMlValid: {
+		type: Boolean,
+		default: true
 	}
 });
-
-const updateMathLiveValue = () => {
-	latexEquation.value = mathLiveField.value?.getValue('latex-unstyled');
-
-	emit('equation-updated', latexEquation.value);
-	if (!latexEquation.value?.includes(`color`)) {
-		emit('mathml-updated', mathLiveField.value?.getValue('math-ml'));
-	}
-};
 
 const getLaTeX = (equationString: string): string => {
 	if (isMathML(equationString)) {
@@ -119,10 +120,6 @@ const getLaTeX = (equationString: string): string => {
 	return equationString;
 };
 
-const updateMathJaxValue = () => {
-	emit('equation-updated', jaxEquation.value);
-};
-
 onMounted(() => {
 	if (props.mathMode) {
 		mathMode.value = props.mathMode;
@@ -132,13 +129,10 @@ onMounted(() => {
 onUpdated(() => {
 	if (mathMode.value === MathEditorModes.LIVE) {
 		mathLiveField.value?.setValue(latexEquation.value);
-		if (!latexEquation.value?.includes(`color`)) {
-			emit('mathml-updated', mathLiveField.value?.getValue('math-ml'));
-		}
 	}
 });
 
-const updateEquation = () => {
+const renderEquations = () => {
 	if (mathMode.value === MathEditorModes.LIVE) {
 		mathLiveField.value?.setValue(latexEquation.value, { suppressChangeNotifications: true });
 	} else if (mathMode.value === 'mathJAX') {
@@ -150,34 +144,32 @@ watch(
 	() => mathMode.value,
 	(newValue, oldValue) => {
 		if (newValue !== oldValue) {
-			updateEquation();
+			renderEquations();
 		}
 	}
 );
 
 watch(
 	() => props.latexEquation,
-	(newValue, oldValue) => {
-		if (newValue !== oldValue) {
-			latexEquation.value = getLaTeX(newValue);
-			updateEquation();
-		}
+	(newValue) => {
+		latexEquation.value = getLaTeX(newValue);
+		renderEquations();
 	}
 );
 
-const toggleEditEquationMode = async () => {
-	isEditingEQ.value = !isEditingEQ.value;
-	if (!isEditingEQ.value) {
-		if (mathMode.value === MathEditorModes.JAX) {
-			updateMathJaxValue();
-		} else if (mathMode.value === MathEditorModes.LIVE) {
-			updateMathLiveValue();
-		}
+const toggleEditEquation = () => {
+	// save mode
+	if (props.isEditingEq) {
+		emit('equation-updated', mathLiveField.value?.getValue('latex-unstyled')); // set the temp equation
+		emit('validate-mathml', mathLiveField.value?.getValue('math-ml'));
+	} else {
+		// editing
+		emit('validate-mathml', mathLiveField.value?.getValue('math-ml'), true);
 	}
 };
 
-const cancelEditEquation = async () => {
-	isEditingEQ.value = false;
+const cancelEditEquation = () => {
+	emit('cancel-editing', true);
 };
 </script>
 
@@ -216,6 +208,7 @@ math-field[disabled] {
 	align-items: center;
 	justify-content: center;
 	max-width: 100%;
+	border-color: green;
 }
 
 .edit-button {
