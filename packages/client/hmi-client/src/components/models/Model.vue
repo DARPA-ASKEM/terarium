@@ -451,7 +451,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 // Model editor context menu
 const contextMenuItems = ref([
 	{
-		label: 'Add State',
+		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
@@ -460,7 +460,7 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Add Transition',
+		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {

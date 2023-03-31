@@ -431,7 +431,7 @@ onMounted(async () => {
 
 .content-navigator {
 	padding: 1rem;
-	padding-top: 8rem;
+	padding-top: 8.5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 3rem;
