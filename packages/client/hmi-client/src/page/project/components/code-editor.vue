@@ -509,7 +509,7 @@ async function createModelFromCode() {
 }
 
 .controls {
-	margin-left: 3rem;
+	margin-left: 1rem;
 	margin-right: 1rem;
 	margin-bottom: 1rem;
 	display: flex;
