@@ -13,7 +13,13 @@
 	/>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" :project="project" />
+			<component
+				class="page"
+				ref="pageRef"
+				:is="Component"
+				:project="project"
+				@update-project="fetchProject"
+			/>
 		</router-view>
 	</main>
 	<footer>

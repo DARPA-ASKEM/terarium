@@ -184,6 +184,8 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes | 'overview' | '';
 }>();
 
+const emit = defineEmits(['update-project']);
+
 const tabStore = useTabStore();
 const router = useRouter();
 const resources = useResourcesStore();
@@ -246,7 +248,7 @@ async function removeAsset(asset: Tab) {
 		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
 
 		if (isRemoved) {
-			// TODO - Refetch the project to update the list
+			emit('update-project', props.project.id);
 			removeClosedTab(Number.parseInt(assetId, 10));
 			logger.info(`${assetName} was removed.`, { showToast: true });
 			return;

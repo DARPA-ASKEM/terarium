@@ -120,6 +120,7 @@ const assets = computed((): IProjectAssetTabs => {
 
 function removeAsset(asset = props.openedAssetRoute) {
 	emit('remove-asset', asset);
+	isRemovalModal.value = false;
 }
 </script>
 
