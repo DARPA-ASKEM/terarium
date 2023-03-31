@@ -88,6 +88,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('rx', '6')
 			.attr('ry', '6')
 			.style('fill', '#FFF')
+			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
 
@@ -128,6 +129,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('text')
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', '#FFF')
+			.style('stroke-width', '6px')
+			.style('stroke-linecap', 'butt')
+			.style('stroke-linejoin', 'matter')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
 			.text((d) => d.label);
 
 		// species
@@ -137,7 +145,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', '#FFF')
 			.attr('stroke', 'var(--petri-nodeBorder)')
-			.attr('stroke-width', 1);
+			.attr('stroke-width', 1)
+			.style('cursor', 'pointer');
 
 		// species drag handles
 		const speciesHandles = [
@@ -162,6 +171,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('text')
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', '#FFF')
+			.style('stroke-width', '6px')
+			.style('stroke-linecap', 'butt')
+			.style('stroke-linejoin', 'matter')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
 			.text((d) => d.label);
 	}
 
@@ -190,10 +206,14 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.append('text')
 				.classed('multi-edge-label', true)
 				.attr('x', point.x)
-				.attr('y', point.y)
-				.attr('stroke', null)
-				.attr('fill', '#000')
+				.attr('y', point.y + 6)
 				.style('font-size', 18)
+				.style('paint-order', 'stroke')
+				.style('stroke', 'var(--gray-50)')
+				.style('stroke-width', '6px')
+				.style('stroke-linecap', 'butt')
+				.style('stroke-linejoin', 'matter')
+				.style('fill', 'var(--text-color-primary')
 				.text((d) => d.data?.numEdges as number);
 		});
 	}
@@ -219,7 +239,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				'style',
 				`width:${
 					w * 0.8
-				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid var(--primary-color); text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%);`
+				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid transparent; text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%);`
 			)
 			.attr('value', selection.datum().label);
 	}

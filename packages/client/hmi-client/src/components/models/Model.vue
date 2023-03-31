@@ -455,7 +455,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('S', 'test', { x: eventX, y: eventY });
+				renderer.addNode('S', '?', { x: eventX, y: eventY });
 			}
 		}
 	},
@@ -464,7 +464,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('T', 'test', { x: eventX, y: eventY });
+				renderer.addNode('T', '?', { x: eventX, y: eventY });
 			}
 		}
 	}
