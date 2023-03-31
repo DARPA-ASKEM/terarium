@@ -73,6 +73,7 @@ const addResourcesToProject = async (projectId: string) => {
 				await ProjectService.addAsset(projectId, assetsType, documentId);
 
 				// update local copy of project assets
+				// @ts-ignore
 				validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
 				resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
 			}
@@ -85,6 +86,7 @@ const addResourcesToProject = async (projectId: string) => {
 			await ProjectService.addAsset(projectId, assetsType, modelId);
 
 			// update local copy of project assets
+			// @ts-ignore
 			validProject.value?.assets.models.push(modelId);
 			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(selectedItem);
 		}
@@ -96,6 +98,7 @@ const addResourcesToProject = async (projectId: string) => {
 			await ProjectService.addAsset(projectId, assetsType, datasetId);
 
 			// update local copy of project assets
+			// @ts-ignore
 			validProject.value?.assets.datasets.push(datasetId);
 			resources.activeProjectAssets?.[ProjectAssetTypes.DATASETS].push(selectedItem);
 		}
