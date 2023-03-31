@@ -10,7 +10,7 @@
 				<tera-resource-sidebar
 					:project="project"
 					:tabs="tabs"
-					:opened-asset-route="openedAssetRoute"
+					:active-tab="openedAssetRoute"
 					@open-asset="openAsset"
 					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
