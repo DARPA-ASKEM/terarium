@@ -20,7 +20,7 @@
 						<b> ..</b>
 					</li>
 					<li
-						v-for="(content, index) in directoryContents"
+						v-for="(content, index) in directoryContent"
 						:key="index"
 						@click="openContent(content)"
 					>
@@ -40,7 +40,7 @@ import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
-import API from '@/api/api';
+import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
 
 const props = defineProps<{
 	urlString: string;
@@ -50,26 +50,19 @@ const emit = defineEmits(['open-code']);
 
 const repoOwnerAndName = ref('');
 const currentDirectory = ref('');
-const directoryContents = ref();
+const directoryContent = ref();
 const isModalVisible = ref(false);
 
 const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
 
-async function getGithubRepositoryContent() {
-	const response = await API.get('/code/get_repo_content', {
-		params: {
-			repoOwnerAndName: repoOwnerAndName.value,
-			path: currentDirectory.value
-		}
-	});
-	directoryContents.value = response.data;
-}
-
-function initializeCodeBrowser() {
+async function initializeCodeBrowser() {
 	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
 	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
-	getGithubRepositoryContent();
+	directoryContent.value = await getGithubRepositoryContent(
+		repoOwnerAndName.value,
+		currentDirectory.value
+	);
 }
 
 // Content as in file or directory
@@ -79,25 +72,25 @@ async function openContent(content?) {
 		const directoryPathArray = currentDirectory.value.split('/');
 		directoryPathArray.pop();
 		currentDirectory.value = directoryPathArray.join('/');
-		getGithubRepositoryContent();
+		directoryContent.value = await getGithubRepositoryContent(
+			repoOwnerAndName.value,
+			currentDirectory.value
+		);
 		return;
 	}
 
 	// Open directory
 	if (content.type === 'dir') {
 		currentDirectory.value = content.path;
-		getGithubRepositoryContent();
+		directoryContent.value = await getGithubRepositoryContent(
+			repoOwnerAndName.value,
+			currentDirectory.value
+		);
 		return;
 	}
 
 	// Open file in code view
-	const response = await API.get('/code/get_code', {
-		params: {
-			repoOwnerAndName: repoOwnerAndName.value,
-			path: content.path
-		}
-	});
-	const code = response.data;
+	const code = await getGithubCode(repoOwnerAndName.value, content.path);
 
 	// Will be pasted into the code editor
 	emit(

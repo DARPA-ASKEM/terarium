@@ -102,7 +102,7 @@ public class CodeResource {
 	}
 
 	@GET
-	@Path("/get_repo_content")
+	@Path("/repo_content")
 	public Response getGithubRepositoryContent(
 		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path
@@ -111,7 +111,7 @@ public class CodeResource {
 	}
 
 	@GET
-	@Path("/get_code")
+	@Path("/repo_file_content")
 	public String getGithubCode(
 		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path
