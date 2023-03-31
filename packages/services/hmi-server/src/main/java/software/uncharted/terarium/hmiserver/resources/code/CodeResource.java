@@ -7,10 +7,13 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
 import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
+import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
+import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -23,13 +26,19 @@ import java.util.List;
 @Tag(name = "Code REST Endpoint")
 public class CodeResource {
 	@RestClient
+	GithubProxy githubProxy;
+
+	@RestClient
+	JsDelivrProxy jsdelivrProxy;
+
+	@RestClient
+	MitProxy mitProxy;
+
+	@RestClient
 	SkemaProxy skemaProxy;
 
 	@RestClient
 	SkemaRustProxy skemaRustProxy;
-
-	@RestClient
-	MitProxy mitProxy;
 
 	/**
 	 * Stores a model from a code snippit
@@ -92,4 +101,21 @@ public class CodeResource {
 			.build();
 	}
 
+	@GET
+	@Path("/repo_content")
+	public Response getGithubRepositoryContent(
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
+		@QueryParam("path") final String path
+	) {
+		return githubProxy.getGithubRepositoryContent(repoOwnerAndName, path);
+	}
+
+	@GET
+	@Path("/repo_file_content")
+	public String getGithubCode(
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
+		@QueryParam("path") final String path
+	) {
+		return jsdelivrProxy.getGithubCode(repoOwnerAndName, path);
+	}
 }

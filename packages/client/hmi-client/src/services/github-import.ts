@@ -1,51 +1,28 @@
+import API from '@/api/api';
 import { logger } from '@/utils/logger';
 
-// A header might be necessary depending on the request frequency
-// const header = {
-// 	Authorization: `Bearer ${import.meta.env.VITE_CR_PAT}`
-// };
-const requestOptions = {
-	method: 'GET'
-	// header
-};
-
-// Might be useful if we want to display some other information about the repository
-export async function getGithubRepositoryAttributes(repositoryName: string) {
+export async function getGithubRepositoryContent(repoOwnerAndName: string, path: string) {
 	try {
-		const response = await fetch(`https://api.github.com/repos/${repositoryName}`, requestOptions);
-		const result = await response.json();
-		if (!response.ok) return null;
-		return result;
+		const response = await API.get('/code/repo_content', {
+			params: { repoOwnerAndName, path }
+		});
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
 	} catch (error) {
 		logger.error(error);
 		return null;
 	}
 }
 
-export async function getGithubRepositoryContent(repositoryName: string, path: string) {
+export async function getGithubCode(repoOwnerAndName: string, path: string) {
 	try {
-		const response = await fetch(
-			`https://api.github.com/repos/${repositoryName}/contents/${path}`,
-			requestOptions
-		);
-		const result = await response.json();
-		if (!response.ok) return null;
-		return result;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
-export async function getGithubCode(repositoryName: string, path: string) {
-	try {
-		const response = await fetch(
-			`https://cdn.jsdelivr.net/gh/${repositoryName}@latest/${path}`,
-			requestOptions
-		);
-		const result = await response.text();
-		if (!response.ok) return null;
-		return result;
+		const response = await API.get('/code/repo_file_content', {
+			params: { repoOwnerAndName, path }
+		});
+		const { status, data } = response;
+		if (status !== 200) return null;
+		return data ?? null;
 	} catch (error) {
 		logger.error(error);
 		return null;
