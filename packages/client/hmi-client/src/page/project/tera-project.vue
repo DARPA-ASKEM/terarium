@@ -199,8 +199,8 @@ const openedAssetRoute = computed<Tab>(() => ({
 	assetId: props.assetId
 }));
 
-const getXDDuri = (assetId: Tab['assetId']) =>
-	ProjectService.getDocumentAssetXddUri(props?.project, assetId);
+const getXDDuri = (assetId: Tab['assetId']): string =>
+	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
 function openAsset(asset: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
 	router.push({ name: RouteName.ProjectRoute, params: asset });
