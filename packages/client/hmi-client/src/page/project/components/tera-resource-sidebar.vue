@@ -193,6 +193,10 @@ header {
 	padding: 0.375rem 1rem;
 }
 
+::v-deep(.asset-button.p-button[active='true']) {
+	background-color: var(--surface-highlight);
+}
+
 ::v-deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
