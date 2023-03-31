@@ -104,18 +104,18 @@ public class CodeResource {
 	@GET
 	@Path("/get_repo_content")
 	public Response getGithubRepositoryContent(
-		@QueryParam("repositoryName") final String repositoryName,
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path
 	) {
-		return githubProxy.getGithubRepositoryContent(repositoryName, path);
+		return githubProxy.getGithubRepositoryContent(repoOwnerAndName, path);
 	}
 
 	@GET
 	@Path("/get_code")
 	public String getGithubCode(
-		@QueryParam("repositoryName") final String repositoryName,
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path
 	) {
-		return jsdelivrProxy.getGithubCode(repositoryName, path);
+		return jsdelivrProxy.getGithubCode(repoOwnerAndName, path);
 	}
 }

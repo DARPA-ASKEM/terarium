@@ -10,9 +10,9 @@ import javax.ws.rs.core.Response;
 @RegisterRestClient(configKey = "jsdelivr")
 public interface JsDelivrProxy {
     @GET
-	@Path("/gh/{repositoryName}@latest/{path}")
+	@Path("/gh/{repoOwnerAndName}@latest/{path}")
 	String getGithubCode(
-		@PathParam("repositoryName") String repositoryName,
+		@PathParam("repoOwnerAndName") String repoOwnerAndName,
 		@PathParam("path") String path
 	);
 }

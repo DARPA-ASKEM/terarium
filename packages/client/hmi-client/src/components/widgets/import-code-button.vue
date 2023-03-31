@@ -9,7 +9,7 @@
 		<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 			<template #header>
 				<h5>
-					Choose file to open from {{ repositoryName
+					Choose file to open from {{ repoOwnerAndName
 					}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
 				</h5>
 			</template>
@@ -48,7 +48,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-code']);
 
-const repositoryName = ref('');
+const repoOwnerAndName = ref('');
 const currentDirectory = ref('');
 const directoryContents = ref();
 const isModalVisible = ref(false);
@@ -58,7 +58,7 @@ const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
 async function getGithubRepositoryContent() {
 	const response = await API.get('/code/get_repo_content', {
 		params: {
-			repositoryName: repositoryName.value,
+			repoOwnerAndName: repoOwnerAndName.value,
 			path: currentDirectory.value
 		}
 	});
@@ -68,7 +68,7 @@ async function getGithubRepositoryContent() {
 function initializeCodeBrowser() {
 	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
-	repositoryName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
+	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
 	getGithubRepositoryContent();
 }
 
@@ -93,7 +93,7 @@ async function openContent(content?) {
 	// Open file in code view
 	const response = await API.get('/code/get_code', {
 		params: {
-			repositoryName: repositoryName.value,
+			repoOwnerAndName: repoOwnerAndName.value,
 			path: content.path
 		}
 	});

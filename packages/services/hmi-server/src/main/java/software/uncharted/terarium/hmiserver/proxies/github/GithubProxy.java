@@ -10,9 +10,9 @@ import javax.ws.rs.core.Response;
 @RegisterRestClient(configKey = "github")
 public interface GithubProxy {
     @GET
-	@Path("/repos/{repositoryName}/contents/{path}")
+	@Path("/repos/{repoOwnerAndName}/contents/{path}")
 	Response getGithubRepositoryContent(
-		@PathParam("repositoryName") String repositoryName,
+		@PathParam("repoOwnerAndName") String repoOwnerAndName,
 		@PathParam("path") String path
 	);
 }
