@@ -17,7 +17,7 @@
 						class="p-button-sm p-button-outlined"
 					/>
 					<Button
-						@click="goToSimulationRunPage"
+						@click="launchForecast"
 						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
@@ -199,6 +199,15 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+
+		<Teleport to="body">
+			<ForecastLauncher
+				v-if="showForecastLauncher && model"
+				:model="model"
+				@close="showForecastLauncher = false"
+				@launch-forecast="goToSimulationRunPage"
+			/>
+		</Teleport>
 	</section>
 </template>
 
@@ -229,6 +238,7 @@ import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ModelParameterList from '@/components/models/model-parameter-list.vue';
+import ForecastLauncher from '@/components/models/forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -262,6 +272,8 @@ const selectedVariable = ref('');
 const equation = ref<string>('');
 const equationOriginal = ref<string>('');
 const mathmode = ref('mathLIVE');
+
+const showForecastLauncher = ref(false);
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
 // const modelMath = ref(String.raw`\begin{align}
@@ -512,8 +524,13 @@ const updatePetriFromMathML = async (mathmlString: string) => {
 	}
 };
 
+const launchForecast = () => {
+	showForecastLauncher.value = true;
+};
+
 const router = useRouter();
 const goToSimulationRunPage = () => {
+	showForecastLauncher.value = false;
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {

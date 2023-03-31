@@ -106,6 +106,6 @@ public interface ModelProxy {
 	@Path("/opts/copy")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response copyModel(
-			ModelOperationCopy modelOperationCopy
+		ModelOperationCopy modelOperationCopy
 	);
 }
