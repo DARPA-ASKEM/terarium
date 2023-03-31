@@ -31,7 +31,7 @@
 			<template v-if="assetId && !isEmpty(tabs)">
 				<document
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
-					:asset-id="assetId"
+					:xdd-uri="getXDDuri(assetId)"
 					:previewLineLimit="10"
 					:project="project"
 					is-editable
@@ -198,6 +198,9 @@ const openedAssetRoute = computed<Tab>(() => ({
 	assetType: props.assetType,
 	assetId: props.assetId
 }));
+
+const getXDDuri = (assetId: Tab['assetId']) =>
+	ProjectService.getDocumentAssetXddUri(props?.project, assetId);
 
 function openAsset(asset: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
 	router.push({ name: RouteName.ProjectRoute, params: asset });

@@ -5,6 +5,7 @@
 import API from '@/api/api';
 import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import { Tab } from '@/types/common';
 
 /**
  * Create a project
@@ -195,6 +196,17 @@ function iconClassname(type: ProjectAssetTypes | string | null): string {
 	return 'pi pi-circle';
 }
 
+/**
+ * Get the xdd_uri of a Project Document
+ */
+function getDocumentAssetXddUri(project: IProject, assetId: Tab['assetId']): string | null {
+	return (
+		project.assets?.[ProjectAssetTypes.DOCUMENTS]?.find(
+			(document) => document?.id === Number.parseInt(assetId ?? '', 10)
+		)?.xdd_uri ?? null
+	);
+}
+
 export {
 	create,
 	update,
@@ -205,5 +217,6 @@ export {
 	deleteAsset,
 	getAssets,
 	home,
-	iconClassname
+	iconClassname,
+	getDocumentAssetXddUri
 };

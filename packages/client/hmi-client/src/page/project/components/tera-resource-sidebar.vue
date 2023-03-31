@@ -110,10 +110,9 @@ const assets = computed((): IProjectAssetTabs => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType = type as ProjectAssetTypes;
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset.id).toString();
+				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
 				const assetType = asset?.type ?? projectAssetType;
-				const assetId =
-					projectAssetType === ProjectAssetTypes.DOCUMENTS ? asset.xdd_uri : asset?.id.toString();
+				const assetId = asset?.id.toString();
 				return { assetName, assetType, assetId };
 			}) as Tab[];
 			tabs.set(projectAssetType, new Set(typeAssets));
