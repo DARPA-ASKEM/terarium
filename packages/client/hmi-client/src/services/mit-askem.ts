@@ -15,10 +15,16 @@ export async function findVarsFromText(text: string) {
 			const response = await API.get(`/code/response?id=${id.data}`);
 			if (response) {
 				return {
-					data: response.data.data
+					data: response.data.data,
+					progress: null,
+					error: null
 				};
 			}
-			return { error: logger.info(`Linking metadata to model...`) };
+			return {
+				data: null,
+				progress: null,
+				error: logger.info(`Extracting variable metadata from text...`)
+			};
 		});
 	const metadata = await poller.start();
 	return metadata.data;
