@@ -20,10 +20,11 @@ export async function findVarsFromText(text: string) {
 					error: null
 				};
 			}
+			logger.info(`Extracting variable metadata from text...`);
 			return {
 				data: null,
 				progress: null,
-				error: logger.info(`Extracting variable metadata from text...`)
+				error: null
 			};
 		});
 	const metadata = await poller.start();
