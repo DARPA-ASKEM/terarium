@@ -22,11 +22,16 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	editMode: boolean = false;
 
-	setupDefs() {
-		const svg = d3
-			.select(this.svgEl)
+	initialize(element: HTMLDivElement): void {
+		super.initialize(element);
+
+		d3.select(this.svgEl)
 			.style('border', '2px solid transparent')
 			.style('border-radius', '8px 0px 0px 8px');
+	}
+
+	setupDefs() {
+		const svg = d3.select(this.svgEl);
 
 		// Clean up
 		svg.select('defs').selectAll('.edge-marker-end').remove();
@@ -83,12 +88,18 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
 
-		function handleMouseOver() {
-			d3.select(this).transition().duration(100).attr('r', 8);
+		function handleMouseOver(evt: MouseEvent) {
+			d3.select(evt.target as any)
+				.transition()
+				.duration(100)
+				.attr('r', 8);
 		}
 
-		function handleMouseOut() {
-			d3.select(this).transition().duration(100).attr('r', 4);
+		function handleMouseOut(evt: MouseEvent) {
+			d3.select(evt.target as any)
+				.transition()
+				.duration(100)
+				.attr('r', 4);
 		}
 
 		// transitions drag handles
@@ -96,27 +107,19 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			...transitions
 				.append('circle')
 				.attr('cx', (d) => d.width * 0.75)
-				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut),
+				.attr('r', '4'),
 			...transitions
 				.append('circle')
 				.attr('cy', (d) => d.height * 0.75)
-				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut),
+				.attr('r', '4'),
 			...transitions
 				.append('circle')
 				.attr('cx', (d) => -d.width * 0.75)
-				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut),
+				.attr('r', '4'),
 			...transitions
 				.append('circle')
 				.attr('cy', (d) => -d.height * 0.75)
 				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut)
 		];
 
 		d3.selectAll(transitionsHandles)
@@ -124,7 +127,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('fill', 'var(--primary-color)')
 			.attr('stroke', 'none')
 			.style('cursor', 'pointer')
-			.style('opacity', 0);
+			.style('opacity', 0)
+			.on('mouseover', handleMouseOver)
+			.on('mouseout', handleMouseOut);
 
 		// transitions text
 		transitions
@@ -147,27 +152,19 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			...species
 				.append('circle')
 				.attr('cx', (d) => d.width * 0.75)
-				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut),
+				.attr('r', '4'),
 			...species
 				.append('circle')
 				.attr('cy', (d) => d.height * 0.75)
-				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut),
+				.attr('r', '4'),
 			...species
 				.append('circle')
 				.attr('cx', (d) => -d.width * 0.75)
-				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut),
+				.attr('r', '4'),
 			...species
 				.append('circle')
 				.attr('cy', (d) => -d.height * 0.75)
 				.attr('r', '4')
-				.on('mouseover', handleMouseOver)
-				.on('mouseout', handleMouseOut)
 		];
 
 		d3.selectAll(speciesHandles)
@@ -175,7 +172,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('fill', 'var(--primary-color)')
 			.attr('stroke', 'none')
 			.style('cursor', 'pointer')
-			.style('opacity', 0);
+			.style('opacity', 0)
+			.on('mouseover', handleMouseOver)
+			.on('mouseout', handleMouseOut);
 
 		// species text
 		species
