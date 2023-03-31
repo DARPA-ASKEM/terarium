@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<slider-panel
+		<tera-slider-panel
 			v-model:is-open="isResourcesSliderOpen"
 			content-width="300px"
 			header="Resources"
@@ -14,9 +14,10 @@
 					@open-asset="openAsset"
 					@close-tab="removeClosedTab"
 					@click="fetchAnnotations()"
+					@remove-asset="removeAsset"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 		<section>
 			<tera-tab-group
 				v-if="!isEmpty(tabs)"
@@ -79,7 +80,7 @@
 				/>
 			</section>
 		</section>
-		<slider-panel
+		<tera-slider-panel
 			class="slider"
 			content-width="300px"
 			direction="right"
@@ -101,7 +102,7 @@
 					<div class="annotation-content">
 						<div class="annotation-author-date">
 							<div>{{ annotation.username }}</div>
-							<div>{{ formatDate(annotation.timestampMillis) }}</div>
+							<div>{{ formatMillisToDate(annotation.timestampMillis) }}</div>
 						</div>
 						<p>{{ annotation.content }}</p>
 					</div>
@@ -143,36 +144,37 @@
 					</div>
 				</div>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+import { useRouter } from 'vue-router';
+import { isEmpty, isEqual } from 'lodash';
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import Textarea from 'primevue/textarea';
+import API from '@/api/api';
+import Dataset from '@/components/dataset/Dataset.vue';
+import Document from '@/components/documents/Document.vue';
+import Model from '@/components/models/Model.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
+import CodeEditor from '@/page/project/components/code-editor.vue';
+import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import Document from '@/components/documents/Document.vue';
-import Dataset from '@/components/dataset/Dataset.vue';
-import Model from '@/components/models/Model.vue';
-import SimulationPlan from '@/page/project/components/Simulation.vue';
-import SimulationRun from '@/temp/SimulationResult3.vue';
-import CodeEditor from '@/page/project/components/code-editor.vue';
-import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
-import Dropdown from 'primevue/dropdown';
-import { Tab, ResourceType, Annotation } from '@/types/common';
-import { isEmpty, isEqual } from 'lodash';
-import { useTabStore } from '@/stores/tabs';
-import Textarea from 'primevue/textarea';
-import Button from 'primevue/button';
 import { RouteName } from '@/router/routes';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { useRouter } from 'vue-router';
-import API from '@/api/api';
+import { getModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
-import { getModel } from '@/services/model';
+import { useTabStore } from '@/stores/tabs';
+import SimulationRun from '@/temp/SimulationResult2.vue';
+import { Tab, ResourceType, Annotation } from '@/types/common';
+import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import { formatMillisToDate } from '@/utils/date';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -181,6 +183,8 @@ const props = defineProps<{
 	assetId?: string;
 	assetType?: ProjectAssetTypes | 'overview' | '';
 }>();
+
+const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
 const router = useRouter();
@@ -219,7 +223,6 @@ function removeClosedTab(tabIndexToRemove: number) {
 async function openNewModelFromCode(modelId, modelName) {
 	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
 	const model = await getModel(modelId);
-	console.log(model);
 	if (model) {
 		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
 	} else {
@@ -236,10 +239,26 @@ async function openNewModelFromCode(modelId, modelName) {
 	});
 }
 
+async function removeAsset(asset: Tab) {
+	const { assetName, assetId, assetType } = asset;
+
+	// Delete only Asset with an ID and of ProjectAssetType
+	if (assetId && assetType && isProjectAssetTypes(assetType) && assetType !== 'overview') {
+		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
+
+		if (isRemoved) {
+			emit('update-project', props.project.id);
+			removeClosedTab(tabs.value.findIndex((tab: Tab) => isEqual(tab, asset)));
+			logger.info(`${assetName} was removed.`, { showToast: true });
+			return;
+		}
+	}
+
+	logger.error(`Failed to remove ${assetName}`, { showToast: true });
+}
+
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
-
-// Nice to have: Show overview tab on mount if no tabs were open in the previous session
 
 watch(
 	() => [
@@ -266,8 +285,6 @@ watch(
 		}
 	}
 );
-
-const formatDate = (millis: number) => new Date(millis).toLocaleDateString();
 
 // FIXME:
 // - Need to establish terarium artifact types
@@ -311,6 +328,7 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow: auto;
+	padding: 0.5rem 0.5rem 0;
 }
 
 .no-open-tabs {
