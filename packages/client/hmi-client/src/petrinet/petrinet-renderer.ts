@@ -22,11 +22,16 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	editMode: boolean = false;
 
-	setupDefs() {
-		const svg = d3
-			.select(this.svgEl)
+	initialize(element: HTMLDivElement): void {
+		super.initialize(element);
+
+		d3.select(this.svgEl)
 			.style('border', '2px solid transparent')
 			.style('border-radius', '8px 0px 0px 8px');
+	}
+
+	setupDefs() {
+		const svg = d3.select(this.svgEl);
 
 		// Clean up
 		svg.select('defs').selectAll('.edge-marker-end').remove();
@@ -83,12 +88,18 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
 
-		function handleMouseOver() {
-			d3.select(this).transition().duration(100).attr('r', 8);
+		function handleMouseOver(evt: MouseEvent) {
+			d3.select(evt.target as any)
+				.transition()
+				.duration(100)
+				.attr('r', 8);
 		}
 
-		function handleMouseOut() {
-			d3.select(this).transition().duration(100).attr('r', 4);
+		function handleMouseOut(evt: MouseEvent) {
+			d3.select(evt.target as any)
+				.transition()
+				.duration(100)
+				.attr('r', 4);
 		}
 
 		// transitions drag handles

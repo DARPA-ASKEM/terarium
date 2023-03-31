@@ -50,25 +50,28 @@ API.interceptors.response.use(
 
 // eslint-disable-next-line no-promise-executor-return
 const timeout = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const NOOP = () => {};
 
 export enum PollerState {
 	Done = 'done',
 	Failed = 'failed',
-	ExceedThreshold = 'ExceedThreshold'
+	ExceedThreshold = 'ExceedThreshold',
+	Cancelled = 'Cancelled'
 }
 
-// FIXME: need to refine based on actual needs
 interface PollResponse<T> {
 	error: any;
-	progress: any;
-	data: T;
+	progress?: any;
+	data: T | null;
 }
+
+type PollerCallback<T> = (...args: any[]) => Promise<PollResponse<T>>;
+type ProgressCallback = (progressData: any, current: number, max: number) => void;
 
 interface PollerResult<T> {
 	state: PollerState;
 	data: T | null;
 }
+
 export class Poller<T> {
 	pollingInterval = 2000;
 
@@ -76,11 +79,16 @@ export class Poller<T> {
 
 	keepGoing = false;
 
-	poll: Function = NOOP;
+	poll: PollerCallback<T> | null;
 
-	progressAction: Function = NOOP;
+	progressAction: ProgressCallback | null;
 
 	numPolls = 0;
+
+	constructor() {
+		this.poll = null;
+		this.progressAction = null;
+	}
 
 	setInterval(v: number) {
 		this.pollingInterval = v;
@@ -92,12 +100,12 @@ export class Poller<T> {
 		return this;
 	}
 
-	setPollAction(f: Function) {
+	setPollAction(f: PollerCallback<T>) {
 		this.poll = f;
 		return this;
 	}
 
-	setProgressAction(f: Function) {
+	setProgressAction(f: ProgressCallback) {
 		this.progressAction = f;
 		return this;
 	}
@@ -113,10 +121,15 @@ export class Poller<T> {
 
 		let response: PollResponse<T> | null = null;
 
+		if (!this.poll) throw new Error('Poll callback undefined');
+
 		while (this.numPolls < this.pollingThreshold) {
 			this.numPolls++;
 			if (!this.keepGoing) {
-				break;
+				return {
+					state: PollerState.Cancelled,
+					data: null
+				};
 			}
 
 			try {
@@ -139,7 +152,9 @@ export class Poller<T> {
 				}
 
 				// We are still in progress
-				this.progressAction(progress, this.numPolls, this.pollingThreshold);
+				if (this.progressAction) {
+					this.progressAction(progress, this.numPolls, this.pollingThreshold);
+				}
 			} catch (error) {
 				return {
 					state: PollerState.Failed,

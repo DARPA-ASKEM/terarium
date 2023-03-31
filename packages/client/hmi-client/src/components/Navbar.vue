@@ -91,8 +91,6 @@ const showNavigationMenu = (event) => {
 	navigationMenu.value.toggle(event);
 };
 const currentRoute = useCurrentRoute();
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isDataExplorer = computed(() => currentRoute.value.name === RouteName.DataExplorerRoute);
 
 /*
