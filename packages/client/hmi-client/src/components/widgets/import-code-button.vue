@@ -40,8 +40,7 @@ import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
-// import API from '@/api/api';
-import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
+import API from '@/api/api';
 
 const props = defineProps<{
 	urlString: string;
@@ -56,16 +55,21 @@ const isModalVisible = ref(false);
 
 const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
 
-async function initializeCodeBrowser() {
+async function getGithubRepositoryContent() {
+	const response = await API.get('/code/get_repo_content', {
+		params: {
+			repositoryName: repositoryName.value,
+			path: currentDirectory.value
+		}
+	});
+	directoryContents.value = response.data;
+}
+
+function initializeCodeBrowser() {
 	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
 	repositoryName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
-	directoryContents.value = await getGithubRepositoryContent(
-		repositoryName.value,
-		currentDirectory.value
-	);
-	// const res = await API.post(`https://api.github.com/repos/${repositoryName.value}/contents/${currentDirectory.value}`);
-	// console.log({ res })
+	getGithubRepositoryContent();
 }
 
 // Content as in file or directory
@@ -75,26 +79,27 @@ async function openContent(content?) {
 		const directoryPathArray = currentDirectory.value.split('/');
 		directoryPathArray.pop();
 		currentDirectory.value = directoryPathArray.join('/');
-
-		directoryContents.value = await getGithubRepositoryContent(
-			repositoryName.value,
-			currentDirectory.value
-		);
+		getGithubRepositoryContent();
 		return;
 	}
 
 	// Open directory
 	if (content.type === 'dir') {
 		currentDirectory.value = content.path;
-		directoryContents.value = await getGithubRepositoryContent(
-			repositoryName.value,
-			currentDirectory.value
-		);
+		getGithubRepositoryContent();
 		return;
 	}
 
 	// Open file in code view
-	const code = await getGithubCode(repositoryName.value, content.path); // Will be pasted into the code editor
+	const response = await API.get('/code/get_code', {
+		params: {
+			repositoryName: repositoryName.value,
+			path: content.path
+		}
+	});
+	const code = response.data;
+
+	// Will be pasted into the code editor
 	emit(
 		'open-code',
 		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
