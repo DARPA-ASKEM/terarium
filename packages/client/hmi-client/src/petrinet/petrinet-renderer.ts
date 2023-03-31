@@ -15,6 +15,9 @@ const pathFn = d3
 const EDGE_COLOR = 'var(--petri-lineColor)';
 const EDGE_OPACITY = 0.5;
 
+const HANDLE_SIZE = 4;
+const HANDLE_SIZE_HOVER = 8;
+
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
@@ -92,38 +95,27 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			d3.select(evt.target as any)
 				.transition()
 				.duration(100)
-				.attr('r', 8);
+				.attr('r', HANDLE_SIZE_HOVER);
 		}
 
 		function handleMouseOut(evt: MouseEvent) {
 			d3.select(evt.target as any)
 				.transition()
 				.duration(100)
-				.attr('r', 4);
+				.attr('r', HANDLE_SIZE);
 		}
 
 		// transitions drag handles
 		const transitionsHandles = [
-			...transitions
-				.append('circle')
-				.attr('cx', (d) => d.width * 0.75)
-				.attr('r', '4'),
-			...transitions
-				.append('circle')
-				.attr('cy', (d) => d.height * 0.75)
-				.attr('r', '4'),
-			...transitions
-				.append('circle')
-				.attr('cx', (d) => -d.width * 0.75)
-				.attr('r', '4'),
-			...transitions
-				.append('circle')
-				.attr('cy', (d) => -d.height * 0.75)
-				.attr('r', '4')
+			...transitions.append('circle').attr('cx', (d) => d.width * 0.75),
+			...transitions.append('circle').attr('cy', (d) => d.height * 0.75),
+			...transitions.append('circle').attr('cx', (d) => -d.width * 0.75),
+			...transitions.append('circle').attr('cy', (d) => -d.height * 0.75)
 		];
 
 		d3.selectAll(transitionsHandles)
 			.classed('shape no-drag', true)
+			.attr('r', HANDLE_SIZE)
 			.attr('fill', 'var(--primary-color)')
 			.attr('stroke', 'none')
 			.style('cursor', 'pointer')
@@ -149,26 +141,15 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		// species drag handles
 		const speciesHandles = [
-			...species
-				.append('circle')
-				.attr('cx', (d) => d.width * 0.75)
-				.attr('r', '4'),
-			...species
-				.append('circle')
-				.attr('cy', (d) => d.height * 0.75)
-				.attr('r', '4'),
-			...species
-				.append('circle')
-				.attr('cx', (d) => -d.width * 0.75)
-				.attr('r', '4'),
-			...species
-				.append('circle')
-				.attr('cy', (d) => -d.height * 0.75)
-				.attr('r', '4')
+			...species.append('circle').attr('cx', (d) => d.width * 0.75),
+			...species.append('circle').attr('cy', (d) => d.height * 0.75),
+			...species.append('circle').attr('cx', (d) => -d.width * 0.75),
+			...species.append('circle').attr('cy', (d) => -d.height * 0.75)
 		];
 
 		d3.selectAll(speciesHandles)
 			.classed('shape no-drag', true)
+			.attr('r', HANDLE_SIZE)
 			.attr('fill', 'var(--primary-color)')
 			.attr('stroke', 'none')
 			.style('cursor', 'pointer')
