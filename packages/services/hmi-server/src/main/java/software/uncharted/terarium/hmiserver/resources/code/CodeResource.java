@@ -6,7 +6,6 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
-import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
@@ -17,9 +16,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 import java.util.Map;
 
 @Path("/api/code")
@@ -120,7 +119,7 @@ public class CodeResource {
 			.entity(response)
 			.build();
 	}
-	
+
 	@GET
 	@Path("/repo_content")
 	public Response getGithubRepositoryContent(
