@@ -75,7 +75,7 @@
 						/>
 					</div>
 					<div v-html="highlightSearchTerms(doc.publisher)" />
-					<section class="pdf-buttons">
+					<section class="pdf-buttons" v-if="doi">
 						<Button
 							class="p-button-sm p-button-outlined"
 							icon="pi pi-external-link"
@@ -84,7 +84,6 @@
 							:loading="!pdfLink && !linkIsPDF()"
 						/>
 						<Button
-							v-if="doi"
 							class="p-button-sm p-button-outlined"
 							@click="downloadPDF"
 							:icon="'pi pi-cloud-download'"
