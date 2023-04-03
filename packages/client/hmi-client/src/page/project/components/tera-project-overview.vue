@@ -18,8 +18,7 @@
 			<h3 :class="{ isVisible: !isEditingProject }">
 				{{ project?.name }}
 			</h3>
-			<!-- Last updated -->
-			<p class="secondary-text">{{ formatTimeStamp(project?.timestamp) }}</p>
+			<p class="secondary-text">Last updated {{ DateUtils.formatLong(project?.timestamp) }}</p>
 		</header>
 		<section class="content-container">
 			<section class="summary">
@@ -34,33 +33,16 @@
 					<section class="contributors">
 						<span class="pi pi-user"></span>
 						{{ project?.username }}
-						<Button icon="pi pi-plus" label="Add contributor" text />
+						<!-- <Button icon="pi pi-plus" label="Add contributor" text /> -->
 					</section>
 				</div>
 			</section>
 
-			<!-- Project summary KPIs go here -->
+			<!-- Project summary KPIs -->
 			<section class="summary-KPI-bar">
-				<!-- This is placeholder code for styling purposes. This section should be built by a real programmer -->
-				<div class="summary-KPI">
-					<span class="summary-KPI-number">#</span>
-					<span class="summary-KPI-label">Papers</span>
-				</div>
-				<div class="summary-KPI">
-					<span class="summary-KPI-number">#</span>
-					<span class="summary-KPI-label">Models</span>
-				</div>
-				<div class="summary-KPI">
-					<span class="summary-KPI-number">#</span>
-					<span class="summary-KPI-label">Datasets</span>
-				</div>
-				<div class="summary-KPI">
-					<span class="summary-KPI-number">#</span>
-					<span class="summary-KPI-label">Workflows</span>
-				</div>
-				<div class="summary-KPI">
-					<span class="summary-KPI-number">#</span>
-					<span class="summary-KPI-label">Simulations</span>
+				<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
+					<span class="summary-KPI-number">{{ assets.length ?? 0 }}</span>
+					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 				</div>
 			</section>
 
@@ -130,6 +112,8 @@ import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import * as DateUtils from '@/utils/date';
+import { capitalize } from 'lodash';
 
 const props = defineProps<{
 	project: IProject;
@@ -139,16 +123,6 @@ const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
-
-function formatTimeStamp(timestamp) {
-	const formattedDate = new Date(timestamp).toLocaleDateString(undefined, {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric'
-	});
-	return `Last updated ${formattedDate}`;
-}
 
 async function editProject() {
 	newProjectName.value = props.project.name;

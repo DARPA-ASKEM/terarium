@@ -49,6 +49,8 @@ dependencies {
 
 	// Misc
 	implementation "org.apache.commons:commons-text:1.10.0"
+	implementation "org.jsoup:jsoup:1.7.2"
+
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"
