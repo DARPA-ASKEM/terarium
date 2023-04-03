@@ -22,14 +22,59 @@
 			/>
 		</router-view>
 	</main>
-	<footer>
+	<footer class="footer">
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
+		<div class="footer-button-group">
+			<Button label="about" class="footer-button" text @click="visible = true" />
+			<a href="https://terarium.canny.io/report-an-issue" class="no-text-decoration">
+				<Button label="report an issue" class="footer-button" text />{{ null }}
+			</a>
+			<a href="https://terarium.canny.io/request-a-feature" class="no-text-decoration">
+				<Button label="request a feature" class="footer-button" text />{{ null }}
+			</a>
+		</div>
 	</footer>
+
+	<!-- About modal -->
+	<Dialog v-model:visible="visible" modal header="About" :style="{ width: '40vw' }">
+		<div class="about-modal-content">
+			<div class="about-section">
+				<img src="@/assets/svg/terarium-logo.svg" alt="Terarium logo" class="about-terarium-logo" />
+				<p>Version 0.0.1</p>
+			</div>
+			<div class="about-section">
+				<p class="constrain-width">
+					Terarium is a web-based solution featuring human-in-the-loop interactive data
+					visualization for exploring, interpreting, searching, analyzing, viewing and reporting
+					data via multi-dimensional visual representations. Terarium is also designed to support
+					collaboration and interaction relating to data visualization, data mining and analysis.
+				</p>
+			</div>
+			<div class="about-section">
+				<img
+					src="@/assets/svg/uncharted-logo-official.svg"
+					alt="Uncharted Software logo"
+					class="about-uncharted-logo"
+				/>
+				<p class="constrain-width">
+					Uncharted Software provides design, development and consulting services related to data
+					visualization and analysis software.
+				</p>
+				<br />
+				<p>&copy; Copyright Uncharted Software {{ new Date().getFullYear() }}</p>
+			</div>
+		</div>
+		<template #footer>
+			<Button label="Close" @click="visible = false" />
+		</template>
+	</Dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, shallowRef, ref, watch } from 'vue';
 import Toast from 'primevue/toast';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
@@ -41,6 +86,7 @@ import { ResourceType } from '@/types/common';
 import { useCurrentRoute } from './router/index';
 
 const toast = useToastService();
+const visible = ref(false);
 /**
  * Router
  */
@@ -147,5 +193,52 @@ footer {
 	display: flex;
 	grid-area: footer;
 	height: 3rem;
+	justify-content: space-between;
+}
+
+.footer-button-group {
+	padding-right: 3rem;
+}
+
+.no-text-decoration {
+	text-decoration: none;
+}
+
+.p-button.p-component.p-button-text.footer-button {
+	color: var(--text-color-secondary);
+}
+.p-button.p-component.p-button-text.footer-button:hover {
+	color: var(--text-color-primary);
+}
+
+.about-modal-content {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	text-align: center;
+}
+
+.about-terarium-logo {
+	margin-bottom: 1rem;
+	width: 30rem;
+	align-self: center;
+}
+.about-uncharted-logo {
+	width: 15rem;
+	align-self: center;
+}
+
+.about-section {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+	align-content: center;
+}
+.constrain-width {
+	max-width: 40rem;
+}
+
+.subdued {
+	color: var(--text-color-secondary);
 }
 </style>
