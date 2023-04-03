@@ -270,7 +270,7 @@ import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
-import { generatePdfDownloadLink } from '@/services/url-download';
+import { generatePdfDownloadLink } from '@/services/generate-download-link';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 const props = defineProps<{
