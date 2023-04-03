@@ -19,19 +19,14 @@
 				label="Open PDF"
 				@click="openPDF"
 			/>
-			<a
+			<Button
 				v-if="doi"
-				class="download-pdf"
-				:href="isEmpty(pdfLink) ? 'javascript:void(0)' : pdfLink"
-				:download="`${doi}.pdf`"
-			>
-				<Button
-					class="p-button-sm p-button-outlined"
-					:icon="isEmpty(pdfLink) ? 'pi pi-spin pi-spinner' : 'pi pi-cloud-download'"
-					:disabled="isEmpty(pdfLink)"
-					>Download PDF</Button
-				>
-			</a>
+				class="p-button-sm p-button-outlined"
+				@click="downloadPDF"
+				:icon="isEmpty(pdfLink) ? 'pi pi-spin pi-spinner' : 'pi pi-cloud-download'"
+				:disabled="isEmpty(pdfLink)"
+				label="Download PDF"
+			/>
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
@@ -278,16 +273,29 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
+// Creates PDF download link on (doi change)
 async function fetchPDF() {
 	pdfLink.value = '';
 	if (!doi.value) return;
+
 	const query = { doi: doi.value };
 	const URL = `/download?${toQueryString(query)}`;
-	const response = await API.get(URL, { responseType: 'arraybuffer' }).catch((error) => {
+
+	try {
+		const response = await API.get(URL, { responseType: 'arraybuffer' });
+		const blob = new Blob([response?.data], { type: 'application/pdf' });
+		pdfLink.value = window.URL.createObjectURL(blob);
+	} catch (error) {
 		logger.error(`Error: Unable to download pdf for doi ${doi.value}: ${error}`);
-	});
-	const blob = new Blob([response?.data], { type: 'application/pdf' });
-	pdfLink.value = window.URL.createObjectURL(blob);
+	}
+}
+
+// Better than wrapping download button with an anchor
+function downloadPDF() {
+	const link = document.createElement('a');
+	link.href = pdfLink.value;
+	link.download = `${doi.value}.pdf`;
+	link.click();
 }
 
 watch(doi, (currentValue, oldValue) => {
@@ -339,11 +347,3 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 </script>
-<style>
-.download-pdf,
-.download-pdf:hover,
-.download-pdf:focus {
-	display: inline-block;
-	text-decoration: none;
-}
-</style>
