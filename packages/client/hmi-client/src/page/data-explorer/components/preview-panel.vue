@@ -147,4 +147,8 @@ i {
 .toggle-selection {
 	margin-left: 1rem;
 }
+
+footer button {
+	margin: 0 3px;
+}
 </style>

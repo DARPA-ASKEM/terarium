@@ -625,9 +625,11 @@ onUnmounted(() => {
 	color: var(--text-color-secondary);
 	font-size: var(--font-body-small);
 }
+
 .empty-cart-image {
 	margin: auto;
 }
+
 .breakdown-pane-container {
 	margin-left: 0.5rem;
 	margin-right: 0.5rem;
