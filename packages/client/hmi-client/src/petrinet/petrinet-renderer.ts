@@ -13,6 +13,7 @@ const pathFn = d3
 	.curve(d3.curveBasis);
 
 const EDGE_COLOR = 'var(--petri-lineColor)';
+const highlightedStrokeColour = 'var(--primary-color)';
 const EDGE_OPACITY = 0.5;
 
 const HANDLE_SIZE = 4;
@@ -276,6 +277,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			selection.select('circle').attr('stroke', highlightedStrokeColour);
 			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
 			start.x = sourceData.x;
@@ -314,8 +316,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		);
 
-		this.on('node-drag-end', (/* eventName, event, selection: D3SelectionINode<NodeData> */) => {
+		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			chart?.selectAll('.new-edge').remove();
+			selection.select('circle').attr('stroke', 'var(--petri-nodeBorder)');
 			if (!this.isDragEnabled) return;
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
