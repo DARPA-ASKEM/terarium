@@ -67,7 +67,6 @@ echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 Login Succeeded
 ```
 
-
 ## Debugging Front End
 
 To debug the front end you need:
@@ -92,7 +91,39 @@ tag.
 
 ## Debugging Backend
 
-???
+The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ
+![img.png](debug.png)![img_1.png](img_1.png)
+
+This will start the application via `quarkus dev` and then attach the debugger to the service.
+
+## Application Secrets
+
+To add or modify application secrets (like passwords and API keys)...
+
+* There is an ansible encrypted vault located
+  in `packages/services/hmi-server/src/main/resources/application-secrets.properties.encrypted`
+* These instructions assume you have the vault password in your home directory in a file named `askem-vault-id.txt`
+* There is a [husky script](.husky/secretsVerification.sh) which ensures that the secrets file is not committed
+  unencrypted.
+* The outputed unencrypted file is gitignored to never be comitted.
+
+1. Decrypt the secrets vault via ansible-vault
+
+```shell
+ansible-vault decrypt --vault-password-file ~/askem-vault-id.txt --output application-secrets.properties application-secrets.properties.encrypted  
+```
+
+2. Notice that in the resources directory there is now a `application-secrets.properties` file. Add the secrets that you
+   want to this file, making sure to add the %dev prefix to everything as you do.
+3. Re-encrypt the file to commit via the command
+
+```shell
+ansible-vault encrypt --vault-password-file ~/askem-vault-id.txt --output application-secrets.properties.encrypted application-secrets.properties  
+```
+
+4. In the Orchestration project, add the secret to the correct file with the prefix of %prod
+5. When comitting you'll only be comitting the encrypted file, never anything unencrypted. With you PR make sure that
+   people know there is a new secret so they're able to update locally.
 
 ## Running Tests
 
