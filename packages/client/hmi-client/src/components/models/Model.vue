@@ -1,16 +1,10 @@
 <template>
-	<section class="asset">
-		<header>
+	<section class="asset" style="padding-top: 0">
+		<header class="fixed-header">
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
 				<h4 v-html="title" />
 				<span v-if="isEditable">
-					<Button
-						v-if="isEditing"
-						@click="cancelEdit"
-						label="Cancel"
-						class="p-button-sm p-button-outlined"
-					/>
 					<Button
 						@click="toggleEditMode"
 						:label="isEditing ? 'Save model' : 'Edit model'"
@@ -22,6 +16,13 @@
 						:disabled="isEditing"
 						class="p-button-sm"
 					/>
+				</span>
+			</div>
+			<!-- search bar -->
+			<div class="flex justify-content-end">
+				<span class="p-input-icon-left">
+					<i class="pi pi-search" />
+					<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
 				</span>
 			</div>
 			<!--contributor-->
@@ -38,6 +39,17 @@
 							<Splitter class="mb-5 model-panel" :layout="layout">
 								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
 									<section class="graph-element">
+										<Button
+											v-if="isEditing"
+											@click="cancelEdit"
+											label="Cancel"
+											class="p-button-sm p-button-outlined"
+										/>
+										<Button
+											@click="toggleEditMode"
+											:label="isEditing ? 'Save model' : 'Edit model'"
+											class="p-button-sm p-button-outlined"
+										/>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
@@ -80,17 +92,9 @@
 						v-model:selection="selectedRow"
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
-						v-model:filters="stateFilter"
+						v-model:filters="globalFilter"
 						filterDisplay="row"
 					>
-						<template #header>
-							<div class="flex justify-content-start">
-								<span class="p-input-icon-left">
-									<i class="pi pi-search" />
-									<InputText v-model="stateFilter['global'].value" placeholder="Keyword Search" />
-								</span>
-							</div>
-						</template>
 						<Column field="sname" header="Name" />
 						<Column header="Type">
 							<template #body="slotProps">
@@ -143,18 +147,7 @@
 			</AccordionTab>
 			<AccordionTab :header="`Parameters (${betterParams?.length})`">
 				<template v-if="true || !isEditable">
-					<DataTable :value="betterParams" v-model:filters="parameterFilter" filterDisplay="row">
-						<template #header>
-							<div class="flex justify-content-start">
-								<span class="p-input-icon-left">
-									<i class="pi pi-search" />
-									<InputText
-										v-model="parameterFilter['global'].value"
-										placeholder="Keyword Search"
-									/>
-								</span>
-							</div>
-						</template>
+					<DataTable :value="betterParams" v-model:filters="globalFilter" filterDisplay="row">
 						<Column field="name" header="Name" />
 						<Column field="type" header="Type" />
 						<Column field="default_value" header="Default" />
@@ -170,18 +163,7 @@
 				</template>
 			</AccordionTab>
 			<AccordionTab :header="`Extractions (${extractions?.length})`">
-				<DataTable :value="extractions" v-model:filters="ExtractionsFilter" filterDisplay="row">
-					<template #header>
-						<div class="flex justify-content-start">
-							<span class="p-input-icon-left">
-								<i class="pi pi-search" />
-								<InputText
-									v-model="ExtractionsFilter['global'].value"
-									placeholder="Keyword Search"
-								/>
-							</span>
-						</div>
-					</template>
+				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
 					<Column field="text_annotations" header="Text">
@@ -304,15 +286,7 @@ const equationOriginal = ref<string>('');
 const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
 
-const stateFilter = ref({
-	global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-});
-
-const parameterFilter = ref({
-	global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-});
-
-const ExtractionsFilter = ref({
+const globalFilter = ref({
 	global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 
@@ -600,6 +574,12 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 </script>
 
 <style scoped>
+.fixed-header {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	background-color: white;
+}
 .model-panel {
 	height: 100%;
 }
