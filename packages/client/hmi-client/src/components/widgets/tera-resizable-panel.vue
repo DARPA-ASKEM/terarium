@@ -44,7 +44,7 @@ onUnmounted(() => {
 .container {
 	position: relative;
 	width: 100%;
-	border: 1px solid #ccc;
+	border: none;
 	overflow: hidden;
 	height: 100%;
 }
@@ -66,9 +66,15 @@ main {
 	bottom: 0;
 	left: 0;
 	width: 100%;
-	height: 5px;
+	height: 6px;
 	cursor: ns-resize;
-	background: linear-gradient(to bottom, white, var(--primary-color));
+	background: var(--surface-border-light);
 	z-index: 1;
+	border-radius: 0 0 var(--border-radius-big) var(--border-radius-big);
+	mix-blend-mode: darken;
+}
+
+.resize-handle:hover {
+	background: var(--primary-color-light);
 }
 </style>
