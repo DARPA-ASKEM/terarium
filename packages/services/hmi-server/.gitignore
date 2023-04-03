@@ -1,2 +1,2 @@
 #secrets
-/src/main/resources/META-INF/microprofile-config.properties
+/src/main/resources/application-secrets.properties
