@@ -70,7 +70,7 @@ header {
 	display: flex;
 	height: 100%;
 	gap: 0.66rem;
-	padding: 0.25rem 0.5rem 0.25rem 0.5rem;
+	padding: 0.25rem 0.5rem 0.25rem 0.75rem;
 	position: relative;
 }
 
