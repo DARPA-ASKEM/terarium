@@ -1,5 +1,5 @@
 <template>
-	<section class="asset" v-if="doc" ref="sectionElem">
+	<section v-if="doc" ref="sectionElem">
 		<div class="two-columns">
 			<div class="content-navigator" v-if="isEditable">
 				<!-- TODO: Set these buttons up to toggle between PDF and extraction view -->
@@ -61,7 +61,7 @@
 				</div>
 				-->
 			</div>
-			<div v-bind:class="{ 'main-content': isEditable === true }">
+			<div class="asset" v-bind:class="{ 'main-content': isEditable === true }">
 				<header>
 					<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
 					<h4 v-html="highlightSearchTerms(doc.title)" class="constrain-width" />
