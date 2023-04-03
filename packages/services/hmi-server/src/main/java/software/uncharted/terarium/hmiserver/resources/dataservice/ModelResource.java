@@ -34,7 +34,7 @@ import static io.smallrye.jwt.config.ConfigLogging.log;
 @Tag(name = "Model REST Endpoints")
 public class ModelResource {
 
-	@ConfigProperty(name = "mira-metaregistry")
+	@ConfigProperty(name = "mira-metaregistry/mp-rest/url")
 	String metaRegistryURL;
 
 	@Inject
@@ -182,7 +182,7 @@ public class ModelResource {
 			}
 
 			if (!entities.isEmpty()) {
-				entities.forEach(entity -> entity.setLink(metaRegistryURL + entity.getCurie()));
+				entities.forEach(entity -> entity.setLink(metaRegistryURL + "/" + entity.getCurie()));
 
 				// Transform the entities to a Map
 				Map<String, DKG> ontologies =
