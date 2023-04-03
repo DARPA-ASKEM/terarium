@@ -459,7 +459,9 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 };
 
 const downloadPDF = async (dataItem: { item: ResultType; type?: string }) => {
+	console.log(dataItem);
 	const doi = dataItem.item?.identifier[0]?.id;
+	console.log(doi);
 	const query = {
 		doi
 	};
