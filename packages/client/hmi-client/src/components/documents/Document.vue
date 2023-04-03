@@ -154,7 +154,7 @@ import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 
 const props = defineProps<{
-	assetId: string;
+	xddUri: string;
 	isEditable: boolean;
 	highlight?: string;
 	previewLineLimit?: number;
@@ -180,7 +180,7 @@ function highlightSearchTerms(text: string | undefined): string {
 watch(
 	props,
 	async () => {
-		const id = props.assetId;
+		const id = props.xddUri;
 		if (id !== '') {
 			// fetch doc from XDD
 			const d = await getDocumentById(id);
@@ -254,7 +254,7 @@ const fetchDocumentArtifacts = async () => {
 
 const fetchRelatedTerariumArtifacts = async () => {
 	if (doc.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.Publication);
+		const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
 		relatedTerariumArtifacts.value = results;
 	} else {
 		relatedTerariumArtifacts.value = [];

@@ -5,6 +5,7 @@
 import API from '@/api/api';
 import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import { Tab } from '@/types/common';
 
 /**
  * Create a project
@@ -135,19 +136,20 @@ async function deleteAsset(
 
 /**
  * Get a project per id
+ * @param projectId - string
+ * @param containingAssetsInformation - boolean - Add the assets information during the same call
  * @return Project|null - the appropriate project, or null if none returned by API
  */
 async function get(
 	projectId: string,
-	containingAssetsInfomation: boolean = false
+	containingAssetsInformation: boolean = false
 ): Promise<IProject | null> {
 	try {
-		const response = await API.get(`/projects/${projectId}`);
-		const { status, data } = response;
+		const { status, data } = await API.get(`/projects/${projectId}`);
 		if (status !== 200) return null;
 		const project = data as IProject;
 
-		if (project && containingAssetsInfomation) {
+		if (project && containingAssetsInformation) {
 			const assets = await getAssets(projectId);
 			if (assets) {
 				project.assets = assets;
@@ -166,8 +168,7 @@ async function get(
  */
 async function home(): Promise<IProject[] | null> {
 	try {
-		const response = await API.get('/home');
-		const { status, data } = response;
+		const { status, data } = await API.get('/home');
 		if (status !== 200 || !data) return null;
 		return data;
 	} catch (error) {
@@ -195,6 +196,17 @@ function iconClassname(type: ProjectAssetTypes | string | null): string {
 	return 'pi pi-circle';
 }
 
+/**
+ * Get the xdd_uri of a Project Document
+ */
+function getDocumentAssetXddUri(project: IProject, assetId: Tab['assetId']): string | null {
+	return (
+		project.assets?.[ProjectAssetTypes.DOCUMENTS]?.find(
+			(document) => document?.id === Number.parseInt(assetId ?? '', 10)
+		)?.xdd_uri ?? null
+	);
+}
+
 export {
 	create,
 	update,
@@ -205,5 +217,6 @@ export {
 	deleteAsset,
 	getAssets,
 	home,
-	iconClassname
+	iconClassname,
+	getDocumentAssetXddUri
 };

@@ -27,7 +27,6 @@ export type ProjectAssets = {
 export interface IProject {
 	id: string;
 	name: string;
-	title?: string;
 	description: string;
 	timestamp: string;
 	active: boolean;
