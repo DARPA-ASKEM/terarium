@@ -17,7 +17,7 @@
 						class="p-button-sm p-button-outlined"
 					/>
 					<Button
-						@click="goToSimulationRunPage"
+						@click="launchForecast"
 						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
@@ -72,8 +72,11 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<AccordionTab :header="`State variables ${model?.content?.S.length}`">
-				<template v-if="true || !isEditable">
+			<AccordionTab>
+				<template #header>
+					State variables<span class="artifact-amount">({{ model?.content?.S.length }})</span>
+				</template>
+				<template v-if="!isEditable">
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
@@ -108,31 +111,20 @@
 					</DataTable>
 				</template>
 				<template v-else>
-					<DataTable
-						:value="model?.content?.S"
-						selectionMode="single"
-						@row-select="onStateVariableClick"
-						@row-unselect="onStateVariableClick"
-					>
-						<Column field="sname" header="Label" />
-						<Column field="miraIds" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li
-										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
-										:key="ontology.curie"
-									>
-										<a :href="ontology.link">{{ ontology.title }}</a
-										><br />{{ ontology.description }}
-									</li>
-								</ul>
-							</template>
-						</Column>
-					</DataTable>
+					<model-parameter-list
+						:parameters="betterStates"
+						attribute="parameters"
+						:selected-variable="selectedVariable"
+						@update-parameter-row="updateParamaterRow"
+						@parameter-click="onVariableSelected"
+					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Parameters ${betterParams?.length}`">
-				<template v-if="true || !isEditable">
+			<AccordionTab>
+				<template #header>
+					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
+				</template>
+				<template v-if="!isEditable">
 					<DataTable :value="betterParams">
 						<Column field="name" header="Name" />
 						<Column field="type" header="Type" />
@@ -143,6 +135,7 @@
 					<model-parameter-list
 						:parameters="betterParams"
 						attribute="parameters"
+						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
 						@parameter-click="onVariableSelected"
 					/>
@@ -165,7 +158,7 @@
 						<template #body="slotProps">
 							<ul>
 								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
-									{{ `${text[0]}: ${text[1]}` }}
+									<a :href="`http://34.230.33.149:8772/${text[0]}`">{{ text[1] }}</a>
 								</li>
 							</ul>
 						</template>
@@ -206,6 +199,15 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
+
+		<Teleport to="body">
+			<ForecastLauncher
+				v-if="showForecastLauncher && model"
+				:model="model"
+				@close="showForecastLauncher = false"
+				@launch-forecast="goToSimulationRunPage"
+			/>
+		</Teleport>
 	</section>
 </template>
 
@@ -236,6 +238,7 @@ import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ModelParameterList from '@/components/models/model-parameter-list.vue';
+import ForecastLauncher from '@/components/models/forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -264,11 +267,13 @@ const menu = ref();
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
 const selectedRow = ref<any>(null);
+const selectedVariable = ref('');
 
 const equation = ref<string>('');
 const equationOriginal = ref<string>('');
-const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
+
+const showForecastLauncher = ref(false);
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
 // const modelMath = ref(String.raw`\begin{align}
@@ -291,14 +296,29 @@ const mathmode = ref('mathLIVE');
 // 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
 // };
 
+const betterStates = computed(() => {
+	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
+	const statesFromContent: any[] = model.value?.content?.S ?? [];
+
+	statesFromContent.forEach((stateFromContent) => {
+		statesFromParams.forEach((stateFromParams) => {
+			if (stateFromParams.name === stateFromContent.sname) {
+				stateFromParams.label = stateFromContent?.sname;
+				stateFromParams.concepts = [...stateFromContent.miraIds, ...stateFromContent.miraContext];
+			}
+		});
+	});
+	return statesFromParams;
+});
+
 const betterParams = computed(() => {
 	const params = model.value?.parameters.filter((p) => !p.state_variable);
 	const transitions: any[] = model.value?.content?.T ?? [];
 
 	transitions.forEach((transition) => {
 		params.forEach((param) => {
-			if (param.name === transition?.parameter_name) {
-				param.tname = transition?.tname;
+			if (param.name === transition.parameter_name) {
+				param.label = transition?.tname;
 				param.template_type = transition?.template_type;
 			}
 		});
@@ -307,15 +327,20 @@ const betterParams = computed(() => {
 });
 
 const onVariableSelected = (variable: string) => {
-	if (variable && !isSelected.value) {
-		equation.value = equationOriginal.value.replaceAll(
-			variable,
-			String.raw`{\color{red}${variable}}`
-		);
+	if (variable) {
+		if (variable === selectedVariable.value) {
+			selectedVariable.value = '';
+			equation.value = equationOriginal.value;
+		} else {
+			selectedVariable.value = variable;
+			equation.value = equationOriginal.value.replaceAll(
+				selectedVariable.value,
+				String.raw`{\color{red}${variable}}`
+			);
+		}
 	} else {
 		equation.value = equationOriginal.value;
 	}
-	isSelected.value = !isSelected.value;
 };
 
 const onStateVariableClick = () => {
@@ -499,8 +524,13 @@ const updatePetriFromMathML = async (mathmlString: string) => {
 	}
 };
 
+const launchForecast = () => {
+	showForecastLauncher.value = true;
+};
+
 const router = useRouter();
 const goToSimulationRunPage = () => {
+	showForecastLauncher.value = false;
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {

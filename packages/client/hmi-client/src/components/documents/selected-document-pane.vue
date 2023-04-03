@@ -65,6 +65,7 @@ const addResourcesToProject = async (projectId: string) => {
 		await ProjectService.addAsset(projectId, assetsType, documentId);
 
 		// update local copy of project assets
+		// @ts-ignore
 		validProject.value?.assets?.[ProjectAssetTypes.DOCUMENTS].push(documentId);
 		resources.activeProjectAssets?.[ProjectAssetTypes.DOCUMENTS].push(body);
 	}

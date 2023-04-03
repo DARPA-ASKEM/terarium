@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<slider-panel
+		<tera-slider-panel
 			content-width="240px"
 			direction="left"
 			header="Facets"
@@ -15,7 +15,7 @@
 					:result-type="resourceType"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 		<div class="results-content">
 			<div class="secondary-header">
 				<span class="p-buttonset">
@@ -64,7 +64,7 @@
 			@toggle-data-item-selected="toggleDataItemSelected"
 			@download-pdf="downloadPDF"
 		/>
-		<slider-panel
+		<tera-slider-panel
 			class="resources-slider"
 			:content-width="sliderWidth"
 			direction="right"
@@ -104,13 +104,13 @@
 					@find-similar-content="onFindSimilarContent"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
