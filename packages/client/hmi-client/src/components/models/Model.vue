@@ -708,6 +708,7 @@ section math-editor {
 	flex-grow: 1;
 	overflow: hidden;
 	border: none;
+	position: relative;
 }
 
 .math-editor-container {
@@ -731,12 +732,6 @@ section math-editor {
 	height: 100%;
 	display: flex;
 	align-items: center;
-	flex-direction: column;
-	align-content: center;
-}
-
-.splitter-container {
-	height: 100%;
 	width: 100%;
 }
 
