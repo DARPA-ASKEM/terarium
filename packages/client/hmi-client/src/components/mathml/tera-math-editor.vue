@@ -175,10 +175,9 @@ const cancelEditEquation = () => {
 
 <style scoped>
 math-field {
-	background-color: var(--editing-color);
-	border: 1px solid var(--gray-1000);
+	background-color: var(--surface);
 	border-radius: 4px;
-	padding: 5px;
+	border: 1px solid var(--gray-0);
 	padding: 5px;
 	margin: 10px;
 	font-size: 1em;
@@ -186,8 +185,8 @@ math-field {
 }
 
 math-field:focus-within {
-	outline: 1px solid var(--primary-color-light);
-	border-radius: 4px;
+	outline: 2px solid var(--primary-color);
+	border-radius: var(--border-radius);
 }
 
 math-field[disabled] {

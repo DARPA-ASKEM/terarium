@@ -3,8 +3,8 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!openedAssetRoute.assetId || openedAssetRoute.assetName === 'overview'"
-				v-tooltip="`Remove ${openedAssetRoute.assetName}`"
+				:disabled="!activeTab.assetId || activeTab.assetName === 'overview'"
+				v-tooltip="`Remove ${activeTab.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isRemovalModal = true"
 			/>
@@ -24,18 +24,23 @@
 		<Button
 			class="asset-button"
 			label="Overview"
+			:active="activeTab.assetType === 'overview'"
 			:icon="iconClassname('overview')"
 			plain
 			text
 			size="small"
-			@click="emit('open-asset', { assetName: 'Overview', assetType: 'overview' } as Tab)"
+			@click="emit('open-overview')"
 		/>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
-			<AccordionTab v-for="[type, tabs] in assets" :key="type" :header="capitalize(type)">
+			<AccordionTab v-for="[type, tabs] in assets" :key="type">
+				<template #header>
+					{{ capitalize(type) }}
+					<aside>({{ tabs.size }})</aside>
+				</template>
 				<Button
 					v-for="tab in tabs"
 					:key="tab.assetId"
-					:active="isEqual(tab, openedAssetRoute)"
+					:active="isEqual(tab, activeTab)"
 					:icon="iconClassname(tab.assetType?.toString() ?? null)"
 					:label="tab.assetName"
 					:title="tab.assetName"
@@ -43,7 +48,7 @@
 					plain
 					text
 					size="small"
-					@click="emit('open-asset', tab as Tab)"
+					@click="emit('open-asset', tab)"
 				/>
 			</AccordionTab>
 		</Accordion>
@@ -58,7 +63,7 @@
 				</template>
 				<template #default>
 					<p>
-						Removing <em>{{ openedAssetRoute.assetName }}</em> will permanently remove it from
+						Removing <em>{{ activeTab.assetName }}</em> will permanently remove it from
 						{{ project.name }}.
 					</p>
 				</template>
@@ -86,11 +91,11 @@ type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
-	openedAssetRoute: Tab;
+	activeTab: Tab;
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'remove-asset', 'close-tab']);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
 const isRemovalModal = ref(false);
 
@@ -105,10 +110,9 @@ const assets = computed((): IProjectAssetTabs => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
 			const projectAssetType = type as ProjectAssetTypes;
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
-				const assetName = (asset?.name || asset?.title || asset.id).toString();
+				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
 				const assetType = asset?.type ?? projectAssetType;
-				const assetId =
-					projectAssetType === ProjectAssetTypes.DOCUMENTS ? asset.xdd_uri : asset?.id.toString();
+				const assetId = asset?.id.toString();
 				return { assetName, assetType, assetId };
 			}) as Tab[];
 			tabs.set(projectAssetType, new Set(typeAssets));
@@ -118,7 +122,7 @@ const assets = computed((): IProjectAssetTabs => {
 	return tabs;
 });
 
-function removeAsset(asset = props.openedAssetRoute) {
+function removeAsset(asset = props.activeTab) {
 	emit('remove-asset', asset);
 	isRemovalModal.value = false;
 }
@@ -143,8 +147,13 @@ header {
 
 ::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
 	font-size: var(--font-body-small);
-	gap: 1rem;
 	padding: 0.5rem 1rem;
+}
+
+::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	margin-left: 0.25rem;
 }
 
 ::v-deep(.asset-button.p-button) {

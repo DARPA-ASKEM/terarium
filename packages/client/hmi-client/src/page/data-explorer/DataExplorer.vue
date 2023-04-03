@@ -62,6 +62,7 @@
 			:selected-search-items="selectedSearchItems"
 			:search-term="searchTerm"
 			@toggle-data-item-selected="toggleDataItemSelected"
+			@download-pdf="downloadPDF"
 		/>
 		<tera-slider-panel
 			class="resources-slider"
@@ -134,6 +135,10 @@ import SelectedResourcesOptionsPane from '@/page/data-explorer/components/select
 import selectedResourcesHeaderPane from '@/page/data-explorer/components/selected-resources-header-pane.vue';
 import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
 import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
+import API from '@/api/api';
+import { logger } from '@/utils/logger';
+import { toQueryString } from '@/utils/query-string';
+import { DocumentType } from '@/types/Document';
 import { useSearchByExampleOptions } from './search-by-example';
 
 // FIXME: page count is not taken into consideration
@@ -452,6 +457,27 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 		previewItem.value = null;
 		isSliderResourcesOpen.value = true;
 	}
+};
+
+const downloadPDF = async (dataItem: { item: DocumentType; type?: string }) => {
+	const doi = dataItem.item?.identifier[0]?.id;
+	const query = {
+		doi
+	};
+	const URL = `/download?${toQueryString(query)}`;
+	let response;
+	try {
+		response = await API.get(URL, { responseType: 'arraybuffer' });
+	} catch (e) {
+		logger.error(`Error: Unable to download pdf for doi ${doi}: ${e}`);
+		return;
+	}
+
+	const blob = new Blob([response?.data], { type: 'application/pdf' });
+	const link = document.createElement('a');
+	link.href = window.URL.createObjectURL(blob);
+	link.download = `${doi}.pdf`;
+	link.click();
 };
 
 const updateAssetType = async (newResourceType: ResourceType) => {

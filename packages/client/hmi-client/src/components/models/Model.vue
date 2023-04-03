@@ -18,7 +18,7 @@
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" />
+				<p v-html="description" class="constrain-width" />
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -485,20 +485,20 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 // Model editor context menu
 const contextMenuItems = ref([
 	{
-		label: 'Add State',
+		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('S', 'test', { x: eventX, y: eventY });
+				renderer.addNode('S', '?', { x: eventX, y: eventY });
 			}
 		}
 	},
 	{
-		label: 'Add Transition',
+		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('T', 'test', { x: eventX, y: eventY });
+				renderer.addNode('T', '?', { x: eventX, y: eventY });
 			}
 		}
 	}
@@ -707,8 +707,7 @@ section math-editor {
 	max-height: 100%;
 	flex-grow: 1;
 	overflow: hidden;
-	border-radius: 0.25rem;
-	position: relative;
+	border: none;
 }
 
 .math-editor-container {
@@ -745,5 +744,9 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.constrain-width {
+	max-width: 60rem;
 }
 </style>

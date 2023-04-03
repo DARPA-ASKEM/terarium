@@ -14,7 +14,7 @@
 			<section>
 				<document
 					v-if="previewItemResourceType === ResourceType.XDD"
-					:asset-id="previewItemId"
+					:xdd-uri="previewItemId"
 					:previewLineLimit="3"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
@@ -48,6 +48,11 @@
 				label="Remove from Resources"
 				@click="emit('toggle-data-item-selected', { item: previewItem })"
 				class="toggle-selection p-button-secondary"
+			/>
+			<Button
+				label="Download PDF"
+				@click="emit('download-pdf', { item: previewItem })"
+				class="p-button"
 			/>
 		</template>
 	</tera-slider>
@@ -104,7 +109,7 @@ const props = defineProps({
 const previewItemState = ref(props.previewItem);
 const previewItemResourceType = ref<ResourceType | null>(null);
 
-const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
+const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected', 'download-pdf']);
 
 watch(
 	() => props.previewItem,
@@ -146,5 +151,9 @@ i {
 
 .toggle-selection {
 	margin-left: 1rem;
+}
+
+footer button {
+	margin: 0 3px;
 }
 </style>

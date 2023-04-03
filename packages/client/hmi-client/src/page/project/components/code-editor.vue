@@ -6,14 +6,15 @@
 				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
 				:loading="extractPetrinetLoading"
-			></Button>
+			/>
 			<FileUpload
 				name="demo[]"
 				:customUpload="true"
 				@uploader="onFileOpen"
 				mode="basic"
 				auto
-				chooseLabel="Load File"
+				chooseLabel="Load file"
+				class="p-button-secondary outline-upload-button"
 			/>
 		</div>
 		<v-ace-editor
@@ -22,6 +23,7 @@
 			lang="python"
 			theme="chrome"
 			style="height: 100%; width: 100%"
+			class="ace-editor"
 		/>
 	</div>
 	<Dialog
@@ -203,13 +205,37 @@ async function createModelFromCode() {
 	flex-direction: column;
 	flex: 1;
 	padding-top: 1rem;
+	background-color: var(--surface-0);
 }
 
 .controls {
-	margin-left: 40px;
-	margin-bottom: 10px;
+	margin-left: 1rem;
+	margin-right: 1rem;
+	margin-bottom: 1rem;
 	display: flex;
 	gap: 10px;
+	justify-content: space-between;
+}
+
+.control-group {
+	display: flex;
+	gap: 1rem;
+}
+
+.p-fileupload-choose.p-button.outline-upload-button {
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border);
+	color: var(--text-color-primary);
+	width: 100%;
+	font-size: var(--font-body-small);
+}
+.p-fileupload-choose.p-button.p-button.outline-upload-button:hover {
+	background-color: var(--surface-hover);
+	color: var(--text-color-primary);
+}
+
+.ace-editor {
+	border-top: 1px solid var(--surface-border-light);
 }
 
 .graph-element {
