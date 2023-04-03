@@ -138,6 +138,7 @@ import SearchResultsList from '@/page/data-explorer/components/search-results-li
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { toQueryString } from '@/utils/query-string';
+import { DocumentType } from '@/types/Document';
 import { useSearchByExampleOptions } from './search-by-example';
 
 // FIXME: page count is not taken into consideration
@@ -458,15 +459,19 @@ const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) =
 	}
 };
 
-const downloadPDF = async (dataItem: { item: ResultType; type?: string }) => {
+const downloadPDF = async (dataItem: { item: DocumentType; type?: string }) => {
 	const doi = dataItem.item?.identifier[0]?.id;
 	const query = {
 		doi
 	};
 	const URL = `/download?${toQueryString(query)}`;
-	const response = await API.get(URL, { responseType: 'arraybuffer' }).catch((error) => {
-		logger.error(`Error: Unable to download pdf for doi ${doi}: ${error}`);
-	});
+	let response;
+	try {
+		response = await API.get(URL, { responseType: 'arraybuffer' });
+	} catch (e) {
+		logger.error(`Error: Unable to download pdf for doi ${doi}: ${e}`);
+		return;
+	}
 
 	const blob = new Blob([response?.data], { type: 'application/pdf' });
 	const link = document.createElement('a');
