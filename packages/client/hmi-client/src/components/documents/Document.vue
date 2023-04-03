@@ -61,11 +61,11 @@
 				</div>
 				-->
 			</div>
-			<div v-bind:class="{ 'main-content': isEditable === true }">
+			<div class="asset" v-bind:class="{ 'main-content': isEditable === true }">
 				<header>
 					<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-					<h4 v-html="highlightSearchTerms(doc.title)" class="constrain-width" />
-					<div class="authors constrain-width" v-html="formatDocumentAuthors(doc)" />
+					<h4 v-html="highlightSearchTerms(doc.title)" />
+					<div class="authors" v-html="formatDocumentAuthors(doc)" />
 					<div v-if="docLink || doi">
 						DOI:
 						<a
@@ -75,12 +75,22 @@
 						/>
 					</div>
 					<div v-html="highlightSearchTerms(doc.publisher)" />
-					<Button
-						v-if="linkIsPDF()"
-						class="p-button-sm p-button-outlined"
-						label="Open PDF"
-						@click="openPDF"
-					/>
+					<section class="pdf-buttons" v-if="doi">
+						<Button
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-external-link"
+							label="Open PDF"
+							@click="openPDF"
+							:loading="!pdfLink && !linkIsPDF()"
+						/>
+						<Button
+							class="p-button-sm p-button-outlined"
+							@click="downloadPDF"
+							:icon="'pi pi-cloud-download'"
+							:loading="!pdfLink"
+							label="Download PDF"
+						/>
+					</section>
 				</header>
 				<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 					<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract" id="Abstract">
@@ -262,6 +272,7 @@ import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
+import { generatePdfDownloadLink } from '@/services/generate-download-link';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 const props = defineProps<{
@@ -273,6 +284,7 @@ const props = defineProps<{
 
 const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
+const pdfLink = ref<string | null>(null);
 
 const emit = defineEmits(['open-asset']);
 
@@ -372,10 +384,36 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
-watch(doi, (currentValue, oldValue) => {
+// Better than wrapping download button with an anchor
+function downloadPDF() {
+	if (pdfLink.value) {
+		const link = document.createElement('a');
+		link.href = pdfLink.value;
+		link.download = `${doi.value}.pdf`;
+		link.click();
+	}
+}
+
+function linkIsPDF() {
+	const link = docLink.value ?? doi.value;
+	return link.match(/^.*\.(pdf|PDF)$/);
+}
+
+const openPDF = () => {
+	if (linkIsPDF()) {
+		if (docLink.value) window.open(docLink.value as string);
+		else if (doi.value) window.open(`https://doi.org/${doi.value}`);
+		return;
+	}
+	if (pdfLink.value) window.open(pdfLink.value);
+};
+
+watch(doi, async (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchDocumentArtifacts();
 		fetchRelatedTerariumArtifacts();
+		pdfLink.value = null;
+		pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
 	}
 });
 
@@ -389,16 +427,6 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
 );
-
-function linkIsPDF() {
-	const link = docLink.value ?? doi.value;
-	return link.match(/^.*\.(pdf|PDF)$/);
-}
-
-const openPDF = () => {
-	if (docLink.value) window.open(docLink.value as string);
-	else if (doi.value) window.open(`https://doi.org/${doi.value}`);
-};
 
 /**
  * Format from xDD citation_list object.
@@ -429,9 +457,14 @@ onMounted(async () => {
 	display: inline;
 }
 
+.pdf-buttons {
+	display: flex;
+	gap: 0.5rem;
+}
+
 .content-navigator {
 	padding: 1rem;
-	padding-top: 8.5rem;
+	margin-top: 8.5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 3rem;
@@ -443,6 +476,7 @@ onMounted(async () => {
 .content-switcher {
 	width: 12rem;
 }
+
 .p-button.p-button-secondary {
 	border: 1px solid var(--surface-border);
 	box-shadow: none;
@@ -479,6 +513,7 @@ onMounted(async () => {
 .p-button.p-button-sm {
 	padding: 0.5rem 0.75rem;
 }
+
 .scroll-to-section-links {
 	display: flex;
 	flex-direction: column;
@@ -490,6 +525,7 @@ onMounted(async () => {
 	padding: 0.75rem;
 	width: 11.75rem;
 }
+
 .main-content {
 	height: 100vh;
 	margin-left: 15rem;
@@ -504,6 +540,7 @@ onMounted(async () => {
 	padding: 1rem;
 	border-radius: var(--border-radius);
 }
+
 .extracted-image {
 	max-width: 30rem;
 }
