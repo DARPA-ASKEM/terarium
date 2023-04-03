@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 @Path("/api/download")
 @Authenticated
-@Tag(name = "User Annotation REST Endpoints")
+@Tag(name = "PDF Download REST Endpoints")
 @Slf4j
 public class DownloadResource {
 
