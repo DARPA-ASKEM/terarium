@@ -27,6 +27,11 @@
             color: var(--text-color-primary);
         }
 
+        h4,
+        .authors {
+            max-width: var(--constrain-width);
+        }
+
         .header-and-buttons {
             display: flex;
             justify-content: space-between;

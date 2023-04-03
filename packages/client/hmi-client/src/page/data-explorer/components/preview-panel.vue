@@ -49,11 +49,6 @@
 				@click="emit('toggle-data-item-selected', { item: previewItem })"
 				class="toggle-selection p-button-secondary"
 			/>
-			<Button
-				label="Download PDF"
-				@click="emit('download-pdf', { item: previewItem })"
-				class="p-button"
-			/>
 		</template>
 	</tera-slider>
 </template>
@@ -109,7 +104,7 @@ const props = defineProps({
 const previewItemState = ref(props.previewItem);
 const previewItemResourceType = ref<ResourceType | null>(null);
 
-const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected', 'download-pdf']);
+const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
 watch(
 	() => props.previewItem,
