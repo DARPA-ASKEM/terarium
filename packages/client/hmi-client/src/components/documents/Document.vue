@@ -1,5 +1,5 @@
 <template>
-	<section v-if="doc" ref="sectionElem">
+	<section class="asset" v-if="doc" ref="sectionElem">
 		<div class="two-columns">
 			<div class="content-navigator" v-if="isEditable">
 				<!-- TODO: Set these buttons up to toggle between PDF and extraction view -->
@@ -64,8 +64,8 @@
 			<div class="asset" v-bind:class="{ 'main-content': isEditable === true }">
 				<header>
 					<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-					<h4 v-html="highlightSearchTerms(doc.title)" class="constrain-width" />
-					<div class="authors constrain-width" v-html="formatDocumentAuthors(doc)" />
+					<h4 v-html="highlightSearchTerms(doc.title)" />
+					<div class="authors" v-html="formatDocumentAuthors(doc)" />
 					<div v-if="docLink || doi">
 						DOI:
 						<a
@@ -469,7 +469,7 @@ onMounted(async () => {
 
 .content-navigator {
 	padding: 1rem;
-	padding-top: 8.5rem;
+	margin-top: 8.5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 3rem;
