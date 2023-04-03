@@ -14,7 +14,7 @@ import software.uncharted.terarium.hmiserver.resources.documentservice.responses
 public class ExtractionProxyTests {
 
 
-	@ConfigProperty(name = "xdd_api_key")
+	@ConfigProperty(name = "xdd_api_key", defaultValue = "")
 	String key;
 
 	@RestClient
