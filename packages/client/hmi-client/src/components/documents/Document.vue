@@ -19,6 +19,19 @@
 				label="Open PDF"
 				@click="openPDF"
 			/>
+			<a
+				v-if="doi"
+				class="download-pdf"
+				:href="isEmpty(pdfLink) ? 'javascript:void(0)' : pdfLink"
+				:download="`${doi}.pdf`"
+			>
+				<Button
+					class="p-button-sm p-button-outlined"
+					:icon="isEmpty(pdfLink) ? 'pi pi-spin pi-spinner' : 'pi pi-cloud-download'"
+					:disabled="isEmpty(pdfLink)"
+					>Download PDF</Button
+				>
+			</a>
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
@@ -152,6 +165,9 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
+import API from '@/api/api';
+import { logger } from '@/utils/logger';
+import { toQueryString } from '@/utils/query-string';
 
 const props = defineProps<{
 	xddUri: string;
@@ -162,6 +178,7 @@ const props = defineProps<{
 
 const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
+const pdfLink = ref('');
 
 const emit = defineEmits(['open-asset']);
 
@@ -261,10 +278,23 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
+async function fetchPDF() {
+	pdfLink.value = '';
+	if (!doi.value) return;
+	const query = { doi: doi.value };
+	const URL = `/download?${toQueryString(query)}`;
+	const response = await API.get(URL, { responseType: 'arraybuffer' }).catch((error) => {
+		logger.error(`Error: Unable to download pdf for doi ${doi.value}: ${error}`);
+	});
+	const blob = new Blob([response?.data], { type: 'application/pdf' });
+	pdfLink.value = window.URL.createObjectURL(blob);
+}
+
 watch(doi, (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchDocumentArtifacts();
 		fetchRelatedTerariumArtifacts();
+		fetchPDF();
 	}
 });
 
@@ -309,3 +339,11 @@ onMounted(async () => {
 	fetchRelatedTerariumArtifacts();
 });
 </script>
+<style>
+.download-pdf,
+.download-pdf:hover,
+.download-pdf:focus {
+	display: inline-block;
+	text-decoration: none;
+}
+</style>
