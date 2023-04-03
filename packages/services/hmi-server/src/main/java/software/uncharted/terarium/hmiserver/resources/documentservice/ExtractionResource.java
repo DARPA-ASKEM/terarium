@@ -28,7 +28,7 @@ public class ExtractionResource {
 	// source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 	private static final Pattern DOI_VALIDATION_PATTERN = Pattern.compile("^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
-	@ConfigProperty(name = "xdd_api_key")
+	@ConfigProperty(name = "xdd_api_key", defaultValue = "")
 	String key;
 	@RestClient
 	ExtractionProxy proxy;
