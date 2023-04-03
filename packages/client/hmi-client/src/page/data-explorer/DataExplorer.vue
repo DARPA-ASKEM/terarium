@@ -463,6 +463,7 @@ const downloadPDF = async (dataItem: { item: ResultType; type?: string }) => {
 	const query = {
 		doi
 	};
+	console.log(query);
 	const URL = `/download?${toQueryString(query)}`;
 	const response = await API.get(URL, { responseType: 'arraybuffer' }).catch((error) => {
 		logger.error(`Error: Unable to download pdf for doi ${doi}: ${error}`);
@@ -646,9 +647,11 @@ onUnmounted(() => {
 	color: var(--text-color-secondary);
 	font-size: var(--font-body-small);
 }
+
 .empty-cart-image {
 	margin: auto;
 }
+
 .breakdown-pane-container {
 	margin-left: 0.5rem;
 	margin-right: 0.5rem;

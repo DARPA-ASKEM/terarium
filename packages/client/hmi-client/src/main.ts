@@ -6,6 +6,7 @@ import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
 import { MathfieldElement } from 'mathlive';
 import VueMathjax from 'vue-mathjax-next';
+import VuePdf from 'vue3-pdfjs';
 import useAuthStore from './stores/auth';
 import router from './router';
 import App from './App.vue';
@@ -20,6 +21,7 @@ app.use(PrimeVue, { ripple: true });
 app.directive('tooltip', Tooltip);
 app.use(VueMathjax); // we need to intialize this vue mathjax component this way
 app.component('math-field', MathfieldElement);
+app.use(VuePdf);
 
 const auth = useAuthStore();
 await auth.fetchSSO();

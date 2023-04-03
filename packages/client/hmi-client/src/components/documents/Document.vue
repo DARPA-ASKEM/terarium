@@ -20,6 +20,10 @@
 				@click="openPDF"
 			/>
 		</header>
+		<vue-pdf v-for="page in numOfPages" :key="page" :src="pdfSrc" :page="page" />
+		<!-- <vue-pdf-embed class="pdf" v-if="pdfLink"
+			:source="`https://www.lego.com/cdn/cs/set/assets/blt8d8677b8321b803e/RAC3_TRUCK.pdf`" height="375" /> -->
+
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 			<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract">
 				<span v-html="formattedAbstract" />
@@ -152,6 +156,12 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
+import API from '@/api/api';
+import { logger } from '@/utils/logger';
+import { toQueryString } from '@/utils/query-string';
+import { VuePdf, createLoadingTask } from 'vue3-pdfjs/esm';
+import { VuePdfPropsType } from 'vue3-pdfjs/components/vue-pdf/vue-pdf-props'; // Prop type definitions can also be imported
+import { PDFDocumentProxy } from 'pdfjs-dist/types/src/display/api';
 
 const props = defineProps<{
 	assetId: string;
@@ -162,6 +172,10 @@ const props = defineProps<{
 
 const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
+// const pdfLink = ref('');
+
+const pdfSrc = ref<VuePdfPropsType['src']>('');
+const numOfPages = ref(0);
 
 const emit = defineEmits(['open-asset']);
 
@@ -304,8 +318,31 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	return highlightSearchTerms(citation);
 };
 
+async function loadPDFPreview() {
+	const d = doi.value;
+	const query = { d };
+	console.log(query);
+	const URL = `/download?${toQueryString(query)}`;
+	const response = await API.get(URL, { responseType: 'arraybuffer' }).catch((error) => {
+		logger.error(`Error: Unable to download pdf for doi ${doi.value}: ${error}`);
+	});
+
+	const blob = new Blob([response?.data], { type: 'application/pdf' });
+	pdfSrc.value = window.URL.createObjectURL(blob);
+	console.log(pdfSrc.value);
+}
+
+watch(
+	() => doi.value,
+	() => loadPDFPreview()
+);
+
 onMounted(async () => {
 	fetchDocumentArtifacts();
 	fetchRelatedTerariumArtifacts();
+	const loadingTask = createLoadingTask(pdfSrc.value);
+	loadingTask.promise.then((pdf: PDFDocumentProxy) => {
+		numOfPages.value = pdf.numPages;
+	});
 });
 </script>
