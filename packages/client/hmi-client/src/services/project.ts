@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import { IProject, ProjectAssets } from '@/types/Project';
+import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 
 /**
@@ -44,18 +44,17 @@ async function update(project: IProject): Promise<IProject | null> {
 }
 
 /**
- * Get a project per id
- * @return Project|null - the appropriate project, or null if none returned by API
+ * Remove a project (soft-delete)
+ * @param projectId {IProject["id"]} - the id of the project to be removed
+ * @return boolean - if the removal was succesful
  */
-async function get(projectId: string): Promise<IProject | null> {
+async function remove(projectId: IProject['id']): Promise<boolean> {
 	try {
-		const response = await API.get(`/projects/${projectId}`);
-		const { status, data } = response;
-		if (status !== 200) return null;
-		return data ?? null;
+		const { status } = await API.delete(`/projects/${projectId}`);
+		return status === 200;
 	} catch (error) {
 		logger.error(error);
-		return null;
+		return false;
 	}
 }
 
@@ -114,16 +113,97 @@ async function addAsset(projectId: string, assetsType: string, assetId) {
 
 /**
  * Delete a project asset
- * @projectId string - represents the project id wherein the asset will be added
- * @assetType string - represents the type of asset to be added, e.g., 'documents'
- * @assetId string - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
- * @return any|null - some result if success, or null if none returned by API
+ * @projectId IProject["id"] - represents the project id wherein the asset will be added
+ * @assetType ProjectAssetTypes - represents the type of asset to be added, e.g., 'documents'
+ * @assetId string | number - represents the id of the asset to be added. This will be the internal id of some asset stored in one of the data service collections
+ * @return boolean
  */
-async function deleteAsset(projectId: string, assetsType: string, assetId) {
-	// FIXME: handle cases where asset does not exist
-	const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
-	const response = await API.delete(url);
-	return response?.data ?? null;
+async function deleteAsset(
+	projectId: IProject['id'],
+	assetsType: ProjectAssetTypes,
+	assetId: string | number
+): Promise<boolean> {
+	try {
+		const url = `/projects/${projectId}/assets/${assetsType}/${assetId}`;
+		const { status } = await API.delete(url);
+		return status >= 200 && status < 300;
+	} catch (error) {
+		logger.error(error);
+		return false;
+	}
 }
 
-export { create, update, get, getAll, addAsset, deleteAsset, getAssets };
+/**
+ * Get a project per id
+ * @return Project|null - the appropriate project, or null if none returned by API
+ */
+async function get(
+	projectId: string,
+	containingAssetsInfomation: boolean = false
+): Promise<IProject | null> {
+	try {
+		const response = await API.get(`/projects/${projectId}`);
+		const { status, data } = response;
+		if (status !== 200) return null;
+		const project = data as IProject;
+
+		if (project && containingAssetsInfomation) {
+			const assets = await getAssets(projectId);
+			if (assets) {
+				project.assets = assets;
+			}
+		}
+
+		return project ?? null;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+/**
+ * Get all informations for the homepage
+ */
+async function home(): Promise<IProject[] | null> {
+	try {
+		const response = await API.get('/home');
+		const { status, data } = response;
+		if (status !== 200 || !data) return null;
+		return data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+/**
+ * Get the icon associated with an Asset
+ */
+const icons = new Map([
+	[ProjectAssetTypes.DOCUMENTS, 'file'],
+	[ProjectAssetTypes.MODELS, 'share-alt'],
+	[ProjectAssetTypes.DATASETS, 'sliders-v'],
+	[ProjectAssetTypes.SIMULATIONS, 'cog'],
+	[ProjectAssetTypes.SIMULATION_RUNS, 'eye'],
+	[ProjectAssetTypes.CODE, 'code'],
+	['overview', 'inbox']
+]);
+function iconClassname(type: ProjectAssetTypes | string | null): string {
+	if (type && icons.has(type)) {
+		return `pi pi-${icons.get(type)}`;
+	}
+	return 'pi pi-circle';
+}
+
+export {
+	create,
+	update,
+	get,
+	remove,
+	getAll,
+	addAsset,
+	deleteAsset,
+	getAssets,
+	home,
+	iconClassname
+};

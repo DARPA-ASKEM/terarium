@@ -46,6 +46,9 @@ public class Document implements Serializable {
 
 	private List<Map<String, String>> identifier;
 
+	@JsonAlias("_github_urls")
+	private List<String> githubUrls;
+
 	@JsonAlias("known_terms")
 	private Map<String, List<String>> knownTerms;
 
@@ -63,6 +66,9 @@ public class Document implements Serializable {
 
 	@JsonAlias("citation_list")
 	private List<Map<String, String>> citationList;
+
+	@JsonAlias("cited_by")
+	private List<Map<String, Object>> citedBy;
 
 
 }

@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import graphScaffolder, { INode, IEdge } from '@graph-scaffolder/index';
+import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
@@ -9,12 +9,18 @@ const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
 const pathFn = d3
 	.line<{ x: number; y: number }>()
 	.x((d) => d.x)
-	.y((d) => d.y);
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
 
-export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, EdgeData> {
+const EDGE_COLOR = '#333333';
+const EDGE_OPACITY = 0.5;
+
+export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
+
+	editMode: boolean = false;
 
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
@@ -32,14 +38,26 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('refX', 2)
 			.attr('refY', 0)
 			.attr('orient', 'auto')
-			.attr('markerWidth', 15)
-			.attr('markerHeight', 15)
+			.attr('markerWidth', 20)
+			.attr('markerHeight', 20)
 			.attr('markerUnits', 'userSpaceOnUse')
 			.attr('xoverflow', 'visible')
 			.append('svg:path')
 			.attr('d', ARROW)
-			.style('fill', '#000')
+			.style('fill', EDGE_COLOR)
+			.style('fill-opacity', EDGE_OPACITY)
 			.style('stroke', 'none');
+	}
+
+	setEditMode(v: boolean) {
+		this.editMode = v;
+
+		const svg = d3.select(this.svgEl);
+		if (this.editMode) {
+			svg.style('background-color', '#EE8');
+		} else {
+			svg.style('background-color', null);
+		}
 	}
 
 	renderNodes(selection: D3SelectionINode<NodeData>) {
@@ -64,19 +82,19 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		const transitionsHandles = [
 			...transitions
 				.append('circle')
-				.attr('cx', (d) => d.width * 1.2)
+				.attr('cx', (d) => d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...transitions
 				.append('circle')
-				.attr('cy', (d) => d.height * 1.2)
+				.attr('cy', (d) => d.height)
 				.attr('r', (d) => d.width * 0.2),
 			...transitions
 				.append('circle')
-				.attr('cx', (d) => -d.width * 1.2)
+				.attr('cx', (d) => -d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...transitions
 				.append('circle')
-				.attr('cy', (d) => -d.height * 1.2)
+				.attr('cy', (d) => -d.height)
 				.attr('r', (d) => d.width * 0.2)
 		];
 
@@ -85,6 +103,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2)
+			.style('cursor', 'pointer')
 			.style('opacity', 0);
 
 		// transitions text
@@ -98,7 +117,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		species
 			.append('circle')
 			.classed('shape', true)
-			.attr('r', (d) => d.width * 1.4)
+			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2);
@@ -107,19 +126,19 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		const speciesHandles = [
 			...species
 				.append('circle')
-				.attr('cx', (d) => d.width * 2)
+				.attr('cx', (d) => d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...species
 				.append('circle')
-				.attr('cy', (d) => d.height * 2)
+				.attr('cy', (d) => d.height)
 				.attr('r', (d) => d.width * 0.2),
 			...species
 				.append('circle')
-				.attr('cx', (d) => -d.width * 2)
+				.attr('cx', (d) => -d.width)
 				.attr('r', (d) => d.width * 0.2),
 			...species
 				.append('circle')
-				.attr('cy', (d) => -d.height * 2)
+				.attr('cy', (d) => -d.height)
 				.attr('r', (d) => d.width * 0.2)
 		];
 
@@ -128,6 +147,7 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.attr('fill', '#FFF')
 			.attr('stroke', '#AAA')
 			.attr('stroke-width', 2)
+			.style('cursor', 'pointer')
 			.style('opacity', 0);
 
 		// species text
@@ -143,7 +163,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
 			.style('fill', 'none')
-			.style('stroke', '#000')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 2)
 			.attr('marker-end', 'url(#arrowhead)');
 
@@ -165,20 +186,40 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 				.attr('y', point.y)
 				.attr('stroke', null)
 				.attr('fill', '#000')
+				.style('font-size', 18)
 				.text((d) => d.data?.numEdges as number);
 		});
 	}
 
 	selectNode(selection: D3SelectionINode<NodeData>) {
-		selection.selectAll('circle').attr('stroke-width', 4);
+		selection.selectAll('.no-drag').attr('stroke-width', 3);
+		selection.select('text').style('fill-opacity', 0);
+
+		// Add in a input textbox to change the name
+		const w = selection.datum().width;
+		const h = selection.datum().width;
+
+		selection
+			.append('foreignObject')
+			.attr('x', -0.5 * w)
+			.attr('y', -0.25 * h)
+			.attr('width', w)
+			.attr('height', h)
+			.append('xhtml:input')
+			.attr('type', 'text')
+			.attr('value', selection.datum().label);
 	}
 
 	deselectNode(selection: D3SelectionINode<NodeData>) {
-		selection.selectAll('circle').attr('stroke-width', 1);
+		selection.selectAll('.no-drag').attr('stroke-width', 1);
+		const newLabel = (selection.select('input').node() as HTMLInputElement).value;
+		selection.datum().label = newLabel;
+		selection.select('text').text(newLabel).style('fill-opacity', 1.0);
+		selection.select('foreignObject').remove();
 	}
 
 	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
-		selection.selectAll('path').style('stroke-width', 4);
+		selection.selectAll('path').style('stroke-width', 3);
 	}
 
 	deselectEdge(selection: D3SelectionIEdge<EdgeData>) {
@@ -234,7 +275,9 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 					.classed('new-edge', true)
 					.attr('d', pathFn(line))
 					.attr('marker-end', 'url(#arrowhead)')
-					.style('stroke', '#000');
+					.style('stroke-dasharray', '4')
+					.style('stroke-width', 3)
+					.style('stroke', '#888');
 			}
 		);
 
@@ -249,6 +292,9 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		});
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			if (!this.editMode) return;
+			if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) return;
+
 			// hide any handles which are already open
 			if (this.nodeSelection) {
 				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
@@ -270,6 +316,8 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		});
 
 		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
+			if (!this.editMode) return;
+
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
 			}
@@ -290,9 +338,22 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 			}
 			if (this.nodeSelection) {
 				this.deselectNode(this.nodeSelection);
+				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
 				this.nodeSelection = null;
 			}
 		});
+
+		// restore prior selection state, if applicable
+		if (this.nodeSelection && this.chart) {
+			const id = this.nodeSelection.datum().id;
+			this.nodeSelection = this.chart
+				.selectAll('.node-ui')
+				.filter((d: any) => d.id === id) as D3SelectionINode<NodeData>;
+
+			if (this.nodeSelection) {
+				this.selectNode(this.nodeSelection);
+			}
+		}
 	}
 
 	getShapeOffset(node: any, angle: number) {
@@ -311,7 +372,53 @@ export class PetrinetRenderer extends graphScaffolder.BasicRenderer<NodeData, Ed
 		}
 	}
 
+	addNode(type: string, name: string, pos: { x: number; y: number }) {
+		// FIXME: hardwired sizing
+		const size = type === 'S' ? 60 : 30;
+		this.graph.nodes.push({
+			id: `s-${this.graph.nodes.length + 1}`,
+			label: name,
+			x: pos.x,
+			y: pos.y,
+			width: size,
+			height: size,
+			nodes: [],
+			data: {
+				type
+			}
+		});
+
+		this.render();
+	}
+
 	addEdge(source: any, target: any) {
+		// prevent nodes with same type from being linked with each other
+		if (source.data.type === target.data.type) {
+			return;
+		}
+
+		const existingEdge = this.graph.edges.find(
+			(edge) => edge.source === source.id && edge.target === target.id
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+		} else {
+			this.graph.edges.push({
+				id: `${source.id}_${target.id}`,
+				source: source.id,
+				target: target.id,
+				points: [
+					{ x: source.x, y: source.y },
+					{ x: target.x, y: target.y }
+				],
+				data: { numEdges: 1 }
+			});
+		}
+		this.render();
+	}
+
+	// Test adding edge to one of four quadrants on the target
+	addEdgeTest(source: any, target: any) {
 		// prevent nodes with same type from being linked with each other
 		if (source.data.type === target.data.type) {
 			return;

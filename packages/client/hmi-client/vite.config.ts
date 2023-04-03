@@ -12,6 +12,9 @@ import * as path from 'path';
 // See: https://vitejs.dev/config/
 // See: https://vitejs.dev/config/server-options.html#server-proxy
 export default defineConfig({
+	optimizeDeps: {
+		exclude: ['mathlive']
+	},
 	// Syntax sugar for specifying imports
 	resolve: {
 		alias: {
@@ -44,7 +47,7 @@ export default defineConfig({
 				compilerOptions: {
 					// treat all components starting with `facet` as custom elements
 					// ignore facets as custom elements
-					isCustomElement: (tag) => tag.startsWith('facet-')
+					isCustomElement: (tag) => tag.startsWith('facet-') || tag === 'math-field'
 				}
 			}
 		})

@@ -98,12 +98,14 @@ async function getRelatedArtifacts(id: string, rootType: ProvenanceType): Promis
 				// but the fetch service expects IDs as string(s)
 				datasetIDs.push(node.id.toString());
 			}
-			if (
-				node.type === ProvenanceType.ModelRevision &&
-				modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
-			) {
-				modelRevisionIDs.push(node.id.toString());
-			}
+
+			// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/880
+			// if (
+			// 	node.type === ProvenanceType.ModelRevision &&
+			// 	modelRevisionIDs.length < MAX_RELATED_ARTIFACT_COUNT
+			// ) {
+			// 	modelRevisionIDs.push(node.id.toString());
+			// }
 		});
 
 		//

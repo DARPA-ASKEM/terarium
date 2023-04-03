@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<slider-panel
+		<tera-slider-panel
 			content-width="240px"
 			direction="left"
 			header="Facets"
@@ -15,7 +15,7 @@
 					:result-type="resourceType"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 		<div class="results-content">
 			<div class="secondary-header">
 				<span class="p-buttonset">
@@ -63,11 +63,11 @@
 			:search-term="searchTerm"
 			@toggle-data-item-selected="toggleDataItemSelected"
 		/>
-		<slider-panel
+		<tera-slider-panel
 			class="resources-slider"
 			:content-width="sliderWidth"
 			direction="right"
-			header="Cart"
+			header="Selected resources"
 			v-model:is-open="isSliderResourcesOpen"
 			:indicator-value="selectedSearchItems.length"
 		>
@@ -85,8 +85,17 @@
 				<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
 					{{ selectedSearchItems.length }} items
 				</div>
+				<div v-if="selectedSearchItems.length == 0">
+					<div class="sub-header-title">Empty</div>
+				</div>
 			</template>
 			<template v-slot:content>
+				<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
+					<div class="empty-cart-image">
+						<img src="@/assets/svg/seed.svg" alt="Picture of a seed" />
+					</div>
+					<p>Selected resources will appear here</p>
+				</div>
 				<selected-resources-options-pane
 					:selected-search-items="selectedSearchItems"
 					@toggle-data-item-selected="toggleDataItemSelected"
@@ -94,13 +103,13 @@
 					@find-similar-content="onFindSimilarContent"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
@@ -265,6 +274,7 @@ const executeSearch = async () => {
 		// find related documents (which utilizes the xDD doc2vec API through the HMI server)
 		//
 		if (isDocument(searchByExampleItem.value) && searchParams.xdd) {
+			searchParams.xdd.dataset = xddDataset.value;
 			if (searchByExampleOptions.value.similarContent) {
 				searchParams.xdd.similar_search_enabled = executeSearchByExample.value;
 			}
@@ -377,6 +387,7 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 	// REVIEW: executing a related content search means to find related artifacts to the one selected:
 	//         if a model/dataset/document is selected then find related artifacts from TDS
 	if (searchOptions.similarContent || searchOptions.relatedContent) {
+		isSliderFacetsOpen.value = false;
 		// NOTE the executeSearch will set proper search-by-example search parameters
 		//  and let the data service handles the fetch
 		executeSearchByExample.value = true;
@@ -390,30 +401,26 @@ const onSearchByExample = async (searchOptions: SearchByExampleOptions) => {
 
 // helper function to bypass the search-by-example modal
 //  by executing a search by example and refreshing the output
-const onFindRelatedContent = (item: ResultType) => {
-	searchByExampleItem.value = item;
-	const searchOptions: SearchByExampleOptions = {
+const onFindRelatedContent = (item) => {
+	searchByExampleItem.value = item.item;
+	searchByExampleOptions.value = {
 		similarContent: false,
 		forwardCitation: false,
 		backwardCitation: false,
 		relatedContent: true
 	};
-	searchByExampleOptions.value = searchOptions;
-	onSearchByExample(searchByExampleOptions.value);
 };
 
 // helper function to bypass the search-by-example modal
 //  by executing a search by example and refreshing the output
-const onFindSimilarContent = (item: ResultType) => {
-	searchByExampleItem.value = item;
-	const searchOptions: SearchByExampleOptions = {
+const onFindSimilarContent = (item) => {
+	searchByExampleItem.value = item.item;
+	searchByExampleOptions.value = {
 		similarContent: true,
 		forwardCitation: false,
 		backwardCitation: false,
 		relatedContent: false
 	};
-	searchByExampleOptions.value = searchOptions;
-	onSearchByExample(searchByExampleOptions.value);
 };
 
 const toggleDataItemSelected = (dataItem: { item: ResultType; type?: string }) => {
@@ -528,6 +535,8 @@ onMounted(async () => {
 	if (!isEmpty(xddDatasets.value) && xddDataset.value === null) {
 		xddDatasetSelectionChanged(xddDatasets.value[xddDatasets.value.length - 1]);
 		xddDatasets.value.push(ResourceType.ALL);
+	} else {
+		resources.setXDDDataset('xdd-covid-19'); // give xdd dataset a default value
 	}
 	executeNewQuery();
 });
@@ -563,7 +572,7 @@ onUnmounted(() => {
 }
 
 .sub-header-title {
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
 	text-align: center;
 	color: var(--text-color-subdued);
 	display: flex;
@@ -604,5 +613,27 @@ onUnmounted(() => {
 
 .p-button.p-button-sm {
 	padding: 0.5rem 0.75rem;
+}
+
+.empty-cart-image-container {
+	justify-content: center;
+	display: flex;
+	flex-direction: column;
+	margin-top: 12rem;
+	align-items: center;
+	gap: 2rem;
+	color: var(--text-color-secondary);
+	font-size: var(--font-body-small);
+}
+.empty-cart-image {
+	margin: auto;
+}
+.breakdown-pane-container {
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
+}
+
+.cart-item {
+	list-style-type: none;
 }
 </style>

@@ -3,17 +3,28 @@
 		label="Import"
 		class="p-button-sm p-button-outlined"
 		icon="pi pi-cloud-download"
-		@click="openCodeBrowser(url)"
+		@click="initializeCodeBrowser"
 	/>
 	<Teleport to="body">
 		<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 			<template #header>
-				<h5>Choose file to open from {{ chosenRepositoryName }}</h5>
+				<h5>
+					Choose file to open from {{ repoOwnerAndName
+					}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
+				</h5>
 			</template>
 			<template #default>
-				<ul class="repository-content">
-					<li v-for="(content, index) in filesToSelect" :key="index" @click="openCode(content)">
-						<i v-if="content.download_url === null" class="pi pi-folder" />
+				<ul>
+					<li v-if="isInDirectory" @click="openContent()">
+						<i class="pi pi-folder-open" />
+						<b> ..</b>
+					</li>
+					<li
+						v-for="(content, index) in directoryContent"
+						:key="index"
+						@click="openContent(content)"
+					>
+						<i v-if="content.type === 'dir'" class="pi pi-folder" />
 						<i v-else class="pi pi-file" />
 						{{ content.name }}
 					</li>
@@ -24,60 +35,91 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import modal from '@/components/widgets/Modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
+import { isEmpty } from 'lodash';
 import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
 
-defineProps<{
-	url: Object;
+const props = defineProps<{
+	urlString: string;
 }>();
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-code']);
 
-const chosenRepositoryName = ref('');
-const filesToSelect = ref();
+const repoOwnerAndName = ref('');
+const currentDirectory = ref('');
+const directoryContent = ref();
 const isModalVisible = ref(false);
 
-async function openCodeBrowser(url) {
+const isInDirectory = computed(() => !isEmpty(currentDirectory.value));
+
+async function initializeCodeBrowser() {
+	currentDirectory.value = ''; // Goes back to root directory if modal is closed then opened again
 	isModalVisible.value = true;
-	chosenRepositoryName.value = url.full_name;
-	filesToSelect.value = await getGithubRepositoryContent(url.contents_url.slice(0, -8));
+	repoOwnerAndName.value = new URL(props.urlString).pathname.substring(1); // owner/repo
+	directoryContent.value = await getGithubRepositoryContent(
+		repoOwnerAndName.value,
+		currentDirectory.value
+	);
 }
 
-async function openCode(url) {
-	if (url.download_url === null) {
-		chosenRepositoryName.value = `${chosenRepositoryName.value}/${url.name}`;
-		filesToSelect.value = await getGithubRepositoryContent(url.url);
+// Content as in file or directory
+async function openContent(content?) {
+	// Go to parent directory
+	if (!content) {
+		const directoryPathArray = currentDirectory.value.split('/');
+		directoryPathArray.pop();
+		currentDirectory.value = directoryPathArray.join('/');
+		directoryContent.value = await getGithubRepositoryContent(
+			repoOwnerAndName.value,
+			currentDirectory.value
+		);
 		return;
 	}
 
+	// Open directory
+	if (content.type === 'dir') {
+		currentDirectory.value = content.path;
+		directoryContent.value = await getGithubRepositoryContent(
+			repoOwnerAndName.value,
+			currentDirectory.value
+		);
+		return;
+	}
+
+	// Open file in code view
+	const code = await getGithubCode(repoOwnerAndName.value, content.path);
+
+	// Will be pasted into the code editor
 	emit(
-		'open-asset',
-		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE },
+		'open-code',
+		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
 		// { assetName: url.name, assetId: url.name, assetType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
-		await getGithubCode(url.download_url)
+		code
 	);
 }
 </script>
 
-<style>
-.repository-content {
+<style scoped>
+ul {
 	list-style: none;
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
-	margin-top: 1rem;
+	min-width: 40vw;
+	height: 50vh;
+	overflow-y: auto;
 }
 
-.repository-content li {
+ul li {
 	padding: 0.25rem;
 	cursor: pointer;
 	border-radius: 0.5rem;
 }
 
-.repository-content li:hover {
+ul li:hover {
 	background-color: var(--surface-hover);
 }
 </style>
