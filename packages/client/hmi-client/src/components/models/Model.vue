@@ -29,7 +29,7 @@
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" />
+				<p v-html="description" class="constrain-width" />
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -465,20 +465,20 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 // Model editor context menu
 const contextMenuItems = ref([
 	{
-		label: 'Add State',
+		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('S', 'test', { x: eventX, y: eventY });
+				renderer.addNode('S', '?', { x: eventX, y: eventY });
 			}
 		}
 	},
 	{
-		label: 'Add Transition',
+		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('T', 'test', { x: eventX, y: eventY });
+				renderer.addNode('T', '?', { x: eventX, y: eventY });
 			}
 		}
 	}
@@ -600,10 +600,13 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 <style scoped>
 .model-panel {
 	height: 100%;
+	border-radius: var(--border-radius-big);
+	border: solid 1px var(--surface-border);
+	overflow: hidden;
 }
 
 .content {
-	height: 99%;
+	height: 100%;
 	width: 100%;
 }
 
@@ -613,7 +616,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	max-height: 100%;
 	flex-grow: 1;
 	overflow: hidden;
-	border-radius: 0.25rem;
+	border: none;
 }
 
 .math-editor {
@@ -626,10 +629,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 .model_diagram {
 	display: flex;
 	height: 100%;
-}
-
-.p-splitter .p-splitter-gutter {
-	color: red;
 }
 
 .dev-options {
@@ -657,5 +656,9 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.constrain-width {
+	max-width: 60rem;
 }
 </style>

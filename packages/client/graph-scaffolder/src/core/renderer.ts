@@ -79,13 +79,13 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		this.options = options;
 
 		if (this.options.el) {
-			this.initalize(this.options.el);
+			this.initialize(this.options.el);
 		} else {
 			throw new Error('options must provide an element for graph rendering');
 		}
 	}
 
-	initalize(element: HTMLDivElement): void {
+	initialize(element: HTMLDivElement): void {
 		this.chartSize.width = element.clientWidth;
 		this.chartSize.height = element.clientHeight;
 		this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

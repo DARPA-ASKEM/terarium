@@ -223,8 +223,6 @@ section {
 }
 .summary-KPI-label {
 	font-size: 1.15rem;
-	font-weight: var(--font-weight-semibold);
-	color: var(--text-color-secondary);
 }
 
 .quick-links {

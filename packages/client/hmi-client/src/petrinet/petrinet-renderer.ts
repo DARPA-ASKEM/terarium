@@ -12,8 +12,11 @@ const pathFn = d3
 	.y((d) => d.y)
 	.curve(d3.curveBasis);
 
-const EDGE_COLOR = '#333333';
+const EDGE_COLOR = 'var(--petri-lineColor)';
 const EDGE_OPACITY = 0.5;
+
+const HANDLE_SIZE = 4;
+const HANDLE_SIZE_HOVER = 8;
 
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
@@ -21,6 +24,14 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
 
 	editMode: boolean = false;
+
+	initialize(element: HTMLDivElement): void {
+		super.initialize(element);
+
+		d3.select(this.svgEl)
+			.style('border', '2px solid transparent')
+			.style('border-radius', '8px 0px 0px 8px');
+	}
 
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
@@ -35,7 +46,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.classed('edge-marker-end', true)
 			.attr('id', 'arrowhead')
 			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 2)
+			.attr('refX', 6)
 			.attr('refY', 0)
 			.attr('orient', 'auto')
 			.attr('markerWidth', 20)
@@ -54,9 +65,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const svg = d3.select(this.svgEl);
 		if (this.editMode) {
-			svg.style('background-color', '#EE8');
+			svg.style('border', '2px solid var(--primary-color)');
 		} else {
-			svg.style('background-color', null);
+			svg.style('border', '2px solid transparent');
 		}
 	}
 
@@ -74,43 +85,57 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('height', (d) => d.height)
 			.attr('y', (d) => -d.height * 0.5)
 			.attr('x', (d) => -d.width * 0.5)
+			.attr('rx', '6')
+			.attr('ry', '6')
 			.style('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2);
+			.style('cursor', 'pointer')
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1);
+
+		function handleMouseOver(evt: MouseEvent) {
+			d3.select(evt.target as any)
+				.transition()
+				.duration(100)
+				.attr('r', HANDLE_SIZE_HOVER);
+		}
+
+		function handleMouseOut(evt: MouseEvent) {
+			d3.select(evt.target as any)
+				.transition()
+				.duration(100)
+				.attr('r', HANDLE_SIZE);
+		}
 
 		// transitions drag handles
 		const transitionsHandles = [
-			...transitions
-				.append('circle')
-				.attr('cx', (d) => d.width)
-				.attr('r', (d) => d.width * 0.2),
-			...transitions
-				.append('circle')
-				.attr('cy', (d) => d.height)
-				.attr('r', (d) => d.width * 0.2),
-			...transitions
-				.append('circle')
-				.attr('cx', (d) => -d.width)
-				.attr('r', (d) => d.width * 0.2),
-			...transitions
-				.append('circle')
-				.attr('cy', (d) => -d.height)
-				.attr('r', (d) => d.width * 0.2)
+			...transitions.append('circle').attr('cx', (d) => d.width * 0.75),
+			...transitions.append('circle').attr('cy', (d) => d.height * 0.75),
+			...transitions.append('circle').attr('cx', (d) => -d.width * 0.75),
+			...transitions.append('circle').attr('cy', (d) => -d.height * 0.75)
 		];
 
 		d3.selectAll(transitionsHandles)
 			.classed('shape no-drag', true)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
+			.attr('r', HANDLE_SIZE)
+			.attr('fill', 'var(--primary-color)')
+			.attr('stroke', 'none')
 			.style('cursor', 'pointer')
-			.style('opacity', 0);
+			.style('opacity', 0)
+			.on('mouseover', handleMouseOver)
+			.on('mouseout', handleMouseOut);
 
 		// transitions text
 		transitions
 			.append('text')
-			.attr('y', () => 4)
+			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', '#FFF')
+			.style('stroke-width', '6px')
+			.style('stroke-linecap', 'butt')
+			.style('stroke-linejoin', 'matter')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
 			.text((d) => d.label);
 
 		// species
@@ -119,42 +144,40 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.classed('shape', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2);
+			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke-width', 1)
+			.style('cursor', 'pointer');
 
 		// species drag handles
 		const speciesHandles = [
-			...species
-				.append('circle')
-				.attr('cx', (d) => d.width)
-				.attr('r', (d) => d.width * 0.2),
-			...species
-				.append('circle')
-				.attr('cy', (d) => d.height)
-				.attr('r', (d) => d.width * 0.2),
-			...species
-				.append('circle')
-				.attr('cx', (d) => -d.width)
-				.attr('r', (d) => d.width * 0.2),
-			...species
-				.append('circle')
-				.attr('cy', (d) => -d.height)
-				.attr('r', (d) => d.width * 0.2)
+			...species.append('circle').attr('cx', (d) => d.width * 0.75),
+			...species.append('circle').attr('cy', (d) => d.height * 0.75),
+			...species.append('circle').attr('cx', (d) => -d.width * 0.75),
+			...species.append('circle').attr('cy', (d) => -d.height * 0.75)
 		];
 
 		d3.selectAll(speciesHandles)
 			.classed('shape no-drag', true)
-			.attr('fill', '#FFF')
-			.attr('stroke', '#AAA')
-			.attr('stroke-width', 2)
+			.attr('r', HANDLE_SIZE)
+			.attr('fill', 'var(--primary-color)')
+			.attr('stroke', 'none')
 			.style('cursor', 'pointer')
-			.style('opacity', 0);
+			.style('opacity', 0)
+			.on('mouseover', handleMouseOver)
+			.on('mouseout', handleMouseOut);
 
 		// species text
 		species
 			.append('text')
-			.attr('y', () => 2)
+			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
+			.style('paint-order', 'stroke')
+			.style('stroke', '#FFF')
+			.style('stroke-width', '6px')
+			.style('stroke-linecap', 'butt')
+			.style('stroke-linejoin', 'matter')
+			.style('fill', 'var(--text-color-primary')
+			.style('pointer-events', 'none')
 			.text((d) => d.label);
 	}
 
@@ -165,7 +188,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
 			.style('stroke-opacity', EDGE_OPACITY)
-			.style('stroke-width', 2)
+			.style('stroke-width', 1)
 			.attr('marker-end', 'url(#arrowhead)');
 
 		this.updateMultiEdgeLabels();
@@ -183,10 +206,14 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.append('text')
 				.classed('multi-edge-label', true)
 				.attr('x', point.x)
-				.attr('y', point.y)
-				.attr('stroke', null)
-				.attr('fill', '#000')
+				.attr('y', point.y + 6)
 				.style('font-size', 18)
+				.style('paint-order', 'stroke')
+				.style('stroke', 'var(--gray-50)')
+				.style('stroke-width', '6px')
+				.style('stroke-linecap', 'butt')
+				.style('stroke-linejoin', 'matter')
+				.style('fill', 'var(--text-color-primary')
 				.text((d) => d.data?.numEdges as number);
 		});
 	}
@@ -202,11 +229,18 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		selection
 			.append('foreignObject')
 			.attr('x', -0.5 * w)
-			.attr('y', -0.25 * h)
+			.attr('y', -0.5 * h)
 			.attr('width', w)
 			.attr('height', h)
+			.attr('style', 'position:relative')
 			.append('xhtml:input')
 			.attr('type', 'text')
+			.attr(
+				'style',
+				`width:${
+					w * 0.8
+				}px; height:30px; background: var(--petri-inputBox); border-radius:var(--border-radius); border: 2px solid transparent; text-align:center; position: absolute; top:50%; left:50%; transform: translate(-50%, -50%);`
+			)
 			.attr('value', selection.datum().label);
 	}
 
@@ -275,9 +309,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.classed('new-edge', true)
 					.attr('d', pathFn(line))
 					.attr('marker-end', 'url(#arrowhead)')
-					.style('stroke-dasharray', '4')
 					.style('stroke-width', 3)
-					.style('stroke', '#888');
+					.style('stroke', 'var(--primary-color)');
 			}
 		);
 
