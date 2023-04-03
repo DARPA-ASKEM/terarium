@@ -281,9 +281,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			start.x = sourceData.x;
 			start.y = sourceData.y;
 
-			const target = event.sourceEvent.target;
-			start.x += +d3.select(target).attr('cx');
-			start.y += +d3.select(target).attr('cy');
+			const targetSelection = d3.select(event.sourceEvent.target);
+			start.x += +targetSelection.attr('cx');
+			start.y += +targetSelection.attr('cy');
 		});
 
 		this.on(
