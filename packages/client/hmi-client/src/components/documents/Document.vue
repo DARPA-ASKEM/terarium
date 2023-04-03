@@ -75,20 +75,23 @@
 						/>
 					</div>
 					<div v-html="highlightSearchTerms(doc.publisher)" />
-					<Button
-						v-if="linkIsPDF()"
-						class="p-button-sm p-button-outlined"
-						label="Open PDF"
-						@click="openPDF"
-					/>
-					<Button
-						v-if="doi"
-						class="p-button-sm p-button-outlined"
-						@click="downloadPDF"
-						:icon="'pi pi-cloud-download'"
-						:loading="!pdfLink"
-						label="Download PDF"
-					/>
+					<section class="pdf-buttons">
+						<Button
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-external-link"
+							label="Open PDF"
+							@click="openPDF"
+							:loading="!pdfLink && !linkIsPDF()"
+						/>
+						<Button
+							v-if="doi"
+							class="p-button-sm p-button-outlined"
+							@click="downloadPDF"
+							:icon="'pi pi-cloud-download'"
+							:loading="!pdfLink"
+							label="Download PDF"
+						/>
+					</section>
 				</header>
 				<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 					<AccordionTab v-if="!isEmpty(formattedAbstract)" header="Abstract" id="Abstract">
@@ -392,11 +395,25 @@ function downloadPDF() {
 	}
 }
 
+function linkIsPDF() {
+	const link = docLink.value ?? doi.value;
+	return link.match(/^.*\.(pdf|PDF)$/);
+}
+
+const openPDF = () => {
+	if (linkIsPDF()) {
+		if (docLink.value) window.open(docLink.value as string);
+		else if (doi.value) window.open(`https://doi.org/${doi.value}`);
+		return;
+	}
+	if (pdfLink.value) window.open(pdfLink.value);
+};
+
 watch(doi, async (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchDocumentArtifacts();
 		fetchRelatedTerariumArtifacts();
-		pdfLink.value = '';
+		pdfLink.value = null;
 		pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
 	}
 });
@@ -411,16 +428,6 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
 );
-
-function linkIsPDF() {
-	const link = docLink.value ?? doi.value;
-	return link.match(/^.*\.(pdf|PDF)$/);
-}
-
-const openPDF = () => {
-	if (docLink.value) window.open(docLink.value as string);
-	else if (doi.value) window.open(`https://doi.org/${doi.value}`);
-};
 
 /**
  * Format from xDD citation_list object.
@@ -449,6 +456,11 @@ onMounted(async () => {
 <style scoped>
 .two-columns {
 	display: inline;
+}
+
+.pdf-buttons {
+	display: flex;
+	gap: 0.5rem;
 }
 
 .content-navigator {
