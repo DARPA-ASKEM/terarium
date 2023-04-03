@@ -2,7 +2,7 @@
 	<section class="asset">
 		<header>
 			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
-			<h4 v-html="dataset?.name" class="model-name" />
+			<h4 v-html="dataset?.name" />
 		</header>
 
 		<section class="description">
@@ -198,10 +198,6 @@ const showAccordion = computed(() =>
 </script>
 
 <style scoped>
-.model-name {
-	max-width: var(--constrain-width);
-}
-
 .metadata {
 	margin: 1rem;
 	margin-bottom: 0.5rem;
