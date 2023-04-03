@@ -85,8 +85,8 @@
 						v-if="doi"
 						class="p-button-sm p-button-outlined"
 						@click="downloadPDF"
-						:icon="isEmpty(pdfLink) ? 'pi pi-spin pi-spinner' : 'pi pi-cloud-download'"
-						:disabled="isEmpty(pdfLink)"
+						:icon="'pi pi-cloud-download'"
+						:loading="!pdfLink"
 						label="Download PDF"
 					/>
 				</header>
@@ -269,10 +269,8 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
-import API from '@/api/api';
-import { logger } from '@/utils/logger';
-import { toQueryString } from '@/utils/query-string';
 import Image from 'primevue/image';
+import { generatePdfDownloadLink } from '@/services/url-download';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 const props = defineProps<{
@@ -284,7 +282,7 @@ const props = defineProps<{
 
 const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
-const pdfLink = ref('');
+const pdfLink = ref<string | null>(null);
 
 const emit = defineEmits(['open-asset']);
 
@@ -384,36 +382,22 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
-// Creates PDF download link on (doi change)
-async function fetchPDF() {
-	pdfLink.value = '';
-	if (!doi.value) return;
-
-	const query = { doi: doi.value };
-	const URL = `/download?${toQueryString(query)}`;
-
-	try {
-		const response = await API.get(URL, { responseType: 'arraybuffer' });
-		const blob = new Blob([response?.data], { type: 'application/pdf' });
-		pdfLink.value = window.URL.createObjectURL(blob);
-	} catch (error) {
-		logger.error(`Error: Unable to download pdf for doi ${doi.value}: ${error}`);
+// Better than wrapping download button with an anchor
+function downloadPDF() {
+	if (pdfLink.value) {
+		const link = document.createElement('a');
+		link.href = pdfLink.value;
+		link.download = `${doi.value}.pdf`;
+		link.click();
 	}
 }
 
-// Better than wrapping download button with an anchor
-function downloadPDF() {
-	const link = document.createElement('a');
-	link.href = pdfLink.value;
-	link.download = `${doi.value}.pdf`;
-	link.click();
-}
-
-watch(doi, (currentValue, oldValue) => {
+watch(doi, async (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchDocumentArtifacts();
 		fetchRelatedTerariumArtifacts();
-		fetchPDF();
+		pdfLink.value = '';
+		pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
 	}
 });
 
