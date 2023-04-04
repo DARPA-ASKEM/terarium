@@ -17,7 +17,6 @@
 					:active="documentView === DocumentView.PDF"
 				/>
 			</span>
-			<!-- TODO: Add scroll to anchor feature -->
 			<div class="scroll-to-section-links" v-if="documentView === DocumentView.EXRACTIONS">
 				<a @click="scrollTo(topAnchor)">Top</a>
 				<a v-if="!isEmpty(formattedAbstract)" @click="scrollTo(abstractAnchor)">Abstract</a>
@@ -50,7 +49,6 @@
 					<span class="artifact-amount">({{ relatedTerariumArtifacts.length }})</span></a
 				>
 			</div>
-
 			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
 			<!--- 
 				<div class="p-input-icon-left">
@@ -334,7 +332,7 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-async function scrollTo(elementRef: HTMLElement) {
+function scrollTo(elementRef: HTMLElement) {
 	if (elementRef) elementRef.scrollIntoView({ behavior: 'smooth' });
 }
 
