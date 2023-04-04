@@ -14,7 +14,7 @@
 					@open-asset="openAsset"
 					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
-					@click="getAnnotations(props.assetId)"
+					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
 				/>
 			</template>
@@ -26,7 +26,7 @@
 				:active-tab-index="activeTabIndex"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
-				@click="getAnnotations(props.assetId)"
+				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
 				<document
@@ -78,7 +78,7 @@
 			direction="right"
 			header="Notes"
 			v-model:is-open="isNotesSliderOpen"
-			@click="getAnnotations(props.assetId)"
+			@click="getAndPopulateAnnotations()"
 		>
 			<template v-slot:content>
 				<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
@@ -283,10 +283,14 @@ watch(
 	}
 );
 
+async function getAndPopulateAnnotations() {
+	annotations.value = await getAnnotations(props.assetId);
+}
+
 const addNote = async () => {
 	await createAnnotation(annotationContent.value, props.assetId);
 	annotationContent.value = '';
-	await getAnnotations(props.assetId);
+	await getAndPopulateAnnotations();
 };
 
 function toggleAnnotationInput() {
