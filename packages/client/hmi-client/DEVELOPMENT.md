@@ -128,3 +128,9 @@ toast.showToast(
    5000
   );
 ```
+
+[## TERA-MATH-EDITOR](src/components/mathml/README.md)
+
+Terrarium uses [mathlive](https://cortexjs.io/docs/mathlive/) & [mathjax 2.7.2](https://docs.mathjax.org/en/v2.7-latest/start.html) via a the `vue-mathjax-next` component to create a custom component: `tera-math-editor`
+
+This component `<tera-math-editor>` can display a `LaTeX` formatted formula using either renderer by setting `:mathmode` to a `MathEditorModes.JAX | MathEditorModes.LIVE`.
