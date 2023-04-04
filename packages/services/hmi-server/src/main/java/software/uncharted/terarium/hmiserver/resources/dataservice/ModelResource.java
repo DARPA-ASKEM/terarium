@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -32,6 +33,9 @@ import static io.smallrye.jwt.config.ConfigLogging.log;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")
 public class ModelResource {
+
+	@ConfigProperty(name = "mira-metaregistry/mp-rest/url")
+	String metaRegistryURL;
 
 	@Inject
 	@RestClient
@@ -178,10 +182,7 @@ public class ModelResource {
 			}
 
 			if (!entities.isEmpty()) {
-				// FIXME - For now we need to resolve ourselves this link, HMS will fix this
-				// I don't know how to read application.properties to get that URL directly
-				final String metaRegistryURL = "http://34.230.33.149:8772/";
-				entities.forEach(entity -> entity.setLink(metaRegistryURL + entity.getCurie()));
+				entities.forEach(entity -> entity.setLink(metaRegistryURL + "/" + entity.getCurie()));
 
 				// Transform the entities to a Map
 				Map<String, DKG> ontologies =

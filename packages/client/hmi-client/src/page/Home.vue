@@ -7,6 +7,7 @@
 					<Button
 						icon="pi pi-plus"
 						label="New project"
+						size="large"
 						@click="isNewProjectModalVisible = true"
 					></Button>
 				</header>
@@ -365,14 +366,16 @@ header svg {
 
 .chevron-left {
 	left: -1rem;
-	top: 1.4rem;
-	height: 20rem;
+	top: 0.5rem;
+	height: 22rem;
+	border-radius: 0rem 10rem 10rem 0rem;
 }
 
 .chevron-right {
 	right: -1rem;
-	top: 1.4rem;
-	height: 20rem;
+	top: 0.5em;
+	height: 22em;
+	border-radius: 10rem 0rem 0rem 10rem;
 }
 
 .papers .chevron-left,

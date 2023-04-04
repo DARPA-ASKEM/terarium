@@ -7,13 +7,18 @@
     .p-splitter-gutter {
         transition: $actionIconTransition;
         background: $splitterGutterBg;
+        width:6px;
 
         .p-splitter-gutter-handle {
-            background: $splitterGutterHandleBg;
+            background: transparent;
         }
     }
 
     .p-splitter-gutter-resizing {
         background: $splitterGutterHandleBg;
+    }
+
+    .p-splitter-gutter:hover {
+        background-color: var(--primary-color-light);
     }
 }
