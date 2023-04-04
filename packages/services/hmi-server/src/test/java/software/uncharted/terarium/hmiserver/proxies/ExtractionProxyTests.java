@@ -10,19 +10,25 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionP
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 
+import java.util.Optional;
+
 @QuarkusTest
 public class ExtractionProxyTests {
 
 
-	@ConfigProperty(name = "xdd_api_key", defaultValue = "")
-	String key;
+	//TODO this will be null in testing :(
+	@ConfigProperty(name = "xdd_api_key")
+	Optional<String> key;
 
 	@RestClient
 	ExtractionProxy proxy;
 
 	@Test
 	public void testItCanGetExtractions() {
-		XDDResponse<XDDExtractionsResponseOK> response = proxy.getExtractions(null, "covid", null, null, "true", key);
+
+		String apiKey = key.isPresent() ? key.get() : "";
+
+		XDDResponse<XDDExtractionsResponseOK> response = proxy.getExtractions(null, "covid", null, null, "true", apiKey);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());
