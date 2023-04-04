@@ -1,12 +1,12 @@
 import API, { Poller } from '@/api/api';
 
 export async function codeToAcset(code: string) {
-	const response = await API.post(`code/to_acset`, code);
+	const response = await API.post(`code/to-acset`, code);
 	return response.data ?? null;
 }
 
 export async function findVarsFromText(text: string) {
-	const id = await API.post(`/code/annotation/find_text_vars`, text);
+	const id = await API.post(`/code/annotation/find-text-vars`, text);
 	const poller = new Poller<object>()
 		.setInterval(2000)
 		.setThreshold(90)
@@ -30,6 +30,6 @@ export async function findVarsFromText(text: string) {
 }
 
 export async function getlinkedAnnotations(data) {
-	const response = await API.post(`/code/annotation/link_annos_to_pyacset`, data);
+	const response = await API.post(`/code/annotation/link-annos-to-pyacset`, data);
 	return response.data ?? null;
 }

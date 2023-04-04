@@ -36,7 +36,7 @@ public class ProvenanceResource {
 	}
 
 	@POST
-	@Path("/connected_nodes")
+	@Path("/connected-nodes")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response searchConnectedNodes(
 		final ProvenanceQueryParam body,
@@ -46,7 +46,7 @@ public class ProvenanceResource {
 	}
 
 	@DELETE
-	@Path("/hanging_nodes")
+	@Path("/hanging-nodes")
 	public Response deleteHangingNodes() {
 		return proxy.deleteHangingNodes();
 	}
