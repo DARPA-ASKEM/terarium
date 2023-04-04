@@ -7,6 +7,7 @@
 					<Button
 						icon="pi pi-plus"
 						label="New project"
+						size="large"
 						@click="isNewProjectModalVisible = true"
 					></Button>
 				</header>
@@ -296,6 +297,8 @@ const removeProject = (projectId: IProject['id']) => {
 	overflow-x: hidden;
 	flex: 1;
 	padding: 0;
+	display: flex;
+	flex-direction: column;
 }
 
 section {
@@ -308,6 +311,7 @@ section {
 	background: linear-gradient(180deg, #8bd4af1a, #d5e8e5);
 	padding: 1rem;
 	border-top: 1px solid var(--gray-100);
+	flex-grow: 1;
 }
 
 .papers p {
@@ -362,14 +366,16 @@ header svg {
 
 .chevron-left {
 	left: -1rem;
-	top: 1.4rem;
-	height: 20rem;
+	top: 0.5rem;
+	height: 22rem;
+	border-radius: 0rem 10rem 10rem 0rem;
 }
 
 .chevron-right {
 	right: -1rem;
-	top: 1.4rem;
-	height: 20rem;
+	top: 0.5em;
+	height: 22em;
+	border-radius: 10rem 0rem 0rem 10rem;
 }
 
 .papers .chevron-left,

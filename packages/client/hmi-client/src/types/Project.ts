@@ -4,17 +4,19 @@ import { Model } from './Model';
 
 export enum ProjectAssetTypes {
 	DOCUMENTS = 'publications',
-	INTERMEDIATES = 'intermediates',
 	MODELS = 'models',
 	PLANS = 'plans',
+	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
 	DATASETS = 'datasets',
 	CODE = 'code'
 }
 
+export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
+	Object.values(ProjectAssetTypes).includes(type as ProjectAssetTypes);
+
 export type ProjectAssets = {
 	[ProjectAssetTypes.DOCUMENTS]: DocumentAsset[];
-	[ProjectAssetTypes.INTERMEDIATES]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.MODELS]: Model[];
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
@@ -22,24 +24,14 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.CODE]: any[];
 };
 
-export type SimpleProjectAssets = {
-	[ProjectAssetTypes.DOCUMENTS]: (string | number)[];
-	[ProjectAssetTypes.INTERMEDIATES]: (string | number)[];
-	[ProjectAssetTypes.MODELS]: (string | number)[];
-	[ProjectAssetTypes.PLANS]: (string | number)[];
-	[ProjectAssetTypes.SIMULATION_RUNS]: (string | number)[];
-	[ProjectAssetTypes.DATASETS]: (string | number)[];
-};
-
 export interface IProject {
 	id: string;
 	name: string;
-	title?: string;
 	description: string;
 	timestamp: string;
 	active: boolean;
 	concept: string | null;
-	assets: SimpleProjectAssets;
+	assets: ProjectAssets | null;
 	relatedDocuments: DocumentType[];
 	username: string;
 }

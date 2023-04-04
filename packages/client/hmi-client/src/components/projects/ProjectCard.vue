@@ -16,7 +16,7 @@
 				<span>Last updated {{ formatDdMmmYyyy(project.timestamp) }}</span>
 				<Button
 					icon="pi pi-ellipsis-v"
-					class="p-button-rounded p-button-secondary"
+					class="p-button-icon-only p-button-text p-button-rounded"
 					@click.stop="showProjectMenu"
 				/>
 			</div>
@@ -202,11 +202,6 @@ const removeProject = async () => {
 
 .project-footer.skeleton {
 	align-items: flex-end;
-}
-
-.p-button.p-button-icon-only.p-button-rounded {
-	height: 2rem;
-	width: 2rem;
 }
 
 .p-dialog em {

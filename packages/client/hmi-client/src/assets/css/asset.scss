@@ -9,7 +9,7 @@
         overflow-wrap: break-word;
     }
 
-    header {
+    >header {
         margin: 0rem 1rem;
         color: var(--text-color-subdued);
         display: flex;
@@ -25,6 +25,11 @@
 
         h4 {
             color: var(--text-color-primary);
+        }
+
+        h4,
+        .authors {
+            max-width: var(--constrain-width);
         }
 
         .header-and-buttons {

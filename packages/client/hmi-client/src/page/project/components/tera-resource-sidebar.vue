@@ -3,46 +3,73 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!openedAssetRoute.assetId"
-				v-tooltip="`Remove ${openedAssetRoute.assetName}`"
+				:disabled="!activeTab.assetId || activeTab.assetName === 'overview'"
+				v-tooltip="`Remove ${activeTab.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="isConfirmRemovalModalVisible = true"
+				@click="isRemovalModal = true"
+			/>
+			<Button
+				icon="pi pi-file"
+				v-tooltip="`New code file`"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="
+					emit('open-asset', {
+						assetName: 'New file',
+						assetType: ProjectAssetTypes.CODE,
+						assetId: undefined
+					})
+				"
 			/>
 		</header>
-		<tree
-			v-if="!isEmpty(resources)"
-			:value="resources"
-			selectionMode="single"
-			v-on:node-select="emit('open-asset', $event.asset)"
-		>
-			<template #default="slotProps">
-				<span :active="isEqual(openedAssetRoute, slotProps.node.asset)">
-					{{ slotProps.node.label }}
-					<Chip :label="slotProps.node.asset.assetType" />
-				</span>
-			</template>
-		</tree>
-		<div v-else class="loading-spinner">
-			<div><i class="pi pi-spin pi-spinner" /></div>
-		</div>
+		<Button
+			class="asset-button"
+			label="Overview"
+			:active="activeTab.assetType === 'overview'"
+			:icon="iconClassname('overview')"
+			plain
+			text
+			size="small"
+			@click="emit('open-overview')"
+		/>
+		<Accordion v-if="!isEmpty(assets)" :multiple="true">
+			<AccordionTab v-for="[type, tabs] in assets" :key="type">
+				<template #header>
+					{{ capitalize(type) }}
+					<aside>({{ tabs.size }})</aside>
+				</template>
+				<Button
+					v-for="tab in tabs"
+					:key="tab.assetId"
+					:active="isEqual(tab, activeTab)"
+					:icon="iconClassname(tab.assetType?.toString() ?? null)"
+					:label="tab.assetName"
+					:title="tab.assetName"
+					class="asset-button"
+					plain
+					text
+					size="small"
+					@click="emit('open-asset', tab)"
+				/>
+			</AccordionTab>
+		</Accordion>
 		<Teleport to="body">
 			<modal
-				v-if="isConfirmRemovalModalVisible"
-				@modal-mask-clicked="isConfirmRemovalModalVisible = false"
+				v-if="isRemovalModal"
+				@modal-mask-clicked="isRemovalModal = false"
+				class="remove-modal"
 			>
 				<template #header>
-					<h5>
-						<!--openedAsset.assetName only makes sense in the case that the selected asset is the one to be deleted-->
-						Are you sure you want remove "{{ openedAssetRoute.assetName }}" from {{ project.name }}?
-					</h5>
+					<h4>Confirm remove</h4>
+				</template>
+				<template #default>
+					<p>
+						Removing <em>{{ activeTab.assetName }}</em> will permanently remove it from
+						{{ project.name }}.
+					</p>
 				</template>
 				<template #footer>
-					<Button label="Yes" @click="removeAsset()" />
-					<Button
-						label="No"
-						class="p-button-secondary"
-						@click="isConfirmRemovalModalVisible = false"
-					/>
+					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
+					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
 				</template>
 			</modal>
 		</Teleport>
@@ -51,155 +78,99 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { logger } from '@/utils/logger';
-import { isEmpty, isEqual } from 'lodash';
+import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
-import { deleteAsset } from '@/services/project';
-import useResourcesStore from '@/stores/resources';
-import Tree from 'primevue/tree';
+import { iconClassname } from '@/services/project';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import Chip from 'primevue/chip';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { DocumentAsset } from '@/types/Types';
-import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
+import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+
+type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
 const props = defineProps<{
 	project: IProject;
-	openedAssetRoute: Tab;
+	activeTab: Tab;
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'close-tab']);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
-const resourcesStore = useResourcesStore();
+const isRemovalModal = ref(false);
 
-const isConfirmRemovalModalVisible = ref(false);
+const assets = computed((): IProjectAssetTabs => {
+	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
 
-const resources = computed(() => {
-	const storedAssets = resourcesStore.activeProjectAssets ?? [];
-	const projectAssetTypes = Object.keys(storedAssets);
-	const resourceTreeNodes: any[] = [];
+	const projectAssets = props.project?.assets;
+	if (!projectAssets) return tabs;
 
-	if (!isEmpty(storedAssets)) {
-		resourceTreeNodes.push({
-			key: 'Overview',
-			label: 'Overview',
-			asset: {
-				assetName: 'Overview',
-				assetType: 'overview',
-				assetId: undefined
-			},
-			selectable: true
-		});
-
-		// Basic new code file (temp)
-		resourceTreeNodes.push({
-			key: 'New file',
-			label: 'New file',
-			asset: {
-				assetName: 'New file',
-				assetType: ProjectAssetTypes.CODE,
-				assetId: undefined
-			},
-			selectable: true
-		});
-
-		for (let i = 0; i < projectAssetTypes.length; i++) {
-			if (projectAssetTypes[i] == null || storedAssets[projectAssetTypes[i]] == null) continue;
-			const assets: (DocumentAsset & Model & Dataset)[] =
-				Object.values(storedAssets[projectAssetTypes[i]]) ?? [];
-
-			for (let j = 0; j < assets.length; j++) {
-				resourceTreeNodes.push({
-					key: j.toString(),
-					label: assets[j]?.name || assets[j]?.title || assets[j]?.id,
-					asset: {
-						// Matches Tab type
-						assetName: assets[j]?.name || assets[j]?.title || assets[j]?.id,
-						assetType: projectAssetTypes[i],
-						assetId:
-							projectAssetTypes[i] === ProjectAssetTypes.DOCUMENTS
-								? assets[j].xdd_uri
-								: assets[j]?.id.toString()
-					},
-					selectable: true
-				});
-			}
+	// Run through all the assets type within the project
+	Object.keys(projectAssets).forEach((type) => {
+		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
+			const projectAssetType = type as ProjectAssetTypes;
+			const typeAssets = projectAssets[projectAssetType].map((asset) => {
+				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+				const assetType = asset?.type ?? projectAssetType;
+				const assetId = asset?.id.toString();
+				return { assetName, assetType, assetId };
+			}) as Tab[];
+			tabs.set(projectAssetType, new Set(typeAssets));
 		}
-	}
-	return resourceTreeNodes;
+	});
+
+	return tabs;
 });
 
-function removeAsset(assetToRemove: Tab = props.openedAssetRoute) {
-	const { assetName, assetId, assetType } = assetToRemove;
-
-	if (!assetType || !resourcesStore.activeProject || !resourcesStore.activeProjectAssets) {
-		return; // See about removing this check somehow, it may be best to pass the resourceStore from App.vue
-	}
-
-	const asset = resourcesStore.activeProjectAssets[assetType].find((a) =>
-		assetType === ProjectAssetTypes.DOCUMENTS ? a.xdd_uri === assetId : a.id.toString() === assetId
-	);
-
-	if (!asset) {
-		logger.error('Failed to remove asset');
-		return;
-	}
-
-	// Remove asset from resource storage
-	deleteAsset(resourcesStore.activeProject.id, assetType, asset.id);
-	resourcesStore.activeProjectAssets[assetType] = resourcesStore.activeProjectAssets[
-		assetType
-	].filter(({ id }) => id !== asset.id);
-	// Remove also from the local cache
-	resourcesStore.activeProject.assets[assetType] = resourcesStore.activeProject.assets[
-		assetType
-	].filter((id: string | number) => id !== asset.id);
-
-	// If asset to be removed is open in a tab, close it
-	const tabIndex = props.tabs.findIndex((tab: Tab) => isEqual(tab, assetToRemove));
-	if (tabIndex !== undefined) emit('close-tab', tabIndex);
-
-	isConfirmRemovalModalVisible.value = false;
-	logger.info(`${assetName} was removed.`);
+function removeAsset(asset = props.activeTab) {
+	emit('remove-asset', asset);
+	isRemovalModal.value = false;
 }
-
-// function exportIds() {
-// 	logger.info(
-// 		'List of xDD _gddid ',
-// 		{},
-// 		documents.value.map((document) => document)
-// 	);
-// }
 </script>
 
 <style scoped>
 nav {
 	display: flex;
 	flex-direction: column;
-	margin: 0.75rem;
-	margin-top: 0;
 	gap: 1rem;
-	min-height: 75%;
 }
 
-.p-chip {
+header {
 	padding: 0 0.5rem;
-	border-radius: 0.5rem;
-	text-transform: uppercase;
 }
 
-.p-tree:deep(.p-treenode-label) {
-	text-overflow: ellipsis;
+::v-deep(.p-accordion .p-accordion-content) {
+	display: flex;
+	flex-direction: column;
+	padding: 0 0 1rem;
+}
+
+::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	font-size: var(--font-body-small);
+	padding: 0.5rem 1rem;
+}
+
+::v-deep(.p-accordion .p-accordion-header .p-accordion-header-link aside) {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+	margin-left: 0.25rem;
+}
+
+::v-deep(.asset-button.p-button) {
+	display: inline-flex;
 	overflow: hidden;
-	white-space: nowrap;
+	padding: 0.375rem 1rem;
 }
 
-.p-tree:deep(.p-treenode-content:has(span[active='true'])),
-.p-tree:deep(.p-treenode-content:hover:has(span[active='true'])) {
+::v-deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
+}
+
+::v-deep(.asset-button.p-button .p-button-label) {
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .loading-spinner {
@@ -208,9 +179,18 @@ nav {
 	justify-content: center;
 	align-items: center;
 	color: var(--primary-color);
+	flex-grow: 1;
 }
 
 .pi-spinner {
 	font-size: 4rem;
+}
+
+.remove-modal p {
+	max-width: 40rem;
+}
+
+.remove-modal em {
+	font-weight: var(--font-weight-semibold);
 }
 </style>

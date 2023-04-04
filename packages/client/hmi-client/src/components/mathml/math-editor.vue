@@ -110,19 +110,19 @@ watch(
 
 <style scoped>
 math-field {
-	background-color: beige;
+	background-color: var(--surface);
 	border-radius: 4px;
-	border: 1px solid var(--gray-1000);
+	border: 1px solid var(--gray-0);
 	padding: 5px;
 	min-height: 100%;
 	padding: 5px;
 	margin: 10px;
-	font-size: 1.5em;
+	font-size: 1.3em;
 }
 
 math-field:focus-within {
-	outline: 1px solid var(--primary-color-light);
-	border-radius: 4px;
+	outline: 2px solid var(--primary-color);
+	border-radius: var(--border-radius);
 }
 
 .equation {

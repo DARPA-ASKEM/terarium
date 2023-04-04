@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<slider-panel
+		<tera-slider-panel
 			content-width="240px"
 			direction="left"
 			header="Facets"
@@ -15,7 +15,7 @@
 					:result-type="resourceType"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 		<div class="results-content">
 			<div class="secondary-header">
 				<span class="p-buttonset">
@@ -63,11 +63,11 @@
 			:search-term="searchTerm"
 			@toggle-data-item-selected="toggleDataItemSelected"
 		/>
-		<slider-panel
+		<tera-slider-panel
 			class="resources-slider"
 			:content-width="sliderWidth"
 			direction="right"
-			header="Cart"
+			header="Selected resources"
 			v-model:is-open="isSliderResourcesOpen"
 			:indicator-value="selectedSearchItems.length"
 		>
@@ -85,8 +85,17 @@
 				<div v-if="selectedSearchItems.length > 1" class="sub-header-title">
 					{{ selectedSearchItems.length }} items
 				</div>
+				<div v-if="selectedSearchItems.length == 0">
+					<div class="sub-header-title">Empty</div>
+				</div>
 			</template>
 			<template v-slot:content>
+				<div v-if="selectedSearchItems.length == 0" class="empty-cart-image-container">
+					<div class="empty-cart-image">
+						<img src="@/assets/svg/seed.svg" alt="Picture of a seed" />
+					</div>
+					<p>Selected resources will appear here</p>
+				</div>
 				<selected-resources-options-pane
 					:selected-search-items="selectedSearchItems"
 					@toggle-data-item-selected="toggleDataItemSelected"
@@ -94,13 +103,13 @@
 					@find-similar-content="onFindSimilarContent"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
@@ -563,7 +572,7 @@ onUnmounted(() => {
 }
 
 .sub-header-title {
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
 	text-align: center;
 	color: var(--text-color-subdued);
 	display: flex;
@@ -604,5 +613,29 @@ onUnmounted(() => {
 
 .p-button.p-button-sm {
 	padding: 0.5rem 0.75rem;
+}
+
+.empty-cart-image-container {
+	justify-content: center;
+	display: flex;
+	flex-direction: column;
+	margin-top: 12rem;
+	align-items: center;
+	gap: 2rem;
+	color: var(--text-color-secondary);
+	font-size: var(--font-body-small);
+}
+
+.empty-cart-image {
+	margin: auto;
+}
+
+.breakdown-pane-container {
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
+}
+
+.cart-item {
+	list-style-type: none;
 }
 </style>

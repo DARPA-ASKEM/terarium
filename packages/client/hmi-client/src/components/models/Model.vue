@@ -17,7 +17,7 @@
 						class="p-button-sm p-button-outlined"
 					/>
 					<Button
-						@click="goToSimulationRunPage"
+						@click="launchForecast"
 						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
@@ -27,9 +27,9 @@
 			<!--contributor-->
 			<!--created on: date-->
 		</header>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" />
+				<p v-html="description" class="constrain-width" />
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -72,15 +72,11 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<template v-if="!isEditable">
-				<AccordionTab header="Parameters">
-					<DataTable :value="model?.parameters">
-						<Column field="name" header="Name"></Column>
-						<Column field="type" header="Type"></Column>
-						<Column field="default_value" header="Default"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab header="State variables">
+			<AccordionTab>
+				<template #header>
+					State variables<span class="artifact-amount">({{ model?.content?.S.length }})</span>
+				</template>
+				<template v-if="!isEditable">
 					<DataTable
 						:value="model?.content?.S"
 						selectionMode="single"
@@ -88,7 +84,17 @@
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
 					>
-						<Column field="sname" header="Label" />
+						<Column field="sname" header="Name" />
+						<Column header="Type">
+							<template #body="slotProps">
+								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.type }}
+							</template>
+						</Column>
+						<Column header="Default">
+							<template #body="slotProps">
+								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.default_value }}
+							</template>
+						</Column>
 						<Column field="miraIds" header="Concepts">
 							<template #body="slotProps">
 								<ul>
@@ -103,8 +109,84 @@
 							</template>
 						</Column>
 					</DataTable>
-				</AccordionTab>
-			</template>
+				</template>
+				<template v-else>
+					<model-parameter-list
+						:parameters="betterStates"
+						attribute="parameters"
+						:selected-variable="selectedVariable"
+						@update-parameter-row="updateParamaterRow"
+						@parameter-click="onVariableSelected"
+					/>
+				</template>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
+				</template>
+				<template v-if="!isEditable">
+					<DataTable :value="betterParams">
+						<Column field="name" header="Name" />
+						<Column field="type" header="Type" />
+						<Column field="default_value" header="Default" />
+					</DataTable>
+				</template>
+				<template v-else>
+					<model-parameter-list
+						:parameters="betterParams"
+						attribute="parameters"
+						:selected-variable="selectedVariable"
+						@update-parameter-row="updateParamaterRow"
+						@parameter-click="onVariableSelected"
+					/>
+				</template>
+			</AccordionTab>
+			<AccordionTab :header="`Extractions ${extractions?.length}`">
+				<DataTable :value="extractions">
+					<Column field="name" header="Name" />
+					<Column field="id" header="ID" />
+					<Column field="text_annotations" header="Text">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.text_annotations" :key="key">
+									{{ text }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="dkg_annotations" header="Concepts">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
+									<a :href="`http://34.230.33.149:8772/${text[0]}`">{{ text[1] }}</a>
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="data_annotations" header="Data">
+						<template #body="slotProps">
+							<ul>
+								<li v-for="(text, key) in slotProps.data.data_annotations" :key="key">
+									{{ `${text[0]}: ${text[1]}` }}
+								</li>
+							</ul>
+						</template>
+					</Column>
+					<Column field="file" header="File" />
+					<Column field="doi" header="doi">
+						<template #body="slotProps">
+							<a :href="slotProps.data.doi">{{ slotProps.data.doi }}</a>
+						</template>
+					</Column>
+					<Column field="equation_annotations" header="Equations">
+						<template #body="slotProps">
+							<div style="word-wrap: break-word">
+								{{ slotProps.data.equation_annotations }}
+							</div>
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
@@ -116,50 +198,16 @@
 					<Column field="name" header="Documents"></Column>
 				</DataTable>
 			</AccordionTab>
-			<template v-if="isEditable">
-				<AccordionTab header="State variables">
-					<DataTable
-						:value="model?.content?.S"
-						selectionMode="single"
-						@row-select="onStateVariableClick"
-						@row-unselect="onStateVariableClick"
-					>
-						<Column field="sname" header="Label" />
-						<Column field="miraIds" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li
-										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
-										:key="ontology.curie"
-									>
-										<a :href="ontology.link">{{ ontology.title }}</a
-										><br />{{ ontology.description }}
-									</li>
-								</ul>
-							</template>
-						</Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						Parameters<span class="artifact-amount">({{ model?.parameters.length }})</span>
-					</template>
-					<model-parameter-list
-						:parameters="betterParams"
-						attribute="parameters"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</AccordionTab>
-				<!-- <AccordionTab> // Integrate other types later these values are already in parameters so perhaps they can be filtered through here instead of using the content attribute
-					<template #header>
-						State variables<span class="artifact-amount">({{ model?.content.S.length }})</span>
-					</template>
-					<model-parameter-list :parameters="model?.content.S" :attributes="['content', 'S']"
-						@update-parameterRow="updateParamaterRow" />
-				</AccordionTab> -->
-			</template>
 		</Accordion>
+
+		<Teleport to="body">
+			<ForecastLauncher
+				v-if="showForecastLauncher && model"
+				:model="model"
+				@close="showForecastLauncher = false"
+				@launch-forecast="goToSimulationRunPage"
+			/>
+		</Teleport>
 	</section>
 </template>
 
@@ -190,6 +238,7 @@ import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ModelParameterList from '@/components/models/model-parameter-list.vue';
+import ForecastLauncher from '@/components/models/forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -200,12 +249,15 @@ import MathEditor from '@/components/mathml/math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
 export interface ModelProps {
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
 }
+
+const extractions = ref(Object.values(example));
 
 const props = defineProps<ModelProps>();
 
@@ -215,11 +267,13 @@ const menu = ref();
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
 const selectedRow = ref<any>(null);
+const selectedVariable = ref('');
 
 const equation = ref<string>('');
 const equationOriginal = ref<string>('');
-const isSelected = ref<boolean>(false);
 const mathmode = ref('mathLIVE');
+
+const showForecastLauncher = ref(false);
 
 // Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
 // const modelMath = ref(String.raw`\begin{align}
@@ -242,32 +296,51 @@ const mathmode = ref('mathLIVE');
 // 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
 // };
 
+const betterStates = computed(() => {
+	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
+	const statesFromContent: any[] = model.value?.content?.S ?? [];
+
+	statesFromContent.forEach((stateFromContent) => {
+		statesFromParams.forEach((stateFromParams) => {
+			if (stateFromParams.name === stateFromContent.sname) {
+				stateFromParams.label = stateFromContent?.sname;
+				stateFromParams.concepts = [...stateFromContent.miraIds, ...stateFromContent.miraContext];
+			}
+		});
+	});
+	return statesFromParams;
+});
+
 const betterParams = computed(() => {
-	const params = model.value?.parameters;
+	const params = model.value?.parameters.filter((p) => !p.state_variable);
 	const transitions: any[] = model.value?.content?.T ?? [];
 
 	transitions.forEach((transition) => {
 		params.forEach((param) => {
-			if (param.name === transition?.parameter_name) {
-				param.tname = transition?.tname;
+			if (param.name === transition.parameter_name) {
+				param.label = transition?.tname;
 				param.template_type = transition?.template_type;
 			}
 		});
 	});
-
 	return params;
 });
 
 const onVariableSelected = (variable: string) => {
-	if (variable && !isSelected.value) {
-		equation.value = equationOriginal.value.replaceAll(
-			variable,
-			String.raw`{\color{red}${variable}}`
-		);
+	if (variable) {
+		if (variable === selectedVariable.value) {
+			selectedVariable.value = '';
+			equation.value = equationOriginal.value;
+		} else {
+			selectedVariable.value = variable;
+			equation.value = equationOriginal.value.replaceAll(
+				selectedVariable.value,
+				String.raw`{\color{red}${variable}}`
+			);
+		}
 	} else {
 		equation.value = equationOriginal.value;
 	}
-	isSelected.value = !isSelected.value;
 };
 
 const onStateVariableClick = () => {
@@ -326,6 +399,7 @@ function highlightSearchTerms(text: string | undefined): string {
 watch(
 	() => [props.assetId],
 	async () => {
+		updateFormula('');
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
@@ -337,7 +411,6 @@ watch(
 				}
 			}
 		} else {
-			equation.value = '';
 			model.value = null;
 		}
 	},
@@ -368,7 +441,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			const edgeData = renderer.edgeSelection.datum();
 			remove(
 				renderer.graph.edges,
-				(e) => e.source === edgeData.source || e.target === edgeData.target
+				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
 			renderer.render();
 		}
@@ -378,20 +451,20 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 // Model editor context menu
 const contextMenuItems = ref([
 	{
-		label: 'Add State',
+		label: 'Add state',
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('S', 'test', { x: eventX, y: eventY });
+				renderer.addNode('S', '?', { x: eventX, y: eventY });
 			}
 		}
 	},
 	{
-		label: 'Add Transition',
+		label: 'Add transition',
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('T', 'test', { x: eventX, y: eventY });
+				renderer.addNode('T', '?', { x: eventX, y: eventY });
 			}
 		}
 	}
@@ -435,6 +508,8 @@ watch(
 		const latexFormula = await petriToLatex(model.value.content);
 		if (latexFormula) {
 			updateFormula(latexFormula);
+		} else {
+			updateFormula('');
 		}
 	},
 	{ deep: true }
@@ -449,8 +524,13 @@ const updatePetriFromMathML = async (mathmlString: string) => {
 	}
 };
 
+const launchForecast = () => {
+	showForecastLauncher.value = true;
+};
+
 const router = useRouter();
 const goToSimulationRunPage = () => {
+	showForecastLauncher.value = false;
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
@@ -506,10 +586,13 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 <style scoped>
 .model-panel {
 	height: 100%;
+	border-radius: var(--border-radius-big);
+	border: solid 1px var(--surface-border);
+	overflow: hidden;
 }
 
 .content {
-	height: 99%;
+	height: 100%;
 	width: 100%;
 }
 
@@ -519,7 +602,7 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	max-height: 100%;
 	flex-grow: 1;
 	overflow: hidden;
-	border-radius: 0.25rem;
+	border: none;
 }
 
 .math-editor {
@@ -532,10 +615,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 .model_diagram {
 	display: flex;
 	height: 100%;
-}
-
-.p-splitter .p-splitter-gutter {
-	color: red;
 }
 
 .dev-options {
@@ -563,5 +642,9 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.constrain-width {
+	max-width: 60rem;
 }
 </style>

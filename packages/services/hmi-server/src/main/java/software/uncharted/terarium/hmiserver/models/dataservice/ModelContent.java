@@ -28,4 +28,8 @@ public class ModelContent implements Serializable {
 	@JsonAlias("O")
 	@JsonSetter("O")
 	private List<Map<String, Number>> O;
+
+	@JsonAlias("metadata")
+	@JsonSetter("metadata")
+	private Object metadata;
 }
