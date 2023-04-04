@@ -278,6 +278,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
 			selection.select('circle').attr('stroke', highlightedStrokeColour);
+			selection.select('rect').attr('stroke', highlightedStrokeColour);
 			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
 			start.x = sourceData.x;
@@ -323,6 +324,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			chart?.selectAll('.new-edge').remove();
 			selection.select('circle').attr('stroke', 'var(--petri-nodeBorder)');
+			selection.select('rect').attr('stroke', 'var(--petri-nodeBorder)');
+
 			if (!this.isDragEnabled) return;
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
@@ -332,6 +335,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			// Set focus on node:
+			this.chart.selectAll('.node-ui').style('opacity', '0.3');
+			this.chart.selectAll('.edge').style('opacity', '0.3');
+			selection.style('opacity', '1');
+
 			if (!this.editMode) return;
 			if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) return;
 
@@ -372,6 +380,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('background-click', () => {
+			// Reset opacity from focus:
+			this.chart.selectAll('.node-ui').style('opacity', '1');
+			this.chart.selectAll('.edge').style('opacity', '1');
+
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
 				this.edgeSelection = null;
