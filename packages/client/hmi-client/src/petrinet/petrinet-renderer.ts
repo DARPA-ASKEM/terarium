@@ -336,8 +336,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			// Set focus on node:
-			this.chart.selectAll('.node-ui').style('opacity', '0.3');
-			this.chart.selectAll('.edge').style('opacity', '0.3');
+			this?.chart?.selectAll('.node-ui').style('opacity', '0.3');
+			this?.chart?.selectAll('.edge').style('opacity', '0.3');
 			selection.style('opacity', '1');
 
 			if (!this.editMode) return;
@@ -381,8 +381,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		this.on('background-click', () => {
 			// Reset opacity from focus:
-			this.chart.selectAll('.node-ui').style('opacity', '1');
-			this.chart.selectAll('.edge').style('opacity', '1');
+			this?.chart?.selectAll('.node-ui').style('opacity', '1');
+			this?.chart?.selectAll('.edge').style('opacity', '1');
 
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
