@@ -14,7 +14,7 @@
 					@open-asset="openAsset"
 					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
-					@click="fetchAnnotations()"
+					@click="getAnnotations(props.assetId)"
 					@remove-asset="removeAsset"
 				/>
 			</template>
@@ -26,7 +26,7 @@
 				:active-tab-index="activeTabIndex"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
-				@click="fetchAnnotations()"
+				@click="getAnnotations(props.assetId)"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
 				<document
@@ -78,7 +78,7 @@
 			direction="right"
 			header="Notes"
 			v-model:is-open="isNotesSliderOpen"
-			@click="fetchAnnotations()"
+			@click="getAnnotations(props.assetId)"
 		>
 			<template v-slot:content>
 				<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
@@ -111,7 +111,7 @@
 						<div class="save-cancel-buttons">
 							<Button
 								@click="
-									addAnnotation();
+									addNote();
 									toggleAnnotationInput();
 								"
 								label="Save"
@@ -147,7 +147,6 @@ import { isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import API from '@/api/api';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Document from '@/components/documents/Document.vue';
 import Model from '@/components/models/Model.vue';
@@ -163,10 +162,11 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult2.vue';
-import { Tab, ResourceType, Annotation } from '@/types/common';
+import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { formatMillisToDate } from '@/utils/date';
+import { createAnnotation, getAnnotations } from '@/services/models/annotations';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -283,32 +283,10 @@ watch(
 	}
 );
 
-// FIXME:
-// - Need to establish terarium artifact types
-// - Move to service layer
-const fetchAnnotations = async () => {
-	const response = await API.get('/annotations', {
-		params: {
-			artifact_type: ResourceType.XDD,
-			artifact_id: props.assetId
-		}
-	});
-	if (response) {
-		annotations.value = response.data;
-	}
-};
-
-const addAnnotation = async () => {
-	const content = annotationContent.value;
-	await API.post('/annotations', {
-		content,
-		artifact_id: props.assetId,
-		artifact_type: ResourceType.XDD
-	});
+const addNote = async () => {
+	await createAnnotation(annotationContent.value, props.assetId);
 	annotationContent.value = '';
-
-	// Refresh
-	await fetchAnnotations();
+	await getAnnotations(props.assetId);
 };
 
 function toggleAnnotationInput() {
