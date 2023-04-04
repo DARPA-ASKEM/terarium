@@ -20,9 +20,9 @@ $overlayColor: #000000 !default;
 
 $primaryColorRGB: 45, 142, 45;
 $primaryColor: #1B8073;
-$primaryColorLighter: #ABEFE6;
-$primaryColorLight: #67d2c3;
-$primaryColorDark: #12564D;
+$primaryColorLighter: #bceae4;
+$primaryColorLight: #86d3c9;
+$primaryColorDark: #166359;
 $primaryTextColor: #ffffff !default;
 $accentColor: rgba(208, 213, 221, .3) !default;
 $accentTextColor: $emphasis-high !default;
@@ -156,16 +156,16 @@ $roundedButtonBorderRadius: 2rem !default;
 $textButtonHoverBgOpacity: .04 !default;
 $textButtonActiveBgOpacity: .16 !default;
 $outlinedButtonBorder: 0 none !default;
-$plainButtonTextColor: $textSecondaryColor !default;
+$plainButtonTextColor: $textColor !default;
 $plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
 $plainButtonActiveBgColor: rgba(0, 0, 0, .16) !default;
 
 $secondaryButtonBg: $accentColor !default;
 $secondaryButtonTextColor: $accentTextColor !default;
 $secondaryButtonBorder: 0 none !default;
-$secondaryButtonHoverBg: rgba($accentColor, .92) !default;
+$secondaryButtonHoverBg: var(--surface-hover)!default;
 $secondaryButtonTextHoverColor: $accentTextColor !default;
-$secondaryButtonHoverBorderColor: transparent !default;
+$secondaryButtonHoverBorderColor: var(--gray-200) !default;
 $secondaryButtonActiveBg: rgba($accentColor, .68) !default;
 $secondaryButtonTextActiveColor: $accentTextColor !default;
 $secondaryButtonActiveBorderColor: transparent !default;
@@ -218,7 +218,7 @@ $helpButtonFocusShadow: none !default;
 $dangerButtonBg: #D32F2F !default;
 $dangerButtonTextColor: #ffffff !default;
 $dangerButtonBorder: 0 none !default;
-$dangerButtonHoverBg: rgba(#D32F2F, .92) !default;
+$dangerButtonHoverBg: #971414 !default;
 $dangerButtonTextHoverColor: #ffffff !default;
 $dangerButtonHoverBorderColor: transparent !default;
 $dangerButtonActiveBg: rgba(#D32F2F, .68) !default;
@@ -485,7 +485,7 @@ $paginatorElementMargin: .143rem !default;
 $paginatorElementPadding: 0 !default;
 
 //table
-$tableHeaderBorder: 1px solid #e4e4e4 !default;
+$tableHeaderBorder: 1px solid var(--surface-border-light) !default;
 $tableHeaderBorderWidth: 0 0 1px 0 !default;
 $tableHeaderBg: #ffffff !default;
 $tableHeaderTextColor: $textColor !default;
@@ -494,13 +494,13 @@ $tableHeaderPadding: 1rem 1rem !default;
 
 $tableHeaderCellPadding: 1rem 1rem !default;
 $tableHeaderCellBg: #ffffff !default;
-$tableHeaderCellTextColor: var(--text-color-subdued) !default;
+$tableHeaderCellTextColor: var(--text-color-primary) !default;
 $tableHeaderCellFontWeight: 500 !default;
-$tableHeaderCellBorder: 1px solid #e4e4e4 !default;
+$tableHeaderCellBorder: 1px solid var(--surface-border-light) !default;
 $tableHeaderCellBorderWidth: 0 0 1px 0 !default;
 $tableHeaderCellHoverBg: rgba(0, 0, 0, .04) !default;
 $tableHeaderCellTextHoverColor: $textColor !default;
-$tableHeaderCellIconColor: $textSecondaryColor !default;
+$tableHeaderCellIconColor: var(--text-color-subdued) !default;
 $tableHeaderCellIconHoverColor: $textSecondaryColor !default;
 $tableHeaderCellHighlightBg: #ffffff !default;
 $tableHeaderCellHighlightTextColor: $textColor !default;
@@ -513,7 +513,7 @@ $tableBodyRowTextColor: $textColor !default;
 $tableBodyRowEvenBg: rgba(0, 0, 0, .02) !default;
 $tableBodyRowHoverBg: rgba(0, 0, 0, .04) !default;
 $tableBodyRowTextHoverColor: $textColor !default;
-$tableBodyCellBorder: 1px solid #e4e4e4 !default;
+$tableBodyCellBorder: 1px solid var(--surface-border-light) !default;
 $tableBodyCellBorderWidth: 0 0 1px 0 !default;
 $tableBodyCellPadding: 1rem 1rem !default;
 
@@ -521,11 +521,11 @@ $tableFooterCellPadding: 1rem 1rem !default;
 $tableFooterCellBg: #ffffff !default;
 $tableFooterCellTextColor: $textColor !default;
 $tableFooterCellFontWeight: 500 !default;
-$tableFooterCellBorder: 1px solid #e4e4e4 !default;
+$tableFooterCellBorder: 1px solid var(--surface-border-light) !default;
 $tableFooterCellBorderWidth: 0 0 1px 0 !default;
 $tableResizerHelperBg: $primaryColor !default;
 
-$tableFooterBorder: 1px solid #e4e4e4 !default;
+$tableFooterBorder: 1px solid var(--surface-border-light) !default;
 $tableFooterBorderWidth: 0 0 1px 0 !default;
 $tableFooterBg: #ffffff !default;
 $tableFooterTextColor: $textColor !default;
@@ -589,10 +589,10 @@ $inlineMessageBorderWidth: 1px !default;
 //toast
 $toastIconFontSize: 2rem !default;
 $toastMessageTextMargin: 0 0 0 1rem !default;
-$toastMargin: 0 0 1rem 0 !default;
-$toastPadding: 1.5rem !default;
+$toastMargin: 0 0 0 0 !default;
+$toastPadding: 1rem 0.5rem !default;
 $toastBorderWidth: 0 0 0 0 !default;
-$toastShadow: 0 5px 5px -3px rgba(0, 0, 0, .2), 0 8px 10px 1px rgba(0, 0, 0, .14), 0 3px 14px 2px rgba(0, 0, 0, .12) !default;
+$toastShadow: 0 3px 6px -3px rgba(0, 0, 0, .1), 0 8px 10px 1px rgba(0, 0, 0, .08), 0 3px 14px 2px rgba(0, 0, 0, .06) !default;
 $toastOpacity: .9 !default;
 $toastTitleFontWeight: 700 !default;
 $toastDetailMargin: $inlineSpacing 0 0 0 !default;
@@ -675,7 +675,7 @@ $menuitemIconActiveColor: $textSecondaryColor !default;
 $menuitemActiveBg: rgba(0, 0, 0, .04) !default;
 $menuitemSubmenuIconFontSize: .875rem !default;
 $submenuHeaderMargin: 0 !default;
-$submenuHeaderPadding: 1rem !default;
+$submenuHeaderPadding: 1rem 1rem 0.5rem !default;
 $submenuHeaderBg: #ffffff !default;
 $submenuHeaderTextColor: $textSecondaryColor !default;
 $submenuHeaderBorderRadius: 0 !default;
@@ -807,8 +807,8 @@ $skeletonBg: rgba(0, 0, 0, .08) !default;
 $skeletonAnimationBg: rgba(255, 255, 255, 0.4) !default;
 
 //splitter
-$splitterGutterBg: rgba(0, 0, 0, .04) !default;
-$splitterGutterHandleBg: rgba(0, 0, 0, .12) !default;
+$splitterGutterBg: var(--surface-border-light) !default;
+$splitterGutterHandleBg: var(--surface-border-light) !default;
 
 //speeddial
 $speedDialButtonWidth: 4rem !default;
@@ -834,10 +834,10 @@ $dockPadding: .5rem .5rem !default;
 $dockBorderRadius: .5rem !default;
 
 //image
-$imageMaskBg: rgba(0, 0, 0, 0.9) !default;
+$imageMaskBg: rgba(0, 0, 0, 0.75) !default;
 $imagePreviewToolbarPadding: 1rem !default;
-$imagePreviewIndicatorColor: #f8f9fa !default;
-$imagePreviewIndicatorBg: rgba(0, 0, 0, 0.5) !default;
+$imagePreviewIndicatorColor: var(--text-color) !default;
+$imagePreviewIndicatorBg: #1b807332 !default;
 $imagePreviewActionIconBg: transparent !default;
 $imagePreviewActionIconColor: #f8f9fa !default;
 $imagePreviewActionIconHoverBg: rgba(255, 255, 255, 0.1) !default;
@@ -847,11 +847,18 @@ $imagePreviewActionIconHeight: 3rem !default;
 $imagePreviewActionIconFontSize: 1.5rem !default;
 $imagePreviewActionIconBorderRadius: 50% !default;
 
+//petrinet
+$petri-nodeBorder: var(--gray-800);
+$petri-nodeFill: var(--surface);
+$petri-lineColor: var(--gray-700);
+$petri-inputBox: var(--gray-300);
+
+
 :root {
 	--border-radius: #{$borderRadius};
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};
-	--chevron-hover: #eeeeeeAA;
+	--chevron-hover: #1b807332;
 	--content-padding: #{$panelContentPadding};
 	--focus-ring: #{$focusShadow};
 	--font-body-large: #{$fontBodyLarge};
@@ -874,6 +881,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--gray-700: #616161;
 	--gray-800: #424242;
 	--gray-900: #212121;
+	--gray-1000: #000000;
 	--inline-spacing: #{$inlineSpacing};
 	--maskbg: #{$maskBg};
 	--primary-color: #{$primaryColor};
@@ -903,7 +911,7 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--surface-f: #ffffff;
 	--surface-overlay: #ffffff;
 	--surface-ground: var(--gray-100);
-	--surface-highlight: #E3EFE4;
+	--surface-highlight: #EBF4F3;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #F9FAFB;
 	--surface-section: #ffffff;
@@ -913,5 +921,10 @@ $imagePreviewActionIconBorderRadius: 50% !default;
 	--text-color-secondary: #{$textSecondaryColor};
 	--text-color-subdued: rgb(102, 112, 133);
 	--text-color-light: rgb(152, 154, 160);
+	--constrain-width: 55rem;
 	color-scheme: light;
+	--petri-nodeBorder: #{$petri-nodeBorder};
+	--petri-nodeFill: var(--surface);
+	--petri-lineColor: #{$petri-lineColor};
+	--petri-inputBox: #{$petri-inputBox};
 }

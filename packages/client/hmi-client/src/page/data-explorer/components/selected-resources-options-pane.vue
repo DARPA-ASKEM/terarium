@@ -116,17 +116,17 @@ button {
 	border: none;
 	background-color: transparent;
 	height: min-content;
-	padding: 0;
 }
 
 i {
-	padding: 0.2rem;
-	border-radius: var(--border-radius);
+	padding: 0.25rem;
+	border-radius: var(--border-radius-bigger);
+	color: var(--text-color-subdued);
 }
 
 i:hover {
 	cursor: pointer;
-	background-color: hsla(0, 0%, 0%, 0.1);
-	background-color: hsla(0, 0%, 0%, 0.1);
+	color: var(--text-color-primary);
+	background-color: var(--surface-hover);
 }
 </style>

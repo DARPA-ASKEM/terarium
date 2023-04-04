@@ -13,7 +13,13 @@
 	/>
 	<main>
 		<router-view v-slot="{ Component }">
-			<component class="page" ref="pageRef" :is="Component" :project="project" />
+			<component
+				class="page"
+				ref="pageRef"
+				:is="Component"
+				:project="project"
+				@update-project="fetchProject"
+			/>
 		</router-view>
 	</main>
 	<footer>
@@ -59,7 +65,7 @@ const showSuggestions = computed(() => {
  * As we use only one Project per application instance.
  * It is loaded at the root and passed to all views as prop.
  */
-const resources = useResourcesStore();
+const resourcesStore = useResourcesStore();
 const project = shallowRef<IProject | null>(null);
 const projects = shallowRef<IProject[] | null>(null);
 
@@ -79,17 +85,21 @@ API.interceptors.response.use(
 	}
 );
 
+async function fetchProject(id: IProject['id']) {
+	// fetch project metadata
+	project.value = await ProjectService.get(id, true);
+
+	// fetch basic metadata about project assets and save them into a global store/cache
+	resourcesStore.activeProjectAssets = project.value?.assets ?? null;
+	resourcesStore.setActiveProject(project.value);
+}
+
 watch(
 	() => route.params.projectId,
 	async (projectId) => {
 		// If the projectId or the Project are null, set the Project to null.
 		if (projectId && !!projectId) {
-			const id = projectId as string;
-			// fetch project metadata
-			project.value = await ProjectService.get(id);
-			// fetch basic metadata about project assets and save them into a global store/cache
-			resources.activeProjectAssets = await ProjectService.getAssets(id);
-			resources.setActiveProject(project.value);
+			fetchProject(projectId as IProject['id']);
 		} else {
 			project.value = null;
 		}
@@ -102,7 +112,7 @@ watch(
 
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-resources.$subscribe((mutation, state) => {
+resourcesStore.$subscribe((mutation, state) => {
 	project.value = state.activeProject;
 });
 </script>

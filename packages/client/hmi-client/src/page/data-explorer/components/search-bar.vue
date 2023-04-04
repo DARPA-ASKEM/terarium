@@ -16,6 +16,14 @@
 					@complete="fillAutocomplete"
 					@keyup.enter="initiateSearch"
 					@item-select="initiateSearch"
+					@dragover.prevent
+					@dragenter.prevent
+					@drop="
+						{
+							isSearchByExampleVisible = true;
+							onDrop();
+						}
+					"
 				>
 					<template #option="prop">
 						<span class="auto-complete-term">
@@ -56,6 +64,7 @@
 						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
 						:asset="searchByExampleSelectedAsset"
 						:resourceType="searchByExampleSelectedResourceType"
+						class="asset-card-in-searchByExample-dropzone"
 					>
 					</asset-card>
 					<Button
@@ -64,6 +73,7 @@
 						text
 						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
 						class="clear-search-by-example"
+						@click="searchByExampleSelectedAsset = null"
 					>
 					</Button>
 					<span v-else class="drop-zone">
@@ -79,7 +89,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.similarContent"
 					/>
-					<label for="similarContent">Similar<br />content</label>
+					<label for="similarContent">Similar content</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -87,7 +97,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.forwardCitation"
 					/>
-					<label for="forwardCitation">Forward<br />citation</label>
+					<label for="forwardCitation">Forward citations</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -95,7 +105,7 @@
 						binary
 						v-model="selectedSearchByExampleOptions.backwardCitation"
 					/>
-					<label for="backwardCitation">Backward<br />citation</label>
+					<label for="backwardCitation">Backward citation</label>
 				</div>
 				<div class="field-checkbox">
 					<Checkbox
@@ -103,9 +113,9 @@
 						binary
 						v-model="selectedSearchByExampleOptions.relatedContent"
 					/>
-					<label for="relatedContent">Related<br />resources</label>
+					<label for="relatedContent">Related resources</label>
 				</div>
-				<Button label="SEARCH" @click="initiateSearchByExample()" />
+				<Button label="Search" @click="initiateSearchByExample()" />
 			</footer>
 		</section>
 	</section>
@@ -312,6 +322,7 @@ i {
 
 .clear-search:hover {
 	background-color: var(--surface-hover);
+	color: var(--text-color-primary);
 	padding: 0.5rem;
 	border-radius: var(--border-radius-bigger);
 	top: 1rem;
@@ -357,6 +368,7 @@ i {
 
 .search-by-example header .p-button:hover {
 	background-color: var(--surface-hover);
+	color: var(--text-color-primary);
 }
 
 .search-drag-drop-area {
@@ -384,8 +396,11 @@ i {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
+	pointer-events: none;
 }
-
+.asset-card-in-searchByExample-dropzone {
+	width: 100%;
+}
 .clear-search-by-example {
 	height: fit-content;
 }
@@ -393,6 +408,12 @@ i {
 .search-by-example footer {
 	display: flex;
 	justify-content: space-between;
+}
+
+.field-checkbox {
+	font-size: var(--font-small);
+	color: var(--text-color-primary);
+	margin-bottom: 0rem;
 }
 
 .p-button.search-by-example-button {

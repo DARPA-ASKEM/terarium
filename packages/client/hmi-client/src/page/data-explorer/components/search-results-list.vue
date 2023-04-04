@@ -7,7 +7,7 @@
 			>
 		</span>
 	</div>
-	<div class="facet-chips">
+	<div v-if="chosenFacets.length > 0" class="facet-chips">
 		<template v-for="facet in chosenFacets">
 			<Chip
 				v-for="(value, index) in facet.values"
@@ -200,11 +200,11 @@ ul {
 }
 
 .loading-spinner {
-	color: var(--primary-color);
+	color: var(--surface-highlight);
 }
 
 .pi-spinner {
-	font-size: 5rem;
+	font-size: 8rem;
 }
 
 .no-results-found {
@@ -224,7 +224,7 @@ ul {
 }
 
 .result-count {
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
 	white-space: nowrap;
 }
 

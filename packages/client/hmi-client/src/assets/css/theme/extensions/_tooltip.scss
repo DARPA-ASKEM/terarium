@@ -1,7 +1,7 @@
 .p-tooltip {
     .p-tooltip-text {
         box-shadow: none;
-        font-size: .875rem;
+        font-size: var(--font-size);
     }
 
     .p-tooltip-arrow {

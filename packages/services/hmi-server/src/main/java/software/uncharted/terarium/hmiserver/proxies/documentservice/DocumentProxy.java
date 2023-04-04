@@ -34,7 +34,8 @@ public interface DocumentProxy {
 		@QueryParam("publisher") String publisher,
 		@QueryParam("additional_fields") String additional_fields,
 		@QueryParam("match") String match,
-		@QueryParam("known_entities") String known_entities
+		@QueryParam("known_entities") String known_entities,
+		@QueryParam("github_url") String github_url
 	);
 
 	@GET

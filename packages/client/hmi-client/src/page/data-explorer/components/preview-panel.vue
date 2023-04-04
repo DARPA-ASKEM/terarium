@@ -14,7 +14,7 @@
 			<section>
 				<document
 					v-if="previewItemResourceType === ResourceType.XDD"
-					:asset-id="previewItemId"
+					:xdd-uri="previewItemId"
 					:previewLineLimit="3"
 					:project="resources.activeProject"
 					:highlight="searchTerm"
@@ -146,5 +146,9 @@ i {
 
 .toggle-selection {
 	margin-left: 1rem;
+}
+
+footer button {
+	margin: 0 3px;
 }
 </style>

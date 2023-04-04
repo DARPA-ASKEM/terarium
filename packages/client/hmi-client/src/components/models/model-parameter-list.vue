@@ -1,24 +1,26 @@
 <template>
 	<main>
 		<table>
-			<tr class="parameters_header">
+			<tr>
 				<th>Label</th>
 				<th>Name</th>
 				<th>Units</th>
-				<th>Concept</th>
-				<th>Definition</th>
+				<th>Concepts/Definition</th>
 			</tr>
 		</table>
 		<ul>
-			<li v-for="parameterRow in parameters" :key="parameterRow.id">
+			<li v-for="(parameterRow, index) in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
-					class="model-parameter-list-item"
+					class="model-parameter"
+					:active="parameterRow.label === selectedVariable"
 					:parameter-row="parameterRow"
+					:example-index="(index + 1).toString()"
 					@update-parameter-row="updateParamaterRow"
+					@click="variableClick($event, parameterRow.label)"
 				/>
 			</li>
 			<footer>
-				<Button label="Add parameter" icon="pi pi-plus" />
+				<Button label="Add variable" icon="pi pi-plus" />
 				<Button label="Extract from a dataset" icon="pi pi-file-export" />
 			</footer>
 		</ul>
@@ -32,9 +34,14 @@ import ModelParameterListItem from '@/components/models/model-parameter-list-ite
 const props = defineProps<{
 	parameters: any; // Temporary - this is also any in ITypeModel
 	attribute: string;
+	selectedVariable: string;
 }>();
 
-const emit = defineEmits(['update-parameter-row']);
+const emit = defineEmits(['update-parameter-row', 'parameter-click']);
+
+const variableClick = (_event: Event, variable: any) => {
+	emit('parameter-click', variable);
+};
 
 function updateParamaterRow(newParameterRow: any) {
 	emit('update-parameter-row', props.attribute, newParameterRow);
@@ -48,7 +55,12 @@ ul {
 	padding: 0.75rem;
 }
 
+.model-parameter[active='true'] {
+	background-color: var(--surface-highlight);
+}
+
 table {
+	width: 80%;
 	margin: 0.5rem 1.5rem;
 	text-transform: uppercase;
 	font-size: var(--font-caption);
@@ -57,12 +69,12 @@ table {
 
 table tr {
 	display: flex;
-	gap: 10rem;
 }
 
 table tr th {
+	min-width: 13rem;
+	text-align: left;
 	font-weight: normal;
-	width: 20%;
 }
 
 .over {

@@ -1,6 +1,9 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import io.quarkus.security.Authenticated;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Intermediate;
@@ -8,13 +11,21 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
+import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
+import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
+import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.smallrye.jwt.config.ConfigLogging.log;
 
 @Path("/api/models")
 @Authenticated
@@ -23,9 +34,16 @@ import java.util.Map;
 @Tag(name = "Model REST Endpoints")
 public class ModelResource {
 
+	@ConfigProperty(name = "mira-metaregistry/mp-rest/url")
+	String metaRegistryURL;
+
 	@Inject
 	@RestClient
 	ModelProxy proxy;
+
+	@Inject
+	@RestClient
+	DKGProxy dkgProxy;
 
 	@POST
 	@Path("/frameworks")
@@ -80,10 +98,8 @@ public class ModelResource {
 	@GET
 	@Path("/descriptions")
 	public Response getDescriptions(
-
 		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
-
 	) {
 		return proxy.getDescriptions(pageSize, page);
 	}
@@ -114,12 +130,94 @@ public class ModelResource {
 		return proxy.updateParameters(id, parameters);
 	}
 
+	/**
+	 * Get a Model from the data-service
+	 * Return Model
+	 */
 	@GET
 	@Path("/{id}")
+	@APIResponses({
+		@APIResponse(responseCode = "500", description = "An error occurred retrieving the model"),
+		@APIResponse(responseCode = "204", description = "Request received successfully, but there are no model with this id")
+	})
 	public Response getModel(
 		@PathParam("id") final String id
 	) {
-		return proxy.getModel(id);
+		Model model;
+
+		// Fetch the model from the data-service
+		try {
+			model = proxy.getModel(id);
+		} catch (RuntimeException e) {
+			log.error("Unable to get the model" + id, e);
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.build();
+		}
+
+		if (model == null) {
+			return Response.noContent().build();
+		}
+
+		// Resolve the ontology curies
+		final List<Species> species = model.getContent().getS();
+
+		if (species != null && !species.isEmpty()) {
+			// Get the curies from all species, as one string, comma separated without duplicate
+			final String curies = species.stream()
+				.flatMap(s -> Stream.concat(
+					s.getMiraIds().stream().map(Ontology::getCurie),
+					s.getMiraContext().stream().map(Ontology::getCurie)
+				))
+				.filter(Objects::nonNull)
+				.distinct()
+				.collect(Collectors.joining(","));
+
+			// Fetch the ontology information from the DKG
+			List<DKG> entities = new ArrayList<>();
+			try {
+				entities = dkgProxy.getEntities(curies);
+			} catch (RuntimeException e) {
+				log.error("Unable to get the ontology entity for curies: " + curies, e);
+			}
+
+			if (!entities.isEmpty()) {
+				entities.forEach(entity -> entity.setLink(metaRegistryURL + "/" + entity.getCurie()));
+
+				// Transform the entities to a Map
+				Map<String, DKG> ontologies =
+					entities.stream().collect(Collectors.toMap(DKG::getCurie, entity -> entity));
+
+				// Now add the ontologies to each species mira_ids and mira_context
+				species.forEach(s -> {
+					s.getMiraIds().forEach(miraId -> {
+						if (ontologies.containsKey(miraId.getCurie())) {
+							final DKG ontology = ontologies.get(miraId.getCurie());
+							miraId
+								.setTitle(ontology.getName())
+								.setDescription(ontology.getDescription())
+								.setLink(ontology.getLink());
+						}
+					});
+
+					s.getMiraContext().forEach(context -> {
+						if (ontologies.containsKey(context.getCurie())) {
+							final DKG ontology = ontologies.get(context.getCurie());
+							context
+								.setTitle(ontology.getName())
+								.setDescription(ontology.getDescription())
+								.setLink(ontology.getLink());
+						}
+					});
+				});
+			}
+		}
+
+		// Return the model
+		return Response
+			.status(Response.Status.OK)
+			.entity(model)
+			.build();
 	}
 
 	@POST
