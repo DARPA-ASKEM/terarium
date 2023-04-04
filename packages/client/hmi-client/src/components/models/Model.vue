@@ -533,7 +533,11 @@ watch(
 			if (!renderer?.editMode) return;
 			eventX = pos.x;
 			eventY = pos.y;
-			menu.value.toggle(evt);
+			menu.value.show(evt);
+		});
+
+		renderer.on('background-click', () => {
+			if (menu.value) menu.value.hide();
 		});
 
 		// Render graph
