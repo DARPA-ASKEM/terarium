@@ -6,7 +6,7 @@
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
-						@click="goToSimulationRunPage"
+						@click="launchForecast"
 						label="Open simulation space"
 						:disabled="isEditing"
 						class="p-button-sm"
@@ -585,6 +585,10 @@ const updatePetri = async (m: PetriNet) => {
 	await renderer?.setData(graphData);
 	await renderer?.render();
 	updateLatexFormula(equationLatexNew.value);
+};
+
+const launchForecast = () => {
+	showForecastLauncher.value = true;
 };
 
 const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {

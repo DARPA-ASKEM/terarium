@@ -162,7 +162,7 @@ import { getModel } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
-import SimulationRun from '@/temp/SimulationResult2.vue';
+import SimulationRun from '@/temp/SimulationResult3.vue';
 import { Tab, ResourceType, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
