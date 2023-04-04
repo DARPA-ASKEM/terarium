@@ -130,9 +130,11 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tableArtifacts)" id="Tables" ref="tablesAnchor">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)" id="Tables">
 					<template #header>
-						Tables<span class="artifact-amount">({{ tableArtifacts.length }})</span>
+						Tables<span class="artifact-amount" ref="tablesAnchor"
+							>({{ tableArtifacts.length }})</span
+						>
 					</template>
 					<div class="constrain-width">
 						<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
