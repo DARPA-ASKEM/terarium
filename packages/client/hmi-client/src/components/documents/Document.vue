@@ -18,33 +18,33 @@
 				/>
 			</span>
 			<div class="scroll-to-section-links" v-if="documentView === DocumentView.EXRACTIONS">
-				<a @click="scrollTo(topAnchor)">Top</a>
-				<a v-if="!isEmpty(formattedAbstract)" @click="scrollTo(abstractAnchor)">Abstract</a>
-				<a v-if="doc?.knownEntities?.summaries?.sections" @click="scrollTo(sectionSummariesAnchor)"
+				<a @click="scrollTo('Top')">Top</a>
+				<a v-if="!isEmpty(formattedAbstract)" @click="scrollTo('Abstract')">Abstract</a>
+				<a v-if="doc?.knownEntities?.summaries?.sections" @click="scrollTo('SectionSummaries')"
 					>Section summaries</a
 				>
-				<a v-if="!isEmpty(figureArtifacts)" @click="scrollTo(figuresAnchor)"
+				<a v-if="!isEmpty(figureArtifacts)" @click="scrollTo('Figures')"
 					>Figures <span class="artifact-amount">({{ figureArtifacts.length }})</span></a
 				>
-				<a v-if="!isEmpty(tableArtifacts)" @click="scrollTo(tablesAnchor)"
+				<a v-if="!isEmpty(tableArtifacts)" @click="scrollTo('Tables')"
 					>Tables <span class="artifact-amount">({{ tableArtifacts.length }})</span></a
 				>
-				<a v-if="!isEmpty(equationArtifacts)" @click="scrollTo(equationsAnchor)"
+				<a v-if="!isEmpty(equationArtifacts)" @click="scrollTo('Equations')"
 					>Equations <span class="artifact-amount">({{ equationArtifacts.length }})</span></a
 				>
-				<a v-if="!isEmpty(githubUrls)" @click="scrollTo(gitHubUrlsAnchor)"
+				<a v-if="!isEmpty(githubUrls)" @click="scrollTo('GithubURLs')"
 					>GitHub URLs <span class="artifact-amount">({{ githubUrls.length }})</span></a
 				>
-				<a v-if="!isEmpty(urlArtifacts)" @click="scrollTo(otherUrlsAnchor)"
+				<a v-if="!isEmpty(urlArtifacts)" @click="scrollTo('OtherURLs')"
 					>Other URLs <span class="artifact-amount">({{ urlArtifacts.length }})</span></a
 				>
-				<a v-if="!isEmpty(otherArtifacts)" @click="scrollTo(otherExtractionsAnchor)"
+				<a v-if="!isEmpty(otherArtifacts)" @click="scrollTo('OtherExtractions')"
 					>Other extractions <span class="artifact-amount">({{ otherArtifacts.length }})</span></a
 				>
-				<a v-if="!isEmpty(doc.citationList)" @click="scrollTo(referencesAnchor)"
+				<a v-if="!isEmpty(doc.citationList)" @click="scrollTo('References')"
 					>References <span class="artifact-amount">({{ doc.citationList.length }})</span></a
 				>
-				<a v-if="!isEmpty(relatedTerariumArtifacts)" @click="scrollTo(associatedResourcesAnchor)"
+				<a v-if="!isEmpty(relatedTerariumArtifacts)" @click="scrollTo('AssociatedResources')"
 					>Associated resources
 					<span class="artifact-amount">({{ relatedTerariumArtifacts.length }})</span></a
 				>
@@ -56,7 +56,7 @@
 					<InputText placeholder="Find in page" class="find-in-page" />
 				</div>
 				--></nav>
-		<section class="asset" v-if="documentView === DocumentView.EXRACTIONS" ref="topAnchor">
+		<section class="asset" v-if="documentView === DocumentView.EXRACTIONS" id="Top">
 			<header>
 				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
 				<h4 v-html="highlightSearchTerms(doc.title)" />
@@ -88,28 +88,26 @@
 				</section>
 			</header>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
-				<AccordionTab v-if="!isEmpty(formattedAbstract)" id="Abstract">
+				<AccordionTab v-if="!isEmpty(formattedAbstract)">
 					<template #header>
-						<span ref="abstractAnchor">Abstract</span>
+						<span id="Abstract">Abstract</span>
 					</template>
-					<div class="constrain-width" ref="abstactAnchor">
+					<div class="constrain-width">
 						<span v-html="formattedAbstract" />
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections" id="SectionSummaries">
+				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
 					<template #header>
-						<span ref="sectionSummariesAnchor">Section Summaries</span>
+						<span id="SectionSummaries">Section Summaries</span>
 					</template>
 					<template v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<h6>{{ index }}</h6>
 						<p v-html="highlightSearchTerms(section)" />
 					</template>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(figureArtifacts)" id="Figures">
+				<AccordionTab v-if="!isEmpty(figureArtifacts)">
 					<template #header>
-						Figures<span class="artifact-amount" ref="figuresAnchor"
-							>({{ figureArtifacts.length }})</span
-						>
+						Figures<span class="artifact-amount" id="Figures">({{ figureArtifacts.length }})</span>
 					</template>
 					<div class="constrain-width">
 						<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
@@ -128,11 +126,9 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tableArtifacts)" id="Tables">
+				<AccordionTab v-if="!isEmpty(tableArtifacts)">
 					<template #header>
-						Tables<span class="artifact-amount" ref="tablesAnchor"
-							>({{ tableArtifacts.length }})</span
-						>
+						Tables<span class="artifact-amount" id="Tables">({{ tableArtifacts.length }})</span>
 					</template>
 					<div class="constrain-width">
 						<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
@@ -151,9 +147,9 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(equationArtifacts)" id="Equations">
+				<AccordionTab v-if="!isEmpty(equationArtifacts)">
 					<template #header>
-						Equations<span class="artifact-amount" ref="equationsAnchor"
+						Equations<span class="artifact-amount" id="Equations"
 							>({{ equationArtifacts.length }})</span
 						>
 					</template>
@@ -174,9 +170,9 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(githubUrls)" id="GitHubLinks">
+				<AccordionTab v-if="!isEmpty(githubUrls)">
 					<template #header>
-						GitHub URLs<span class="artifact-amount" ref="githubUrlsAnchor"
+						GitHub URLs<span class="artifact-amount" id="GithubURLs"
 							>({{ githubUrls.length }})</span
 						>
 					</template>
@@ -193,9 +189,9 @@
 						</ul>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(urlArtifacts)" id="OtherURLs">
+				<AccordionTab v-if="!isEmpty(urlArtifacts)">
 					<template #header>
-						Other URLs<span class="artifact-amount" ref="otherUrlsAnchor"
+						Other URLs<span class="artifact-amount" id="OtherURLs"
 							>({{ urlArtifacts.length }})</span
 						>
 					</template>
@@ -210,9 +206,9 @@
 						</ul>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherArtifacts)" id="OtherArtifacts">
+				<AccordionTab v-if="!isEmpty(otherArtifacts)">
 					<template #header>
-						Other extractions<span class="artifact-amount" ref="otherExtractionsAnchor"
+						Other extractions<span class="artifact-amount" id="OtherExtractions"
 							>({{ otherArtifacts.length }})</span
 						>
 					</template>
@@ -225,9 +221,9 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(doc.citationList)" id="References">
+				<AccordionTab v-if="!isEmpty(doc.citationList)">
 					<template #header>
-						References<span class="artifact-amount" ref="referencesAnchor"
+						References<span class="artifact-amount" id="References"
 							>({{ doc.citationList.length }})</span
 						>
 					</template>
@@ -241,10 +237,10 @@
 						</ul>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" id="AssociatedResources">
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)">
 					<template #header>
 						Associated resources
-						<span class="artifact-amount" ref="associatedResourcesAnchor"
+						<span class="artifact-amount" id="AssociatedResources"
 							>({{ relatedTerariumArtifacts.length }})</span
 						>
 					</template>
@@ -305,19 +301,6 @@ const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-// Anchors for scrolling to extraction headers
-const topAnchor = ref();
-const abstractAnchor = ref();
-const sectionSummariesAnchor = ref();
-const figuresAnchor = ref();
-const tablesAnchor = ref();
-const equationsAnchor = ref();
-const gitHubUrlsAnchor = ref();
-const otherUrlsAnchor = ref();
-const otherExtractionsAnchor = ref();
-const referencesAnchor = ref();
-const associatedResourcesAnchor = ref();
-
 const emit = defineEmits(['open-asset']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
@@ -332,8 +315,8 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-function scrollTo(elementRef: HTMLElement) {
-	if (elementRef) elementRef.scrollIntoView({ behavior: 'smooth' });
+function scrollTo(elementId: string) {
+	document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' });
 }
 
 watch(
