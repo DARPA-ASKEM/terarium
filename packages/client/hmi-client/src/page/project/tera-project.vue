@@ -74,31 +74,34 @@
 		</section>
 		<tera-slider-panel
 			class="slider"
-			content-width="300px"
+			content-width="240px"
 			direction="right"
 			header="Notes"
 			v-model:is-open="isNotesSliderOpen"
 			@click="getAndPopulateAnnotations()"
 		>
 			<template v-slot:content>
-				<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
-					<div class="annotation-header">
-						<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
-						<Dropdown
-							placeholder="Unassigned"
-							class="p-button p-button-text notes-dropdown-button"
-						/>
-						<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
-						<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
-					</div>
-					<div class="annotation-content">
-						<div class="annotation-author-date">
-							<div>{{ annotation.username }}</div>
-							<div>{{ formatMillisToDate(annotation.timestampMillis) }}</div>
+				<section class="annotation-panel-container">
+					<div v-for="(annotation, idx) of annotations" :key="idx">
+						<div class="annotation-header">
+							<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
+							<Dropdown
+								placeholder="Unassigned"
+								class="p-button p-button-text notes-dropdown-button"
+							/>
+							<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
+							<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
 						</div>
-						<p>{{ annotation.content }}</p>
+						<div>
+							<p>{{ annotation.content }}</p>
+							<div class="annotation-author-date">
+								<div>
+									{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+								</div>
+							</div>
+						</div>
 					</div>
-				</div>
+				</section>
 				<div class="annotation-input-box">
 					<div v-if="isAnnotationInputOpen">
 						<Textarea
@@ -165,7 +168,7 @@ import SimulationRun from '@/temp/SimulationResult2.vue';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { formatMillisToDate } from '@/utils/date';
+import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import { createAnnotation, getAnnotations } from '@/services/models/annotations';
 
 // Asset props are extracted from route
@@ -299,6 +302,13 @@ function toggleAnnotationInput() {
 		annotationContent.value = '';
 	}
 }
+
+function formatAuthorTimestamp(username, timestamp) {
+	if (isDateToday(timestamp)) {
+		return `${username} at ${formatLocalTime(timestamp)} today`;
+	}
+	return `${username} on ${formatDdMmmYyyy(timestamp)}`;
+}
 </script>
 
 <style scoped>
@@ -348,9 +358,10 @@ section {
 	background-color: var(--surface-section);
 }
 
-.annotation-panel {
-	margin: 1rem;
-	margin-left: 0.5rem;
+.annotation-panel-container {
+	display: flex;
+	gap: 16px;
+	padding: 0 16px 0 16px;
 }
 
 .notes-dropdown-button {
@@ -358,8 +369,17 @@ section {
 	padding: 0rem;
 }
 
+:deep(span.p-dropdown-label.p-placeholder) {
+	color: var(--text-color-subdued);
+}
+
 :deep(span.p-dropdown-label) {
-	padding: 0.25rem 0.25rem 0.25rem 0.5rem !important;
+	padding: 0;
+	font-size: var(--font-caption);
+}
+
+:deep(span.p-dropdown-trigger-icon.pi.pi-chevron-down) {
+	color: var(--text-color-subdued);
 }
 
 .annotation-panel .p-dropdown:not(.p-disabled).p-focus {
@@ -378,10 +398,7 @@ section {
 }
 
 .annotation-content {
-	padding: 0.5rem;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--gray-50);
+	padding: 0rem 0.5rem 0rem 0.5rem;
 }
 
 .annotation-input-box {
