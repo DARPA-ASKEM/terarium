@@ -276,12 +276,16 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.removeAllEvents('node-drag-end');
 
 		// (Re)create dragging listeners
-		this.on('node-drag-start', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
 			selection.select('circle').attr('stroke', highlightedStrokeColour);
 			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
 			start.x = sourceData.x;
 			start.y = sourceData.y;
+
+			const targetSelection = d3.select(event.sourceEvent.target);
+			start.x += +targetSelection.attr('cx');
+			start.y += +targetSelection.attr('cy');
 		});
 
 		this.on(
