@@ -17,7 +17,7 @@ export async function getAnnotations(artifact_id) {
 	}
 }
 
-export async function createAnnotation(artifact_id, content) {
+export async function createAnnotation(content, artifact_id) {
 	try {
 		const response = await API.post('/annotations', {
 			content,
