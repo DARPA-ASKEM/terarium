@@ -4,21 +4,21 @@
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
 				<h4 v-html="title" />
-				<span v-if="isEditable">
-					<Button
-						@click="launchForecast"
-						label="Open simulation space"
-						:disabled="isEditing"
-						class="p-button-sm"
-					/>
-				</span>
+				<!-- search bar -->
+				<div class="flex justify-content-end">
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
+					</span>
+				</div>
 			</div>
-			<!-- search bar -->
-			<div class="flex justify-content-end">
-				<span class="p-input-icon-left">
-					<i class="pi pi-search" />
-					<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
-				</span>
+			<div v-if="isEditable">
+				<Button
+					@click="launchForecast"
+					label="Open simulation space"
+					:disabled="isEditing"
+					class="p-button-sm left"
+				/>
 			</div>
 			<!--contributor-->
 			<!--created on: date-->
@@ -722,6 +722,10 @@ const mathJaxEq = (eq) => {
 </script>
 
 <style scoped>
+.left {
+	float: right;
+}
+
 .fixed-header {
 	position: sticky;
 	top: -1px;
