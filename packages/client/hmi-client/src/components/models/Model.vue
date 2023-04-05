@@ -615,8 +615,7 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		logger.error(
 			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
 		);
-	}
-	if (!editMode) {
+	} else if (!editMode) {
 		try {
 			const newPetri = await mathmlToPetri(cleanedMathML);
 			if (
@@ -634,6 +633,8 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		} catch (e) {
 			isMathMLValid.value = false;
 		}
+	} else if (editMode) {
+		isMathMLValid.value = true;
 	}
 };
 
@@ -747,6 +748,7 @@ section math-editor {
 
 .math-editor-error {
 	outline: 2px solid red;
+	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .model_diagram {

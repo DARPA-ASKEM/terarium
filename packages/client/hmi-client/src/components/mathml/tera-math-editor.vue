@@ -34,7 +34,6 @@
 				ref="mathLiveField"
 				virtual-keyboard-mode="false"
 				:disabled="!isEditingEq"
-				:style="{ borderColor: isMathMlValid ? 'inherit' : 'red' }"
 				><slot v-if="mathMode === MathEditorModes.LIVE"></slot
 			></math-field>
 		</section>
@@ -175,6 +174,7 @@ const cancelEditEquation = () => {
 
 <style scoped>
 math-field {
+	background-color: var(--gray-100);
 	border-radius: 4px;
 	padding: 5px;
 	margin: 10px;
@@ -183,6 +183,7 @@ math-field {
 }
 
 math-field[disabled] {
+	background-color: var(--gray-0);
 	opacity: 1;
 }
 
