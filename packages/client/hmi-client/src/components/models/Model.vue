@@ -481,7 +481,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 		}
 	}
 	if (event.key === 'Enter' && renderer) {
-		if (renderer?.nodeSelection) {
+		if (renderer.nodeSelection) {
 			renderer.deselectNode(renderer.nodeSelection);
 			renderer.nodeSelection
 				.selectAll('.no-drag')
@@ -489,7 +489,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 				.style('visibility', 'hidden');
 			renderer.nodeSelection = null;
 		}
-		if (renderer?.edgeSelection) {
+		if (renderer.edgeSelection) {
 			renderer.deselectEdge(renderer.edgeSelection);
 			renderer.edgeSelection = null;
 		}
