@@ -368,18 +368,18 @@ const globalFilter = ref({
 });
 
 const filteredStates = computed(() =>
-	betterStates.value.filter(
+	betterStates.value?.filter(
 		(p) =>
-			p.name.includes(globalFilter.value.global.value) ||
-			p.label.includes(globalFilter.value.global.value)
+			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
+			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
 	)
 );
 
 const filteredParams = computed(() =>
-	betterParams.value.filter(
+	betterParams.value?.filter(
 		(p) =>
-			p.name.includes(globalFilter.value.global.value) ||
-			p.label.includes(globalFilter.value.global.value)
+			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
+			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
 	)
 );
 
