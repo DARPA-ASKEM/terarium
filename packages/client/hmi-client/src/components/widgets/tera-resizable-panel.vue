@@ -47,6 +47,7 @@ onUnmounted(() => {
 	border: none;
 	overflow: hidden;
 	height: 100%;
+	isolation: isolate;
 }
 
 section {

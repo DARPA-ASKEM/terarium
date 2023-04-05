@@ -725,6 +725,7 @@ const mathJaxEq = (eq) => {
 	top: -1px;
 	z-index: 1;
 	background-color: white;
+	isolation: isolate;
 }
 
 section math-editor {
