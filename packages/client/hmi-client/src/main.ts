@@ -20,7 +20,6 @@ app.use(PrimeVue, { ripple: true });
 app.directive('tooltip', Tooltip);
 app.use(VueMathjax); // we need to intialize this vue mathjax component this way
 app.component('math-field', MathfieldElement);
-// document.addEventListener("adobe_dc_view_sdk.ready", () => console.log("Adobe created with adobe_dc_view_sdk.ready"));
 
 const auth = useAuthStore();
 await auth.fetchSSO();

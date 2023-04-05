@@ -430,7 +430,10 @@ const openPDF = () => {
 		else if (doi.value) window.open(`https://doi.org/${doi.value}`);
 		return;
 	}
-	if (pdfLink.value) window.open(pdfLink.value);
+	if (pdfLink.value) {
+		const pdfWindow = window.open(pdfLink.value);
+		if (pdfWindow) pdfWindow.document.title = doi.value;
+	}
 };
 
 watch(doi, async (currentValue, oldValue) => {
