@@ -278,7 +278,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
 			// set colour on drag
-			selection.select('*.selectableNode').attr('stroke', HIGHLIGHTEDSTROKECOLOUR);
+			selection.selectAll('.selectableNode').attr('stroke', HIGHLIGHTEDSTROKECOLOUR);
 
 			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
@@ -325,7 +325,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			chart?.selectAll('.new-edge').remove();
 			// reset colour after drag
-			selection.select('*.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
+			selection.selectAll('.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
 
 			if (!this.isDragEnabled) return;
 			if (targetData && sourceData) {
