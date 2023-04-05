@@ -260,7 +260,6 @@ import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import { FilterMatchMode } from 'primevue/api';
 import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import { example } from './example-model-extraction'; // TODO - to be removed after March demo
@@ -364,7 +363,7 @@ const betterParams = computed(() => {
 });
 
 const globalFilter = ref({
-	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
+	global: { value: '', matchMode: 'contains' }
 });
 
 const filteredStates = computed(() =>
