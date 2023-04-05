@@ -43,7 +43,7 @@ async function getConnectedNodes(
 		rootId: publication.id,
 		rootType
 	};
-	const connectedNodesRaw = await API.post('/provenance/connected_nodes', body).catch((error) =>
+	const connectedNodesRaw = await API.post('/provenance/connected-nodes', body).catch((error) =>
 		logger.error(`Error: ${error}`)
 	);
 

@@ -1,0 +1,39 @@
+// Styles reused in Document.vue and DataExplorer.vue - TODO: look into changing prime vue styling to reflect this
+.p-buttonset {
+    .p-button.p-button-secondary {
+        border: 1px solid var(--surface-border);
+        box-shadow: none;
+    }
+
+    .p-button[active='false'].p-button-secondary,
+    .p-button[active='false'].p-button-secondary:focus,
+    .p-button[active='false'].p-button-secondary:enabled {
+        border-color: var(--surface-border);
+        background-color: var(--surface-0);
+        color: var(--text-color-subdued);
+    }
+
+    .p-button[active='false'].p-button-secondary:hover {
+        border-color: var(--surface-border);
+        background-color: var(--surface-100);
+        color: var(--text-color-subdued);
+    }
+
+    .p-button[active='true'].p-button-secondary,
+    .p-button[active='true'].p-button-secondary:focus,
+    .p-button[active='true'].p-button-secondary:enabled {
+        border-color: var(--surface-border);
+        background-color: var(--surface-highlight);
+        color: var(--text-color-primary);
+    }
+
+    .p-button[active='true'].p-button-secondary:hover {
+        border-color: var(--surface-border);
+        background-color: var(--surface-highlight);
+        color: var(--text-color-subdued);
+    }
+
+    .p-button.p-button-sm {
+        padding: 0.5rem 0.75rem;
+    }
+}

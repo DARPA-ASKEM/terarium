@@ -89,7 +89,7 @@ public class ExtractionResource {
 	}
 
 	@GET
-	@Path("/askem_autocomplete/{term}")
+	@Path("/askem-autocomplete/{term}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
 	@APIResponses({
