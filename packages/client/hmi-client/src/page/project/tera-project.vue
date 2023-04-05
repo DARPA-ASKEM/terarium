@@ -88,9 +88,15 @@
 							<Dropdown
 								placeholder="Unassigned"
 								class="p-button p-button-text notes-dropdown-button"
+								:options="noteOptions"
+								optionLabel="name"
 							/>
 							<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
-							<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
+							<Button
+								icon="pi pi-ellipsis-v"
+								class="p-button-rounded p-button-secondary"
+								@click="toggleAnnotationMenu"
+							/>
 						</div>
 						<div>
 							<p>{{ annotation.content }}</p>
@@ -101,9 +107,16 @@
 							</div>
 						</div>
 					</div>
+					<Menu ref="annotationMenu" :model="annotationMenuItems" :popup="true" />
 				</section>
 				<div class="annotation-input-box">
-					<div v-if="isAnnotationInputOpen">
+					<div v-if="isAnnotationInputOpen" class="annotation-input-container">
+						<div class="annotation-header">
+							<Dropdown
+								placeholder="Unassigned"
+								class="p-button p-button-text notes-dropdown-button"
+							/>
+						</div>
 						<Textarea
 							v-model="annotationContent"
 							ref="annotationTextInput"
@@ -113,18 +126,18 @@
 						/>
 						<div class="save-cancel-buttons">
 							<Button
+								@click="toggleAnnotationInput()"
+								label="Cancel"
+								class="p-button p-button-secondary"
+								size="small"
+							/>
+							<Button
 								@click="
 									addNote();
 									toggleAnnotationInput();
 								"
 								label="Save"
 								class="p-button"
-								size="small"
-							/>
-							<Button
-								@click="toggleAnnotationInput()"
-								label="Cancel"
-								class="p-button p-button-secondary"
 								size="small"
 							/>
 						</div>
@@ -170,6 +183,7 @@ import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Projec
 import { logger } from '@/utils/logger';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import { createAnnotation, getAnnotations } from '@/services/models/annotations';
+import Menu from 'primevue/menu';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -191,6 +205,26 @@ const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 const code = ref<string>();
 const isAnnotationInputOpen = ref(false);
+const annotationMenu = ref();
+const annotationMenuItems = ref([
+	{ label: 'Edit', icon: 'pi pi-fw pi-file-edit' },
+	{
+		label: 'Delete',
+		icon: 'pi pi-fw pi-trash',
+		command: () => {
+			annotationMenuItems.value.push({
+				label: 'Are you sure?',
+				items: [{ label: 'Yes, delete this note' }]
+			});
+			annotationMenu.value.show();
+		}
+	}
+]);
+const toggleAnnotationMenu = (event) => {
+	annotationMenu.value.toggle(event);
+};
+
+const noteOptions = ref([{ name: 'Test' }]);
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
@@ -401,24 +435,36 @@ section {
 	padding: 0rem 0.5rem 0rem 0.5rem;
 }
 
+.annotation-input-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
 .annotation-input-box {
-	padding: 1rem;
-	padding-left: 0.5rem;
+	padding: 16px 16px 8px 16px;
 }
 
 .annotation-input-box .p-inputtext {
 	border-color: var(--surface-border);
 	max-width: 100%;
 	min-width: 100%;
-	margin-bottom: 0.25rem;
 }
 
 .annotation-input-box .p-inputtext:hover {
 	border-color: var(--primary-color) !important;
 }
 
-.annotation-input-box .save-cancel-buttons {
+.annotation-input-box .annotation-header {
+	height: 2rem;
+}
+
+.save-cancel-buttons {
 	display: flex;
 	gap: 0.5rem;
+}
+
+.save-cancel-buttons > button {
+	flex: 1;
 }
 </style>
