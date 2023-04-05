@@ -3,13 +3,14 @@
     display: flex;
     flex-direction: column;
     background-color: var(--surface-section);
+    scroll-margin-top: 1rem;
 
     div,
     span {
         overflow-wrap: break-word;
     }
 
-    header {
+    >header {
         margin: 0rem 1rem;
         color: var(--text-color-subdued);
         display: flex;
@@ -25,6 +26,11 @@
 
         h4 {
             color: var(--text-color-primary);
+        }
+
+        h4,
+        .authors {
+            max-width: var(--constrain-width);
         }
 
         .header-and-buttons {
@@ -49,6 +55,11 @@
             font-size: var(--font-caption);
             color: var(--text-color-subdued);
             margin-left: 0.25rem;
+        }
+
+        // Gives some top padding to anchor
+        span {
+            scroll-margin-top: 1rem;
         }
 
         ul {
@@ -94,7 +105,6 @@
     }
 
     .p-button.p-button-outlined {
-        background-color: transparent;
         color: var(--text-color-primary);
         box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
     }

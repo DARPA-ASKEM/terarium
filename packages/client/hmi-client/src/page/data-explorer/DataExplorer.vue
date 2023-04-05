@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<slider-panel
+		<tera-slider-panel
 			content-width="240px"
 			direction="left"
 			header="Facets"
@@ -15,7 +15,7 @@
 					:result-type="resourceType"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 		<div class="results-content">
 			<div class="secondary-header">
 				<span class="p-buttonset">
@@ -63,7 +63,7 @@
 			:search-term="searchTerm"
 			@toggle-data-item-selected="toggleDataItemSelected"
 		/>
-		<slider-panel
+		<tera-slider-panel
 			class="resources-slider"
 			:content-width="sliderWidth"
 			direction="right"
@@ -103,13 +103,13 @@
 					@find-similar-content="onFindSimilarContent"
 				/>
 			</template>
-		</slider-panel>
+		</tera-slider-panel>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
 	Facets,
@@ -578,43 +578,6 @@ onUnmounted(() => {
 	display: flex;
 }
 
-.p-button.p-button-secondary {
-	border: 1px solid var(--surface-border);
-	box-shadow: none;
-}
-
-.p-button[active='false'].p-button-secondary,
-.p-button[active='false'].p-button-secondary:focus,
-.p-button[active='false'].p-button-secondary:enabled {
-	border-color: var(--surface-border);
-	background-color: var(--surface-0);
-	color: var(--text-color-subdued);
-}
-
-.p-button[active='false'].p-button-secondary:hover {
-	border-color: var(--surface-border);
-	background-color: var(--surface-100);
-	color: var(--text-color-subdued);
-}
-
-.p-button[active='true'].p-button-secondary,
-.p-button[active='true'].p-button-secondary:focus,
-.p-button[active='true'].p-button-secondary:enabled {
-	border-color: var(--surface-border);
-	background-color: var(--surface-highlight);
-	color: var(--text-color-primary);
-}
-
-.p-button[active='true'].p-button-secondary:hover {
-	border-color: var(--surface-border);
-	background-color: var(--surface-highlight);
-	color: var(--text-color-subdued);
-}
-
-.p-button.p-button-sm {
-	padding: 0.5rem 0.75rem;
-}
-
 .empty-cart-image-container {
 	justify-content: center;
 	display: flex;
@@ -625,9 +588,11 @@ onUnmounted(() => {
 	color: var(--text-color-secondary);
 	font-size: var(--font-body-small);
 }
+
 .empty-cart-image {
 	margin: auto;
 }
+
 .breakdown-pane-container {
 	margin-left: 0.5rem;
 	margin-right: 0.5rem;

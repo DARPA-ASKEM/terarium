@@ -31,6 +31,30 @@ import { getAllModelDescriptions } from './model';
 // eslint-disable-next-line import/no-cycle
 import { getRelatedArtifacts } from './provenance';
 
+/**
+ * fetch list of extractions data from the HMI server
+ */
+const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
+	let url = '/document/extractions?';
+	url += `term=${term}`;
+	url += '&include_highlights=true';
+
+	if (extractionTypes) {
+		url += '&ASKEM_CLASS=';
+		for (let i = 0; i < extractionTypes.length; i++) {
+			url += `${extractionTypes[i]},`;
+		}
+	}
+
+	const res = await API.get(url);
+	if (res) {
+		const rawdata: XDDResult = res.data;
+		if (rawdata && rawdata.success) return rawdata.success.data as XDDArtifact[];
+	}
+
+	return [] as XDDArtifact[];
+};
+
 const getXDDSets = async () => {
 	const res = await API.get('/document/sets');
 	const response: XDDResult = res.data;
@@ -47,6 +71,143 @@ const getXDDDictionaries = async () => {
 		}
 	}
 	return [] as XDDDictionary[];
+};
+
+const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {
+	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
+
+	// NOTE when true it disables ranking of results
+	const enablePagination = xddSearchParam?.fullResults ?? false;
+
+	// "full_results": "Optional. When this parameter is included (no value required),
+	//  an overview of total number of matching documents is returned,
+	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
+	//  NOTE: the "max" parameter will be ignored
+	//  NOTE: results may not be ranked in this mode
+	let searchParams = `term=${term}`;
+	const url = '/documents?';
+
+	if (xddSearchParam?.docid) {
+		searchParams += `&docid=${xddSearchParam.docid}`;
+	}
+	if (xddSearchParam?.doi) {
+		searchParams += `&doi=${xddSearchParam.doi}`;
+	}
+	if (xddSearchParam?.dataset) {
+		searchParams += `&dataset=${xddSearchParam.dataset}`;
+	}
+	if (xddSearchParam?.fields) {
+		searchParams += `&fields=${xddSearchParam.fields}`;
+	}
+	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
+		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
+	}
+	if (xddSearchParam?.min_published) {
+		searchParams += `&min_published=${xddSearchParam.min_published}`;
+	}
+	if (xddSearchParam?.max_published) {
+		searchParams += `&max_published=${xddSearchParam.max_published}`;
+	}
+	if (xddSearchParam?.pubname) {
+		searchParams += `&pubname=${xddSearchParam.pubname}`;
+	}
+	if (xddSearchParam?.publisher) {
+		searchParams += `&publisher=${xddSearchParam.publisher}`;
+	}
+	if (xddSearchParam?.includeHighlights) {
+		searchParams += '&include_highlights=true';
+	}
+	if (xddSearchParam?.inclusive) {
+		searchParams += '&inclusive=true';
+	}
+	if (enablePagination) {
+		searchParams += '&full_results';
+	} else {
+		// request results to be ranked
+		searchParams += '&include_score=true';
+	}
+	if (xddSearchParam?.facets) {
+		searchParams += '&facets=true';
+	}
+
+	if (xddSearchParam?.githubUrls) {
+		searchParams += `&github_url=${xddSearchParam.githubUrls}`;
+	}
+
+	// search title and abstract when performing term-based search if requested
+	if (term !== '' && xddSearchParam?.additional_fields) {
+		searchParams += `&additional_fields=${xddSearchParam?.additional_fields}`;
+	}
+
+	// utilize ES improved matching
+	if (term !== '' && xddSearchParam?.match) {
+		searchParams += '&match=true';
+	}
+
+	if (xddSearchParam?.known_entities) {
+		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
+	}
+
+	//
+	// "max": "Maximum number of documents to return (default is all)",
+	searchParams += `&max=${limitResultsCount}`;
+
+	// "per_page": "Maximum number of results to include in one response.
+	//  Applies to full_results pagination or single-page requests.
+	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter,
+	//        floor rounded to a multiple of 25."
+	searchParams += `&per_page=${limitResultsCount}`;
+
+	// url = 'https://xdd.wisc.edu/api/articles?&include_score=true&max=25&term=abbott&publisher=USGS&full_results';
+
+	// this will give error if "max" param is not included since the result is too large
+	//  either set "max"
+	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
+	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
+
+	const res = await API.get(url + searchParams);
+
+	if (res.data && res.data.success) {
+		const { data, hits, scrollId, nextPage } = res.data.success;
+		const documentsRaw =
+			xddSearchParam?.fields === undefined
+				? (data as DocumentType[])
+				: ((data as any).data as DocumentType[]); // FIXME: xDD returns inconsistent response object
+
+		const documents = documentsRaw.map((a) => ({
+			...a,
+			abstractText: a.abstract
+		}));
+
+		const formattedFacets: Facets = getDocumentFacets(documents);
+
+		// also, perform search across extractions
+		let extractionsSearchResults = [] as XDDArtifact[];
+		if (term !== '') {
+			// Temporary call to get a sufficient amount of extractions
+			// (Every call is limited to providing 30 extractions)
+			extractionsSearchResults = [
+				...(await getXDDArtifacts(term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
+				...(await getXDDArtifacts(term, [XDDExtractionType.Document]))
+			];
+		}
+
+		return {
+			results: documents,
+			facets: formattedFacets,
+			xddExtractions: extractionsSearchResults,
+			searchSubsystem: ResourceType.XDD,
+			hits,
+			hasMore: scrollId !== null && scrollId !== '',
+			nextPage
+		};
+	}
+
+	return {
+		results: [] as DocumentType[],
+		searchSubsystem: ResourceType.XDD,
+		hits: 0
+	};
 };
 
 const filterAssets = <T extends Model | Dataset>(
@@ -114,18 +275,15 @@ const getAssets = async (params: GetAssetsParams) => {
 
 	switch (resourceType) {
 		case ResourceType.MODEL:
-			assetList = (await getAllModelDescriptions()) || ([] as Model[]);
+			assetList = (await getAllModelDescriptions()) ?? ([] as Model[]);
 			projectAssetType = ProjectAssetTypes.MODELS;
 			break;
 		case ResourceType.DATASET:
-			assetList = (await DatasetService.getAll()) || ([] as Dataset[]);
+			assetList = (await DatasetService.getAll()) ?? ([] as Dataset[]);
 			projectAssetType = ProjectAssetTypes.DATASETS;
 			break;
 		case ResourceType.XDD:
-			// @ts-ignore
-			xddResults =
-				(await searchXDDDocuments(term, searchParam)) || // eslint-disable-line @typescript-eslint/no-use-before-define
-				([] as DocumentType[]);
+			xddResults = (await searchXDDDocuments(term, searchParam)) ?? ([] as DocumentType[]);
 			assetList = xddResults.results;
 			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;
@@ -326,34 +484,10 @@ const getAssets = async (params: GetAssetsParams) => {
 	return results;
 };
 
-//
-// fetch list of extractions data from the HMI server
-//
-const getXDDArtifacts = async (term: string, extractionTypes?: XDDExtractionType[]) => {
-	let url = '/document/extractions?';
-	url += `term=${term}`;
-	url += '&include_highlights=true';
-
-	if (extractionTypes) {
-		url += '&ASKEM_CLASS=';
-		for (let i = 0; i < extractionTypes.length; i++) {
-			url += `${extractionTypes[i]},`;
-		}
-	}
-
-	const res = await API.get(url);
-	if (res) {
-		const rawdata: XDDResult = res.data;
-		if (rawdata && rawdata.success) return rawdata.success.data as XDDArtifact[];
-	}
-
-	return [] as XDDArtifact[];
-};
-
-//
-// fetch list of related documented utilizing
-//  semantic similarity (i.e., document embedding) from XDD via the HMI server
-//
+/**
+ * fetch list of related documented utilizing
+ *  semantic similarity (i.e., document embedding) from XDD via the HMI server
+ */
 const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 	if (docid === '' || dataset === null) {
 		return [] as DocumentType[];
@@ -394,147 +528,10 @@ async function getRelatedTerms(query?: string, dataset?: string | null): Promise
 }
 
 const getAutocomplete = async (searchTerm: string) => {
-	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
+	const url = `/document/extractions/askem-autocomplete/${searchTerm}`;
 	const response = await API.get(url);
 	if (response.status === 204) return [];
 	return response.data ?? [];
-};
-
-const searchXDDDocuments = async (term: string, xddSearchParam?: XDDSearchParams) => {
-	const limitResultsCount = xddSearchParam?.perPage ?? XDD_RESULT_DEFAULT_PAGE_SIZE;
-
-	// NOTE when true it disables ranking of results
-	const enablePagination = xddSearchParam?.fullResults ?? false;
-
-	// "full_results": "Optional. When this parameter is included (no value required),
-	//  an overview of total number of matching documents is returned,
-	//  with a scan-and-scroll cursor that allows client to step through all results page-by-page.
-	//  NOTE: the "max" parameter will be ignored
-	//  NOTE: results may not be ranked in this mode
-	let searchParams = `term=${term}`;
-	const url = '/documents?';
-
-	if (xddSearchParam?.docid) {
-		searchParams += `&docid=${xddSearchParam.docid}`;
-	}
-	if (xddSearchParam?.doi) {
-		searchParams += `&doi=${xddSearchParam.doi}`;
-	}
-	if (xddSearchParam?.dataset) {
-		searchParams += `&dataset=${xddSearchParam.dataset}`;
-	}
-	if (xddSearchParam?.fields) {
-		searchParams += `&fields=${xddSearchParam.fields}`;
-	}
-	if (xddSearchParam?.dict && xddSearchParam?.dict.length > 0) {
-		searchParams += `&dict=${xddSearchParam.dict.join(',')}`;
-	}
-	if (xddSearchParam?.min_published) {
-		searchParams += `&min_published=${xddSearchParam.min_published}`;
-	}
-	if (xddSearchParam?.max_published) {
-		searchParams += `&max_published=${xddSearchParam.max_published}`;
-	}
-	if (xddSearchParam?.pubname) {
-		searchParams += `&pubname=${xddSearchParam.pubname}`;
-	}
-	if (xddSearchParam?.publisher) {
-		searchParams += `&publisher=${xddSearchParam.publisher}`;
-	}
-	if (xddSearchParam?.includeHighlights) {
-		searchParams += '&include_highlights=true';
-	}
-	if (xddSearchParam?.inclusive) {
-		searchParams += '&inclusive=true';
-	}
-	if (enablePagination) {
-		searchParams += '&full_results';
-	} else {
-		// request results to be ranked
-		searchParams += '&include_score=true';
-	}
-	if (xddSearchParam?.facets) {
-		searchParams += '&facets=true';
-	}
-
-	if (xddSearchParam?.githubUrls) {
-		searchParams += `&github_url=${xddSearchParam.githubUrls}`;
-	}
-
-	// search title and abstract when performing term-based search if requested
-	if (term !== '' && xddSearchParam?.additional_fields) {
-		searchParams += `&additional_fields=${xddSearchParam?.additional_fields}`;
-	}
-
-	// utilize ES improved matching
-	if (term !== '' && xddSearchParam?.match) {
-		searchParams += '&match=true';
-	}
-
-	if (xddSearchParam?.known_entities) {
-		searchParams += `&known_entities=${xddSearchParam?.known_entities}`;
-	}
-
-	//
-	// "max": "Maximum number of documents to return (default is all)",
-	searchParams += `&max=${limitResultsCount}`;
-
-	// "per_page": "Maximum number of results to include in one response.
-	//  Applies to full_results pagination or single-page requests.
-	//  NOTE: Due to internal mechanisms, actual number of results will be this parameter,
-	//        floor rounded to a multiple of 25."
-	searchParams += `&per_page=${limitResultsCount}`;
-
-	// url = 'https://xdd.wisc.edu/api/articles?&include_score=true&max=25&term=abbott&publisher=USGS&full_results';
-
-	// this will give error if "max" param is not included since the result is too large
-	//  either set "max"
-	//  or use the "full_results" which automatically sets a default of 500 per page (per_page)
-	// url = 'https://xdd.wisc.edu/api/articles?dataset=xdd-covid-19&term=covid&include_score=true&full_results'
-
-	const res = await API.get(url + searchParams);
-
-	if (res.data && res.data.success) {
-		const { data, hits, scrollId, nextPage } = res.data.success;
-		const documentsRaw =
-			xddSearchParam?.fields === undefined
-				? (data as DocumentType[])
-				: ((data as any).data as DocumentType[]); // FIXME: xDD returns inconsistent response object
-
-		const documents = documentsRaw.map((a) => ({
-			...a,
-			abstractText: a.abstract
-		}));
-
-		const formattedFacets: Facets = getDocumentFacets(documents);
-
-		// also, perform search across extractions
-		let extractionsSearchResults = [] as XDDArtifact[];
-		if (term !== '') {
-			// Temporary call to get a sufficient amount of extractions
-			// (Every call is limited to providing 30 extractions)
-			extractionsSearchResults = [
-				...(await getXDDArtifacts(term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
-				...(await getXDDArtifacts(term, [XDDExtractionType.Document]))
-			];
-		}
-
-		return {
-			results: documents,
-			facets: formattedFacets,
-			xddExtractions: extractionsSearchResults,
-			searchSubsystem: ResourceType.XDD,
-			hits,
-			hasMore: scrollId !== null && scrollId !== '',
-			nextPage
-		};
-	}
-
-	return {
-		results: [] as DocumentType[],
-		searchSubsystem: ResourceType.XDD,
-		hits: 0
-	};
 };
 
 const getDocumentById = async (docid: string) => {

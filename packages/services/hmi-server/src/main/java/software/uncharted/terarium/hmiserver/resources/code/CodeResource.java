@@ -6,30 +6,40 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
-import software.uncharted.terarium.hmiserver.models.modelservice.PetriNet;
+import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
+import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
+import java.util.Map;
 
 @Path("/api/code")
 @Authenticated
 @Tag(name = "Code REST Endpoint")
+@Produces(MediaType.APPLICATION_JSON)
 public class CodeResource {
+	@RestClient
+	GithubProxy githubProxy;
+
+	@RestClient
+	JsDelivrProxy jsdelivrProxy;
+
+	@RestClient
+	MitProxy mitProxy;
+
 	@RestClient
 	SkemaProxy skemaProxy;
 
 	@RestClient
 	SkemaRustProxy skemaRustProxy;
-
-	@RestClient
-	MitProxy mitProxy;
 
 	/**
 	 * Stores a model from a code snippit
@@ -69,27 +79,62 @@ public class CodeResource {
 	}
 
 	@POST
-	@Path("/to_acset")
-	public Object toAcset(@QueryParam("code") final String code) {
+	@Path("/to-acset")
+	public Object toAcset(final String code) {
 		String places = mitProxy.getPlaces(code);
 		String transitions = mitProxy.getTransitions(code);
 		String arcs = mitProxy.getArcs(code);
-
-		PetriNet pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
+		String pyAcset = mitProxy.getPyAcset(places, transitions, arcs);
 		return Response.ok(Response.Status.OK)
 			.entity(pyAcset)
-			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
 
 	@POST
-	@Path("/annotation/find_text_vars")
-	public Object findTextVars(@QueryParam("text") final String text){
-		String textVars = mitProxy.findTextVars(text);
+	@Path("/annotation/find-text-vars")
+	public Object findTextVars(final String text) {
+		String textVars = mitProxy.findTextVars("true", text);
 		return Response.ok(Response.Status.OK)
 			.entity(textVars)
-			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
 
+	@POST
+	@Path("/annotation/link-annos-to-pyacset")
+	public Object linkAnnotationsToAcset(final Map<String, String> data) {
+		String pyacset = data.get("pyacset");
+		String annotations = data.get("annotations");
+		String info = data.get("info");
+		String metadata = mitProxy.linkAnnotationsToAcset(pyacset, annotations, info);
+		return Response.ok(Response.Status.OK)
+			.entity(metadata)
+			.build();
+	}
+
+	@GET
+	@Path("/response")
+	public Object getResponse(@QueryParam("id") final String id) {
+		String response = mitProxy.getResponse(id);
+		return Response.ok(Response.Status.OK)
+			.entity(response)
+			.build();
+	}
+
+	@GET
+	@Path("/repo-content")
+	public Response getGithubRepositoryContent(
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
+		@QueryParam("path") final String path
+	) {
+		return githubProxy.getGithubRepositoryContent(repoOwnerAndName, path);
+	}
+
+	@GET
+	@Path("/repo-file-content")
+	public String getGithubCode(
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
+		@QueryParam("path") final String path
+	) {
+		return jsdelivrProxy.getGithubCode(repoOwnerAndName, path);
+	}
 }
