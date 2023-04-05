@@ -13,6 +13,7 @@
 					class="p-button-secondary p-button-sm"
 					label="PDF"
 					icon="pi pi-file"
+					:loading="!pdfLink"
 					@click="documentView = DocumentView.PDF"
 					:active="documentView === DocumentView.PDF"
 				/>
@@ -256,7 +257,11 @@
 				</AccordionTab>
 			</Accordion>
 		</section>
-		<section v-else-if="DocumentView.PDF" class="asset">PDF Preview</section>
+		<pdf-embed
+			v-else-if="documentView === DocumentView.PDF && pdfLink"
+			:pdf-link="pdfLink"
+			:title="doc.title"
+		/>
 	</section>
 </template>
 
@@ -276,6 +281,7 @@ import { ResultType, Tab } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import ImportCodeButton from '@/components/widgets/import-code-button.vue';
+import PdfEmbed from '@/components/widgets/pdf-embed.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
