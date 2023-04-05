@@ -10,7 +10,7 @@ const props = defineProps<{
 	title: string;
 }>();
 
-const adobeDCView = ref(null);
+const adobeDCView = ref();
 const isAdobePdfApiReady = ref(false);
 
 onMounted(() => {
@@ -32,12 +32,12 @@ watch(isAdobePdfApiReady, () => {
 			// @ts-ignore
 			// eslint-disable-line
 			new window.AdobeDC.View({
-				clientId: import.meta.env.VITE_ADOBE_API,
+				clientId: import.meta.env.VITE_ADOBE_API_KEY,
 				divId: 'adobe-dc-view'
 			})
 		);
 
-		adobeDCView.value?.previewFile({
+		adobeDCView.value.previewFile({
 			content: {
 				location: {
 					url: props.pdfLink
