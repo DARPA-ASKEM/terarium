@@ -270,8 +270,10 @@ const noteDeletionConfirmationMenuItem = {
 const annotationMenuItems = ref([
 	{
 		label: 'Edit',
-		icon: 'pi pi-fw pi-file-edit'
-		// command: () => isEditingNote.value = true
+		icon: 'pi pi-fw pi-file-edit',
+		command: () => {
+			isEditingNote.value = true;
+		}
 	},
 	{
 		label: 'Delete',
