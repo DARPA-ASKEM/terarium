@@ -6,6 +6,12 @@
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
+						v-if="isEditing"
+						@click="cancelEdit"
+						label="Cancel"
+						class="p-button-sm p-button-outlined"
+					/>
+					<Button
 						@click="toggleEditMode"
 						:label="isEditing ? 'Save model' : 'Edit model'"
 						class="p-button-sm p-button-outlined"
@@ -39,17 +45,6 @@
 							<Splitter class="mb-5 model-panel" :layout="layout">
 								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
 									<section class="graph-element">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											class="p-button-sm p-button-outlined"
-										/>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
