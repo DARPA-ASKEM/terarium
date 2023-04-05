@@ -83,31 +83,79 @@
 			<template v-slot:content>
 				<section class="annotation-panel-container">
 					<div v-for="(annotation, idx) of annotations" :key="idx">
-						<div class="annotation-header">
-							<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
-							<Dropdown
-								placeholder="Unassigned"
-								class="p-button p-button-text notes-dropdown-button"
-								:options="noteOptions"
-								optionLabel="name"
+						<div
+							v-if="isEditingNote && idx === selectedNoteIndex"
+							class="annotation-input-container"
+						>
+							<div class="annotation-header">
+								<Dropdown
+									placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button"
+								/>
+							</div>
+							<Textarea
+								v-model="annotation.content"
+								ref="annotationTextInput"
+								rows="5"
+								cols="30"
+								aria-labelledby="annotation"
 							/>
-							<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
-							<Button
-								icon="pi pi-ellipsis-v"
-								class="p-button-rounded p-button-secondary"
-								@click="toggleAnnotationMenu"
-							/>
+							<div class="save-cancel-buttons">
+								<Button
+									@click="isEditingNote = false"
+									label="Cancel"
+									class="p-button p-button-secondary"
+									size="small"
+								/>
+								<Button
+									@click="
+										updateNote();
+										isEditingNote = false;
+									"
+									label="Save"
+									class="p-button"
+									size="small"
+								/>
+							</div>
 						</div>
-						<div>
-							<p>{{ annotation.content }}</p>
-							<div class="annotation-author-date">
-								<div>
-									{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+						<div v-else>
+							<div class="annotation-header">
+								<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
+								<Dropdown
+									placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button"
+									:options="noteOptions"
+									optionLabel="name"
+								/>
+								<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
+								<Button
+									icon="pi pi-ellipsis-v"
+									class="p-button-rounded p-button-secondary"
+									@click="
+										(event) => {
+											toggleAnnotationMenu(event);
+											selectedNoteIndex = idx;
+										}
+									"
+								/>
+							</div>
+							<div>
+								<p>{{ annotation.content }}</p>
+								<div class="annotation-author-date">
+									<div>
+										{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-					<Menu ref="annotationMenu" :model="annotationMenuItems" :popup="true" />
+					<Menu
+						ref="annotationMenu"
+						:model="annotationMenuItems"
+						:popup="true"
+						@hide="onHide"
+						@click.stop
+					/>
 				</section>
 				<div class="annotation-input-box">
 					<div v-if="isAnnotationInputOpen" class="annotation-input-container">
@@ -206,24 +254,56 @@ const annotationContent = ref<string>('');
 const code = ref<string>();
 const isAnnotationInputOpen = ref(false);
 const annotationMenu = ref();
+const menuOpenEvent = ref();
+
+const selectedNoteIndex = ref();
+const isEditingNote = ref(false);
+const isNoteDeletionConfirmation = ref(false);
+const noteDeletionConfirmationMenuItem = {
+	label: 'Are you sure?',
+	items: [
+		{
+			label: 'Yes, delete this note'
+		}
+	]
+};
 const annotationMenuItems = ref([
-	{ label: 'Edit', icon: 'pi pi-fw pi-file-edit' },
+	{
+		label: 'Edit',
+		icon: 'pi pi-fw pi-file-edit'
+		// command: () => isEditingNote.value = true
+	},
 	{
 		label: 'Delete',
 		icon: 'pi pi-fw pi-trash',
 		command: () => {
-			annotationMenuItems.value.push({
-				label: 'Are you sure?',
-				items: [{ label: 'Yes, delete this note' }]
-			});
-			annotationMenu.value.show();
+			if (!isNoteDeletionConfirmation.value) {
+				annotationMenuItems.value.push(noteDeletionConfirmationMenuItem);
+				isNoteDeletionConfirmation.value = true;
+			}
 		}
 	}
 ]);
+
+function onHide() {
+	if (isNoteDeletionConfirmation.value) {
+		annotationMenu.value.show(menuOpenEvent.value);
+		isNoteDeletionConfirmation.value = false;
+	} else if (annotationMenuItems.value.length > 2) {
+		annotationMenuItems.value.pop();
+	}
+}
+
 const toggleAnnotationMenu = (event) => {
+	// Fake object to allow the Menu component to not hide after clicking an item.
+	// Actually I am immediately showing it again after it automatically hides.
+	// I need to save and pass event.currentTarget in a ref to use when I want to manually show the menu.
+	// Kind of a hack/workaround due to the restrictive nature of this component.
+	menuOpenEvent.value = {
+		currentTarget: event.currentTarget
+	};
 	annotationMenu.value.toggle(event);
 };
-
 const noteOptions = ref([{ name: 'Test' }]);
 
 // Associated with tab storage
@@ -329,6 +409,8 @@ const addNote = async () => {
 	annotationContent.value = '';
 	await getAndPopulateAnnotations();
 };
+
+const updateNote = async () => {};
 
 function toggleAnnotationInput() {
 	isAnnotationInputOpen.value = !isAnnotationInputOpen.value;
@@ -455,7 +537,7 @@ section {
 	border-color: var(--primary-color) !important;
 }
 
-.annotation-input-box .annotation-header {
+.annotation-header {
 	height: 2rem;
 }
 
