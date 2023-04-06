@@ -315,7 +315,7 @@ const addNote = async () => {
 	await getAndPopulateAnnotations();
 };
 
-const deleteNote = async () => {
+async function deleteNote() {
 	const noteToDelete: Annotation = annotations.value[selectedNoteIndex.value];
 	await deleteAnnotation(noteToDelete.id);
 	await getAndPopulateAnnotations();
