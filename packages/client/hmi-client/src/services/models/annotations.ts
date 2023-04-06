@@ -1,13 +1,12 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { ResourceType } from '@/types/common';
 
-export async function getAnnotations(artifact_id) {
+export async function getAnnotations(artifactId, artifactType) {
 	try {
 		const response = await API.get('/annotations', {
 			params: {
-				artifact_type: ResourceType.XDD,
-				artifact_id
+				artifact_type: artifactType,
+				artifact_id: artifactId
 			}
 		});
 		return response.data;
@@ -17,15 +16,30 @@ export async function getAnnotations(artifact_id) {
 	}
 }
 
-export async function createAnnotation(content, artifact_id) {
+export async function createAnnotation(content, artifactId, artifactType) {
 	try {
 		const response = await API.post('/annotations', {
 			content,
-			artifact_id,
-			artifact_type: ResourceType.XDD
+			artifact_id: artifactId,
+			artifact_type: artifactType
 		});
 		return response.data;
 	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function deleteAnnotation(id) {
+	try {
+		const response = await API.delete('/annotations', {
+			params: {
+				id
+			}
+		});
+		return response.data;
+	}
+	catch (error) {
 		logger.error(error);
 		return null;
 	}
