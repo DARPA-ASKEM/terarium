@@ -491,6 +491,20 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			renderer.render();
 		}
 	}
+	if (event.key === 'Enter' && renderer) {
+		if (renderer.nodeSelection) {
+			renderer.deselectNode(renderer.nodeSelection);
+			renderer.nodeSelection
+				.selectAll('.no-drag')
+				.style('opacity', 0)
+				.style('visibility', 'hidden');
+			renderer.nodeSelection = null;
+		}
+		if (renderer.edgeSelection) {
+			renderer.deselectEdge(renderer.edgeSelection);
+			renderer.edgeSelection = null;
+		}
+	}
 };
 
 // Model editor context menu

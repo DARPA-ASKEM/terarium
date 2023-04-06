@@ -13,6 +13,7 @@ const pathFn = d3
 	.curve(d3.curveBasis);
 
 const EDGE_COLOR = 'var(--petri-lineColor)';
+const HIGHLIGHTEDSTROKECOLOUR = 'var(--primary-color)';
 const EDGE_OPACITY = 0.5;
 
 const HANDLE_SIZE = 4;
@@ -80,7 +81,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// transitions
 		transitions
 			.append('rect')
-			.classed('shape', true)
+			.classed('shape selectableNode', true)
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
 			.attr('y', (d) => -d.height * 0.5)
@@ -141,7 +142,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		// species
 		species
 			.append('circle')
-			.classed('shape', true)
+			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
 			.attr('fill', '#FFF')
 			.attr('stroke', 'var(--petri-nodeBorder)')
@@ -276,6 +277,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
+			// set colour on drag
+			selection.selectAll('.selectableNode').attr('stroke', HIGHLIGHTEDSTROKECOLOUR);
+
 			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
 			start.x = sourceData.x;
@@ -318,8 +322,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		);
 
-		this.on('node-drag-end', (/* eventName, event, selection: D3SelectionINode<NodeData> */) => {
+		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			chart?.selectAll('.new-edge').remove();
+			// reset colour after drag
+			selection.selectAll('.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
+
 			if (!this.isDragEnabled) return;
 			if (targetData && sourceData) {
 				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
@@ -329,6 +336,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			// Set focus on node:
+			this?.chart?.selectAll('.node-ui').style('opacity', 0.3);
+			this?.chart?.selectAll('.edge').style('opacity', 0.3);
+			selection.style('opacity', 1);
+
 			if (!this.editMode) return;
 			if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) return;
 
@@ -369,6 +381,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('background-click', () => {
+			// Reset opacity from focus:
+			this?.chart?.selectAll('.node-ui').style('opacity', 1);
+			this?.chart?.selectAll('.edge').style('opacity', 1);
+
 			if (this.edgeSelection) {
 				this.deselectEdge(this.edgeSelection);
 				this.edgeSelection = null;
