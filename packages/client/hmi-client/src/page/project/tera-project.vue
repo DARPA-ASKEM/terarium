@@ -38,7 +38,8 @@
 					<div v-for="(annotation, idx) of annotations" :key="idx">
 						<div v-if="isEditingNote && idx === selectedNoteIndex" class="annotation-input-container">
 							<div class="annotation-header">
-								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button" />
+								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
+									:options="noteOptions" v-model="selectedNoteSection[idx]" />
 							</div>
 							<Textarea v-model="annotation.content" ref="annotationTextInput" rows="5" cols="30"
 								aria-labelledby="annotation" />
@@ -54,7 +55,7 @@
 							<div class="annotation-header">
 								<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
 								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-									:options="noteOptions" optionLabel="name" v-model="selectedNoteSection[idx]" />
+									:options="noteOptions" v-model="selectedNoteSection[idx]" />
 								<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
 								<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" @click="
 									(event) => {
@@ -79,7 +80,7 @@
 					<div v-if="isAnnotationInputOpen" class="annotation-input-container">
 						<div class="annotation-header">
 							<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-								:options="noteOptions" optionLabel="name" v-model="newNoteSection" />
+								:options="noteOptions" v-model="newNoteSection" />
 						</div>
 						<Textarea v-model="annotationContent" ref="annotationTextInput" rows="5" cols="30"
 							aria-labelledby="annotation" />
@@ -205,13 +206,9 @@ const toggleAnnotationMenu = (event) => {
 	annotationMenu.value.toggle(event);
 };
 
-interface Section {
-	name: string;
-}
-const sections = ['Unassigned', 'Abstract', 'Intro', 'Methods', 'Results', 'Discussion', 'References', '+ Add section']
-const noteOptions = ref<Section[]>(sections.map(section => ({ name: section })));
-const selectedNoteSection = ref<Section[]>([]);
-const newNoteSection = ref<Section>();
+const noteOptions = ref(['Unassigned', 'Abstract', 'Intro', 'Methods', 'Results', 'Discussion', 'References', '+ Add section']);
+const selectedNoteSection = ref([]);
+const newNoteSection = ref();
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
@@ -321,9 +318,9 @@ const addNote = async () => {
 
 async function updateNote() {
 	const noteToUpdate: Annotation = annotations.value[selectedNoteIndex.value];
-	const section: Section | null = (selectedNoteSection.value.length >= selectedNoteIndex.value) ?
+	const section = (selectedNoteSection.value.length >= selectedNoteIndex.value) ?
 		selectedNoteSection.value[selectedNoteIndex.value] : null;
-	await updateAnnotation(noteToUpdate.id, section?.name, noteToUpdate.content);
+	await updateAnnotation(noteToUpdate.id, section, noteToUpdate.content);
 	await getAndPopulateAnnotations();
 }
 

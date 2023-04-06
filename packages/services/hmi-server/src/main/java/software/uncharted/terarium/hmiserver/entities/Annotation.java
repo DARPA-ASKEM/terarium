@@ -55,7 +55,7 @@ public class Annotation extends PanacheEntityBase implements Serializable {
 	@JsonProperty("artifact_type")
 	private String artifactType;
 
-	@Column
+	@Column(nullable = true)
 	private String section;
 
 	/**
