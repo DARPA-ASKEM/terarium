@@ -46,15 +46,20 @@ public class AnnotationResource {
 			.build();
 	}
 
-	public Response updateAnnotation(@QueryParam("id") final String id,
-																	 @QueryParam("content") final String content){
+	@PATCH
+	@Transactional
+	public Response updateAnnotation(final Annotation annotation){
+		String id = annotation.getId();
+		String content = annotation.getContent();
 		if (id == null || content == null) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
+//		System.out.println(id);
 		Annotation entity = Annotation.findById(id);
 		if (entity == null){
 			throw new NotFoundException();
 		}
+		entity.setContent(content);
 		Annotation.persist(entity);
 		return Response.ok().build();
 	}

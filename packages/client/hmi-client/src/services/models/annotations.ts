@@ -30,6 +30,19 @@ export async function createAnnotation(content, artifactId, artifactType) {
 	}
 }
 
+export async function updateAnnotation(id, content) {
+	try {
+		const response = await API.patch('/annotations', {
+			id,
+			content
+		});
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
 export async function deleteAnnotation(id) {
 	try {
 		const response = await API.delete('/annotations', {

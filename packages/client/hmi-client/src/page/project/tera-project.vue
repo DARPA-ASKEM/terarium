@@ -45,12 +45,9 @@
 							<div class="save-cancel-buttons">
 								<Button @click="isEditingNote = false" label="Cancel" class="p-button p-button-secondary"
 									size="small" />
-								<Button
-									@click="
-										updateNote();
-									isEditingNote = false;
-																																																																																																																																								"
-									label="Save" class="p-button" size="small" />
+								<Button @click="
+									updateNote();
+								isEditingNote = false;" label=" Save" class="p-button" size="small" />
 							</div>
 						</div>
 						<div v-else>
@@ -90,9 +87,7 @@
 								size="small" />
 							<Button @click="
 								addNote();
-							toggleAnnotationInput();
-																																																																																																																								"
-								label="Save" class="p-button" size="small" />
+							toggleAnnotationInput();" label=" Save" class="p-button" size="small" />
 						</div>
 					</div>
 					<div v-else>
@@ -131,9 +126,8 @@ import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
-import { createAnnotation, deleteAnnotation, getAnnotations } from '@/services/models/annotations';
+import { createAnnotation, deleteAnnotation, getAnnotations, updateAnnotation } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
-import { select } from 'd3-selection';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -314,6 +308,12 @@ const addNote = async () => {
 	annotationContent.value = '';
 	await getAndPopulateAnnotations();
 };
+
+async function updateNote() {
+	const noteToUpdate: Annotation = annotations.value[selectedNoteIndex.value];
+	await updateAnnotation(noteToUpdate.id, noteToUpdate.content);
+	await getAndPopulateAnnotations();
+}
 
 async function deleteNote() {
 	const noteToDelete: Annotation = annotations.value[selectedNoteIndex.value];
