@@ -528,7 +528,7 @@ async function getRelatedTerms(query?: string, dataset?: string | null): Promise
 }
 
 const getAutocomplete = async (searchTerm: string) => {
-	const url = `/document/extractions/askem_autocomplete/${searchTerm}`;
+	const url = `/document/extractions/askem-autocomplete/${searchTerm}`;
 	const response = await API.get(url);
 	if (response.status === 204) return [];
 	return response.data ?? [];
