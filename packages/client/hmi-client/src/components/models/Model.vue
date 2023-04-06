@@ -747,13 +747,14 @@ section math-editor {
 
 .math-editor-container {
 	display: flex;
-	max-height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
-	flex-grow: 1;
+	height: 100%;
 	flex-direction: column;
 	border-width: 2px;
-	border-color: red;
-	height: 100%;
+	overflow: auto;
 }
 
 .math-editor-selected {
@@ -775,6 +776,7 @@ section math-editor {
 }
 
 .tera-split-panel {
+	position: relative;
 	height: 100%;
 	display: flex;
 	align-items: center;
