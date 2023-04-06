@@ -1,0 +1,27 @@
+$customIconPath: '../svg/icons/';
+
+.ci-dataset::before {
+    content: url("#{$customIconPath}dataset.svg");
+    fill: red;
+    height: 0;
+}
+
+.ci-overview::before {
+    content: url("#{$customIconPath}overview.svg");
+    height: 0;
+}
+
+.ci-results::before {
+    content: url("#{$customIconPath}results.svg");
+    height: 0;
+}
+
+.ci-workflow::before {
+    content: url("#{$customIconPath}workflow.svg");
+    height: 0;
+}
+
+.ci-compare-models::before {
+    content: url("#{$customIconPath}compare-models.svg");
+    height: 0;
+}

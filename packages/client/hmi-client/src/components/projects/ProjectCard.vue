@@ -4,7 +4,7 @@
 			<header class="project-stats">
 				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
 				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
-				<span title="Datasets"><i class="pi pi-sliders-v" /> {{ stats?.datasets }}</span>
+				<span title="Datasets"><i class="pi ci-dataset" /> {{ stats?.datasets }}</span>
 				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 			</header>
 			<div class="project-img">
@@ -125,6 +125,12 @@ const removeProject = async () => {
 	justify-content: space-between;
 	font-size: var(--font-caption);
 	vertical-align: bottom;
+}
+
+.project-stats span {
+	display: flex;
+	gap: 0.1rem;
+	align-items: center;
 }
 
 .pi {

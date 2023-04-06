@@ -181,17 +181,17 @@ async function home(): Promise<IProject[] | null> {
  * Get the icon associated with an Asset
  */
 const icons = new Map([
-	[ProjectAssetTypes.DOCUMENTS, 'file'],
-	[ProjectAssetTypes.MODELS, 'share-alt'],
-	[ProjectAssetTypes.DATASETS, 'sliders-v'],
-	[ProjectAssetTypes.SIMULATIONS, 'cog'],
-	[ProjectAssetTypes.SIMULATION_RUNS, 'eye'],
-	[ProjectAssetTypes.CODE, 'code'],
-	['overview', 'inbox']
+	[ProjectAssetTypes.DOCUMENTS, 'pi-file'],
+	[ProjectAssetTypes.MODELS, 'pi-share-alt'],
+	[ProjectAssetTypes.DATASETS, 'ci-dataset'],
+	[ProjectAssetTypes.SIMULATIONS, 'pi-cog'],
+	[ProjectAssetTypes.SIMULATION_RUNS, 'pi-eye'],
+	[ProjectAssetTypes.CODE, 'pi-code'],
+	['overview', 'ci-overview']
 ]);
 function iconClassname(type: ProjectAssetTypes | string | null): string {
 	if (type && icons.has(type)) {
-		return `pi pi-${icons.get(type)}`;
+		return `pi ${icons.get(type)}`;
 	}
 	return 'pi pi-circle';
 }

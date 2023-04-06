@@ -64,19 +64,20 @@
 					<Button
 						label="New workflow"
 						size="large"
-						icon="pi pi-sitemap"
+						icon="pi ci-workflow"
+						icon-class="lg-button-icon"
 						class="p-button p-button-secondary quick-link-button"
 					/>
 					<Button
 						label="Compare models"
 						size="large"
-						icon="pi pi-share-alt"
+						icon="pi ci-compare-models"
 						class="p-button p-button-secondary quick-link-button"
 					/>
 					<Button
 						label="New simulation"
 						size="large"
-						icon="pi pi-chart-line"
+						icon="pi pi-play"
 						class="p-button p-button-secondary quick-link-button"
 					/>
 				</div>
@@ -163,6 +164,11 @@ function showProjectMenu(event) {
 	background: var(--surface-section);
 }
 
+.p-button:deep(.ci-workflow::before),
+.p-button:deep(.ci-compare-models::before) {
+	scale: 1.25;
+}
+
 a {
 	text-decoration: underline;
 }
@@ -193,6 +199,7 @@ section {
 	margin-top: 0.5rem;
 	margin-bottom: 0.5rem;
 }
+
 .contributors {
 	flex-direction: row;
 	align-items: center;
@@ -221,6 +228,7 @@ section {
 .summary-KPI-number {
 	font-size: 2.5rem;
 }
+
 .summary-KPI-label {
 	font-size: 1.15rem;
 }
@@ -241,6 +249,7 @@ section {
 	width: 100%;
 	font-size: var(--font-body-small);
 }
+
 .resource-list {
 	margin-top: 1rem;
 }
@@ -255,11 +264,13 @@ section {
 .resource-list-section-header h4 {
 	font-size: var(--font-body-medium);
 }
+
 .keyword-search {
 	border-color: transparent;
 	padding-top: 0.75rem;
 	padding-bottom: 0.75rem;
 }
+
 .keyword-search:hover {
 	border-color: var(--surface-border) !important;
 }

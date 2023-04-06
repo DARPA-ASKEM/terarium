@@ -37,7 +37,7 @@
 						class="p-button-secondary p-button-sm"
 						:active="resourceType === ResourceType.DATASET"
 						label="Datasets"
-						icon="pi pi-database"
+						icon="pi ci-dataset"
 						@click="updateAssetType(ResourceType.DATASET)"
 					/>
 				</span>

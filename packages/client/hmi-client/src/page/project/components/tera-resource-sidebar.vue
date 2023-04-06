@@ -9,7 +9,7 @@
 				@click="isRemovalModal = true"
 			/>
 			<Button
-				icon="pi pi-file"
+				icon="pi pi-code"
 				v-tooltip="`New code file`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
