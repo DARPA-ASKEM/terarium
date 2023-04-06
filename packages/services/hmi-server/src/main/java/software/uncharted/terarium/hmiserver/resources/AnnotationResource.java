@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import java.time.Instant;
 
 @Path("/api/annotations")
 @Authenticated
@@ -60,6 +61,7 @@ public class AnnotationResource {
 			throw new NotFoundException();
 		}
 		entity.setContent(content);
+		entity.setTimestampMillis(Instant.now().toEpochMilli());
 		Annotation.persist(entity);
 		return Response.ok().build();
 	}

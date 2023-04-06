@@ -54,7 +54,7 @@
 							<div class="annotation-header">
 								<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
 								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-									:options="noteOptions" optionLabel="name" />
+									:options="noteOptions" optionLabel="name" v-model="selectedNoteSection[idx]" />
 								<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
 								<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" @click="
 									(event) => {
@@ -78,7 +78,8 @@
 				<div class="annotation-input-box">
 					<div v-if="isAnnotationInputOpen" class="annotation-input-container">
 						<div class="annotation-header">
-							<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button" />
+							<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
+								:options="noteOptions" optionLabel="name" v-model="newNoteSection" />
 						</div>
 						<Textarea v-model="annotationContent" ref="annotationTextInput" rows="5" cols="30"
 							aria-labelledby="annotation" />
@@ -203,7 +204,14 @@ const toggleAnnotationMenu = (event) => {
 	};
 	annotationMenu.value.toggle(event);
 };
-const noteOptions = ref([{ name: 'Test' }]);
+
+interface Section {
+	name: string;
+}
+const sections = ['Unassigned', 'Abstract', 'Intro', 'Methods', 'Results', 'Discussion', 'References', '+ Add section']
+const noteOptions = ref<Section[]>(sections.map(section => ({ name: section })));
+const selectedNoteSection = ref<Section[]>([]);
+const newNoteSection = ref<Section>();
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
@@ -273,6 +281,8 @@ async function removeAsset(asset: Tab) {
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
 
+watch(selectedNoteSection.value, (newSelectedNoteSection) => { console.log(newSelectedNoteSection) })
+
 watch(
 	() => [
 		openedAssetRoute.value, // Once route attributes change, add/switch to another tab
@@ -304,14 +314,16 @@ async function getAndPopulateAnnotations() {
 }
 
 const addNote = async () => {
-	await createAnnotation(annotationContent.value, props.assetId, props.assetType);
+	await createAnnotation(newNoteSection.value, annotationContent.value, props.assetId, props.assetType);
 	annotationContent.value = '';
 	await getAndPopulateAnnotations();
 };
 
 async function updateNote() {
 	const noteToUpdate: Annotation = annotations.value[selectedNoteIndex.value];
-	await updateAnnotation(noteToUpdate.id, noteToUpdate.content);
+	const section: Section | null = (selectedNoteSection.value.length >= selectedNoteIndex.value) ?
+		selectedNoteSection.value[selectedNoteIndex.value] : null;
+	await updateAnnotation(noteToUpdate.id, section?.name, noteToUpdate.content);
 	await getAndPopulateAnnotations();
 }
 

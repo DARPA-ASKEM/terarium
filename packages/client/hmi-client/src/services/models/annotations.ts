@@ -16,9 +16,10 @@ export async function getAnnotations(artifactId, artifactType) {
 	}
 }
 
-export async function createAnnotation(content, artifactId, artifactType) {
+export async function createAnnotation(section, content, artifactId, artifactType) {
 	try {
 		const response = await API.post('/annotations', {
+			section,
 			content,
 			artifact_id: artifactId,
 			artifact_type: artifactType
@@ -30,11 +31,12 @@ export async function createAnnotation(content, artifactId, artifactType) {
 	}
 }
 
-export async function updateAnnotation(id, content) {
+export async function updateAnnotation(id, section, content) {
 	try {
 		const response = await API.patch('/annotations', {
 			id,
-			content
+			section,
+			content,
 		});
 		return response.data;
 	} catch (error) {

@@ -12,6 +12,7 @@ export type Annotation = {
 	content: string;
 	timestampMillis: number;
 	username: number;
+	section: string;
 };
 
 export enum ViewType {
