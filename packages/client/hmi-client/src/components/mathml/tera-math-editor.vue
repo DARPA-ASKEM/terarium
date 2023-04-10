@@ -196,7 +196,6 @@ math-field[disabled] {
 
 .mathlive-equation {
 	display: flex;
-	position: absolute;
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
@@ -243,7 +242,6 @@ math-field[disabled] {
 	resize: none;
 	overflow-y: hidden;
 	display: flex;
-	position: absolute;
 	align-items: center;
 	justify-content: center;
 	max-width: 100%;
