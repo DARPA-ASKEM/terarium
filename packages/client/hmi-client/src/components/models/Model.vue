@@ -282,14 +282,6 @@ const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const showForecastLauncher = ref(false);
 
-// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-// const modelMath = ref(String.raw`\begin{align}
-// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-// \end{align}`);
-
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
 const equationPanelSize = ref<number>(50);
@@ -747,13 +739,14 @@ section math-editor {
 
 .math-editor-container {
 	display: flex;
-	max-height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
-	flex-grow: 1;
+	height: 100%;
 	flex-direction: column;
 	border-width: 2px;
-	border-color: red;
-	height: 100%;
+	overflow: auto;
 }
 
 .math-editor-selected {
@@ -775,6 +768,7 @@ section math-editor {
 }
 
 .tera-split-panel {
+	position: relative;
 	height: 100%;
 	display: flex;
 	align-items: center;
