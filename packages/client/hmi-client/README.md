@@ -6,9 +6,9 @@
 ## Vue 3 + TypeScript + Vite
 
 - Terarium uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-- [Uncharted Design Tokens](https://github.com/unchartedsoftware/design-tokens)
-- CSS utility library is [PrimeFlex](https://www.primefaces.org/primeflex/)
+- CSS utility library is [PrimeFlex](https://www.primefaces.org/primeflex/).
 - Components System is [PrimeVue](https://primefaces.org/primevue).
+- Icons is [Feather Icons](https://vue-feather-icons.egoist.dev/).
 
 ## Recommended IDE Setup
 

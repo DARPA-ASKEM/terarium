@@ -3281,6 +3281,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"babel-helper-vue-jsx-merge-props@npm:^2.0.2":
+  version: 2.0.3
+  resolution: "babel-helper-vue-jsx-merge-props@npm:2.0.3"
+  checksum: 94d354b401fae665137433632d6ecb4f212217c115feb06b2544987939fdb2735b35bc856eb99e306e8ead5f840b7891d8e050916a76c025b2380ee052a3b8df
+  languageName: node
+  linkType: hard
+
 "babel-jest@npm:^26.6.3":
   version: 26.6.3
   resolution: "babel-jest@npm:26.6.3"
@@ -6930,6 +6937,7 @@ cors@latest:
     vite: 3.2.5
     vitest: 0.24.5
     vue: 3.2.47
+    vue-feather-icons: 5.1.0
     vue-mathjax-next: 0.0.4
     vue-router: 4.1.6
     vue-tsc: 1.2.0
@@ -12061,6 +12069,15 @@ send@latest:
   peerDependencies:
     eslint: ">=6.0.0"
   checksum: e2e6b05989294c4439d91283a78a0cb444cfba30f2715a5be1950d7815cadb5c8f449d9362a92bdd163cb8944abaac73bb076ce3c27b27586eaa4560002e6dfd
+  languageName: node
+  linkType: hard
+
+"vue-feather-icons@npm:5.1.0":
+  version: 5.1.0
+  resolution: "vue-feather-icons@npm:5.1.0"
+  dependencies:
+    babel-helper-vue-jsx-merge-props: ^2.0.2
+  checksum: c09447e8f18ac8d3908270bc51ffe9452ef44a874f5bb0449cffa57ffedac3deef4488bb4d0535419138650e073b8f64347b9d71554d21f96e8524f8a3b1f7ff
   languageName: node
   linkType: hard
 
