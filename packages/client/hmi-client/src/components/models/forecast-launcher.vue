@@ -114,7 +114,7 @@ const launch = async () => {
 		});
 		storage.setItem(key, JSON.stringify(modelItem));
 	}
-	emit('launch-forecast');
+	emit('launch-forecast', run.id);
 };
 
 const close = () => {

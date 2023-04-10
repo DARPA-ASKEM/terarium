@@ -7,9 +7,9 @@
 	<Teleport to="body">
 		<ForecastLauncher
 			v-if="showForecastLauncher && currentModel"
-			:model="model"
+			:model="currentModel"
 			@close="showForecastLauncher = false"
-			@launch-forecast="goToSimulationRunPage"
+			@launch-forecast="saveSimulation"
 		/>
 	</Teleport>
 </template>
@@ -23,8 +23,10 @@ import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/g
 import { BasicRenderer, IGraph, INode } from '@graph-scaffolder/index';
 import ContextMenu from 'primevue/contextmenu';
 import ForecastLauncher from '@/components/models/forecast-launcher.vue';
+import { getRunStatus, getRunResult } from '@/services/models/simulation-service';
 
 import { getModel } from '@/services/model';
+import { parse } from 'path';
 
 // SIR and SVIIvR
 const MODEL_LIST = [2, 3];
@@ -33,7 +35,7 @@ interface NodeData {
 	type: string;
 	val: number;
 	model?: ITypedModel<PetriNet>;
-	forecast?: any;
+	forecastId?: any;
 }
 
 interface EdgeData {
@@ -50,7 +52,26 @@ const pathFn = d3
 	.y((d) => d.y)
 	.curve(d3.curveBasis);
 
+let counter = 0;
+let forecastSelection: any = null;
+
 class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
+	parentNodes(id: any) {
+		const edges = this.graph.edges.filter((d) => d.target === id);
+		console.log('debug', edges);
+		const sources = edges.map((e) => e.source);
+		console.log('debug', sources);
+		const nodes = this.graph.nodes.filter((d) => sources.includes(d.id));
+		return nodes;
+	}
+
+	childrenNodes(id: any) {
+		const edges = this.graph.edges.filter((d) => d.source === id);
+		const targets = edges.map((e) => e.target);
+		const nodes = this.graph.nodes.filter((d) => targets.includes(d.id));
+		return nodes;
+	}
+
 	setupDefs() {
 		const svg = d3.select(this.svgEl);
 		svg.select('defs').selectAll('.edge-marker-end').remove();
@@ -108,6 +129,20 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke-opacity', EDGE_OPACITY)
 			.style('stroke-width', 1)
 			.attr('marker-end', 'url(#arrowhead)');
+	}
+
+	addNodeViz(pos: { x: number; y: number }) {
+		this.graph.nodes.push({
+			id: `s-${this.graph.nodes.length + 1}`,
+			label: name,
+			x: pos.x,
+			y: pos.y,
+			width: 200,
+			height: 90,
+			nodes: [],
+			data: { type: 'visualization', val: 1 }
+		});
+		this.render();
 	}
 
 	addNodeModel(model: ITypedModel<PetriNet>, pos: { x: number; y: number }) {
@@ -174,6 +209,7 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.removeAllEvents('node-drag-start');
 		this.removeAllEvents('node-drag-move');
 		this.removeAllEvents('node-drag-end');
+		this.removeAllEvents('node-drag-end');
 
 		// (Re)create dragging listeners
 		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
@@ -225,6 +261,19 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 				targetData = null;
 			}
 		});
+
+		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log(selection.datum().data.type);
+			const nodeType = selection.datum().data.type;
+			if (nodeType === 'forecast') {
+				const parentData = this.parentNodes(selection.datum().id);
+				if (parentData) {
+					currentModel.value = parentData[0].data.model;
+					showForecastLauncher.value = true;
+					forecastSelection = selection;
+				}
+			}
+		});
 	}
 }
 
@@ -242,6 +291,7 @@ let eventX = 0;
 let eventY = 0;
 
 const currentModel = ref<ITypedModel<PetriNet> | null>(null);
+const showForecastLauncher = ref(false);
 
 const run = async () => {
 	renderer = new WorkflowRenderer({
@@ -276,8 +326,9 @@ const contextMenuItems = ref([
 		label: 'Add model',
 		icon: 'pi pi-fw pi-circle',
 		command: async () => {
-			const model = await getModel(2);
+			const model = await getModel(MODEL_LIST[counter % 2] + '');
 			console.log('[add model]', model);
+			counter++;
 
 			if (renderer && model) {
 				renderer.addNodeModel(model, { x: eventX, y: eventY });
@@ -298,15 +349,55 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-eye',
 		command: () => {
 			if (renderer) {
-				renderer.addNode('visualization', '?', { x: eventX, y: eventY });
+				renderer.addNodeViz({ x: eventX, y: eventY });
 			}
 		}
 	}
 ]);
 
+const renderVisNode = async (nodeId: string, runId: number) => {
+	console.log('render vis node', nodeId, runId);
+	if (!renderer) return;
+
+	const nodeUI = renderer.chart.selectAll('.node-ui').filter((d) => d.id === nodeId);
+	nodeUI.selectAll('text').remove();
+	nodeUI.selectAll('.temp').remove();
+
+	setTimeout(async () => {
+		const resultCSV = await getRunResult(runId);
+		const parsedCSV = d3.csvParse(resultCSV);
+		const temp = nodeUI.append('g').classed('temp', true);
+
+		parsedCSV.forEach((d, i) => {
+			const key = Object.keys(d)[2];
+			const value = +(d[key] as string);
+			console.log(key, value);
+			temp
+				.append('circle')
+				.attr('cx', i * 2 - 0.5 * nodeUI.datum().width)
+				.attr('cy', 80 - value - 0.5 * nodeUI.datum().height)
+				.attr('r', 2)
+				.attr('fill', 'red');
+		});
+	}, 1000);
+};
+
+const saveSimulation = (runId: number) => {
+	showForecastLauncher.value = false;
+	forecastSelection.datum().data.forecastId = runId;
+	if (renderer) {
+		const childrenNodes = renderer.childrenNodes(forecastSelection.datum().id);
+		if (childrenNodes) {
+			for (let i = 0; i < childrenNodes.length; i++) {
+				const nodeId = childrenNodes[i].id;
+				renderVisNode(nodeId, runId);
+			}
+		}
+	}
+};
+
 // Entry point
 onMounted(() => {
-	console.log('[onmounted]');
 	run();
 });
 </script>
