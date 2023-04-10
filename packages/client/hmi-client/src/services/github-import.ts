@@ -3,7 +3,7 @@ import { logger } from '@/utils/logger';
 
 export async function getGithubRepositoryContent(repoOwnerAndName: string, path: string) {
 	try {
-		const response = await API.get('/code/repo_content', {
+		const response = await API.get('/code/repo-content', {
 			params: { repoOwnerAndName, path }
 		});
 		const { status, data } = response;
@@ -17,7 +17,7 @@ export async function getGithubRepositoryContent(repoOwnerAndName: string, path:
 
 export async function getGithubCode(repoOwnerAndName: string, path: string) {
 	try {
-		const response = await API.get('/code/repo_file_content', {
+		const response = await API.get('/code/repo-file-content', {
 			params: { repoOwnerAndName, path }
 		});
 		const { status, data } = response;

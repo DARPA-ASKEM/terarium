@@ -106,9 +106,13 @@ const sidePanelTabStyle = computed(
 	overflow-y: auto;
 }
 
+footer:empty {
+	display: none;
+}
+
 footer {
 	position: relative;
-	border-top: 1px solid var(--surface-border);
+	border-top: 1px solid var(--surface-border-light);
 	background-color: var(--surface-section);
 	height: 5rem;
 	width: 100%;
