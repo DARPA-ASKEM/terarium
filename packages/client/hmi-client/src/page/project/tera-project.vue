@@ -292,6 +292,7 @@ const annotationMenuItems = ref([
 		icon: 'pi pi-fw pi-trash',
 		command: () => {
 			if (!isNoteDeletionConfirmation.value) {
+				// @ts-ignore
 				annotationMenuItems.value.push(noteDeletionConfirmationMenuItem);
 				isNoteDeletionConfirmation.value = true;
 			}
