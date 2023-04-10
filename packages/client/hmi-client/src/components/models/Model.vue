@@ -743,7 +743,7 @@ const mathJaxEq = (eq) => {
 	display: flex;
 	justify-content: space-between;
 	position: absolute;
-	z-index: 90001;
+	z-index: 1;
 	isolation: isolate;
 }
 
