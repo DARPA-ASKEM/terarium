@@ -385,8 +385,11 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 		svg.call(this.zoom as any).on('dblclick.zoom', null);
 
-		// Align the zoom to the height of the container, then try to center against the width
-		// FIXME: expose default positioning strategy as option
+		this.setToDefaultZoom();
+	}
+
+	setToDefaultZoom() {
+		const svg = d3.select(this.svgEl);
 		let zoomLevel = 1;
 		let zoomX = 0;
 		let zoomY = 0;
@@ -403,8 +406,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 		}
 
 		svg.call(
-			this.zoom.transform as any,
-			d3.zoomIdentity.translate(0, 0).scale(zoomLevel).translate(zoomX, zoomY)
+			this.zoom?.transform as any,
+			d3.zoomIdentity.translate(zoomX, zoomY).scale(zoomLevel).translate(0, 0)
 		);
 	}
 
