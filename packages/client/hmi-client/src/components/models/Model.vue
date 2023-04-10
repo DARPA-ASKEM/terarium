@@ -740,6 +740,7 @@ const mathJaxEq = (eq) => {
 
 <style scoped>
 .toolbar {
+	right: 0;
 	display: flex;
 	justify-content: space-between;
 	position: absolute;
