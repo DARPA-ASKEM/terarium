@@ -495,6 +495,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			const nodeData = renderer.nodeSelection.datum();
 			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
 			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+			renderer.nodeSelection = null;
 			renderer.render();
 		}
 
@@ -504,6 +505,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 				renderer.graph.edges,
 				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
+			renderer.edgeSelection = null;
 			renderer.render();
 		}
 	}
