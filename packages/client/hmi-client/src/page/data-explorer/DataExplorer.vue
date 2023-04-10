@@ -37,21 +37,10 @@
 						class="p-button-secondary p-button-sm"
 						:active="resourceType === ResourceType.DATASET"
 						label="Datasets"
-						icon="pi ci-dataset"
+						icon="pi pi-database"
 						@click="updateAssetType(ResourceType.DATASET)"
 					/>
 				</span>
-				<div>
-					<span class="pi ci-dataset"></span>
-					<span class="pi pi-file"></span>
-					<img src="@assets/svg/icons/dataset.svg" alt="icon" />
-					<svg>
-						<use
-							xlink:href="@assets/svg/icons/dataset.svg"
-							href="@assets/svg/icons/dataset.svg"
-						></use>
-					</svg>
-				</div>
 			</div>
 			<search-results-list
 				:data-items="dataItems"

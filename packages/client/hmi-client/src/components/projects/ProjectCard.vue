@@ -4,7 +4,9 @@
 			<header class="project-stats">
 				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
 				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
-				<span title="Datasets"> {{ stats?.datasets }}</span>
+				<span title="Datasets"
+					><dataset-icon fill="rgb(152, 154, 160)" /> {{ stats?.datasets }}</span
+				>
 				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 			</header>
 			<div class="project-img">
@@ -69,6 +71,7 @@ import { formatDdMmmYyyy } from '@/utils/date';
 import { placeholder } from '@/utils/project-card';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 
 const props = defineProps<{ project?: IProject }>();
 const emit = defineEmits<{

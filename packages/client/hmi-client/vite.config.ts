@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import svgLoader from 'vite-svg-loader';
 import * as path from 'path';
 
 /**
@@ -50,7 +51,8 @@ export default defineConfig({
 					isCustomElement: (tag) => tag.startsWith('facet-') || tag === 'math-field'
 				}
 			}
-		})
+		}),
+		svgLoader({ defaultImport: 'url' })
 	],
 	test: {
 		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']

@@ -44,7 +44,6 @@
 					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 				</div>
 			</section>
-
 			<!-- Quick link buttons go here -->
 			<section>
 				<div class="quick-links">
@@ -69,12 +68,10 @@
 						/>
 						<span class="p-button-label">New workflow</span>
 					</Button>
-					<Button
-						label="Compare models"
-						size="large"
-						icon="pi ci-compare-models"
-						class="p-button p-button-secondary quick-link-button"
-					/>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<compare-models-icon fill="rgb(16, 24, 40)" style="scale: 1.25" />
+						<span class="p-button-label">Compare Models</span>
+					</Button>
 					<Button
 						label="New simulation"
 						size="large"
@@ -116,6 +113,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
+// Should be imported with ?component due to typescript, otherwise the component will have a red underline which is worse
+import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 
 const props = defineProps<{
 	project: IProject;
@@ -163,11 +162,6 @@ function showProjectMenu(event) {
 	flex-direction: column;
 	flex: 1;
 	background: var(--surface-section);
-}
-
-.p-button:deep(.ci-workflow::before),
-.p-button:deep(.ci-compare-models::before) {
-	scale: 1.25;
 }
 
 a {
