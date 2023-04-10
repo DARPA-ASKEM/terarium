@@ -54,6 +54,8 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	const g = new dagre.graphlib.Graph({ compound: true });
 	g.setGraph({});
 	g.setDefaultEdgeLabel(() => ({}));
+	let nodeWidth;
+	let nodeHeight;
 
 	graphScaffolder.traverseGraph(graphData, (node: INode<V>) => {
 		if (node.width && node.height) {
@@ -64,8 +66,12 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 				x: node.x,
 				y: node.y
 			});
+			nodeWidth = node.width;
+			nodeHeight = node.height;
 		} else {
 			g.setNode(node.id, { label: node.label, x: node.x, y: node.y });
+			nodeWidth = node.width;
+			nodeHeight = node.height;
 		}
 		if (!_.isEmpty(node.nodes)) {
 			// eslint-disable-next-line
@@ -124,5 +130,19 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		dupe.add(hash);
 	}
 
+	// Find new width and height
+	let minX = Number.MAX_VALUE;
+	let maxX = Number.MIN_VALUE;
+	let minY = Number.MAX_VALUE;
+	let maxY = Number.MIN_VALUE;
+	graphData.nodes.forEach((node) => {
+		if (node.x < minX) minX = node.x;
+		if (node.x > maxX) maxX = node.x;
+		if (node.y < minY) minY = node.y;
+		if (node.y > maxY) maxY = node.y;
+	});
+
+	graphData.width = Math.abs(maxX - minX) + 2 * nodeWidth;
+	graphData.height = Math.abs(maxY - minY) + 2 * nodeHeight;
 	return graphData;
 };

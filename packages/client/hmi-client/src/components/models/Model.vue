@@ -32,17 +32,40 @@
 									:maxSize="equationPanelMaxSize"
 								>
 									<section class="graph-element">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined floating-edit-button cancel-edit-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											class="p-button-sm p-button-outlined floating-edit-button"
-										/>
+										<span v-if="isEditing" class="toolbar p-buttonset">
+											<Button
+												@click="resetZoom"
+												label="Reset Zoom"
+												class="p-button-sm p-button-secondary"
+											/>
+											<Button
+												@click="addState"
+												label="Add State"
+												class="p-button-sm p-button-secondary"
+											/>
+											<Button
+												@click="addTransition"
+												label="Add Transition"
+												class="p-button-sm p-button-secondary"
+											/>
+											<Button
+												@click="cancelEdit"
+												label="Cancel"
+												class="p-button-sm p-button-secondary"
+											/>
+											<Button
+												@click="toggleEditMode"
+												:label="isEditing ? 'Save model' : 'Edit model'"
+												class="p-button-sm p-button-secondary"
+											/>
+										</span>
+										<div v-else>
+											<Button
+												@click="toggleEditMode"
+												:label="isEditing ? 'Save model' : 'Edit model'"
+												class="p-button-sm p-button-secondary floating-edit-button"
+											/>
+										</div>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
@@ -225,7 +248,8 @@ import {
 	EdgeData,
 	parseIGraph2PetriNet,
 	mathmlToPetri,
-	petriToLatex
+	petriToLatex,
+	NodeType
 } from '@/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
@@ -471,6 +495,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			const nodeData = renderer.nodeSelection.datum();
 			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
 			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+			renderer.nodeSelection = null;
 			renderer.render();
 		}
 
@@ -480,6 +505,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 				renderer.graph.edges,
 				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
+			renderer.edgeSelection = null;
 			renderer.render();
 		}
 	}
@@ -695,6 +721,18 @@ const cancelEdit = async () => {
 	}
 };
 
+const resetZoom = async () => {
+	renderer?.setToDefaultZoom();
+};
+
+const addState = async () => {
+	renderer?.addNodeCenter(NodeType.State, '?');
+};
+
+const addTransition = async () => {
+	renderer?.addNodeCenter(NodeType.Transition, '?');
+};
+
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 
@@ -707,6 +745,17 @@ const mathJaxEq = (eq) => {
 </script>
 
 <style scoped>
+.toolbar {
+	right: 0;
+	display: flex;
+	justify-content: space-between;
+	position: absolute;
+	z-index: 1;
+	isolation: isolate;
+	margin-top: 10px;
+	margin-right: 10px;
+}
+
 section math-editor {
 	justify-content: center;
 }
@@ -717,10 +766,6 @@ section math-editor {
 	position: absolute;
 	right: 10px;
 	z-index: 10;
-}
-
-.cancel-edit-button {
-	right: 110px;
 }
 
 .splitter-container {
