@@ -55,8 +55,9 @@
 						<div v-else>
 							<div class="annotation-header">
 								<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
-								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-									:options="noteOptions" v-model="selectedNoteSection[idx]" />
+								<Dropdown disabled placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button" :options="noteOptions"
+									v-model="selectedNoteSection[idx]" />
 								<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
 								<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" @click="
 									(event) => {
@@ -326,6 +327,7 @@ watch(
 async function getAndPopulateAnnotations() {
 	annotations.value = await getAnnotations(props.assetId, props.assetType);
 	selectedNoteSection.value = annotations.value.map(note => note.section);
+	console.log(selectedNoteSection.value);
 }
 
 const addNote = async () => {

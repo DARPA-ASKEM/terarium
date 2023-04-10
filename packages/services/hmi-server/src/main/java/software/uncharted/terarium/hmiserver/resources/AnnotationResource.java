@@ -52,15 +52,16 @@ public class AnnotationResource {
 	public Response updateAnnotation(final Annotation annotation){
 		String id = annotation.getId();
 		String content = annotation.getContent();
-		if (id == null || content == null) {
+		String section = annotation.getSection();
+		if (id == null || content == null || section == null) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
-//		System.out.println(id);
 		Annotation entity = Annotation.findById(id);
 		if (entity == null){
 			throw new NotFoundException();
 		}
 		entity.setContent(content);
+		entity.setSection(section);
 		entity.setTimestampMillis(Instant.now().toEpochMilli());
 		Annotation.persist(entity);
 		return Response.ok().build();
