@@ -36,7 +36,7 @@ export async function updateAnnotation(id, section, content) {
 		const response = await API.patch('/annotations', {
 			id,
 			section,
-			content,
+			content
 		});
 		return response.data;
 	} catch (error) {
@@ -53,8 +53,7 @@ export async function deleteAnnotation(id) {
 			}
 		});
 		return response.data;
-	}
-	catch (error) {
+	} catch (error) {
 		logger.error(error);
 		return null;
 	}

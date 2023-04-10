@@ -1,29 +1,70 @@
 <template>
 	<main>
-		<tera-slider-panel v-model:is-open="isResourcesSliderOpen" content-width="300px" header="Resources"
-			direction="left">
+		<tera-slider-panel
+			v-model:is-open="isResourcesSliderOpen"
+			content-width="300px"
+			header="Resources"
+			direction="left"
+		>
 			<template v-slot:content>
-				<tera-resource-sidebar :project="project" :tabs="tabs" :active-tab="openedAssetRoute"
-					@open-asset="openAsset" @open-overview="openOverview" @close-tab="removeClosedTab"
-					@click="getAndPopulateAnnotations()" @remove-asset="removeAsset" />
+				<tera-resource-sidebar
+					:project="project"
+					:tabs="tabs"
+					:active-tab="openedAssetRoute"
+					@open-asset="openAsset"
+					@open-overview="openOverview"
+					@close-tab="removeClosedTab"
+					@click="getAndPopulateAnnotations()"
+					@remove-asset="removeAsset"
+				/>
 			</template>
 		</tera-slider-panel>
 		<section>
-			<tera-tab-group v-if="!isEmpty(tabs)" :tabs="tabs" :active-tab-index="activeTabIndex"
-				@close-tab="removeClosedTab" @select-tab="openAsset" @click="getAndPopulateAnnotations()" />
+			<tera-tab-group
+				v-if="!isEmpty(tabs)"
+				:tabs="tabs"
+				:active-tab-index="activeTabIndex"
+				@close-tab="removeClosedTab"
+				@select-tab="openAsset"
+				@click="getAndPopulateAnnotations()"
+			/>
 			<template v-if="assetId && !isEmpty(tabs)">
-				<document v-if="assetType === ProjectAssetTypes.DOCUMENTS" :xdd-uri="getXDDuri(assetId)"
-					:previewLineLimit="10" :project="project" is-editable @open-asset="openAsset" />
-				<dataset v-else-if="assetType === ProjectAssetTypes.DATASETS" :asset-id="assetId" :project="project"
-					is-editable />
-				<model v-else-if="assetType === ProjectAssetTypes.MODELS" :asset-id="assetId" :project="project"
-					is-editable />
-				<simulation-plan v-else-if="assetType === ProjectAssetTypes.PLANS" :asset-id="assetId" :project="project" />
-				<simulation-run v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS" :asset-id="assetId"
-					:project="project" />
+				<document
+					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
+					:xdd-uri="getXDDuri(assetId)"
+					:previewLineLimit="10"
+					:project="project"
+					is-editable
+					@open-asset="openAsset"
+				/>
+				<dataset
+					v-else-if="assetType === ProjectAssetTypes.DATASETS"
+					:asset-id="assetId"
+					:project="project"
+					is-editable
+				/>
+				<model
+					v-else-if="assetType === ProjectAssetTypes.MODELS"
+					:asset-id="assetId"
+					:project="project"
+					is-editable
+				/>
+				<simulation-plan
+					v-else-if="assetType === ProjectAssetTypes.PLANS"
+					:asset-id="assetId"
+					:project="project"
+				/>
+				<simulation-run
+					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
+					:asset-id="assetId"
+					:project="project"
+				/>
 			</template>
-			<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code"
-				@on-model-created="openNewModelFromCode" />
+			<code-editor
+				v-else-if="assetType === ProjectAssetTypes.CODE"
+				:initial-code="code"
+				@on-model-created="openNewModelFromCode"
+			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -31,38 +72,74 @@
 				<Button label="Open project overview" @click="openOverview" />
 			</section>
 		</section>
-		<tera-slider-panel class="slider" content-width="240px" direction="right" header="Notes"
-			v-model:is-open="isNotesSliderOpen" @click="getAndPopulateAnnotations()">
+		<tera-slider-panel
+			class="slider"
+			content-width="240px"
+			direction="right"
+			header="Notes"
+			v-model:is-open="isNotesSliderOpen"
+			@click="getAndPopulateAnnotations()"
+		>
 			<template v-slot:content>
 				<section class="annotation-panel-container">
 					<div v-for="(annotation, idx) of annotations" :key="idx">
-						<div v-if="isEditingNote && idx === selectedNoteIndex" class="annotation-input-container">
+						<div
+							v-if="isEditingNote && idx === selectedNoteIndex"
+							class="annotation-input-container"
+						>
 							<div class="annotation-header">
-								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-									:options="noteOptions" v-model="selectedNoteSection[idx]" />
+								<Dropdown
+									placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button"
+									:options="noteOptions"
+									v-model="selectedNoteSection[idx]"
+								/>
 							</div>
-							<Textarea v-model="annotation.content" ref="annotationTextInput" rows="5" cols="30"
-								aria-labelledby="annotation" />
+							<Textarea
+								v-model="annotation.content"
+								ref="annotationTextInput"
+								rows="5"
+								cols="30"
+								aria-labelledby="annotation"
+							/>
 							<div class="save-cancel-buttons">
-								<Button @click="isEditingNote = false" label="Cancel" class="p-button p-button-secondary"
-									size="small" />
-								<Button @click="
-									updateNote();
-								isEditingNote = false;" label=" Save" class="p-button" size="small" />
+								<Button
+									@click="isEditingNote = false"
+									label="Cancel"
+									class="p-button p-button-secondary"
+									size="small"
+								/>
+								<Button
+									@click="
+										updateNote();
+										isEditingNote = false;
+									"
+									label=" Save"
+									class="p-button"
+									size="small"
+								/>
 							</div>
 						</div>
 						<div v-else>
 							<div class="annotation-header">
 								<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
-								<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-									:options="noteOptions" v-model="selectedNoteSection[idx]" />
+								<Dropdown
+									placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button"
+									:options="noteOptions"
+									v-model="selectedNoteSection[idx]"
+								/>
 								<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
-								<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" @click="
-									(event) => {
-										toggleAnnotationMenu(event);
-										selectedNoteIndex = idx;
-									}
-								" />
+								<Button
+									icon="pi pi-ellipsis-v"
+									class="p-button-rounded p-button-secondary"
+									@click="
+										(event) => {
+											toggleAnnotationMenu(event);
+											selectedNoteIndex = idx;
+										}
+									"
+								/>
 							</div>
 							<div>
 								<p>{{ annotation.content }}</p>
@@ -74,27 +151,56 @@
 							</div>
 						</div>
 					</div>
-					<Menu ref="annotationMenu" :model="annotationMenuItems" :popup="true" @hide="onHide" @click.stop />
+					<Menu
+						ref="annotationMenu"
+						:model="annotationMenuItems"
+						:popup="true"
+						@hide="onHide"
+						@click.stop
+					/>
 				</section>
 				<div class="annotation-input-box">
 					<div v-if="isAnnotationInputOpen" class="annotation-input-container">
 						<div class="annotation-header">
-							<Dropdown placeholder="Unassigned" class="p-button p-button-text notes-dropdown-button"
-								:options="noteOptions" v-model="newNoteSection" />
+							<Dropdown
+								placeholder="Unassigned"
+								class="p-button p-button-text notes-dropdown-button"
+								:options="noteOptions"
+								v-model="newNoteSection"
+							/>
 						</div>
-						<Textarea v-model="annotationContent" ref="annotationTextInput" rows="5" cols="30"
-							aria-labelledby="annotation" />
+						<Textarea
+							v-model="annotationContent"
+							ref="annotationTextInput"
+							rows="5"
+							cols="30"
+							aria-labelledby="annotation"
+						/>
 						<div class="save-cancel-buttons">
-							<Button @click="toggleAnnotationInput()" label="Cancel" class="p-button p-button-secondary"
-								size="small" />
-							<Button @click="
-								addNote();
-							toggleAnnotationInput();" label=" Save" class="p-button" size="small" />
+							<Button
+								@click="toggleAnnotationInput()"
+								label="Cancel"
+								class="p-button p-button-secondary"
+								size="small"
+							/>
+							<Button
+								@click="
+									addNote();
+									toggleAnnotationInput();
+								"
+								label=" Save"
+								class="p-button"
+								size="small"
+							/>
 						</div>
 					</div>
 					<div v-else>
-						<Button @click="toggleAnnotationInput()" icon="pi pi-plus" label="Add note"
-							class="p-button-text p-button-flat" />
+						<Button
+							@click="toggleAnnotationInput()"
+							icon="pi pi-plus"
+							label="Add note"
+							class="p-button-text p-button-flat"
+						/>
 					</div>
 				</div>
 			</template>
@@ -124,11 +230,16 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult3.vue';
-import { Tab, ResourceType, Annotation } from '@/types/common';
+import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
-import { createAnnotation, deleteAnnotation, getAnnotations, updateAnnotation } from '@/services/models/annotations';
+import {
+	createAnnotation,
+	deleteAnnotation,
+	getAnnotations,
+	updateAnnotation
+} from '@/services/models/annotations';
 import Menu from 'primevue/menu';
 
 // Asset props are extracted from route
@@ -159,6 +270,7 @@ const isEditingNote = ref(false);
 const isNoteDeletionConfirmation = ref(false);
 const noteDeletionConfirmationMenuItem = {
 	label: 'Are you sure?',
+	icon: '',
 	items: [
 		{
 			label: 'Yes, delete this note',
@@ -206,7 +318,16 @@ const toggleAnnotationMenu = (event) => {
 	annotationMenu.value.toggle(event);
 };
 
-const noteOptions = ref(['Unassigned', 'Abstract', 'Intro', 'Methods', 'Results', 'Discussion', 'References', '+ Add section']);
+const noteOptions = ref([
+	'Unassigned',
+	'Abstract',
+	'Intro',
+	'Methods',
+	'Results',
+	'Discussion',
+	'References',
+	'+ Add section'
+]);
 const selectedNoteSection = ref([]);
 const newNoteSection = ref();
 
@@ -278,7 +399,9 @@ async function removeAsset(asset: Tab) {
 // When a new tab is chosen, reflect that by opening its associated route
 tabStore.$subscribe(() => openAsset());
 
-watch(selectedNoteSection.value, (newSelectedNoteSection) => { console.log(newSelectedNoteSection) })
+watch(selectedNoteSection.value, (newSelectedNoteSection) => {
+	console.log(newSelectedNoteSection);
+});
 
 watch(
 	() => [
@@ -311,15 +434,22 @@ async function getAndPopulateAnnotations() {
 }
 
 const addNote = async () => {
-	await createAnnotation(newNoteSection.value, annotationContent.value, props.assetId, props.assetType);
+	await createAnnotation(
+		newNoteSection.value,
+		annotationContent.value,
+		props.assetId,
+		props.assetType
+	);
 	annotationContent.value = '';
 	await getAndPopulateAnnotations();
 };
 
 async function updateNote() {
 	const noteToUpdate: Annotation = annotations.value[selectedNoteIndex.value];
-	const section = (selectedNoteSection.value.length >= selectedNoteIndex.value) ?
-		selectedNoteSection.value[selectedNoteIndex.value] : null;
+	const section =
+		selectedNoteSection.value.length >= selectedNoteIndex.value
+			? selectedNoteSection.value[selectedNoteIndex.value]
+			: null;
 	await updateAnnotation(noteToUpdate.id, section, noteToUpdate.content);
 	await getAndPopulateAnnotations();
 }
@@ -464,7 +594,7 @@ section {
 	gap: 0.5rem;
 }
 
-.save-cancel-buttons>button {
+.save-cancel-buttons > button {
 	flex: 1;
 }
 </style>
