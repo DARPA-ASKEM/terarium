@@ -36,34 +36,34 @@
 											<Button
 												@click="resetZoom"
 												label="Reset Zoom"
-												class="p-button-sm p-button-outlined"
+												class="p-button-sm p-button-secondary"
 											/>
 											<Button
 												@click="addState"
 												label="Add State"
-												class="p-button-sm p-button-outlined"
+												class="p-button-sm p-button-secondary"
 											/>
 											<Button
 												@click="addTransition"
 												label="Add Transition"
-												class="p-button-sm p-button-outlined"
+												class="p-button-sm p-button-secondary"
 											/>
 											<Button
 												@click="cancelEdit"
 												label="Cancel"
-												class="p-button-sm p-button-outlined"
+												class="p-button-sm p-button-secondary"
 											/>
 											<Button
 												@click="toggleEditMode"
 												:label="isEditing ? 'Save model' : 'Edit model'"
-												class="p-button-sm p-button-outlined"
+												class="p-button-sm p-button-secondary"
 											/>
 										</span>
 										<div v-else>
 											<Button
 												@click="toggleEditMode"
 												:label="isEditing ? 'Save model' : 'Edit model'"
-												class="p-button-sm p-button-outlined floating-edit-button"
+												class="p-button-sm p-button-secondary floating-edit-button"
 											/>
 										</div>
 										<div v-if="model" ref="graphElement" class="graph-element" />
