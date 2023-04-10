@@ -135,12 +135,12 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	let maxX = Number.MIN_VALUE;
 	let minY = Number.MAX_VALUE;
 	let maxY = Number.MIN_VALUE;
-	for (let i = 0; i < graphData.nodes.length; i++) {
-		if (graphData.nodes[i].x < minX) minX = graphData.nodes[i].x;
-		if (graphData.nodes[i].x > maxX) maxX = graphData.nodes[i].x;
-		if (graphData.nodes[i].y < minY) minY = graphData.nodes[i].y;
-		if (graphData.nodes[i].y > maxY) maxY = graphData.nodes[i].y;
-	}
+	graphData.nodes.forEach((node) => {
+		if (node.x < minX) minX = node.x;
+		if (node.x > maxX) maxX = node.x;
+		if (node.y < minY) minY = node.y;
+		if (node.y > maxY) maxY = node.y;
+	});
 
 	graphData.width = Math.abs(maxX - minX) + 2 * nodeWidth;
 	graphData.height = Math.abs(maxY - minY) + 2 * nodeHeight;
