@@ -390,24 +390,14 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 	setToDefaultZoom() {
 		const svg = d3.select(this.svgEl);
-		let zoomLevel = 1;
-		let zoomX = 0;
-		let zoomY = 0;
+		let scale = 1;
 		if (this.chart) {
-			const graphRect: DOMRect = (this.chart.node() as SVGGElement).getBoundingClientRect();
-			zoomLevel = Math.min(1, this.chartSize.height / (graphRect.height + 1)); // Div by zero
-			zoomX = -(graphRect.width * zoomLevel - this.chartSize.width) * 0.5;
-		}
-
-		if (this.options.useStableZoomPan === true && this.zoomTransformObject !== null) {
-			zoomLevel = this.zoomTransformObject.k;
-			zoomX = this.zoomTransformObject.x / zoomLevel;
-			zoomY = this.zoomTransformObject.y / zoomLevel;
+			scale = this.chartSize.width / (this.graph.width ?? 1);
 		}
 
 		svg.call(
 			this.zoom?.transform as any,
-			d3.zoomIdentity.translate(zoomX, zoomY).scale(zoomLevel).translate(0, 0)
+			d3.zoomIdentity.translate(10, 100).scale(scale).translate(0, 0)
 		);
 	}
 

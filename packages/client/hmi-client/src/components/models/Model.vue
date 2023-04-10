@@ -717,15 +717,14 @@ const cancelEdit = async () => {
 
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
-	console.log('TODO');
 };
+
 const addState = async () => {
-	renderer?.addNode(NodeType.State, '?', { x: 0, y: 0 });
-	console.log('TODO');
+	renderer?.addNodeCenter(NodeType.State, '?');
 };
+
 const addTransition = async () => {
-	renderer?.addNode(NodeType.Transition, '?', { x: 0, y: 0 });
-	console.log('TODO');
+	renderer?.addNodeCenter(NodeType.Transition, '?');
 };
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));

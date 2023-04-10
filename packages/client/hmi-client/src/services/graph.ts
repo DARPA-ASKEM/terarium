@@ -124,5 +124,19 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		dupe.add(hash);
 	}
 
+	// Find new width and height
+	let minX = Number.MAX_VALUE;
+	let maxX = Number.MIN_VALUE;
+	let minY = Number.MAX_VALUE;
+	let maxY = Number.MIN_VALUE;
+	for (let i = 0; i < graphData.nodes.length; i++) {
+		if (graphData.nodes[i].x < minX) minX = graphData.nodes[i].x;
+		if (graphData.nodes[i].x > maxX) maxX = graphData.nodes[i].x;
+		if (graphData.nodes[i].y < minY) minY = graphData.nodes[i].y;
+		if (graphData.nodes[i].y > maxY) maxY = graphData.nodes[i].y;
+	}
+
+	graphData.width = Math.abs(maxX - minX);
+	graphData.height = Math.abs(maxY - minY);
 	return graphData;
 };
