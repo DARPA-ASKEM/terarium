@@ -32,7 +32,7 @@
 									:maxSize="equationPanelMaxSize"
 								>
 									<section class="graph-element">
-										<div v-if="isEditing" class="toolbar">
+										<span v-if="isEditing" class="toolbar p-buttonset">
 											<Button
 												@click="resetZoom"
 												label="Reset Zoom"
@@ -58,7 +58,7 @@
 												:label="isEditing ? 'Save model' : 'Edit model'"
 												class="p-button-sm p-button-outlined"
 											/>
-										</div>
+										</span>
 										<div v-else>
 											<Button
 												@click="toggleEditMode"
