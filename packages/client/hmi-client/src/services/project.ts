@@ -6,6 +6,9 @@ import API from '@/api/api';
 import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { Tab } from '@/types/common';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import ResultsIcon from '@/assets/svg/icons/results.svg?component';
+import { Component } from 'vue';
 
 /**
  * Create a project
@@ -183,15 +186,15 @@ async function home(): Promise<IProject[] | null> {
 const icons = new Map([
 	[ProjectAssetTypes.DOCUMENTS, 'pi pi-file'],
 	[ProjectAssetTypes.MODELS, 'pi pi-share-alt'],
-	[ProjectAssetTypes.DATASETS, 'database'],
+	[ProjectAssetTypes.DATASETS, DatasetIcon],
 	[ProjectAssetTypes.SIMULATIONS, 'pi pi-cog'],
-	[ProjectAssetTypes.SIMULATION_RUNS, 'pi pi-eye'],
+	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'pi pi-code'],
 	['overview', 'layout']
 ]);
-function iconClassname(type: ProjectAssetTypes | string | null): string {
+function getAssetIcon(type: ProjectAssetTypes | string | null): string | Component {
 	if (type && icons.has(type)) {
-		return icons.get(type) as string;
+		return icons.get(type);
 	}
 	return 'pi pi-circle';
 }
@@ -217,6 +220,6 @@ export {
 	deleteAsset,
 	getAssets,
 	home,
-	iconClassname,
+	getAssetIcon,
 	getDocumentAssetXddUri
 };

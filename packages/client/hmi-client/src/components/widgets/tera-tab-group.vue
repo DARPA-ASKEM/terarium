@@ -2,15 +2,24 @@
 	<nav :style="{ '--nb-tabs': tabs.length }">
 		<header v-for="(tab, index) in tabs" :key="index">
 			<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
-				<i
-					v-if="iconClassname(tab.assetType ?? null).substring(0, 3) === 'pi '"
-					:class="iconClassname(tab.assetType ?? null)"
-				/>
-				<vue-feather
+				<template v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'">
+					<i
+						v-if="getAssetIcon(tab.assetType ?? null).substring(0, 3) === 'pi '"
+						:class="getAssetIcon(tab.assetType ?? null)"
+					/>
+					<vue-feather
+						v-else
+						:type="getAssetIcon(tab.assetType ?? null)"
+						size="1rem"
+						stroke="rgb(16, 24, 40)"
+					/>
+				</template>
+				<component
 					v-else
-					:type="iconClassname(tab.assetType ?? null)"
-					size="1rem"
-					stroke="rgb(16, 24, 40)"
+					:is="getAssetIcon(tab.assetType ?? null)"
+					class="p-button-icon-left"
+					fill="rgb(16, 24, 40)"
+					style="overflow: visible"
 				/>
 				<span class="name">
 					{{ tab.assetName }}
@@ -33,7 +42,7 @@
  */
 import { Tab } from '@/types/common';
 import Button from 'primevue/button';
-import { iconClassname } from '@/services/project';
+import { getAssetIcon } from '@/services/project';
 
 defineProps<{
 	tabs: Tab[];

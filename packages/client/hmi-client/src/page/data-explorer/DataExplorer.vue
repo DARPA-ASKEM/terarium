@@ -601,9 +601,4 @@ onUnmounted(() => {
 .cart-item {
 	list-style-type: none;
 }
-
-/* 
-use {
-	color: red;
-} */
 </style>

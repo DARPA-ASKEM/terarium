@@ -49,16 +49,25 @@
 					size="small"
 					@click="emit('open-asset', tab)"
 				>
-					<i
-						v-if="iconClassname(tab.assetType ?? null).substring(0, 3) === 'pi '"
-						:class="`p-button-icon-left ${iconClassname(tab.assetType ?? null)}`"
-					/>
-					<vue-feather
+					<template v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'">
+						<i
+							v-if="getAssetIcon(tab.assetType ?? null).substring(0, 3) === 'pi '"
+							:class="`p-button-icon-left ${getAssetIcon(tab.assetType ?? null)}`"
+						/>
+						<vue-feather
+							v-else
+							class="p-button-icon-left"
+							:type="getAssetIcon(tab.assetType ?? null)"
+							size="1rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+					</template>
+					<component
 						v-else
+						:is="getAssetIcon(tab.assetType ?? null)"
 						class="p-button-icon-left"
-						:type="iconClassname(tab.assetType ?? null)"
-						size="1rem"
-						stroke="rgb(16, 24, 40)"
+						fill="rgb(16, 24, 40)"
+						style="overflow: visible"
 					/>
 					<span class="p-button-label">{{ tab.assetName }}</span>
 				</Button>
@@ -93,7 +102,7 @@ import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
-import { iconClassname } from '@/services/project';
+import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
