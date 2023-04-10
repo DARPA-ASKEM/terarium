@@ -397,7 +397,7 @@ export abstract class Renderer<V, E> extends EventEmitter {
 
 		svg.call(
 			this.zoom?.transform as any,
-			d3.zoomIdentity.translate(10, 100).scale(scale).translate(0, 0)
+			d3.zoomIdentity.translate(1, 100).scale(scale).translate(0, 0)
 		);
 	}
 
