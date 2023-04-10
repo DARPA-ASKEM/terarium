@@ -50,10 +50,6 @@ onUnmounted(() => {
 	isolation: isolate;
 }
 
-section {
-	min-height: 600px;
-}
-
 main {
 	height: 100%;
 }
