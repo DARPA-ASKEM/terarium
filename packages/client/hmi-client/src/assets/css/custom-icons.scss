@@ -2,7 +2,6 @@ $customIconPath: '../svg/icons/';
 
 .ci-dataset::before {
     content: url("#{$customIconPath}dataset.svg");
-    fill: red;
     height: 0;
 }
 

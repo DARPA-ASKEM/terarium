@@ -41,6 +41,14 @@
 						@click="updateAssetType(ResourceType.DATASET)"
 					/>
 				</span>
+				<!-- <div>
+					<span class="pi ci-dataset"></span>
+					<span class="pi pi-file"></span>
+					<img src="@assets/svg/icons/dataset.svg" />
+					<svg>
+						<use xlink:href='@assets/svg/icons/dataset.svg' href="@assets/svg/icons/dataset.svg"></use>
+					</svg>
+				</div> -->
 			</div>
 			<search-results-list
 				:data-items="dataItems"
@@ -601,4 +609,9 @@ onUnmounted(() => {
 .cart-item {
 	list-style-type: none;
 }
+
+/* 
+use {
+	color: red;
+} */
 </style>
