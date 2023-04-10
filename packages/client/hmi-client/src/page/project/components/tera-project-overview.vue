@@ -37,7 +37,6 @@
 					</section>
 				</div>
 			</section>
-
 			<!-- Project summary KPIs -->
 			<section class="summary-KPI-bar">
 				<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
@@ -61,13 +60,15 @@
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
 					/>
-					<Button
-						label="New workflow"
-						size="large"
-						icon="pi ci-workflow"
-						icon-class="lg-button-icon"
-						class="p-button p-button-secondary quick-link-button"
-					/>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+						<span class="p-button-label">New workflow</span>
+					</Button>
 					<Button
 						label="Compare models"
 						size="large"

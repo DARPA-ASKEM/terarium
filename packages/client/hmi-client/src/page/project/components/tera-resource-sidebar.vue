@@ -23,14 +23,15 @@
 		</header>
 		<Button
 			class="asset-button"
-			label="Overview"
 			:active="activeTab.assetType === 'overview'"
-			:icon="iconClassname('overview')"
 			plain
 			text
 			size="small"
 			@click="emit('open-overview')"
-		/>
+		>
+			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
+			<span class="p-button-label">Overview</span>
+		</Button>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
@@ -41,15 +42,26 @@
 					v-for="tab in tabs"
 					:key="tab.assetId"
 					:active="isEqual(tab, activeTab)"
-					:icon="iconClassname(tab.assetType?.toString() ?? null)"
-					:label="tab.assetName"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
 					text
 					size="small"
 					@click="emit('open-asset', tab)"
-				/>
+				>
+					<i
+						v-if="iconClassname(tab.assetType ?? null).substring(0, 3) === 'pi '"
+						:class="`p-button-icon-left ${iconClassname(tab.assetType ?? null)}`"
+					/>
+					<vue-feather
+						v-else
+						class="p-button-icon-left"
+						:type="iconClassname(tab.assetType ?? null)"
+						size="1rem"
+						stroke="rgb(16, 24, 40)"
+					/>
+					<span class="p-button-label">{{ tab.assetName }}</span>
+				</Button>
 			</AccordionTab>
 		</Accordion>
 		<Teleport to="body">

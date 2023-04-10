@@ -4,7 +4,7 @@
 			<header class="project-stats">
 				<span title="Contributors"><i class="pi pi-user" /> {{ stats?.contributors }}</span>
 				<span title="Models"><i class="pi pi-share-alt" /> {{ stats?.models }}</span>
-				<span title="Datasets"><i class="pi ci-dataset" /> {{ stats?.datasets }}</span>
+				<span title="Datasets"> {{ stats?.datasets }}</span>
 				<span title="Papers"><i class="pi pi-file" /> {{ stats?.papers }}</span>
 			</header>
 			<div class="project-img">

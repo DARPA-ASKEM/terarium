@@ -28,13 +28,6 @@
 
 .pi {
     font-size: $primeIconFontSize;
-
-    &:before {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
 }
 
 .p-link {
