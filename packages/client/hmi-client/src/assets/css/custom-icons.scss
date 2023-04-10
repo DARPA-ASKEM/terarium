@@ -1,8 +1,20 @@
 $customIconPath: '../svg/icons/';
 
+// .ci-dataset {
+//     background: url("#{$customIconPath}dataset.svg");
+//     background-repeat: no-repeat;
+//     background-size: contain;
+//     height: 16px;
+//     width: 16px;
+//     color: red;
+//     fill: red;
+// }
+
 .ci-dataset::before {
     content: url("#{$customIconPath}dataset.svg");
     height: 0;
+    color: red;
+    fill: red;
 }
 
 .ci-overview::before {
