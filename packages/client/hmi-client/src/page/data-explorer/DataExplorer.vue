@@ -41,14 +41,17 @@
 						@click="updateAssetType(ResourceType.DATASET)"
 					/>
 				</span>
-				<!-- <div>
+				<div>
 					<span class="pi ci-dataset"></span>
 					<span class="pi pi-file"></span>
-					<img src="@assets/svg/icons/dataset.svg" />
+					<img src="@assets/svg/icons/dataset.svg" alt="icon" />
 					<svg>
-						<use xlink:href='@assets/svg/icons/dataset.svg' href="@assets/svg/icons/dataset.svg"></use>
+						<use
+							xlink:href="@assets/svg/icons/dataset.svg"
+							href="@assets/svg/icons/dataset.svg"
+						></use>
 					</svg>
-				</div> -->
+				</div>
 			</div>
 			<search-results-list
 				:data-items="dataItems"
