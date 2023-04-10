@@ -49,10 +49,6 @@ onUnmounted(() => {
 	height: 100%;
 }
 
-section {
-	min-height: 600px;
-}
-
 main {
 	height: 100%;
 }

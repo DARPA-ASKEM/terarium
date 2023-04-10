@@ -271,7 +271,9 @@ const clustersInfo = computed(() => {
 
 			if (mutualExclusiveClutering) {
 				// i.e., each cluster will only includes the items that exactly match the cluster variable
-				clusteredDocuments = groupBy(documentsToCluster, clusterVariable);
+				clusteredDocuments = groupBy(documentsToCluster, clusterVariable) as {
+					[clusterKey: string]: DocumentType[];
+				};
 			} else {
 				// special clustering is needed
 				//  since the cluster field (or key), e.g., known_terms, is an array
@@ -295,7 +297,9 @@ const clustersInfo = computed(() => {
 				}, {});
 			}
 		} else {
-			clusteredDocuments = groupBy(documentsToCluster, clusterVariable);
+			clusteredDocuments = groupBy(documentsToCluster, clusterVariable) as {
+				[clusterKey: string]: DocumentType[];
+			};
 		}
 
 		const names = Object.keys(clusteredDocuments);

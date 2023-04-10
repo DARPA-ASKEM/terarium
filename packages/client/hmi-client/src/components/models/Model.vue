@@ -6,17 +6,6 @@
 				<h4 v-html="title" />
 				<span v-if="isEditable">
 					<Button
-						v-if="isEditing"
-						@click="cancelEdit"
-						label="Cancel"
-						class="p-button-sm p-button-outlined"
-					/>
-					<Button
-						@click="toggleEditMode"
-						:label="isEditing ? 'Save model' : 'Edit model'"
-						class="p-button-sm p-button-outlined"
-					/>
-					<Button
 						@click="launchForecast"
 						label="Open simulation space"
 						:disabled="isEditing"
@@ -34,37 +23,47 @@
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
 					<TeraResizablePanel>
-						<div class="content">
-							<Splitter class="mb-5 model-panel" :layout="layout">
-								<SplitterPanel class="tera-split-panel" :size="60" :minSize="50">
+						<div ref="splitterContainer" class="splitter-container">
+							<Splitter :gutterSize="5" :layout="layout">
+								<SplitterPanel
+									class="tera-split-panel"
+									:size="equationPanelSize"
+									:minSize="equationPanelMinSize"
+									:maxSize="equationPanelMaxSize"
+								>
 									<section class="graph-element">
+										<Button
+											v-if="isEditing"
+											@click="cancelEdit"
+											label="Cancel"
+											class="p-button-sm p-button-outlined floating-edit-button cancel-edit-button"
+										/>
+										<Button
+											@click="toggleEditMode"
+											:label="isEditing ? 'Save model' : 'Edit model'"
+											class="p-button-sm p-button-outlined floating-edit-button"
+										/>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
 								</SplitterPanel>
-								<SplitterPanel class="tera-split-panel" :size="40" :minSize="30">
-									<section class="math-editor">
-										<!-- eventually remove -->
-										<section class="dev-options">
-											<div style="align-self: center">[Math Renderer]</div>
-											<div class="math-options">
-												<label>
-													<input type="radio" v-model="mathmode" value="mathJAX" />
-													MathJAX
-												</label>
-												<label>
-													<input type="radio" v-model="mathmode" value="mathLIVE" />
-													MathLIVE
-												</label>
-											</div>
-										</section>
-										<!-- eventually remove -->
-										<math-editor
-											:value="equation"
-											:mathmode="mathmode"
-											@formula-updated="updateFormula"
-											@mathml="updatePetriFromMathML"
-										></math-editor>
+								<SplitterPanel
+									class="tera-split-panel"
+									:size="mathPanelSize"
+									:minSize="mathPanelMinSize"
+									:maxSize="mathPanelMaxSize"
+								>
+									<section class="math-editor-container" :class="mathEditorSelected">
+										<tera-math-editor
+											:is-editable="isEditable"
+											:latex-equation="equationLatex"
+											:is-editing-eq="isEditingEQ"
+											:is-math-ml-valid="isMathMLValid"
+											:math-mode="MathEditorModes.LIVE"
+											@cancel-editing="cancelEditng"
+											@equation-updated="setNewLatexFormula"
+											@validate-mathml="validateMathML"
+										></tera-math-editor>
 									</section>
 								</SplitterPanel>
 							</Splitter>
@@ -181,7 +180,9 @@
 					<Column field="equation_annotations" header="Equations">
 						<template #body="slotProps">
 							<div style="word-wrap: break-word">
-								{{ slotProps.data.equation_annotations }}
+								<vue-mathjax
+									:formula="mathJaxEq(slotProps.data.equation_annotations)"
+								></vue-mathjax>
 							</div>
 						</template>
 					</Column>
@@ -212,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty } from 'lodash';
+import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -226,10 +227,12 @@ import {
 	mathmlToPetri,
 	petriToLatex
 } from '@/petrinet/petrinet-service';
+import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -245,7 +248,7 @@ import { ResultType } from '@/types/common';
 import { DocumentType } from '@/types/Document';
 import { ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
-import MathEditor from '@/components/mathml/math-editor.vue';
+import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
@@ -266,35 +269,61 @@ const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
 const isEditing = ref<boolean>(false);
+const isEditingEQ = ref<boolean>(false);
 const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
-const equation = ref<string>('');
-const equationOriginal = ref<string>('');
-const mathmode = ref('mathLIVE');
+const equationLatex = ref<string>('');
+const equationLatexOriginal = ref<string>('');
+const equationLatexNew = ref<string>('');
+const isMathMLValid = ref<boolean>(true);
 
+const splitterContainer = ref<HTMLElement | null>(null);
+const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const showForecastLauncher = ref(false);
 
-// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-// const modelMath = ref(String.raw`\begin{align}
-// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-// \end{align}`);
+const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
-// Another experiment using a map to automatically select highlighted version of the latex formula
-// this would require the backend service to provide a map of the eq.  Might be a little challenging.
-// const equationMap = {
-// 	default: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
-// 	\beta IS - \gamma I \frac{dR}{dt} = \gamma I`,
-// 	S: String.raw`\frac{d\colorbox{red}{S}}{dt} = -\beta I{\color{red}{S}} \frac{dI}{dt} = \
-// 	\beta I{\color{red}{S}} - \gamma I \frac{dR}{dt} = \gamma I`,
-// 	I: String.raw`\frac{dS}{dt} = -\beta {\color{red}I}S \frac{dI}{dt} = \
-// 	\beta {\color{red}I}S - \gamma {\color{red}I} \frac{dR}{dt} = \gamma {\color{red}I}`,
-// 	R: String.raw`\frac{dS}{dt} = -\beta IS \frac{dI}{dt} = \
-// 	\beta IS - \gamma I \frac{d\color{red}{R}}{dt} = \gamma I`
-// };
+const equationPanelSize = ref<number>(50);
+const equationPanelMinSize = ref<number>(0);
+const equationPanelMaxSize = ref<number>(100);
+
+const mathPanelSize = ref<number>(50);
+const mathPanelMinSize = ref<number>(0);
+const mathPanelMaxSize = ref<number>(100);
+
+const updateLayout = () => {
+	if (splitterContainer.value) {
+		layout.value =
+			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
+			window.innerWidth < 800
+				? 'vertical'
+				: 'horizontal';
+	}
+};
+
+const handleResize = () => {
+	updateLayout();
+};
+
+onMounted(() => {
+	window.addEventListener('resize', handleResize);
+	handleResize();
+});
+
+onUnmounted(() => {
+	window.removeEventListener('resize', handleResize);
+});
+
+const mathEditorSelected = computed(() => {
+	if (!isMathMLValid.value) {
+		return 'math-editor-error';
+	}
+	if (isEditingEQ.value) {
+		return 'math-editor-selected';
+	}
+	return '';
+});
 
 const betterStates = computed(() => {
 	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
@@ -330,36 +359,44 @@ const onVariableSelected = (variable: string) => {
 	if (variable) {
 		if (variable === selectedVariable.value) {
 			selectedVariable.value = '';
-			equation.value = equationOriginal.value;
+			equationLatex.value = equationLatexOriginal.value;
 		} else {
 			selectedVariable.value = variable;
-			equation.value = equationOriginal.value.replaceAll(
+			equationLatex.value = equationLatexOriginal.value.replaceAll(
 				selectedVariable.value,
 				String.raw`{\color{red}${variable}}`
 			);
 		}
 	} else {
-		equation.value = equationOriginal.value;
+		equationLatex.value = equationLatexOriginal.value;
 	}
 };
 
 const onStateVariableClick = () => {
 	if (selectedRow.value) {
-		equation.value = equationOriginal.value.replaceAll(
+		equationLatex.value = equationLatexOriginal.value.replaceAll(
 			selectedRow.value.sname,
 			String.raw`{\color{red}${selectedRow.value.sname}}`
 		);
 	} else {
-		equation.value = equationOriginal.value;
+		equationLatex.value = equationLatexOriginal.value;
 	}
 };
 
-const updateFormula = (formulaString: string) => {
-	equation.value = formulaString;
-	equationOriginal.value = formulaString;
+const setNewLatexFormula = (formulaString: string) => {
+	equationLatexNew.value = formulaString;
 };
 
-const layout = computed(() => (!props.isEditable ? 'vertical' : 'horizontal'));
+const updateLatexFormula = (formulaString: string) => {
+	equationLatex.value = formulaString;
+	equationLatexOriginal.value = formulaString;
+};
+
+const cancelEditng = () => {
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
+	// updateLatexFormula(equationLatexOriginal.value);
+};
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -399,7 +436,7 @@ function highlightSearchTerms(text: string | undefined): string {
 watch(
 	() => [props.assetId],
 	async () => {
-		updateFormula('');
+		updateLatexFormula('');
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
@@ -407,7 +444,7 @@ watch(
 			if (model.value) {
 				const data = await petriToLatex(model.value.content);
 				if (data) {
-					updateFormula(data);
+					updateLatexFormula(data);
 				}
 			}
 		} else {
@@ -444,6 +481,20 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
 			renderer.render();
+		}
+	}
+	if (event.key === 'Enter' && renderer) {
+		if (renderer.nodeSelection) {
+			renderer.deselectNode(renderer.nodeSelection);
+			renderer.nodeSelection
+				.selectAll('.no-drag')
+				.style('opacity', 0)
+				.style('visibility', 'hidden');
+			renderer.nodeSelection = null;
+		}
+		if (renderer.edgeSelection) {
+			renderer.deselectEdge(renderer.edgeSelection);
+			renderer.edgeSelection = null;
 		}
 	}
 };
@@ -499,7 +550,11 @@ watch(
 			if (!renderer?.editMode) return;
 			eventX = pos.x;
 			eventY = pos.y;
-			menu.value.toggle(evt);
+			menu.value.show(evt);
+		});
+
+		renderer.on('background-click', () => {
+			if (menu.value) menu.value.hide();
 		});
 
 		// Render graph
@@ -507,25 +562,86 @@ watch(
 		await renderer?.render();
 		const latexFormula = await petriToLatex(model.value.content);
 		if (latexFormula) {
-			updateFormula(latexFormula);
+			updateLatexFormula(latexFormula);
 		} else {
-			updateFormula('');
+			updateLatexFormula('');
 		}
 	},
 	{ deep: true }
 );
 
-const updatePetriFromMathML = async (mathmlString: string) => {
-	// No bueno - doesn't work right now.
-	const newPetri = await mathmlToPetri([mathmlString]);
-	if (model.value && newPetri) {
-		model.value.content = newPetri;
-		updateModel(model.value);
-	}
+const updatePetri = async (m: PetriNet) => {
+	// equationML.value = mathmlString;
+	// Convert petri net into a graph
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
+		S: { width: 60, height: 60 },
+		T: { width: 40, height: 40 }
+	});
+
+	// Create renderer
+	renderer = new PetrinetRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: false,
+		useStableZoomPan: true,
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
+	});
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		renderer?.addEdge(d.source, d.target);
+	});
+
+	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+		if (!renderer?.editMode) return;
+		eventX = pos.x;
+		eventY = pos.y;
+		menu.value.toggle(evt);
+	});
+
+	// Render graph
+	await renderer?.setData(graphData);
+	await renderer?.render();
+	updateLatexFormula(equationLatexNew.value);
 };
 
 const launchForecast = () => {
 	showForecastLauncher.value = true;
+};
+
+const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
+	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
+	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
+};
+
+const validateMathML = async (mathMlString: string, editMode: boolean) => {
+	isEditingEQ.value = true;
+	isMathMLValid.value = false;
+	const cleanedMathML = separateEquations(mathMlString);
+	if (mathMlString === '') {
+		logger.error(
+			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
+		);
+	} else if (!editMode) {
+		try {
+			const newPetri = await mathmlToPetri(cleanedMathML);
+			if (
+				(isArray(newPetri) && newPetri.length > 0) ||
+				(!isArray(newPetri) && Object.keys(newPetri).length > 0 && hasNoEmptyKeys(newPetri))
+			) {
+				isMathMLValid.value = true;
+				isEditingEQ.value = false;
+				updatePetri(newPetri);
+			} else {
+				logger.error(
+					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
+				);
+			}
+		} catch (e) {
+			isMathMLValid.value = false;
+		}
+	} else if (editMode) {
+		isMathMLValid.value = true;
+	}
 };
 
 const router = useRouter();
@@ -581,19 +697,34 @@ const cancelEdit = async () => {
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
+
+const mathJaxEq = (eq) => {
+	if (eq) {
+		return String.raw`$$${Object.keys(eq)[0]}$$`;
+	}
+	return '';
+};
 </script>
 
 <style scoped>
-.model-panel {
-	height: 100%;
-	border-radius: var(--border-radius-big);
-	border: solid 1px var(--surface-border);
-	overflow: hidden;
+section math-editor {
+	justify-content: center;
 }
 
-.content {
+.floating-edit-button {
+	background-color: var(--surface-0);
+	margin-top: 10px;
+	position: absolute;
+	right: 10px;
+	z-index: 10;
+}
+
+.cancel-edit-button {
+	right: 110px;
+}
+
+.splitter-container {
 	height: 100%;
-	width: 100%;
 }
 
 .graph-element {
@@ -603,13 +734,28 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	flex-grow: 1;
 	overflow: hidden;
 	border: none;
+	position: relative;
 }
 
-.math-editor {
+.math-editor-container {
 	display: flex;
-	max-height: 100%;
-	flex-grow: 1;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
 	flex-direction: column;
+	border-width: 2px;
+	overflow: auto;
+}
+
+.math-editor-selected {
+	outline: 2px solid var(--primary-color);
+}
+
+.math-editor-error {
+	outline: 2px solid red;
+	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .model_diagram {
@@ -617,25 +763,16 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 	height: 100%;
 }
 
-.dev-options {
-	display: flex;
-	flex-direction: column;
-	align-self: center;
-	width: 100%;
-	font-size: 0.75em;
-	font-family: monospace;
-}
-
-.math-options {
-	display: flex;
-	flex-direction: row;
-	align-self: center;
+.p-splitter {
+	height: 100%;
 }
 
 .tera-split-panel {
+	position: relative;
+	height: 100%;
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	width: 100%;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
