@@ -53,7 +53,7 @@
 									:minSize="mathPanelMinSize"
 									:maxSize="mathPanelMaxSize"
 								>
-									<section class="math-editor-container">
+									<section class="math-editor-container" :class="mathEditorSelected">
 										<tera-math-editor
 											:is-editable="isEditable"
 											:latex-equation="equationLatex"
@@ -293,12 +293,12 @@ const showForecastLauncher = ref(false);
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
 const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(1);
-const equationPanelMaxSize = ref<number>(99);
+const equationPanelMinSize = ref<number>(0);
+const equationPanelMaxSize = ref<number>(100);
 
 const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(1);
-const mathPanelMaxSize = ref<number>(99);
+const mathPanelMinSize = ref<number>(0);
+const mathPanelMaxSize = ref<number>(100);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -322,6 +322,17 @@ onMounted(() => {
 onUnmounted(() => {
 	window.removeEventListener('resize', handleResize);
 });
+
+const mathEditorSelected = computed(() => {
+	if (!isMathMLValid.value) {
+		return 'math-editor-error';
+	}
+	if (isEditingEQ.value) {
+		return 'math-editor-selected';
+	}
+	return '';
+});
+
 const betterStates = computed(() => {
 	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
 	const statesFromContent: any[] = model.value?.content?.S ?? [];
@@ -618,8 +629,7 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		logger.error(
 			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
 		);
-	}
-	if (!editMode) {
+	} else if (!editMode) {
 		try {
 			const newPetri = await mathmlToPetri(cleanedMathML);
 			if (
@@ -637,6 +647,8 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		} catch (e) {
 			isMathMLValid.value = false;
 		}
+	} else if (editMode) {
+		isMathMLValid.value = true;
 	}
 };
 
@@ -739,6 +751,18 @@ section math-editor {
 	width: 100%;
 	flex-grow: 1;
 	flex-direction: column;
+	border-width: 2px;
+	border-color: red;
+	height: 100%;
+}
+
+.math-editor-selected {
+	outline: 2px solid var(--primary-color);
+}
+
+.math-editor-error {
+	outline: 2px solid red;
+	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .model_diagram {
