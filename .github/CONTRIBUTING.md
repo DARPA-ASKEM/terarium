@@ -112,6 +112,14 @@ directory. Once launched you should be able to attach your favourite debugger to
 
 To add or modify application secrets (like passwords and API keys)...
 
+### Install Ansible
+
+Required to encrypt/decrypt secrets.
+
+```shell
+brew install ansible
+```
+
 * There is an ansible encrypted vault located
   in `packages/services/hmi-server/src/main/resources/application-secrets.properties.encrypted`
 * These instructions assume you have the vault password in your home directory in a file named `askem-vault-id.txt`
