@@ -10,7 +10,7 @@ export interface ForecastParametersType {
 
 export async function makeForecast(simulationParam: ForecastParametersType) {
 	try {
-		const resp = await API.post('simulation-service/forecast', simulationParam);
+		const resp = await API.post('simulation/forecast', simulationParam);
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -21,7 +21,7 @@ export async function makeForecast(simulationParam: ForecastParametersType) {
 
 export async function getRunStatus(runId: number) {
 	try {
-		const resp = await API.get(`simulation-service/${runId}/status`);
+		const resp = await API.get(`simulation/${runId}/status`);
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -32,7 +32,7 @@ export async function getRunStatus(runId: number) {
 
 export async function getRunResult(runId: number) {
 	try {
-		const resp = await API.get(`simulation-service/${runId}/result`);
+		const resp = await API.get(`simulation/${runId}/result`);
 		const output = resp.data;
 		return output;
 	} catch (err) {
