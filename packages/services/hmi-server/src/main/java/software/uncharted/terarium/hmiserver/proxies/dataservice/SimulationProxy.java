@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.SimulationPlan;
 import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRun;
 import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRunDescription;
@@ -14,6 +15,29 @@ import java.util.Map;
 @Path("/simulations")
 @Produces(MediaType.APPLICATION_JSON)
 public interface SimulationProxy {
+
+	@GET
+	@Path("/{id}")
+	Response getSimulation(
+		@PathParam("id") String id
+	);
+
+	@POST
+	Response createSimulation(
+		Simulation simulation
+	);
+
+	@PATCH
+	Response updateSimulation(
+		@QueryParam("name") String name,
+		@QueryParam("description") String description
+	);
+
+	@DELETE
+	@Path("/{id}")
+	Response deleteSimulation(
+		@PathParam("id") String id
+	);
 
 	@GET
 	@Path("/plans")

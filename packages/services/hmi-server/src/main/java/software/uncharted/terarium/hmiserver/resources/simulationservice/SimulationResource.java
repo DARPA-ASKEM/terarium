@@ -4,14 +4,16 @@ import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationParams;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/api/simulation-service")
+@Path("/api/simulation")
 @Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -19,7 +21,33 @@ import javax.ws.rs.core.Response;
 public class SimulationResource {
 
 	@RestClient
-	SimulationServiceProxy proxy;
+	SimulationServiceProxy simulationServiceProxy;
+
+	@RestClient
+	SimulationProxy simulationProxy;
+
+	@GET
+	@Path("/{id}")
+	public Response getSimulation(@PathParam("id") final String id){
+		return simulationProxy.getSimulation(id);
+	}
+
+	@POST
+	public Response createSimulation(final Simulation simulation){
+		return simulationProxy.createSimulation(simulation);
+	}
+
+	@PATCH
+	public Response updateSimulation(@QueryParam("name") String name,
+																	 @QueryParam("description") String description){
+		return simulationProxy.updateSimulation(name, description);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	public Response deleteSimulation(@PathParam("id") final String id){
+		return simulationProxy.deleteSimulation(id);
+	}
 
 	@POST
 	@Path("/forecast")
@@ -29,7 +57,7 @@ public class SimulationResource {
 	public Response makeForecastRun(
 		final SimulationParams simulationParams
 	) {
-		return proxy.makeForecastRun(simulationParams);
+		return simulationServiceProxy.makeForecastRun(simulationParams);
 	}
 
 	@GET
@@ -39,7 +67,7 @@ public class SimulationResource {
 	public Response getRunStatus(
 		@PathParam("runId") final String runId
 	) {
-		return proxy.getRunStatus(runId);
+		return simulationServiceProxy.getRunStatus(runId);
 	}
 
 	@GET
@@ -49,6 +77,6 @@ public class SimulationResource {
 	public Response getRunResult(
 		@PathParam("runId") final String runId
 	) {
-		return proxy.getRunResult(runId);
+		return simulationServiceProxy.getRunResult(runId);
 	}
 }
