@@ -26,17 +26,46 @@
 									:maxSize="equationPanelMaxSize"
 								>
 									<section class="graph-element">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined floating-edit-button cancel-edit-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											class="p-button-sm p-button-outlined floating-edit-button"
-										/>
+										<Toolbar>
+											<template #start>
+												<Button
+													@click="resetZoom"
+													label="Reset Zoom"
+													class="p-button-sm p-button-secondary"
+												/>
+											</template>
+											<template #center>
+												<span class="p-buttonset">
+													<Button
+														v-if="isEditing"
+														@click="addState"
+														label="Add State"
+														class="p-button-sm p-button-secondary"
+													/>
+													<Button
+														v-if="isEditing"
+														@click="addTransition"
+														label="Add Transition"
+														class="p-button-sm p-button-secondary"
+													/>
+												</span>
+											</template>
+											<template #end>
+												<span class="p-buttonset">
+													<Button
+														v-if="isEditing"
+														@click="cancelEdit"
+														label="Cancel"
+														class="p-button-sm p-button-secondary"
+													/>
+													<Button
+														@click="toggleEditMode"
+														:label="isEditing ? 'Save model' : 'Edit model'"
+														class="p-button-sm p-button-secondary"
+													/>
+												</span>
+											</template>
+										</Toolbar>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
@@ -219,7 +248,8 @@ import {
 	EdgeData,
 	parseIGraph2PetriNet,
 	mathmlToPetri,
-	petriToLatex
+	petriToLatex,
+	NodeType
 } from '@/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
@@ -246,6 +276,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraAsset from '@/components/widgets/tera-asset.vue';
+import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
@@ -276,14 +307,6 @@ const isMathMLValid = ref<boolean>(true);
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const showForecastLauncher = ref(false);
-
-// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-// const modelMath = ref(String.raw`\begin{align}
-// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-// \end{align}`);
 
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
@@ -475,6 +498,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			const nodeData = renderer.nodeSelection.datum();
 			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
 			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+			renderer.nodeSelection = null;
 			renderer.render();
 		}
 
@@ -484,6 +508,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 				renderer.graph.edges,
 				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
+			renderer.edgeSelection = null;
 			renderer.render();
 		}
 	}
@@ -699,6 +724,18 @@ const cancelEdit = async () => {
 	}
 };
 
+const resetZoom = async () => {
+	renderer?.setToDefaultZoom();
+};
+
+const addState = async () => {
+	renderer?.addNodeCenter(NodeType.State, '?');
+};
+
+const addTransition = async () => {
+	renderer?.addNodeCenter(NodeType.Transition, '?');
+};
+
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 
@@ -711,6 +748,15 @@ const mathJaxEq = (eq) => {
 </script>
 
 <style scoped>
+.p-toolbar {
+	position: absolute;
+	width: 100%;
+	z-index: 1;
+	isolation: isolate;
+	background: transparent;
+	padding: 0.25rem;
+}
+
 section math-editor {
 	justify-content: center;
 }
@@ -721,10 +767,6 @@ section math-editor {
 	position: absolute;
 	right: 10px;
 	z-index: 10;
-}
-
-.cancel-edit-button {
-	right: 110px;
 }
 
 .splitter-container {
@@ -743,13 +785,14 @@ section math-editor {
 
 .math-editor-container {
 	display: flex;
-	max-height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
-	flex-grow: 1;
+	height: 100%;
 	flex-direction: column;
 	border-width: 2px;
-	border-color: red;
-	height: 100%;
+	overflow: auto;
 }
 
 .math-editor-selected {
@@ -771,6 +814,7 @@ section math-editor {
 }
 
 .tera-split-panel {
+	position: relative;
 	height: 100%;
 	display: flex;
 	align-items: center;
