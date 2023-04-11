@@ -9,7 +9,7 @@
 				@click="isRemovalModal = true"
 			/>
 			<Button
-				icon="pi pi-file"
+				icon="pi pi-code"
 				v-tooltip="`New code file`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
@@ -23,14 +23,15 @@
 		</header>
 		<Button
 			class="asset-button"
-			label="Overview"
 			:active="activeTab.assetType === 'overview'"
-			:icon="iconClassname('overview')"
 			plain
 			text
 			size="small"
 			@click="emit('open-overview')"
-		/>
+		>
+			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
+			<span class="p-button-label">Overview</span>
+		</Button>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
@@ -41,15 +42,27 @@
 					v-for="tab in tabs"
 					:key="tab.assetId"
 					:active="isEqual(tab, activeTab)"
-					:icon="iconClassname(tab.assetType?.toString() ?? null)"
-					:label="tab.assetName"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
 					text
 					size="small"
 					@click="emit('open-asset', tab)"
-				/>
+				>
+					<vue-feather
+						v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
+						class="p-button-icon-left icon"
+						:type="getAssetIcon(tab.assetType ?? null)"
+						size="1rem"
+						stroke="rgb(16, 24, 40)"
+					/>
+					<component
+						v-else
+						:is="getAssetIcon(tab.assetType ?? null)"
+						class="p-button-icon-left icon"
+					/>
+					<span class="p-button-label">{{ tab.assetName }}</span>
+				</Button>
 			</AccordionTab>
 		</Accordion>
 		<Teleport to="body">
@@ -81,7 +94,7 @@ import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
 import Modal from '@/components/widgets/Modal.vue';
-import { iconClassname } from '@/services/project';
+import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -137,6 +150,11 @@ nav {
 
 header {
 	padding: 0 0.5rem;
+}
+
+.icon {
+	fill: var(--text-color-primary);
+	overflow: visible;
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {
