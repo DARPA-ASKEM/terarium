@@ -20,7 +20,7 @@ To develop and test the core application:
 
 3. Start a service locally to replace the services you shut down
 
-- Start up the Backend Quarkus server using `./gradlew quarkusDev` or `quarkus dev` command
+- Start up the Backend Quarkus server using `./hmiServerDev.sh` command from the root directory
 - Start the front end by doing `yarn && yarn dev` (shortcut for `yarn install && yarn workspaces him-client dev`)
 
 4. Navigate your browser to `localhost:8078`
@@ -67,7 +67,6 @@ echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
 Login Succeeded
 ```
 
-
 ## Debugging Front End
 
 To debug the front end you need:
@@ -92,7 +91,51 @@ tag.
 
 ## Debugging Backend
 
-???
+### IntelliJ
+
+The easiest way to debug the back end is to use the auto-created debug profile in IntelliJ. However first you'll have to
+create a new run config to decrypt the application secrets and then modify the default run profile to include it.
+
+1) Create a new run profile named "Decrypt" which runs the `hmiServerDev decrypt` command:
+   ![Decrypt run config](decrypt.png)
+2) In your default run profile for the hmi-server, add a "Before Launch" step to run your previously created config.
+   Note that you may need to manually run the Decrypt run profile once for IntelliJ to pick it
+   up: ![before Launch](beforeLaunch.png)
+3) Now when you run your run/debug profile, the secrets will be decrypted correctly.
+
+### Other IDEs
+
+As previously mentioned you are able to start up the hmi-server by running the `hmiServerDev` script located in the main
+directory. Once launched you should be able to attach your favourite debugger to the process
+
+## Application Secrets
+
+To add or modify application secrets (like passwords and API keys)...
+
+* There is an ansible encrypted vault located
+  in `packages/services/hmi-server/src/main/resources/application-secrets.properties.encrypted`
+* These instructions assume you have the vault password in your home directory in a file named `askem-vault-id.txt`
+* You can find this file in the **ASKEM TERArium (Shared External)** drive on Google Drive
+* There is a [husky script](.husky/secretsVerification.sh) which ensures that the secrets file is not committed
+  unencrypted.
+* The outputed unencrypted file is gitignored to never be comitted.
+
+1. Decrypt the secrets vault via ansible-vault
+
+```shell
+./hmiServerDev decrypt 
+```
+
+2. Notice that in the resources directory there is now a `application-secrets.properties` file. Add the secrets that you
+   want to this file, making sure to add the %dev prefix to everything as you do.
+3. Re-encrypt the file to commit via the command
+
+```shell
+./hmiServerDev decrypt  
+```
+
+4. In the Orchestration project, add the secret to the correct file with the prefix of %prod
+5. When comitting you'll only be comitting the encrypted file, never anything unencrypted.
 
 ## Running Tests
 
