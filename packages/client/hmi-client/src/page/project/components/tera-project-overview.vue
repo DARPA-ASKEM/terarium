@@ -69,7 +69,7 @@
 						<span class="p-button-label">New workflow</span>
 					</Button>
 					<Button size="large" class="p-button p-button-secondary quick-link-button">
-						<compare-models-icon fill="rgb(16, 24, 40)" style="scale: 1.25" />
+						<compare-models-icon class="icon" />
 						<span class="p-button-label">Compare Models</span>
 					</Button>
 					<Button
@@ -226,6 +226,11 @@ section {
 
 .summary-KPI-label {
 	font-size: 1.15rem;
+}
+
+button .icon {
+	scale: 1.25;
+	color: var(--text-color-primary);
 }
 
 .quick-links {

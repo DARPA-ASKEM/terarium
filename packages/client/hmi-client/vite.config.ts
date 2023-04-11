@@ -52,6 +52,8 @@ export default defineConfig({
 				}
 			}
 		}),
+		// By default SVGs are imported as URL in order to easily reference them in img tags
+		// In order to import SVGs as components '?component' is added as a suffix of an SVG's path
 		svgLoader({ defaultImport: 'url' })
 	],
 	test: {

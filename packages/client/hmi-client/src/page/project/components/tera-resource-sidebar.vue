@@ -51,7 +51,7 @@
 				>
 					<vue-feather
 						v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
-						class="p-button-icon-left"
+						class="p-button-icon-left icon"
 						:type="getAssetIcon(tab.assetType ?? null)"
 						size="1rem"
 						stroke="rgb(16, 24, 40)"
@@ -59,9 +59,7 @@
 					<component
 						v-else
 						:is="getAssetIcon(tab.assetType ?? null)"
-						class="p-button-icon-left"
-						fill="rgb(16, 24, 40)"
-						style="overflow: visible"
+						class="p-button-icon-left icon"
 					/>
 					<span class="p-button-label">{{ tab.assetName }}</span>
 				</Button>
@@ -152,6 +150,11 @@ nav {
 
 header {
 	padding: 0 0.5rem;
+}
+
+.icon {
+	fill: var(--text-color-primary);
+	overflow: visible;
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {

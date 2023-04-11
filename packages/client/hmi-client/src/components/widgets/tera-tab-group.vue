@@ -11,9 +11,7 @@
 				<component
 					v-else
 					:is="getAssetIcon(tab.assetType ?? null)"
-					class="p-button-icon-left"
-					fill="rgb(16, 24, 40)"
-					style="overflow: visible"
+					class="p-button-icon-left icon"
 				/>
 				<span class="name">
 					{{ tab.assetName }}
@@ -84,6 +82,11 @@ header {
 	gap: 0.66rem;
 	padding: 0.25rem 0.5rem 0.25rem 0.75rem;
 	position: relative;
+}
+
+.icon {
+	fill: var(--text-color-primary);
+	overflow: visible;
 }
 
 i {
