@@ -6,11 +6,13 @@ import { XDDArtifact, DocumentType } from './Document';
 import { ProjectAssetTypes } from './Project';
 
 export type Annotation = {
+	id: string;
 	artifact_id: string;
 	artifact_type: string;
 	content: string;
 	timestampMillis: number;
 	username: number;
+	section: string;
 };
 
 export enum ViewType {
