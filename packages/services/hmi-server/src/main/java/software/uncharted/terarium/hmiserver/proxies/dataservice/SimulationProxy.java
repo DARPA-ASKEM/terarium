@@ -29,8 +29,7 @@ public interface SimulationProxy {
 
 	@PATCH
 	Response updateSimulation(
-		@QueryParam("name") String name,
-		@QueryParam("description") String description
+		Simulation simulation
 	);
 
 	@DELETE

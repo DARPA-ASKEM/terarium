@@ -38,9 +38,9 @@ public class SimulationResource {
 	}
 
 	@PATCH
-	public Response updateSimulation(@QueryParam("name") String name,
-																	 @QueryParam("description") String description){
-		return simulationProxy.updateSimulation(name, description);
+	@Path("/{id}")
+	public Response updateSimulation(final Simulation simulation){
+		return simulationProxy.updateSimulation(simulation);
 	}
 
 	@DELETE

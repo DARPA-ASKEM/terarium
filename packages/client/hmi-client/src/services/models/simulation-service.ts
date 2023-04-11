@@ -40,3 +40,51 @@ export async function getRunResult(runId: number) {
 		return null;
 	}
 }
+
+export async function getSimulation(id) {
+	try {
+		const response = await API.get(`/simulation/${id}`);
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function createSimulation(name, description, simulationParams, result) {
+	try {
+		const response = await API.post('/simulation', {
+			name,
+			description,
+			simulationParams,
+			result
+		});
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function updateSimulation(id, name, description) {
+	try {
+		const response = await API.patch(`/simulation/${id}`, {
+			name,
+			description
+		});
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
+
+export async function deleteAnnotation(id) {
+	try {
+		const response = await API.delete(`/simulation/${id}`);
+		return response.data;
+	} catch (error) {
+		logger.error(error);
+		return null;
+	}
+}
