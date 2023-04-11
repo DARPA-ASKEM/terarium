@@ -9,7 +9,7 @@
 			v-if="showForecastLauncher && currentModel"
 			:model="currentModel"
 			@close="showForecastLauncher = false"
-			@launch-forecast="saveSimulation"
+			@launch-forecast="runSimulation"
 		/>
 	</Teleport>
 </template>
@@ -23,10 +23,9 @@ import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/g
 import { BasicRenderer, IGraph, INode } from '@graph-scaffolder/index';
 import ContextMenu from 'primevue/contextmenu';
 import ForecastLauncher from '@/components/models/forecast-launcher.vue';
-import { getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { getRunResult } from '@/services/models/simulation-service';
 
 import { getModel } from '@/services/model';
-import { parse } from 'path';
 
 // SIR and SVIIvR
 const MODEL_LIST = [2, 3];
@@ -35,7 +34,7 @@ interface NodeData {
 	type: string;
 	val: number;
 	model?: ITypedModel<PetriNet>;
-	forecastId?: any;
+	runId?: any;
 }
 
 interface EdgeData {
@@ -52,15 +51,12 @@ const pathFn = d3
 	.y((d) => d.y)
 	.curve(d3.curveBasis);
 
-let counter = 0;
 let forecastSelection: any = null;
 
 class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 	parentNodes(id: any) {
 		const edges = this.graph.edges.filter((d) => d.target === id);
-		console.log('debug', edges);
 		const sources = edges.map((e) => e.source);
-		console.log('debug', sources);
 		const nodes = this.graph.nodes.filter((d) => sources.includes(d.id));
 		return nodes;
 	}
@@ -105,11 +101,19 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('stroke', '#888')
 			.attr('fill', '#EEE');
 
-		selection
+		const modelSelection = selection.filter((d) => d.data.type === 'model');
+		modelSelection
 			.append('text')
 			.attr('x', (d) => -d.width * 0.4)
-			.text((d) => d.data.type);
+			.text((d) => d.data.model.name);
 
+		const forecastSelection = selection.filter((d) => d.data.type === 'forecast');
+		forecastSelection
+			.append('text')
+			.attr('x', (d) => -d.width * 0.4)
+			.text('Forecast');
+
+		// Handle
 		selection
 			.append('circle')
 			.attr('class', 'no-drag')
@@ -118,6 +122,26 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('r', 8)
 			.attr('fill', '#345')
 			.style('visibility', 'visible');
+
+		this.renderVisNodes();
+	}
+
+	renderVisNodes() {
+		const visNodes = this.chart
+			.selectAll('.node-ui')
+			.filter((d) => d.data.type === 'visualization');
+		if (visNodes.size() <= 0) return;
+
+		visNodes.each((d, g, i) => {
+			// const nodeUI = d3.select(g[i]);
+
+			// Get parent forecast if applicable
+			const pn = this.parentNodes(d.id);
+			if (pn.length > 0 && pn[0].data.runId) {
+				const runId = pn[0].data.runId;
+				renderVisNode(d.id, runId);
+			}
+		});
 	}
 
 	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
@@ -138,7 +162,7 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 			x: pos.x,
 			y: pos.y,
 			width: 200,
-			height: 90,
+			height: 100,
 			nodes: [],
 			data: { type: 'visualization', val: 1 }
 		});
@@ -280,8 +304,8 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 const WORKFLOW: IGraph<NodeData, EdgeData> = {
 	nodes: [],
 	edges: [],
-	width: 1200,
-	height: 500
+	width: 1500,
+	height: 600
 };
 
 const graphElement = ref<HTMLDivElement | null>(null);
@@ -323,12 +347,23 @@ const run = async () => {
 // Model editor context menu
 const contextMenuItems = ref([
 	{
-		label: 'Add model',
+		label: 'Add SIR model',
 		icon: 'pi pi-fw pi-circle',
 		command: async () => {
-			const model = await getModel(MODEL_LIST[counter % 2] + '');
+			const model = await getModel('2');
 			console.log('[add model]', model);
-			counter++;
+
+			if (renderer && model) {
+				renderer.addNodeModel(model, { x: eventX, y: eventY });
+			}
+		}
+	},
+	{
+		label: 'Add SIR RODA 2020',
+		icon: 'pi pi-fw pi-circle',
+		command: async () => {
+			const model = await getModel('5');
+			console.log('[add model]', model);
 
 			if (renderer && model) {
 				renderer.addNodeModel(model, { x: eventX, y: eventY });
@@ -356,43 +391,73 @@ const contextMenuItems = ref([
 ]);
 
 const renderVisNode = async (nodeId: string, runId: number) => {
-	console.log('render vis node', nodeId, runId);
 	if (!renderer) return;
 
 	const nodeUI = renderer.chart.selectAll('.node-ui').filter((d) => d.id === nodeId);
 	nodeUI.selectAll('text').remove();
 	nodeUI.selectAll('.temp').remove();
 
-	setTimeout(async () => {
-		const resultCSV = await getRunResult(runId);
-		const parsedCSV = d3.csvParse(resultCSV);
-		const temp = nodeUI.append('g').classed('temp', true);
+	const resultCSV = await getRunResult(runId);
+	const parsedCSV = d3.csvParse(resultCSV);
+	const temp = nodeUI.append('g').classed('temp', true);
 
-		parsedCSV.forEach((d, i) => {
-			const key = Object.keys(d)[2];
-			const value = +(d[key] as string);
-			console.log(key, value);
-			temp
-				.append('circle')
-				.attr('cx', i * 2 - 0.5 * nodeUI.datum().width)
-				.attr('cy', 80 - value - 0.5 * nodeUI.datum().height)
-				.attr('r', 2)
-				.attr('fill', 'red');
+	const keys = Object.keys(parsedCSV[0]);
+
+	const colors = [
+		'#a6cee3',
+		'#1f78b4',
+		'#b2df8a',
+		'#33a02c',
+		'#fb9a99',
+		'#e31a1c',
+		'#fdbf6f',
+		'#ff7f00',
+		'#cab2d6',
+		'#6a3d9a'
+	];
+
+	keys.forEach((key, keyIdx) => {
+		if (keyIdx === 0) return;
+		const series = parsedCSV.map((p) => p[key]);
+		const pathData = series.map((v: number, i) => {
+			return { x: 3 * i, y: 100 - v };
 		});
-	}, 1000);
+
+		temp
+			.append('path')
+			.attr(
+				'transform',
+				`translate(${-0.5 * nodeUI.datum().width},${-0.5 * nodeUI.datum().height})`
+			)
+			.attr('d', pathFn(pathData as any))
+			.attr('fill', 'none')
+			.attr('stroke', colors[keyIdx])
+			.attr('stroke-width', 2);
+
+		temp
+			.append('text')
+			.attr('x', 50)
+			.attr('y', -nodeUI.datum().height * 0.5 + 15 * keyIdx)
+			.style('stroke', colors[keyIdx])
+			.text(key);
+	});
 };
 
-const saveSimulation = (runId: number) => {
+// t1 = 0.002
+// t2 = 0.003
+const runSimulation = (runId: number) => {
 	showForecastLauncher.value = false;
-	forecastSelection.datum().data.forecastId = runId;
+	forecastSelection.datum().data.runId = runId;
 	if (renderer) {
-		const childrenNodes = renderer.childrenNodes(forecastSelection.datum().id);
-		if (childrenNodes) {
-			for (let i = 0; i < childrenNodes.length; i++) {
-				const nodeId = childrenNodes[i].id;
-				renderVisNode(nodeId, runId);
+		setTimeout(() => {
+			const childrenNodes = renderer.childrenNodes(forecastSelection.datum().id);
+			if (childrenNodes) {
+				for (let i = 0; i < childrenNodes.length; i++) {
+					const nodeId = childrenNodes[i].id;
+					renderVisNode(nodeId, runId);
+				}
 			}
-		}
+		}, 1000);
 	}
 };
 
@@ -409,8 +474,8 @@ section {
 }
 .experiment-container {
 	margin: 10px;
-	width: 1200px;
-	height: 500px;
+	width: 1500px;
+	height: 600px;
 	border: 1px solid #888;
 	box-sizing: border-box;
 }
