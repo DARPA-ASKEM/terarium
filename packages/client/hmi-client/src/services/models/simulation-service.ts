@@ -1,14 +1,8 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
+import { SimulationParams } from '@/types/Types';
 
-export interface ForecastParametersType {
-	petri: string;
-	initials: { [key: string]: number };
-	tspan: number[];
-	params: { [key: string]: number };
-}
-
-export async function makeForecast(simulationParam: ForecastParametersType) {
+export async function makeForecast(simulationParam: SimulationParams) {
 	try {
 		const resp = await API.post('simulation/forecast', simulationParam);
 		const output = resp.data;

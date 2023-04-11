@@ -22,6 +22,21 @@ export interface ProvenanceQueryParam {
     userId?: number;
 }
 
+export interface Simulation {
+    id?: number;
+    name: string;
+    description?: string;
+    simulationParams: SimulationParams;
+    result?: string;
+}
+
+export interface SimulationParams {
+    petri: string;
+    initials: { [index: string]: number };
+    tspan: number[];
+    params: { [index: string]: number };
+}
+
 export enum EventType {
     Search = "SEARCH",
 }
