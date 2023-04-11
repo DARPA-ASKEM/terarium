@@ -32,40 +32,46 @@
 									:maxSize="equationPanelMaxSize"
 								>
 									<section class="graph-element">
-										<span v-if="isEditing" class="toolbar p-buttonset">
-											<Button
-												@click="resetZoom"
-												label="Reset Zoom"
-												class="p-button-sm p-button-secondary"
-											/>
-											<Button
-												@click="addState"
-												label="Add State"
-												class="p-button-sm p-button-secondary"
-											/>
-											<Button
-												@click="addTransition"
-												label="Add Transition"
-												class="p-button-sm p-button-secondary"
-											/>
-											<Button
-												@click="cancelEdit"
-												label="Cancel"
-												class="p-button-sm p-button-secondary"
-											/>
-											<Button
-												@click="toggleEditMode"
-												:label="isEditing ? 'Save model' : 'Edit model'"
-												class="p-button-sm p-button-secondary"
-											/>
-										</span>
-										<div v-else>
-											<Button
-												@click="toggleEditMode"
-												:label="isEditing ? 'Save model' : 'Edit model'"
-												class="p-button-sm p-button-secondary floating-edit-button"
-											/>
-										</div>
+										<Toolbar>
+											<template #start>
+												<Button
+													@click="resetZoom"
+													label="Reset Zoom"
+													class="p-button-sm p-button-secondary"
+												/>
+											</template>
+											<template #center>
+												<span class="p-buttonset">
+													<Button
+														v-if="isEditing"
+														@click="addState"
+														label="Add State"
+														class="p-button-sm p-button-secondary"
+													/>
+													<Button
+														v-if="isEditing"
+														@click="addTransition"
+														label="Add Transition"
+														class="p-button-sm p-button-secondary"
+													/>
+												</span>
+											</template>
+											<template #end>
+												<span class="p-buttonset">
+													<Button
+														v-if="isEditing"
+														@click="cancelEdit"
+														label="Cancel"
+														class="p-button-sm p-button-secondary"
+													/>
+													<Button
+														@click="toggleEditMode"
+														:label="isEditing ? 'Save model' : 'Edit model'"
+														class="p-button-sm p-button-secondary"
+													/>
+												</span>
+											</template>
+										</Toolbar>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
@@ -275,6 +281,7 @@ import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
@@ -745,15 +752,13 @@ const mathJaxEq = (eq) => {
 </script>
 
 <style scoped>
-.toolbar {
-	right: 0;
-	display: flex;
-	justify-content: space-between;
+.p-toolbar {
 	position: absolute;
+	width: 100%;
 	z-index: 1;
 	isolation: isolate;
-	margin-top: 10px;
-	margin-right: 10px;
+	background: transparent;
+	padding: 0.25rem;
 }
 
 section math-editor {

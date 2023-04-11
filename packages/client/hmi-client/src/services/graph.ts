@@ -131,18 +131,21 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 	}
 
 	// Find new width and height
-	let minX = Number.MAX_VALUE;
-	let maxX = Number.MIN_VALUE;
-	let minY = Number.MAX_VALUE;
-	let maxY = Number.MIN_VALUE;
-	graphData.nodes.forEach((node) => {
-		if (node.x < minX) minX = node.x;
-		if (node.x > maxX) maxX = node.x;
-		if (node.y < minY) minY = node.y;
-		if (node.y > maxY) maxY = node.y;
-	});
+	if (graphData.nodes.length > 0) {
+		let minX = Number.MAX_VALUE;
+		let maxX = Number.MIN_VALUE;
+		let minY = Number.MAX_VALUE;
+		let maxY = Number.MIN_VALUE;
+		graphData.nodes.forEach((node) => {
+			if (node.x < minX) minX = node.x;
+			if (node.x > maxX) maxX = node.x;
+			if (node.y < minY) minY = node.y;
+			if (node.y > maxY) maxY = node.y;
+		});
 
-	graphData.width = Math.abs(maxX - minX) + 2 * nodeWidth;
-	graphData.height = Math.abs(maxY - minY) + 2 * nodeHeight;
+		graphData.width = Math.abs(maxX - minX) + 2 * nodeWidth;
+		graphData.height = Math.abs(maxY - minY) + 2 * nodeHeight;
+	}
+
 	return graphData;
 };
