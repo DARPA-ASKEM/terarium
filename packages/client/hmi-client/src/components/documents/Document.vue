@@ -56,37 +56,33 @@
 					<InputText placeholder="Find in page" class="find-in-page" />
 				</div>
 				--></nav>
-		<section class="asset" v-if="documentView === DocumentView.EXRACTIONS" id="Top">
+		<tera-asset
+			v-if="documentView === DocumentView.EXRACTIONS"
+			:is-editable="isEditable"
+			:name="highlightSearchTerms(doc.title)"
+			:asset-form="highlightSearchTerms(doc.journal)"
+			:authors="formatDocumentAuthors(doc)"
+			:doi="highlightSearchTerms(doi)"
+		>
 			<header>
-				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-				<h4 v-html="highlightSearchTerms(doc.title)" />
-				<div class="authors" v-html="formatDocumentAuthors(doc)" />
-				<div v-if="docLink || doi">
-					DOI:
-					<a
-						:href="`https://doi.org/${doi}`"
-						rel="noreferrer noopener"
-						v-html="highlightSearchTerms(doi)"
-					/>
-				</div>
 				<div v-html="highlightSearchTerms(doc.publisher)" />
-				<section class="pdf-buttons" v-if="doi">
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-external-link"
-						label="Open PDF"
-						@click="openPDF"
-						:loading="!pdfLink && !linkIsPDF()"
-					/>
-					<Button
-						class="p-button-sm p-button-outlined"
-						@click="downloadPDF"
-						:icon="'pi pi-cloud-download'"
-						:loading="!pdfLink"
-						label="Download PDF"
-					/>
-				</section>
 			</header>
+			<template #bottom-buttons>
+				<Button
+					class="p-button-sm p-button-outlined"
+					icon="pi pi-external-link"
+					label="Open PDF"
+					@click="openPDF"
+					:loading="!pdfLink && !linkIsPDF()"
+				/>
+				<Button
+					class="p-button-sm p-button-outlined"
+					@click="downloadPDF"
+					:icon="'pi pi-cloud-download'"
+					:loading="!pdfLink"
+					label="Download PDF"
+				/>
+			</template>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 				<AccordionTab v-if="!isEmpty(formattedAbstract)">
 					<template #header>
@@ -255,7 +251,7 @@
 					</DataTable>
 				</AccordionTab>
 			</Accordion>
-		</section>
+		</tera-asset>
 		<section v-else-if="DocumentView.PDF" class="asset">PDF Preview</section>
 	</section>
 </template>
@@ -282,6 +278,7 @@ import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
+import TeraAsset from '@/components/widgets/tera-asset.vue';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 enum DocumentView {
@@ -328,6 +325,7 @@ watch(
 			const d = await getDocumentById(id);
 			if (d) {
 				doc.value = d;
+				console.log(d);
 			}
 		} else {
 			doc.value = null;
@@ -475,11 +473,6 @@ onMounted(async () => {
 .two-columns {
 	display: flex;
 	flex-direction: row;
-}
-
-.pdf-buttons {
-	display: flex;
-	gap: 0.5rem;
 }
 
 nav {

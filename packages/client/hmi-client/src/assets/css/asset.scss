@@ -14,13 +14,11 @@
         margin: 0rem 1rem;
         color: var(--text-color-subdued);
         display: flex;
-        flex-direction: column;
         gap: 0.5rem;
+        justify-content: space-between;
 
-        .authors,
-        .journal,
-        .framework,
-        .simulation {
+        .asset-form,
+        .authors {
             color: var(--primary-color-dark);
         }
 
@@ -33,13 +31,8 @@
             max-width: var(--constrain-width);
         }
 
-        .header-and-buttons {
-            display: flex;
-            justify-content: space-between;
-
-            button {
-                margin: 0 0.25rem
-            }
+        section {
+            gap: 0.5rem;
         }
 
         button {

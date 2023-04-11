@@ -1,21 +1,15 @@
 <template>
-	<section class="asset">
-		<header>
-			<div class="framework">{{ model?.framework }}</div>
-			<div class="header-and-buttons">
-				<h4 v-html="title" />
-				<span v-if="isEditable">
-					<Button
-						@click="launchForecast"
-						label="Open simulation space"
-						:disabled="isEditing"
-						class="p-button-sm"
-					/>
-				</span>
-			</div>
+	<tera-asset v-if="model" :name="name" :asset-form="model?.framework" :is-editable="isEditable">
+		<template #right-buttons>
+			<Button
+				@click="launchForecast"
+				label="Open simulation space"
+				:disabled="isEditing"
+				class="p-button-sm"
+			/>
 			<!--contributor-->
 			<!--created on: date-->
-		</header>
+		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-html="description" class="constrain-width" />
@@ -209,7 +203,7 @@
 				@launch-forecast="goToSimulationRunPage"
 			/>
 		</Teleport>
-	</section>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -251,6 +245,7 @@ import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraAsset from '@/components/widgets/tera-asset.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
@@ -448,6 +443,7 @@ watch(
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
+			console.log(result);
 			fetchRelatedTerariumArtifacts();
 			if (model.value) {
 				const data = await petriToLatex(model.value.content);
@@ -703,7 +699,7 @@ const cancelEdit = async () => {
 	}
 };
 
-const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 
 const mathJaxEq = (eq) => {

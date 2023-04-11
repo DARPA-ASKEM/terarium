@@ -1,14 +1,11 @@
 <template>
-	<section class="asset">
-		<header>
-			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
-			<h4 v-html="dataset?.name" />
-		</header>
-
-		<section class="description">
-			<span>{{ dataset?.description }}</span>
-		</section>
-
+	<tera-asset
+		v-if="dataset"
+		:name="dataset?.name"
+		:asset-form="dataset?.simulation_run ? 'Simulation run' : ''"
+		:is-editable="isEditable"
+		:description="dataset?.description"
+	>
 		<section class="metadata data-row">
 			<section>
 				<header>Maintainer</header>
@@ -127,7 +124,7 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-	</section>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -141,6 +138,7 @@ import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import TeraAsset from '@/components/widgets/tera-asset.vue';
 
 const props = defineProps<{
 	assetId: string;
@@ -180,6 +178,7 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
+				console.log(datasetTemp);
 			}
 		} else {
 			dataset.value = null;
@@ -241,12 +240,6 @@ ol.numbered-list li::marker {
 
 .feature-type {
 	color: var(--text-color-subdued);
-}
-
-.description {
-	padding: 1rem;
-	padding-bottom: 0.5rem;
-	max-width: var(--constrain-width);
 }
 
 .annotation-group {

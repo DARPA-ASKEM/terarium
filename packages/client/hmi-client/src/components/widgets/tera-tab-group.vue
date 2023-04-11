@@ -39,6 +39,7 @@ nav {
 	display: grid;
 	grid-auto-columns: min(calc(100% / var(--nb-tabs, 1)), 20%);
 	grid-auto-flow: column;
+	margin: 0.2rem 0.2rem 0 0.2rem;
 }
 
 @keyframes show-tab {
@@ -92,8 +93,10 @@ header {
 	display: none;
 	visibility: hidden;
 }
+
 .p-button {
-	flex-shrink: 0; /* Avoid the highlight to be squished */
+	flex-shrink: 0;
+	/* Avoid the highlight to be squished */
 }
 
 span {

@@ -37,14 +37,14 @@
 					is-editable
 					@open-asset="openAsset"
 				/>
-				<dataset
-					v-else-if="assetType === ProjectAssetTypes.DATASETS"
+				<model
+					v-else-if="assetType === ProjectAssetTypes.MODELS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
 				/>
-				<model
-					v-else-if="assetType === ProjectAssetTypes.MODELS"
+				<dataset
+					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
@@ -325,7 +325,6 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow: auto;
-	padding: 0.5rem 0.5rem 0;
 }
 
 .no-open-tabs {
