@@ -40,6 +40,14 @@ brew install quarkusio/tap/quarkus
 First, launch the authentication service before running the server (see
 documentation [here](https://github.com/DARPA-ASKEM/orchestration)).
 
+Then, before your first launch of the server you will need to decrypt the local secrets file. This command is assuming
+you have the password located in your home directory in a file named `askem-vault-id.txt`.
+This command should be run from inside of the `resources` directory of the hmi-server
+
+```shell
+ansible-vault decrypt --vault-password-file ~/askem-vault-id.txt --output application-secrets.properties application-secrets.properties.encrypted   
+```
+
 Then, you can run your application in dev mode that enables live coding using:
 
 ```

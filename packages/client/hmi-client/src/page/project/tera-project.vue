@@ -14,7 +14,7 @@
 					@open-asset="openAsset"
 					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
-					@click="fetchAnnotations()"
+					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
 				/>
 			</template>
@@ -26,7 +26,7 @@
 				:active-tab-index="activeTabIndex"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
-				@click="fetchAnnotations()"
+				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
 				<document
@@ -74,33 +74,102 @@
 		</section>
 		<tera-slider-panel
 			class="slider"
-			content-width="300px"
+			content-width="240px"
 			direction="right"
 			header="Notes"
 			v-model:is-open="isNotesSliderOpen"
-			@click="fetchAnnotations()"
+			@click="getAndPopulateAnnotations()"
 		>
 			<template v-slot:content>
-				<div v-for="(annotation, idx) of annotations" :key="idx" class="annotation-panel">
-					<div class="annotation-header">
-						<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
-						<Dropdown
-							placeholder="Unassigned"
-							class="p-button p-button-text notes-dropdown-button"
-						/>
-						<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
-						<Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-secondary" />
-					</div>
-					<div class="annotation-content">
-						<div class="annotation-author-date">
-							<div>{{ annotation.username }}</div>
-							<div>{{ formatMillisToDate(annotation.timestampMillis) }}</div>
+				<section class="annotation-panel-container">
+					<div v-for="(annotation, idx) of annotations" :key="idx">
+						<div
+							v-if="isEditingNote && idx === selectedNoteIndex"
+							class="annotation-input-container"
+						>
+							<div class="annotation-header">
+								<Dropdown
+									placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button"
+									:options="noteOptions"
+									v-model="selectedNoteSection[idx]"
+								/>
+							</div>
+							<Textarea
+								v-model="annotation.content"
+								ref="annotationTextInput"
+								rows="5"
+								cols="30"
+								aria-labelledby="annotation"
+							/>
+							<div class="save-cancel-buttons">
+								<Button
+									@click="isEditingNote = false"
+									label="Cancel"
+									class="p-button p-button-secondary"
+									size="small"
+								/>
+								<Button
+									@click="
+										updateNote();
+										isEditingNote = false;
+									"
+									label=" Save"
+									class="p-button"
+									size="small"
+								/>
+							</div>
 						</div>
-						<p>{{ annotation.content }}</p>
+						<div v-else>
+							<div class="annotation-header">
+								<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
+								<Dropdown
+									disabled
+									placeholder="Unassigned"
+									class="p-button p-button-text notes-dropdown-button"
+									:options="noteOptions"
+									v-model="selectedNoteSection[idx]"
+								/>
+								<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
+								<Button
+									icon="pi pi-ellipsis-v"
+									class="p-button-rounded p-button-secondary"
+									@click="
+										(event) => {
+											toggleAnnotationMenu(event);
+											selectedNoteIndex = idx;
+										}
+									"
+								/>
+							</div>
+							<div>
+								<p>{{ annotation.content }}</p>
+								<div class="annotation-author-date">
+									<div>
+										{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
-				</div>
+					<Menu
+						ref="annotationMenu"
+						:model="annotationMenuItems"
+						:popup="true"
+						@hide="onHide"
+						@click.stop
+					/>
+				</section>
 				<div class="annotation-input-box">
-					<div v-if="isAnnotationInputOpen">
+					<div v-if="isAnnotationInputOpen" class="annotation-input-container">
+						<div class="annotation-header">
+							<Dropdown
+								placeholder="Unassigned"
+								class="p-button p-button-text notes-dropdown-button"
+								:options="noteOptions"
+								v-model="newNoteSection"
+							/>
+						</div>
 						<Textarea
 							v-model="annotationContent"
 							ref="annotationTextInput"
@@ -110,18 +179,18 @@
 						/>
 						<div class="save-cancel-buttons">
 							<Button
-								@click="
-									addAnnotation();
-									toggleAnnotationInput();
-								"
-								label="Save"
-								class="p-button"
-								size="small"
-							/>
-							<Button
 								@click="toggleAnnotationInput()"
 								label="Cancel"
 								class="p-button p-button-secondary"
+								size="small"
+							/>
+							<Button
+								@click="
+									addNote();
+									toggleAnnotationInput();
+								"
+								label=" Save"
+								class="p-button"
 								size="small"
 							/>
 						</div>
@@ -147,7 +216,6 @@ import { isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import API from '@/api/api';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Document from '@/components/documents/Document.vue';
 import Model from '@/components/models/Model.vue';
@@ -163,10 +231,17 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult3.vue';
-import { Tab, ResourceType, Annotation } from '@/types/common';
+import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
-import { formatMillisToDate } from '@/utils/date';
+import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
+import {
+	createAnnotation,
+	deleteAnnotation,
+	getAnnotations,
+	updateAnnotation
+} from '@/services/models/annotations';
+import Menu from 'primevue/menu';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -188,6 +263,83 @@ const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 const code = ref<string>();
 const isAnnotationInputOpen = ref(false);
+const annotationMenu = ref();
+const menuOpenEvent = ref();
+
+const selectedNoteIndex = ref();
+const isEditingNote = ref(false);
+const isNoteDeletionConfirmation = ref(false);
+const noteDeletionConfirmationMenuItem = {
+	label: 'Are you sure?',
+	icon: '',
+	items: [
+		{
+			label: 'Yes, delete this note',
+			command: () => deleteNote()
+		}
+	]
+};
+const annotationMenuItems = ref([
+	{
+		label: 'Edit',
+		icon: 'pi pi-fw pi-file-edit',
+		command: () => {
+			isEditingNote.value = true;
+		}
+	},
+	{
+		label: 'Delete',
+		icon: 'pi pi-fw pi-trash',
+		command: () => {
+			if (!isNoteDeletionConfirmation.value) {
+				// @ts-ignore
+				annotationMenuItems.value.push(noteDeletionConfirmationMenuItem);
+				isNoteDeletionConfirmation.value = true;
+			}
+		}
+	}
+]);
+
+function onHide() {
+	if (isNoteDeletionConfirmation.value) {
+		annotationMenu.value.show(menuOpenEvent.value);
+		isNoteDeletionConfirmation.value = false;
+	} else if (annotationMenuItems.value.length > 2) {
+		annotationMenuItems.value.pop();
+	}
+}
+
+const toggleAnnotationMenu = (event) => {
+	// Fake object to allow the Menu component to not hide after clicking an item.
+	// Actually I am immediately showing it again after it automatically hides.
+	// I need to save and pass event.currentTarget in a ref to use when I want to manually show the menu.
+	// Kind of a hack/workaround due to the restrictive nature of this component.
+	menuOpenEvent.value = {
+		currentTarget: event.currentTarget
+	};
+	annotationMenu.value.toggle(event);
+};
+
+enum NoteSection {
+	Unassigned = 'Unassigned',
+	Abstract = 'Abstract',
+	Intro = 'Intro',
+	Methods = 'Methods',
+	Results = 'Results',
+	Discussion = 'Discussion',
+	References = 'References'
+}
+const noteOptions = ref([
+	NoteSection.Unassigned,
+	NoteSection.Abstract,
+	NoteSection.Intro,
+	NoteSection.Methods,
+	NoteSection.Results,
+	NoteSection.Discussion,
+	NoteSection.References
+]);
+const selectedNoteSection = ref<string[]>([]);
+const newNoteSection = ref();
 
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
@@ -283,39 +435,52 @@ watch(
 	}
 );
 
-// FIXME:
-// - Need to establish terarium artifact types
-// - Move to service layer
-const fetchAnnotations = async () => {
-	const response = await API.get('/annotations', {
-		params: {
-			artifact_type: ResourceType.XDD,
-			artifact_id: props.assetId
-		}
-	});
-	if (response) {
-		annotations.value = response.data;
-	}
-};
+async function getAndPopulateAnnotations() {
+	annotations.value = await getAnnotations(props.assetId, props.assetType);
+	selectedNoteSection.value = annotations.value.map((note) => note.section);
+	console.log(selectedNoteSection.value);
+}
 
-const addAnnotation = async () => {
-	const content = annotationContent.value;
-	await API.post('/annotations', {
-		content,
-		artifact_id: props.assetId,
-		artifact_type: ResourceType.XDD
-	});
+const addNote = async () => {
+	await createAnnotation(
+		newNoteSection.value,
+		annotationContent.value,
+		props.assetId,
+		props.assetType
+	);
 	annotationContent.value = '';
-
-	// Refresh
-	await fetchAnnotations();
+	newNoteSection.value = NoteSection.Unassigned;
+	await getAndPopulateAnnotations();
 };
+
+async function updateNote() {
+	const noteToUpdate: Annotation = annotations.value[selectedNoteIndex.value];
+	const section =
+		selectedNoteSection.value.length >= selectedNoteIndex.value
+			? selectedNoteSection.value[selectedNoteIndex.value]
+			: null;
+	await updateAnnotation(noteToUpdate.id, section, noteToUpdate.content);
+	await getAndPopulateAnnotations();
+}
+
+async function deleteNote() {
+	const noteToDelete: Annotation = annotations.value[selectedNoteIndex.value];
+	await deleteAnnotation(noteToDelete.id);
+	await getAndPopulateAnnotations();
+}
 
 function toggleAnnotationInput() {
 	isAnnotationInputOpen.value = !isAnnotationInputOpen.value;
 	if (isAnnotationInputOpen.value === false) {
 		annotationContent.value = '';
 	}
+}
+
+function formatAuthorTimestamp(username, timestamp) {
+	if (isDateToday(timestamp)) {
+		return `${username} at ${formatLocalTime(timestamp)} today`;
+	}
+	return `${username} on ${formatDdMmmYyyy(timestamp)}`;
 }
 </script>
 
@@ -366,9 +531,10 @@ section {
 	background-color: var(--surface-section);
 }
 
-.annotation-panel {
-	margin: 1rem;
-	margin-left: 0.5rem;
+.annotation-panel-container {
+	display: flex;
+	gap: 16px;
+	padding: 0 16px 0 16px;
 }
 
 .notes-dropdown-button {
@@ -376,8 +542,17 @@ section {
 	padding: 0rem;
 }
 
+:deep(span.p-dropdown-label.p-placeholder) {
+	color: var(--text-color-subdued);
+}
+
 :deep(span.p-dropdown-label) {
-	padding: 0.25rem 0.25rem 0.25rem 0.5rem !important;
+	padding: 0;
+	font-size: var(--font-caption);
+}
+
+:deep(span.p-dropdown-trigger-icon.pi.pi-chevron-down) {
+	color: var(--text-color-subdued);
 }
 
 .annotation-panel .p-dropdown:not(.p-disabled).p-focus {
@@ -396,30 +571,39 @@ section {
 }
 
 .annotation-content {
-	padding: 0.5rem;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--gray-50);
+	padding: 0rem 0.5rem 0rem 0.5rem;
+}
+
+.annotation-input-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 .annotation-input-box {
-	padding: 1rem;
-	padding-left: 0.5rem;
+	padding: 16px 16px 8px 16px;
 }
 
 .annotation-input-box .p-inputtext {
 	border-color: var(--surface-border);
 	max-width: 100%;
 	min-width: 100%;
-	margin-bottom: 0.25rem;
 }
 
 .annotation-input-box .p-inputtext:hover {
 	border-color: var(--primary-color) !important;
 }
 
-.annotation-input-box .save-cancel-buttons {
+.annotation-header {
+	height: 2rem;
+}
+
+.save-cancel-buttons {
 	display: flex;
 	gap: 0.5rem;
+}
+
+.save-cancel-buttons > button {
+	flex: 1;
 }
 </style>

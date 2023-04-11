@@ -15,6 +15,20 @@ export function formatLong(timestamp): string {
 	});
 }
 
+export function formatLocalTime(timestamp): string {
+	return new Date(timestamp).toLocaleTimeString('en-US', { timeStyle: 'short' });
+}
+
 export function formatMillisToDate(millis: number) {
 	return new Date(millis).toLocaleDateString('en-US');
+}
+
+export function isDateToday(timestamp): boolean {
+	const today = new Date();
+	const someDate = new Date(timestamp);
+	return (
+		someDate.getDate() === today.getDate() &&
+		someDate.getMonth() === today.getMonth() &&
+		someDate.getFullYear() === today.getFullYear()
+	);
 }
