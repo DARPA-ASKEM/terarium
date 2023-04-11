@@ -116,8 +116,8 @@ i {
 }
 
 .p-button {
-	flex-shrink: 0;
 	/* Avoid the highlight to be squished */
+	flex-shrink: 0;
 }
 
 span {
