@@ -2,18 +2,12 @@
 	<nav :style="{ '--nb-tabs': tabs.length }">
 		<header v-for="(tab, index) in tabs" :key="index">
 			<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
-				<template v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'">
-					<i
-						v-if="getAssetIcon(tab.assetType ?? null).substring(0, 3) === 'pi '"
-						:class="getAssetIcon(tab.assetType ?? null)"
-					/>
-					<vue-feather
-						v-else
-						:type="getAssetIcon(tab.assetType ?? null)"
-						size="1rem"
-						stroke="rgb(16, 24, 40)"
-					/>
-				</template>
+				<vue-feather
+					v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
+					:type="getAssetIcon(tab.assetType ?? null)"
+					size="1rem"
+					stroke="rgb(16, 24, 40)"
+				/>
 				<component
 					v-else
 					:is="getAssetIcon(tab.assetType ?? null)"

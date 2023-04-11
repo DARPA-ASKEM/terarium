@@ -49,19 +49,13 @@
 					size="small"
 					@click="emit('open-asset', tab)"
 				>
-					<template v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'">
-						<i
-							v-if="getAssetIcon(tab.assetType ?? null).substring(0, 3) === 'pi '"
-							:class="`p-button-icon-left ${getAssetIcon(tab.assetType ?? null)}`"
-						/>
-						<vue-feather
-							v-else
-							class="p-button-icon-left"
-							:type="getAssetIcon(tab.assetType ?? null)"
-							size="1rem"
-							stroke="rgb(16, 24, 40)"
-						/>
-					</template>
+					<vue-feather
+						v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
+						class="p-button-icon-left"
+						:type="getAssetIcon(tab.assetType ?? null)"
+						size="1rem"
+						stroke="rgb(16, 24, 40)"
+					/>
 					<component
 						v-else
 						:is="getAssetIcon(tab.assetType ?? null)"
