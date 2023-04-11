@@ -99,7 +99,15 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('width', (d) => d.width)
 			.attr('height', (d) => d.height)
 			.attr('stroke', '#888')
-			.attr('fill', '#EEE');
+			.attr('fill', (d) => {
+				if (d.data.type === 'visualization') {
+					return '#FEFEFE';
+				} else if (d.data.type === 'forecast') {
+					return '#FFCC33';
+				} else {
+					return '#EEEEEE';
+				}
+			});
 
 		const modelSelection = selection.filter((d) => d.data.type === 'model');
 		modelSelection
@@ -117,10 +125,11 @@ class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
 		selection
 			.append('circle')
 			.attr('class', 'no-drag')
-			.attr('cx', (d) => d.width * 0.5 + 10)
-			.attr('cy', 0)
+			.attr('cx', (d) => d.width * 0.5 + 2)
+			.attr('cy', (d) => d.height * 0.5 + 2)
 			.attr('r', 8)
-			.attr('fill', '#345')
+			.attr('fill', '#BBBBFF')
+			.attr('stroke', '#888')
 			.style('visibility', 'visible');
 
 		this.renderVisNodes();
@@ -347,8 +356,8 @@ const run = async () => {
 // Model editor context menu
 const contextMenuItems = ref([
 	{
-		label: 'Add SIR model',
-		icon: 'pi pi-fw pi-circle',
+		label: 'SIR model',
+		icon: 'pi pi-fw pi-calculator',
 		command: async () => {
 			const model = await getModel('2');
 			console.log('[add model]', model);
@@ -359,8 +368,8 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Add SIR RODA 2020',
-		icon: 'pi pi-fw pi-circle',
+		label: 'SIR RODA 2020',
+		icon: 'pi pi-fw pi-calculator',
 		command: async () => {
 			const model = await getModel('5');
 			console.log('[add model]', model);
@@ -371,8 +380,8 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Add forecast',
-		icon: 'pi pi-fw pi-stop',
+		label: 'Forecast',
+		icon: 'pi pi-fw pi-angle-double-right',
 		command: () => {
 			if (renderer) {
 				renderer.addNode('forecast', '?', { x: eventX, y: eventY });
@@ -380,8 +389,8 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Add visualization',
-		icon: 'pi pi-fw pi-eye',
+		label: 'Visualization',
+		icon: 'pi pi-fw pi-chart-line',
 		command: () => {
 			if (renderer) {
 				renderer.addNodeViz({ x: eventX, y: eventY });
@@ -437,8 +446,9 @@ const renderVisNode = async (nodeId: string, runId: number) => {
 		temp
 			.append('text')
 			.attr('x', 50)
-			.attr('y', -nodeUI.datum().height * 0.5 + 15 * keyIdx)
-			.style('stroke', colors[keyIdx])
+			.attr('y', -nodeUI.datum().height * 0.5 + 18 * keyIdx)
+			.style('stroke', 'none')
+			.style('fill', colors[keyIdx])
 			.text(key);
 	});
 };
@@ -454,7 +464,9 @@ const runSimulation = (runId: number) => {
 			if (childrenNodes) {
 				for (let i = 0; i < childrenNodes.length; i++) {
 					const nodeId = childrenNodes[i].id;
-					renderVisNode(nodeId, runId);
+					if (childrenNodes[i].data.type === 'visualization') {
+						renderVisNode(nodeId, runId);
+					}
 				}
 			}
 		}, 1000);
