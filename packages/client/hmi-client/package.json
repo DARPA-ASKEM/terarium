@@ -47,7 +47,7 @@
 		"vue3-ace-editor": "2.2.2"
 	},
 	"devDependencies": {
-		"@pinia/testing": "0.0.15",
+		"@pinia/testing": "0.0.16",
 		"@playwright/experimental-ct-vue": "1.31.2",
 		"@playwright/test": "1.31.2",
 		"@rushstack/eslint-patch": "1.2.0",
