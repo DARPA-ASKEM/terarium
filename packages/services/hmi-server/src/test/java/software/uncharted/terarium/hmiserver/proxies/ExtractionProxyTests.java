@@ -17,7 +17,7 @@ public class ExtractionProxyTests {
 
 
 	//TODO this will be null in testing :(
-	@ConfigProperty(name = "xdd_api_key")
+	@ConfigProperty(name = "xdd.api_key")
 	Optional<String> key;
 
 	@RestClient
