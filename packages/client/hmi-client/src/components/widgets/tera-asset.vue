@@ -8,13 +8,16 @@
 				<div v-if="doi">
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 				</div>
-				<slot name="bottom-buttons" />
+				<div v-if="publisher" v-html="publisher" />
+				<div class="bottom-buttons">
+					<slot name="bottom-buttons" />
+				</div>
+				<p v-if="description">
+					{{ description }}
+				</p>
 			</section>
 			<slot v-if="isEditable" name="right-buttons" />
 		</header>
-		<p v-if="description">
-			{{ description }}
-		</p>
 		<slot name="default" />
 	</section>
 </template>
@@ -27,13 +30,12 @@ defineProps<{
 	description?: string;
 	authors?: string;
 	doi?: string;
+	publisher?: string;
 }>();
 </script>
 
 <style scoped>
 p {
-	padding: 1rem;
-	padding-bottom: 0.5rem;
 	max-width: var(--constrain-width);
 }
 

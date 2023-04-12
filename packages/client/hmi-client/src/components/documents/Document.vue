@@ -1,5 +1,6 @@
 <template>
-	<section class="two-columns asset" v-if="doc" ref="sectionElem">
+	<section class="two-columns asset" v-if="doc">
+		<!--table of contents could be its own component later-->
 		<nav v-if="isEditable">
 			<span class="p-buttonset">
 				<Button
@@ -18,36 +19,14 @@
 				/>
 			</span>
 			<div class="scroll-to-section-links" v-if="documentView === DocumentView.EXRACTIONS">
-				<a @click="scrollTo('Top')">Top</a>
-				<a v-if="!isEmpty(formattedAbstract)" @click="scrollTo('Abstract')">Abstract</a>
-				<a v-if="doc?.knownEntities?.summaries?.sections" @click="scrollTo('SectionSummaries')"
-					>Section summaries</a
-				>
-				<a v-if="!isEmpty(figureArtifacts)" @click="scrollTo('Figures')"
-					>Figures <span class="artifact-amount">({{ figureArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(tableArtifacts)" @click="scrollTo('Tables')"
-					>Tables <span class="artifact-amount">({{ tableArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(equationArtifacts)" @click="scrollTo('Equations')"
-					>Equations <span class="artifact-amount">({{ equationArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(githubUrls)" @click="scrollTo('GithubURLs')"
-					>GitHub URLs <span class="artifact-amount">({{ githubUrls.length }})</span></a
-				>
-				<a v-if="!isEmpty(urlArtifacts)" @click="scrollTo('OtherURLs')"
-					>Other URLs <span class="artifact-amount">({{ urlArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(otherArtifacts)" @click="scrollTo('OtherExtractions')"
-					>Other extractions <span class="artifact-amount">({{ otherArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(doc.citationList)" @click="scrollTo('References')"
-					>References <span class="artifact-amount">({{ doc.citationList.length }})</span></a
-				>
-				<a v-if="!isEmpty(relatedTerariumArtifacts)" @click="scrollTo('AssociatedResources')"
-					>Associated resources
-					<span class="artifact-amount">({{ relatedTerariumArtifacts.length }})</span></a
-				>
+				<template v-for="content in documentContent">
+					<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
+						{{ content.key.replace('-', ' ') }}
+						<span v-if="Array.isArray(content.value)" class="artifact-amount">
+							({{ content.value.length }})
+						</span>
+					</a>
+				</template>
 			</div>
 			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
 			<!--- 
@@ -63,10 +42,8 @@
 			:asset-form="highlightSearchTerms(doc.journal)"
 			:authors="formatDocumentAuthors(doc)"
 			:doi="highlightSearchTerms(doi)"
+			:publisher="highlightSearchTerms(doc.publisher)"
 		>
-			<header>
-				<div v-html="highlightSearchTerms(doc.publisher)" />
-			</header>
 			<template #bottom-buttons>
 				<Button
 					class="p-button-sm p-button-outlined"
@@ -94,19 +71,19 @@
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
 					<template #header>
-						<span id="SectionSummaries">Section Summaries</span>
+						<span id="Section-summaries">Section Summaries</span>
 					</template>
 					<template v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<h6>{{ index }}</h6>
 						<p v-html="highlightSearchTerms(section)" />
 					</template>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(figureArtifacts)">
+				<AccordionTab v-if="!isEmpty(figures)">
 					<template #header>
-						Figures<span class="artifact-amount" id="Figures">({{ figureArtifacts.length }})</span>
+						Figures<span class="artifact-amount" id="Figures">({{ figures.length }})</span>
 					</template>
 					<div class="constrain-width">
-						<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
+						<div v-for="ex in figures" :key="ex.askemId" class="extracted-item">
 							<div class="extracted-image">
 								<Image
 									id="img"
@@ -122,12 +99,12 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tableArtifacts)">
+				<AccordionTab v-if="!isEmpty(tables)">
 					<template #header>
-						Tables<span class="artifact-amount" id="Tables">({{ tableArtifacts.length }})</span>
+						Tables<span class="artifact-amount" id="Tables">({{ tables.length }})</span>
 					</template>
 					<div class="constrain-width">
-						<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
+						<div v-for="ex in tables" :key="ex.askemId" class="extracted-item">
 							<div class="extracted-image">
 								<Image
 									id="img"
@@ -143,14 +120,12 @@
 						</div>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(equationArtifacts)">
+				<AccordionTab v-if="!isEmpty(equations)">
 					<template #header>
-						Equations<span class="artifact-amount" id="Equations"
-							>({{ equationArtifacts.length }})</span
-						>
+						Equations<span class="artifact-amount" id="Equations">({{ equations.length }})</span>
 					</template>
 					<div class="constrain-width">
-						<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
+						<div v-for="ex in equations" :key="ex.askemId" class="extracted-item">
 							<div class="extracted-image">
 								<Image
 									id="img"
@@ -168,7 +143,7 @@
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(githubUrls)">
 					<template #header>
-						GitHub URLs<span class="artifact-amount" id="GithubURLs"
+						GitHub URLs<span class="artifact-amount" id="Github-URLs"
 							>({{ githubUrls.length }})</span
 						>
 					</template>
@@ -185,15 +160,13 @@
 						</ul>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(urlArtifacts)">
+				<AccordionTab v-if="!isEmpty(otherUrls)">
 					<template #header>
-						Other URLs<span class="artifact-amount" id="OtherURLs"
-							>({{ urlArtifacts.length }})</span
-						>
+						Other URLs<span class="artifact-amount" id="Other-URLs">({{ otherUrls.length }})</span>
 					</template>
 					<div class="constrain-width">
 						<ul>
-							<li v-for="ex in urlArtifacts" :key="ex.url" class="extracted-item">
+							<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
 								<b>{{ ex.resourceTitle }}</b>
 								<div>
 									<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
@@ -202,14 +175,14 @@
 						</ul>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherArtifacts)">
+				<AccordionTab v-if="!isEmpty(otherExtractions)">
 					<template #header>
-						Other extractions<span class="artifact-amount" id="OtherExtractions"
-							>({{ otherArtifacts.length }})</span
+						Other extractions<span class="artifact-amount" id="Other-Extractions"
+							>({{ otherExtractions.length }})</span
 						>
 					</template>
 					<div class="constrain-width">
-						<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
+						<div v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 							<b v-html="highlightSearchTerms(ex.properties.title)" />
 							<span v-html="highlightSearchTerms(ex.properties.caption)" />
 							<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
@@ -233,11 +206,11 @@
 						</ul>
 					</div>
 				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)">
+				<AccordionTab v-if="!isEmpty(associatedResources)">
 					<template #header>
 						Associated resources
-						<span class="artifact-amount" id="AssociatedResources"
-							>({{ relatedTerariumArtifacts.length }})</span
+						<span class="artifact-amount" id="Associated-Resources"
+							>({{ associatedResources.length }})</span
 						>
 					</template>
 					<DataTable :value="relatedTerariumModels">
@@ -293,7 +266,6 @@ const props = defineProps<{
 	previewLineLimit?: number;
 }>();
 
-const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
@@ -352,24 +324,25 @@ const doi = computed(() => getDocumentDoi(doc.value));
 
 /* Artifacts */
 const artifacts = ref<XDDArtifact[]>([]);
-const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const associatedResources = ref<ResultType[]>([]);
 
-const figureArtifacts = computed(
+const figures = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
-const tableArtifacts = computed(
+const tables = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
-const equationArtifacts = computed(
+const equations = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
 );
-const urlArtifacts = computed(() =>
+const otherUrls = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
-const otherArtifacts = computed(() => {
+const otherExtractions = computed(() => {
+	console.log(artifacts.value);
 	const exclusion = [
 		XDDExtractionType.URL,
 		XDDExtractionType.Table,
@@ -379,6 +352,20 @@ const otherArtifacts = computed(() => {
 
 	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
+
+const documentContent = computed(() => [
+	{ key: 'Top', value: 'Top' },
+	{ key: 'Abstract', value: formattedAbstract.value },
+	{ key: 'Section-Summaries', value: doc.value?.knownEntities?.summaries?.sections },
+	{ key: 'Figures', value: figures.value },
+	{ key: 'Tables', value: tables.value },
+	{ key: 'Equations', value: equations.value },
+	{ key: 'Github-URLs', value: githubUrls.value },
+	{ key: 'Other-URLs', value: otherUrls.value },
+	{ key: 'Other-Extractions', value: otherExtractions.value },
+	{ key: 'References', value: doc.value?.citationList },
+	{ key: 'Associated-Resources', value: associatedResources.value }
+]);
 
 // This fetches various parts of the document: figures, tables, equations ... etc
 const fetchDocumentArtifacts = async () => {
@@ -392,12 +379,12 @@ const fetchDocumentArtifacts = async () => {
 	}
 };
 
-const fetchRelatedTerariumArtifacts = async () => {
+const fetchAssociatedResources = async () => {
 	if (doc.value) {
 		const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
-		relatedTerariumArtifacts.value = results;
+		associatedResources.value = results;
 	} else {
-		relatedTerariumArtifacts.value = [];
+		associatedResources.value = [];
 	}
 };
 
@@ -428,7 +415,7 @@ const openPDF = () => {
 watch(doi, async (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchDocumentArtifacts();
-		fetchRelatedTerariumArtifacts();
+		fetchAssociatedResources();
 		pdfLink.value = null;
 		pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
 	}
@@ -436,13 +423,13 @@ watch(doi, async (currentValue, oldValue) => {
 
 /* Provenance */
 const relatedTerariumModels = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
+	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
 );
 const relatedTerariumDatasets = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
+	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
+	() => associatedResources.value.filter((d) => isDocument(d)) as DocumentType[]
 );
 
 /**
@@ -466,7 +453,7 @@ const formatCitation = (obj: { [key: string]: string }) => {
 
 onMounted(async () => {
 	fetchDocumentArtifacts();
-	fetchRelatedTerariumArtifacts();
+	fetchAssociatedResources();
 });
 </script>
 <style scoped>
