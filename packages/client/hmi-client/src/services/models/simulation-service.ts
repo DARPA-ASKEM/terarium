@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { SimulationParams } from '@/types/Types';
+import { Simulation, SimulationParams } from '@/types/Types';
 
 export async function makeForecast(simulationParam: SimulationParams) {
 	try {
@@ -35,7 +35,7 @@ export async function getRunResult(runId: number) {
 	}
 }
 
-export async function getSimulation(id) {
+export async function getSimulation(id: Simulation['id']): Promise<Simulation | null> {
 	try {
 		const response = await API.get(`/simulation/${id}`);
 		return response.data;
@@ -45,14 +45,9 @@ export async function getSimulation(id) {
 	}
 }
 
-export async function createSimulation(name, description, simulationParams, result) {
+export async function createSimulation(simulation: Simulation): Promise<Simulation | null> {
 	try {
-		const response = await API.post('/simulation', {
-			name,
-			description,
-			simulationParams,
-			result
-		});
+		const response = await API.post('/simulation', simulation);
 		return response.data;
 	} catch (error) {
 		logger.error(error);
@@ -60,7 +55,11 @@ export async function createSimulation(name, description, simulationParams, resu
 	}
 }
 
-export async function updateSimulation(id, name, description) {
+export async function updateSimulation(
+	id: Simulation['id'],
+	name: Simulation['name'],
+	description: Simulation['description']
+): Promise<Simulation | null> {
 	try {
 		const response = await API.patch(`/simulation/${id}`, {
 			name,
@@ -73,7 +72,7 @@ export async function updateSimulation(id, name, description) {
 	}
 }
 
-export async function deleteAnnotation(id) {
+export async function deleteAnnotation(id: Simulation['id']) {
 	try {
 		const response = await API.delete(`/simulation/${id}`);
 		return response.data;

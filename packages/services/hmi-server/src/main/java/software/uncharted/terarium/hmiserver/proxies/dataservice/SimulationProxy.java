@@ -28,6 +28,7 @@ public interface SimulationProxy {
 	);
 
 	@PATCH
+	@Path("/{id}")
 	Response updateSimulation(
 		Simulation simulation
 	);
