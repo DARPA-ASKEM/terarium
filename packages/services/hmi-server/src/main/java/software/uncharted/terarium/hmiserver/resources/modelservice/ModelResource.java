@@ -3,10 +3,10 @@ package software.uncharted.terarium.hmiserver.resources.modelservice;
 import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 import software.uncharted.terarium.hmiserver.models.modelservice.Graph;
-import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
 import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositionParams;
+import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
+import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;

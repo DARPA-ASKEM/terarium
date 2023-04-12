@@ -28,7 +28,8 @@ dependencies {
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
-
+	implementation 'io.quarkus:quarkus-smallrye-reactive-messaging-rabbitmq'
+	implementation 'io.quarkus:quarkus-resteasy-reactive-jackson'
 
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"
@@ -49,8 +50,7 @@ dependencies {
 
 	// Misc
 	implementation "org.apache.commons:commons-text:1.10.0"
-	implementation "org.jsoup:jsoup:1.7.2"
-
+	implementation 'org.jsoup:jsoup:1.15.3'
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"

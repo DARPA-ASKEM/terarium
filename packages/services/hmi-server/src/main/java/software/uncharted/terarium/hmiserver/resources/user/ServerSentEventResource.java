@@ -29,6 +29,6 @@ public class ServerSentEventResource {
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType("text/plain")
 	public UserEvent<String> stream() {
-		return newUserEvents;
+		return null; //newUserEvents;
 	}
 }
