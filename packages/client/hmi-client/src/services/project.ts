@@ -186,9 +186,9 @@ async function home(): Promise<IProject[] | null> {
 const icons = new Map([
 	[ProjectAssetTypes.DOCUMENTS, 'file'],
 	[ProjectAssetTypes.MODELS, 'share-2'],
-	[ProjectAssetTypes.DATASETS, DatasetIcon],
+	[ProjectAssetTypes.DATASETS, DatasetIcon as Component],
 	[ProjectAssetTypes.SIMULATIONS, 'settings'],
-	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
+	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon as Component],
 	[ProjectAssetTypes.CODE, 'code'],
 	['overview', 'layout']
 ]);
