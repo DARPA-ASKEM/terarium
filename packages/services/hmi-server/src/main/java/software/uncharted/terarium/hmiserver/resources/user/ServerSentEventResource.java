@@ -6,6 +6,7 @@ import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.SseElementType;
+import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -27,7 +28,7 @@ public class ServerSentEventResource {
 	@Path("/server-sent-events")
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType("text/plain")
-	public UserEvents<String> stream() {
+	public UserEvent<String> stream() {
 		return newUserEvents;
 	}
 }
