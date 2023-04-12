@@ -1,5 +1,5 @@
 <template>
-	<section class="two-columns asset" v-if="doc">
+	<section class="two-columns" v-if="doc">
 		<!--table of contents could be its own component later-->
 		<nav v-if="isEditable">
 			<span class="p-buttonset">
@@ -44,7 +44,7 @@
 			:doi="highlightSearchTerms(doi)"
 			:publisher="highlightSearchTerms(doc.publisher)"
 		>
-			<template #bottom-buttons>
+			<template #bottom-header-buttons>
 				<Button
 					class="p-button-sm p-button-outlined"
 					icon="pi pi-external-link"
@@ -71,7 +71,7 @@
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
 					<template #header>
-						<span id="Section-summaries">Section Summaries</span>
+						<span id="Section-Summaries">Section Summaries</span>
 					</template>
 					<template v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<h6>{{ index }}</h6>
@@ -463,7 +463,9 @@ onMounted(async () => {
 }
 
 nav {
-	margin-left: 0.5rem;
+	background-color: var(--surface-section);
+	padding-left: 1rem;
+	padding-top: 1rem;
 	min-width: 14rem;
 	position: sticky;
 	top: 0;

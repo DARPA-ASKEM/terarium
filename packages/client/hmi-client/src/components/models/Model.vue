@@ -1,14 +1,12 @@
 <template>
 	<tera-asset v-if="model" :name="name" :asset-form="model?.framework" :is-editable="isEditable">
-		<template #right-buttons>
+		<template #right-header-buttons>
 			<Button
 				@click="launchForecast"
 				label="Open simulation space"
 				:disabled="isEditing"
 				class="p-button-sm"
 			/>
-			<!--contributor-->
-			<!--created on: date-->
 		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">

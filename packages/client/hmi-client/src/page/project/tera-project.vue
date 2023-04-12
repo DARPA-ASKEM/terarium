@@ -500,10 +500,6 @@ section {
 	color: var(--text-color-subdued);
 }
 
-.asset {
-	padding-top: 1rem;
-}
-
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
 	max-width: 15rem;

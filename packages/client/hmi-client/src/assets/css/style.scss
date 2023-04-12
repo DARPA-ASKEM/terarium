@@ -65,3 +65,12 @@ body {
 	padding-left: 0.2em;
 	padding-right: 0.2em;
 }
+
+/* Hyperlinks */
+a {
+	color: var(--text-color-subdued);
+
+	&:hover {
+		color: var(--primary-color-dark);
+	}
+}

@@ -1,5 +1,5 @@
 <template>
-	<section class="asset" id="Top">
+	<main class="asset" id="Top">
 		<header>
 			<section>
 				<span class="asset-form">{{ assetForm }}</span>
@@ -9,17 +9,22 @@
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 				</div>
 				<div v-if="publisher" v-html="publisher" />
-				<div class="bottom-buttons">
-					<slot name="bottom-buttons" />
+				<!--Model header details that aren't in yet-->
+				<!--contributor-->
+				<!--created on: date-->
+				<div class="header-buttons">
+					<slot name="bottom-header-buttons" />
 				</div>
 				<p v-if="description">
 					{{ description }}
 				</p>
 			</section>
-			<slot v-if="isEditable" name="right-buttons" />
+			<section class="header-buttons">
+				<slot v-if="isEditable" name="right-header-buttons" />
+			</section>
 		</header>
 		<slot name="default" />
-	</section>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -35,12 +40,34 @@ defineProps<{
 </script>
 
 <style scoped>
-p {
-	max-width: var(--constrain-width);
+main {
+	display: flex;
+	flex-direction: column;
+	background-color: var(--surface-section);
+	scroll-margin-top: 1rem;
 }
 
-.bottom-buttons {
+header {
+	padding: 1rem;
+	color: var(--text-color-subdued);
 	display: flex;
+	gap: 0.5rem;
+	justify-content: space-between;
+}
+
+header section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+p {
+	/* max-width: var(--constrain-width); */
+}
+
+.header-buttons {
+	display: flex;
+	align-self: flex-start;
 	gap: 0.5rem;
 }
 </style>
