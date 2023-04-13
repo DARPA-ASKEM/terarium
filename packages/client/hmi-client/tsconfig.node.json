@@ -8,8 +8,7 @@
 		"moduleResolution": "Node",
 		"types": [
 			"vite/client",
-			"vue",
-			"vite-svg-loader"
+			"vue"
 		],
 		"allowSyntheticDefaultImports": true
 	},
