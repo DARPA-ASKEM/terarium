@@ -28,6 +28,7 @@ export interface Simulation {
     description?: string;
     simulationParams: SimulationParams;
     result?: string;
+    modelId: number;
 }
 
 export interface SimulationParams {

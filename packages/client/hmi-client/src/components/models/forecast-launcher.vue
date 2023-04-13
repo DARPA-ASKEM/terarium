@@ -98,7 +98,8 @@ const launch = async () => {
 	const simulation: Simulation = {
 		name: 'New simulation',
 		simulationParams: payload,
-		result: run.id
+		result: run.id,
+		modelId: props.model.id as number
 	};
 	await createSimulation(simulation);
 
