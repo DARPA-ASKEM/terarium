@@ -28,24 +28,24 @@ public class SimulationResource {
 
 	@GET
 	@Path("/{id}")
-	public Response getSimulation(@PathParam("id") final String id){
+	public Simulation getSimulation(@PathParam("id") final String id){
 		return simulationProxy.getSimulation(id);
 	}
 
 	@POST
-	public Response createSimulation(final Simulation simulation){
+	public Simulation createSimulation(final Simulation simulation){
 		return simulationProxy.createSimulation(simulation);
 	}
 
 	@PATCH
 	@Path("/{id}")
-	public Response updateSimulation(@PathParam("id") final String id, final Simulation simulation){
+	public Simulation updateSimulation(@PathParam("id") final String id, final Simulation simulation){
 		return simulationProxy.updateSimulation(id, simulation);
 	}
 
 	@DELETE
 	@Path("/{id}")
-	public Response deleteSimulation(@PathParam("id") final String id){
+	public String deleteSimulation(@PathParam("id") final String id){
 		return simulationProxy.deleteSimulation(id);
 	}
 

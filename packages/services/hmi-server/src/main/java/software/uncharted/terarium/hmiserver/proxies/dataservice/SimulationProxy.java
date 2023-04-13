@@ -18,25 +18,25 @@ public interface SimulationProxy {
 
 	@GET
 	@Path("/{id}")
-	Response getSimulation(
+	Simulation getSimulation(
 		@PathParam("id") String id
 	);
 
 	@POST
-	Response createSimulation(
+	Simulation createSimulation(
 		Simulation simulation
 	);
 
 	@PATCH
 	@Path("/{id}")
-	Response updateSimulation(
+	Simulation updateSimulation(
 		@PathParam("id") String id,
 		Simulation simulation
 	);
 
 	@DELETE
 	@Path("/{id}")
-	Response deleteSimulation(
+	String deleteSimulation(
 		@PathParam("id") String id
 	);
 
