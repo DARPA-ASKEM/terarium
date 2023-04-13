@@ -80,7 +80,7 @@ header section {
 	gap: 0.5rem;
 }
 
-/* Affects child components */
+/* Affects child components put in the slot*/
 main:deep(p),
 main:deep(ul),
 main:deep(.data-row) {
