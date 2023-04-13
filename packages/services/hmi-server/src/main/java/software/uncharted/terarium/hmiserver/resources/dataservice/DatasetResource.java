@@ -13,10 +13,13 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Path("/api/datasets")
 @Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Dataset REST Endpoints")
+@Slf4j
 public class DatasetResource {
 
 	@Inject
@@ -168,9 +171,18 @@ public class DatasetResource {
 		@PathParam("id") final String id,
 		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
 		@DefaultValue("false") @QueryParam("data_annotation_flag") final Boolean dataAnnotationFlag,
-		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
+		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit,
+		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
-		return proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
+		
+		log.warn("Getting csv content");
+		Response returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
+		if (binCount > 0){ 
+			log.warn("Tom");
+			// log.warn(returnResponse);
+		}
+		return returnResponse;
+		
 	}
 
 	@POST
@@ -183,4 +195,5 @@ public class DatasetResource {
 	) {
 		return proxy.uploadFile(id, filename, file);
 	}
+		
 }

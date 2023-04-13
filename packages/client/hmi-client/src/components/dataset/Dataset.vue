@@ -108,6 +108,41 @@
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
+
+				<Chart type="bar" :data="chartData" :options="chartOptions" class="h-30rem" />
+
+				<!-- column summary charts go here -->
+				<!-- <table class="summary-chart-table">
+					<tr>
+						<td
+							v-for="colName of rawColumnNames"
+							class="summary-chart-column"
+							:key="colName"
+							:field="colName"
+							:header="colName"
+						>
+							<span class="histogram-label-min">min</span>
+							<Chart
+								type="bar"
+								:height="800"
+								:data="chartData"
+								:options="chartOptions"
+								class="histogram"
+							/>
+							<span class="histogram-label-max">max</span>
+							<div
+								v-if=" longestString(makeArrayFromColumn(colName, csvContent)) !== '' &&
+										longestString(makeArrayFromColumn(colName, csvContent)).length > colName.length
+									"
+									class="longest-value"
+								>
+								{{ longestString(makeArrayFromColumn(colName, csvContent)) }}
+							</div>
+							<div v-else class="longest-value-fallback">{{ colName }}</div>
+						</td>
+					</tr>
+				</table> -->
+
 				<DataTable
 					tableStyle="width:auto"
 					class="p-datatable-sm"
@@ -141,6 +176,7 @@ import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Chart from 'primevue/chart';
 
 const props = defineProps<{
 	assetId: string;
@@ -156,6 +192,9 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
+const CATEGORYPERCENTAGE = 0.98;
+const BARPERCENTAGE = 0.98;
+
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<string | null>(null);
 
@@ -165,6 +204,8 @@ const csvContent = computed(() =>
 const rawColumnNames = computed(() =>
 	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
 );
+const chartData = ref();
+const chartOptions = ref();
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
@@ -173,6 +214,7 @@ watch(
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId);
 			const datasetTemp = await getDataset(props.assetId);
+			// console.log(rawContent.value);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -195,6 +237,134 @@ const showAccordion = computed(() =>
 		? [2]
 		: [0]
 );
+
+watch(
+	() => [csvContent.value],
+	async () => {
+		console.log(props.assetId);
+		console.log(csvContent.value);
+		// TOM TODO: Use the actual names, not hard coded infected
+		chartData.value = setBarChartData(
+			csvContent.value.map((col) => col.Infected),
+			10
+		);
+		console.log(chartData.value);
+		chartOptions.value = setChartOptions();
+		console.log(setBarChartData([1, 1, 1, 1, 1, 1], 10));
+		// console.log(setBarChartData([1,2,3,4,5,6,7,8,9,10], 10));
+		// console.log(setBarChartData([-2,-1,8], 10));
+		// console.log(setBarChartData([-1,1,2,3,4,8], 10));
+		// console.log(setBarChartData([1,1,2,3,4,100], 10));
+		console.log(
+			setBarChartData(
+				csvContent.value.map((col) => col.Infected),
+				10
+			)
+		);
+	}
+);
+
+// Given a column in the csv content throw these into X bins for the bar chart
+// TOM TODO: What is stepsize = 0?
+const setBarChartData = (anArray: any[], binCount: number) => {
+	// if (Number(anArray[0]))  console.log(Number(anArray[0]));
+	// else console.log("Not a number");
+
+	// Set up array
+	const numberArray = anArray.map((ele) => Number(ele));
+	numberArray.sort((a, b) => a - b);
+
+	// Set up bins:
+	const bins: number[] = new Array(binCount).fill(0);
+	const stepSize = (numberArray[numberArray.length - 1] - numberArray[0]) / (binCount - 1);
+
+	// Fill bins:
+	numberArray.forEach((number) => {
+		const index = Math.abs(Math.floor((number - numberArray[0]) / stepSize));
+		bins[index] += 1;
+	});
+
+	const dummyLabels: string[] = [];
+	for (let i = 0; i < binCount; i++) {
+		dummyLabels.push(i.toString());
+	}
+	const documentStyle = getComputedStyle(document.documentElement);
+	return {
+		labels: dummyLabels,
+		datasets: [
+			{
+				categoryPercentage: CATEGORYPERCENTAGE,
+				barPercentage: BARPERCENTAGE,
+				label: 'Filler',
+				backgroundColor: documentStyle.getPropertyValue('--blue-500'),
+				borderColor: documentStyle.getPropertyValue('--blue-500'),
+				data: bins
+			}
+		]
+	};
+};
+
+// Get the top 3 most used string and get their usage %
+// TODO
+// function setChartStringData(anArray: String[]){
+// 	return [0];
+// }
+
+// const setChartDataPrimevue = () => {
+//     const documentStyle = getComputedStyle(document.documentElement);
+
+//     return {
+//         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+//         datasets: [
+//             {
+// 				categoryPercentage: 1.0,
+//            		barPercentage: 1.0,
+//                 label: 'My First dataset',
+//                 backgroundColor: documentStyle.getPropertyValue('--blue-500'),
+//                 borderColor: documentStyle.getPropertyValue('--blue-500'),
+//                 data: [43, 2, 1, 1, 1, 0, 1, 0, 0, 1]
+//             }
+//         ]
+//     };
+// };
+const setChartOptions = () => {
+	const documentStyle = getComputedStyle(document.documentElement);
+	return {
+		indexAxis: 'y',
+		plugins: {
+			legend: {
+				labels: {
+					display: false
+				},
+				display: false
+			},
+			tooltip: {
+				enabled: false
+			}
+		},
+		scales: {
+			x: {
+				ticks: {
+					display: false
+				},
+				grid: {
+					display: false,
+					drawBorder: false
+				}
+			},
+			y: {
+				ticks: {
+					display: false
+				},
+				grid: {
+					display: false,
+					drawBorder: false,
+					borderColor: documentStyle.getPropertyValue('--surface-border-light')
+				}
+			}
+		}
+	};
+};
 </script>
 
 <style scoped>
