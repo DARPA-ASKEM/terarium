@@ -47,7 +47,17 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 
 export async function createSimulation(simulation: Simulation): Promise<Simulation | null> {
 	try {
-		const response = await API.post('/simulation', simulation);
+		// const response = await API.post('/simulation', simulation);
+		const request = {
+			simulator_id: 1,
+			parameters: Object.entries(simulation).map((entry) => ({
+				name: entry[0],
+				value: JSON.stringify(entry[1]),
+				type: 'float',
+				id: 0
+			}))
+		};
+		const response = await API.post('/simulations/runs/', request);
 		return response.data;
 	} catch (error) {
 		logger.error(error);

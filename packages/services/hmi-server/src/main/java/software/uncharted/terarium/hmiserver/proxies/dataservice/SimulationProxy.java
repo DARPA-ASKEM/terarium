@@ -30,6 +30,7 @@ public interface SimulationProxy {
 	@PATCH
 	@Path("/{id}")
 	Response updateSimulation(
+		@PathParam("id") String id,
 		Simulation simulation
 	);
 

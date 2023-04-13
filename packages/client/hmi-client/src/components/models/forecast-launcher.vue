@@ -33,8 +33,8 @@ import { PetriNet } from '@/petrinet/petrinet-service';
 import Modal from '@/components/widgets/Modal.vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import { makeForecast } from '@/services/models/simulation-service';
-import { SimulationParams } from '@/types/Types';
+import { makeForecast, createSimulation } from '@/services/models/simulation-service';
+import { Simulation, SimulationParams } from '@/types/Types';
 
 interface StringValueMap {
 	[key: string]: string;
@@ -94,6 +94,13 @@ const launch = async () => {
 	};
 
 	const run = await makeForecast(payload);
+
+	const simulation: Simulation = {
+		name: 'New simulation',
+		simulationParams: payload,
+		result: run.id
+	};
+	await createSimulation(simulation);
 
 	// FIXME: Cache into sessionStorage, should be DB
 	const storage = window.sessionStorage;
