@@ -381,7 +381,8 @@ const handleResize = () => {
 onMounted(() => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
-	if (props.assetId) {
+	// new model
+	if (props.assetId === '') {
 		isEditingEQ.value = true;
 		isMathMLValid.value = false;
 	}
@@ -708,6 +709,8 @@ const createNewModel = async () => {
 		content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
 	};
 	emit('create-new-model', newModel);
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
 };
 
 const validateMathML = async (mathMlString: string, editMode: boolean) => {
