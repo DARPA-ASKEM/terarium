@@ -1,5 +1,5 @@
 <template>
-	<main id="Top">
+	<main id="asset-toc-top">
 		<header>
 			<section>
 				<span class="asset-form">{{ assetForm }}</span>

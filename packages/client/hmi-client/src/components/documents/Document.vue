@@ -19,6 +19,7 @@
 				/>
 			</span>
 			<div class="scroll-to-section-links" v-if="documentView === DocumentView.EXRACTIONS">
+				<a @click="scrollTo('asset-toc-top')">Top</a>
 				<template v-for="content in documentContent">
 					<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
 						{{ content.key.replace('-', ' ') }}
@@ -357,7 +358,6 @@ const relatedTerariumDocuments = computed(
 );
 
 const documentContent = computed(() => [
-	{ key: 'Top', value: 'Top' },
 	{ key: 'Abstract', value: formattedAbstract.value },
 	{ key: 'Section-Summaries', value: doc.value?.knownEntities?.summaries?.sections },
 	{ key: 'Figures', value: figures.value },
