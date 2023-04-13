@@ -20,7 +20,7 @@
 				</p>
 			</section>
 			<section class="header-buttons">
-				<slot v-if="isEditable" name="right-header-buttons" />
+				<slot v-if="isEditable" name="edit-buttons" />
 			</section>
 		</header>
 		<slot name="default" />
