@@ -6,6 +6,9 @@ import API from '@/api/api';
 import { IProject, ProjectAssets, ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { Tab } from '@/types/common';
+import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
+import ResultsIcon from '@/assets/svg/icons/results.svg?component';
+import { Component } from 'vue';
 
 /**
  * Create a project
@@ -180,20 +183,21 @@ async function home(): Promise<IProject[] | null> {
 /**
  * Get the icon associated with an Asset
  */
-const icons = new Map([
+const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.DOCUMENTS, 'file'],
-	[ProjectAssetTypes.MODELS, 'share-alt'],
-	[ProjectAssetTypes.DATASETS, 'sliders-v'],
-	[ProjectAssetTypes.SIMULATIONS, 'cog'],
-	[ProjectAssetTypes.SIMULATION_RUNS, 'eye'],
+	[ProjectAssetTypes.MODELS, 'share-2'],
+	[ProjectAssetTypes.DATASETS, DatasetIcon],
+	[ProjectAssetTypes.SIMULATIONS, 'settings'],
+	[ProjectAssetTypes.SIMULATION_RUNS, ResultsIcon],
 	[ProjectAssetTypes.CODE, 'code'],
-	['overview', 'inbox']
+	['overview', 'layout']
 ]);
-function iconClassname(type: ProjectAssetTypes | string | null): string {
+
+function getAssetIcon(type: ProjectAssetTypes | string | null): string | Component {
 	if (type && icons.has(type)) {
-		return `pi pi-${icons.get(type)}`;
+		return icons.get(type) ?? 'circle';
 	}
-	return 'pi pi-circle';
+	return 'circle';
 }
 
 /**
@@ -217,6 +221,6 @@ export {
 	deleteAsset,
 	getAssets,
 	home,
-	iconClassname,
+	getAssetIcon,
 	getDocumentAssetXddUri
 };

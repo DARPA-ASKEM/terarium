@@ -13,6 +13,9 @@
 		],
 		"module": "ESNext",
 		"target": "ESNext",
+		"types": [
+			"vite-svg-loader"
+		],
 		"outDir": "dist",
 		"paths": {
 			"@/*": [

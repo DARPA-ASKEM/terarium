@@ -6,7 +6,10 @@
 		"composite": true,
 		"module": "ESNext",
 		"moduleResolution": "Node",
-		"types": ["vite/client", "vue"],
+		"types": [
+			"vite/client",
+			"vue"
+		],
 		"allowSyntheticDefaultImports": true
 	},
 	"include": [
