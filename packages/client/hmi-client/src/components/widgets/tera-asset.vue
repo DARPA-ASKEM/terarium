@@ -55,14 +55,20 @@ header {
 	justify-content: space-between;
 }
 
+h4 {
+	color: var(--text-color-primary);
+}
+
 header section {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
+	max-width: var(--constrain-width);
 }
 
-p {
-	/* max-width: var(--constrain-width); */
+.asset-form,
+.authors {
+	color: var(--primary-color-dark);
 }
 
 .header-buttons {

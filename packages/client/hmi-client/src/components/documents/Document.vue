@@ -65,9 +65,7 @@
 					<template #header>
 						<span id="Abstract">Abstract</span>
 					</template>
-					<div class="constrain-width">
-						<span v-html="formattedAbstract" />
-					</div>
+					<p v-html="formattedAbstract" />
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
 					<template #header>
@@ -82,64 +80,57 @@
 					<template #header>
 						Figures<span class="artifact-amount" id="Figures">({{ figures.length }})</span>
 					</template>
-					<div class="constrain-width">
-						<div v-for="ex in figures" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
-							/>
-						</div>
-					</div>
+					<article v-for="ex in figures" :key="ex.askemId" class="extracted-item">
+						<Image
+							id="img"
+							class="extracted-image"
+							:src="'data:image/jpeg;base64,' + ex.properties.image"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</article>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(tables)">
 					<template #header>
 						Tables<span class="artifact-amount" id="Tables">({{ tables.length }})</span>
 					</template>
-					<div class="constrain-width">
-						<div v-for="ex in tables" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
+					<article v-for="ex in tables" :key="ex.askemId" class="extracted-item">
+						<div class="extracted-image">
+							<Image
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								preview
 							/>
 						</div>
-					</div>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</article>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(equations)">
 					<template #header>
 						Equations<span class="artifact-amount" id="Equations">({{ equations.length }})</span>
 					</template>
-					<div class="constrain-width">
-						<div v-for="ex in equations" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
+					<article v-for="ex in equations" :key="ex.askemId" class="extracted-item">
+						<div class="extracted-image">
+							<Image
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								preview
 							/>
 						</div>
-					</div>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</article>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(githubUrls)">
 					<template #header>
@@ -147,33 +138,25 @@
 							>({{ githubUrls.length }})</span
 						>
 					</template>
-					<div class="constrain-width">
-						<ul>
-							<li
-								class="github-link extracted-item"
-								v-for="(url, index) in githubUrls"
-								:key="index"
-							>
-								<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
-								<a :href="url" rel="noreferrer noopener">{{ url }}</a>
-							</li>
-						</ul>
-					</div>
+					<ul>
+						<li class="github-link extracted-item" v-for="(url, index) in githubUrls" :key="index">
+							<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+							<a :href="url" rel="noreferrer noopener">{{ url }}</a>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherUrls)">
 					<template #header>
 						Other URLs<span class="artifact-amount" id="Other-URLs">({{ otherUrls.length }})</span>
 					</template>
-					<div class="constrain-width">
-						<ul>
-							<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
-								<b>{{ ex.resourceTitle }}</b>
-								<div>
-									<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
-								</div>
-							</li>
-						</ul>
-					</div>
+					<ul>
+						<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
+							<b>{{ ex.resourceTitle }}</b>
+							<div>
+								<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
+							</div>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherExtractions)">
 					<template #header>
@@ -181,14 +164,12 @@
 							>({{ otherExtractions.length }})</span
 						>
 					</template>
-					<div class="constrain-width">
-						<div v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
-							<b v-html="highlightSearchTerms(ex.properties.title)" />
-							<span v-html="highlightSearchTerms(ex.properties.caption)" />
-							<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
-							<span v-html="highlightSearchTerms(ex.properties.contentText)" />
-						</div>
-					</div>
+					<p v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
+						<b v-html="highlightSearchTerms(ex.properties.title)" />
+						<span v-html="highlightSearchTerms(ex.properties.caption)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
+					</p>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(doc.citationList)">
 					<template #header>
@@ -196,15 +177,13 @@
 							>({{ doc.citationList.length }})</span
 						>
 					</template>
-					<div class="constrain-width">
-						<ul>
-							<li v-for="(citation, key) of doc.citationList" :key="key">
-								<template v-if="!isEmpty(formatCitation(citation))">
-									{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
-								</template>
-							</li>
-						</ul>
-					</div>
+					<ul>
+						<li v-for="(citation, key) of doc.citationList" :key="key">
+							<template v-if="!isEmpty(formatCitation(citation))">
+								{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
+							</template>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(associatedResources)">
 					<template #header>
@@ -460,10 +439,10 @@ onMounted(async () => {
 .two-columns {
 	display: flex;
 	flex-direction: row;
+	background-color: var(--surface-section);
 }
 
 nav {
-	background-color: var(--surface-section);
 	padding-left: 1rem;
 	padding-top: 1rem;
 	min-width: 14rem;
@@ -484,17 +463,21 @@ nav {
 	width: 11.75rem;
 }
 
-.constrain-width {
-	max-width: var(--constrain-width);
-}
-
 .extracted-item {
+	margin-bottom: 1rem;
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
 	border-radius: var(--border-radius);
 }
 
-.extracted-image {
+.extracted-item > .extracted-image {
+	display: block;
 	max-width: 30rem;
+	margin-bottom: 0.5rem;
+	width: fit-content;
+	padding: 8px;
+	border: 1px solid var(--gray-300);
+	border-radius: 6px;
+	object-fit: contain;
 }
 </style>

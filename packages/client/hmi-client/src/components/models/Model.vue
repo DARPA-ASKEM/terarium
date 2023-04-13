@@ -10,7 +10,7 @@
 		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" class="constrain-width" />
+				<p v-html="description" />
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -221,7 +221,6 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-
 		<Teleport to="body">
 			<ForecastLauncher
 				v-if="showForecastLauncher && model"
@@ -823,9 +822,5 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.constrain-width {
-	max-width: 60rem;
 }
 </style>
