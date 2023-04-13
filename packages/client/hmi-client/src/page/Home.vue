@@ -140,7 +140,7 @@
 				</template>
 				<template #default>
 					<form>
-						<label for="new-project-name">Name</label>
+						<label for="new-project-name">Name</label>F
 						<InputText
 							id="new-project-name"
 							type="text"
