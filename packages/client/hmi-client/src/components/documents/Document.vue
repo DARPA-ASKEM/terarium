@@ -291,7 +291,6 @@ watch(
 			const d = await getDocumentById(id);
 			if (d) {
 				doc.value = d;
-				console.log(d);
 			}
 		} else {
 			doc.value = null;
@@ -336,7 +335,6 @@ const otherUrls = computed(() =>
 );
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
 const otherExtractions = computed(() => {
-	console.log(artifacts.value);
 	const exclusion = [
 		XDDExtractionType.URL,
 		XDDExtractionType.Table,

@@ -463,7 +463,6 @@ watch(
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
 			model.value = result;
-			console.log(result);
 			fetchRelatedTerariumArtifacts();
 			if (model.value) {
 				const data = await petriToLatex(model.value.content);
