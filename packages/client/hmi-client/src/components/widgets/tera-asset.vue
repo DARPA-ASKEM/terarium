@@ -76,6 +76,7 @@ header section {
 
 .header-buttons {
 	display: flex;
+	flex-direction: row;
 	align-self: flex-start;
 	gap: 0.5rem;
 }

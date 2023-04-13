@@ -1,9 +1,9 @@
 <template>
-	<div class="code">
-		<div class="controls">
+	<tera-asset name="New file" asset-form="Python" is-editable>
+		<template #edit-buttons>
 			<Button
 				label="Extract model"
-				:class="`p-button ${selectedText.length === 0 ? 'p-disabled' : ''}`"
+				:class="`p-button-sm ${selectedText.length === 0 ? 'p-disabled' : ''}`"
 				@click="onExtractModel"
 				:loading="extractPetrinetLoading"
 			/>
@@ -14,9 +14,9 @@
 				mode="basic"
 				auto
 				chooseLabel="Load file"
-				class="p-button-secondary outline-upload-button"
+				class="p-button-sm p-button-secondary outline-upload-button"
 			/>
-		</div>
+		</template>
 		<v-ace-editor
 			v-model:value="code"
 			@init="initialize"
@@ -25,29 +25,29 @@
 			style="height: 100%; width: 100%"
 			class="ace-editor"
 		/>
-	</div>
-	<Dialog
-		v-model:visible="codeExtractionDialogVisible"
-		modal
-		header="Confirm extraction"
-		:style="{ width: '50vw' }"
-	>
-		<div ref="graphElement" class="graph-element" />
-		<h6>
-			Terarium can extract metadata about this model from related papers. Select the papers you
-			would like to use.
-		</h6>
-		<DataTable v-model:selection="selectedPaper" :value="resources" dataKey="id">
-			<Column selectionMode="multiple"></Column>
-			<Column field="title" header="Title"></Column>
-			<!-- <Column field="authors" header="Authors"></Column> -->
-			<!-- <Column field="year" header="Year"></Column> -->
-		</DataTable>
-		<template #footer>
-			<Button label="Cancel" @click="codeExtractionDialogVisible = false" text />
-			<Button label="Create model" @click="createModelFromCode()" :loading="createModelLoading" />
-		</template>
-	</Dialog>
+		<Dialog
+			v-model:visible="codeExtractionDialogVisible"
+			modal
+			header="Confirm extraction"
+			:style="{ width: '50vw' }"
+		>
+			<div ref="graphElement" class="graph-element" />
+			<h6>
+				Terarium can extract metadata about this model from related papers. Select the papers you
+				would like to use.
+			</h6>
+			<DataTable v-model:selection="selectedPaper" :value="resources" dataKey="id">
+				<Column selectionMode="multiple"></Column>
+				<Column field="title" header="Title"></Column>
+				<!-- <Column field="authors" header="Authors"></Column> -->
+				<!-- <Column field="year" header="Year"></Column> -->
+			</DataTable>
+			<template #footer>
+				<Button label="Cancel" @click="codeExtractionDialogVisible = false" text />
+				<Button label="Create model" @click="createModelFromCode()" :loading="createModelLoading" />
+			</template>
+		</Dialog>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -72,6 +72,7 @@ import { ProjectAssetTypes } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
 import { DocumentAsset } from '@/types/Types';
 import { getDocumentDoi } from '@/utils/data-util';
+import TeraAsset from '@/components/widgets/tera-asset.vue';
 import { codeToAcset, findVarsFromText, getlinkedAnnotations } from '@/services/mit-askem';
 
 const props = defineProps({
@@ -199,29 +200,7 @@ async function createModelFromCode() {
 }
 </script>
 
-<style>
-.code {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	padding-top: 1rem;
-	background-color: var(--surface-0);
-}
-
-.controls {
-	margin-left: 1rem;
-	margin-right: 1rem;
-	margin-bottom: 1rem;
-	display: flex;
-	gap: 10px;
-	justify-content: space-between;
-}
-
-.control-group {
-	display: flex;
-	gap: 1rem;
-}
-
+<style scoped>
 .p-fileupload-choose.p-button.outline-upload-button {
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border);
@@ -229,6 +208,7 @@ async function createModelFromCode() {
 	width: 100%;
 	font-size: var(--font-body-small);
 }
+
 .p-fileupload-choose.p-button.p-button.outline-upload-button:hover {
 	background-color: var(--surface-hover);
 	color: var(--text-color-primary);
