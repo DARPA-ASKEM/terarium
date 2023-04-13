@@ -113,7 +113,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
-// Should be imported with ?component due to typescript, otherwise the component will have a red underline which is worse
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 
 const props = defineProps<{
