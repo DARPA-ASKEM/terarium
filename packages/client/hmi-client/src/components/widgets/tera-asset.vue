@@ -1,5 +1,5 @@
 <template>
-	<main class="asset" id="Top">
+	<main id="Top">
 		<header>
 			<section>
 				<span class="asset-form">{{ assetForm }}</span>
@@ -42,6 +42,8 @@ defineProps<{
 <style scoped>
 main {
 	display: flex;
+	flex: 1;
+	height: fit-content;
 	flex-direction: column;
 	background-color: var(--surface-section);
 	scroll-margin-top: 1rem;
@@ -55,7 +57,8 @@ header {
 	justify-content: space-between;
 }
 
-h4 {
+h4,
+header section p {
 	color: var(--text-color-primary);
 }
 
@@ -75,5 +78,40 @@ header section {
 	display: flex;
 	align-self: flex-start;
 	gap: 0.5rem;
+}
+
+/* Affects child components */
+main:deep(p),
+main:deep(ul),
+main:deep(.data-row) {
+	max-width: var(--constrain-width);
+}
+
+main:deep(.p-accordion) {
+	padding: 0.5rem;
+}
+
+/*  Gives some top padding when you auto-scroll to the anchor */
+main:deep(.p-accordion header) {
+	scroll-margin-top: 1rem;
+}
+
+main:deep(.p-accordion ul) {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	list-style: none;
+}
+
+main:deep(.artifact-amount) {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
+	margin-left: 0.25rem;
+}
+
+/* This button style should probably be moved to the general theme in some form */
+main:deep(.p-button.p-button-outlined) {
+	color: var(--text-color-primary);
+	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
 }
 </style>

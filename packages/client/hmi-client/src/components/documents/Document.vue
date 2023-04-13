@@ -22,9 +22,7 @@
 				<template v-for="content in documentContent">
 					<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
 						{{ content.key.replace('-', ' ') }}
-						<span v-if="Array.isArray(content.value)" class="artifact-amount">
-							({{ content.value.length }})
-						</span>
+						<span v-if="Array.isArray(content.value)"> ({{ content.value.length }}) </span>
 					</a>
 				</template>
 			</div>
@@ -63,91 +61,106 @@
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
 				<AccordionTab v-if="!isEmpty(formattedAbstract)">
 					<template #header>
-						<span id="Abstract">Abstract</span>
+						<header id="Abstract">Abstract</header>
 					</template>
 					<p v-html="formattedAbstract" />
 				</AccordionTab>
 				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
 					<template #header>
-						<span id="Section-Summaries">Section Summaries</span>
+						<header id="Section-Summaries">Section Summaries</header>
 					</template>
-					<template v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
-						<h6>{{ index }}</h6>
-						<p v-html="highlightSearchTerms(section)" />
-					</template>
+					<ul>
+						<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+							<h6>{{ index }}</h6>
+							<p v-html="highlightSearchTerms(section)" />
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(figures)">
 					<template #header>
-						Figures<span class="artifact-amount" id="Figures">({{ figures.length }})</span>
+						<header id="Figures">
+							Figures<span class="artifact-amount">({{ figures.length }})</span>
+						</header>
 					</template>
-					<article v-for="ex in figures" :key="ex.askemId" class="extracted-item">
-						<Image
-							id="img"
-							class="extracted-image"
-							:src="'data:image/jpeg;base64,' + ex.properties.image"
-							:alt="''"
-							preview
-						/>
-						<tera-show-more-text
-							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							:lines="previewLineLimit"
-						/>
-					</article>
+					<ul>
+						<li v-for="ex in figures" :key="ex.askemId" class="extracted-item">
+							<Image
+								id="img"
+								class="extracted-image"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								preview
+							/>
+							<tera-show-more-text
+								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+								:lines="previewLineLimit"
+							/>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(tables)">
 					<template #header>
-						Tables<span class="artifact-amount" id="Tables">({{ tables.length }})</span>
+						<header id="Tables">
+							Tables<span class="artifact-amount">({{ tables.length }})</span>
+						</header>
 					</template>
-					<article v-for="ex in tables" :key="ex.askemId" class="extracted-item">
-						<div class="extracted-image">
-							<Image
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								preview
+					<ul>
+						<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
+							<div class="extracted-image">
+								<Image
+									id="img"
+									:src="'data:image/jpeg;base64,' + ex.properties.image"
+									:alt="''"
+									preview
+								/>
+							</div>
+							<tera-show-more-text
+								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+								:lines="previewLineLimit"
 							/>
-						</div>
-						<tera-show-more-text
-							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							:lines="previewLineLimit"
-						/>
-					</article>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(equations)">
 					<template #header>
-						Equations<span class="artifact-amount" id="Equations">({{ equations.length }})</span>
+						<header id="Equations">
+							Equations<span class="artifact-amount">({{ equations.length }})</span>
+						</header>
 					</template>
-					<article v-for="ex in equations" :key="ex.askemId" class="extracted-item">
-						<div class="extracted-image">
-							<Image
-								id="img"
-								:src="'data:image/jpeg;base64,' + ex.properties.image"
-								:alt="''"
-								preview
+					<ul>
+						<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
+							<div class="extracted-image">
+								<Image
+									id="img"
+									:src="'data:image/jpeg;base64,' + ex.properties.image"
+									:alt="''"
+									preview
+								/>
+							</div>
+							<tera-show-more-text
+								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+								:lines="previewLineLimit"
 							/>
-						</div>
-						<tera-show-more-text
-							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-							:lines="previewLineLimit"
-						/>
-					</article>
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(githubUrls)">
 					<template #header>
-						GitHub URLs<span class="artifact-amount" id="Github-URLs"
-							>({{ githubUrls.length }})</span
-						>
+						<header id="Github-URLs">
+							GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
+						</header>
 					</template>
 					<ul>
-						<li class="github-link extracted-item" v-for="(url, index) in githubUrls" :key="index">
+						<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
 							<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
-							<a :href="url" rel="noreferrer noopener">{{ url }}</a>
 						</li>
 					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherUrls)">
 					<template #header>
-						Other URLs<span class="artifact-amount" id="Other-URLs">({{ otherUrls.length }})</span>
+						<header id="Other-URLs">
+							Other URLs<span class="artifact-amount">({{ otherUrls.length }})</span>
+						</header>
 					</template>
 					<ul>
 						<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
@@ -160,22 +173,24 @@
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(otherExtractions)">
 					<template #header>
-						Other extractions<span class="artifact-amount" id="Other-Extractions"
-							>({{ otherExtractions.length }})</span
-						>
+						<header id="Other-Extractions">
+							Other extractions<span class="artifact-amount">({{ otherExtractions.length }})</span>
+						</header>
 					</template>
-					<p v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
-						<b v-html="highlightSearchTerms(ex.properties.title)" />
-						<span v-html="highlightSearchTerms(ex.properties.caption)" />
-						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
-						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
-					</p>
+					<ul>
+						<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
+							<b v-html="highlightSearchTerms(ex.properties.title)" />
+							<span v-html="highlightSearchTerms(ex.properties.caption)" />
+							<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+							<span v-html="highlightSearchTerms(ex.properties.contentText)" />
+						</li>
+					</ul>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(doc.citationList)">
 					<template #header>
-						References<span class="artifact-amount" id="References"
-							>({{ doc.citationList.length }})</span
-						>
+						<header id="References">
+							References<span class="artifact-amount">({{ doc.citationList.length }})</span>
+						</header>
 					</template>
 					<ul>
 						<li v-for="(citation, key) of doc.citationList" :key="key">
@@ -187,10 +202,10 @@
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(associatedResources)">
 					<template #header>
-						Associated resources
-						<span class="artifact-amount" id="Associated-Resources"
-							>({{ associatedResources.length }})</span
-						>
+						<header id="Associated-Resources">
+							Associated resources
+							<span class="artifact-amount">({{ associatedResources.length }})</span>
+						</header>
 					</template>
 					<DataTable :value="relatedTerariumModels">
 						<Column field="name" header="Models"></Column>
@@ -332,6 +347,17 @@ const otherExtractions = computed(() => {
 	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
 
+/* Provenance */
+const relatedTerariumModels = computed(
+	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => associatedResources.value.filter((d) => isDocument(d)) as DocumentType[]
+);
+
 const documentContent = computed(() => [
 	{ key: 'Top', value: 'Top' },
 	{ key: 'Abstract', value: formattedAbstract.value },
@@ -400,17 +426,6 @@ watch(doi, async (currentValue, oldValue) => {
 	}
 });
 
-/* Provenance */
-const relatedTerariumModels = computed(
-	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => associatedResources.value.filter((d) => isDocument(d)) as DocumentType[]
-);
-
 /**
  * Format from xDD citation_list object.
  * -  author (year), title, journal, doi
@@ -464,7 +479,6 @@ nav {
 }
 
 .extracted-item {
-	margin-bottom: 1rem;
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
 	border-radius: var(--border-radius);

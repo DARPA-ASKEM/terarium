@@ -8,7 +8,7 @@
 				<th>Concepts/Definition</th>
 			</tr>
 		</table>
-		<ul>
+		<ul class="table">
 			<li v-for="(parameterRow, index) in parameters" :key="parameterRow.id">
 				<model-parameter-list-item
 					class="model-parameter"
@@ -49,7 +49,8 @@ function updateParamaterRow(newParameterRow: any) {
 </script>
 
 <style scoped>
-ul {
+ul.table {
+	max-width: 100%;
 	background-color: var(--surface-ground);
 	border-radius: 0.75rem;
 	padding: 0.75rem;
