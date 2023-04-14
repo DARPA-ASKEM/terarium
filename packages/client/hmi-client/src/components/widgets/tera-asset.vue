@@ -82,22 +82,22 @@ header section {
 }
 
 /* Affects child components put in the slot*/
-main:deep(p),
-main:deep(ul),
-main:deep(.data-row) {
-	max-width: var(--constrain-width);
-}
-
 main:deep(.p-accordion) {
 	padding: 0.5rem;
 }
 
-/*  Gives some top padding when you auto-scroll to the anchor */
-main:deep(.p-accordion header) {
+/*  Gives some top padding when you auto-scroll to an anchor */
+main:deep(.p-accordion-header > a > header) {
 	scroll-margin-top: 1rem;
 }
 
-main:deep(.p-accordion ul) {
+main:deep(.p-accordion-content > p),
+main:deep(.p-accordion-content > ul),
+main:deep(.data-row) {
+	max-width: var(--constrain-width);
+}
+
+main:deep(.p-accordion-content ul) {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
