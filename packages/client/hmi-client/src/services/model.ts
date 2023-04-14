@@ -2,23 +2,8 @@ import API from '@/api/api';
 import { Model } from '@/types/Model';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
-import { IProject, ProjectAssetTypes, ProjectAssets } from '@/types/Project';
-import { Store } from 'pinia';
-
-type ResourceType = Store<
-	'resources',
-	{
-		xddDataset: string | null;
-		activeProject: IProject | null;
-		activeProjectAssets: ProjectAssets | null;
-	},
-	{},
-	{
-		setXDDDataset(dataset: string | null): void;
-		setActiveProject(project: IProject | null): void;
-		reset(): void;
-	}
->;
+import { ProjectAssetTypes } from '@/types/Project';
+import { ResourceType } from '@/stores/resources';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -77,12 +62,15 @@ export async function addModelToProject(
 	assetId: string,
 	resources: ResourceType
 ) {
-	await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
+	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
 
-	const model = await getModel(assetId);
-
-	if (model) {
-		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+	if (resp) {
+		const model = await getModel(assetId);
+		if (model) {
+			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+		} else {
+			logger.warn(`Unable to find model id: ${assetId}`);
+		}
 	} else {
 		logger.warn('Could not add new model to project.');
 	}
