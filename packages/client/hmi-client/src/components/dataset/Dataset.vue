@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:asset-form="dataset?.simulation_run ? 'Simulation run' : ''"
+		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:description="dataset?.description"
 	>

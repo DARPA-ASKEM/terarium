@@ -2,7 +2,7 @@
 	<main id="asset-toc-top">
 		<header>
 			<section>
-				<span class="asset-form">{{ assetForm }}</span>
+				<span class="overline">{{ overline }}</span>
 				<h4 v-html="name" />
 				<div v-if="authors" class="authors" v-html="authors" />
 				<div v-if="doi">
@@ -30,7 +30,7 @@
 <script setup lang="ts">
 defineProps<{
 	name: string;
-	assetForm: string;
+	overline: string;
 	isEditable: boolean;
 	description?: string;
 	authors?: string;
@@ -69,7 +69,7 @@ header section {
 	max-width: var(--constrain-width);
 }
 
-.asset-form,
+.overline,
 .authors {
 	color: var(--primary-color-dark);
 }

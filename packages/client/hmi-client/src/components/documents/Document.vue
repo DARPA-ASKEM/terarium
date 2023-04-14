@@ -38,7 +38,7 @@
 			v-if="documentView === DocumentView.EXRACTIONS"
 			:is-editable="isEditable"
 			:name="highlightSearchTerms(doc.title)"
-			:asset-form="highlightSearchTerms(doc.journal)"
+			:overline="highlightSearchTerms(doc.journal)"
 			:authors="formatDocumentAuthors(doc)"
 			:doi="highlightSearchTerms(doi)"
 			:publisher="highlightSearchTerms(doc.publisher)"

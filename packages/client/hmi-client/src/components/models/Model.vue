@@ -1,5 +1,5 @@
 <template>
-	<tera-asset v-if="model" :name="name" :asset-form="model?.framework" :is-editable="isEditable">
+	<tera-asset v-if="model" :name="name" :overline="model?.framework" :is-editable="isEditable">
 		<template #edit-buttons>
 			<Button
 				@click="launchForecast"
