@@ -45,37 +45,37 @@
 					@click="searchByExampleToggle = !searchByExampleToggle"
 				/>
 			</header>
-			<section class="search-drag-drop-area">
-				<section
-					@dragenter="isDraggedOver = true"
-					@dragleave="isDraggedOver = false"
-					@drop="onDrop()"
-					@dragover.prevent
-					@dragenter.prevent
-					:style="dragOverStyle"
-				>
-					<asset-card
-						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
-						:asset="searchByExampleSelectedAsset"
-						:resourceType="searchByExampleSelectedResourceType"
-						class="asset-card-in-searchByExample-dropzone"
-					>
-					</asset-card>
-					<Button
-						label="Clear"
-						size="small"
-						text
-						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
-						class="clear-search-by-example"
-						@click="searchByExampleSelectedAsset = null"
-					/>
+			<section
+				class="search-drag-drop-area"
+				@dragenter="isDraggedOver = true"
+				@dragleave="isDraggedOver = false"
+				@drop="onDrop()"
+				@dragover.prevent
+				@dragenter.prevent
+			>
+				<section :style="dragOverStyle">
+					<template v-if="isAssetDropped">
+						<asset-card
+							:asset="searchByExampleSelectedAsset"
+							:resourceType="searchByExampleSelectedResourceType"
+							class="asset-card-in-searchByExample-dropzone"
+						>
+						</asset-card>
+						<Button
+							label="Clear"
+							size="small"
+							text
+							class="clear-search-by-example"
+							@click="searchByExampleSelectedAsset = null"
+						/>
+					</template>
 					<span v-else class="drop-zone">
 						<i class="pi pi-upload big-icon" />
 						Drag and drop a paper, model, or dataset here</span
 					>
 				</section>
 			</section>
-			<footer v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType">
+			<footer v-if="isAssetDropped">
 				<div class="field-checkbox">
 					<Checkbox
 						name="similarContent"
@@ -199,22 +199,18 @@ const fillAutocomplete = async () => {
 const isSearchByExampleVisible = computed(
 	() => getDragData('asset') || searchByExampleToggle.value
 );
+const isAssetDropped = computed(
+	() => searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value
+);
 
 const dragOverStyle = computed(() => {
-	if (isDraggedOver.value) {
-		return {
-			border: `2px solid var(--primary-color)`,
-			'background-color': 'var(--surface-highlight)'
-		};
-	}
-	if (searchByExampleSelectedAsset.value && searchByExampleSelectedResourceType.value) {
-		return {
-			border: `2px solid var(--surface-border)`,
-			'background-color': 'var(--surface-highlight)'
-		};
-	}
-
-	return {};
+	let borderStyle: string = '';
+	if (isDraggedOver.value) borderStyle = '2px solid var(--primary-color)';
+	else if (isAssetDropped.value) borderStyle = '2px solid var(--surface-border)';
+	return {
+		border: borderStyle,
+		backgroundColor: isDraggedOver.value || isAssetDropped.value ? 'var(--surface-highlight)' : ''
+	};
 });
 
 const { getDragData } = useDragEvent();
@@ -231,6 +227,17 @@ onMounted(() => {
 	const { q } = route.query;
 	query.value = q?.toString() ?? query.value;
 });
+
+watch(
+	() => isSearchByExampleVisible.value,
+	() => {
+		if (!isSearchByExampleVisible.value) {
+			// Clear search by example input once popup closes
+			searchByExampleSelectedAsset.value = null;
+			searchByExampleSelectedResourceType.value = null;
+		}
+	}
+);
 
 // Clear the query if not on the data explorer view
 watch(
