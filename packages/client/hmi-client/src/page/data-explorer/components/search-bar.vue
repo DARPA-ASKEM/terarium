@@ -228,11 +228,11 @@ onMounted(() => {
 	query.value = q?.toString() ?? query.value;
 });
 
+// Clear search by example input once popup closes
 watch(
 	() => isSearchByExampleVisible.value,
 	() => {
 		if (!isSearchByExampleVisible.value) {
-			// Clear search by example input once popup closes
 			searchByExampleSelectedAsset.value = null;
 			searchByExampleSelectedResourceType.value = null;
 		}
