@@ -3,7 +3,7 @@
 		class="asset-card"
 		draggable="true"
 		@dragstart="startDrag(asset, resourceType)"
-		@dragend="deleteDragData('asset')"
+		@dragend="stopDrag"
 	>
 		<main>
 			<div class="type-and-filters">
@@ -254,6 +254,11 @@ const { setDragData, deleteDragData } = useDragEvent();
 function startDrag(asset, resourceType) {
 	setDragData('asset', asset);
 	setDragData('resourceType', resourceType);
+}
+
+function stopDrag() {
+	deleteDragData('asset');
+	deleteDragData('resourceType');
 }
 </script>
 
