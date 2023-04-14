@@ -3,7 +3,7 @@
 		class="asset-card"
 		draggable="true"
 		@dragstart="startDrag(asset, resourceType)"
-		@dragend="stopDrag"
+		@dragend="endDrag"
 	>
 		<main>
 			<div class="type-and-filters">
@@ -256,7 +256,7 @@ function startDrag(asset, resourceType) {
 	setDragData('resourceType', resourceType);
 }
 
-function stopDrag() {
+function endDrag() {
 	deleteDragData('asset');
 	deleteDragData('resourceType');
 }
