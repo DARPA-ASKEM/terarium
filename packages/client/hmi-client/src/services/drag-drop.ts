@@ -13,5 +13,8 @@ export function useDragEvent() {
 	function setDragData(key: string, value: object) {
 		data.value.set(key, value);
 	}
-	return { getDragData, setDragData };
+	function deleteDragData(key: string) {
+		data.value.delete(key);
+	}
+	return { getDragData, setDragData, deleteDragData };
 }

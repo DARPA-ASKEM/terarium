@@ -18,12 +18,6 @@
 					@item-select="initiateSearch"
 					@dragover.prevent
 					@dragenter.prevent
-					@drop="
-						{
-							isSearchByExampleVisible = true;
-							onDrop();
-						}
-					"
 				>
 					<template #option="prop">
 						<span class="auto-complete-term">
@@ -38,7 +32,7 @@
 			<Button
 				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small search-by-example-button"
 				icon="pi pi-upload"
-				@click="isSearchByExampleVisible = !isSearchByExampleVisible"
+				@click="searchByExampleToggle = !searchByExampleToggle"
 				:active="isSearchByExampleVisible"
 			/>
 		</div>
@@ -48,8 +42,8 @@
 				<Button
 					class="p-button-rounded"
 					icon="pi pi-times"
-					@click="isSearchByExampleVisible = !isSearchByExampleVisible"
-				></Button>
+					@click="searchByExampleToggle = !searchByExampleToggle"
+				/>
 			</header>
 			<section class="search-drag-drop-area">
 				<section
@@ -74,8 +68,7 @@
 						v-if="searchByExampleSelectedAsset && searchByExampleSelectedResourceType"
 						class="clear-search-by-example"
 						@click="searchByExampleSelectedAsset = null"
-					>
-					</Button>
+					/>
 					<span v-else class="drop-zone">
 						<i class="pi pi-upload big-icon" />
 						Drag and drop a paper, model, or dataset here</span
@@ -151,7 +144,7 @@ const query = ref<string>('');
 const searchBarRef = ref();
 const autocompleteMenuItems = ref<string[]>([]);
 
-const isSearchByExampleVisible = ref(false);
+const searchByExampleToggle = ref(false);
 const isDraggedOver = ref(false);
 const searchByExampleSelectedAsset = ref();
 const searchByExampleSelectedResourceType = ref();
@@ -176,7 +169,7 @@ const initiateSearch = () => {
 
 function initiateSearchByExample() {
 	searchByExampleOptions.value = { ...selectedSearchByExampleOptions.value };
-	isSearchByExampleVisible.value = false;
+	searchByExampleToggle.value = false;
 }
 
 function addToQuery(term: string) {
@@ -203,6 +196,10 @@ const fillAutocomplete = async () => {
 	});
 };
 
+const isSearchByExampleVisible = computed(
+	() => getDragData('asset') || searchByExampleToggle.value
+);
+
 const dragOverStyle = computed(() => {
 	if (isDraggedOver.value) {
 		return {
@@ -223,6 +220,7 @@ const dragOverStyle = computed(() => {
 const { getDragData } = useDragEvent();
 
 function onDrop() {
+	searchByExampleToggle.value = true; // Maintains open search by example popup once an asset is successfully dropped
 	searchByExampleSelectedAsset.value = getDragData('asset');
 	searchByExampleSelectedResourceType.value = getDragData('resourceType');
 	searchByExampleItem.value = searchByExampleSelectedAsset.value;
@@ -398,9 +396,11 @@ i {
 	gap: 0.75rem;
 	pointer-events: none;
 }
+
 .asset-card-in-searchByExample-dropzone {
 	width: 100%;
 }
+
 .clear-search-by-example {
 	height: fit-content;
 }
