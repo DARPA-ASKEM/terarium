@@ -60,6 +60,11 @@
 					:asset-id="assetId"
 					:project="project"
 				/>
+				<data-transform
+					v-else-if="assetType === ProjectAssetTypes.TRANSFORM"
+					:asset-id="assetId"
+					:project="project"
+				/>
 			</template>
 			<code-editor
 				v-else-if="assetType === ProjectAssetTypes.CODE"
@@ -231,6 +236,7 @@ import TeraModel from '@/components/models/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
+import DataTransform from "@/page/project/components/data-transform.vue";
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
@@ -443,6 +449,9 @@ watch(
 	],
 	() => {
 		if (projectContext.value) {
+			if (openedAssetRoute.value.assetType === ProjectAssetTypes.DATASETS) {
+				openedAssetRoute.value.assetType = ProjectAssetTypes.TRANSFORM;
+			}
 			// If name isn't recognized, its a new asset so add a new tab
 			if (
 				props.assetName &&

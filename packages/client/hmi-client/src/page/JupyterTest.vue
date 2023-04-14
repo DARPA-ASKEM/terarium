@@ -4,7 +4,7 @@
 			ref="dataTransformNotebook"
 			alt="notebook widget"
 		/>
-		<slider-panel
+		<!-- <slider-panel
 			v-model:is-open="isResourcesSliderOpen"
 			content-width="300px"
 			header="Resources"
@@ -13,7 +13,7 @@
 			<template v-slot:content>
 				<tera-resource-sidebar />
 			</template>
-		</slider-panel>
+		</slider-panel> -->
 		<section>
 			<tera-tab-group
 				v-if="!isEmpty(tabs)"
@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import SliderPanel from '@/components/widgets/slider-panel.vue';
+// import SliderPanel from '@/components/widgets/slider-panel.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import Document from '@/components/documents/Document.vue';

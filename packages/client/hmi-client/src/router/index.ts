@@ -50,6 +50,7 @@ const routes = [
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
 	{ path: '/workflow-playground', component: WorkflowPlayground },
 	{ path: '/jupyter', component: JupyterTest},
+	{ path: '/transform', component: JupyterTest},
 ];
 
 const router = createRouter({

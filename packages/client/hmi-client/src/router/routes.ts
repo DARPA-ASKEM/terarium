@@ -10,6 +10,7 @@ export enum RouteName {
 	DataExplorerRoute = 'dataExplorer',
 	CodeRoute = 'code',
 	JupyterTestRoute = 'jupyter',
+	DataTransformRoute = 'transform',
 }
 
 export const RouteMetadata: {
@@ -25,4 +26,5 @@ export const RouteMetadata: {
 	[RouteName.HomeRoute]: { displayName: 'Home', icon: 'pi pi-home' },
 	[RouteName.DataExplorerRoute]: { displayName: 'Explorer', icon: 'pi pi-compass' },
 	[RouteName.JupyterTestRoute]: {displayName: 'Jupyter cell testing', icon: 'pi pi-compass' },
+	[RouteName.DataTransformRoute]: {displayName: 'Transform data', icon: 'pi pi-compass' },
 };

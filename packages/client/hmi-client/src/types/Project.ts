@@ -9,7 +9,8 @@ export enum ProjectAssetTypes {
 	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
 	DATASETS = 'datasets',
-	CODE = 'code'
+	CODE = 'code',
+	TRANSFORM = 'transform'
 }
 
 export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
