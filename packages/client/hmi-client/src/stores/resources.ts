@@ -1,5 +1,20 @@
-import { defineStore } from 'pinia';
+import { Store, defineStore } from 'pinia';
 import { IProject, ProjectAssets } from '@/types/Project';
+
+export type ResourceType = Store<
+	'resources',
+	{
+		xddDataset: string | null;
+		activeProject: IProject | null;
+		activeProjectAssets: ProjectAssets | null;
+	},
+	{},
+	{
+		setXDDDataset(dataset: string | null): void;
+		setActiveProject(project: IProject | null): void;
+		reset(): void;
+	}
+>;
 
 /**
  * Mainly to store all data resources in this project, e.g. datasets, documents, models, etc.

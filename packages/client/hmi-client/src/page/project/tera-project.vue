@@ -16,6 +16,7 @@
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
+					@create-asset="createAsset"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -64,6 +65,14 @@
 				v-else-if="assetType === ProjectAssetTypes.CODE"
 				:initial-code="code"
 				@on-model-created="openNewModelFromCode"
+			/>
+			<model
+				v-else-if="assetType === ProjectAssetTypes.MODELS"
+				:asset-id="newModelId"
+				:project="project"
+				@update-tab-name="updateTabName"
+				@create-new-model="createNewModel"
+				is-editable
 			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
 			<section v-else class="no-open-tabs">
@@ -226,7 +235,7 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import { RouteName } from '@/router/routes';
-import { getModel } from '@/services/model';
+import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
@@ -242,6 +251,7 @@ import {
 	updateAnnotation
 } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
+import { PetriNet } from '@/petrinet/petrinet-service';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -256,6 +266,9 @@ const emit = defineEmits(['update-project']);
 const tabStore = useTabStore();
 const router = useRouter();
 const resources = useResourcesStore();
+
+const newModelId = ref<string>('');
+const isNewModel = ref<boolean>(true);
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -359,9 +372,9 @@ function openAsset(asset: Tab = tabs.value[activeTabIndex.value], newCode?: stri
 
 	if (newCode) {
 		code.value = newCode;
-		// addCreatedAsset(assetToOpen);
 	}
 }
+
 const openOverview = () =>
 	openAsset({ assetName: 'Overview', assetType: 'overview', assetId: undefined });
 
@@ -369,14 +382,22 @@ function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 }
 
-async function openNewModelFromCode(modelId, modelName) {
-	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-	const model = await getModel(modelId);
-	if (model) {
-		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
-	} else {
-		logger.warn('Could not add new model to project.');
+const updateTabName = (tabName) => {
+	tabs.value[activeTabIndex.value].assetName = tabName;
+};
+
+// Create the new model
+const createNewModel = async (newModel: PetriNet) => {
+	const newModelResp = await createModel(newModel);
+	if (newModelResp) {
+		newModelId.value = newModelResp.id.toString();
+		await addModelToProject(props.project.id, newModelId.value, resources);
+		isNewModel.value = false;
 	}
+};
+
+async function openNewModelFromCode(modelId, modelName) {
+	await addModelToProject(props.project.id, modelId, resources);
 
 	router.push({
 		name: RouteName.ProjectRoute,
@@ -386,6 +407,12 @@ async function openNewModelFromCode(modelId, modelName) {
 			assetType: ProjectAssetTypes.MODELS
 		}
 	});
+}
+
+// create the new Asset
+async function createAsset(asset: Tab) {
+	newModelId.value = '';
+	router.push({ name: RouteName.ProjectRoute, params: asset });
 }
 
 async function removeAsset(asset: Tab) {
