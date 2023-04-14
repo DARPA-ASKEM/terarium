@@ -28,8 +28,6 @@ dependencies {
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
-	implementation 'io.quarkus:quarkus-smallrye-reactive-messaging-rabbitmq'
-	implementation 'io.quarkus:quarkus-resteasy-reactive-jackson'
 
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"
