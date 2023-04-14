@@ -7,7 +7,7 @@
 					v-if="assetId === ''"
 					v-model="newModelName"
 					class="model-title-text-area"
-					placeholder="Title of New Model"
+					placeholder="Title of new model"
 				/>
 				<h4 v-else v-html="title" />
 				<span v-if="assetId === ''">
@@ -34,7 +34,7 @@
 						v-model="newDescription"
 						class="model-description-text-area"
 						rows="5"
-						placeholder="Description of New Model"
+						placeholder="Description of new model"
 					/>
 				</section>
 			</AccordionTab>
