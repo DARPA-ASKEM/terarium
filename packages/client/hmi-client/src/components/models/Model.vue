@@ -324,8 +324,8 @@ const props = defineProps({
 		required: true
 	},
 	highlight: {
-		type: Boolean,
-		default: false,
+		type: String,
+		default: '',
 		required: false
 	}
 });
@@ -541,7 +541,6 @@ watch(
 );
 
 const graphElement = ref<HTMLDivElement | null>(null);
-
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
@@ -905,7 +904,7 @@ section math-editor {
 
 .model-description-text-area {
 	border: 1px solid var(--surface-border-light);
-	border-radius: 4px;
+	border-radius: var(--border-radius);
 	padding: 5px;
 	resize: none;
 	overflow-y: hidden;
@@ -919,6 +918,6 @@ section math-editor {
 	resize: none;
 	overflow-y: hidden;
 	width: 100%;
-	font-size: Bold 1.25rem;
+	font-size: var(--font-body-medium);
 }
 </style>

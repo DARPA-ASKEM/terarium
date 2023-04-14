@@ -1,5 +1,24 @@
 import API from '@/api/api';
 import { Model } from '@/types/Model';
+import { logger } from '@/utils/logger';
+import * as ProjectService from '@/services/project';
+import { IProject, ProjectAssetTypes, ProjectAssets } from '@/types/Project';
+import { Store } from 'pinia';
+
+type ResourceType = Store<
+	'resources',
+	{
+		xddDataset: string | null;
+		activeProject: IProject | null;
+		activeProjectAssets: ProjectAssets | null;
+	},
+	{},
+	{
+		setXDDDataset(dataset: string | null): void;
+		setActiveProject(project: IProject | null): void;
+		reset(): void;
+	}
+>;
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -51,4 +70,20 @@ export async function updateModel(model: Model) {
 		content: JSON.stringify(model.content)
 	});
 	return response?.data ?? null;
+}
+
+export async function addModelToProject(
+	projectId: string,
+	assetId: string,
+	resources: ResourceType
+) {
+	await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
+
+	const model = await getModel(assetId);
+
+	if (model) {
+		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+	} else {
+		logger.warn('Could not add new model to project.');
+	}
 }

@@ -68,7 +68,7 @@
 			/>
 			<model
 				v-else-if="assetType === ProjectAssetTypes.MODELS"
-				:asset-id="newAssetId"
+				:asset-id="newModelId"
 				:project="project"
 				@update-tab-name="updateTabName"
 				@create-new-model="createNewModel"
@@ -235,7 +235,7 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import { RouteName } from '@/router/routes';
-import { getModel, createModel } from '@/services/model';
+import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
@@ -251,6 +251,7 @@ import {
 	updateAnnotation
 } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
+import { PetriNet } from '@/petrinet/petrinet-service';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -266,7 +267,7 @@ const tabStore = useTabStore();
 const router = useRouter();
 const resources = useResourcesStore();
 
-const newAssetId = ref<string>('');
+const newModelId = ref<string>('');
 const isNewModel = ref<boolean>(true);
 
 const isResourcesSliderOpen = ref(true);
@@ -386,35 +387,17 @@ const updateTabName = (tabName) => {
 };
 
 // Create the new model
-const createNewModel = async (newModel) => {
+const createNewModel = async (newModel: PetriNet) => {
 	const newModelResp = await createModel(newModel);
 	if (newModelResp) {
-		newAssetId.value = newModelResp.id.toString();
-	}
-
-	if (newAssetId.value) {
-		// add to sidebar
-		await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, newAssetId.value);
-
-		const model = await getModel(newAssetId.value);
-
-		if (model) {
-			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
-		} else {
-			logger.warn('Could not add new model to project.');
-		}
+		newModelId.value = newModelResp.id.toString();
+		await addModelToProject(props.project.id, newModelId.value, resources);
 		isNewModel.value = false;
 	}
 };
 
 async function openNewModelFromCode(modelId, modelName) {
-	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-	const model = await getModel(modelId);
-	if (model) {
-		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
-	} else {
-		logger.warn('Could not add new model to project.');
-	}
+	await addModelToProject(props.project.id, modelId, resources);
 
 	router.push({
 		name: RouteName.ProjectRoute,
@@ -426,9 +409,9 @@ async function openNewModelFromCode(modelId, modelName) {
 	});
 }
 
-// create the new sset
+// create the new Asset
 async function createAsset(asset: Tab) {
-	newAssetId.value = '';
+	newModelId.value = '';
 	router.push({ name: RouteName.ProjectRoute, params: asset });
 }
 
