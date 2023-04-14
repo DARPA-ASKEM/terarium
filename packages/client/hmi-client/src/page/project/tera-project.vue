@@ -464,7 +464,7 @@ watch(
 
 async function getAndPopulateAnnotations() {
 	annotations.value = await getAnnotations(props.assetId, props.assetType);
-	selectedNoteSection.value = annotations.value.map((note) => note.section);
+	selectedNoteSection.value = annotations.value?.map((note) => note.section);
 }
 
 const addNote = async () => {
