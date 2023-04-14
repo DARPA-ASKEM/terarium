@@ -315,12 +315,10 @@ const extractions = ref([]);
 const props = defineProps({
 	assetId: {
 		type: String,
-		default: '',
 		required: true
 	},
 	isEditable: {
 		type: Boolean,
-		default: false,
 		required: true
 	},
 	highlight: {
