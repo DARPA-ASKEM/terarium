@@ -19,8 +19,8 @@
 					{{ description }}
 				</p>
 			</section>
-			<section class="header-buttons">
-				<slot v-if="isEditable" name="edit-buttons" />
+			<section class="header-buttons" v-if="isEditable">
+				<slot name="edit-buttons" />
 			</section>
 		</header>
 		<slot name="default" />
