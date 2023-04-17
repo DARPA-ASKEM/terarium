@@ -128,7 +128,7 @@
 									class="histogram"
 								/>
 								<div class="histogram-label-min">min</div>
-								<div class="longest-value">
+								<div class="longest-value-fallback">
 									{{ colName }}
 								</div>
 							</th>
@@ -138,7 +138,7 @@
 				<DataTable
 					tableStyle="width:auto"
 					class="p-datatable-sm"
-					:value="csvContent.slice(1, csvContent.length)"
+					:value="csvContent?.slice(1, csvContent.length)"
 					removableSort
 					resizable-columns
 					showGridlines
@@ -202,7 +202,6 @@ watch(
 	async () => {
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId, 10);
-			console.log(rawContent.value);
 			const datasetTemp = await getDataset(props.assetId);
 			// console.log(rawContent.value);
 			if (datasetTemp) {
@@ -229,7 +228,6 @@ const showAccordion = computed(() =>
 );
 
 // Given the bins for a column set up the object needed for the chart.
-// TOM TODO: What is stepsize = 0?
 const setBarChartData = (bins: any[]) => {
 	const documentStyle = getComputedStyle(document.documentElement);
 	const dummyLabels: string[] = [];
