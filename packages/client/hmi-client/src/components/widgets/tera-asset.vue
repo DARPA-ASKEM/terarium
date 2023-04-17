@@ -21,9 +21,12 @@
 					{{ description }}
 				</p>
 			</section>
-			<section v-if="isEditable" class="header-buttons">
-				<slot name="edit-buttons" />
-			</section>
+			<aside>
+				<section v-if="isEditable" class="header-buttons">
+					<slot name="edit-buttons" />
+				</section>
+				<slot name="keyword-search" />
+			</aside>
 		</header>
 		<slot name="default" />
 	</main>
@@ -58,6 +61,12 @@ header {
 	display: flex;
 	gap: 0.5rem;
 	justify-content: space-between;
+	position: sticky;
+	top: 0;
+	background-color: var(--surface-section);
+	z-index: 1;
+	isolation: isolate;
+	border-bottom: 1px solid var(--surface-border-light);
 }
 
 h4,
@@ -65,19 +74,25 @@ header section p {
 	color: var(--text-color-primary);
 }
 
-header section {
+header section,
+header aside {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
 	max-width: var(--constrain-width);
 }
 
+header aside {
+	align-items: flex-end;
+}
+
+header aside:deep(.p-inputtext.p-inputtext-sm) {
+	padding: 0.65rem 0.65rem 0.65rem 3rem;
+}
+
 /* Input asset name */
 header section:deep(> input) {
-	border: 1px solid var(--surface-border-light);
 	width: var(--constrain-width);
-	border-radius: var(--border-radius);
-	padding: 0.75rem;
 	font-size: var(--font-body-medium);
 }
 
@@ -89,7 +104,6 @@ header section:deep(> input) {
 .header-buttons {
 	display: flex;
 	flex-direction: row;
-	align-self: flex-start;
 	gap: 0.5rem;
 }
 
@@ -131,7 +145,13 @@ main:deep(.artifact-amount) {
 	margin-left: 0.25rem;
 }
 
-/* This button style should probably be moved to the general theme in some form */
+/* These styles should probably be moved to the general theme in some form */
+header:deep(input) {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: 0.75rem;
+}
+
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
