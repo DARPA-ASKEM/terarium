@@ -1,7 +1,12 @@
 <template>
 	<nav :style="{ '--nb-tabs': tabs.length }">
 		<header v-for="(tab, index) in tabs" :key="index">
-			<div class="tab" @click="emit('select-tab', index)" :active="activeTabIndex === index">
+			<div
+				class="tab"
+				@click="emit('select-tab', index)"
+				:active="activeTabIndex === index"
+				:loading="loadingTabIndex === index"
+			>
 				<vue-feather
 					v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
 					:type="getAssetIcon(tab.assetType ?? null)"
@@ -22,7 +27,7 @@
 					@click.stop="emit('close-tab', index)"
 				/>
 			</div>
-			<div :loading="loadingTabIndex === index" />
+			<div :loading="loadingTabIndex === index" @animationiteration="endAnimationIfTabIsLoaded" />
 		</header>
 	</nav>
 </template>
@@ -36,14 +41,33 @@
 import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import { getAssetIcon } from '@/services/project';
+import { ref, watch } from 'vue';
 
-defineProps<{
+const props = defineProps<{
 	tabs: Tab[];
 	activeTabIndex: number;
-	loadingTabIndex: number;
+	loadingTabIndex: number | null;
 }>();
 
 const emit = defineEmits(['select-tab', 'close-tab']);
+const loadingTabIndex = ref();
+
+function endAnimationIfTabIsLoaded() {
+	if (props.loadingTabIndex === null) {
+		loadingTabIndex.value = null;
+	}
+}
+
+watch(
+	() => props.loadingTabIndex,
+	() => {
+		if (props.loadingTabIndex !== null) {
+			console.log('watch');
+			loadingTabIndex.value = props.loadingTabIndex;
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -101,6 +125,9 @@ i {
 
 .tab[active='true'] {
 	background-color: var(--surface-0);
+}
+
+.tab[active='true'][loading='false'] {
 	border-bottom-color: var(--primary-color);
 }
 
@@ -125,21 +152,21 @@ i {
 @keyframes tab-loading {
 	0% {
 		width: 0%;
-		opacity: 1;
+		/* opacity: 1; */
 	}
 
 	50% {
-		width: 100%;
+		width: calc(100% - 2px);
 	}
 
 	100% {
-		opacity: 0;
+		/* opacity: 0; */
 	}
 }
 
-.tab[active='false'] + div[loading='true'] {
+.tab + div[loading='true'] {
 	background-color: var(--primary-color);
-	animation: tab-loading 0.5s ease-in-out infinite forwards;
+	animation: tab-loading 1s ease-out infinite forwards;
 }
 
 .p-button {
