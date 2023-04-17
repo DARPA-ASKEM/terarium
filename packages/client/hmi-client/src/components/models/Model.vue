@@ -1,5 +1,17 @@
 <template>
-	<tera-asset v-if="model" :name="name" :overline="model?.framework" :is-editable="isEditable">
+	<tera-asset
+		:name="name"
+		:overline="model?.framework"
+		:is-editable="isEditable"
+		:is-creating-asset="assetId === ''"
+	>
+		<template #name-input>
+			<InputText
+				v-model="newModelName"
+				class="model-title-text-area"
+				placeholder="Title of new model"
+			/>
+		</template>
 		<template #edit-buttons>
 			<Button
 				v-if="assetId === ''"
@@ -8,36 +20,20 @@
 				class="p-button-sm"
 			/>
 			<Button
+				v-else
 				@click="launchForecast"
 				label="Open simulation space"
 				:disabled="isEditing"
 				class="p-button-sm"
 			/>
 		</template>
-		<header>
-			<div class="framework">{{ model?.framework }}</div>
-			<div class="header-and-buttons">
-				<InputText
-					v-if="assetId === ''"
-					v-model="newModelName"
-					class="model-title-text-area"
-					placeholder="Title of new model"
-				/>
-				<h4 v-else v-html="name" />
-			</div>
-		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-if="assetId !== ''" v-html="description" />
-				<section v-else>
+				<template v-else>
 					<label for="placeholder"></label
-					><Textarea
-						v-model="newDescription"
-						class="model-description-text-area"
-						rows="5"
-						placeholder="Description of new model"
-					/>
-				</section>
+					><Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
+				</template>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -895,24 +891,5 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.model-description-text-area {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	padding: 5px;
-	resize: none;
-	overflow-y: hidden;
-	width: 100%;
-}
-
-.model-title-text-area {
-	border: 1px solid var(--surface-border-light);
-	border-radius: 4px;
-	padding: 5px;
-	resize: none;
-	overflow-y: hidden;
-	width: 100%;
-	font-size: var(--font-body-medium);
 }
 </style>

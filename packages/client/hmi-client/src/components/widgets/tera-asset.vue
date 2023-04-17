@@ -2,8 +2,10 @@
 	<main id="asset-toc-top">
 		<header>
 			<section>
-				<span class="overline">{{ overline }}</span>
-				<h4 v-html="name" />
+				<span v-if="overline" class="overline">{{ overline }}</span>
+				<!--For naming asset such as model or code file-->
+				<slot v-if="isCreatingAsset" name="name-input" />
+				<h4 v-else v-html="name" />
 				<div v-if="authors" class="authors" v-html="authors" />
 				<div v-if="doi">
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
@@ -19,7 +21,7 @@
 					{{ description }}
 				</p>
 			</section>
-			<section class="header-buttons" v-if="isEditable">
+			<section v-if="isEditable" class="header-buttons">
 				<slot name="edit-buttons" />
 			</section>
 		</header>
@@ -30,8 +32,9 @@
 <script setup lang="ts">
 defineProps<{
 	name: string;
-	overline: string;
+	overline?: string;
 	isEditable: boolean;
+	isCreatingAsset?: boolean;
 	description?: string;
 	authors?: string;
 	doi?: string;
@@ -69,6 +72,15 @@ header section {
 	max-width: var(--constrain-width);
 }
 
+/* Input asset name */
+header section:deep(> input) {
+	border: 1px solid var(--surface-border-light);
+	width: var(--constrain-width);
+	border-radius: var(--border-radius);
+	padding: 0.75rem;
+	font-size: var(--font-body-medium);
+}
+
 .overline,
 .authors {
 	color: var(--primary-color-dark);
@@ -102,6 +114,15 @@ main:deep(.p-accordion-content ul) {
 	flex-direction: column;
 	gap: 0.5rem;
 	list-style: none;
+}
+
+main:deep(.p-accordion-content > textarea) {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
 }
 
 main:deep(.artifact-amount) {
