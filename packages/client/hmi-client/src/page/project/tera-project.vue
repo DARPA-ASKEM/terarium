@@ -515,7 +515,7 @@ section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	overflow: auto;
+	overflow-x: auto;
 }
 
 .no-open-tabs {

@@ -134,6 +134,7 @@ header {
 	display: flex;
 	align-items: center;
 	margin: 1rem;
+	margin-bottom: 0;
 	font-size: 14px;
 	color: var(--text-color-subdued);
 	font-weight: bold;

@@ -6,13 +6,15 @@
 				<!--For naming asset such as model or code file-->
 				<slot v-if="isCreatingAsset" name="name-input" />
 				<h4 v-else v-html="name" />
-				<div v-if="authors" class="authors" v-html="authors" />
+				<div class="authors" v-if="authors">
+					<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
+					<div v-html="authors" />
+					<!--contributor-->
+				</div>
 				<div v-if="doi">
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 				</div>
 				<div v-if="publisher" v-html="publisher" />
-				<!--Model header details that aren't in yet-->
-				<!--contributor-->
 				<!--created on: date-->
 				<div class="header-buttons">
 					<slot name="bottom-header-buttons" />
@@ -53,10 +55,12 @@ main {
 	flex-direction: column;
 	background-color: var(--surface-section);
 	scroll-margin-top: 1rem;
+	overflow: auto;
 }
 
 header {
 	padding: 1rem;
+	padding-bottom: 0.5rem;
 	color: var(--text-color-subdued);
 	display: flex;
 	gap: 0.5rem;
@@ -99,6 +103,15 @@ header section:deep(> input) {
 .overline,
 .authors {
 	color: var(--primary-color-dark);
+}
+
+.authors {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.authors i {
+	color: var(--text-color-subdued);
 }
 
 .header-buttons {
