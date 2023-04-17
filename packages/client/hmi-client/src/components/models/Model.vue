@@ -1,8 +1,15 @@
 <template>
-	<section class="asset">
-		<header>
+	<section class="asset" style="padding-top: 0">
+		<header class="fixed-header">
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
+				<!-- search bar -->
+				<div class="flex justify-content-end">
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
+					</span>
+				</div>
 				<InputText
 					v-if="assetId === ''"
 					v-model="newModelName"
@@ -129,6 +136,8 @@
 						v-model:selection="selectedRow"
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
+						v-model:filters="globalFilter"
+						filterDisplay="row"
 					>
 						<Column field="sname" header="Name" />
 						<Column header="Type">
@@ -158,7 +167,7 @@
 				</template>
 				<template v-else>
 					<model-parameter-list
-						:parameters="betterStates"
+						:parameters="filteredStates"
 						attribute="parameters"
 						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
@@ -171,7 +180,7 @@
 					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
 				</template>
 				<template v-if="!isEditable">
-					<DataTable :value="betterParams">
+					<DataTable :value="betterParams" v-model:filters="globalFilter" filterDisplay="row">
 						<Column field="name" header="Name" />
 						<Column field="type" header="Type" />
 						<Column field="default_value" header="Default" />
@@ -179,7 +188,7 @@
 				</template>
 				<template v-else>
 					<model-parameter-list
-						:parameters="betterParams"
+						:parameters="filteredParams"
 						attribute="parameters"
 						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
@@ -192,7 +201,7 @@
 					extractions?.length ? extractions?.length : ': No Extractions Found'
 				}`"
 			>
-				<DataTable :value="extractions">
+				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
 					<Column field="text_annotations" header="Text">
@@ -306,6 +315,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
+import { FilterMatchMode } from 'primevue/api';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 const emit = defineEmits(['create-new-model', 'update-tab-name']);
@@ -429,6 +439,28 @@ const betterParams = computed(() => {
 	});
 	return params;
 });
+
+const globalFilter = ref({
+	// @ts-ignore
+	// eslint-disable-line
+	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
+});
+
+const filteredStates = computed(() =>
+	betterStates.value?.filter(
+		(p) =>
+			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
+			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
+	)
+);
+
+const filteredParams = computed(() =>
+	betterParams.value?.filter(
+		(p) =>
+			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
+			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
+	)
+);
 
 const onVariableSelected = (variable: string) => {
 	if (variable) {
@@ -824,6 +856,19 @@ const mathJaxEq = (eq) => {
 	isolation: isolate;
 	background: transparent;
 	padding: 0.25rem;
+}
+
+.button-container {
+	display: flex;
+	float: right;
+}
+
+.fixed-header {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	background-color: white;
+	isolation: isolate;
 }
 
 section math-editor {
