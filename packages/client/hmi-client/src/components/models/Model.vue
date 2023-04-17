@@ -2,15 +2,42 @@
 	<tera-asset v-if="model" :name="name" :overline="model?.framework" :is-editable="isEditable">
 		<template #edit-buttons>
 			<Button
+				v-if="assetId === ''"
+				@click="createNewModel"
+				label="Create New Model"
+				class="p-button-sm"
+			/>
+			<Button
 				@click="launchForecast"
 				label="Open simulation space"
 				:disabled="isEditing"
 				class="p-button-sm"
 			/>
 		</template>
+		<header>
+			<div class="framework">{{ model?.framework }}</div>
+			<div class="header-and-buttons">
+				<InputText
+					v-if="assetId === ''"
+					v-model="newModelName"
+					class="model-title-text-area"
+					placeholder="Title of new model"
+				/>
+				<h4 v-else v-html="name" />
+			</div>
+		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" />
+				<p v-if="assetId !== ''" v-html="description" />
+				<section v-else>
+					<label for="placeholder"></label
+					><Textarea
+						v-model="newDescription"
+						class="model-description-text-area"
+						rows="5"
+						placeholder="Description of new model"
+					/>
+				</section>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -161,7 +188,11 @@
 					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Extractions ${extractions?.length}`">
+			<AccordionTab
+				:header="`Extractions ${
+					extractions?.length ? extractions?.length : ': No Extractions Found'
+				}`"
+			>
 				<DataTable :value="extractions">
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
@@ -235,7 +266,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, defineEmits } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -248,6 +279,8 @@ import {
 	petriToLatex,
 	NodeType
 } from '@/petrinet/petrinet-service';
+import Textarea from 'primevue/textarea';
+import InputText from 'primevue/inputtext';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -275,24 +308,39 @@ import SplitterPanel from 'primevue/splitterpanel';
 import TeraAsset from '@/components/widgets/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
-import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
-export interface ModelProps {
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-}
+const emit = defineEmits(['create-new-model', 'update-tab-name']);
 
-const extractions = ref(Object.values(example));
+const extractions = ref([]);
 
-const props = defineProps<ModelProps>();
+const props = defineProps({
+	assetId: {
+		type: String,
+		required: true
+	},
+	isEditable: {
+		type: Boolean,
+		required: true
+	},
+	highlight: {
+		type: String,
+		default: '',
+		required: false
+	}
+});
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
+
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
+
+const newModelName = ref('New Model');
+const newDescription = ref<string | undefined>('');
+const newPetri = ref();
+
 const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
@@ -332,6 +380,11 @@ const handleResize = () => {
 onMounted(() => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
+	// new model
+	if (props.assetId === '') {
+		isEditingEQ.value = true;
+		isMathMLValid.value = false;
+	}
 });
 
 onUnmounted(() => {
@@ -477,8 +530,16 @@ watch(
 	{ immediate: true }
 );
 
-const graphElement = ref<HTMLDivElement | null>(null);
+watch(
+	() => newModelName.value,
+	(newValue, oldValue) => {
+		if (newValue !== oldValue) {
+			emit('update-tab-name', newValue);
+		}
+	}
+);
 
+const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
@@ -638,24 +699,37 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
+const createNewModel = async () => {
+	const newModel = {
+		name: newModelName.value,
+		framework: 'Petri Net',
+		description: newDescription.value,
+		content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
+	};
+	emit('create-new-model', newModel);
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
+};
+
 const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	isEditingEQ.value = true;
 	isMathMLValid.value = false;
 	const cleanedMathML = separateEquations(mathMlString);
 	if (mathMlString === '') {
-		logger.error(
-			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-		);
+		isMathMLValid.value = true;
+		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			const newPetri = await mathmlToPetri(cleanedMathML);
+			newPetri.value = await mathmlToPetri(cleanedMathML);
 			if (
-				(isArray(newPetri) && newPetri.length > 0) ||
-				(!isArray(newPetri) && Object.keys(newPetri).length > 0 && hasNoEmptyKeys(newPetri))
+				(isArray(newPetri.value) && newPetri.value.length > 0) ||
+				(!isArray(newPetri.value) &&
+					Object.keys(newPetri.value).length > 0 &&
+					hasNoEmptyKeys(newPetri.value))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-				updatePetri(newPetri);
+				updatePetri(newPetri.value);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -821,5 +895,24 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+.model-description-text-area {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
+}
+
+.model-title-text-area {
+	border: 1px solid var(--surface-border-light);
+	border-radius: 4px;
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
+	font-size: var(--font-body-medium);
 }
 </style>
