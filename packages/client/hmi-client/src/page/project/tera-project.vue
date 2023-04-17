@@ -375,6 +375,7 @@ function openAsset(index: number, newCode?: string) {
 
 function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value]) {
 	router.push({ name: RouteName.ProjectRoute, params: asset });
+	loadingTabIndex.value = tabs.value.length;
 }
 
 const openOverview = () => {
