@@ -1,5 +1,9 @@
 import API from '@/api/api';
 import { Model } from '@/types/Model';
+import { logger } from '@/utils/logger';
+import * as ProjectService from '@/services/project';
+import { ProjectAssetTypes } from '@/types/Project';
+import { ResourceType } from '@/stores/resources';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -51,4 +55,23 @@ export async function updateModel(model: Model) {
 		content: JSON.stringify(model.content)
 	});
 	return response?.data ?? null;
+}
+
+export async function addModelToProject(
+	projectId: string,
+	assetId: string,
+	resources: ResourceType
+) {
+	const resp = await ProjectService.addAsset(projectId, ProjectAssetTypes.MODELS, assetId);
+
+	if (resp) {
+		const model = await getModel(assetId);
+		if (model) {
+			resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
+		} else {
+			logger.warn(`Unable to find model id: ${assetId}`);
+		}
+	} else {
+		logger.warn('Could not add new model to project.');
+	}
 }

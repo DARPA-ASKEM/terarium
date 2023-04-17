@@ -37,7 +37,6 @@
 					</section>
 				</div>
 			</section>
-
 			<!-- Project summary KPIs -->
 			<section class="summary-KPI-bar">
 				<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
@@ -45,7 +44,6 @@
 					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 				</div>
 			</section>
-
 			<!-- Quick link buttons go here -->
 			<section>
 				<div class="quick-links">
@@ -61,22 +59,23 @@
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
 					/>
-					<Button
-						label="New workflow"
-						size="large"
-						icon="pi pi-sitemap"
-						class="p-button p-button-secondary quick-link-button"
-					/>
-					<Button
-						label="Compare models"
-						size="large"
-						icon="pi pi-share-alt"
-						class="p-button p-button-secondary quick-link-button"
-					/>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+						<span class="p-button-label">New workflow</span>
+					</Button>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<compare-models-icon class="icon" />
+						<span class="p-button-label">Compare Models</span>
+					</Button>
 					<Button
 						label="New simulation"
 						size="large"
-						icon="pi pi-chart-line"
+						icon="pi pi-play"
 						class="p-button p-button-secondary quick-link-button"
 					/>
 				</div>
@@ -114,6 +113,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
+import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 
 const props = defineProps<{
 	project: IProject;
@@ -193,6 +193,7 @@ section {
 	margin-top: 0.5rem;
 	margin-bottom: 0.5rem;
 }
+
 .contributors {
 	flex-direction: row;
 	align-items: center;
@@ -221,8 +222,14 @@ section {
 .summary-KPI-number {
 	font-size: 2.5rem;
 }
+
 .summary-KPI-label {
 	font-size: 1.15rem;
+}
+
+button .icon {
+	scale: 1.25;
+	color: var(--text-color-primary);
 }
 
 .quick-links {
@@ -241,6 +248,7 @@ section {
 	width: 100%;
 	font-size: var(--font-body-small);
 }
+
 .resource-list {
 	margin-top: 1rem;
 }
@@ -255,11 +263,13 @@ section {
 .resource-list-section-header h4 {
 	font-size: var(--font-body-medium);
 }
+
 .keyword-search {
 	border-color: transparent;
 	padding-top: 0.75rem;
 	padding-bottom: 0.75rem;
 }
+
 .keyword-search:hover {
 	border-color: var(--surface-border) !important;
 }

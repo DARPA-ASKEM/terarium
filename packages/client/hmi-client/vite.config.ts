@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import svgLoader from 'vite-svg-loader';
 import * as path from 'path';
 
 /**
@@ -50,7 +51,10 @@ export default defineConfig({
 					isCustomElement: (tag) => tag.startsWith('facet-') || tag === 'math-field'
 				}
 			}
-		})
+		}),
+		// By default SVGs are imported as URL in order to easily reference them in img tags
+		// In order to import SVGs as components you must add '?component' as a suffix of an SVG's path
+		svgLoader({ defaultImport: 'url' })
 	],
 	test: {
 		include: ['tests/unit/**/*.{test,spec}.{ts,mts}']

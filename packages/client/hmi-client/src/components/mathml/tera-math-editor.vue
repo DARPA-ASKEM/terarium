@@ -34,7 +34,6 @@
 				ref="mathLiveField"
 				virtual-keyboard-mode="false"
 				:disabled="!isEditingEq"
-				:style="{ borderColor: isMathMlValid ? 'inherit' : 'red' }"
 				><slot v-if="mathMode === MathEditorModes.LIVE"></slot
 			></math-field>
 		</section>
@@ -175,23 +174,19 @@ const cancelEditEquation = () => {
 
 <style scoped>
 math-field {
-	background-color: var(--surface);
+	background-color: var(--gray-100);
 	border-radius: 4px;
-	border: 1px solid var(--gray-0);
+	border: none;
+	outline: none;
 	padding: 5px;
 	margin: 10px;
 	font-size: 1em;
 	transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
-math-field:focus-within {
-	outline: 2px solid var(--primary-color);
-	border-radius: var(--border-radius);
-}
-
 math-field[disabled] {
+	background-color: var(--gray-0);
 	opacity: 1;
-	background-color: var(--surface-secondary);
 }
 
 .controls {
@@ -206,7 +201,8 @@ math-field[disabled] {
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	max-width: 100%;
+	width: 99%;
+	margin: 5px;
 }
 
 .edit-button {
@@ -239,24 +235,29 @@ math-field[disabled] {
 }
 
 .mathjax-equation {
-	background-color: var(--editing-color);
-	border: 1px solid var(--gray-1000);
-	border-radius: 4px;
+	flex-direction: row;
+	background-color: var(--gray-100);
+	border-color: var(--gray-0);
 	padding: 5px;
-	padding: 5px;
-	margin: 10px;
 	height: auto;
 	resize: none;
 	overflow-y: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 100%;
+	width: 99%;
+	margin: 5px;
 }
 
 .mathjax-container {
 	display: flex;
 	flex-direction: column;
+	background-color: var(--gray-0);
 }
 
 .mathjax-container Textarea[disabled] {
 	opacity: 1;
-	background-color: var(--surface-secondary);
+	background-color: var(--gray-0);
 }
 </style>

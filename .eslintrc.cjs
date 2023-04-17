@@ -9,17 +9,18 @@ module.exports = {
 	],
 	parser: 'vue-eslint-parser',
 	rules: {
-		'vue/multi-word-component-names': 'off',
 		'class-methods-use-this': 'off',
-		'no-plusplus': 'off',
-		'prefer-destructuring': 'off',
 		'func-names': 'off',
-		'no-param-reassign': 'off',
-		'no-continue': 'off',
-		'vuejs-accessibility/click-events-have-key-events': 'off',
 		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+		'no-continue': 'off',
+		'no-param-reassign': 'off',
 		'no-plusplus': 'off',
-		"import/prefer-default-export": "off",
+		'no-use-before-define': 'off',
+		'@typescript-eslint/no-use-before-define': 'off',
+		'prefer-destructuring': 'off',
+		'vuejs-accessibility/click-events-have-key-events': 'off',
+		'vue/multi-word-component-names': 'off',
+		'import/prefer-default-export': 'off'
 	},
 	"ignorePatterns": [
 		"**/src/temp/*"

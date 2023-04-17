@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.proxies;
 
 import io.quarkus.test.junit.QuarkusTest;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -9,15 +10,25 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionP
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 
+import java.util.Optional;
+
 @QuarkusTest
 public class ExtractionProxyTests {
+
+
+	//TODO this will be null in testing :(
+	@ConfigProperty(name = "xdd.api_key")
+	Optional<String> key;
 
 	@RestClient
 	ExtractionProxy proxy;
 
 	@Test
 	public void testItCanGetExtractions() {
-		XDDResponse<XDDExtractionsResponseOK> response = proxy.getExtractions(null, "covid", null, null, "true");
+
+		String apiKey = key.isPresent() ? key.get() : "";
+
+		XDDResponse<XDDExtractionsResponseOK> response = proxy.getExtractions(null, "covid", null, null, "true", apiKey);
 
 		Assertions.assertNotNull(response);
 		Assertions.assertNull(response.getError());

@@ -3,31 +3,47 @@
 		<header class="fixed-header">
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" />
-				<div class="button-container">
-					<!-- search bar -->
-					<div class="flex justify-content-end">
-						<span class="p-input-icon-left">
-							<i class="pi pi-search" />
-							<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
-						</span>
-					</div>
-					<div v-if="isEditable">
-						<Button
-							@click="launchForecast"
-							label="Open simulation space"
-							:disabled="isEditing"
-							class="p-button-sm"
-						/>
-					</div>
+				<!-- search bar -->
+				<div class="flex justify-content-end">
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
+					</span>
 				</div>
+				<InputText
+					v-if="assetId === ''"
+					v-model="newModelName"
+					class="model-title-text-area"
+					placeholder="Title of new model"
+				/>
+				<h4 v-else v-html="title" />
+				<span v-if="assetId === ''">
+					<Button @click="createNewModel" label="Create New Model" class="p-button-sm" />
+				</span>
+				<span v-else-if="isEditable">
+					<Button
+						@click="launchForecast"
+						label="Open simulation space"
+						:disabled="isEditing"
+						class="p-button-sm"
+					/>
+				</span>
 			</div>
 			<!--contributor-->
 			<!--created on: date-->
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" class="constrain-width" />
+				<p v-if="assetId !== ''" v-html="description" class="constrain-width" />
+				<section v-else>
+					<label for="placeholder"></label
+					><Textarea
+						v-model="newDescription"
+						class="model-description-text-area"
+						rows="5"
+						placeholder="Description of new model"
+					/>
+				</section>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -41,17 +57,46 @@
 									:maxSize="equationPanelMaxSize"
 								>
 									<section class="graph-element">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined floating-edit-button cancel-edit-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											class="p-button-sm p-button-outlined floating-edit-button"
-										/>
+										<Toolbar>
+											<template #start>
+												<Button
+													@click="resetZoom"
+													label="Reset Zoom"
+													class="p-button-sm p-button-secondary"
+												/>
+											</template>
+											<template #center>
+												<span class="p-buttonset">
+													<Button
+														v-if="isEditing"
+														@click="addState"
+														label="Add State"
+														class="p-button-sm p-button-secondary"
+													/>
+													<Button
+														v-if="isEditing"
+														@click="addTransition"
+														label="Add Transition"
+														class="p-button-sm p-button-secondary"
+													/>
+												</span>
+											</template>
+											<template #end>
+												<span class="p-buttonset">
+													<Button
+														v-if="isEditing"
+														@click="cancelEdit"
+														label="Cancel"
+														class="p-button-sm p-button-secondary"
+													/>
+													<Button
+														@click="toggleEditMode"
+														:label="isEditing ? 'Save model' : 'Edit model'"
+														class="p-button-sm p-button-secondary"
+													/>
+												</span>
+											</template>
+										</Toolbar>
 										<div v-if="model" ref="graphElement" class="graph-element" />
 										<ContextMenu ref="menu" :model="contextMenuItems" />
 									</section>
@@ -62,7 +107,7 @@
 									:minSize="mathPanelMinSize"
 									:maxSize="mathPanelMaxSize"
 								>
-									<section class="math-editor-container">
+									<section class="math-editor-container" :class="mathEditorSelected">
 										<tera-math-editor
 											:is-editable="isEditable"
 											:latex-equation="equationLatex"
@@ -151,7 +196,11 @@
 					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Extractions ${extractions?.length}`">
+			<AccordionTab
+				:header="`Extractions ${
+					extractions?.length ? extractions?.length : ': No Extractions Found'
+				}`"
+			>
 				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
@@ -226,7 +275,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, defineEmits } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -236,8 +285,11 @@ import {
 	EdgeData,
 	parseIGraph2PetriNet,
 	mathmlToPetri,
-	petriToLatex
+	petriToLatex,
+	NodeType
 } from '@/petrinet/petrinet-service';
+import Textarea from 'primevue/textarea';
+import InputText from 'primevue/inputtext';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -262,27 +314,42 @@ import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
-import InputText from 'primevue/inputtext';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
-import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
-export interface ModelProps {
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-}
+const emit = defineEmits(['create-new-model', 'update-tab-name']);
 
-const extractions = ref(Object.values(example));
+const extractions = ref([]);
 
-const props = defineProps<ModelProps>();
+const props = defineProps({
+	assetId: {
+		type: String,
+		required: true
+	},
+	isEditable: {
+		type: Boolean,
+		required: true
+	},
+	highlight: {
+		type: String,
+		default: '',
+		required: false
+	}
+});
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
+
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
+
+const newModelName = ref('New Model');
+const newDescription = ref<string | undefined>('');
+const newPetri = ref();
+
 const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
@@ -295,23 +362,15 @@ const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const showForecastLauncher = ref(false);
 
-// Test equation.  Was thinking this would probably eventually live in model.mathLatex or model.mathML?
-// const modelMath = ref(String.raw`\begin{align}
-// \frac{\mathrm{d} S\left( t \right)}{\mathrm{d}t} =&  - inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} I\left( t \right)}{\mathrm{d}t} =&  - death I\left( t \right) - recover I\left( t \right) + inf I\left( t \right) S\left( t \right) \\
-// \frac{\mathrm{d} R\left( t \right)}{\mathrm{d}t} =& recover I\left( t \right) \\
-// \frac{\mathrm{d} D\left( t \right)}{\mathrm{d}t} =& death I\left( t \right)
-// \end{align}`);
-
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
 const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(1);
-const equationPanelMaxSize = ref<number>(99);
+const equationPanelMinSize = ref<number>(0);
+const equationPanelMaxSize = ref<number>(100);
 
 const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(1);
-const mathPanelMaxSize = ref<number>(99);
+const mathPanelMinSize = ref<number>(0);
+const mathPanelMaxSize = ref<number>(100);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -330,11 +389,27 @@ const handleResize = () => {
 onMounted(() => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
+	// new model
+	if (props.assetId === '') {
+		isEditingEQ.value = true;
+		isMathMLValid.value = false;
+	}
 });
 
 onUnmounted(() => {
 	window.removeEventListener('resize', handleResize);
 });
+
+const mathEditorSelected = computed(() => {
+	if (!isMathMLValid.value) {
+		return 'math-editor-error';
+	}
+	if (isEditingEQ.value) {
+		return 'math-editor-selected';
+	}
+	return '';
+});
+
 const betterStates = computed(() => {
 	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
 	const statesFromContent: any[] = model.value?.content?.S ?? [];
@@ -486,8 +561,16 @@ watch(
 	{ immediate: true }
 );
 
-const graphElement = ref<HTMLDivElement | null>(null);
+watch(
+	() => newModelName.value,
+	(newValue, oldValue) => {
+		if (newValue !== oldValue) {
+			emit('update-tab-name', newValue);
+		}
+	}
+);
 
+const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
@@ -503,6 +586,7 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 			const nodeData = renderer.nodeSelection.datum();
 			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
 			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
+			renderer.nodeSelection = null;
 			renderer.render();
 		}
 
@@ -512,7 +596,22 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 				renderer.graph.edges,
 				(e) => e.source === edgeData.source && e.target === edgeData.target
 			);
+			renderer.edgeSelection = null;
 			renderer.render();
+		}
+	}
+	if (event.key === 'Enter' && renderer) {
+		if (renderer.nodeSelection) {
+			renderer.deselectNode(renderer.nodeSelection);
+			renderer.nodeSelection
+				.selectAll('.no-drag')
+				.style('opacity', 0)
+				.style('visibility', 'hidden');
+			renderer.nodeSelection = null;
+		}
+		if (renderer.edgeSelection) {
+			renderer.deselectEdge(renderer.edgeSelection);
+			renderer.edgeSelection = null;
 		}
 	}
 };
@@ -631,25 +730,37 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
+const createNewModel = async () => {
+	const newModel = {
+		name: newModelName.value,
+		framework: 'Petri Net',
+		description: newDescription.value,
+		content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
+	};
+	emit('create-new-model', newModel);
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
+};
+
 const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	isEditingEQ.value = true;
 	isMathMLValid.value = false;
 	const cleanedMathML = separateEquations(mathMlString);
 	if (mathMlString === '') {
-		logger.error(
-			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-		);
-	}
-	if (!editMode) {
+		isMathMLValid.value = true;
+		isEditingEQ.value = false;
+	} else if (!editMode) {
 		try {
-			const newPetri = await mathmlToPetri(cleanedMathML);
+			newPetri.value = await mathmlToPetri(cleanedMathML);
 			if (
-				(isArray(newPetri) && newPetri.length > 0) ||
-				(!isArray(newPetri) && Object.keys(newPetri).length > 0 && hasNoEmptyKeys(newPetri))
+				(isArray(newPetri.value) && newPetri.value.length > 0) ||
+				(!isArray(newPetri.value) &&
+					Object.keys(newPetri.value).length > 0 &&
+					hasNoEmptyKeys(newPetri.value))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-				updatePetri(newPetri);
+				updatePetri(newPetri.value);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -658,6 +769,8 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 		} catch (e) {
 			isMathMLValid.value = false;
 		}
+	} else if (editMode) {
+		isMathMLValid.value = true;
 	}
 };
 
@@ -712,6 +825,18 @@ const cancelEdit = async () => {
 	}
 };
 
+const resetZoom = async () => {
+	renderer?.setToDefaultZoom();
+};
+
+const addState = async () => {
+	renderer?.addNodeCenter(NodeType.State, '?');
+};
+
+const addTransition = async () => {
+	renderer?.addNodeCenter(NodeType.Transition, '?');
+};
+
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 
@@ -724,6 +849,15 @@ const mathJaxEq = (eq) => {
 </script>
 
 <style scoped>
+.p-toolbar {
+	position: absolute;
+	width: 100%;
+	z-index: 1;
+	isolation: isolate;
+	background: transparent;
+	padding: 0.25rem;
+}
+
 .button-container {
 	display: flex;
 	float: right;
@@ -749,10 +883,6 @@ section math-editor {
 	z-index: 10;
 }
 
-.cancel-edit-button {
-	right: 110px;
-}
-
 .splitter-container {
 	height: 100%;
 }
@@ -769,10 +899,23 @@ section math-editor {
 
 .math-editor-container {
 	display: flex;
-	max-height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
 	width: 100%;
-	flex-grow: 1;
+	height: 100%;
 	flex-direction: column;
+	border-width: 2px;
+	overflow: auto;
+}
+
+.math-editor-selected {
+	outline: 2px solid var(--primary-color);
+}
+
+.math-editor-error {
+	outline: 2px solid red;
+	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .model_diagram {
@@ -785,6 +928,7 @@ section math-editor {
 }
 
 .tera-split-panel {
+	position: relative;
 	height: 100%;
 	display: flex;
 	align-items: center;
@@ -799,5 +943,24 @@ section math-editor {
 
 .constrain-width {
 	max-width: 60rem;
+}
+
+.model-description-text-area {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
+}
+
+.model-title-text-area {
+	border: 1px solid var(--surface-border-light);
+	border-radius: 4px;
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
+	font-size: var(--font-body-medium);
 }
 </style>

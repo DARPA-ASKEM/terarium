@@ -1,5 +1,10 @@
 <template>
-	<div class="asset-card" draggable="true" @dragstart="startDrag(asset, resourceType)">
+	<div
+		class="asset-card"
+		draggable="true"
+		@dragstart="startDrag(asset, resourceType)"
+		@dragend="endDrag"
+	>
 		<main>
 			<div class="type-and-filters">
 				{{ resourceType.toUpperCase() }}
@@ -244,11 +249,16 @@ const formatFeatures = () => {
 	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
 };
 
-const { setDragData } = useDragEvent();
+const { setDragData, deleteDragData } = useDragEvent();
 
 function startDrag(asset, resourceType) {
 	setDragData('asset', asset);
 	setDragData('resourceType', resourceType);
+}
+
+function endDrag() {
+	deleteDragData('asset');
+	deleteDragData('resourceType');
 }
 </script>
 
@@ -329,6 +339,7 @@ function startDrag(asset, resourceType) {
 	border-radius: 24px;
 	font-size: 10px;
 }
+
 .asset-nav-arrows .asset-pages {
 	display: flex;
 	justify-content: space-between;
