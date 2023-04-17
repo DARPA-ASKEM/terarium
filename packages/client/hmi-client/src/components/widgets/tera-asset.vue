@@ -23,11 +23,8 @@
 					{{ description }}
 				</p>
 			</section>
-			<aside>
-				<section v-if="isEditable" class="header-buttons">
-					<slot name="edit-buttons" />
-				</section>
-				<slot name="keyword-search" />
+			<aside v-if="isEditable">
+				<slot name="edit-buttons" />
 			</aside>
 		</header>
 		<slot name="default" />
@@ -87,7 +84,7 @@ header aside {
 }
 
 header aside {
-	align-items: flex-end;
+	align-self: flex-start;
 }
 
 header aside:deep(.p-inputtext.p-inputtext-sm) {
@@ -114,7 +111,8 @@ header section:deep(> input) {
 	color: var(--text-color-subdued);
 }
 
-.header-buttons {
+.header-buttons,
+header aside {
 	display: flex;
 	flex-direction: row;
 	gap: 0.5rem;

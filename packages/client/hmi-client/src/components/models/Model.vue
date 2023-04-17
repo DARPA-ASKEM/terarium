@@ -9,6 +9,14 @@
 			<InputText v-model="newModelName" placeholder="Title of new model" />
 		</template>
 		<template #edit-buttons>
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
+				<InputText
+					v-model="globalFilter['global'].value"
+					class="p-inputtext-sm"
+					placeholder="Search keyword"
+				/>
+			</span>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
@@ -23,22 +31,16 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<template #keyword-search>
-			<span class="p-input-icon-left">
-				<i class="pi pi-search" />
-				<InputText
-					v-model="globalFilter['global'].value"
-					class="p-inputtext-sm"
-					placeholder="Search keyword"
-				/>
-			</span>
-		</template>
+		<template #keyword-search> </template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-if="assetId !== ''" v-html="description" />
 				<template v-else>
-					<label for="placeholder"></label
-					><Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
+					<label for="placeholder" /><Textarea
+						v-model="newDescription"
+						rows="5"
+						placeholder="Description of new model"
+					/>
 				</template>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">

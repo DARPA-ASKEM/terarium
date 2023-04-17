@@ -18,15 +18,10 @@
 					:active="documentView === DocumentView.PDF"
 				/>
 			</span>
-			<div class="scroll-to-section-links" v-if="documentView === DocumentView.EXRACTIONS">
-				<a @click="scrollTo('asset-toc-top')">Top</a>
-				<template v-for="content in documentContent">
-					<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
-						{{ content.key.replace('-', ' ') }}
-						<span v-if="Array.isArray(content.value)"> ({{ content.value.length }}) </span>
-					</a>
-				</template>
-			</div>
+			<tera-asset-nav
+				:asset-content="documentContent"
+				v-if="documentView === DocumentView.EXRACTIONS"
+			/>
 			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
 			<!--- 
 				<div class="p-input-icon-left">
@@ -247,6 +242,7 @@ import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import TeraAsset from '@/components/widgets/tera-asset.vue';
+import TeraAssetNav from '@/components/widgets/tera-asset-nav.vue';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 enum DocumentView {
@@ -277,10 +273,6 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
-}
-
-function scrollTo(elementId: string) {
-	document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' });
 }
 
 watch(
@@ -461,13 +453,6 @@ nav {
 	min-width: 14rem;
 	position: sticky;
 	top: 0;
-}
-
-.scroll-to-section-links {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	margin-top: 1rem;
 }
 
 .find-in-page {
