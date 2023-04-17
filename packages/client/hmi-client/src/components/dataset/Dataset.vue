@@ -168,7 +168,7 @@
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
-import { csvToRecords, getColumns, Record } from '@/utils/csv';
+import { getColumns } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -198,9 +198,7 @@ const BARPERCENTAGE = 0.98;
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<string | null>(null);
 
-const csvContent = computed(() =>
-	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
-);
+const csvContent = computed(() => rawContent.value?.csv);
 const rawColumnNames = computed(() =>
 	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
 );
@@ -212,7 +210,8 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId);
+			rawContent.value = await downloadRawFile(props.assetId, 10);
+			console.log(rawContent.value);
 			const datasetTemp = await getDataset(props.assetId);
 			// console.log(rawContent.value);
 			if (datasetTemp) {
@@ -244,10 +243,10 @@ watch(
 		console.log(props.assetId);
 		console.log(csvContent.value);
 		// TOM TODO: Use the actual names, not hard coded infected
-		chartData.value = setBarChartData(
-			csvContent.value.map((col) => col.Infected),
-			10
-		);
+		// chartData.value = setBarChartData(
+		// 	csvContent.value.map((col) => col.Infected),
+		// 	10
+		// );
 		console.log(chartData.value);
 		chartOptions.value = setChartOptions();
 		console.log(setBarChartData([1, 1, 1, 1, 1, 1], 10));
