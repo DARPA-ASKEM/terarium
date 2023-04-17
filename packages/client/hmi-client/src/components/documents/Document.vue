@@ -1,34 +1,34 @@
 <template>
 	<section class="two-columns" v-if="doc">
-		<!--table of contents could be its own component later-->
-		<nav v-if="isEditable">
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-			</span>
-			<tera-asset-nav
-				:asset-content="documentContent"
-				v-if="documentView === DocumentView.EXRACTIONS"
-			/>
+		<tera-asset-nav
+			:asset-content="documentContent"
+			:show-anchors="documentView === DocumentView.EXRACTIONS"
+			v-if="isEditable"
+		>
+			<template #viewing-mode>
+				<span class="p-buttonset">
+					<Button
+						class="p-button-secondary p-button-sm"
+						label="Extractions"
+						icon="pi pi-list"
+						@click="documentView = DocumentView.EXRACTIONS"
+						:active="documentView === DocumentView.EXRACTIONS"
+					/>
+					<Button
+						class="p-button-secondary p-button-sm"
+						label="PDF"
+						icon="pi pi-file"
+						@click="documentView = DocumentView.PDF"
+						:active="documentView === DocumentView.PDF"
+					/>
+				</span>
+			</template>
 			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-			<!--- 
-				<div class="p-input-icon-left">
+			<!---  <div class="p-input-icon-left">
 					<i class="pi pi-search" />
 					<InputText placeholder="Find in page" class="find-in-page" />
-				</div>
-				--></nav>
+				</div>-->
+		</tera-asset-nav>
 		<tera-asset
 			v-if="documentView === DocumentView.EXRACTIONS"
 			:is-editable="isEditable"
@@ -445,14 +445,6 @@ onMounted(async () => {
 	display: flex;
 	flex-direction: row;
 	background-color: var(--surface-section);
-}
-
-nav {
-	padding-left: 1rem;
-	padding-top: 1rem;
-	min-width: 14rem;
-	position: sticky;
-	top: 0;
 }
 
 .find-in-page {
