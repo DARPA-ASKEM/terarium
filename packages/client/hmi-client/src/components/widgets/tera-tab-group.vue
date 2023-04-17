@@ -22,6 +22,7 @@
 					@click.stop="emit('close-tab', index)"
 				/>
 			</div>
+			<div :loading="loadingTabIndex === index" />
 		</header>
 	</nav>
 </template>
@@ -39,6 +40,7 @@ import { getAssetIcon } from '@/services/project';
 defineProps<{
 	tabs: Tab[];
 	activeTabIndex: number;
+	loadingTabIndex: number;
 }>();
 
 const emit = defineEmits(['select-tab', 'close-tab']);
@@ -110,6 +112,34 @@ i {
 	pointer-events: none;
 	display: none;
 	visibility: hidden;
+}
+
+.tab + div {
+	width: calc(100% - 2px);
+	position: relative;
+	height: 1px;
+	top: -1px;
+	left: 1px;
+}
+
+@keyframes tab-loading {
+	0% {
+		width: 0%;
+		opacity: 1;
+	}
+
+	50% {
+		width: 100%;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+.tab[active='false'] + div[loading='true'] {
+	background-color: var(--primary-color);
+	animation: tab-loading 0.5s ease-in-out infinite forwards;
 }
 
 .p-button {

@@ -26,12 +26,7 @@
 				:active-tab-index="activeTabIndex"
 				:loading-tab-index="loadingTabIndex"
 				@close-tab="removeClosedTab"
-				@select-tab="
-					(tab) => {
-						openAsset(tab);
-						setLoadingTab();
-					}
-				"
+				@select-tab="openAsset"
 				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
@@ -351,8 +346,7 @@ const newNoteSection = ref();
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
-// const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
-const activeTabIndex = ref();
+const activeTabIndex = ref(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	assetName: props.assetName ?? '',
 	assetType: props.assetType,
@@ -365,19 +359,13 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-function setLoadingTab() {
-	const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
-	loadingTabIndex.value = index;
-	console.log(loadingTabIndex.value);
-}
-
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
 function openAsset(index: number, newCode?: string) {
 	const asset: Tab = tabs.value[index];
-	console.log(index);
-	console.log(asset);
+	loadingTabIndex.value = index;
+
 	router.push({ name: RouteName.ProjectRoute, params: asset });
 
 	if (newCode) {
