@@ -191,13 +191,12 @@ public class DatasetResource {
 			log.warn("Tom");
 			log.warn(csv.get(0).get(0));
 			log.warn(rawCsvString);
-			for (int i = 1; i < csv.get(0).size(); i++){
+			for (int i = 0; i < csv.get(0).size(); i++){
 				log.warn("Binify column ");
 				log.warn(String.valueOf(i));
 				List<String> column = getColumn(csv,i);
 				log.warn(column.subList(1,column.size()).toString());
-				//remove first as it is header:
-				bins.add(binify(column.subList(1,column.size()), binCount));
+				bins.add(binify(column.subList(1,column.size()), binCount)); //remove first as it is header:
 			}
 			log.warn("Output Headers:");
 			log.warn(headers.toString());
