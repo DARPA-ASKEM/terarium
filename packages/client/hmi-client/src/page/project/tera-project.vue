@@ -11,7 +11,7 @@
 					:project="project"
 					:tabs="tabs"
 					:active-tab="openedAssetRoute"
-					@open-asset="openAsset"
+					@open-asset="openAssetFromSidebar"
 					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
@@ -24,8 +24,14 @@
 				v-if="!isEmpty(tabs)"
 				:tabs="tabs"
 				:active-tab-index="activeTabIndex"
+				:loading-tab-index="loadingTabIndex"
 				@close-tab="removeClosedTab"
-				@select-tab="openAsset"
+				@select-tab="
+					(tab) => {
+						openAsset(tab);
+						setLoadingTab();
+					}
+				"
 				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
@@ -36,6 +42,7 @@
 					:project="project"
 					is-editable
 					@open-asset="openAsset"
+					@asset-loaded="setActiveTab"
 				/>
 				<dataset
 					v-else-if="assetType === ProjectAssetTypes.DATASETS"
@@ -344,29 +351,54 @@ const newNoteSection = ref();
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
-const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
+// const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
+const activeTabIndex = ref();
 const openedAssetRoute = computed<Tab>(() => ({
 	assetName: props.assetName ?? '',
 	assetType: props.assetType,
 	assetId: props.assetId
 }));
+const loadingTabIndex = ref();
+
+function setActiveTab() {
+	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
+	loadingTabIndex.value = null;
+}
+
+function setLoadingTab() {
+	const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
+	loadingTabIndex.value = index;
+	console.log(loadingTabIndex.value);
+}
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
-function openAsset(asset: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
+function openAsset(index: number, newCode?: string) {
+	const asset: Tab = tabs.value[index];
+	console.log(index);
+	console.log(asset);
 	router.push({ name: RouteName.ProjectRoute, params: asset });
 
 	if (newCode) {
 		code.value = newCode;
-		// addCreatedAsset(assetToOpen);
 	}
 }
-const openOverview = () =>
-	openAsset({ assetName: 'Overview', assetType: 'overview', assetId: undefined });
+
+function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value]) {
+	router.push({ name: RouteName.ProjectRoute, params: asset });
+}
+
+const openOverview = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
+	});
+};
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
+	openAsset(tabStore.getActiveTabIndex(projectContext.value));
 }
 
 async function openNewModelFromCode(modelId, modelName) {
@@ -406,9 +438,6 @@ async function removeAsset(asset: Tab) {
 	logger.error(`Failed to remove ${assetName}`, { showToast: true });
 }
 
-// When a new tab is chosen, reflect that by opening its associated route
-tabStore.$subscribe(() => openAsset());
-
 watch(
 	() => [
 		openedAssetRoute.value, // Once route attributes change, add/switch to another tab
@@ -430,7 +459,9 @@ watch(
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
 			// Goes to tab from previous session
-			else openAsset();
+			else {
+				openAsset();
+			}
 		}
 	}
 );

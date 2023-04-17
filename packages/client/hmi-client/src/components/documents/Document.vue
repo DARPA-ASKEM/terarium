@@ -301,7 +301,7 @@ const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-asset', 'asset-loaded']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
@@ -465,6 +465,14 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	}
 	return highlightSearchTerms(citation);
 };
+
+watch(
+	() => doc.value,
+	() => {
+		emit('asset-loaded');
+	},
+	{ immediate: true }
+);
 
 onMounted(async () => {
 	fetchDocumentArtifacts();

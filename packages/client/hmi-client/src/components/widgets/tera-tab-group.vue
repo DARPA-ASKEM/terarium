@@ -1,7 +1,7 @@
 <template>
 	<nav :style="{ '--nb-tabs': tabs.length }">
 		<header v-for="(tab, index) in tabs" :key="index">
-			<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
+			<div class="tab" @click="emit('select-tab', index)" :active="activeTabIndex === index">
 				<vue-feather
 					v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
 					:type="getAssetIcon(tab.assetType ?? null)"
