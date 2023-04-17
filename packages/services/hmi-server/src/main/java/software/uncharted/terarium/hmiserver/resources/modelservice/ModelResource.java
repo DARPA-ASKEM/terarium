@@ -35,10 +35,10 @@ public class ModelResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create blank model")
 	public Response createModel() {
-		final Model model = proxy.createModel();
-		final UUID uuid = model.getId();
+		final Response response = proxy.createModel();
+		final Integer uuid = 12;
 		userEventRequestEmitter.send(uuid.toString());
-		return model;
+		return response;
 	}
 
 

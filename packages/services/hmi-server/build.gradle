@@ -39,6 +39,9 @@ dependencies {
 	implementation "io.quarkus:quarkus-cache"
 	implementation "io.quarkus:quarkus-scheduler"
 
+	// Message Queue
+	implementation "io.quarkus:quarkus-smallrye-reactive-messaging-rabbitmq"
+
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client"
 
