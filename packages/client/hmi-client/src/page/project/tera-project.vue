@@ -364,12 +364,18 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 
 function openAsset(index: number, newCode?: string) {
 	const asset: Tab = tabs.value[index];
-	loadingTabIndex.value = index;
-
-	router.push({ name: RouteName.ProjectRoute, params: asset });
-
-	if (newCode) {
-		code.value = newCode;
+	if (
+		asset.assetId === props.assetId &&
+		asset.assetName === props.assetName &&
+		asset.assetType === props.assetType
+	) {
+		setActiveTab();
+	} else {
+		loadingTabIndex.value = index;
+		router.push({ name: RouteName.ProjectRoute, params: asset });
+		if (newCode) {
+			code.value = newCode;
+		}
 	}
 }
 
@@ -387,9 +393,6 @@ const openOverview = () => {
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
-	// if (tabIndexToRemove === activeTabIndex.value || tabIndexToRemove === 0) {
-	// 	openAsset(tabStore.getActiveTabIndex(projectContext.value));
-	// }
 }
 
 async function openNewModelFromCode(modelId, modelName) {
@@ -452,11 +455,14 @@ watch(
 			// Goes to tab from previous session
 			else {
 				openAsset(tabStore.getActiveTabIndex(projectContext.value));
-				// openAsset();
 			}
 		}
 	}
 );
+
+tabStore.$subscribe(() => {
+	openAsset(tabStore.getActiveTabIndex(projectContext.value));
+});
 
 async function getAndPopulateAnnotations() {
 	annotations.value = await getAnnotations(props.assetId, props.assetType);
