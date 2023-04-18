@@ -7,7 +7,6 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.modelservice.Graph;
 import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositionParams;
 import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
@@ -16,7 +15,7 @@ import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServicePr
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.UUID;
+
 
 @Path("/api/model-service/models")
 @Authenticated
