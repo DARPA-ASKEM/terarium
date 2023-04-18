@@ -108,33 +108,7 @@
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
-				<!-- column summary charts go here -->
-				<table class="summary-chart-table">
-					<thead>
-						<tr>
-							<th
-								v-for="(colName, index) of csvHeaders"
-								class="summary-chart-column"
-								:key="index"
-								:field="index.toString()"
-								:header="colName"
-							>
-								<div class="histogram-label-max">max</div>
-								<Chart
-									type="bar"
-									:height="800"
-									:data="chartData.at(index)"
-									:options="chartOptions"
-									class="histogram"
-								/>
-								<div class="histogram-label-min">min</div>
-								<div class="longest-value-fallback">
-									{{ colName }}
-								</div>
-							</th>
-						</tr>
-					</thead>
-				</table>
+
 				<DataTable
 					tableStyle="width:auto"
 					class="p-datatable-sm"
@@ -150,13 +124,28 @@
 						:header="colName"
 						sortable
 					>
+						<!-- column summary charts go here -->
+						<template #header>
+							<div class="histogram">
+								<div class="histogram-label-min">Min: {{ csvMins?.at(index) }}</div>
+								<Chart
+									type="bar"
+									:height="800"
+									:data="chartData?.at(index)"
+									:options="chartOptions"
+								/>
+								<div class="histogram-label-max">Max: {{ csvMaxsToDisplay?.at(index) }}</div>
+								<div class="histogram-label-other">Mean: {{ csvMeansToDisplay?.at(index) }}</div>
+								<div class="histogram-label-other">Median: {{ csvMedianToDisplay?.at(index) }}</div>
+								<div class="histogram-label-other">SD: {{ csvSdToDisplay?.at(index) }}</div>
+							</div>
+						</template>
 					</Column>
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
 	</section>
 </template>
-
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
@@ -168,6 +157,7 @@ import { isString } from 'lodash';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Chart from 'primevue/chart';
+import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	assetId: string;
@@ -188,12 +178,28 @@ const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
 
 const dataset = ref<Dataset | null>(null);
-const rawContent = ref<any>(null);
+const rawContent = ref<CsvAsset | null>(null);
 
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
-// const chartData = ref<any[]>();
-const chartData = computed(() => rawContent.value?.bins.map((bin) => setBarChartData(bin)));
+const chartData = computed(() =>
+	rawContent.value?.stats?.map((stat) => setBarChartData(stat.bins))
+);
+const csvMins = computed(() =>
+	rawContent.value?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
+);
+const csvMaxsToDisplay = computed(() =>
+	rawContent.value?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
+);
+const csvMeansToDisplay = computed(() =>
+	rawContent.value?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
+);
+const csvMedianToDisplay = computed(() =>
+	rawContent.value?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
+);
+const csvSdToDisplay = computed(() =>
+	rawContent.value?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
+);
 const chartOptions = computed(() => setChartOptions());
 
 // Whenever assetId changes, fetch dataset with that ID
@@ -203,7 +209,7 @@ watch(
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId, 10);
 			const datasetTemp = await getDataset(props.assetId);
-			// console.log(rawContent.value);
+			console.log(rawContent.value);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -343,22 +349,6 @@ const setChartOptions = () => {
 	padding-left: 0.5rem;
 	position: relative;
 	top: -9px;
-}
-.longest-value {
-	padding-left: 7px;
-	padding-right: 10px;
-	color: transparent;
-	user-select: none;
-	height: 0px;
-}
-.longest-value-fallback {
-	padding-left: 7px;
-	padding-right: 30px;
-	text-transform: uppercase;
-	font-size: var(--font-caption);
-	color: transparent;
-	user-select: none;
-	height: 0px;
 }
 /* Datatable  */
 .data-row > section > header {

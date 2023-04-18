@@ -3,7 +3,8 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import software.uncharted.terarium.hmiserver.models.documentservice.Extraction;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.io.Serializable;
 import java.util.*;
@@ -11,21 +12,22 @@ import java.util.*;
 @Data
 @Accessors(chain = true)
 @Slf4j
+@TSModel
 public class CsvAsset implements Serializable {
 	List<List<String>> csv;
-	List<List<Integer>> bins;
+	@TSOptional
+	List<CsvStats> stats;
 	List<String> headers;
 
-	public CsvAsset(List<List<String>> csv, List<List<Integer>> bins, List<String> headers){
+	public CsvAsset(List<List<String>> csv, List<CsvStats> stats, List<String> headers){
 		this.csv = csv;
-		this.bins = bins;
+		this.stats = stats;
 		this.headers = headers;
 	}
 
 	public CsvAsset(List<List<String>> csv, List<String> headers){
 		this.csv = csv;
-		this.bins = null;
+		this.stats = null;
 		this.headers = headers;
 	}
-
 }

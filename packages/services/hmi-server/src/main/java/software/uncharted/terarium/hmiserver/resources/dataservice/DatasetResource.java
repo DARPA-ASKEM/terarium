@@ -5,6 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.CsvStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
@@ -186,25 +187,23 @@ public class DatasetResource {
 		String rawCsvString = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit).readEntity(String.class);
 		List<List<String>> csv = csvToRecords(rawCsvString);
 		List<String> headers = csv.get(0);
-		List<List<Integer>> bins = new ArrayList<List<Integer>>();
+		List<CsvStats> csvStats = new ArrayList<CsvStats>();
 		if (binCount > 0){ 
-			log.warn("Tom");
-			log.warn(csv.get(0).get(0));
-			log.warn(rawCsvString);
 			for (int i = 0; i < csv.get(0).size(); i++){
 				log.warn("Binify column ");
 				log.warn(String.valueOf(i));
 				List<String> column = getColumn(csv,i);
 				log.warn(column.subList(1,column.size()).toString());
-				bins.add(binify(column.subList(1,column.size()), binCount)); //remove first as it is header:
+				csvStats.add(getStats(column.subList(1,column.size()), binCount)); //remove first as it is header:
 			}
-			log.warn("Output Headers:");
-			log.warn(headers.toString());
-			log.warn("Output bins:");
-			log.warn(bins.toString());
+			// log.warn("Output Headers:");
+			// log.warn(headers.toString());
+			// log.warn("Output binNumbers:");
+			// log.warn(binNumbers.toString());
 
 		}
-		CsvAsset csvAsset = new CsvAsset(csv,bins,headers);
+		
+		CsvAsset csvAsset = new CsvAsset(csv,csvStats,headers);
 		return Response
 			.status(Response.Status.OK)
 			.entity(csvAsset)
@@ -240,20 +239,27 @@ public class DatasetResource {
 		}
 		return column;
 	}
-	private List<Integer> binify(List<String> aRow, Integer binCount){
+	private CsvStats getStats(List<String> aRow, Integer binCount){
 		List<Integer> bins = new ArrayList<>();
 		try {
-			
 			// set up row as numbers. may fail here.
 			// List<Integer> numberList = aRow.stream().map(String s -> Integer.parseInt(s.trim()));
 			List<Double> numberList = aRow.stream().map(Double::valueOf).collect(Collectors.toList());
 			Collections.sort(numberList); 
-			
+			double minValue = numberList.get(0);
+			double maxValue = numberList.get(numberList.size() - 1);
+			double meanValue = numberList.stream()
+				.mapToDouble(d -> d)
+				.average()
+				.orElse(0.0);
+
+			double medianValue = getMedianValue(numberList);
+			double sdValue = getSdValue(numberList, meanValue);
 			//Set up bins
 			for (int i = 0; i < binCount; i++){
 				bins.add(0);
 			}	
-			Double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
+			double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
 			
 			// Fill bins:
 			for (int i = 0; i < numberList.size(); i++){
@@ -261,14 +267,35 @@ public class DatasetResource {
 				Integer value = bins.get(index);
 				bins.set(index,value + 1);
 			}
-			// log.warn("Output bins:");
-			// log.warn(bins.toString());
-			return bins;
+			
+			return new CsvStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
 		
 		}catch(RuntimeException e){
 			//Cannot convert column to double, just return empty list.
-			return bins;
+			return new CsvStats(bins,0,0,0,0,0);
+		}	
+	}
+
+	//Assume list is already sorted because i know when its being called its already sorted..
+	private double getMedianValue(List<Double> aList){
+		int size = aList.size();
+		if (size % 2 == 1){
+			return aList.get((size + 1)/ 2 - 1);
 		}
-		
+		else{
+			return (aList.get(size / 2 - 1) + aList.get(size / 2)) / 2;
+		}
+	}
+
+	private double getSdValue (List<Double> aList, double mean){
+		double temp = 0;
+		for (int i = 0; i < aList.size(); i++){
+			double val = aList.get(i);
+			double squrDiffToMean = Math.pow(val - mean, 2);
+			temp += squrDiffToMean;
+		}
+		double meanOfDiffs = (double) temp / (double) (aList.size());
+
+		return Math.sqrt(meanOfDiffs);
 	}
 }
