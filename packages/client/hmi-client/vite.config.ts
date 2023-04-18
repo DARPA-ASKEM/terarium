@@ -42,15 +42,14 @@ export default defineConfig({
 	build: {
 		target: 'esnext'
 	},
-	// Our public directory currently contains the fonts.  Mathlive is setup to load the fonts from /assets/fonts
-	publicDir: 'public',
 	plugins: [
 		vue({
 			template: {
 				compilerOptions: {
 					// treat all components starting with `facet` as custom elements
 					// ignore facets as custom elements
-					isCustomElement: (tag) => tag.startsWith('facet-') || tag === 'math-field'
+					isCustomElement: (tag) =>
+						tag.startsWith('facet-') || tag === 'math-field' || tag == 'katex'
 				}
 			}
 		}),
