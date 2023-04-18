@@ -15,7 +15,7 @@ import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServicePr
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
+import java.util.Map;
 
 @Path("/api/model-service/models")
 @Authenticated
@@ -35,9 +35,14 @@ public class ModelResource {
 	@Tag(name = "Create blank model")
 	public Response createModel() {
 		final Response response = proxy.createModel();
-		final Integer uuid = 12;
-		userEventRequestEmitter.send(uuid.toString());
-		return response;
+		final Map model = response.readEntity(Map.class);
+		final String modelId = model.get("id").toString();
+		try {
+			userEventRequestEmitter.send(modelId);
+		} catch (Error e) {
+
+		}
+		return Response.ok(Map.of("id", modelId)).build();
 	}
 
 

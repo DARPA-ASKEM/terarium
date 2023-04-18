@@ -15,8 +15,8 @@ import * as ModelService from '@/services/models/model-service';
 
 function listen() {}
 
-function createEmptyModel() {
-	const model = ModelService.create();
+async function createEmptyModel() {
+	const model = await ModelService.create();
 	console.log('Model created', model);
 }
 </script>
