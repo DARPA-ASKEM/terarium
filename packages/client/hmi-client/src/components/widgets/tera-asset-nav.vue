@@ -10,6 +10,7 @@
 				</a>
 			</template>
 		</template>
+		<slot name="page-search" />
 	</nav>
 </template>
 
@@ -36,10 +37,10 @@ function scrollTo(elementId: string) {
 nav {
 	display: flex;
 	flex-direction: column;
+	max-width: 14rem;
 	gap: 1rem;
 	padding-left: 1rem;
 	padding-top: 1rem;
-	min-width: 14rem;
 	position: sticky;
 	top: 0;
 }

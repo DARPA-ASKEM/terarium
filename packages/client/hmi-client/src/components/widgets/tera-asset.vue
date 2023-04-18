@@ -1,16 +1,18 @@
 <template>
 	<main id="asset-toc-top">
+		<slot name="nav" />
 		<header>
 			<section>
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
 				<slot v-if="isCreatingAsset" name="name-input" />
 				<h4 v-else v-html="name" />
-				<div class="authors" v-if="authors">
+				<span class="authors" v-if="authors">
+					<!--Make icon inline for wrapping-->
 					<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
-					<div v-html="authors" />
+					<span v-html="authors" />
 					<!--contributor-->
-				</div>
+				</span>
 				<div v-if="doi">
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 				</div>
@@ -19,15 +21,14 @@
 				<div class="header-buttons">
 					<slot name="bottom-header-buttons" />
 				</div>
-				<p v-if="description">
-					{{ description }}
-				</p>
 			</section>
 			<aside v-if="isEditable">
 				<slot name="edit-buttons" />
 			</aside>
 		</header>
-		<slot name="default" />
+		<section>
+			<slot name="default" />
+		</section>
 	</main>
 </template>
 
@@ -37,7 +38,6 @@ defineProps<{
 	overline?: string;
 	isEditable: boolean;
 	isCreatingAsset?: boolean;
-	description?: string;
 	authors?: string;
 	doi?: string;
 	publisher?: string;
@@ -46,16 +46,26 @@ defineProps<{
 
 <style scoped>
 main {
-	display: flex;
-	flex: 1;
-	height: fit-content;
-	flex-direction: column;
+	display: grid;
+	/* minmax prevents grid blowout caused by datatable */
+	grid-template-columns: auto minmax(0, 1fr);
 	background-color: var(--surface-section);
 	scroll-margin-top: 1rem;
-	overflow: auto;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+main:deep(> nav) {
+	height: fit-content;
+	grid-row: 1 / span 2;
+}
+
+main > section {
+	grid-column-start: 2;
 }
 
 header {
+	grid-column-start: 2;
 	padding: 1rem;
 	padding-bottom: 0.5rem;
 	color: var(--text-color-subdued);
@@ -87,7 +97,7 @@ header aside {
 	align-self: flex-start;
 }
 
-header aside:deep(.p-inputtext.p-inputtext-sm) {
+main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
 }
 
@@ -121,6 +131,8 @@ header aside {
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
 	padding: 0.5rem;
+	margin: auto;
+	/* overflow-x: scroll; */
 }
 
 /*  Gives some top padding when you auto-scroll to an anchor */
@@ -157,7 +169,7 @@ main:deep(.artifact-amount) {
 }
 
 /* These styles should probably be moved to the general theme in some form */
-header:deep(input) {
+main:deep(input) {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: 0.75rem;

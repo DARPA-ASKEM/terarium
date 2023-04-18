@@ -1,222 +1,228 @@
 <template>
-	<section class="two-columns" v-if="doc">
-		<tera-asset-nav
-			:asset-content="documentContent"
-			:show-anchors="documentView === DocumentView.EXRACTIONS"
-			v-if="isEditable"
-		>
-			<template #viewing-mode>
-				<span class="p-buttonset">
-					<Button
-						class="p-button-secondary p-button-sm"
-						label="Extractions"
-						icon="pi pi-list"
-						@click="documentView = DocumentView.EXRACTIONS"
-						:active="documentView === DocumentView.EXRACTIONS"
-					/>
-					<Button
-						class="p-button-secondary p-button-sm"
-						label="PDF"
-						icon="pi pi-file"
-						@click="documentView = DocumentView.PDF"
-						:active="documentView === DocumentView.PDF"
-					/>
-				</span>
-			</template>
-			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-			<!---  <div class="p-input-icon-left">
-					<i class="pi pi-search" />
-					<InputText placeholder="Find in page" class="find-in-page" />
-				</div>-->
-		</tera-asset-nav>
-		<tera-asset
+	<tera-asset
+		v-if="doc"
+		:is-editable="isEditable"
+		:name="highlightSearchTerms(doc.title)"
+		:overline="highlightSearchTerms(doc.journal)"
+		:authors="formatDocumentAuthors(doc)"
+		:doi="highlightSearchTerms(doi)"
+		:publisher="highlightSearchTerms(doc.publisher)"
+	>
+		<template #nav>
+			<tera-asset-nav
+				:asset-content="documentContent"
+				:show-anchors="documentView === DocumentView.EXRACTIONS"
+				v-if="isEditable"
+			>
+				<template #viewing-mode>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Extractions"
+							icon="pi pi-list"
+							@click="documentView = DocumentView.EXRACTIONS"
+							:active="documentView === DocumentView.EXRACTIONS"
+						/>
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="PDF"
+							icon="pi pi-file"
+							@click="documentView = DocumentView.PDF"
+							:active="documentView === DocumentView.PDF"
+						/>
+					</span>
+				</template>
+				<template #page-search>
+					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText placeholder="Find in page" class="p-inputtext-sm" />
+					</span>
+				</template>
+			</tera-asset-nav>
+		</template>
+		<template #bottom-header-buttons>
+			<Button
+				class="p-button-sm p-button-outlined"
+				icon="pi pi-external-link"
+				label="Open PDF"
+				@click="openPDF"
+				:loading="!pdfLink && !linkIsPDF()"
+			/>
+			<Button
+				class="p-button-sm p-button-outlined"
+				@click="downloadPDF"
+				:icon="'pi pi-cloud-download'"
+				:loading="!pdfLink"
+				label="Download PDF"
+			/>
+		</template>
+		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
-			:is-editable="isEditable"
-			:name="highlightSearchTerms(doc.title)"
-			:overline="highlightSearchTerms(doc.journal)"
-			:authors="formatDocumentAuthors(doc)"
-			:doi="highlightSearchTerms(doi)"
-			:publisher="highlightSearchTerms(doc.publisher)"
+			:multiple="true"
+			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
 		>
-			<template #bottom-header-buttons>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-external-link"
-					label="Open PDF"
-					@click="openPDF"
-					:loading="!pdfLink && !linkIsPDF()"
-				/>
-				<Button
-					class="p-button-sm p-button-outlined"
-					@click="downloadPDF"
-					:icon="'pi pi-cloud-download'"
-					:loading="!pdfLink"
-					label="Download PDF"
-				/>
-			</template>
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
-				<AccordionTab v-if="!isEmpty(formattedAbstract)">
-					<template #header>
-						<header id="Abstract">Abstract</header>
-					</template>
-					<p v-html="formattedAbstract" />
-				</AccordionTab>
-				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
-					<template #header>
-						<header id="Section-Summaries">Section Summaries</header>
-					</template>
-					<ul>
-						<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
-							<h6>{{ index }}</h6>
-							<p v-html="highlightSearchTerms(section)" />
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(figures)">
-					<template #header>
-						<header id="Figures">
-							Figures<span class="artifact-amount">({{ figures.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li v-for="ex in figures" :key="ex.askemId" class="extracted-item">
+			<AccordionTab v-if="!isEmpty(formattedAbstract)">
+				<template #header>
+					<header id="Abstract">Abstract</header>
+				</template>
+				<p v-html="formattedAbstract" />
+			</AccordionTab>
+			<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
+				<template #header>
+					<header id="Section-Summaries">Section Summaries</header>
+				</template>
+				<ul>
+					<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+						<h6>{{ index }}</h6>
+						<p v-html="highlightSearchTerms(section)" />
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(figures)">
+				<template #header>
+					<header id="Figures">
+						Figures<span class="artifact-amount">({{ figures.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in figures" :key="ex.askemId" class="extracted-item">
+						<Image
+							id="img"
+							class="extracted-image"
+							:src="'data:image/jpeg;base64,' + ex.properties.image"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(tables)">
+				<template #header>
+					<header id="Tables">
+						Tables<span class="artifact-amount">({{ tables.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
+						<div class="extracted-image">
 							<Image
 								id="img"
-								class="extracted-image"
 								:src="'data:image/jpeg;base64,' + ex.properties.image"
 								:alt="''"
 								preview
 							/>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
+						</div>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(equations)">
+				<template #header>
+					<header id="Equations">
+						Equations<span class="artifact-amount">({{ equations.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
+						<div class="extracted-image">
+							<Image
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								preview
 							/>
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tables)">
-					<template #header>
-						<header id="Tables">
-							Tables<span class="artifact-amount">({{ tables.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
-							/>
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(equations)">
-					<template #header>
-						<header id="Equations">
-							Equations<span class="artifact-amount">({{ equations.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
-							/>
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(githubUrls)">
-					<template #header>
-						<header id="Github-URLs">
-							GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-							<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherUrls)">
-					<template #header>
-						<header id="Other-URLs">
-							Other URLs<span class="artifact-amount">({{ otherUrls.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
-							<b>{{ ex.resourceTitle }}</b>
-							<div>
-								<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
-							</div>
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherExtractions)">
-					<template #header>
-						<header id="Other-Extractions">
-							Other extractions<span class="artifact-amount">({{ otherExtractions.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
-							<b v-html="highlightSearchTerms(ex.properties.title)" />
-							<span v-html="highlightSearchTerms(ex.properties.caption)" />
-							<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
-							<span v-html="highlightSearchTerms(ex.properties.contentText)" />
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(doc.citationList)">
-					<template #header>
-						<header id="References">
-							References<span class="artifact-amount">({{ doc.citationList.length }})</span>
-						</header>
-					</template>
-					<ul>
-						<li v-for="(citation, key) of doc.citationList" :key="key">
-							<template v-if="!isEmpty(formatCitation(citation))">
-								{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
-							</template>
-						</li>
-					</ul>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(associatedResources)">
-					<template #header>
-						<header id="Associated-Resources">
-							Associated resources
-							<span class="artifact-amount">({{ associatedResources.length }})</span>
-						</header>
-					</template>
-					<DataTable :value="relatedTerariumModels">
-						<Column field="name" header="Models"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDatasets">
-						<Column field="name" header="Datasets"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Documents"></Column>
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</tera-asset>
+						</div>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(githubUrls)">
+				<template #header>
+					<header id="Github-URLs">
+						GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
+						<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(otherUrls)">
+				<template #header>
+					<header id="Other-URLs">
+						Other URLs<span class="artifact-amount">({{ otherUrls.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
+						<b>{{ ex.resourceTitle }}</b>
+						<div>
+							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
+						</div>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(otherExtractions)">
+				<template #header>
+					<header id="Other-Extractions">
+						Other extractions<span class="artifact-amount">({{ otherExtractions.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
+						<b v-html="highlightSearchTerms(ex.properties.title)" />
+						<span v-html="highlightSearchTerms(ex.properties.caption)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(doc.citationList)">
+				<template #header>
+					<header id="References">
+						References<span class="artifact-amount">({{ doc.citationList.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="(citation, key) of doc.citationList" :key="key">
+						<template v-if="!isEmpty(formatCitation(citation))">
+							{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
+						</template>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(associatedResources)">
+				<template #header>
+					<header id="Associated-Resources">
+						Associated resources
+						<span class="artifact-amount">({{ associatedResources.length }})</span>
+					</header>
+				</template>
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
 		<section v-else-if="DocumentView.PDF" class="asset">PDF Preview</section>
-	</section>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -243,7 +249,7 @@ import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import TeraAsset from '@/components/widgets/tera-asset.vue';
 import TeraAssetNav from '@/components/widgets/tera-asset-nav.vue';
-// import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
+import InputText from 'primevue/inputtext';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -441,12 +447,6 @@ onMounted(async () => {
 });
 </script>
 <style scoped>
-.two-columns {
-	display: flex;
-	flex-direction: row;
-	background-color: var(--surface-section);
-}
-
 .find-in-page {
 	border: 1px solid var(--surface-border-light) !important;
 	padding: 0.75rem;

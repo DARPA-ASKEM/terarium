@@ -31,7 +31,6 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<template #keyword-search> </template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-if="assetId !== ''" v-html="description" />
