@@ -62,7 +62,6 @@ watch(
 	() => props.loadingTabIndex,
 	() => {
 		if (props.loadingTabIndex !== null) {
-			console.log('watch');
 			loadingTabIndex.value = props.loadingTabIndex;
 		}
 	},

@@ -387,7 +387,9 @@ const openOverview = () => {
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
-	openAsset(tabStore.getActiveTabIndex(projectContext.value));
+	// if (tabIndexToRemove === activeTabIndex.value || tabIndexToRemove === 0) {
+	// 	openAsset(tabStore.getActiveTabIndex(projectContext.value));
+	// }
 }
 
 async function openNewModelFromCode(modelId, modelName) {
@@ -449,7 +451,8 @@ watch(
 			}
 			// Goes to tab from previous session
 			else {
-				openAsset();
+				openAsset(tabStore.getActiveTabIndex(projectContext.value));
+				// openAsset();
 			}
 		}
 	}
