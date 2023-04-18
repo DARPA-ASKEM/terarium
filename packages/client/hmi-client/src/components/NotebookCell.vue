@@ -10,10 +10,13 @@ const code = ref("");
 const result = ref("");
 
 const syncJupyter = () => {
+	console.log("Syncing!");
 	const iframe = notebookRef.value;
 	const notebookDoc = iframe?.contentDocument;
+	console.log(notebookDoc);
 	const cellContents = notebookDoc?.querySelector("#code-cell .cm-content")?.innerText;
 	const results = notebookDoc?.querySelector("#code-output .jp-OutputArea-output")?.innerHTML;
+	console.log(results);
 	code.value = cellContents;
 	result.value = results;
 }

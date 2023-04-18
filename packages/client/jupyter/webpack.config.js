@@ -15,6 +15,9 @@ module.exports = {
   bail: true,
   devtool: 'cheap-source-map',
   mode: 'production',
+  resolve: {
+    extensions: ['.ts', '.js', '.json'],
+  },
   module: {
     rules: [
       { test: /\.css$/, use: ['style-loader', 'css-loader'] },
@@ -44,9 +47,5 @@ module.exports = {
     ]
   },
   plugins: [
-    new webpack.DefinePlugin({
-      // Needed for various packages using cwd(), like the path polyfill
-      process: { cwd: () => '/' }
-    })
   ]
 };

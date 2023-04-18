@@ -19,6 +19,8 @@ from jupyter_server.extension.handler import ExtensionHandlerJinjaMixin, Extensi
 from jupyter_server.utils import url_path_join as ujoin
 from jupyterlab_server import LabServerApp
 
+from llmkernel.kernel import PythonLLMKernel
+
 
 HERE = os.path.dirname(__file__)
 
@@ -61,8 +63,8 @@ class ExampleApp(LabServerApp):
     extension_url = "/notebook"
     default_url = "/notebook"
     app_url = "/notebook/notebook"
-    base_url = "/bar"
-    ws_url = "/foo"
+    # base_url = "/bar"
+    # ws_url = "/foo"
     # static_url_prefix = "/notebook/static/"
     name = __name__
     load_other_extensions = False
@@ -85,6 +87,8 @@ class ExampleApp(LabServerApp):
         # Override to allow cross domain websockets
         self.settings['allow_origin'] = '*'
 
-
 if __name__ == "__main__":
+
     ExampleApp.launch_instance()
+
+

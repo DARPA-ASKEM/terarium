@@ -13,12 +13,27 @@ import '@jupyterlab/theme-light-extension/style/theme.css';
 import '@jupyterlab/completer/style/index.css';
 import '../index.css';
 
-import { Toolbar as AppToolbar, SessionContext } from '@jupyterlab/apputils';
-import { Toolbar } from '@jupyterlab/ui-components';
+import {
+  Toolbar as AppToolbar,
+  SessionContext,
+  SessionContextDialogs
+} from '@jupyterlab/apputils';
+import {
+  refreshIcon,
+  stopIcon,
+  Toolbar,
+  ToolbarButton
+} from '@jupyterlab/ui-components';
 
-import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
+import { Cell, CodeCell, CodeCellModel } from '@jupyterlab/cells';
 
-import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
+import {
+  CodeMirrorEditorFactory,
+  CodeMirrorMimeTypeService,
+  EditorExtensionRegistry,
+  EditorLanguageRegistry,
+  ybinding
+} from '@jupyterlab/codemirror';
 
 import {
   Completer,
@@ -39,11 +54,15 @@ import {
   SessionManager
 } from '@jupyterlab/services';
 
+import { IYText } from '@jupyter/ydoc';
+
 import { CommandRegistry } from '@lumino/commands';
 
 import { BoxPanel, Widget } from '@lumino/widgets';
 
 import { getCodeBlock } from './askemlib';
+import { LLMCell, LLMCellModel } from './llmcell';
+
 
 function main(): void {
   const kernelManager = new KernelManager();
@@ -54,7 +73,42 @@ function main(): void {
     specsManager,
     name: 'TerariumNode'
   });
-  const mimeService = new CodeMirrorMimeTypeService();
+  const editorExtensions = () => {
+    const registry = new EditorExtensionRegistry();
+    for (const extensionFactory of EditorExtensionRegistry.getDefaultExtensions(
+      {}
+    )) {
+      registry.addExtension(extensionFactory);
+    }
+    registry.addExtension({
+      name: 'shared-model-binding',
+      factory: options => {
+        const sharedModel = options.model.sharedModel as IYText;
+        return EditorExtensionRegistry.createImmutableExtension(
+          ybinding({
+            ytext: sharedModel.ysource,
+            undoManager: sharedModel.undoManager ?? undefined
+          })
+        );
+      }
+    });
+    return registry;
+  };
+  
+  const languages = new EditorLanguageRegistry();
+  EditorLanguageRegistry.getDefaultLanguages()
+    .filter(language =>
+      ['ipython', 'julia', 'python'].includes(language.name.toLowerCase())
+    )
+    .forEach(language => {
+      languages.addLanguage(language);
+    });
+
+  const factoryService = new CodeMirrorEditorFactory({
+    extensions: editorExtensions(),
+    languages
+  });
+  const mimeService = new CodeMirrorMimeTypeService(languages);
 
   // Initialize the command registry with the bindings.
   const commands = new CommandRegistry();
@@ -74,9 +128,13 @@ function main(): void {
   // Create the cell widget with a default rendermime instance.
   const rendermime = new RenderMimeRegistry({ initialFactories });
 
-  const cellWidget = new CodeCell({
+  // const cellWidget = new LLMCell({
+  const cellWidget = new LLMCell({
+    contentFactory: new Cell.ContentFactory({
+      editorFactory: factoryService.newInlineEditor.bind(factoryService)
+    }),
     rendermime,
-    model: new CodeCellModel()
+    model: new LLMCellModel()
   }).initializeState();
   cellWidget.id = "code-cell";
   cellWidget.outputArea.id = "code-output";
@@ -93,15 +151,6 @@ function main(): void {
       const mimeType = mimeService.getMimeTypeByLanguage(lang);
       cellWidget.model.mimeType = mimeType;
 
-      // TODO: Make the setup code more dynamic
-      // let setupCode = ''
-
-      // if (lang.name == "julia") {
-      //   setupCode = askemFile.julia.init;
-      // }
-      // else if (lang.name == "python") {
-      //   setupCode = askemFile.python.init;
-      // }
       let setupCode = getCodeBlock(lang.name);
       console.log(setupCode);
 
@@ -187,8 +236,7 @@ function main(): void {
   });
   commands.addCommand('run:cell', {
     execute: async () => {
-      console.log("HI");
-      CodeCell.execute(cellWidget, sessionContext).then(() => {
+      LLMCell.execute(cellWidget, sessionContext).then(() => {
         // Trigger automatic actions for when the cell is ran
         const event = new Event("cell:ran");
         parentIframe?.dispatchEvent(event);

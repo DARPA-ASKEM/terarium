@@ -21,7 +21,15 @@ RUN julia -e 'using Pkg; Pkg.add("IJulia");'
 
 # Install Python requirements
 USER root
-RUN pip install jupyterlab jupyterlab_server pandas matplotlib xarray numpy
+RUN pip install jupyterlab jupyterlab_server pandas matplotlib xarray numpy poetry
+
+COPY chatty/ /chatty
+# RUN (cd /chatty && poetry config virtualenvs.prefer-active-python true && poetry install --no-interaction)
+# RUN bash -c -- "pip install /chatty/chatty*.whl"
+RUN pip install /chatty/chatty*.whl
+
+COPY llmkernel /usr/local/share/jupyter/kernels/llmkernel
+
 
 # Switch to non-root user
 USER 1000
@@ -41,4 +49,6 @@ COPY --chown=1000:1000 . /jupyter
 # Build Notebook javascript bundle
 RUN npm run build
 
+
 CMD ["python", "main.py", "--ip", "0.0.0.0"]
+
