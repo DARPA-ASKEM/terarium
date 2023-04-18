@@ -42,6 +42,8 @@ export default defineConfig({
 	build: {
 		target: 'esnext'
 	},
+	// Our public directory currently contains the fonts.  Mathlive is setup to load the fonts from /assets/fonts
+	publicDir: 'public',
 	plugins: [
 		vue({
 			template: {
