@@ -362,9 +362,13 @@ function setActiveTab() {
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
-function openAsset(index: number, newCode?: string) {
+function openAsset(
+	index: number = tabStore.getActiveTabIndex(projectContext.value),
+	newCode?: string
+) {
 	const asset: Tab = tabs.value[index];
 	if (
+		asset &&
 		asset.assetId === props.assetId &&
 		asset.assetName === props.assetName &&
 		asset.assetType === props.assetType
@@ -433,23 +437,34 @@ async function removeAsset(asset: Tab) {
 }
 
 watch(
-	() => [
-		openedAssetRoute.value, // Once route attributes change, add/switch to another tab
-		projectContext.value // Make sure we are in the proper project context before opening assets
-	],
+	() => projectContext.value,
 	() => {
-		if (projectContext.value) {
+		if (
+			tabs.value.length > 0 &&
+			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
+		) {
+			openAsset();
+		} else if (openedAssetRoute.value && openedAssetRoute.value.assetName) {
+			tabStore.addTab(projectContext.value, openedAssetRoute.value);
+		}
+	}
+);
+
+watch(
+	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
+	(newOpenedAssetRoute) => {
+		if (newOpenedAssetRoute.assetName) {
 			// If name isn't recognized, its a new asset so add a new tab
 			if (
 				props.assetName &&
 				props.assetType &&
-				!tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value))
+				!tabs.value.some((tab) => isEqual(tab, newOpenedAssetRoute))
 			) {
-				tabStore.addTab(projectContext.value, openedAssetRoute.value);
+				tabStore.addTab(projectContext.value, newOpenedAssetRoute);
 			}
 			// Tab switch
 			else if (props.assetName) {
-				const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
+				const index = tabs.value.findIndex((tab) => isEqual(tab, newOpenedAssetRoute));
 				tabStore.setActiveTabIndex(projectContext.value, index);
 			}
 			// Goes to tab from previous session

@@ -165,7 +165,7 @@ i {
 
 .tab + div[loading='true'] {
 	background-color: var(--primary-color);
-	animation: tab-loading 1s ease-out infinite forwards;
+	animation: tab-loading 0.6s ease-out infinite forwards;
 }
 
 .p-button {
