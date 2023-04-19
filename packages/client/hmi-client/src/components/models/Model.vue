@@ -1,10 +1,26 @@
 <template>
-	<section class="asset">
-		<header>
+	<section class="asset" style="padding-top: 0">
+		<header class="fixed-header">
 			<div class="framework">{{ model?.framework }}</div>
 			<div class="header-and-buttons">
-				<h4 v-html="title" />
-				<span v-if="isEditable">
+				<!-- search bar -->
+				<div class="flex justify-content-end">
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
+					</span>
+				</div>
+				<InputText
+					v-if="assetId === ''"
+					v-model="newModelName"
+					class="model-title-text-area"
+					placeholder="Title of new model"
+				/>
+				<h4 v-else v-html="title" />
+				<span v-if="assetId === ''">
+					<Button @click="createNewModel" label="Create New Model" class="p-button-sm" />
+				</span>
+				<span v-else-if="isEditable">
 					<Button
 						@click="launchForecast"
 						label="Open simulation space"
@@ -18,7 +34,16 @@
 		</header>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-html="description" class="constrain-width" />
+				<p v-if="assetId !== ''" v-html="description" class="constrain-width" />
+				<section v-else>
+					<label for="placeholder"></label
+					><Textarea
+						v-model="newDescription"
+						class="model-description-text-area"
+						rows="5"
+						placeholder="Description of new model"
+					/>
+				</section>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -111,6 +136,8 @@
 						v-model:selection="selectedRow"
 						@row-select="onStateVariableClick"
 						@row-unselect="onStateVariableClick"
+						v-model:filters="globalFilter"
+						filterDisplay="row"
 					>
 						<Column field="sname" header="Name" />
 						<Column header="Type">
@@ -140,7 +167,7 @@
 				</template>
 				<template v-else>
 					<model-parameter-list
-						:parameters="betterStates"
+						:parameters="filteredStates"
 						attribute="parameters"
 						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
@@ -153,7 +180,7 @@
 					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
 				</template>
 				<template v-if="!isEditable">
-					<DataTable :value="betterParams">
+					<DataTable :value="betterParams" v-model:filters="globalFilter" filterDisplay="row">
 						<Column field="name" header="Name" />
 						<Column field="type" header="Type" />
 						<Column field="default_value" header="Default" />
@@ -161,7 +188,7 @@
 				</template>
 				<template v-else>
 					<model-parameter-list
-						:parameters="betterParams"
+						:parameters="filteredParams"
 						attribute="parameters"
 						:selected-variable="selectedVariable"
 						@update-parameter-row="updateParamaterRow"
@@ -169,8 +196,12 @@
 					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab :header="`Extractions ${extractions?.length}`">
-				<DataTable :value="extractions">
+			<AccordionTab
+				:header="`Extractions ${
+					extractions?.length ? extractions?.length : ': No Extractions Found'
+				}`"
+			>
+				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
 					<Column field="name" header="Name" />
 					<Column field="id" header="ID" />
 					<Column field="text_annotations" header="Text">
@@ -244,7 +275,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, defineEmits } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -257,6 +288,8 @@ import {
 	petriToLatex,
 	NodeType
 } from '@/petrinet/petrinet-service';
+import Textarea from 'primevue/textarea';
+import InputText from 'primevue/inputtext';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -282,25 +315,41 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
+import { FilterMatchMode } from 'primevue/api';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
-import { example } from './example-model-extraction'; // TODO - to be removed after March demo
 
-export interface ModelProps {
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-}
+const emit = defineEmits(['create-new-model', 'update-tab-name']);
 
-const extractions = ref(Object.values(example));
+const extractions = ref([]);
 
-const props = defineProps<ModelProps>();
+const props = defineProps({
+	assetId: {
+		type: String,
+		required: true
+	},
+	isEditable: {
+		type: Boolean,
+		required: true
+	},
+	highlight: {
+		type: String,
+		default: '',
+		required: false
+	}
+});
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
+
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
+
+const newModelName = ref('New Model');
+const newDescription = ref<string | undefined>('');
+const newPetri = ref();
+
 const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
@@ -340,6 +389,11 @@ const handleResize = () => {
 onMounted(() => {
 	window.addEventListener('resize', handleResize);
 	handleResize();
+	// new model
+	if (props.assetId === '') {
+		isEditingEQ.value = true;
+		isMathMLValid.value = false;
+	}
 });
 
 onUnmounted(() => {
@@ -385,6 +439,28 @@ const betterParams = computed(() => {
 	});
 	return params;
 });
+
+const globalFilter = ref({
+	// @ts-ignore
+	// eslint-disable-line
+	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
+});
+
+const filteredStates = computed(() =>
+	betterStates.value?.filter(
+		(p) =>
+			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
+			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
+	)
+);
+
+const filteredParams = computed(() =>
+	betterParams.value?.filter(
+		(p) =>
+			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
+			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
+	)
+);
 
 const onVariableSelected = (variable: string) => {
 	if (variable) {
@@ -485,8 +561,16 @@ watch(
 	{ immediate: true }
 );
 
-const graphElement = ref<HTMLDivElement | null>(null);
+watch(
+	() => newModelName.value,
+	(newValue, oldValue) => {
+		if (newValue !== oldValue) {
+			emit('update-tab-name', newValue);
+		}
+	}
+);
 
+const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
@@ -646,24 +730,37 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
+const createNewModel = async () => {
+	const newModel = {
+		name: newModelName.value,
+		framework: 'Petri Net',
+		description: newDescription.value,
+		content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
+	};
+	emit('create-new-model', newModel);
+	isEditingEQ.value = false;
+	isMathMLValid.value = true;
+};
+
 const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	isEditingEQ.value = true;
 	isMathMLValid.value = false;
 	const cleanedMathML = separateEquations(mathMlString);
 	if (mathMlString === '') {
-		logger.error(
-			'Empty MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-		);
+		isMathMLValid.value = true;
+		isEditingEQ.value = false;
 	} else if (!editMode) {
 		try {
-			const newPetri = await mathmlToPetri(cleanedMathML);
+			newPetri.value = await mathmlToPetri(cleanedMathML);
 			if (
-				(isArray(newPetri) && newPetri.length > 0) ||
-				(!isArray(newPetri) && Object.keys(newPetri).length > 0 && hasNoEmptyKeys(newPetri))
+				(isArray(newPetri.value) && newPetri.value.length > 0) ||
+				(!isArray(newPetri.value) &&
+					Object.keys(newPetri.value).length > 0 &&
+					hasNoEmptyKeys(newPetri.value))
 			) {
 				isMathMLValid.value = true;
 				isEditingEQ.value = false;
-				updatePetri(newPetri);
+				updatePetri(newPetri.value);
 			} else {
 				logger.error(
 					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
@@ -761,6 +858,19 @@ const mathJaxEq = (eq) => {
 	padding: 0.25rem;
 }
 
+.button-container {
+	display: flex;
+	float: right;
+}
+
+.fixed-header {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	background-color: white;
+	isolation: isolate;
+}
+
 section math-editor {
 	justify-content: center;
 }
@@ -833,5 +943,24 @@ section math-editor {
 
 .constrain-width {
 	max-width: 60rem;
+}
+
+.model-description-text-area {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
+}
+
+.model-title-text-area {
+	border: 1px solid var(--surface-border-light);
+	border-radius: 4px;
+	padding: 5px;
+	resize: none;
+	overflow-y: hidden;
+	width: 100%;
+	font-size: var(--font-body-medium);
 }
 </style>
