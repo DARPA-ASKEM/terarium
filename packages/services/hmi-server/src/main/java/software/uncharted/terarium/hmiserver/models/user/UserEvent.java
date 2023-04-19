@@ -15,6 +15,6 @@ public class UserEvent<S> {
 
 	@Override
 	public String toString() {
-		return type + "{" + "id='" + id + "', message=" + message + "}";
+		return type + "{" + "id='" + id + "', message=" + message.toString() + "}";
 	}
 }

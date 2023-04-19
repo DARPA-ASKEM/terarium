@@ -37,11 +37,7 @@ public class ModelResource {
 		final Response response = proxy.createModel();
 		final Map model = response.readEntity(Map.class);
 		final String modelId = model.get("id").toString();
-		try {
-			userEventRequestEmitter.send(modelId);
-		} catch (Error e) {
-
-		}
+		userEventRequestEmitter.send(modelId);
 		return Response.ok(Map.of("id", modelId)).build();
 	}
 
