@@ -855,6 +855,7 @@ $petri-inputBox: var(--gray-300);
 
 
 :root {
+	--editing-color: rgb(238, 238, 136);
 	--border-radius: #{$borderRadius};
 	--border-radius-big: #{$bigBorderRadius};
 	--border-radius-bigger: #{$biggerBorderRadius};

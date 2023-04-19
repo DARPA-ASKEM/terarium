@@ -79,7 +79,7 @@ public class CodeResource {
 	}
 
 	@POST
-	@Path("/to_acset")
+	@Path("/to-acset")
 	public Object toAcset(final String code) {
 		String places = mitProxy.getPlaces(code);
 		String transitions = mitProxy.getTransitions(code);
@@ -91,17 +91,17 @@ public class CodeResource {
 	}
 
 	@POST
-	@Path("/annotation/find_text_vars")
-	public Object findTextVars(final String text){
-		String textVars = mitProxy.findTextVars("true",text);
+	@Path("/annotation/find-text-vars")
+	public Object findTextVars(final String text) {
+		String textVars = mitProxy.findTextVars("true", text);
 		return Response.ok(Response.Status.OK)
 			.entity(textVars)
 			.build();
 	}
 
 	@POST
-	@Path("/annotation/link_annos_to_pyacset")
-	public Object linkAnnotationsToAcset(final Map<String,String> data){
+	@Path("/annotation/link-annos-to-pyacset")
+	public Object linkAnnotationsToAcset(final Map<String, String> data) {
 		String pyacset = data.get("pyacset");
 		String annotations = data.get("annotations");
 		String info = data.get("info");
@@ -113,7 +113,7 @@ public class CodeResource {
 
 	@GET
 	@Path("/response")
-	public Object getResponse(@QueryParam("id") final String id){
+	public Object getResponse(@QueryParam("id") final String id) {
 		String response = mitProxy.getResponse(id);
 		return Response.ok(Response.Status.OK)
 			.entity(response)
@@ -121,7 +121,7 @@ public class CodeResource {
 	}
 
 	@GET
-	@Path("/repo_content")
+	@Path("/repo-content")
 	public Response getGithubRepositoryContent(
 		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path
@@ -130,7 +130,7 @@ public class CodeResource {
 	}
 
 	@GET
-	@Path("/repo_file_content")
+	@Path("/repo-file-content")
 	public String getGithubCode(
 		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path

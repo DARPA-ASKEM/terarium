@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -13,6 +14,7 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionP
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +29,9 @@ public class ExtractionResource {
 	// source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 	private static final Pattern DOI_VALIDATION_PATTERN = Pattern.compile("^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
+
+	@ConfigProperty(name = "xdd.api_key")
+	Optional<String> key;
 	@RestClient
 	ExtractionProxy proxy;
 
@@ -43,14 +48,18 @@ public class ExtractionResource {
 		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
 
 		Boolean isDoi = matcher.find();
-
+		String apiKey = "";
+		if (key.isPresent())
+			apiKey = key.get();
+		else
+			log.info("XDD API key missing. Image assets will not return correctly.");
 
 		try {
 			XDDResponse<XDDExtractionsResponseOK> response;
 			if (isDoi) {
-				response = proxy.getExtractions(term, null, page, askemClass, include_highlights);
+				response = proxy.getExtractions(term, null, page, askemClass, include_highlights, apiKey);
 			} else {
-				response = proxy.getExtractions(null, term, page, askemClass, include_highlights);
+				response = proxy.getExtractions(null, term, page, askemClass, include_highlights, apiKey);
 			}
 
 			if (response.getErrorMessage() != null) {
@@ -80,7 +89,7 @@ public class ExtractionResource {
 	}
 
 	@GET
-	@Path("/askem_autocomplete/{term}")
+	@Path("/askem-autocomplete/{term}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Tag(name = "Search XDD for extractions related to the document identified in the payload")
 	@APIResponses({
