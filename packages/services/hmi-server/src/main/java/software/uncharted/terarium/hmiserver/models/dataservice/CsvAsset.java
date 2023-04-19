@@ -16,10 +16,10 @@ import java.util.*;
 public class CsvAsset implements Serializable {
 	List<List<String>> csv;
 	@TSOptional
-	List<CsvStats> stats;
+	List<CsvColumnStats> stats;
 	List<String> headers;
 
-	public CsvAsset(List<List<String>> csv, List<CsvStats> stats, List<String> headers){
+	public CsvAsset(List<List<String>> csv, List<CsvColumnStats> stats, List<String> headers){
 		this.csv = csv;
 		this.stats = stats;
 		this.headers = headers;

@@ -5,7 +5,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
@@ -182,28 +182,20 @@ public class DatasetResource {
 		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
 		
-		log.warn("Getting csv content");
+		log.info("Getting csv content");
 		Response returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
 		String rawCsvString = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit).readEntity(String.class);
 		List<List<String>> csv = csvToRecords(rawCsvString);
 		List<String> headers = csv.get(0);
-		List<CsvStats> csvStats = new ArrayList<CsvStats>();
+		List<CsvColumnStats> CsvColumnStats = new ArrayList<CsvColumnStats>();
 		if (binCount > 0){ 
 			for (int i = 0; i < csv.get(0).size(); i++){
-				log.warn("Binify column ");
-				log.warn(String.valueOf(i));
 				List<String> column = getColumn(csv,i);
-				log.warn(column.subList(1,column.size()).toString());
-				csvStats.add(getStats(column.subList(1,column.size()), binCount)); //remove first as it is header:
+				CsvColumnStats.add(getStats(column.subList(1,column.size()), binCount)); //remove first as it is header:
 			}
-			// log.warn("Output Headers:");
-			// log.warn(headers.toString());
-			// log.warn("Output binNumbers:");
-			// log.warn(binNumbers.toString());
-
 		}
 		
-		CsvAsset csvAsset = new CsvAsset(csv,csvStats,headers);
+		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)
 			.entity(csvAsset)
@@ -232,6 +224,7 @@ public class DatasetResource {
 		}
 		return csv;
 	}
+	
 	private List<String> getColumn(List<List<String>> maxtrix, int columnNumber){
 		List<String> column = new ArrayList<>();
 		for(int i = 0 ; i < maxtrix.size(); i++){
@@ -239,12 +232,14 @@ public class DatasetResource {
 		}
 		return column;
 	}
-	private CsvStats getStats(List<String> aRow, Integer binCount){
+
+	//Given a column and an amount of bins create a CsvColumnStats object.
+	private CsvColumnStats getStats(List<String> aCol, Integer binCount){
 		List<Integer> bins = new ArrayList<>();
 		try {
 			// set up row as numbers. may fail here.
-			// List<Integer> numberList = aRow.stream().map(String s -> Integer.parseInt(s.trim()));
-			List<Double> numberList = aRow.stream().map(Double::valueOf).collect(Collectors.toList());
+			// List<Integer> numberList = aCol.stream().map(String s -> Integer.parseInt(s.trim()));
+			List<Double> numberList = aCol.stream().map(Double::valueOf).collect(Collectors.toList());
 			Collections.sort(numberList); 
 			double minValue = numberList.get(0);
 			double maxValue = numberList.get(numberList.size() - 1);
@@ -268,11 +263,11 @@ public class DatasetResource {
 				bins.set(index,value + 1);
 			}
 			
-			return new CsvStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
+			return new CsvColumnStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
 		
 		}catch(RuntimeException e){
 			//Cannot convert column to double, just return empty list.
-			return new CsvStats(bins,0,0,0,0,0);
+			return new CsvColumnStats(bins,0,0,0,0,0);
 		}	
 	}
 
@@ -287,6 +282,8 @@ public class DatasetResource {
 		}
 	}
 
+	//Get standard deviation from a list of doubles.
+	//Provided the mean as well because need it anyways, and will already have it.
 	private double getSdValue (List<Double> aList, double mean){
 		double temp = 0;
 		for (int i = 0; i < aList.size(); i++){

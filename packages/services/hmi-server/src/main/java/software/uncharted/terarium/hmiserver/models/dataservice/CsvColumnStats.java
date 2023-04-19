@@ -12,15 +12,15 @@ import java.util.*;
 @Accessors(chain = true)
 @Slf4j
 @TSModel
-public class CsvStats implements Serializable {
-	List<Integer> bins;
+public class CsvColumnStats implements Serializable {
+	List<Integer> bins; 
 	double minValue; 
 	double maxValue;
 	double mean;
 	double median;
 	double sd;
 
-	public CsvStats(List<Integer> bins, double minValue, double maxValue, double mean, double median, double sd){
+	public CsvColumnStats(List<Integer> bins, double minValue, double maxValue, double mean, double median, double sd){
 		this.bins = bins;
 		this.minValue = minValue;
 		this.maxValue = maxValue;

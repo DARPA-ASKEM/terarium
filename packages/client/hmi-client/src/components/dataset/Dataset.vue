@@ -127,7 +127,7 @@
 						<!-- column summary charts go here -->
 						<template #header>
 							<div class="histogram">
-								<div class="histogram-label-min">Min: {{ csvMins?.at(index) }}</div>
+								<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>
 								<Chart
 									type="bar"
 									:height="800"
@@ -185,7 +185,7 @@ const csvHeaders = computed(() => rawContent.value?.headers);
 const chartData = computed(() =>
 	rawContent.value?.stats?.map((stat) => setBarChartData(stat.bins))
 );
-const csvMins = computed(() =>
+const csvMinsToDisplay = computed(() =>
 	rawContent.value?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
 );
 const csvMaxsToDisplay = computed(() =>
@@ -209,7 +209,6 @@ watch(
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId, 10);
 			const datasetTemp = await getDataset(props.assetId);
-			console.log(rawContent.value);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -317,9 +316,8 @@ const setChartOptions = () => {
 	width: max-content;
 	border-spacing: 0;
 	border-collapse: collapse;
-	position: sticky;
-	top: -1rem;
-	z-index: 1;
+	/* position: sticky; */
+	/* top: -1rem; */
 	background: var(--surface-0);
 	border-bottom: 1px solid var(--surface-border-light);
 }

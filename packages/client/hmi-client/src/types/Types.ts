@@ -12,11 +12,11 @@ export interface Event {
 
 export interface CsvAsset {
     csv: string[][];
-    stats?: CsvStats[];
+    stats?: CsvColumnStats[];
     headers: string[];
 }
 
-export interface CsvStats {
+export interface CsvColumnStats {
     bins: number[];
     minValue: number;
     maxValue: number;
