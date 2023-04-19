@@ -182,9 +182,19 @@ public class DatasetResource {
 		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
 		
-		log.info("Getting csv content");
-		Response returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
-		String rawCsvString = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit).readEntity(String.class);
+		log.debug("Getting csv content");
+		Response returnResponse;
+		try {
+			returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
+		} catch (RuntimeException e) {
+			log.error("Unable to get csv", e);
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+		String rawCsvString = returnResponse.readEntity(String.class);
 		List<List<String>> csv = csvToRecords(rawCsvString);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<CsvColumnStats>();
@@ -267,7 +277,7 @@ public class DatasetResource {
 			
 			return new CsvColumnStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
 		
-		}catch(RuntimeException e){
+		}catch(Exception e){
 			//Cannot convert column to double, just return empty list.
 			return new CsvColumnStats(bins,0,0,0,0,0);
 		}	
