@@ -1,7 +1,7 @@
 <template>
 	<main @scroll="updateScrollPosition">
 		<slot name="nav" />
-		<header id="asset-header" :class="shrinkHeader && 'shrinked'">
+		<header id="asset-header" ref="header" :class="shrinkHeader && !isCreatingAsset && 'shrinked'">
 			<section v-if="!shrinkHeader">
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
@@ -45,20 +45,16 @@ defineProps<{
 	publisher?: string;
 }>();
 
+const header = ref();
 const scrollPosition = ref(0);
 
-const shrinkHeader = computed(() => {
-	if (document.getElementById('asset-header')?.clientHeight) {
-		console.log(document.getElementById('asset-header')?.clientHeight);
-		return scrollPosition.value > document.getElementById('asset-header')?.clientHeight;
-	}
-	console.log(document.getElementById('asset-header')?.scrollTop);
-	return scrollPosition.value > 100;
-});
+const shrinkHeader = computed(
+	() => scrollPosition.value > Math.round(header.value.clientHeight / 2 ?? 1)
+);
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
-	console.log(scrollPosition.value);
+	console.log(scrollPosition.value, Math.round(header.value.clientHeight / 2 ?? 1));
 }
 </script>
 
@@ -88,19 +84,21 @@ header {
 	height: fit-content;
 	grid-column-start: 2;
 	padding: 1rem;
-	color: var(--text-color-subdued);
+	padding-bottom: 0;
 	display: flex;
 	gap: 0.5rem;
 	justify-content: space-between;
-	position: sticky;
-	top: -1px;
+	color: var(--text-color-subdued);
 	background-color: var(--surface-section);
-	z-index: 1;
-	isolation: isolate;
 	transition: 0.2s;
+	overflow-anchor: none;
 }
 
 header.shrinked {
+	position: sticky;
+	top: -1px;
+	z-index: 1;
+	isolation: isolate;
 	padding: 0.5rem 1rem;
 	border-bottom: 1px solid var(--surface-border-light);
 }
@@ -161,9 +159,7 @@ header aside {
 
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
-	padding: 0.5rem;
-	margin: auto;
-	/* overflow-x: scroll; */
+	margin: 0.5rem;
 }
 
 /*  Gives some top padding when you auto-scroll to an anchor */
