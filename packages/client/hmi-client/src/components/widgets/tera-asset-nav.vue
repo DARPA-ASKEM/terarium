@@ -1,16 +1,16 @@
 <template>
 	<nav>
 		<slot name="viewing-mode" />
-		<template v-if="showAnchors">
-			<a @click="scrollTo('asset-toc-top')">Top</a>
+		<template v-if="extractionMode">
+			<a @click="scrollTo('asset-header')">Top</a>
 			<template v-for="content in assetContent">
 				<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
 					{{ content.key.replace('-', ' ') }}
 					<span v-if="Array.isArray(content.value)"> ({{ content.value.length }}) </span>
 				</a>
 			</template>
+			<slot name="page-search" />
 		</template>
-		<slot name="page-search" />
 	</nav>
 </template>
 
@@ -22,7 +22,7 @@ defineProps({
 		type: Array<{ key: string; value: any }>,
 		default: []
 	},
-	showAnchors: {
+	extractionMode: {
 		type: Boolean,
 		default: true
 	}
@@ -37,10 +37,11 @@ function scrollTo(elementId: string) {
 nav {
 	display: flex;
 	flex-direction: column;
-	max-width: 14rem;
+	width: 14rem;
 	gap: 1rem;
 	padding-left: 1rem;
 	padding-top: 1rem;
+	margin-right: 0.5rem;
 	position: sticky;
 	top: 0;
 }

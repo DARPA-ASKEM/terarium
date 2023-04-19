@@ -11,7 +11,7 @@
 		<template #nav>
 			<tera-asset-nav
 				:asset-content="documentContent"
-				:show-anchors="documentView === DocumentView.EXRACTIONS"
+				:extraction-mode="documentView === DocumentView.EXRACTIONS"
 				v-if="isEditable"
 			>
 				<template #viewing-mode>

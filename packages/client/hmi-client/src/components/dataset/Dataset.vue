@@ -33,7 +33,6 @@
 				<section>{{ csvContent?.length }}</section>
 			</section>
 		</section>
-
 		<Accordion :multiple="true" :activeIndex="showAccordion">
 			<AccordionTab header="Description">
 				<p v-html="dataset.description" />

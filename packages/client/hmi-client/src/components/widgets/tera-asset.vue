@@ -1,17 +1,16 @@
 <template>
-	<main id="asset-toc-top">
+	<main @scroll="updateScrollPosition">
 		<slot name="nav" />
-		<header>
-			<section>
+		<header id="asset-header" :class="shrinkHeader && 'shrinked'">
+			<section v-if="!shrinkHeader">
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
 				<slot v-if="isCreatingAsset" name="name-input" />
 				<h4 v-else v-html="name" />
+				<!--put model contributors here too-->
 				<span class="authors" v-if="authors">
-					<!--Make icon inline for wrapping-->
 					<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
 					<span v-html="authors" />
-					<!--contributor-->
 				</span>
 				<div v-if="doi">
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
@@ -22,6 +21,7 @@
 					<slot name="bottom-header-buttons" />
 				</div>
 			</section>
+			<h4 v-else class="inline" v-html="name" />
 			<aside v-if="isEditable">
 				<slot name="edit-buttons" />
 			</aside>
@@ -33,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
+
 defineProps<{
 	name: string;
 	overline?: string;
@@ -42,6 +44,22 @@ defineProps<{
 	doi?: string;
 	publisher?: string;
 }>();
+
+const scrollPosition = ref(0);
+
+const shrinkHeader = computed(() => {
+	if (document.getElementById('asset-header')?.clientHeight) {
+		console.log(document.getElementById('asset-header')?.clientHeight);
+		return scrollPosition.value > document.getElementById('asset-header')?.clientHeight;
+	}
+	console.log(document.getElementById('asset-header')?.scrollTop);
+	return scrollPosition.value > 100;
+});
+
+function updateScrollPosition(event) {
+	scrollPosition.value = event?.currentTarget.scrollTop;
+	console.log(scrollPosition.value);
+}
 </script>
 
 <style scoped>
@@ -49,6 +67,8 @@ main {
 	display: grid;
 	/* minmax prevents grid blowout caused by datatable */
 	grid-template-columns: auto minmax(0, 1fr);
+	grid-template-rows: auto 1fr;
+	height: 100%;
 	background-color: var(--surface-section);
 	scroll-margin-top: 1rem;
 	overflow-y: auto;
@@ -65,19 +85,34 @@ main > section {
 }
 
 header {
+	height: fit-content;
 	grid-column-start: 2;
 	padding: 1rem;
-	padding-bottom: 0.5rem;
 	color: var(--text-color-subdued);
 	display: flex;
 	gap: 0.5rem;
 	justify-content: space-between;
 	position: sticky;
-	top: 0;
+	top: -1px;
 	background-color: var(--surface-section);
 	z-index: 1;
 	isolation: isolate;
+	transition: 0.2s;
+}
+
+header.shrinked {
+	padding: 0.5rem 1rem;
 	border-bottom: 1px solid var(--surface-border-light);
+}
+
+h4.inline {
+	display: flex;
+	align-self: center;
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: var(--constrain-width);
 }
 
 h4,
@@ -112,13 +147,9 @@ header section:deep(> input) {
 	color: var(--primary-color-dark);
 }
 
-.authors {
-	display: flex;
-	gap: 0.5rem;
-}
-
 .authors i {
 	color: var(--text-color-subdued);
+	margin-right: 0.5rem;
 }
 
 .header-buttons,
