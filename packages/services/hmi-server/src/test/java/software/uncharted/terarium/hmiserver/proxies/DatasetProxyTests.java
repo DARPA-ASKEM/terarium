@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 import javax.ws.rs.core.Response;
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-@RegisterRestClient(configKey = "data-service")
 @QuarkusTest
 public class DatasetProxyTests {
 
