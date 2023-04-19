@@ -124,7 +124,7 @@
 						:header="colName"
 						sortable
 					>
-						<!-- column summary charts go here -->
+						<!-- column summary charts below -->
 						<template #header>
 							<div class="histogram">
 								<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>

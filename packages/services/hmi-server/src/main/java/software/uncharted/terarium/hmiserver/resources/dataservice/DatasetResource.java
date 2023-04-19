@@ -215,7 +215,8 @@ public class DatasetResource {
 		return proxy.uploadFile(id, filename, file);
 	}
 	
-	// TODO: warning this is not sufficient for the long term. Should likely use a library for this conversion formatting may break this.
+	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
+	// warning this is not sufficient for the long term. Should likely use a library for this conversion formatting may break this.
 	private List<List<String>> csvToRecords(String rawCsvString){
 		String[] csvRows = rawCsvString.split("\n");
 		String[] headers = csvRows[0].split(",");
