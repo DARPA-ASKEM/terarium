@@ -184,8 +184,16 @@ public class DatasetResource {
 		
 		log.debug("Getting csv content");
 		Response returnResponse;
+		String rawCsvString; 
 		try {
 			returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
+			rawCsvString = returnResponse.readEntity(String.class);
+			if (rawCsvString.length() == 0){
+				log.debug("No csv assosiated with this ID");
+				return Response
+					.noContent()
+					.build();
+			}
 		} catch (RuntimeException e) {
 			log.error("Unable to get csv", e);
 			return Response
@@ -194,7 +202,7 @@ public class DatasetResource {
 				.build();
 		}
 
-		String rawCsvString = returnResponse.readEntity(String.class);
+		
 		List<List<String>> csv = csvToRecords(rawCsvString);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<CsvColumnStats>();
