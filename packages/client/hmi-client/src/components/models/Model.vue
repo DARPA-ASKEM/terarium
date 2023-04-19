@@ -4,6 +4,7 @@
 		:overline="model?.framework"
 		:is-editable="isEditable"
 		:is-creating-asset="assetId === ''"
+		@close-preview="emit('close-preview')"
 	>
 		<template #name-input>
 			<InputText v-model="newModelName" placeholder="Title of new model" />
@@ -315,7 +316,7 @@ import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name']);
+const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview']);
 
 const extractions = ref([]);
 

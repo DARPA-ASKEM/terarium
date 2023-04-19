@@ -1,7 +1,7 @@
 <template>
-	<main @scroll="updateScrollPosition">
+	<main id="asset" @scroll="updateScrollPosition">
 		<slot name="nav" />
-		<header id="asset-header" ref="header" :class="shrinkHeader && !isCreatingAsset && 'shrinked'">
+		<header ref="header" :class="shrinkHeader && !isCreatingAsset && 'shrinked'">
 			<section v-if="!shrinkHeader">
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
@@ -22,8 +22,14 @@
 				</div>
 			</section>
 			<h4 v-else class="inline" v-html="name" />
-			<aside v-if="isEditable">
-				<slot name="edit-buttons" />
+			<aside>
+				<slot v-if="isEditable" name="edit-buttons" />
+				<Button
+					v-else
+					icon="pi pi-times"
+					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+					@click="emit('close-preview')"
+				/>
 			</aside>
 		</header>
 		<section>
@@ -33,9 +39,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import Button from 'primevue/button';
 
-defineProps<{
+const props = defineProps<{
 	name: string;
 	overline?: string;
 	isEditable: boolean;
@@ -45,11 +52,13 @@ defineProps<{
 	publisher?: string;
 }>();
 
+const emit = defineEmits(['close-preview']);
+
 const header = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
-	const headerHeight = header.value.clientHeight ? header.value.clientHeight / 2 : 1;
+	const headerHeight = header.value?.clientHeight ? header.value.clientHeight / 2 : 1;
 	return scrollPosition.value > headerHeight;
 });
 
@@ -57,6 +66,13 @@ function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
 	console.log(scrollPosition.value, header.value?.clientHeight);
 }
+
+watch(
+	() => props.name,
+	() => {
+		document.getElementById('asset')?.scrollIntoView();
+	}
+);
 </script>
 
 <style scoped>
@@ -92,11 +108,11 @@ header {
 	color: var(--text-color-subdued);
 	background-color: var(--surface-section);
 	transition: 0.2s;
-	overflow-anchor: none;
 }
 
 header.shrinked {
 	position: sticky;
+	overflow-anchor: none;
 	top: -1px;
 	z-index: 1;
 	isolation: isolate;
@@ -120,15 +136,20 @@ header section p {
 }
 
 header section,
-header aside {
+header > aside {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
 	max-width: var(--constrain-width);
 }
 
-header aside {
+header > aside {
 	align-self: flex-start;
+}
+
+/* Aligns close button */
+header > aside > .close {
+	margin: -0.5rem;
 }
 
 main:deep(.p-inputtext.p-inputtext-sm) {
@@ -165,7 +186,7 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: 1rem;
+	scroll-margin-top: 40px;
 }
 
 main:deep(.p-accordion-content > p),

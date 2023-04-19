@@ -4,6 +4,7 @@
 		:name="dataset?.name"
 		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
 		:is-editable="isEditable"
+		@close-preview="emit('close-preview')"
 	>
 		<section class="metadata data-row">
 			<section>
@@ -145,6 +146,8 @@ const props = defineProps<{
 	isEditable: boolean;
 	highlight?: string;
 }>();
+
+const emit = defineEmits(['close-preview']);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {

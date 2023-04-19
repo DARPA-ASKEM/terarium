@@ -2,7 +2,7 @@
 	<nav>
 		<slot name="viewing-mode" />
 		<template v-if="extractionMode">
-			<a @click="scrollTo('asset-header')">Top</a>
+			<a @click="scrollTo('asset')">Top</a>
 			<template v-for="content in assetContent">
 				<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
 					{{ content.key.replace('-', ' ') }}

@@ -7,6 +7,7 @@
 		:authors="formatDocumentAuthors(doc)"
 		:doi="highlightSearchTerms(doi)"
 		:publisher="highlightSearchTerms(doc.publisher)"
+		@close-preview="emit('close-preview')"
 	>
 		<template #nav>
 			<tera-asset-nav
@@ -267,7 +268,7 @@ const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-asset', 'close-preview']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
