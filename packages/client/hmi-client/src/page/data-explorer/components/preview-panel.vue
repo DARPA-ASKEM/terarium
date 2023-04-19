@@ -42,7 +42,7 @@
 			/>
 			<Button
 				v-else
-				label="Remove from Resources"
+				label="Remove from selected resources"
 				@click="emit('toggle-data-item-selected', { item: previewItem })"
 				class="toggle-selection p-button-secondary"
 			/>
