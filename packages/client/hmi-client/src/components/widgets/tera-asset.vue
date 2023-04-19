@@ -48,13 +48,14 @@ defineProps<{
 const header = ref();
 const scrollPosition = ref(0);
 
-const shrinkHeader = computed(
-	() => scrollPosition.value > Math.round(header.value.clientHeight / 2 ?? 1)
-);
+const shrinkHeader = computed(() => {
+	const headerHeight = header.value.clientHeight ? header.value.clientHeight / 2 : 1;
+	return scrollPosition.value > headerHeight;
+});
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
-	console.log(scrollPosition.value, Math.round(header.value.clientHeight / 2 ?? 1));
+	console.log(scrollPosition.value, header.value?.clientHeight);
 }
 </script>
 
