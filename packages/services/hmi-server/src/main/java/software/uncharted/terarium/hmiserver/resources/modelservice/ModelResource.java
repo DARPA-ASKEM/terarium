@@ -27,7 +27,7 @@ public class ModelResource {
 	@RestClient
 	ModelServiceProxy proxy;
 
-	@Channel("user-event-requests")
+	@Channel("user-event")
 	Emitter<String> userEventRequestEmitter;
 
 	@PUT
