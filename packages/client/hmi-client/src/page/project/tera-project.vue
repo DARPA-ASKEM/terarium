@@ -352,7 +352,7 @@ const openedAssetRoute = computed<Tab>(() => ({
 	assetType: props.assetType,
 	assetId: props.assetId
 }));
-const loadingTabIndex = ref();
+const loadingTabIndex = ref(null);
 
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
