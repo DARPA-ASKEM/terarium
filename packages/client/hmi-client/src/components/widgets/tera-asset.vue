@@ -1,8 +1,21 @@
 <template>
-	<main id="asset" @scroll="updateScrollPosition">
+	<main @scroll="updateScrollPosition">
+		<span id="asset-top" />
 		<slot name="nav" />
-		<header ref="header" :class="shrinkHeader && !isCreatingAsset && 'shrinked'">
-			<section v-if="!shrinkHeader">
+		<header v-if="shrinkHeader && !isCreatingAsset" class="shrinked">
+			<h4 v-html="name" />
+			<aside>
+				<slot v-if="isEditable" name="edit-buttons" />
+				<Button
+					v-else
+					icon="pi pi-times"
+					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+					@click="emit('close-preview')"
+				/>
+			</aside>
+		</header>
+		<header ref="header">
+			<section>
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
 				<slot v-if="isCreatingAsset" name="name-input" />
@@ -21,7 +34,6 @@
 					<slot name="bottom-header-buttons" />
 				</div>
 			</section>
-			<h4 v-else class="inline" v-html="name" />
 			<aside>
 				<slot v-if="isEditable" name="edit-buttons" />
 				<Button
@@ -39,10 +51,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 
-const props = defineProps<{
+defineProps<{
 	name: string;
 	overline?: string;
 	isEditable: boolean;
@@ -58,7 +70,7 @@ const header = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
-	const headerHeight = header.value?.clientHeight ? header.value.clientHeight / 2 : 1;
+	const headerHeight = header.value?.clientHeight ? header.value.clientHeight - 50 : 1;
 	return scrollPosition.value > headerHeight;
 });
 
@@ -67,12 +79,7 @@ function updateScrollPosition(event) {
 	console.log(scrollPosition.value, header.value?.clientHeight);
 }
 
-watch(
-	() => props.name,
-	() => {
-		document.getElementById('asset')?.scrollIntoView();
-	}
-);
+// TODO: See about resetting the scroll position to the top on asset change
 </script>
 
 <style scoped>
@@ -83,7 +90,8 @@ main {
 	grid-template-rows: auto 1fr;
 	height: 100%;
 	background-color: var(--surface-section);
-	scroll-margin-top: 1rem;
+	/** 40px accounts for sticky header height */
+	scroll-margin-top: calc(50px + 0.5rem);
 	overflow-y: auto;
 	overflow-x: hidden;
 }
@@ -100,28 +108,27 @@ main > section {
 header {
 	height: fit-content;
 	grid-column-start: 2;
+	color: var(--text-color-subdued);
 	padding: 1rem;
 	padding-bottom: 0;
+	transition: 0.2s;
 	display: flex;
 	gap: 0.5rem;
 	justify-content: space-between;
-	color: var(--text-color-subdued);
-	background-color: var(--surface-section);
-	transition: 0.2s;
 }
 
 header.shrinked {
+	height: 50px;
 	position: sticky;
-	overflow-anchor: none;
 	top: -1px;
 	z-index: 1;
 	isolation: isolate;
+	background-color: var(--surface-section);
 	padding: 0.5rem 1rem;
 	border-bottom: 1px solid var(--surface-border-light);
 }
 
-h4.inline {
-	display: flex;
+header.shrinked h4 {
 	align-self: center;
 	overflow: hidden;
 	text-align: left;
@@ -136,20 +143,19 @@ header section p {
 }
 
 header section,
-header > aside {
+header aside {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
 	max-width: var(--constrain-width);
 }
 
-header > aside {
+header aside {
 	align-self: flex-start;
 }
 
-/* Aligns close button */
-header > aside > .close {
-	margin: -0.5rem;
+header.shrinked aside {
+	align-self: center;
 }
 
 main:deep(.p-inputtext.p-inputtext-sm) {
@@ -186,7 +192,7 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: 40px;
+	scroll-margin-top: calc(50px + 0.5rem);
 }
 
 main:deep(.p-accordion-content > p),
