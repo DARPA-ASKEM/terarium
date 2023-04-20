@@ -26,8 +26,8 @@
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
 
-import CategoricalFacet from '@/components/facets/categorical-facet.vue';
-import NumericalFacet from '@/components/facets/numerical-facet.vue';
+import CategoricalFacet from '@/page/data-explorer/components/facets/tera-categorical-facet.vue';
+import NumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
