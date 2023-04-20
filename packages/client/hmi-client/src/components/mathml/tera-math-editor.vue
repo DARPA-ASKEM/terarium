@@ -176,6 +176,8 @@ const cancelEditEquation = () => {
 math-field {
 	background-color: var(--gray-100);
 	border-radius: 4px;
+	border: none;
+	outline: none;
 	padding: 5px;
 	margin: 10px;
 	font-size: 1em;
@@ -236,7 +238,6 @@ math-field[disabled] {
 	flex-direction: row;
 	background-color: var(--gray-100);
 	border-color: var(--gray-0);
-	padding: 5px;
 	padding: 5px;
 	height: auto;
 	resize: none;

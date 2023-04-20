@@ -22,6 +22,9 @@
  */
 @import '@assets/css/facets-overrides';
 
+/* Setup MathLive Fonts */
+@import '@node_modules/mathlive/dist/mathlive-fonts.css';
+
 :root {
 	/* Layout */
 	--navbar-outer-height: 51px;
