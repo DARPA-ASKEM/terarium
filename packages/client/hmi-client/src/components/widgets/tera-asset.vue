@@ -70,7 +70,7 @@ const header = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
-	const headerHeight = header.value?.clientHeight ? header.value.clientHeight - 50 : 1;
+	const headerHeight = header.value?.clientHeight ? header.value.clientHeight : 1;
 	return scrollPosition.value > headerHeight;
 });
 
