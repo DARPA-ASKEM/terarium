@@ -7082,6 +7082,7 @@ cors@latest:
     vue-router: 4.1.6
     vue-tsc: 1.2.0
     vue3-ace-editor: 2.2.2
+    vue3-draggable-resizable: ^1.6.5
   languageName: unknown
   linkType: soft
 
@@ -12338,6 +12339,13 @@ send@latest:
     resize-observer-polyfill: ^1.5.1
     vue: ^3.2.26
   checksum: 63983e5ab2832b3979933f7b4e6ea4651a07e7ca3262af34522e4a768efda7ecb206e3508740ed2b066b971dea4cf6b39a836357d4a10928da10eb7ed872e97c
+  languageName: node
+  linkType: hard
+
+"vue3-draggable-resizable@npm:^1.6.5":
+  version: 1.6.5
+  resolution: "vue3-draggable-resizable@npm:1.6.5"
+  checksum: 041ad4518605e35b9e91c32a6e91d53f73ee95117d7944025bb90f6957b3a11d103c42ada0a3dbada6a7b96b635bea06b273177205d47330fdbd45723de1a8bf
   languageName: node
   linkType: hard
 
