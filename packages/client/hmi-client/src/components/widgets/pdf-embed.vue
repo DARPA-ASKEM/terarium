@@ -32,7 +32,7 @@ watch(isAdobePdfApiReady, () => {
 			// @ts-ignore
 			// eslint-disable-line
 			new window.AdobeDC.View({
-				clientId: import.meta.env.VITE_ADOBE_API_KEY,
+				clientId: '0cac1f8fd97c4957b968ebf6a5252223',
 				divId: 'adobe-dc-view'
 			})
 		);

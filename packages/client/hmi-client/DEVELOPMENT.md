@@ -132,15 +132,3 @@ toast.showToast(
 Terrarium uses [mathlive](https://cortexjs.io/docs/mathlive/) & [mathjax 2.7.2](https://docs.mathjax.org/en/v2.7-latest/start.html) via a the `vue-mathjax-next` component to create a custom component: `tera-math-editor`
 
 This component `<tera-math-editor>` can display a `LaTeX` formatted formula using either renderer by setting `:mathmode` to a `MathEditorModes.JAX | MathEditorModes.LIVE`.
-
-## Adobe PDF Embed API
-
-If you want to view PDF embeds during development [get an API key](https://documentservices.adobe.com/dc-integration-creation-app-cdn/main.html?api=pdf-embed-api).
-- Credentials Name can be whatever you want
-- Application Domain should be set to `localhost`
-  
-
-Next create an `.env` file in `packages/client/hmi-client`. Assign your API key as shown below. The API key is read in `pdf-embed.vue`.
-```
-VITE_ADOBE_API_KEY=<YOUR_API_KEY>
-```
