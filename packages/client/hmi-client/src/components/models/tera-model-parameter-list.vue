@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import Button from 'primevue/button';
-import ModelParameterListItem from '@/components/models/model-parameter-list-item.vue';
+import ModelParameterListItem from '@/components/models/tera-model-parameter-list-item.vue';
 
 const props = defineProps<{
 	parameters: any; // Temporary - this is also any in ITypeModel

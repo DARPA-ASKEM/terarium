@@ -227,7 +227,7 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Dataset from '@/components/dataset/Dataset.vue';
 import Document from '@/components/documents/Document.vue';
-import Model from '@/components/models/Model.vue';
+import Model from '@/components/models/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
