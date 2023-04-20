@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -27,5 +28,5 @@ public class SimulationRun implements Serializable {
 
 	private String response;
 
-	private Map<String, String> parameters;
+	private List<Object> parameters;
 }

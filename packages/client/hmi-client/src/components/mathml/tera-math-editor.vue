@@ -176,6 +176,8 @@ const cancelEditEquation = () => {
 math-field {
 	background-color: var(--gray-100);
 	border-radius: 4px;
+	border: none;
+	outline: none;
 	padding: 5px;
 	margin: 10px;
 	font-size: 1em;
@@ -199,7 +201,8 @@ math-field[disabled] {
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	max-width: 100%;
+	width: 99%;
+	margin: 5px;
 }
 
 .edit-button {
@@ -232,24 +235,29 @@ math-field[disabled] {
 }
 
 .mathjax-equation {
-	background-color: var(--editing-color);
-	border: 1px solid var(--gray-1000);
-	border-radius: 4px;
+	flex-direction: row;
+	background-color: var(--gray-100);
+	border-color: var(--gray-0);
 	padding: 5px;
-	padding: 5px;
-	margin: 10px;
 	height: auto;
 	resize: none;
 	overflow-y: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 100%;
+	width: 99%;
+	margin: 5px;
 }
 
 .mathjax-container {
 	display: flex;
 	flex-direction: column;
+	background-color: var(--gray-0);
 }
 
 .mathjax-container Textarea[disabled] {
 	opacity: 1;
-	background-color: var(--surface-secondary);
+	background-color: var(--gray-0);
 }
 </style>
