@@ -10,7 +10,7 @@
 			<Button
 				@click="toggleEditEquation"
 				:label="isEditingEq ? 'Save equation' : 'Edit equation'"
-				class="p-button-sm p-button-outlined edit-button"
+				:class="isEditingEq ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
 			/>
 		</span>
 	</section>
@@ -174,7 +174,7 @@ const cancelEditEquation = () => {
 
 <style scoped>
 math-field {
-	background-color: var(--gray-100);
+	background-color: var(--gray-0);
 	border-radius: 4px;
 	border: none;
 	outline: none;
