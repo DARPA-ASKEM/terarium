@@ -16,7 +16,6 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
 import java.util.*;
 import java.lang.Math;
 
@@ -182,20 +181,20 @@ public class DatasetResource {
 		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
 		
-		log.debug("Getting csv content");
+		log.debug("Getting CSV content");
 		Response returnResponse;
 		String rawCsvString; 
 		try {
 			returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
 			rawCsvString = returnResponse.readEntity(String.class);
 			if (rawCsvString.length() == 0){
-				log.debug("No csv assosiated with this ID");
+				log.debug("No CSV assosiated with this ID");
 				return Response
 					.noContent()
 					.build();
 			}
 		} catch (RuntimeException e) {
-			log.error("Unable to get csv", e);
+			log.error("Unable to get CSV", e);
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
