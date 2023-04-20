@@ -51,10 +51,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 
-defineProps<{
+const props = defineProps<{
 	name: string;
 	overline?: string;
 	isEditable: boolean;
@@ -79,7 +79,13 @@ function updateScrollPosition(event) {
 	console.log(scrollPosition.value, header.value?.clientHeight);
 }
 
-// TODO: See about resetting the scroll position to the top on asset change
+// Reset the scroll position to the top on asset change
+watch(
+	() => props.name,
+	() => {
+		document.getElementById('asset-top')?.scrollIntoView();
+	}
+);
 </script>
 
 <style scoped>
