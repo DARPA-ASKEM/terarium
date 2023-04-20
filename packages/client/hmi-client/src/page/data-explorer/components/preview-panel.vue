@@ -60,7 +60,7 @@ import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
 import Document from '@/components/documents/Document.vue';
-import Dataset from '@/components/dataset/Dataset.vue';
+import Dataset from '@/components/dataset/tera-dataset.vue';
 import Model from '@/components/models/Model.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 
