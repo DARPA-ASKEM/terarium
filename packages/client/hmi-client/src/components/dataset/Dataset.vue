@@ -109,39 +109,7 @@
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
 
-				<DataTable
-					tableStyle="width:auto"
-					class="p-datatable-sm"
-					:value="csvContent?.slice(1, csvContent.length)"
-					removableSort
-					resizable-columns
-					showGridlines
-				>
-					<Column
-						v-for="(colName, index) of csvHeaders"
-						:key="index"
-						:field="index.toString()"
-						:header="colName"
-						sortable
-					>
-						<!-- column summary charts below -->
-						<template #header>
-							<div class="histogram">
-								<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>
-								<Chart
-									type="bar"
-									:height="800"
-									:data="chartData?.at(index)"
-									:options="chartOptions"
-								/>
-								<div class="histogram-label-max">Max: {{ csvMaxsToDisplay?.at(index) }}</div>
-								<div class="histogram-label-other">Mean: {{ csvMeansToDisplay?.at(index) }}</div>
-								<div class="histogram-label-other">Median: {{ csvMedianToDisplay?.at(index) }}</div>
-								<div class="histogram-label-other">SD: {{ csvSdToDisplay?.at(index) }}</div>
-							</div>
-						</template>
-					</Column>
-				</DataTable>
+				<datasetDatatable :raw-content="rawContent" />
 			</AccordionTab>
 		</Accordion>
 	</section>
@@ -154,10 +122,8 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Chart from 'primevue/chart';
 import { CsvAsset } from '@/types/Types';
+import datasetDatatable from '@/components/dataset/dataset-datatable.vue';
 
 const props = defineProps<{
 	assetId: string;
@@ -173,34 +139,10 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const CATEGORYPERCENTAGE = 0.9;
-const BARPERCENTAGE = 1.0;
-const MINBARLENGTH = 1;
-
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 
 const csvContent = computed(() => rawContent.value?.csv);
-const csvHeaders = computed(() => rawContent.value?.headers);
-const chartData = computed(() =>
-	rawContent.value?.stats?.map((stat) => setBarChartData(stat.bins))
-);
-const csvMinsToDisplay = computed(() =>
-	rawContent.value?.stats?.map((stat) => Math.round(stat.minValue * 1000) / 1000)
-);
-const csvMaxsToDisplay = computed(() =>
-	rawContent.value?.stats?.map((stat) => Math.round(stat.maxValue * 1000) / 1000)
-);
-const csvMeansToDisplay = computed(() =>
-	rawContent.value?.stats?.map((stat) => Math.round(stat.mean * 1000) / 1000)
-);
-const csvMedianToDisplay = computed(() =>
-	rawContent.value?.stats?.map((stat) => Math.round(stat.median * 1000) / 1000)
-);
-const csvSdToDisplay = computed(() =>
-	rawContent.value?.stats?.map((stat) => Math.round(stat.sd * 1000) / 1000)
-);
-const chartOptions = computed(() => setChartOptions());
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
@@ -231,68 +173,6 @@ const showAccordion = computed(() =>
 		? [2]
 		: [0]
 );
-
-// Given the bins for a column set up the object needed for the chart.
-const setBarChartData = (bins: any[]) => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	const dummyLabels: string[] = [];
-	for (let i = 0; i < bins.length; i++) {
-		dummyLabels.push(i.toString());
-	}
-	return {
-		labels: dummyLabels,
-		datasets: [
-			{
-				label: false,
-				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
-				borderColor: documentStyle.getPropertyValue('--primary-color'),
-				data: bins,
-				categoryPercentage: CATEGORYPERCENTAGE,
-				barPercentage: BARPERCENTAGE,
-				minBarLength: MINBARLENGTH
-			}
-		]
-	};
-};
-
-const setChartOptions = () => {
-	const documentStyle = getComputedStyle(document.documentElement);
-	return {
-		indexAxis: 'y',
-		plugins: {
-			legend: {
-				labels: {
-					display: false
-				},
-				display: false
-			},
-			tooltip: {
-				enabled: false
-			}
-		},
-		scales: {
-			x: {
-				ticks: {
-					display: false
-				},
-				grid: {
-					display: false,
-					drawBorder: false
-				}
-			},
-			y: {
-				ticks: {
-					display: false
-				},
-				grid: {
-					display: false,
-					drawBorder: false,
-					borderColor: documentStyle.getPropertyValue('--surface-border-light')
-				}
-			}
-		}
-	};
-};
 </script>
 
 <style scoped>
@@ -311,43 +191,7 @@ const setChartOptions = () => {
 	flex: 1;
 	padding: 0.5rem;
 }
-/* Histograms & Charts  */
-.summary-chart-table {
-	width: max-content;
-	border-spacing: 0;
-	border-collapse: collapse;
-	/* position: sticky; */
-	/* top: -1rem; */
-	background: var(--surface-0);
-	border-bottom: 1px solid var(--surface-border-light);
-}
-.summary-chart-column {
-	border-left: 1.111px solid transparent;
-	border-right: 1.111px solid transparent;
-	text-align: left;
-	padding-bottom: 1rem;
-}
-.histogram {
-	width: 40px;
-}
-.histogram-label-max {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	padding-left: 0.5rem;
-}
-.histogram-label-other {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	padding-left: 0.5rem;
-	text-align: left;
-}
-.histogram-label-min {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-	padding-left: 0.5rem;
-	position: relative;
-	top: -9px;
-}
+
 /* Datatable  */
 .data-row > section > header {
 	font-size: var(--font-caption);
