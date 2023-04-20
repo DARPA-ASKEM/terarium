@@ -170,7 +170,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
+import SelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
@@ -178,7 +178,7 @@ import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
-import DocumentCard from '@/components/documents/DocumentCard.vue';
+import DocumentCard from '@/components/documents/tera-document-card.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
