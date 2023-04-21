@@ -61,38 +61,42 @@
 											<template #start>
 												<Button
 													@click="resetZoom"
-													label="Reset Zoom"
-													class="p-button-sm p-button-secondary"
+													label="Reset zoom"
+													class="p-button-sm p-button-outlined toolbar-button"
 												/>
 											</template>
 											<template #center>
-												<span class="p-buttonset">
+												<span class="toolbar-subgroup">
 													<Button
 														v-if="isEditing"
 														@click="addState"
-														label="Add State"
-														class="p-button-sm p-button-secondary"
+														label="Add state"
+														class="p-button-sm p-button-outlined toolbar-button"
 													/>
 													<Button
 														v-if="isEditing"
 														@click="addTransition"
-														label="Add Transition"
-														class="p-button-sm p-button-secondary"
+														label="Add transition"
+														class="p-button-sm p-button-outlined toolbar-button"
 													/>
 												</span>
 											</template>
 											<template #end>
-												<span class="p-buttonset">
+												<span class="toolbar-subgroup">
 													<Button
 														v-if="isEditing"
 														@click="cancelEdit"
 														label="Cancel"
-														class="p-button-sm p-button-secondary"
+														class="p-button-sm p-button-outlined toolbar-button"
 													/>
 													<Button
 														@click="toggleEditMode"
 														:label="isEditing ? 'Save model' : 'Edit model'"
-														class="p-button-sm p-button-secondary"
+														:class="
+															isEditing
+																? 'p-button-sm toolbar-button-saveModel'
+																: 'p-button-sm p-button-outlined toolbar-button'
+														"
 													/>
 												</span>
 											</template>
@@ -855,12 +859,20 @@ const mathJaxEq = (eq) => {
 	z-index: 1;
 	isolation: isolate;
 	background: transparent;
-	padding: 0.25rem;
+	padding: 0.5rem;
 }
 
-.button-container {
+.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
+	background-color: var(--surface-0);
+	margin: 0.25rem;
+}
+
+.toolbar-button-saveModel {
+	margin: 0.25rem;
+}
+
+.toolbar-subgroup {
 	display: flex;
-	float: right;
 }
 
 .fixed-header {
@@ -905,16 +917,17 @@ section math-editor {
 	width: 100%;
 	height: 100%;
 	flex-direction: column;
-	border-width: 2px;
+	border: 4px solid transparent;
+	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
 	overflow: auto;
 }
 
 .math-editor-selected {
-	outline: 2px solid var(--primary-color);
+	border: 4px solid var(--primary-color);
 }
 
 .math-editor-error {
-	outline: 2px solid red;
+	border: 4px solid var(--surface-border-warning);
 	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 

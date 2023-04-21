@@ -55,12 +55,12 @@
 			>
 				<section :style="dragOverStyle">
 					<template v-if="isAssetDropped">
-						<asset-card
+						<tera-asset-card
 							:asset="searchByExampleSelectedAsset"
 							:resourceType="searchByExampleSelectedResourceType"
 							class="asset-card-in-searchByExample-dropzone"
 						>
-						</asset-card>
+						</tera-asset-card>
 						<Button
 							label="Clear"
 							size="small"
@@ -125,7 +125,7 @@ import useResourcesStore from '@/stores/resources';
 import { EventType } from '@/types/Types';
 import Button from 'primevue/button';
 import { useDragEvent } from '@/services/drag-drop';
-import AssetCard from '@/page/data-explorer/components/asset-card.vue';
+import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
 import { useSearchByExampleOptions } from '../../search-by-example';
