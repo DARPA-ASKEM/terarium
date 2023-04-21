@@ -255,9 +255,9 @@ import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
-import TeraAsset from '@/components/widgets/tera-asset.vue';
-import TeraAssetNav from '@/components/widgets/tera-asset-nav.vue';
 import InputText from 'primevue/inputtext';
+import TeraAsset from '@/components/asset/tera-asset.vue.js';
+import TeraAssetNav from '@/components/asset/tera-asset-nav.vue.js';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
