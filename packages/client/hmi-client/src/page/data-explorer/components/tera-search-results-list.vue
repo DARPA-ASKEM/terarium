@@ -31,7 +31,7 @@
 	</div>
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
-			<SearchItem
+			<tera-search-item
 				:asset="(asset as DocumentType & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
@@ -54,7 +54,7 @@ import { Dataset } from '@/types/Dataset';
 import { Facets, SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
-import SearchItem from './search-item.vue';
+import TeraSearchItem from './tera-search-item.vue';
 
 const props = defineProps({
 	dataItems: {
