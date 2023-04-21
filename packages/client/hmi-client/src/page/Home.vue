@@ -81,7 +81,7 @@
 						</div>
 						<ul>
 							<li v-for="(document, j) in project.relatedDocuments" :key="j">
-								<TeraDocumentCard :document="document" @click="selectDocument(document)" />
+								<tera-document-card :document="document" @click="selectDocument(document)" />
 							</li>
 						</ul>
 					</div>
@@ -93,7 +93,7 @@
 					<div class="carousel">
 						<ul>
 							<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
-								<TeraDocumentCard />
+								<tera-document-card />
 							</li>
 						</ul>
 					</div>
@@ -178,7 +178,7 @@ import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
-import TeraDocumentCard from '@/components/documents/tera-document-card.vue';
+import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
