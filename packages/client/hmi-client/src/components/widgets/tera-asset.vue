@@ -124,7 +124,7 @@ header {
 }
 
 header.shrinked {
-	height: 50px;
+	height: 3rem;
 	position: sticky;
 	top: -1px;
 	z-index: 1;
