@@ -31,7 +31,7 @@
 	</div>
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
-			<TeraSearchItem
+			<tera-search-item
 				:asset="(asset as DocumentType & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
