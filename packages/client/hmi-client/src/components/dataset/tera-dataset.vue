@@ -108,39 +108,22 @@
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
-				<DataTable
-					tableStyle="width:auto"
-					class="p-datatable-sm"
-					:value="csvContent"
-					removableSort
-					resizable-columns
-					showGridlines
-				>
-					<Column
-						v-for="colName of rawColumnNames"
-						:key="colName"
-						:field="colName"
-						:header="colName"
-						sortable
-					>
-					</Column>
-				</DataTable>
+
+				<tera-dataset-datatable :raw-content="rawContent" />
 			</AccordionTab>
 		</Accordion>
 	</section>
 </template>
-
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
-import { csvToRecords, getColumns, Record } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
+import { CsvAsset } from '@/types/Types';
+import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
 const props = defineProps<{
 	assetId: string;
@@ -157,21 +140,16 @@ function highlightSearchTerms(text: string | undefined): string {
 }
 
 const dataset = ref<Dataset | null>(null);
-const rawContent = ref<string | null>(null);
+const rawContent = ref<CsvAsset | null>(null);
 
-const csvContent = computed(() =>
-	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
-);
-const rawColumnNames = computed(() =>
-	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
-);
+const csvContent = computed(() => rawContent.value?.csv);
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId);
+			rawContent.value = await downloadRawFile(props.assetId, 10);
 			const datasetTemp = await getDataset(props.assetId);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
@@ -209,46 +187,39 @@ const showAccordion = computed(() =>
 	flex-direction: row;
 	justify-content: space-evenly;
 }
-
 .metadata > section {
 	flex: 1;
 	padding: 0.5rem;
 }
 
+/* Datatable  */
 .data-row > section > header {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 }
-
 .data-row > section > section:last-child {
 	font-size: var(--font-body-small);
 }
-
 .annotation-row > section {
 	flex: 1;
 	padding: 0.5rem;
 }
-
 .numbered-list {
 	list-style: numbered-list;
 	margin-left: 2rem;
 	list-style-position: outside;
 }
-
 ol.numbered-list li::marker {
 	color: var(--text-color-subdued);
 }
-
 .feature-type {
 	color: var(--text-color-subdued);
 }
-
 .description {
 	padding: 1rem;
 	padding-bottom: 0.5rem;
 	max-width: var(--constrain-width);
 }
-
 .annotation-group {
 	padding: 0.25rem;
 	border: solid 1px var(--surface-border-light);
@@ -260,17 +231,14 @@ ol.numbered-list li::marker {
 	margin-bottom: 1rem;
 	max-width: var(--constrain-width);
 }
-
 .annotation-subheader {
 	font-weight: var(--font-weight-semibold);
 }
-
 .annotation-row {
 	display: flex;
 	flex-direction: row;
 	gap: 3rem;
 }
-
 .layout-topbar {
 	top: 20px;
 	background-color: red;

@@ -50,6 +50,8 @@ dependencies {
 	// Misc
 	implementation "org.apache.commons:commons-text:1.10.0"
 	implementation "org.jsoup:jsoup:1.7.2"
+	implementation "com.google.guava:guava:31.1-jre"
+
 
 
 	// Test

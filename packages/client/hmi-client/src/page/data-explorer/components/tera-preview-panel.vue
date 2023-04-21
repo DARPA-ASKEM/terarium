@@ -27,7 +27,7 @@
 					:highlight="searchTerm"
 					:is-editable="false"
 				/>
-				<model
+				<tera-model
 					v-else-if="previewItemResourceType === ResourceType.MODEL"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
@@ -59,8 +59,8 @@ import { PropType, computed, ref, watch } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
+import TeraModel from '@/components/models/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
-import Model from '@/components/models/Model.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import Document from '@/components/documents/Document.vue';
 

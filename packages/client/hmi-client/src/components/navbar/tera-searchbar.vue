@@ -128,7 +128,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
-import { useSearchByExampleOptions } from '../search-by-example';
+import { useSearchByExampleOptions } from '@/page/data-explorer/search-by-example';
 
 const props = defineProps<{
 	showSuggestions: boolean;

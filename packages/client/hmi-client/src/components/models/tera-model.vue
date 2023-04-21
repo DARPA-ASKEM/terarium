@@ -117,10 +117,11 @@
 											:latex-equation="equationLatex"
 											:is-editing-eq="isEditingEQ"
 											:is-math-ml-valid="isMathMLValid"
-											:math-mode="MathEditorModes.LIVE"
+											:math-mode="MathEditorModes.KATEX"
 											@cancel-editing="cancelEditng"
 											@equation-updated="setNewLatexFormula"
 											@validate-mathml="validateMathML"
+											@set-editing="isEditingEQ = true"
 										></tera-math-editor>
 									</section>
 								</SplitterPanel>
@@ -244,9 +245,7 @@
 					<Column field="equation_annotations" header="Equations">
 						<template #body="slotProps">
 							<div style="word-wrap: break-word">
-								<vue-mathjax
-									:formula="mathJaxEq(slotProps.data.equation_annotations)"
-								></vue-mathjax>
+								<katex-element :expression="Object.keys(slotProps.data.equation_annotations)[0]" />
 							</div>
 						</template>
 					</Column>
@@ -279,7 +278,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, defineEmits } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -307,8 +306,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
-import ModelParameterList from '@/components/models/model-parameter-list.vue';
-import ForecastLauncher from '@/components/models/forecast-launcher.vue';
+import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -320,6 +318,8 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
+import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
+
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 const emit = defineEmits(['create-new-model', 'update-tab-name']);
@@ -506,7 +506,7 @@ const updateLatexFormula = (formulaString: string) => {
 const cancelEditng = () => {
 	isEditingEQ.value = false;
 	isMathMLValid.value = true;
-	// updateLatexFormula(equationLatexOriginal.value);
+	updateLatexFormula(equationLatexOriginal.value);
 };
 
 const relatedTerariumModels = computed(
@@ -843,13 +843,6 @@ const addTransition = async () => {
 
 const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
-
-const mathJaxEq = (eq) => {
-	if (eq) {
-		return String.raw`$$${Object.keys(eq)[0]}$$`;
-	}
-	return '';
-};
 </script>
 
 <style scoped>
