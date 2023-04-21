@@ -1,6 +1,5 @@
 <template>
 	<main @scroll="updateScrollPosition">
-		<span id="asset-top" />
 		<slot name="nav" />
 		<header v-if="shrinkHeader" class="shrinked">
 			<h4 v-html="name" />
@@ -14,7 +13,7 @@
 				/>
 			</aside>
 		</header>
-		<header ref="header">
+		<header id="asset-top" ref="header">
 			<section>
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
@@ -62,6 +61,7 @@ const props = defineProps<{
 	authors?: string;
 	doi?: string;
 	publisher?: string;
+	hideHeader?: boolean;
 }>();
 
 const emit = defineEmits(['close-preview']);
@@ -75,7 +75,7 @@ const shrinkHeader = computed(() => {
 });
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
-const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+const scrollMarginTop = computed(() => (shrinkHeader.value ? '0.5rem' : '0.5rem'));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
