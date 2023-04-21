@@ -109,7 +109,7 @@
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
 
-				<datasetDatatable :raw-content="rawContent" />
+				<teraDatasetDatatable :raw-content="rawContent" />
 			</AccordionTab>
 		</Accordion>
 	</section>
@@ -123,7 +123,7 @@ import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset } from '@/types/Types';
-import datasetDatatable from '@/components/dataset/dataset-datatable.vue';
+import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
 const props = defineProps<{
 	assetId: string;
