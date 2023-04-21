@@ -74,7 +74,7 @@ const shrinkHeader = computed(() => {
 	return scrollPosition.value > headerHeight && !props.isCreatingAsset;
 });
 
-// Scroll margin for anchors are adjusted depending on the header
+// Scroll margin for anchors are adjusted depending on the header (inserted in css)
 const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
 
 function updateScrollPosition(event) {
@@ -98,7 +98,7 @@ main {
 	grid-template-rows: auto 1fr;
 	height: 100%;
 	background-color: var(--surface-section);
-	/** 3.5rem accounts for sticky header height */
+	/* accounts for sticky header height */
 	scroll-margin-top: v-bind('scrollMarginTop');
 	overflow-y: auto;
 	overflow-x: hidden;
