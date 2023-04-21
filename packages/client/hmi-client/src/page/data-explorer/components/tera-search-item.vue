@@ -1,5 +1,5 @@
 <template>
-	<AssetCard
+	<tera-asset-card
 		:asset="asset"
 		:resourceType="resourceType"
 		:active="isPreviewed"
@@ -11,7 +11,7 @@
 			class="p-button-icon-only p-button-text p-button-rounded"
 			@click.stop="emit('toggle-selected-asset')"
 		/>
-	</AssetCard>
+	</tera-asset-card>
 </template>
 
 <script setup lang="ts">
@@ -22,7 +22,7 @@ import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { isDocument, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
-import AssetCard from '@/page/data-explorer/components/asset-card.vue';
+import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
 const props = defineProps<{
 	asset: DocumentType & Model & Dataset;
