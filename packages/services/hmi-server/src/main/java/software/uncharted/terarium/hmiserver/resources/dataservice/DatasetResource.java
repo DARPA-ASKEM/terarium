@@ -18,6 +18,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 import java.lang.Math;
+import com.google.common.math.Stats;
+import com.google.common.math.Quantiles;
+
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -262,13 +265,10 @@ public class DatasetResource {
 			Collections.sort(numberList); 
 			double minValue = numberList.get(0);
 			double maxValue = numberList.get(numberList.size() - 1);
-			double meanValue = numberList.stream()
-				.mapToDouble(d -> d)
-				.average()
-				.orElse(0.0);
+			double meanValue = Stats.meanOf(numberList);
+			double medianValue = Quantiles.median().compute(numberList);
+			double sdValue = Stats.of(numberList).populationStandardDeviation();
 
-			double medianValue = getMedianValue(numberList);
-			double sdValue = getSdValue(numberList, meanValue);
 			//Set up bins
 			for (int i = 0; i < binCount; i++){
 				bins.add(0);
@@ -288,30 +288,5 @@ public class DatasetResource {
 			//Cannot convert column to double, just return empty list.
 			return new CsvColumnStats(bins,0,0,0,0,0);
 		}	
-	}
-
-	//Assume list is already sorted because i know when its being called its already sorted..
-	private double getMedianValue(List<Double> aList){
-		int size = aList.size();
-		if (size % 2 == 1){
-			return aList.get((size + 1)/ 2 - 1);
-		}
-		else{
-			return (aList.get(size / 2 - 1) + aList.get(size / 2)) / 2;
-		}
-	}
-
-	//Get standard deviation from a list of doubles.
-	//Provided the mean as well because need it anyways, and will already have it.
-	private double getSdValue (List<Double> aList, double mean){
-		double temp = 0;
-		for (int i = 0; i < aList.size(); i++){
-			double val = aList.get(i);
-			double squrDiffToMean = Math.pow(val - mean, 2);
-			temp += squrDiffToMean;
-		}
-		double meanOfDiffs = (double) temp / (double) (aList.size());
-
-		return Math.sqrt(meanOfDiffs);
 	}
 }

@@ -318,7 +318,8 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
-import ModelParameterList from '@/components/models/model-parameter-list.vue';
+import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
+
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 const emit = defineEmits(['create-new-model', 'update-tab-name']);
