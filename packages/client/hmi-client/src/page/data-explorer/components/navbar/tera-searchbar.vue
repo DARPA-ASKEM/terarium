@@ -128,7 +128,7 @@ import { useDragEvent } from '@/services/drag-drop';
 import AssetCard from '@/page/data-explorer/components/asset-card.vue';
 import Checkbox from 'primevue/checkbox';
 import { SearchByExampleOptions } from '@/types/common';
-import { useSearchByExampleOptions } from '../search-by-example';
+import { useSearchByExampleOptions } from '../../search-by-example';
 
 const props = defineProps<{
 	showSuggestions: boolean;

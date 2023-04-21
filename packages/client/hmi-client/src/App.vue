@@ -4,7 +4,7 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<Navbar
+	<tera-navbar
 		class="header"
 		:active="!isErrorState"
 		:current-project-id="project?.id ?? null"
@@ -84,7 +84,7 @@ import Button from 'primevue/button';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
-import Navbar from '@/components/Navbar.vue';
+import TeraNavbar from '@/page/data-explorer/components/navbar/tera-navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
@@ -215,6 +215,7 @@ footer {
 .p-button.p-component.p-button-text.footer-button {
 	color: var(--text-color-secondary);
 }
+
 .p-button.p-component.p-button-text.footer-button:hover {
 	color: var(--text-color-primary);
 }
@@ -229,6 +230,7 @@ footer {
 	margin-top: 1rem;
 	width: 20rem;
 }
+
 .about-uncharted-logo {
 	width: 10rem;
 	margin-top: 1rem;
@@ -241,6 +243,7 @@ footer {
 	flex-wrap: wrap;
 	justify-content: space-between;
 }
+
 .modal-footer {
 	display: flex;
 	flex-direction: row;
@@ -248,6 +251,7 @@ footer {
 	justify-content: space-between;
 	width: 100%;
 }
+
 .constrain-width {
 	max-width: 40rem;
 }
