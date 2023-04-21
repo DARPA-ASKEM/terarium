@@ -1,7 +1,7 @@
 <template>
 	<div class="facets-panel">
 		<div v-for="facet in formattedFacets" :key="facet.label">
-			<numerical-facet
+			<tera-numerical-facet
 				v-if="facet.isNumerical"
 				:key="facet.label"
 				:facet="facet.id"
@@ -9,7 +9,7 @@
 				:base-data="facet.baseData"
 				:selected-data="facet.filteredData"
 			/>
-			<categorical-facet
+			<tera-categorical-facet
 				v-else
 				:key="facet.id"
 				:facet="facet.id"
@@ -26,8 +26,8 @@
 <script setup lang="ts">
 import { computed, PropType } from 'vue';
 
-import CategoricalFacet from '@/components/facets/categorical-facet.vue';
-import NumericalFacet from '@/components/facets/numerical-facet.vue';
+import TeraCategoricalFacet from '@/page/data-explorer/components/facets/tera-categorical-facet.vue';
+import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
 import { Facets, FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
