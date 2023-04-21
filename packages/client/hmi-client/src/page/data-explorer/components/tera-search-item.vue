@@ -11,7 +11,7 @@
 			class="p-button-icon-only p-button-text p-button-rounded"
 			@click.stop="emit('toggle-selected-asset')"
 		/>
-	</TeraAssetCard>
+	</tera-asset-card>
 </template>
 
 <script setup lang="ts">
