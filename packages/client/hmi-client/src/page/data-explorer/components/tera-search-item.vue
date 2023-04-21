@@ -1,5 +1,5 @@
 <template>
-	<TeraAssetCard
+	<tera-asset-card
 		:asset="asset"
 		:resourceType="resourceType"
 		:active="isPreviewed"
