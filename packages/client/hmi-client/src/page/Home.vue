@@ -81,7 +81,7 @@
 						</div>
 						<ul>
 							<li v-for="(document, j) in project.relatedDocuments" :key="j">
-								<DocumentCard :document="document" @click="selectDocument(document)" />
+								<TeraDocumentCard :document="document" @click="selectDocument(document)" />
 							</li>
 						</ul>
 					</div>
@@ -93,7 +93,7 @@
 					<div class="carousel">
 						<ul>
 							<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
-								<DocumentCard />
+								<TeraDocumentCard />
 							</li>
 						</ul>
 					</div>
@@ -121,7 +121,7 @@
 				<div class="modal-subheader-text">
 					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
 				</div>
-				<selected-document-pane
+				<tera-selected-document-pane
 					class="selected-document-pane"
 					:selected-document="selectedDocument"
 					@close="close()"
@@ -170,7 +170,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import SelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
+import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
@@ -178,7 +178,7 @@ import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
 import ProjectCard from '@/components/projects/ProjectCard.vue';
-import DocumentCard from '@/components/documents/tera-document-card.vue';
+import TeraDocumentCard from '@/components/documents/tera-document-card.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
