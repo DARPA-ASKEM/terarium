@@ -10,6 +10,21 @@ export interface Event {
     value?: string;
 }
 
+export interface CsvAsset {
+    csv: string[][];
+    stats?: CsvColumnStats[];
+    headers: string[];
+}
+
+export interface CsvColumnStats {
+    bins: number[];
+    minValue: number;
+    maxValue: number;
+    mean: number;
+    median: number;
+    sd: number;
+}
+
 export interface DocumentAsset {
     id?: number;
     title: string;
