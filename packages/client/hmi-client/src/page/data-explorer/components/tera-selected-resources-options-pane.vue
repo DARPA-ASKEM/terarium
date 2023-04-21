@@ -2,7 +2,7 @@
 	<div class="breakdown-pane-container">
 		<ul>
 			<li v-for="(asset, idx) in selectedSearchItems" class="cart-item" :key="idx">
-				<asset-card
+				<tera-asset-card
 					:asset="(asset as DocumentType & Model & Dataset)"
 					:resourceType="(getType(asset) as ResourceType)"
 				>
@@ -10,7 +10,7 @@
 						<i class="pi pi-ellipsis-v" />
 					</button>
 					<Menu ref="contextMenu" :model="getMenuItemsForItem(asset)" :popup="true" />
-				</asset-card>
+				</tera-asset-card>
 			</li>
 		</ul>
 	</div>
@@ -26,7 +26,7 @@ import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import { Dataset } from '@/types/Dataset';
 import Menu from 'primevue/menu';
-import AssetCard from '@/page/data-explorer/components/asset-card.vue';
+import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
 defineProps({
 	selectedSearchItems: {

@@ -7,7 +7,7 @@
 			v-model:is-open="isSliderFacetsOpen"
 		>
 			<template v-slot:content>
-				<facets-panel
+				<tera-facets-panel
 					v-if="viewType === ViewType.LIST"
 					class="facets-panel"
 					:facets="facets"
@@ -42,7 +42,7 @@
 					/>
 				</span>
 			</div>
-			<search-results-list
+			<tera-search-results-list
 				:data-items="dataItems"
 				:facets="filteredFacets"
 				:result-type="resourceType"
@@ -52,7 +52,7 @@
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 		</div>
-		<preview-panel
+		<tera-preview-panel
 			class="preview-slider"
 			:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
 			tab-width="0"
@@ -72,7 +72,7 @@
 			:indicator-value="selectedSearchItems.length"
 		>
 			<template v-slot:header>
-				<selected-resources-header-pane
+				<tera-selected-resources-header-pane
 					:selected-search-items="selectedSearchItems"
 					@close="isSliderResourcesOpen = false"
 					@clear-selected="clearItemSelected"
@@ -96,7 +96,7 @@
 					</div>
 					<p>Selected resources will appear here</p>
 				</div>
-				<selected-resources-options-pane
+				<tera-selected-resources-options-pane
 					:selected-search-items="selectedSearchItems"
 					@toggle-data-item-selected="toggleDataItemSelected"
 					@find-related-content="onFindRelatedContent"
@@ -129,11 +129,11 @@ import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
-import PreviewPanel from '@/page/data-explorer/components/preview-panel.vue';
-import SelectedResourcesOptionsPane from '@/page/data-explorer/components/selected-resources-options-pane.vue';
-import selectedResourcesHeaderPane from '@/page/data-explorer/components/selected-resources-header-pane.vue';
-import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
-import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
+import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
+import TeraSelectedResourcesOptionsPane from '@/page/data-explorer/components/tera-selected-resources-options-pane.vue';
+import TeraSelectedResourcesHeaderPane from '@/page/data-explorer/components/tera-selected-resources-header-pane.vue';
+import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
+import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
 import { useSearchByExampleOptions } from './search-by-example';
 
 // FIXME: page count is not taken into consideration
