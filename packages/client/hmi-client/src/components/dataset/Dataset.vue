@@ -4,7 +4,7 @@
 		:name="dataset?.name"
 		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
 		:is-editable="isEditable"
-		:description="dataset?.description"
+		@close-preview="emit('close-preview')"
 	>
 		<section class="metadata data-row">
 			<section>
@@ -34,8 +34,10 @@
 				<section>{{ csvContent?.length }}</section>
 			</section>
 		</section>
-
 		<Accordion :multiple="true" :activeIndex="showAccordion">
+			<AccordionTab header="Description">
+				<p v-html="dataset.description" />
+			</AccordionTab>
 			<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
 				<template #header>
 					Annotations<span class="artifact-amount"
@@ -106,7 +108,6 @@
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
 				<DataTable
-					tableStyle="width:auto"
 					class="p-datatable-sm"
 					:value="csvContent"
 					removableSort
@@ -145,6 +146,8 @@ const props = defineProps<{
 	isEditable: boolean;
 	highlight?: string;
 }>();
+
+const emit = defineEmits(['close-preview']);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {

@@ -7,34 +7,31 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<header>
-				<span>{{ previewItemResourceType?.toUpperCase() }}</span>
-				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
-			</header>
-			<section>
-				<document
-					v-if="previewItemResourceType === ResourceType.XDD"
-					:xdd-uri="previewItemId"
-					:previewLineLimit="3"
-					:project="resources.activeProject"
-					:highlight="searchTerm"
-					:is-editable="false"
-				/>
-				<dataset
-					v-else-if="previewItemResourceType === ResourceType.DATASET"
-					:asset-id="previewItemId"
-					:project="resources.activeProject"
-					:highlight="searchTerm"
-					:is-editable="false"
-				/>
-				<model
-					v-else-if="previewItemResourceType === ResourceType.MODEL"
-					:asset-id="previewItemId"
-					:project="resources.activeProject"
-					:highlight="searchTerm"
-					:is-editable="false"
-				/>
-			</section>
+			<document
+				v-if="previewItemResourceType === ResourceType.XDD"
+				:xdd-uri="previewItemId"
+				:previewLineLimit="3"
+				:project="resources.activeProject"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
+			<dataset
+				v-else-if="previewItemResourceType === ResourceType.DATASET"
+				:asset-id="previewItemId"
+				:project="resources.activeProject"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
+			<model
+				v-else-if="previewItemResourceType === ResourceType.MODEL"
+				:asset-id="previewItemId"
+				:project="resources.activeProject"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
 		</template>
 		<template v-slot:footerButtons>
 			<Button
@@ -115,6 +112,10 @@ watch(
 		}
 	}
 );
+
+function closePreview() {
+	emit('update:previewItem', null);
+}
 
 const previewItemId = computed(() => {
 	if (!previewItemState.value) return '';

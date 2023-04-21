@@ -4,11 +4,20 @@
 		:overline="model?.framework"
 		:is-editable="isEditable"
 		:is-creating-asset="assetId === ''"
+		@close-preview="emit('close-preview')"
 	>
 		<template #name-input>
 			<InputText v-model="newModelName" placeholder="Title of new model" />
 		</template>
 		<template #edit-buttons>
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
+				<InputText
+					v-model="globalFilter['global'].value"
+					class="p-inputtext-sm"
+					placeholder="Search keyword"
+				/>
+			</span>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
@@ -23,22 +32,15 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<template #keyword-search>
-			<span class="p-input-icon-left">
-				<i class="pi pi-search" />
-				<InputText
-					v-model="globalFilter['global'].value"
-					class="p-inputtext-sm"
-					placeholder="Search keyword"
-				/>
-			</span>
-		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
 				<p v-if="assetId !== ''" v-html="description" />
 				<template v-else>
-					<label for="placeholder"></label
-					><Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
+					<label for="placeholder" /><Textarea
+						v-model="newDescription"
+						rows="5"
+						placeholder="Description of new model"
+					/>
 				</template>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
@@ -314,7 +316,7 @@ import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name']);
+const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview']);
 
 const extractions = ref([]);
 

@@ -1,16 +1,30 @@
 <template>
-	<main id="asset-toc-top">
-		<header>
+	<main @scroll="updateScrollPosition">
+		<span id="asset-top" />
+		<slot name="nav" />
+		<header v-if="shrinkHeader" class="shrinked">
+			<h4 v-html="name" />
+			<aside>
+				<slot v-if="isEditable" name="edit-buttons" />
+				<Button
+					v-else
+					icon="pi pi-times"
+					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+					@click="emit('close-preview')"
+				/>
+			</aside>
+		</header>
+		<header ref="header">
 			<section>
 				<span v-if="overline" class="overline">{{ overline }}</span>
 				<!--For naming asset such as model or code file-->
 				<slot v-if="isCreatingAsset" name="name-input" />
 				<h4 v-else v-html="name" />
-				<div class="authors" v-if="authors">
+				<!--put model contributors here too-->
+				<span class="authors" v-if="authors">
 					<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
-					<div v-html="authors" />
-					<!--contributor-->
-				</div>
+					<span v-html="authors" />
+				</span>
 				<div v-if="doi">
 					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
 				</div>
@@ -19,58 +33,116 @@
 				<div class="header-buttons">
 					<slot name="bottom-header-buttons" />
 				</div>
-				<p v-if="description">
-					{{ description }}
-				</p>
 			</section>
 			<aside>
-				<section v-if="isEditable" class="header-buttons">
-					<slot name="edit-buttons" />
-				</section>
-				<slot name="keyword-search" />
+				<slot v-if="isEditable" name="edit-buttons" />
+				<Button
+					v-else
+					icon="pi pi-times"
+					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+					@click="emit('close-preview')"
+				/>
 			</aside>
 		</header>
-		<slot name="default" />
+		<section>
+			<slot name="default" />
+		</section>
 	</main>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { ref, computed, watch } from 'vue';
+import Button from 'primevue/button';
+
+const props = defineProps<{
 	name: string;
 	overline?: string;
 	isEditable: boolean;
 	isCreatingAsset?: boolean;
-	description?: string;
 	authors?: string;
 	doi?: string;
 	publisher?: string;
 }>();
+
+const emit = defineEmits(['close-preview']);
+
+const header = ref();
+const scrollPosition = ref(0);
+
+const shrinkHeader = computed(() => {
+	const headerHeight = header.value?.clientHeight ? header.value.clientHeight : 1;
+	return scrollPosition.value > headerHeight && !props.isCreatingAsset;
+});
+
+// Scroll margin for anchors are adjusted depending on the header (inserted in css)
+const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+
+function updateScrollPosition(event) {
+	scrollPosition.value = event?.currentTarget.scrollTop;
+}
+
+// Reset the scroll position to the top on asset change
+watch(
+	() => props.name,
+	() => {
+		document.getElementById('asset-top')?.scrollIntoView();
+	}
+);
 </script>
 
 <style scoped>
 main {
-	display: flex;
-	flex: 1;
-	height: fit-content;
-	flex-direction: column;
+	display: grid;
+	/* minmax prevents grid blowout caused by datatable */
+	grid-template-columns: auto minmax(0, 1fr);
+	grid-template-rows: auto 1fr;
+	height: 100%;
 	background-color: var(--surface-section);
-	scroll-margin-top: 1rem;
-	overflow: auto;
+	/* accounts for sticky header height */
+	scroll-margin-top: v-bind('scrollMarginTop');
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+main:deep(> nav) {
+	height: fit-content;
+	grid-row: 1 / span 2;
+}
+
+main > section {
+	grid-column-start: 2;
 }
 
 header {
-	padding: 1rem;
-	padding-bottom: 0.5rem;
+	height: fit-content;
+	grid-column-start: 2;
 	color: var(--text-color-subdued);
+	padding: 1rem;
+	padding-bottom: 0;
+	transition: 0.2s;
 	display: flex;
 	gap: 0.5rem;
 	justify-content: space-between;
+}
+
+header.shrinked {
+	height: 3rem;
 	position: sticky;
-	top: 0;
-	background-color: var(--surface-section);
+	top: -1px;
 	z-index: 1;
 	isolation: isolate;
+	background-color: var(--surface-section);
+	padding: 0.5rem 1rem;
 	border-bottom: 1px solid var(--surface-border-light);
+}
+
+header.shrinked h4 {
+	align-self: center;
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: var(--constrain-width);
 }
 
 h4,
@@ -87,10 +159,14 @@ header aside {
 }
 
 header aside {
-	align-items: flex-end;
+	align-self: flex-start;
 }
 
-header aside:deep(.p-inputtext.p-inputtext-sm) {
+header.shrinked aside {
+	align-self: center;
+}
+
+main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
 }
 
@@ -105,16 +181,13 @@ header section:deep(> input) {
 	color: var(--primary-color-dark);
 }
 
-.authors {
-	display: flex;
-	gap: 0.5rem;
-}
-
 .authors i {
 	color: var(--text-color-subdued);
+	margin-right: 0.5rem;
 }
 
-.header-buttons {
+.header-buttons,
+header aside {
 	display: flex;
 	flex-direction: row;
 	gap: 0.5rem;
@@ -122,12 +195,12 @@ header section:deep(> input) {
 
 /* Affects child components put in the slot*/
 main:deep(.p-accordion) {
-	padding: 0.5rem;
+	margin: 0.5rem;
 }
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: 1rem;
+	scroll-margin-top: v-bind('scrollMarginTop');
 }
 
 main:deep(.p-accordion-content > p),
@@ -159,7 +232,7 @@ main:deep(.artifact-amount) {
 }
 
 /* These styles should probably be moved to the general theme in some form */
-header:deep(input) {
+main:deep(input) {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	padding: 0.75rem;
