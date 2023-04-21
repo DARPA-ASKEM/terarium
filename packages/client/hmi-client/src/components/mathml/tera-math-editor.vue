@@ -62,8 +62,6 @@ import Button from 'primevue/button';
 import katex from 'katex';
 import { logger } from '@/utils/logger';
 
-// const mfe = ref(new MathfieldElement());
-
 const mathLiveField = ref<Mathfield | null>(new MathfieldElement({ fontsDirectory: 'fonts/' }));
 const katexEquation = ref<string>('');
 const mathMode = ref<string | null>(null);
