@@ -57,7 +57,7 @@ import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import TeraSearchbar from '@/page/data-explorer/components/navbar/tera-searchbar.vue';
+import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';

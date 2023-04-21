@@ -84,7 +84,7 @@ import Button from 'primevue/button';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
-import TeraNavbar from '@/page/data-explorer/components/navbar/tera-navbar.vue';
+import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
