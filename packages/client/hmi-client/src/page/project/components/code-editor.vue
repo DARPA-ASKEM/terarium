@@ -72,7 +72,7 @@ import { ProjectAssetTypes } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
 import { DocumentAsset } from '@/types/Types';
 import { getDocumentDoi } from '@/utils/data-util';
-import TeraAsset from '@/components/widgets/tera-asset.vue';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 import { codeToAcset, findVarsFromText, getlinkedAnnotations } from '@/services/mit-askem';
 
 const props = defineProps({

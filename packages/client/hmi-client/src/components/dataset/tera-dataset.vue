@@ -139,7 +139,7 @@ import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import TeraAsset from '@/components/widgets/tera-asset.vue';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 
 const props = defineProps<{
 	assetId: string;
