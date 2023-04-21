@@ -2,7 +2,7 @@
 	<main @scroll="updateScrollPosition">
 		<span id="asset-top" />
 		<slot name="nav" />
-		<header v-if="shrinkHeader && !isCreatingAsset" class="shrinked">
+		<header v-if="shrinkHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside>
 				<slot v-if="isEditable" name="edit-buttons" />
@@ -71,12 +71,14 @@ const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
 	const headerHeight = header.value?.clientHeight ? header.value.clientHeight : 1;
-	return scrollPosition.value > headerHeight;
+	return scrollPosition.value > headerHeight && !props.isCreatingAsset;
 });
+
+// Scroll margin for anchors are adjusted depending on the header
+const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
-	console.log(scrollPosition.value, header.value?.clientHeight);
 }
 
 // Reset the scroll position to the top on asset change
@@ -96,8 +98,8 @@ main {
 	grid-template-rows: auto 1fr;
 	height: 100%;
 	background-color: var(--surface-section);
-	/** 40px accounts for sticky header height */
-	scroll-margin-top: calc(50px + 0.5rem);
+	/** 3.5rem accounts for sticky header height */
+	scroll-margin-top: v-bind('scrollMarginTop');
 	overflow-y: auto;
 	overflow-x: hidden;
 }
@@ -198,7 +200,7 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: calc(50px + 0.5rem);
+	scroll-margin-top: v-bind('scrollMarginTop');
 }
 
 main:deep(.p-accordion-content > p),
