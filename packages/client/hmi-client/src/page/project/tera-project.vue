@@ -30,7 +30,7 @@
 				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
-				<document
+				<tera-document
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 					:xdd-uri="getXDDuri(assetId)"
 					:previewLineLimit="10"
@@ -251,7 +251,7 @@ import {
 } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import Document from '@/components/documents/Document.vue';
+import TeraDocument from '@/components/documents/tera-document.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
