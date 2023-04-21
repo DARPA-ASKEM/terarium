@@ -12,7 +12,7 @@
 				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
 			</header>
 			<section>
-				<document
+				<tera-document
 					v-if="previewItemResourceType === ResourceType.XDD"
 					:xdd-uri="previewItemId"
 					:previewLineLimit="3"
@@ -62,7 +62,7 @@ import { isDocument } from '@/utils/data-util';
 import TeraModel from '@/components/models/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
-import Document from '@/components/documents/Document.vue';
+import TeraDocument from '@/components/documents/tera-document.vue';
 
 const resources = useResourcesStore();
 
