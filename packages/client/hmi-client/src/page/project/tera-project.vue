@@ -38,7 +38,7 @@
 					is-editable
 					@open-asset="openAsset"
 				/>
-				<dataset
+				<tera-dataset
 					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
 					:project="project"
@@ -225,7 +225,7 @@ import { isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import Dataset from '@/components/dataset/Dataset.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import Document from '@/components/documents/Document.vue';
 import Model from '@/components/models/Model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
