@@ -38,7 +38,7 @@
 					is-editable
 					@open-asset="openAsset"
 				/>
-				<model
+				<tera-model
 					v-else-if="assetType === ProjectAssetTypes.MODELS"
 					:asset-id="assetId"
 					:project="project"
@@ -66,7 +66,7 @@
 				:initial-code="code"
 				@on-model-created="openNewModelFromCode"
 			/>
-			<model
+			<tera-model
 				v-else-if="assetType === ProjectAssetTypes.MODELS"
 				:asset-id="newModelId"
 				:project="project"
@@ -227,7 +227,7 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import Document from '@/components/documents/Document.vue';
-import Model from '@/components/models/Model.vue';
+import TeraModel from '@/components/models/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';

@@ -13,35 +13,37 @@
 				/>
 			</aside>
 		</header>
-		<header id="asset-top" ref="header">
-			<section>
-				<span v-if="overline" class="overline">{{ overline }}</span>
-				<!--For naming asset such as model or code file-->
-				<slot v-if="isCreatingAsset" name="name-input" />
-				<h4 v-else v-html="name" />
-				<!--put model contributors here too-->
-				<span class="authors" v-if="authors">
-					<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
-					<span v-html="authors" />
-				</span>
-				<div v-if="doi">
-					DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
-				</div>
-				<div v-if="publisher" v-html="publisher" />
-				<!--created on: date-->
-				<div class="header-buttons">
-					<slot name="bottom-header-buttons" />
-				</div>
-			</section>
-			<aside>
-				<slot v-if="isEditable" name="edit-buttons" />
-				<Button
-					v-else
-					icon="pi pi-times"
-					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-					@click="emit('close-preview')"
-				/>
-			</aside>
+		<header id="asset-top" ref="headerRef">
+			<template v-if="!hideHeader">
+				<section>
+					<span v-if="overline" class="overline">{{ overline }}</span>
+					<!--For naming asset such as model or code file-->
+					<slot v-if="isCreatingAsset" name="name-input" />
+					<h4 v-else v-html="name" />
+					<!--put model contributors here too-->
+					<span class="authors" v-if="authors">
+						<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
+						<span v-html="authors" />
+					</span>
+					<div v-if="doi">
+						DOI: <a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
+					</div>
+					<div v-if="publisher" v-html="publisher" />
+					<!--created on: date-->
+					<div class="header-buttons">
+						<slot name="bottom-header-buttons" />
+					</div>
+				</section>
+				<aside>
+					<slot v-if="isEditable" name="edit-buttons" />
+					<Button
+						v-else
+						icon="pi pi-times"
+						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+						@click="emit('close-preview')"
+					/>
+				</aside>
+			</template>
 		</header>
 		<section>
 			<slot name="default" />
@@ -66,16 +68,16 @@ const props = defineProps<{
 
 const emit = defineEmits(['close-preview']);
 
-const header = ref();
+const headerRef = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
-	const headerHeight = header.value?.clientHeight ? header.value.clientHeight : 1;
+	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight : 1;
 	return scrollPosition.value > headerHeight && !props.isCreatingAsset;
 });
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
-const scrollMarginTop = computed(() => (shrinkHeader.value ? '0.5rem' : '0.5rem'));
+const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
@@ -160,6 +162,8 @@ header aside {
 
 header aside {
 	align-self: flex-start;
+	/* Prevent button stretch */
+	max-height: 2.5rem;
 }
 
 header.shrinked aside {

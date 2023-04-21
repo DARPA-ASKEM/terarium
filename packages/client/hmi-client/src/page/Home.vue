@@ -34,12 +34,12 @@
 							</div>
 							<ul v-if="isLoadingProjects">
 								<li v-for="i in [0, 1, 2]" :key="i">
-									<project-card />
+									<tera-project-card />
 								</li>
 							</ul>
 							<ul v-else>
 								<li v-for="project in projects" :key="project.id">
-									<project-card
+									<tera-project-card
 										:project="project"
 										@click="openProject(project.id)"
 										@removed="removeProject"
@@ -177,7 +177,6 @@ import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
-import ProjectCard from '@/components/projects/ProjectCard.vue';
 import DocumentCard from '@/components/documents/DocumentCard.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -191,6 +190,7 @@ import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
+import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
 const projects = ref<IProject[]>();
 // Only display projects with at least one related document
