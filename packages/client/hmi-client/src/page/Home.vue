@@ -130,7 +130,7 @@
 		</div>
 		<!-- New project modal -->
 		<Teleport to="body">
-			<Modal
+			<tera-modal
 				v-if="isNewProjectModalVisible"
 				class="modal"
 				@modal-mask-clicked="isNewProjectModalVisible = false"
@@ -163,7 +163,7 @@
 						>Cancel</Button
 					>
 				</template>
-			</Modal>
+			</tera-modal>
 		</Teleport>
 	</main>
 </template>
@@ -183,7 +183,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Modal from '@/components/widgets/Modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';

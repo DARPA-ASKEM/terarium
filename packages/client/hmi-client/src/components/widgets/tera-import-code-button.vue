@@ -6,7 +6,7 @@
 		@click="initializeCodeBrowser"
 	/>
 	<Teleport to="body">
-		<modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
+		<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 			<template #header>
 				<h5>
 					Choose file to open from {{ repoOwnerAndName
@@ -30,14 +30,14 @@
 					</li>
 				</ul>
 			</template>
-		</modal>
+		</tera-modal>
 	</Teleport>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
-import modal from '@/components/widgets/Modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
