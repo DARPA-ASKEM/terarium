@@ -1,49 +1,47 @@
 <template>
-	<section class="asset" style="padding-top: 0">
-		<header class="fixed-header">
-			<div class="framework">{{ model?.framework }}</div>
-			<div class="header-and-buttons">
-				<!-- search bar -->
-				<div class="flex justify-content-end">
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
-					</span>
-				</div>
+	<tera-asset
+		:name="name"
+		:overline="model?.framework"
+		:is-editable="isEditable"
+		:is-creating-asset="assetId === ''"
+		@close-preview="emit('close-preview')"
+	>
+		<template #name-input>
+			<InputText v-model="newModelName" placeholder="Title of new model" />
+		</template>
+		<template #edit-buttons>
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
 				<InputText
-					v-if="assetId === ''"
-					v-model="newModelName"
-					class="model-title-text-area"
-					placeholder="Title of new model"
+					v-model="globalFilter['global'].value"
+					class="p-inputtext-sm"
+					placeholder="Search keyword"
 				/>
-				<h4 v-else v-html="title" />
-				<span v-if="assetId === ''">
-					<Button @click="createNewModel" label="Create New Model" class="p-button-sm" />
-				</span>
-				<span v-else-if="isEditable">
-					<Button
-						@click="launchForecast"
-						label="Open simulation space"
-						:disabled="isEditing"
-						class="p-button-sm"
-					/>
-				</span>
-			</div>
-			<!--contributor-->
-			<!--created on: date-->
-		</header>
+			</span>
+			<Button
+				v-if="assetId === ''"
+				@click="createNewModel"
+				label="Create New Model"
+				class="p-button-sm"
+			/>
+			<Button
+				v-else
+				@click="launchForecast"
+				label="Open simulation space"
+				:disabled="isEditing"
+				class="p-button-sm"
+			/>
+		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-if="assetId !== ''" v-html="description" class="constrain-width" />
-				<section v-else>
-					<label for="placeholder"></label
-					><Textarea
+				<p v-if="assetId !== ''" v-html="description" />
+				<template v-else>
+					<label for="placeholder" /><Textarea
 						v-model="newDescription"
-						class="model-description-text-area"
 						rows="5"
 						placeholder="Description of new model"
 					/>
-				</section>
+				</template>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -263,7 +261,6 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-
 		<Teleport to="body">
 			<ForecastLauncher
 				v-if="showForecastLauncher && model"
@@ -272,7 +269,7 @@
 				@launch-forecast="goToSimulationRunPage"
 			/>
 		</Teleport>
-	</section>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -316,13 +313,14 @@ import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
 
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name']);
+const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview']);
 
 const extractions = ref([]);
 
@@ -841,7 +839,7 @@ const addTransition = async () => {
 	renderer?.addNodeCenter(NodeType.Transition, '?');
 };
 
-const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
 </script>
 
@@ -866,14 +864,6 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 
 .toolbar-subgroup {
 	display: flex;
-}
-
-.fixed-header {
-	position: sticky;
-	top: -1px;
-	z-index: 1;
-	background-color: white;
-	isolation: isolate;
 }
 
 section math-editor {
@@ -945,28 +935,5 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.constrain-width {
-	max-width: 60rem;
-}
-
-.model-description-text-area {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	padding: 5px;
-	resize: none;
-	overflow-y: hidden;
-	width: 100%;
-}
-
-.model-title-text-area {
-	border: 1px solid var(--surface-border-light);
-	border-radius: 4px;
-	padding: 5px;
-	resize: none;
-	overflow-y: hidden;
-	width: 100%;
-	font-size: var(--font-body-medium);
 }
 </style>

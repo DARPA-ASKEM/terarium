@@ -1,14 +1,11 @@
 <template>
-	<section class="asset">
-		<header>
-			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
-			<h4 v-html="dataset?.name" />
-		</header>
-
-		<section class="description">
-			<span>{{ dataset?.description }}</span>
-		</section>
-
+	<tera-asset
+		v-if="dataset"
+		:name="dataset?.name"
+		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
+		:is-editable="isEditable"
+		@close-preview="emit('close-preview')"
+	>
 		<section class="metadata data-row">
 			<section>
 				<header>Maintainer</header>
@@ -37,8 +34,10 @@
 				<section>{{ csvContent?.length }}</section>
 			</section>
 		</section>
-
 		<Accordion :multiple="true" :activeIndex="showAccordion">
+			<AccordionTab header="Description">
+				<p v-html="dataset.description" />
+			</AccordionTab>
 			<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
 				<template #header>
 					Annotations<span class="artifact-amount"
@@ -108,11 +107,10 @@
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
-
 				<tera-dataset-datatable :raw-content="rawContent" />
 			</AccordionTab>
 		</Accordion>
-	</section>
+	</tera-asset>
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
@@ -124,12 +122,15 @@ import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
 }>();
+
+const emit = defineEmits(['close-preview']);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -187,6 +188,7 @@ const showAccordion = computed(() =>
 	flex-direction: row;
 	justify-content: space-evenly;
 }
+
 .metadata > section {
 	flex: 1;
 	padding: 0.5rem;
@@ -197,30 +199,37 @@ const showAccordion = computed(() =>
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 }
+
 .data-row > section > section:last-child {
 	font-size: var(--font-body-small);
 }
+
 .annotation-row > section {
 	flex: 1;
 	padding: 0.5rem;
 }
+
 .numbered-list {
 	list-style: numbered-list;
 	margin-left: 2rem;
 	list-style-position: outside;
 }
+
 ol.numbered-list li::marker {
 	color: var(--text-color-subdued);
 }
+
 .feature-type {
 	color: var(--text-color-subdued);
 }
+
 .description {
 	padding: 1rem;
 	padding-bottom: 0.5rem;
 	max-width: var(--constrain-width);
 }
-.annotation-group {
+
+main .annotation-group {
 	padding: 0.25rem;
 	border: solid 1px var(--surface-border-light);
 	background-color: var(--gray-50);
@@ -231,14 +240,17 @@ ol.numbered-list li::marker {
 	margin-bottom: 1rem;
 	max-width: var(--constrain-width);
 }
+
 .annotation-subheader {
 	font-weight: var(--font-weight-semibold);
 }
+
 .annotation-row {
 	display: flex;
 	flex-direction: row;
 	gap: 3rem;
 }
+
 .layout-topbar {
 	top: 20px;
 	background-color: red;
