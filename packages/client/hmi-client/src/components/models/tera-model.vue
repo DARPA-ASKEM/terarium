@@ -307,8 +307,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
-import ModelParameterList from '@/components/models/model-parameter-list.vue';
-import ForecastLauncher from '@/components/models/forecast-launcher.vue';
+import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -320,6 +319,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
+import ModelParameterList from '@/components/models/model-parameter-list.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 const emit = defineEmits(['create-new-model', 'update-tab-name']);
