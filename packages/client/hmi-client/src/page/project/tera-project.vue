@@ -38,7 +38,7 @@
 					is-editable
 					@open-asset="openAsset"
 				/>
-				<teraDataset
+				<tera-dataset
 					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
 					:project="project"

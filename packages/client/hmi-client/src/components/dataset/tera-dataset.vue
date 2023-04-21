@@ -109,7 +109,7 @@
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
 
-				<teraDatasetDatatable :raw-content="rawContent" />
+				<tera-dataset-datatable :raw-content="rawContent" />
 			</AccordionTab>
 		</Accordion>
 	</section>

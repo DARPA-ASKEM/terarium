@@ -20,7 +20,7 @@
 					:highlight="searchTerm"
 					:is-editable="false"
 				/>
-				<teraDataset
+				<tera-dataset
 					v-else-if="previewItemResourceType === ResourceType.DATASET"
 					:asset-id="previewItemId"
 					:project="resources.activeProject"
