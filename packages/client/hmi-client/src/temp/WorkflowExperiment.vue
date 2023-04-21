@@ -1,0 +1,494 @@
+<template>
+	<section>
+		<h4>Workflow Experiment</h4>
+		<div class="experiment-container" ref="graphElement"></div>
+		<ContextMenu ref="menu" :model="contextMenuItems" />
+	</section>
+	<Teleport to="body">
+		<ForecastLauncher
+			v-if="showForecastLauncher && currentModel"
+			:model="currentModel"
+			@close="showForecastLauncher = false"
+			@launch-forecast="runSimulation"
+		/>
+	</Teleport>
+</template>
+
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import * as d3 from 'd3';
+import { PetriNet } from '@/petrinet/petrinet-service';
+import { ITypedModel } from '@/types/Model';
+import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
+import { BasicRenderer, IGraph, INode } from '@graph-scaffolder/index';
+import ContextMenu from 'primevue/contextmenu';
+import ForecastLauncher from '@/components/models/forecast-launcher.vue';
+import { getRunResult } from '@/services/models/simulation-service';
+
+import { getModel } from '@/services/model';
+
+// SIR and SVIIvR
+const MODEL_LIST = [2, 3];
+
+interface NodeData {
+	type: string;
+	val: number;
+	model?: ITypedModel<PetriNet>;
+	runId?: any;
+}
+
+interface EdgeData {
+	val: number;
+}
+
+const MARKER_VIEWBOX = '-5 -5 10 10';
+const ARROW = 'M 0,-3.25 L 5 ,0 L 0,3.25';
+const EDGE_COLOR = 'var(--petri-lineColor)';
+const EDGE_OPACITY = 0.5;
+const pathFn = d3
+	.line<{ x: number; y: number }>()
+	.x((d) => d.x)
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
+
+let forecastSelection: any = null;
+
+class WorkflowRenderer extends BasicRenderer<NodeData, EdgeData> {
+	parentNodes(id: any) {
+		const edges = this.graph.edges.filter((d) => d.target === id);
+		const sources = edges.map((e) => e.source);
+		const nodes = this.graph.nodes.filter((d) => sources.includes(d.id));
+		return nodes;
+	}
+
+	childrenNodes(id: any) {
+		const edges = this.graph.edges.filter((d) => d.source === id);
+		const targets = edges.map((e) => e.target);
+		const nodes = this.graph.nodes.filter((d) => targets.includes(d.id));
+		return nodes;
+	}
+
+	setupDefs() {
+		const svg = d3.select(this.svgEl);
+		svg.select('defs').selectAll('.edge-marker-end').remove();
+		svg
+			.select('defs')
+			.append('marker')
+			.classed('edge-marker-end', true)
+			.attr('id', 'arrowhead')
+			.attr('viewBox', MARKER_VIEWBOX)
+			.attr('refX', 6)
+			.attr('refY', 0)
+			.attr('orient', 'auto')
+			.attr('markerWidth', 20)
+			.attr('markerHeight', 20)
+			.attr('markerUnits', 'userSpaceOnUse')
+			.attr('xoverflow', 'visible')
+			.append('svg:path')
+			.attr('d', ARROW)
+			.style('fill', EDGE_COLOR)
+			.style('fill-opacity', EDGE_OPACITY)
+			.style('stroke', 'none');
+	}
+
+	renderNodes(selection: D3SelectionINode<NodeData>) {
+		selection
+			.append('rect')
+			.attr('x', (d) => -d.width * 0.5)
+			.attr('y', (d) => -d.height * 0.5)
+			.attr('width', (d) => d.width)
+			.attr('height', (d) => d.height)
+			.attr('stroke', '#888')
+			.attr('fill', (d) => {
+				if (d.data.type === 'visualization') {
+					return '#FEFEFE';
+				} else if (d.data.type === 'forecast') {
+					return '#FFCC33';
+				} else {
+					return '#EEEEEE';
+				}
+			});
+
+		const modelSelection = selection.filter((d) => d.data.type === 'model');
+		modelSelection
+			.append('text')
+			.attr('x', (d) => -d.width * 0.4)
+			.text((d) => d.data.model.name);
+
+		const forecastSelection = selection.filter((d) => d.data.type === 'forecast');
+		forecastSelection
+			.append('text')
+			.attr('x', (d) => -d.width * 0.4)
+			.text('Forecast');
+
+		// Handle
+		selection
+			.append('circle')
+			.attr('class', 'no-drag')
+			.attr('cx', (d) => d.width * 0.5 + 2)
+			.attr('cy', (d) => d.height * 0.5 + 2)
+			.attr('r', 8)
+			.attr('fill', '#BBBBFF')
+			.attr('stroke', '#888')
+			.style('visibility', 'visible');
+
+		this.renderVisNodes();
+	}
+
+	renderVisNodes() {
+		const visNodes = this.chart
+			.selectAll('.node-ui')
+			.filter((d) => d.data.type === 'visualization');
+		if (visNodes.size() <= 0) return;
+
+		visNodes.each((d, g, i) => {
+			// const nodeUI = d3.select(g[i]);
+
+			// Get parent forecast if applicable
+			const pn = this.parentNodes(d.id);
+			if (pn.length > 0 && pn[0].data.runId) {
+				const runId = pn[0].data.runId;
+				renderVisNode(d.id, runId);
+			}
+		});
+	}
+
+	renderEdges(selection: D3SelectionIEdge<EdgeData>) {
+		selection
+			.append('path')
+			.attr('d', (d) => pathFn(d.points))
+			.style('fill', 'none')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
+			.style('stroke-width', 1)
+			.attr('marker-end', 'url(#arrowhead)');
+	}
+
+	addNodeViz(pos: { x: number; y: number }) {
+		this.graph.nodes.push({
+			id: `s-${this.graph.nodes.length + 1}`,
+			label: name,
+			x: pos.x,
+			y: pos.y,
+			width: 200,
+			height: 100,
+			nodes: [],
+			data: { type: 'visualization', val: 1 }
+		});
+		this.render();
+	}
+
+	addNodeModel(model: ITypedModel<PetriNet>, pos: { x: number; y: number }) {
+		// FIXME: hardwired sizing
+		this.graph.nodes.push({
+			id: `s-${this.graph.nodes.length + 1}`,
+			label: name,
+			x: pos.x,
+			y: pos.y,
+			width: 100,
+			height: 50,
+			nodes: [],
+			data: { type: 'model', val: 1, model: model }
+		});
+		this.render();
+	}
+
+	addNode(type: string, name: string, pos: { x: number; y: number }) {
+		// FIXME: hardwired sizing
+		this.graph.nodes.push({
+			id: `s-${this.graph.nodes.length + 1}`,
+			label: name,
+			x: pos.x,
+			y: pos.y,
+			width: 100,
+			height: 50,
+			nodes: [],
+			data: { type: type, val: 1 }
+		});
+
+		this.render();
+	}
+
+	addEdge(source: any, target: any) {
+		const existingEdge = this.graph.edges.find(
+			(edge) => edge.source === source.id && edge.target === target.id
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges++;
+		} else {
+			this.graph.edges.push({
+				id: `${source.id}_${target.id}`,
+				source: source.id,
+				target: target.id,
+				points: [
+					{ x: source.x, y: source.y },
+					{ x: target.x, y: target.y }
+				],
+				data: { val: 1 }
+			});
+		}
+		this.render();
+	}
+
+	postRenderProcess() {
+		const chart = this.chart;
+		const svg = d3.select(this.svgEl);
+		const start: { x: number; y: number } = { x: 0, y: 0 };
+		const end: { x: number; y: number } = { x: 0, y: 0 };
+		let sourceData: INode<NodeData> | null = null;
+		let targetData: INode<NodeData> | null = null;
+
+		// Reset all
+		this.removeAllEvents('node-drag-start');
+		this.removeAllEvents('node-drag-move');
+		this.removeAllEvents('node-drag-end');
+		this.removeAllEvents('node-drag-end');
+
+		// (Re)create dragging listeners
+		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
+			if (!this.isDragEnabled) return;
+			sourceData = selection.datum();
+			start.x = sourceData.x;
+			start.y = sourceData.y;
+
+			const targetSelection = d3.select(event.sourceEvent.target);
+			start.x += +targetSelection.attr('cx');
+			start.y += +targetSelection.attr('cy');
+		});
+
+		this.on('node-drag-move', (_eventName, event) => {
+			if (!this.isDragEnabled) return;
+			const pointerCoords = d3
+				.zoomTransform(svg.node() as Element)
+				.invert(d3.pointer(event, svg.node()));
+			targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
+			if (targetData) {
+				end.x = targetData.x;
+				end.y = targetData.y;
+			} else {
+				end.x = pointerCoords[0];
+				end.y = pointerCoords[1];
+			}
+			chart?.selectAll('.new-edge').remove();
+
+			const line = [
+				{ x: start.x, y: start.y },
+				{ x: end.x, y: end.y }
+			];
+			chart
+				?.append('path')
+				.classed('new-edge', true)
+				.attr('d', pathFn(line))
+				.attr('marker-end', 'url(#arrowhead)')
+				.style('stroke-width', 3)
+				.style('stroke', 'var(--primary-color)');
+		});
+
+		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			chart?.selectAll('.new-edge').remove();
+
+			if (!this.isDragEnabled) return;
+			if (targetData && sourceData) {
+				this.emit('add-edge', null, null, { target: targetData, source: sourceData });
+				sourceData = null;
+				targetData = null;
+			}
+		});
+
+		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			console.log(selection.datum().data.type);
+			const nodeType = selection.datum().data.type;
+			if (nodeType === 'forecast') {
+				const parentData = this.parentNodes(selection.datum().id);
+				if (parentData) {
+					currentModel.value = parentData[0].data.model;
+					showForecastLauncher.value = true;
+					forecastSelection = selection;
+				}
+			}
+		});
+	}
+}
+
+const WORKFLOW: IGraph<NodeData, EdgeData> = {
+	nodes: [],
+	edges: [],
+	width: 1500,
+	height: 600
+};
+
+const graphElement = ref<HTMLDivElement | null>(null);
+const menu = ref();
+let renderer: WorkflowRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
+
+const currentModel = ref<ITypedModel<PetriNet> | null>(null);
+const showForecastLauncher = ref(false);
+
+const run = async () => {
+	renderer = new WorkflowRenderer({
+		el: graphElement.value as HTMLDivElement,
+		useAStarRouting: false,
+		useStableZoomPan: true,
+		runLayout: runDagreLayout,
+		dragSelector: 'no-drag'
+	});
+	const x = runDagreLayout(WORKFLOW);
+	await renderer.setData(x);
+	await renderer.render();
+
+	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
+		eventX = pos.x;
+		eventY = pos.y;
+		menu.value.show(evt);
+	});
+
+	renderer.on('background-click', () => {
+		if (menu.value) menu.value.hide();
+	});
+
+	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
+		renderer?.addEdge(d.source, d.target);
+	});
+};
+
+// Model editor context menu
+const contextMenuItems = ref([
+	{
+		label: 'SIR model',
+		icon: 'pi pi-fw pi-calculator',
+		command: async () => {
+			const model = await getModel('2');
+			console.log('[add model]', model);
+
+			if (renderer && model) {
+				renderer.addNodeModel(model, { x: eventX, y: eventY });
+			}
+		}
+	},
+	{
+		label: 'SIR RODA 2020',
+		icon: 'pi pi-fw pi-calculator',
+		command: async () => {
+			const model = await getModel('5');
+			console.log('[add model]', model);
+
+			if (renderer && model) {
+				renderer.addNodeModel(model, { x: eventX, y: eventY });
+			}
+		}
+	},
+	{
+		label: 'Forecast',
+		icon: 'pi pi-fw pi-angle-double-right',
+		command: () => {
+			if (renderer) {
+				renderer.addNode('forecast', '?', { x: eventX, y: eventY });
+			}
+		}
+	},
+	{
+		label: 'Visualization',
+		icon: 'pi pi-fw pi-chart-line',
+		command: () => {
+			if (renderer) {
+				renderer.addNodeViz({ x: eventX, y: eventY });
+			}
+		}
+	}
+]);
+
+const renderVisNode = async (nodeId: string, runId: number) => {
+	if (!renderer) return;
+
+	const nodeUI = renderer.chart.selectAll('.node-ui').filter((d) => d.id === nodeId);
+	nodeUI.selectAll('text').remove();
+	nodeUI.selectAll('.temp').remove();
+
+	const resultCSV = await getRunResult(runId);
+	const parsedCSV = d3.csvParse(resultCSV);
+	const temp = nodeUI.append('g').classed('temp', true);
+
+	const keys = Object.keys(parsedCSV[0]);
+
+	const colors = [
+		'#a6cee3',
+		'#1f78b4',
+		'#b2df8a',
+		'#33a02c',
+		'#fb9a99',
+		'#e31a1c',
+		'#fdbf6f',
+		'#ff7f00',
+		'#cab2d6',
+		'#6a3d9a'
+	];
+
+	keys.forEach((key, keyIdx) => {
+		if (keyIdx === 0) return;
+		const series = parsedCSV.map((p) => p[key]);
+		const pathData = series.map((v: number, i) => {
+			return { x: 3 * i, y: 100 - v };
+		});
+
+		temp
+			.append('path')
+			.attr(
+				'transform',
+				`translate(${-0.5 * nodeUI.datum().width},${-0.5 * nodeUI.datum().height})`
+			)
+			.attr('d', pathFn(pathData as any))
+			.attr('fill', 'none')
+			.attr('stroke', colors[keyIdx])
+			.attr('stroke-width', 2);
+
+		temp
+			.append('text')
+			.attr('x', 50)
+			.attr('y', -nodeUI.datum().height * 0.5 + 18 * keyIdx)
+			.style('stroke', 'none')
+			.style('fill', colors[keyIdx])
+			.text(key);
+	});
+};
+
+// t1 = 0.002
+// t2 = 0.003
+const runSimulation = (runId: number) => {
+	showForecastLauncher.value = false;
+	forecastSelection.datum().data.runId = runId;
+	if (renderer) {
+		setTimeout(() => {
+			const childrenNodes = renderer.childrenNodes(forecastSelection.datum().id);
+			if (childrenNodes) {
+				for (let i = 0; i < childrenNodes.length; i++) {
+					const nodeId = childrenNodes[i].id;
+					if (childrenNodes[i].data.type === 'visualization') {
+						renderVisNode(nodeId, runId);
+					}
+				}
+			}
+		}, 1000);
+	}
+};
+
+// Entry point
+onMounted(() => {
+	run();
+});
+</script>
+
+<style scoped>
+section {
+	display: flex;
+	flex-direction: column;
+}
+.experiment-container {
+	margin: 10px;
+	width: 1500px;
+	height: 600px;
+	border: 1px solid #888;
+	box-sizing: border-box;
+}
+</style>
