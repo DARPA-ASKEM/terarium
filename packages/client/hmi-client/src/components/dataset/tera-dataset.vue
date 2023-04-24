@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onUpdated } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
@@ -130,7 +130,7 @@ const props = defineProps<{
 	highlight?: string;
 }>();
 
-const emit = defineEmits(['close-preview']);
+const emit = defineEmits(['close-preview', 'asset-loaded']);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -144,6 +144,12 @@ const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 
 const csvContent = computed(() => rawContent.value?.csv);
+
+onUpdated(() => {
+	if (dataset.value) {
+		emit('asset-loaded');
+	}
+});
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
