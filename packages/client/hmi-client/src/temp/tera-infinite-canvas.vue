@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
 
 let width: number, height: number;
@@ -15,23 +15,26 @@ let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, 
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
 let gX: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
 	gY: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+let currentTransform: d3.ZoomTransform;
 
 const canvasRef = ref<HTMLElement>();
-
-// const zoomObj: { x: number; y: number; k: number } = { x: 0, y: 0, k: 1 };
 // const debugMode = ref(true);
 
-const handleZoom = (evt: any, container) => {
+const handleZoom = (evt: any, container: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => {
 	container.attr('transform', evt.transform).style('transform-origin', '0 0');
 
 	gX.call(xAxis.scale(evt.transform.rescaleX(x)));
 	gY.call(yAxis.scale(evt.transform.rescaleY(y)));
+
+	currentTransform = evt.transform;
 };
 
 function updateDimensions() {
+	// Update dimensions
 	width = window.innerWidth;
 	height = window.innerHeight;
 
+	// Update debug values
 	x = d3
 		.scaleLinear()
 		.domain([-1, width + 1])
@@ -51,7 +54,11 @@ function updateDimensions() {
 		.tickSize(width)
 		.tickPadding(8 - width);
 
-	console.log(1);
+	if (currentTransform) {
+		gX.call(xAxis.scale(currentTransform.rescaleX(x)));
+		gY.call(yAxis.scale(currentTransform.rescaleY(y)));
+		// console.log(transform.value, width, height)
+	}
 }
 
 onMounted(() => {
@@ -71,8 +78,6 @@ onMounted(() => {
 	updateDimensions();
 	window.addEventListener('resize', () => updateDimensions());
 
-	console.log(0);
-
 	gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
 	gY = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
 });
@@ -89,6 +94,10 @@ svg {
 	cursor: grab;
 	width: 100%;
 	height: 100%;
+}
+
+.axis {
+	color: red;
 }
 
 svg:active {
