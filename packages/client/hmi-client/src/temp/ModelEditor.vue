@@ -77,7 +77,7 @@ import {
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import MetadataTable from '@/components/models/MetadataTable.vue';
+import MetadataTable from '@/temp/MetadataTable.vue';
 
 const router = useRouter();
 

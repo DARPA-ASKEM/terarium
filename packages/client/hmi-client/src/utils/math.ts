@@ -1,17 +1,38 @@
 /* Collection of MATH/MATH-EDITOR utility functions */
+import { logger } from '@/utils/logger';
+import Mathml2latex from 'mathml-to-latex';
 
 export enum MathEditorModes {
 	LIVE = 'mathLIVE',
-	JAX = 'mathJAX'
+	KATEX = 'katex'
 }
 
 // simple check to test if it's a mathml string based on opening and closing tags
-export const isMathML = (val: string): boolean => {
+export const isMathML = (mathMLString: string): boolean => {
 	const regex = /<math[>\s][\s\S]*?<\/math>/s;
-	return regex.test(val);
+	return regex.test(mathMLString);
 };
 
-export const removeRedundantMrow = (element: Element | null): void => {
+/**
+ * Checks if a string is a mathML equation and returns its latex
+ */
+export const getLatexFromMathML = (mathMLString: string): string => {
+	if (isMathML(mathMLString)) {
+		try {
+			return Mathml2latex.convert(mathMLString);
+		} catch (error) {
+			logger.error(error, { showToast: false, silent: true });
+			return '';
+		}
+	}
+
+	return mathMLString;
+};
+
+/**
+ * removes redudant <mrow> tags
+ */
+const removeRedundantMrow = (element: Element | null): void => {
 	if (element) {
 		const mrowElements = Array.from(element.querySelectorAll('mrow'));
 		mrowElements.forEach((mrowElement) => {
@@ -24,12 +45,16 @@ export const removeRedundantMrow = (element: Element | null): void => {
 				while (mrowElement.children.length > 0) {
 					parentElement.insertBefore(mrowElement.children[0], mrowElement);
 				}
+				console.log(mrowElement);
 				mrowElement.remove();
 			}
 		});
 	}
 };
 
+/**
+ * removes empty <mo> items
+ */
 export const removeInvisibleTimes = (element: Element | null): void => {
 	if (element) {
 		Array.from(element.children).forEach((child) => {
@@ -42,6 +67,9 @@ export const removeInvisibleTimes = (element: Element | null): void => {
 	}
 };
 
+/**
+ * removes any parentheses found in the equations
+ */
 export function removeParentheses(element: Element | null): void {
 	if (element) {
 		const moElements = Array.from(element.querySelectorAll('mo'));
@@ -53,6 +81,9 @@ export function removeParentheses(element: Element | null): void {
 	}
 }
 
+/**
+ * removes the "t"/time element in the equations
+ */
 export function removeTElement(element: Element | null): void {
 	if (element) {
 		const tElements = Array.from(element.querySelectorAll('mi'));
@@ -65,6 +96,9 @@ export function removeTElement(element: Element | null): void {
 	}
 }
 
+/**
+ * Flattens the mathML structure that are made up of multiple <mrows>
+ */
 export function flattenMathMLElement(element: Element | null) {
 	if (element) {
 		const children = Array.from(element.children);
@@ -79,11 +113,14 @@ export function flattenMathMLElement(element: Element | null) {
 	}
 }
 
+// Cleans the mathMLString produced by either katex or mathlive for use with mathml to petri endpoint
+// Seperates the mathMLString into seperate equations into a list
 export function separateEquations(mathMLString: string): string[] {
 	if (!mathMLString) return [''];
 
 	const parser = new DOMParser();
 	const mathMLDocument = parser.parseFromString(mathMLString, 'application/xml');
+	mathMLDocument.querySelector('math')?.removeAttribute('xmlns');
 	const mtableElement = mathMLDocument.querySelector('mtable');
 
 	const equations: string[] = [];
@@ -110,12 +147,15 @@ export function separateEquations(mathMLString: string): string[] {
 
 				const newMathElement = mathMLDocument.createElement('math');
 				newMathElement.appendChild(newMrowElement);
-
 				const serializer = new XMLSerializer();
-				equations.push(serializer.serializeToString(newMathElement));
+				const newRowString = serializer
+					.serializeToString(newMathElement)
+					.replace(/[a-zA-Z]+="[^"]*"/g, '')
+					.replaceAll(' ', '')
+					.replaceAll('<mrow/>', '');
+				equations.push(newRowString);
 			}
 		});
 	}
-
 	return equations;
 }
