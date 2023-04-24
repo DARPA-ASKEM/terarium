@@ -7,6 +7,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.ESSearchProxy;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
@@ -32,8 +33,66 @@ public class ExtractionResource {
 
 	@ConfigProperty(name = "xdd.api_key")
 	Optional<String> key;
+
+	@ConfigProperty(name = "xdd.api_es_key")
+	Optional<String> ESkey;
 	@RestClient
 	ExtractionProxy proxy;
+
+	@RestClient
+	ESSearchProxy esSearchProxy;
+
+	@POST
+	@Path("/search")
+	public Response search(@QueryParam("query") final String query){
+		String apiKey = "";
+		if (ESkey.isPresent())
+			apiKey = ESkey.get();
+		else {
+			log.error("XDD API key missing. ES will fail.");
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
+		return esSearchProxy.search(apiKey, query);
+	}
+
+	@POST
+	@Path("/histogram")
+	public Response histogramSearch(@QueryParam("query") final String query){
+
+		String searchQuery = """
+			{
+			    "query": {
+			        "bool": {
+			            "should": [
+			                {
+			                    "match_phrase": {
+			                        "contents": "%s"
+			                    }
+			                }
+			            ]
+			        }
+			    },
+			    "aggs": {
+			        "pub_dates": {
+			            "date_histogram": {
+			                "field": "time",
+			                "calendar_interval": "year"
+			            }
+			        }
+			    },
+			    "size": 0
+			}
+			""".formatted(query);
+		String apiKey = "";
+		if (ESkey.isPresent())
+			apiKey = ESkey.get();
+		else {
+			log.error("XDD API key missing. ES will fail.");
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
+
+		return esSearchProxy.search(apiKey, searchQuery);
+	}
 
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
