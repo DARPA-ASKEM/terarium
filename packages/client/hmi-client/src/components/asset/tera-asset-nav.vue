@@ -1,0 +1,48 @@
+<template>
+	<nav>
+		<slot name="viewing-mode" />
+		<template v-if="extractionMode">
+			<a @click="scrollTo('asset-top')">Top</a>
+			<template v-for="content in assetContent">
+				<a v-if="!isEmpty(content.value)" :key="content.key" @click="scrollTo(content.key)">
+					{{ content.key.replace('-', ' ') }}
+					<span v-if="Array.isArray(content.value)"> ({{ content.value.length }}) </span>
+				</a>
+			</template>
+			<slot name="page-search" />
+		</template>
+	</nav>
+</template>
+
+<script setup lang="ts">
+import { isEmpty } from 'lodash';
+
+defineProps({
+	assetContent: {
+		type: Array<{ key: string; value: any }>,
+		default: []
+	},
+	extractionMode: {
+		type: Boolean,
+		default: true
+	}
+});
+
+function scrollTo(elementId: string) {
+	document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+<style scoped>
+nav {
+	display: flex;
+	flex-direction: column;
+	width: 14rem;
+	gap: 1rem;
+	padding-left: 1rem;
+	padding-top: 1rem;
+	margin-right: 0.5rem;
+	position: sticky;
+	top: 0;
+}
+</style>

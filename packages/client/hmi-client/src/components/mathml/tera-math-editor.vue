@@ -10,7 +10,7 @@
 			<Button
 				@click="toggleEditEquation"
 				:label="isEditingEq ? 'Save equation' : 'Edit equation'"
-				class="p-button-sm p-button-outlined edit-button"
+				:class="isEditingEq ? 'p-button-sm' : 'p-button-sm p-button-outlined edit-button'"
 			/>
 		</span>
 	</section>
@@ -19,8 +19,8 @@
 			<div style="align-self: center">[Math Renderer]</div>
 			<div class="math-options">
 				<label>
-					<input type="radio" v-model="mathMode" :value="MathEditorModes.JAX" />
-					MathJAX
+					<input type="radio" v-model="mathMode" :value="MathEditorModes.KATEX" />
+					KaTeX
 				</label>
 				<label>
 					<input type="radio" v-model="mathMode" :value="MathEditorModes.LIVE" />
@@ -37,41 +37,46 @@
 				><slot v-if="mathMode === MathEditorModes.LIVE"></slot
 			></math-field>
 		</section>
-		<section class="mathjax-container" v-else-if="mathMode === MathEditorModes.JAX">
+		<section class="katex-math-container" v-else-if="mathMode === MathEditorModes.KATEX">
 			<Textarea
-				v-model="jaxEquation"
-				class="mathjax-equation"
-				id="mathjax"
+				v-model="katexEquation"
+				class="katex-equation"
+				id="katex"
 				type="text"
 				rows="2"
-				aria-label="mathjax"
+				aria-label="katex"
 				:disabled="!isEditingEq"
 				autoResize
 			/>
-			<div><vue-mathjax :formula="jaxEquationString" /></div>
+			<div ref="katexMathElement"></div>
 		</section>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUpdated, computed, onMounted } from 'vue';
-import { Mathfield } from 'mathlive';
-import Mathml2latex from 'mathml-to-latex';
-import { logger } from '@/utils/logger';
+import { ref, watch, onUpdated, onMounted } from 'vue';
+import { Mathfield, MathfieldElement } from 'mathlive';
 import Textarea from 'primevue/textarea';
-import { isMathML, MathEditorModes } from '@/utils/math';
+import { MathEditorModes } from '@/utils/math';
 import Button from 'primevue/button';
+import katex from 'katex';
+import { logger } from '@/utils/logger';
 
-const mathLiveField = ref<Mathfield | null>(null);
-const latexEquation = ref<string | undefined>('');
-const jaxEquation = ref<string | undefined>('');
+const mathLiveField = ref<Mathfield | null>(new MathfieldElement({ fontsDirectory: 'fonts/' }));
+const katexEquation = ref<string>('');
 const mathMode = ref<string | null>(null);
+const katexMathElement = ref<HTMLElement | null>(null);
 
-const jaxEquationString = computed((): string =>
-	latexEquation.value ? `$$${latexEquation.value}$$` : ''
-);
+const emit = defineEmits(['equation-updated', 'validate-mathml', 'cancel-editing', 'set-editing']);
 
-const emit = defineEmits(['equation-updated', 'validate-mathml', 'cancel-editing']);
+const KATEX_CONFIG = {
+	displayMode: true,
+	throwOnError: true,
+	errorColor: 'blue',
+	strict: 'warn',
+	output: 'htmlAndMathml',
+	trust: true
+};
 
 const props = defineProps({
 	// LaTeX formula to be populated
@@ -89,7 +94,7 @@ const props = defineProps({
 		type: Boolean,
 		default: true
 	},
-	// Show edit button
+	// Is the edit button activated?
 	isEditingEq: {
 		type: Boolean,
 		default: true
@@ -106,19 +111,6 @@ const props = defineProps({
 	}
 });
 
-const getLaTeX = (equationString: string): string => {
-	if (isMathML(equationString)) {
-		try {
-			return Mathml2latex.convert(equationString);
-		} catch (error) {
-			logger.error(error, { showToast: false, silent: true });
-			return '';
-		}
-	}
-
-	return equationString;
-};
-
 onMounted(() => {
 	if (props.mathMode) {
 		mathMode.value = props.mathMode;
@@ -127,17 +119,38 @@ onMounted(() => {
 
 onUpdated(() => {
 	if (mathMode.value === MathEditorModes.LIVE) {
-		mathLiveField.value?.setValue(latexEquation.value);
+		mathLiveField.value?.setValue(props.latexEquation);
+	} else if (mathMode.value === MathEditorModes.KATEX && katexMathElement.value) {
+		katex.render(addTagToEquations(katexEquation.value, `\\notag`), katexMathElement.value, {
+			displayMode: true,
+			throwOnError: true,
+			errorColor: 'blue',
+			strict: 'red',
+			trust: true
+		});
 	}
 });
 
 const renderEquations = () => {
 	if (mathMode.value === MathEditorModes.LIVE) {
-		mathLiveField.value?.setValue(latexEquation.value, { suppressChangeNotifications: true });
-	} else if (mathMode.value === 'mathJAX') {
-		jaxEquation.value = latexEquation.value;
+		mathLiveField.value?.setValue(props.latexEquation, { suppressChangeNotifications: true });
+	} else if (mathMode.value === MathEditorModes.KATEX) {
+		katexEquation.value = props.latexEquation;
+	} else {
+		logger.warn(`Invalid mathMode set : ${mathMode.value}`);
 	}
 };
+
+const katexToMathML = (equation: string) =>
+	katex.renderToString(equation, {
+		displayMode: true,
+		throwOnError: true,
+		output: 'mathml'
+	});
+
+watch(katexEquation, (value) => {
+	katex.render(addTagToEquations(value, `\\notag`), katexMathElement.value, KATEX_CONFIG);
+});
 
 watch(
 	() => mathMode.value,
@@ -148,25 +161,54 @@ watch(
 	}
 );
 
+/**
+ * Adds a new 'tag' to the multiLineString
+ */
+function addTagToEquations(multiLineString: string, tag: string): string {
+	const lines = multiLineString.split('\n');
+	const outputLines = lines.map((line) => {
+		if (!line.includes('begin') && !line.includes('end')) {
+			return `${tag} ${line}`;
+		}
+		return line;
+	});
+	return outputLines.join('\n');
+}
+
 watch(
 	() => props.latexEquation,
 	(newValue) => {
-		latexEquation.value = getLaTeX(newValue);
+		if (katexMathElement.value) {
+			katex.render(addTagToEquations(newValue, `\\notag`), katexMathElement.value, KATEX_CONFIG);
+		}
 		renderEquations();
 	}
 );
 
+/**
+ * Toggles equation editing mode and emits "equation-updated" and "validate-mathml" events.
+ */
 const toggleEditEquation = () => {
-	// save mode
 	if (props.isEditingEq) {
-		emit('equation-updated', mathLiveField.value?.getValue('latex-unstyled')); // set the temp equation
-		emit('validate-mathml', mathLiveField.value?.getValue('math-ml'));
-	} else {
-		// editing
-		emit('validate-mathml', mathLiveField.value?.getValue('math-ml'), true);
+		if (mathMode.value === MathEditorModes.LIVE) {
+			emit('equation-updated', mathLiveField.value?.getValue('latex-unstyled'));
+			emit('validate-mathml', mathLiveField.value?.getValue('math-ml'));
+		} else if (mathMode.value === MathEditorModes.KATEX) {
+			emit('equation-updated', katexEquation.value);
+			emit('validate-mathml', katexToMathML(katexEquation.value));
+		}
+	} else if (!props.isEditingEq) {
+		if (mathMode.value === MathEditorModes.LIVE) {
+			emit('validate-mathml', mathLiveField.value?.getValue('math-ml'), true);
+		} else {
+			emit('validate-mathml', katexToMathML(katexEquation.value), true);
+		}
 	}
 };
 
+/**
+ * Cancel the editing of an equation event
+ */
 const cancelEditEquation = () => {
 	emit('cancel-editing', true);
 };
@@ -174,7 +216,7 @@ const cancelEditEquation = () => {
 
 <style scoped>
 math-field {
-	background-color: var(--gray-100);
+	background-color: var(--gray-0);
 	border-radius: 4px;
 	border: none;
 	outline: none;
@@ -234,7 +276,7 @@ math-field[disabled] {
 	justify-content: center;
 }
 
-.mathjax-equation {
+.katex-equation {
 	flex-direction: row;
 	background-color: var(--gray-100);
 	border-color: var(--gray-0);
@@ -250,13 +292,13 @@ math-field[disabled] {
 	margin: 5px;
 }
 
-.mathjax-container {
+.katex-math-container {
 	display: flex;
 	flex-direction: column;
 	background-color: var(--gray-0);
 }
 
-.mathjax-container Textarea[disabled] {
+.katex-math-container Textarea[disabled] {
 	opacity: 1;
 	background-color: var(--gray-0);
 }

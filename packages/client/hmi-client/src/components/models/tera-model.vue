@@ -1,49 +1,47 @@
 <template>
-	<section class="asset" style="padding-top: 0">
-		<header class="fixed-header">
-			<div class="framework">{{ model?.framework }}</div>
-			<div class="header-and-buttons">
-				<!-- search bar -->
-				<div class="flex justify-content-end">
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText v-model="globalFilter['global'].value" placeholder="Keyword Search" />
-					</span>
-				</div>
+	<tera-asset
+		:name="name"
+		:overline="model?.framework"
+		:is-editable="isEditable"
+		:is-creating-asset="assetId === ''"
+		@close-preview="emit('close-preview')"
+	>
+		<template #name-input>
+			<InputText v-model="newModelName" placeholder="Title of new model" />
+		</template>
+		<template #edit-buttons>
+			<span class="p-input-icon-left">
+				<i class="pi pi-search" />
 				<InputText
-					v-if="assetId === ''"
-					v-model="newModelName"
-					class="model-title-text-area"
-					placeholder="Title of new model"
+					v-model="globalFilter['global'].value"
+					class="p-inputtext-sm"
+					placeholder="Search keyword"
 				/>
-				<h4 v-else v-html="title" />
-				<span v-if="assetId === ''">
-					<Button @click="createNewModel" label="Create New Model" class="p-button-sm" />
-				</span>
-				<span v-else-if="isEditable">
-					<Button
-						@click="launchForecast"
-						label="Open simulation space"
-						:disabled="isEditing"
-						class="p-button-sm"
-					/>
-				</span>
-			</div>
-			<!--contributor-->
-			<!--created on: date-->
-		</header>
+			</span>
+			<Button
+				v-if="assetId === ''"
+				@click="createNewModel"
+				label="Create New Model"
+				class="p-button-sm"
+			/>
+			<Button
+				v-else
+				@click="launchForecast"
+				label="Open simulation space"
+				:disabled="isEditing"
+				class="p-button-sm"
+			/>
+		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
-				<p v-if="assetId !== ''" v-html="description" class="constrain-width" />
-				<section v-else>
-					<label for="placeholder"></label
-					><Textarea
+				<p v-if="assetId !== ''" v-html="description" />
+				<template v-else>
+					<label for="placeholder" /><Textarea
 						v-model="newDescription"
-						class="model-description-text-area"
 						rows="5"
 						placeholder="Description of new model"
 					/>
-				</section>
+				</template>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
 				<section class="model_diagram">
@@ -61,38 +59,42 @@
 											<template #start>
 												<Button
 													@click="resetZoom"
-													label="Reset Zoom"
-													class="p-button-sm p-button-secondary"
+													label="Reset zoom"
+													class="p-button-sm p-button-outlined toolbar-button"
 												/>
 											</template>
 											<template #center>
-												<span class="p-buttonset">
+												<span class="toolbar-subgroup">
 													<Button
 														v-if="isEditing"
 														@click="addState"
-														label="Add State"
-														class="p-button-sm p-button-secondary"
+														label="Add state"
+														class="p-button-sm p-button-outlined toolbar-button"
 													/>
 													<Button
 														v-if="isEditing"
 														@click="addTransition"
-														label="Add Transition"
-														class="p-button-sm p-button-secondary"
+														label="Add transition"
+														class="p-button-sm p-button-outlined toolbar-button"
 													/>
 												</span>
 											</template>
 											<template #end>
-												<span class="p-buttonset">
+												<span class="toolbar-subgroup">
 													<Button
 														v-if="isEditing"
 														@click="cancelEdit"
 														label="Cancel"
-														class="p-button-sm p-button-secondary"
+														class="p-button-sm p-button-outlined toolbar-button"
 													/>
 													<Button
 														@click="toggleEditMode"
 														:label="isEditing ? 'Save model' : 'Edit model'"
-														class="p-button-sm p-button-secondary"
+														:class="
+															isEditing
+																? 'p-button-sm toolbar-button-saveModel'
+																: 'p-button-sm p-button-outlined toolbar-button'
+														"
 													/>
 												</span>
 											</template>
@@ -113,10 +115,11 @@
 											:latex-equation="equationLatex"
 											:is-editing-eq="isEditingEQ"
 											:is-math-ml-valid="isMathMLValid"
-											:math-mode="MathEditorModes.LIVE"
+											:math-mode="MathEditorModes.KATEX"
 											@cancel-editing="cancelEditng"
 											@equation-updated="setNewLatexFormula"
 											@validate-mathml="validateMathML"
+											@set-editing="isEditingEQ = true"
 										></tera-math-editor>
 									</section>
 								</SplitterPanel>
@@ -240,9 +243,7 @@
 					<Column field="equation_annotations" header="Equations">
 						<template #body="slotProps">
 							<div style="word-wrap: break-word">
-								<vue-mathjax
-									:formula="mathJaxEq(slotProps.data.equation_annotations)"
-								></vue-mathjax>
+								<katex-element :expression="Object.keys(slotProps.data.equation_annotations)[0]" />
 							</div>
 						</template>
 					</Column>
@@ -260,7 +261,6 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-
 		<Teleport to="body">
 			<ForecastLauncher
 				v-if="showForecastLauncher && model"
@@ -269,13 +269,13 @@
 				@launch-forecast="goToSimulationRunPage"
 			/>
 		</Teleport>
-	</section>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, defineEmits } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -303,8 +303,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
-import ModelParameterList from '@/components/models/model-parameter-list.vue';
-import ForecastLauncher from '@/components/models/forecast-launcher.vue';
+import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
@@ -314,11 +313,14 @@ import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
+import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
+
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name']);
+const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview']);
 
 const extractions = ref([]);
 
@@ -502,7 +504,7 @@ const updateLatexFormula = (formulaString: string) => {
 const cancelEditng = () => {
 	isEditingEQ.value = false;
 	isMathMLValid.value = true;
-	// updateLatexFormula(equationLatexOriginal.value);
+	updateLatexFormula(equationLatexOriginal.value);
 };
 
 const relatedTerariumModels = computed(
@@ -837,15 +839,8 @@ const addTransition = async () => {
 	renderer?.addNodeCenter(NodeType.Transition, '?');
 };
 
-const title = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
-
-const mathJaxEq = (eq) => {
-	if (eq) {
-		return String.raw`$$${Object.keys(eq)[0]}$$`;
-	}
-	return '';
-};
 </script>
 
 <style scoped>
@@ -855,20 +850,20 @@ const mathJaxEq = (eq) => {
 	z-index: 1;
 	isolation: isolate;
 	background: transparent;
-	padding: 0.25rem;
+	padding: 0.5rem;
 }
 
-.button-container {
+.p-button.p-component.p-button-sm.p-button-outlined.toolbar-button {
+	background-color: var(--surface-0);
+	margin: 0.25rem;
+}
+
+.toolbar-button-saveModel {
+	margin: 0.25rem;
+}
+
+.toolbar-subgroup {
 	display: flex;
-	float: right;
-}
-
-.fixed-header {
-	position: sticky;
-	top: -1px;
-	z-index: 1;
-	background-color: white;
-	isolation: isolate;
 }
 
 section math-editor {
@@ -905,16 +900,17 @@ section math-editor {
 	width: 100%;
 	height: 100%;
 	flex-direction: column;
-	border-width: 2px;
+	border: 4px solid transparent;
+	border-radius: 0px var(--border-radius) var(--border-radius) 0px;
 	overflow: auto;
 }
 
 .math-editor-selected {
-	outline: 2px solid var(--primary-color);
+	border: 4px solid var(--primary-color);
 }
 
 .math-editor-error {
-	outline: 2px solid red;
+	border: 4px solid var(--surface-border-warning);
 	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
@@ -939,28 +935,5 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-.constrain-width {
-	max-width: 60rem;
-}
-
-.model-description-text-area {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	padding: 5px;
-	resize: none;
-	overflow-y: hidden;
-	width: 100%;
-}
-
-.model-title-text-area {
-	border: 1px solid var(--surface-border-light);
-	border-radius: 4px;
-	padding: 5px;
-	resize: none;
-	overflow-y: hidden;
-	width: 100%;
-	font-size: var(--font-body-medium);
 }
 </style>
