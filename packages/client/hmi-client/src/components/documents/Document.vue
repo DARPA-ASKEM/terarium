@@ -1,268 +1,235 @@
 <template>
-	<section class="two-columns asset" v-if="doc" ref="sectionElem">
-		<nav v-if="isEditable">
-			<span class="p-buttonset">
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="Extractions"
-					icon="pi pi-list"
-					@click="documentView = DocumentView.EXRACTIONS"
-					:active="documentView === DocumentView.EXRACTIONS"
-				/>
-				<Button
-					class="p-button-secondary p-button-sm"
-					label="PDF"
-					icon="pi pi-file"
-					:loading="!pdfLink"
-					@click="documentView = DocumentView.PDF"
-					:active="documentView === DocumentView.PDF"
-				/>
-			</span>
-			<div class="scroll-to-section-links" v-if="documentView === DocumentView.EXRACTIONS">
-				<a @click="scrollTo('Top')">Top</a>
-				<a v-if="!isEmpty(formattedAbstract)" @click="scrollTo('Abstract')">Abstract</a>
-				<a v-if="doc?.knownEntities?.summaries?.sections" @click="scrollTo('SectionSummaries')"
-					>Section summaries</a
-				>
-				<a v-if="!isEmpty(figureArtifacts)" @click="scrollTo('Figures')"
-					>Figures <span class="artifact-amount">({{ figureArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(tableArtifacts)" @click="scrollTo('Tables')"
-					>Tables <span class="artifact-amount">({{ tableArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(equationArtifacts)" @click="scrollTo('Equations')"
-					>Equations <span class="artifact-amount">({{ equationArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(githubUrls)" @click="scrollTo('GithubURLs')"
-					>GitHub URLs <span class="artifact-amount">({{ githubUrls.length }})</span></a
-				>
-				<a v-if="!isEmpty(urlArtifacts)" @click="scrollTo('OtherURLs')"
-					>Other URLs <span class="artifact-amount">({{ urlArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(otherArtifacts)" @click="scrollTo('OtherExtractions')"
-					>Other extractions <span class="artifact-amount">({{ otherArtifacts.length }})</span></a
-				>
-				<a v-if="!isEmpty(doc.citationList)" @click="scrollTo('References')"
-					>References <span class="artifact-amount">({{ doc.citationList.length }})</span></a
-				>
-				<a v-if="!isEmpty(relatedTerariumArtifacts)" @click="scrollTo('AssociatedResources')"
-					>Associated resources
-					<span class="artifact-amount">({{ relatedTerariumArtifacts.length }})</span></a
-				>
-			</div>
-			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-			<!--- 
-				<div class="p-input-icon-left">
-					<i class="pi pi-search" />
-					<InputText placeholder="Find in page" class="find-in-page" />
-				</div>
-				--></nav>
-		<section class="asset" v-if="documentView === DocumentView.EXRACTIONS" id="Top">
-			<header>
-				<div class="journal" v-html="highlightSearchTerms(doc.journal)" />
-				<h4 v-html="highlightSearchTerms(doc.title)" />
-				<div class="authors" v-html="formatDocumentAuthors(doc)" />
-				<div v-if="docLink || doi">
-					DOI:
-					<a
-						:href="`https://doi.org/${doi}`"
-						rel="noreferrer noopener"
-						v-html="highlightSearchTerms(doi)"
-					/>
-				</div>
-				<div v-html="highlightSearchTerms(doc.publisher)" />
-				<section class="pdf-buttons" v-if="doi">
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-external-link"
-						label="Open PDF"
-						@click="openPDF"
-						:loading="!pdfLink && !linkIsPDF()"
-					/>
-					<Button
-						class="p-button-sm p-button-outlined"
-						@click="downloadPDF"
-						:icon="'pi pi-cloud-download'"
-						:loading="!pdfLink"
-						label="Download PDF"
-					/>
-				</section>
-			</header>
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4, 5, 6, 7]">
-				<AccordionTab v-if="!isEmpty(formattedAbstract)">
-					<template #header>
-						<span id="Abstract">Abstract</span>
-					</template>
-					<div class="constrain-width">
-						<span v-html="formattedAbstract" />
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
-					<template #header>
-						<span id="SectionSummaries">Section Summaries</span>
-					</template>
-					<template v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
+	<tera-asset
+		v-if="doc"
+		:is-editable="isEditable"
+		:name="highlightSearchTerms(doc.title)"
+		:overline="highlightSearchTerms(doc.journal)"
+		:authors="formatDocumentAuthors(doc)"
+		:doi="highlightSearchTerms(doi)"
+		:publisher="highlightSearchTerms(doc.publisher)"
+		@close-preview="emit('close-preview')"
+		:hide-header="documentView === DocumentView.PDF"
+	>
+		<template #nav>
+			<tera-asset-nav
+				:asset-content="documentContent"
+				:extraction-mode="documentView === DocumentView.EXRACTIONS"
+				v-if="isEditable"
+			>
+				<template #viewing-mode>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Extractions"
+							icon="pi pi-list"
+							@click="documentView = DocumentView.EXRACTIONS"
+							:active="documentView === DocumentView.EXRACTIONS"
+						/>
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="PDF"
+							icon="pi pi-file"
+							:loading="!pdfLink"
+							@click="documentView = DocumentView.PDF"
+							:active="documentView === DocumentView.PDF"
+						/>
+					</span>
+				</template>
+				<template #page-search>
+					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText placeholder="Find in page" class="p-inputtext-sm" />
+					</span>
+				</template>
+			</tera-asset-nav>
+		</template>
+		<template #bottom-header-buttons>
+			<Button
+				class="p-button-sm p-button-outlined"
+				icon="pi pi-external-link"
+				label="Open PDF"
+				@click="openPDF"
+				:loading="!pdfLink && !linkIsPDF()"
+			/>
+			<Button
+				class="p-button-sm p-button-outlined"
+				@click="downloadPDF"
+				:icon="'pi pi-cloud-download'"
+				:loading="!pdfLink"
+				label="Download PDF"
+			/>
+		</template>
+		<Accordion
+			v-if="documentView === DocumentView.EXRACTIONS"
+			:multiple="true"
+			:active-index="[0, 1, 2, 3, 4, 5, 6, 7]"
+		>
+			<AccordionTab v-if="!isEmpty(formattedAbstract)">
+				<template #header>
+					<header id="Abstract">Abstract</header>
+				</template>
+				<p v-html="formattedAbstract" />
+			</AccordionTab>
+			<AccordionTab v-if="doc?.knownEntities?.summaries?.sections">
+				<template #header>
+					<header id="Section-Summaries">Section Summaries</header>
+				</template>
+				<ul>
+					<li v-for="(section, index) of doc.knownEntities.summaries.sections" :key="index">
 						<h6>{{ index }}</h6>
 						<p v-html="highlightSearchTerms(section)" />
-					</template>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(figureArtifacts)">
-					<template #header>
-						Figures<span class="artifact-amount" id="Figures">({{ figureArtifacts.length }})</span>
-					</template>
-					<div class="constrain-width">
-						<div v-for="ex in figureArtifacts" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(figures)">
+				<template #header>
+					<header id="Figures">
+						Figures<span class="artifact-amount">({{ figures.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in figures" :key="ex.askemId" class="extracted-item">
+						<Image
+							id="img"
+							class="extracted-image"
+							:src="'data:image/jpeg;base64,' + ex.properties.image"
+							:alt="''"
+							preview
+						/>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(tables)">
+				<template #header>
+					<header id="Tables">
+						Tables<span class="artifact-amount">({{ tables.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in tables" :key="ex.askemId" class="extracted-item">
+						<div class="extracted-image">
+							<Image
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								preview
 							/>
 						</div>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(tableArtifacts)">
-					<template #header>
-						Tables<span class="artifact-amount" id="Tables">({{ tableArtifacts.length }})</span>
-					</template>
-					<div class="constrain-width">
-						<div v-for="ex in tableArtifacts" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(equations)">
+				<template #header>
+					<header id="Equations">
+						Equations<span class="artifact-amount">({{ equations.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in equations" :key="ex.askemId" class="extracted-item">
+						<div class="extracted-image">
+							<Image
+								id="img"
+								:src="'data:image/jpeg;base64,' + ex.properties.image"
+								:alt="''"
+								preview
 							/>
 						</div>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(equationArtifacts)">
-					<template #header>
-						Equations<span class="artifact-amount" id="Equations"
-							>({{ equationArtifacts.length }})</span
-						>
-					</template>
-					<div class="constrain-width">
-						<div v-for="ex in equationArtifacts" :key="ex.askemId" class="extracted-item">
-							<div class="extracted-image">
-								<Image
-									id="img"
-									:src="'data:image/jpeg;base64,' + ex.properties.image"
-									:alt="''"
-									preview
-								/>
-							</div>
-							<tera-show-more-text
-								:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
-								:lines="previewLineLimit"
-							/>
+						<tera-show-more-text
+							:text="highlightSearchTerms(ex.properties?.caption ?? ex.properties.contentText)"
+							:lines="previewLineLimit"
+						/>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(githubUrls)">
+				<template #header>
+					<header id="Github-URLs">
+						GitHub URLs<span class="artifact-amount">({{ githubUrls.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
+						<tera-import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(otherUrls)">
+				<template #header>
+					<header id="Other-URLs">
+						Other URLs<span class="artifact-amount">({{ otherUrls.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in otherUrls" :key="ex.url" class="extracted-item">
+						<b>{{ ex.resourceTitle }}</b>
+						<div>
+							<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
 						</div>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(githubUrls)">
-					<template #header>
-						GitHub URLs<span class="artifact-amount" id="GithubURLs"
-							>({{ githubUrls.length }})</span
-						>
-					</template>
-					<div class="constrain-width">
-						<ul>
-							<li
-								class="github-link extracted-item"
-								v-for="(url, index) in githubUrls"
-								:key="index"
-							>
-								<tera-import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
-								<a :href="url" rel="noreferrer noopener">{{ url }}</a>
-							</li>
-						</ul>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(urlArtifacts)">
-					<template #header>
-						Other URLs<span class="artifact-amount" id="OtherURLs"
-							>({{ urlArtifacts.length }})</span
-						>
-					</template>
-					<div class="constrain-width">
-						<ul>
-							<li v-for="ex in urlArtifacts" :key="ex.url" class="extracted-item">
-								<b>{{ ex.resourceTitle }}</b>
-								<div>
-									<a :href="ex.url" rel="noreferrer noopener">{{ ex.url }}</a>
-								</div>
-							</li>
-						</ul>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(otherArtifacts)">
-					<template #header>
-						Other extractions<span class="artifact-amount" id="OtherExtractions"
-							>({{ otherArtifacts.length }})</span
-						>
-					</template>
-					<div class="constrain-width">
-						<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
-							<b v-html="highlightSearchTerms(ex.properties.title)" />
-							<span v-html="highlightSearchTerms(ex.properties.caption)" />
-							<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
-							<span v-html="highlightSearchTerms(ex.properties.contentText)" />
-						</div>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(doc.citationList)">
-					<template #header>
-						References<span class="artifact-amount" id="References"
-							>({{ doc.citationList.length }})</span
-						>
-					</template>
-					<div class="constrain-width">
-						<ul>
-							<li v-for="(citation, key) of doc.citationList" :key="key">
-								<template v-if="!isEmpty(formatCitation(citation))">
-									{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
-								</template>
-							</li>
-						</ul>
-					</div>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)">
-					<template #header>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(otherExtractions)">
+				<template #header>
+					<header id="Other-Extractions">
+						Other extractions<span class="artifact-amount">({{ otherExtractions.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
+						<b v-html="highlightSearchTerms(ex.properties.title)" />
+						<span v-html="highlightSearchTerms(ex.properties.caption)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(doc.citationList)">
+				<template #header>
+					<header id="References">
+						References<span class="artifact-amount">({{ doc.citationList.length }})</span>
+					</header>
+				</template>
+				<ul>
+					<li v-for="(citation, key) of doc.citationList" :key="key">
+						<template v-if="!isEmpty(formatCitation(citation))">
+							{{ key + 1 }}. <span v-html="formatCitation(citation)"></span>
+						</template>
+					</li>
+				</ul>
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(associatedResources)">
+				<template #header>
+					<header id="Associated-Resources">
 						Associated resources
-						<span class="artifact-amount" id="AssociatedResources"
-							>({{ relatedTerariumArtifacts.length }})</span
-						>
-					</template>
-					<DataTable :value="relatedTerariumModels">
-						<Column field="name" header="Models"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDatasets">
-						<Column field="name" header="Datasets"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Documents"></Column>
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</section>
+						<span class="artifact-amount">({{ associatedResources.length }})</span>
+					</header>
+				</template>
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
 		<tera-pdf-embed
 			v-else-if="documentView === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.title"
 		/>
-	</section>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -288,7 +255,9 @@ import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
-// import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
+import InputText from 'primevue/inputtext';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -302,12 +271,11 @@ const props = defineProps<{
 	previewLineLimit?: number;
 }>();
 
-const sectionElem = ref<HTMLElement | null>(null);
 const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-asset', 'close-preview']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
@@ -319,10 +287,6 @@ function highlightSearchTerms(text: string | undefined): string {
 		return textUtil.highlight(text, props.highlight);
 	}
 	return text ?? '';
-}
-
-function scrollTo(elementId: string) {
-	document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' });
 }
 
 watch(
@@ -360,24 +324,24 @@ const doi = computed(() => getDocumentDoi(doc.value));
 
 /* Artifacts */
 const artifacts = ref<XDDArtifact[]>([]);
-const relatedTerariumArtifacts = ref<ResultType[]>([]);
+const associatedResources = ref<ResultType[]>([]);
 
-const figureArtifacts = computed(
+const figures = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Figure) || []
 );
-const tableArtifacts = computed(
+const tables = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Table) || []
 );
-const equationArtifacts = computed(
+const equations = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
 );
-const urlArtifacts = computed(() =>
+const otherUrls = computed(() =>
 	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );
 const githubUrls = computed(() => doc.value?.githubUrls ?? []);
-const otherArtifacts = computed(() => {
+const otherExtractions = computed(() => {
 	const exclusion = [
 		XDDExtractionType.URL,
 		XDDExtractionType.Table,
@@ -387,6 +351,30 @@ const otherArtifacts = computed(() => {
 
 	return artifacts.value.filter((d) => !exclusion.includes(d.askemClass as XDDExtractionType));
 });
+
+/* Provenance */
+const relatedTerariumModels = computed(
+	() => associatedResources.value.filter((d) => isModel(d)) as Model[]
+);
+const relatedTerariumDatasets = computed(
+	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
+);
+const relatedTerariumDocuments = computed(
+	() => associatedResources.value.filter((d) => isDocument(d)) as DocumentType[]
+);
+
+const documentContent = computed(() => [
+	{ key: 'Abstract', value: formattedAbstract.value },
+	{ key: 'Section-Summaries', value: doc.value?.knownEntities?.summaries?.sections },
+	{ key: 'Figures', value: figures.value },
+	{ key: 'Tables', value: tables.value },
+	{ key: 'Equations', value: equations.value },
+	{ key: 'Github-URLs', value: githubUrls.value },
+	{ key: 'Other-URLs', value: otherUrls.value },
+	{ key: 'Other-Extractions', value: otherExtractions.value },
+	{ key: 'References', value: doc.value?.citationList },
+	{ key: 'Associated-Resources', value: associatedResources.value }
+]);
 
 // This fetches various parts of the document: figures, tables, equations ... etc
 const fetchDocumentArtifacts = async () => {
@@ -400,12 +388,12 @@ const fetchDocumentArtifacts = async () => {
 	}
 };
 
-const fetchRelatedTerariumArtifacts = async () => {
+const fetchAssociatedResources = async () => {
 	if (doc.value) {
 		const results = await getRelatedArtifacts(props.xddUri, ProvenanceType.Publication);
-		relatedTerariumArtifacts.value = results;
+		associatedResources.value = results;
 	} else {
-		relatedTerariumArtifacts.value = [];
+		associatedResources.value = [];
 	}
 };
 
@@ -439,22 +427,11 @@ const openPDF = () => {
 watch(doi, async (currentValue, oldValue) => {
 	if (currentValue !== oldValue) {
 		fetchDocumentArtifacts();
-		fetchRelatedTerariumArtifacts();
+		fetchAssociatedResources();
 		pdfLink.value = null;
 		pdfLink.value = await generatePdfDownloadLink(doi.value); // Generate PDF download link on (doi change)
 	}
 });
-
-/* Provenance */
-const relatedTerariumModels = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
-);
-const relatedTerariumDatasets = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
-);
-const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
-);
 
 /**
  * Format from xDD citation_list object.
@@ -477,42 +454,14 @@ const formatCitation = (obj: { [key: string]: string }) => {
 
 onMounted(async () => {
 	fetchDocumentArtifacts();
-	fetchRelatedTerariumArtifacts();
+	fetchAssociatedResources();
 });
 </script>
 <style scoped>
-.two-columns {
-	display: flex;
-	flex-direction: row;
-}
-
-.pdf-buttons {
-	display: flex;
-	gap: 0.5rem;
-}
-
-nav {
-	margin-left: 0.5rem;
-	min-width: 14rem;
-	position: sticky;
-	top: 0;
-}
-
-.scroll-to-section-links {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	margin-top: 1rem;
-}
-
 .find-in-page {
 	border: 1px solid var(--surface-border-light) !important;
 	padding: 0.75rem;
 	width: 11.75rem;
-}
-
-.constrain-width {
-	max-width: var(--constrain-width);
 }
 
 .extracted-item {
@@ -521,7 +470,14 @@ nav {
 	border-radius: var(--border-radius);
 }
 
-.extracted-image {
+.extracted-item > .extracted-image {
+	display: block;
 	max-width: 30rem;
+	margin-bottom: 0.5rem;
+	width: fit-content;
+	padding: 8px;
+	border: 1px solid var(--gray-300);
+	border-radius: 6px;
+	object-fit: contain;
 }
 </style>

@@ -4,7 +4,7 @@
 	<Toast position="top-right" group="warn" />
 	<Toast position="bottom-right" group="info" />
 	<Toast position="bottom-right" group="success" />
-	<Navbar
+	<tera-navbar
 		class="header"
 		:active="!isErrorState"
 		:current-project-id="project?.id ?? null"
@@ -88,7 +88,7 @@ import Button from 'primevue/button';
 import { ToastSummaries, ToastSeverity, useToastService } from '@/services/toast';
 import { useRoute, useRouter } from 'vue-router';
 import API from '@/api/api';
-import Navbar from '@/components/Navbar.vue';
+import TeraNavbar from '@/components/navbar/tera-navbar.vue';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';

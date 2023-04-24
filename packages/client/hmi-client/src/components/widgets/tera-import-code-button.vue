@@ -1,37 +1,40 @@
 <template>
-	<Button
-		label="Import"
-		class="p-button-sm p-button-outlined"
-		icon="pi pi-cloud-download"
-		@click="initializeCodeBrowser"
-	/>
-	<Teleport to="body">
-		<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
-			<template #header>
-				<h5>
-					Choose file to open from {{ repoOwnerAndName
-					}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
-				</h5>
-			</template>
-			<template #default>
-				<ul>
-					<li v-if="isInDirectory" @click="openContent()">
-						<i class="pi pi-folder-open" />
-						<b> ..</b>
-					</li>
-					<li
-						v-for="(content, index) in directoryContent"
-						:key="index"
-						@click="openContent(content)"
-					>
-						<i v-if="content.type === 'dir'" class="pi pi-folder" />
-						<i v-else class="pi pi-file" />
-						{{ content.name }}
-					</li>
-				</ul>
-			</template>
-		</tera-modal>
-	</Teleport>
+	<main>
+		<Button
+			label="Import"
+			class="p-button-sm p-button-outlined"
+			icon="pi pi-cloud-download"
+			@click="initializeCodeBrowser"
+		/>
+		<a :href="urlString" rel="noreferrer noopener">{{ urlString }}</a>
+		<Teleport to="body">
+			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
+				<template #header>
+					<h5>
+						Choose file to open from {{ repoOwnerAndName
+						}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
+					</h5>
+				</template>
+				<template #default>
+					<ul>
+						<li v-if="isInDirectory" @click="openContent()">
+							<i class="pi pi-folder-open" />
+							<b> ..</b>
+						</li>
+						<li
+							v-for="(content, index) in directoryContent"
+							:key="index"
+							@click="openContent(content)"
+						>
+							<i v-if="content.type === 'dir'" class="pi pi-folder" />
+							<i v-else class="pi pi-file" />
+							{{ content.name }}
+						</li>
+					</ul>
+				</template>
+			</tera-modal>
+		</Teleport>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -103,6 +106,12 @@ async function openContent(content?) {
 </script>
 
 <style scoped>
+main {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
 ul {
 	list-style: none;
 	display: flex;

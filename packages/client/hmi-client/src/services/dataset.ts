@@ -5,6 +5,7 @@
 import API from '@/api/api';
 import { Dataset } from '@/types/Dataset';
 import { logger } from '@/utils/logger';
+import { CsvAsset } from '@/types/Types';
 
 /**
  * Get all datasets
@@ -51,9 +52,10 @@ async function getBulkDatasets(datasetIDs: string[]) {
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
-async function downloadRawFile(datasetId: string): Promise<string | null> {
+async function downloadRawFile(datasetId: string, binCount?: number): Promise<CsvAsset | null> {
 	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
-	const URL = `/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`;
+	let URL = `/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`;
+	if (binCount) URL += `&binCount=${binCount}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});

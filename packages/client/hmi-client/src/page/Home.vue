@@ -190,7 +190,7 @@ import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
-import TeraProjectCard from '@/components/projects/tera-project-card.vue';
+import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
 const projects = ref<IProject[]>();
 // Only display projects with at least one related document

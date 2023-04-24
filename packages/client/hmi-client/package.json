@@ -17,6 +17,7 @@
 	},
 	"dependencies": {
 		"@carbon/icons-vue": "10.60.0",
+		"@hsorby/vue3-katex": "0.6.0-rc.5",
 		"@uncharted.software/design-tokens": "1.1.0",
 		"@uncharted.software/facets-core": "3.2.6",
 		"@uncharted.software/facets-plugins": "3.2.5",
@@ -28,6 +29,7 @@
 		"eslint-import-resolver-typescript": "3.5.5",
 		"feather-icons": "4",
 		"graph-scaffolder": "*",
+		"katex": "0.16.6",
 		"lodash": "4.17.21",
 		"mathlive": "0.89.2",
 		"mathml-to-latex": "1.2.0",
@@ -41,7 +43,6 @@
 		"sass": "1.56.1",
 		"vue": "3.2.47",
 		"vue-feather": "2",
-		"vue-mathjax-next": "0.0.4",
 		"vue-router": "4.1.6",
 		"vue3-ace-editor": "2.2.2"
 	},

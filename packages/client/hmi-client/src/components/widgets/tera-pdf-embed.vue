@@ -1,5 +1,5 @@
 <template>
-	<div id="adobe-dc-view"></div>
+	<div id="adobe-dc-view" />
 </template>
 
 <script setup lang="ts">
