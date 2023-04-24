@@ -38,14 +38,14 @@
 					is-editable
 					@open-asset="openAsset"
 				/>
-				<tera-dataset
-					v-else-if="assetType === ProjectAssetTypes.DATASETS"
+				<tera-model
+					v-else-if="assetType === ProjectAssetTypes.MODELS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
 				/>
-				<tera-model
-					v-else-if="assetType === ProjectAssetTypes.MODELS"
+				<tera-dataset
+					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
@@ -515,8 +515,7 @@ section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	overflow: auto;
-	padding: 0.5rem 0.5rem 0;
+	overflow-x: auto;
 }
 
 .no-open-tabs {
@@ -525,10 +524,6 @@ section {
 	margin-bottom: 8rem;
 	align-items: center;
 	color: var(--text-color-subdued);
-}
-
-.asset {
-	padding-top: 1rem;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

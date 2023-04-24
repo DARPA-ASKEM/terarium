@@ -1,25 +1,27 @@
 <template>
-	<div class="flex-container">
-		<header class="overview-header">
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-rounded menu-button"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+	<tera-asset
+		:name="project?.name"
+		:authors="project?.username"
+		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
+		is-editable
+	>
+		<template #name-input>
 			<InputText
 				v-model="newProjectName"
 				ref="inputElement"
 				class="project-name-input"
 				@keyup.enter="updateProjectName"
 				:class="{ isVisible: isEditingProject }"
-			>
-			</InputText>
-			<h3 :class="{ isVisible: !isEditingProject }">
-				{{ project?.name }}
-			</h3>
-			<p class="secondary-text">Last updated {{ DateUtils.formatLong(project?.timestamp) }}</p>
-		</header>
+			/>
+		</template>
+		<template #edit-buttons>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+		</template>
 		<section class="content-container">
 			<section class="summary">
 				<!-- This div is so that child elements will automatically collapse margins -->
@@ -29,11 +31,6 @@
 						<p>
 							{{ project?.description }}
 						</p>
-					</section>
-					<section class="contributors">
-						<span class="pi pi-user"></span>
-						{{ project?.username }}
-						<!-- <Button icon="pi pi-plus" label="Add contributor" text /> -->
 					</section>
 				</div>
 			</section>
@@ -98,7 +95,7 @@
 				</DataTable>
 			</section>
 		</section>
-	</div>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -113,6 +110,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 
 const props = defineProps<{
@@ -156,19 +154,11 @@ function showProjectMenu(event) {
 </script>
 
 <style scoped>
-.flex-container {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	background: var(--surface-section);
-}
-
 a {
 	text-decoration: underline;
 }
 
 .content-container {
-	flex-direction: column;
 	margin-left: 1rem;
 	margin-right: 1rem;
 }
@@ -315,10 +305,5 @@ ul {
 	color: var(--text-color-secondary);
 	padding: 0 0.5rem 0 0.5rem;
 	margin: 0.5rem;
-}
-
-.menu-button {
-	position: absolute;
-	right: 0;
 }
 </style>
