@@ -10,7 +10,8 @@
 import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
 
-let width: number, height: number;
+let width = 0,
+	height = 0;
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
 let gX: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
@@ -31,9 +32,8 @@ const handleZoom = (evt: any, container: d3.Selection<SVGGElement, unknown, HTML
 
 function updateDimensions() {
 	// Update dimensions
-	width = window.innerWidth;
-	height = window.innerHeight;
-
+	width = canvasRef.value?.clientWidth ?? window.innerWidth;
+	height = canvasRef.value?.clientHeight ?? window.innerHeight;
 	// Update debug values
 	x = d3
 		.scaleLinear()
@@ -57,7 +57,6 @@ function updateDimensions() {
 	if (currentTransform) {
 		gX.call(xAxis.scale(currentTransform.rescaleX(x)));
 		gY.call(yAxis.scale(currentTransform.rescaleY(y)));
-		// console.log(transform.value, width, height)
 	}
 }
 
@@ -94,10 +93,6 @@ svg {
 	cursor: grab;
 	width: 100%;
 	height: 100%;
-}
-
-.axis {
-	color: red;
 }
 
 svg:active {
