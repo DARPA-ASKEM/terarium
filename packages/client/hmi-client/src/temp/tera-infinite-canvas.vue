@@ -7,72 +7,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import * as d3 from 'd3';
 
-const width = 800;
-const height = 600;
+let gX;
+let gY;
+const canvasRef = ref<HTMLElement>();
 
-const x = d3
+const width = computed(() => canvasRef.value?.clientWidth ?? 600);
+const height = computed(() => canvasRef.value?.clientHeight ?? 500);
+
+let x = d3
 	.scaleLinear()
-	.domain([-1, width + 1])
-	.range([-1, width + 1]);
+	.domain([-1, width.value + 1])
+	.range([-1, width.value + 1]);
 
-const y = d3
+let y = d3
 	.scaleLinear()
-	.domain([-1, height + 1])
-	.range([-1, height + 1]);
+	.domain([-1, height.value + 1])
+	.range([-1, height.value + 1]);
 
-const xAxis = d3
+let xAxis = d3
 	.axisBottom(x)
-	.ticks(((width + 2) / (height + 2)) * 10)
-	.tickSize(height)
-	.tickPadding(8 - height);
+	.ticks(((width.value + 2) / (height.value + 2)) * 10)
+	.tickSize(height.value)
+	.tickPadding(8 - height.value);
 
-const yAxis = d3
+let yAxis = d3
 	.axisRight(y)
 	.ticks(10)
-	.tickSize(width)
-	.tickPadding(8 - width);
+	.tickSize(width.value)
+	.tickPadding(8 - width.value);
 
-const gX = ref();
-const gY = ref();
-
-let zoom: d3.ZoomBehavior<Element, unknown> | null = null;
 // const zoomObj: { x: number; y: number; k: number } = { x: 0, y: 0, k: 1 };
 // const debugMode = ref(true);
 
-const handleZoom = (evt: any) => {
-	d3.select('svg')
-		.attr('transform', evt.transform)
-		// .style(
-		// 	'transform',
-		// 	`translate(${evt.transform.x}px, ${evt.transform.y}px) scale(${evt.transform.k})`
-		// )
-		.style('transform-origin', '0 0');
+const handleZoom = (evt: any, container) => {
+	container.attr('transform', evt.transform).style('transform-origin', '0 0');
 
-	gX.value.call(xAxis.scale(evt.transform.rescaleX(x)));
-	gY.value.call(yAxis.scale(evt.transform.rescaleY(y)));
+	gX.call(xAxis.scale(evt.transform.rescaleX(x)));
+	gY.call(yAxis.scale(evt.transform.rescaleY(y)));
 };
-
-zoom = d3
-	.zoom()
-	.scaleExtent([1, 5])
-	.translateExtent([
-		[-100, -100],
-		[width + 90, height + 100]
-	])
-	.on('zoom', handleZoom);
-
 onMounted(() => {
 	const svg = d3.select('svg');
+
+	const container = svg.append('g').classed('container', true);
+
+	const zoom = d3
+		.zoom()
+		.scaleExtent([1, 5])
+		.on('zoom', (e) => handleZoom(e, container));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
 	svg.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 10).attr('fill', 'red');
 
-	gX.value = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
-	gY.value = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
+	gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
+	gY = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
 });
 
 // const itemState: any = ref([

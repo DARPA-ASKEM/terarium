@@ -22,7 +22,7 @@ import { ITypedModel } from '@/types/Model';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { BasicRenderer, IGraph, INode } from '@graph-scaffolder/index';
 import ContextMenu from 'primevue/contextmenu';
-import ForecastLauncher from '@/components/models/forecast-launcher.vue';
+import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { getRunResult } from '@/services/models/simulation-service';
 
 import { getModel } from '@/services/model';
@@ -484,6 +484,7 @@ section {
 	display: flex;
 	flex-direction: column;
 }
+
 .experiment-container {
 	margin: 10px;
 	width: 1500px;
