@@ -45,22 +45,26 @@
 					:asset-id="assetId"
 					:project="project"
 					is-editable
+					@asset-loaded="setActiveTab"
 				/>
 				<tera-dataset
 					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
+					@asset-loaded="setActiveTab"
 				/>
 				<simulation-plan
 					v-else-if="assetType === ProjectAssetTypes.PLANS"
 					:asset-id="assetId"
 					:project="project"
+					@asset-loaded="setActiveTab"
 				/>
 				<simulation-run
 					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
 					:asset-id="assetId"
 					:project="project"
+					@asset-loaded="setActiveTab"
 				/>
 			</template>
 			<code-editor
@@ -359,7 +363,7 @@ const newNoteSection = ref();
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
-const activeTabIndex = ref(0);
+const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	assetName: props.assetName ?? '',
 	assetType: props.assetType,
@@ -379,15 +383,16 @@ function openAsset(
 	index: number = tabStore.getActiveTabIndex(projectContext.value),
 	newCode?: string
 ) {
+	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
 	if (
-		asset &&
-		asset.assetId === props.assetId &&
-		asset.assetName === props.assetName &&
-		asset.assetType === props.assetType
+		!(
+			asset &&
+			asset.assetId === props.assetId &&
+			asset.assetName === props.assetName &&
+			asset.assetType === props.assetType
+		)
 	) {
-		setActiveTab();
-	} else {
 		loadingTabIndex.value = index;
 		router.push({ name: RouteName.ProjectRoute, params: asset });
 		if (newCode) {
@@ -396,7 +401,7 @@ function openAsset(
 	}
 }
 
-function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value]) {
+function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value!]) {
 	router.push({ name: RouteName.ProjectRoute, params: asset });
 	loadingTabIndex.value = tabs.value.length;
 }
@@ -410,10 +415,11 @@ const openOverview = () => {
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
+	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 }
 
 const updateTabName = (tabName) => {
-	tabs.value[activeTabIndex.value].assetName = tabName;
+	tabs.value[activeTabIndex.value!].assetName = tabName;
 };
 
 // Create the new model

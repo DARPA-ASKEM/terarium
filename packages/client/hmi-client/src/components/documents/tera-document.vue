@@ -233,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, onUpdated } from 'vue';
 import { isEmpty, isEqual, uniqWith } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -306,14 +306,6 @@ watch(
 	{
 		immediate: true
 	}
-);
-
-watch(
-	() => doc.value,
-	() => {
-		emit('asset-loaded');
-	},
-	{ immediate: true }
 );
 
 const formatDocumentAuthors = (d: DocumentType) =>
@@ -463,6 +455,12 @@ const formatCitation = (obj: { [key: string]: string }) => {
 onMounted(async () => {
 	fetchDocumentArtifacts();
 	fetchAssociatedResources();
+});
+
+onUpdated(() => {
+	if (doc.value) {
+		emit('asset-loaded');
+	}
 });
 </script>
 <style scoped>

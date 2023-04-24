@@ -45,7 +45,7 @@ import { ref, watch } from 'vue';
 
 const props = defineProps<{
 	tabs: Tab[];
-	activeTabIndex: number;
+	activeTabIndex: number | null;
 	loadingTabIndex: number | null;
 }>();
 
