@@ -275,7 +275,7 @@ const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset', 'close-preview']);
+const emit = defineEmits(['open-asset', 'close-preview', 'asset-loaded']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
@@ -306,6 +306,14 @@ watch(
 	{
 		immediate: true
 	}
+);
+
+watch(
+	() => doc.value,
+	() => {
+		emit('asset-loaded');
+	},
+	{ immediate: true }
 );
 
 const formatDocumentAuthors = (d: DocumentType) =>
