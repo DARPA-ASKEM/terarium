@@ -7,34 +7,31 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<header>
-				<span>{{ previewItemResourceType?.toUpperCase() }}</span>
-				<i class="pi pi-times" @click="emit('update:previewItem', null)" />
-			</header>
-			<section>
-				<document
-					v-if="previewItemResourceType === ResourceType.XDD"
-					:xdd-uri="previewItemId"
-					:previewLineLimit="3"
-					:project="resources.activeProject"
-					:highlight="searchTerm"
-					:is-editable="false"
-				/>
-				<dataset
-					v-else-if="previewItemResourceType === ResourceType.DATASET"
-					:asset-id="previewItemId"
-					:project="resources.activeProject"
-					:highlight="searchTerm"
-					:is-editable="false"
-				/>
-				<model
-					v-else-if="previewItemResourceType === ResourceType.MODEL"
-					:asset-id="previewItemId"
-					:project="resources.activeProject"
-					:highlight="searchTerm"
-					:is-editable="false"
-				/>
-			</section>
+			<tera-document
+				v-if="previewItemResourceType === ResourceType.XDD"
+				:xdd-uri="previewItemId"
+				:previewLineLimit="3"
+				:project="resources.activeProject"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
+			<tera-dataset
+				v-else-if="previewItemResourceType === ResourceType.DATASET"
+				:asset-id="previewItemId"
+				:project="resources.activeProject"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
+			<tera-model
+				v-else-if="previewItemResourceType === ResourceType.MODEL"
+				:asset-id="previewItemId"
+				:project="resources.activeProject"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
 		</template>
 		<template v-slot:footerButtons>
 			<Button
@@ -45,7 +42,7 @@
 			/>
 			<Button
 				v-else
-				label="Remove from Resources"
+				label="Remove from selected resources"
 				@click="emit('toggle-data-item-selected', { item: previewItem })"
 				class="toggle-selection p-button-secondary"
 			/>
@@ -59,10 +56,10 @@ import { PropType, computed, ref, watch } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
-import Document from '@/components/documents/Document.vue';
-import Dataset from '@/components/dataset/Dataset.vue';
-import Model from '@/components/models/Model.vue';
+import TeraModel from '@/components/models/tera-model.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
+import TeraDocument from '@/components/documents/tera-document.vue';
 
 const resources = useResourcesStore();
 
@@ -116,6 +113,10 @@ watch(
 	}
 );
 
+function closePreview() {
+	emit('update:previewItem', null);
+}
+
 const previewItemId = computed(() => {
 	if (!previewItemState.value) return '';
 	if (isDocument(previewItemState.value)) {
@@ -134,6 +135,7 @@ header {
 	display: flex;
 	align-items: center;
 	margin: 1rem;
+	margin-bottom: 0;
 	font-size: 14px;
 	color: var(--text-color-subdued);
 	font-weight: bold;

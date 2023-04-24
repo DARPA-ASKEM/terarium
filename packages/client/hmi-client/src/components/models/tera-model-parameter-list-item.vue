@@ -105,10 +105,11 @@
 									<template v-else-if="key.toString() === 'data_annotations'">
 										{{ ex[0] }}: {{ ex[1] }}
 									</template>
-									<vue-mathjax
+
+									<katex-element
 										v-else-if="key.toString() === 'equation_annotations'"
-										:formula="String.raw`$$${Object.keys(ex)[0]}$$`"
-									/>
+										:expression="Object.keys(ex)[0]"
+									></katex-element>
 									<template v-else>
 										{{ ex }}
 									</template>

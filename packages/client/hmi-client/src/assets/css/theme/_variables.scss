@@ -161,13 +161,13 @@ $plainButtonHoverBgColor: rgba(0, 0, 0, .04) !default;
 $plainButtonActiveBgColor: rgba(0, 0, 0, .16) !default;
 
 $secondaryButtonBg: $accentColor !default;
-$secondaryButtonTextColor: $accentTextColor !default;
+$secondaryButtonTextColor: var(--text-color-subdued) !default;
 $secondaryButtonBorder: 0 none !default;
 $secondaryButtonHoverBg: var(--surface-hover)!default;
-$secondaryButtonTextHoverColor: $accentTextColor !default;
+$secondaryButtonTextHoverColor: var(--text-color-primary) !default;
 $secondaryButtonHoverBorderColor: var(--gray-200) !default;
 $secondaryButtonActiveBg: rgba($accentColor, .68) !default;
-$secondaryButtonTextActiveColor: $accentTextColor !default;
+$secondaryButtonTextActiveColor: var(--text-color-primary) !default;
 $secondaryButtonActiveBorderColor: transparent !default;
 $secondaryButtonFocusShadow: none !default;
 
@@ -905,6 +905,7 @@ $petri-inputBox: var(--gray-300);
 	--surface-b: #fafafa;
 	--surface-border: #D0D5DD;
 	--surface-border-light: #EAEAEA;
+	--surface-border-warning: #D92D20;
 	--surface-c: rgba(0, 0, 0, .04);
 	--surface-card: #ffffff;
 	--surface-d: rgba(0, 0, 0, .12);

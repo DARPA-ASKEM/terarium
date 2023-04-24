@@ -1,14 +1,11 @@
 <template>
-	<section class="asset">
-		<header>
-			<div class="simulation" v-if="dataset?.simulation_run">Simulation run</div>
-			<h4 v-html="dataset?.name" />
-		</header>
-
-		<section class="description">
-			<span>{{ dataset?.description }}</span>
-		</section>
-
+	<tera-asset
+		v-if="dataset"
+		:name="dataset?.name"
+		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
+		:is-editable="isEditable"
+		@close-preview="emit('close-preview')"
+	>
 		<section class="metadata data-row">
 			<section>
 				<header>Maintainer</header>
@@ -37,8 +34,10 @@
 				<section>{{ csvContent?.length }}</section>
 			</section>
 		</section>
-
 		<Accordion :multiple="true" :activeIndex="showAccordion">
+			<AccordionTab header="Description">
+				<p v-html="dataset.description" />
+			</AccordionTab>
 			<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
 				<template #header>
 					Annotations<span class="artifact-amount"
@@ -108,45 +107,30 @@
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 				</template>
-				<DataTable
-					tableStyle="width:auto"
-					class="p-datatable-sm"
-					:value="csvContent"
-					removableSort
-					resizable-columns
-					showGridlines
-				>
-					<Column
-						v-for="colName of rawColumnNames"
-						:key="colName"
-						:field="colName"
-						:header="colName"
-						sortable
-					>
-					</Column>
-				</DataTable>
+				<tera-dataset-datatable :raw-content="rawContent" />
 			</AccordionTab>
 		</Accordion>
-	</section>
+	</tera-asset>
 </template>
-
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
-import { csvToRecords, getColumns, Record } from '@/utils/csv';
 import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
+import { CsvAsset } from '@/types/Types';
+import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraAsset from '@/components/asset/tera-asset.vue';
 
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
 }>();
+
+const emit = defineEmits(['close-preview']);
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -157,21 +141,16 @@ function highlightSearchTerms(text: string | undefined): string {
 }
 
 const dataset = ref<Dataset | null>(null);
-const rawContent = ref<string | null>(null);
+const rawContent = ref<CsvAsset | null>(null);
 
-const csvContent = computed(() =>
-	rawContent.value ? csvToRecords(rawContent.value) : ([] as Record[])
-);
-const rawColumnNames = computed(() =>
-	csvContent.value ? getColumns(csvContent.value) : ([] as string[])
-);
+const csvContent = computed(() => rawContent.value?.csv);
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId);
+			rawContent.value = await downloadRawFile(props.assetId, 10);
 			const datasetTemp = await getDataset(props.assetId);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
@@ -215,6 +194,7 @@ const showAccordion = computed(() =>
 	padding: 0.5rem;
 }
 
+/* Datatable  */
 .data-row > section > header {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
@@ -249,7 +229,7 @@ ol.numbered-list li::marker {
 	max-width: var(--constrain-width);
 }
 
-.annotation-group {
+main .annotation-group {
 	padding: 0.25rem;
 	border: solid 1px var(--surface-border-light);
 	background-color: var(--gray-50);

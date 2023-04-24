@@ -74,6 +74,7 @@ nav {
 	display: grid;
 	grid-auto-columns: min(calc(100% / var(--nb-tabs, 1)), 20%);
 	grid-auto-flow: column;
+	margin: 0.2rem 0.2rem 0 0.2rem;
 }
 
 @keyframes show-tab {

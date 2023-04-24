@@ -31,7 +31,7 @@
 				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
-				<document
+				<tera-document
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 					:xdd-uri="getXDDuri(assetId)"
 					:previewLineLimit="10"
@@ -40,14 +40,14 @@
 					@open-asset="openAsset"
 					@asset-loaded="setActiveTab"
 				/>
-				<dataset
-					v-else-if="assetType === ProjectAssetTypes.DATASETS"
+				<tera-model
+					v-else-if="assetType === ProjectAssetTypes.MODELS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
 				/>
-				<model
-					v-else-if="assetType === ProjectAssetTypes.MODELS"
+				<tera-dataset
+					v-else-if="assetType === ProjectAssetTypes.DATASETS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
@@ -68,7 +68,7 @@
 				:initial-code="code"
 				@on-model-created="openNewModelFromCode"
 			/>
-			<model
+			<tera-model
 				v-else-if="assetType === ProjectAssetTypes.MODELS"
 				:asset-id="newModelId"
 				:project="project"
@@ -227,9 +227,8 @@ import { isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import Dataset from '@/components/dataset/Dataset.vue';
-import Document from '@/components/documents/Document.vue';
-import Model from '@/components/models/Model.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
+import TeraModel from '@/components/models/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
@@ -254,6 +253,7 @@ import {
 } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
 import { PetriNet } from '@/petrinet/petrinet-service';
+import TeraDocument from '@/components/documents/tera-document.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -559,8 +559,7 @@ section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	overflow: auto;
-	padding: 0.5rem 0.5rem 0;
+	overflow-x: auto;
 }
 
 .no-open-tabs {
@@ -569,10 +568,6 @@ section {
 	margin-bottom: 8rem;
 	align-items: center;
 	color: var(--text-color-subdued);
-}
-
-.asset {
-	padding-top: 1rem;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

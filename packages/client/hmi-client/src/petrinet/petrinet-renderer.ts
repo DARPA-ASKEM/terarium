@@ -30,8 +30,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		super.initialize(element);
 
 		d3.select(this.svgEl)
-			.style('border', '2px solid transparent')
-			.style('border-radius', '8px 0px 0px 8px');
+			.style('border', '4px solid transparent')
+			.style('border-radius', 'var(--border-radius) 0px 0px var(--border-radius)');
 	}
 
 	setupDefs() {
@@ -66,9 +66,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const svg = d3.select(this.svgEl);
 		if (this.editMode) {
-			svg.style('border', '2px solid var(--primary-color)');
+			svg.style('border', '4px solid var(--primary-color)');
 		} else {
-			svg.style('border', '2px solid transparent');
+			svg.style('border', '4px solid transparent');
 		}
 	}
 
