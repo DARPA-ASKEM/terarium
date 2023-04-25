@@ -5,15 +5,20 @@
 			<Button label="Start listening" @click="listen" />
 			<Button label="Create empty models" @click="createEmptyModel" />
 		</header>
-		<ul></ul>
+		<ul>
+			<li v-for="modelId in models" :key="modelId">{{ modelId }}</li>
+		</ul>
 	</main>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import * as ModelService from '@/services/models/model-service';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import useAuthStore from '../stores/auth';
+
+const models = ref<Array<string>>([]);
 
 function listen() {
 	const auth = useAuthStore();
@@ -24,15 +29,14 @@ function listen() {
 	});
 	//const events = new EventSource("/api/server-sent-events", { withCredentials: true });
 	events.onmessage = (event) => {
-		console.log(event);
-		const json = JSON.parse(event.data);
-		console.log(json);
+		const id: string = JSON.parse(event.data)?.id;
+		models.value.push(id);
+		console.log(id);
 	};
 }
 
 async function createEmptyModel() {
-	const model = await ModelService.create();
-	console.log('Model created', model);
+	await ModelService.create();
 }
 </script>
 
