@@ -22,6 +22,10 @@ let gX: d3.Selection<SVGGElement, any, null, any>;
 let gY: d3.Selection<SVGGElement, any, null, any>;
 let currentTransform: d3.ZoomTransform;
 
+// Debug
+const debugMode = false;
+const scaleExtent: [number, number] = [0.1, 10];
+
 const width = ref(0);
 const height = ref(0);
 const canvasRef = ref<HTMLElement>();
@@ -48,30 +52,32 @@ function updateDimensions() {
 	// Update dimensions
 	width.value = canvasRef.value?.clientWidth ?? window.innerWidth;
 	height.value = canvasRef.value?.clientHeight ?? window.innerHeight;
-	console.log(0);
-	// Update debug values
-	x = d3
-		.scaleLinear()
-		.domain([-1, width.value + 1])
-		.range([-1, width.value + 1]);
-	y = d3
-		.scaleLinear()
-		.domain([-1, height.value + 1])
-		.range([-1, height.value + 1]);
-	xAxis = d3
-		.axisBottom(x)
-		.ticks(((width.value + 2) / (height.value + 2)) * 10)
-		.tickSize(height.value)
-		.tickPadding(8 - height.value);
-	yAxis = d3
-		.axisRight(y)
-		.ticks(10)
-		.tickSize(width.value)
-		.tickPadding(8 - width.value);
 
-	if (currentTransform) {
-		gX.call(xAxis.scale(currentTransform.rescaleX(x)));
-		gY.call(yAxis.scale(currentTransform.rescaleY(y)));
+	if (debugMode) {
+		// Update debug values
+		x = d3
+			.scaleLinear()
+			.domain([-1, width.value + 1])
+			.range([-1, width.value + 1]);
+		y = d3
+			.scaleLinear()
+			.domain([-1, height.value + 1])
+			.range([-1, height.value + 1]);
+		xAxis = d3
+			.axisBottom(x)
+			.ticks(((width.value + 2) / (height.value + 2)) * 10)
+			.tickSize(height.value)
+			.tickPadding(8 - height.value);
+		yAxis = d3
+			.axisRight(y)
+			.ticks(10)
+			.tickSize(width.value)
+			.tickPadding(8 - width.value);
+
+		if (currentTransform) {
+			gX.call(xAxis.scale(currentTransform.rescaleX(x)));
+			gY.call(yAxis.scale(currentTransform.rescaleY(y)));
+		}
 	}
 }
 
@@ -82,7 +88,7 @@ onMounted(() => {
 
 	const zoom = d3
 		.zoom()
-		.scaleExtent([0.2, 20])
+		.scaleExtent(scaleExtent)
 		.on('zoom', (e) => handleZoom(e, container));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
@@ -92,8 +98,10 @@ onMounted(() => {
 	updateDimensions();
 	window.addEventListener('resize', () => updateDimensions());
 
-	gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
-	gY = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
+	if (debugMode) {
+		gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
+		gY = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
+	}
 });
 </script>
 
@@ -112,6 +120,10 @@ svg {
 
 .data-layer {
 	position: absolute;
+}
+
+.axis {
+	opacity: 0.5;
 }
 
 svg:active {
