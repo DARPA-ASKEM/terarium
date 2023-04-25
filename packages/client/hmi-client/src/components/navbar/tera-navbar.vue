@@ -19,7 +19,7 @@
 			</div>
 			<Menu ref="navigationMenu" :model="navMenuItems" :popup="true" class="navigation-menu" />
 		</section>
-		<SearchBar
+		<tera-searchbar
 			v-if="active"
 			class="search-bar"
 			ref="searchBarRef"
@@ -57,7 +57,7 @@ import Chip from 'primevue/chip';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
 import { MenuItem } from 'primevue/menuitem';
-import SearchBar from '@/page/data-explorer/components/search-bar.vue';
+import TeraSearchbar from '@/components/navbar/tera-searchbar.vue';
 import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteMetadata, RouteName } from '@/router/routes';
 import { getRelatedTerms } from '@/services/data';

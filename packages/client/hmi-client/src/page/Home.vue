@@ -34,12 +34,12 @@
 							</div>
 							<ul v-if="isLoadingProjects">
 								<li v-for="i in [0, 1, 2]" :key="i">
-									<project-card />
+									<tera-project-card />
 								</li>
 							</ul>
 							<ul v-else>
 								<li v-for="project in projects" :key="project.id">
-									<project-card
+									<tera-project-card
 										:project="project"
 										@click="openProject(project.id)"
 										@removed="removeProject"
@@ -81,7 +81,7 @@
 						</div>
 						<ul>
 							<li v-for="(document, j) in project.relatedDocuments" :key="j">
-								<DocumentCard :document="document" @click="selectDocument(document)" />
+								<tera-document-card :document="document" @click="selectDocument(document)" />
 							</li>
 						</ul>
 					</div>
@@ -93,7 +93,7 @@
 					<div class="carousel">
 						<ul>
 							<li v-for="i in [0, 1, 2, 3, 4, 5]" :key="i">
-								<DocumentCard />
+								<tera-document-card />
 							</li>
 						</ul>
 					</div>
@@ -121,7 +121,7 @@
 				<div class="modal-subheader-text">
 					<em> {{ listAuthorNames(selectedDocument.author) }} </em>
 				</div>
-				<selected-document-pane
+				<tera-selected-document-pane
 					class="selected-document-pane"
 					:selected-document="selectedDocument"
 					@close="close()"
@@ -130,7 +130,7 @@
 		</div>
 		<!-- New project modal -->
 		<Teleport to="body">
-			<Modal
+			<tera-modal
 				v-if="isNewProjectModalVisible"
 				class="modal"
 				@modal-mask-clicked="isNewProjectModalVisible = false"
@@ -163,34 +163,34 @@
 						>Cancel</Button
 					>
 				</template>
-			</Modal>
+			</tera-modal>
 		</Teleport>
 	</main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
+import TeraSelectedDocumentPane from '@/components/documents/tera-selected-document-pane.vue';
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
 import { DocumentType } from '@/types/Document';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
-import ProjectCard from '@/components/projects/ProjectCard.vue';
-import DocumentCard from '@/components/documents/DocumentCard.vue';
+import TeraDocumentCard from '@/components/home/tera-document-card.vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Modal from '@/components/widgets/Modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useRouter } from 'vue-router';
 import * as ProjectService from '@/services/project';
 import useAuthStore from '@/stores/auth';
 import { RouteName } from '@/router/routes';
 import Skeleton from 'primevue/skeleton';
 import { isEmpty } from 'lodash';
+import TeraProjectCard from '@/components/home/tera-project-card.vue';
 
 const projects = ref<IProject[]>();
 // Only display projects with at least one related document

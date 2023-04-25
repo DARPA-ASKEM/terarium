@@ -1,5 +1,5 @@
 <template>
-	<Modal class="modal" @modal-mask-clicked="close()">
+	<tera-modal class="modal" @modal-mask-clicked="close()">
 		<template #default>
 			<!-- initial values -->
 			<h4>Initial values</h4>
@@ -23,14 +23,14 @@
 			<Button @click="launch">Launch</Button>
 			<Button class="p-button-secondary" @click="close()">Cancel</Button>
 		</template>
-	</Modal>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { ITypedModel } from '@/types/Model';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import Modal from '@/components/widgets/Modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { makeForecast, createSimulation } from '@/services/models/simulation-service';
