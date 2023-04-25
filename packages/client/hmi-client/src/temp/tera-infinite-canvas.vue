@@ -1,10 +1,11 @@
 <template>
-	<main ref="canvasRef">
+	<main ref="canvasRef" @contextmenu="toggleContextMenu">
+		<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 		<div>
 			<slot name="foreground" />
 		</div>
 		<div class="data-layer" ref="dataLayerRef">
-			<div>html test</div>
+			<!-- <tera-workflow-node /> -->
 			<slot name="data" />
 		</div>
 		<svg ref="backgroundLayerRef" :width="width" :height="height"></svg>
@@ -14,6 +15,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
+import TeraWorkflowNode from './tera-workflow-node.vue';
+import { Node } from '@/types/workflow';
+import ContextMenu from 'primevue/contextmenu';
+
+const nodes = ref<Node[]>([]);
+const contextMenu = ref();
+const contextMenuItems = ref([{ label: 'New operation' }]);
+function toggleContextMenu(event) {
+	contextMenu.value.show(event);
+}
 
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
