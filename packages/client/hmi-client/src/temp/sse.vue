@@ -12,8 +12,23 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import * as ModelService from '@/services/models/model-service';
+import { EventSourcePolyfill } from 'event-source-polyfill';
+import useAuthStore from '../stores/auth';
 
-function listen() {}
+function listen() {
+	const auth = useAuthStore();
+	const events = new EventSourcePolyfill('/api/user/server-sent-events', {
+		headers: {
+			Authorization: `Bearer ${auth.token}`
+		}
+	});
+	//const events = new EventSource("/api/server-sent-events", { withCredentials: true });
+	events.onmessage = (event) => {
+		console.log(event);
+		const json = JSON.parse(event.data);
+		console.log(json);
+	};
+}
 
 async function createEmptyModel() {
 	const model = await ModelService.create();

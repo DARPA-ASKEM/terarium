@@ -27,6 +27,7 @@
 		"d3": "7.6.1",
 		"dagre": "0.8.5",
 		"eslint-import-resolver-typescript": "3.5.5",
+		"event-source-polyfill": "1.0.31",
 		"feather-icons": "4",
 		"graph-scaffolder": "*",
 		"katex": "0.16.6",
