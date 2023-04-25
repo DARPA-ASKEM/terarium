@@ -158,7 +158,7 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+						<tera-import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
 					</li>
 				</ul>
 			</AccordionTab>
@@ -224,7 +224,7 @@
 				</DataTable>
 			</AccordionTab>
 		</Accordion>
-		<pdf-embed
+		<tera-pdf-embed
 			v-else-if="documentView === DocumentView.PDF && pdfLink"
 			:pdf-link="pdfLink"
 			:title="doc.title"
@@ -247,8 +247,8 @@ import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-uti
 import { ResultType, Tab } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import ImportCodeButton from '@/components/widgets/import-code-button.vue';
-import PdfEmbed from '@/components/widgets/pdf-embed.vue';
+import TeraImportCodeButton from '@/components/widgets/tera-import-code-button.vue';
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';

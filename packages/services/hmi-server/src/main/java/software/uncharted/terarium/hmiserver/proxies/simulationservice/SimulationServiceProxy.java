@@ -6,6 +6,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationParams;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationParams;
 
 
 @RegisterRestClient(configKey = "simulation-service")
@@ -30,5 +31,12 @@ public interface SimulationServiceProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response getRunResult(
 		@PathParam("runId") String runId
+	);
+
+	@POST
+	@Path("/calls/calibrate")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response makeCalibrateJob(
+		CalibrationParams calibrationParams
 	);
 }

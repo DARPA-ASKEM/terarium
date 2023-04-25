@@ -6,6 +6,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationParams;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationParams;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 
@@ -78,5 +79,16 @@ public class SimulationResource {
 		@PathParam("runId") final String runId
 	) {
 		return simulationServiceProxy.getRunResult(runId);
+	}
+
+	@POST
+	@Path("/calibrate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public Response makeCalibrateJob(
+		final CalibrationParams calibrationParams
+	) {
+		return simulationServiceProxy.makeCalibrateJob(calibrationParams);
 	}
 }

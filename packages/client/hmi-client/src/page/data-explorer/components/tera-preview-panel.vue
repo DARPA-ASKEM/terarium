@@ -7,7 +7,7 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<document
+			<tera-document
 				v-if="previewItemResourceType === ResourceType.XDD"
 				:xdd-uri="previewItemId"
 				:previewLineLimit="3"
@@ -56,10 +56,10 @@ import { PropType, computed, ref, watch } from 'vue';
 import useResourcesStore from '@/stores/resources';
 import { ResultType, ResourceType } from '@/types/common';
 import { isDocument } from '@/utils/data-util';
-import Document from '@/components/documents/Document.vue';
 import TeraModel from '@/components/models/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
+import TeraDocument from '@/components/documents/tera-document.vue';
 
 const resources = useResourcesStore();
 
