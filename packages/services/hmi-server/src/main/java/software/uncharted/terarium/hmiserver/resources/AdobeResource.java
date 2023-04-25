@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Path("/api/adobe")
 @Authenticated
-@Tag(name = "User Annotation REST Endpoints")
+@Tag(name = "Adobe REST Endpoints")
 @Slf4j
 public class AdobeResource {
 	@ConfigProperty(name = "adobe.api_key")
