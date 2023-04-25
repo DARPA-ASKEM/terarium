@@ -1,8 +1,13 @@
 <template>
 	<main ref="canvasRef">
-		<slot name="toolbar" />
-		<slot name="nodes" />
-		<svg id="d3Layer" :width="width" :height="height"></svg>
+		<div>
+			<slot name="foreground" />
+		</div>
+		<div class="data-layer" ref="dataLayerRef">
+			<div>html test</div>
+			<slot name="data" />
+		</div>
+		<svg ref="backgroundLayerRef" :width="width" :height="height"></svg>
 	</main>
 </template>
 
@@ -19,9 +24,18 @@ let currentTransform: d3.ZoomTransform;
 const width = ref(0);
 const height = ref(0);
 const canvasRef = ref<HTMLElement>();
+const dataLayerRef = ref();
+const backgroundLayerRef = ref();
 
 const handleZoom = (evt: any, container: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => {
-	container.attr('transform', evt.transform).style('transform-origin', '0 0');
+	container.attr('transform', evt.transform);
+
+	d3.select(dataLayerRef.value)
+		.style(
+			'transform',
+			`translate(${evt.transform.x}px, ${evt.transform.y}px) scale(${evt.transform.k})`
+		)
+		.style('transform-origin', '0 0');
 
 	gX.call(xAxis.scale(evt.transform.rescaleX(x)));
 	gY.call(yAxis.scale(evt.transform.rescaleY(y)));
@@ -61,14 +75,14 @@ function updateDimensions() {
 }
 
 onMounted(() => {
-	const svg = d3.select('#d3Layer');
+	const svg = d3.select(backgroundLayerRef.value);
 
-	const container = svg.append('g').classed('container', true);
+	const container = svg.append('g');
 
 	const zoom = d3
 		.zoom()
 		.scaleExtent([0.2, 20])
-		.on('zoom', (e) => handleZoom(e, container));
+		.on('zoom', (e) => handleZoom(e, container as any));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
@@ -93,6 +107,10 @@ svg {
 	cursor: grab;
 	width: 100%;
 	height: 100%;
+}
+
+.data-layer {
+	position: absolute;
 }
 
 svg:active {
