@@ -275,7 +275,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -320,7 +320,7 @@ import ModelParameterList from '@/components/models/tera-model-parameter-list.vu
 
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview']);
+const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview', 'asset-loaded']);
 
 const extractions = ref([]);
 
@@ -571,6 +571,12 @@ watch(
 		}
 	}
 );
+
+onUpdated(() => {
+	if (model.value) {
+		emit('asset-loaded');
+	}
+});
 
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
