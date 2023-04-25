@@ -82,7 +82,7 @@ onMounted(() => {
 	const zoom = d3
 		.zoom()
 		.scaleExtent([0.2, 20])
-		.on('zoom', (e) => handleZoom(e, container as any));
+		.on('zoom', (e) => handleZoom(e, container));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
