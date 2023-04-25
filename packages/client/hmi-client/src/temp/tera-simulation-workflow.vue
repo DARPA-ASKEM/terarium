@@ -1,7 +1,9 @@
 <template>
 	<infinite-canvas>
-		<template #toolbar></template>
-		<template #nodes></template>
+		<template #foreground></template>
+		<template #data>
+			<div style="font-size: 24px; padding: 10px; background: #9ef">This is a DataLayer DIV</div>
+		</template>
 	</infinite-canvas>
 </template>
 

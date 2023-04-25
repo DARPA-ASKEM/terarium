@@ -5,10 +5,11 @@
 			<slot name="foreground" />
 		</div>
 		<div class="data-layer" ref="dataLayerRef">
-			<!-- <tera-workflow-node /> -->
 			<slot name="data" />
 		</div>
-		<svg ref="backgroundLayerRef" :width="width" :height="height"></svg>
+		<svg ref="backgroundLayerRef" :width="width" :height="height">
+			<slot name="background" />
+		</svg>
 	</main>
 </template>
 
@@ -28,20 +29,20 @@ function toggleContextMenu(event) {
 
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
-let gX: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
-	gY: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+let gX: d3.Selection<SVGGElement, any, null, any>;
+let gY: d3.Selection<SVGGElement, any, null, any>;
 let currentTransform: d3.ZoomTransform;
 
 const width = ref(0);
 const height = ref(0);
 const canvasRef = ref<HTMLElement>();
-const dataLayerRef = ref();
-const backgroundLayerRef = ref();
+const dataLayerRef = ref<HTMLDivElement>();
+const backgroundLayerRef = ref<SVGElement>();
 
-const handleZoom = (evt: any, container: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => {
+const handleZoom = (evt: any, container: d3.Selection<SVGGElement, any, null, any>) => {
 	container.attr('transform', evt.transform);
 
-	d3.select(dataLayerRef.value)
+	d3.select(dataLayerRef.value as HTMLDivElement)
 		.style(
 			'transform',
 			`translate(${evt.transform.x}px, ${evt.transform.y}px) scale(${evt.transform.k})`
@@ -86,7 +87,7 @@ function updateDimensions() {
 }
 
 onMounted(() => {
-	const svg = d3.select(backgroundLayerRef.value);
+	const svg = d3.select(backgroundLayerRef.value as SVGGElement);
 
 	const container = svg.append('g');
 
