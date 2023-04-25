@@ -44,7 +44,8 @@
 		"vue": "3.2.47",
 		"vue-feather": "2",
 		"vue-router": "4.1.6",
-		"vue3-ace-editor": "2.2.2"
+		"vue3-ace-editor": "2.2.2",
+		"vue3-draggable-resizable": "1.6.5"
 	},
 	"devDependencies": {
 		"@pinia/testing": "0.0.16",

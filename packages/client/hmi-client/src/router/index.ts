@@ -11,6 +11,7 @@ import TA2Playground from '@/temp/TA2Playground.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
+import SimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -47,6 +48,7 @@ const routes = [
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
+	{ path: '/simulation-workflow', component: SimulationWorkflow },
 	{ path: '/workflow-playground', component: WorkflowPlayground }
 ];
 
