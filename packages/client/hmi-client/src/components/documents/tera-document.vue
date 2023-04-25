@@ -233,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, onUpdated } from 'vue';
 import { isEmpty, isEqual, uniqWith } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -275,7 +275,7 @@ const doc = ref<DocumentType | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset', 'close-preview']);
+const emit = defineEmits(['open-asset', 'close-preview', 'asset-loaded']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
@@ -455,6 +455,12 @@ const formatCitation = (obj: { [key: string]: string }) => {
 onMounted(async () => {
 	fetchDocumentArtifacts();
 	fetchAssociatedResources();
+});
+
+onUpdated(() => {
+	if (doc.value) {
+		emit('asset-loaded');
+	}
 });
 </script>
 <style scoped>

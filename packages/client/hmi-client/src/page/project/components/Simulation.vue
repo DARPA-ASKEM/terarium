@@ -15,6 +15,8 @@ import { RouteName } from '@/router/routes';
 import { logger } from '@/utils/logger';
 import { ProjectAssetTypes } from '@/types/Project';
 
+const emit = defineEmits(['asset-loaded']);
+
 // FIXME: remove after Dec 8 demo
 const IS_DEC_8_DEMO = true;
 
@@ -81,6 +83,8 @@ const plan = {
 const route = useRoute();
 
 onMounted(async () => {
+	emit('asset-loaded'); // temp placement of this emit
+
 	// FIXME: remove after Dec 8 Demo
 	if (IS_DEC_8_DEMO) return;
 	const divElement = (document.querySelector('.simulation-plan') ?? [0]) as HTMLDivElement;
