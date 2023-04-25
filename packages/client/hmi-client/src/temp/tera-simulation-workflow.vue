@@ -1,7 +1,9 @@
 <template>
 	<infinite-canvas>
-		<template #toolbar></template>
-		<template #nodes></template>
+		<template #foreground></template>
+		<template #data>
+			<div>ssss</div>
+		</template>
 	</infinite-canvas>
 </template>
 
