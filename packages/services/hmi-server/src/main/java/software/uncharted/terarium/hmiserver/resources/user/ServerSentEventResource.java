@@ -24,7 +24,7 @@ public class ServerSentEventResource {
 	@Inject
 	SecurityIdentity securityIdentity;
 
-	@Channel("user-event") Multi<UserEvent> userEvents;
+	@Channel("user-ack") Multi<UserEvent> userEvents;
 
 	/**
 	 * Gets all user events

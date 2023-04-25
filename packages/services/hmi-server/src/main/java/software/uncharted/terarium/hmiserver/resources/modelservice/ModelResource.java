@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.resources.modelservice;
 
 import io.quarkus.security.Authenticated;
+import io.smallrye.reactive.messaging.annotations.Broadcast;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import org.eclipse.microprofile.reactive.messaging.Channel;
@@ -10,12 +12,14 @@ import org.eclipse.microprofile.reactive.messaging.Emitter;
 import software.uncharted.terarium.hmiserver.models.modelservice.Graph;
 import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositionParams;
 import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
+import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
+import java.util.UUID;
 
 @Path("/api/model-service/models")
 @Authenticated
@@ -27,8 +31,9 @@ public class ModelResource {
 	@RestClient
 	ModelServiceProxy proxy;
 
+	@Broadcast
 	@Channel("user-event")
-	Emitter<String> userEventRequestEmitter;
+	Emitter<UserEvent> userEventEmitter;
 
 	@PUT
 	@Produces(MediaType.APPLICATION_JSON)
@@ -36,9 +41,11 @@ public class ModelResource {
 	public Response createModel() {
 		final Response response = proxy.createModel();
 		final Map model = response.readEntity(Map.class);
-		final String modelId = model.get("id").toString();
-		userEventRequestEmitter.send(modelId);
-		return Response.ok(Map.of("id", modelId)).build();
+		final UUID eventId = UUID.fromString(model.get("id").toString());
+		final UserEvent event = new UserEvent();
+		event.setId(eventId);
+		userEventEmitter.send(event);
+		return Response.ok(Map.of("id", model.get("id").toString())).build();
 	}
 
 
