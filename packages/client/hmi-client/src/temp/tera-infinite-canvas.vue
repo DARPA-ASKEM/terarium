@@ -1,8 +1,8 @@
 <template>
-	<main id="canvas" ref="canvasRef">
+	<main ref="canvasRef">
 		<slot name="toolbar" />
 		<slot name="nodes" />
-		<svg :width="width" :height="height"></svg>
+		<svg id="d3Layer" :width="width" :height="height"></svg>
 	</main>
 </template>
 
@@ -10,16 +10,15 @@
 import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
 
-let width = 0,
-	height = 0;
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
 let gX: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
 	gY: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
 let currentTransform: d3.ZoomTransform;
 
+const width = ref(0);
+const height = ref(0);
 const canvasRef = ref<HTMLElement>();
-// const debugMode = ref(true);
 
 const handleZoom = (evt: any, container: d3.Selection<SVGGElement, unknown, HTMLElement, any>) => {
 	container.attr('transform', evt.transform).style('transform-origin', '0 0');
@@ -32,27 +31,28 @@ const handleZoom = (evt: any, container: d3.Selection<SVGGElement, unknown, HTML
 
 function updateDimensions() {
 	// Update dimensions
-	width = canvasRef.value?.clientWidth ?? window.innerWidth;
-	height = canvasRef.value?.clientHeight ?? window.innerHeight;
+	width.value = canvasRef.value?.clientWidth ?? window.innerWidth;
+	height.value = canvasRef.value?.clientHeight ?? window.innerHeight;
+	console.log(0);
 	// Update debug values
 	x = d3
 		.scaleLinear()
-		.domain([-1, width + 1])
-		.range([-1, width + 1]);
+		.domain([-1, width.value + 1])
+		.range([-1, width.value + 1]);
 	y = d3
 		.scaleLinear()
-		.domain([-1, height + 1])
-		.range([-1, height + 1]);
+		.domain([-1, height.value + 1])
+		.range([-1, height.value + 1]);
 	xAxis = d3
 		.axisBottom(x)
-		.ticks(((width + 2) / (height + 2)) * 10)
-		.tickSize(height)
-		.tickPadding(8 - height);
+		.ticks(((width.value + 2) / (height.value + 2)) * 10)
+		.tickSize(height.value)
+		.tickPadding(8 - height.value);
 	yAxis = d3
 		.axisRight(y)
 		.ticks(10)
-		.tickSize(width)
-		.tickPadding(8 - width);
+		.tickSize(width.value)
+		.tickPadding(8 - width.value);
 
 	if (currentTransform) {
 		gX.call(xAxis.scale(currentTransform.rescaleX(x)));
@@ -61,7 +61,7 @@ function updateDimensions() {
 }
 
 onMounted(() => {
-	const svg = d3.select('svg');
+	const svg = d3.select('#d3Layer');
 
 	const container = svg.append('g').classed('container', true);
 
@@ -83,7 +83,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-#canvas {
+main {
 	width: 100%;
 	height: 100%;
 }

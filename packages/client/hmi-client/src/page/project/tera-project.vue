@@ -75,7 +75,8 @@
 				is-editable
 			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
-			<!-- <tera-simulation-workflow v-else /> Test workflow in project view -->
+			<!-- Test workflow in project view -->
+			<!-- <tera-simulation-workflow v-else /> -->
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
