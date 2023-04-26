@@ -46,8 +46,6 @@ const backgroundLayerRef = ref<SVGElement>();
 const handleZoom = (evt: any, container: d3.Selection<SVGGElement, any, null, any>) => {
 	container.attr('transform', evt.transform);
 
-	console.log(evt);
-
 	d3.select(dataLayerRef.value as HTMLDivElement)
 		.style(
 			'transform',
@@ -107,7 +105,6 @@ onMounted(() => {
 		.on('zoom', (e) => handleZoom(e, container));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
-
 	svg.transition().call(zoom.transform as any, currentTransform);
 
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
