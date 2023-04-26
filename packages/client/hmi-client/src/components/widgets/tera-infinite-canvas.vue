@@ -20,7 +20,7 @@ const props = withDefaults(
 	defineProps<{
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
-		lastTransform?: d3.ZoomTransform;
+		lastTransform?: { k: number; x: number; y: number };
 	}>(),
 	{
 		debugMode: false,
@@ -31,11 +31,13 @@ const props = withDefaults(
 
 const emit = defineEmits(['save-transform']);
 
-let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
-let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
-let gX: d3.Selection<SVGGElement, any, null, any>, gY: d3.Selection<SVGGElement, any, null, any>;
-
-let currentTransform = props.lastTransform;
+let x: d3.ScaleLinear<number, number, never>;
+let y: d3.ScaleLinear<number, number, never>;
+let xAxis: d3.Axis<d3.NumberValue>;
+let yAxis: d3.Axis<d3.NumberValue>;
+let gX: d3.Selection<SVGGElement, any, null, any>;
+let gY: d3.Selection<SVGGElement, any, null, any>;
+let currentTransform: d3.ZoomTransform;
 
 const width = ref(0);
 const height = ref(0);
@@ -95,28 +97,36 @@ function updateDimensions() {
 const resizeObserver = new ResizeObserver(() => updateDimensions());
 
 onMounted(() => {
-	const svg = d3.select(backgroundLayerRef.value as SVGGElement);
+	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
+	const container = svg.append('g'); // Pan/zoom area
 
-	const container = svg.append('g');
-
+	// Zoom config is applied and event handler
 	const zoom = d3
 		.zoom()
 		.scaleExtent(props.scaleExtent)
 		.on('zoom', (e) => handleZoom(e, container));
-
 	svg.call(zoom as any).on('dblclick.zoom', null);
-	// Resize works when d3.zoomIdentity is thrown in here - for some reason assigning currentTransform to d3.zoomIdentity and putting it here doesnt work
-	svg.transition().call(zoom.transform as any, d3.zoomIdentity);
 
-	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
-
+	// Initializes/watches resize of component so SVG layer fills it
 	updateDimensions();
 	if (canvasRef.value) resizeObserver.observe(canvasRef.value);
 
+	// Assign debug grid
 	if (props.debugMode) {
 		gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
 		gY = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
 	}
+
+	// Initialize starting position
+	if (props.lastTransform) {
+		zoom.scaleTo(svg as any, props.lastTransform.k);
+		zoom.translateTo(svg as any, props.lastTransform.x, props.lastTransform.y);
+	} else {
+		// Default position - triggers handleZoom which in turn sets currentTransform
+		svg.transition().call(zoom.transform as any, d3.zoomIdentity);
+	}
+
+	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
 
 onUnmounted(() => {

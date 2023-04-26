@@ -8,16 +8,13 @@
 </template>
 
 <script setup lang="ts">
-import * as d3 from 'd3';
-import InfiniteCanvas from '@/temp/tera-infinite-canvas.vue';
+import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 
-let lastTransform = undefined;
-
-// {
-// 	k: 0.7120250977985356,
-// 	x: 246.1420085893451,
-// 	y: 199.416543275727
-// }
+const lastTransform = {
+	k: 0.5,
+	x: 0,
+	y: 0
+};
 
 function saveTransform(transform: d3.ZoomTransform) {
 	console.log(transform);
