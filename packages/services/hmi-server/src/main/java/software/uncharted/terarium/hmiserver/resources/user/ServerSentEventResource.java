@@ -4,7 +4,6 @@ package software.uncharted.terarium.hmiserver.resources.user;
 import com.oracle.svm.core.annotate.Inject;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
-import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.reactive.messaging.Channel;
@@ -16,11 +15,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.sse.OutboundSseEvent;
-import javax.ws.rs.sse.SseEventSink;
-import java.util.stream.Stream;
 
 @Path("/api/user/")
 @ApplicationScoped
