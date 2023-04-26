@@ -32,8 +32,8 @@ const emit = defineEmits(['save-transform']);
 
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
-let gX: d3.Selection<SVGGElement, any, null, any>;
-let gY: d3.Selection<SVGGElement, any, null, any>;
+let gX: d3.Selection<SVGGElement, any, null, any>, gY: d3.Selection<SVGGElement, any, null, any>;
+
 let currentTransform = props.lastTransform;
 
 const width = ref(0);
@@ -91,6 +91,8 @@ function updateDimensions() {
 	}
 }
 
+const resizeObserver = new ResizeObserver(() => updateDimensions());
+
 onMounted(() => {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement);
 
@@ -106,7 +108,7 @@ onMounted(() => {
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 
 	updateDimensions();
-	window.addEventListener('resize', () => updateDimensions());
+	if (canvasRef.value) resizeObserver.observe(canvasRef.value);
 
 	if (props.debugMode) {
 		gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
@@ -130,14 +132,13 @@ main {
 }
 
 .background-layer {
-	border: 1px solid blue;
 	cursor: grab;
 	width: 100%;
 	height: 100%;
 }
 
 .background-layer:deep(.tick line) {
-	opacity: 0.2;
+	color: var(--surface-border);
 }
 
 svg:active {
