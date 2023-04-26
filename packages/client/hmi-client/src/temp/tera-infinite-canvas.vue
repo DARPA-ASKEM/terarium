@@ -6,25 +6,35 @@
 		<div class="data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<svg ref="backgroundLayerRef" :width="width" :height="height">
+		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<slot name="background" />
 		</svg>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import * as d3 from 'd3';
+
+const props = withDefaults(
+	defineProps<{
+		debugMode?: boolean;
+		scaleExtent?: [number, number];
+		lastTransform?: d3.ZoomTransform;
+	}>(),
+	{
+		debugMode: false,
+		scaleExtent: () => [0.1, 10]
+	}
+);
+
+const emit = defineEmits(['save-transform']);
 
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
 let gX: d3.Selection<SVGGElement, any, null, any>;
 let gY: d3.Selection<SVGGElement, any, null, any>;
-let currentTransform: d3.ZoomTransform;
-
-// Debug
-const debugMode = false;
-const scaleExtent: [number, number] = [0.1, 10];
+let currentTransform = props.lastTransform;
 
 const width = ref(0);
 const height = ref(0);
@@ -53,7 +63,7 @@ function updateDimensions() {
 	width.value = canvasRef.value?.clientWidth ?? window.innerWidth;
 	height.value = canvasRef.value?.clientHeight ?? window.innerHeight;
 
-	if (debugMode) {
+	if (props.debugMode) {
 		// Update debug values
 		x = d3
 			.scaleLinear()
@@ -88,7 +98,7 @@ onMounted(() => {
 
 	const zoom = d3
 		.zoom()
-		.scaleExtent(scaleExtent)
+		.scaleExtent(props.scaleExtent)
 		.on('zoom', (e) => handleZoom(e, container));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
@@ -98,10 +108,14 @@ onMounted(() => {
 	updateDimensions();
 	window.addEventListener('resize', () => updateDimensions());
 
-	if (debugMode) {
+	if (props.debugMode) {
 		gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
 		gY = svg.append('g').attr('class', 'axis axis--y').call(yAxis);
 	}
+});
+
+onUnmounted(() => {
+	emit('save-transform', currentTransform);
 });
 </script>
 
@@ -111,19 +125,19 @@ main {
 	height: 100%;
 }
 
-svg {
+.data-layer {
+	position: absolute;
+}
+
+.background-layer {
 	border: 1px solid blue;
 	cursor: grab;
 	width: 100%;
 	height: 100%;
 }
 
-.data-layer {
-	position: absolute;
-}
-
-.axis {
-	opacity: 0.5;
+.background-layer:deep(.tick line) {
+	opacity: 0.2;
 }
 
 svg:active {
