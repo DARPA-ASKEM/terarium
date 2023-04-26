@@ -81,6 +81,8 @@
 				is-editable
 			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
+			<!-- Test workflow in project view -->
+			<!-- <tera-simulation-workflow v-else /> -->
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
@@ -245,6 +247,7 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult3.vue';
+// import TeraSimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -566,6 +569,7 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .no-open-tabs {

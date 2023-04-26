@@ -275,13 +275,13 @@ import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-uti
 import { ResultType, Tab } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
+import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 enum DocumentView {
