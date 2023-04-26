@@ -105,7 +105,8 @@ onMounted(() => {
 		.on('zoom', (e) => handleZoom(e, container));
 
 	svg.call(zoom as any).on('dblclick.zoom', null);
-	svg.transition().call(zoom.transform as any, currentTransform);
+	// Resize works when d3.zoomIdentity is thrown in here - for some reason assigning currentTransform to d3.zoomIdentity and putting it here doesnt work
+	svg.transition().call(zoom.transform as any, d3.zoomIdentity);
 
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 
