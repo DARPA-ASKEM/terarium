@@ -24,7 +24,8 @@ const props = withDefaults(
 	}>(),
 	{
 		debugMode: false,
-		scaleExtent: () => [0.1, 10]
+		scaleExtent: () => [0.1, 10],
+		lastTransform: undefined // d3.zoomIdentity
 	}
 );
 
