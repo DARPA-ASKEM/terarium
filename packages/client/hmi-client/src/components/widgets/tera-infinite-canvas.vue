@@ -55,8 +55,10 @@ const handleZoom = (evt: any, container: d3.Selection<SVGGElement, any, null, an
 		)
 		.style('transform-origin', '0 0');
 
-	gX.call(xAxis.scale(evt.transform.rescaleX(x)));
-	gY.call(yAxis.scale(evt.transform.rescaleY(y)));
+	if (props.debugMode) {
+		gX.call(xAxis.scale(evt.transform.rescaleX(x)));
+		gY.call(yAxis.scale(evt.transform.rescaleY(y)));
+	}
 
 	currentTransform = evt.transform;
 };

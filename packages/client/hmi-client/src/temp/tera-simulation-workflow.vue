@@ -11,7 +11,7 @@
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 
 const lastTransform = {
-	k: 0.5,
+	k: 0.75,
 	x: 0,
 	y: 0
 };
