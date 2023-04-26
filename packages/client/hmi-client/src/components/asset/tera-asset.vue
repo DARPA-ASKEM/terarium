@@ -72,7 +72,7 @@ const headerRef = ref();
 const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
-	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight : 1;
+	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
 	return scrollPosition.value > headerHeight && !props.isCreatingAsset;
 });
 
@@ -133,9 +133,11 @@ header.shrinked {
 	top: -1px;
 	z-index: 1;
 	isolation: isolate;
-	background-color: var(--surface-section);
+	background-color: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(6px);
 	padding: 0.5rem 1rem;
 	border-bottom: 1px solid var(--surface-border-light);
+	box-shadow: 0px 4px 8px -7px #b8b8b8;
 }
 
 header.shrinked h4 {
@@ -145,6 +147,7 @@ header.shrinked h4 {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	max-width: var(--constrain-width);
+	font-size: var(--font-body-small);
 }
 
 h4,
