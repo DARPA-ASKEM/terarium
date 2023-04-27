@@ -51,6 +51,7 @@ dependencies {
 	implementation "org.apache.commons:commons-text:1.10.0"
 	implementation "org.jsoup:jsoup:1.15.3"
 	implementation "com.google.guava:guava:31.1-jre"
+	implementation 'commons-io:commons-io:2.11.0'
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"
@@ -66,7 +67,7 @@ dependencies {
 }
 
 group "software.uncharted"
-version "1.0.0-SNAPSHOT"
+version "2.0.0"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
