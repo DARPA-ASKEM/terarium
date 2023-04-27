@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
 
 const props = withDefaults(
@@ -45,23 +45,24 @@ const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
 
-const handleZoom = (evt: any, container: d3.Selection<SVGGElement, any, null, any>) => {
-	container.attr('transform', evt.transform);
+function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
+	container.attr('transform', e.transform);
 
 	d3.select(dataLayerRef.value as HTMLDivElement)
-		.style(
-			'transform',
-			`translate(${evt.transform.x}px, ${evt.transform.y}px) scale(${evt.transform.k})`
-		)
+		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
 		.style('transform-origin', '0 0');
 
 	if (props.debugMode) {
-		gX.call(xAxis.scale(evt.transform.rescaleX(x)));
-		gY.call(yAxis.scale(evt.transform.rescaleY(y)));
+		gX.call(xAxis.scale(e.transform.rescaleX(x)));
+		gY.call(yAxis.scale(e.transform.rescaleY(y)));
 	}
 
-	currentTransform = evt.transform;
-};
+	currentTransform = e.transform;
+}
+
+function handleZoomEnd() {
+	emit('save-transform', currentTransform);
+}
 
 function updateDimensions() {
 	// Update dimensions
@@ -106,7 +107,8 @@ onMounted(() => {
 	const zoom = d3
 		.zoom()
 		.scaleExtent(props.scaleExtent)
-		.on('zoom', (e) => handleZoom(e, container));
+		.on('zoom', (e) => handleZoom(e, container))
+		.on('end', handleZoomEnd);
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
 	// Initializes/watches resize of component so SVG layer fills it
@@ -129,10 +131,6 @@ onMounted(() => {
 	}
 
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
-});
-
-onUnmounted(() => {
-	emit('save-transform', currentTransform);
 });
 </script>
 
