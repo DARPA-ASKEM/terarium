@@ -18,6 +18,7 @@ export interface Operation {
 // Defines the data-exchange between WorkflowNode
 // In most cases the value here will be an assetId
 export interface WorkflowPort {
+	id?: string; // FIXME: Investigate using unique-ids across dynamic port allocation
 	type: string;
 	value?: any;
 }
@@ -49,10 +50,10 @@ export interface WorkflowEdge {
 	workflowId: string;
 	points: { x: number; y: number }[];
 
-	source: string;
+	source: WorkflowNode['id'];
 	sourcePort: number;
 
-	target: string;
+	target: WorkflowNode['id'];
 	targetPort: number;
 }
 
