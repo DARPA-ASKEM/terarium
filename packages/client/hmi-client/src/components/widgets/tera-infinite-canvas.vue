@@ -142,7 +142,7 @@ main {
 	height: 100%;
 }
 
-.data-layer {
+main > * {
 	position: absolute;
 }
 
