@@ -1,4 +1,4 @@
-import { Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowEdge } from '@/workflow/workflow';
+import { Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowEdge } from '@/types/workflow';
 import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
