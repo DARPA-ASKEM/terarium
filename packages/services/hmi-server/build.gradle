@@ -23,12 +23,15 @@ dependencies {
 	implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusVersion}")
 
 	// REST server
-	implementation "io.quarkus:quarkus-resteasy"
-	implementation "io.quarkus:quarkus-resteasy-jackson"
+	implementation "io.quarkus:quarkus-resteasy-reactive"
+	implementation "io.quarkus:quarkus-resteasy-reactive-jackson"
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
 
+	// REST client
+	implementation "io.quarkus:quarkus-rest-client-reactive"
+	implementation "io.quarkus:quarkus-rest-client-reactive-jackson"
 
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"
@@ -40,9 +43,6 @@ dependencies {
 	implementation "io.quarkus:quarkus-cache"
 	implementation "io.quarkus:quarkus-scheduler"
 
-	// REST client
-	implementation "io.quarkus:quarkus-rest-client"
-
 	// Auth dependencies
 	implementation "io.quarkus:quarkus-oidc"
 	implementation "io.quarkus:quarkus-keycloak-authorization"
@@ -51,8 +51,6 @@ dependencies {
 	implementation "org.apache.commons:commons-text:1.10.0"
 	implementation "org.jsoup:jsoup:1.7.2"
 	implementation "com.google.guava:guava:31.1-jre"
-
-
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"
