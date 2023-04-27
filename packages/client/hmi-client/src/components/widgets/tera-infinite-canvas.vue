@@ -1,14 +1,14 @@
 <template>
 	<main ref="canvasRef">
-		<div>
-			<slot name="foreground" />
-		</div>
-		<div class="data-layer" ref="dataLayerRef">
-			<slot name="data" />
-		</div>
 		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<slot name="background" />
 		</svg>
+		<div class="data-layer" ref="dataLayerRef">
+			<slot name="data" />
+		</div>
+		<div>
+			<slot name="foreground" />
+		</div>
 	</main>
 </template>
 
