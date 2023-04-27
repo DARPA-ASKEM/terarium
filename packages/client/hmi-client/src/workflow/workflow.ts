@@ -19,6 +19,7 @@ export interface Operation {
 // In most cases the value here will be an assetId
 export interface WorkflowPort {
 	type: string;
+	label?: string;
 	value?: any;
 }
 

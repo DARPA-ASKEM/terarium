@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import InfiniteCanvas from '@/temp/tera-infinite-canvas.vue';
-import { WorkflowNode } from '@/workflow/workflow';
+import { Operation, WorkflowNode } from '@/workflow/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
 
@@ -25,17 +25,32 @@ const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const transform = ref<d3.ZoomTransform>();
 
-function insertNode() {
+const testOperation: Operation = {
+	name: 'Test operation',
+	description: 'A test operation',
+	inputs: [
+		{ type: 'number', label: 'Input one' },
+		{ type: 'number', label: 'Input two' },
+		{ type: 'number', label: 'Input three' }
+	],
+	outputs: [
+		{ type: 'number', label: 'Output one' },
+		{ type: 'number', label: 'Output two' }
+	],
+	action: () => {}
+};
+
+function insertNode(operation: Operation) {
 	nodes.value.push({
 		id: nodes.value.length.toString(),
 		workflowId: '0',
-		operationType: 'test-operation',
+		operationType: operation.name,
 		x: newNodePosition.value.x,
 		y: newNodePosition.value.y,
 		width: 100,
 		height: 100,
-		inputs: [],
-		outputs: []
+		inputs: operation.inputs,
+		outputs: operation.outputs
 	});
 }
 
@@ -43,7 +58,7 @@ const contextMenuItems = ref([
 	{
 		label: 'New operation',
 		command: () => {
-			insertNode();
+			insertNode(testOperation);
 		}
 	}
 ]);
