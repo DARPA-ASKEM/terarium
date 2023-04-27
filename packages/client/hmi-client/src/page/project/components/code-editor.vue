@@ -173,6 +173,7 @@ async function createModelFromCode() {
 	createModelLoading.value = true;
 	if (selectedPaper.value) {
 		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
+		console.log(paperToExtractMetadata);
 		if (paperToExtractMetadata) {
 			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
 			const metadata = await findVarsFromText(paperToExtractMetadata.abstractText);

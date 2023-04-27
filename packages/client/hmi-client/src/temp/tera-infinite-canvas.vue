@@ -1,6 +1,5 @@
 <template>
-	<main ref="canvasRef" @contextmenu="toggleContextMenu">
-		<ContextMenu ref="contextMenu" :model="contextMenuItems" />
+	<main ref="canvasRef">
 		<div>
 			<slot name="foreground" />
 		</div>
@@ -16,16 +15,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
-import TeraWorkflowNode from './tera-workflow-node.vue';
-import { Node } from '@/types/workflow';
-import ContextMenu from 'primevue/contextmenu';
 
-const nodes = ref<Node[]>([]);
-const contextMenu = ref();
-const contextMenuItems = ref([{ label: 'New operation' }]);
-function toggleContextMenu(event) {
-	contextMenu.value.show(event);
-}
+const emit = defineEmits(['zoom']);
 
 let x: d3.ScaleLinear<number, number, never>, y: d3.ScaleLinear<number, number, never>;
 let xAxis: d3.Axis<d3.NumberValue>, yAxis: d3.Axis<d3.NumberValue>;
@@ -53,6 +44,7 @@ const handleZoom = (evt: any, container: d3.Selection<SVGGElement, any, null, an
 	gY.call(yAxis.scale(evt.transform.rescaleY(y)));
 
 	currentTransform = evt.transform;
+	emit('zoom', currentTransform);
 };
 
 function updateDimensions() {

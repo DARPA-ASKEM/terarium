@@ -1,11 +1,23 @@
 <template>
-	<div class="container"></div>
+	<div class="container" :style="nodeStyle"></div>
 </template>
 
 <script setup lang="ts">
-// defineProps<{
+import { WorkflowNode } from '@/workflow/workflow';
+import { ref, onMounted } from 'vue';
 
-// }>();
+const props = defineProps<{
+	node: WorkflowNode;
+}>();
+
+const nodeStyle = ref({
+	width: `${props.node.width}px`,
+	height: `${props.node.height}px`,
+	top: `${props.node.y}px`,
+	left: `${props.node.x}px`
+});
+
+onMounted(() => {});
 </script>
 
 <style scoped>
@@ -13,8 +25,6 @@
 	background-color: var(--surface-section);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
-	height: 200px;
-	width: 200px;
 	position: absolute;
 }
 </style>
