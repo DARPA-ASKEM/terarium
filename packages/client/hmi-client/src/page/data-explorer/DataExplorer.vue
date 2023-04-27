@@ -490,6 +490,9 @@ const clearItemSelected = () => {
 
 async function executeNewQuery() {
 	searchTerm.value = route.query?.q?.toString() ?? searchTerm.value;
+
+	if (!searchTerm.value) return; // Empty string is an invalid search term
+
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
 

@@ -2,7 +2,7 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else
+			<template v-else-if="props.searchTerm"
 				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
 			>
 		</span>
