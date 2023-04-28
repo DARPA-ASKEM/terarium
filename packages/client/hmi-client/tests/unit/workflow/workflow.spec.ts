@@ -1,4 +1,11 @@
-import { Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowEdge } from '@/types/workflow';
+import {
+	WorkflowStatus,
+	Workflow,
+	WorkflowPort,
+	Operation,
+	WorkflowNode,
+	WorkflowEdge
+} from '@/types/workflow';
 import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
@@ -6,6 +13,7 @@ const addOperation: Operation = {
 	description: 'add two numbers',
 	inputs: [{ type: 'number' }, { type: 'number' }],
 	outputs: [{ type: 'number' }],
+	isRunnable: true,
 
 	// This is the brain of the operation, it will make changes, API-calls, that type of stuff
 	// and returns an outputs to the node
@@ -22,7 +30,6 @@ const workflow: Workflow = {
 	name: 'test',
 	description: 'test',
 	transform: { x: 0, y: 0, k: 1 },
-
 	nodes: [],
 	edges: []
 };
@@ -30,28 +37,32 @@ const workflow: Workflow = {
 const addEdge = (
 	wf: Workflow,
 	source: string,
-	sourcePort: number,
+	sourcePortId: string,
 	target: string,
-	targetPort: number
+	targetPortId: string
 ) => {
-	const d = wf.nodes.find((n) => n.id === source)?.outputs[sourcePort];
+	const d = wf.nodes.find((n) => n.id === source)?.outputs.find((o) => o.id === sourcePortId);
 	if (d) {
 		const targetNode = wf.nodes.find((n) => n.id === target);
 		if (targetNode) {
-			targetNode.inputs[targetPort] = d;
+			const targetNodePort = targetNode?.outputs.find((o) => o.id === targetPortId);
+			if (targetNodePort) {
+				targetNodePort.type = d.type;
+				targetNodePort.value = d.value;
+			}
 		}
 	}
 
-	const key = `${source}:${sourcePort}-${target}:${targetPort}`;
+	const key = `${source}:${sourcePortId}-${target}:${targetPortId}`;
 	const edge: WorkflowEdge = {
 		id: key,
 		workflowId: '0',
 		points: [],
 
 		source,
-		sourcePort,
+		sourcePortId,
 		target,
-		targetPort
+		targetPortId
 	};
 	wf.edges.push(edge);
 };
@@ -77,7 +88,8 @@ const plusNode = (id: string) =>
 		x: 0,
 		y: 0,
 		width: 0,
-		height: 0
+		height: 0,
+		statusCode: WorkflowStatus.INVALID
 	} as WorkflowNode);
 
 describe('basic tests to make sure it all works', () => {
@@ -95,11 +107,11 @@ describe('basic tests to make sure it all works', () => {
 		workflow.nodes.push(Z);
 
 		// Pretend we are linking connections
-		X.inputs.push({ type: 'number', value: 1 });
-		X.inputs.push({ type: 'number', value: 2 });
+		X.inputs.push({ id: '1', type: 'number', value: 1 });
+		X.inputs.push({ id: '2', type: 'number', value: 2 });
 
-		Y.inputs.push({ type: 'number', value: 3 });
-		Y.inputs.push({ type: 'number', value: 4 });
+		Y.inputs.push({ id: '3', type: 'number', value: 3 });
+		Y.inputs.push({ id: '4', type: 'number', value: 4 });
 
 		runNode(X); // should be 3
 		runNode(Y); // should be 7
