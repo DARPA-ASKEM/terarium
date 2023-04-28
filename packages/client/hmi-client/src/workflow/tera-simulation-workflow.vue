@@ -26,21 +26,21 @@ const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
 
-// const testOperation: Operation = {
-// 	name: 'Test operation',
-// 	description: 'A test operation',
-// 	inputs: [
-// 		{ type: 'number', label: 'Input one' },
-// 		{ type: 'number', label: 'Input two' },
-// 		{ type: 'number', label: 'Input three' }
-// 	],
-// 	outputs: [
-// 		{ type: 'number', label: 'Output one' },
-// 		{ type: 'number', label: 'Output two' }
-// 	],
-// 	action: () => {},
-// 	isRunnable: true
-// };
+const testOperation: Operation = {
+	name: 'testOpteration',
+	description: 'A test operation',
+	inputs: [
+		{ type: 'number', label: 'Input one' },
+		{ type: 'number', label: 'Input two' },
+		{ type: 'number', label: 'Input three' }
+	],
+	outputs: [
+		{ type: 'number', label: 'Output one' },
+		{ type: 'number', label: 'Output two' }
+	],
+	action: () => {},
+	isRunnable: true
+};
 
 function insertNode(operation: Operation) {
 	const newNode: WorkflowNode = {
@@ -60,7 +60,13 @@ function insertNode(operation: Operation) {
 
 const contextMenuItems = ref([
 	{
-		label: 'New operation',
+		label: 'New Test Operation',
+		command: () => {
+			insertNode(testOperation);
+		}
+	},
+	{
+		label: 'New Calibration',
 		command: () => {
 			insertNode(CalibrationOperation);
 		}
