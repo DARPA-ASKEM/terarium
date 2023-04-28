@@ -10,6 +10,7 @@ export const calibrationOperation: Operation = {
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [{ type: 'modelId' }, { type: 'datasetId' }, { type: 'calibrationConfiguration' }],
 	outputs: [{ type: 'number' }],
+	isRunnable: true,
 
 	// TODO: Figure out mapping
 	// Calls API, returns results.
