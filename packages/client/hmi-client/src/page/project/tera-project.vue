@@ -247,7 +247,7 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult3.vue';
-import TeraSimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
+import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
