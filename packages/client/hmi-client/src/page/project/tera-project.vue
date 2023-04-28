@@ -13,6 +13,7 @@
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
 					@open-overview="openOverview"
+					@open-canvas="openCanvas"
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
@@ -81,6 +82,7 @@
 				is-editable
 			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
+			<tera-simulation-workflow v-else-if="assetType === 'canvas'" :project="project" />
 			<!-- Test workflow in project view -->
 			<!-- <tera-simulation-workflow v-else /> -->
 			<section v-else class="no-open-tabs">
@@ -241,6 +243,7 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+import teraSimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
@@ -267,7 +270,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | '';
+	assetType?: ProjectAssetTypes | 'overview' | 'canvas' | '';
 }>();
 
 const emit = defineEmits(['update-project']);
@@ -413,6 +416,13 @@ const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
+	});
+};
+
+const openCanvas = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: { assetName: 'Canvas', assetType: 'canvas', assetId: undefined }
 	});
 };
 
