@@ -10,7 +10,7 @@
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 
 			<ul v-for="node in nodes">
-				<tera-workflow-node :node="node" :initialTransform="canvasTransform"></tera-workflow-node>
+				<tera-workflow-node :node="node"></tera-workflow-node>
 			</ul>
 		</template>
 	</infinite-canvas>

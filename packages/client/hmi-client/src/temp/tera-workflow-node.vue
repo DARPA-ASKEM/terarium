@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { WorkflowNode } from '@/workflow/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { ref, onMounted } from 'vue';
 
 const props = defineProps<{
