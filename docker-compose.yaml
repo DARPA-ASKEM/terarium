@@ -9,6 +9,7 @@ services:
       - VITE_BYPASS_KEYCLOAK=true
       - hmi_server_host=hmi-server
       - hmi_server_port=3000
+      - VITE_JUPYTER_TOKEN=89f73481102c46c0bc13b2998f9a4fce
     volumes:
       - ./packages/client/hmi-client/src:/hmi-client/src
     ports:
@@ -100,6 +101,21 @@ services:
       - "8888"
     ports:
       - "3010:8888"
+  simulation-service:
+    image: ghcr.io/darpa-askem/simulation-service:latest
+    expose:
+      - "8080"
+    ports:
+      - "3030:8080"
+  jupyter:
+    image: jupyter-llm:latest
+    ports:
+      - "8889:8888"
+    environment:
+      - DATA_SERVICE_URL=http://data-service:8000
+      - SIMULATION_SCHEDULER_URL=http://simulation-service:8080
+      - DEBUG=1
+      - JUPYTER_TOKEN=89f73481102c46c0bc13b2998f9a4fce
 volumes:
   terarium-db-storage:
   minio-data:
