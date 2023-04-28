@@ -38,7 +38,8 @@ const viewState = computed(() => props.node.viewState);
 const startCalibration = async () => {
 	// Make calibration job.
 	const calibrationParam: CalibrationParams = calibrationParamExample;
-	runId.value = await makeCalibrateJob(calibrationParam);
+	const results = await makeCalibrateJob(calibrationParam);
+	runId.value = results.id;
 	console.log(runId.value);
 };
 
