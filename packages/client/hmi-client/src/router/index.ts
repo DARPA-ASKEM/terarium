@@ -12,6 +12,7 @@ import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
 import SimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
+import JupyterTransform from '@/temp/jupyter-transform.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -49,7 +50,8 @@ const routes = [
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
 	{ path: '/simulation-workflow', component: SimulationWorkflow },
-	{ path: '/workflow-playground', component: WorkflowPlayground }
+	{ path: '/workflow-playground', component: WorkflowPlayground },
+	{ path: '/transform', component: JupyterTransform }
 ];
 
 const router = createRouter({
