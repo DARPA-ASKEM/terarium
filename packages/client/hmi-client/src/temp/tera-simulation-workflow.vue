@@ -1,11 +1,11 @@
 <template>
-	<infinite-canvas @contextmenu="toggleContextMenu" @zoom="updateTransform">
+	<infinite-canvas debug-mode @contextmenu="toggleContextMenu" @saveTransform="saveTransform">
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 
 			<ul v-for="node in nodes">
-				<tera-workflow-node :node="node" :initialTransform="transform"></tera-workflow-node>
+				<tera-workflow-node :node="node" :initialTransform="canvasTransform"></tera-workflow-node>
 			</ul>
 		</template>
 	</infinite-canvas>
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import InfiniteCanvas from '@/temp/tera-infinite-canvas.vue';
+import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
@@ -21,7 +21,7 @@ import ContextMenu from 'primevue/contextmenu';
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
-const transform = ref<d3.ZoomTransform>();
+const canvasTransform = ref<d3.ZoomTransform>();
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -66,16 +66,16 @@ const contextMenuItems = ref([
 
 function toggleContextMenu(event) {
 	contextMenu.value.show(event);
-	const transformX = transform.value ? transform.value.x : 0;
-	const transformY = transform.value ? transform.value.y : 0;
-	const transformK = transform.value ? transform.value.k : 1;
+	const transformX = canvasTransform.value ? canvasTransform.value.x : 0;
+	const transformY = canvasTransform.value ? canvasTransform.value.y : 0;
+	const transformK = canvasTransform.value ? canvasTransform.value.k : 1;
 	newNodePosition.value = {
 		x: (event.offsetX - transformX) / transformK,
 		y: (event.offsetY - transformY) / transformK
 	};
 }
 
-function updateTransform(newTransform: d3.ZoomTransform) {
-	transform.value = newTransform;
+function saveTransform(newTransform: d3.ZoomTransform) {
+	canvasTransform.value = newTransform;
 }
 </script>
