@@ -85,7 +85,7 @@
 				:project="project"
 				@open-workflow="openWorkflow"
 			/>
-			<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
+			<tera-simulation-workflow v-else-if="assetType === 'workflow'" />
 			<!-- Test workflow in project view -->
 			<!-- <tera-simulation-workflow v-else /> -->
 			<section v-else class="no-open-tabs">
