@@ -1,8 +1,6 @@
 <template>
 	<infinite-canvas @contextmenu="toggleContextMenu" @zoom="updateTransform">
-		<template #foreground>
-			<!-- <div style="font-size: 24px; padding: 10px; background: #9ef">This is a foreground DIV</div> -->
-		</template>
+		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 
@@ -62,6 +60,7 @@ const contextMenuItems = ref([
 		}
 	}
 ]);
+
 function toggleContextMenu(event) {
 	contextMenu.value.show(event);
 	const transformX = transform.value ? transform.value.x : 0;
