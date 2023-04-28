@@ -6,6 +6,12 @@ export enum WorkflowStatus {
 	ERROR = 'error'
 }
 
+export enum VIEWOPTIONS {
+	ONNODE = 'onNode',
+	PREVIEW = 'preview',
+	FULLPAGE = 'fullPage'
+}
+
 // Defines the type of data an operation can consume and output
 export interface OperationData {
 	type: string;
@@ -48,7 +54,7 @@ export interface WorkflowNode {
 	y: number;
 	width: number;
 	height: number;
-
+	viewState: VIEWOPTIONS;
 	inputs: WorkflowPort[];
 	outputs: WorkflowPort[];
 

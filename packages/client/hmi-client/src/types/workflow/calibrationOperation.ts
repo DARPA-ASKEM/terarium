@@ -4,8 +4,8 @@ import { calibrationParamExample } from '@/temp/calibrationExample';
 import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 
-export const calibrationOperation: Operation = {
-	name: 'calibration',
+export const CalibrationOperation: Operation = {
+	name: 'CalibrationOperation',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [{ type: 'modelId' }, { type: 'datasetId' }, { type: 'calibrationConfiguration' }],

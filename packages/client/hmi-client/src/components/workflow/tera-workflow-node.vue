@@ -7,6 +7,7 @@
 				{{ input.label }}
 			</li>
 		</section>
+		<slot name="body"></slot>
 		<section class="outputs">
 			<li v-for="(output, index) in node.outputs" :key="index">
 				{{ output.label }}
