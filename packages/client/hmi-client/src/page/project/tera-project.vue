@@ -82,7 +82,7 @@
 				is-editable
 			/>
 			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
-			<tera-simulation-workflow v-else-if="assetType === 'canvas'" :project="project" />
+			<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
 			<!-- Test workflow in project view -->
 			<!-- <tera-simulation-workflow v-else /> -->
 			<section v-else class="no-open-tabs">
@@ -270,7 +270,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | 'canvas' | '';
+	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 }>();
 
 const emit = defineEmits(['update-project']);
@@ -422,7 +422,7 @@ const openOverview = () => {
 const openCanvas = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetName: 'Canvas', assetType: 'canvas', assetId: undefined }
+		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
 	});
 };
 
