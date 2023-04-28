@@ -81,7 +81,11 @@
 				@create-new-model="createNewModel"
 				is-editable
 			/>
-			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
+			<tera-project-overview
+				v-else-if="assetType === 'overview'"
+				:project="project"
+				@open-workflow="openWorkflow"
+			/>
 			<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
 			<!-- Test workflow in project view -->
 			<!-- <tera-simulation-workflow v-else /> -->
