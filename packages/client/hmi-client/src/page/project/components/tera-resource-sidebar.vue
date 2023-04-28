@@ -45,11 +45,6 @@
 			<span class="p-button-label">Overview</span>
 		</Button>
 
-		<Button class="asset-button" plain text size="small" @click="emit('open-workflow')">
-			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
-			<span class="p-button-label">Open Workflow</span>
-		</Button>
-
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
@@ -129,7 +124,6 @@ const props = defineProps<{
 const emit = defineEmits([
 	'open-asset',
 	'open-overview',
-	'open-workflow',
 	'remove-asset',
 	'close-tab',
 	'create-asset'

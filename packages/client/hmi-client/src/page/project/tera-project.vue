@@ -13,7 +13,6 @@
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
 					@open-overview="openOverview"
-					@open-workflow="openWorkflow"
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
