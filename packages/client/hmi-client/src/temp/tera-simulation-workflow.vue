@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import InfiniteCanvas from '@/temp/tera-infinite-canvas.vue';
-import { Operation, WorkflowNode } from '@/workflow/workflow';
+import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
 
@@ -35,11 +35,12 @@ const testOperation: Operation = {
 		{ type: 'number', label: 'Output one' },
 		{ type: 'number', label: 'Output two' }
 	],
-	action: () => {}
+	action: () => {},
+	isRunnable: true
 };
 
 function insertNode(operation: Operation) {
-	nodes.value.push({
+	const newNode: WorkflowNode = {
 		id: nodes.value.length.toString(),
 		workflowId: '0',
 		operationType: operation.name,
@@ -47,9 +48,11 @@ function insertNode(operation: Operation) {
 		y: newNodePosition.value.y,
 		width: 100,
 		height: 100,
-		inputs: operation.inputs,
-		outputs: operation.outputs
-	});
+		inputs: operation.inputs.map((o, i) => ({ id: i.toString(), ...o })),
+		outputs: operation.outputs.map((o, i) => ({ id: i.toString(), ...o })),
+		statusCode: WorkflowStatus.INVALID
+	};
+	nodes.value.push(newNode);
 }
 
 const contextMenuItems = ref([
