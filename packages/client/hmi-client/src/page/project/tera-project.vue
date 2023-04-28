@@ -13,7 +13,7 @@
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
 					@open-overview="openOverview"
-					@open-canvas="openCanvas"
+					@open-workflow="openWorkflow"
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
@@ -419,7 +419,7 @@ const openOverview = () => {
 	});
 };
 
-const openCanvas = () => {
+const openWorkflow = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
