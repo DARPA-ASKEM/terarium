@@ -1,5 +1,5 @@
 <template>
-	<tera-workflow-node :node="node">
+	<tera-workflow-node :node="thisNode">
 		<template #body>
 			<Button @click="startCalibration">Start Calibration Job</Button>
 			<form>
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams } from '@/types/Types';
@@ -28,13 +28,12 @@ import { calibrationParamExample } from '@/temp/calibrationExample';
 import { WorkflowNode } from '@/types/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 
-// @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
 const runId = ref('');
+const thisNode = computed(() => props.node);
 
 const startCalibration = async () => {
 	// Make calibration job.
