@@ -61,7 +61,7 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 }
 
 function handleZoomEnd() {
-	emit('save-transform', currentTransform);
+	emit('save-transform', { x: currentTransform.x, y: currentTransform.y, k: currentTransform.k });
 }
 
 function updateDimensions() {

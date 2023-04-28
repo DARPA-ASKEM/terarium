@@ -32,6 +32,7 @@ export interface Operation {
 export interface WorkflowPort {
 	id: string;
 	type: string;
+	label?: string;
 	value?: any;
 }
 
