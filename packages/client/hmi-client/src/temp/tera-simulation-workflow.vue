@@ -1,10 +1,5 @@
 <template>
-	<infinite-canvas
-		debug-mode
-		@contextmenu="toggleContextMenu"
-		:last-transform="canvasTransform"
-		@save-transform="saveTransform"
-	>
+	<infinite-canvas debug-mode @contextmenu="toggleContextMenu" @save-transform="saveTransform">
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
@@ -26,7 +21,7 @@ import ContextMenu from 'primevue/contextmenu';
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
-const canvasTransform = ref<d3.ZoomTransform>();
+let canvasTransform = { x: 0, y: 0, k: 1 };
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -71,16 +66,13 @@ const contextMenuItems = ref([
 
 function toggleContextMenu(event) {
 	contextMenu.value.show(event);
-	const transformX = canvasTransform.value ? canvasTransform.value.x : 0;
-	const transformY = canvasTransform.value ? canvasTransform.value.y : 0;
-	const transformK = canvasTransform.value ? canvasTransform.value.k : 1;
 	newNodePosition.value = {
-		x: (event.offsetX - transformX) / transformK,
-		y: (event.offsetY - transformY) / transformK
+		x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
+		y: (event.offsetY - canvasTransform.y) / canvasTransform.k
 	};
 }
 
-function saveTransform(newTransform: d3.ZoomTransform) {
-	canvasTransform.value = newTransform;
+function saveTransform(newTransform) {
+	canvasTransform = newTransform;
 }
 </script>
