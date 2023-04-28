@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import { Operation, WorkflowNode, WorkflowStatus, VIEWOPTIONS } from '@/types/workflow';
+import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import ContextMenu from 'primevue/contextmenu';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import teraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
@@ -51,7 +51,6 @@ function insertNode(operation: Operation) {
 		y: newNodePosition.value.y,
 		width: 100,
 		height: 100,
-		viewState: VIEWOPTIONS.ONNODE,
 		inputs: operation.inputs.map((o, i) => ({ id: i.toString(), ...o })),
 		outputs: operation.outputs.map((o, i) => ({ id: i.toString(), ...o })),
 		statusCode: WorkflowStatus.INVALID
