@@ -1,5 +1,10 @@
 <template>
-	<infinite-canvas debug-mode @contextmenu="toggleContextMenu" @saveTransform="saveTransform">
+	<infinite-canvas
+		debug-mode
+		@contextmenu="toggleContextMenu"
+		:last-transform="canvasTransform"
+		@save-transform="saveTransform"
+	>
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
