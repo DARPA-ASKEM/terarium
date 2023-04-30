@@ -85,7 +85,7 @@ export type Tab = {
 	assetName: string;
 	icon?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | '';
+	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 };
 
 export enum AcceptedTypes {

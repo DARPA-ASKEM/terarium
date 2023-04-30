@@ -57,7 +57,11 @@
 						icon="pi pi-share-alt"
 						class="p-button p-button-secondary quick-link-button"
 					/>
-					<Button size="large" class="p-button p-button-secondary quick-link-button">
+					<Button
+						size="large"
+						class="p-button p-button-secondary quick-link-button"
+						@click="emit('open-workflow')"
+					>
 						<vue-feather
 							class="p-button-icon-left"
 							type="git-merge"
@@ -169,7 +173,7 @@ import { logger } from '@/utils/logger';
 const props = defineProps<{
 	project: IProject;
 }>();
-
+const emit = defineEmits(['open-workflow']);
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);

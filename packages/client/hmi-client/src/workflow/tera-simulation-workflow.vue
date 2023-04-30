@@ -4,7 +4,7 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 
-			<ul v-for="node in nodes">
+			<ul v-for="(node, index) in nodes" :key="index">
 				<tera-workflow-node :node="node"></tera-workflow-node>
 			</ul>
 		</template>
@@ -15,8 +15,8 @@
 import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
-import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
+import TeraWorkflowNode from './tera-workflow-node.vue';
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
