@@ -49,6 +49,7 @@
 						size="large"
 						icon="pi pi-cloud-upload"
 						class="p-button p-button-secondary quick-link-button"
+						@click="openImportModal"
 					/>
 					<Button
 						label="New model"
@@ -94,6 +95,51 @@
 					<Column field="tags" header="Tags"></Column>
 				</DataTable>
 			</section>
+			<section class="drag-n-drop">
+				<Dialog
+					v-model:visible="visible"
+					modal
+					header="Resource Importer"
+					:style="{ width: '60vw' }"
+				>
+					<drag-n-drop
+						:show-preview="true"
+						:accept-types="[
+							AcceptedTypes.PDF,
+							AcceptedTypes.JPG,
+							AcceptedTypes.JPEG,
+							AcceptedTypes.PNG
+						]"
+						:import-action="processPDFs"
+						@import-completed="importCompleted"
+					></drag-n-drop>
+
+					<section v-if="results">
+						<Card v-for="item in results" :key="item.file.name" class="card">
+							<template #title>
+								<div class="card-img"></div>
+							</template>
+							<template #content>
+								<div class="card-content">
+									<div class="file-title">{{ item.file.name }}</div>
+									<div class="file-content">
+										<br />
+										<div>Extracted Text</div>
+										<div>{{ item.response.text }}</div>
+										<br />
+										<div v-if="item.response.images">Images Found</div>
+										<div v-for="image in item.response.images" :key="image">
+											<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+										</div>
+										<br />
+										<i class="pi pi-plus"></i>
+									</div>
+								</div>
+							</template>
+						</Card>
+					</section>
+				</Dialog>
+			</section>
 		</section>
 	</tera-asset>
 </template>
@@ -110,8 +156,15 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
+
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
+import { AcceptedTypes } from '@/types/common';
+import Dialog from 'primevue/dialog';
+import Card from 'primevue/card';
+import DragNDrop from '@/components/extracting/drag-n-drop-importer.vue';
+
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	project: IProject;
@@ -121,6 +174,146 @@ const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
+const visible = ref(false);
+const results = ref<
+	{ file: File; error: boolean; response: { text: string[]; images: string[] } }[] | null
+>(null);
+
+function sleep(ms) {
+	// eslint-disable-next-line no-promise-executor-return
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchTaskResult(taskId) {
+	const resultResponse = await fetch(`http://localhost:5000/task_result/${taskId}`);
+	const resultJson = await resultResponse.json();
+
+	if (resultJson.status === 'SUCCESS') {
+		return resultJson.result;
+	}
+
+	// Call the function recursively
+	await sleep(500);
+	return fetchTaskResult(taskId);
+}
+async function processPDFs(files, extractionMode, extractImages) {
+	const promises = files.map(async (file) => {
+		const formData = new FormData();
+		formData.append('file', file);
+
+		const response = await fetch(
+			`http://localhost:5000/convertpdftask?extraction_method=${extractionMode}&extract_images=${extractImages}`,
+			{
+				method: 'POST',
+				body: formData
+			}
+		);
+
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+		const { task_id } = await response.json();
+		const taskResult = await fetchTaskResult(task_id);
+		return { file, taskResult };
+	});
+
+	const r = await Promise.allSettled(promises);
+	const processedFiles = r.map((result, index) => {
+		if (result.status === 'fulfilled') {
+			return {
+				file: files[index],
+				error: false,
+				response: {
+					text: result.value.taskResult.text[0],
+					images: result.value.taskResult.images
+				}
+			};
+		}
+		return {
+			file: files[index],
+			error: true,
+			response: { text: result.reason, images: [] }
+		};
+	});
+
+	const successCount = processedFiles.filter((item) => !item.error).length;
+	const errorCount = processedFiles.filter((item) => item.error).length;
+
+	if (errorCount) {
+		logger.error(`An error occurred while importing ${errorCount} files.`);
+	} else {
+		logger.info(`Successfully imported ${successCount} files.`);
+	}
+
+	return processedFiles;
+}
+
+// async function processPDFs(files: File[], extractionMode, extractImages) {
+// 	try {
+// 		const tasks = await Promise.all(
+// 			files.map(async (f) => {
+// 				const formData = new FormData();
+// 				formData.append('file', f);
+
+// 				const response = await fetch(
+// 					`http://localhost:5000/convertpdftask?extraction_method=${extractionMode}&extract_images=${extractImages}`,
+// 					{
+// 						method: 'POST',
+// 						body: formData
+// 					}
+// 				);
+// 				const jsonResponse = await response.json();
+// 				const taskId = jsonResponse.task_id;
+
+// 				const taskResult = await fetchTaskResult(taskId);
+// 				return { file: f, success: true, response: taskResult };
+// 			})
+// 		);
+
+// 		logger.info(`Successfully imported ${tasks.length} files.`);
+// 		return tasks;
+// 	} catch (error) {
+// 		logger.error(`An error occurred while importing ${files.length} files.`);
+// 		logger.error(error);
+// 		return [];
+// 	}
+// }
+
+function openImportModal() {
+	visible.value = true;
+	results.value = null;
+}
+
+// async function processPDFs(files: File[], extractionMode, extractImages) {
+// 	try {
+// 		const promises = files.map((file) => {
+// 			const formData = new FormData();
+// 			formData.append('file', file);
+
+// 			return fetch(`http://localhost:5000/convertpdftask?extraction_method=${extractionMode}&extract_images=${extractImages}`, {
+// 				method: 'POST',
+// 				body: formData
+// 			});
+// 		});
+
+// 		const responses = await Promise.all(promises);
+// 		const jsonResponses = await Promise.all(responses.map((response) => response.json()));
+// 		const r = files.map((f, index) => ({
+// 			file: f,
+// 			response: { pdf_contents: jsonResponses[index].text[0], images: jsonResponses[index].images }
+// 		}));
+// 		logger.info(`Successfully imported ${r.length} filles.`);
+// 		return r;
+// 	} catch (error) {
+// 		logger.error(`An error occured while importing ${files.length} files.`);
+// 		logger.error(error);
+// 		return [];
+// 	}
+// }
+
+function importCompleted(
+	abc: { file: File; error: boolean; response: { text: string[]; images: string[] } }[] | null
+) {
+	results.value = abc;
+}
 
 async function editProject() {
 	newProjectName.value = props.project.name;
@@ -148,7 +341,7 @@ const projectMenuItems = ref([
 	}
 ]);
 
-function showProjectMenu(event) {
+function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
 </script>
@@ -305,5 +498,9 @@ ul {
 	color: var(--text-color-secondary);
 	padding: 0 0.5rem 0 0.5rem;
 	margin: 0.5rem;
+}
+
+.file-title {
+	font-size: 2em;
 }
 </style>

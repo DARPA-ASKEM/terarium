@@ -87,3 +87,10 @@ export type Tab = {
 	assetId?: string;
 	assetType?: ProjectAssetTypes | 'overview' | '';
 };
+
+export enum AcceptedTypes {
+	PDF = 'application/pdf',
+	JPG = 'image/jpg',
+	JPEG = 'image/jpeg',
+	PNG = 'image/png'
+}
