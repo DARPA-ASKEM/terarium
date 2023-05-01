@@ -31,7 +31,7 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
-import { ModelOperation } from '@/types/workflow/model-operation';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 
 defineProps<{
