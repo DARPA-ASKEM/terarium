@@ -2,13 +2,9 @@
 	<main ref="canvasRef">
 		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<slot name="background">
-				<g ref="edgesRef" class="edges" stroke="black" stroke-width="1" fill="none">
-					<path
-						v-if="newPath?.start && newPath.end"
-						:d="drawNewPath()"
-						stroke-dasharray="4"
-						class="newPath"
-					></path>
+				<g ref="edgesRef" class="edges" stroke-width="1" fill="none">
+					<path v-if="newPath?.start && newPath.end" :d="drawNewEdge()" stroke="green" />
+					<path v-for="(path, index) in paths" :d="drawEdge(path)" stroke="black" :key="index" />
 				</g>
 			</slot>
 		</svg>
@@ -32,15 +28,17 @@ const props = withDefaults(
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
 		newPath?: Path;
+		paths: Path[];
 	}>(),
 	{
 		debugMode: false,
 		scaleExtent: () => [0.1, 10],
 		lastTransform: undefined,
-		newPath: undefined
+		newPath: undefined,
+		paths: () => []
 	}
 );
-
+//
 const emit = defineEmits(['save-transform']);
 
 let x: d3.ScaleLinear<number, number, never>;
@@ -156,7 +154,7 @@ onMounted(() => {
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
 
-function drawNewPath() {
+function drawNewEdge(): string {
 	if (newPath.value?.start && newPath.value?.end) {
 		// const newPathElement = d3.select('newPath');
 		const path = d3.path();
@@ -165,6 +163,17 @@ function drawNewPath() {
 		path.closePath();
 		return path.toString();
 		// newPathElement.attr('d', path.toString());
+	}
+	return `M0,0`;
+}
+
+function drawEdge(path: Path): string {
+	if (path.start && path.end) {
+		const d3Path = d3.path();
+		d3Path.moveTo(path.start.x, path.start.y);
+		d3Path.lineTo(path.end.x, path.end.y);
+		d3Path.closePath();
+		return d3Path.toString();
 	}
 	return `M0,0`;
 }

@@ -5,6 +5,7 @@
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
 		:new-path="newPath"
+		:paths="paths"
 	>
 		<template #foreground></template>
 		<template #data>
@@ -26,7 +27,6 @@ import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import { Operation, Position, WorkflowNode, WorkflowStatus, Path } from '@/types/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
-import { path } from 'd3';
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
@@ -96,7 +96,8 @@ function createNewEdge() {
 		newPath.value.start = currentPortPosition;
 		isCreatingNewEdge.value = true;
 	} else {
-		paths.value.push(newPath.value);
+		const path = { start: newPath.value.start, end: newPath.value.end };
+		paths.value.push(path);
 		isCreatingNewEdge.value = false;
 		newPath.value.start = undefined;
 	}
