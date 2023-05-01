@@ -1,7 +1,16 @@
 <template>
 	<main ref="canvasRef">
 		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
-			<slot name="background" />
+			<slot name="background">
+				<g class="paths" stroke="black" stroke-width="1" fill="none">
+					<path
+						v-if="newPath?.start && newPath.end"
+						:d="drawNewPath()"
+						stroke-dasharray="4"
+						class="newPath"
+					></path>
+				</g>
+			</slot>
 		</svg>
 		<div class="data-layer" ref="dataLayerRef">
 			<slot name="data" />
@@ -13,19 +22,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import * as d3 from 'd3';
+import { Path } from '@/types/workflow';
 
 const props = withDefaults(
 	defineProps<{
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
+		newPath?: Path;
 	}>(),
 	{
 		debugMode: false,
 		scaleExtent: () => [0.1, 10],
-		lastTransform: undefined
+		lastTransform: undefined,
+		newPath: undefined
 	}
 );
 
@@ -44,6 +56,11 @@ const height = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
+
+const newPath = computed(() => {
+	console.log(props.newPath);
+	return props.newPath;
+});
 
 function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
 	container.attr('transform', e.transform);
@@ -132,6 +149,20 @@ onMounted(() => {
 
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
+
+function drawNewPath() {
+	if (newPath.value?.start && newPath.value?.end) {
+		// const newPathElement = d3.select('newPath');
+		const path = d3.path();
+		path.moveTo(newPath.value.start.x, newPath.value.start.y);
+		path.lineTo(newPath.value.end.x, newPath.value.end.y);
+		path.closePath();
+		return path.toString();
+		// newPathElement.attr('d', path.toString());
+	}
+	return `M0,0`;
+	// edges.append('path').attr('d', path.toString()).attr('stroke', 'black').attr('stroke-width', '1').attr('fill', 'none');
+}
 </script>
 
 <style scoped>

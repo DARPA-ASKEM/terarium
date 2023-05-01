@@ -84,3 +84,13 @@ export interface Workflow {
 	nodes: WorkflowNode[];
 	edges: WorkflowEdge[];
 }
+
+export interface Position {
+	x: number;
+	y: number;
+}
+
+export interface Path {
+	start?: Position;
+	end?: Position;
+}

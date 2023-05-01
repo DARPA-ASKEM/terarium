@@ -2,27 +2,32 @@
 	<section class="container" :style="nodeStyle">
 		<header>{{ node.operationType }}</header>
 		<section class="inputs">
-			<li v-for="input in node.inputs">
-				<div class="port"></div>
+			<li v-for="(input, index) in node.inputs" ref="inputs">
+				<div class="port" @click.stop="selectPort(index)"></div>
 				{{ input.label }}
 			</li>
 		</section>
 		<section class="outputs">
-			<li v-for="output in node.outputs">
+			<li v-for="(output, index) in node.outputs" ref="outputs">
 				{{ output.label }}
-				<div class="port"></div>
+				<div class="port" @click.stop="selectPort(index)"></div>
 			</li>
 		</section>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { WorkflowNode } from '@/types/workflow';
-import { ref, onMounted } from 'vue';
+import { Position, WorkflowNode } from '@/types/workflow';
+import { ref } from 'vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['port-selected']);
+
+const inputs = ref<HTMLElement>();
+const outputs = ref<HTMLElement>();
 
 const nodeStyle = ref({
 	minWidth: `${props.node.width}px`,
@@ -31,7 +36,13 @@ const nodeStyle = ref({
 	left: `${props.node.x}px`
 });
 
-onMounted(() => {});
+function selectPort(index: number) {
+	if (outputs.value && inputs.value) {
+		const el = outputs.value[index] as HTMLElement;
+		const nodePosition: Position = { x: props.node.x, y: props.node.y };
+		emit('port-selected', nodePosition, el);
+	}
+}
 </script>
 
 <style scoped>
@@ -69,12 +80,20 @@ li {
 	background: var(--surface-100);
 }
 
+.port:hover {
+	background: var(--surface-border);
+}
+
 .inputs .port {
 	left: -8px;
 }
 
 .outputs .port {
 	left: 8px;
+}
+
+.outputs {
+	padding-bottom: 4px;
 }
 
 header {
