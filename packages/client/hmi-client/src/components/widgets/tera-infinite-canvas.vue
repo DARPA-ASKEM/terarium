@@ -1,12 +1,17 @@
 <template>
 	<main ref="canvasRef">
-		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
+		<svg
+			class="canvas-layer background-layer"
+			ref="backgroundLayerRef"
+			:width="width"
+			:height="height"
+		>
 			<slot name="background" />
 		</svg>
-		<div class="data-layer" ref="dataLayerRef">
+		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<div>
+		<div class="canvas-layer">
 			<slot name="foreground" />
 		</div>
 	</main>
@@ -106,6 +111,13 @@ onMounted(() => {
 	// Zoom config is applied and event handler
 	const zoom = d3
 		.zoom()
+		.filter((evt: any) => {
+			const classStr = d3.select(evt.target).attr('class');
+			if (classStr.includes('canvas-layer') || evt.type === 'wheel') {
+				return true;
+			}
+			return false;
+		})
 		.scaleExtent(props.scaleExtent)
 		.on('zoom', (e) => handleZoom(e, container))
 		.on('end', handleZoomEnd);
@@ -129,8 +141,6 @@ onMounted(() => {
 		// Default position - triggers handleZoom which in turn sets currentTransform
 		svg.transition().call(zoom.transform as any, d3.zoomIdentity);
 	}
-
-	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
 </script>
 
@@ -151,6 +161,9 @@ main > * {
 }
 
 .background-layer:deep(.tick line) {
+	color: var(--surface-border);
+}
+.background-layer:deep(.tick text) {
 	color: var(--surface-border);
 }
 

@@ -14,8 +14,6 @@ import { defineComponent, ref } from 'vue';
 import { fetchStratificationResult } from '@/services/models/stratification-service';
 import { runDagreLayout, D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import API from '@/api/api';
-import { CalibrationParams } from '@/types/Types';
-import { makeCalibrateJob } from '@/services/models/simulation-service';
 
 enum NodeType {
 	Species = 'S',
@@ -765,69 +763,6 @@ export default defineComponent({
 			resultGraph.height = 500;
 			await renderer?.setData(resultGraph);
 			await renderer?.render();
-		},
-		async testCalibration() {
-			console.log('Testing Calibration:');
-			let calibrationParam: CalibrationParams = {
-				petri: JSON.stringify({
-					T: [{ tname: 'exp' }, { tname: 'conv' }, { tname: 'rec' }, { tname: 'death' }],
-					S: [{ sname: 'S' }, { sname: 'E' }, { sname: 'I' }, { sname: 'R' }, { sname: 'D' }],
-					I: [
-						{ it: 1, is: 1 },
-						{ it: 1, is: 3 },
-						{ it: 2, is: 2 },
-						{ it: 3, is: 3 },
-						{ it: 4, is: 3 }
-					],
-					O: [
-						{ ot: 1, os: 2 },
-						{ ot: 1, os: 3 },
-						{ ot: 2, os: 3 },
-						{ ot: 3, os: 4 },
-						{ ot: 4, os: 5 }
-					]
-				}),
-				initials: {
-					S: 0.49457800495224524,
-					E: 0.26745259325403603,
-					I: 0.4497387877393193,
-					R: 0.32807705995998604,
-					D: 0.8545934885162726
-				},
-				t: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
-				data: {
-					S: [
-						0.8457800495224524, 0.7989147588862952, 0.7717574792075946, 0.7555359186659574,
-						0.7456920016554676, 0.7396688112881398
-					],
-					E: [
-						0.21745259325403604, 0.1404833532397162, 0.088632010007611, 0.05529630617740498,
-						0.03431001255438966, 0.021230743198302895
-					],
-					I: [
-						0.4497387877393193, 0.27034535589195036, 0.1653910436709313, 0.10194987107919627,
-						0.06301885280976183, 0.03898091182580745
-					],
-					R: [
-						0.8545934885162726, 0.575704439041781, 0.7259355031548465, 0.8182142842907686,
-						0.8751839322495475, 0.9104140088945406
-					],
-					D: [
-						0.3545934885162726, 0.41019407193232343, 0.44392594295108295, 0.4646455987787392,
-						0.47743717972289984, 0.48534750378527575
-					]
-				},
-				params: {
-					exp: 0.16207166221196045,
-					conv: 0.7009195813964052,
-					rec: 0.7040317196117394,
-					death: 0.15807853921067516
-				}
-			};
-			console.log('Calibration Params setup done');
-			const results = await makeCalibrateJob(calibrationParam);
-			console.log('Done');
-			console.log(results);
 		}
 	}
 });
@@ -835,7 +770,6 @@ export default defineComponent({
 <template>
 	<section class="playground">
 		<p>A playground for testing TA2 API integrations.</p>
-		<button type="button" @click="testCalibration">Test Calibration</button>
 		<button type="button" @click="addPlace">Add place</button>
 		<button type="button" @click="addTransition">Add transition</button>
 		&nbsp;
