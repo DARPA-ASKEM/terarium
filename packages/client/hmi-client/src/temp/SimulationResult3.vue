@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onUpdated } from 'vue';
 import { useRoute } from 'vue-router';
 import { csvParse } from 'd3';
 import { isEqual } from 'lodash';
@@ -125,6 +125,12 @@ const renderGraph = ([{ code }]) => {
 	};
 };
 watch(() => [selectedVariable.value, selectedRun.value] as any, renderGraph);
+
+const emit = defineEmits(['asset-loaded']);
+
+onUpdated(() => {
+	emit('asset-loaded');
+});
 </script>
 
 <template>

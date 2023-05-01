@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Simulation, SimulationParams } from '@/types/Types';
+import { Simulation, SimulationParams, CalibrationParams } from '@/types/Types';
 
 export async function makeForecast(simulationParam: SimulationParams) {
 	try {
@@ -88,6 +88,17 @@ export async function deleteAnnotation(id: Simulation['id']) {
 		return response.data;
 	} catch (error) {
 		logger.error(error);
+		return null;
+	}
+}
+
+export async function makeCalibrateJob(calibrationParams: CalibrationParams) {
+	try {
+		const resp = await API.post('simulation/calibrate', calibrationParams);
+		const output = resp.data;
+		return output;
+	} catch (err) {
+		logger.error(err);
 		return null;
 	}
 }

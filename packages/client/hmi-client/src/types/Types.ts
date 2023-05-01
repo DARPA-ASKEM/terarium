@@ -46,6 +46,14 @@ export interface Simulation {
     modelId: number;
 }
 
+export interface CalibrationParams {
+    petri: string;
+    initials: { [index: string]: number };
+    t: number[];
+    params: { [index: string]: number };
+    data: { [index: string]: number[] };
+}
+
 export interface SimulationParams {
     petri: string;
     initials: { [index: string]: number };
