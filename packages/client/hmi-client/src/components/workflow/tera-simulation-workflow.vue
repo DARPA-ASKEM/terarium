@@ -33,7 +33,7 @@ import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
 
 defineProps<{
-	models: Model[];
+	models?: Model[];
 }>();
 
 const nodes = ref<WorkflowNode[]>([]);
