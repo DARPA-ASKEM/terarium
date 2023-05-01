@@ -636,19 +636,6 @@ section {
 	padding: 0rem;
 }
 
-/* :deep(span.p-dropdown-label.p-placeholder) {
-	color: var(--text-color-subdued);
-}
-
-:deep(span.p-dropdown-label) {
-	padding: 0;
-	font-size: var(--font-caption);
-}
-
-:deep(span.p-dropdown-trigger-icon.pi.pi-chevron-down) {
-	color: var(--text-color-subdued);
-} */
-
 .annotation-panel .p-dropdown:not(.p-disabled).p-focus {
 	box-shadow: none;
 	background-color: var(--surface-hover);
