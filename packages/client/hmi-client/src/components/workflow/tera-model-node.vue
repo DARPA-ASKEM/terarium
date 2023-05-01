@@ -50,11 +50,13 @@ const parameterValues = ref<StringValueMap>({});
 
 function run() {
 	if (ModelOperation.action) {
-		ModelOperation.action({
-			model: model.value,
-			initialValues: initialValues.value,
-			parameterValues: parameterValues.value
-		});
+		console.log(
+			ModelOperation.action({
+				model: model.value,
+				initialValues: initialValues.value,
+				parameterValues: parameterValues.value
+			})
+		);
 	}
 }
 
