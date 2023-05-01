@@ -604,11 +604,6 @@ onUpdated(() => {
 	}
 });
 
-const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
-
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
 	if ((event.target as HTMLElement).tagName === 'INPUT') {
