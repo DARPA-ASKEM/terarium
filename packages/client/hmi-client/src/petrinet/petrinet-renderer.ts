@@ -262,6 +262,49 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		selection.selectAll('path').style('stroke-width', 2);
 	}
 
+	toggoleNodeSelectionByLabel(label: string) {
+		const selection = this.chart?.selectAll('.node-ui').filter((d) => d.label === label);
+		if (selection.size() === 1) {
+			this.toggleNodeSelection(selection);
+		}
+	}
+
+	toggleNodeSelection(selection: D3SelectionINode<NodeData>) {
+		if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) {
+			this?.chart?.selectAll('.node-ui').style('opacity', 1);
+			this?.chart?.selectAll('.edge').style('opacity', 1);
+			this.deselectNode(this.nodeSelection);
+			this.nodeSelection = null;
+		} else {
+			if (this.nodeSelection) {
+				this.deselectNode(this.nodeSelection);
+				this.nodeSelection.selectAll('.no-drag').style('opacity', 0).style('visibility', 'hidden');
+			}
+
+			// Set focus on node:
+			this?.chart?.selectAll('.node-ui').style('opacity', 0.3);
+			this?.chart?.selectAll('.edge').style('opacity', 0.3);
+			selection.style('opacity', 1);
+			this.nodeSelection = selection;
+
+			if (this.editMode) {
+				selection
+					.selectAll('.no-drag')
+					.transition('ease-out')
+					.duration(200)
+					.style('opacity', 1)
+					.style('visibility', 'visible');
+				console.log('hihihi');
+				this.selectNodeEdit(this.nodeSelection);
+			}
+		}
+
+		if (this.edgeSelection) {
+			this.deselectEdge(this.edgeSelection);
+			this.edgeSelection = null;
+		}
+	}
+
 	postRenderProcess() {
 		const chart = this.chart;
 		const svg = d3.select(this.svgEl);
@@ -337,44 +380,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('node-click', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
-			if (this.nodeSelection && this.nodeSelection.datum().id === selection.datum().id) {
-				console.log('clicked the same node, deselect');
-
-				this?.chart?.selectAll('.node-ui').style('opacity', 1);
-				this?.chart?.selectAll('.edge').style('opacity', 1);
-				this.deselectNode(this.nodeSelection);
-				this.nodeSelection = null;
-			} else {
-				if (this.nodeSelection) {
-					this.deselectNode(this.nodeSelection);
-					this.nodeSelection
-						.selectAll('.no-drag')
-						.style('opacity', 0)
-						.style('visibility', 'hidden');
-				}
-
-				// Set focus on node:
-				this?.chart?.selectAll('.node-ui').style('opacity', 0.3);
-				this?.chart?.selectAll('.edge').style('opacity', 0.3);
-				selection.style('opacity', 1);
-				this.nodeSelection = selection;
-
-				if (this.editMode) {
-					selection
-						.selectAll('.no-drag')
-						.transition('ease-out')
-						.duration(200)
-						.style('opacity', 1)
-						.style('visibility', 'visible');
-					console.log('hihihi');
-					this.selectNodeEdit(this.nodeSelection);
-				}
-			}
-
-			if (this.edgeSelection) {
-				this.deselectEdge(this.edgeSelection);
-				this.edgeSelection = null;
-			}
+			this.toggleNodeSelection(selection);
 		});
 
 		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {

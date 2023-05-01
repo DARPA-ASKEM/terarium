@@ -274,8 +274,8 @@
 
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
-import { IGraph, INode } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated, nextTick } from 'vue';
+import { IGraph } from '@graph-scaffolder/index';
+import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -474,36 +474,16 @@ const onVariableSelected = (variable: string) => {
 		if (variable === selectedVariable.value) {
 			selectedVariable.value = '';
 			equationLatex.value = equationLatexOriginal.value;
-
-			// model editor stuff
-
-			renderer?.chart?.selectAll('.node-ui').style('opacity', 1);
-			renderer?.chart?.selectAll('.edge').style('opacity', 1);
 		} else {
 			selectedVariable.value = variable;
 			equationLatex.value = equationLatexOriginal.value.replaceAll(
 				selectedVariable.value,
 				String.raw`{\color{red}${variable}}`
 			);
-
-			// model editor stuff
-
-			const selection = renderer?.chart
-				?.selectAll('.node-ui')
-				.filter((d) => (d as INode<NodeData>).label === variable);
-			if (selection && renderer) {
-				renderer.chart?.selectAll('.node-ui').style('opacity', 0.3);
-				renderer.chart?.selectAll('.edge').style('opacity', 0.3);
-				selection.style('opacity', 1);
-			}
 		}
+		renderer?.toggoleNodeSelectionByLabel(variable);
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
-
-		// model editor stuff
-
-		renderer?.chart?.selectAll('.node-ui').style('opacity', 1);
-		renderer?.chart?.selectAll('.edge').style('opacity', 1);
 	}
 };
 
@@ -709,11 +689,8 @@ watch(
 		});
 
 		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-			if (!renderer?.editMode) {
-				// use `nextTick` to push `onVariableSelected` fn call onto the event loop queue
-				await nextTick();
-				onVariableSelected(d.label);
-			}
+			// Note: do not change the renderer's visuals, this is done internally
+			onVariableSelected(d.label);
 		});
 
 		// Render graph
