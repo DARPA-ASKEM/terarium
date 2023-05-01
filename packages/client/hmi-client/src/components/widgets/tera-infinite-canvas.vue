@@ -2,7 +2,7 @@
 	<main ref="canvasRef">
 		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
 			<slot name="background">
-				<g class="paths" stroke="black" stroke-width="1" fill="none">
+				<g ref="edgesRef" class="edges" stroke="black" stroke-width="1" fill="none">
 					<path
 						v-if="newPath?.start && newPath.end"
 						:d="drawNewPath()"
@@ -56,14 +56,17 @@ const height = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
+const edgesRef = ref<SVGElement>();
 
-const newPath = computed(() => {
-	console.log(props.newPath);
-	return props.newPath;
-});
+const newPath = computed(() => props.newPath);
 
-function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
+function handleZoom(
+	e: any,
+	container: d3.Selection<SVGGElement, any, null, any>,
+	edges: d3.Selection<SVGGElement, any, null, any>
+) {
 	container.attr('transform', e.transform);
+	edges.attr('transform', e.transform);
 
 	d3.select(dataLayerRef.value as HTMLDivElement)
 		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
@@ -119,12 +122,15 @@ const resizeObserver = new ResizeObserver(() => updateDimensions());
 onMounted(() => {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
 	const container = svg.append('g'); // Pan/zoom area
+	const edges = d3.select(edgesRef.value as SVGGElement);
 
 	// Zoom config is applied and event handler
 	const zoom = d3
 		.zoom()
 		.scaleExtent(props.scaleExtent)
-		.on('zoom', (e) => handleZoom(e, container))
+		.on('zoom', (e) => {
+			handleZoom(e, container, edges);
+		})
 		.on('end', handleZoomEnd);
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
@@ -150,6 +156,14 @@ onMounted(() => {
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
 
+// function drawTestPath() {
+// 	const path = d3.path();
+// 	path.moveTo(100, 100);
+// 	path.lineTo(600, 600);
+// 	path.closePath();
+// 	return path.toString();
+// }
+
 function drawNewPath() {
 	if (newPath.value?.start && newPath.value?.end) {
 		// const newPathElement = d3.select('newPath');
@@ -160,6 +174,7 @@ function drawNewPath() {
 		return path.toString();
 		// newPathElement.attr('d', path.toString());
 	}
+	console.log('else');
 	return `M0,0`;
 	// edges.append('path').attr('d', path.toString()).attr('stroke', 'black').attr('stroke-width', '1').attr('fill', 'none');
 }

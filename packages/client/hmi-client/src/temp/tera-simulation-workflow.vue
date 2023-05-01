@@ -85,14 +85,19 @@ function saveTransform(newTransform) {
 	canvasTransform = newTransform;
 }
 
+// function applyCanvasTransform(position: Position): Position {
+// 	return {
+// 		x: (position.x - canvasTransform.x) / canvasTransform.k,
+// 		y: (position.y - canvasTransform.y) / canvasTransform.k
+// 	}
+// }
+
 function createNewEdge(nodePosition: Position, portElement: HTMLElement) {
-	console.log(`${portElement.offsetHeight}, ${portElement.offsetTop}`);
 	if (isCreatingNewEdge.value === false) {
 		const totalOffsetX = portElement.offsetLeft + portElement.offsetWidth;
 		const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2 + 1;
 		newPath.value.start = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 		isCreatingNewEdge.value = true;
-		// paths.value.push(newPath.value);
 	}
 }
 
@@ -108,6 +113,7 @@ function mouseUpdate(event) {
 		x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
 		y: (event.offsetY - canvasTransform.y) / canvasTransform.k
 	};
+	// mousePosition.value = applyCanvasTransform({ x: event.offsetX, y: event.offsetY });
 	if (isCreatingNewEdge.value === true) {
 		// console.log(event);
 	}
