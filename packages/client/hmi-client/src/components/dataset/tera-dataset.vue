@@ -6,103 +6,137 @@
 		:is-editable="isEditable"
 		@close-preview="emit('close-preview')"
 	>
-		<section class="metadata data-row">
-			<section>
-				<header>Maintainer</header>
-				<section>{{ dataset?.maintainer || '-' }}</section>
-			</section>
-			<section>
-				<header>Quality</header>
-				<section>{{ dataset?.quality || '-' }}</section>
-			</section>
-			<section>
-				<header>URL</header>
+		<template #nav>
+			<tera-asset-nav :asset-content="datasetContent">
+				<template #viewing-mode>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Description"
+							icon="pi pi-list"
+							@click="datasetView = DatasetView.DESCRIPTION"
+							:active="datasetView === DatasetView.DESCRIPTION"
+						/>
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Data"
+							icon="pi pi-file"
+							@click="datasetView = DatasetView.DATA"
+							:active="datasetView === DatasetView.DATA"
+						/>
+					</span>
+				</template>
+			</tera-asset-nav>
+		</template>
+		<template v-if="datasetView === DatasetView.DESCRIPTION">
+			<section class="metadata data-row">
 				<section>
-					<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+					<header>Maintainer</header>
+					<section>{{ dataset?.maintainer || '-' }}</section>
+				</section>
+				<section>
+					<header>Quality</header>
+					<section>{{ dataset?.quality || '-' }}</section>
+				</section>
+				<section>
+					<header>URL</header>
+					<section>
+						<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+					</section>
+				</section>
+				<section>
+					<header>Geospatial resolution</header>
+					<section>{{ dataset?.geospatialResolution || '-' }}</section>
+				</section>
+				<section>
+					<header>Temporal resolution</header>
+					<section>{{ dataset?.temporalResolution || '-' }}</section>
+				</section>
+				<section>
+					<header>Number of records</header>
+					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
-			<section>
-				<header>Geospatial resolution</header>
-				<section>{{ dataset?.geospatialResolution || '-' }}</section>
-			</section>
-			<section>
-				<header>Temporal resolution</header>
-				<section>{{ dataset?.temporalResolution || '-' }}</section>
-			</section>
-			<section>
-				<header>Number of records</header>
-				<section>{{ csvContent?.length }}</section>
-			</section>
-		</section>
-		<Accordion :multiple="true" :activeIndex="showAccordion">
-			<AccordionTab header="Description">
-				<p v-html="dataset.description" />
-			</AccordionTab>
-			<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
-				<template #header>
-					Annotations<span class="artifact-amount"
-						>({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})</span
-					>
-				</template>
-				<section v-if="annotations?.geo">
-					<header class="annotation-subheader">Geospatial annotations</header>
-					<section class="annotation-group">
-						<section
-							v-for="annotation in annotations?.geo"
-							:key="annotation.name"
-							class="annotation-row data-row"
-						>
-							<section>
-								<header>Name</header>
-								<section class="value">{{ annotation.name }}</section>
-							</section>
-							<section>
-								<header>Description</header>
-								<section>{{ annotation.description }}</section>
-							</section>
-							<section>
-								<header>GADM level</header>
-								<section>{{ annotation.gadm_level }}</section>
+			<Accordion :multiple="true" :activeIndex="showAccordion">
+				<AccordionTab>
+					<template #header>
+						<header id="Description">Description</header>
+					</template>
+					<p v-html="dataset.description" />
+				</AccordionTab>
+				<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
+					<template #header>
+						<header id="Annotations">
+							Annotations
+							<span class="artifact-amount">
+								({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})
+							</span>
+						</header>
+					</template>
+					<section v-if="annotations?.geo">
+						<header class="annotation-subheader">Geospatial annotations</header>
+						<section class="annotation-group">
+							<section
+								v-for="annotation in annotations?.geo"
+								:key="annotation.name"
+								class="annotation-row data-row"
+							>
+								<section>
+									<header>Name</header>
+									<section class="value">{{ annotation.name }}</section>
+								</section>
+								<section>
+									<header>Description</header>
+									<section>{{ annotation.description }}</section>
+								</section>
+								<section>
+									<header>GADM level</header>
+									<section>{{ annotation.gadm_level }}</section>
+								</section>
 							</section>
 						</section>
 					</section>
-				</section>
-				<section v-if="annotations?.date">
-					<header class="annotation-subheader">Temporal annotations</header>
-					<section class="annotation-group">
-						<section
-							v-for="annotation in annotations?.date"
-							:key="annotation.name"
-							class="annotation-row data-row"
-						>
-							<section>
-								<header>Name</header>
-								<section>{{ annotation.name }}</section>
-							</section>
-							<section>
-								<header>Description</header>
-								<section>{{ annotation.description }}</section>
-							</section>
-							<section>
-								<header>Time format</header>
-								<section>{{ annotation.time_format }}</section>
+					<section v-if="annotations?.date">
+						<header class="annotation-subheader">Temporal annotations</header>
+						<section class="annotation-group">
+							<section
+								v-for="annotation in annotations?.date"
+								:key="annotation.name"
+								class="annotation-row data-row"
+							>
+								<section>
+									<header>Name</header>
+									<section>{{ annotation.name }}</section>
+								</section>
+								<section>
+									<header>Description</header>
+									<section>{{ annotation.description }}</section>
+								</section>
+								<section>
+									<header>Time format</header>
+									<section>{{ annotation.time_format }}</section>
+								</section>
 							</section>
 						</section>
 					</section>
-				</section>
-			</AccordionTab>
-			<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
-				<template #header>
-					Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
-				</template>
-				<ol class="numbered-list">
-					<li v-for="(feature, index) of annotations?.feature" :key="index">
-						<span>{{ feature.display_name || feature.name }}</span
-						>:
-						<span class="feature-type">{{ feature.feature_type }}</span>
-					</li>
-				</ol>
-			</AccordionTab>
+				</AccordionTab>
+				<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
+					<template #header>
+						<header id="Features">
+							Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
+						</header>
+					</template>
+					<ol class="numbered-list">
+						<li v-for="(feature, index) of annotations?.feature" :key="index">
+							<span>{{ feature.display_name || feature.name }}</span
+							>:
+							<span class="feature-type">{{ feature.feature_type }}</span>
+						</li>
+					</ol>
+				</AccordionTab>
+			</Accordion>
+		</template>
+		<Accordion v-else-if="DatasetView.DATA">
 			<AccordionTab>
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
@@ -117,12 +151,19 @@ import { downloadRawFile, getDataset } from '@/services/dataset';
 import { Dataset } from '@/types/Dataset';
 import { computed, ref, watch, onUpdated } from 'vue';
 import Accordion from 'primevue/accordion';
+import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+
+enum DatasetView {
+	DESCRIPTION = 'description',
+	DATA = 'data'
+}
 
 const props = defineProps<{
 	assetId: string;
@@ -142,8 +183,18 @@ function highlightSearchTerms(text: string | undefined): string {
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
+const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
+
+const datasetContent = computed(() => [
+	{ key: 'Description', value: dataset.value?.description },
+	{
+		key: 'Annotations',
+		value: [...(annotations.value?.geo ?? []), ...(annotations.value?.date ?? [])]
+	},
+	{ key: 'Features', value: annotations.value?.feature }
+]);
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -165,6 +216,7 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
+				console.log(datasetTemp);
 			}
 		} else {
 			dataset.value = null;
