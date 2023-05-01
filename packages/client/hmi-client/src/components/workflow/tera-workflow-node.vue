@@ -1,13 +1,15 @@
 <template>
 	<section class="container" :style="nodeStyle">
-		<header>{{ node.operationType }}</header>
+		<header>
+			<h5>{{ node.operationType }}</h5>
+		</header>
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index">
 				<div class="port"></div>
 				{{ input.label }}
 			</li>
 		</section>
-		<slot name="body"></slot>
+		<slot name="body" />
 		<section class="outputs">
 			<li v-for="(output, index) in node.outputs" :key="index">
 				{{ output.label }}
@@ -48,6 +50,7 @@ section {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	position: absolute;
+	padding: 0.5rem;
 }
 
 .outputs {
