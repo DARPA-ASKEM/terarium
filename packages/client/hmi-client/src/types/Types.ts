@@ -49,7 +49,7 @@ export interface Simulation {
 export interface CalibrationParams {
     petri: string;
     initials: { [index: string]: number };
-    t: number[];
+    timesteps: number[];
     params: { [index: string]: number };
     data: { [index: string]: number[] };
 }
