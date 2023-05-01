@@ -5,8 +5,15 @@
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 
 			<ul v-for="(node, index) in nodes" :key="index">
-				<tera-workflow-node :node="node" v-if="node.operationType === 'testOpteration'" />
-				<tera-calibration-node :node="node" v-if="node.operationType === 'CalibrationOperation'" />
+				<tera-workflow-node :node="node">
+					<template #body>
+						<tera-calibration-node
+							:node="node"
+							v-if="node.operationType === 'CalibrationOperation'"
+						/>
+						<div v-else>Test node</div>
+					</template>
+				</tera-workflow-node>
 			</ul>
 		</template>
 	</infinite-canvas>

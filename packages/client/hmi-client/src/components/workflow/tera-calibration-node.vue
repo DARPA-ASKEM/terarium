@@ -1,39 +1,33 @@
 <template>
-	<tera-workflow-node :node="thisNode">
-		<template #body>
-			<Button @click="startCalibration">Start Calibration Job</Button>
-			<form>
-				<label for="calibrationStatus">
-					<input v-model="runId" type="text" placeholder="Run ID" />
-				</label>
-				<Button @click="getCalibrationStatus"> Get Run Status </Button>
-			</form>
+	<Button @click="startCalibration">Start Calibration Job</Button>
+	<form>
+		<label for="calibrationStatus">
+			<input v-model="runId" type="text" placeholder="Run ID" />
+		</label>
+		<Button @click="getCalibrationStatus"> Get Run Status </Button>
+	</form>
 
-			<form>
-				<label for="calibrationResult">
-					<input v-model="runId" type="text" placeholder="Run ID" />
-				</label>
-				<Button @click="getCalibrationResults"> Get Run Results </Button>
-			</form>
-		</template>
-	</tera-workflow-node>
+	<form>
+		<label for="calibrationResult">
+			<input v-model="runId" type="text" placeholder="Run ID" />
+		</label>
+		<Button @click="getCalibrationResults"> Get Run Results </Button>
+	</form>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams } from '@/types/Types';
 import { calibrationParamExample } from '@/temp/calibrationExample';
 import { WorkflowNode } from '@/types/workflow';
-import TeraWorkflowNode from './tera-workflow-node.vue';
 
-const props = defineProps<{
+defineProps<{
 	node: WorkflowNode;
 }>();
 
 const runId = ref('');
-const thisNode = computed(() => props.node);
 
 const startCalibration = async () => {
 	// Make calibration job.
