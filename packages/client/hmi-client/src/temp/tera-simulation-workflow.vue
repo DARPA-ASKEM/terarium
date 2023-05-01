@@ -92,9 +92,9 @@ function saveTransform(newTransform) {
 // 	}
 // }
 
-function createNewEdge(nodePosition: Position, portElement: HTMLElement) {
+function createNewEdge(nodePosition: Position, portElement: HTMLElement, isInput: boolean) {
 	if (isCreatingNewEdge.value === false) {
-		const totalOffsetX = portElement.offsetLeft + portElement.offsetWidth;
+		const totalOffsetX = portElement.offsetLeft + (isInput ? 0 : portElement.offsetWidth);
 		const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2 + 1;
 		newPath.value.start = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 		isCreatingNewEdge.value = true;

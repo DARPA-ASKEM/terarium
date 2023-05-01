@@ -3,14 +3,14 @@
 		<header>{{ node.operationType }}</header>
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" ref="inputs">
-				<div class="port" @click.stop="selectPort(index)"></div>
+				<div class="port" @click.stop="selectPort(index, true)"></div>
 				{{ input.label }}
 			</li>
 		</section>
 		<section class="outputs">
 			<li v-for="(output, index) in node.outputs" ref="outputs">
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort(index)"></div>
+				<div class="port" @click.stop="selectPort(index, false)"></div>
 			</li>
 		</section>
 	</section>
@@ -36,11 +36,12 @@ const nodeStyle = ref({
 	left: `${props.node.x}px`
 });
 
-function selectPort(index: number) {
-	if (outputs.value && inputs.value) {
-		const el = outputs.value[index] as HTMLElement;
+function selectPort(index: number, isInput: boolean) {
+	const ports = isInput ? inputs.value : outputs.value;
+	if (ports) {
+		const el = ports[index] as HTMLElement;
 		const nodePosition: Position = { x: props.node.x, y: props.node.y };
-		emit('port-selected', nodePosition, el);
+		emit('port-selected', nodePosition, el, isInput);
 	}
 }
 </script>
