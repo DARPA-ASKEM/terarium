@@ -3,14 +3,14 @@
 		<header>{{ node.operationType }}</header>
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" ref="inputs">
-				<div class="port" @click.stop="selectPort(index, true)"></div>
+				<div class="port" @click.stop="selectPort" @mouseover="mouseoverPort(index, true)"></div>
 				{{ input.label }}
 			</li>
 		</section>
 		<section class="outputs">
 			<li v-for="(output, index) in node.outputs" ref="outputs">
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort(index, false)"></div>
+				<div class="port" @click.stop="selectPort" @mouseover="mouseoverPort(index, false)"></div>
 			</li>
 		</section>
 	</section>
@@ -24,7 +24,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['port-selected']);
+const emit = defineEmits(['port-selected', 'port-mouseover']);
 
 const inputs = ref<HTMLElement>();
 const outputs = ref<HTMLElement>();
@@ -36,12 +36,19 @@ const nodeStyle = ref({
 	left: `${props.node.x}px`
 });
 
-function selectPort(index: number, isInput: boolean) {
+function selectPort() {
+	emit('port-selected');
+}
+
+function mouseoverPort(index: number, isInput: boolean) {
 	const ports = isInput ? inputs.value : outputs.value;
 	if (ports) {
 		const el = ports[index] as HTMLElement;
 		const nodePosition: Position = { x: props.node.x, y: props.node.y };
-		emit('port-selected', nodePosition, el, isInput);
+		const totalOffsetX = el.offsetLeft + (isInput ? 0 : el.offsetWidth);
+		const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
+		const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+		emit('port-mouseover', portPosition);
 	}
 }
 </script>

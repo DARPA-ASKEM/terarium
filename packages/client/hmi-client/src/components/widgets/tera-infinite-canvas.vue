@@ -156,14 +156,6 @@ onMounted(() => {
 	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
 
-// function drawTestPath() {
-// 	const path = d3.path();
-// 	path.moveTo(100, 100);
-// 	path.lineTo(600, 600);
-// 	path.closePath();
-// 	return path.toString();
-// }
-
 function drawNewPath() {
 	if (newPath.value?.start && newPath.value?.end) {
 		// const newPathElement = d3.select('newPath');
@@ -174,9 +166,7 @@ function drawNewPath() {
 		return path.toString();
 		// newPathElement.attr('d', path.toString());
 	}
-	console.log('else');
 	return `M0,0`;
-	// edges.append('path').attr('d', path.toString()).attr('stroke', 'black').attr('stroke-width', '1').attr('fill', 'none');
 }
 </script>
 

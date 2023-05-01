@@ -1,7 +1,7 @@
 <template>
 	<infinite-canvas
 		debug-mode
-		@click.stop="handleCanvasClick()"
+		@click.stop="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
 		:new-path="newPath"
@@ -10,7 +10,11 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 			<ul v-for="node in nodes">
-				<tera-workflow-node :node="node" @port-selected="createNewEdge"></tera-workflow-node>
+				<tera-workflow-node
+					:node="node"
+					@port-selected="createNewEdge"
+					@port-mouseover="onPortMouseover"
+				></tera-workflow-node>
 			</ul>
 		</template>
 	</infinite-canvas>
@@ -22,6 +26,7 @@ import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import { Operation, Position, WorkflowNode, WorkflowStatus, Path } from '@/types/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
+import { path } from 'd3';
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
@@ -30,6 +35,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 const mousePosition = ref<Position>();
 const newPath = ref<Path>({ start: undefined, end: undefined });
 const isCreatingNewEdge = ref<boolean>(false);
+let currentPortPosition: Position = { x: 0, y: 0 };
 const paths = ref<Path[]>([]);
 
 const testOperation: Operation = {
@@ -85,39 +91,38 @@ function saveTransform(newTransform) {
 	canvasTransform = newTransform;
 }
 
-// function applyCanvasTransform(position: Position): Position {
-// 	return {
-// 		x: (position.x - canvasTransform.x) / canvasTransform.k,
-// 		y: (position.y - canvasTransform.y) / canvasTransform.k
-// 	}
-// }
-
-function createNewEdge(nodePosition: Position, portElement: HTMLElement, isInput: boolean) {
+function createNewEdge() {
 	if (isCreatingNewEdge.value === false) {
-		const totalOffsetX = portElement.offsetLeft + (isInput ? 0 : portElement.offsetWidth);
-		const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2 + 1;
-		newPath.value.start = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+		newPath.value.start = currentPortPosition;
 		isCreatingNewEdge.value = true;
+	} else {
+		paths.value.push(newPath.value);
+		isCreatingNewEdge.value = false;
+		newPath.value.start = undefined;
 	}
 }
 
-function handleCanvasClick() {
+function onCanvasClick() {
 	if (isCreatingNewEdge.value === true) {
 		newPath.value.start = undefined;
 		isCreatingNewEdge.value = false;
 	}
 }
 
+function onPortMouseover(position: Position) {
+	currentPortPosition = position;
+}
+
 function mouseUpdate(event) {
 	mousePosition.value = {
-		x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
-		y: (event.offsetY - canvasTransform.y) / canvasTransform.k
+		x: (event.pageX - canvasTransform.x) / canvasTransform.k,
+		y: (event.pageY - 57 - canvasTransform.y) / canvasTransform.k
 	};
-	// mousePosition.value = applyCanvasTransform({ x: event.offsetX, y: event.offsetY });
-	if (isCreatingNewEdge.value === true) {
-		// console.log(event);
+	if (event.target.className === 'port') {
+		newPath.value.end = currentPortPosition;
+	} else {
+		newPath.value.end = mousePosition.value;
 	}
-	newPath.value.end = mousePosition.value;
 }
 
 onMounted(() => window.addEventListener('mousemove', mouseUpdate));
