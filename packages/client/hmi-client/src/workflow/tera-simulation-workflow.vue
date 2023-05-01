@@ -5,7 +5,15 @@
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 
 			<ul v-for="(node, index) in nodes" :key="index">
-				<tera-workflow-node :node="node"></tera-workflow-node>
+				<tera-workflow-node :node="node">
+					<template #body>
+						<tera-calibration-node
+							:node="node"
+							v-if="node.operationType === 'CalibrationOperation'"
+						/>
+						<div v-else>Test node</div>
+					</template>
+				</tera-workflow-node>
 			</ul>
 		</template>
 	</infinite-canvas>
@@ -16,7 +24,9 @@ import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import ContextMenu from 'primevue/contextmenu';
-import TeraWorkflowNode from './tera-workflow-node.vue';
+import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
+import teraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import { CalibrationOperation } from '@/types/workflow/CalibrationOperation';
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
@@ -24,7 +34,7 @@ const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
 
 const testOperation: Operation = {
-	name: 'Test operation',
+	name: 'testOpteration',
 	description: 'A test operation',
 	inputs: [
 		{ type: 'number', label: 'Input one' },
@@ -57,9 +67,15 @@ function insertNode(operation: Operation) {
 
 const contextMenuItems = ref([
 	{
-		label: 'New operation',
+		label: 'New Test Operation',
 		command: () => {
 			insertNode(testOperation);
+		}
+	},
+	{
+		label: 'New Calibration',
+		command: () => {
+			insertNode(CalibrationOperation);
 		}
 	}
 ]);

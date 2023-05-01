@@ -15,7 +15,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 public class CalibrationParams implements Serializable {
 	private String petri;
 	private Map<String, Double> initials;
-	private List<Double> t;
+	private List<Double> timesteps;
 	private Map<String, Double> params;
 	private Map<String, List<Double>> data;
 }
