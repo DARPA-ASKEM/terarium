@@ -85,14 +85,15 @@
 				:project="project"
 				@open-workflow="openWorkflow"
 			/>
-			<tera-simulation-workflow v-else-if="assetType === 'workflow'" />
-			<!-- Test workflow in project view -->
-			<tera-simulation-workflow v-else :project="project" />
-			<!-- <section v-else class="no-open-tabs">
+			<tera-simulation-workflow
+				v-else-if="assetType === 'workflow'"
+				:models="project?.assets?.models"
+			/>
+			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
 				<Button label="Open project overview" @click="openOverview" />
-			</section> -->
+			</section>
 		</section>
 		<tera-slider-panel
 			class="slider"
@@ -246,7 +247,7 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraSimulationWorkflow from '@/workflow/tera-simulation-workflow.vue';
+import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
@@ -635,7 +636,7 @@ section {
 	padding: 0rem;
 }
 
-:deep(span.p-dropdown-label.p-placeholder) {
+/* :deep(span.p-dropdown-label.p-placeholder) {
 	color: var(--text-color-subdued);
 }
 
@@ -646,7 +647,7 @@ section {
 
 :deep(span.p-dropdown-trigger-icon.pi.pi-chevron-down) {
 	color: var(--text-color-subdued);
-}
+} */
 
 .annotation-panel .p-dropdown:not(.p-disabled).p-focus {
 	box-shadow: none;

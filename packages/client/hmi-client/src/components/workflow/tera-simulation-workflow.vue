@@ -2,27 +2,26 @@
 	<infinite-canvas debug-mode @contextmenu="toggleContextMenu" @save-transform="saveTransform">
 		<template #foreground></template>
 		<template #data>
-			<tera-model-node v-if="models" :models="models" />
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node v-for="(node, index) in nodes" :node="node" :key="index" />
+			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node" />
+			<tera-model-node :models="models" />
 		</template>
 	</infinite-canvas>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import { IProject } from '@/types/Project';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
-import TeraWorkflowNode from '@/temp/tera-workflow-node.vue';
+import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
+import { ModelOperation } from '@/types/workflow/model-operation';
 import ContextMenu from 'primevue/contextmenu';
+import { Model } from '@/types/Model';
 
-const props = defineProps<{
-	project: IProject;
+defineProps<{
+	models: Model[];
 }>();
-
-const models = computed(() => props.project?.assets?.models);
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
@@ -66,6 +65,12 @@ const contextMenuItems = ref([
 		label: 'New operation',
 		command: () => {
 			insertNode(testOperation);
+		}
+	},
+	{
+		label: ModelOperation.name,
+		command: () => {
+			insertNode(ModelOperation);
 		}
 	}
 ]);
