@@ -2,7 +2,6 @@
 	<infinite-canvas debug-mode @contextmenu="toggleContextMenu" @save-transform="saveTransform">
 		<template #foreground></template>
 		<template #data>
-			<tera-model-node v-if="models" :models="models" />
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 			<ul v-for="node in nodes">
 				<tera-workflow-node :node="node"></tera-workflow-node>
@@ -12,19 +11,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import TeraModelNode from '@/components/workflow/tera-model-node.vue';
-import { IProject } from '@/types/Project';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from './tera-workflow-node.vue';
 import ContextMenu from 'primevue/contextmenu';
-
-const props = defineProps<{
-	project: IProject;
-}>();
-
-const models = computed(() => props.project?.assets?.models);
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();

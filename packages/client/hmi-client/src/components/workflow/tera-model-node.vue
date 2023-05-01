@@ -21,15 +21,17 @@
 				<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
 			</li>
 		</ul>
+		<Button @click="run">Run</Button>
 	</template>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
-// import { ModelOperation } from '@/types/workflow/model-operation';
+import { ModelOperation } from '@/types/workflow/model-operation';
 import { getModel } from '@/services/model';
 
 defineProps<{
@@ -41,10 +43,20 @@ interface StringValueMap {
 }
 
 const selectedModel = ref<Model>();
-const model = ref();
+const model = ref<Model | null>();
 
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
+
+function run() {
+	if (ModelOperation.action) {
+		ModelOperation.action({
+			model: model.value,
+			initialValues: initialValues.value,
+			parameterValues: parameterValues.value
+		});
+	}
+}
 
 watch(
 	() => selectedModel.value,
@@ -52,13 +64,11 @@ watch(
 		if (selectedModel.value) {
 			model.value = await getModel(selectedModel.value.id.toString());
 
-			// console.log(model.value)
-
-			model.value.content.S.forEach((s) => {
+			model.value?.content.S.forEach((s) => {
 				initialValues.value[s.sname] = `${1}`;
 			});
 
-			model.value.content.T.forEach((s) => {
+			model.value?.content.T.forEach((s) => {
 				parameterValues.value[s.tname] = `${0.0005}`;
 			});
 		}

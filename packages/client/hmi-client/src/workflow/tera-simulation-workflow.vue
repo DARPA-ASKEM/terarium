@@ -3,7 +3,6 @@
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-
 			<ul v-for="(node, index) in nodes" :key="index">
 				<tera-workflow-node :node="node">
 					<template #body>
