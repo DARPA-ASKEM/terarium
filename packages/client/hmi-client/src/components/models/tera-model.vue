@@ -274,8 +274,8 @@
 
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
-import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted } from 'vue';
+import { IGraph, INode } from '@graph-scaffolder/index';
+import { watch, ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -374,6 +374,11 @@ const mathPanelSize = ref<number>(50);
 const mathPanelMinSize = ref<number>(0);
 const mathPanelMaxSize = ref<number>(100);
 
+const graphElement = ref<HTMLDivElement | null>(null);
+let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
+
 const updateLayout = () => {
 	if (splitterContainer.value) {
 		layout.value =
@@ -469,15 +474,36 @@ const onVariableSelected = (variable: string) => {
 		if (variable === selectedVariable.value) {
 			selectedVariable.value = '';
 			equationLatex.value = equationLatexOriginal.value;
+
+			// model editor stuff
+
+			renderer?.chart?.selectAll('.node-ui').style('opacity', 1);
+			renderer?.chart?.selectAll('.edge').style('opacity', 1);
 		} else {
 			selectedVariable.value = variable;
 			equationLatex.value = equationLatexOriginal.value.replaceAll(
 				selectedVariable.value,
 				String.raw`{\color{red}${variable}}`
 			);
+
+			// model editor stuff
+
+			const selection = renderer?.chart
+				?.selectAll('.node-ui')
+				.filter((d) => (d as INode<NodeData>).label === variable);
+			if (selection && renderer) {
+				renderer.chart?.selectAll('.node-ui').style('opacity', 0.3);
+				renderer.chart?.selectAll('.edge').style('opacity', 0.3);
+				selection.style('opacity', 1);
+			}
 		}
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
+
+		// model editor stuff
+
+		renderer?.chart?.selectAll('.node-ui').style('opacity', 1);
+		renderer?.chart?.selectAll('.edge').style('opacity', 1);
 	}
 };
 
@@ -571,11 +597,6 @@ watch(
 		}
 	}
 );
-
-const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -674,6 +695,19 @@ watch(
 
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
+
+			// de-select node if selection exists
+			if (selectedVariable.value) {
+				onVariableSelected(selectedVariable.value);
+			}
+		});
+
+		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
+			if (!renderer?.editMode) {
+				// use `nextTick` to push `onVariableSelected` fn call onto the event loop queue
+				await nextTick();
+				onVariableSelected(d.label);
+			}
 		});
 
 		// Render graph
@@ -804,6 +838,9 @@ const toggleEditMode = () => {
 	if (!isEditing.value && model.value && renderer) {
 		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
+	} else if (isEditing.value && selectedVariable.value) {
+		// de-select node if selection exists
+		onVariableSelected(selectedVariable.value);
 	}
 };
 
