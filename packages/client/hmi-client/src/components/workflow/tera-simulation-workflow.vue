@@ -3,8 +3,19 @@
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node" />
-			<tera-model-node :models="models" />
+			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node">
+				<template #body>
+					<tera-model-node
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
+						:node="node"
+					/>
+					<div v-else>Test node</div>
+				</template>
+			</tera-workflow-node>
 		</template>
 	</infinite-canvas>
 </template>
@@ -12,9 +23,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
+import TeraModelNode from '@/components/workflow/tera-model-node.vue';
+import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import { CalibrationOperation } from '@/types/workflow/CalibrationOperation';
 import { ModelOperation } from '@/types/workflow/model-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
@@ -68,9 +81,15 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: ModelOperation.name,
+		label: 'New model',
 		command: () => {
 			insertNode(ModelOperation);
+		}
+	},
+	{
+		label: 'New calibration',
+		command: () => {
+			insertNode(CalibrationOperation);
 		}
 	}
 ]);

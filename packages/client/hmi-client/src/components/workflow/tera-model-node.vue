@@ -7,20 +7,20 @@
 		placeholder="Select a model"
 	/>
 	<template v-if="model">
-		<h4>Initial values</h4>
-		<section>
-			<div v-for="(s, i) of model.content.S" :key="i" class="row">
+		<h6>Initial values</h6>
+		<ul>
+			<li v-for="(s, i) of model.content.S" :key="i">
 				<span>{{ s.sname }}</span>
 				<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
-			</div>
-		</section>
-		<h4>Parameter values</h4>
-		<section>
-			<div v-for="(t, i) of model.content?.T" :key="i" class="row">
+			</li>
+		</ul>
+		<h6>Parameter values</h6>
+		<ul>
+			<li v-for="(t, i) of model.content?.T" :key="i">
 				<span>{{ t.tname }}</span>
 				<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
-			</div>
-		</section>
+			</li>
+		</ul>
 	</template>
 </template>
 
@@ -33,7 +33,7 @@ import { Model } from '@/types/Model';
 import { getModel } from '@/services/model';
 
 defineProps<{
-	models?: Model[];
+	models: Model[];
 }>();
 
 interface StringValueMap {
@@ -51,8 +51,43 @@ watch(
 	async () => {
 		if (selectedModel.value) {
 			model.value = await getModel(selectedModel.value.id.toString());
-			console.log(model.value);
+
+			// console.log(model.value)
+
+			model.value.content.S.forEach((s) => {
+				initialValues.value[s.sname] = `${1}`;
+			});
+
+			model.value.content.T.forEach((s) => {
+				parameterValues.value[s.tname] = `${0.0005}`;
+			});
 		}
 	}
 );
 </script>
+
+<style scoped>
+h6 {
+	margin-top: 0.5rem;
+}
+
+ul {
+	list-style-type: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+li {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+}
+
+.p-inputtext.p-inputtext-sm {
+	padding: 0.25rem 0.5rem;
+	font-size: 1rem;
+	margin-left: 1rem;
+}
+</style>
