@@ -156,13 +156,11 @@ onMounted(() => {
 
 function drawNewEdge(): string {
 	if (newPath.value?.start && newPath.value?.end) {
-		// const newPathElement = d3.select('newPath');
 		const path = d3.path();
 		path.moveTo(newPath.value.start.x, newPath.value.start.y);
 		path.lineTo(newPath.value.end.x, newPath.value.end.y);
 		path.closePath();
 		return path.toString();
-		// newPathElement.attr('d', path.toString());
 	}
 	return `M0,0`;
 }
