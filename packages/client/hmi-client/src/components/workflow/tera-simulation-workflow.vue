@@ -5,7 +5,8 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node"
-				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)" @port-mouseover="onPortMouseover">
+				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)" @port-mouseover="onPortMouseover"
+				@dragging="event => updatePosition(node, event)">
 				<template #body>
 					<tera-model-node v-if="node.operationType === 'ModelOperation' && models" :models="models" />
 					<tera-calibration-node v-else-if="node.operationType === 'CalibrationOperation'" :node="node" />
@@ -159,4 +160,9 @@ function mouseUpdate(event) {
 
 onMounted(() => window.addEventListener('mousemove', mouseUpdate));
 onUnmounted(() => window.removeEventListener('mousemove', mouseUpdate));
+
+const updatePosition = (node: WorkflowNode, { x, y }) => {
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
+};
 </script>
