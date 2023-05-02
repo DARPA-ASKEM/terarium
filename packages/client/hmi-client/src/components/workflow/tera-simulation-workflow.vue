@@ -1,18 +1,14 @@
 <template>
-	<infinite-canvas debug-mode @contextmenu="toggleContextMenu" @save-transform="saveTransform">
+	<infinite-canvas debug-mode @click.stop="onCanvasClick()" @contextmenu="toggleContextMenu"
+		@save-transform="saveTransform" :new-path="newPath" :paths="paths">
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node">
+			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node" @port-selected="createNewEdge"
+				@port-mouseover="onPortMouseover">
 				<template #body>
-					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
-						:models="models"
-					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
-					/>
+					<tera-model-node v-if="node.operationType === 'ModelOperation' && models" :models="models" />
+					<tera-calibration-node v-else-if="node.operationType === 'CalibrationOperation'" :node="node" />
 					<div v-else>Test node</div>
 				</template>
 			</tera-workflow-node>
@@ -21,9 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { Operation, Path, Position, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
@@ -40,6 +36,11 @@ const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
+const mousePosition = ref<Position>();
+const newPath = ref<Path>({ start: undefined, end: undefined });
+const isCreatingNewEdge = ref<boolean>(false);
+let currentPortPosition: Position = { x: 0, y: 0 };
+const paths = ref<Path[]>([]);
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -53,7 +54,7 @@ const testOperation: Operation = {
 		{ type: 'number', label: 'Output one' },
 		{ type: 'number', label: 'Output two' }
 	],
-	action: () => {},
+	action: () => { },
 	isRunnable: true
 };
 
@@ -105,4 +106,42 @@ function toggleContextMenu(event) {
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
 }
+
+function createNewEdge() {
+	if (isCreatingNewEdge.value === false) {
+		newPath.value.start = currentPortPosition;
+		isCreatingNewEdge.value = true;
+	} else {
+		const path = { start: newPath.value.start, end: newPath.value.end };
+		paths.value.push(path);
+		isCreatingNewEdge.value = false;
+		newPath.value.start = undefined;
+	}
+}
+
+function onCanvasClick() {
+	if (isCreatingNewEdge.value === true) {
+		newPath.value.start = undefined;
+		isCreatingNewEdge.value = false;
+	}
+}
+
+function onPortMouseover(position: Position) {
+	currentPortPosition = position;
+}
+
+function mouseUpdate(event) {
+	mousePosition.value = {
+		x: (event.pageX - canvasTransform.x) / canvasTransform.k,
+		y: (event.pageY - 57 - canvasTransform.y) / canvasTransform.k
+	};
+	if (event.target.className === 'port') {
+		newPath.value.end = currentPortPosition;
+	} else {
+		newPath.value.end = mousePosition.value;
+	}
+}
+
+onMounted(() => window.addEventListener('mousemove', mouseUpdate));
+onUnmounted(() => window.removeEventListener('mousemove', mouseUpdate));
 </script>

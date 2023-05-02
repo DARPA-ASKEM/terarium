@@ -4,28 +4,33 @@
 			<h5>{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index">
-				<div class="port"></div>
+			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
+				<div class="port" @click.stop="selectPort" @mouseover="mouseoverPort(index, true)"></div>
 				{{ input.label }}
 			</li>
 		</section>
 		<slot name="body" />
 		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index">
+			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
-				<div class="port"></div>
+				<div class="port" @click.stop="selectPort" @mouseover="mouseoverPort(index, false)"></div>
 			</li>
 		</section>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { WorkflowNode } from '@/types/workflow';
-import { ref, onMounted } from 'vue';
+import { Position, WorkflowNode } from '@/types/workflow';
+import { ref } from 'vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['port-selected', 'port-mouseover']);
+
+const inputs = ref<HTMLElement>();
+const outputs = ref<HTMLElement>();
 
 const nodeStyle = ref({
 	minWidth: `${props.node.width}px`,
@@ -34,7 +39,21 @@ const nodeStyle = ref({
 	left: `${props.node.x}px`
 });
 
-onMounted(() => {});
+function selectPort() {
+	emit('port-selected');
+}
+
+function mouseoverPort(index: number, isInput: boolean) {
+	const ports = isInput ? inputs.value : outputs.value;
+	if (ports) {
+		const el = ports[index] as HTMLElement;
+		const nodePosition: Position = { x: props.node.x, y: props.node.y };
+		const totalOffsetX = el.offsetLeft + (isInput ? 0 : el.offsetWidth);
+		const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
+		const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+		emit('port-mouseover', portPosition);
+	}
+}
 </script>
 
 <style scoped>
