@@ -71,13 +71,13 @@ const testOperation: Operation = {
 	name: 'Test operation',
 	description: 'A test operation',
 	inputs: [
-		{ type: 'number', label: 'Input one' },
-		{ type: 'number', label: 'Input two' },
-		{ type: 'number', label: 'Input three' }
+		{ type: 'number', label: 'Number input' },
+		{ type: 'number', label: 'Number input' },
+		{ type: 'string', label: 'String input' }
 	],
 	outputs: [
-		{ type: 'number', label: 'Output one' },
-		{ type: 'number', label: 'Output two' }
+		{ type: 'number', label: 'Number output' },
+		{ type: 'string', label: 'String output' }
 	],
 	action: () => {},
 	isRunnable: true
@@ -139,16 +139,20 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 			workflowId: '0',
 			points: [currentPortPosition, currentPortPosition],
 			source: node.id,
-			sourcePortId: port.id,
+			sourcePort: port,
 			target: undefined,
-			targetPortId: undefined
+			targetPort: undefined
 		};
 		isCreatingNewEdge.value = true;
 	} else if (newEdge.value) {
-		newEdge.value.target = node.id;
-		newEdge.value.targetPortId = port.id;
-		edges.value.push(newEdge.value);
-		cancelNewEdge();
+		if (port.type === newEdge.value.sourcePort.type) {
+			newEdge.value.target = node.id;
+			newEdge.value.targetPort = port;
+			edges.value.push(newEdge.value);
+			cancelNewEdge();
+		} else {
+			cancelNewEdge();
+		}
 	}
 }
 
