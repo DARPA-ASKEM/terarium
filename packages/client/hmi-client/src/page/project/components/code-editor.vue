@@ -175,7 +175,7 @@ async function createModelFromCode() {
 		const paperToExtractMetadata = await getDocumentById(selectedPaper.value[0].xdd_uri);
 		if (paperToExtractMetadata) {
 			const info = { pdf_name: '', DOI: getDocumentDoi(paperToExtractMetadata) };
-			const metadata = await findVarsFromText(paperToExtractMetadata.abstractText);
+			const metadata = await findVarsFromText(paperToExtractMetadata.abstract);
 			const linkAnnotationData = {
 				pyacset: JSON.stringify(acset.value),
 				annotations: JSON.stringify(metadata),
