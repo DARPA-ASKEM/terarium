@@ -63,13 +63,8 @@ const edgesRef = ref<SVGElement>();
 
 const newEdge = computed(() => props.newEdge);
 
-function handleZoom(
-	e: any,
-	container: d3.Selection<SVGGElement, any, null, any>,
-	edges: d3.Selection<SVGGElement, any, null, any>
-) {
+function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
 	container.attr('transform', e.transform);
-	edges.attr('transform', e.transform);
 
 	d3.select(dataLayerRef.value as HTMLDivElement)
 		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
@@ -124,8 +119,7 @@ const resizeObserver = new ResizeObserver(() => updateDimensions());
 
 onMounted(() => {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
-	const container = svg.append('g'); // Pan/zoom area
-	const edges = d3.select(edgesRef.value as SVGGElement);
+	const edges = d3.select(edgesRef.value as SVGGElement); // Pan/zoom area
 
 	// Zoom config is applied and event handler
 	const zoom = d3
@@ -139,7 +133,7 @@ onMounted(() => {
 		})
 		.scaleExtent(props.scaleExtent)
 		.on('zoom', (e) => {
-			handleZoom(e, container, edges);
+			handleZoom(e, edges);
 		})
 		.on('end', handleZoomEnd);
 	svg.call(zoom as any).on('dblclick.zoom', null);
