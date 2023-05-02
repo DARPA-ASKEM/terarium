@@ -5,7 +5,12 @@
 		</header>
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
-				<div class="port" @click.stop="selectPort(input)" @mouseover="mouseoverPort(index, true)"></div>
+				<div
+					class="port"
+					@click.stop="selectPort(input)"
+					@mouseover="mouseoverPort(index, true)"
+					@focus="() => {}"
+				></div>
 				{{ input.label }}
 			</li>
 		</section>
@@ -13,7 +18,12 @@
 		<section class="outputs">
 			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort(output)" @mouseover="mouseoverPort(index, false)"></div>
+				<div
+					class="port"
+					@click.stop="selectPort(output)"
+					@mouseover="mouseoverPort(index, false)"
+					@focus="() => {}"
+				></div>
 			</li>
 		</section>
 	</section>
