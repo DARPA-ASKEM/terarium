@@ -98,7 +98,7 @@ function mouseoverPort(index: number, isInput: boolean) {
 	if (ports) {
 		const el = ports[index] as HTMLElement;
 		const nodePosition: Position = { x: props.node.x, y: props.node.y };
-		const totalOffsetX = el.offsetLeft + (isInput ? 0 : el.offsetWidth + 8);
+		const totalOffsetX = el.offsetLeft + (isInput ? -7 : el.offsetWidth + 8);
 		const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 		const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 		emit('port-mouseover', portPosition);
