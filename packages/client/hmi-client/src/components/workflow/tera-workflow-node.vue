@@ -5,7 +5,7 @@
 		</header>
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
-				<div class="port" @click.stop="selectPort" @mouseover="mouseoverPort(index, true)"></div>
+				<div class="port" @click.stop="selectPort(input)" @mouseover="mouseoverPort(index, true)"></div>
 				{{ input.label }}
 			</li>
 		</section>
@@ -13,14 +13,14 @@
 		<section class="outputs">
 			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort" @mouseover="mouseoverPort(index, false)"></div>
+				<div class="port" @click.stop="selectPort(output)" @mouseover="mouseoverPort(index, false)"></div>
 			</li>
 		</section>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -39,8 +39,8 @@ const nodeStyle = ref({
 	left: `${props.node.x}px`
 });
 
-function selectPort() {
-	emit('port-selected');
+function selectPort(port: WorkflowPort) {
+	emit('port-selected', port);
 }
 
 function mouseoverPort(index: number, isInput: boolean) {
@@ -90,6 +90,10 @@ li {
 	border-radius: 8px;
 	position: relative;
 	background: var(--surface-100);
+}
+
+.port:hover {
+	background: var(--surface-border);
 }
 
 .inputs .port {

@@ -88,8 +88,3 @@ export interface Position {
 	x: number;
 	y: number;
 }
-
-export interface Path {
-	start?: Position;
-	end?: Position;
-}

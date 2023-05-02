@@ -1,31 +1,14 @@
 <template>
-	<infinite-canvas
-		debug-mode
-		@click.stop="onCanvasClick()"
-		@contextmenu="toggleContextMenu"
-		@save-transform="saveTransform"
-		:new-edge="newEdge"
-		:edges="edges"
-	>
+	<infinite-canvas debug-mode @click.stop="onCanvasClick()" @contextmenu="toggleContextMenu"
+		@save-transform="saveTransform" :new-edge="newEdge" :edges="edges">
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node
-				v-for="(node, index) in nodes"
-				:key="index"
-				:node="node"
-				@port-selected="(portId) => createNewEdge(node, portId)"
-				@port-mouseover="onPortMouseover"
-			>
+			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node"
+				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)" @port-mouseover="onPortMouseover">
 				<template #body>
-					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
-						:models="models"
-					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
-					/>
+					<tera-model-node v-if="node.operationType === 'ModelOperation' && models" :models="models" />
+					<tera-calibration-node v-else-if="node.operationType === 'CalibrationOperation'" :node="node" />
 					<div v-else>Test node</div>
 				</template>
 			</tera-workflow-node>
@@ -36,7 +19,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import { Operation, Position, WorkflowEdge, WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { Operation, Position, WorkflowEdge, WorkflowNode, WorkflowPort, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
@@ -71,7 +54,7 @@ const testOperation: Operation = {
 		{ type: 'number', label: 'Output one' },
 		{ type: 'number', label: 'Output two' }
 	],
-	action: () => {},
+	action: () => { },
 	isRunnable: true
 };
 
@@ -124,23 +107,24 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
 }
 
-function createNewEdge(node: WorkflowNode, portId: string) {
+function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 	if (isCreatingNewEdge.value === false) {
 		newEdge.value = {
 			id: edges.value.length.toString(),
 			workflowId: '0',
 			points: [currentPortPosition, currentPortPosition],
 			source: node.id,
-			sourcePortId: portId,
+			sourcePortId: port.id,
 			target: undefined,
 			targetPortId: undefined
 		};
 		isCreatingNewEdge.value = true;
 	} else if (newEdge.value) {
 		newEdge.value.target = node.id;
-		newEdge.value.targetPortId = portId;
+		newEdge.value.targetPortId = port.id;
 		edges.value.push(newEdge.value);
 		cancelNewEdge();
+
 	}
 }
 
