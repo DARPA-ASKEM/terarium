@@ -3,7 +3,12 @@
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node">
+			<tera-workflow-node
+				v-for="(node, index) in nodes"
+				:key="index"
+				:node="node"
+				@dragging="updatePosition(node, $event)"
+			>
 				<template #body>
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
@@ -105,4 +110,9 @@ function toggleContextMenu(event) {
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
 }
+
+const updatePosition = (node: WorkflowNode, { x, y }) => {
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
+};
 </script>
