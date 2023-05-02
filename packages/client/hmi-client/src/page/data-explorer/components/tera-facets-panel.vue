@@ -30,7 +30,7 @@ import TeraCategoricalFacet from '@/page/data-explorer/components/facets/tera-ca
 import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
 import { FacetBucket, Facets, ResourceType } from '@/types/common';
-import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
+import { getFacetNameFormatter, getFacetsDisplayNames } from '@/utils/facets';
 import { XDDFacetsItemResponse } from '@/types/Types';
 
 const props = defineProps({
@@ -58,7 +58,7 @@ const formattedFacets = computed(() => {
 	const keys = Object.keys(props.facets);
 
 	// mux the filtered data and base data into facets.
-	const facetList = keys.map((key) => {
+	return keys.map((key) => {
 		const baseData: FacetBucket[] = [];
 		const filteredData: FacetBucket[] = [];
 
@@ -105,6 +105,5 @@ const formattedFacets = computed(() => {
 			filteredData
 		};
 	});
-	return facetList;
 });
 </script>
