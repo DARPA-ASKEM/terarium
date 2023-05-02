@@ -1,5 +1,5 @@
 <template>
-	<section class="container" :style="nodeStyle">
+	<section class="container" :style="nodeStyle" ref="workflowNode">
 		<header>
 			<h5>{{ node.operationType }}</h5>
 		</header>
@@ -21,20 +21,68 @@
 
 <script setup lang="ts">
 import { WorkflowNode } from '@/types/workflow';
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+
+const emit = defineEmits(['dragging']);
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const nodeStyle = ref({
+const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
 	minHeight: `${props.node.height}px`,
 	top: `${props.node.y}px`,
 	left: `${props.node.x}px`
+}));
+
+const workflowNode = ref<HTMLElement>();
+
+let tempX = 0;
+let tempY = 0;
+let dragStart = false;
+
+const startDrag = (evt: MouseEvent) => {
+	console.log('start', evt.x, evt.y);
+	tempX = evt.x;
+	tempY = evt.y;
+	dragStart = true;
+};
+
+const drag = (evt: MouseEvent) => {
+	if (dragStart === false) return;
+
+	const dx = evt.x - tempX;
+	const dy = evt.y - tempY;
+
+	emit('dragging', { x: dx, y: dy });
+
+	tempX = evt.x;
+	tempY = evt.y;
+};
+
+const stopDrag = (evt: MouseEvent) => {
+	console.log('end', evt.x, evt.y);
+	tempX = 0;
+	tempY = 0;
+	dragStart = false;
+};
+
+onMounted(() => {
+	if (!workflowNode.value) return;
+
+	workflowNode.value.addEventListener('mousedown', startDrag);
+	document.addEventListener('mousemove', drag);
+	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
-onMounted(() => {});
+onBeforeUnmount(() => {
+	if (workflowNode.value) {
+		workflowNode.value.removeEventListener('mousedown', startDrag);
+		document.removeEventListener('mousemove', drag);
+		workflowNode.value.removeEventListener('mouseup', stopDrag);
+	}
+});
 </script>
 
 <style scoped>
@@ -51,6 +99,7 @@ section {
 	border-radius: var(--border-radius);
 	position: absolute;
 	padding: 0.5rem;
+	user-select: none;
 }
 
 .outputs {
