@@ -29,21 +29,26 @@ import { computed, PropType } from 'vue';
 import TeraCategoricalFacet from '@/page/data-explorer/components/facets/tera-categorical-facet.vue';
 import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
-import { Facets, FacetBucket, ResourceType } from '@/types/common';
+import { FacetBucket, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
+import { XDDFacetsItemResponse } from '@/types/Types';
 
 const props = defineProps({
 	facets: {
-		type: Object as PropType<Facets>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
 		default: () => {}
 	},
 	filteredFacets: {
-		type: Object as PropType<Facets>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
 		default: () => {}
 	},
 	resultType: {
 		type: String,
 		default: ResourceType.ALL
+	},
+	docCount: {
+		type: Number,
+		default: 0
 	}
 });
 
@@ -58,17 +63,17 @@ const formattedFacets = computed(() => {
 		const filteredData: FacetBucket[] = [];
 
 		const filteredFacetDict = props.filteredFacets[key]
-			? props.filteredFacets[key].reduce((dict, category) => {
+			? props.filteredFacets[key].buckets.reduce((dict, category) => {
 					// eslint-disable-next-line no-param-reassign
-					dict[category.key] = category.value;
+					dict[category.key] = Number(category.docCount);
 					return dict;
 			  }, {} as { [key: string]: number })
 			: {};
 
-		props.facets[key].forEach((category) => {
+		props.facets[key].buckets.forEach((category) => {
 			baseData.push({
 				key: category.key,
-				value: category.value
+				value: props.docCount
 			});
 			filteredData.push({
 				key: category.key,

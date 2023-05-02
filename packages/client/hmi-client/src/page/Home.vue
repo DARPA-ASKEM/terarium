@@ -173,7 +173,7 @@ import { computed, onMounted, ref } from 'vue';
 import SelectedDocumentPane from '@/components/documents/selected-document-pane.vue';
 import { IProject } from '@/types/Project';
 import { XDDSearchParams } from '@/types/XDD';
-import { DocumentType } from '@/types/Document';
+import { Document } from '@/types/Types';
 import { searchXDDDocuments } from '@/services/data';
 import useResourcesStore from '@/stores/resources';
 import useQueryStore from '@/stores/query';
@@ -198,10 +198,10 @@ const projects = ref<IProject[]>();
 const projectsToDisplay = computed(() =>
 	projects.value?.filter((project) => project.relatedDocuments !== undefined).slice(0, 5)
 );
-const relevantDocuments = ref<DocumentType[]>([]);
+const relevantDocuments = ref<Document[]>([]);
 const relevantSearchTerm = 'COVID-19';
 const relevantSearchParams: XDDSearchParams = { perPage: 15 }; // , fields: "abstract,title" };
-const selectedDocument = ref<DocumentType>();
+const selectedDocument = ref<Document>();
 
 const resourcesStore = useResourcesStore();
 const queryStore = useQueryStore();
@@ -223,12 +223,12 @@ onMounted(async () => {
 	// Get all relevant documents (latest on section)
 	const allDocuments = await searchXDDDocuments(relevantSearchTerm, relevantSearchParams);
 	if (allDocuments) {
-		relevantDocuments.value = allDocuments.results;
+		relevantDocuments.value = allDocuments.data;
 	}
 });
 
-const selectDocument = (item: DocumentType) => {
-	const itemID = item as DocumentType;
+const selectDocument = (item: Document) => {
+	const itemID = item as Document;
 	selectedDocument.value = itemID;
 };
 

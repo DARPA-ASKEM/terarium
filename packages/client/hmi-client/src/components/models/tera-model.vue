@@ -307,8 +307,7 @@ import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
-import { DocumentType } from '@/types/Document';
-import { ProvenanceType } from '@/types/Types';
+import { Document, ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
@@ -514,7 +513,7 @@ const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
 const fetchRelatedTerariumArtifacts = async () => {

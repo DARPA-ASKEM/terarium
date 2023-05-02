@@ -23,8 +23,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, PropType, ref } from 'vue';
-import { DocumentType } from '@/types/Document';
-import { DocumentAsset } from '@/types/Types';
+import { Document, DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import * as ProjectService from '@/services/project';
@@ -33,7 +32,7 @@ import dropdown from 'primevue/dropdown';
 
 const props = defineProps({
 	selectedDocument: {
-		type: Object as PropType<DocumentType>,
+		type: Object as PropType<Document>,
 		required: true
 	}
 });
@@ -71,7 +70,7 @@ const addResourcesToProject = async (projectId: string) => {
 	}
 };
 
-const formatAbstract = (item: DocumentType) =>
+const formatAbstract = (item: Document) =>
 	item.abstract !== undefined ? item.abstract : '[no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
