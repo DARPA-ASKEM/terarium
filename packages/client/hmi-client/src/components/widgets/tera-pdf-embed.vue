@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
+import API from '@/api/api';
 
 const props = defineProps<{
 	pdfLink: string;
@@ -12,8 +13,12 @@ const props = defineProps<{
 
 const adobeDCView = ref();
 const isAdobePdfApiReady = ref(false);
+let apiKey = null;
 
-onMounted(() => {
+onMounted(async () => {
+	const apiKeyResponse = await API.get('/adobe');
+	apiKey = apiKeyResponse.data;
+
 	// @ts-ignore
 	// eslint-disable-line
 	if (window.AdobeDC) {
@@ -32,7 +37,7 @@ watch(isAdobePdfApiReady, () => {
 			// @ts-ignore
 			// eslint-disable-line
 			new window.AdobeDC.View({
-				clientId: '0cac1f8fd97c4957b968ebf6a5252223',
+				clientId: apiKey,
 				divId: 'adobe-dc-view'
 			})
 		);

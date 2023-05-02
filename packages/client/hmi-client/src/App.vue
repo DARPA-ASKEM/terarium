@@ -34,8 +34,11 @@
 			</a>
 		</div>
 	</footer>
-
-	<Modal v-if="isAboutModalVisible" class="modal" @modal-mask-clicked="isAboutModalVisible = false">
+	<tera-modal
+		v-if="isAboutModalVisible"
+		class="modal"
+		@modal-mask-clicked="isAboutModalVisible = false"
+	>
 		<template #header>
 			<h4>About Terarium</h4>
 		</template>
@@ -74,7 +77,7 @@
 				<Button class="p-button" @click="isAboutModalVisible = false">Close</Button>
 			</div>
 		</template>
-	</Modal>
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -90,7 +93,7 @@ import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
 import { useCurrentRoute } from './router/index';
-import Modal from './components/widgets/Modal.vue';
+import TeraModal from './components/widgets/tera-modal.vue';
 
 const toast = useToastService();
 /**

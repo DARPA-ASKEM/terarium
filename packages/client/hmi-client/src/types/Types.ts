@@ -46,6 +46,14 @@ export interface Simulation {
     modelId: number;
 }
 
+export interface CalibrationParams {
+    petri: string;
+    initials: { [index: string]: number };
+    timesteps: number[];
+    params: { [index: string]: number };
+    data: { [index: string]: number[] };
+}
+
 export interface DocumentsResponseOK extends XDDResponseOK {
     data: Document[];
     nextPage: string;
