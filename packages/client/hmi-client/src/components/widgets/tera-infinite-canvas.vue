@@ -1,6 +1,11 @@
 <template>
 	<main ref="canvasRef">
-		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
+		<svg
+			class="canvas-layer background-layer"
+			ref="backgroundLayerRef"
+			:width="width"
+			:height="height"
+		>
 			<slot name="background">
 				<g ref="edgesRef" class="edges" stroke-width="1" fill="none">
 					<path v-if="newPath?.start && newPath.end" :d="drawNewEdge()" stroke="green" />
