@@ -8,8 +8,8 @@
 		>
 			<slot name="background">
 				<g ref="edgesRef" class="edges" stroke-width="1" fill="none">
-					<path v-if="newPath?.start && newPath.end" :d="drawNewEdge()" stroke="green" />
-					<path v-for="(path, index) in paths" :d="drawEdge(path)" stroke="black" :key="index" />
+					<path v-if="newEdge?.points" :d="drawNewEdge()" stroke="green" />
+					<path v-for="(edge, index) in edges" :d="drawEdge(edge)" stroke="black" :key="index" />
 				</g>
 			</slot>
 		</svg>
@@ -25,22 +25,22 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import * as d3 from 'd3';
-import { Path } from '@/types/workflow';
+import { WorkflowEdge } from '@/types/workflow';
 
 const props = withDefaults(
 	defineProps<{
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
-		newPath?: Path;
-		paths: Path[];
+		newEdge?: WorkflowEdge;
+		edges: WorkflowEdge[];
 	}>(),
 	{
 		debugMode: false,
 		scaleExtent: () => [0.1, 10],
 		lastTransform: undefined,
-		newPath: undefined,
-		paths: () => []
+		newEdge: undefined,
+		edges: () => []
 	}
 );
 //
@@ -61,7 +61,7 @@ const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
 const edgesRef = ref<SVGElement>();
 
-const newPath = computed(() => props.newPath);
+const newEdge = computed(() => props.newEdge);
 
 function handleZoom(
 	e: any,
@@ -165,25 +165,33 @@ onMounted(() => {
 });
 
 function drawNewEdge(): string {
-	if (newPath.value?.start && newPath.value?.end) {
+	// if (newEdge.value?.points && newEdge.value?.points.length === 2) {
+	// 	const sourcePoint = newEdge.value.points[0];
+	// 	const targetPoint = newEdge.value.points[1];
+	// 	const path = d3.path();
+	// 	path.moveTo(sourcePoint.x, sourcePoint.y);
+	// 	path.lineTo(targetPoint.x, targetPoint.y);
+	// 	path.closePath();
+	// 	return path.toString();
+	// }
+	// return 'M0,0';
+	if (newEdge.value) {
+		return drawEdge(newEdge.value);
+	}
+	return 'M0,0';
+}
+
+function drawEdge(edge: WorkflowEdge): string {
+	if (edge.points && edge.points.length === 2) {
+		const sourcePoint = edge.points[0];
+		const targetPoint = edge.points[1];
 		const path = d3.path();
-		path.moveTo(newPath.value.start.x, newPath.value.start.y);
-		path.lineTo(newPath.value.end.x, newPath.value.end.y);
+		path.moveTo(sourcePoint.x, sourcePoint.y);
+		path.lineTo(targetPoint.x, targetPoint.y);
 		path.closePath();
 		return path.toString();
 	}
-	return `M0,0`;
-}
-
-function drawEdge(path: Path): string {
-	if (path.start && path.end) {
-		const d3Path = d3.path();
-		d3Path.moveTo(path.start.x, path.start.y);
-		d3Path.lineTo(path.end.x, path.end.y);
-		d3Path.closePath();
-		return d3Path.toString();
-	}
-	return `M0,0`;
+	return 'M0,0';
 }
 </script>
 

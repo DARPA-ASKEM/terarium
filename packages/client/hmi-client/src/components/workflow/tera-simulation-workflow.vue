@@ -1,14 +1,31 @@
 <template>
-	<infinite-canvas debug-mode @click.stop="onCanvasClick()" @contextmenu="toggleContextMenu"
-		@save-transform="saveTransform" :new-path="newPath" :paths="paths">
+	<infinite-canvas
+		debug-mode
+		@click.stop="onCanvasClick()"
+		@contextmenu="toggleContextMenu"
+		@save-transform="saveTransform"
+		:new-edge="newEdge"
+		:edges="edges"
+	>
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node v-for="(node, index) in nodes" :key="index" :node="node" @port-selected="createNewEdge"
-				@port-mouseover="onPortMouseover">
+			<tera-workflow-node
+				v-for="(node, index) in nodes"
+				:key="index"
+				:node="node"
+				@port-selected="(portId) => createNewEdge(node, portId)"
+				@port-mouseover="onPortMouseover"
+			>
 				<template #body>
-					<tera-model-node v-if="node.operationType === 'ModelOperation' && models" :models="models" />
-					<tera-calibration-node v-else-if="node.operationType === 'CalibrationOperation'" :node="node" />
+					<tera-model-node
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
+						:node="node"
+					/>
 					<div v-else>Test node</div>
 				</template>
 			</tera-workflow-node>
@@ -19,7 +36,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
-import { Operation, Path, Position, WorkflowNode, WorkflowStatus } from '@/types/workflow';
+import { Operation, Position, WorkflowEdge, WorkflowNode, WorkflowStatus } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
@@ -36,11 +53,11 @@ const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
-const mousePosition = ref<Position>();
-const newPath = ref<Path>({ start: undefined, end: undefined });
+const mousePosition = ref<Position>({ x: 0, y: 0 });
 const isCreatingNewEdge = ref<boolean>(false);
 let currentPortPosition: Position = { x: 0, y: 0 };
-const paths = ref<Path[]>([]);
+const newEdge = ref<WorkflowEdge | undefined>();
+const edges = ref<WorkflowEdge[]>([]);
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -54,7 +71,7 @@ const testOperation: Operation = {
 		{ type: 'number', label: 'Output one' },
 		{ type: 'number', label: 'Output two' }
 	],
-	action: () => { },
+	action: () => {},
 	isRunnable: true
 };
 
@@ -107,23 +124,35 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
 }
 
-function createNewEdge() {
+function createNewEdge(node: WorkflowNode, portId: string) {
 	if (isCreatingNewEdge.value === false) {
-		newPath.value.start = currentPortPosition;
+		newEdge.value = {
+			id: edges.value.length.toString(),
+			workflowId: '0',
+			points: [currentPortPosition, mousePosition.value],
+			source: node.id,
+			sourcePortId: portId,
+			target: undefined,
+			targetPortId: undefined
+		};
 		isCreatingNewEdge.value = true;
-	} else {
-		const path = { start: newPath.value.start, end: newPath.value.end };
-		paths.value.push(path);
-		isCreatingNewEdge.value = false;
-		newPath.value.start = undefined;
+	} else if (newEdge.value) {
+		newEdge.value.target = node.id;
+		newEdge.value.targetPortId = portId;
+		edges.value.push(newEdge.value);
+		cancelNewEdge();
 	}
 }
 
 function onCanvasClick() {
 	if (isCreatingNewEdge.value === true) {
-		newPath.value.start = undefined;
-		isCreatingNewEdge.value = false;
+		cancelNewEdge();
 	}
+}
+
+function cancelNewEdge() {
+	isCreatingNewEdge.value = false;
+	newEdge.value = undefined;
 }
 
 function onPortMouseover(position: Position) {
@@ -131,14 +160,16 @@ function onPortMouseover(position: Position) {
 }
 
 function mouseUpdate(event) {
-	mousePosition.value = {
-		x: (event.pageX - canvasTransform.x) / canvasTransform.k,
-		y: (event.pageY - 57 - canvasTransform.y) / canvasTransform.k
-	};
-	if (event.target.className === 'port') {
-		newPath.value.end = currentPortPosition;
-	} else {
-		newPath.value.end = mousePosition.value;
+	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
+		mousePosition.value = {
+			x: (event.pageX - canvasTransform.x) / canvasTransform.k,
+			y: (event.pageY - 57 - canvasTransform.y) / canvasTransform.k
+		};
+		if (event.target.className === 'port') {
+			newEdge.value.points[1] = currentPortPosition;
+		} else {
+			newEdge.value.points[1] = mousePosition.value;
+		}
 	}
 }
 
