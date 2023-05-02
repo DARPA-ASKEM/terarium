@@ -20,6 +20,6 @@ public class XDDFacetsItemResponse implements Serializable {
 
 	// The 'Object' in question here is a Number, however, sometimes they are coming in as Big numbers, and the
 	// parent class can't handle the deserialization of scientific notation.
-	private List<Map<String, Object>> buckets;
+	private List<XDDFacetBucket> buckets;
 
 }
