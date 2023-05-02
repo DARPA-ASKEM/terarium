@@ -65,6 +65,7 @@ const formattedFacets = computed(() => {
 		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
 		let buckets;
 		if (props.filteredFacets[key] && 'buckets' in props.filteredFacets[key]) {
+			// accessing via ['buckets'] for now
 			buckets = props.filteredFacets[key].buckets;
 		} else {
 			buckets = props.filteredFacets[key];
@@ -80,6 +81,7 @@ const formattedFacets = computed(() => {
 
 		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
 		if (props.facets[key] && 'buckets' in props.facets[key]) {
+			// accessing via ['buckets'] for now
 			buckets = props.facets[key].buckets;
 		} else {
 			buckets = props.facets[key];
