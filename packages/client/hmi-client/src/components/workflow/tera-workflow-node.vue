@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { WorkflowNode } from '@/types/workflow';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 
 const emit = defineEmits(['dragging']);
 
@@ -29,12 +29,12 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const nodeStyle = ref({
+const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
 	minHeight: `${props.node.height}px`,
 	top: `${props.node.y}px`,
 	left: `${props.node.x}px`
-});
+}));
 
 const workflowNode = ref<HTMLElement>();
 
@@ -55,7 +55,6 @@ const drag = (evt: MouseEvent) => {
 	const dx = evt.x - tempX;
 	const dy = evt.y - tempY;
 
-	console.log('move', dx, dy);
 	emit('dragging', { x: dx, y: dy });
 
 	tempX = evt.x;
@@ -73,14 +72,14 @@ onMounted(() => {
 	if (!workflowNode.value) return;
 
 	workflowNode.value.addEventListener('mousedown', startDrag);
-	workflowNode.value.addEventListener('mousemove', drag);
+	document.addEventListener('mousemove', drag);
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
 onBeforeUnmount(() => {
 	if (workflowNode.value) {
 		workflowNode.value.removeEventListener('mousedown', startDrag);
-		workflowNode.value.removeEventListener('mousemove', drag);
+		document.removeEventListener('mousemove', drag);
 		workflowNode.value.removeEventListener('mouseup', stopDrag);
 	}
 });

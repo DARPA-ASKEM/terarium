@@ -112,7 +112,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 const updatePosition = (node: WorkflowNode, { x, y }) => {
-	node.x += x;
-	node.y += y;
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
 };
 </script>
