@@ -88,7 +88,7 @@ function mouseoverPort(index: number, isInput: boolean) {
 	if (ports) {
 		const el = ports[index] as HTMLElement;
 		const nodePosition: Position = { x: props.node.x, y: props.node.y };
-		const totalOffsetX = el.offsetLeft + (isInput ? 0 : el.offsetWidth);
+		const totalOffsetX = el.offsetLeft + (isInput ? 0 : el.offsetWidth + 8);
 		const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 		const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 		emit('port-mouseover', portPosition);
@@ -133,9 +133,9 @@ li {
 .port {
 	display: inline-block;
 	height: 16px;
-	width: 16px;
+	width: 8px;
 	border: 1px solid var(--surface-border);
-	border-radius: 8px;
+
 	position: relative;
 	background: var(--surface-100);
 }
@@ -146,10 +146,12 @@ li {
 
 .inputs .port {
 	left: -8px;
+	border-radius: 0 8px 8px 0;
 }
 
 .outputs .port {
 	left: 8px;
+	border-radius: 8px 0 0 8px;
 }
 
 header {
