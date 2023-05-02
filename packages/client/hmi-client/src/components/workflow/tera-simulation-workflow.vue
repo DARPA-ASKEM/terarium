@@ -129,7 +129,7 @@ function createNewEdge(node: WorkflowNode, portId: string) {
 		newEdge.value = {
 			id: edges.value.length.toString(),
 			workflowId: '0',
-			points: [currentPortPosition, mousePosition.value],
+			points: [currentPortPosition, currentPortPosition],
 			source: node.id,
 			sourcePortId: portId,
 			target: undefined,
