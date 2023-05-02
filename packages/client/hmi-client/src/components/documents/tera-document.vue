@@ -187,7 +187,7 @@
 					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
-						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstract)" />
 						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</li>
 				</ul>
