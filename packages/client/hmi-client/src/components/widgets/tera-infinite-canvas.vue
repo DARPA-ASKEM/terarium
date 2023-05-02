@@ -165,16 +165,6 @@ onMounted(() => {
 });
 
 function drawNewEdge(): string {
-	// if (newEdge.value?.points && newEdge.value?.points.length === 2) {
-	// 	const sourcePoint = newEdge.value.points[0];
-	// 	const targetPoint = newEdge.value.points[1];
-	// 	const path = d3.path();
-	// 	path.moveTo(sourcePoint.x, sourcePoint.y);
-	// 	path.lineTo(targetPoint.x, targetPoint.y);
-	// 	path.closePath();
-	// 	return path.toString();
-	// }
-	// return 'M0,0';
 	if (newEdge.value) {
 		return drawEdge(newEdge.value);
 	}
