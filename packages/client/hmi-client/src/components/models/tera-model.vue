@@ -374,6 +374,11 @@ const mathPanelSize = ref<number>(50);
 const mathPanelMinSize = ref<number>(0);
 const mathPanelMaxSize = ref<number>(100);
 
+const graphElement = ref<HTMLDivElement | null>(null);
+let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
+
 const updateLayout = () => {
 	if (splitterContainer.value) {
 		layout.value =
@@ -476,6 +481,7 @@ const onVariableSelected = (variable: string) => {
 				String.raw`{\color{red}${variable}}`
 			);
 		}
+		renderer?.toggoleNodeSelectionByLabel(variable);
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
 	}
@@ -578,11 +584,6 @@ onUpdated(() => {
 	}
 });
 
-const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
-
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
 	if ((event.target as HTMLElement).tagName === 'INPUT') {
@@ -680,6 +681,16 @@ watch(
 
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
+
+			// de-select node if selection exists
+			if (selectedVariable.value) {
+				onVariableSelected(selectedVariable.value);
+			}
+		});
+
+		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
+			// Note: do not change the renderer's visuals, this is done internally
+			onVariableSelected(d.label);
 		});
 
 		// Render graph
@@ -810,6 +821,9 @@ const toggleEditMode = () => {
 	if (!isEditing.value && model.value && renderer) {
 		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
+	} else if (isEditing.value && selectedVariable.value) {
+		// de-select node if selection exists
+		onVariableSelected(selectedVariable.value);
 	}
 };
 
