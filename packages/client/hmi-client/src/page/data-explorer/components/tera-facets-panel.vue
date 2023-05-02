@@ -29,17 +29,17 @@ import { computed, PropType } from 'vue';
 import TeraCategoricalFacet from '@/page/data-explorer/components/facets/tera-categorical-facet.vue';
 import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
-import { FacetBucket, ResourceType } from '@/types/common';
+import { FacetBucket, Facets, ResourceType } from '@/types/common';
 import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
 import { XDDFacetsItemResponse } from '@/types/Types';
 
 const props = defineProps({
 	facets: {
-		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse } | Facets>,
 		default: () => {}
 	},
 	filteredFacets: {
-		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse } | Facets>,
 		default: () => {}
 	},
 	resultType: {
@@ -62,15 +62,30 @@ const formattedFacets = computed(() => {
 		const baseData: FacetBucket[] = [];
 		const filteredData: FacetBucket[] = [];
 
+		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
+		let buckets;
+		if (props.filteredFacets[key] && 'buckets' in props.filteredFacets[key]) {
+			buckets = props.filteredFacets[key].buckets;
+		} else {
+			buckets = props.filteredFacets[key];
+		}
+
 		const filteredFacetDict = props.filteredFacets[key]
-			? props.filteredFacets[key].buckets.reduce((dict, category) => {
+			? buckets.reduce((dict, category) => {
 					// eslint-disable-next-line no-param-reassign
 					dict[category.key] = Number(category.docCount);
 					return dict;
 			  }, {} as { [key: string]: number })
 			: {};
 
-		props.facets[key].buckets.forEach((category) => {
+		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
+		if (props.facets[key] && 'buckets' in props.facets[key]) {
+			buckets = props.facets[key].buckets;
+		} else {
+			buckets = props.facets[key];
+		}
+
+		buckets.forEach((category) => {
 			baseData.push({
 				key: category.key,
 				value: props.docCount
