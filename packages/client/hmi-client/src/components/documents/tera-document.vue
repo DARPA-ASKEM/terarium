@@ -9,7 +9,7 @@
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
 		:hide-header="documentView === DocumentView.PDF"
-		:span-content="documentView === DocumentView.PDF"
+		:stretch-content="documentView === DocumentView.PDF"
 	>
 		<template #nav>
 			<tera-asset-nav

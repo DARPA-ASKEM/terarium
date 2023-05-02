@@ -4,7 +4,7 @@
 		:name="dataset?.name"
 		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
 		:is-editable="isEditable"
-		:span-content="datasetView === DatasetView.DATA"
+		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 	>
 		<template #nav>
