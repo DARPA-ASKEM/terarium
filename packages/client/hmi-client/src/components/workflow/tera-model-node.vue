@@ -31,7 +31,7 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
-import { ModelOperation } from '@/components/workflow/model-operation';
+import { modelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 
 defineProps<{
@@ -49,14 +49,15 @@ const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
 function run() {
-	if (ModelOperation.action) {
+	if (modelOperation.action) {
 		console.log(
-			ModelOperation.action({
+			modelOperation.action({
 				model: model.value,
 				initialValues: initialValues.value,
 				parameterValues: parameterValues.value
 			})
 		);
+		modelOperation.outputs.push({ type: 'modelConfig' });
 	}
 }
 

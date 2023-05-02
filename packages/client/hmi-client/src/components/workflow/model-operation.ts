@@ -5,7 +5,7 @@ interface StringValueMap {
 	[key: string]: string;
 }
 
-export const ModelOperation: Operation = {
+export const modelOperation: Operation = {
 	name: 'ModelOperation',
 	description: 'Select a model and configure its initial and parameter values.',
 	isRunnable: true,
