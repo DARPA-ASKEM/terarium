@@ -48,7 +48,6 @@ export interface WorkflowNode {
 	y: number;
 	width: number;
 	height: number;
-
 	inputs: WorkflowPort[];
 	outputs: WorkflowPort[];
 
