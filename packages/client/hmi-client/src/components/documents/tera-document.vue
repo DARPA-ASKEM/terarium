@@ -9,11 +9,12 @@
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
 		:hide-header="documentView === DocumentView.PDF"
+		:span-content="documentView === DocumentView.PDF"
 	>
 		<template #nav>
 			<tera-asset-nav
 				:asset-content="documentContent"
-				:extraction-mode="documentView === DocumentView.EXRACTIONS"
+				:show-header-links="documentView === DocumentView.EXRACTIONS"
 				v-if="isEditable"
 			>
 				<template #viewing-mode>

@@ -4,10 +4,14 @@
 		:name="dataset?.name"
 		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
 		:is-editable="isEditable"
+		:span-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 	>
 		<template #nav>
-			<tera-asset-nav :asset-content="datasetContent">
+			<tera-asset-nav
+				:asset-content="datasetContent"
+				:show-header-links="datasetView === DatasetView.DESCRIPTION"
+			>
 				<template #viewing-mode>
 					<span class="p-buttonset">
 						<Button
@@ -136,7 +140,7 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<Accordion v-else-if="DatasetView.DATA">
+		<Accordion v-else-if="DatasetView.DATA" :activeIndex="0">
 			<AccordionTab>
 				<template #header>
 					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>

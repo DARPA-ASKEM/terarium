@@ -45,7 +45,7 @@
 				</aside>
 			</template>
 		</header>
-		<section>
+		<section :style="spanContentStyle">
 			<slot name="default" />
 		</section>
 	</main>
@@ -64,6 +64,7 @@ const props = defineProps<{
 	doi?: string;
 	publisher?: string;
 	hideHeader?: boolean;
+	spanContent?: boolean;
 }>();
 
 const emit = defineEmits(['close-preview']);
@@ -77,7 +78,8 @@ const shrinkHeader = computed(() => {
 });
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
-const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+const spanContentStyle = computed(() => (props.spanContent ? { gridColumn: '1 / span 2' } : {}));
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
@@ -101,14 +103,9 @@ main {
 	height: 100%;
 	background-color: var(--surface-section);
 	/* accounts for sticky header height */
-	scroll-margin-top: v-bind('scrollMarginTop');
+	scroll-margin-top: v-bind('scrollMarginTopStyle');
 	overflow-y: auto;
 	overflow-x: hidden;
-}
-
-main:deep(> nav) {
-	height: fit-content;
-	grid-row: 1 / span 2;
 }
 
 main > section {
@@ -207,7 +204,7 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: v-bind('scrollMarginTop');
+	scroll-margin-top: v-bind('scrollMarginTopStyle');
 }
 
 main:deep(.p-accordion-content > p),
