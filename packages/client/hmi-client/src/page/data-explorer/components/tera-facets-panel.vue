@@ -33,6 +33,8 @@ import { FacetBucket, Facets, ResourceType } from '@/types/common';
 import { getFacetNameFormatter, getFacetsDisplayNames } from '@/utils/facets';
 import { XDDFacetsItemResponse } from '@/types/Types';
 
+const BUCKETS = 'buckets';
+
 const props = defineProps({
 	facets: {
 		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse } | Facets>,
@@ -66,7 +68,7 @@ const formattedFacets = computed(() => {
 		let buckets;
 		if (props.filteredFacets[key] && 'buckets' in props.filteredFacets[key]) {
 			// accessing via ['buckets'] for now
-			buckets = props.filteredFacets[key].buckets;
+			buckets = props.filteredFacets[key][BUCKETS];
 		} else {
 			buckets = props.filteredFacets[key];
 		}
@@ -82,7 +84,7 @@ const formattedFacets = computed(() => {
 		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
 		if (props.facets[key] && 'buckets' in props.facets[key]) {
 			// accessing via ['buckets'] for now
-			buckets = props.facets[key].buckets;
+			buckets = props.facets[key][BUCKETS];
 		} else {
 			buckets = props.facets[key];
 		}
