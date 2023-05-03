@@ -1,11 +1,10 @@
 <template>
-	<infinite-canvas
+	<tera-infinite-canvas
 		debug-mode
 		@click.stop="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		:new-edge="newEdge"
-		:edges="edges"
+		ref="infiniteCanvas"
 	>
 		<template #foreground></template>
 		<template #data>
@@ -31,12 +30,16 @@
 				</template>
 			</tera-workflow-node>
 		</template>
-	</infinite-canvas>
+		<template #background>
+			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" />
+			<path v-for="(edge, index) in edges" :d="drawPath(edge.points)" stroke="black" :key="index" />
+		</template>
+	</tera-infinite-canvas>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
+import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
 	Position,
@@ -52,6 +55,7 @@ import { CalibrationOperation } from '@/components/workflow/calibrate-operation'
 import { ModelOperation } from '@/components/workflow/model-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
+import * as d3 from 'd3';
 
 defineProps<{
 	models?: Model[];
@@ -59,6 +63,8 @@ defineProps<{
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
+const infiniteCanvas = ref();
+
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let mousePosition = { x: 0, y: 0 };
@@ -175,13 +181,16 @@ function onPortMouseover(position: Position) {
 	currentPortPosition = position;
 }
 
-function mouseUpdate(event) {
+function mouseUpdate(event: MouseEvent) {
+	const pointer = d3.pointer(event, infiniteCanvas);
+	console.log('>>', pointer);
+
 	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
 		mousePosition = {
 			x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
 			y: (event.offsetY - canvasTransform.y) / canvasTransform.k
 		};
-		if (event.target.className === 'port') {
+		if ((event.target as HTMLLIElement).className === 'port') {
 			newEdge.value.points[1] = currentPortPosition;
 		} else {
 			newEdge.value.points[1] = mousePosition;
@@ -212,4 +221,13 @@ const updatePosition = (node: WorkflowNode, { x, y }) => {
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
 };
+
+const pathFn = d3
+	.line<{ x: number; y: number }>()
+	.x((d) => d.x)
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
+
+// Get around typescript complaints
+const drawPath = (v: any) => pathFn(v) as string;
 </script>

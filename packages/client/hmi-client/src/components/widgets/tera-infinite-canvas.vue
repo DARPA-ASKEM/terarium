@@ -6,17 +6,9 @@
 			:width="width"
 			:height="height"
 		>
-			<slot name="background">
-				<g ref="edgesRef" class="edges" stroke-width="5" fill="none">
-					<path v-if="newEdge?.points" :d="pathFn(newEdge.points)" stroke="green" />
-					<path
-						v-for="(edge, index) in edges"
-						:d="drawEdge(edge.points)"
-						stroke="black"
-						:key="index"
-					/>
-				</g>
-			</slot>
+			<g ref="svgRef">
+				<slot name="background" />
+			</g>
 		</svg>
 		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
@@ -28,24 +20,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import * as d3 from 'd3';
-import { Position, WorkflowEdge } from '@/types/workflow';
 
 const props = withDefaults(
 	defineProps<{
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
-		newEdge?: WorkflowEdge;
-		edges: WorkflowEdge[];
 	}>(),
 	{
 		debugMode: false,
 		scaleExtent: () => [0.1, 10],
-		lastTransform: undefined,
-		newEdge: undefined,
-		edges: () => []
+		lastTransform: undefined
 	}
 );
 //
@@ -64,9 +51,7 @@ const height = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
-const edgesRef = ref<SVGElement>();
-
-const newEdge = computed(() => props.newEdge);
+const svgRef = ref<SVGElement>();
 
 function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
 	container.attr('transform', e.transform);
@@ -124,7 +109,7 @@ const resizeObserver = new ResizeObserver(() => updateDimensions());
 
 onMounted(() => {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
-	const edges = d3.select(edgesRef.value as SVGGElement); // Pan/zoom area
+	const svgContainer = d3.select(svgRef.value as SVGGElement); // Pan/zoom area
 
 	// Zoom config is applied and event handler
 	const zoom = d3
@@ -138,7 +123,7 @@ onMounted(() => {
 		})
 		.scaleExtent(props.scaleExtent)
 		.on('zoom', (e) => {
-			handleZoom(e, edges);
+			handleZoom(e, svgContainer);
 		})
 		.on('end', handleZoomEnd);
 	svg.call(zoom as any).on('dblclick.zoom', null);
@@ -162,25 +147,6 @@ onMounted(() => {
 		svg.transition().call(zoom.transform as any, d3.zoomIdentity);
 	}
 });
-
-const pathFn = d3
-	.line<{ x: number; y: number }>()
-	.x((d) => d.x)
-	.y((d) => d.y)
-	.curve(d3.curveBasis);
-
-function drawEdge(points: Position[]): string {
-	if (points.length > 0) {
-		const sourcePoint = points[0];
-		const targetPoint = points[points.length - 1];
-		const path = d3.path();
-		path.moveTo(sourcePoint.x, sourcePoint.y);
-		path.lineTo(targetPoint.x, targetPoint.y);
-		path.closePath();
-		return path.toString();
-	}
-	return 'M0,0';
-}
 </script>
 
 <style scoped>
