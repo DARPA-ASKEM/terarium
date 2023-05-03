@@ -18,3 +18,17 @@ export async function generatePdfDownloadLink(doi: string) {
 		return null;
 	}
 }
+
+export async function getPDFUrl(url: string) {
+	if (!url) return null;
+
+	const query = { url };
+	const URL = `/download/url?${toQueryString(query)}`;
+	try {
+		const response = await API.get(URL);
+		return response.data;
+	} catch (error) {
+		logger.error(`Error: Unable to retrieve link ${url}: ${error}`);
+		return null;
+	}
+}

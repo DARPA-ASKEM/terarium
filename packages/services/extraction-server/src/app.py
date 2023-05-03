@@ -7,6 +7,8 @@ from pdf_extraction import extract_text, extract_images_base64
 import logging
 import requests
 from tempfile import NamedTemporaryFile
+import jwt
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 UPLOAD_FOLDER = "uploads"
@@ -30,7 +32,7 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route("/convertpdfurl", methods=["POST"])
+@app.route("/convertpdfurl", methods=["GET"])
 def convert_pdf_url():
     """
     This function downloads a PDF file from a given URL, saves it as a temporary file, and then
@@ -41,10 +43,12 @@ def convert_pdf_url():
     with a 400 status code.
     """
 
-    url = request.form["url"]
-    extraction_method = request.form["extraction_method"]
-    extract_images = request.form["extract_images"]
-
+    url = request.args.get("url")
+    extraction_method = request.args.get("extraction_method")
+    extract_images = request.args.get("extract_images")
+    logging.info(url)
+    logging.info(extraction_method)
+    logging.info(extract_images)
     response = requests.get(url)
     if response.status_code == 200:
         with NamedTemporaryFile(delete=False) as tmp_file:
@@ -77,8 +81,8 @@ def convert_pdf_task():
     if "file" not in request.files:
         return jsonify(error="No file part in the request"), 400
 
-    extraction_method = request.form["extraction_method"]
-    extract_images = request.form["extract_images"]
+    extraction_method = request.form.get("extraction_method", "pydf2")
+    extract_images = request.form.get("extract_images", "false")
 
     file = request.files["file"]
     if file.filename == "":
@@ -100,8 +104,6 @@ def convert_pdf_task():
             400,
         )
 
-    extract_images = request.args.get("extract_images") == "true"
-
     task = extract_text_and_images_task.apply_async(
         args=[file_path, extraction_method, extract_images]
     )
@@ -122,21 +124,22 @@ def task_result(task_id):
     otherwise it will be `None`.
     """
     try:
-      task = AsyncResult(task_id)
+        task = AsyncResult(task_id)
 
-      if task.ready():
-          response_data = {
-              "task_id": task_id,
-              "status": task.status,
-              "result": task.result,
-          }
-      else:
-          response_data = {"task_id": task_id, "status": task.status, "result": None}
+        if task.ready():
+            response_data = {
+                "task_id": task_id,
+                "status": task.status,
+                "result": task.result,
+            }
+        else:
+            response_data = {"task_id": task_id, "status": task.status, "result": None}
     except Exception:
-      logging.error('Unable to find task_id: ' + task_id)
-      response_data = {"task_id": task_id, "status": "error", "result": None}
+        logging.error("Unable to find task_id: " + task_id)
+        response_data = {"task_id": task_id, "status": "error", "result": None}
 
     return jsonify(response_data)
+
 
 @celery.task(bind=True)
 def extract_text_and_images_task(self, file_path, extraction_method, extract_images):
@@ -153,15 +156,17 @@ def extract_text_and_images_task(self, file_path, extraction_method, extract_ima
     to True, otherwise it is an empty list.
     """
     try:
-        extracted_text = extract_text(file_path, extraction_method)
-        extracted_text = [
-            text_chunk.decode("utf-8").strip() for text_chunk in extracted_text
+        logging.info("Extracting.... ")
+        extracted_text_list = extract_text(file_path, extraction_method)
+        extracted_text_list = [
+            text_chunk.decode("utf-8").strip() for text_chunk in extracted_text_list
         ]
-        # extracted_tables = extract_tables_from_pdf(file_path)
+        extracted_text = ' '.join(extracted_text_list).replace("\n", "")
         if extract_images:
             extracted_images = extract_images_base64(file_path)
         else:
             extracted_images = []
+        # logging.info('Fininished Extracting in: ', time.time() - s_time)
 
     except Exception as e:
         return jsonify(error=str(e)), 500
@@ -221,6 +226,94 @@ def convert_pdf():
 
     response_data = {"text": text_data, "images": extracted_images}
     return jsonify(response_data)
+
+
+# def get_jwt_auth_config():
+#     config = {
+#         "Token Name": None,
+#         "Auth URL": None,
+#         "Access Token URL": None,
+#         "Client ID": None,
+#         "Client Secret": None,
+#         "Scope": None,
+#     }
+
+#     global_config = {
+#         "values": [
+#             {
+#                 "key": "Token Name",
+#                 "value": "keycloak",
+#                 "type": "default",
+#                 "enabled": True,
+#             },
+#             {
+#                 "key": "Auth URL",
+#                 "value": "http://localhost:8079/realms/Terarium/protocol/openid-connect/auth",
+#                 "type": "default",
+#                 "enabled": True,
+#             },
+#             {
+#                 "key": "Access Token URL",
+#                 "value": "http://localhost:8079/realms/Terarium/protocol/openid-connect/token",
+#                 "type": "default",
+#                 "enabled": True,
+#             },
+#             {"key": "Client ID", "value": "app", "type": "secret", "enabled": True},
+#             {
+#                 "key": "Client Secret",
+#                 "value": "jtbQhs6SlfynqJaygVpwav2kLzAme2b4",
+#                 "type": "secret",
+#                 "enabled": True,
+#             },
+#             {"key": "Scope", "value": "openid email profile", "enabled": True},
+#         ]
+#     }
+
+#     for item in global_config["values"]:
+#         key = item["key"]
+#         value = item.get("value")
+#         config[key] = value
+
+#     return config
+
+
+# # Login route to obtain the JWT token
+# @app.route("/login", methods=["POST"])
+# def login():
+#     username = "adam@test.io"
+#     password = "asdf1ASDF"
+
+#     if username and password:
+#         config = get_jwt_auth_config()
+
+#         try:
+#             # Generate and return a JWT token
+#             payload = {"username": username}
+#             token = jwt.encode(payload, config["Client Secret"], algorithm="HS256")
+#             return jsonify({"token": token}), 200
+#         except:
+#             return jsonify({"message": "Failed to generate token."}), 500
+
+#     return jsonify({"message": "Invalid credentials."}), 401
+
+
+# # Route to validate the JWT token
+# @app.route("/protected", methods=["GET"])
+# def protected():
+#     token = request.headers.get("Authorization")
+#     if token:
+#         token = token.split()[1]  # Remove 'Bearer ' from the token
+
+#         config = get_jwt_auth_config()
+
+#         try:
+#             # Validate the JWT token using the provided client secret
+#             payload = jwt.decode(token, config["Client Secret"], algorithms=["HS256"])
+#             return jsonify({"message": "Valid token."}), 200
+#         except jwt.InvalidTokenError:
+#             return jsonify({"message": "Invalid token."}), 401
+
+#     return jsonify({"message": "Token missing."}), 401
 
 
 if __name__ == "__main__":

@@ -11,4 +11,13 @@ public class PDFExtractionMultipartBody {
 	@PartType(MediaType.APPLICATION_OCTET_STREAM)
 	public InputStream file;
 
+	@FormParam("fileName")
+	@PartType(MediaType.TEXT_PLAIN)
+	public String fileName;
+
+	public PDFExtractionMultipartBody(){
+		this.file = null;
+		this.fileName = "test";
+	}
+
 }

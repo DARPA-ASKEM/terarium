@@ -180,7 +180,7 @@ const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
 const visible = ref(false);
 const results = ref<
-	{ file: File; error: boolean; response: { text: string[]; images: string[] } }[] | null
+	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
 
 function sleep(ms) {
@@ -200,18 +200,18 @@ async function fetchTaskResult(taskId) {
 	await sleep(500);
 	return fetchTaskResult(taskId);
 }
+
 async function processPDFs(files, extractionMode, extractImages) {
 	const promises = files.map(async (file) => {
 		const formData = new FormData();
 		formData.append('file', file);
+		formData.append('extraction_method', extractionMode);
+		formData.append('extract_images', extractImages);
 
-		const response = await fetch(
-			`http://localhost:5000/convertpdftask?extraction_method=${extractionMode}&extract_images=${extractImages}`,
-			{
-				method: 'POST',
-				body: formData
-			}
-		);
+		const response = await fetch(`http://localhost:5000/convertpdftask`, {
+			method: 'POST',
+			body: formData
+		});
 
 		// eslint-disable-next-line @typescript-eslint/naming-convention
 		const { task_id } = await response.json();
@@ -226,7 +226,7 @@ async function processPDFs(files, extractionMode, extractImages) {
 				file: files[index],
 				error: false,
 				response: {
-					text: result.value.taskResult.text[0],
+					text: result.value.taskResult.text,
 					images: result.value.taskResult.images
 				}
 			};
@@ -250,73 +250,15 @@ async function processPDFs(files, extractionMode, extractImages) {
 	return processedFiles;
 }
 
-// async function processPDFs(files: File[], extractionMode, extractImages) {
-// 	try {
-// 		const tasks = await Promise.all(
-// 			files.map(async (f) => {
-// 				const formData = new FormData();
-// 				formData.append('file', f);
-
-// 				const response = await fetch(
-// 					`http://localhost:5000/convertpdftask?extraction_method=${extractionMode}&extract_images=${extractImages}`,
-// 					{
-// 						method: 'POST',
-// 						body: formData
-// 					}
-// 				);
-// 				const jsonResponse = await response.json();
-// 				const taskId = jsonResponse.task_id;
-
-// 				const taskResult = await fetchTaskResult(taskId);
-// 				return { file: f, success: true, response: taskResult };
-// 			})
-// 		);
-
-// 		logger.info(`Successfully imported ${tasks.length} files.`);
-// 		return tasks;
-// 	} catch (error) {
-// 		logger.error(`An error occurred while importing ${files.length} files.`);
-// 		logger.error(error);
-// 		return [];
-// 	}
-// }
-
 function openImportModal() {
 	visible.value = true;
 	results.value = null;
 }
 
-// async function processPDFs(files: File[], extractionMode, extractImages) {
-// 	try {
-// 		const promises = files.map((file) => {
-// 			const formData = new FormData();
-// 			formData.append('file', file);
-
-// 			return fetch(`http://localhost:5000/convertpdftask?extraction_method=${extractionMode}&extract_images=${extractImages}`, {
-// 				method: 'POST',
-// 				body: formData
-// 			});
-// 		});
-
-// 		const responses = await Promise.all(promises);
-// 		const jsonResponses = await Promise.all(responses.map((response) => response.json()));
-// 		const r = files.map((f, index) => ({
-// 			file: f,
-// 			response: { pdf_contents: jsonResponses[index].text[0], images: jsonResponses[index].images }
-// 		}));
-// 		logger.info(`Successfully imported ${r.length} filles.`);
-// 		return r;
-// 	} catch (error) {
-// 		logger.error(`An error occured while importing ${files.length} files.`);
-// 		logger.error(error);
-// 		return [];
-// 	}
-// }
-
 function importCompleted(
-	abc: { file: File; error: boolean; response: { text: string[]; images: string[] } }[] | null
+	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
-	results.value = abc;
+	results.value = newResults;
 }
 
 async function editProject() {

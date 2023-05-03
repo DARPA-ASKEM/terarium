@@ -44,7 +44,8 @@ case "$1" in
         docker stop extraction-services
     ;;
 
-		rebuild)
+		restart)
+			echo "rebuilding service"
 			echo "Stopping Docker container..."
 			docker stop extraction-services
 			echo "Building Docker image..."
@@ -60,7 +61,7 @@ case "$1" in
     ;;
 
     *)
-        echo "Usage: ./helper.sh {build|start|stop|logs}"
+        echo "Usage: ./run.sh {build|start|stop|restart|logs}"
         exit 1
     ;;
 esac
