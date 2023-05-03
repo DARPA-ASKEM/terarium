@@ -13,6 +13,8 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
+						:node="node"
+						@append-output-port="appendOutputPort"
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
@@ -61,6 +63,13 @@ const testOperation: Operation = {
 	action: () => {},
 	isRunnable: true
 };
+
+function appendOutputPort(index: number, type: string) {
+	nodes.value[index].outputs.push({
+		id: nodes.value[index].outputs.length.toString(),
+		type
+	});
+}
 
 function insertNode(operation: Operation) {
 	const newNode: WorkflowNode = {

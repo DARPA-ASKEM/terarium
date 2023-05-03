@@ -33,10 +33,15 @@ import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
 import { modelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
+import { WorkflowNode } from '@/types/workflow';
+import { cloneDeep } from 'lodash';
 
-defineProps<{
+const props = defineProps<{
 	models: Model[];
+	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['append-output-port']);
 
 interface StringValueMap {
 	[key: string]: string;
@@ -48,16 +53,18 @@ const model = ref<Model | null>();
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
+const thisModelOperation = cloneDeep(modelOperation);
+
 function run() {
-	if (modelOperation.action) {
+	if (thisModelOperation.action) {
 		console.log(
-			modelOperation.action({
+			thisModelOperation.action({
 				model: model.value,
 				initialValues: initialValues.value,
 				parameterValues: parameterValues.value
 			})
 		);
-		modelOperation.outputs.push({ type: 'modelConfig' });
+		emit('append-output-port', props.node.id, 'modelConfig');
 	}
 }
 
