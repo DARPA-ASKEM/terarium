@@ -17,7 +17,7 @@
 							{ type: XDDExtractionType.URL, class: 'pi-link' },
 							{ type: XDDExtractionType.Figure, class: 'pi-chart-bar' },
 							{ type: XDDExtractionType.Table, class: 'pi-table' },
-							{ type: XDDExtractionType.Document, class: 'pi-file-pdf' }
+							{ type: XDDExtractionType.Doc, class: 'pi-file-pdf' }
 						]"
 						:key="icon"
 					>
@@ -59,7 +59,7 @@
 						class="extracted-assets"
 						alt="asset"
 					/>
-					<div class="link" v-else-if="relatedAsset.properties.DOI">
+					<div class="link" v-else-if="relatedAsset.properties.doi">
 						<a
 							v-if="relatedAsset.properties.documentBibjson.link"
 							:href="relatedAsset.properties.documentBibjson.link[0].url"
@@ -70,11 +70,11 @@
 						</a>
 						<a
 							v-else
-							:href="`https://doi.org/${relatedAsset.properties.DOI}`"
+							:href="`https://doi.org/${relatedAsset.properties.doi}`"
 							@click.stop
 							rel="noreferrer noopener"
 						>
-							{{ `https://doi.org/${relatedAsset.properties.DOI}` }}
+							{{ `https://doi.org/${relatedAsset.properties.doi}` }}
 						</a>
 					</div>
 					<div class="link" v-else-if="relatedAsset.urlExtraction">
@@ -105,7 +105,7 @@
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { XDDArtifact, XDDUrlExtraction, DocumentType } from '@/types/Document';
+import { Document, Extraction, XDDUrlExtraction } from '@/types/Types';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
@@ -119,7 +119,7 @@ type UrlExtraction = {
 };
 
 const props = defineProps<{
-	asset: DocumentType & Model & Dataset;
+	asset: Document & Model & Dataset;
 	resourceType: ResourceType;
 	highlight?: string;
 }>();
@@ -143,7 +143,7 @@ const urlExtractions = computed(() => {
 	if (props.asset.relatedExtractions) {
 		const documentsWithUrls = props.asset.relatedExtractions.filter(
 			(ex) =>
-				ex.askemClass === XDDExtractionType.Document &&
+				ex.askemClass === XDDExtractionType.Doc &&
 				ex.properties.documentBibjson.knownEntities != null &&
 				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
 		);
@@ -164,11 +164,11 @@ const urlExtractions = computed(() => {
 	return urls;
 });
 
-const extractions: ComputedRef<UrlExtraction[] & XDDArtifact[]> = computed(() => {
+const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
 	if (props.asset.relatedExtractions) {
 		const allExtractions = [
-			...(props.asset.relatedExtractions as UrlExtraction[] & XDDArtifact[]),
-			...(urlExtractions.value as UrlExtraction[] & XDDArtifact[])
+			...(props.asset.relatedExtractions as UrlExtraction[] & Extraction[]),
+			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 
 		if (chosenExtractionFilter.value === 'Asset') return allExtractions;

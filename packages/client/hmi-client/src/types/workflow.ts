@@ -1,3 +1,11 @@
+export enum WorkflowStatus {
+	INVALID = 'invalid',
+	FAILED = 'failed',
+	COMPLETED = 'completed',
+	IN_PROGRESS = 'in progress',
+	ERROR = 'error'
+}
+
 // Defines the type of data an operation can consume and output
 export interface OperationData {
 	type: string;
@@ -8,7 +16,11 @@ export interface OperationData {
 export interface Operation {
 	name: string;
 	description: string;
-	action: Function;
+
+	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
+	isRunnable: boolean;
+
+	action?: Function;
 	validation?: Function;
 
 	inputs: OperationData[];
@@ -18,8 +30,9 @@ export interface Operation {
 // Defines the data-exchange between WorkflowNode
 // In most cases the value here will be an assetId
 export interface WorkflowPort {
-	id?: string; // FIXME: Investigate using unique-ids across dynamic port allocation
+	id: string;
 	type: string;
+	label?: string;
 	value?: any;
 }
 
@@ -35,26 +48,25 @@ export interface WorkflowNode {
 	y: number;
 	width: number;
 	height: number;
-
 	inputs: WorkflowPort[];
 	outputs: WorkflowPort[];
 
 	// FIXME: The section below is slated to be further spec'ed out later.
 	// State and progress, tracking of intermediate results
-	statusCode?: string; // not-run, completed, in-progress, error, invalid
+	statusCode: WorkflowStatus;
 	intermediateIds?: WorkflowPort[];
 }
 
 export interface WorkflowEdge {
 	id: string;
 	workflowId: string;
-	points: { x: number; y: number }[];
+	points: Position[];
 
 	source: WorkflowNode['id'];
-	sourcePort: number;
+	sourcePortId: string;
 
 	target: WorkflowNode['id'];
-	targetPort: number;
+	targetPortId: string;
 }
 
 export interface Workflow {
@@ -70,4 +82,9 @@ export interface Workflow {
 	};
 	nodes: WorkflowNode[];
 	edges: WorkflowEdge[];
+}
+
+export interface Position {
+	x: number;
+	y: number;
 }

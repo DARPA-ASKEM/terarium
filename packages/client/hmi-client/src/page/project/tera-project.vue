@@ -80,9 +80,15 @@
 				@create-new-model="createNewModel"
 				is-editable
 			/>
-			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
-			<!-- Test workflow in project view -->
-			<!-- <tera-simulation-workflow v-else /> -->
+			<tera-project-overview
+				v-else-if="assetType === 'overview'"
+				:project="project"
+				@open-workflow="openWorkflow"
+			/>
+			<tera-simulation-workflow
+				v-else-if="assetType === 'workflow'"
+				:models="project?.assets?.models"
+			/>
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
@@ -241,13 +247,13 @@ import CodeEditor from '@/page/project/components/code-editor.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
 import SimulationRun from '@/temp/SimulationResult3.vue';
-// import TeraSimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -267,7 +273,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | '';
+	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 }>();
 
 const emit = defineEmits(['update-project']);
@@ -416,6 +422,13 @@ const openOverview = () => {
 	});
 };
 
+const openWorkflow = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
+	});
+};
+
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
@@ -458,7 +471,13 @@ async function removeAsset(asset: Tab) {
 	const { assetName, assetId, assetType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (assetId && assetType && isProjectAssetTypes(assetType) && assetType !== 'overview') {
+	if (
+		assetId &&
+		assetType &&
+		isProjectAssetTypes(assetType) &&
+		assetType !== 'overview' &&
+		assetType !== 'workflow'
+	) {
 		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
 
 		if (isRemoved) {
@@ -615,19 +634,6 @@ section {
 .notes-dropdown-button {
 	color: var(--text-color-subdued);
 	padding: 0rem;
-}
-
-:deep(span.p-dropdown-label.p-placeholder) {
-	color: var(--text-color-subdued);
-}
-
-:deep(span.p-dropdown-label) {
-	padding: 0;
-	font-size: var(--font-caption);
-}
-
-:deep(span.p-dropdown-trigger-icon.pi.pi-chevron-down) {
-	color: var(--text-color-subdued);
 }
 
 .annotation-panel .p-dropdown:not(.p-disabled).p-focus {

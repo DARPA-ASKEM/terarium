@@ -13,38 +13,31 @@ import java.io.Serializable;
 @Data
 @Accessors(chain = true)
 public class LoggingService implements Serializable {
-    private List<JsonObject> logs;
+	private List<LogMessage> logs;
 
-		
-
-    public void echoLogs(String name){
-        this.logs.forEach(l -> logMessage(l, name));
-    }
-
-    private void logMessage(JsonObject payload, String name) {
-        String level = payload.getString("level");
-        String message = "HMI-Log | " + name + " | " + payload.getString("message");
-
-        switch (level) {
-            case "trace":
-                log.trace(message);
-                break;
-            case "debug":
-                log.debug(message);
-                break;
-            case "info":
-                log.info(message);
-                break;
-            case "warn":
-                log.warn(message);
-                break;
-            case "error":
-                log.error(message);
-                break;
-            default:
-                log.info("Invalid logging level, defaulting to info level: " + message);
-                break;
-        }
-    }
+	public void logMessage(LogMessage logObj, String name) {
+		String level = logObj.level;
+		String message = "HMI-Log | " + name + " | " + logObj.message;
+		switch (level) {
+			case "trace":
+				log.trace(message);
+				break;
+			case "debug":
+				log.debug(message);
+				break;
+			case "info":
+				log.info(message);
+				break;
+			case "warn":
+				log.warn(message);
+				break;
+			case "error":
+				log.error(message);
+				break;
+			default:
+				log.info("Invalid logging level, defaulting to info level: " + message);
+				break;
+		}
+	}
 
 }

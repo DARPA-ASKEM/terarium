@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { getXDDArtifacts } from '@/services/data';
-import { DocumentType, XDDArtifact } from '@/types/Document';
+import { Document, Extraction } from '@/types/Types';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi } from '@/utils/data-util';
 import Card from 'primevue/card';
@@ -62,8 +62,8 @@ import { onMounted, ref, computed } from 'vue';
 import * as stockImages from '@/assets/images/homePageStockImages';
 import Skeleton from 'primevue/skeleton';
 
-const props = defineProps<{ document?: DocumentType }>();
-const artifacts = ref<XDDArtifact[]>([]);
+const props = defineProps<{ document?: Document }>();
+const artifacts = ref<Extraction[]>([]);
 const extractionType = ref('');
 const images = computed(() => artifacts.value.map((a) => a.properties.image));
 const shownImage = computed(() => images.value.find((element) => element !== undefined));
@@ -75,10 +75,10 @@ function getRandomImage() {
 
 onMounted(async () => {
 	if (props.document) {
-		const doi = await getDocumentDoi(props.document);
+		const doi = getDocumentDoi(props.document);
 		if (doi !== '') {
 			const allArtifacts = await getXDDArtifacts(doi);
-			artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
+			artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Doc);
 		} else {
 			artifacts.value = [];
 		}
