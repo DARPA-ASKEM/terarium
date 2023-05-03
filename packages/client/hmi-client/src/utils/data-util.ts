@@ -2,12 +2,12 @@ import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
 import { Model, FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
-import { DocumentType } from '@/types/Document';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
 import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
+import { Document } from '@/types/Types';
 
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
@@ -67,13 +67,13 @@ export function isDataset(item: ResultType): item is Dataset {
 	return (<Dataset>item).annotations !== undefined;
 }
 
-export function isDocument(item: ResultType): item is DocumentType {
-	return (<DocumentType>item).publisher !== undefined;
+export function isDocument(item: ResultType): item is Document {
+	return (<Document>item).publisher !== undefined;
 }
 
 export function getResourceID(item: ResultType) {
 	if (isDocument(item)) {
-		return (item as DocumentType).gddId;
+		return (item as Document).gddId;
 	}
 	return item.id;
 }
@@ -93,7 +93,7 @@ export function validate(possibleDOI?: string): boolean {
 	return possibleDOI.match(DOI_VALIDATION_PATTERN) !== null;
 }
 
-export function getDocumentDoi(doc: DocumentType | null) {
+export function getDocumentDoi(doc: Document | null) {
 	let docIdentifier = '';
 	if (doc && doc.identifier.length > 0) {
 		const defaultDOI = doc.identifier.find((i) => i.type === 'doi');

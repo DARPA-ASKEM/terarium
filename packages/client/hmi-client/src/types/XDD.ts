@@ -1,11 +1,11 @@
-import { DocumentType, XDDArtifact } from '@/types/Document';
+import { Document, Extraction } from '@/types/Types';
 
 export enum XDDExtractionType {
-	Document = 'Document',
+	Doc = 'Document',
 	Table = 'Table',
 	Figure = 'Figure',
 	Equation = 'Equation',
-	Section = 'Section', // Section
+	Section = 'Section',
 	URL = 'URL' // websites, URLs, links, etc.
 }
 
@@ -28,7 +28,7 @@ export type XDDFacetsResponse = {
 
 export type XDDResult = {
 	success?: {
-		data: DocumentType[] | XDDDictionary[] | XDDArtifact[];
+		data: Document[] | XDDDictionary[] | Extraction[];
 		facets: XDDFacetsResponse | null;
 		// URL to fetch next page results
 		// https://xdd.wisc.edu/api/articles?&include_score=true&per_page=100&term=abbott&publisher=USGS&full_results
@@ -44,7 +44,7 @@ export type XDDResult = {
 	description?: string;
 	availableSets?: string[];
 	// related docs
-	data?: { bibjson: DocumentType; score: number }[];
+	data?: { bibjson: Document; score: number }[];
 };
 
 export type XDDSearchParams = {
@@ -84,15 +84,14 @@ export const XDD_RESULT_DEFAULT_PAGE_SIZE = 100;
 //
 export const TYPE = 'type'; // Type of document (document, book, etc)
 export const TITLE = 'title'; // Document title
-export const JOURNAL = 'journal'; // The name of the journal
+export const JOURNAL = 'pubname'; // The name of the journal
 export const VOL = 'vol'; // Volume
 export const NUMBER = 'number'; // Issue
 export const AUTHORS = 'authors'; // An array of objects, each containing a key 'name' and a value equal to the name of one author
 export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the document (e.g. Elsevier, USGS)
-export const DOCUMENT_NAME = 'pubname';
 export const PAGES = 'pages'; // Document' page numbers within the issue
 export const YEAR = 'year'; // Year of document
-export const GITHUB_URL = 'githubUrls';
+export const GITHUB_URL = 'github_urls';
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
 	[TYPE]: 'Document type',
@@ -102,7 +101,6 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[NUMBER]: 'Journal issue number',
 	[AUTHORS]: 'Authors',
 	[PUBLISHER]: 'Publisher',
-	[DOCUMENT_NAME]: 'Document name',
 	[PAGES]: 'Number of pages',
 	[YEAR]: 'Publication year',
 	[GITHUB_URL]: 'Github Repositories'

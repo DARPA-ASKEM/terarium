@@ -66,6 +66,11 @@ dependencies {
 
 	// Annotations
 	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	//elasticsearch
+	implementation "org.elasticsearch:elasticsearch:${elasticsearchVersion}"
+	implementation "org.elasticsearch.client:elasticsearch-rest-client:${elasticsearchVersion}"
+	implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${elasticsearchVersion}"
 }
 
 group "software.uncharted"

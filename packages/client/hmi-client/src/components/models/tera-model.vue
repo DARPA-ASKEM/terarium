@@ -307,8 +307,7 @@ import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
-import { DocumentType } from '@/types/Document';
-import { ProvenanceType } from '@/types/Types';
+import { Document, ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
@@ -373,6 +372,11 @@ const equationPanelMaxSize = ref<number>(100);
 const mathPanelSize = ref<number>(50);
 const mathPanelMinSize = ref<number>(0);
 const mathPanelMaxSize = ref<number>(100);
+
+const graphElement = ref<HTMLDivElement | null>(null);
+let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -476,6 +480,7 @@ const onVariableSelected = (variable: string) => {
 				String.raw`{\color{red}${variable}}`
 			);
 		}
+		renderer?.toggoleNodeSelectionByLabel(variable);
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
 	}
@@ -514,7 +519,7 @@ const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
 const fetchRelatedTerariumArtifacts = async () => {
@@ -577,11 +582,6 @@ onUpdated(() => {
 		emit('asset-loaded');
 	}
 });
-
-const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -680,6 +680,16 @@ watch(
 
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
+
+			// de-select node if selection exists
+			if (selectedVariable.value) {
+				onVariableSelected(selectedVariable.value);
+			}
+		});
+
+		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
+			// Note: do not change the renderer's visuals, this is done internally
+			onVariableSelected(d.label);
 		});
 
 		// Render graph
@@ -810,6 +820,9 @@ const toggleEditMode = () => {
 	if (!isEditing.value && model.value && renderer) {
 		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
+	} else if (isEditing.value && selectedVariable.value) {
+		// de-select node if selection exists
+		onVariableSelected(selectedVariable.value);
 	}
 };
 

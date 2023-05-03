@@ -1,4 +1,4 @@
-FROM amazoncorretto:17.0.6
+FROM amazoncorretto:17.0.7
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
