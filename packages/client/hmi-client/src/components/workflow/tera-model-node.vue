@@ -62,7 +62,7 @@ function run() {
 			})
 		);
 		emit('append-output-port', props.node.id, {
-			id: props.node.outputs.length.toString(),
+			id: props.node.outputs[props.node.outputs.length - 1].id,
 			type: modelOperation.outputs[0].type,
 			value: {
 				model: model.value,
