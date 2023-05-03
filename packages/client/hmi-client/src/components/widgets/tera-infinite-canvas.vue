@@ -11,7 +11,7 @@
 					<path v-if="newEdge?.points" :d="pathFn(newEdge.points)" stroke="green" />
 					<path
 						v-for="(edge, index) in edges"
-						:d="pathFn(edge.points)"
+						:d="drawEdge(edge.points)"
 						stroke="black"
 						:key="index"
 					/>
@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import * as d3 from 'd3';
-import { WorkflowEdge } from '@/types/workflow';
+import { Position, WorkflowEdge } from '@/types/workflow';
 
 const props = withDefaults(
 	defineProps<{
@@ -168,6 +168,19 @@ const pathFn = d3
 	.x((d) => d.x)
 	.y((d) => d.y)
 	.curve(d3.curveBasis);
+
+function drawEdge(points: Position[]): string {
+	if (points.length > 0) {
+		const sourcePoint = points[0];
+		const targetPoint = points[points.length - 1];
+		const path = d3.path();
+		path.moveTo(sourcePoint.x, sourcePoint.y);
+		path.lineTo(targetPoint.x, targetPoint.y);
+		path.closePath();
+		return path.toString();
+	}
+	return 'M0,0';
+}
 </script>
 
 <style scoped>

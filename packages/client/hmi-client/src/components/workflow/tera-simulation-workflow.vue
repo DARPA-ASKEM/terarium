@@ -185,21 +185,20 @@ function mouseUpdate(event) {
 	}
 }
 
-onMounted(() => {
-	document.addEventListener('mousemove', mouseUpdate);
-});
+onMounted(() => document.addEventListener('mousemove', mouseUpdate));
 onUnmounted(() => document.removeEventListener('mousemove', mouseUpdate));
 
 // TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {
+	console.log(edges.value.length);
 	edges.value.forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
 			edge.points[0].y += y / canvasTransform.k;
 		}
 		if (edge.target === node.id) {
-			edge.points[edges.value.length - 1].x += x / canvasTransform.k;
-			edge.points[edges.value.length - 1].y += y / canvasTransform.k;
+			edge.points[edge.points.length - 1].x += x / canvasTransform.k;
+			edge.points[edge.points.length - 1].y += y / canvasTransform.k;
 		}
 	});
 }

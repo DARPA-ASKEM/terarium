@@ -94,12 +94,8 @@ function selectPort(port: WorkflowPort) {
 }
 
 function mouseoverPort(event) {
-	// const ports = isInput ? inputs.value : outputs.value;
-	// if (ports) {
 	const el = event.target as HTMLElement;
-	// const el = ports[index] as HTMLElement;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	// const totalOffsetX = el.offsetLeft + (isInput ? -7 : el.offsetWidth + 8);
 	const totalOffsetX = el.offsetLeft;
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
