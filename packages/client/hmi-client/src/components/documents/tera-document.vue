@@ -188,7 +188,7 @@
 					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
-						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstract)" />
 						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</li>
 				</ul>
@@ -243,7 +243,6 @@ import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
-import { XDDArtifact, DocumentType } from '@/types/Document';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType, Tab } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -252,7 +251,7 @@ import TeraImportCodeButton from '@/components/widgets/tera-import-code-button.v
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { ProvenanceType } from '@/types/Types';
+import { Extraction, ProvenanceType, Document } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
@@ -272,7 +271,7 @@ const props = defineProps<{
 	previewLineLimit?: number;
 }>();
 
-const doc = ref<DocumentType | null>(null);
+const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
@@ -309,7 +308,7 @@ watch(
 	}
 );
 
-const formatDocumentAuthors = (d: DocumentType) =>
+const formatDocumentAuthors = (d: Document) =>
 	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
@@ -317,14 +316,14 @@ const docLink = computed(() =>
 );
 
 const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.abstractText) return '';
-	return highlightSearchTerms(doc.value.abstractText);
+	if (!doc.value || !doc.value.abstract) return '';
+	return highlightSearchTerms(doc.value.abstract);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));
 
 /* Artifacts */
-const artifacts = ref<XDDArtifact[]>([]);
+const artifacts = ref<Extraction[]>([]);
 const associatedResources = ref<ResultType[]>([]);
 
 const figures = computed(
@@ -361,7 +360,7 @@ const relatedTerariumDatasets = computed(
 	() => associatedResources.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => associatedResources.value.filter((d) => isDocument(d)) as DocumentType[]
+	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
 );
 
 const documentContent = computed(() => [
@@ -382,7 +381,7 @@ const fetchDocumentArtifacts = async () => {
 	if (doi.value !== '') {
 		const allArtifacts = await getXDDArtifacts(doi.value);
 		// filter out Document extraction type
-		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
+		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Doc);
 	} else {
 		// note that some XDD documents do not have a valid doi
 		artifacts.value = [];
