@@ -112,8 +112,8 @@ onMounted(() => {
 	const zoom = d3
 		.zoom()
 		.filter((evt: any) => {
-			const classStr = d3.select(evt.target).attr('class');
-			if (classStr.includes('canvas-layer') || evt.type === 'wheel') {
+			const classStr = d3.select(evt.target).attr('class') || '';
+			if ((classStr && classStr.includes('canvas-layer')) || evt.type === 'wheel') {
 				return true;
 			}
 			return false;
@@ -148,6 +148,7 @@ onMounted(() => {
 main {
 	width: 100%;
 	height: 100%;
+	clip: rect(0%, 0%, 100%, 100%);
 }
 
 main > * {
