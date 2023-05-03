@@ -128,8 +128,8 @@ function closeLogoutDialog() {
 const searchBarRef = ref();
 const terms = ref<string[]>([]);
 
-async function updateRelatedTerms(q?: string) {
-	if (!isEmpty(q)) terms.value = await getRelatedTerms(q);
+async function updateRelatedTerms(query?: string) {
+	if (!isEmpty(query) || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
 }
 
 function searchByExampleModalToggled() {
