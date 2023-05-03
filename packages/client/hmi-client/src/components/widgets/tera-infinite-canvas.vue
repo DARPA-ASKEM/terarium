@@ -6,12 +6,14 @@
 			:width="width"
 			:height="height"
 		>
-			<slot name="background" />
+			<g ref="svgRef">
+				<slot name="background" />
+			</g>
 		</svg>
 		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<div class="canvas-layer">
+		<div class="canvas-layer foreground-layer">
 			<slot name="foreground" />
 		</div>
 	</main>
@@ -33,7 +35,7 @@ const props = withDefaults(
 		lastTransform: undefined
 	}
 );
-
+//
 const emit = defineEmits(['save-transform']);
 
 let x: d3.ScaleLinear<number, number, never>;
@@ -49,6 +51,7 @@ const height = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
+const svgRef = ref<SVGElement>();
 
 function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
 	container.attr('transform', e.transform);
@@ -106,7 +109,7 @@ const resizeObserver = new ResizeObserver(() => updateDimensions());
 
 onMounted(() => {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
-	const container = svg.append('g'); // Pan/zoom area
+	const svgContainer = d3.select(svgRef.value as SVGGElement); // Pan/zoom area
 
 	// Zoom config is applied and event handler
 	const zoom = d3
@@ -119,7 +122,9 @@ onMounted(() => {
 			return false;
 		})
 		.scaleExtent(props.scaleExtent)
-		.on('zoom', (e) => handleZoom(e, container))
+		.on('zoom', (e) => {
+			handleZoom(e, svgContainer);
+		})
 		.on('end', handleZoomEnd);
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
@@ -163,6 +168,7 @@ main > * {
 .background-layer:deep(.tick line) {
 	color: var(--surface-border);
 }
+
 .background-layer:deep(.tick text) {
 	color: var(--surface-border);
 }
