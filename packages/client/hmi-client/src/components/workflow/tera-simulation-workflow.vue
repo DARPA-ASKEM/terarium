@@ -17,14 +17,12 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<template #body>
-					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
-						:models="models"
-					/>
+					<tera-model-node v-if="node.operationType === 'ModelOperation'" :models="models" />
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
 					/>
+					<tera-dataset-node v-else-if="node.operationType === 'Dataset'" :datasets="datasets" />
 					<div v-else>Test node</div>
 				</template>
 			</tera-workflow-node>
@@ -39,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -55,12 +53,19 @@ import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import ContextMenu from 'primevue/contextmenu';
-import { Model } from '@/types/Model';
 import * as d3 from 'd3';
+import { IProject } from '@/types/Project';
+import { Dataset } from '@/types/Dataset';
+import { Model } from '@/types/Model';
+import { datasetOperation } from './dataset-operation';
+import TeraDatasetNode from './tera-dataset-node.vue';
 
-defineProps<{
-	models?: Model[];
+const props = defineProps<{
+	project: IProject;
 }>();
+
+const models = computed<Model[]>(() => props.project.assets?.models ?? []);
+const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
@@ -121,6 +126,12 @@ const contextMenuItems = ref([
 		label: 'New calibration',
 		command: () => {
 			insertNode(CalibrationOperation);
+		}
+	},
+	{
+		label: 'New dataset',
+		command: () => {
+			insertNode(datasetOperation);
 		}
 	}
 ]);
