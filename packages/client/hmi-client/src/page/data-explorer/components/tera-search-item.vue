@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { DocumentType } from '@/types/Document';
+import { Document } from '@/types/Types';
 import { computed } from 'vue';
 import Button from 'primevue/button';
 import { Model } from '@/types/Model';
@@ -25,7 +25,7 @@ import { ResultType, ResourceType } from '@/types/common';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
 const props = defineProps<{
-	asset: DocumentType & Model & Dataset;
+	asset: Document & Model & Dataset;
 	isPreviewed: boolean;
 	resourceType: ResourceType;
 	selectedSearchItems: ResultType[];
@@ -37,7 +37,7 @@ const emit = defineEmits(['toggle-selected-asset', 'toggle-asset-preview']);
 const isSelected = () =>
 	props.selectedSearchItems.find((item) => {
 		if (isDocument(item)) {
-			const itemAsDocument = item as DocumentType;
+			const itemAsDocument = item as Document;
 			return itemAsDocument.title === props.asset.title;
 		}
 		if (isDataset(item)) {

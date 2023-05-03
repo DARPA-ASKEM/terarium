@@ -29,21 +29,28 @@ import { computed, PropType } from 'vue';
 import TeraCategoricalFacet from '@/page/data-explorer/components/facets/tera-categorical-facet.vue';
 import TeraNumericalFacet from '@/page/data-explorer/components/facets/tera-numerical-facet.vue';
 
-import { Facets, FacetBucket, ResourceType } from '@/types/common';
-import { getFacetsDisplayNames, getFacetNameFormatter } from '@/utils/facets';
+import { FacetBucket, Facets, ResourceType } from '@/types/common';
+import { getFacetNameFormatter, getFacetsDisplayNames } from '@/utils/facets';
+import { XDDFacetsItemResponse } from '@/types/Types';
+
+const BUCKETS = 'buckets';
 
 const props = defineProps({
 	facets: {
-		type: Object as PropType<Facets>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse } | Facets>,
 		default: () => {}
 	},
 	filteredFacets: {
-		type: Object as PropType<Facets>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse } | Facets>,
 		default: () => {}
 	},
 	resultType: {
 		type: String,
 		default: ResourceType.ALL
+	},
+	docCount: {
+		type: Number,
+		default: 0
 	}
 });
 
@@ -53,22 +60,39 @@ const formattedFacets = computed(() => {
 	const keys = Object.keys(props.facets);
 
 	// mux the filtered data and base data into facets.
-	const facetList = keys.map((key) => {
+	return keys.map((key) => {
 		const baseData: FacetBucket[] = [];
 		const filteredData: FacetBucket[] = [];
 
+		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
+		let buckets;
+		if (props.filteredFacets[key] && 'buckets' in props.filteredFacets[key]) {
+			// accessing via ['buckets'] for now
+			buckets = props.filteredFacets[key][BUCKETS];
+		} else {
+			buckets = props.filteredFacets[key];
+		}
+
 		const filteredFacetDict = props.filteredFacets[key]
-			? props.filteredFacets[key].reduce((dict, category) => {
+			? buckets.reduce((dict, category) => {
 					// eslint-disable-next-line no-param-reassign
-					dict[category.key] = category.value;
+					dict[category.key] = category.docCount ? Number(category.docCount) : category.value;
 					return dict;
 			  }, {} as { [key: string]: number })
 			: {};
 
-		props.facets[key].forEach((category) => {
+		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
+		if (props.facets[key] && 'buckets' in props.facets[key]) {
+			// accessing via ['buckets'] for now
+			buckets = props.facets[key][BUCKETS];
+		} else {
+			buckets = props.facets[key];
+		}
+
+		buckets.forEach((category) => {
 			baseData.push({
 				key: category.key,
-				value: category.value
+				value: category.docCount ? Number(category.docCount) : category.value
 			});
 			filteredData.push({
 				key: category.key,
@@ -85,6 +109,5 @@ const formattedFacets = computed(() => {
 			filteredData
 		};
 	});
-	return facetList;
 });
 </script>

@@ -3,9 +3,24 @@
 		<template #foreground></template>
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<ul v-for="node in nodes">
-				<tera-workflow-node :node="node"></tera-workflow-node>
-			</ul>
+			<tera-workflow-node
+				v-for="(node, index) in nodes"
+				:key="index"
+				:node="node"
+				@dragging="updatePosition(node, $event)"
+			>
+				<template #body>
+					<tera-model-node
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
+						:node="node"
+					/>
+					<div v-else>Test node</div>
+				</template>
+			</tera-workflow-node>
 		</template>
 	</infinite-canvas>
 </template>
@@ -14,8 +29,17 @@
 import { ref } from 'vue';
 import InfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import { Operation, WorkflowNode, WorkflowStatus } from '@/types/workflow';
-import TeraWorkflowNode from './tera-workflow-node.vue';
+import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
+import TeraModelNode from '@/components/workflow/tera-model-node.vue';
+import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import ContextMenu from 'primevue/contextmenu';
+import { Model } from '@/types/Model';
+
+defineProps<{
+	models?: Model[];
+}>();
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
@@ -60,6 +84,18 @@ const contextMenuItems = ref([
 		command: () => {
 			insertNode(testOperation);
 		}
+	},
+	{
+		label: 'New model',
+		command: () => {
+			insertNode(ModelOperation);
+		}
+	},
+	{
+		label: 'New calibration',
+		command: () => {
+			insertNode(CalibrationOperation);
+		}
 	}
 ]);
 
@@ -71,7 +107,12 @@ function toggleContextMenu(event) {
 	};
 }
 
-function saveTransform(newTransform) {
+function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
 }
+
+const updatePosition = (node: WorkflowNode, { x, y }) => {
+	node.x += x / canvasTransform.k;
+	node.y += y / canvasTransform.k;
+};
 </script>

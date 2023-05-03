@@ -1,5 +1,4 @@
-import { DocumentType } from '@/types/Document';
-import { DocumentAsset } from '@/types/Types';
+import { DocumentAsset, Document } from '@/types/Types';
 import { Model } from './Model';
 
 export enum ProjectAssetTypes {
@@ -32,6 +31,6 @@ export interface IProject {
 	active: boolean;
 	concept: string | null;
 	assets: ProjectAssets | null;
-	relatedDocuments: DocumentType[];
+	relatedDocuments: Document[];
 	username: string;
 }
