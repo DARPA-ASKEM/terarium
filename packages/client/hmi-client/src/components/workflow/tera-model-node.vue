@@ -34,7 +34,6 @@ import { Model } from '@/types/Model';
 import { modelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
-import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	models: Model[];
@@ -53,18 +52,16 @@ const model = ref<Model | null>();
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
-const thisModelOperation = cloneDeep(modelOperation);
-
 function run() {
-	if (thisModelOperation.action) {
+	if (modelOperation.action) {
 		console.log(
-			thisModelOperation.action({
+			modelOperation.action({
 				model: model.value,
 				initialValues: initialValues.value,
 				parameterValues: parameterValues.value
 			})
 		);
-		emit('append-output-port', props.node.id, thisModelOperation.outputs[0].type);
+		emit('append-output-port', props.node.id, modelOperation.outputs[0].type);
 	}
 }
 
