@@ -4,9 +4,8 @@
 		@click.stop="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
-		ref="infiniteCanvas"
 	>
-		<template #foreground></template>
+		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 			<tera-workflow-node
@@ -30,9 +29,11 @@
 				</template>
 			</tera-workflow-node>
 		</template>
+
+		<!-- background -->
 		<template #background>
 			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" />
-			<path v-for="(edge, index) in edges" :d="drawPath(edge.points)" stroke="black" :key="index" />
+			<path v-for="(edge, index) of edges" :d="drawPath(edge.points)" stroke="black" :key="index" />
 		</template>
 	</tera-infinite-canvas>
 </template>
@@ -63,12 +64,10 @@ defineProps<{
 
 const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
-const infiniteCanvas = ref();
 
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
-let mousePosition = { x: 0, y: 0 };
-const isCreatingNewEdge = ref<boolean>(false);
+let isCreatingNewEdge = false;
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
 const edges = ref<WorkflowEdge[]>([]);
@@ -139,21 +138,24 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 }
 
 function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
-	if (isCreatingNewEdge.value === false) {
+	if (isCreatingNewEdge === false) {
 		newEdge.value = {
 			id: edges.value.length.toString(),
 			workflowId: '0',
-			points: [currentPortPosition, currentPortPosition],
+			points: [
+				{ x: currentPortPosition.x, y: currentPortPosition.y },
+				{ x: currentPortPosition.x, y: currentPortPosition.y }
+			],
 			source: node.id,
 			sourcePortId: port.id,
 			target: '',
 			targetPortId: ''
 		};
-		isCreatingNewEdge.value = true;
+		isCreatingNewEdge = true;
 	} else if (newEdge.value) {
 		// FIXME: move to service
 		const sourceNode = nodes.value.find((d) => d.id === newEdge.value?.source);
-		const sourcePort = sourceNode?.outputs.find((d) => d.id === newEdge.value?.targetPortId);
+		const sourcePort = sourceNode?.outputs.find((d) => d.id === newEdge.value?.sourcePortId);
 
 		if (port.type === sourcePort?.type) {
 			newEdge.value.target = node.id;
@@ -167,13 +169,13 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 }
 
 function onCanvasClick() {
-	if (isCreatingNewEdge.value === true) {
+	if (isCreatingNewEdge === true) {
 		cancelNewEdge();
 	}
 }
 
 function cancelNewEdge() {
-	isCreatingNewEdge.value = false;
+	isCreatingNewEdge = false;
 	newEdge.value = undefined;
 }
 
@@ -181,29 +183,21 @@ function onPortMouseover(position: Position) {
 	currentPortPosition = position;
 }
 
+let prevX = 0;
+let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
-	const pointer = d3.pointer(event, infiniteCanvas);
-	console.log('>>', pointer);
-
 	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
-		mousePosition = {
-			x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
-			y: (event.offsetY - canvasTransform.y) / canvasTransform.k
-		};
-		if ((event.target as HTMLLIElement).className === 'port') {
-			newEdge.value.points[1] = currentPortPosition;
-		} else {
-			newEdge.value.points[1] = mousePosition;
-		}
+		const dx = event.x - prevX;
+		const dy = event.y - prevY;
+		newEdge.value.points[1].x += dx / canvasTransform.k;
+		newEdge.value.points[1].y += dy / canvasTransform.k;
 	}
+	prevX = event.x;
+	prevY = event.y;
 }
-
-onMounted(() => document.addEventListener('mousemove', mouseUpdate));
-onUnmounted(() => document.removeEventListener('mousemove', mouseUpdate));
 
 // TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {
-	console.log(edges.value.length);
 	edges.value.forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
@@ -230,4 +224,11 @@ const pathFn = d3
 
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
+
+onMounted(() => {
+	document.addEventListener('mousemove', mouseUpdate);
+});
+onUnmounted(() => {
+	document.removeEventListener('mousemove', mouseUpdate);
+});
 </script>

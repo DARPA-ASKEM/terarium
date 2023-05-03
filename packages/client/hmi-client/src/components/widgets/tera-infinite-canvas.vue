@@ -13,7 +13,7 @@
 		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<div class="canvas-layer">
+		<div class="canvas-layer foreground-layer">
 			<slot name="foreground" />
 		</div>
 	</main>
