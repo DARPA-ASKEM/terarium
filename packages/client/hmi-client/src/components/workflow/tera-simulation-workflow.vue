@@ -66,6 +66,7 @@ const isCreatingNewEdge = ref<boolean>(false);
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
 const edges = ref<WorkflowEdge[]>([]);
+const dataLayerRef = ref<HTMLElement>();
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -172,12 +173,14 @@ function onPortMouseover(position: Position) {
 }
 
 function mouseUpdate(event) {
+	const pageYOffset = 57; // header height
 	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
 		mousePosition = {
-			x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
-			y: (event.offsetY - canvasTransform.y) / canvasTransform.k
+			x: (event.pageX - canvasTransform.x) / canvasTransform.k,
+			y: (event.pageY - pageYOffset - canvasTransform.y) / canvasTransform.k
 		};
-		if (event.target.className === 'port') {
+		const className: string = event.target.className.toString();
+		if (className.includes('port')) {
 			newEdge.value.points[1] = currentPortPosition;
 		} else {
 			newEdge.value.points[1] = mousePosition;
@@ -186,9 +189,9 @@ function mouseUpdate(event) {
 }
 
 onMounted(() => {
-	document.addEventListener('mousemove', mouseUpdate);
+	dataLayerRef.value?.addEventListener('mousemove', mouseUpdate);
 });
-onUnmounted(() => document.removeEventListener('mousemove', mouseUpdate));
+onUnmounted(() => dataLayerRef.value?.removeEventListener('mousemove', mouseUpdate));
 
 // TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {

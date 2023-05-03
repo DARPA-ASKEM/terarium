@@ -6,7 +6,7 @@
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
 				<div
-					class="port"
+					class="input port"
 					@click.stop="selectPort(input)"
 					@mouseover="(event) => mouseoverPort(event)"
 					@focus="() => {}"
@@ -19,7 +19,7 @@
 			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
 				<div
-					class="port"
+					class="output port"
 					@click.stop="selectPort(output)"
 					@mouseover="(event) => mouseoverPort(event)"
 					@focus="() => {}"
@@ -83,7 +83,6 @@ const stopDrag = (evt: MouseEvent) => {
 
 onMounted(() => {
 	if (!workflowNode.value) return;
-
 	workflowNode.value.addEventListener('mousedown', startDrag);
 	document.addEventListener('mousemove', drag);
 	workflowNode.value.addEventListener('mouseup', stopDrag);
@@ -94,17 +93,14 @@ function selectPort(port: WorkflowPort) {
 }
 
 function mouseoverPort(event) {
-	// const ports = isInput ? inputs.value : outputs.value;
-	// if (ports) {
 	const el = event.target as HTMLElement;
-	// const el = ports[index] as HTMLElement;
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	// const totalOffsetX = el.offsetLeft + (isInput ? -7 : el.offsetWidth + 8);
-	const totalOffsetX = el.offsetLeft;
+	const isInput = el.className === 'input port';
+	console.log(isInput);
+	const totalOffsetX = el.offsetLeft + (isInput ? 0 : el.offsetWidth);
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
-	// }
 }
 onBeforeUnmount(() => {
 	if (workflowNode.value) {
