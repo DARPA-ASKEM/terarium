@@ -220,7 +220,6 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
-				console.log(datasetTemp);
 			}
 		} else {
 			dataset.value = null;
