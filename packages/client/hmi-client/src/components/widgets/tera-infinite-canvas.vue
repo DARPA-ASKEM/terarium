@@ -148,7 +148,6 @@ onMounted(() => {
 main {
 	width: 100%;
 	height: 100%;
-	clip: rect(0%, 0%, 100%, 100%);
 }
 
 main > * {
