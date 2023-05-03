@@ -63,10 +63,10 @@ export interface WorkflowEdge {
 	points: Position[];
 
 	source: WorkflowNode['id'];
-	sourcePort: WorkflowPort;
+	sourcePortId: string;
 
-	target: WorkflowNode['id'] | undefined;
-	targetPort: WorkflowPort | undefined;
+	target: WorkflowNode['id'];
+	targetPortId: string;
 }
 
 export interface Workflow {

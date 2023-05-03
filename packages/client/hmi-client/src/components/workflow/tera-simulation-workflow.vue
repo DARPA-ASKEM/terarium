@@ -139,15 +139,19 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 			workflowId: '0',
 			points: [currentPortPosition, currentPortPosition],
 			source: node.id,
-			sourcePort: port,
-			target: undefined,
-			targetPort: undefined
+			sourcePortId: port.id,
+			target: '',
+			targetPortId: ''
 		};
 		isCreatingNewEdge.value = true;
 	} else if (newEdge.value) {
-		if (port.type === newEdge.value.sourcePort.type) {
+		// FIXME: move to service
+		const sourceNode = nodes.value.find((d) => d.id === newEdge.value?.source);
+		const sourcePort = sourceNode?.outputs.find((d) => d.id === newEdge.value?.targetPortId);
+
+		if (port.type === sourcePort?.type) {
 			newEdge.value.target = node.id;
-			newEdge.value.targetPort = port;
+			newEdge.value.targetPortId = port.id;
 			edges.value.push(newEdge.value);
 			cancelNewEdge();
 		} else {
