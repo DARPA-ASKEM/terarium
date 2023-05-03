@@ -61,7 +61,15 @@ function run() {
 				parameterValues: parameterValues.value
 			})
 		);
-		emit('append-output-port', props.node.id, modelOperation.outputs[0].type);
+		emit('append-output-port', props.node.id, {
+			id: props.node.outputs.length.toString(),
+			type: modelOperation.outputs[0].type,
+			value: {
+				model: model.value,
+				initialValues: initialValues.value,
+				parameterValues: parameterValues.value
+			}
+		});
 	}
 }
 

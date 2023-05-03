@@ -90,10 +90,15 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
-function appendOutputPort(index: number, type: string) {
-	nodes.value[index].outputs.push({
-		id: nodes.value[index].outputs.length.toString(),
-		type
+function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
+	// Find node and assign outport data to its output port
+	const node = nodes.value[nodes.value.findIndex(({ id }) => id === nodeId)];
+	node.outputs[node.outputs.length - 1] = outputPortData;
+
+	// Create new output port
+	node.outputs.push({
+		id: node.outputs.length.toString(),
+		type: outputPortData.type
 	});
 }
 
