@@ -15,8 +15,5 @@ export const modelOperation: Operation = {
 		model: Model;
 		intialValues: StringValueMap;
 		parameterValues: StringValueMap;
-	}) => {
-		modelOperation.outputs.push({ type: 'modelConfig' });
-		return [{ type: 'modelConfig', value: modelConfig }];
-	}
+	}) => [{ type: 'modelConfig', value: modelConfig }]
 };
