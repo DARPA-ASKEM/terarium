@@ -10,8 +10,15 @@ facet-terms {
   // No item in the group is selected
   // No item in the group is being hovered
   --facet-terms-bar-0-normal: var(--primary-color);
+
+	// We should give the appearance of just green bars on a white background
+	--facet-terms-bar-1-normal: var(--surface-section);
+	--facet-terms-bar-1-normal-contrast-hover: var(--surface-hover);
+	--facet-terms-bar-1-normal-contrast: var(--surface-section);
+	--facet-terms-bar-1-selected: var(--primary-color-lighter);
+
   // Another item in the group is being hovered
-  --facet-terms-bar-0-normal-contrast: var(--primary-color); 
+  --facet-terms-bar-0-normal-contrast: var(--primary-color);
   // This item is being hovered
   --facet-terms-bar-0-normal-contrast-hover: var(--primary-color);
 

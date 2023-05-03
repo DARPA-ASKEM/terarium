@@ -45,7 +45,7 @@
 				</aside>
 			</template>
 		</header>
-		<section>
+		<section :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
 	</main>
@@ -64,6 +64,7 @@ const props = defineProps<{
 	doi?: string;
 	publisher?: string;
 	hideHeader?: boolean;
+	stretchContent?: boolean;
 }>();
 
 const emit = defineEmits(['close-preview']);
@@ -73,11 +74,18 @@ const scrollPosition = ref(0);
 
 const shrinkHeader = computed(() => {
 	const headerHeight = headerRef.value?.clientHeight ? headerRef.value.clientHeight - 50 : 1;
-	return scrollPosition.value > headerHeight && !props.isCreatingAsset;
+	return (
+		scrollPosition.value > headerHeight && // Appear if (original header - 50px) is scrolled past
+		scrollPosition.value !== 0 && // Handles case where original header is shorter than shrunk header (happens in PDF view)
+		!props.isCreatingAsset // Don't appear while creating an asset eg. a model
+	);
 });
 
 // Scroll margin for anchors are adjusted depending on the header (inserted in css)
-const scrollMarginTop = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+const scrollMarginTopStyle = computed(() => (shrinkHeader.value ? '3.5rem' : '0.5rem'));
+const stretchContentStyle = computed(() =>
+	props.stretchContent ? { gridColumn: '1 / span 2' } : {}
+);
 
 function updateScrollPosition(event) {
 	scrollPosition.value = event?.currentTarget.scrollTop;
@@ -101,14 +109,9 @@ main {
 	height: 100%;
 	background-color: var(--surface-section);
 	/* accounts for sticky header height */
-	scroll-margin-top: v-bind('scrollMarginTop');
+	scroll-margin-top: v-bind('scrollMarginTopStyle');
 	overflow-y: auto;
 	overflow-x: hidden;
-}
-
-main:deep(> nav) {
-	height: fit-content;
-	grid-row: 1 / span 2;
 }
 
 main > section {
@@ -207,7 +210,7 @@ main:deep(.p-accordion) {
 
 /*  Gives some top padding when you auto-scroll to an anchor */
 main:deep(.p-accordion-header > a > header) {
-	scroll-margin-top: v-bind('scrollMarginTop');
+	scroll-margin-top: v-bind('scrollMarginTopStyle');
 }
 
 main:deep(.p-accordion-content > p),

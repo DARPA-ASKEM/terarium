@@ -48,7 +48,7 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
-import { CalibrationOperation } from '@/types/workflow/CalibrationOperation';
+import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
