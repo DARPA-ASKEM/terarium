@@ -66,17 +66,20 @@ const formattedFacets = computed(() => {
 
 		// Temp hack fix while model/dataset facets are on divergent paths from XDD facets
 		let buckets;
+		let docFacet = false;
 		if (props.filteredFacets[key] && 'buckets' in props.filteredFacets[key]) {
 			// accessing via ['buckets'] for now
 			buckets = props.filteredFacets[key][BUCKETS];
+			docFacet = true;
 		} else {
 			buckets = props.filteredFacets[key];
+			docFacet = false;
 		}
 
 		const filteredFacetDict = props.filteredFacets[key]
 			? buckets.reduce((dict, category) => {
 					// eslint-disable-next-line no-param-reassign
-					dict[category.key] = category.docCount ? Number(category.docCount) : category.value;
+					dict[category.key] = docFacet ? Number(category.docCount) : category.value;
 					return dict;
 			  }, {} as { [key: string]: number })
 			: {};
@@ -92,7 +95,7 @@ const formattedFacets = computed(() => {
 		buckets.forEach((category) => {
 			baseData.push({
 				key: category.key,
-				value: category.docCount ? Number(category.docCount) : category.value
+				value: docFacet ? Number(props.docCount) : category.value
 			});
 			filteredData.push({
 				key: category.key,
