@@ -129,7 +129,7 @@ const searchBarRef = ref();
 const terms = ref<string[]>([]);
 
 async function updateRelatedTerms(q?: string) {
-	terms.value = await getRelatedTerms(q);
+	if (!isEmpty(q)) terms.value = await getRelatedTerms(q);
 }
 
 function searchByExampleModalToggled() {
