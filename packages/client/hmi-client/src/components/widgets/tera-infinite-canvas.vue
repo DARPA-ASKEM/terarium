@@ -7,7 +7,7 @@
 			:height="height"
 		>
 			<slot name="background">
-				<g ref="edgesRef" class="edges" stroke-width="2" fill="none">
+				<g ref="edgesRef" class="edges" stroke-width="5" fill="none">
 					<path v-if="newEdge?.points" :d="pathFn(newEdge.points)" stroke="green" />
 					<path
 						v-for="(edge, index) in edges"
