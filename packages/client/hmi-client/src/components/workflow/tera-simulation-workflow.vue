@@ -61,7 +61,7 @@ const nodes = ref<WorkflowNode[]>([]);
 const contextMenu = ref();
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
-const mousePosition = ref<Position>({ x: 0, y: 0 });
+let mousePosition = { x: 0, y: 0 };
 const isCreatingNewEdge = ref<boolean>(false);
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
@@ -173,21 +173,24 @@ function onPortMouseover(position: Position) {
 
 function mouseUpdate(event) {
 	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
-		mousePosition.value = {
-			x: (event.pageX - canvasTransform.x) / canvasTransform.k,
-			y: (event.pageY - 57 - canvasTransform.y) / canvasTransform.k
+		mousePosition = {
+			x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
+			y: (event.offsetY - canvasTransform.y) / canvasTransform.k
 		};
 		if (event.target.className === 'port') {
 			newEdge.value.points[1] = currentPortPosition;
 		} else {
-			newEdge.value.points[1] = mousePosition.value;
+			newEdge.value.points[1] = mousePosition;
 		}
 	}
 }
 
-onMounted(() => window.addEventListener('mousemove', mouseUpdate));
-onUnmounted(() => window.removeEventListener('mousemove', mouseUpdate));
+onMounted(() => {
+	document.addEventListener('mousemove', mouseUpdate);
+});
+onUnmounted(() => document.removeEventListener('mousemove', mouseUpdate));
 
+// TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {
 	edges.value.forEach((edge) => {
 		if (edge.source === node.id) {
@@ -195,8 +198,8 @@ function updateEdgePositions(node: WorkflowNode, { x, y }) {
 			edge.points[0].y += y / canvasTransform.k;
 		}
 		if (edge.target === node.id) {
-			edge.points[1].x += x / canvasTransform.k;
-			edge.points[1].y += y / canvasTransform.k;
+			edge.points[edges.value.length - 1].x += x / canvasTransform.k;
+			edge.points[edges.value.length - 1].y += y / canvasTransform.k;
 		}
 	});
 }

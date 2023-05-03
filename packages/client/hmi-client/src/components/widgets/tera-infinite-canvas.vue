@@ -7,9 +7,14 @@
 			:height="height"
 		>
 			<slot name="background">
-				<g ref="edgesRef" class="edges" stroke-width="1" fill="none">
-					<path v-if="newEdge?.points" :d="drawNewEdge()" stroke="green" />
-					<path v-for="(edge, index) in edges" :d="drawEdge(edge)" stroke="black" :key="index" />
+				<g ref="edgesRef" class="edges" stroke-width="5" fill="none">
+					<path v-if="newEdge?.points" :d="pathFn(newEdge.points)" stroke="green" />
+					<path
+						v-for="(edge, index) in edges"
+						:d="pathFn(edge.points)"
+						stroke="black"
+						:key="index"
+					/>
 				</g>
 			</slot>
 		</svg>
@@ -158,25 +163,11 @@ onMounted(() => {
 	}
 });
 
-function drawNewEdge(): string {
-	if (newEdge.value) {
-		return drawEdge(newEdge.value);
-	}
-	return 'M0,0';
-}
-
-function drawEdge(edge: WorkflowEdge): string {
-	if (edge.points && edge.points.length === 2) {
-		const sourcePoint = edge.points[0];
-		const targetPoint = edge.points[1];
-		const path = d3.path();
-		path.moveTo(sourcePoint.x, sourcePoint.y);
-		path.lineTo(targetPoint.x, targetPoint.y);
-		path.closePath();
-		return path.toString();
-	}
-	return 'M0,0';
-}
+const pathFn = d3
+	.line<{ x: number; y: number }>()
+	.x((d) => d.x)
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
 </script>
 
 <style scoped>
