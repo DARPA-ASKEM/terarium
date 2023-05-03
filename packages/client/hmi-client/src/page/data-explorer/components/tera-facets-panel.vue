@@ -76,7 +76,7 @@ const formattedFacets = computed(() => {
 		const filteredFacetDict = props.filteredFacets[key]
 			? buckets.reduce((dict, category) => {
 					// eslint-disable-next-line no-param-reassign
-					dict[category.key] = Number(category.docCount);
+					dict[category.key] = category.docCount ? Number(category.docCount) : category.value;
 					return dict;
 			  }, {} as { [key: string]: number })
 			: {};
@@ -92,7 +92,7 @@ const formattedFacets = computed(() => {
 		buckets.forEach((category) => {
 			baseData.push({
 				key: category.key,
-				value: props.docCount
+				value: category.docCount ? Number(category.docCount) : category.value
 			});
 			filteredData.push({
 				key: category.key,
