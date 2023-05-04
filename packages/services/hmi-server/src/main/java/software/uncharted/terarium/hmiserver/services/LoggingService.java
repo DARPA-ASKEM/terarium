@@ -12,12 +12,12 @@ import java.io.Serializable;
 @Slf4j
 @Data
 @Accessors(chain = true)
-public class LoggingService implements Serializable {
+public class LoggingService {
 	private List<LogMessage> logs;
 
 	public void logMessage(LogMessage logObj, String name) {
 		String level = logObj.level;
-		String message = "HMI-Log | " + name + " | " + logObj.message;
+		String message = "HMI_LOG | " + name + " | " + logObj.message;
 		switch (level) {
 			case "trace":
 				log.trace(message);

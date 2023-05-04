@@ -16,26 +16,30 @@
 			</label>
 			<br />
 
-			<div v-if="files.length > 0">
-				<div class="preview-container mt-4" v-if="files.length">
-					<div v-for="file in files" :key="file.name" class="file-preview" scrolling="no">
-						<importPreview
+			<div v-if="importFiles.length > 0">
+				<div class="preview-container mt-4" v-if="importFiles.length">
+					<div v-for="file in importFiles" :key="file.name" class="file-preview" scrolling="no">
+						<TeraDragAndDropFilePreviewer
 							:file="file"
 							:show-preview="props.showPreview"
 							:is-processing="isProcessing"
-							@remove-file="removeFile(files.indexOf(file))"
-						></importPreview>
+							@remove-file="removeFile(importFiles.indexOf(file))"
+						></TeraDragAndDropFilePreviewer>
 					</div>
 				</div>
 				<br />
-				<div class="card flex justify-content-center">
+				<div class="options-container">
 					<Dropdown
 						v-model="extractionMode"
 						:options="modes"
 						optionLabel="name"
 						placeholder="Extraction Mode"
-						class="w-full md:w-14rem"
+						class="extraction-mode"
 					/>
+					<div class="flex align-items-center">
+						<Checkbox v-model="extractImages" value="Extract Images" :binary="true" />
+						<label for="extractImage" class="ml-2"> Extract Images </label>
+					</div>
 				</div>
 			</div>
 			<br />
@@ -43,7 +47,7 @@
 				v-if="canImport"
 				type="button"
 				class="import-button"
-				@click="processFiles(files)"
+				@click="processFiles(importFiles)"
 				label="Import Data"
 			></Button>
 		</div>
@@ -55,31 +59,31 @@ import { ref, defineProps, computed } from 'vue';
 import API from '@/api/api';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import { AcceptedTypes } from '@/types/common';
-import importPreview from './file-preview.vue';
+import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
 const emit = defineEmits(['import-completed']);
-const files = ref(<File[]>[]);
+const importFiles = ref(<File[]>[]);
 const fileInput = ref(<HTMLInputElement | null>null);
 const dragOver = ref(false);
 const isProcessing = ref(false);
 const processResponse = ref(<{ file: string; response: { text: string } }[]>[]);
 
 const extractionMode = ref({ name: 'pymupdf' });
+const extractImages = ref(false);
 const modes = ref([{ name: 'pypdf2' }, { name: 'pdfminer' }, { name: 'pymupdf' }]);
 
 const props = defineProps({
 	// show preview
 	showPreview: {
 		type: Boolean,
-		required: true,
-		default: true
+		required: true
 	},
 	// list of accepted types of files
 	acceptTypes: {
 		type: Array<AcceptedTypes>,
 		required: true,
-		default: ['application/pdf'],
 		validator: (value: Array<string>) =>
 			[AcceptedTypes.JPEG, AcceptedTypes.JPG, AcceptedTypes.PNG, AcceptedTypes.PDF].every((v) =>
 				value.includes(v)
@@ -123,9 +127,9 @@ const addFiles = (addedFiles: File[] | undefined) => {
 		for (let i = 0; i < addedFiles.length; i++) {
 			// only add files that weren't added before
 			if (props.acceptTypes.indexOf(addedFiles[i].type as AcceptedTypes) > -1) {
-				const index = files.value.findIndex((item) => item.name === addedFiles[i].name);
+				const index = importFiles.value.findIndex((item) => item.name === addedFiles[i].name);
 				if (index === -1) {
-					files.value.push(addedFiles[i]);
+					importFiles.value.push(addedFiles[i]);
 				} else {
 					console.log(`${addedFiles[i].name} File already added!`);
 				}
@@ -182,19 +186,19 @@ const onDragLeave = (event: DragEvent) => {
  * @returns {any}
  */
 const removeFile = (index: number) => {
-	files.value.splice(index, 1);
+	importFiles.value.splice(index, 1);
 };
 
-async function processFiles(f) {
+async function processFiles(files) {
 	isProcessing.value = true;
-	processResponse.value = await props.importAction(f, extractionMode.value.name, true);
-	console.log(processResponse.value);
+	const r = await props.importAction(files, extractionMode.value.name, extractImages.value);
+	processResponse.value = await Promise.all(r);
 	isProcessing.value = false;
 	emit('import-completed', processResponse.value);
 	files.value = [];
 }
 
-const canImport = computed(() => files.value.length > 0);
+const canImport = computed(() => importFiles.value.length > 0);
 </script>
 
 <style scoped>
@@ -225,6 +229,15 @@ const canImport = computed(() => files.value.length > 0);
 	display: flex;
 	flex-direction: column;
 	cursor: pointer;
+}
+
+.options-container {
+	display: flex;
+	flex-direction: row;
+}
+
+.extraction-mode {
+	margin-right: 10px;
 }
 
 .preview-container {

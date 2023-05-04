@@ -106,7 +106,7 @@
 					header="Resource Importer"
 					:style="{ width: '60vw' }"
 				>
-					<drag-n-drop
+					<tera-drag-and-drop-importer
 						:show-preview="true"
 						:accept-types="[
 							AcceptedTypes.PDF,
@@ -116,17 +116,17 @@
 						]"
 						:import-action="processPDFs"
 						@import-completed="importCompleted"
-					></drag-n-drop>
+					></tera-drag-and-drop-importer>
 
 					<section v-if="results">
-						<Card v-for="item in results" :key="item.file.name" class="card">
+						<Card v-for="(item, i) in results" :key="i" class="card">
 							<template #title>
 								<div class="card-img"></div>
 							</template>
 							<template #content>
 								<div class="card-content">
-									<div class="file-title">{{ item.file.name }}</div>
-									<div class="file-content">
+									<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+									<div v-if="item.response" class="file-content">
 										<br />
 										<div>Extracted Text</div>
 										<div>{{ item.response.text }}</div>
@@ -160,15 +160,14 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
-
+import { PDFExtractionResponseType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 import { AcceptedTypes } from '@/types/common';
 import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
-import DragNDrop from '@/components/extracting/drag-n-drop-importer.vue';
-
-import { logger } from '@/utils/logger';
+import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
+import API, { Poller } from '@/api/api';
 
 const props = defineProps<{
 	project: IProject;
@@ -183,74 +182,65 @@ const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
 
-function sleep(ms) {
-	// eslint-disable-next-line no-promise-executor-return
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
+async function getPDFContents(
+	file: string | Blob,
+	extractionMode: string,
+	extractImages: string
+): Promise<PDFExtractionResponseType> {
+	const formData = new FormData();
+	formData.append('file', file);
+	formData.append('extraction_method', extractionMode);
+	formData.append('extract_images', extractImages);
 
-async function fetchTaskResult(taskId) {
-	const resultResponse = await fetch(`http://localhost:5000/task_result/${taskId}`);
-	const resultJson = await resultResponse.json();
+	// const result = await API.post(`/extract/convertpdftask/`, formData);
+	const result = await fetch(`http://localhost:5000/convertpdftask`, {
+		method: 'POST',
+		body: formData
+	});
 
-	if (resultJson.status === 'SUCCESS') {
-		return resultJson.result;
+	if (result) {
+		const taskID = await result.json();
+		const poller = new Poller<object>()
+			.setInterval(2000)
+			.setThreshold(90)
+			.setPollAction(async () => {
+				const response = await API.get(`/extract/task_result/${taskID.task_id}`);
+
+				if (response.data.status === 'SUCCESS' && response.data.result) {
+					return {
+						data: response.data.result,
+						progress: null,
+						error: null
+					};
+				}
+				return {
+					data: null,
+					progress: null,
+					error: null
+				};
+			});
+
+		const pollerResults = await poller.start();
+
+		if (pollerResults.data) {
+			return pollerResults.data as PDFExtractionResponseType;
+		}
 	}
-
-	// Call the function recursively
-	await sleep(500);
-	return fetchTaskResult(taskId);
+	return { text: '', images: [] } as PDFExtractionResponseType;
 }
 
 async function processPDFs(files, extractionMode, extractImages) {
-	const promises = files.map(async (file) => {
-		const formData = new FormData();
-		formData.append('file', file);
-		formData.append('extraction_method', extractionMode);
-		formData.append('extract_images', extractImages);
-
-		const response = await fetch(`http://localhost:5000/convertpdftask`, {
-			method: 'POST',
-			body: formData
-		});
-
-		// eslint-disable-next-line @typescript-eslint/naming-convention
-		const { task_id } = await response.json();
-		const taskResult = await fetchTaskResult(task_id);
-		return { file, taskResult };
+	const processedFiles = await files.map(async (file) => {
+		const resp = await getPDFContents(file, extractionMode, extractImages);
+		const text = resp.text ? resp.text : '';
+		const images = resp.images ? resp.images : [];
+		return { file, error: false, response: { text, images } };
 	});
-
-	const r = await Promise.allSettled(promises);
-	const processedFiles = r.map((result, index) => {
-		if (result.status === 'fulfilled') {
-			return {
-				file: files[index],
-				error: false,
-				response: {
-					text: result.value.taskResult.text,
-					images: result.value.taskResult.images
-				}
-			};
-		}
-		return {
-			file: files[index],
-			error: true,
-			response: { text: result.reason, images: [] }
-		};
-	});
-
-	const successCount = processedFiles.filter((item) => !item.error).length;
-	const errorCount = processedFiles.filter((item) => item.error).length;
-
-	if (errorCount) {
-		logger.error(`An error occurred while importing ${errorCount} files.`);
-	} else {
-		logger.info(`Successfully imported ${successCount} files.`);
-	}
 
 	return processedFiles;
 }
 
-function openImportModal() {
+async function openImportModal() {
 	visible.value = true;
 	results.value = null;
 }
