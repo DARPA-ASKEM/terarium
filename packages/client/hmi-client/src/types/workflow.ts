@@ -60,7 +60,7 @@ export interface WorkflowNode {
 export interface WorkflowEdge {
 	id: string;
 	workflowId: string;
-	points: { x: number; y: number }[];
+	points: Position[];
 
 	source: WorkflowNode['id'];
 	sourcePortId: string;
@@ -82,4 +82,9 @@ export interface Workflow {
 	};
 	nodes: WorkflowNode[];
 	edges: WorkflowEdge[];
+}
+
+export interface Position {
+	x: number;
+	y: number;
 }

@@ -4,30 +4,43 @@
 			<h5>{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index">
-				<div class="port"></div>
+			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
+				<div
+					class="port"
+					@click.stop="selectPort(input)"
+					@mouseover="(event) => mouseoverPort(event)"
+					@focus="() => {}"
+				></div>
 				{{ input.label }}
 			</li>
 		</section>
 		<slot name="body" />
 		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index">
+			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
-				<div class="port"></div>
+				<div
+					class="port"
+					@click.stop="selectPort(output)"
+					@mouseover="(event) => mouseoverPort(event)"
+					@focus="() => {}"
+				></div>
 			</li>
 		</section>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { WorkflowNode } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-
-const emit = defineEmits(['dragging']);
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
+
+const inputs = ref<HTMLElement>();
+const outputs = ref<HTMLElement>();
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -76,6 +89,19 @@ onMounted(() => {
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
+function selectPort(port: WorkflowPort) {
+	emit('port-selected', port);
+}
+
+function mouseoverPort(event) {
+	const el = event.target as HTMLElement;
+	const nodePosition: Position = { x: props.node.x, y: props.node.y };
+	const totalOffsetX = el.offsetLeft;
+	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
+	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
+	emit('port-mouseover', portPosition);
+	// }
+}
 onBeforeUnmount(() => {
 	if (workflowNode.value) {
 		workflowNode.value.removeEventListener('mousedown', startDrag);
@@ -115,19 +141,25 @@ li {
 .port {
 	display: inline-block;
 	height: 16px;
-	width: 16px;
+	width: 8px;
 	border: 1px solid var(--surface-border);
-	border-radius: 8px;
+
 	position: relative;
 	background: var(--surface-100);
 }
 
+.port:hover {
+	background: var(--surface-border);
+}
+
 .inputs .port {
 	left: -8px;
+	border-radius: 0 8px 8px 0;
 }
 
 .outputs .port {
 	left: 8px;
+	border-radius: 8px 0 0 8px;
 }
 
 header {
