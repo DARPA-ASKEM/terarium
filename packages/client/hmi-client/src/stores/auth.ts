@@ -1,29 +1,6 @@
 import { defineStore } from 'pinia';
 
 /**
- * Decode the OIDC token for additional information
- * @param token the OIDC token
- * @returns decoded JSON object representing the token
- * @throws an Error if token is not formatted as expected
- */
-const decode = (token: string) => {
-	// split the string up based on delimiter '.'
-	const tokens = token.split('.');
-
-	// retrieve only the 2nd one
-	if (tokens.length !== 3) {
-		throw new Error('Failed to Decode OIDC Token');
-	}
-	const infoToken = tokens[1];
-
-	// decode the token
-	const decodedToken = window.atob(infoToken);
-	// const decodedToken = base64Decoder(infoToken);
-	return JSON.parse(decodedToken);
-};
-
-let timer: NodeJS.Timeout;
-/**
  * Main store used for authentication
  */
 const useAuthStore = defineStore('auth', {
