@@ -31,7 +31,6 @@
 				</template>
 			</tera-workflow-node>
 		</template>
-
 		<!-- background -->
 		<template #background>
 			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" />
