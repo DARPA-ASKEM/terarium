@@ -1,5 +1,6 @@
 <template>
 	<section class="container" :style="nodeStyle" ref="workflowNode">
+		<slot name="header"></slot>
 		<header>
 			<h5>{{ node.operationType }}</h5>
 		</header>
