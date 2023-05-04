@@ -28,15 +28,14 @@ let timer: NodeJS.Timeout;
  */
 const useAuthStore = defineStore('auth', {
 	state: () => ({
-		userId: null,
-		userToken: null as string | null,
-		expires: null as number | null,
 		name: null as string | null,
-		email: null as string | null
+		email: null as string | null,
+		initials: null as string | null,
+		isAdmin: false as boolean,
+		isUser: false as boolean
 	}),
 	getters: {
-		token: (state) => state.userToken,
-		isAuthenticated: (state) => !!state.userToken
+		isAuthenticated: (state) => !!state.isUser
 	},
 	actions: {
 		/**
@@ -46,62 +45,34 @@ const useAuthStore = defineStore('auth', {
 			// In development mode, bypass Keycloak setting the user to be anonymous
 			if (import.meta.env.VITE_BYPASS_KEYCLOAK === 'true') {
 				console.log(import.meta.env);
-				this.userToken = null;
 				this.name = 'Dev User';
 				this.email = 'dev@terarium.ai';
+				this.isUser = true;
 			} else {
 				// Fetch or refresh the access token
-				const response =
-					this.userToken !== null
-						? await fetch(
-								`/app/redirect_uri?refresh=/silent-check-sso.html&access_token=${this.userToken}`
-						  )
-						: await fetch('/silent-check-sso.html');
+				const response = await fetch('/ua/user');
 
-				if (!response.ok) {
+				const data = await response.json();
+				if (response.ok) {
+					this.name = data.userName;
+					this.email = data.email;
+					this.initials = data.initials;
+					this.isAdmin = data.admin;
+					this.isUser = data.user;
+				} else {
 					this.logout();
 					const error = new Error('Authentication Failed');
 					throw error;
 				}
-
-				const accessToken = response.headers.get('OIDC_access_token');
-				const expirationTimestamp =
-					+(response?.headers?.get('OIDC_access_token_expires') ?? 0) * 1000;
-
-				this.userToken = accessToken;
-
-				if (accessToken) {
-					try {
-						const tokenInfo = decode(accessToken);
-
-						this.name = tokenInfo.name;
-						this.email = tokenInfo.email;
-					} catch (error) {
-						console.error('Unable to decode authentication token for additional user information');
-						this.name = null;
-						this.email = null;
-					}
-
-					// TODO: other info we can gather
-					// preferred_username, given_name, family_name, realm_access.roles etc
-				}
-
-				const expiresIn = expirationTimestamp - new Date().getTime();
-				timer = setTimeout(() => {
-					this.autoRenew();
-				}, expiresIn);
 			}
 		},
 		logout() {
-			this.userId = null;
-			this.userToken = null;
 			this.name = null;
 			this.email = null;
+			this.initials = null;
+			this.isAdmin = false;
+			this.isUser = false;
 			window.location.assign('/logout');
-		},
-		autoRenew() {
-			clearTimeout(timer);
-			this.fetchSSO();
 		}
 	}
 });
