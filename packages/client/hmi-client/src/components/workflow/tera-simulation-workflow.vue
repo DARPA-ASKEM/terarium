@@ -54,7 +54,7 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
-import { modelOperation } from '@/components/workflow/model-operation';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
@@ -128,7 +128,7 @@ const contextMenuItems = ref([
 	{
 		label: 'New model',
 		command: () => {
-			insertNode(modelOperation);
+			insertNode(ModelOperation);
 		}
 	},
 	{

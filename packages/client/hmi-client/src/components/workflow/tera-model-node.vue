@@ -31,7 +31,7 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
-import { modelOperation } from '@/components/workflow/model-operation';
+import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -53,9 +53,9 @@ const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
 function run() {
-	if (modelOperation.action) {
+	if (ModelOperation.action) {
 		console.log(
-			modelOperation.action({
+			ModelOperation.action({
 				model: model.value,
 				initialValues: initialValues.value,
 				parameterValues: parameterValues.value
@@ -63,7 +63,7 @@ function run() {
 		);
 		emit('append-output-port', props.node.id, {
 			id: props.node.outputs[props.node.outputs.length - 1].id,
-			type: modelOperation.outputs[0].type,
+			type: ModelOperation.outputs[0].type,
 			value: {
 				model: model.value,
 				initialValues: initialValues.value,
