@@ -17,7 +17,12 @@
 				@dragging="(event) => updatePosition(node, event)"
 			>
 				<template #body>
-					<tera-model-node v-if="node.operationType === 'ModelOperation'" :models="models" />
+					<tera-model-node
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
+						:node="node"
+						@append-output-port="appendOutputPort"
+					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
@@ -50,8 +55,8 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
-import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { ModelOperation } from '@/components/workflow/model-operation';
+import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
@@ -92,6 +97,18 @@ const testOperation: Operation = {
 	action: () => {},
 	isRunnable: true
 };
+
+function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
+	// Find node and assign outport data to its output port
+	const node = nodes.value[nodes.value.findIndex(({ id }) => id === nodeId)];
+	node.outputs[node.outputs.length - 1] = outputPortData;
+
+	// Create new output port
+	node.outputs.push({
+		id: node.outputs.length.toString(),
+		type: outputPortData.type
+	});
+}
 
 function insertNode(operation: Operation) {
 	const newNode: WorkflowNode = {

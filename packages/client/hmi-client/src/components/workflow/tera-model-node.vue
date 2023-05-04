@@ -33,10 +33,14 @@ import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
+import { WorkflowNode } from '@/types/workflow';
 
-defineProps<{
+const props = defineProps<{
 	models: Model[];
+	node: WorkflowNode;
 }>();
+
+const emit = defineEmits(['append-output-port']);
 
 interface StringValueMap {
 	[key: string]: string;
@@ -57,6 +61,15 @@ function run() {
 				parameterValues: parameterValues.value
 			})
 		);
+		emit('append-output-port', props.node.id, {
+			id: props.node.outputs[props.node.outputs.length - 1].id,
+			type: ModelOperation.outputs[0].type,
+			value: {
+				model: model.value,
+				initialValues: initialValues.value,
+				parameterValues: parameterValues.value
+			}
+		});
 	}
 }
 
