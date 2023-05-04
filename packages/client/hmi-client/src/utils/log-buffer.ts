@@ -2,30 +2,10 @@
 import { useToastService } from '@/services/toast';
 import axios from 'axios';
 import { isEmpty } from 'lodash';
-import useAuthStore from '../stores/auth';
 
 const LOGS = axios.create({
 	baseURL: '/api'
 });
-
-// Hook in bearer tokens
-// See
-// - https://medium.com/swlh/handling-access-and-refresh-tokens-using-axios-interceptors-3970b601a5da
-LOGS.interceptors.request.use(
-	(config) => {
-		const auth = useAuthStore();
-
-		if (config.headers) {
-			config.headers.Authorization = `Bearer ${auth.token}`;
-		} else {
-			config.headers = { Authorization: `Bearer ${auth.token}` };
-		}
-		return config;
-	},
-	(error) => {
-		console.error(error);
-	}
-);
 
 const toast = useToastService();
 
