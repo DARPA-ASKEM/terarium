@@ -16,7 +16,7 @@
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
 			>
-				<template #body="{ appendPort }">
+				<template #body="{ appendPort, updatePorts }">
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
@@ -31,6 +31,7 @@
 						v-else-if="node.operationType === 'Dataset'"
 						:datasets="datasets"
 						@append-port="appendPort"
+						@update-ports="updatePorts"
 					/>
 					<div v-else>Test node</div>
 				</template>

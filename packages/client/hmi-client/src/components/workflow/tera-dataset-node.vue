@@ -43,24 +43,51 @@ defineProps<{
 const emit = defineEmits<{
 	(
 		e: 'append-port',
-		port: { type: string; label: string; direction: string; value?: string }
+		port: {
+			type: string;
+			label: string;
+			value: string;
+			direction: string;
+		}
 	): void;
+	(
+		e: 'update-ports',
+		port: {
+			type: string;
+			label: string;
+			value: string;
+			direction: string;
+		}[]
+	);
 }>();
 
-const selectedDataset = ref<Dataset>();
+const selectedDataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
-watch(
-	() => selectedDataset.value,
-	async () => {
-		if (selectedDataset.value) {
-			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
-			emit('append-port', { type: 'dataset', label: selectedDataset.value.name, direction: 'out' });
+watch(selectedDataset, async (newSelectedDataset, previousSelectedDataset) => {
+	if (newSelectedDataset) {
+		rawContent.value = await downloadRawFile(newSelectedDataset.id.toString(), 10);
+		if (previousSelectedDataset) {
+			emit('update-ports', [
+				{
+					type: 'dataset',
+					label: newSelectedDataset.name,
+					value: newSelectedDataset.id.toString(),
+					direction: 'out'
+				}
+			]);
+		} else {
+			emit('append-port', {
+				type: 'dataset',
+				label: newSelectedDataset.name,
+				value: newSelectedDataset.id.toString(),
+				direction: 'out'
+			});
 		}
 	}
-);
+});
 </script>
 
 <style scoped>
