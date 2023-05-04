@@ -166,7 +166,3 @@ export enum ProvenanceType {
     Concept = "Concept",
     SimulationRun = "SimulationRun",
 }
-export interface PDFExtractionResponseType {
-    text: string;
-    images: string[];
-}

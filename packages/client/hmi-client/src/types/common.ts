@@ -94,3 +94,8 @@ export enum AcceptedTypes {
 	JPEG = 'image/jpeg',
 	PNG = 'image/png'
 }
+
+export interface PDFExtractionResponseType {
+	text: string;
+	images: string[];
+}

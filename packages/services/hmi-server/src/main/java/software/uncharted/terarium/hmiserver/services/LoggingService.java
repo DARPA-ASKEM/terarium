@@ -2,11 +2,9 @@ package software.uncharted.terarium.hmiserver.services;
 
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
-import io.vertx.core.json.JsonObject;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import java.io.Serializable;
 
 @ApplicationScoped
 @Slf4j

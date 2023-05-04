@@ -70,7 +70,8 @@ import { IGraph } from '@graph-scaffolder/index';
 import { createModel } from '@/services/model';
 import { ProjectAssetTypes } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
-import { DocumentAsset, PDFExtractionResponseType } from '@/types/Types';
+import { DocumentAsset } from '@/types/Types';
+import { PDFExtractionResponseType } from '@/types/common';
 import { getDocumentDoi } from '@/utils/data-util';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import {
