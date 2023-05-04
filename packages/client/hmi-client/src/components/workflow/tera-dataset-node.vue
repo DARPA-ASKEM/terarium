@@ -40,6 +40,13 @@ defineProps<{
 	datasets: Dataset[];
 }>();
 
+const emit = defineEmits<{
+	(
+		e: 'append-port',
+		port: { type: string; label: string; direction: string; value?: string }
+	): void;
+}>();
+
 const selectedDataset = ref<Dataset>();
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
@@ -50,6 +57,7 @@ watch(
 	async () => {
 		if (selectedDataset.value) {
 			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
+			emit('append-port', { type: 'dataset', label: selectedDataset.value.name, direction: 'out' });
 		}
 	}
 );

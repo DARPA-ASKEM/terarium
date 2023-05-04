@@ -1,11 +1,10 @@
 <template>
 	<section class="container" :style="nodeStyle" ref="workflowNode">
-		<slot name="header"></slot>
 		<header>
 			<h5>{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
+			<li v-for="(input, index) in inputs" :key="index" ref="inputRefs">
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
@@ -15,9 +14,9 @@
 				{{ input.label }}
 			</li>
 		</section>
-		<slot name="body" />
+		<slot name="body" :appendPort="appendPort" />
 		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
+			<li v-for="(output, index) in outputs" :key="index" ref="outputRefs">
 				{{ output.label }}
 				<div
 					class="port"
@@ -40,8 +39,10 @@ const props = defineProps<{
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
 
-const inputs = ref<HTMLElement>();
-const outputs = ref<HTMLElement>();
+const inputs = ref<WorkflowPort[]>(props.node.inputs);
+const outputs = ref<WorkflowPort[]>(props.node.outputs);
+const inputRefs = ref<HTMLElement>();
+const outputRefs = ref<HTMLElement>();
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -101,8 +102,17 @@ function mouseoverPort(event) {
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
-	// }
 }
+
+function appendPort(port: { type: string; label: string; direction: string }) {
+	const { type, label, direction } = port;
+	if (direction === 'in') {
+		inputs.value.push({ id: inputs.value.length.toString(), type, label });
+	} else if (direction === 'out') {
+		outputs.value.push({ id: outputs.value.length.toString(), type, label });
+	}
+}
+
 onBeforeUnmount(() => {
 	if (workflowNode.value) {
 		workflowNode.value.removeEventListener('mousedown', startDrag);

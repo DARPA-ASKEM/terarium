@@ -16,7 +16,7 @@
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
 			>
-				<template #body>
+				<template #body="{ appendPort }">
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
@@ -27,7 +27,11 @@
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
 					/>
-					<tera-dataset-node v-else-if="node.operationType === 'Dataset'" :datasets="datasets" />
+					<tera-dataset-node
+						v-else-if="node.operationType === 'Dataset'"
+						:datasets="datasets"
+						@append-port="appendPort"
+					/>
 					<div v-else>Test node</div>
 				</template>
 			</tera-workflow-node>
