@@ -183,7 +183,7 @@ async function home(): Promise<IProject[] | null> {
 /**
  * Get the icon associated with an Asset
  */
-const icons = new Map([
+const icons = new Map<string | ProjectAssetTypes, string | Component>([
 	[ProjectAssetTypes.DOCUMENTS, 'file'],
 	[ProjectAssetTypes.MODELS, 'share-2'],
 	[ProjectAssetTypes.DATASETS, DatasetIcon],
@@ -192,9 +192,10 @@ const icons = new Map([
 	[ProjectAssetTypes.CODE, 'code'],
 	['overview', 'layout']
 ]);
+
 function getAssetIcon(type: ProjectAssetTypes | string | null): string | Component {
 	if (type && icons.has(type)) {
-		return icons.get(type);
+		return icons.get(type) ?? 'circle';
 	}
 	return 'circle';
 }

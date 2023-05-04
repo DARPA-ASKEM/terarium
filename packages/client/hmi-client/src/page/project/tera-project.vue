@@ -11,11 +11,12 @@
 					:project="project"
 					:tabs="tabs"
 					:active-tab="openedAssetRoute"
-					@open-asset="openAsset"
+					@open-asset="openAssetFromSidebar"
 					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
+					@create-asset="createAsset"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -24,40 +25,46 @@
 				v-if="!isEmpty(tabs)"
 				:tabs="tabs"
 				:active-tab-index="activeTabIndex"
+				:loading-tab-index="loadingTabIndex"
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
 				@click="getAndPopulateAnnotations()"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
-				<document
+				<tera-document
 					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 					:xdd-uri="getXDDuri(assetId)"
 					:previewLineLimit="10"
 					:project="project"
 					is-editable
 					@open-asset="openAsset"
+					@asset-loaded="setActiveTab"
 				/>
-				<dataset
-					v-else-if="assetType === ProjectAssetTypes.DATASETS"
-					:asset-id="assetId"
-					:project="project"
-					is-editable
-				/>
-				<model
+				<tera-model
 					v-else-if="assetType === ProjectAssetTypes.MODELS"
 					:asset-id="assetId"
 					:project="project"
 					is-editable
+					@asset-loaded="setActiveTab"
+				/>
+				<tera-dataset
+					v-else-if="assetType === ProjectAssetTypes.DATASETS"
+					:asset-id="assetId"
+					:project="project"
+					is-editable
+					@asset-loaded="setActiveTab"
 				/>
 				<simulation-plan
 					v-else-if="assetType === ProjectAssetTypes.PLANS"
 					:asset-id="assetId"
 					:project="project"
+					@asset-loaded="setActiveTab"
 				/>
 				<simulation-run
 					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
 					:asset-id="assetId"
 					:project="project"
+					@asset-loaded="setActiveTab"
 				/>
 			</template>
 			<code-editor
@@ -65,7 +72,23 @@
 				:initial-code="code"
 				@on-model-created="openNewModelFromCode"
 			/>
-			<tera-project-overview v-else-if="assetType === 'overview'" :project="project" />
+			<tera-model
+				v-else-if="assetType === ProjectAssetTypes.MODELS"
+				:asset-id="newModelId"
+				:project="project"
+				@update-tab-name="updateTabName"
+				@create-new-model="createNewModel"
+				is-editable
+			/>
+			<tera-project-overview
+				v-else-if="assetType === 'overview'"
+				:project="project"
+				@open-workflow="openWorkflow"
+			/>
+			<tera-simulation-workflow
+				v-else-if="assetType === 'workflow'"
+				:models="project?.assets?.models"
+			/>
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
@@ -216,17 +239,17 @@ import { isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import Dataset from '@/components/dataset/Dataset.vue';
-import Document from '@/components/documents/Document.vue';
-import Model from '@/components/models/Model.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
+import TeraModel from '@/components/models/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
 import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from '@/router/routes';
-import { getModel } from '@/services/model';
+import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
@@ -242,13 +265,15 @@ import {
 	updateAnnotation
 } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
+import { PetriNet } from '@/petrinet/petrinet-service';
+import TeraDocument from '@/components/documents/tera-document.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | '';
+	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 }>();
 
 const emit = defineEmits(['update-project']);
@@ -256,6 +281,9 @@ const emit = defineEmits(['update-project']);
 const tabStore = useTabStore();
 const router = useRouter();
 const resources = useResourcesStore();
+
+const newModelId = ref<string>('');
+const isNewModel = ref<boolean>(true);
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -344,39 +372,84 @@ const newNoteSection = ref();
 // Associated with tab storage
 const projectContext = computed(() => props.project?.id.toString());
 const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
-const activeTabIndex = computed(() => tabStore.getActiveTabIndex(projectContext.value));
+const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	assetName: props.assetName ?? '',
 	assetType: props.assetType,
 	assetId: props.assetId
 }));
+const loadingTabIndex = ref<number | null>(null);
+
+function setActiveTab() {
+	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
+	loadingTabIndex.value = null;
+}
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
-function openAsset(asset: Tab = tabs.value[activeTabIndex.value], newCode?: string) {
-	router.push({ name: RouteName.ProjectRoute, params: asset });
-
-	if (newCode) {
-		code.value = newCode;
-		// addCreatedAsset(assetToOpen);
+function openAsset(
+	index: number = tabStore.getActiveTabIndex(projectContext.value),
+	newCode?: string
+) {
+	activeTabIndex.value = null;
+	const asset: Tab = tabs.value[index];
+	if (
+		!(
+			asset &&
+			asset.assetId === props.assetId &&
+			asset.assetName === props.assetName &&
+			asset.assetType === props.assetType
+		)
+	) {
+		loadingTabIndex.value = index;
+		router.push({ name: RouteName.ProjectRoute, params: asset });
+		if (newCode) {
+			code.value = newCode;
+		}
 	}
 }
-const openOverview = () =>
-	openAsset({ assetName: 'Overview', assetType: 'overview', assetId: undefined });
+
+function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value!]) {
+	router.push({ name: RouteName.ProjectRoute, params: asset });
+	loadingTabIndex.value = tabs.value.length;
+}
+
+const openOverview = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
+	});
+};
+
+const openWorkflow = () => {
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
+	});
+};
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
+	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 }
 
-async function openNewModelFromCode(modelId, modelName) {
-	await ProjectService.addAsset(props.project.id, ProjectAssetTypes.MODELS, modelId);
-	const model = await getModel(modelId);
-	if (model) {
-		resources.activeProjectAssets?.[ProjectAssetTypes.MODELS].push(model);
-	} else {
-		logger.warn('Could not add new model to project.');
+const updateTabName = (tabName) => {
+	tabs.value[activeTabIndex.value!].assetName = tabName;
+};
+
+// Create the new model
+const createNewModel = async (newModel: PetriNet) => {
+	const newModelResp = await createModel(newModel);
+	if (newModelResp) {
+		newModelId.value = newModelResp.id.toString();
+		await addModelToProject(props.project.id, newModelId.value, resources);
+		isNewModel.value = false;
 	}
+};
+
+async function openNewModelFromCode(modelId, modelName) {
+	await addModelToProject(props.project.id, modelId, resources);
 
 	router.push({
 		name: RouteName.ProjectRoute,
@@ -388,11 +461,23 @@ async function openNewModelFromCode(modelId, modelName) {
 	});
 }
 
+// create the new Asset
+async function createAsset(asset: Tab) {
+	newModelId.value = '';
+	router.push({ name: RouteName.ProjectRoute, params: asset });
+}
+
 async function removeAsset(asset: Tab) {
 	const { assetName, assetId, assetType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (assetId && assetType && isProjectAssetTypes(assetType) && assetType !== 'overview') {
+	if (
+		assetId &&
+		assetType &&
+		isProjectAssetTypes(assetType) &&
+		assetType !== 'overview' &&
+		assetType !== 'workflow'
+	) {
 		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
 
 		if (isRemoved) {
@@ -406,39 +491,52 @@ async function removeAsset(asset: Tab) {
 	logger.error(`Failed to remove ${assetName}`, { showToast: true });
 }
 
-// When a new tab is chosen, reflect that by opening its associated route
-tabStore.$subscribe(() => openAsset());
-
 watch(
-	() => [
-		openedAssetRoute.value, // Once route attributes change, add/switch to another tab
-		projectContext.value // Make sure we are in the proper project context before opening assets
-	],
+	() => projectContext.value,
 	() => {
-		if (projectContext.value) {
-			// If name isn't recognized, its a new asset so add a new tab
-			if (
-				props.assetName &&
-				props.assetType &&
-				!tabs.value.some((tab) => isEqual(tab, openedAssetRoute.value))
-			) {
-				tabStore.addTab(projectContext.value, openedAssetRoute.value);
-			}
-			// Tab switch
-			else if (props.assetName) {
-				const index = tabs.value.findIndex((tab) => isEqual(tab, openedAssetRoute.value));
-				tabStore.setActiveTabIndex(projectContext.value, index);
-			}
-			// Goes to tab from previous session
-			else openAsset();
+		if (
+			tabs.value.length > 0 &&
+			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
+		) {
+			openAsset();
+		} else if (openedAssetRoute.value && openedAssetRoute.value.assetName) {
+			tabStore.addTab(projectContext.value, openedAssetRoute.value);
 		}
 	}
 );
 
+watch(
+	() => openedAssetRoute.value, // Once route attributes change, add/switch to another tab
+	(newOpenedAssetRoute) => {
+		if (newOpenedAssetRoute.assetName) {
+			// If name isn't recognized, its a new asset so add a new tab
+			if (
+				props.assetName &&
+				props.assetType &&
+				!tabs.value.some((tab) => isEqual(tab, newOpenedAssetRoute))
+			) {
+				tabStore.addTab(projectContext.value, newOpenedAssetRoute);
+			}
+			// Tab switch
+			else if (props.assetName) {
+				const index = tabs.value.findIndex((tab) => isEqual(tab, newOpenedAssetRoute));
+				tabStore.setActiveTabIndex(projectContext.value, index);
+			}
+			// Goes to tab from previous session
+			else {
+				openAsset(tabStore.getActiveTabIndex(projectContext.value));
+			}
+		}
+	}
+);
+
+tabStore.$subscribe(() => {
+	openAsset(tabStore.getActiveTabIndex(projectContext.value));
+});
+
 async function getAndPopulateAnnotations() {
 	annotations.value = await getAnnotations(props.assetId, props.assetType);
-	selectedNoteSection.value = annotations.value.map((note) => note.section);
-	console.log(selectedNoteSection.value);
+	selectedNoteSection.value = annotations.value?.map((note) => note.section);
 }
 
 const addNote = async () => {
@@ -489,8 +587,8 @@ section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	overflow: auto;
-	padding: 0.5rem 0.5rem 0;
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .no-open-tabs {
@@ -499,10 +597,6 @@ section {
 	margin-bottom: 8rem;
 	align-items: center;
 	color: var(--text-color-subdued);
-}
-
-.asset {
-	padding-top: 1rem;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
@@ -540,19 +634,6 @@ section {
 .notes-dropdown-button {
 	color: var(--text-color-subdued);
 	padding: 0rem;
-}
-
-:deep(span.p-dropdown-label.p-placeholder) {
-	color: var(--text-color-subdued);
-}
-
-:deep(span.p-dropdown-label) {
-	padding: 0;
-	font-size: var(--font-caption);
-}
-
-:deep(span.p-dropdown-trigger-icon.pi.pi-chevron-down) {
-	color: var(--text-color-subdued);
 }
 
 .annotation-panel .p-dropdown:not(.p-disabled).p-focus {

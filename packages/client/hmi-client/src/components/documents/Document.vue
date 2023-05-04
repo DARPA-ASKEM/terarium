@@ -50,7 +50,7 @@
 				>
 			</div>
 			<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-			<!--- 
+			<!---
 				<div class="p-input-icon-left">
 					<i class="pi pi-search" />
 					<InputText placeholder="Find in page" class="find-in-page" />
@@ -216,7 +216,7 @@
 						<div v-for="ex in otherArtifacts" :key="ex.askemId" class="extracted-item">
 							<b v-html="highlightSearchTerms(ex.properties.title)" />
 							<span v-html="highlightSearchTerms(ex.properties.caption)" />
-							<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
+							<span v-html="highlightSearchTerms(ex.properties.abstract)" />
 							<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 						</div>
 					</div>
@@ -270,18 +270,17 @@ import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
-import { XDDArtifact, DocumentType } from '@/types/Document';
+import { Document, Extraction, ProvenanceType } from '@/types/Types';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ResultType, Tab } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { ProvenanceType } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
+import ImportCodeButton from '@/components/widgets/import-code-button.vue';
 // import InputText from 'primevue/inputtext'; // <-- this is for the keyword search feature commented out below
 
 enum DocumentView {
@@ -297,11 +296,11 @@ const props = defineProps<{
 }>();
 
 const sectionElem = ref<HTMLElement | null>(null);
-const doc = ref<DocumentType | null>(null);
+const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset']);
+const emit = defineEmits(['open-asset', 'asset-loaded']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
 	emit('open-asset', assetToOpen, newCode);
@@ -338,7 +337,7 @@ watch(
 	}
 );
 
-const formatDocumentAuthors = (d: DocumentType) =>
+const formatDocumentAuthors = (d: Document) =>
 	highlightSearchTerms(d.author.map((a) => a.name).join(', '));
 
 const docLink = computed(() =>
@@ -346,14 +345,14 @@ const docLink = computed(() =>
 );
 
 const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.abstractText) return '';
-	return highlightSearchTerms(doc.value.abstractText);
+	if (!doc.value || !doc.value.abstract) return '';
+	return highlightSearchTerms(doc.value.abstract);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));
 
 /* Artifacts */
-const artifacts = ref<XDDArtifact[]>([]);
+const artifacts = ref<Extraction[]>([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const figureArtifacts = computed(
@@ -387,7 +386,7 @@ const fetchDocumentArtifacts = async () => {
 	if (doi.value !== '') {
 		const allArtifacts = await getXDDArtifacts(doi.value);
 		// filter out Document extraction type
-		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Document);
+		artifacts.value = allArtifacts.filter((art) => art.askemClass !== XDDExtractionType.Doc);
 	} else {
 		// note that some XDD documents do not have a valid doi
 		artifacts.value = [];
@@ -444,7 +443,7 @@ const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
 /**
@@ -465,6 +464,14 @@ const formatCitation = (obj: { [key: string]: string }) => {
 	}
 	return highlightSearchTerms(citation);
 };
+
+watch(
+	() => doc.value,
+	() => {
+		emit('asset-loaded');
+	},
+	{ immediate: true }
+);
 
 onMounted(async () => {
 	fetchDocumentArtifacts();

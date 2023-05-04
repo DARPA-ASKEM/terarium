@@ -20,6 +20,18 @@
 					})
 				"
 			/>
+			<Button
+				icon="pi pi-user-edit"
+				v-tooltip="`Create model from Equation`"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="
+					emit('create-asset', {
+						assetName: 'New Model',
+						assetType: ProjectAssetTypes.MODELS,
+						assetId: undefined
+					})
+				"
+			/>
 		</header>
 		<Button
 			class="asset-button"
@@ -66,7 +78,7 @@
 			</AccordionTab>
 		</Accordion>
 		<Teleport to="body">
-			<modal
+			<tera-modal
 				v-if="isRemovalModal"
 				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
@@ -84,7 +96,7 @@
 					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
 					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
 				</template>
-			</modal>
+			</tera-modal>
 		</Teleport>
 	</nav>
 </template>
@@ -93,7 +105,7 @@
 import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
-import Modal from '@/components/widgets/Modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -108,7 +120,13 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
+const emit = defineEmits([
+	'open-asset',
+	'open-overview',
+	'remove-asset',
+	'close-tab',
+	'create-asset'
+]);
 
 const isRemovalModal = ref(false);
 

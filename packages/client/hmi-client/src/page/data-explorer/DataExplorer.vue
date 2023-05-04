@@ -7,12 +7,13 @@
 			v-model:is-open="isSliderFacetsOpen"
 		>
 			<template v-slot:content>
-				<facets-panel
+				<tera-facets-panel
 					v-if="viewType === ViewType.LIST"
 					class="facets-panel"
 					:facets="facets"
 					:filtered-facets="filteredFacets"
 					:result-type="resourceType"
+					:docCount="docCount"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -42,17 +43,18 @@
 					/>
 				</span>
 			</div>
-			<search-results-list
+			<tera-search-results-list
 				:data-items="dataItems"
 				:facets="filteredFacets"
 				:result-type="resourceType"
 				:selected-search-items="selectedSearchItems"
 				:search-term="searchTerm"
 				:is-loading="isLoading"
+				:doc-count="docCount"
 				@toggle-data-item-selected="toggleDataItemSelected"
 			/>
 		</div>
-		<preview-panel
+		<tera-preview-panel
 			class="preview-slider"
 			:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
 			tab-width="0"
@@ -72,7 +74,7 @@
 			:indicator-value="selectedSearchItems.length"
 		>
 			<template v-slot:header>
-				<selected-resources-header-pane
+				<tera-selected-resources-header-pane
 					:selected-search-items="selectedSearchItems"
 					@close="isSliderResourcesOpen = false"
 					@clear-selected="clearItemSelected"
@@ -96,7 +98,7 @@
 					</div>
 					<p>Selected resources will appear here</p>
 				</div>
-				<selected-resources-options-pane
+				<tera-selected-resources-options-pane
 					:selected-search-items="selectedSearchItems"
 					@toggle-data-item-selected="toggleDataItemSelected"
 					@find-related-content="onFindRelatedContent"
@@ -112,7 +114,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { fetchData, getXDDSets } from '@/services/data';
 import {
-	Facets,
 	ResourceType,
 	ResultType,
 	SearchByExampleOptions,
@@ -121,7 +122,12 @@ import {
 	ViewType
 } from '@/types/common';
 import { getFacets } from '@/utils/facets';
-import { FACET_FIELDS as XDD_FACET_FIELDS, XDD_RESULT_DEFAULT_PAGE_SIZE, YEAR } from '@/types/XDD';
+import {
+	FACET_FIELDS as XDD_FACET_FIELDS,
+	GITHUB_URL,
+	XDD_RESULT_DEFAULT_PAGE_SIZE,
+	YEAR
+} from '@/types/XDD';
 import useQueryStore from '@/stores/query';
 import filtersUtil from '@/utils/filters-util';
 import useResourcesStore from '@/stores/resources';
@@ -129,11 +135,12 @@ import { getResourceID, isDataset, isModel, isDocument, validate } from '@/utils
 import { cloneDeep, intersectionBy, isEmpty, isEqual, max, min, unionBy } from 'lodash';
 import { useRoute } from 'vue-router';
 import Button from 'primevue/button';
-import PreviewPanel from '@/page/data-explorer/components/preview-panel.vue';
-import SelectedResourcesOptionsPane from '@/page/data-explorer/components/selected-resources-options-pane.vue';
-import selectedResourcesHeaderPane from '@/page/data-explorer/components/selected-resources-header-pane.vue';
-import FacetsPanel from '@/page/data-explorer/components/facets-panel.vue';
-import SearchResultsList from '@/page/data-explorer/components/search-results-list.vue';
+import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
+import TeraSelectedResourcesOptionsPane from '@/page/data-explorer/components/tera-selected-resources-options-pane.vue';
+import TeraSelectedResourcesHeaderPane from '@/page/data-explorer/components/tera-selected-resources-header-pane.vue';
+import TeraFacetsPanel from '@/page/data-explorer/components/tera-facets-panel.vue';
+import TeraSearchResultsList from '@/page/data-explorer/components/tera-search-results-list.vue';
+import { XDDFacetsItemResponse } from '@/types/Types';
 import { useSearchByExampleOptions } from './search-by-example';
 
 // FIXME: page count is not taken into consideration
@@ -158,8 +165,9 @@ const xddDatasets = ref<string[]>([]);
 const dictNames = ref<string[]>([]);
 const rankedResults = ref(true); // disable sorted/ranked results to enable pagination
 // facets
-const facets = ref<Facets>({});
-const filteredFacets = ref<Facets>({});
+const facets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
+const docCount = ref(0);
+const filteredFacets = ref<{ [index: string]: XDDFacetsItemResponse }>({});
 //
 const resourceType = ref<ResourceType>(ResourceType.XDD);
 const viewType = ref<string>(ViewType.LIST);
@@ -315,19 +323,22 @@ const executeSearch = async () => {
 				if (clause.values.length === 1) {
 					// a single year is selected
 					const val = (clause.values as string[]).join(',');
-					const formattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
-					xddSearchParams.min_published = formattedVal;
-					xddSearchParams.max_published = formattedVal;
+					const minFormattedVal = `${val}-01-01`; // must be in ISO format; 2020-01-01
+					const maxFormattedVal = `${val}-12-31`; // must be in ISO format; 2020-01-01
+					xddSearchParams.min_published = minFormattedVal;
+					xddSearchParams.max_published = maxFormattedVal;
 				} else {
 					// multiple years are selected, so find their range
 					const years = clause.values.map((year) => +year);
 					const minYear = min(years);
 					const maxYear = max(years);
 					const formattedValMinYear = `${minYear}-01-01`; // must be in ISO format; 2020-01-01
-					const formattedValMaxYear = `${maxYear}-01-01`; // must be in ISO format; 2020-01-01
+					const formattedValMaxYear = `${maxYear}-12-31`; // must be in ISO format; 2020-01-01
 					xddSearchParams.min_published = formattedValMinYear;
 					xddSearchParams.max_published = formattedValMaxYear;
 				}
+			} else if (clause.field === GITHUB_URL) {
+				xddSearchParams.githubUrls = (clause.values as string[]).join(',');
 			} else {
 				xddSearchParams[clause.field] = (clause.values as string[]).join(',');
 			}
@@ -368,6 +379,14 @@ const executeSearch = async () => {
 
 	// final step: cache the facets and filteredFacets objects
 	calculateFacets(allData, allDataFilteredWithFacets);
+
+	let total = 0;
+	allData.forEach((res) => {
+		const count = res?.hits ?? res?.results.length;
+		total += count;
+	});
+
+	docCount.value = total;
 
 	isLoading.value = false;
 };

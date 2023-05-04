@@ -1,6 +1,5 @@
 /* Reset */
 @import '@assets/css/reset.css';
-@import '@assets/css/asset.scss';
 @import '@assets/css/buttonset.scss';
 
 /**
@@ -21,6 +20,9 @@
  * Facets Overrides
  */
 @import '@assets/css/facets-overrides';
+
+/* Setup MathLive Fonts */
+@import '@node_modules/mathlive/dist/mathlive-fonts.css';
 
 :root {
 	/* Layout */
@@ -64,4 +66,13 @@ body {
 	border-radius: var(--border-radius);
 	padding-left: 0.2em;
 	padding-right: 0.2em;
+}
+
+/* Hyperlinks */
+a {
+	color: var(--text-color-subdued);
+
+	&:hover {
+		color: var(--primary-color-dark);
+	}
 }
