@@ -4,7 +4,7 @@
 			<h5>{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
-			<li v-for="(input, index) in inputs" :key="index" ref="inputRefs">
+			<li v-for="(input, index) in node.inputs" :key="index" ref="inputRefs">
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
@@ -16,7 +16,7 @@
 		</section>
 		<slot name="body" />
 		<section class="outputs">
-			<li v-for="(output, index) in outputs" :key="index" ref="outputRefs">
+			<li v-for="(output, index) in node.outputs" :key="index" ref="outputRefs">
 				{{ output.label }}
 				<div
 					class="port"
@@ -39,8 +39,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
 
-const inputs = ref<WorkflowPort[]>(props.node.inputs);
-const outputs = ref<WorkflowPort[]>(props.node.outputs);
 const inputRefs = ref<HTMLElement>();
 const outputRefs = ref<HTMLElement>();
 

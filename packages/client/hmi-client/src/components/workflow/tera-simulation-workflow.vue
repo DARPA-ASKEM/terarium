@@ -20,7 +20,6 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
