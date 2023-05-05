@@ -14,13 +14,13 @@ import javax.ws.rs.core.Response;
 
 @RegisterRestClient(configKey = "pdf")
 @Produces(MediaType.APPLICATION_JSON)
-@Tag(	name = "PDF Extraction REST Endpoint")
+@Tag(name = "PDF Extraction REST Endpoint")
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface PDFExtractionServiceProxy {
 
 	@GET
 	@Path("/convertpdfurl")
-	Response convertPdfUrl(@QueryParam("url") String url,
+	Response convertPDFURL(@QueryParam("url") String url,
 			@DefaultValue("pypdf2") @QueryParam("extraction_method") String extractionMethod,
 			@DefaultValue("true") @QueryParam("extract_images") String extractImages);
 

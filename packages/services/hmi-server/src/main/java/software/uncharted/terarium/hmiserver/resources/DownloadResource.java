@@ -104,7 +104,7 @@ public class DownloadResource {
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	private String getPDFURl(final String url) throws IOException, URISyntaxException {
+	private String getPDFURL(final String url) throws IOException, URISyntaxException {
 		CloseableHttpClient httpclient = HttpClients.custom()
 				.disableRedirectHandling()
 				.build();
@@ -116,9 +116,9 @@ public class DownloadResource {
 		if (response.getStatusLine().getStatusCode() >= 300 && response.getStatusLine().getStatusCode() <= 310) {
 			final String redirect = response.getFirstHeader("Location").getValue();
 			if (!redirect.startsWith("http")) {
-				return getPDFURl(normalizeRelativeUrl(redirect, url));
+				return getPDFURL(normalizeRelativeUrl(redirect, url));
 			} else {
-				return getPDFURl(redirect);
+				return getPDFURL(redirect);
 			}
 		} else {
 			// We actually have a document, if it's an HTML page with the content, look for
@@ -141,9 +141,9 @@ public class DownloadResource {
 
 				if (!pdfUrl.startsWith("http")) {
 					final URI uri = new URI(url);
-					return getPDFURl(uri.getScheme() + "://" + uri.getHost() + pdfUrl);
+					return getPDFURL(uri.getScheme() + "://" + uri.getHost() + pdfUrl);
 				} else {
-					return getPDFURl(pdfUrl);
+					return getPDFURL(pdfUrl);
 				}
 			}
 		}
@@ -167,7 +167,7 @@ public class DownloadResource {
 	@Path("/url")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
-		final String pdfLink = getPDFURl("https://unpaywall.org/" + url);
+		final String pdfLink = getPDFURL("https://unpaywall.org/" + url);
 		if (pdfLink != null) {
 			return pdfLink;
 		}

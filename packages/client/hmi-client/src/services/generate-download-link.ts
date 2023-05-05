@@ -19,7 +19,7 @@ export async function generatePdfDownloadLink(doi: string) {
 	}
 }
 
-export async function getPDFUrl(url: string) {
+export async function getPDFURL(url: string) {
 	if (!url) return null;
 
 	const query = { url };

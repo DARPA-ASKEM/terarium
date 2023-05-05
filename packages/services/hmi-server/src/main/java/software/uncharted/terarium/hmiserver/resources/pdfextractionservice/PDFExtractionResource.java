@@ -39,7 +39,7 @@ public class PDFExtractionResource {
 	public Response convertPdfUrl(@QueryParam("url") String url,
 			@QueryParam("extraction_method") String extractionMethod,
 			@QueryParam("extract_images") String extractImages) {
-		return extractionProxy.convertPdfUrl(url, extractionMethod, extractImages);
+		return extractionProxy.convertPDFURL(url, extractionMethod, extractImages);
 	}
 
 	//
