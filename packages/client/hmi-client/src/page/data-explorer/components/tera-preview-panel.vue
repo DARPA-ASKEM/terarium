@@ -3,7 +3,7 @@
 		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
-		:is-open="!Boolean(previewItem)"
+		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
 			<tera-document
