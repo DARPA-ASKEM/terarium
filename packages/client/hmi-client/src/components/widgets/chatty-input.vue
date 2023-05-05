@@ -11,80 +11,24 @@
 			:placeholder="placeholderMessage"
 			@keydown.enter="onEnter"
 		/>
-	</div>
-	<div id="chatty-history">
-		<div v-for="message in messages" :key="message.msg_id">
-			<div v-if="message.msg_type === 'execute_input'" class="query">
-				Query: {{ message.content?.code }}
-			</div>
-			<div
-				v-else-if="
-					message.msg_type === 'chatty_response' && message.content.name === 'response_text'
-				"
-				class="answer"
-			>
-				Response: {{ message.content?.text }}
-			</div>
-			<div
-				v-else-if="message.msg_type === 'stream' && message.content.name === 'stdout'"
-				class="thought"
-			>
-				{{ message.content?.text }}
-			</div>
-			<div
-				v-else-if="message.msg_type === 'stream' && message.content.name === 'stderr'"
-				class="error"
-			>
-				Error: {{ message.content?.text }}
-			</div>
-			<div v-else>Other: {{ message }}</div>
-			<hr />
+		<div style="width: 3em; padding: 5%">
+			<i v-if="kernelState !== KernelState.idle" class="pi pi-spin pi-spinner" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+const emit = defineEmits(['newCodeCell', 'newMessage']);
 import { computed, onMounted, ref } from 'vue';
-
 import { SessionContext } from '@jupyterlab/apputils';
-import {
-	ServerConnection,
-	KernelManager,
-	KernelSpecManager,
-	SessionManager
-} from '@jupyterlab/services';
-import { IIOPubMessage } from '@jupyterlab/services/lib/kernel/messages';
-
-// TODO: These settings should be pulled from the environment variables or appropriate config setup.
-const serverSettings = ServerConnection.makeSettings({
-	baseUrl: '/chatty/',
-	appUrl: 'http://localhost:8078/chatty/',
-	wsUrl: 'ws://localhost:8078/chatty_ws/',
-	token: import.meta.env.VITE_JUPYTER_TOKEN
-});
-
-const kernelManager = new KernelManager({
-	serverSettings
-});
-const specsManager = new KernelSpecManager({
-	serverSettings
-});
-const sessionManager = new SessionManager({
-	kernelManager,
-	serverSettings
-});
-const sessionContext = new SessionContext({
-	sessionManager,
-	specsManager,
-	name: 'ChattyNode',
-	kernelPreference: {
-		name: 'llmkernel'
-		// name: "python3",
-	}
-});
-specsManager.refreshSpecs();
+import { createMessage, IIOPubMessage } from '@jupyterlab/services/lib/kernel/messages';
 
 const props = defineProps({
+	llmContext: {
+		type: SessionContext,
+		required: true,
+		default: null
+	},
 	placeholderMessage: {
 		type: String,
 		required: false,
@@ -101,8 +45,27 @@ const props = defineProps({
 	placeholderColor: {
 		type: String,
 		default: 'black'
+	},
+	context: {
+		type: String,
+		default: null
+	},
+	context_info: {
+		type: Object,
+		default: {}
 	}
 });
+const llmContext = props.llmContext;
+llmContext.kernelChanged.connect((_context, kernelInfo) => {
+	const kernel = kernelInfo.newValue;
+	if (kernel?.name === 'llmkernel') {
+		setKernelContext(kernel, {
+			context: props.context,
+			context_info: props.context_info,
+		});
+	}
+});
+
 
 const inputStyle = computed(() => `--placeholder-color:${props.placeholderColor}`);
 
@@ -125,27 +88,50 @@ const queryString = ref('');
 const kernelState = ref<KernelState>(KernelState.idle);
 const messages = ref<Array<IIOPubMessage>>([]);
 
+
 const onEnter = () => {
 	submitQuery(inputElement.value?.value);
 };
 
-const iopubMessageHandler = (session, message: IIOPubMessage) => {
+const setKernelContext = (kernel, context_info) => {
+	// let kernel = sessionContext.session?.kernel;
+	const message = createMessage({
+		session: llmContext.session?.name,
+		channel: 'shell',
+		content: context_info,
+		msgType: 'context_setup_request',
+		msgId: `${kernel.id}-setcontext`,
+	});
+	kernel?.sendControlMessage(message);
+	kernelState.value = KernelState.busy;
+}
+
+const iopubMessageHandler = (_session, message) => {
 	if (message.msg_type === 'status') {
 		const newState: KernelState = KernelState[message.content.execution_state];
 		kernelState.value = newState;
 		return;
 	}
-	console.log(message);
-	messages.value.push(message);
+	emit('newMessage', message);
 };
-sessionContext.iopubMessage.connect(iopubMessageHandler);
+llmContext.iopubMessage.connect(iopubMessageHandler);
 
 const submitQuery = (inputStr: string | undefined) => {
 	if (inputStr !== undefined) {
-		sessionContext.session?.kernel?.requestExecute({
-			code: inputStr,
-			silent: false
+		const kernel = llmContext.session?.kernel;
+		if (kernel === undefined) {
+			return;
+		}
+		kernelState.value = KernelState.busy;
+		const message = createMessage({
+			session: llmContext.session?.name,
+			channel: 'shell',
+			content: {"request": inputStr},
+			msgType: 'llm_request',
+			msgId: `${kernel.id}-setcontext`,
 		});
+		kernel?.sendControlMessage(message);
+		emit('newMessage', {...message, msg_type: "llm_request"});
 	}
 };
 
@@ -155,7 +141,7 @@ onMounted(() => {
 	}
 });
 
-sessionContext.initialize();
+// llmContext.initialize();
 </script>
 
 <style scoped>
@@ -175,6 +161,7 @@ sessionContext.initialize();
 	height: auto;
 	flex-direction: column;
 	flex-basis: auto;
+	overflow-y: scroll;
 }
 
 .query {
@@ -184,16 +171,16 @@ sessionContext.initialize();
 
 .answer {
 	color: darkblue;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 
 .thought {
 	color: blueviolet;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 
 .error {
 	color: darkred;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 </style>

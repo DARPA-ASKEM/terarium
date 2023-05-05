@@ -13,6 +13,11 @@ import config from './vite.config';
 
 // Configuration overrides for running inside docker-compose
 config.resolve.alias['@node_modules'] = path.resolve(__dirname, './node_modules');
+config.resolve.alias['~@lumino'] = path.resolve(__dirname, './node_modules/@lumino/');
+config.resolve.alias['~@jupyterlab'] = path.resolve(__dirname, './node_modules/@jupyterlab/');
+config.resolve.alias['~@blueprintjs'] = path.resolve(__dirname, './node_modules/@blueprintjs/');
+config.resolve.alias['~codemirror'] = path.resolve(__dirname, './node_modules/codemirror/');
+config.resolve.alias['~@fortawesome'] = path.resolve(__dirname, './node_modules/@fortawesome/');
 config.server.fs = {
 	allow: ['.', '/graph-scaffolder']
 };
