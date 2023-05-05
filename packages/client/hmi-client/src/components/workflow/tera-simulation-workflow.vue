@@ -27,7 +27,9 @@
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
 					/>
-					<div v-else>Test node</div>
+					<div v-else>
+						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
+					</div>
 				</template>
 			</tera-workflow-node>
 		</template>
@@ -35,7 +37,12 @@
 		<!-- background -->
 		<template #background>
 			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" />
-			<path v-for="(edge, index) of edges" :d="drawPath(edge.points)" stroke="black" :key="index" />
+			<path
+				v-for="(edge, index) of wf.edges"
+				:d="drawPath(edge.points)"
+				stroke="black"
+				:key="index"
+			/>
 		</template>
 	</tera-infinite-canvas>
 </template>
@@ -58,6 +65,7 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
+import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 
@@ -73,22 +81,26 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isCreatingNewEdge = false;
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
-const edges = ref<WorkflowEdge[]>([]);
 
 const testOperation: Operation = {
 	name: 'Test operation',
 	description: 'A test operation',
 	inputs: [
 		{ type: 'number', label: 'Number input' },
-		{ type: 'number', label: 'Number input' },
 		{ type: 'string', label: 'String input' }
 	],
-	outputs: [
-		{ type: 'number', label: 'Number output' },
-		{ type: 'string', label: 'String output' }
-	],
+	outputs: [{ type: 'number', label: 'Number output' }],
 	action: () => {},
 	isRunnable: true
+};
+
+// Run testOperation
+const testNode = (node: WorkflowNode) => {
+	if (node.inputs[0].value !== null) {
+		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
+	} else {
+		node.outputs[0].value = Math.round(Math.random() * 10);
+	}
 };
 
 function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
@@ -139,7 +151,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 	if (isCreatingNewEdge === false) {
 		newEdge.value = {
-			id: edges.value.length.toString(),
+			id: 'new edge',
 			workflowId: '0',
 			points: [
 				{ x: currentPortPosition.x, y: currentPortPosition.y },
@@ -194,7 +206,7 @@ function mouseUpdate(event: MouseEvent) {
 
 // TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {
-	edges.value.forEach((edge) => {
+	wf.value.edges.forEach((edge) => {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
 			edge.points[0].y += y / canvasTransform.k;
