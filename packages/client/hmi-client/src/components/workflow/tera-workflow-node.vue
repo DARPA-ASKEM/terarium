@@ -46,9 +46,6 @@ const props = defineProps<{
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
 
-const inputs = ref<HTMLElement>();
-const outputs = ref<HTMLElement>();
-
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
 	minHeight: `${props.node.height}px`,
@@ -105,8 +102,8 @@ function mouseoverPort(event) {
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
-	// }
 }
+
 onBeforeUnmount(() => {
 	if (workflowNode.value) {
 		workflowNode.value.removeEventListener('mousedown', startDrag);
