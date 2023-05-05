@@ -80,7 +80,7 @@ import {
 	FindVarsFromTextResponseType,
 	getlinkedAnnotations
 } from '@/services/mit-askem';
-import { getPDFUrl } from '@/services/generate-download-link';
+import { getPDFURL } from '@/services/generate-download-link';
 import API, { Poller } from '@/api/api';
 
 const props = defineProps({
@@ -193,7 +193,7 @@ async function createModelFromCode() {
 			const paperToExtractMetadata = await getDocumentById(dAsset.xdd_uri);
 			const doi = getDocumentDoi(paperToExtractMetadata);
 
-			const pdfURL = await getPDFUrl(doi);
+			const pdfURL = await getPDFURL(doi);
 
 			let text: string = '';
 			let metadata: FindVarsFromTextResponseType | null = null;
