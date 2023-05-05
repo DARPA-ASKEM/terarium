@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import _ from 'lodash';
 import {
 	Workflow,
 	Operation,
@@ -17,6 +18,19 @@ import {
  * - Should we update workflow node status on modification???
  */
 
+export const create = () => {
+	const workflow: Workflow = {
+		id: uuidv4(),
+		name: 'test',
+		description: '',
+
+		transform: { x: 0, y: 0, k: 1 },
+		nodes: [],
+		edges: []
+	};
+	return workflow;
+};
+
 export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
@@ -25,14 +39,16 @@ export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 		x: pos.x,
 		y: pos.y,
 
-		inputs: op.inputs.map((o) => ({
+		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
-			type: o.type,
+			type: port.type,
+			label: port.label,
 			value: null
 		})),
-		outputs: op.outputs.map((o) => ({
+		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
-			type: o.type,
+			type: port.type,
+			label: port.label,
 			value: null
 		})),
 		statusCode: WorkflowStatus.INVALID,
@@ -89,7 +105,7 @@ export const addEdge = (
 		sourcePortId: sourceOutputPortId,
 		target: targetId,
 		targetPortId: targetInputPortId,
-		points
+		points: _.cloneDeep(points)
 	};
 
 	wf.edges.push(edge);

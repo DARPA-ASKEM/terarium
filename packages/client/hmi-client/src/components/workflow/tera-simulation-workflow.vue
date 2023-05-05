@@ -9,7 +9,7 @@
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
 			<tera-workflow-node
-				v-for="(node, index) in nodes"
+				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
@@ -46,10 +46,10 @@ import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
 	Position,
+	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPort,
-	WorkflowStatus
+	WorkflowPort
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
@@ -58,13 +58,14 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
+import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 
 defineProps<{
 	models?: Model[];
 }>();
 
-const nodes = ref<WorkflowNode[]>([]);
+const wf = ref<Workflow>(workflowService.create());
 const contextMenu = ref();
 
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -92,7 +93,7 @@ const testOperation: Operation = {
 
 function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
 	// Find node and assign outport data to its output port
-	const node = nodes.value[nodes.value.findIndex(({ id }) => id === nodeId)];
+	const node = wf.value.nodes[wf.value.nodes.findIndex(({ id }) => id === nodeId)];
 	node.outputs[node.outputs.length - 1] = outputPortData;
 
 	// Create new output port
@@ -102,39 +103,23 @@ function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
 	});
 }
 
-function insertNode(operation: Operation) {
-	const newNode: WorkflowNode = {
-		id: nodes.value.length.toString(),
-		workflowId: '0',
-		operationType: operation.name,
-		x: newNodePosition.value.x,
-		y: newNodePosition.value.y,
-		width: 100,
-		height: 100,
-		inputs: operation.inputs.map((o, i) => ({ id: i.toString(), ...o })),
-		outputs: operation.outputs.map((o, i) => ({ id: i.toString(), ...o })),
-		statusCode: WorkflowStatus.INVALID
-	};
-	nodes.value.push(newNode);
-}
-
 const contextMenuItems = ref([
 	{
 		label: 'New operation',
 		command: () => {
-			insertNode(testOperation);
+			workflowService.addNode(wf.value, testOperation, newNodePosition.value);
 		}
 	},
 	{
 		label: 'New model',
 		command: () => {
-			insertNode(ModelOperation);
+			workflowService.addNode(wf.value, ModelOperation, newNodePosition.value);
 		}
 	},
 	{
 		label: 'New calibration',
 		command: () => {
-			insertNode(CalibrationOperation);
+			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition.value);
 		}
 	}
 ]);
@@ -167,18 +152,15 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 		};
 		isCreatingNewEdge = true;
 	} else if (newEdge.value) {
-		// FIXME: move to service
-		const sourceNode = nodes.value.find((d) => d.id === newEdge.value?.source);
-		const sourcePort = sourceNode?.outputs.find((d) => d.id === newEdge.value?.sourcePortId);
-
-		if (port.type === sourcePort?.type) {
-			newEdge.value.target = node.id;
-			newEdge.value.targetPortId = port.id;
-			edges.value.push(newEdge.value);
-			cancelNewEdge();
-		} else {
-			cancelNewEdge();
-		}
+		workflowService.addEdge(
+			wf.value,
+			newEdge.value.source,
+			newEdge.value.sourcePortId,
+			node.id,
+			port.id,
+			newEdge.value.points
+		);
+		cancelNewEdge();
 	}
 }
 
