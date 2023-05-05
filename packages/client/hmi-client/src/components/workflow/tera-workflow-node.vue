@@ -3,29 +3,31 @@
 		<header>
 			<h5>{{ node.operationType }}</h5>
 		</header>
-		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index">
-				<div
-					class="port"
-					@click.stop="selectPort(input)"
-					@mouseover="(event) => mouseoverPort(event)"
-					@focus="() => {}"
-				></div>
-				{{ input.label }}
-			</li>
-		</section>
-		<slot name="body" />
-		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index">
-				{{ output.label }}
-				<div
-					class="port"
-					@click.stop="selectPort(output)"
-					@mouseover="(event) => mouseoverPort(event)"
-					@focus="() => {}"
-				></div>
-			</li>
-		</section>
+		<main>
+			<section class="inputs">
+				<li v-for="(input, index) in node.inputs" :key="index">
+					<div
+						class="port"
+						@click.stop="selectPort(input)"
+						@mouseover="(event) => mouseoverPort(event)"
+						@focus="() => {}"
+					></div>
+					{{ input.label }}
+				</li>
+			</section>
+			<slot name="body" />
+			<section class="outputs">
+				<li v-for="(output, index) in node.outputs" :key="index">
+					{{ output.label }}
+					<div
+						class="port"
+						@click.stop="selectPort(output)"
+						@mouseover="(event) => mouseoverPort(event)"
+						@focus="() => {}"
+					></div>
+				</li>
+			</section>
+		</main>
 	</section>
 </template>
 
@@ -110,16 +112,18 @@ onBeforeUnmount(() => {
 section {
 	display: flex;
 	flex-direction: column;
-	justify-content: space-evenly;
 	gap: 4px;
+}
+
+main {
+	padding: 0.5rem;
 }
 
 .container {
 	background-color: var(--surface-section);
-	border: 1px solid var(--surface-border-light);
+	border: 2px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	position: absolute;
-	padding: 0.5rem;
 	user-select: none;
 }
 
@@ -140,7 +144,7 @@ li {
 	border: 1px solid var(--surface-border);
 
 	position: relative;
-	background: var(--surface-100);
+	background: var(--surface-300);
 }
 
 .port:hover {
@@ -158,7 +162,9 @@ li {
 }
 
 header {
-	padding: 4px;
 	white-space: nowrap;
+	background: var(--primary-color);
+	color: var(--gray-50);
+	padding: 5px;
 }
 </style>
