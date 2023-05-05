@@ -146,6 +146,11 @@ function toggleContextMenu(event) {
 
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	canvasTransform = newTransform;
+
+	const t = wf.value.transform;
+	t.x = newTransform.x;
+	t.y = newTransform.y;
+	t.k = newTransform.k;
 }
 
 function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
