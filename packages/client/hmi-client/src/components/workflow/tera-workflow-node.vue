@@ -56,7 +56,6 @@ let tempY = 0;
 let dragStart = false;
 
 const startDrag = (evt: MouseEvent) => {
-	console.log('start', evt.x, evt.y);
 	tempX = evt.x;
 	tempY = evt.y;
 	dragStart = true;
@@ -74,8 +73,7 @@ const drag = (evt: MouseEvent) => {
 	tempY = evt.y;
 };
 
-const stopDrag = (evt: MouseEvent) => {
-	console.log('end', evt.x, evt.y);
+const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
 	dragStart = false;

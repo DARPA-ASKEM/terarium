@@ -35,7 +35,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { datasetOperation } from './dataset-operation';
+import { DatasetOperation } from './dataset-operation';
 
 defineProps<{
 	datasets: Dataset[];
@@ -54,7 +54,7 @@ watch(
 		if (selectedDataset.value) {
 			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
 			emit('append-output-port', {
-				type: datasetOperation.outputs[0].type,
+				type: DatasetOperation.outputs[0].type,
 				label: selectedDataset.value.name,
 				value: selectedDataset.value.id.toString()
 			});

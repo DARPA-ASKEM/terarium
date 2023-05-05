@@ -508,7 +508,16 @@ const clearItemSelected = () => {
 // };
 
 async function executeNewQuery() {
-	searchTerm.value = route.query?.q?.toString() ?? searchTerm.value;
+	const previousSearchTerm = searchTerm.value;
+
+	// If search query is not empty update the search term
+	if (!isEmpty(route.query?.q?.toString()) && route.query?.q?.toString()) {
+		searchTerm.value = route.query?.q?.toString();
+	}
+
+	// If the search term is empty or is the same as the previous term don't execute a search
+	if (isEmpty(searchTerm.value) || previousSearchTerm === searchTerm.value) return;
+
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
 
