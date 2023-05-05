@@ -159,7 +159,11 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<tera-import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+						<tera-import-code-button
+							:urlString="url"
+							:show-import-button="isEditable"
+							@open-code="openCode"
+						/>
 					</li>
 				</ul>
 			</AccordionTab>
