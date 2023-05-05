@@ -12,6 +12,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
+				@show-preview="showPreviewPanel"
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
@@ -48,10 +49,19 @@
 				:key="index"
 			/>
 		</template>
+		<template #foreground>
+			<tera-preview-panel
+				:content-width="`50%`"
+				tab-width="0"
+				direction="right"
+				:resource-type="ResourceType.MODEL"
+			/>
+		</template>
 	</tera-infinite-canvas>
 </template>
 
 <script setup lang="ts">
+// v-model:preview-item="previewItem"
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
@@ -74,6 +84,8 @@ import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { Dataset } from '@/types/Dataset';
+import { ResourceType } from '@/types/common';
+import TeraPreviewPanel from '@/page/data-explorer/components/tera-preview-panel.vue';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
@@ -104,6 +116,10 @@ const testOperation: Operation = {
 	action: () => {},
 	isRunnable: true
 };
+
+function showPreviewPanel(assetNode) {
+	console.log(assetNode);
+}
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	// assign outport data to its output port

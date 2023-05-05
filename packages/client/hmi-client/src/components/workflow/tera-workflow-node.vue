@@ -1,7 +1,7 @@
 <template>
 	<section class="container" :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5>{{ node.operationType }}</h5>
+			<h5 @click="emit('show-preview', node)">{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index">
@@ -37,7 +37,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
+const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'show-preview']);
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
