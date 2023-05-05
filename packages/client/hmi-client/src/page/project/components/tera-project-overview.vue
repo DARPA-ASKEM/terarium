@@ -203,7 +203,7 @@ async function getPDFContents(
 			.setInterval(2000)
 			.setThreshold(90)
 			.setPollAction(async () => {
-				const response = await API.get(`/extract/task_result/${taskID.task_id}`);
+				const response = await API.get(`/extract/task-result/${taskID.task_id}`);
 
 				if (response.data.status === 'SUCCESS' && response.data.result) {
 					return {

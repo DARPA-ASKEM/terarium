@@ -1,11 +1,13 @@
 package software.uncharted.terarium.hmiserver.resources.pdfextractionservice;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import javax.inject.Inject;
 import io.quarkus.security.Authenticated;
 
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import software.uncharted.terarium.hmiserver.proxies.pdfextractionservice.PDFExtractionServiceProxy;
+import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -20,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Authenticated
 @Produces(MediaType.APPLICATION_JSON)
+@RegisterProvider(HmiResponseExceptionMapper.class)
 public class PDFExtractionResource {
 
 	@Inject
@@ -57,7 +60,7 @@ public class PDFExtractionResource {
 
 	// checks a taskId status
 	@GET
-	@Path("/task_result/{taskId}")
+	@Path("/task-result/{taskId}")
 	public Response getTaskStatus(
 			@PathParam("taskId") final String taskId) {
 		return extractionProxy.getTaskStatus(taskId);

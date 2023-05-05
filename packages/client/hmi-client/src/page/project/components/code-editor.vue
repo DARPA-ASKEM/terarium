@@ -253,7 +253,7 @@ async function getPDFContents(url: string): Promise<PDFExtractionResponseType> {
 			.setInterval(2000)
 			.setThreshold(90)
 			.setPollAction(async () => {
-				const response = await API.get(`/extract/task_result/${taskID}`);
+				const response = await API.get(`/extract/task-result/${taskID}`);
 
 				if (response.data.status === 'SUCCESS' && response.data.result) {
 					return {

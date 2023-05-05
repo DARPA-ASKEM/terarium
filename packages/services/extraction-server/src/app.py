@@ -112,7 +112,7 @@ def convert_pdf_task():
     return jsonify({"task_id": task_id}), 202
 
 
-@app.route("/task_result/<task_id>", methods=["GET"])
+@app.route("/task-result/<task_id>", methods=["GET"])
 def task_result(task_id):
     """
     The `task_result` function returns the status and result of a given task ID in a JSON response.
@@ -161,7 +161,7 @@ def extract_text_and_images_task(self, file_path, extraction_method, extract_ima
         extracted_text_list = [
             text_chunk.decode("utf-8").strip() for text_chunk in extracted_text_list
         ]
-        extracted_text = ' '.join(extracted_text_list).replace("\n", "")
+        extracted_text = " ".join(extracted_text_list).replace("\n", "")
         if extract_images:
             extracted_images = extract_images_base64(file_path)
         else:
@@ -226,6 +226,7 @@ def convert_pdf():
 
     response_data = {"text": text_data, "images": extracted_images}
     return jsonify(response_data)
+
 
 if __name__ == "__main__":
     app.run()
