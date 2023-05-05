@@ -1,6 +1,7 @@
 <template>
 	<main>
 		<Button
+			v-if="showImportButton"
 			label="Import"
 			class="p-button-sm p-button-outlined"
 			icon="pi pi-cloud-download"
@@ -47,6 +48,7 @@ import { getGithubRepositoryContent, getGithubCode } from '@/services/github-imp
 
 const props = defineProps<{
 	urlString: string;
+	showImportButton: boolean;
 }>();
 
 const emit = defineEmits(['open-code']);
