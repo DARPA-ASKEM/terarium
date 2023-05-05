@@ -5,6 +5,6 @@ export const datasetOperation: Operation = {
 	description: 'Select a dataset',
 	isRunnable: true,
 	inputs: [],
-	outputs: [],
+	outputs: [{ type: 'dataset' }],
 	action: () => {}
 };

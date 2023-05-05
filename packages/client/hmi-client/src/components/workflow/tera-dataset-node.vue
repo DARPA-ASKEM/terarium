@@ -35,59 +35,32 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { datasetOperation } from './dataset-operation';
 
 defineProps<{
 	datasets: Dataset[];
 }>();
 
-const emit = defineEmits<{
-	(
-		e: 'append-port',
-		port: {
-			type: string;
-			label: string;
-			value: string;
-			direction: string;
-		}
-	): void;
-	(
-		e: 'update-ports',
-		port: {
-			type: string;
-			label: string;
-			value: string;
-			direction: string;
-		}[]
-	);
-}>();
+const emit = defineEmits(['update-output-port', 'append-output-port']);
 
 const selectedDataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
-watch(selectedDataset, async (newSelectedDataset, previousSelectedDataset) => {
-	if (newSelectedDataset) {
-		rawContent.value = await downloadRawFile(newSelectedDataset.id.toString(), 10);
-		if (previousSelectedDataset) {
-			emit('update-ports', [
-				{
-					type: 'dataset',
-					label: newSelectedDataset.name,
-					value: newSelectedDataset.id.toString(),
-					direction: 'out'
-				}
-			]);
-		} else {
-			emit('append-port', {
-				type: 'dataset',
-				label: newSelectedDataset.name,
-				value: newSelectedDataset.id.toString(),
-				direction: 'out'
+watch(
+	() => selectedDataset.value,
+	async () => {
+		if (selectedDataset.value) {
+			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
+			emit('append-output-port', {
+				type: datasetOperation.outputs[0].type,
+				label: selectedDataset.value.name,
+				value: selectedDataset.value.id.toString()
 			});
 		}
 	}
-});
+);
 </script>
 
 <style scoped>

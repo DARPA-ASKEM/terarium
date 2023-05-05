@@ -16,12 +16,12 @@
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
 			>
-				<template #body="{ appendPort, updatePorts }">
+				<template #body>
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
 						:node="node"
-						@append-output-port="appendOutputPort"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
@@ -30,8 +30,7 @@
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset'"
 						:datasets="datasets"
-						@append-port="appendPort"
-						@update-ports="updatePorts"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<div v-else>Test node</div>
 				</template>
@@ -103,15 +102,16 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
-function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
-	// Find node and assign outport data to its output port
-	const node = nodes.value[nodes.value.findIndex(({ id }) => id === nodeId)];
-	node.outputs[node.outputs.length - 1] = outputPortData;
-
+function appendOutputPort(
+	node: WorkflowNode,
+	port: { type: string; label?: string; value?: string }
+) {
+	// assign outport data to its output port
+	Object.assign(node.outputs[node.outputs.length - 1], port);
 	// Create new output port
 	node.outputs.push({
 		id: node.outputs.length.toString(),
-		type: outputPortData.type
+		type: port.type
 	});
 }
 

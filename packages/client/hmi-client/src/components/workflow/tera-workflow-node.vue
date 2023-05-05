@@ -14,7 +14,7 @@
 				{{ input.label }}
 			</li>
 		</section>
-		<slot name="body" :appendPort="appendPort" :updatePorts="updatePorts" />
+		<slot name="body" />
 		<section class="outputs">
 			<li v-for="(output, index) in outputs" :key="index" ref="outputRefs">
 				{{ output.label }}
@@ -102,24 +102,6 @@ function mouseoverPort(event) {
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
-}
-
-function appendPort(port: { type: string; label: string; value: string; direction: string }) {
-	const { type, label, value, direction } = port;
-	if (direction === 'in') {
-		inputs.value.push({ id: inputs.value.length.toString(), type, label, value });
-	} else if (direction === 'out') {
-		outputs.value.push({ id: outputs.value.length.toString(), type, label, value });
-	}
-}
-
-function updatePorts(ports: { type: string; label: string; value: string; direction: string }[]) {
-	inputs.value = ports
-		.filter((port) => port.direction === 'in')
-		.map(({ type, label, value }, index) => ({ id: index.toString(), type, label, value }));
-	outputs.value = ports
-		.filter((port) => port.direction === 'out')
-		.map(({ type, label, value }, index) => ({ id: index.toString(), type, label, value }));
 }
 
 onBeforeUnmount(() => {
