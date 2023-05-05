@@ -1,4 +1,3 @@
-// Captures common actions performed on workflow nodes/edges
 import { v4 as uuidv4 } from 'uuid';
 import {
 	Workflow,
@@ -9,11 +8,14 @@ import {
 	WorkflowEdge
 } from '@/types/workflow';
 
-/// /////////////////////////////////////////////////////////////////////////////
-// TODO:
-// - Should update workflow node status on modification???
-// - Remove node...this also remove edges
-/// /////////////////////////////////////////////////////////////////////////////
+/**
+ * Captures common actions performed on workflow nodes/edges. The functions here are
+ * not optimized, on the account that we don't expect most workflow graphs to
+ * exceed say ... 10-12 nodes with 30-40 edges.
+ *
+ * TODO:
+ * - Should we update workflow node status on modification???
+ */
 
 export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 	const node: WorkflowNode = {
@@ -51,7 +53,6 @@ export const addEdge = (
 	targetInputPortId: string,
 	points: Position[]
 ) => {
-	// Find the nodes and ports instances, not particulary efficient however the workflow is not expected to be large
 	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
 	const targetNode = wf.nodes.find((d) => d.id === targetId);
 	if (!sourceNode) return;
@@ -103,6 +104,20 @@ export const removeEdge = (wf: Workflow, id: string) => {
 	if (!targetNode) return;
 	const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
 	if (!targetPort) return;
-
 	targetPort.value = null;
+
+	// Edge re-assignment
+	wf.edges = wf.edges.filter((edge) => edge.id !== id);
+};
+
+export const removeNode = (wf: Workflow, id: string) => {
+	// Remove all the edges first
+	const edgesToRemove = wf.edges.filter((d) => d.source === id || d.target === id);
+	const edgeIds = edgesToRemove.map((d) => d.id);
+	edgeIds.forEach((edgeId) => {
+		removeEdge(wf, edgeId);
+	});
+
+	// Remove the node
+	wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
