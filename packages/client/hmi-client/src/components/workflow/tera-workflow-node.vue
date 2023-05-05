@@ -4,7 +4,7 @@
 			<h5>{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index" ref="inputRefs">
+			<li v-for="(input, index) in node.inputs" :key="index">
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
@@ -16,7 +16,7 @@
 		</section>
 		<slot name="body" />
 		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index" ref="outputRefs">
+			<li v-for="(output, index) in node.outputs" :key="index">
 				{{ output.label }}
 				<div
 					class="port"
@@ -38,9 +38,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
-
-const inputRefs = ref<HTMLElement>();
-const outputRefs = ref<HTMLElement>();
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
