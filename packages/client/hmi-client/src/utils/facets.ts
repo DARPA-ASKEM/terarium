@@ -16,7 +16,7 @@ import {
 	FACET_FIELDS as DOCUMENT_FACET_FIELDS,
 	GITHUB_URL
 } from '@/types/XDD';
-import { DocumentType } from '@/types/Document';
+import { Document, XDDFacetsItemResponse } from '@/types/Types';
 import { groupBy, mergeWith, isArray } from 'lodash';
 
 import { logger } from '@/utils/logger';
@@ -113,11 +113,11 @@ export const getDatasetFacets = (datasets: Dataset[], conceptFacets: ConceptFace
 
 // FIXME: this client-side computation of facets from "datasets" data should be done //////////////////no point in editing//////////////////
 //        at the HMI server
-export const getDocumentFacets = (documents: DocumentType[]) => {
+export const getDocumentFacets = (documents: Document[]) => {
 	// utility function for manually calculating facet aggregation from dataset results
 	const aggField = (fieldName: string) => {
 		const aggs: FacetBucket[] = [];
-		const documentsMap = documents.map((document) => document[fieldName as keyof DocumentType]);
+		const documentsMap = documents.map((document) => document[fieldName as keyof Document]);
 		// convert lists inside these fields to individual entries
 		const unListedDocumentsMap: any[] = [];
 		documentsMap.forEach((entry) => {
@@ -167,7 +167,7 @@ function mergeCustomizer(objValue: any, srcValue: any) {
 }
 
 export const getFacets = (results: SearchResults[], resultType: ResourceType | string) => {
-	let facets = {} as Facets;
+	let facets = {} as { [index: string]: XDDFacetsItemResponse };
 	if (results.length > 0) {
 		results.forEach((resultsObj) => {
 			if (resultsObj.searchSubsystem === resultType || resultType === ResourceType.ALL) {

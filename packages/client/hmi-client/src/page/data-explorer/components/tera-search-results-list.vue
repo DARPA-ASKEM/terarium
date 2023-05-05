@@ -2,7 +2,7 @@
 	<div class="result-details">
 		<span class="result-count">
 			<template v-if="isLoading">Loading...</template>
-			<template v-else
+			<template v-else-if="props.searchTerm"
 				>{{ resultsText }} <span>"{{ props.searchTerm }}"</span></template
 			>
 		</span>
@@ -32,7 +32,7 @@
 	<ul v-else>
 		<li v-for="(asset, index) in filteredAssets" :key="index">
 			<tera-search-item
-				:asset="(asset as DocumentType & Model & Dataset)"
+				:asset="(asset as Document & Model & Dataset)"
 				:selectedSearchItems="selectedSearchItems"
 				:isPreviewed="previewedAsset === asset"
 				:resourceType="(resultType as ResourceType)"
@@ -47,11 +47,11 @@
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
 import { XDDExtractionType } from '@/types/XDD';
-import { DocumentType } from '@/types/Document';
+import { Document, XDDFacetsItemResponse } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
 import { Dataset } from '@/types/Dataset';
-import { Facets, SearchResults, ResourceType, ResultType } from '@/types/common';
+import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';
 import TeraSearchItem from './tera-search-item.vue';
@@ -62,7 +62,7 @@ const props = defineProps({
 		default: () => []
 	},
 	facets: {
-		type: Object as PropType<Facets>,
+		type: Object as PropType<{ [index: string]: XDDFacetsItemResponse }>,
 		required: true
 	},
 	selectedSearchItems: {
@@ -80,6 +80,10 @@ const props = defineProps({
 	isLoading: {
 		type: Boolean,
 		default: true
+	},
+	docCount: {
+		type: Number,
+		default: 0
 	}
 });
 
@@ -117,10 +121,10 @@ const filteredAssets = computed(() => {
 
 	if (searchResults) {
 		if (props.resultType === ResourceType.XDD) {
-			let documentsFromExtractions: DocumentType[] = [];
+			let documentsFromExtractions: Document[] = [];
 
 			if (searchResults.xddExtractions && searchResults.xddExtractions.length > 0) {
-				const docMap: { [docid: string]: DocumentType } = {};
+				const docMap: { [docid: string]: Document } = {};
 
 				searchResults.xddExtractions.forEach((ex) => {
 					const docid = ex.properties.documentBibjson.gddId;
@@ -129,22 +133,22 @@ const filteredAssets = computed(() => {
 						docMap[docid].relatedExtractions = [];
 					}
 					// Avoid duplicate documents
-					else if (ex.askemClass === XDDExtractionType.Document) {
+					else if (ex.askemClass === XDDExtractionType.Doc) {
 						const docExtractions = docMap[docid].relatedExtractions?.filter(
-							(extraction) => extraction.askemClass === XDDExtractionType.Document
+							(extraction) => extraction.askemClass === XDDExtractionType.Doc
 						);
 
 						if (docExtractions) {
 							for (let i = 0; i < docExtractions.length; i++) {
-								if (ex.properties.DOI === docExtractions[i].properties.DOI) return; // Skip
+								if (ex.properties.doi === docExtractions[i].properties.doi) return; // Skip
 							}
 						}
 					}
 					docMap[docid].relatedExtractions?.push(ex);
 				});
-				documentsFromExtractions = Object.values(docMap) as DocumentType[];
+				documentsFromExtractions = Object.values(docMap) as Document[];
 			}
-			const documentSearchResults = searchResults.results as DocumentType[];
+			const documentSearchResults = searchResults.results as Document[];
 
 			return [...documentsFromExtractions, ...documentSearchResults];
 		}
@@ -174,8 +178,9 @@ const resultsText = computed(() => {
 	if (resultsCount.value === 0) {
 		return 'No results found for';
 	}
+	const truncated = props.docCount > resultsCount.value ? `of ${props.docCount} ` : '';
 	const s = resultsCount.value === 1 ? '' : 's';
-	return `Showing ${resultsCount.value} result${s} for `;
+	return `Showing ${resultsCount.value} ${truncated}result${s} for `;
 });
 </script>
 

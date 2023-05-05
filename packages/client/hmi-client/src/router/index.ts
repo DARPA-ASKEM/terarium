@@ -12,7 +12,7 @@ import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
 import SSE from '@/temp/sse.vue';
 import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
-import SimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
+import SimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
