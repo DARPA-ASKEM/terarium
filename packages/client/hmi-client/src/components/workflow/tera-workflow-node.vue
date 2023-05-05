@@ -4,7 +4,7 @@
 			<h5>{{ node.operationType }}</h5>
 		</header>
 		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
+			<li v-for="(input, index) in node.inputs" :key="index">
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
@@ -16,7 +16,7 @@
 		</section>
 		<slot name="body" />
 		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
+			<li v-for="(output, index) in node.outputs" :key="index">
 				{{ output.label }}
 				<div
 					class="port"
@@ -38,9 +38,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
-
-const inputs = ref<HTMLElement>();
-const outputs = ref<HTMLElement>();
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -98,8 +95,8 @@ function mouseoverPort(event) {
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
-	// }
 }
+
 onBeforeUnmount(() => {
 	if (workflowNode.value) {
 		workflowNode.value.removeEventListener('mousedown', startDrag);

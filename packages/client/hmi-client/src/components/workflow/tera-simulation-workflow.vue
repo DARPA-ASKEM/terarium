@@ -20,12 +20,16 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:node="node"
-						@append-output-port="appendOutputPort"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
+					/>
+					<tera-dataset-node
+						v-else-if="node.operationType === 'Dataset'"
+						:datasets="datasets"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
@@ -48,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -68,10 +72,17 @@ import { Model } from '@/types/Model';
 import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
+import { IProject } from '@/types/Project';
+import { Dataset } from '@/types/Dataset';
+import { DatasetOperation } from './dataset-operation';
+import TeraDatasetNode from './tera-dataset-node.vue';
 
-defineProps<{
-	models?: Model[];
+const props = defineProps<{
+	project: IProject;
 }>();
+
+const models = computed<Model[]>(() => props.project.assets?.models ?? []);
+const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 const wf = ref<Workflow>(workflowService.create());
 const contextMenu = ref();
@@ -94,6 +105,16 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
+function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
+	// assign outport data to its output port
+	Object.assign(node.outputs[node.outputs.length - 1], port);
+	// Create new output port
+	node.outputs.push({
+		id: node.outputs.length.toString(),
+		type: port.type
+	});
+}
+
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
 	if (node.inputs[0].value !== null) {
@@ -102,18 +123,6 @@ const testNode = (node: WorkflowNode) => {
 		node.outputs[0].value = Math.round(Math.random() * 10);
 	}
 };
-
-function appendOutputPort(nodeId: string, outputPortData: WorkflowPort) {
-	// Find node and assign outport data to its output port
-	const node = wf.value.nodes[wf.value.nodes.findIndex(({ id }) => id === nodeId)];
-	node.outputs[node.outputs.length - 1] = outputPortData;
-
-	// Create new output port
-	node.outputs.push({
-		id: node.outputs.length.toString(),
-		type: outputPortData.type
-	});
-}
 
 const contextMenuItems = ref([
 	{
@@ -132,6 +141,12 @@ const contextMenuItems = ref([
 		label: 'New calibration',
 		command: () => {
 			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition.value);
+		}
+	},
+	{
+		label: 'New dataset',
+		command: () => {
+			workflowService.addNode(wf.value, DatasetOperation, newNodePosition.value);
 		}
 	}
 ]);
