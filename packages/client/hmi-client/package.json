@@ -41,6 +41,7 @@
 		"primeicons": "6.0.1",
 		"primevue": "3.25.0",
 		"sass": "1.56.1",
+		"uuid": "^9.0.0",
 		"vue": "3.2.47",
 		"vue-feather": "2.0.0",
 		"vue-router": "4.1.6",

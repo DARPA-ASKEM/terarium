@@ -1,6 +1,6 @@
 <template>
 	<Dropdown
-		class="w-full md:w-14rem"
+		class="w-full"
 		v-model="selectedModel"
 		:options="models"
 		option-label="name"
@@ -38,6 +38,8 @@ defineProps<{
 	models: Model[];
 }>();
 
+const emit = defineEmits(['append-output-port']);
+
 interface StringValueMap {
 	[key: string]: string;
 }
@@ -57,6 +59,14 @@ function run() {
 				parameterValues: parameterValues.value
 			})
 		);
+		emit('append-output-port', {
+			type: ModelOperation.outputs[0].type,
+			value: {
+				model: model.value,
+				initialValues: initialValues.value,
+				parameterValues: parameterValues.value
+			}
+		});
 	}
 }
 
@@ -79,10 +89,6 @@ watch(
 </script>
 
 <style scoped>
-h6 {
-	margin-top: 0.5rem;
-}
-
 ul {
 	list-style-type: none;
 	display: flex;
