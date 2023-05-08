@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

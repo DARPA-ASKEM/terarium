@@ -43,6 +43,9 @@ dependencies {
 	implementation "io.quarkus:quarkus-cache"
 	implementation "io.quarkus:quarkus-scheduler"
 
+	// Message Queue
+	implementation "io.quarkus:quarkus-smallrye-reactive-messaging-rabbitmq"
+
 	// Auth dependencies
 	implementation "io.quarkus:quarkus-oidc"
 	implementation "io.quarkus:quarkus-keycloak-authorization"
