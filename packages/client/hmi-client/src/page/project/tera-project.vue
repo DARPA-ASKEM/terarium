@@ -33,15 +33,15 @@
 						@click="getAndPopulateAnnotations()"
 					/>
 					<tera-tab-content
+						ref="tabContentRef"
 						:asset-id="assetId"
 						:asset-type="assetType"
 						:tabs="tabs"
 						:project="project"
 						:code="code"
-						:new-model-id="newModelId"
+						v-model:new-model-id="newModelId"
 						@asset-loaded="setActiveTab"
 						@open-asset="openAsset"
-						@assign-new-model-id="assignNewModelId"
 						@update-tab-name="updateTabName"
 					/>
 					<!-- <template v-if="assetId && !isEmpty(tabs)">
@@ -70,8 +70,8 @@
 						<Button label="Open project overview" @click="openOverview" />
 					</section> -->
 				</SplitterPanel>
-				<SplitterPanel v-if="!isEmpty(workflowRef?.openedNode)" :size="20">
-					{{ workflowRef.openedNode }}
+				<SplitterPanel v-if="!isEmpty(tabContentRef?.workflowNodeRef)" :size="20">
+					{{ tabContentRef.workflowNodeRef }}
 				</SplitterPanel>
 			</Splitter>
 		</section>
@@ -225,16 +225,6 @@ import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar
 import { RouteName } from '@/router/routes';
 import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
-// import { createModel, addModelToProject } from '@/services/model';
-// import TeraDataset from '@/components/dataset/tera-dataset.vue';
-// import TeraModel from '@/components/models/tera-model.vue';
-// import CodeEditor from '@/page/project/components/code-editor.vue';
-// import SimulationPlan from '@/page/project/components/Simulation.vue';
-// import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-// import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
-// import SimulationRun from '@/temp/SimulationResult3.vue';
-// import TeraDocument from '@/components/documents/tera-document.vue';
-// import { PetriNet } from '@/petrinet/petrinet-service';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -249,6 +239,17 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraTabContent from './components/tera-tab-content.vue';
+//
+// import { createModel, addModelToProject } from '@/services/model';
+// import TeraDataset from '@/components/dataset/tera-dataset.vue';
+// import TeraModel from '@/components/models/tera-model.vue';
+// import CodeEditor from '@/page/project/components/code-editor.vue';
+// import SimulationPlan from '@/page/project/components/Simulation.vue';
+// import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+// import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+// import SimulationRun from '@/temp/SimulationResult3.vue';
+// import TeraDocument from '@/components/documents/tera-document.vue';
+// import { PetriNet } from '@/petrinet/petrinet-service';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -266,6 +267,7 @@ const router = useRouter();
 const newModelId = ref<string>('');
 // const resources = useResourcesStore();
 // const isNewModel = ref<boolean>(true);
+const tabContentRef = ref();
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -275,8 +277,6 @@ const code = ref<string>();
 const isAnnotationInputOpen = ref(false);
 const annotationMenu = ref();
 const menuOpenEvent = ref();
-
-const workflowRef = ref();
 
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
@@ -412,6 +412,7 @@ const updateTabName = (tabName) => {
 	tabs.value[activeTabIndex.value!].assetName = tabName;
 };
 
+/// //////
 // const getXDDuri = (assetId: Tab['assetId']): string =>
 // 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
@@ -444,15 +445,12 @@ const updateTabName = (tabName) => {
 // 		}
 // 	});
 // }
+/// ////
 
 // create the new Asset
 async function createAsset(asset: Tab) {
 	newModelId.value = '';
 	router.push({ name: RouteName.ProjectRoute, params: asset });
-}
-
-function assignNewModelId(modelId: string) {
-	newModelId.value = modelId;
 }
 
 async function removeAsset(asset: Tab) {

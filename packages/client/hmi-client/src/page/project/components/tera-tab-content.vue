@@ -92,18 +92,20 @@ const props = defineProps<{
 	project: IProject;
 	assetId?: string;
 	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
-	tabs: Tab[];
+	tabs?: Tab[];
 	newModelId: string;
 	code?: string;
 }>();
 
 // open asset may not work
-const emit = defineEmits(['open-asset', 'asset-loaded', 'assign-new-model-id', 'update-tab-name']);
+const emit = defineEmits(['open-asset', 'asset-loaded', 'update:newModelId', 'update-tab-name']);
 
 const router = useRouter();
 const resources = useResourcesStore();
 
 const isNewModel = ref<boolean>(true);
+const workflowRef = ref();
+defineExpose({ workflowRef });
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
@@ -126,7 +128,7 @@ const openOverview = () => {
 const createNewModel = async (newModel: PetriNet) => {
 	const newModelResp = await createModel(newModel);
 	if (newModelResp) {
-		emit('assign-new-model-id', newModelResp.id.toString());
+		emit('update:newModelId', newModelResp.id.toString());
 		await addModelToProject(props.project.id, props.newModelId, resources);
 		isNewModel.value = false;
 	}
