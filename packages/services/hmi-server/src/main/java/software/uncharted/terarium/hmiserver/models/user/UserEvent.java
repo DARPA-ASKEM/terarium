@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @RegisterForReflection
 @Data
-public class UserEvent<S> {
+public class UserEvent {
 	private EventType type;
 	private User user;
 	private UUID id;
