@@ -3,7 +3,7 @@
 		<header>
 			<h5>{{ node.operationType }}</h5>
 			<Button
-				@click="emit('show-preview', node)"
+				@click="emit('show-node-drilldown', node)"
 				icon="pi pi-ellipsis-v"
 				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 			/>
@@ -45,7 +45,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'show-preview']);
+const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'show-node-drilldown']);
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,

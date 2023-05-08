@@ -15,6 +15,7 @@
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
+				@show-node-drilldown="showNodeDrilldown"
 			>
 				<template #body>
 					<tera-model-node
@@ -143,9 +144,12 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
-// function showPreviewPanel(assetNode) {
-// 	console.log(assetNode);
-// }
+const openedNode = ref<WorkflowNode>();
+defineExpose({ openedNode });
+
+function showNodeDrilldown(workflowNode: WorkflowNode) {
+	if (workflowNode.outputs.length > 1) openedNode.value = workflowNode;
+}
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	// assign outport data to its output port

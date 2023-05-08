@@ -21,76 +21,59 @@
 			</template>
 		</tera-slider-panel>
 		<section>
-			<tera-tab-group
-				v-if="!isEmpty(tabs)"
-				:tabs="tabs"
-				:active-tab-index="activeTabIndex"
-				:loading-tab-index="loadingTabIndex"
-				@close-tab="removeClosedTab"
-				@select-tab="openAsset"
-				@click="getAndPopulateAnnotations()"
-			/>
-			<template v-if="assetId && !isEmpty(tabs)">
-				<tera-document
-					v-if="assetType === ProjectAssetTypes.DOCUMENTS"
-					:xdd-uri="getXDDuri(assetId)"
-					:previewLineLimit="10"
-					:project="project"
-					is-editable
-					@open-asset="openAsset"
-					@asset-loaded="setActiveTab"
-				/>
-				<tera-model
-					v-else-if="assetType === ProjectAssetTypes.MODELS"
-					:asset-id="assetId"
-					:project="project"
-					is-editable
-					@asset-loaded="setActiveTab"
-				/>
-				<tera-dataset
-					v-else-if="assetType === ProjectAssetTypes.DATASETS"
-					:asset-id="assetId"
-					:project="project"
-					is-editable
-					@asset-loaded="setActiveTab"
-				/>
-				<simulation-plan
-					v-else-if="assetType === ProjectAssetTypes.PLANS"
-					:asset-id="assetId"
-					:project="project"
-					@asset-loaded="setActiveTab"
-				/>
-				<simulation-run
-					v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-					:asset-id="assetId"
-					:project="project"
-					@asset-loaded="setActiveTab"
-				/>
-			</template>
-			<code-editor
-				v-else-if="assetType === ProjectAssetTypes.CODE"
-				:initial-code="code"
-				@on-model-created="openNewModelFromCode"
-			/>
-			<tera-model
-				v-else-if="assetType === ProjectAssetTypes.MODELS"
-				:asset-id="newModelId"
-				:project="project"
-				@update-tab-name="updateTabName"
-				@create-new-model="createNewModel"
-				is-editable
-			/>
-			<tera-project-overview
-				v-else-if="assetType === 'overview'"
-				:project="project"
-				@open-workflow="openWorkflow"
-			/>
-			<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
-			<section v-else class="no-open-tabs">
-				<img src="@assets/svg/seed.svg" alt="Seed" />
-				<p>You can open resources from the resource panel.</p>
-				<Button label="Open project overview" @click="openOverview" />
-			</section>
+			<Splitter>
+				<SplitterPanel :size="20">
+					<tera-tab-group
+						v-if="!isEmpty(tabs)"
+						:tabs="tabs"
+						:active-tab-index="activeTabIndex"
+						:loading-tab-index="loadingTabIndex"
+						@close-tab="removeClosedTab"
+						@select-tab="openAsset"
+						@click="getAndPopulateAnnotations()"
+					/>
+					<tera-tab-content
+						:asset-id="assetId"
+						:asset-type="assetType"
+						:tabs="tabs"
+						:project="project"
+						:code="code"
+						:new-model-id="newModelId"
+						@asset-loaded="setActiveTab"
+						@open-asset="openAsset"
+						@assign-new-model-id="assignNewModelId"
+						@update-tab-name="updateTabName"
+					/>
+					<!-- <template v-if="assetId && !isEmpty(tabs)">
+						<tera-document v-if="assetType === ProjectAssetTypes.DOCUMENTS" :xdd-uri="getXDDuri(assetId)"
+							:previewLineLimit="10" :project="project" is-editable @open-asset="openAsset"
+							@asset-loaded="setActiveTab" />
+						<tera-model v-else-if="assetType === ProjectAssetTypes.MODELS" :asset-id="assetId"
+							:project="project" is-editable @asset-loaded="setActiveTab" />
+						<tera-dataset v-else-if="assetType === ProjectAssetTypes.DATASETS" :asset-id="assetId"
+							:project="project" is-editable @asset-loaded="setActiveTab" />
+						<simulation-plan v-else-if="assetType === ProjectAssetTypes.PLANS" :asset-id="assetId"
+							:project="project" @asset-loaded="setActiveTab" />
+						<simulation-run v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS" :asset-id="assetId"
+							:project="project" @asset-loaded="setActiveTab" />
+					</template>
+					<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code"
+						@on-model-created="openNewModelFromCode" />
+					<tera-model v-else-if="assetType === ProjectAssetTypes.MODELS" :asset-id="newModelId" :project="project"
+						@update-tab-name="updateTabName" @create-new-model="createNewModel" is-editable />
+					<tera-project-overview v-else-if="assetType === 'overview'" :project="project"
+						@open-workflow="openWorkflow" />
+					<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" ref="workflowRef" />
+					<section v-else class="no-open-tabs">
+						<img src="@assets/svg/seed.svg" alt="Seed" />
+						<p>You can open resources from the resource panel.</p>
+						<Button label="Open project overview" @click="openOverview" />
+					</section> -->
+				</SplitterPanel>
+				<SplitterPanel v-if="!isEmpty(workflowRef?.openedNode)" :size="20">
+					{{ workflowRef.openedNode }}
+				</SplitterPanel>
+			</Splitter>
 		</section>
 		<tera-slider-panel
 			class="slider"
@@ -236,21 +219,22 @@ import { isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import TeraDataset from '@/components/dataset/tera-dataset.vue';
-import TeraModel from '@/components/models/tera-model.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTabGroup from '@/components/widgets/tera-tab-group.vue';
-import CodeEditor from '@/page/project/components/code-editor.vue';
-import SimulationPlan from '@/page/project/components/Simulation.vue';
 import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar.vue';
-import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from '@/router/routes';
-import { createModel, addModelToProject } from '@/services/model';
 import * as ProjectService from '@/services/project';
-import useResourcesStore from '@/stores/resources';
 import { useTabStore } from '@/stores/tabs';
-import SimulationRun from '@/temp/SimulationResult3.vue';
+// import { createModel, addModelToProject } from '@/services/model';
+// import TeraDataset from '@/components/dataset/tera-dataset.vue';
+// import TeraModel from '@/components/models/tera-model.vue';
+// import CodeEditor from '@/page/project/components/code-editor.vue';
+// import SimulationPlan from '@/page/project/components/Simulation.vue';
+// import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
+// import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+// import SimulationRun from '@/temp/SimulationResult3.vue';
+// import TeraDocument from '@/components/documents/tera-document.vue';
+// import { PetriNet } from '@/petrinet/petrinet-service';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -262,8 +246,9 @@ import {
 	updateAnnotation
 } from '@/services/models/annotations';
 import Menu from 'primevue/menu';
-import { PetriNet } from '@/petrinet/petrinet-service';
-import TeraDocument from '@/components/documents/tera-document.vue';
+import Splitter from 'primevue/splitter';
+import SplitterPanel from 'primevue/splitterpanel';
+import TeraTabContent from './components/tera-tab-content.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -277,10 +262,10 @@ const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
 const router = useRouter();
-const resources = useResourcesStore();
 
 const newModelId = ref<string>('');
-const isNewModel = ref<boolean>(true);
+// const resources = useResourcesStore();
+// const isNewModel = ref<boolean>(true);
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -290,6 +275,8 @@ const code = ref<string>();
 const isAnnotationInputOpen = ref(false);
 const annotationMenu = ref();
 const menuOpenEvent = ref();
+
+const workflowRef = ref();
 
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
@@ -382,9 +369,6 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-const getXDDuri = (assetId: Tab['assetId']): string =>
-	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
-
 function openAsset(
 	index: number = tabStore.getActiveTabIndex(projectContext.value),
 	newCode?: string
@@ -419,13 +403,6 @@ const openOverview = () => {
 	});
 };
 
-const openWorkflow = () => {
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
-	});
-};
-
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
@@ -435,33 +412,47 @@ const updateTabName = (tabName) => {
 	tabs.value[activeTabIndex.value!].assetName = tabName;
 };
 
-// Create the new model
-const createNewModel = async (newModel: PetriNet) => {
-	const newModelResp = await createModel(newModel);
-	if (newModelResp) {
-		newModelId.value = newModelResp.id.toString();
-		await addModelToProject(props.project.id, newModelId.value, resources);
-		isNewModel.value = false;
-	}
-};
+// const getXDDuri = (assetId: Tab['assetId']): string =>
+// 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
-async function openNewModelFromCode(modelId, modelName) {
-	await addModelToProject(props.project.id, modelId, resources);
+// const openWorkflow = () => {
+// 	router.push({
+// 		name: RouteName.ProjectRoute,
+// 		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
+// 	});
+// };
 
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: modelName,
-			assetId: modelId,
-			assetType: ProjectAssetTypes.MODELS
-		}
-	});
-}
+// // Create the new model
+// const createNewModel = async (newModel: PetriNet) => {
+// 	const newModelResp = await createModel(newModel);
+// 	if (newModelResp) {
+// 		newModelId.value = newModelResp.id.toString();
+// 		await addModelToProject(props.project.id, newModelId.value, resources);
+// 		isNewModel.value = false;
+// 	}
+// };
+
+// async function openNewModelFromCode(modelId, modelName) {
+// 	await addModelToProject(props.project.id, modelId, resources);
+
+// 	router.push({
+// 		name: RouteName.ProjectRoute,
+// 		params: {
+// 			assetName: modelName,
+// 			assetId: modelId,
+// 			assetType: ProjectAssetTypes.MODELS
+// 		}
+// 	});
+// }
 
 // create the new Asset
 async function createAsset(asset: Tab) {
 	newModelId.value = '';
 	router.push({ name: RouteName.ProjectRoute, params: asset });
+}
+
+function assignNewModelId(modelId: string) {
+	newModelId.value = modelId;
 }
 
 async function removeAsset(asset: Tab) {
@@ -580,12 +571,19 @@ function formatAuthorTimestamp(username, timestamp) {
 </script>
 
 <style scoped>
-section {
+section,
+.p-splitter-panel {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
+}
+
+.p-splitter {
+	height: 100%;
+	background: none;
+	border: none;
 }
 
 .no-open-tabs {
