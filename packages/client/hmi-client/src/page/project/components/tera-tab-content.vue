@@ -1,5 +1,6 @@
 <template>
 	<template v-if="assetId && !isEmpty(tabs)">
+		<!--Investigate using component tag since props are similar-->
 		<tera-document
 			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 			:xdd-uri="getXDDuri(assetId)"
