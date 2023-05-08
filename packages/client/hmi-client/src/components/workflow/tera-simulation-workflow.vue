@@ -37,7 +37,6 @@
 				</template>
 			</tera-workflow-node>
 		</template>
-
 		<!-- background -->
 		<template #backgroundDefs>
 			<!--
