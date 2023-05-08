@@ -1,6 +1,6 @@
 <template>
 	<Dropdown
-		class="w-full md:w-14rem"
+		class="w-full"
 		v-model="selectedModel"
 		:options="models"
 		option-label="name"
@@ -33,11 +33,9 @@ import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
-import { WorkflowNode } from '@/types/workflow';
 
-const props = defineProps<{
+defineProps<{
 	models: Model[];
-	node: WorkflowNode;
 }>();
 
 const emit = defineEmits(['append-output-port']);
@@ -61,8 +59,7 @@ function run() {
 				parameterValues: parameterValues.value
 			})
 		);
-		emit('append-output-port', props.node.id, {
-			id: props.node.outputs[props.node.outputs.length - 1].id,
+		emit('append-output-port', {
 			type: ModelOperation.outputs[0].type,
 			value: {
 				model: model.value,
@@ -92,10 +89,6 @@ watch(
 </script>
 
 <style scoped>
-h6 {
-	margin-top: 0.5rem;
-}
-
 ul {
 	list-style-type: none;
 	display: flex;
