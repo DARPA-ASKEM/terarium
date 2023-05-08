@@ -70,4 +70,30 @@ section {
 	flex-direction: column;
 	max-width: 400px;
 }
+
+:deep(.p-datatable > .p-datatable-wrapper) {
+	font-size: xx-small;
+	padding-bottom: 8px;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+	font-size: xx-small;
+}
+
+:deep(.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td) {
+	padding: 0;
+	background-color: var(--gray-50);
+}
+
+:deep(.p-datatable.p-datatable-sm .p-datatable-thead > tr > th) {
+	background-color: var(--gray-50);
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+	border: none;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+	border: none;
+}
 </style>
