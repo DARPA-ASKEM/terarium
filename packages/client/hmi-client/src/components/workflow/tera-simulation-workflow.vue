@@ -80,12 +80,6 @@
 			/>
 		</template>
 	</tera-infinite-canvas>
-	<!-- <tera-slider-panel
-			class="node-preview"
-			:content-width="`30%`"
-			tab-width="0"
-			direction="right"
-		/> -->
 </template>
 
 <script setup lang="ts">

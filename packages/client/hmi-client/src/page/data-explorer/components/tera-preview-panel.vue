@@ -105,7 +105,6 @@ const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 watch(
 	() => props.previewItem,
 	(previewItem) => {
-		console.log(previewItem);
 		if (previewItem) {
 			previewItemState.value = previewItem;
 			previewItemResourceType.value = props.resourceType;
