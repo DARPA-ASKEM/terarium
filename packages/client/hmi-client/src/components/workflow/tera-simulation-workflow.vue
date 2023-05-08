@@ -1,63 +1,90 @@
 <template>
-	<main>
-		<tera-infinite-canvas
-			debug-mode
-			@click.stop="onCanvasClick()"
-			@contextmenu="toggleContextMenu"
-			@save-transform="saveTransform"
-		>
-			<!-- data -->
-			<template #data>
-				<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-				<tera-workflow-node
-					v-for="(node, index) in wf.nodes"
-					:key="index"
-					:node="node"
-					@show-preview="showPreviewPanel"
-					@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
-					@port-mouseover="onPortMouseover"
-					@dragging="(event) => updatePosition(node, event)"
-				>
-					<template #body>
-						<tera-model-node
-							v-if="node.operationType === 'ModelOperation' && models"
-							:models="models"
-							@append-output-port="(event) => appendOutputPort(node, event)"
-						/>
-						<tera-calibration-node
-							v-else-if="node.operationType === 'CalibrationOperation'"
-							:node="node"
-						/>
-						<tera-dataset-node
-							v-else-if="node.operationType === 'Dataset'"
-							:datasets="datasets"
-							@append-output-port="(event) => appendOutputPort(node, event)"
-						/>
-						<div v-else>
-							<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
-						</div>
-					</template>
-				</tera-workflow-node>
-			</template>
-
-			<!-- background -->
-			<template #background>
-				<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" />
+	<tera-infinite-canvas
+		debug-mode
+		@click.stop="onCanvasClick()"
+		@contextmenu="toggleContextMenu"
+		@save-transform="saveTransform"
+	>
+		<!-- data -->
+		<template #data>
+			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
+			<tera-workflow-node
+				v-for="(node, index) in wf.nodes"
+				:key="index"
+				:node="node"
+				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
+				@port-mouseover="onPortMouseover"
+				@dragging="(event) => updatePosition(node, event)"
+			>
+				<template #body>
+					<tera-model-node
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
+						:node="node"
+					/>
+					<tera-dataset-node
+						v-else-if="node.operationType === 'Dataset'"
+						:datasets="datasets"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<div v-else>
+						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
+					</div>
+				</template>
+			</tera-workflow-node>
+		</template>
+		<!-- background -->
+		<template #backgroundDefs>
+			<!--
+			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible"><path d="M 0,-3.25 L 5 ,0 L 0,3.25" style="fill: var(--petri-lineColor); fill-opacity: 0.5; stroke: none;"></path></marker>
+			-->
+			<marker
+				class="edge-marker-end"
+				id="arrowhead"
+				viewBox="-5 -5 10 10"
+				refX="6"
+				refY="0"
+				orient="auto"
+				markerWidth="20"
+				markerHeight="20"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
 				<path
-					v-for="(edge, index) of wf.edges"
-					:d="drawPath(edge.points)"
-					stroke="black"
-					:key="index"
-				/>
-			</template>
-		</tera-infinite-canvas>
-		<tera-slider-panel
+					d="M 0 -4.875 L 7.5 0 L 0 4.875"
+					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
+				></path>
+			</marker>
+		</template>
+		<template #background>
+			<path
+				v-if="newEdge?.points"
+				:d="drawPath(newEdge.points)"
+				stroke="green"
+				stroke-dasharray="4"
+				stroke-width="4"
+				marker-end="url(#arrowhead)"
+			/>
+			<path
+				v-for="(edge, index) of wf.edges"
+				:d="drawPath(edge.points)"
+				stroke="black"
+				stroke-width="4"
+				marker-end="url(#arrowhead)"
+				:key="index"
+			/>
+		</template>
+	</tera-infinite-canvas>
+	<!-- <tera-slider-panel
 			class="node-preview"
 			:content-width="`30%`"
 			tab-width="0"
 			direction="right"
-		/>
-	</main>
+		/> -->
 </template>
 
 <script setup lang="ts">
@@ -84,7 +111,7 @@ import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { Dataset } from '@/types/Dataset';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+// import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
@@ -116,9 +143,9 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
-function showPreviewPanel(assetNode) {
-	console.log(assetNode);
-}
+// function showPreviewPanel(assetNode) {
+// 	console.log(assetNode);
+// }
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	// assign outport data to its output port

@@ -1,6 +1,12 @@
 <template>
 	<section>
-		<Dropdown class="w-full" :options="datasets" option-label="name" v-model="selectedDataset">
+		<Dropdown
+			class="w-full"
+			:options="datasets"
+			option-label="name"
+			v-model="selectedDataset"
+			placeholder="Select a dataset"
+		>
 		</Dropdown>
 		<Accordion>
 			<AccordionTab header="Data preview">

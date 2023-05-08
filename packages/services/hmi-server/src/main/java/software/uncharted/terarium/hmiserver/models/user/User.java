@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models;
+package software.uncharted.terarium.hmiserver.models.user;
 
 import io.quarkus.security.identity.SecurityIdentity;
 import lombok.Data;
