@@ -6,6 +6,9 @@
 			:width="width"
 			:height="height"
 		>
+			<defs>
+				<slot name="backgroundDefs" />
+			</defs>
 			<g ref="svgRef">
 				<slot name="background" />
 			</g>

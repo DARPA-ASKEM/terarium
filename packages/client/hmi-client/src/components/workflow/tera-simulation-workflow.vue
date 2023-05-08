@@ -38,12 +38,42 @@
 			</tera-workflow-node>
 		</template>
 		<!-- background -->
+		<template #backgroundDefs>
+			<!--
+			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible"><path d="M 0,-3.25 L 5 ,0 L 0,3.25" style="fill: var(--petri-lineColor); fill-opacity: 0.5; stroke: none;"></path></marker>
+			-->
+			<marker
+				class="edge-marker-end"
+				id="arrowhead"
+				viewBox="-5 -5 10 10"
+				refX="6"
+				refY="0"
+				orient="auto"
+				markerWidth="20"
+				markerHeight="20"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+				><path
+					d="M 0 -4.875 L 7.5 0 L 0 4.875"
+					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
+				></path
+			></marker>
+		</template>
 		<template #background>
-			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" />
+			<path
+				v-if="newEdge?.points"
+				:d="drawPath(newEdge.points)"
+				stroke="green"
+				stroke-dasharray="4"
+				stroke-width="4"
+				marker-end="url(#arrowhead)"
+			/>
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(edge.points)"
 				stroke="black"
+				stroke-width="4"
+				marker-end="url(#arrowhead)"
 				:key="index"
 			/>
 		</template>

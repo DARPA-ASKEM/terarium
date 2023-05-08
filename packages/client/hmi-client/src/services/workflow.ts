@@ -54,8 +54,8 @@ export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 		statusCode: WorkflowStatus.INVALID,
 
 		// Not currently in use. May 2023
-		width: 100,
-		height: 100
+		width: 180,
+		height: 220
 	};
 
 	wf.nodes.push(node);
