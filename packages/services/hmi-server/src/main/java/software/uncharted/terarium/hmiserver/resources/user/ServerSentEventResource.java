@@ -9,6 +9,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
+import software.uncharted.terarium.hmiserver.models.user.User;
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -37,6 +38,7 @@ public class ServerSentEventResource {
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	public Publisher<UserEvent> stream() {
-		return Multi.createFrom().publisher(userEvents);
+		return Multi.createFrom().publisher(userEvents)
+			.select().where(userEvent -> userEvent.isCurrentUser(securityIdentity));
 	}
 }

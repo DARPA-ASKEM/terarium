@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.resources.modelservice;
 
+import com.oracle.svm.core.annotate.Inject;
 import io.quarkus.security.Authenticated;
+import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.reactive.messaging.annotations.Broadcast;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -28,6 +30,9 @@ import java.util.UUID;
 @Tag(name = "Model Service REST Endpoint")
 public class ModelResource {
 
+	@Inject
+	SecurityIdentity securityIdentity;
+
 	@RestClient
 	ModelServiceProxy proxy;
 
@@ -42,8 +47,7 @@ public class ModelResource {
 		final Response response = proxy.createModel();
 		final Map model = response.readEntity(Map.class);
 		final UUID eventId = UUID.fromString(model.get("id").toString());
-		final UserEvent event = new UserEvent();
-		event.setId(eventId);
+		final UserEvent event = new UserEvent().setId(eventId);
 		userEventEmitter.send(event);
 		return Response.ok(Map.of("id", model.get("id").toString())).build();
 	}
