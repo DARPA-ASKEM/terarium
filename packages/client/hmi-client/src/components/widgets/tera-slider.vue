@@ -64,6 +64,10 @@ const sidePanelTabStyle = computed(
 </script>
 
 <style scoped>
+.slider {
+	z-index: 1;
+}
+
 .slider,
 .slider-content,
 .slider-tab {

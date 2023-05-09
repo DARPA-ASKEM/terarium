@@ -84,8 +84,13 @@
 				v-else-if="assetType === 'overview'"
 				:project="project"
 				@open-workflow="openWorkflow"
+				@vnode-mounted="setActiveTab"
 			/>
-			<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
+			<tera-simulation-workflow
+				v-else-if="assetType === 'workflow'"
+				:project="project"
+				@vnode-mounted="setActiveTab"
+			/>
 			<section v-else class="no-open-tabs">
 				<img src="@assets/svg/seed.svg" alt="Seed" />
 				<p>You can open resources from the resource panel.</p>
