@@ -6015,6 +6015,13 @@ cors@latest:
   languageName: node
   linkType: hard
 
+"event-source-polyfill@npm:1.0.31":
+  version: 1.0.31
+  resolution: "event-source-polyfill@npm:1.0.31"
+  checksum: 973f226404e2a1b14ed7ef15c718b89e213b41d7cfeeb1c10937fd09229f13904f3d7c3075ab28ccf858c213007559908eecdd577577330352f53a351383dd75
+  languageName: node
+  linkType: hard
+
 "event-stream@npm:3.3.4":
   version: 3.3.4
   resolution: "event-stream@npm:3.3.4"
@@ -7088,6 +7095,7 @@ cors@latest:
     d3: 7.6.1
     dagre: 0.8.5
     eslint-import-resolver-typescript: 3.5.5
+    event-source-polyfill: 1.0.31
     feather-icons: 4.29.0
     graph-scaffolder: "*"
     katex: 0.16.6
@@ -7103,6 +7111,7 @@ cors@latest:
     primevue: 3.25.0
     sass: 1.56.1
     typescript: 4.9.5
+    uuid: ^9.0.0
     vite: 3.2.5
     vite-svg-loader: 4.0.0
     vitest: 0.24.5
@@ -12075,6 +12084,15 @@ send@latest:
   bin:
     uuid: ./bin/uuid
   checksum: 58de2feed61c59060b40f8203c0e4ed7fd6f99d42534a499f1741218a1dd0c129f4aa1de797bcf822c8ea5da7e4137aa3673431a96dae729047f7aca7b27866f
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "uuid@npm:9.0.0"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 8dd2c83c43ddc7e1c71e36b60aea40030a6505139af6bee0f382ebcd1a56f6cd3028f7f06ffb07f8cf6ced320b76aea275284b224b002b289f89fe89c389b028
   languageName: node
   linkType: hard
 

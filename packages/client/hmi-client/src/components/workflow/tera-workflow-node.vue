@@ -1,46 +1,40 @@
 <template>
-	<section class="container" :style="nodeStyle" ref="workflowNode">
+	<main :style="nodeStyle" ref="workflowNode">
 		<header>
 			<h5>{{ node.operationType }}</h5>
+			<Button icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small" />
 		</header>
-		<section class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index" ref="inputRefs">
-				<div
-					class="port"
-					@click.stop="selectPort(input)"
-					@mouseover="(event) => mouseoverPort(event)"
-					@focus="() => {}"
-				></div>
+		<ul class="inputs">
+			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
+				<div class="port" @click.stop="selectPort(input)" @mouseover="(event) => mouseoverPort(event)"
+					@focus="() => { }"></div>
 				{{ input.label }}
 			</li>
+		</ul>
+		<section>
+			<slot name="body" />
 		</section>
-		<slot name="body" />
-		<section class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index" ref="outputRefs">
+		<ul class="outputs">
+			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
-				<div
-					class="port"
-					@click.stop="selectPort(output)"
-					@mouseover="(event) => mouseoverPort(event)"
-					@focus="() => {}"
-				></div>
+				<div class="port" @click.stop="selectPort(output)" @mouseover="(event) => mouseoverPort(event)"
+					@focus="() => { }"></div>
 			</li>
-		</section>
-	</section>
+		</ul>
+	</main>
 </template>
 
 <script setup lang="ts">
 import { Position, WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import Button from 'primevue/button';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
-
-const inputRefs = ref<HTMLElement>();
-const outputRefs = ref<HTMLElement>();
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -56,7 +50,6 @@ let tempY = 0;
 let dragStart = false;
 
 const startDrag = (evt: MouseEvent) => {
-	console.log('start', evt.x, evt.y);
 	tempX = evt.x;
 	tempY = evt.y;
 	dragStart = true;
@@ -74,8 +67,7 @@ const drag = (evt: MouseEvent) => {
 	tempY = evt.y;
 };
 
-const stopDrag = (evt: MouseEvent) => {
-	console.log('end', evt.x, evt.y);
+const stopDrag = (/* evt: MouseEvent */) => {
 	tempX = 0;
 	tempY = 0;
 	dragStart = false;
@@ -112,38 +104,61 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-section {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-	gap: 4px;
-}
-
-.container {
+main {
 	background-color: var(--surface-section);
-	border: 1px solid var(--surface-border-light);
+	outline: 1px solid var(--surface-border);
 	border-radius: var(--border-radius);
 	position: absolute;
-	padding: 0.5rem;
+	width: 20rem;
 	user-select: none;
 }
 
-.outputs {
-	align-items: end;
+header {
+	display: flex;
+	padding: 0.25rem 0.5rem;
+	justify-content: space-between;
+	align-items: center;
+	color: var(--gray-0);
+	background-color: var(--primary-color);
+	white-space: nowrap;
+	border-top-right-radius: var(--border-radius);
+	border-top-left-radius: var(--border-radius);
 }
 
-li {
+header .p-button.p-button-icon-only,
+header .p-button.p-button-text:enabled:hover {
+	color: var(--gray-0);
+}
+
+section {
+	margin: 0.5rem;
+}
+
+section,
+ul {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+	gap: 0.5rem;
+}
+
+ul {
+	margin: 0.5rem 0;
 	list-style: none;
 	font-size: var(--font-caption);
+}
+
+ul li {
 	display: flex;
+	gap: 0.5rem;
+	align-items: center;
 }
 
 .port {
 	display: inline-block;
 	height: 16px;
 	width: 8px;
-	border: 1px solid var(--surface-border);
-
+	border: 2px solid var(--surface-border);
 	position: relative;
 	background: var(--surface-100);
 }
@@ -153,17 +168,16 @@ li {
 }
 
 .inputs .port {
-	left: -8px;
 	border-radius: 0 8px 8px 0;
+	border-left: none;
 }
 
 .outputs .port {
-	left: 8px;
 	border-radius: 8px 0 0 8px;
+	border-right: none;
 }
 
-header {
-	padding: 4px;
-	white-space: nowrap;
+.outputs {
+	align-items: end;
 }
 </style>

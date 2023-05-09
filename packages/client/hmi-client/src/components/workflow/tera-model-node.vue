@@ -1,6 +1,6 @@
 <template>
 	<Dropdown
-		class="w-full md:w-14rem"
+		class="w-full"
 		v-model="selectedModel"
 		:options="models"
 		option-label="name"
@@ -89,10 +89,6 @@ watch(
 </script>
 
 <style scoped>
-h6 {
-	margin-top: 0.5rem;
-}
-
 ul {
 	list-style-type: none;
 	display: flex;
