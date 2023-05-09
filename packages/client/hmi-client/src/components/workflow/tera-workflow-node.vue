@@ -60,7 +60,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'show-node-drilldown']);
+const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
