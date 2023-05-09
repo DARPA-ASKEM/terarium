@@ -1,5 +1,5 @@
 <template>
-	<template v-if="assetId && (!isEmpty(tabs) || isPreview)">
+	<template v-if="assetId && (!isEmpty(tabs) || isDrilldown)">
 		<!--Investigate using component tag since props are similar-->
 		<tera-document
 			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
@@ -46,7 +46,7 @@
 		v-else-if="assetType === ProjectAssetTypes.MODELS"
 		:asset-id="newModelId"
 		:project="project"
-		@update-tab-name="emit('update-tab-name')"
+		@update-tab-name="updateTabName"
 		@create-new-model="createNewModel"
 		is-editable
 	/>
@@ -55,11 +55,7 @@
 		:project="project"
 		@open-workflow="openWorkflow"
 	/>
-	<tera-simulation-workflow
-		v-else-if="assetType === 'workflow'"
-		:project="project"
-		ref="workflowRef"
-	/>
+	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
 	<section v-else class="no-open-tabs">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
 		<p>You can open resources from the resource panel.</p>
@@ -76,7 +72,7 @@ import { PetriNet } from '@/petrinet/petrinet-service';
 import { useRouter } from 'vue-router';
 import useResourcesStore from '@/stores/resources';
 import { RouteName } from '@/router/routes';
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
@@ -88,27 +84,32 @@ import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 
-// openCode, update-tab-name, openOverview2
+// openCode, update-tab-name
 
 const props = defineProps<{
 	project: IProject;
+	newModelId: string;
 	assetId?: string;
 	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 	tabs?: Tab[];
-	newModelId: string;
+	activeTabIndex?: number;
 	code?: string;
-	isPreview?: boolean; // temp just to preview workflow node
+	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
 // open asset may not work
-const emit = defineEmits(['open-asset', 'asset-loaded', 'update:newModelId', 'update-tab-name']);
+const emit = defineEmits([
+	'update:newModelId',
+	'update:tabs',
+	'open-asset',
+	'asset-loaded',
+	'update-tab-name'
+]);
 
 const router = useRouter();
 const resources = useResourcesStore();
 
 const isNewModel = ref<boolean>(true);
-const workflowRef = ref();
-defineExpose({ workflowRef });
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
@@ -125,6 +126,15 @@ const openOverview = () => {
 		name: RouteName.ProjectRoute,
 		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
 	});
+};
+
+const updateTabName = (tabName: string) => {
+	const tabsClone = cloneDeep(props.tabs);
+	console.log(tabsClone);
+	if (tabsClone) {
+		tabsClone[props.activeTabIndex!].assetName = tabName;
+		emit('update:tabs', tabsClone);
+	}
 };
 
 // Create the new model

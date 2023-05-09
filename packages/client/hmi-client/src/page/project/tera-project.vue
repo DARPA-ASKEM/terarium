@@ -12,7 +12,6 @@
 					:tabs="tabs"
 					:active-tab="openedAssetRoute"
 					@open-asset="openAssetFromSidebar"
-					@open-overview="openOverview"
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
@@ -21,7 +20,7 @@
 			</template>
 		</tera-slider-panel>
 		<Splitter>
-			<SplitterPanel>
+			<SplitterPanel :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
 					:tabs="tabs"
@@ -35,12 +34,11 @@
 					:project="project"
 					:asset-id="assetId"
 					:asset-type="assetType"
-					:tabs="tabs"
-					:code="code"
+					v-model:tabs="tabs"
 					v-model:new-model-id="newModelId"
+					:code="code"
 					@asset-loaded="setActiveTab"
 					@open-asset="openAsset"
-					@update-tab-name="updateTabName"
 				/>
 				<!-- <template v-if="assetId && !isEmpty(tabs)">
 						<tera-document v-if="assetType === ProjectAssetTypes.DOCUMENTS" :xdd-uri="getXDDuri(assetId)"
@@ -68,18 +66,20 @@
 						<Button label="Open project overview" @click="openOverview" />
 					</section> -->
 			</SplitterPanel>
-			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode">
+			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
 				<Button label="Print chosen node" @click="printChosenNode" />
-				<!--asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???-->
+				<!--
+					for now just testing model component in drilldown
+					asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???
+				-->
 				<tera-tab-content
 					:project="project"
 					:asset-id="workflowNodeAssetId"
 					:asset-type="ProjectAssetTypes.MODELS"
-					is-preview
+					is-drilldown
 					v-model:new-model-id="newModelId"
 					@asset-loaded="setActiveTab"
 					@open-asset="openAsset"
-					@update-tab-name="updateTabName"
 				/>
 			</SplitterPanel>
 		</Splitter>
@@ -422,21 +422,15 @@ function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value!]) {
 	loadingTabIndex.value = tabs.value.length;
 }
 
-const openOverview = () => {
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
-	});
-};
-
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 }
 
-const updateTabName = (tabName) => {
-	tabs.value[activeTabIndex.value!].assetName = tabName;
-};
+// const updateTabName = (tabName: string) => {
+// 	console.log(tabName)
+// 	tabs.value[activeTabIndex.value!].assetName = tabName;
+// };
 
 /// //////
 // const getXDDuri = (assetId: Tab['assetId']): string =>
