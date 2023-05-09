@@ -87,3 +87,15 @@ export type Tab = {
 	assetId?: string;
 	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 };
+
+export enum AcceptedTypes {
+	PDF = 'application/pdf',
+	JPG = 'image/jpg',
+	JPEG = 'image/jpeg',
+	PNG = 'image/png'
+}
+
+export interface PDFExtractionResponseType {
+	text: string;
+	images: string[];
+}
