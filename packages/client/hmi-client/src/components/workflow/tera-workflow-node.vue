@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5>{{ node.operationType }}</h5>
+			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<Button
 				icon="pi pi-ellipsis-v"
 				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
@@ -200,6 +200,6 @@ ul li {
 }
 
 .port-connected {
-	background: #f80;
+	background: var(--surface-border);
 }
 </style>
