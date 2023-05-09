@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources;
 
-
 import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -32,9 +31,10 @@ public class DownloadResource {
 
 	/**
 	 * Normalizes a relative url fragment and a base url to a fully qualified Url
-	 * @param relativeUrl	the fragment
-	 * @param baseUrl			the base url
-	 * @return						a fully qualified url
+	 *
+	 * @param relativeUrl the fragment
+	 * @param baseUrl     the base url
+	 * @return a fully qualified url
 	 * @throws URISyntaxException
 	 */
 	private String normalizeRelativeUrl(final String relativeUrl, final String baseUrl) throws URISyntaxException {
@@ -44,15 +44,16 @@ public class DownloadResource {
 
 	/**
 	 * Gets a PDF file from a given url
-	 * @param url		the url location (that may contain redirects)
-	 * @return			the pdf file
+	 *
+	 * @param url the url location (that may contain redirects)
+	 * @return the pdf file
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
 	private byte[] getPDF(final String url) throws IOException, URISyntaxException {
 		CloseableHttpClient httpclient = HttpClients.custom()
-			.disableRedirectHandling()
-			.build();
+				.disableRedirectHandling()
+				.build();
 
 		final HttpGet get = new HttpGet(url);
 		final HttpResponse response = httpclient.execute(get);
@@ -66,7 +67,8 @@ public class DownloadResource {
 				return getPDF(redirect);
 			}
 		} else {
-			// We actually have a document, if it's an HTML page with the content, look for a link to the pdf itself and follow
+			// We actually have a document, if it's an HTML page with the content, look for
+			// a link to the pdf itself and follow
 			// it
 			final String contentType = response.getEntity().getContentType().getValue();
 			if (contentType.contains("html")) {
@@ -74,10 +76,10 @@ public class DownloadResource {
 				final Document document = Jsoup.parse(html);
 				final Elements links = document.select("a");
 				final String pdfUrl = links.stream()
-					.map(element -> element.attributes().get("href"))
-					.map(String::toLowerCase)
-					.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
-					.findFirst().orElse(null);
+						.map(element -> element.attributes().get("href"))
+						.map(String::toLowerCase)
+						.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
+						.findFirst().orElse(null);
 
 				if (pdfUrl == null) {
 					return null;
@@ -94,15 +96,82 @@ public class DownloadResource {
 		return IOUtils.toByteArray(response.getEntity().getContent());
 	}
 
+	/**
+	 * Gets a PDF file from a given url
+	 *
+	 * @param url the url location (that may contain redirects)
+	 * @return the pdf file
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	private String getPDFURL(final String url) throws IOException, URISyntaxException {
+		CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build();
+
+		final HttpGet get = new HttpGet(url);
+		final HttpResponse response = httpclient.execute(get);
+
+		// Follow redirects until we actually get a document
+		if (response.getStatusLine().getStatusCode() >= 300 && response.getStatusLine().getStatusCode() <= 310) {
+			final String redirect = response.getFirstHeader("Location").getValue();
+			if (!redirect.startsWith("http")) {
+				return getPDFURL(normalizeRelativeUrl(redirect, url));
+			} else {
+				return getPDFURL(redirect);
+			}
+		} else {
+			// We actually have a document, if it's an HTML page with the content, look for
+			// a link to the pdf itself and follow
+			// it
+			final String contentType = response.getEntity().getContentType().getValue();
+			if (contentType.contains("html")) {
+				final String html = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+				final Document document = Jsoup.parse(html);
+				final Elements links = document.select("a");
+				final String pdfUrl = links.stream()
+						.map(element -> element.attributes().get("href"))
+						.map(String::toLowerCase)
+						.filter(extractedUrl -> extractedUrl.endsWith(".pdf"))
+						.findFirst().orElse(null);
+
+				if (pdfUrl == null) {
+					return null;
+				}
+
+				if (!pdfUrl.startsWith("http")) {
+					final URI uri = new URI(url);
+					return getPDFURL(uri.getScheme() + "://" + uri.getHost() + pdfUrl);
+				} else {
+					return getPDFURL(pdfUrl);
+				}
+			}
+		}
+		return url;
+	}
+
 	@GET
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response get(@QueryParam("doi") final String doi) throws IOException, URISyntaxException {
-
 		final byte[] pdfBytes = getPDF("https://unpaywall.org/" + doi);
-		return Response.ok(pdfBytes)
-				.header("Content-Length", pdfBytes.length)
-				.build();
+		if (pdfBytes != null) {
+			return Response.ok(pdfBytes)
+					.header("Content-Length", pdfBytes.length)
+					.build();
+		} else {
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
 	}
+
+	@GET
+	@Path("/url")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getURL(@QueryParam("url") final String url) throws IOException, URISyntaxException {
+		final String pdfLink = getPDFURL("https://unpaywall.org/" + url);
+		if (pdfLink != null) {
+			return pdfLink;
+		}
+		return "";
+	}
+
 }
-
-
