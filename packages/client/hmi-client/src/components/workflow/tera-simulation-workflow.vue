@@ -290,10 +290,3 @@ onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 });
 </script>
-
-<style scoped>
-.node-preview {
-	margin-top: -3.2rem;
-	margin-left: calc(70% - 100px);
-}
-</style>
