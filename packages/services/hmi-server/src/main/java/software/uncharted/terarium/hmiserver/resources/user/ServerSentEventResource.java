@@ -1,13 +1,15 @@
 package software.uncharted.terarium.hmiserver.resources.user;
 
 
-import com.oracle.svm.core.annotate.Inject;
+import javax.inject.Inject;
 import io.quarkus.security.Authenticated;
+import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
+import software.uncharted.terarium.hmiserver.models.user.User;
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 import software.uncharted.terarium.hmiserver.services.UserEventService;
 
