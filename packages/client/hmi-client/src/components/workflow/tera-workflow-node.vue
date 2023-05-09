@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5>{{ node.operationType }}</h5>
+			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<span>
 				<Button
 					icon="pi pi-ellipsis-v"
@@ -15,7 +15,11 @@
 			</span>
 		</header>
 		<ul class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
+			<li
+				v-for="(input, index) in node.inputs"
+				:key="index"
+				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+			>
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
@@ -29,7 +33,11 @@
 			<slot name="body" />
 		</section>
 		<ul class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
+			<li
+				v-for="(output, index) in node.outputs"
+				:key="index"
+				:class="output.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+			>
 				{{ output.label }}
 				<div
 					class="port"
@@ -43,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPort } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
@@ -203,5 +211,9 @@ ul li {
 
 .outputs {
 	align-items: end;
+}
+
+.port-connected {
+	background: var(--surface-border);
 }
 </style>
