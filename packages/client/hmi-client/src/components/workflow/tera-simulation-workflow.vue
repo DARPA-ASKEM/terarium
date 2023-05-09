@@ -31,6 +31,7 @@
 						:datasets="datasets"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
+					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
 					</div>
@@ -94,8 +95,10 @@ import {
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
+import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
 import Button from 'primevue/button';
@@ -176,6 +179,12 @@ const contextMenuItems = ref([
 		label: 'New dataset',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition.value);
+		}
+	},
+	{
+		label: 'New Simulation',
+		command: () => {
+			workflowService.addNode(wf.value, SimulateOperation, newNodePosition.value);
 		}
 	}
 ]);
