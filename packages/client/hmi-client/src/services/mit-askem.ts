@@ -5,7 +5,7 @@ export async function codeToAcset(code: string) {
 	return response.data ?? null;
 }
 
-export async function findVarsFromText(text: string) {
+export async function findVarsFromText(text: string): Promise<FindVarsFromTextResponseType | null> {
 	const id = await API.post(`/code/annotation/find-text-vars`, text);
 	const poller = new Poller<object>()
 		.setInterval(2000)
@@ -26,10 +26,29 @@ export async function findVarsFromText(text: string) {
 			};
 		});
 	const metadata = await poller.start();
-	return metadata.data;
+	if (metadata.data === null) {
+		return null;
+	}
+	return metadata.data as FindVarsFromTextResponseType;
 }
 
 export async function getlinkedAnnotations(data) {
 	const response = await API.post(`/code/annotation/link-annos-to-pyacset`, data);
 	return response.data ?? null;
+}
+
+// Sample return
+// {
+// 	'type': 'variable',
+// 		'name': 'S',
+// 			'id': 'v0',
+// 				'text_annotations': [' Susceptible (uninfected)'],
+// 					'dkg_annotations': [['ncit:C171133', 'COVID-19 Infection'],
+// 					['ido:0000514', 'susceptible population']]
+// }
+export interface FindVarsFromTextResponseType {
+	name: string;
+	id: string;
+	text_annotations: string[];
+	dkg_annotations: [string, string][];
 }

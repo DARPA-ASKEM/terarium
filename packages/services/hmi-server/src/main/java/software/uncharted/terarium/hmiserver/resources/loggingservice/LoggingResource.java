@@ -23,18 +23,16 @@ import javax.ws.rs.Produces;
 @Authenticated
 public class LoggingResource {
 
-  @Inject
-  SecurityIdentity securityIdentity;
+	@Inject
+	SecurityIdentity securityIdentity;
 
-  @Inject
-  private LoggingService loggingService;
-
-  @POST
-  @Path("/logs")
-  public Response echoLogs(LoggingService logData) {
-    for (LogMessage log : logData.getLogs()) {
-      loggingService.logMessage(log, securityIdentity.getPrincipal().getName());
-    }
-    return Response.ok().build();
-  }
+	@POST
+	@Path("/logs")
+	public Response echoLogs(LoggingService logData) {
+		for (LogMessage log : logData.getLogs()) {
+			logData.logMessage(log, securityIdentity.getPrincipal().getName());
+		}
+		return Response.ok().build();
+	}
 }
+
