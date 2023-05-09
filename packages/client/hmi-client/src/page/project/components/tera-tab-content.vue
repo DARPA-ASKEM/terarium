@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import * as ProjectService from '@/services/project';
 import { createModel, addModelToProject } from '@/services/model';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
@@ -88,7 +88,6 @@ import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workfl
 
 const props = defineProps<{
 	project: IProject;
-	newModelId: string;
 	assetId?: string;
 	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 	tabs?: Tab[];
@@ -98,18 +97,12 @@ const props = defineProps<{
 }>();
 
 // open asset may not work
-const emit = defineEmits([
-	'update:newModelId',
-	'update:tabs',
-	'open-asset',
-	'asset-loaded',
-	'update-tab-name'
-]);
+const emit = defineEmits(['update:tabs', 'open-asset', 'asset-loaded', 'update-tab-name']);
 
 const router = useRouter();
 const resources = useResourcesStore();
 
-const isNewModel = ref<boolean>(true);
+const newModelId = ref<string>('');
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
@@ -141,9 +134,8 @@ const updateTabName = (tabName: string) => {
 const createNewModel = async (newModel: PetriNet) => {
 	const newModelResp = await createModel(newModel);
 	if (newModelResp) {
-		emit('update:newModelId', newModelResp.id.toString());
-		await addModelToProject(props.project.id, props.newModelId, resources);
-		isNewModel.value = false;
+		newModelId.value = newModelResp.id.toString();
+		await addModelToProject(props.project.id, newModelId.value, resources);
 	}
 };
 
@@ -163,4 +155,11 @@ async function openNewModelFromCode(modelId: string, modelName: string) {
 		}
 	});
 }
+
+watch(
+	() => props.assetId,
+	() => {
+		newModelId.value = '';
+	}
+);
 </script>

@@ -15,7 +15,6 @@
 					@close-tab="removeClosedTab"
 					@click="getAndPopulateAnnotations()"
 					@remove-asset="removeAsset"
-					@create-asset="createAsset"
 				/>
 			</template>
 		</tera-slider-panel>
@@ -35,7 +34,6 @@
 					:asset-id="assetId"
 					:asset-type="assetType"
 					v-model:tabs="tabs"
-					v-model:new-model-id="newModelId"
 					:code="code"
 					@asset-loaded="setActiveTab"
 					@open-asset="openAsset"
@@ -77,7 +75,6 @@
 					:asset-id="workflowNodeAssetId"
 					:asset-type="ProjectAssetTypes.MODELS"
 					is-drilldown
-					v-model:new-model-id="newModelId"
 					@asset-loaded="setActiveTab"
 					@open-asset="openAsset"
 				/>
@@ -291,9 +288,8 @@ function printChosenNode() {
 
 const router = useRouter();
 
-const newModelId = ref<string>('');
+// const newModelId = ref<string>('');
 // const resources = useResourcesStore();
-// const isNewModel = ref<boolean>(true);
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -467,11 +463,11 @@ function removeClosedTab(tabIndexToRemove: number) {
 // }
 /// ////
 
-// create the new Asset
-async function createAsset(asset: Tab) {
-	newModelId.value = '';
-	router.push({ name: RouteName.ProjectRoute, params: asset });
-}
+// // create the new Asset
+// async function createAsset(asset: Tab) {
+// 	newModelId.value = '';
+// 	router.push({ name: RouteName.ProjectRoute, params: asset });
+// }
 
 async function removeAsset(asset: Tab) {
 	const { assetName, assetId, assetType } = asset;

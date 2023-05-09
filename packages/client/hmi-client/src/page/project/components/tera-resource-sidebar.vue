@@ -25,7 +25,7 @@
 				v-tooltip="`Create model from Equation`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
-					emit('create-asset', {
+					emit('open-asset', {
 						assetName: 'New Model',
 						assetType: ProjectAssetTypes.MODELS,
 						assetId: undefined
@@ -122,13 +122,7 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits([
-	'open-asset',
-	'open-overview',
-	'remove-asset',
-	'close-tab',
-	'create-asset'
-]);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
 const isRemovalModal = ref(false);
 
