@@ -175,20 +175,19 @@ public class DatasetResource {
 	}
 
 	@GET
-	@Path("/{id}/download/rawfile")
+	@Path("/{id}/files")
 	public Response getCsv(
 		@PathParam("id") final String id,
 		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("false") @QueryParam("data_annotation_flag") final Boolean dataAnnotationFlag,
 		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit,
 		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
-		
+
 		log.debug("Getting CSV content");
 		Response returnResponse;
-		String rawCsvString; 
+		String rawCsvString;
 		try {
-			returnResponse = proxy.getCsv(id, wideFormat, dataAnnotationFlag, rowLimit);
+			returnResponse = proxy.getCsv(id, wideFormat, rowLimit);
 			rawCsvString = returnResponse.readEntity(String.class);
 			if (rawCsvString.length() == 0){
 				log.debug("No CSV assosiated with this ID");
@@ -204,28 +203,28 @@ public class DatasetResource {
 				.build();
 		}
 
-		
+
 		List<List<String>> csv = csvToRecords(rawCsvString);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<CsvColumnStats>();
-		if (binCount > 0){ 
+		if (binCount > 0){
 			for (int i = 0; i < csv.get(0).size(); i++){
 				List<String> column = getColumn(csv,i);
 				CsvColumnStats.add(getStats(column.subList(1,column.size()), binCount)); //remove first as it is header:
 			}
 		}
-		
+
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)
 			.entity(csvAsset)
 			.type(MediaType.APPLICATION_JSON)
 			.build();
-		
+
 	}
 
 	@POST
-	@Path("/{id}/upload/file")
+	@Path("/{id}/files")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	public Response uploadFile(
 		@PathParam("id") final String id,
@@ -234,7 +233,7 @@ public class DatasetResource {
 	) {
 		return proxy.uploadFile(id, filename, file);
 	}
-	
+
 	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
 	// warning this is not sufficient for the long term. Should likely use a library for this conversion formatting may break this.
 	private List<List<String>> csvToRecords(String rawCsvString){
@@ -246,7 +245,7 @@ public class DatasetResource {
 		}
 		return csv;
 	}
-	
+
 	private List<String> getColumn(List<List<String>> maxtrix, int columnNumber){
 		List<String> column = new ArrayList<>();
 		for(int i = 0 ; i < maxtrix.size(); i++){
@@ -262,7 +261,7 @@ public class DatasetResource {
 			// set up row as numbers. may fail here.
 			// List<Integer> numberList = aCol.stream().map(String s -> Integer.parseInt(s.trim()));
 			List<Double> numberList = aCol.stream().map(Double::valueOf).collect(Collectors.toList());
-			Collections.sort(numberList); 
+			Collections.sort(numberList);
 			double minValue = numberList.get(0);
 			double maxValue = numberList.get(numberList.size() - 1);
 			double meanValue = Stats.meanOf(numberList);
@@ -272,21 +271,21 @@ public class DatasetResource {
 			//Set up bins
 			for (int i = 0; i < binCount; i++){
 				bins.add(0);
-			}	
+			}
 			double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
-			
+
 			// Fill bins:
 			for (int i = 0; i < numberList.size(); i++){
 				Integer index = (int)Math.abs(Math.floor((numberList.get(i) - numberList.get(0)) / stepSize));
 				Integer value = bins.get(index);
 				bins.set(index,value + 1);
 			}
-			
+
 			return new CsvColumnStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
-		
+
 		}catch(Exception e){
 			//Cannot convert column to double, just return empty list.
 			return new CsvColumnStats(bins,0,0,0,0,0);
-		}	
+		}
 	}
 }

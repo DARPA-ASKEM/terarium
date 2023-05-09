@@ -121,16 +121,15 @@ public interface DatasetProxy {
 	);
 
 	@GET
-	@Path("/{id}/download/rawfile")
+	@Path("/{id}/files")
 	Response getCsv(
 		@PathParam("id") String id,
 		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("false") @QueryParam("data_annotation_flag") Boolean dataAnnotationFlag,
 		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
 	);
 
 	@POST
-	@Path("/{id}/upload/file")
+	@Path("/{id}/files")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	Response uploadFile(
 		@PathParam("id") String id,

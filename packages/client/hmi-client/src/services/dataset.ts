@@ -54,7 +54,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
  */
 async function downloadRawFile(datasetId: string, binCount?: number): Promise<CsvAsset | null> {
 	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
-	let URL = `/datasets/${datasetId}/download/rawfile?wide_format=true&data_annotation_flag=false&row_limit=50`;
+	let URL = `/datasets/${datasetId}/files?wide_format=true&row_limit=50`;
 	if (binCount) URL += `&binCount=${binCount}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
