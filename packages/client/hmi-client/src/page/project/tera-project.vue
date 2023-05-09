@@ -272,11 +272,17 @@ const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
 
-// workflow node
+// Makes asset from workflow node appear
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 const workflowNodeAssetId = computed(() => {
-	console.log(openedWorkflowNodeStore?.workflowNode?.outputs);
-	return openedWorkflowNodeStore?.workflowNode?.outputs[0].value.model.id.toString() ?? undefined;
+	let index: number = 0;
+
+	if (openedWorkflowNodeStore?.workflowNode?.outputs.length) {
+		index = openedWorkflowNodeStore.workflowNode.outputs.length - 2;
+	}
+	return (
+		openedWorkflowNodeStore?.workflowNode?.outputs[index].value.model.id.toString() ?? undefined
+	);
 });
 
 function printChosenNode() {

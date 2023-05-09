@@ -164,8 +164,6 @@ main > * {
 
 .background-layer {
 	cursor: grab;
-	width: 100%;
-	height: 100%;
 }
 
 .background-layer:deep(.tick line) {
