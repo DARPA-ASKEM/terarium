@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 
+import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -21,6 +22,7 @@ import javax.ws.rs.core.Response;
 @Tag(name = "Dictionaries REST Endpoint")
 @Path("/api")
 @Slf4j
+@Authenticated
 public class DictionariesResource {
 
 	@RestClient

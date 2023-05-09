@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
+import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -24,6 +25,7 @@ import java.util.regex.Pattern;
 @Tag(name = "Document Extraction REST Endpoint")
 @Path("/api/document/extractions")
 @Slf4j
+@Authenticated
 public class ExtractionResource {
 
 
