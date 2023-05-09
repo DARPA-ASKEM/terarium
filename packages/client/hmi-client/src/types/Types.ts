@@ -151,6 +151,7 @@ export interface XDDUrlExtraction {
 
 export enum EventType {
     Search = "SEARCH",
+    Model = "MODEL",
 }
 
 export enum ProvenanceType {
