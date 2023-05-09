@@ -33,18 +33,18 @@ API.interceptors.response.use(
 		const status = error.response.status;
 		switch (status) {
 			case 500:
-				logger.error(msg, {
+				logger.error(msg.toString(), {
 					showToast: false,
 					toastTitle: `${ToastSummaries.SERVICE_UNAVAILABLE} (${status})`
 				});
 				break;
 			default:
-				logger.error(msg, {
+				logger.error(msg.toString(), {
 					showToast: false,
 					toastTitle: `${ToastSummaries.NETWORK_ERROR} (${status})`
 				});
 		}
-		return null; // return null
+		return null;
 	}
 );
 
