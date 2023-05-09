@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources;
 
-import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -18,7 +17,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 @Path("/api/events")
-
 @Tag(name = "Events REST Endpoints")
 @Slf4j
 public class EventResource {

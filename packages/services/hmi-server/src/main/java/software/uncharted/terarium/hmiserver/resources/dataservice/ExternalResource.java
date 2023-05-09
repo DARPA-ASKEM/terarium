@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -16,7 +15,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/external")
-
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "External REST Endpoints")
 public class ExternalResource {

@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -14,7 +12,6 @@ import javax.ws.rs.core.Response;
 import java.time.Instant;
 
 @Path("/api/annotations")
-
 @Tag(name = "User Annotation REST Endpoints")
 @Slf4j
 public class AnnotationResource {

@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.modelservice;
 
-import io.quarkus.security.Authenticated;
 import io.smallrye.reactive.messaging.annotations.Broadcast;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -22,7 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 
 @Path("/api/model-service/models")
-
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model Service REST Endpoint")

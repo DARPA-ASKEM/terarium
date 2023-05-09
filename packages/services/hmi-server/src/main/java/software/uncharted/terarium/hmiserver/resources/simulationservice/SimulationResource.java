@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.simulationservice;
 
-import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
@@ -15,7 +14,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/simulation")
-
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation Service REST Endpoint")

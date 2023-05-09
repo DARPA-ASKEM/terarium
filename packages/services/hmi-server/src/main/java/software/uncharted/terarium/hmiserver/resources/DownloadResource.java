@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources;
 
-import io.quarkus.security.Authenticated;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -24,7 +23,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 @Path("/api/download")
-
 @Tag(name = "PDF Download REST Endpoints")
 @Slf4j
 public class DownloadResource {

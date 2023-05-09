@@ -6,8 +6,6 @@ import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServicePr
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import io.quarkus.security.Authenticated;
-import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -18,7 +16,6 @@ import javax.ws.rs.core.Response;
 
 
 @Path("/api/transforms")
-
 @Slf4j
 public class TransformResource {
 	@Inject

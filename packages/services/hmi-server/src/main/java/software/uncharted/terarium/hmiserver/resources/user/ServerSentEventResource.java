@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.resources.user;
 
 
 import com.oracle.svm.core.annotate.Inject;
-import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.mutiny.Multi;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
@@ -19,7 +18,6 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/api/user/")
 @ApplicationScoped
-
 @Tag(name = "Server Sent Events Endpoints")
 public class ServerSentEventResource {
 

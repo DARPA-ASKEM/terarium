@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.code;
 
-import io.quarkus.security.Authenticated;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -22,7 +21,6 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Path("/api/code")
-
 @Tag(name = "Code REST Endpoint")
 @Produces(MediaType.APPLICATION_JSON)
 public class CodeResource {
