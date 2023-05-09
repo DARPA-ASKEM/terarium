@@ -85,8 +85,6 @@ import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 
-// update - tab - name
-
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
@@ -96,8 +94,7 @@ const props = defineProps<{
 	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
-// open asset may not work
-const emit = defineEmits(['update:tabs', 'open-asset', 'asset-loaded', 'update-tab-name']);
+const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name']);
 
 const router = useRouter();
 const resources = useResourcesStore();
@@ -129,9 +126,10 @@ function openCode(assetToOpen: Tab, newCode?: string) {
 	});
 }
 
+// Just preserving this as this didn't even work when it was in tera-project.vue - same error occurs on staging
+// I think this is meant to make the tab name and the model name to be the same as you're editing it which isn't important/necessary
 const updateTabName = (tabName: string) => {
 	const tabsClone = cloneDeep(props.tabs);
-	console.log(tabsClone);
 	if (tabsClone) {
 		tabsClone[props.activeTabIndex!].assetName = tabName;
 		emit('update:tabs', tabsClone);

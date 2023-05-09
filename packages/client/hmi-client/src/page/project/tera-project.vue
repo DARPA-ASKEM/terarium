@@ -35,7 +35,6 @@
 					:asset-type="assetType"
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
-					@open-asset="openAsset"
 				/>
 			</SplitterPanel>
 			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
@@ -50,7 +49,6 @@
 					:asset-type="ProjectAssetTypes.MODELS"
 					is-drilldown
 					@asset-loaded="setActiveTab"
-					@open-asset="openAsset"
 				/>
 			</SplitterPanel>
 		</Splitter>
