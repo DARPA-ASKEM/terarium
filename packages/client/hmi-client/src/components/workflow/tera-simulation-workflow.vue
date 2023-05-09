@@ -1,7 +1,7 @@
 <template>
 	<tera-infinite-canvas
 		debug-mode
-		@click.stop="onCanvasClick()"
+		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
 	>
@@ -53,11 +53,12 @@
 				markerHeight="20"
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
-				><path
+			>
+				<path
 					d="M 0 -4.875 L 7.5 0 L 0 4.875"
 					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
-				></path
-			></marker>
+				></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
