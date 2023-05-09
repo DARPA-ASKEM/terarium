@@ -8,7 +8,6 @@ import software.uncharted.terarium.hmiserver.models.EventType;
 import software.uncharted.terarium.hmiserver.models.modelservice.Graph;
 import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositionParams;
 import software.uncharted.terarium.hmiserver.models.modelservice.SimulateParams;
-import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 import software.uncharted.terarium.hmiserver.proxies.modelservice.ModelServiceProxy;
 import software.uncharted.terarium.hmiserver.services.UserEventService;
 
@@ -16,7 +15,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
-import java.util.UUID;
 
 @Path("/api/model-service/models")
 @Authenticated
@@ -30,6 +28,9 @@ public class ModelResource {
 
 	@Inject
 	private UserEventService userEventService;
+	public ModelResource(UserEventService userEventService) {
+		this.userEventService = userEventService;
+	}
 
 	@PUT
 	@Produces(MediaType.APPLICATION_JSON)
