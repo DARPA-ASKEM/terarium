@@ -42,9 +42,9 @@ let runResults = {};
 
 // data for rendering ui
 let stateVariablesList = [] as any[];
-const selectedVariable = ref(null as null | any);
+const selectedVariable = ref<{ code: string }[]>([]);
 let runList = [] as any[];
-const selectedRun = ref(null as null | any);
+const selectedRun = ref<null | { code: string }>(null);
 
 const chartData = ref({});
 const chartOptions = {
@@ -85,7 +85,7 @@ watch(
 			inputList.map(({ value }) =>
 				makeForecast({
 					model: value.model.id,
-					initials: value.initalValues,
+					initials: value.initialValues,
 					params: value.parameterValues,
 					tspan: [0.0, 90.0] // hardcoded timespan
 				})
