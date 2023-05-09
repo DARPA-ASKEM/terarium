@@ -19,16 +19,12 @@ public class UserEvent {
 	SecurityIdentity securityIdentity;
 
 	private EventType type;
-	private User user = new User(securityIdentity);
+	private User user;
 	private UUID id;
-	private JsonNode message;
+	private String message;
 
 	@Override
 	public String toString() {
-		return "{type='" + type + "', id='" + id + "', message=" + message.toString() + "}";
-	}
-	
-	public boolean isCurrentUser(final SecurityIdentity identity) {
-		return this.user.equals(new User(identity));
+		return "{type='" + type + "', id='" + id + "', message=" + message + "}";
 	}
 }

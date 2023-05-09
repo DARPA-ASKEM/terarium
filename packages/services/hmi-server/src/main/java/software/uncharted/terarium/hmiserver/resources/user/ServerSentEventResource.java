@@ -11,6 +11,7 @@ import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
 import software.uncharted.terarium.hmiserver.models.user.User;
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
+import software.uncharted.terarium.hmiserver.services.UserEventService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
@@ -28,7 +29,10 @@ public class ServerSentEventResource {
 	SecurityIdentity securityIdentity;
 
 	@Inject
-	@Channel("user-event") Publisher<UserEvent> userEvents;
+	private UserEventService userEventService;
+
+	@Inject
+	@Channel("user-event") Publisher<UserEvent> events;
 
 	/**
 	 * Gets all user events
@@ -38,7 +42,7 @@ public class ServerSentEventResource {
 	@Produces(MediaType.SERVER_SENT_EVENTS)
 	@SseElementType(MediaType.APPLICATION_JSON)
 	public Publisher<UserEvent> stream() {
-		return Multi.createFrom().publisher(userEvents)
-			.select().where(userEvent -> userEvent.isCurrentUser(securityIdentity));
+		return Multi.createFrom().publisher(events)
+			.select().where(event -> userEventService.isCurrentUser(event));
 	}
 }
