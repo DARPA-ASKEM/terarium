@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.oracle.svm.core.annotate.Inject;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.smallrye.reactive.messaging.annotations.Broadcast;
 import org.eclipse.microprofile.reactive.messaging.Channel;
@@ -11,6 +9,7 @@ import software.uncharted.terarium.hmiserver.models.user.User;
 import software.uncharted.terarium.hmiserver.models.user.UserEvent;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.UUID;
 
 @ApplicationScoped

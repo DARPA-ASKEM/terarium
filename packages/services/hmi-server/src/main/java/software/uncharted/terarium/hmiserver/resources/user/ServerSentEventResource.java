@@ -27,10 +27,7 @@ public class ServerSentEventResource {
 	@Channel("user-event") Publisher<UserEvent> events;
 
 	@Inject
-	private UserEventService userEventService;
-	public ServerSentEventResource(UserEventService userEventService) {
-		this.userEventService = userEventService;
-	}
+	UserEventService userEventService;
 
 	/**
 	 * Gets all user events

@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.modelservice;
 
-import com.oracle.svm.core.annotate.Inject;
+import javax.inject.Inject;
 import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -27,10 +27,7 @@ public class ModelResource {
 	ModelServiceProxy proxy;
 
 	@Inject
-	private UserEventService userEventService;
-	public ModelResource(UserEventService userEventService) {
-		this.userEventService = userEventService;
-	}
+	UserEventService userEventService;
 
 	@PUT
 	@Produces(MediaType.APPLICATION_JSON)
