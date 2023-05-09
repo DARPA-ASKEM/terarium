@@ -29,7 +29,7 @@ import java.util.*;
 
 
 @Path("/api/home")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Home Screen End Points")
 @Slf4j
@@ -75,7 +75,7 @@ public class HomeResource {
 			.stream()
 			.filter(Project::getActive)
 			.toList();
-		
+
 		//Get project's related documents and add them to the project.
 		//Currently related documents is really stupid. It just grabs the first publication in the project and will get related documents of that publication.
 		//TODO: Make this smarter than grabbing first publication and then its related

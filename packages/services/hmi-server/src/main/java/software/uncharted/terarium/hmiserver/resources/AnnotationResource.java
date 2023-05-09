@@ -14,7 +14,7 @@ import javax.ws.rs.core.Response;
 import java.time.Instant;
 
 @Path("/api/annotations")
-@Authenticated
+
 @Tag(name = "User Annotation REST Endpoints")
 @Slf4j
 public class AnnotationResource {

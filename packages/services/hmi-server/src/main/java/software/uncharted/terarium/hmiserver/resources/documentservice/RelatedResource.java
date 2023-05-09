@@ -20,7 +20,7 @@ import javax.ws.rs.core.Response;
 @Tag(name = "Related documents / words REST Endpoint")
 @Path("/api/document/related")
 @Slf4j
-@Authenticated
+
 public class RelatedResource {
 
 	@RestClient

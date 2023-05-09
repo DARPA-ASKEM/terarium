@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
 @Path("/api/models")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")

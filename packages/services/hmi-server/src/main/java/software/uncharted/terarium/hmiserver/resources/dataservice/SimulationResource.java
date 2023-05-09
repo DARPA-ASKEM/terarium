@@ -15,7 +15,7 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Path("/api/simulations")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation REST Endpoints")
 public class SimulationResource {

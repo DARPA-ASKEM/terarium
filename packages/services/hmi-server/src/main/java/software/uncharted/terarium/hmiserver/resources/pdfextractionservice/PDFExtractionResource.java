@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 
 @Path("/api/extract")
 @Slf4j
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public class PDFExtractionResource {

@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 import java.util.*;
 
 @Path("/api/projects")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Project REST Endpoints")
 public class ProjectResource {

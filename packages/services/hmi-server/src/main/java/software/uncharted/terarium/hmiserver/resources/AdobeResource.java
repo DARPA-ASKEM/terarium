@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 @Path("/api/adobe")
-@Authenticated
+
 @Tag(name = "Adobe REST Endpoints")
 @Slf4j
 public class AdobeResource {

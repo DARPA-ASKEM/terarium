@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Path("/api/model-service/models")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model Service REST Endpoint")

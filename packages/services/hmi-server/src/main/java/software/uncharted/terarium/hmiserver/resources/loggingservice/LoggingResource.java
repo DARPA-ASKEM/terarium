@@ -20,7 +20,7 @@ import javax.ws.rs.Produces;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Authenticated
+
 public class LoggingResource {
 
 	@Inject

@@ -19,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/api/user/")
 @ApplicationScoped
-@Authenticated
+
 @Tag(name = "Server Sent Events Endpoints")
 public class ServerSentEventResource {
 

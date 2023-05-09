@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Path("/api/code")
-@Authenticated
+
 @Tag(name = "Code REST Endpoint")
 @Produces(MediaType.APPLICATION_JSON)
 public class CodeResource {

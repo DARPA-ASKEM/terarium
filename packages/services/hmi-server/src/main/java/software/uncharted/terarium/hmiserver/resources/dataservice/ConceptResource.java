@@ -19,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/concepts")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Concept REST Endpoints")
 @RegisterProvider(HmiResponseExceptionMapper.class)

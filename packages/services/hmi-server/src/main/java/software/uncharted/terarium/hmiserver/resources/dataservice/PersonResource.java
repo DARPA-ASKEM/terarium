@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/persons")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Person REST Endpoints")
 public class PersonResource {

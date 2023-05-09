@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response;
 @Tag(name = "Dictionaries REST Endpoint")
 @Path("/api")
 @Slf4j
-@Authenticated
+
 public class DictionariesResource {
 
 	@RestClient

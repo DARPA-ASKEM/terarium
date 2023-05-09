@@ -21,7 +21,7 @@ import javax.ws.rs.core.Response;
 @Tag(name = "Documents REST Endpoint")
 @Path("/api")
 @Slf4j
-@Authenticated
+
 public class DocumentResource {
 
 	@RestClient

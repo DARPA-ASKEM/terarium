@@ -24,7 +24,7 @@ import javax.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Sets REST Endpoint")
 @Slf4j
-@Authenticated
+
 public class SetResource {
 
 	@RestClient

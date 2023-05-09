@@ -16,7 +16,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/external")
-@Authenticated
+
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "External REST Endpoints")
 public class ExternalResource {

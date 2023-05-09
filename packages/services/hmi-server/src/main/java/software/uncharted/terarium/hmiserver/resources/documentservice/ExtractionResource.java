@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @Tag(name = "Document Extraction REST Endpoint")
 @Path("/api/document/extractions")
 @Slf4j
-@Authenticated
+
 public class ExtractionResource {
 
 

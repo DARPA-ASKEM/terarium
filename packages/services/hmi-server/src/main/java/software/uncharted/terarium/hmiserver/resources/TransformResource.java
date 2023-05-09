@@ -18,7 +18,7 @@ import javax.ws.rs.core.Response;
 
 
 @Path("/api/transforms")
-@Authenticated
+
 @Slf4j
 public class TransformResource {
 	@Inject
