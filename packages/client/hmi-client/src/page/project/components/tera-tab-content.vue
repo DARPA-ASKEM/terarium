@@ -1,5 +1,5 @@
 <template>
-	<template v-if="assetId && !isEmpty(tabs)">
+	<template v-if="assetId && (!isEmpty(tabs) || isPreview)">
 		<!--Investigate using component tag since props are similar-->
 		<tera-document
 			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
@@ -7,7 +7,7 @@
 			:previewLineLimit="10"
 			:project="project"
 			is-editable
-			@open-asset="emit('open-asset')"
+			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-model
@@ -88,6 +88,8 @@ import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 
+// openCode, update-tab-name, openOverview2
+
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
@@ -95,6 +97,7 @@ const props = defineProps<{
 	tabs?: Tab[];
 	newModelId: string;
 	code?: string;
+	isPreview?: boolean; // temp just to preview workflow node
 }>();
 
 // open asset may not work
@@ -133,6 +136,10 @@ const createNewModel = async (newModel: PetriNet) => {
 		isNewModel.value = false;
 	}
 };
+
+function openCode(assetToOpen: Tab, newCode?: string) {
+	emit('open-asset', assetToOpen, newCode);
+}
 
 async function openNewModelFromCode(modelId: string, modelName: string) {
 	await addModelToProject(props.project.id, modelId, resources);

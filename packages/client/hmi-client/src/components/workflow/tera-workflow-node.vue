@@ -2,11 +2,17 @@
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
 			<h5>{{ node.operationType }}</h5>
-			<Button
-				@click="emit('show-node-drilldown', node)"
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-			/>
+			<span>
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+				<Button
+					@click="showNodeDrilldown"
+					icon="pi pi-external-link"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+			</span>
 		</header>
 		<ul class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
@@ -40,6 +46,7 @@
 import { Position, WorkflowNode, WorkflowPort } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -55,6 +62,7 @@ const nodeStyle = computed(() => ({
 }));
 
 const workflowNode = ref<HTMLElement>();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 let tempX = 0;
 let tempY = 0;
@@ -94,6 +102,10 @@ onMounted(() => {
 
 function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
+}
+
+function showNodeDrilldown() {
+	openedWorkflowNodeStore.setWorkflowNode(props.node);
 }
 
 function mouseoverPort(event) {

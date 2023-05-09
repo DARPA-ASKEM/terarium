@@ -20,31 +20,29 @@
 				/>
 			</template>
 		</tera-slider-panel>
-		<section>
-			<Splitter>
-				<SplitterPanel :size="20">
-					<tera-tab-group
-						v-if="!isEmpty(tabs)"
-						:tabs="tabs"
-						:active-tab-index="activeTabIndex"
-						:loading-tab-index="loadingTabIndex"
-						@close-tab="removeClosedTab"
-						@select-tab="openAsset"
-						@click="getAndPopulateAnnotations()"
-					/>
-					<tera-tab-content
-						ref="tabContentRef"
-						:asset-id="assetId"
-						:asset-type="assetType"
-						:tabs="tabs"
-						:project="project"
-						:code="code"
-						v-model:new-model-id="newModelId"
-						@asset-loaded="setActiveTab"
-						@open-asset="openAsset"
-						@update-tab-name="updateTabName"
-					/>
-					<!-- <template v-if="assetId && !isEmpty(tabs)">
+		<Splitter>
+			<SplitterPanel>
+				<tera-tab-group
+					v-if="!isEmpty(tabs)"
+					:tabs="tabs"
+					:active-tab-index="activeTabIndex"
+					:loading-tab-index="loadingTabIndex"
+					@close-tab="removeClosedTab"
+					@select-tab="openAsset"
+					@click="getAndPopulateAnnotations()"
+				/>
+				<tera-tab-content
+					:project="project"
+					:asset-id="assetId"
+					:asset-type="assetType"
+					:tabs="tabs"
+					:code="code"
+					v-model:new-model-id="newModelId"
+					@asset-loaded="setActiveTab"
+					@open-asset="openAsset"
+					@update-tab-name="updateTabName"
+				/>
+				<!-- <template v-if="assetId && !isEmpty(tabs)">
 						<tera-document v-if="assetType === ProjectAssetTypes.DOCUMENTS" :xdd-uri="getXDDuri(assetId)"
 							:previewLineLimit="10" :project="project" is-editable @open-asset="openAsset"
 							@asset-loaded="setActiveTab" />
@@ -69,12 +67,22 @@
 						<p>You can open resources from the resource panel.</p>
 						<Button label="Open project overview" @click="openOverview" />
 					</section> -->
-				</SplitterPanel>
-				<SplitterPanel v-if="!isEmpty(tabContentRef?.workflowNodeRef)" :size="20">
-					{{ tabContentRef.workflowNodeRef }}
-				</SplitterPanel>
-			</Splitter>
-		</section>
+			</SplitterPanel>
+			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode">
+				<Button label="Print chosen node" @click="printChosenNode" />
+				<!--asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???-->
+				<tera-tab-content
+					:project="project"
+					:asset-id="workflowNodeAssetId"
+					:asset-type="ProjectAssetTypes.MODELS"
+					is-preview
+					v-model:new-model-id="newModelId"
+					@asset-loaded="setActiveTab"
+					@open-asset="openAsset"
+					@update-tab-name="updateTabName"
+				/>
+			</SplitterPanel>
+		</Splitter>
 		<tera-slider-panel
 			class="slider"
 			content-width="240px"
@@ -225,6 +233,7 @@ import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar
 import { RouteName } from '@/router/routes';
 import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -262,12 +271,23 @@ const props = defineProps<{
 const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
+
+// workflow node
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+const workflowNodeAssetId = computed(() => {
+	console.log(openedWorkflowNodeStore?.workflowNode?.outputs);
+	return openedWorkflowNodeStore?.workflowNode?.outputs[0].value.model.id.toString() ?? undefined;
+});
+
+function printChosenNode() {
+	console.log(openedWorkflowNodeStore.workflowNode);
+}
+
 const router = useRouter();
 
 const newModelId = ref<string>('');
 // const resources = useResourcesStore();
 // const isNewModel = ref<boolean>(true);
-const tabContentRef = ref();
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
@@ -579,7 +599,8 @@ section,
 }
 
 .p-splitter {
-	height: 100%;
+	display: flex;
+	flex: 1;
 	background: none;
 	border: none;
 }

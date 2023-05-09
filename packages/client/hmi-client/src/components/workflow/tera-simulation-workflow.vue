@@ -15,7 +15,6 @@
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
-				@show-node-drilldown="showNodeDrilldown"
 			>
 				<template #body>
 					<tera-model-node
@@ -83,7 +82,6 @@
 </template>
 
 <script setup lang="ts">
-// v-model:preview-item="previewItem"
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
@@ -106,7 +104,6 @@ import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
 import { Dataset } from '@/types/Dataset';
-// import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
@@ -137,13 +134,6 @@ const testOperation: Operation = {
 	action: () => {},
 	isRunnable: true
 };
-
-const openedNode = ref<WorkflowNode>();
-defineExpose({ openedNode });
-
-function showNodeDrilldown(workflowNode: WorkflowNode) {
-	if (workflowNode.outputs.length > 1) openedNode.value = workflowNode;
-}
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	// assign outport data to its output port
