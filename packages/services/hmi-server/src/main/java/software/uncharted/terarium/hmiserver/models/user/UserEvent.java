@@ -27,12 +27,7 @@ public class UserEvent {
 	public String toString() {
 		return "{type='" + type + "', id='" + id + "', message=" + message.toString() + "}";
 	}
-
-	/**
-	 * Test if passed user is the one from the event
-	 * @param identity
-	 * @return boolean
-	 */
+	
 	public boolean isCurrentUser(final SecurityIdentity identity) {
 		return this.user.equals(new User(identity));
 	}
