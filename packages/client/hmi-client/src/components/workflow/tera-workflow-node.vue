@@ -104,6 +104,7 @@ function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
 }
 
+// Pass workflow node to drilldown panel
 function showNodeDrilldown() {
 	openedWorkflowNodeStore.setWorkflowNode(props.node);
 }

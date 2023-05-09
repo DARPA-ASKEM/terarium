@@ -34,35 +34,9 @@
 					:asset-id="assetId"
 					:asset-type="assetType"
 					v-model:tabs="tabs"
-					:code="code"
 					@asset-loaded="setActiveTab"
 					@open-asset="openAsset"
 				/>
-				<!-- <template v-if="assetId && !isEmpty(tabs)">
-						<tera-document v-if="assetType === ProjectAssetTypes.DOCUMENTS" :xdd-uri="getXDDuri(assetId)"
-							:previewLineLimit="10" :project="project" is-editable @open-asset="openAsset"
-							@asset-loaded="setActiveTab" />
-						<tera-model v-else-if="assetType === ProjectAssetTypes.MODELS" :asset-id="assetId"
-							:project="project" is-editable @asset-loaded="setActiveTab" />
-						<tera-dataset v-else-if="assetType === ProjectAssetTypes.DATASETS" :asset-id="assetId"
-							:project="project" is-editable @asset-loaded="setActiveTab" />
-						<simulation-plan v-else-if="assetType === ProjectAssetTypes.PLANS" :asset-id="assetId"
-							:project="project" @asset-loaded="setActiveTab" />
-						<simulation-run v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS" :asset-id="assetId"
-							:project="project" @asset-loaded="setActiveTab" />
-					</template>
-					<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code"
-						@on-model-created="openNewModelFromCode" />
-					<tera-model v-else-if="assetType === ProjectAssetTypes.MODELS" :asset-id="newModelId" :project="project"
-						@update-tab-name="updateTabName" @create-new-model="createNewModel" is-editable />
-					<tera-project-overview v-else-if="assetType === 'overview'" :project="project"
-						@open-workflow="openWorkflow" />
-					<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" ref="workflowRef" />
-					<section v-else class="no-open-tabs">
-						<img src="@assets/svg/seed.svg" alt="Seed" />
-						<p>You can open resources from the resource panel.</p>
-						<Button label="Open project overview" @click="openOverview" />
-					</section> -->
 			</SplitterPanel>
 			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
 				<Button label="Print chosen node" @click="printChosenNode" />
@@ -245,17 +219,6 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraTabContent from './components/tera-tab-content.vue';
-//
-// import { createModel, addModelToProject } from '@/services/model';
-// import TeraDataset from '@/components/dataset/tera-dataset.vue';
-// import TeraModel from '@/components/models/tera-model.vue';
-// import CodeEditor from '@/page/project/components/code-editor.vue';
-// import SimulationPlan from '@/page/project/components/Simulation.vue';
-// import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
-// import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
-// import SimulationRun from '@/temp/SimulationResult3.vue';
-// import TeraDocument from '@/components/documents/tera-document.vue';
-// import { PetriNet } from '@/petrinet/petrinet-service';
 
 // Asset props are extracted from route
 const props = defineProps<{
@@ -282,24 +245,15 @@ const workflowNodeAssetId = computed(() => {
 	);
 });
 
-function printChosenNode() {
-	console.log(openedWorkflowNodeStore.workflowNode);
-}
-
 const router = useRouter();
-
-// const newModelId = ref<string>('');
-// const resources = useResourcesStore();
 
 const isResourcesSliderOpen = ref(true);
 const isNotesSliderOpen = ref(false);
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
-const code = ref<string>();
 const isAnnotationInputOpen = ref(false);
 const annotationMenu = ref();
 const menuOpenEvent = ref();
-
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
 const isNoteDeletionConfirmation = ref(false);
@@ -391,10 +345,11 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-function openAsset(
-	index: number = tabStore.getActiveTabIndex(projectContext.value),
-	newCode?: string
-) {
+function printChosenNode() {
+	console.log(openedWorkflowNodeStore.workflowNode);
+}
+
+function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
 	if (
@@ -407,9 +362,6 @@ function openAsset(
 	) {
 		loadingTabIndex.value = index;
 		router.push({ name: RouteName.ProjectRoute, params: asset });
-		if (newCode) {
-			code.value = newCode;
-		}
 	}
 }
 
@@ -422,52 +374,6 @@ function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 }
-
-// const updateTabName = (tabName: string) => {
-// 	console.log(tabName)
-// 	tabs.value[activeTabIndex.value!].assetName = tabName;
-// };
-
-/// //////
-// const getXDDuri = (assetId: Tab['assetId']): string =>
-// 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
-
-// const openWorkflow = () => {
-// 	router.push({
-// 		name: RouteName.ProjectRoute,
-// 		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
-// 	});
-// };
-
-// // Create the new model
-// const createNewModel = async (newModel: PetriNet) => {
-// 	const newModelResp = await createModel(newModel);
-// 	if (newModelResp) {
-// 		newModelId.value = newModelResp.id.toString();
-// 		await addModelToProject(props.project.id, newModelId.value, resources);
-// 		isNewModel.value = false;
-// 	}
-// };
-
-// async function openNewModelFromCode(modelId, modelName) {
-// 	await addModelToProject(props.project.id, modelId, resources);
-
-// 	router.push({
-// 		name: RouteName.ProjectRoute,
-// 		params: {
-// 			assetName: modelName,
-// 			assetId: modelId,
-// 			assetType: ProjectAssetTypes.MODELS
-// 		}
-// 	});
-// }
-/// ////
-
-// // create the new Asset
-// async function createAsset(asset: Tab) {
-// 	newModelId.value = '';
-// 	router.push({ name: RouteName.ProjectRoute, params: asset });
-// }
 
 async function removeAsset(asset: Tab) {
 	const { assetName, assetId, assetType } = asset;

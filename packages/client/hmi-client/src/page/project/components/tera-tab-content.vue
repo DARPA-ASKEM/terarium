@@ -56,6 +56,7 @@
 		@open-workflow="openWorkflow"
 	/>
 	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
+	<!--Add new process/asset views here-->
 	<section v-else class="no-open-tabs">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
 		<p>You can open resources from the resource panel.</p>
@@ -84,7 +85,7 @@ import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 
-// openCode, update-tab-name
+// update - tab - name
 
 const props = defineProps<{
 	project: IProject;
@@ -92,7 +93,6 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
 	tabs?: Tab[];
 	activeTabIndex?: number;
-	code?: string;
 	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
@@ -103,23 +103,31 @@ const router = useRouter();
 const resources = useResourcesStore();
 
 const newModelId = ref<string>('');
+const code = ref<string>();
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
+// These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
 const openWorkflow = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
 	});
 };
-
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
 	});
 };
+function openCode(assetToOpen: Tab, newCode?: string) {
+	code.value = newCode;
+	router.push({
+		name: RouteName.ProjectRoute,
+		params: assetToOpen
+	});
+}
 
 const updateTabName = (tabName: string) => {
 	const tabsClone = cloneDeep(props.tabs);
@@ -138,10 +146,6 @@ const createNewModel = async (newModel: PetriNet) => {
 		await addModelToProject(props.project.id, newModelId.value, resources);
 	}
 };
-
-function openCode(assetToOpen: Tab, newCode?: string) {
-	emit('open-asset', assetToOpen, newCode);
-}
 
 async function openNewModelFromCode(modelId: string, modelName: string) {
 	await addModelToProject(props.project.id, modelId, resources);
