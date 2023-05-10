@@ -32,7 +32,13 @@ export const create = () => {
 	return workflow;
 };
 
-export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
+type NodeSize = { width: number; height: number };
+export const addNode = (
+	wf: Workflow,
+	op: Operation,
+	pos: Position,
+	size: NodeSize = { width: 180, height: 220 }
+) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
 		workflowId: wf.id,
@@ -59,9 +65,8 @@ export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 	  */
 		statusCode: WorkflowStatus.INVALID,
 
-		// Not currently in use. May 2023
-		width: 180,
-		height: 220
+		width: size.width,
+		height: size.height
 	};
 
 	wf.nodes.push(node);
