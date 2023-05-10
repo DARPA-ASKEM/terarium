@@ -507,14 +507,6 @@ section,
 	border: none;
 }
 
-.no-open-tabs {
-	justify-content: center;
-	gap: 2rem;
-	margin-bottom: 8rem;
-	align-items: center;
-	color: var(--text-color-subdued);
-}
-
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
 	max-width: 15rem;

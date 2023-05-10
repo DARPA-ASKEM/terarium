@@ -8,50 +8,16 @@
 		@asset-loaded="emit('asset-loaded')"
 		is-editable
 	/>
-	<code-editor
-		v-else-if="assetType === ProjectAssetTypes.CODE"
-		:initial-code="code"
+	<component
+		v-else-if="currentComponent"
+		:is="currentComponent.name"
+		v-bind="currentComponent.properties"
+		@asset-loaded="emit('asset-loaded')"
+		@open-code="openCode"
 		@on-model-created="openNewModelFromCode"
-	/>
-	<tera-project-overview
-		v-else-if="assetType === 'overview'"
-		:project="project"
 		@open-workflow="openWorkflow"
 	/>
-	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
-	<!--Add new process/asset views here-->
-	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
-		<!--Investigate using component tag since props are similar-->
-		<tera-document
-			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
-			:xdd-uri="getXDDuri(assetId)"
-			:previewLineLimit="10"
-			:project="project"
-			is-editable
-			@open-code="openCode"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<tera-dataset
-			v-else-if="assetType === ProjectAssetTypes.DATASETS"
-			:asset-id="assetId"
-			:project="project"
-			is-editable
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<simulation-plan
-			v-else-if="assetType === ProjectAssetTypes.PLANS"
-			:asset-id="assetId"
-			:project="project"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<simulation-run
-			v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-			:asset-id="assetId"
-			:project="project"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-	</template>
-	<section v-else class="no-open-tabs">
+	<section v-else>
 		<img src="@assets/svg/seed.svg" alt="Seed" />
 		<p>You can open resources from the resource panel.</p>
 		<Button label="Open project overview" @click="openOverview" />
@@ -59,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import * as ProjectService from '@/services/project';
 import { createModel, addModelToProject } from '@/services/model';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
@@ -95,6 +61,49 @@ const resources = useResourcesStore();
 
 const newModelId = ref<string>('');
 const code = ref<string>();
+
+// Add new process/asset views here
+const currentComponent = computed(() => {
+	// All components share these properties
+	const properties = { project: props.project, isEditable: true };
+
+	if (props.assetId && (!isEmpty(props.tabs) || props.isDrilldown)) {
+		const assetProperties = { ...properties, assetId: props.assetId };
+
+		switch (props.assetType) {
+			case ProjectAssetTypes.DOCUMENTS:
+				return {
+					name: TeraDocument,
+					// Add additional props for a specific asset like this
+					properties: { ...properties, previewLineLimit: 10, xddUri: getXDDuri(props.assetId) }
+				};
+			case ProjectAssetTypes.MODELS:
+				return { name: TeraModel, properties: assetProperties };
+			case ProjectAssetTypes.DATASETS:
+				return { name: TeraDataset, properties: assetProperties };
+			case ProjectAssetTypes.PLANS:
+				return { name: SimulationPlan, properties: assetProperties };
+			case ProjectAssetTypes.SIMULATION_RUNS:
+				return { name: SimulationRun, properties: assetProperties };
+			default:
+				break;
+		}
+	}
+	// Not all are assets or not treated like one in the backend yet
+	switch (props.assetType) {
+		case 'overview':
+			return { name: TeraProjectOverview, properties };
+		case 'workflow':
+			return { name: TeraSimulationWorkflow, properties };
+		case ProjectAssetTypes.CODE:
+			return {
+				name: CodeEditor,
+				properties: { ...properties, initialCode: code.value }
+			};
+		default:
+			return null;
+	}
+});
 
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
@@ -159,3 +168,16 @@ watch(
 	}
 );
 </script>
+
+<style scoped>
+section {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	flex: 1;
+	gap: 2rem;
+	margin-bottom: 8rem;
+	color: var(--text-color-subdued);
+}
+</style>
