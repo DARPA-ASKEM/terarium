@@ -1,5 +1,26 @@
 <template>
-	<template v-if="assetId && (!isEmpty(tabs) || isDrilldown)">
+	<tera-model
+		v-if="assetType === ProjectAssetTypes.MODELS"
+		:asset-id="assetId ?? newModelId"
+		:project="project"
+		@update-tab-name="updateTabName"
+		@create-new-model="createNewModel"
+		@asset-loaded="emit('asset-loaded')"
+		is-editable
+	/>
+	<code-editor
+		v-else-if="assetType === ProjectAssetTypes.CODE"
+		:initial-code="code"
+		@on-model-created="openNewModelFromCode"
+	/>
+	<tera-project-overview
+		v-else-if="assetType === 'overview'"
+		:project="project"
+		@open-workflow="openWorkflow"
+	/>
+	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
+	<!--Add new process/asset views here-->
+	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
 		<!--Investigate using component tag since props are similar-->
 		<tera-document
 			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
@@ -8,13 +29,6 @@
 			:project="project"
 			is-editable
 			@open-code="openCode"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<tera-model
-			v-else-if="assetType === ProjectAssetTypes.MODELS"
-			:asset-id="assetId"
-			:project="project"
-			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
@@ -37,26 +51,6 @@
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
-	<code-editor
-		v-else-if="assetType === ProjectAssetTypes.CODE"
-		:initial-code="code"
-		@on-model-created="openNewModelFromCode"
-	/>
-	<tera-model
-		v-else-if="assetType === ProjectAssetTypes.MODELS"
-		:asset-id="newModelId"
-		:project="project"
-		@update-tab-name="updateTabName"
-		@create-new-model="createNewModel"
-		is-editable
-	/>
-	<tera-project-overview
-		v-else-if="assetType === 'overview'"
-		:project="project"
-		@open-workflow="openWorkflow"
-	/>
-	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
-	<!--Add new process/asset views here-->
 	<section v-else class="no-open-tabs">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
 		<p>You can open resources from the resource panel.</p>
