@@ -114,7 +114,9 @@ function selectPort(port: WorkflowPort) {
 
 // Pass workflow node to drilldown panel
 function showNodeDrilldown() {
-	openedWorkflowNodeStore.setWorkflowNode(props.node);
+	if (props.node.outputs.length > 1) {
+		openedWorkflowNodeStore.setWorkflowNode(props.node);
+	} else alert('Node needs a valid output');
 }
 
 function mouseoverPort(event) {
