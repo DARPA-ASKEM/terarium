@@ -141,9 +141,6 @@ const getStatus = async () => {
 
 	if (currentRunStatus.every(({ status }) => status === 'done')) {
 		completedRunIdList.value = startedRunIdList.value;
-	} else if (currentRunStatus.some(({ status }) => status === 'in progress')) {
-		// recursively call until all runs retrieved
-		setTimeout(getStatus, 3000);
 	} else if (currentRunStatus.some(({ status }) => status === 'queuing')) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
