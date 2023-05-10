@@ -170,9 +170,11 @@ watch(
 
 		// assume that the state variables for all runs will be identical
 		// take first run and parse it for state variables
-		stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
-			.filter((key) => key !== 'timestep')
-			.map((key) => ({ code: key }));
+		if (!stateVariablesList.length) {
+			stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
+				.filter((key) => key !== 'timestep')
+				.map((key) => ({ code: key }));
+		}
 		selectedVariable.value = [stateVariablesList[0]];
 		runList = runIdList.map((runId, index) => ({ code: runId, index }));
 		selectedRun.value = runList[0];
