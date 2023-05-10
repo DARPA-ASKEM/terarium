@@ -47,7 +47,7 @@ defineProps<{
 	datasets: Dataset[];
 }>();
 
-const emit = defineEmits(['update-output-port', 'append-output-port']);
+const emit = defineEmits(['append-output-port']);
 
 const selectedDataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);

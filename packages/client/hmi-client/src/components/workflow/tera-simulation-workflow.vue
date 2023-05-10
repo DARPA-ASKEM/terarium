@@ -32,7 +32,8 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<div v-else>
-						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
+						<Button @click="testNode(node)">Test run</Button
+						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
 					</div>
 				</template>
 			</tera-workflow-node>
@@ -81,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
@@ -89,7 +91,8 @@ import {
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPort
+	WorkflowPort,
+	WorkflowPortStatus
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
@@ -136,16 +139,30 @@ const testOperation: Operation = {
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	// assign outport data to its output port
-	Object.assign(node.outputs[node.outputs.length - 1], port);
+	// Object.assign(node.outputs[node.outputs.length - 1], port);
 	// Create new output port
+
 	node.outputs.push({
-		id: node.outputs.length.toString(),
-		type: port.type
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		value: port.value,
+		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
+	if (node.outputs.length === 0) {
+		node.outputs.push({
+			id: uuidv4(),
+			label: 'test',
+			value: null,
+			type: 'number',
+			status: WorkflowPortStatus.NOT_CONNECTED
+		});
+	}
+
 	if (node.inputs[0].value !== null) {
 		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
 	} else {
