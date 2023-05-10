@@ -317,14 +317,11 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
-import { IProject } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded']);
-
-const extractions = ref([]);
-const resources = useResourcesStore();
 
 const props = defineProps({
 	project: {
@@ -347,6 +344,10 @@ const props = defineProps({
 	}
 });
 
+const resources = useResourcesStore();
+const router = useRouter();
+
+const extractions = ref([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
@@ -766,7 +767,18 @@ const createNewModel = async () => {
 		};
 		const newModelResp = await createModel(newModel);
 		if (newModelResp) {
-			await addModelToProject(props.project.id, newModelResp.id.toString(), resources);
+			const modelId = newModelResp.id.toString();
+			await addModelToProject(props.project.id, modelId, resources);
+
+			// Go to the model you just created
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: {
+					assetName: newModelName.value,
+					assetId: modelId,
+					assetType: ProjectAssetTypes.MODELS
+				}
+			});
 		}
 		isEditingEQ.value = false;
 		isMathMLValid.value = true;
@@ -805,7 +817,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	}
 };
 
-const router = useRouter();
 const goToSimulationRunPage = () => {
 	showForecastLauncher.value = false;
 	router.push({

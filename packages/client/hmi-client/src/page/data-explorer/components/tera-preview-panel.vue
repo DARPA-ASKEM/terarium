@@ -6,29 +6,15 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<tera-document
-				v-if="previewItemResourceType === ResourceType.XDD"
+			<component
+				v-if="assetComponent"
+				:is="assetComponent"
+				:is-editable="false"
+				:project="resources.activeProject"
 				:xdd-uri="previewItemId"
+				:asset-id="previewItemId"
 				:previewLineLimit="3"
-				:project="resources.activeProject"
 				:highlight="searchTerm"
-				:is-editable="false"
-				@close-preview="closePreview"
-			/>
-			<tera-dataset
-				v-else-if="previewItemResourceType === ResourceType.DATASET"
-				:asset-id="previewItemId"
-				:project="resources.activeProject"
-				:highlight="searchTerm"
-				:is-editable="false"
-				@close-preview="closePreview"
-			/>
-			<tera-model
-				v-else-if="previewItemResourceType === ResourceType.MODEL"
-				:asset-id="previewItemId"
-				:project="resources.activeProject"
-				:highlight="searchTerm"
-				:is-editable="false"
 				@close-preview="closePreview"
 			/>
 		</template>
@@ -76,7 +62,6 @@ const props = defineProps({
 		type: String,
 		default: '0'
 	},
-
 	// slider-panel props
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
@@ -100,6 +85,27 @@ const props = defineProps({
 const previewItemState = ref(props.previewItem);
 const previewItemResourceType = ref<ResourceType | null>(null);
 
+const previewItemId = computed(() => {
+	if (!previewItemState.value) return '';
+	if (isDocument(previewItemState.value)) {
+		return previewItemState.value.gddId;
+	}
+	return previewItemState.value.id as string;
+});
+
+const assetComponent = computed(() => {
+	switch (previewItemResourceType.value) {
+		case ResourceType.XDD:
+			return TeraDocument;
+		case ResourceType.MODEL:
+			return TeraModel;
+		case ResourceType.DATASET:
+			return TeraDataset;
+		default:
+			return null;
+	}
+});
+
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
 watch(
@@ -115,14 +121,6 @@ watch(
 function closePreview() {
 	emit('update:previewItem', null);
 }
-
-const previewItemId = computed(() => {
-	if (!previewItemState.value) return '';
-	if (isDocument(previewItemState.value)) {
-		return previewItemState.value.gddId;
-	}
-	return previewItemState.value.id as string;
-});
 
 const previewItemSelected = computed(() =>
 	props.selectedSearchItems.some((selectedItem) => selectedItem === props.previewItem)
