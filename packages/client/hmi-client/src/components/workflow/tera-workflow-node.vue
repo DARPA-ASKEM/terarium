@@ -55,6 +55,7 @@ import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/type
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -114,7 +115,7 @@ function selectPort(port: WorkflowPort) {
 
 // Pass workflow node to drilldown panel
 function showNodeDrilldown() {
-	if (props.node.outputs.length > 1) {
+	if (!isEmpty(props.node.outputs)) {
 		openedWorkflowNodeStore.setWorkflowNode(props.node);
 	} else alert('Node needs a valid output');
 }
