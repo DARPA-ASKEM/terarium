@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { PetriNet } from '@/petrinet/petrinet-service';
+import { ITypedModel } from '@/types/Model';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
 
@@ -77,7 +78,7 @@ const chartOptions = {
 
 // FIXME: adapt to new model representation
 // FIXME: adapt to new simulation-service id-based API
-const scrubModel = (model: Model) => {
+const scrubModel = (model: ITypedModel<PetriNet>) => {
 	const cleanedModel: PetriNet = {
 		S: [],
 		T: [],
