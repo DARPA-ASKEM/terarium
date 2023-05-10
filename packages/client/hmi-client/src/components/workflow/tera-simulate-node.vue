@@ -1,5 +1,6 @@
 <template>
 	<section class="result-container">
+		<Button @click="runSimulate()">Run</Button>
 		<div class="options">
 			<div class="dropdown-group">
 				<span>Select variables to plot</span>
@@ -18,14 +19,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUpdated } from 'vue';
+import { ref, watch } from 'vue';
+import { PetriNet } from '@/petrinet/petrinet-service';
+import Button from 'primevue/button';
 import { csvParse } from 'd3';
 
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
-
 import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{
@@ -73,40 +75,84 @@ const chartOptions = {
 	}
 };
 
-// watch for changes in node input
-watch(
-	() => props.node.inputs,
-	async (inputList) => {
-		const forecastOutputList = await Promise.all(
-			inputList.map(({ value }) =>
-				makeForecast({
-					model: value.model.id,
-					initials: value.initialValues,
-					params: value.parameterValues,
-					tspan: [0.0, 90.0] // hardcoded timespan
-				})
-			)
-		);
-		startedRunIdList.value = forecastOutputList.map((forecastOutput) => forecastOutput.id);
+// FIXME: adapt to new model representation
+// FIXME: adapt to new simulation-service id-based API
+const scrubModel = (model: Model) => {
+	const cleanedModel: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+	if (model) {
+		cleanedModel.S = model.content.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = model.content.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = model.content.I;
+		cleanedModel.O = model.content.O;
+	}
+	return JSON.stringify(cleanedModel);
+};
+
+const runSimulate = async () => {
+	const port = props.node.inputs[0];
+	if (port && port.value) {
+		const payload = {
+			model: scrubModel(port.value.model),
+			initials: port.value.initialValues,
+			params: port.value.parameterValues,
+			tspan: [0, 100]
+		};
+
+		console.log('');
+		console.log(JSON.stringify(payload));
+		console.log('');
+
+		const response = await makeForecast(payload);
+		startedRunIdList.value = [response.id];
 
 		// start polling for run status
 		getStatus();
-	},
-	{ deep: true }
-);
+	}
+};
 
-// retrieve run ids
+// watch for changes in node input
+// watch(
+// 	() => props.node.inputs,
+// 	async (inputList) => {
+// 		const forecastOutputList = await Promise.all(
+// 			inputList.map(({ value }) =>
+// 				makeForecast({
+// 					model: value.model.id,
+// 					initials: value.initialValues,
+// 					params: value.parameterValues,
+// 					tspan: [0.0, 90.0] // hardcoded timespan
+// 				})
+// 			)
+// 		);
+// 		startedRunIdList.value = forecastOutputList.map((forecastOutput) => forecastOutput.id);
+//
+// 		// start polling for run status
+// 		getStatus();
+// 	},
+// 	{ deep: true }
+// );
+
+// Retrieve run ids
+// FIXME: Replace with API.poller
 const getStatus = async () => {
 	const currentRunStatus = await Promise.all(startedRunIdList.value.map(getRunStatus));
 
-	if (currentRunStatus.every(({ status }) => status === 'completed')) {
+	if (currentRunStatus.every(({ status }) => status === 'done')) {
 		completedRunIdList.value = startedRunIdList.value;
 	} else if (currentRunStatus.some(({ status }) => status === 'in progress')) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
+	} else if (currentRunStatus.some(({ status }) => status === 'queuing')) {
+		// recursively call until all runs retrieved
+		setTimeout(getStatus, 3000);
 	} else {
 		// throw if there are any failed runs for now
-		console.log(startedRunIdList.value);
+		console.error('Failed', startedRunIdList.value);
 		throw Error('Failed Runs');
 	}
 };
@@ -139,7 +185,7 @@ watch(
 		// assume that the state variables for all runs will be identical
 		// take first run and parse it for state variables
 		stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
-			.filter((key) => key !== 'timestamp')
+			.filter((key) => key !== 'timestep')
 			.map((key) => ({ code: key }));
 		selectedVariable.value = [stateVariablesList[0]];
 		runList = runIdList.map((runId, index) => ({ code: runId, index }));
@@ -165,17 +211,17 @@ const renderGraph = ([selectedVarList]) => {
 			})
 	);
 	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestamp)),
+		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestep)),
 		datasets
 	};
 };
 watch(() => [selectedVariable.value, selectedRun.value] as any, renderGraph);
 
-const emit = defineEmits(['asset-loaded']);
-
-onUpdated(() => {
-	emit('asset-loaded');
-});
+// const emit = defineEmits(['asset-loaded']);
+//
+// onUpdated(() => {
+// 	emit('asset-loaded');
+// });
 </script>
 
 <style scoped>

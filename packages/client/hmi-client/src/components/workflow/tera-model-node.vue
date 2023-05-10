@@ -52,15 +52,16 @@ const parameterValues = ref<StringValueMap>({});
 
 function run() {
 	if (ModelOperation.action) {
-		console.log(
-			ModelOperation.action({
-				model: model.value,
-				initialValues: initialValues.value,
-				parameterValues: parameterValues.value
-			})
-		);
+		// console.log(
+		// 	ModelOperation.action({
+		// 		model: model.value,
+		// 		initialValues: initialValues.value,
+		// 		parameterValues: parameterValues.value
+		// 	})
+		// );
 		emit('append-output-port', {
 			type: ModelOperation.outputs[0].type,
+			label: model.value?.name,
 			value: {
 				model: model.value,
 				initialValues: initialValues.value,
@@ -81,7 +82,7 @@ watch(
 			});
 
 			model.value?.content.T.forEach((s) => {
-				parameterValues.value[s.tname] = `${0.0005}`;
+				parameterValues.value[s.tname] = `${0.005}`;
 			});
 		}
 	}

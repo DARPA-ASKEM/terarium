@@ -63,7 +63,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 }
 
 export interface SimulationParams {
-    petri: string;
+    model: string;
     initials: { [index: string]: number };
     tspan: number[];
     params: { [index: string]: number };

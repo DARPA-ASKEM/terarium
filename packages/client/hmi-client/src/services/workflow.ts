@@ -104,6 +104,9 @@ export const addEdge = (
 	// Transfer data value/reference
 	targetInputPort.value = sourceOutputPort.value;
 
+	// TODO: Need to fix for multi-values
+	targetInputPort.label = sourceOutputPort.label;
+
 	const edge: WorkflowEdge = {
 		id: uuidv4(),
 		workflowId: wf.id,

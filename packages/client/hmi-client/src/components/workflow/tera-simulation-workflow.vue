@@ -141,10 +141,6 @@ const testOperation: Operation = {
 };
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
-	// assign outport data to its output port
-	// Object.assign(node.outputs[node.outputs.length - 1], port);
-	// Create new output port
-
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
