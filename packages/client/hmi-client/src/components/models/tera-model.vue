@@ -21,7 +21,7 @@
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
-				label="Create New Model"
+				label="Create new model"
 				class="p-button-sm"
 			/>
 			<Button
@@ -275,7 +275,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, onUpdated, PropType } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -291,10 +291,11 @@ import {
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import { separateEquations, MathEditorModes } from '@/utils/math';
-import { getModel, updateModel } from '@/services/model';
+import { getModel, updateModel, createModel, addModelToProject } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import useResourcesStore from '@/stores/resources';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
@@ -316,14 +317,21 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
-
+import { IProject } from '@/types/Project';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview', 'asset-loaded']);
+// Get rid of these emits
+const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded']);
 
 const extractions = ref([]);
+const resources = useResourcesStore();
 
 const props = defineProps({
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null,
+		required: false
+	},
 	assetId: {
 		type: String,
 		required: true
@@ -749,15 +757,20 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 };
 
 const createNewModel = async () => {
-	const newModel = {
-		name: newModelName.value,
-		framework: 'Petri Net',
-		description: newDescription.value,
-		content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
-	};
-	emit('create-new-model', newModel);
-	isEditingEQ.value = false;
-	isMathMLValid.value = true;
+	if (props.project) {
+		const newModel = {
+			name: newModelName.value,
+			framework: 'Petri Net',
+			description: newDescription.value,
+			content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
+		};
+		const newModelResp = await createModel(newModel);
+		if (newModelResp) {
+			await addModelToProject(props.project.id, newModelResp.id.toString(), resources);
+		}
+		isEditingEQ.value = false;
+		isMathMLValid.value = true;
+	}
 };
 
 const validateMathML = async (mathMlString: string, editMode: boolean) => {

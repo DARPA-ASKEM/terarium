@@ -1,21 +1,12 @@
 <template>
-	<tera-model
-		v-if="assetType === ProjectAssetTypes.MODELS"
-		:asset-id="assetId ?? newModelId"
-		:project="project"
-		@update-tab-name="updateTabName"
-		@create-new-model="createNewModel"
-		@asset-loaded="emit('asset-loaded')"
-		is-editable
-	/>
 	<component
-		v-else-if="currentComponent"
+		v-if="currentComponent"
 		:is="currentComponent.name"
 		v-bind="currentComponent.properties"
 		@asset-loaded="emit('asset-loaded')"
 		@open-code="openCode"
-		@on-model-created="openNewModelFromCode"
 		@open-workflow="openWorkflow"
+		@update-tab-name="updateTabName"
 	/>
 	<section v-else>
 		<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -25,13 +16,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import * as ProjectService from '@/services/project';
-import { createModel, addModelToProject } from '@/services/model';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
-import { PetriNet } from '@/petrinet/petrinet-service';
 import { useRouter } from 'vue-router';
-import useResourcesStore from '@/stores/resources';
 import { RouteName } from '@/router/routes';
 import { isEmpty, cloneDeep } from 'lodash';
 import { Tab } from '@/types/common';
@@ -57,9 +45,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name']);
 
 const router = useRouter();
-const resources = useResourcesStore();
 
-const newModelId = ref<string>('');
 const code = ref<string>();
 
 // Add new process/asset views here
@@ -77,8 +63,6 @@ const currentComponent = computed(() => {
 					// Add additional props for a specific asset like this
 					properties: { ...properties, previewLineLimit: 10, xddUri: getXDDuri(props.assetId) }
 				};
-			case ProjectAssetTypes.MODELS:
-				return { name: TeraModel, properties: assetProperties };
 			case ProjectAssetTypes.DATASETS:
 				return { name: TeraDataset, properties: assetProperties };
 			case ProjectAssetTypes.PLANS:
@@ -91,15 +75,17 @@ const currentComponent = computed(() => {
 	}
 	// Not all are assets or not treated like one in the backend yet
 	switch (props.assetType) {
-		case 'overview':
-			return { name: TeraProjectOverview, properties };
-		case 'workflow':
-			return { name: TeraSimulationWorkflow, properties };
+		case ProjectAssetTypes.MODELS:
+			return { name: TeraModel, properties: { ...properties, assetId: props.assetId } };
 		case ProjectAssetTypes.CODE:
 			return {
 				name: CodeEditor,
 				properties: { ...properties, initialCode: code.value }
 			};
+		case 'overview':
+			return { name: TeraProjectOverview, properties };
+		case 'workflow':
+			return { name: TeraSimulationWorkflow, properties };
 		default:
 			return null;
 	}
@@ -138,35 +124,6 @@ const updateTabName = (tabName: string) => {
 		emit('update:tabs', tabsClone);
 	}
 };
-
-// Create the new model
-const createNewModel = async (newModel: PetriNet) => {
-	const newModelResp = await createModel(newModel);
-	if (newModelResp) {
-		newModelId.value = newModelResp.id.toString();
-		await addModelToProject(props.project.id, newModelId.value, resources);
-	}
-};
-
-async function openNewModelFromCode(modelId: string, modelName: string) {
-	await addModelToProject(props.project.id, modelId, resources);
-
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: modelName,
-			assetId: modelId,
-			assetType: ProjectAssetTypes.MODELS
-		}
-	});
-}
-
-watch(
-	() => props.assetId,
-	() => {
-		newModelId.value = '';
-	}
-);
 </script>
 
 <style scoped>
