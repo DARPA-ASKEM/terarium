@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import io.quarkus.security.Authenticated;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
 @Path("/api/models")
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model REST Endpoints")
