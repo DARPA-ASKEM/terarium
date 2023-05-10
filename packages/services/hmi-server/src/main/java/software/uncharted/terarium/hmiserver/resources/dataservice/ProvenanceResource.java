@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Provenance;
@@ -13,7 +12,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/provenance")
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Provenance REST Endpoints")
 public class ProvenanceResource {
