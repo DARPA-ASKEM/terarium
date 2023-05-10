@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.resources.pdfextractionservice;
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import javax.inject.Inject;
-import io.quarkus.security.Authenticated;
 
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import software.uncharted.terarium.hmiserver.proxies.pdfextractionservice.PDFExtractionServiceProxy;
@@ -20,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 
 @Path("/api/extract")
 @Slf4j
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public class PDFExtractionResource {
