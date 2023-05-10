@@ -1,14 +1,31 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5>{{ node.operationType }}</h5>
-			<Button icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small" />
+			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
+			<span>
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+				<Button
+					@click="showNodeDrilldown"
+					icon="pi pi-external-link"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+			</span>
 		</header>
 		<ul class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
-				<div class="port" @click.stop="selectPort(input)" @mouseover="(event) => mouseoverPort(event)"
-					@focus="() => { }"></div>
+			<li
+				v-for="(input, index) in node.inputs"
+				:key="index"
+				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+			>
+				<div
+					class="port"
+					@click.stop="selectPort(input)"
+					@mouseover="(event) => mouseoverPort(event)"
+					@focus="() => {}"
+				></div>
 				{{ input.label }}
 			</li>
 		</ul>
@@ -16,19 +33,29 @@
 			<slot name="body" />
 		</section>
 		<ul class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
+			<li
+				v-for="(output, index) in node.outputs"
+				:key="index"
+				:class="output.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+			>
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort(output)" @mouseover="(event) => mouseoverPort(event)"
-					@focus="() => { }"></div>
+				<div
+					class="port"
+					@click.stop="selectPort(output)"
+					@mouseover="(event) => mouseoverPort(event)"
+					@focus="() => {}"
+				></div>
 			</li>
 		</ul>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPort } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -44,6 +71,7 @@ const nodeStyle = computed(() => ({
 }));
 
 const workflowNode = ref<HTMLElement>();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 let tempX = 0;
 let tempY = 0;
@@ -83,6 +111,13 @@ onMounted(() => {
 
 function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
+}
+
+// Pass workflow node to drilldown panel
+function showNodeDrilldown() {
+	if (!isEmpty(props.node.outputs)) {
+		openedWorkflowNodeStore.setWorkflowNode(props.node);
+	} else alert('Node needs a valid output');
 }
 
 function mouseoverPort(event) {
@@ -179,5 +214,9 @@ ul li {
 
 .outputs {
 	align-items: end;
+}
+
+.port-connected {
+	background: var(--surface-border);
 }
 </style>

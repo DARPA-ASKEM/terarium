@@ -55,3 +55,11 @@ build
 # MISC
 create.sql
 .eslintcache
+
+# Python
+__pycache__/
+response.txt
+response.zip
+supervisord*.*
+output
+uploads

@@ -1,6 +1,5 @@
 <template>
 	<tera-slider
-		class="preview-slider"
 		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
