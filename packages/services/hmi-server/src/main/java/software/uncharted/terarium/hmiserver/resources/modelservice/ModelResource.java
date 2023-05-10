@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.modelservice;
 
 import javax.inject.Inject;
-import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.EventType;
@@ -17,7 +16,6 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Path("/api/model-service/models")
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Model Service REST Endpoint")
