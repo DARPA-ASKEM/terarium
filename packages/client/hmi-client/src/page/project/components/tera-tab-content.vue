@@ -1,55 +1,22 @@
 <template>
-	<tera-model
-		v-if="assetType === ProjectAssetTypes.MODELS"
-		:asset-id="assetId ?? newModelId"
-		:project="project"
-		@update-tab-name="updateTabName"
-		@create-new-model="createNewModel"
-		@asset-loaded="emit('asset-loaded')"
-		is-editable
-	/>
-	<code-editor
-		v-else-if="assetType === ProjectAssetTypes.CODE"
-		:initial-code="code"
-		@on-model-created="openNewModelFromCode"
-	/>
-	<tera-project-overview
-		v-else-if="assetType === 'overview'"
-		:project="project"
-		@open-workflow="openWorkflow"
-	/>
+	<tera-model v-if="assetType === ProjectAssetTypes.MODELS" :asset-id="assetId ?? newModelId" :project="project"
+		@update-tab-name="updateTabName" @create-new-model="createNewModel" @asset-loaded="emit('asset-loaded')"
+		is-editable />
+	<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code"
+		@on-model-created="openNewModelFromCode" />
+	<tera-project-overview v-else-if="assetType === 'overview'" :project="project" @open-workflow="openWorkflow" />
 	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
 		<!--Investigate using component tag since props are similar-->
-		<tera-document
-			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
-			:xdd-uri="getXDDuri(assetId)"
-			:previewLineLimit="10"
-			:project="project"
-			is-editable
-			@open-code="openCode"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<tera-dataset
-			v-else-if="assetType === ProjectAssetTypes.DATASETS"
-			:asset-id="assetId"
-			:project="project"
-			is-editable
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<simulation-plan
-			v-else-if="assetType === ProjectAssetTypes.PLANS"
-			:asset-id="assetId"
-			:project="project"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<simulation-run
-			v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-			:asset-id="assetId"
-			:project="project"
-			@asset-loaded="emit('asset-loaded')"
-		/>
+		<tera-document v-if="assetType === ProjectAssetTypes.DOCUMENTS" :xdd-uri="getXDDuri(assetId)" :previewLineLimit="10"
+			:project="project" is-editable @open-code="openCode" @asset-loaded="emit('asset-loaded')" />
+		<tera-dataset v-else-if="assetType === ProjectAssetTypes.DATASETS" :asset-id="assetId" :project="project"
+			is-editable @asset-loaded="emit('asset-loaded')" />
+		<simulation-plan v-else-if="assetType === ProjectAssetTypes.PLANS" :asset-id="assetId" :project="project"
+			@asset-loaded="emit('asset-loaded')" />
+		<simulation-run v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS" :asset-id="assetId" :project="project"
+			@asset-loaded="emit('asset-loaded')" />
 	</template>
 	<section v-else class="no-open-tabs">
 		<img src="@assets/svg/seed.svg" alt="Seed" />
