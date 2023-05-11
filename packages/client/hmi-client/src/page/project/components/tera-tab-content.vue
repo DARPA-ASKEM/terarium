@@ -7,13 +7,22 @@
 		@asset-loaded="emit('asset-loaded')"
 		is-editable
 	/>
-	<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code" />
+	<code-editor
+		v-else-if="assetType === ProjectAssetTypes.CODE"
+		:initial-code="code"
+		@vnode-mounted="emit('asset-loaded')"
+	/>
 	<tera-project-overview
 		v-else-if="assetType === 'overview'"
 		:project="project"
+		@vnode-mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
 	/>
-	<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
+	<tera-simulation-workflow
+		v-else-if="assetType === 'workflow'"
+		:project="project"
+		@vnode-mounted="emit('asset-loaded')"
+	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
 		<!--Investigate using component tag since props are similar-->
