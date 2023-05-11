@@ -5,6 +5,7 @@
 			content-width="300px"
 			header="Resources"
 			direction="left"
+			class="resource-panel"
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
@@ -29,6 +30,7 @@
 				@close-tab="removeClosedTab"
 				@select-tab="openAsset"
 				@click="getAndPopulateAnnotations()"
+				class="tab-group"
 			/>
 			<template v-if="assetId && !isEmpty(tabs)">
 				<tera-document
@@ -585,6 +587,12 @@ function formatAuthorTimestamp(username, timestamp) {
 </script>
 
 <style scoped>
+.resource-panel,
+.tab-group {
+	z-index: 2;
+	isolation: isolate;
+}
+
 section {
 	display: flex;
 	flex-direction: column;
