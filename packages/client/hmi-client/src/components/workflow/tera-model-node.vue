@@ -11,14 +11,26 @@
 		<ul>
 			<li v-for="(s, i) of model.content.S" :key="i">
 				<span>{{ s.sname }}</span>
-				<InputNumber class="p-inputtext-sm" v-model="initialValues[s.sname]" />
+				<InputNumber
+					inputId="minmaxfraction"
+					:minFractionDigits="0"
+					:maxFractionDigits="10"
+					class="p-inputtext-sm"
+					v-model="initialValues[s.sname]"
+				/>
 			</li>
 		</ul>
 		<h6>Parameter values</h6>
 		<ul>
 			<li v-for="(t, i) of model.content?.T" :key="i">
 				<span>{{ t.tname }}</span>
-				<InputNumber class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
+				<InputNumber
+					inputId="minmaxfraction"
+					:minFractionDigits="0"
+					:maxFractionDigits="10"
+					class="p-inputtext-sm"
+					v-model="parameterValues[t.tname]"
+				/>
 			</li>
 		</ul>
 		<Button @click="run">Run</Button>
