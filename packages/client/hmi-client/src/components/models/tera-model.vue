@@ -321,7 +321,7 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
-const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded']);
+const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
 
 const props = defineProps({
 	project: {
@@ -768,6 +768,7 @@ const createNewModel = async () => {
 		const newModelResp = await createModel(newModel);
 		if (newModelResp) {
 			const modelId = newModelResp.id.toString();
+			emit('close-current-tab');
 			await addModelToProject(props.project.id, modelId, resources);
 
 			// Go to the model you just created

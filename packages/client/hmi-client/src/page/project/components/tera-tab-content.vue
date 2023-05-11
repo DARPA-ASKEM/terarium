@@ -7,6 +7,7 @@
 		@open-code="openCode"
 		@open-workflow="openWorkflow"
 		@update-tab-name="updateTabName"
+		@close-current-tab="emit('close-current-tab')"
 	/>
 	<section v-else>
 		<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -42,7 +43,7 @@ const props = defineProps<{
 	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
-const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name']);
+const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
 
 const router = useRouter();
 
@@ -91,6 +92,7 @@ const currentComponent = computed(() => {
 	}
 });
 
+// This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
