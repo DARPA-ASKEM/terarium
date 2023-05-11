@@ -128,6 +128,23 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
+			<AccordionTab v-if="model">
+				<template #header> Model configurations </template>
+				<h6>Initial values</h6>
+				<ul>
+					<li v-for="(s, i) of model.content.S" :key="i">
+						<span>{{ s.sname }}</span>
+						<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
+					</li>
+				</ul>
+				<h6>Parameter values</h6>
+				<ul>
+					<li v-for="(t, i) of model.content?.T" :key="i">
+						<span>{{ t.tname }}</span>
+						<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
+					</li>
+				</ul>
+			</AccordionTab>
 			<AccordionTab>
 				<template #header>
 					State variables<span class="artifact-amount">({{ model?.content?.S.length }})</span>
@@ -316,8 +333,11 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
-
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+
+interface StringValueMap {
+	[key: string]: string;
+}
 
 const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview', 'asset-loaded']);
 
@@ -338,6 +358,9 @@ const props = defineProps({
 		required: false
 	}
 });
+
+const initialValues = ref<StringValueMap>({});
+const parameterValues = ref<StringValueMap>({});
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
@@ -860,6 +883,23 @@ const addTransition = async () => {
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
+
+watch(
+	() => model.value,
+	async () => {
+		if (model.value) {
+			model.value = await getModel(model.value.id.toString());
+
+			model.value?.content.S.forEach((s) => {
+				initialValues.value[s.sname] = `${1}`;
+			});
+
+			model.value?.content.T.forEach((s) => {
+				parameterValues.value[s.tname] = `${0.0005}`;
+			});
+		}
+	}
+);
 </script>
 
 <style scoped>
