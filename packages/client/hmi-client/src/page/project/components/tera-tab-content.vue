@@ -21,7 +21,6 @@
 			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
-			:project="project"
 			is-editable
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
@@ -29,20 +28,15 @@
 		<tera-dataset
 			v-else-if="assetType === ProjectAssetTypes.DATASETS"
 			:asset-id="assetId"
-			:project="project"
 			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<simulation-plan
 			v-else-if="assetType === ProjectAssetTypes.PLANS"
-			:asset-id="assetId"
-			:project="project"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<simulation-run
 			v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-			:asset-id="assetId"
-			:project="project"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
