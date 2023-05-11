@@ -888,8 +888,6 @@ watch(
 	() => model.value,
 	async () => {
 		if (model.value) {
-			model.value = await getModel(model.value.id.toString());
-
 			model.value?.content.S.forEach((s) => {
 				initialValues.value[s.sname] = `${1}`;
 			});
