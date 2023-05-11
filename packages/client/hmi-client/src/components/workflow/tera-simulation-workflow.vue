@@ -24,7 +24,8 @@
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
+						:model-config="node.inputs[0].value"
+						:dataset-id="node.inputs[1].value"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset'"

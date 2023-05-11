@@ -41,14 +41,15 @@ import { ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
-	node: WorkflowNode;
+	modelConfig: ModelConfig | null;
+	datasetId: number | null;
 }>();
 
 const runId = ref('');
@@ -58,7 +59,7 @@ const modelColumnNames = ref();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
 
-// const featuredIndex = computed(props.node.inputs[0].value.model.content || []);
+// const featuredIndex = computed(props.modelConfig.model.content || []);
 // const featureValues = ref<[String]>(['']);
 const featureMap = ref();
 
@@ -71,12 +72,12 @@ const startCalibration = async () => {
 		I: [],
 		O: []
 	};
-	if (props.node.inputs[0].value.model) {
+	if (props.modelConfig) {
 		// Take out all the extra content in model.content
-		cleanedModel.S = props.node.inputs[0].value.model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = props.node.inputs[0].value.model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = props.node.inputs[0].value.model.content.I;
-		cleanedModel.O = props.node.inputs[0].value.model.content.O;
+		cleanedModel.S = props.modelConfig.model.content.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = props.modelConfig.model.content.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = props.modelConfig.model.content.I;
+		cleanedModel.O = props.modelConfig.model.content.O;
 
 		if (featureMap.value) {
 			const featureObject: { [index: string]: string } = {};
@@ -88,8 +89,8 @@ const startCalibration = async () => {
 
 			const calibrationParam: CalibrationParams = {
 				model: JSON.stringify(cleanedModel),
-				initials: props.node.inputs[0].value.initialValues,
-				params: props.node.inputs[0].value.parameterValues,
+				initials: props.modelConfig.initialValues,
+				params: props.modelConfig.parameterValues,
 				timesteps_column: timestepColumnName.value,
 				feature_mappings: featureObject,
 				dataset: datasetValue.value
@@ -116,26 +117,29 @@ const getCalibrationResults = async () => {
 };
 
 watch(
-	() => props.node.inputs[0].value,
+	() => props.modelConfig,
 	async () => {
-		// When model changes get model column names
-		modelColumnNames.value = props.node.inputs[0].value.model?.content?.S.map(
-			(state) => state.sname
-		);
+		if (props.modelConfig) {
+			console.log(props.modelConfig);
+			// When model changes get model column names
+			modelColumnNames.value = props.modelConfig.model?.content?.S.map((state) => state.sname);
 
-		// initialize featureMap
-		// featureMap.value = [[]];
-		featureMap.value = modelColumnNames.value.map((stateName) => ['123', stateName]);
+			// initialize featureMap
+			// featureMap.value = [[]];
+			featureMap.value = modelColumnNames.value.map((stateName) => ['123', stateName]);
+		}
 	}
 );
 
 watch(
-	() => props.node.inputs[1].value, // When dataset ID changes, update datasetColumnNames
+	() => props.datasetId, // When dataset ID changes, update datasetColumnNames
 	async () => {
-		// Get dataset:
-		csvAsset.value = (await downloadRawFile(props.node.inputs[1].value.toString())) as CsvAsset;
-		datasetColumnNames.value = csvAsset.value?.headers;
-		datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
+		if (props.datasetId) {
+			// Get dataset:
+			csvAsset.value = (await downloadRawFile(props.datasetId.toString())) as CsvAsset;
+			datasetColumnNames.value = csvAsset.value?.headers;
+			datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
+		}
 	}
 );
 </script>
