@@ -2,19 +2,13 @@
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
 			<h5>{{ node.operationType }}</h5>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-			/>
+			<Button icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small" />
 		</header>
 		<ul class="inputs">
 			<li v-for="(input, index) in node.inputs" :key="index" ref="inputs">
-				<div
-					class="port"
-					@click.stop="selectPort(input)"
-					@mouseover="(event) => mouseoverPort(event)"
-					@focus="() => {}"
-				></div>
+				<div class="port" @click.stop="selectPort(input)" @mouseover="(event) => mouseoverPort(event)"
+					@focus="() => { }"></div>
 				{{ input.label }}
 			</li>
 		</ul>
@@ -24,12 +18,8 @@
 		<ul class="outputs">
 			<li v-for="(output, index) in node.outputs" :key="index" ref="outputs">
 				{{ output.label }}
-				<div
-					class="port"
-					@click.stop="selectPort(output)"
-					@mouseover="(event) => mouseoverPort(event)"
-					@focus="() => {}"
-				></div>
+				<div class="port" @click.stop="selectPort(output)" @mouseover="(event) => mouseoverPort(event)"
+					@focus="() => { }"></div>
 			</li>
 		</ul>
 	</main>
@@ -42,6 +32,7 @@ import Button from 'primevue/button';
 
 const props = defineProps<{
 	node: WorkflowNode;
+	canDrag: boolean
 }>();
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
@@ -75,6 +66,10 @@ const drag = (evt: MouseEvent) => {
 
 	tempX = evt.x;
 	tempY = evt.y;
+
+	if (!props.canDrag) {
+		stopDrag();
+	}
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {

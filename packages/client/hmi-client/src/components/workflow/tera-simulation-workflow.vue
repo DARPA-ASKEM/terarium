@@ -1,36 +1,18 @@
 <template>
-	<tera-infinite-canvas
-		debug-mode
-		@click="onCanvasClick()"
-		@contextmenu="toggleContextMenu"
-		@save-transform="saveTransform"
-	>
+	<tera-infinite-canvas debug-mode @click="onCanvasClick()" @contextmenu="toggleContextMenu"
+		@save-transform="saveTransform" @mouseleave="isMouseOverCanvas = false" @mouseenter="isMouseOverCanvas = true">
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node
-				v-for="(node, index) in wf.nodes"
-				:key="index"
-				:node="node"
-				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
-				@port-mouseover="onPortMouseover"
-				@dragging="(event) => updatePosition(node, event)"
-			>
+			<tera-workflow-node v-for="(node, index) in wf.nodes" :key="index" :node="node"
+				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)" @port-mouseover="onPortMouseover"
+				@dragging="(event) => updatePosition(node, event)" :canDrag="isMouseOverCanvas">
 				<template #body>
-					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && models"
-						:models="models"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
-					/>
-					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset'"
-						:datasets="datasets"
-						@append-output-port="(event) => appendOutputPort(node, event)"
-					/>
+					<tera-model-node v-if="node.operationType === 'ModelOperation' && models" :models="models"
+						@append-output-port="(event) => appendOutputPort(node, event)" />
+					<tera-calibration-node v-else-if="node.operationType === 'CalibrationOperation'" :node="node" />
+					<tera-dataset-node v-else-if="node.operationType === 'Dataset'" :datasets="datasets"
+						@append-output-port="(event) => appendOutputPort(node, event)" />
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
 					</div>
@@ -42,41 +24,17 @@
 			<!--
 			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible"><path d="M 0,-3.25 L 5 ,0 L 0,3.25" style="fill: var(--petri-lineColor); fill-opacity: 0.5; stroke: none;"></path></marker>
 			-->
-			<marker
-				class="edge-marker-end"
-				id="arrowhead"
-				viewBox="-5 -5 10 10"
-				refX="6"
-				refY="0"
-				orient="auto"
-				markerWidth="20"
-				markerHeight="20"
-				markerUnits="userSpaceOnUse"
-				xoverflow="visible"
-			>
-				<path
-					d="M 0 -4.875 L 7.5 0 L 0 4.875"
-					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
-				></path>
+			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto"
+				markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible">
+				<path d="M 0 -4.875 L 7.5 0 L 0 4.875"
+					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"></path>
 			</marker>
 		</template>
 		<template #background>
-			<path
-				v-if="newEdge?.points"
-				:d="drawPath(newEdge.points)"
-				stroke="green"
-				stroke-dasharray="4"
-				stroke-width="4"
-				marker-end="url(#arrowhead)"
-			/>
-			<path
-				v-for="(edge, index) of wf.edges"
-				:d="drawPath(edge.points)"
-				stroke="black"
-				stroke-width="4"
-				marker-end="url(#arrowhead)"
-				:key="index"
-			/>
+			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" stroke-dasharray="4" stroke-width="4"
+				marker-end="url(#arrowhead)" />
+			<path v-for="(edge, index) of wf.edges" :d="drawPath(edge.points)" stroke="black" stroke-width="4"
+				marker-end="url(#arrowhead)" :key="index" />
 		</template>
 	</tera-infinite-canvas>
 </template>
@@ -122,6 +80,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isCreatingNewEdge = false;
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
+const isMouseOverCanvas = ref<boolean>(false);
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -131,7 +90,7 @@ const testOperation: Operation = {
 		{ type: 'string', label: 'String input' }
 	],
 	outputs: [{ type: 'number', label: 'Number output' }],
-	action: () => {},
+	action: () => { },
 	isRunnable: true
 };
 
