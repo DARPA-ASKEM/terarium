@@ -16,7 +16,7 @@ OUTPUT_FOLDER = "output"
 ALLOWED_EXTENSIONS = {"pdf"}
 
 app = Flask(__name__)
-app.config["broker_url"] = "amqp://terarium:terarium123@172.27.173.54:5672//"
+app.config["broker_url"] = os.getenv("IP_ADDRESS", "amqp://terarium:terarium123@host.docker.internal:5672//")
 app.config["result_backend"] = "rpc://"
 
 celery = Celery(app.name, broker=app.config["broker_url"])
