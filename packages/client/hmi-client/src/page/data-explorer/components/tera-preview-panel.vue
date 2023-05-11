@@ -6,15 +6,27 @@
 		:is-open="Boolean(previewItem)"
 	>
 		<template v-slot:content>
-			<component
-				v-if="assetComponent"
-				:is="assetComponent"
-				:is-editable="false"
-				:project="resources.activeProject"
+			<tera-document
+				v-if="previewItemResourceType === ResourceType.XDD"
 				:xdd-uri="previewItemId"
-				:asset-id="previewItemId"
 				:previewLineLimit="3"
 				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
+			<tera-dataset
+				v-else-if="previewItemResourceType === ResourceType.DATASET"
+				:asset-id="previewItemId"
+				:highlight="searchTerm"
+				:is-editable="false"
+				@close-preview="closePreview"
+			/>
+			<tera-model
+				v-else-if="previewItemResourceType === ResourceType.MODEL"
+				:asset-id="previewItemId"
+				:project="(resources.activeProject as IProject)"
+				:highlight="searchTerm"
+				:is-editable="false"
 				@close-preview="closePreview"
 			/>
 		</template>
@@ -45,6 +57,7 @@ import TeraModel from '@/components/models/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocument from '@/components/documents/tera-document.vue';
+import { IProject } from '@/types/Project';
 
 const resources = useResourcesStore();
 
@@ -91,19 +104,6 @@ const previewItemId = computed(() => {
 		return previewItemState.value.gddId;
 	}
 	return previewItemState.value.id as string;
-});
-
-const assetComponent = computed(() => {
-	switch (previewItemResourceType.value) {
-		case ResourceType.XDD:
-			return TeraDocument;
-		case ResourceType.MODEL:
-			return TeraModel;
-		case ResourceType.DATASET:
-			return TeraDataset;
-		default:
-			return null;
-	}
 });
 
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
