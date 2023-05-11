@@ -51,16 +51,17 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig);
-const datasetId = computed(() => props.node.inputs[1].value as number);
+const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
+const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
 const runId = ref('');
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
-const modelColumnNames = ref();
+const modelColumnNames = computed(() =>
+	modelConfig.value?.model.content.S.map((state) => state.sname)
+);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
-
 const featureMap = ref();
 
 const startCalibration = async () => {
@@ -119,15 +120,9 @@ const getCalibrationResults = async () => {
 watch(
 	() => modelConfig.value,
 	async () => {
-		console.log('ho');
 		if (modelConfig.value) {
-			console.log(modelConfig.value);
-			// When model changes get model column names
-			modelColumnNames.value = modelConfig.value.model?.content?.S.map((state) => state.sname);
-
 			// initialize featureMap
-			// featureMap.value = [[]];
-			featureMap.value = modelColumnNames.value.map((stateName) => ['123', stateName]);
+			featureMap.value = modelColumnNames.value.map((stateName) => ['', stateName]);
 		}
 	}
 );
