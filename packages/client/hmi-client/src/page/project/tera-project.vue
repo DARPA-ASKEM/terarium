@@ -35,6 +35,7 @@
 					:asset-type="assetType"
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
+					@close-current-tab="removeClosedTab(activeTabIndex as number)"
 				/>
 			</SplitterPanel>
 			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
@@ -505,14 +506,6 @@ section,
 	flex: 1;
 	background: none;
 	border: none;
-}
-
-.no-open-tabs {
-	justify-content: center;
-	gap: 2rem;
-	margin-bottom: 8rem;
-	align-items: center;
-	color: var(--text-color-subdued);
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

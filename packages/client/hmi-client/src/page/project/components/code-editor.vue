@@ -51,12 +51,12 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, computed, PropType } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import FileUpload from 'primevue/fileupload';
 import Button from 'primevue/button';
 import '@node_modules/ace-builds/src-noconflict/mode-python';
 import '@node_modules/ace-builds/src-noconflict/theme-chrome';
-import { ref, watch, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Dialog from 'primevue/dialog';
@@ -67,8 +67,7 @@ import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import { parsePetriNet2IGraph, PetriNet, NodeData, EdgeData } from '@/petrinet/petrinet-service';
 import { IGraph } from '@graph-scaffolder/index';
-import { createModel } from '@/services/model';
-import { ProjectAssetTypes } from '@/types/Project';
+import { ProjectAssetTypes, IProject } from '@/types/Project';
 import { getDocumentById } from '@/services/data';
 import { DocumentAsset } from '@/types/Types';
 import { PDFExtractionResponseType } from '@/types/common';
@@ -82,13 +81,23 @@ import {
 } from '@/services/mit-askem';
 import { getPDFURL } from '@/services/generate-download-link';
 import API, { Poller } from '@/api/api';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
+import { createModel, addModelToProject } from '@/services/model';
 
 const props = defineProps({
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null,
+		required: false
+	},
 	initialCode: {
 		type: String,
 		default: '# Paste some python code here or import from the controls above'
 	}
 });
+
+const router = useRouter();
 
 const code = ref(props.initialCode);
 const editor = ref<VAceEditorInstance['_editor'] | null>(null);
@@ -114,7 +123,6 @@ watch([graphElement], async () => {
 	await renderer?.setData(g);
 	await renderer?.render();
 });
-const emit = defineEmits(['on-model-created']);
 
 const selectedPapers = ref<DocumentAsset[]>();
 const createModelLoading = ref(false);
@@ -228,8 +236,17 @@ async function createModelFromCode() {
 			content: JSON.stringify({ ...acset.value, metadata: linkedMetadata })
 		};
 		const model = await createModel(newModel);
-		if (model) {
-			emit('on-model-created', model.id, newModelName);
+		if (model && props.project) {
+			await addModelToProject(props.project.id, model.id.toString(), resourcesStore);
+
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: {
+					assetName: newModelName,
+					assetId: model.id,
+					assetType: ProjectAssetTypes.MODELS
+				}
+			});
 		} else {
 			logger.error(`Something went wrong.`);
 		}

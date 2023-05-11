@@ -1,18 +1,13 @@
 <template>
 	<tera-model
 		v-if="assetType === ProjectAssetTypes.MODELS"
-		:asset-id="assetId ?? newModelId"
+		:asset-id="assetId ?? ''"
 		:project="project"
 		@update-tab-name="updateTabName"
-		@create-new-model="createNewModel"
 		@asset-loaded="emit('asset-loaded')"
 		is-editable
 	/>
-	<code-editor
-		v-else-if="assetType === ProjectAssetTypes.CODE"
-		:initial-code="code"
-		@on-model-created="openNewModelFromCode"
-	/>
+	<code-editor v-else-if="assetType === ProjectAssetTypes.CODE" :initial-code="code" />
 	<tera-project-overview
 		v-else-if="assetType === 'overview'"
 		:project="project"
@@ -26,7 +21,6 @@
 			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
-			:project="project"
 			is-editable
 			@open-code="openCode"
 			@asset-loaded="emit('asset-loaded')"
@@ -34,24 +28,19 @@
 		<tera-dataset
 			v-else-if="assetType === ProjectAssetTypes.DATASETS"
 			:asset-id="assetId"
-			:project="project"
 			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<simulation-plan
 			v-else-if="assetType === ProjectAssetTypes.PLANS"
-			:asset-id="assetId"
-			:project="project"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<simulation-run
 			v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
-			:asset-id="assetId"
-			:project="project"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
-	<section v-else class="no-open-tabs">
+	<section v-else>
 		<img src="@assets/svg/seed.svg" alt="Seed" />
 		<p>You can open resources from the resource panel.</p>
 		<Button label="Open project overview" @click="openOverview" />
@@ -59,13 +48,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import * as ProjectService from '@/services/project';
-import { createModel, addModelToProject } from '@/services/model';
 import { ProjectAssetTypes, IProject } from '@/types/Project';
-import { PetriNet } from '@/petrinet/petrinet-service';
 import { useRouter } from 'vue-router';
-import useResourcesStore from '@/stores/resources';
 import { RouteName } from '@/router/routes';
 import { isEmpty, cloneDeep } from 'lodash';
 import { Tab } from '@/types/common';
@@ -88,14 +74,13 @@ const props = defineProps<{
 	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
-const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name']);
+const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
 
 const router = useRouter();
-const resources = useResourcesStore();
 
-const newModelId = ref<string>('');
 const code = ref<string>();
 
+// This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
@@ -129,33 +114,17 @@ const updateTabName = (tabName: string) => {
 		emit('update:tabs', tabsClone);
 	}
 };
-
-// Create the new model
-const createNewModel = async (newModel: PetriNet) => {
-	const newModelResp = await createModel(newModel);
-	if (newModelResp) {
-		newModelId.value = newModelResp.id.toString();
-		await addModelToProject(props.project.id, newModelId.value, resources);
-	}
-};
-
-async function openNewModelFromCode(modelId: string, modelName: string) {
-	await addModelToProject(props.project.id, modelId, resources);
-
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetName: modelName,
-			assetId: modelId,
-			assetType: ProjectAssetTypes.MODELS
-		}
-	});
-}
-
-watch(
-	() => props.assetId,
-	() => {
-		newModelId.value = '';
-	}
-);
 </script>
+
+<style scoped>
+section {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	flex: 1;
+	gap: 2rem;
+	margin-bottom: 8rem;
+	color: var(--text-color-subdued);
+}
+</style>
