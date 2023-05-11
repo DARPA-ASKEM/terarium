@@ -92,7 +92,8 @@ export enum AcceptedTypes {
 	PDF = 'application/pdf',
 	JPG = 'image/jpg',
 	JPEG = 'image/jpeg',
-	PNG = 'image/png'
+	PNG = 'image/png',
+	CSV = 'text/csv'
 }
 
 export interface PDFExtractionResponseType {

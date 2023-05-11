@@ -103,18 +103,20 @@
 				<Dialog
 					v-model:visible="visible"
 					modal
-					header="Resource Importer"
+					header="Upload resources"
 					:style="{ width: '60vw' }"
 				>
+					<div>Add resources to your project here</div>
 					<tera-drag-and-drop-importer
 						:show-preview="true"
 						:accept-types="[
 							AcceptedTypes.PDF,
 							AcceptedTypes.JPG,
 							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG
+							AcceptedTypes.PNG,
+							AcceptedTypes.CSV
 						]"
-						:import-action="processPDFs"
+						:import-action="processFiles"
 						@import-completed="importCompleted"
 					></tera-drag-and-drop-importer>
 
@@ -228,8 +230,18 @@ async function getPDFContents(
 	return { text: '', images: [] } as PDFExtractionResponseType;
 }
 
-async function processPDFs(files, extractionMode, extractImages) {
+async function processFiles(files: File[], extractionMode: string, extractImages: string) {
 	const processedFiles = await files.map(async (file) => {
+		if (file.type === AcceptedTypes.CSV) {
+			const formData = new FormData();
+			formData.append('file', file);
+			const response = await API.post(
+				`/datasets/${props.project.id}/files?filename=${file.name}`,
+				formData
+			);
+			console.log(response);
+			return { file, error: false, response };
+		}
 		const resp = await getPDFContents(file, extractionMode, extractImages);
 		const text = resp.text ? resp.text : '';
 		const images = resp.images ? resp.images : [];

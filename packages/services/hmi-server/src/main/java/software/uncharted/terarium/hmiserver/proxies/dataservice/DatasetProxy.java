@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
@@ -134,6 +136,6 @@ public interface DatasetProxy {
 	Response uploadFile(
 		@PathParam("id") String id,
 		@QueryParam("filename") String filename,
-		Byte[] file
+		@FormDataParam("file") MultipartFormDataOutput file
 	);
 }

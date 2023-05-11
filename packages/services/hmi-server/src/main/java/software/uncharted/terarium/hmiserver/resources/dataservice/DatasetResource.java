@@ -2,12 +2,17 @@ package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -223,12 +228,14 @@ public class DatasetResource {
 	@POST
 	@Path("/{id}/files")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response uploadFile(
-		@PathParam("id") final String id,
-		@QueryParam("filename") final String filename,
-		final Byte[] file
-	) {
-		return proxy.uploadFile(id, filename, file);
+	public Response uploadFile(@PathParam("id") final String id, @QueryParam("filename") final String filename, @FormDataParam("file")InputStream file) throws IOException {
+
+
+		MultipartFormDataOutput fileOutput = new MultipartFormDataOutput();
+		fileOutput.addFormData("file", file.readAllBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE, filename);
+
+		Response r = proxy.uploadFile(id, filename, fileOutput);
+		return r;
 	}
 
 	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
@@ -251,7 +258,12 @@ public class DatasetResource {
 		return column;
 	}
 
-	//Given a column and an amount of bins create a CsvColumnStats object.
+	/**
+	 * Given a column and an amount of bins create a CsvColumnStats object.
+	 * @param aCol
+	 * @param binCount
+	 * @return
+	 */
 	private CsvColumnStats getStats(List<String> aCol, Integer binCount){
 		List<Integer> bins = new ArrayList<>();
 		try {

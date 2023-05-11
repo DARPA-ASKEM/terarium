@@ -8,11 +8,11 @@
 				@change="onFileChange"
 				multiple
 				class="hidden-input"
-				accept=".pdf"
+				accept=".pdf,.csv"
 			/>
 			<label for="fileInput" class="file-label">
 				<div v-if="dragOver">Release mouse button to add files to import</div>
-				<div v-else>To import PDFs drag and drop them here or <u>click here</u>.</div>
+				<div v-else>Drop resources here or <u>upload a file</u>.</div>
 			</label>
 			<br />
 
@@ -85,9 +85,13 @@ const props = defineProps({
 		type: Array<AcceptedTypes>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[AcceptedTypes.JPEG, AcceptedTypes.JPG, AcceptedTypes.PNG, AcceptedTypes.PDF].every((v) =>
-				value.includes(v)
-			)
+			[
+				AcceptedTypes.JPEG,
+				AcceptedTypes.JPG,
+				AcceptedTypes.PNG,
+				AcceptedTypes.PDF,
+				AcceptedTypes.CSV
+			].every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
 	importAction: {
