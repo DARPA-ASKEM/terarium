@@ -6,7 +6,8 @@ import {
 	WorkflowNode,
 	WorkflowStatus,
 	Position,
-	WorkflowEdge
+	WorkflowEdge,
+	WorkflowPortStatus
 } from '@/types/workflow';
 
 /**
@@ -43,14 +44,19 @@ export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
+			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null
 		})),
+		outputs: [],
+		/*
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
+			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null
 		})),
+	  */
 		statusCode: WorkflowStatus.INVALID,
 
 		// Not currently in use. May 2023
@@ -109,6 +115,8 @@ export const addEdge = (
 	};
 
 	wf.edges.push(edge);
+	sourceOutputPort.status = WorkflowPortStatus.CONNECTED;
+	targetInputPort.status = WorkflowPortStatus.CONNECTED;
 };
 
 export const removeEdge = (wf: Workflow, id: string) => {
