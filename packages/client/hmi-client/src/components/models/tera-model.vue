@@ -130,7 +130,12 @@
 			</AccordionTab>
 			<AccordionTab v-if="model">
 				<template #header> Model configurations </template>
-				<DataTable :value="modelConfiguration" showGridlines>
+				<DataTable
+					:value="modelConfiguration"
+					editMode="cell"
+					@cell-edit-complete="onCellEditComplete"
+					showGridlines
+				>
 					<ColumnGroup type="header">
 						<!--Style top rows-->
 						<Row>
@@ -145,11 +150,16 @@
 							<Column v-for="(t, i) of model.content.T" :key="i" :header="t.tname" />
 						</Row>
 					</ColumnGroup>
-					<Column field="name" />
-					<!-- <Column v-for="value in i"/>
-					// 
-					
-					-->
+					<Column field="name">
+						<template #body="{ data, field }">
+							{{ data[field] }}
+						</template>
+						<template #editor="{ data, field }">
+							<InputText v-model="data[field]" autofocus />
+						</template>
+					</Column>
+					<Column v-for="(s, i) of model.content.S" :key="i" :field="s.sname" />
+					<Column v-for="(t, i) of model.content.T" :key="i" :field="t.tname" />
 				</DataTable>
 				<h6>Initial values</h6>
 				<ul>
@@ -388,13 +398,13 @@ const parameterValues = ref<StringValueMap>({});
 const modelConfiguration = computed(() => [
 	{
 		name: 'Config 1',
-		initialValues: initialValues.value,
-		parameterValues: parameterValues.value
+		...initialValues.value,
+		...parameterValues.value
 	},
 	{
 		name: 'Config 2',
-		initialValues: initialValues.value,
-		parameterValues: parameterValues.value
+		...initialValues.value,
+		...parameterValues.value
 	}
 ]);
 
@@ -436,6 +446,18 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
+
+const onCellEditComplete = (event) => {
+	const { data, newValue, field } = event;
+
+	switch (field) {
+		case 'name':
+			data[field] = newValue;
+			break;
+		default:
+			break;
+	}
+};
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
