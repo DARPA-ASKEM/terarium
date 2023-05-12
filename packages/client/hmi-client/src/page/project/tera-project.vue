@@ -46,8 +46,8 @@
 				-->
 				<tera-tab-content
 					:project="project"
-					:asset-id="workflowNodeAssetId"
-					:page-type="ProjectAssetTypes.MODELS"
+					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
+					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
 					is-drilldown
 					@asset-loaded="setActiveTab"
 				/>
@@ -230,21 +230,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
-
-// Makes asset/process from workflow node appear
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
-
-// Grabs the model id from the last model config output from the node
-const workflowNodeAssetId = computed(() => {
-	let index: number = 0;
-
-	if (openedWorkflowNodeStore?.workflowNode?.outputs.length) {
-		index = openedWorkflowNodeStore.workflowNode.outputs.length - 1; // Grab index of last output port
-	}
-	return (
-		openedWorkflowNodeStore?.workflowNode?.outputs[index].value.model.id.toString() ?? undefined
-	);
-});
 
 const router = useRouter();
 
