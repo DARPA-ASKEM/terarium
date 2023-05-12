@@ -32,7 +32,7 @@
 				<tera-tab-content
 					:project="project"
 					:asset-id="assetId"
-					:asset-type="assetType"
+					:page-type="pageType"
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
@@ -47,7 +47,7 @@
 				<tera-tab-content
 					:project="project"
 					:asset-id="workflowNodeAssetId"
-					:asset-type="ProjectAssetTypes.MODELS"
+					:page-type="ProjectAssetTypes.MODELS"
 					is-drilldown
 					@asset-loaded="setActiveTab"
 				/>
@@ -205,7 +205,7 @@ import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { Tab, Annotation } from '@/types/common';
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import {
@@ -224,7 +224,7 @@ const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
+	pageType?: ProjectAssetTypes | ProjectPages;
 }>();
 
 const emit = defineEmits(['update-project']);
@@ -336,7 +336,7 @@ const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	assetName: props.assetName ?? '',
-	assetType: props.assetType,
+	pageType: props.pageType,
 	assetId: props.assetId
 }));
 const loadingTabIndex = ref<number | null>(null);
@@ -358,7 +358,7 @@ function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.val
 			asset &&
 			asset.assetId === props.assetId &&
 			asset.assetName === props.assetName &&
-			asset.assetType === props.assetType
+			asset.pageType === props.pageType
 		)
 	) {
 		loadingTabIndex.value = index;
@@ -377,17 +377,17 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 async function removeAsset(asset: Tab) {
-	const { assetName, assetId, assetType } = asset;
+	const { assetName, assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
 	if (
 		assetId &&
-		assetType &&
-		isProjectAssetTypes(assetType) &&
-		assetType !== 'overview' &&
-		assetType !== 'workflow'
+		pageType &&
+		isProjectAssetTypes(pageType) &&
+		pageType !== ProjectPages.OVERVIEW &&
+		pageType !== ProjectAssetTypes.SIMULATION_WORKFLOW
 	) {
-		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
+		const isRemoved = await ProjectService.deleteAsset(props.project.id, pageType, assetId);
 
 		if (isRemoved) {
 			emit('update-project', props.project.id);
@@ -421,7 +421,7 @@ watch(
 			// If name isn't recognized, its a new asset so add a new tab
 			if (
 				props.assetName &&
-				props.assetType &&
+				props.pageType &&
 				!tabs.value.some((tab) => isEqual(tab, newOpenedAssetRoute))
 			) {
 				tabStore.addTab(projectContext.value, newOpenedAssetRoute);
@@ -444,7 +444,7 @@ tabStore.$subscribe(() => {
 });
 
 async function getAndPopulateAnnotations() {
-	annotations.value = await getAnnotations(props.assetId, props.assetType);
+	annotations.value = await getAnnotations(props.assetId, props.pageType);
 	selectedNoteSection.value = annotations.value?.map((note) => note.section);
 }
 
@@ -453,7 +453,7 @@ const addNote = async () => {
 		newNoteSection.value,
 		annotationContent.value,
 		props.assetId,
-		props.assetType
+		props.pageType
 	);
 	annotationContent.value = '';
 	newNoteSection.value = NoteSection.Unassigned;

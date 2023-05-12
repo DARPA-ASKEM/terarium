@@ -1,6 +1,6 @@
 <template>
 	<tera-model
-		v-if="assetType === ProjectAssetTypes.MODELS"
+		v-if="pageType === ProjectAssetTypes.MODELS"
 		:asset-id="assetId ?? ''"
 		:project="project"
 		@update-tab-name="updateTabName"
@@ -8,18 +8,18 @@
 		is-editable
 	/>
 	<code-editor
-		v-else-if="assetType === ProjectAssetTypes.CODE"
+		v-else-if="pageType === ProjectAssetTypes.CODE"
 		:initial-code="code"
 		@vnode-mounted="emit('asset-loaded')"
 	/>
 	<tera-project-overview
-		v-else-if="assetType === 'overview'"
+		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
 		@vnode-mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
 	/>
 	<tera-simulation-workflow
-		v-else-if="assetType === 'workflow'"
+		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
 		:project="project"
 		@vnode-mounted="emit('asset-loaded')"
 	/>
@@ -27,7 +27,7 @@
 	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
 		<!--Investigate using component tag since props are similar-->
 		<tera-document
-			v-if="assetType === ProjectAssetTypes.DOCUMENTS"
+			v-if="pageType === ProjectAssetTypes.DOCUMENTS"
 			:xdd-uri="getXDDuri(assetId)"
 			:previewLineLimit="10"
 			is-editable
@@ -35,17 +35,17 @@
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
-			v-else-if="assetType === ProjectAssetTypes.DATASETS"
+			v-else-if="pageType === ProjectAssetTypes.DATASETS"
 			:asset-id="assetId"
 			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<simulation-plan
-			v-else-if="assetType === ProjectAssetTypes.PLANS"
+			v-else-if="pageType === ProjectAssetTypes.PLANS"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<simulation-run
-			v-else-if="assetType === ProjectAssetTypes.SIMULATION_RUNS"
+			v-else-if="pageType === ProjectAssetTypes.SIMULATION_RUNS"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 	</template>
@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import * as ProjectService from '@/services/project';
-import { ProjectAssetTypes, IProject } from '@/types/Project';
+import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -77,7 +77,7 @@ import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workfl
 const props = defineProps<{
 	project: IProject;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
+	pageType?: ProjectAssetTypes | ProjectPages;
 	tabs?: Tab[];
 	activeTabIndex?: number;
 	isDrilldown?: boolean; // temp just to preview one workflow node
@@ -97,13 +97,17 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 const openWorkflow = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
+		params: {
+			assetName: 'Workflow',
+			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
+			assetId: undefined
+		}
 	});
 };
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
-		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
+		params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
 function openCode(assetToOpen: Tab, newCode?: string) {

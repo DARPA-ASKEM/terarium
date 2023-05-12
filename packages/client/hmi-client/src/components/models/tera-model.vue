@@ -777,7 +777,7 @@ const createNewModel = async () => {
 				params: {
 					assetName: newModelName.value,
 					assetId: modelId,
-					assetType: ProjectAssetTypes.MODELS
+					pageType: ProjectAssetTypes.MODELS
 				}
 			});
 		}
@@ -825,7 +825,7 @@ const goToSimulationRunPage = () => {
 		params: {
 			assetId: model.value?.id ?? 0 + 1000,
 			assetName: highlightSearchTerms(model.value?.name ?? ''),
-			assetType: 'simulation_runs'
+			pageType: 'simulation_runs'
 		}
 	});
 };

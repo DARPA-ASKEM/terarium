@@ -244,7 +244,7 @@ async function createModelFromCode() {
 				params: {
 					assetName: newModelName,
 					assetId: model.id,
-					assetType: ProjectAssetTypes.MODELS
+					pageType: ProjectAssetTypes.MODELS
 				}
 			});
 		} else {

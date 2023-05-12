@@ -100,8 +100,8 @@ async function openContent(content?) {
 	// Will be pasted into the code editor
 	emit(
 		'open-code',
-		{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
-		// { assetName: url.name, assetId: url.name, assetType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
+		{ assetName: 'New file', pageType: ProjectAssetTypes.CODE, assetId: undefined },
+		// { assetName: url.name, assetId: url.name, pageType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
 		code
 	);
 }
