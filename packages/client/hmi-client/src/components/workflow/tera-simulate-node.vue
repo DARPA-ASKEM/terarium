@@ -31,16 +31,23 @@ import Chart from 'primevue/chart';
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 
+type DatasetType = {
+	data: number[];
+	label: string;
+	fill: boolean;
+	tension: number;
+};
+
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-const startedRunIdList = ref([] as number[]);
-const completedRunIdList = ref([] as number[]);
+const startedRunIdList = ref<number[]>([]);
+const completedRunIdList = ref<number[]>([]);
 let runResults = {};
 
 // data for rendering ui
-let stateVariablesList = [] as any[];
+let stateVariablesList: { code: string }[] = [];
 const selectedVariable = ref<{ code: string }[]>([]);
 let runList = [] as any[];
 const selectedRun = ref<null | { code: string }>(null);
@@ -151,45 +158,43 @@ const getStatus = async () => {
 	}
 };
 
-watch(
-	() => completedRunIdList.value,
-	async (runIdList) => {
-		const newRunResults = {};
-		await Promise.all(
-			runIdList.map(async (runId) => {
-				if (runResults[runId]) {
-					newRunResults[runId] = runResults[runId];
-				} else {
-					const resultCsv = await getRunResult(runId);
-					newRunResults[runId] = csvParse(resultCsv);
-				}
-			})
-		);
-		runResults = newRunResults;
-		// process data retrieved
+const watchCompletedRunList = async (runIdList: number[]) => {
+	const newRunResults = {};
+	await Promise.all(
+		runIdList.map(async (runId) => {
+			if (runResults[runId]) {
+				newRunResults[runId] = runResults[runId];
+			} else {
+				const resultCsv = await getRunResult(runId);
+				newRunResults[runId] = csvParse(resultCsv);
+			}
+		})
+	);
+	runResults = newRunResults;
+	// process data retrieved
 
-		// assume that the state variables for all runs will be identical
-		// take first run and parse it for state variables
-		if (!stateVariablesList.length) {
-			stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
-				.filter((key) => key !== 'timestep')
-				.map((key) => ({ code: key }));
-		}
-		selectedVariable.value = [stateVariablesList[0]];
-		runList = runIdList.map((runId, index) => ({ code: runId, index }));
-		selectedRun.value = runList[0];
+	// assume that the state variables for all runs will be identical
+	// take first run and parse it for state variables
+	if (!stateVariablesList.length) {
+		stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
+			.filter((key) => key !== 'timestep')
+			.map((key) => ({ code: key }));
 	}
-);
+	selectedVariable.value = [stateVariablesList[0]];
+	runList = runIdList.map((runId, index) => ({ code: runId, index }));
+	selectedRun.value = runList[0];
+};
+watch(() => completedRunIdList.value, watchCompletedRunList);
 
-const renderGraph = ([selectedVarList]) => {
-	const datasets: any[] = [];
-	selectedVarList.forEach(({ code }) =>
+const renderGraph = (params) => {
+	const datasets: DatasetType[] = [];
+	params[0].forEach(({ code }) =>
 		completedRunIdList.value
 			.map((runId) => runResults[runId])
 			.forEach((run, runIdx) => {
 				const dataset = {
 					data: run.map(
-						(datum: any) => datum[code] // - runResults[selectedRun.value.code][timeIdx][code]
+						(datum: { [key: string]: number }) => datum[code] // - runResults[selectedRun.value.code][timeIdx][code]
 					),
 					label: `${completedRunIdList.value[runIdx]} - ${code}`,
 					fill: false,
@@ -203,11 +208,11 @@ const renderGraph = ([selectedVarList]) => {
 		datasets
 	};
 };
-watch(() => [selectedVariable.value, selectedRun.value] as any, renderGraph);
+watch(() => [selectedVariable.value, selectedRun.value], renderGraph);
 </script>
 
 <style scoped>
-.result-container {
+section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
