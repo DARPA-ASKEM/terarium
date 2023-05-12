@@ -31,6 +31,7 @@
 				:disabled="isEditing"
 				class="p-button-sm"
 			/>
+			<Button @click="printConfig" label="Print config" class="p-button-sm" />
 		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
@@ -145,8 +146,12 @@
 							<!-- <Column header="Observables" /> -->
 						</Row>
 						<Row>
-							<Column>Select all</Column>
-							<Column v-for="(s, i) of model.content.S" :key="i" :header="s.sname" />
+							<Column
+								v-for="(s, i) of model.content.S"
+								:key="i"
+								:header="s.sname"
+								@click="printConfig(i)"
+							/>
 							<Column v-for="(t, i) of model.content.T" :key="i" :header="t.tname" />
 						</Row>
 					</ColumnGroup>
@@ -161,20 +166,6 @@
 					<Column v-for="(s, i) of model.content.S" :key="i" :field="s.sname" />
 					<Column v-for="(t, i) of model.content.T" :key="i" :field="t.tname" />
 				</DataTable>
-				<h6>Initial values</h6>
-				<ul>
-					<li v-for="(s, i) of model.content.S" :key="i">
-						<span>{{ s.sname }}</span>
-						<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
-					</li>
-				</ul>
-				<h6>Parameter values</h6>
-				<ul>
-					<li v-for="(t, i) of model.content?.T" :key="i">
-						<span>{{ t.tname }}</span>
-						<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
-					</li>
-				</ul>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
@@ -407,6 +398,10 @@ const modelConfiguration = computed(() => [
 		...parameterValues.value
 	}
 ]);
+
+function printConfig(i) {
+	console.log(i, modelConfiguration.value);
+}
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
@@ -1036,6 +1031,11 @@ section math-editor {
 
 .p-splitter {
 	height: 100%;
+}
+
+.p-datatable:deep(td:hover) {
+	background-color: var(--surface-secondary);
+	cursor: pointer;
 }
 
 .tera-split-panel {
