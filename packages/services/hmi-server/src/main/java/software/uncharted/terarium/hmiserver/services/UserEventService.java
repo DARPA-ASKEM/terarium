@@ -27,13 +27,21 @@ public class UserEventService {
 			.setId(UUID.randomUUID());
 	}
 
-	public void send(EventType type, String message) {
-		final User user = new User(securityIdentity);
+	public void send(EventType type, String message, User user) {
 		final UserEvent event = create(user)
 			.setType(type)
 			.setMessage(message);
-
 		userEventEmitter.send(event);
+	}
+
+	/**
+	 * If no User is defined, we use the current user
+	 * @param type
+	 * @param message
+	 */
+	public void send(EventType type, String message) {
+		final User user = new User(securityIdentity);
+		send(type, message, user);
 	}
 
 	public boolean isCurrentUser(UserEvent event) {
