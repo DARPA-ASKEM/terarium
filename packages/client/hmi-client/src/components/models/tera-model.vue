@@ -130,6 +130,27 @@
 			</AccordionTab>
 			<AccordionTab v-if="model">
 				<template #header> Model configurations </template>
+				<DataTable :value="modelConfiguration" showGridlines>
+					<ColumnGroup type="header">
+						<!--Style top rows-->
+						<Row>
+							<Column header="" />
+							<Column header="Initial conditions" :colspan="model.content.S.length" />
+							<Column header="Parameters" :colspan="model.content?.T.length" />
+							<!-- <Column header="Observables" /> -->
+						</Row>
+						<Row>
+							<Column>Select all</Column>
+							<Column v-for="(s, i) of model.content.S" :key="i" :header="s.sname" />
+							<Column v-for="(t, i) of model.content.T" :key="i" :header="t.tname" />
+						</Row>
+					</ColumnGroup>
+					<Column field="name" />
+					<!-- <Column v-for="value in i"/>
+					// 
+					
+					-->
+				</DataTable>
 				<h6>Initial values</h6>
 				<ul>
 					<li v-for="(s, i) of model.content.S" :key="i">
@@ -318,6 +339,8 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Row from 'primevue/row';
+import ColumnGroup from 'primevue/columngroup';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
@@ -361,6 +384,19 @@ const props = defineProps({
 
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
+
+const modelConfiguration = computed(() => [
+	{
+		name: 'Config 1',
+		initialValues: initialValues.value,
+		parameterValues: parameterValues.value
+	},
+	{
+		name: 'Config 2',
+		initialValues: initialValues.value,
+		parameterValues: parameterValues.value
+	}
+]);
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
@@ -986,6 +1022,10 @@ section math-editor {
 	display: flex;
 	align-items: center;
 	width: 100%;
+}
+
+.model-config-header:deep(.p-datatable .p-datatable-thead > tr > th) {
+	border: none;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
