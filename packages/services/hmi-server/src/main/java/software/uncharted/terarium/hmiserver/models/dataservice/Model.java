@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.Nulls;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+package software.uncharted.terarium.hmiserver.models.dataservice.ModelMetadata;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,20 +14,18 @@ import java.util.List;
 @Accessors(chain = true)
 public class Model implements Serializable {
 
-	private Long id;
+	private String id;
 
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)
 	private String description = "";
 
-	private String framework;
+	private String schema;
 
-	private LocalDateTime timestamp;
+	private Map<String, Object> model;
 
-	private ModelContent content;
+	private Map<String, Object> properties;
 
-	private Concept concept;
-
-	private List<Object> parameters;
+	private ModelMetadata metadata;
 }
