@@ -3,10 +3,15 @@
 		<header>
 			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<span>
-				<Button icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small" />
-				<Button @click="showNodeDrilldown" icon="pi pi-external-link"
-					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small" />
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+				<Button
+					@click="showNodeDrilldown"
+					icon="pi pi-external-link"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
 			</span>
 		</header>
 		<ul class="inputs">
@@ -37,7 +42,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
-import { ProjectAssetTypes } from '@/types/Project';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -98,23 +102,24 @@ function selectPort(port: WorkflowPort) {
 // Pass workflow node to drilldown panel
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
-		let assetType, assetId;
-		// openedWorkflowNodeStore.setWorkflowNode(props.node);
-		switch (props.node.operationType) {
-			case 'ModelOperation':
-				assetType = ProjectAssetTypes.MODELS;
-				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
-				break;
-			case 'Dataset':
-				assetType = ProjectAssetTypes.DATASETS;
-				assetId = props.node.outputs[0].value.toString();
-				break;
+		// let assetType, assetId;
+		// // openedWorkflowNodeStore.setWorkflowNode(props.node);
+		// switch (props.node.operationType) {
+		// 	case 'ModelOperation':
+		// 		assetType = ProjectAssetTypes.MODELS;
+		// 		assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+		// 		break;
+		// 	case 'Dataset':
+		// 		assetType = ProjectAssetTypes.DATASETS;
+		// 		assetId = props.node.outputs[0].value.toString();
+		// 		break;
+		// }
+		// console.log(assetType);
+		// console.log(assetId);
+		// if (assetType && assetId) {
+		// 	openedWorkflowNodeStore.asset = { id: assetId, type: assetType }
 		}
-		console.log(assetType);
-		console.log(assetId);
-		if (assetType && assetId) {
-			openedWorkflowNodeStore.asset = { id: assetId, type: assetType }
-		}
+		openedWorkflowNodeStore.setWorkflowNode(props.node);
 	} else alert('Node needs a valid output');
 }
 

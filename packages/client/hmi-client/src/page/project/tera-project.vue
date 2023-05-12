@@ -3,31 +3,60 @@
 		<tera-slider-panel v-model:is-open="isResourcesSliderOpen" content-width="300px" header="Resources"
 			direction="left">
 			<template v-slot:content>
-				<tera-resource-sidebar :project="project" :tabs="tabs" :active-tab="openedAssetRoute"
-					@open-asset="openAssetFromSidebar" @close-tab="removeClosedTab" @click="getAndPopulateAnnotations()"
-					@remove-asset="removeAsset" />
+				<tera-resource-sidebar
+					:project="project"
+					:tabs="tabs"
+					:active-tab="openedAssetRoute"
+					@open-asset="openAssetFromSidebar"
+					@close-tab="removeClosedTab"
+					@click="getAndPopulateAnnotations()"
+					@remove-asset="removeAsset"
+				/>
 			</template>
 		</tera-slider-panel>
 		<Splitter>
 			<SplitterPanel :size="20">
-				<tera-tab-group v-if="!isEmpty(tabs)" :tabs="tabs" :active-tab-index="activeTabIndex"
-					:loading-tab-index="loadingTabIndex" @close-tab="removeClosedTab" @select-tab="openAsset"
-					@click="getAndPopulateAnnotations()" />
-				<tera-tab-content :project="project" :asset-id="assetId" :asset-type="assetType" v-model:tabs="tabs"
-					@asset-loaded="setActiveTab" />
+				<tera-tab-group
+					v-if="!isEmpty(tabs)"
+					:tabs="tabs"
+					:active-tab-index="activeTabIndex"
+					:loading-tab-index="loadingTabIndex"
+					@close-tab="removeClosedTab"
+					@select-tab="openAsset"
+					@click="getAndPopulateAnnotations()"
+				/>
+				<tera-project-page
+					:project="project"
+					:asset-id="assetId"
+					:page-type="pageType"
+					v-model:tabs="tabs"
+					@asset-loaded="setActiveTab"
+					@close-current-tab="removeClosedTab(activeTabIndex as number)"
+				/>
 			</SplitterPanel>
-			<SplitterPanel v-if="openedWorkflowNodeStore.asset" :size="20">
+			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
 				<Button label="Print chosen node" @click="printChosenNode" />
 				<!--
 					for now just testing model component in drilldown
 					asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???
 				-->
-				<tera-tab-content :project="project" :asset-id="openedWorkflowNodeStore.asset.id"
-					:asset-type="openedWorkflowNodeStore.asset.type" is-drilldown @asset-loaded="setActiveTab" />
+				<tera-project-page
+					:project="project"
+					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
+					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
+					is-drilldown
+					@asset-loaded="setActiveTab"
+				/>
 			</SplitterPanel>
 		</Splitter>
-		<tera-slider-panel class="slider" content-width="240px" direction="right" header="Notes"
-			v-model:is-open="isNotesSliderOpen" @click="getAndPopulateAnnotations()">
+		<tera-slider-panel
+			class="slider"
+			content-width="240px"
+			direction="right"
+			header="Notes"
+			v-model:is-open="isNotesSliderOpen"
+			@click="getAndPopulateAnnotations()"
+		>
 			<template v-slot:content>
 				<section class="annotation-panel-container">
 					<div v-for="(annotation, idx) of annotations" :key="idx">
@@ -114,7 +143,7 @@ import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { Tab, Annotation } from '@/types/common';
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import {
@@ -126,34 +155,20 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraTabContent from './components/tera-tab-content.vue';
+import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
 	project: IProject;
 	assetName?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
+	pageType?: ProjectAssetTypes | ProjectPages;
 }>();
 
 const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
-
-// Makes asset/process from workflow node appear
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
-
-// Grabs the model id from the last model config output from the node
-// const workflowNodeAssetId = computed(() => {
-// 	let index: number = 0;
-
-// 	if (openedWorkflowNodeStore?.workflowNode?.outputs.length) {
-// 		index = openedWorkflowNodeStore.workflowNode.outputs.length - 1; // Grab index of last output port
-// 	}
-// 	return (
-// 		openedWorkflowNodeStore?.workflowNode?.outputs[index].value.model.id.toString() ?? undefined
-// 	);
-// });
 
 const router = useRouter();
 
@@ -245,7 +260,7 @@ const tabs = computed(() => tabStore.getTabs(projectContext.value) ?? []);
 const activeTabIndex = ref<number | null>(0);
 const openedAssetRoute = computed<Tab>(() => ({
 	assetName: props.assetName ?? '',
-	assetType: props.assetType,
+	pageType: props.pageType,
 	assetId: props.assetId
 }));
 const loadingTabIndex = ref<number | null>(null);
@@ -267,7 +282,7 @@ function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.val
 			asset &&
 			asset.assetId === props.assetId &&
 			asset.assetName === props.assetName &&
-			asset.assetType === props.assetType
+			asset.pageType === props.pageType
 		)
 	) {
 		loadingTabIndex.value = index;
@@ -286,17 +301,17 @@ function removeClosedTab(tabIndexToRemove: number) {
 }
 
 async function removeAsset(asset: Tab) {
-	const { assetName, assetId, assetType } = asset;
+	const { assetName, assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
 	if (
 		assetId &&
-		assetType &&
-		isProjectAssetTypes(assetType) &&
-		assetType !== 'overview' &&
-		assetType !== 'workflow'
+		pageType &&
+		isProjectAssetTypes(pageType) &&
+		pageType !== ProjectPages.OVERVIEW &&
+		pageType !== ProjectAssetTypes.SIMULATION_WORKFLOW
 	) {
-		const isRemoved = await ProjectService.deleteAsset(props.project.id, assetType, assetId);
+		const isRemoved = await ProjectService.deleteAsset(props.project.id, pageType, assetId);
 
 		if (isRemoved) {
 			emit('update-project', props.project.id);
@@ -330,7 +345,7 @@ watch(
 			// If name isn't recognized, its a new asset so add a new tab
 			if (
 				props.assetName &&
-				props.assetType &&
+				props.pageType &&
 				!tabs.value.some((tab) => isEqual(tab, newOpenedAssetRoute))
 			) {
 				tabStore.addTab(projectContext.value, newOpenedAssetRoute);
@@ -353,7 +368,7 @@ tabStore.$subscribe(() => {
 });
 
 async function getAndPopulateAnnotations() {
-	annotations.value = await getAnnotations(props.assetId, props.assetType);
+	annotations.value = await getAnnotations(props.assetId, props.pageType);
 	selectedNoteSection.value = annotations.value?.map((note) => note.section);
 }
 
@@ -362,7 +377,7 @@ const addNote = async () => {
 		newNoteSection.value,
 		annotationContent.value,
 		props.assetId,
-		props.assetType
+		props.pageType
 	);
 	annotationContent.value = '';
 	newNoteSection.value = NoteSection.Unassigned;
@@ -415,14 +430,6 @@ section,
 	flex: 1;
 	background: none;
 	border: none;
-}
-
-.no-open-tabs {
-	justify-content: center;
-	gap: 2rem;
-	margin-bottom: 8rem;
-	align-items: center;
-	color: var(--text-color-subdued);
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {

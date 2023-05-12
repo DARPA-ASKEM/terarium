@@ -58,7 +58,7 @@ watch(
 			emit('append-output-port', {
 				type: DatasetOperation.outputs[0].type,
 				label: selectedDataset.value.name,
-				value: selectedDataset.value.id.toString()
+				value: selectedDataset.value.id
 			});
 		}
 	}
