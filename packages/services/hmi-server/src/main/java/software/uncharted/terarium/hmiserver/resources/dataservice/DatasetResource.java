@@ -208,7 +208,7 @@ public class DatasetResource {
 
 		List<List<String>> csv = csvToRecords(rawCsvString);
 		List<String> headers = csv.get(0);
-		List<CsvColumnStats> CsvColumnStats = new ArrayList<CsvColumnStats>();
+		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
 		if (binCount > 0){
 			for (int i = 0; i < csv.get(0).size(); i++){
 				List<String> column = getColumn(csv,i);
@@ -243,9 +243,9 @@ public class DatasetResource {
 	private List<List<String>> csvToRecords(String rawCsvString){
 		String[] csvRows = rawCsvString.split("\n");
 		String[] headers = csvRows[0].split(",");
-		List<List<String>> csv = new ArrayList<List<String>>();
-		for (int i = 0; i < csvRows.length; i++){
-			csv.add(Arrays.asList(csvRows[i].split(",")));
+		List<List<String>> csv = new ArrayList<>();
+		for (String csvRow : csvRows) {
+			csv.add(Arrays.asList(csvRow.split(",")));
 		}
 		return csv;
 	}
@@ -284,10 +284,10 @@ public class DatasetResource {
 			double stepSize = (numberList.get(numberList.size() - 1) - numberList.get(0)) / (binCount - 1);
 
 			// Fill bins:
-			for (int i = 0; i < numberList.size(); i++){
-				Integer index = (int)Math.abs(Math.floor((numberList.get(i) - numberList.get(0)) / stepSize));
+			for (Double aDouble : numberList) {
+				int index = (int) Math.abs(Math.floor((aDouble - numberList.get(0)) / stepSize));
 				Integer value = bins.get(index);
-				bins.set(index,value + 1);
+				bins.set(index, value + 1);
 			}
 
 			return new CsvColumnStats(bins,minValue,maxValue,meanValue,medianValue,sdValue);
