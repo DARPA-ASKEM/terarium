@@ -25,7 +25,6 @@
 	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
-		<!--Investigate using component tag since props are similar-->
 		<tera-document
 			v-if="pageType === ProjectAssetTypes.DOCUMENTS"
 			:xdd-uri="getXDDuri(assetId)"
