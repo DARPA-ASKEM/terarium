@@ -8,7 +8,7 @@ export const CalibrationOperation: Operation = {
 	name: 'CalibrationOperation',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	inputs: [{ type: 'modelId' }, { type: 'datasetId' }, { type: 'calibrationConfiguration' }],
+	inputs: [{ type: 'modelConfig' }, { type: 'dataset' }],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 

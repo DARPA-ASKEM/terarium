@@ -11,14 +11,26 @@
 		<ul>
 			<li v-for="(s, i) of model.content.S" :key="i">
 				<span>{{ s.sname }}</span>
-				<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
+				<InputNumber
+					inputId="minmaxfraction"
+					:minFractionDigits="0"
+					:maxFractionDigits="10"
+					class="p-inputtext-sm"
+					v-model="initialValues[s.sname]"
+				/>
 			</li>
 		</ul>
 		<h6>Parameter values</h6>
 		<ul>
 			<li v-for="(t, i) of model.content?.T" :key="i">
 				<span>{{ t.tname }}</span>
-				<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
+				<InputNumber
+					inputId="minmaxfraction"
+					:minFractionDigits="0"
+					:maxFractionDigits="10"
+					class="p-inputtext-sm"
+					v-model="parameterValues[t.tname]"
+				/>
 			</li>
 		</ul>
 		<Button @click="run">Run</Button>
@@ -29,10 +41,11 @@
 import { ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import { Model } from '@/types/Model';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
+import { ModelConfig } from '@/types/ModelConfig';
 
 defineProps<{
 	models: Model[];
@@ -41,7 +54,7 @@ defineProps<{
 const emit = defineEmits(['append-output-port']);
 
 interface StringValueMap {
-	[key: string]: string;
+	[key: string]: number;
 }
 
 const selectedModel = ref<Model>();
@@ -59,7 +72,7 @@ function run() {
 				model: model.value,
 				initialValues: initialValues.value,
 				parameterValues: parameterValues.value
-			}
+			} as ModelConfig
 		});
 	}
 }
@@ -71,11 +84,11 @@ watch(
 			model.value = await getModel(selectedModel.value.id.toString());
 
 			model.value?.content.S.forEach((s) => {
-				initialValues.value[s.sname] = `${1}`;
+				initialValues.value[s.sname] = 1;
 			});
 
 			model.value?.content.T.forEach((s) => {
-				parameterValues.value[s.tname] = `${0.005}`;
+				parameterValues.value[s.tname] = 0.0005;
 			});
 		}
 	}
