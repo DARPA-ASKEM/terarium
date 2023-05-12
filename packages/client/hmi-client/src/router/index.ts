@@ -17,7 +17,7 @@ import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Project = '/projects/:projectId/:assetType?/:assetName?/:assetId?',
+	Project = '/projects/:projectId/:pageType?/:assetName?/:assetId?',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 

@@ -279,10 +279,10 @@ const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset', 'close-preview', 'asset-loaded']);
+const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
 function openCode(assetToOpen: Tab, newCode?: string) {
-	emit('open-asset', assetToOpen, newCode);
+	emit('open-code', assetToOpen, newCode);
 }
 
 // Highlight strings based on props.highlight
