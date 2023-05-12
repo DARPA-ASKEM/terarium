@@ -4,7 +4,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
-import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
@@ -126,7 +126,7 @@ public class DatasetResource {
 	}
 
 	@GET
-	public Response getDatasets(
+	public List<Dataset> getDatasets(
 		@DefaultValue("500") @QueryParam("page_size") final Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") final Integer page
 	) {
@@ -143,7 +143,7 @@ public class DatasetResource {
 
 	@GET
 	@Path("/{id}")
-	public Response getDataset(
+	public Dataset getDataset(
 		@PathParam("id") final String id
 	) {
 		return proxy.getDataset(id);

@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
+		:overline="dataset?.simulationRun ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
@@ -152,14 +152,13 @@
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { Dataset } from '@/types/Dataset';
 import { computed, ref, watch, onUpdated } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, Dataset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';

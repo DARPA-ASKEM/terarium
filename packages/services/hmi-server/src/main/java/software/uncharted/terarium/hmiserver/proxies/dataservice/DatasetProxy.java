@@ -3,13 +3,14 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
-import software.uncharted.terarium.hmiserver.models.dataservice.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/datasets")
@@ -84,7 +85,7 @@ public interface DatasetProxy {
 	);
 
 	@GET
-	Response getDatasets(
+	List<Dataset> getDatasets(
 		@DefaultValue("500") @QueryParam("page_size") Integer pageSize,
 		@DefaultValue("0") @QueryParam("page") Integer page
 	);
@@ -97,7 +98,7 @@ public interface DatasetProxy {
 
 	@GET
 	@Path("/{id}")
-	Response getDataset(
+	Dataset getDataset(
 		@PathParam("id") String id
 	);
 

@@ -33,10 +33,9 @@
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
-import { Dataset } from '@/types/Dataset';
 import { computed, ref, watch } from 'vue';
 import { downloadRawFile } from '@/services/dataset';
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, Dataset } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';

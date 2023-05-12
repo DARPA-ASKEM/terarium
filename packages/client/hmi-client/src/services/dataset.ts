@@ -3,9 +3,8 @@
  */
 
 import API from '@/api/api';
-import { Dataset } from '@/types/Dataset';
 import { logger } from '@/utils/logger';
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, Dataset } from '@/types/Types';
 
 /**
  * Get all datasets

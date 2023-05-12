@@ -13,13 +13,14 @@ import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
-import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
+import { DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import {
 	DocumentsResponseOK,
 	Document,
 	ProvenanceType,
 	XDDFacetsItemResponse,
-	Extraction
+	Extraction,
+	Dataset
 } from '@/types/Types';
 import {
 	XDDDictionary,
