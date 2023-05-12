@@ -19,7 +19,7 @@ public class Variable {
 	@JsonSetter("dkg_groundings")
 	private List<DKGConcept> dkgGroundings;
 
-	private List<Datacolumn> column;
+	private List<DataColumn> column;
 
 	private Paper paper;
 

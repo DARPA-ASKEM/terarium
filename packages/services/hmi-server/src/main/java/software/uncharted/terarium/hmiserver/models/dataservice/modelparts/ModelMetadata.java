@@ -6,11 +6,12 @@ import lombok.experimental.Accessors;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
-import java.io.Serializable;
+import java.util.List;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
 
 @Data
 @Accessors(chain = true)
-public class ModelMetadata implements Serializable {
+public class ModelMetadata {
 	@JsonAlias("processed_at")
 	@JsonSetter("processed_at")
 	private Long processedAt;
