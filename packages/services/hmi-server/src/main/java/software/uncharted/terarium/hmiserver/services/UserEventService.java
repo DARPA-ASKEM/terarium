@@ -21,24 +21,15 @@ public class UserEventService {
 	@Channel("user-event")
 	Emitter<UserEvent> userEventEmitter;
 
-	/**
-	 * Create a new UserEvent for a specific user, without any content
-	 * @param identity
-	 * @return
-	 */
-	public UserEvent createEmptyEvent(SecurityIdentity identity) {
+	public UserEvent create(User user) {
 		return new UserEvent()
-			.setUser(new User(identity))
+			.setUser(user)
 			.setId(UUID.randomUUID());
 	}
 
-	/**
-	 * Send a UserEvent
-	 * @param type
-	 * @param message
-	 */
 	public void send(EventType type, String message) {
-		final UserEvent event = createEmptyEvent(securityIdentity)
+		final User user = new User(securityIdentity);
+		final UserEvent event = create(user)
 			.setType(type)
 			.setMessage(message);
 
