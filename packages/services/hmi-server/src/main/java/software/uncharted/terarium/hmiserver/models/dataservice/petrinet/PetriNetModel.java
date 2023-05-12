@@ -3,7 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.petrinet;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.ModelParameter;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 
 import java.util.List;
 

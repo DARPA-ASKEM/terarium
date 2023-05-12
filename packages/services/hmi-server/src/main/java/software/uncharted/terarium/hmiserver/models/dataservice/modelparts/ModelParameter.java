@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice;
+package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -12,8 +12,8 @@ public class ModelParameter {
 
 	private Double value;
 
-	// FIXME:
-	private String grounding;
-	private String distribution;
+	private ModelGrounding grounding;
+
+	private ModelDistribution distribution;
 }
 
