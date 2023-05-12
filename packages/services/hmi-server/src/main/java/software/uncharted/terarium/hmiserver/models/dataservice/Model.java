@@ -5,11 +5,10 @@ import com.fasterxml.jackson.annotation.Nulls;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-package software.uncharted.terarium.hmiserver.models.dataservice.ModelMetadata;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Map;
+
 @Data
 @Accessors(chain = true)
 public class Model implements Serializable {
@@ -22,6 +21,9 @@ public class Model implements Serializable {
 	private String description = "";
 
 	private String schema;
+
+	// FIXME: Remove
+	private ModelContent content;
 
 	private Map<String, Object> model;
 
