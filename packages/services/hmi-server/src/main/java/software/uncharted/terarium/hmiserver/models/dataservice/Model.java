@@ -22,12 +22,12 @@ public class Model implements Serializable {
 
 	private String schema;
 
-	// FIXME: Remove
-	private ModelContent content;
-
 	private Map<String, Object> model;
 
 	private Map<String, Object> properties;
 
 	private ModelMetadata metadata;
+
+	// FIXME: deprecated, remove
+	private ModelContent content;
 }
