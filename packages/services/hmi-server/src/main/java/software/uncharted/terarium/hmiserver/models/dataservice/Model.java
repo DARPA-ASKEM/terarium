@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import lombok.Data;
