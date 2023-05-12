@@ -8,12 +8,9 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class PetriNetState {
-	private String id;
-
+public class PetriNetTransitionProperties {
 	private String name;
-
 	private ModelGrounding grounding;
-
-	private ModelExpression initial;
+	private ModelExpression rate;
 }
+
