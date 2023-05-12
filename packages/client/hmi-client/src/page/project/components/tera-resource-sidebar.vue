@@ -3,7 +3,7 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!activeTab.assetId || activeTab.assetName === 'overview'"
+				:disabled="!activeTab.assetId || activeTab.assetName === ProjectPages.OVERVIEW"
 				v-tooltip="`Remove ${activeTab.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isRemovalModal = true"
@@ -15,7 +15,7 @@
 				@click="
 					emit('open-asset', {
 						assetName: 'New file',
-						assetType: ProjectAssetTypes.CODE,
+						pageType: ProjectAssetTypes.CODE,
 						assetId: undefined
 					})
 				"
@@ -25,9 +25,9 @@
 				v-tooltip="`Create model from Equation`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
-					emit('create-asset', {
+					emit('open-asset', {
 						assetName: 'New Model',
-						assetType: ProjectAssetTypes.MODELS,
+						pageType: ProjectAssetTypes.MODELS,
 						assetId: undefined
 					})
 				"
@@ -35,11 +35,17 @@
 		</header>
 		<Button
 			class="asset-button"
-			:active="activeTab.assetType === 'overview'"
+			:active="activeTab.pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
-			@click="emit('open-overview')"
+			@click="
+				emit('open-asset', {
+					assetName: 'Overview',
+					pageType: ProjectPages.OVERVIEW,
+					assetId: undefined
+				})
+			"
 		>
 			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
 			<span class="p-button-label">Overview</span>
@@ -62,15 +68,15 @@
 					@click="emit('open-asset', tab)"
 				>
 					<vue-feather
-						v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
+						v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
 						class="p-button-icon-left icon"
-						:type="getAssetIcon(tab.assetType ?? null)"
+						:type="getAssetIcon(tab.pageType ?? null)"
 						size="1rem"
 						stroke="rgb(16, 24, 40)"
 					/>
 					<component
 						v-else
-						:is="getAssetIcon(tab.assetType ?? null)"
+						:is="getAssetIcon(tab.pageType ?? null)"
 						class="p-button-icon-left icon"
 					/>
 					<span class="p-button-label">{{ tab.assetName }}</span>
@@ -110,7 +116,7 @@ import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
@@ -120,13 +126,7 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits([
-	'open-asset',
-	'open-overview',
-	'remove-asset',
-	'close-tab',
-	'create-asset'
-]);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
 const isRemovalModal = ref(false);
 
@@ -142,9 +142,9 @@ const assets = computed((): IProjectAssetTabs => {
 			const projectAssetType = type as ProjectAssetTypes;
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
 				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const assetType = asset?.type ?? projectAssetType;
+				const pageType = asset?.type ?? projectAssetType;
 				const assetId = asset?.id.toString();
-				return { assetName, assetType, assetId };
+				return { assetName, pageType, assetId };
 			}) as Tab[];
 			tabs.set(projectAssetType, new Set(typeAssets));
 		}
