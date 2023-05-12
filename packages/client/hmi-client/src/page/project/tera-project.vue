@@ -29,7 +29,7 @@
 					@select-tab="openAsset"
 					@click="getAndPopulateAnnotations()"
 				/>
-				<tera-tab-content
+				<tera-project-page
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
@@ -44,7 +44,7 @@
 					for now just testing model component in drilldown
 					asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???
 				-->
-				<tera-tab-content
+				<tera-project-page
 					:project="project"
 					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
 					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
@@ -217,7 +217,7 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraTabContent from './components/tera-tab-content.vue';
+import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
 const props = defineProps<{
