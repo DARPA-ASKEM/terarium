@@ -14,4 +14,8 @@ public class User {
 		this.username = identity.getPrincipal().getName();
 		this.roles = identity.getRoles();
 	}
+
+	public User(String username) {
+		this.username = username;
+	}
 }
