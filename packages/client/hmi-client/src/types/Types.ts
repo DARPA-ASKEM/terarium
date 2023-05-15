@@ -53,19 +53,19 @@ export interface Annotations {
 }
 
 export interface Dataset {
-    id: number;
+    id?: number;
     name: string;
     url: string;
     description: string;
-    timestamp: Date;
-    deprecated: boolean;
-    sensitivity: string;
-    quality: string;
-    temporalResolution: string;
-    geospatialResolution: string;
-    annotations: DatasetAnnotations;
-    maintainer: string;
-    simulationRun: boolean;
+    timestamp?: Date;
+    deprecated?: boolean;
+    sensitivity?: string;
+    quality?: string;
+    temporalResolution?: string;
+    geospatialResolution?: string;
+    annotations?: DatasetAnnotations;
+    maintainer?: string;
+    simulationRun?: boolean;
 }
 
 export interface DatasetAnnotatedDate extends DatasetAnnotatedField {
