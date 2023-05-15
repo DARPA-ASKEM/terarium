@@ -12,7 +12,7 @@
 			<AccordionTab header="Data preview">
 				<section v-if="csvContent">
 					<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
-					<DataTable class="p-datatable-sm" :value="csvContent.slice(1, 6)">
+					<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
 						<Column
 							v-for="(colName, index) of csvHeaders"
 							:key="index"
@@ -76,30 +76,5 @@ section {
 span {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-}
-
-:deep(.p-datatable > .p-datatable-wrapper) {
-	font-size: xx-small;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-	font-size: xx-small;
-}
-
-:deep(.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td) {
-	padding: 0 5px 0 5px;
-	background-color: var(--gray-50);
-}
-
-:deep(.p-datatable.p-datatable-sm .p-datatable-thead > tr > th) {
-	background-color: var(--gray-50);
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-	border: none;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-	border: none;
 }
 </style>
