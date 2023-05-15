@@ -8,13 +8,24 @@
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)" @port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)" :canDrag="isMouseOverCanvas">
 				<template #body>
-					<tera-model-node v-if="node.operationType === 'ModelOperation' && models" :models="models"
-						@append-output-port="(event) => appendOutputPort(node, event)" />
-					<tera-calibration-node v-else-if="node.operationType === 'CalibrationOperation'" :node="node" />
-					<tera-dataset-node v-else-if="node.operationType === 'Dataset'" :datasets="datasets"
-						@append-output-port="(event) => appendOutputPort(node, event)" />
+					<tera-model-node
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
+						:node="node"
+					/>
+					<tera-dataset-node
+						v-else-if="node.operationType === 'Dataset'"
+						:datasets="datasets"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
 					<div v-else>
-						<Button @click="testNode(node)">Test run</Button>{{ node.outputs[0].value }}
+						<Button @click="testNode(node)">Test run</Button
+						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
 					</div>
 				</template>
 			</tera-workflow-node>
@@ -24,10 +35,22 @@
 			<!--
 			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible"><path d="M 0,-3.25 L 5 ,0 L 0,3.25" style="fill: var(--petri-lineColor); fill-opacity: 0.5; stroke: none;"></path></marker>
 			-->
-			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto"
-				markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible">
-				<path d="M 0 -4.875 L 7.5 0 L 0 4.875"
-					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"></path>
+			<marker
+				class="edge-marker-end"
+				id="arrowhead"
+				viewBox="-5 -5 10 10"
+				refX="6"
+				refY="0"
+				orient="auto"
+				markerWidth="20"
+				markerHeight="20"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path
+					d="M 0 -4.875 L 7.5 0 L 0 4.875"
+					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
+				></path>
 			</marker>
 		</template>
 		<template #background>
@@ -40,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
@@ -48,13 +72,16 @@ import {
 	Workflow,
 	WorkflowEdge,
 	WorkflowNode,
-	WorkflowPort
+	WorkflowPort,
+	WorkflowPortStatus
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
 import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue';
+import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
+import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import { Model } from '@/types/Model';
 import Button from 'primevue/button';
@@ -95,17 +122,27 @@ const testOperation: Operation = {
 };
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
-	// assign outport data to its output port
-	Object.assign(node.outputs[node.outputs.length - 1], port);
-	// Create new output port
 	node.outputs.push({
-		id: node.outputs.length.toString(),
-		type: port.type
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		value: port.value,
+		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
+	if (node.outputs.length === 0) {
+		node.outputs.push({
+			id: uuidv4(),
+			label: 'test',
+			value: null,
+			type: 'number',
+			status: WorkflowPortStatus.NOT_CONNECTED
+		});
+	}
+
 	if (node.inputs[0].value !== null) {
 		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
 	} else {
@@ -136,6 +173,15 @@ const contextMenuItems = ref([
 		label: 'New dataset',
 		command: () => {
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition.value);
+		}
+	},
+	{
+		label: 'New Simulation',
+		command: () => {
+			workflowService.addNode(wf.value, SimulateOperation, newNodePosition.value, {
+				width: 420,
+				height: 220
+			});
 		}
 	}
 ]);

@@ -1,12 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
 import {
-	Workflow,
 	Operation,
-	WorkflowNode,
-	WorkflowStatus,
 	Position,
-	WorkflowEdge
+	Size,
+	Workflow,
+	WorkflowEdge,
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowStatus
 } from '@/types/workflow';
 
 /**
@@ -31,7 +33,12 @@ export const create = () => {
 	return workflow;
 };
 
-export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
+export const addNode = (
+	wf: Workflow,
+	op: Operation,
+	pos: Position,
+	size: Size = { width: 180, height: 220 }
+) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
 		workflowId: wf.id,
@@ -43,19 +50,23 @@ export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
+			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null
 		})),
+		outputs: [],
+		/*
 		outputs: op.outputs.map((port) => ({
 			id: uuidv4(),
 			type: port.type,
 			label: port.label,
+			status: WorkflowPortStatus.NOT_CONNECTED,
 			value: null
 		})),
+	  */
 		statusCode: WorkflowStatus.INVALID,
 
-		// Not currently in use. May 2023
-		width: 180,
-		height: 220
+		width: size.width,
+		height: size.height
 	};
 
 	wf.nodes.push(node);
@@ -98,6 +109,9 @@ export const addEdge = (
 	// Transfer data value/reference
 	targetInputPort.value = sourceOutputPort.value;
 
+	// TODO: Need to fix for multi-values
+	targetInputPort.label = sourceOutputPort.label;
+
 	const edge: WorkflowEdge = {
 		id: uuidv4(),
 		workflowId: wf.id,
@@ -109,6 +123,8 @@ export const addEdge = (
 	};
 
 	wf.edges.push(edge);
+	sourceOutputPort.status = WorkflowPortStatus.CONNECTED;
+	targetInputPort.status = WorkflowPortStatus.CONNECTED;
 };
 
 export const removeEdge = (wf: Workflow, id: string) => {

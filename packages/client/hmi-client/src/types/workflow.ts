@@ -6,6 +6,11 @@ export enum WorkflowStatus {
 	ERROR = 'error'
 }
 
+export enum WorkflowPortStatus {
+	CONNECTED = 'connected',
+	NOT_CONNECTED = 'not connected'
+}
+
 // Defines the type of data an operation can consume and output
 export interface OperationData {
 	type: string;
@@ -32,6 +37,7 @@ export interface Operation {
 export interface WorkflowPort {
 	id: string;
 	type: string;
+	status: WorkflowPortStatus;
 	label?: string;
 	value?: any;
 }
@@ -87,4 +93,9 @@ export interface Workflow {
 export interface Position {
 	x: number;
 	y: number;
+}
+
+export interface Size {
+	width: number;
+	height: number;
 }

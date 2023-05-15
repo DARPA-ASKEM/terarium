@@ -47,11 +47,12 @@ export interface Simulation {
 }
 
 export interface CalibrationParams {
-    petri: string;
+    model: string;
     initials: { [index: string]: number };
-    timesteps: number[];
     params: { [index: string]: number };
-    data: { [index: string]: number[] };
+    timesteps_column: string;
+    feature_mappings: { [index: string]: string };
+    dataset: string;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -63,7 +64,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 }
 
 export interface SimulationParams {
-    petri: string;
+    model: string;
     initials: { [index: string]: number };
     tspan: number[];
     params: { [index: string]: number };
