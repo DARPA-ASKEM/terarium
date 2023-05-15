@@ -1,16 +1,18 @@
+import { XDDFacetsItemResponse, Document, Extraction } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { Dataset, DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
-import { XDDArtifact, DocumentType } from './Document';
-import { ProjectAssetTypes } from './Project';
+import { ProjectAssetTypes, ProjectPages } from './Project';
 
 export type Annotation = {
+	id: string;
 	artifact_id: string;
 	artifact_type: string;
 	content: string;
 	timestampMillis: number;
 	username: number;
+	section: string;
 };
 
 export enum ViewType {
@@ -32,13 +34,13 @@ export type SearchParameters = {
 	[ResourceType.DATASET]?: DatasetSearchParams;
 };
 
-export type ResultType = Model | Dataset | DocumentType;
+export type ResultType = Model | Dataset | Document;
 
 export type SearchResults = {
 	results: ResultType[];
-	facets?: Facets;
+	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	rawConceptFacets?: ConceptFacets | null;
-	xddExtractions?: XDDArtifact[]; // the result from searching XDD artifacts against a given search term
+	xddExtractions?: Extraction[]; // the result from searching XDD artifacts against a given search term
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;
@@ -83,5 +85,17 @@ export type Tab = {
 	assetName: string;
 	icon?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | '';
+	pageType?: ProjectAssetTypes | ProjectPages;
 };
+
+export enum AcceptedTypes {
+	PDF = 'application/pdf',
+	JPG = 'image/jpg',
+	JPEG = 'image/jpeg',
+	PNG = 'image/png'
+}
+
+export interface PDFExtractionResponseType {
+	text: string;
+	images: string[];
+}

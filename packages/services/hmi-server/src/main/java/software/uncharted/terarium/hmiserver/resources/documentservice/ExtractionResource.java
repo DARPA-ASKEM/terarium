@@ -1,11 +1,13 @@
 package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.documentservice.autocomplete.AutoComplete;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.ESSearchProxy;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDExtractionsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionProxy;
@@ -13,6 +15,7 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.ExtractionP
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,8 +30,69 @@ public class ExtractionResource {
 	// source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 	private static final Pattern DOI_VALIDATION_PATTERN = Pattern.compile("^10.\\d{4,9}\\/[-._;()\\/:A-Z0-9]+$", Pattern.CASE_INSENSITIVE);
 
+
+	@ConfigProperty(name = "xdd.api_key")
+	Optional<String> key;
+
+	@ConfigProperty(name = "xdd.api_es_key")
+	Optional<String> ESkey;
 	@RestClient
 	ExtractionProxy proxy;
+
+	@RestClient
+	ESSearchProxy esSearchProxy;
+
+	@POST
+	@Path("/search")
+	public Response search(@QueryParam("query") final String query){
+		String apiKey = "";
+		if (ESkey.isPresent())
+			apiKey = ESkey.get();
+		else {
+			log.error("XDD API key missing. ES will fail.");
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
+		return esSearchProxy.search(apiKey, query);
+	}
+
+	@POST
+	@Path("/histogram")
+	public Response histogramSearch(@QueryParam("query") final String query){
+
+		String searchQuery = """
+			{
+			    "query": {
+			        "bool": {
+			            "should": [
+			                {
+			                    "match_phrase": {
+			                        "contents": "%s"
+			                    }
+			                }
+			            ]
+			        }
+			    },
+			    "aggs": {
+			        "pub_dates": {
+			            "date_histogram": {
+			                "field": "time",
+			                "calendar_interval": "year"
+			            }
+			        }
+			    },
+			    "size": 0
+			}
+			""".formatted(query);
+		String apiKey = "";
+		if (ESkey.isPresent())
+			apiKey = ESkey.get();
+		else {
+			log.error("XDD API key missing. ES will fail.");
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+		}
+
+		return esSearchProxy.search(apiKey, searchQuery);
+	}
 
 	@GET
 	@Consumes(MediaType.TEXT_PLAIN)
@@ -43,14 +107,18 @@ public class ExtractionResource {
 		Matcher matcher = DOI_VALIDATION_PATTERN.matcher(term);
 
 		Boolean isDoi = matcher.find();
-
+		String apiKey = "";
+		if (key.isPresent())
+			apiKey = key.get();
+		else
+			log.info("XDD API key missing. Image assets will not return correctly.");
 
 		try {
 			XDDResponse<XDDExtractionsResponseOK> response;
 			if (isDoi) {
-				response = proxy.getExtractions(term, null, page, askemClass, include_highlights);
+				response = proxy.getExtractions(term, null, page, askemClass, include_highlights, apiKey);
 			} else {
-				response = proxy.getExtractions(null, term, page, askemClass, include_highlights);
+				response = proxy.getExtractions(null, term, page, askemClass, include_highlights, apiKey);
 			}
 
 			if (response.getErrorMessage() != null) {

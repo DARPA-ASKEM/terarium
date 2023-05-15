@@ -88,9 +88,7 @@ Basic rules to write organised code.
     />
     ```
 
-## `LOGGING & TOASTS`
-
-### LOGGING
+## Logging & Toasts
 
 There is a new logging service in place that buffers log messages to be posted to the `/logs` hmi-server endpoint.  The HMI server then echos out the message for kibana to eventually consume.
 
@@ -129,7 +127,7 @@ toast.showToast(
   );
 ```
 
-[## TERA-MATH-EDITOR](src/components/mathml/README.md)
+## [TERA-MATH-EDITOR](src/components/mathml/README.md)
 
 Terrarium uses [mathlive](https://cortexjs.io/docs/mathlive/) & [mathjax 2.7.2](https://docs.mathjax.org/en/v2.7-latest/start.html) via a the `vue-mathjax-next` component to create a custom component: `tera-math-editor`
 

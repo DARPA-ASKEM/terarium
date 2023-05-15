@@ -1,6 +1,6 @@
 <template>
 	<Teleport to="body">
-		<Modal v-if="modalVisible" @modal-mask-clicked="modalVisible = false">
+		<tera-modal v-if="modalVisible" @modal-mask-clicked="modalVisible = false">
 			<template #default>
 				<InputText
 					ref="input"
@@ -10,7 +10,7 @@
 					@keyup.enter="insertNode()"
 				/>
 			</template>
-		</Modal>
+		</tera-modal>
 	</Teleport>
 	<div class="container" @click.stop="clickBackground()">
 		<div
@@ -92,7 +92,7 @@ svg {
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onUnmounted } from 'vue';
-import Modal from '@/components/widgets/Modal.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 
 interface Position {

@@ -1,25 +1,52 @@
 package software.uncharted.terarium.hmiserver.resources.simulationservice;
 
-import io.quarkus.security.Authenticated;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationParams;
+import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationParams;
+import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/api/simulation-service")
-@Authenticated
+@Path("/api/simulation")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation Service REST Endpoint")
 public class SimulationResource {
 
 	@RestClient
-	SimulationServiceProxy proxy;
+	SimulationServiceProxy simulationServiceProxy;
+
+	@RestClient
+	SimulationProxy simulationProxy;
+
+	@GET
+	@Path("/{id}")
+	public Simulation getSimulation(@PathParam("id") final String id){
+		return simulationProxy.getSimulation(id);
+	}
+
+	@POST
+	public Simulation createSimulation(final Simulation simulation){
+		return simulationProxy.createSimulation(simulation);
+	}
+
+	@PATCH
+	@Path("/{id}")
+	public Simulation updateSimulation(@PathParam("id") final String id, final Simulation simulation){
+		return simulationProxy.updateSimulation(id, simulation);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	public String deleteSimulation(@PathParam("id") final String id){
+		return simulationProxy.deleteSimulation(id);
+	}
 
 	@POST
 	@Path("/forecast")
@@ -29,7 +56,7 @@ public class SimulationResource {
 	public Response makeForecastRun(
 		final SimulationParams simulationParams
 	) {
-		return proxy.makeForecastRun(simulationParams);
+		return simulationServiceProxy.makeForecastRun(simulationParams);
 	}
 
 	@GET
@@ -39,7 +66,7 @@ public class SimulationResource {
 	public Response getRunStatus(
 		@PathParam("runId") final String runId
 	) {
-		return proxy.getRunStatus(runId);
+		return simulationServiceProxy.getRunStatus(runId);
 	}
 
 	@GET
@@ -49,6 +76,17 @@ public class SimulationResource {
 	public Response getRunResult(
 		@PathParam("runId") final String runId
 	) {
-		return proxy.getRunResult(runId);
+		return simulationServiceProxy.getRunResult(runId);
+	}
+
+	@POST
+	@Path("/calibrate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public Response makeCalibrateJob(
+		final CalibrationParams calibrationParams
+	) {
+		return simulationServiceProxy.makeCalibrateJob(calibrationParams);
 	}
 }

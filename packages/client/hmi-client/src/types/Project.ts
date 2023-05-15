@@ -1,5 +1,5 @@
-import { DocumentType } from '@/types/Document';
-import { DocumentAsset } from '@/types/Types';
+import { DocumentAsset, Document } from '@/types/Types';
+import { Dataset } from '@/types/Dataset';
 import { Model } from './Model';
 
 export enum ProjectAssetTypes {
@@ -8,8 +8,14 @@ export enum ProjectAssetTypes {
 	PLANS = 'plans',
 	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
+	SIMULATION_WORKFLOW = 'simulation_workflow',
 	DATASETS = 'datasets',
 	CODE = 'code'
+}
+
+export enum ProjectPages {
+	OVERVIEW = 'overview',
+	EMPTY = ''
 }
 
 export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
@@ -20,7 +26,7 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.MODELS]: Model[];
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.DATASETS]: any[]; // FIXME: add proper type
+	[ProjectAssetTypes.DATASETS]: Dataset[]; // FIXME: add proper type
 	[ProjectAssetTypes.CODE]: any[];
 };
 
@@ -32,6 +38,6 @@ export interface IProject {
 	active: boolean;
 	concept: string | null;
 	assets: ProjectAssets | null;
-	relatedDocuments: DocumentType[];
+	relatedDocuments: Document[];
 	username: string;
 }

@@ -25,10 +25,10 @@ dependencies {
 	// REST server
 	implementation "io.quarkus:quarkus-resteasy"
 	implementation "io.quarkus:quarkus-resteasy-jackson"
+	implementation "io.quarkus:quarkus-resteasy-multipart"
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
-
 
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"
@@ -40,6 +40,9 @@ dependencies {
 	implementation "io.quarkus:quarkus-cache"
 	implementation "io.quarkus:quarkus-scheduler"
 
+	// Message Queue
+	implementation "io.quarkus:quarkus-smallrye-reactive-messaging-rabbitmq"
+
 	// REST client
 	implementation "io.quarkus:quarkus-rest-client"
 
@@ -50,7 +53,7 @@ dependencies {
 	// Misc
 	implementation "org.apache.commons:commons-text:1.10.0"
 	implementation "org.jsoup:jsoup:1.7.2"
-
+	implementation "com.google.guava:guava:31.1-jre"
 
 	// Test
 	testImplementation "io.rest-assured:rest-assured"
@@ -63,6 +66,11 @@ dependencies {
 
 	// Annotations
 	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+	//elasticsearch
+	implementation "org.elasticsearch:elasticsearch:${elasticsearchVersion}"
+	implementation "org.elasticsearch.client:elasticsearch-rest-client:${elasticsearchVersion}"
+	implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${elasticsearchVersion}"
 }
 
 group "software.uncharted"

@@ -1,25 +1,27 @@
 <template>
-	<div class="flex-container">
-		<header class="overview-header">
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-rounded menu-button"
-				@click="showProjectMenu"
-			/>
-			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+	<tera-asset
+		:name="project?.name"
+		:authors="project?.username"
+		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
+		is-editable
+	>
+		<template #name-input>
 			<InputText
 				v-model="newProjectName"
 				ref="inputElement"
 				class="project-name-input"
 				@keyup.enter="updateProjectName"
 				:class="{ isVisible: isEditingProject }"
-			>
-			</InputText>
-			<h3 :class="{ isVisible: !isEditingProject }">
-				{{ project?.name }}
-			</h3>
-			<p class="secondary-text">Last updated {{ DateUtils.formatLong(project?.timestamp) }}</p>
-		</header>
+			/>
+		</template>
+		<template #edit-buttons>
+			<Button
+				icon="pi pi-ellipsis-v"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="showProjectMenu"
+			/>
+			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
+		</template>
 		<section class="content-container">
 			<section class="summary">
 				<!-- This div is so that child elements will automatically collapse margins -->
@@ -30,14 +32,8 @@
 							{{ project?.description }}
 						</p>
 					</section>
-					<section class="contributors">
-						<span class="pi pi-user"></span>
-						{{ project?.username }}
-						<!-- <Button icon="pi pi-plus" label="Add contributor" text /> -->
-					</section>
 				</div>
 			</section>
-
 			<!-- Project summary KPIs -->
 			<section class="summary-KPI-bar">
 				<div class="summary-KPI" v-for="(assets, type) of project?.assets" :key="type">
@@ -45,7 +41,6 @@
 					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 				</div>
 			</section>
-
 			<!-- Quick link buttons go here -->
 			<section>
 				<div class="quick-links">
@@ -54,6 +49,7 @@
 						size="large"
 						icon="pi pi-cloud-upload"
 						class="p-button p-button-secondary quick-link-button"
+						@click="openImportModal"
 					/>
 					<Button
 						label="New model"
@@ -62,21 +58,26 @@
 						class="p-button p-button-secondary quick-link-button"
 					/>
 					<Button
-						label="New workflow"
 						size="large"
-						icon="pi pi-sitemap"
 						class="p-button p-button-secondary quick-link-button"
-					/>
-					<Button
-						label="Compare models"
-						size="large"
-						icon="pi pi-share-alt"
-						class="p-button p-button-secondary quick-link-button"
-					/>
+						@click="emit('open-workflow')"
+					>
+						<vue-feather
+							class="p-button-icon-left"
+							type="git-merge"
+							size="1.25rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+						<span class="p-button-label">New workflow</span>
+					</Button>
+					<Button size="large" class="p-button p-button-secondary quick-link-button">
+						<compare-models-icon class="icon" />
+						<span class="p-button-label">Compare Models</span>
+					</Button>
 					<Button
 						label="New simulation"
 						size="large"
-						icon="pi pi-chart-line"
+						icon="pi pi-play"
 						class="p-button p-button-secondary quick-link-button"
 					/>
 				</div>
@@ -98,8 +99,53 @@
 					<Column field="tags" header="Tags"></Column>
 				</DataTable>
 			</section>
+			<section class="drag-n-drop">
+				<Dialog
+					v-model:visible="visible"
+					modal
+					header="Resource Importer"
+					:style="{ width: '60vw' }"
+				>
+					<tera-drag-and-drop-importer
+						:show-preview="true"
+						:accept-types="[
+							AcceptedTypes.PDF,
+							AcceptedTypes.JPG,
+							AcceptedTypes.JPEG,
+							AcceptedTypes.PNG
+						]"
+						:import-action="processPDFs"
+						@import-completed="importCompleted"
+					></tera-drag-and-drop-importer>
+
+					<section v-if="results">
+						<Card v-for="(item, i) in results" :key="i" class="card">
+							<template #title>
+								<div class="card-img"></div>
+							</template>
+							<template #content>
+								<div class="card-content">
+									<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+									<div v-if="item.response" class="file-content">
+										<br />
+										<div>Extracted Text</div>
+										<div>{{ item.response.text }}</div>
+										<br />
+										<div v-if="item.response.images">Images Found</div>
+										<div v-for="image in item.response.images" :key="image">
+											<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+										</div>
+										<br />
+										<i class="pi pi-plus"></i>
+									</div>
+								</div>
+							</template>
+						</Card>
+					</section>
+				</Dialog>
+			</section>
 		</section>
-	</div>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -114,15 +160,95 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
 import { capitalize } from 'lodash';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
+import { AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
+import Dialog from 'primevue/dialog';
+import Card from 'primevue/card';
+import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
+import API, { Poller } from '@/api/api';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-
+const emit = defineEmits(['open-workflow']);
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
+const visible = ref(false);
+const results = ref<
+	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
+>(null);
+
+async function getPDFContents(
+	file: string | Blob,
+	extractionMode: string,
+	extractImages: string
+): Promise<PDFExtractionResponseType> {
+	const formData = new FormData();
+	formData.append('file', file);
+	formData.append('extraction_method', extractionMode);
+	formData.append('extract_images', extractImages);
+
+	// const result = await API.post(`/extract/convertpdftask/`, formData);
+	const result = await fetch(`http://localhost:5000/convertpdftask`, {
+		method: 'POST',
+		body: formData
+	});
+
+	if (result) {
+		const taskID = await result.json();
+		const poller = new Poller<object>()
+			.setInterval(2000)
+			.setThreshold(90)
+			.setPollAction(async () => {
+				const response = await API.get(`/extract/task-result/${taskID.task_id}`);
+
+				if (response.data.status === 'SUCCESS' && response.data.result) {
+					return {
+						data: response.data.result,
+						progress: null,
+						error: null
+					};
+				}
+				return {
+					data: null,
+					progress: null,
+					error: null
+				};
+			});
+
+		const pollerResults = await poller.start();
+
+		if (pollerResults.data) {
+			return pollerResults.data as PDFExtractionResponseType;
+		}
+	}
+	return { text: '', images: [] } as PDFExtractionResponseType;
+}
+
+async function processPDFs(files, extractionMode, extractImages) {
+	const processedFiles = await files.map(async (file) => {
+		const resp = await getPDFContents(file, extractionMode, extractImages);
+		const text = resp.text ? resp.text : '';
+		const images = resp.images ? resp.images : [];
+		return { file, error: false, response: { text, images } };
+	});
+
+	return processedFiles;
+}
+
+async function openImportModal() {
+	visible.value = true;
+	results.value = null;
+}
+
+function importCompleted(
+	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
+) {
+	results.value = newResults;
+}
 
 async function editProject() {
 	newProjectName.value = props.project.name;
@@ -150,25 +276,17 @@ const projectMenuItems = ref([
 	}
 ]);
 
-function showProjectMenu(event) {
+function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
 </script>
 
 <style scoped>
-.flex-container {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	background: var(--surface-section);
-}
-
 a {
 	text-decoration: underline;
 }
 
 .content-container {
-	flex-direction: column;
 	margin-left: 1rem;
 	margin-right: 1rem;
 }
@@ -193,6 +311,7 @@ section {
 	margin-top: 0.5rem;
 	margin-bottom: 0.5rem;
 }
+
 .contributors {
 	flex-direction: row;
 	align-items: center;
@@ -221,8 +340,14 @@ section {
 .summary-KPI-number {
 	font-size: 2.5rem;
 }
+
 .summary-KPI-label {
 	font-size: 1.15rem;
+}
+
+button .icon {
+	scale: 1.25;
+	color: var(--text-color-primary);
 }
 
 .quick-links {
@@ -241,6 +366,7 @@ section {
 	width: 100%;
 	font-size: var(--font-body-small);
 }
+
 .resource-list {
 	margin-top: 1rem;
 }
@@ -255,11 +381,13 @@ section {
 .resource-list-section-header h4 {
 	font-size: var(--font-body-medium);
 }
+
 .keyword-search {
 	border-color: transparent;
 	padding-top: 0.75rem;
 	padding-bottom: 0.75rem;
 }
+
 .keyword-search:hover {
 	border-color: var(--surface-border) !important;
 }
@@ -307,8 +435,7 @@ ul {
 	margin: 0.5rem;
 }
 
-.menu-button {
-	position: absolute;
-	right: 0;
+.file-title {
+	font-size: 2em;
 }
 </style>

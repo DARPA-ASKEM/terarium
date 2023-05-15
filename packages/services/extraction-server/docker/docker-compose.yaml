@@ -1,0 +1,14 @@
+version: '3.9'
+
+services:
+  flask-pdf-converter:
+    build: .
+    image: flask-pdf-converter
+    container_name: flask-pdf-converter-container
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    volumes:
+      - .:/app
+    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"]

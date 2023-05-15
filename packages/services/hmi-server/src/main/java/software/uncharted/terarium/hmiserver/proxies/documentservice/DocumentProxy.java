@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface DocumentProxy {
 	@GET
-	@Path("/api/articles")
+	@Path("/api/v1/articles")
 	XDDResponse<DocumentsResponseOK> getDocuments(
 		@QueryParam("docid") String docid,
 		@QueryParam("doi") String doi,
@@ -43,7 +43,7 @@ public interface DocumentProxy {
 	XDDSetsResponse getAvailableSets();
 
 	@GET
-	@Path("/api/dictionaries")
+	@Path("/api/v1/dictionaries")
 	XDDResponse<XDDDictionariesResponseOK> getAvailableDictionaries(@QueryParam("all") @DefaultValue("") String all);
 
 	@GET

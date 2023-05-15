@@ -1,8 +1,23 @@
 <template>
 	<nav :style="{ '--nb-tabs': tabs.length }">
 		<header v-for="(tab, index) in tabs" :key="index">
-			<div class="tab" @click="emit('select-tab', tab)" :active="activeTabIndex === index">
-				<i :class="iconClassname(tab.assetType ?? null)" />
+			<div
+				class="tab"
+				@click="emit('select-tab', index)"
+				:active="activeTabIndex === index"
+				:loading="loadingTabIndex === index"
+			>
+				<vue-feather
+					v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
+					:type="getAssetIcon(tab.pageType ?? null)"
+					size="1rem"
+					stroke="rgb(16, 24, 40)"
+				/>
+				<component
+					v-else
+					:is="getAssetIcon(tab.pageType ?? null)"
+					class="p-button-icon-left icon"
+				/>
 				<span class="name">
 					{{ tab.assetName }}
 				</span>
@@ -12,6 +27,7 @@
 					@click.stop="emit('close-tab', index)"
 				/>
 			</div>
+			<div :loading="loadingTabIndex === index" @animationiteration="endAnimationIfTabIsLoaded" />
 		</header>
 	</nav>
 </template>
@@ -24,14 +40,33 @@
  */
 import { Tab } from '@/types/common';
 import Button from 'primevue/button';
-import { iconClassname } from '@/services/project';
+import { getAssetIcon } from '@/services/project';
+import { ref, watch } from 'vue';
 
-defineProps<{
+const props = defineProps<{
 	tabs: Tab[];
-	activeTabIndex: number;
+	activeTabIndex: number | null;
+	loadingTabIndex: number | null;
 }>();
 
 const emit = defineEmits(['select-tab', 'close-tab']);
+const loadingTabIndex = ref();
+
+function endAnimationIfTabIsLoaded() {
+	if (props.loadingTabIndex === null) {
+		loadingTabIndex.value = null;
+	}
+}
+
+watch(
+	() => props.loadingTabIndex,
+	() => {
+		if (props.loadingTabIndex !== null) {
+			loadingTabIndex.value = props.loadingTabIndex;
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -39,6 +74,7 @@ nav {
 	display: grid;
 	grid-auto-columns: min(calc(100% / var(--nb-tabs, 1)), 20%);
 	grid-auto-flow: column;
+	margin: 0.2rem 0.2rem 0 0.2rem;
 }
 
 @keyframes show-tab {
@@ -74,12 +110,24 @@ header {
 	position: relative;
 }
 
+.icon {
+	fill: var(--text-color-primary);
+	overflow: visible;
+}
+
+i {
+	overflow: visible;
+}
+
 .tab:hover {
 	border-color: var(--surface-border-light);
 }
 
 .tab[active='true'] {
 	background-color: var(--surface-0);
+}
+
+.tab[active='true'][loading='false'] {
 	border-bottom-color: var(--primary-color);
 }
 
@@ -92,8 +140,38 @@ header {
 	display: none;
 	visibility: hidden;
 }
+
+.tab + div {
+	width: calc(100% - 2px);
+	position: relative;
+	height: 1px;
+	top: -1px;
+	left: 1px;
+}
+
+@keyframes tab-loading {
+	0% {
+		width: 0%;
+		/* opacity: 1; */
+	}
+
+	50% {
+		width: calc(100% - 2px);
+	}
+
+	100% {
+		/* opacity: 0; */
+	}
+}
+
+.tab + div[loading='true'] {
+	background-color: var(--primary-color);
+	animation: tab-loading 0.6s ease-out infinite forwards;
+}
+
 .p-button {
-	flex-shrink: 0; /* Avoid the highlight to be squished */
+	/* Avoid the highlight to be squished */
+	flex-shrink: 0;
 }
 
 span {

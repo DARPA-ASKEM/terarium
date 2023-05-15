@@ -3,19 +3,31 @@
 		<header>
 			<Button
 				icon="pi pi-trash"
-				:disabled="!activeTab.assetId || activeTab.assetName === 'overview'"
+				:disabled="!activeTab.assetId || activeTab.assetName === ProjectPages.OVERVIEW"
 				v-tooltip="`Remove ${activeTab.assetName}`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="isRemovalModal = true"
 			/>
 			<Button
-				icon="pi pi-file"
+				icon="pi pi-code"
 				v-tooltip="`New code file`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
 					emit('open-asset', {
 						assetName: 'New file',
-						assetType: ProjectAssetTypes.CODE,
+						pageType: ProjectAssetTypes.CODE,
+						assetId: undefined
+					})
+				"
+			/>
+			<Button
+				icon="pi pi-user-edit"
+				v-tooltip="`Create model from Equation`"
+				class="p-button-icon-only p-button-text p-button-rounded"
+				@click="
+					emit('open-asset', {
+						assetName: 'New Model',
+						pageType: ProjectAssetTypes.MODELS,
 						assetId: undefined
 					})
 				"
@@ -23,14 +35,21 @@
 		</header>
 		<Button
 			class="asset-button"
-			label="Overview"
-			:active="activeTab.assetType === 'overview'"
-			:icon="iconClassname('overview')"
+			:active="activeTab.pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
-			@click="emit('open-overview')"
-		/>
+			@click="
+				emit('open-asset', {
+					assetName: 'Overview',
+					pageType: ProjectPages.OVERVIEW,
+					assetId: undefined
+				})
+			"
+		>
+			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
+			<span class="p-button-label">Overview</span>
+		</Button>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
@@ -41,19 +60,31 @@
 					v-for="tab in tabs"
 					:key="tab.assetId"
 					:active="isEqual(tab, activeTab)"
-					:icon="iconClassname(tab.assetType?.toString() ?? null)"
-					:label="tab.assetName"
 					:title="tab.assetName"
 					class="asset-button"
 					plain
 					text
 					size="small"
 					@click="emit('open-asset', tab)"
-				/>
+				>
+					<vue-feather
+						v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
+						class="p-button-icon-left icon"
+						:type="getAssetIcon(tab.pageType ?? null)"
+						size="1rem"
+						stroke="rgb(16, 24, 40)"
+					/>
+					<component
+						v-else
+						:is="getAssetIcon(tab.pageType ?? null)"
+						class="p-button-icon-left icon"
+					/>
+					<span class="p-button-label">{{ tab.assetName }}</span>
+				</Button>
 			</AccordionTab>
 		</Accordion>
 		<Teleport to="body">
-			<modal
+			<tera-modal
 				v-if="isRemovalModal"
 				@modal-mask-clicked="isRemovalModal = false"
 				class="remove-modal"
@@ -71,7 +102,7 @@
 					<Button label="Remove" class="p-button-danger" @click="removeAsset()" />
 					<Button label="Cancel" class="p-button-secondary" @click="isRemovalModal = false" />
 				</template>
-			</modal>
+			</tera-modal>
 		</Teleport>
 	</nav>
 </template>
@@ -80,12 +111,12 @@
 import { computed, ref } from 'vue';
 import { capitalize, isEmpty, isEqual } from 'lodash';
 import { Tab } from '@/types/common';
-import Modal from '@/components/widgets/Modal.vue';
-import { iconClassname } from '@/services/project';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
@@ -111,9 +142,9 @@ const assets = computed((): IProjectAssetTabs => {
 			const projectAssetType = type as ProjectAssetTypes;
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
 				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const assetType = asset?.type ?? projectAssetType;
+				const pageType = asset?.type ?? projectAssetType;
 				const assetId = asset?.id.toString();
-				return { assetName, assetType, assetId };
+				return { assetName, pageType, assetId };
 			}) as Tab[];
 			tabs.set(projectAssetType, new Set(typeAssets));
 		}
@@ -137,6 +168,11 @@ nav {
 
 header {
 	padding: 0 0.5rem;
+}
+
+.icon {
+	fill: var(--text-color-primary);
+	overflow: visible;
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {
