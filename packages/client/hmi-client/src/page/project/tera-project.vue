@@ -23,6 +23,7 @@
 			<SplitterPanel :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
+					class="tab-group"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
 					:loading-tab-index="loadingTabIndex"
@@ -479,10 +480,14 @@ function formatAuthorTimestamp(username, timestamp) {
 </script>
 
 <style scoped>
-.resource-panel,
+.resource-panel {
+	z-index: 2;
+	isolation: isolate;
+}
 .tab-group {
 	z-index: 2;
 	isolation: isolate;
+	position: relative;
 }
 
 section {
