@@ -132,6 +132,7 @@
 			<AccordionTab v-if="model">
 				<template #header> Model configurations </template>
 				<DataTable
+					class="model-configuration"
 					:value="modelConfiguration"
 					editMode="cell"
 					@cell-edit-complete="onCellEditComplete"
@@ -146,7 +147,9 @@
 							<!-- <Column header="Observables" /> -->
 						</Row>
 						<Row>
-							<Column />
+							<Column>
+								<template #header> <Checkbox :binary="true" />Select all </template>
+							</Column>
 							<Column
 								v-for="(s, i) of model.content.S"
 								:key="i"
@@ -155,10 +158,23 @@
 							/>
 							<Column v-for="(t, i) of model.content.T" :key="i" :header="t.tname" />
 						</Row>
+						<Row>
+							<Column header="Show in workflow" />
+							<Column v-for="(s, i) of model.content.S" :key="i">
+								<template #header>
+									<Checkbox :binary="true" />
+								</template>
+							</Column>
+							<Column v-for="(t, i) of model.content.T" :key="i">
+								<template #header>
+									<Checkbox :binary="true" />
+								</template>
+							</Column>
+						</Row>
 					</ColumnGroup>
 					<Column field="name">
 						<template #body="{ data, field }">
-							{{ data[field] }}
+							<Checkbox :binary="true" />{{ data[field] }}
 						</template>
 						<template #editor="{ data, field }">
 							<InputText v-model="data[field]" autofocus />
@@ -171,6 +187,7 @@
 					</Column>
 					<Column v-for="(t, i) of model.content.T" :key="i" :field="t.tname" />
 				</DataTable>
+				<Button icon="pi pi-plus" label="Add configuration" @click="addModelConfiguration" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
@@ -342,6 +359,7 @@ import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
@@ -394,24 +412,31 @@ const props = defineProps({
 	}
 });
 
+const initialModelConfig = ref([{ name: 'Config 1' }]);
+
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
-const modelConfiguration = computed(() => [
-	{
-		name: 'Config 1',
-		...initialValues.value,
-		...parameterValues.value
-	},
-	{
-		name: 'Config 2',
-		...initialValues.value,
-		...parameterValues.value
+const modelConfiguration = computed(() => {
+	const newModelConfiguration: any[] = [];
+
+	for (let i = 0; i < initialModelConfig.value.length; i++) {
+		newModelConfiguration.push({
+			name: initialModelConfig.value[i].name,
+			...initialValues.value,
+			...parameterValues.value
+		});
 	}
-]);
+
+	return newModelConfiguration;
+});
 
 function printConfig(i) {
 	console.log(i, modelConfiguration.value);
+}
+
+function addModelConfiguration() {
+	initialModelConfig.value.push({ name: 'New config' });
 }
 
 const resources = useResourcesStore();
@@ -1077,8 +1102,12 @@ section math-editor {
 	width: 100%;
 }
 
-.model-config-header:deep(.p-datatable .p-datatable-thead > tr > th) {
-	border: none;
+.model-configuration:deep(.p-column-header-content) {
+	color: var(--text-color-subdued);
+}
+
+.model-configuration {
+	margin-bottom: 1rem;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
