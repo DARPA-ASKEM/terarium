@@ -1,13 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
 import {
-	Workflow,
 	Operation,
-	WorkflowNode,
-	WorkflowStatus,
 	Position,
+	Size,
+	Workflow,
 	WorkflowEdge,
-	WorkflowPortStatus
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowStatus
 } from '@/types/workflow';
 
 /**
@@ -32,12 +33,11 @@ export const create = () => {
 	return workflow;
 };
 
-type NodeSize = { width: number; height: number };
 export const addNode = (
 	wf: Workflow,
 	op: Operation,
 	pos: Position,
-	size: NodeSize = { width: 180, height: 220 }
+	size: Size = { width: 180, height: 220 }
 ) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
