@@ -15,10 +15,17 @@
 			</span>
 		</header>
 		<ul class="inputs">
-			<li v-for="(input, index) in node.inputs" :key="index"
-				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''">
-				<div class="port" @click.stop="selectPort(input)" @mouseover="(event) => mouseoverPort(event)"
-					@focus="() => { }"></div>
+			<li
+				v-for="(input, index) in node.inputs"
+				:key="index"
+				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+			>
+				<div
+					class="port"
+					@click.stop="selectPort(input)"
+					@mouseover="mouseoverPort"
+					@focus="() => {}"
+				></div>
 				{{ input.label }}
 			</li>
 		</ul>
@@ -26,11 +33,18 @@
 			<slot name="body" />
 		</section>
 		<ul class="outputs">
-			<li v-for="(output, index) in node.outputs" :key="index"
-				:class="output.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''">
+			<li
+				v-for="(output, index) in node.outputs"
+				:key="index"
+				:class="output.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+			>
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort(output)" @mouseover="(event) => mouseoverPort(event)"
-					@focus="() => { }"></div>
+				<div
+					class="port"
+					@click.stop="selectPort(output)"
+					@mouseover="mouseoverPort"
+					@focus="() => {}"
+				></div>
 			</li>
 		</ul>
 	</main>
@@ -42,6 +56,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
+import { ProjectAssetTypes } from '@/types/Project';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -99,27 +114,25 @@ function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
 }
 
-// Pass workflow node to drilldown panel
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
-		// let assetType, assetId;
-		// // openedWorkflowNodeStore.setWorkflowNode(props.node);
-		// switch (props.node.operationType) {
-		// 	case 'ModelOperation':
-		// 		assetType = ProjectAssetTypes.MODELS;
-		// 		assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
-		// 		break;
-		// 	case 'Dataset':
-		// 		assetType = ProjectAssetTypes.DATASETS;
-		// 		assetId = props.node.outputs[0].value.toString();
-		// 		break;
-		// }
-		// console.log(assetType);
-		// console.log(assetId);
-		// if (assetType && assetId) {
-		// 	openedWorkflowNodeStore.asset = { id: assetId, type: assetType }
+		let pageType;
+		let assetId;
+		switch (props.node.operationType) {
+			case 'ModelOperation':
+				pageType = ProjectAssetTypes.MODELS;
+				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+				break;
+			case 'Dataset':
+				pageType = ProjectAssetTypes.DATASETS;
+				assetId = props.node.outputs[0].value.toString();
+				break;
+			default:
+				break;
 		}
-		openedWorkflowNodeStore.setWorkflowNode(props.node);
+		if (pageType && assetId) {
+			openedWorkflowNodeStore.set(assetId, pageType);
+		}
 	} else alert('Node needs a valid output');
 }
 
