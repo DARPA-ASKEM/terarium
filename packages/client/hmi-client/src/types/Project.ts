@@ -8,8 +8,14 @@ export enum ProjectAssetTypes {
 	PLANS = 'plans',
 	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
+	SIMULATION_WORKFLOW = 'simulation_workflow',
 	DATASETS = 'datasets',
 	CODE = 'code'
+}
+
+export enum ProjectPages {
+	OVERVIEW = 'overview',
+	EMPTY = ''
 }
 
 export const isProjectAssetTypes = (type: ProjectAssetTypes | string): boolean =>
