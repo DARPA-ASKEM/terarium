@@ -146,6 +146,7 @@
 							<!-- <Column header="Observables" /> -->
 						</Row>
 						<Row>
+							<Column />
 							<Column
 								v-for="(s, i) of model.content.S"
 								:key="i"
@@ -163,7 +164,11 @@
 							<InputText v-model="data[field]" autofocus />
 						</template>
 					</Column>
-					<Column v-for="(s, i) of model.content.S" :key="i" :field="s.sname" />
+					<Column v-for="(s, i) of model.content.S" :key="i" :field="s.sname">
+						<template #body="{ data, field }">
+							<div @click="printConfig(i)">{{ data[field] }}</div>
+						</template>
+					</Column>
 					<Column v-for="(t, i) of model.content.T" :key="i" :field="t.tname" />
 				</DataTable>
 			</AccordionTab>
