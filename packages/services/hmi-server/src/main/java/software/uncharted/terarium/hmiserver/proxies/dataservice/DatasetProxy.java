@@ -92,7 +92,7 @@ public interface DatasetProxy {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Dataset createDatasets(
+	Response createDatasets(
 		Dataset dataset
 	);
 

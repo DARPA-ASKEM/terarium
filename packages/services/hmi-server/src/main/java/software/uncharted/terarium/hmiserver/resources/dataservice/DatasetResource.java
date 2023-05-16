@@ -139,14 +139,10 @@ public class DatasetResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Dataset createDatasets(
+	public Response createDatasets(
 		final Dataset dataset
 	) {
-		System.out.println("hello");
-		Dataset r =  proxy.createDatasets(dataset);
-		System.out.println("world");
-		System.out.println(r.getId() + "");
-		return r;
+		return proxy.createDatasets(dataset);
 	}
 
 	@GET
