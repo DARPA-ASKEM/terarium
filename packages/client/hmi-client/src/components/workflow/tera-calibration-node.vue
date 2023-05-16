@@ -44,8 +44,8 @@ import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
-import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
+import { shimPetriModel } from '@/services/models/petri-shim';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
@@ -66,20 +66,7 @@ const featureMap = ref();
 
 const startCalibration = async () => {
 	// Make calibration job.
-	// FIXME: current need to strip out metadata, should do serverside
-	const cleanedModel: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
 	if (modelConfig.value) {
-		// Take out all the extra content in model.content
-		cleanedModel.S = modelConfig.value.model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = modelConfig.value.model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = modelConfig.value.model.content.I;
-		cleanedModel.O = modelConfig.value.model.content.O;
-
 		if (featureMap.value) {
 			const featureObject: { [index: string]: string } = {};
 			// Go from 2D array to a index: value like they want
@@ -89,7 +76,7 @@ const startCalibration = async () => {
 			}
 
 			const calibrationParam: CalibrationParams = {
-				model: JSON.stringify(cleanedModel),
+				model: shimPetriModel(modelConfig.value.model),
 				initials: modelConfig.value.initialValues,
 				params: modelConfig.value.parameterValues,
 				timesteps_column: timestepColumnName.value,
