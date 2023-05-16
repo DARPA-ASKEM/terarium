@@ -228,9 +228,9 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations.annotations);
+const annotations = computed(() => dataset.value?.annotations?.annotations);
 const showAccordion = computed(() =>
-	dataset.value?.annotations.annotations.date && dataset.value?.annotations.annotations.geo
+	dataset.value?.annotations?.annotations.date && dataset.value?.annotations.annotations.geo
 		? [2]
 		: [0]
 );

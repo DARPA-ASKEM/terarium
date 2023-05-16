@@ -19,7 +19,7 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.MODELS]: Model[];
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.DATASETS]: Dataset[]; // FIXME: add proper type
+	[ProjectAssetTypes.DATASETS]: Dataset[];
 	[ProjectAssetTypes.CODE]: any[];
 };
 

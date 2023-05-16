@@ -92,7 +92,7 @@ public interface DatasetProxy {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createDatasets(
+	Dataset createDatasets(
 		Dataset dataset
 	);
 
@@ -124,7 +124,7 @@ public interface DatasetProxy {
 	);
 
 	@GET
-	@Path("/{id}/files")
+	@Path("/{id}/file")
 	Response getCsv(
 		@PathParam("id") String id,
 		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
@@ -132,7 +132,7 @@ public interface DatasetProxy {
 	);
 
 	@POST
-	@Path("/{id}/files")
+	@Path("/{id}/file")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	Response uploadFile(
 		@PathParam("id") String id,

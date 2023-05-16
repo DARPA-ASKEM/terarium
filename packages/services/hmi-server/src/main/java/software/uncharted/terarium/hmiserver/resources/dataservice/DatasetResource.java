@@ -1,9 +1,12 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
+import org.apache.james.mime4j.dom.field.FieldName;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
+import org.jboss.resteasy.plugins.providers.multipart.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -32,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Dataset REST Endpoints")
 @Slf4j
 public class DatasetResource {
+	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
 
 	@Inject
 	@RestClient
@@ -135,10 +139,14 @@ public class DatasetResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createDatasets(
+	public Dataset createDatasets(
 		final Dataset dataset
 	) {
-		return proxy.createDatasets(dataset);
+		System.out.println("hello");
+		Dataset r =  proxy.createDatasets(dataset);
+		System.out.println("world");
+		System.out.println(r.getId() + "");
+		return r;
 	}
 
 	@GET
@@ -180,7 +188,7 @@ public class DatasetResource {
 	@Path("/{id}/files")
 	public Response getCsv(
 		@PathParam("id") final String id,
-		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
+		@DefaultValue("false") @QueryParam("wide_format") final Boolean wideFormat,
 		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit,
 		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
@@ -225,18 +233,67 @@ public class DatasetResource {
 
 	}
 
+	/**
+	 *
+	 * @param id the dataset id to load this csv into
+	 * @param fileName filename for the csv
+	 * @param file multipart form input which contains a single csv file.
+	 * @return response from TDS
+	 */
 	@POST
 	@Path("/{id}/files")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response uploadFile(@PathParam("id") final String id, @QueryParam("filename") final String filename, @FormDataParam("file")InputStream file) throws IOException {
+	@APIResponses({
+		@APIResponse(responseCode = "415", description = "Currently only CSV files can be uploaded. Non CSV mimetype will throw a 415"),
+		@APIResponse(responseCode = "500", description = "An error occurred uploading a file")})
+	@Tag(description = "Upload a csv file to TDS")
+	public Response uploadFile(@PathParam("id") final String id, @QueryParam("filename") final String fileName, @FormDataParam("file") MultipartFormDataInput file) {
 
+		if(id.isEmpty() || fileName.isEmpty() || file == null)
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Parameters cannot be empty or null").build();
 
-		MultipartFormDataOutput fileOutput = new MultipartFormDataOutput();
-		fileOutput.addFormData("file", file.readAllBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE, filename);
+		if(file.getParts().size() != 1)
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Only a single CSV can be uploaded").build();
 
-		Response r = proxy.uploadFile(id, filename, fileOutput);
-		return r;
+		if(!file.getParts().get(0).getMediaType().equals(MEDIA_TYPE_CSV))
+			return Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), "File is not a csv").build();
+
+		MultipartFormDataOutput fileOutput = fromFormDataInputToFormDataOutput(file, fileName);
+
+		if(fileOutput.getFormData().size() < 1)
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "An error occurred converting to output form type").build();
+
+		return proxy.uploadFile(id, fileName, fileOutput);
 	}
+
+	/**
+	 * Converting a multipart form input to an output to pass along to a proxied endpoint.
+	 * @param input non null input
+	 * @param fileName non null file name
+	 * @return a multi part form data output object, which could be empty if we ran into any issues
+	 */
+	private MultipartFormDataOutput fromFormDataInputToFormDataOutput(MultipartFormDataInput input, String fileName) {
+		MultipartFormDataOutput mdo = new MultipartFormDataOutput();
+		int i = 0;
+		for (Map.Entry < String, List < InputPart >> inputPartEntry: input.getFormDataMap().entrySet()) {
+			String partId = inputPartEntry.getKey();
+			List < InputPart > inputParts = inputPartEntry.getValue();
+
+			for (InputPart part: inputParts) {
+				InputStream inputStream;
+				try {
+					inputStream = part.getBody(InputStream.class, null);
+					OutputPart objPart = mdo.addFormData(partId , inputStream, part.getMediaType());
+					objPart.getHeaders().putSingle(FieldName.CONTENT_DISPOSITION, "form-data; name=" + partId + "; filename=" + fileName);
+				} catch (IOException e) {
+					log.error("Error converting to MultipartFormDataInput", e);
+				}
+			}
+		}
+
+		return mdo;
+	}
+
 
 	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1005
 	// warning this is not sufficient for the long term. Should likely use a library for this conversion formatting may break this.

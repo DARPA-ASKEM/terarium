@@ -151,10 +151,10 @@
 </template>
 
 <script setup lang="ts">
-import { IProject } from '@/types/Project';
-import { ref, nextTick } from 'vue';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { nextTick, ref } from 'vue';
 import InputText from 'primevue/inputtext';
-import { update as updateProject } from '@/services/project';
+import { addAsset, update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -169,6 +169,7 @@ import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
+import { Dataset } from '@/types/Types';
 
 const props = defineProps<{
 	project: IProject;
@@ -230,25 +231,55 @@ async function getPDFContents(
 	return { text: '', images: [] } as PDFExtractionResponseType;
 }
 
-async function processFiles(files: File[], extractionMode: string, extractImages: string) {
-	const processedFiles = await files.map(async (file) => {
+async function processFiles(
+	files: File[],
+	extractionMode: string,
+	extractImages: string,
+	csvDescription: string
+) {
+	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
+			const name = file.name.substring(
+				0,
+				file.name.lastIndexOf('.') > 0 ? file.name.lastIndexOf('.') : file.name.length
+			);
+
+			let dataset: Dataset = {
+				name,
+				url: '',
+				description: csvDescription || file.name
+			};
+
+			let resp = await API.post('/datasets', dataset);
+			if (resp && resp.status < 400 && resp.data) {
+				dataset = resp.data;
+			} else {
+				console.log(`Error creating new dataset ${resp?.status}`);
+				return {};
+			}
+
 			const formData = new FormData();
 			formData.append('file', file);
-			const response = await API.post(
-				`/datasets/${props.project.id}/files?filename=${file.name}`,
-				formData
-			);
-			console.log(response);
-			return { file, error: false, response };
+			resp = await API.post(`/datasets/${dataset.id}/files?filename=${file.name}`, formData);
+			if (resp && resp.status < 400 && resp.data) {
+				resp = await addAsset(props.project.id, ProjectAssetTypes.DATASETS, dataset.id);
+			} else {
+				console.log(`Error adding asset ${resp?.status}`);
+				return {};
+			}
+
+			resp = await API.get(`/datasets/${dataset.id}/files?row_limit=10`);
+			const text = resp.data.csv.join('\r\n');
+			const images = [];
+
+			return { file, error: false, response: { text, images } };
 		}
+		// PDF
 		const resp = await getPDFContents(file, extractionMode, extractImages);
 		const text = resp.text ? resp.text : '';
 		const images = resp.images ? resp.images : [];
 		return { file, error: false, response: { text, images } };
 	});
-
-	return processedFiles;
 }
 
 async function openImportModal() {

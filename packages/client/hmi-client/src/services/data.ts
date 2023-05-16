@@ -290,9 +290,9 @@ const getAssets = async (params: GetAssetsParams) => {
 	//        should be added for datasets and other resource types
 	const allAssets = assetList.map((a) => ({
 		...a,
-		temporalResolution: a?.temporal_resolution, // Dataset attribute
-		geospatialResolution: a?.geospatial_resolution, // Dataset attribute
-		simulationRun: a?.simulation_run, // Dataset attribute
+		temporalResolution: a?.temporalResolution, // Dataset attribute
+		geospatialResolution: a?.geospatialResolution, // Dataset attribute
+		simulationRun: a?.simulationRun, // Dataset attribute
 		type: resourceType
 	}));
 
