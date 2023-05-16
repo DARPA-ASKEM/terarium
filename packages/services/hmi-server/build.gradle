@@ -38,9 +38,6 @@ dependencies {
 	implementation "io.quarkus:quarkus-jdbc-postgresql"
 	implementation "io.quarkus:quarkus-hibernate-orm-panache"
 	annotationProcessor "io.quarkus:quarkus-panache-common"
-	// Multipart file upload/download
-	implementation 'org.glassfish.jersey.media:jersey-media-multipart:3.1.1'
-	implementation 'org.glassfish.jersey.core:jersey-server:3.1.1'
 	
 	// Caching
 	implementation "io.quarkus:quarkus-cache"
