@@ -1,12 +1,26 @@
 <template>
-	<tera-infinite-canvas debug-mode @click="onCanvasClick()" @contextmenu="toggleContextMenu"
-		@save-transform="saveTransform" @mouseleave="isMouseOverCanvas = false" @mouseenter="isMouseOverCanvas = true">
+	<tera-infinite-canvas
+		debug-mode
+		@click="onCanvasClick()"
+		@contextmenu="toggleContextMenu"
+		@save-transform="saveTransform"
+		@mouseleave="isMouseOverCanvas = false"
+		@mouseenter="isMouseOverCanvas = true"
+		@focus="() => {}"
+		@blur="() => {}"
+	>
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
-			<tera-workflow-node v-for="(node, index) in wf.nodes" :key="index" :node="node"
-				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)" @port-mouseover="onPortMouseover"
-				@dragging="(event) => updatePosition(node, event)" :canDrag="isMouseOverCanvas">
+			<tera-workflow-node
+				v-for="(node, index) in wf.nodes"
+				:key="index"
+				:node="node"
+				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
+				@port-mouseover="onPortMouseover"
+				@dragging="(event) => updatePosition(node, event)"
+				:canDrag="isMouseOverCanvas"
+			>
 				<template #body>
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
@@ -54,10 +68,22 @@
 			</marker>
 		</template>
 		<template #background>
-			<path v-if="newEdge?.points" :d="drawPath(newEdge.points)" stroke="green" stroke-dasharray="4" stroke-width="4"
-				marker-end="url(#arrowhead)" />
-			<path v-for="(edge, index) of wf.edges" :d="drawPath(edge.points)" stroke="black" stroke-width="4"
-				marker-end="url(#arrowhead)" :key="index" />
+			<path
+				v-if="newEdge?.points"
+				:d="drawPath(newEdge.points)"
+				stroke="green"
+				stroke-dasharray="4"
+				stroke-width="4"
+				marker-end="url(#arrowhead)"
+			/>
+			<path
+				v-for="(edge, index) of wf.edges"
+				:d="drawPath(edge.points)"
+				stroke="black"
+				stroke-width="4"
+				marker-end="url(#arrowhead)"
+				:key="index"
+			/>
 		</template>
 	</tera-infinite-canvas>
 </template>
@@ -117,7 +143,7 @@ const testOperation: Operation = {
 		{ type: 'string', label: 'String input' }
 	],
 	outputs: [{ type: 'number', label: 'Number output' }],
-	action: () => { },
+	action: () => {},
 	isRunnable: true
 };
 

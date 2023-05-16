@@ -1,6 +1,8 @@
 <template>
-	<aside :class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
-		:style="{ width: isOpen ? contentWidth : tabWidth }">
+	<aside
+		:class="`slider ${isOpen ? 'open' : 'closed'} ${direction}`"
+		:style="{ width: isOpen ? contentWidth : tabWidth }"
+	>
 		<div class="slider-content-container" :style="{ width: isOpen ? contentWidth : 0 }">
 			<section class="slider-content" :style="sidePanelContentStyle">
 				<slot name="content" />
@@ -48,10 +50,9 @@ const directionMap = {
 	}
 };
 
-const sidePanelContentStyle = computed(() => {
-	let style: string = thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : '';
-	return style;
-});
+const sidePanelContentStyle = computed(() =>
+	thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : ''
+);
 
 const sidePanelTabStyle = computed(
 	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab()}`
@@ -78,7 +79,7 @@ const sidePanelTabStyle = computed(
 .slider-content-container {
 	position: absolute;
 	height: 100%;
-	transition: width 0.2s ease-out
+	transition: width 0.2s ease-out;
 }
 
 .slider-tab {
