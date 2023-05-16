@@ -6,5 +6,5 @@ export const DatasetOperation: Operation = {
 	isRunnable: true,
 	inputs: [],
 	outputs: [{ type: 'dataset' }],
-	action: () => { }
+	action: () => {}
 };
