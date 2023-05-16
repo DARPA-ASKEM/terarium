@@ -2,10 +2,17 @@
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
 			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-			/>
+			<span>
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+				<Button
+					@click="showNodeDrilldown"
+					icon="pi pi-external-link"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+			</span>
 		</header>
 		<ul class="inputs">
 			<li
@@ -47,6 +54,8 @@
 import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -62,6 +71,7 @@ const nodeStyle = computed(() => ({
 }));
 
 const workflowNode = ref<HTMLElement>();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 let tempX = 0;
 let tempY = 0;
@@ -101,6 +111,13 @@ onMounted(() => {
 
 function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
+}
+
+// Pass workflow node to drilldown panel
+function showNodeDrilldown() {
+	if (!isEmpty(props.node.outputs)) {
+		openedWorkflowNodeStore.setWorkflowNode(props.node);
+	} else alert('Node needs a valid output');
 }
 
 function mouseoverPort(event) {
