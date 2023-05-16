@@ -53,9 +53,9 @@
 			<marker
 				class="edge-marker-end"
 				id="arrowhead"
-				viewBox="-5 -5 10 10"
-				refX="6"
-				refY="0"
+				viewBox="0 0 10 10"
+				refX="7.5"
+				refY="5"
 				orient="auto"
 				markerWidth="20"
 				markerHeight="20"
@@ -63,8 +63,8 @@
 				xoverflow="visible"
 			>
 				<path
-					d="M 0 -4.875 L 7.5 0 L 0 4.875"
-					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
+					d="M 0.5 0.5 L 7.5 5 L 0.25 9.5"
+					style="fill: var(--petri-lineColor); fill-opacity: 0; stroke: #1b8073; stroke-width: 1"
 				></path>
 			</marker>
 		</template>
@@ -73,7 +73,7 @@
 				v-if="newEdge?.points"
 				:d="drawPath(newEdge.points)"
 				stroke="#1B8073"
-				stroke-dasharray="4"
+				stroke-dasharray="8"
 				stroke-width="2"
 				marker-end="url(#arrowhead)"
 			/>
@@ -285,8 +285,8 @@ let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
 		if (isMouseOverPort) {
-			newEdge.value.points[1].x = currentPortPosition.x;
-			newEdge.value.points[1].y = currentPortPosition.y;
+			newEdge.value!.points[1].x = currentPortPosition.x;
+			newEdge.value!.points[1].y = currentPortPosition.y;
 		} else {
 			const dx = event.x - prevX;
 			const dy = event.y - prevY;
