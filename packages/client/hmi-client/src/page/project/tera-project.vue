@@ -358,22 +358,6 @@ function openAssetFromSidebar(asset: Tab = tabs.value[activeTabIndex.value!]) {
 	loadingTabIndex.value = tabs.value.length;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const openOverview = () => {
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: { assetName: 'Overview', assetType: 'overview', assetId: undefined }
-	});
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const openWorkflow = () => {
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
-	});
-};
-
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
