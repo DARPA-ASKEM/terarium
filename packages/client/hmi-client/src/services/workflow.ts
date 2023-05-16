@@ -1,13 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
 import {
-	Workflow,
 	Operation,
-	WorkflowNode,
-	WorkflowStatus,
 	Position,
+	Size,
+	Workflow,
 	WorkflowEdge,
-	WorkflowPortStatus
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowStatus
 } from '@/types/workflow';
 
 /**
@@ -32,7 +33,12 @@ export const create = () => {
 	return workflow;
 };
 
-export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
+export const addNode = (
+	wf: Workflow,
+	op: Operation,
+	pos: Position,
+	size: Size = { width: 180, height: 220 }
+) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
 		workflowId: wf.id,
@@ -59,9 +65,8 @@ export const addNode = (wf: Workflow, op: Operation, pos: Position) => {
 	  */
 		statusCode: WorkflowStatus.INVALID,
 
-		// Not currently in use. May 2023
-		width: 180,
-		height: 220
+		width: size.width,
+		height: size.height
 	};
 
 	wf.nodes.push(node);
@@ -103,6 +108,9 @@ export const addEdge = (
 
 	// Transfer data value/reference
 	targetInputPort.value = sourceOutputPort.value;
+
+	// TODO: Need to fix for multi-values
+	targetInputPort.label = sourceOutputPort.label;
 
 	const edge: WorkflowEdge = {
 		id: uuidv4(),

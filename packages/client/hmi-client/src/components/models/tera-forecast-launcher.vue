@@ -87,7 +87,7 @@ const launch = async () => {
 	});
 
 	const payload: SimulationParams = {
-		petri: JSON.stringify(cleanedModel),
+		model: JSON.stringify(cleanedModel),
 		initials,
 		params,
 		tspan: [0, 50]
