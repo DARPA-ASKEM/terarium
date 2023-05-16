@@ -39,6 +39,10 @@ export interface IEdge<T> {
 export interface IGraph<V, E> {
 	nodes: INode<V>[];
 	edges: IEdge<E>[];
+
+	// Serve as pass-thru for akem-models
+	parameters?: any;
+	metadata?: any;
 	width?: number;
 	height?: number;
 }
