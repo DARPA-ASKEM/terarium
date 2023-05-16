@@ -1,9 +1,13 @@
 <template>
 	<tera-infinite-canvas
 		debug-mode
-		@click.stop="onCanvasClick()"
+		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
+		@mouseleave="isMouseOverCanvas = false"
+		@mouseenter="isMouseOverCanvas = true"
+		@focus="() => {}"
+		@blur="() => {}"
 	>
 		<!-- data -->
 		<template #data>
@@ -15,6 +19,7 @@
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
 				@port-mouseover="onPortMouseover"
 				@dragging="(event) => updatePosition(node, event)"
+				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
 					<tera-model-node
@@ -128,6 +133,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let isCreatingNewEdge = false;
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
+const isMouseOverCanvas = ref<boolean>(false);
 
 const testOperation: Operation = {
 	name: 'Test operation',
