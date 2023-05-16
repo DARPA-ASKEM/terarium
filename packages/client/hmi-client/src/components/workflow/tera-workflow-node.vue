@@ -20,13 +20,18 @@
 				:key="index"
 				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
 			>
-				<div
-					class="port"
-					@click.stop="selectPort(input)"
-					@mouseover="mouseoverPort"
-					@focus="() => {}"
-				></div>
-				{{ input.label }}
+				<div class="port-label">
+					<div
+						class="input port"
+						:style="portStyle"
+						@click.stop="selectPort(input)"
+						@mouseover="mouseoverPort"
+						@mouseleave="emit('port-mouseleave')"
+						@focus="() => {}"
+						@focusout="() => {}"
+					></div>
+					{{ input.label }}
+				</div>
 			</li>
 		</ul>
 		<section>
@@ -38,13 +43,18 @@
 				:key="index"
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
-				{{ output.label }}
-				<div
-					class="port"
-					@click.stop="selectPort(output)"
-					@mouseover="mouseoverPort"
-					@focus="() => {}"
-				></div>
+				<div class="port-label">
+					{{ output.label }}
+					<div
+						class="output port"
+						:style="portStyle"
+						@click.stop="selectPort(output)"
+						@mouseover="mouseoverPort"
+						@mouseleave="emit('port-mouseleave')"
+						@focus="() => {}"
+						@focusout="() => {}"
+					></div>
+				</div>
 			</li>
 		</ul>
 	</main>
@@ -63,13 +73,19 @@ const props = defineProps<{
 	canDrag: boolean;
 }>();
 
-const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
+const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'port-mouseleave']);
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
 	minHeight: `${props.node.height}px`,
 	top: `${props.node.y}px`,
 	left: `${props.node.x}px`
+}));
+
+const portBaseSize: number = 8;
+const portStyle = computed(() => ({
+	width: `${portBaseSize}px`,
+	height: `${portBaseSize * 2}px`
 }));
 
 const workflowNode = ref<HTMLElement>();
@@ -143,8 +159,9 @@ function showNodeDrilldown() {
 
 function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
+	const portDirection = el.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX = el.offsetLeft;
+	const totalOffsetX = el.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
 	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
@@ -210,10 +227,13 @@ ul li {
 	align-items: center;
 }
 
+.port-label {
+	display: flex;
+	gap: 4px;
+}
+
 .port {
 	display: inline-block;
-	height: 16px;
-	width: 8px;
 	border: 2px solid var(--surface-border);
 	position: relative;
 	background: var(--surface-100);

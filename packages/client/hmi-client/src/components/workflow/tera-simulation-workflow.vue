@@ -18,6 +18,7 @@
 				:node="node"
 				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
 				@port-mouseover="onPortMouseover"
+				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				:canDrag="isMouseOverCanvas"
 			>
@@ -71,16 +72,16 @@
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(newEdge.points)"
-				stroke="green"
+				stroke="#1B8073"
 				stroke-dasharray="4"
-				stroke-width="4"
+				stroke-width="2"
 				marker-end="url(#arrowhead)"
 			/>
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(edge.points)"
-				stroke="black"
-				stroke-width="4"
+				stroke="#1B8073"
+				stroke-width="2"
 				marker-end="url(#arrowhead)"
 				:key="index"
 			/>
@@ -130,10 +131,10 @@ const contextMenu = ref();
 
 const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let canvasTransform = { x: 0, y: 0, k: 1 };
-let isCreatingNewEdge = false;
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
 const isMouseOverCanvas = ref<boolean>(false);
+let isMouseOverPort: boolean = false;
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -229,8 +230,12 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.k = newTransform.k;
 }
 
+const isCreatingNewEdge = computed(
+	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
+);
+
 function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
-	if (isCreatingNewEdge === false) {
+	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
 			workflowId: '0',
@@ -243,43 +248,51 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 			target: '',
 			targetPortId: ''
 		};
-		isCreatingNewEdge = true;
-	} else if (newEdge.value) {
+	} else {
 		workflowService.addEdge(
 			wf.value,
-			newEdge.value.source,
-			newEdge.value.sourcePortId,
+			newEdge.value!.source,
+			newEdge.value!.sourcePortId,
 			node.id,
 			port.id,
-			newEdge.value.points
+			newEdge.value!.points
 		);
 		cancelNewEdge();
 	}
 }
 
 function onCanvasClick() {
-	if (isCreatingNewEdge === true) {
+	if (isCreatingNewEdge.value) {
 		cancelNewEdge();
 	}
 }
 
 function cancelNewEdge() {
-	isCreatingNewEdge = false;
 	newEdge.value = undefined;
 }
 
 function onPortMouseover(position: Position) {
 	currentPortPosition = position;
+	isMouseOverPort = true;
+}
+
+function onPortMouseleave() {
+	isMouseOverPort = false;
 }
 
 let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
-	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
-		const dx = event.x - prevX;
-		const dy = event.y - prevY;
-		newEdge.value.points[1].x += dx / canvasTransform.k;
-		newEdge.value.points[1].y += dy / canvasTransform.k;
+	if (isCreatingNewEdge.value) {
+		if (isMouseOverPort) {
+			newEdge.value.points[1].x = currentPortPosition.x;
+			newEdge.value.points[1].y = currentPortPosition.y;
+		} else {
+			const dx = event.x - prevX;
+			const dy = event.y - prevY;
+			newEdge.value!.points[1].x += dx / canvasTransform.k;
+			newEdge.value!.points[1].y += dy / canvasTransform.k;
+		}
 	}
 	prevX = event.x;
 	prevY = event.y;
