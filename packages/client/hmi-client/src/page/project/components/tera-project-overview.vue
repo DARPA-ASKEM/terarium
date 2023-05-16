@@ -174,7 +174,7 @@ import { Dataset } from '@/types/Types';
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow']);
+const emit = defineEmits(['open-workflow', 'update-project']);
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -290,7 +290,14 @@ async function openImportModal() {
 function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
-	results.value = newResults;
+	// This is a hacky override for dealing with CSVs
+	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+		results.value = null;
+		emit('update-project', props.project.id);
+		visible.value = false;
+	} else {
+		results.value = newResults;
+	}
 }
 
 async function editProject() {

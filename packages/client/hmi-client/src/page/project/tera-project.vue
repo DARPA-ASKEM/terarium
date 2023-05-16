@@ -84,6 +84,7 @@
 				v-else-if="assetType === 'overview'"
 				:project="project"
 				@open-workflow="openWorkflow"
+				@update-project="updateProject"
 			/>
 			<tera-simulation-workflow v-else-if="assetType === 'workflow'" :project="project" />
 			<section v-else class="no-open-tabs">
@@ -425,6 +426,10 @@ const openWorkflow = () => {
 		params: { assetName: 'Workflow', assetType: 'workflow', assetId: undefined }
 	});
 };
+
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
+}
 
 function removeClosedTab(tabIndexToRemove: number) {
 	tabStore.removeTab(projectContext.value, tabIndexToRemove);
