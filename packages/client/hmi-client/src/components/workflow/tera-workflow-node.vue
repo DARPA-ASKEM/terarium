@@ -18,18 +18,17 @@
 			<li
 				v-for="(input, index) in node.inputs"
 				:key="index"
-				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+				:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
 			>
-				<div class="port-label">
-					<div
-						class="input port"
-						:style="portStyle"
-						@click.stop="selectPort(input)"
-						@mouseover="mouseoverPort"
-						@mouseleave="emit('port-mouseleave')"
-						@focus="() => {}"
-						@focusout="() => {}"
-					></div>
+				<div
+					class="input-port-container"
+					@mouseover="mouseoverPort"
+					@mouseleave="emit('port-mouseleave')"
+					@click.stop="selectPort(input)"
+					@focus="() => {}"
+					@focusout="() => {}"
+				>
+					<div class="input port" :style="portStyle" />
 					{{ input.label }}
 				</div>
 			</li>
@@ -43,17 +42,16 @@
 				:key="index"
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
-				<div class="port-label">
+				<div
+					class="output-port-container"
+					@mouseover="mouseoverPort"
+					@mouseleave="emit('port-mouseleave')"
+					@click.stop="selectPort(output)"
+					@focus="() => {}"
+					@focusout="() => {}"
+				>
+					<div class="output port" :style="portStyle" />
 					{{ output.label }}
-					<div
-						class="output port"
-						:style="portStyle"
-						@click.stop="selectPort(output)"
-						@mouseover="mouseoverPort"
-						@mouseleave="emit('port-mouseleave')"
-						@focus="() => {}"
-						@focusout="() => {}"
-					></div>
 				</div>
 			</li>
 		</ul>
@@ -159,10 +157,11 @@ function showNodeDrilldown() {
 
 function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
-	const portDirection = el.className.split(' ')[0];
+	const portElement = (el.firstChild as HTMLElement) ?? el;
+	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX = el.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
-	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
+	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
+	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2 + 1;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
 }
@@ -227,9 +226,14 @@ ul li {
 	align-items: center;
 }
 
-.port-label {
+.input-port-container,
+.output-port-container {
 	display: flex;
 	gap: 4px;
+}
+
+.output-port-container {
+	flex-direction: row-reverse;
 }
 
 .port {
@@ -258,6 +262,11 @@ ul li {
 }
 
 .port-connected {
+	background: var(--surface-border);
+}
+
+.inputs > li:hover .port,
+.outputs > li:hover .port {
 	background: var(--surface-border);
 }
 </style>
