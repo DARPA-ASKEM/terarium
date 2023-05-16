@@ -3,7 +3,7 @@ import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
-import { ProjectAssetTypes } from './Project';
+import { ProjectAssetTypes, ProjectPages } from './Project';
 
 export type Annotation = {
 	id: string;
@@ -85,7 +85,7 @@ export type Tab = {
 	assetName: string;
 	icon?: string;
 	assetId?: string;
-	assetType?: ProjectAssetTypes | 'overview' | 'workflow' | '';
+	pageType?: ProjectAssetTypes | ProjectPages;
 };
 
 export enum AcceptedTypes {

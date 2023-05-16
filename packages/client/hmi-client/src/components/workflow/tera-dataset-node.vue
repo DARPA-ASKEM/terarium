@@ -10,14 +10,9 @@
 		</Dropdown>
 		<Accordion>
 			<AccordionTab header="Data preview">
-				<!-- <tera-dataset-datatable v-if="rawContent" :raw-content="rawContent" /> -->
-				<section v-if="rawContent">
-					<DataTable
-						class="p-datatable-sm"
-						:value="csvContent?.slice(1, csvContent.length)"
-						paginator
-						:rows="5"
-					>
+				<section v-if="csvContent">
+					<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
+					<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
 						<Column
 							v-for="(colName, index) of csvHeaders"
 							:key="index"
@@ -25,6 +20,7 @@
 							:header="colName"
 						/>
 					</DataTable>
+					<span>Showing first 5 rows</span>
 				</section>
 			</AccordionTab>
 		</Accordion>
@@ -74,5 +70,10 @@ section {
 	justify-content: center;
 	flex-direction: column;
 	max-width: 400px;
+}
+
+span {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
 }
 </style>

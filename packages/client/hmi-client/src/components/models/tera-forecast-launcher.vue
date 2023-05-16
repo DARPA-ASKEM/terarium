@@ -35,6 +35,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { makeForecast, createSimulation } from '@/services/models/simulation-service';
 import { Simulation, SimulationParams } from '@/types/Types';
+import { shimPetriModel } from '@/services/models/petri-shim';
 
 interface StringValueMap {
 	[key: string]: string;
@@ -61,20 +62,6 @@ props.model.content.T.forEach((s) => {
 const emit = defineEmits(['close', 'launch-forecast']);
 
 const launch = async () => {
-	// FIXME: current need to strip out metadata, should do serverside
-	const cleanedModel: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
-	if (props.model) {
-		cleanedModel.S = props.model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = props.model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = props.model.content.I;
-		cleanedModel.O = props.model.content.O;
-	}
-
 	const initials: NumericValueMap = {};
 	const params: NumericValueMap = {};
 
@@ -87,7 +74,7 @@ const launch = async () => {
 	});
 
 	const payload: SimulationParams = {
-		petri: JSON.stringify(cleanedModel),
+		model: shimPetriModel(props.model),
 		initials,
 		params,
 		tspan: [0, 50]

@@ -8,14 +8,14 @@
 				:loading="loadingTabIndex === index"
 			>
 				<vue-feather
-					v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
-					:type="getAssetIcon(tab.assetType ?? null)"
+					v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
+					:type="getAssetIcon(tab.pageType ?? null)"
 					size="1rem"
 					stroke="rgb(16, 24, 40)"
 				/>
 				<component
 					v-else
-					:is="getAssetIcon(tab.assetType ?? null)"
+					:is="getAssetIcon(tab.pageType ?? null)"
 					class="p-button-icon-left icon"
 				/>
 				<span class="name">
@@ -74,7 +74,8 @@ nav {
 	display: grid;
 	grid-auto-columns: min(calc(100% / var(--nb-tabs, 1)), 20%);
 	grid-auto-flow: column;
-	margin: 0.2rem 0.2rem 0 0.2rem;
+	padding: 0.2rem 0.2rem 0 0.2rem;
+	background-color: var(--surface-ground);
 }
 
 @keyframes show-tab {

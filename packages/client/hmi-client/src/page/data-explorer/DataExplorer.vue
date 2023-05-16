@@ -55,7 +55,6 @@
 			/>
 		</div>
 		<tera-preview-panel
-			class="preview-slider"
 			:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
 			tab-width="0"
 			direction="right"

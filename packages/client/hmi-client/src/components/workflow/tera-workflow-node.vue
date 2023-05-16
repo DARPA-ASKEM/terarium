@@ -2,10 +2,17 @@
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
 			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
-			<Button
-				icon="pi pi-ellipsis-v"
-				class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-			/>
+			<span>
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+				<Button
+					@click="showNodeDrilldown"
+					icon="pi pi-external-link"
+					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+				/>
+			</span>
 		</header>
 		<ul class="inputs">
 			<li
@@ -16,7 +23,7 @@
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseover="mouseoverPort"
 					@focus="() => {}"
 				></div>
 				{{ input.label }}
@@ -29,13 +36,13 @@
 			<li
 				v-for="(output, index) in node.outputs"
 				:key="index"
-				:class="output.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
 				{{ output.label }}
 				<div
 					class="port"
 					@click.stop="selectPort(output)"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseover="mouseoverPort"
 					@focus="() => {}"
 				></div>
 			</li>
@@ -47,9 +54,13 @@
 import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { isEmpty } from 'lodash';
+import { ProjectAssetTypes } from '@/types/Project';
 
 const props = defineProps<{
 	node: WorkflowNode;
+	canDrag: boolean;
 }>();
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
@@ -62,6 +73,7 @@ const nodeStyle = computed(() => ({
 }));
 
 const workflowNode = ref<HTMLElement>();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 let tempX = 0;
 let tempY = 0;
@@ -83,6 +95,10 @@ const drag = (evt: MouseEvent) => {
 
 	tempX = evt.x;
 	tempY = evt.y;
+
+	if (!props.canDrag) {
+		stopDrag();
+	}
 };
 
 const stopDrag = (/* evt: MouseEvent */) => {
@@ -101,6 +117,28 @@ onMounted(() => {
 
 function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
+}
+
+function showNodeDrilldown() {
+	if (!isEmpty(props.node.outputs)) {
+		let pageType;
+		let assetId;
+		switch (props.node.operationType) {
+			case 'ModelOperation':
+				pageType = ProjectAssetTypes.MODELS;
+				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+				break;
+			case 'Dataset':
+				pageType = ProjectAssetTypes.DATASETS;
+				assetId = props.node.outputs[0].value.toString();
+				break;
+			default:
+				break;
+		}
+		if (pageType && assetId) {
+			openedWorkflowNodeStore.set(assetId, pageType);
+		}
+	} else alert('Node needs a valid output');
 }
 
 function mouseoverPort(event) {
