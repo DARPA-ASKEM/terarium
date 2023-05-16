@@ -36,11 +36,15 @@
 			<li
 				v-for="(output, index) in node.outputs"
 				:key="index"
-				:class="output.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
 				{{ output.label }}
-				<div class="port" @click.stop="selectPort(output)" @mouseover="(event) => mouseoverPort(event)"
-					@focus="() => { }"></div>
+				<div
+					class="port"
+					@click.stop="selectPort(output)"
+					@mouseover="(event) => mouseoverPort(event)"
+					@focus="() => {}"
+				></div>
 			</li>
 		</ul>
 	</main>
@@ -55,7 +59,7 @@ import { isEmpty } from 'lodash';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	canDrag: boolean
+	canDrag: boolean;
 }>();
 
 const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
