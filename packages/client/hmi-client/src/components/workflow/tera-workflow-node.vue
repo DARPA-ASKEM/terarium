@@ -23,7 +23,7 @@
 				<div
 					class="port"
 					@click.stop="selectPort(input)"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseover="mouseoverPort"
 					@focus="() => {}"
 				></div>
 				{{ input.label }}
@@ -42,7 +42,7 @@
 				<div
 					class="port"
 					@click.stop="selectPort(output)"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseover="mouseoverPort"
 					@focus="() => {}"
 				></div>
 			</li>
@@ -56,6 +56,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
+import { ProjectAssetTypes } from '@/types/Project';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -118,10 +119,25 @@ function selectPort(port: WorkflowPort) {
 	emit('port-selected', port);
 }
 
-// Pass workflow node to drilldown panel
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
-		openedWorkflowNodeStore.setWorkflowNode(props.node);
+		let pageType;
+		let assetId;
+		switch (props.node.operationType) {
+			case 'ModelOperation':
+				pageType = ProjectAssetTypes.MODELS;
+				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+				break;
+			case 'Dataset':
+				pageType = ProjectAssetTypes.DATASETS;
+				assetId = props.node.outputs[0].value.toString();
+				break;
+			default:
+				break;
+		}
+		if (pageType && assetId) {
+			openedWorkflowNodeStore.set(assetId, pageType);
+		}
 	} else alert('Node needs a valid output');
 }
 

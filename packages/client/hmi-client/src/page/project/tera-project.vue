@@ -40,12 +40,10 @@
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
 				/>
 			</SplitterPanel>
-			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
-				<Button label="Print chosen node" @click="printChosenNode" />
-				<!--
-					for now just testing model component in drilldown
-					asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???
-				-->
+			<SplitterPanel
+				v-if="openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType"
+				:size="20"
+			>
 				<tera-project-page
 					:project="project"
 					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
@@ -332,10 +330,6 @@ const loadingTabIndex = ref<number | null>(null);
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	loadingTabIndex.value = null;
-}
-
-function printChosenNode() {
-	console.log(openedWorkflowNodeStore.workflowNode);
 }
 
 function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
