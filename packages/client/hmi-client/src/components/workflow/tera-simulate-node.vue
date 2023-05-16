@@ -20,10 +20,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { PetriNet } from '@/petrinet/petrinet-service';
-import { ITypedModel } from '@/types/Model';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
+import { shimPetriModel } from '@/services/models/petri-shim';
 
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
@@ -83,29 +82,11 @@ const chartOptions = {
 	}
 };
 
-// FIXME: adapt to new model representation
-// FIXME: adapt to new simulation-service id-based API
-const scrubModel = (model: ITypedModel<PetriNet>) => {
-	const cleanedModel: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
-	if (model) {
-		cleanedModel.S = model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = model.content.I;
-		cleanedModel.O = model.content.O;
-	}
-	return JSON.stringify(cleanedModel);
-};
-
 const runSimulate = async () => {
 	const port = props.node.inputs[0];
 	if (port && port.value) {
 		const payload = {
-			model: scrubModel(port.value.model),
+			model: shimPetriModel(port.value.model),
 			initials: port.value.initialValues,
 			params: port.value.parameterValues,
 			tspan: [0, 100]
