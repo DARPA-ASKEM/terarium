@@ -52,7 +52,7 @@ const csvHeaders = computed(() => rawContent.value?.headers);
 watch(
 	() => selectedDataset.value,
 	async () => {
-		if (selectedDataset.value && selectedDataset.value.id) {
+		if (selectedDataset?.value?.id) {
 			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
 			emit('append-output-port', {
 				type: DatasetOperation.outputs[0].type,
