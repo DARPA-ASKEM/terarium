@@ -275,6 +275,34 @@
         }
     }
 
+    &.p-datatable-xsm {
+        .p-datatable-wrapper {
+            font-size: xx-small;
+        }
+        
+        .p-datatable-thead > tr > th {
+            font-size: xx-small;
+        }
+        
+        .p-datatable-tbody > tr > td {
+            padding: 0 5px 0 5px;
+            background-color: var(--gray-50);
+            border: none;
+        }
+        
+        .p-datatable-thead > tr > th {
+            background-color: var(--gray-50);
+        }
+        
+        .p-datatable-tbody > tr > t {
+            border: none;
+        }
+        
+        .p-datatable-thead > tr > th {
+            border: none;
+        }
+    }
+
     &.p-datatable-sm {
         .p-datatable-header {
             @include scaledPadding($tableHeaderPadding, $tableScaleSM);
