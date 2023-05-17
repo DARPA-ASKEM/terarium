@@ -29,10 +29,9 @@
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
-import { Dataset } from '@/types/Dataset';
 import { computed, ref, watch } from 'vue';
 import { downloadRawFile } from '@/services/dataset';
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, Dataset } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
@@ -53,7 +52,7 @@ const csvHeaders = computed(() => rawContent.value?.headers);
 watch(
 	() => selectedDataset.value,
 	async () => {
-		if (selectedDataset.value) {
+		if (selectedDataset?.value?.id) {
 			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
 			emit('append-output-port', {
 				type: DatasetOperation.outputs[0].type,

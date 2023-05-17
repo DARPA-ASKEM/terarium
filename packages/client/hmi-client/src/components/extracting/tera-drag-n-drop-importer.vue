@@ -8,11 +8,11 @@
 				@change="onFileChange"
 				multiple
 				class="hidden-input"
-				accept=".pdf"
+				accept=".pdf,.csv"
 			/>
 			<label for="fileInput" class="file-label">
 				<div v-if="dragOver">Release mouse button to add files to import</div>
-				<div v-else>To import PDFs drag and drop them here or <u>click here</u>.</div>
+				<div v-else>Drop resources here or <u>upload a file</u>.</div>
 			</label>
 			<br />
 
@@ -28,7 +28,7 @@
 					</div>
 				</div>
 				<br />
-				<div class="options-container">
+				<div v-if="hasPDF" class="options-container">
 					<Dropdown
 						v-model="extractionMode"
 						:options="modes"
@@ -40,6 +40,10 @@
 						<Checkbox v-model="extractImages" value="Extract Images" :binary="true" />
 						<label for="extractImage" class="ml-2"> Extract Images </label>
 					</div>
+				</div>
+				<div v-if="hasCSV" class="options-container">
+					Description:
+					<InputText v-model="csvDescription" type="text" class="p-inputtext-sm" />
 				</div>
 			</div>
 			<br />
@@ -61,6 +65,7 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import { AcceptedTypes } from '@/types/common';
+import InputText from 'primevue/inputtext';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
 const emit = defineEmits(['import-completed']);
@@ -73,6 +78,7 @@ const processResponse = ref(<{ file: string; response: { text: string } }[]>[]);
 const extractionMode = ref({ name: 'pymupdf' });
 const extractImages = ref(false);
 const modes = ref([{ name: 'pypdf2' }, { name: 'pdfminer' }, { name: 'pymupdf' }]);
+const csvDescription = ref('');
 
 const props = defineProps({
 	// show preview
@@ -85,9 +91,13 @@ const props = defineProps({
 		type: Array<AcceptedTypes>,
 		required: true,
 		validator: (value: Array<string>) =>
-			[AcceptedTypes.JPEG, AcceptedTypes.JPG, AcceptedTypes.PNG, AcceptedTypes.PDF].every((v) =>
-				value.includes(v)
-			)
+			[
+				AcceptedTypes.JPEG,
+				AcceptedTypes.JPG,
+				AcceptedTypes.PNG,
+				AcceptedTypes.PDF,
+				AcceptedTypes.CSV
+			].every((v) => value.includes(v))
 	},
 	// custom import action can be passed in as prop
 	importAction: {
@@ -191,12 +201,32 @@ const removeFile = (index: number) => {
 
 async function processFiles(files) {
 	isProcessing.value = true;
-	const r = await props.importAction(files, extractionMode.value.name, extractImages.value);
+	const r = await props.importAction(
+		files,
+		extractionMode.value.name,
+		extractImages.value,
+		csvDescription.value
+	);
 	processResponse.value = await Promise.all(r);
 	isProcessing.value = false;
 	emit('import-completed', processResponse.value);
 	files.value = [];
 }
+const hasPDF = computed(() => {
+	if (importFiles.value.length === 0) return false;
+
+	for (let i = 0; i < importFiles.value.length; i++) {
+		const file: File = importFiles.value[i];
+		if ((file.type as AcceptedTypes) === AcceptedTypes.PDF) return true;
+	}
+
+	return false;
+});
+
+const hasCSV = computed(() => {
+	if (importFiles.value.length === 0) return false;
+	return importFiles.value.some((file) => (file.type as AcceptedTypes) === AcceptedTypes.CSV);
+});
 
 const canImport = computed(() => importFiles.value.length > 0);
 </script>

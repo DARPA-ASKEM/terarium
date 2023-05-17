@@ -17,6 +17,7 @@
 		:project="project"
 		@vnode-mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
+		@update-project="updateProject"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
@@ -82,7 +83,13 @@ const props = defineProps<{
 	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
-const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
+const emit = defineEmits([
+	'update:tabs',
+	'asset-loaded',
+	'update-tab-name',
+	'close-current-tab',
+	'update-project'
+]);
 
 const router = useRouter();
 
@@ -103,6 +110,11 @@ const openWorkflow = () => {
 		}
 	});
 };
+
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
+}
+
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,

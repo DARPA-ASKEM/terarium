@@ -6,8 +6,8 @@ import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
-import { Dataset, FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
-import { Document } from '@/types/Types';
+import { FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
+import { Document, Dataset } from '@/types/Types';
 
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
