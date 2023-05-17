@@ -38,7 +38,13 @@
 				:key="index"
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
-				{{ output.label }}
+				<div
+					class="output-name"
+					:active="openedWorkflowNodeStore.openedOutputIndex === index"
+					@click="openedWorkflowNodeStore.openedOutputIndex = index"
+				>
+					{{ output.label }}
+				</div>
 				<div
 					class="port"
 					@click.stop="selectPort(output)"
@@ -180,6 +186,15 @@ header {
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
+}
+
+.output-name:hover {
+	cursor: pointer;
+	background-color: var(--surface-highlight);
+}
+
+.output-name[active='true'] {
+	color: var(--primary-color);
 }
 
 header .p-button.p-button-icon-only,

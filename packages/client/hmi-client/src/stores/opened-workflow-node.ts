@@ -10,6 +10,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 	state: () => ({
 		assetId: null as string | null,
 		pageType: null as ProjectAssetTypes | null,
+		openedOutputIndex: 0 as number,
 		// model node
 		initialValues: null as StringValueMap[] | null,
 		parameterValues: null as StringValueMap[] | null

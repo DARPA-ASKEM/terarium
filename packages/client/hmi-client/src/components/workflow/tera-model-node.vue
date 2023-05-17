@@ -16,7 +16,7 @@
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[0][s.sname]"
+					v-model="initialValues[openedWorkflowNodeStore.openedOutputIndex][s.sname]"
 				/>
 			</li>
 		</ul>
@@ -29,7 +29,7 @@
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[0][t.tname]"
+					v-model="parameterValues[openedWorkflowNodeStore.openedOutputIndex][t.tname]"
 				/>
 			</li>
 		</ul>
@@ -47,6 +47,7 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { cloneDeep } from 'lodash';
 
 defineProps<{
 	models: Model[];
@@ -58,13 +59,13 @@ interface StringValueMap {
 	[key: string]: number;
 }
 
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+
 const selectedModel = ref<Model>();
 const model = ref<Model | null>();
 
 const initialValues = ref<StringValueMap[]>([{}]);
 const parameterValues = ref<StringValueMap[]>([{}]);
-
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 function run() {
 	if (ModelOperation.action) {
@@ -78,6 +79,12 @@ function run() {
 			} as ModelConfig
 		});
 	}
+	addModelConfiguration();
+}
+
+function addModelConfiguration() {
+	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
+	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
 }
 
 watch(
