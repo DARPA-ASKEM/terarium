@@ -5,6 +5,7 @@
 			content-width="300px"
 			header="Resources"
 			direction="left"
+			class="resource-panel"
 		>
 			<template v-slot:content>
 				<tera-resource-sidebar
@@ -22,6 +23,7 @@
 			<SplitterPanel :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
+					class="tab-group"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
 					:loading-tab-index="loadingTabIndex"
@@ -38,12 +40,10 @@
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
 				/>
 			</SplitterPanel>
-			<SplitterPanel v-if="openedWorkflowNodeStore.workflowNode" :size="20">
-				<Button label="Print chosen node" @click="printChosenNode" />
-				<!--
-					for now just testing model component in drilldown
-					asset type could be determined by the operationType or consider adding ProjectAssetTypes to the Workflow node???
-				-->
+			<SplitterPanel
+				v-if="openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType"
+				:size="20"
+			>
 				<tera-project-page
 					:project="project"
 					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
@@ -332,10 +332,6 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
-function printChosenNode() {
-	console.log(openedWorkflowNodeStore.workflowNode);
-}
-
 function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
@@ -478,8 +474,17 @@ function formatAuthorTimestamp(username, timestamp) {
 </script>
 
 <style scoped>
-section,
-.p-splitter-panel {
+.resource-panel {
+	z-index: 2;
+	isolation: isolate;
+}
+.tab-group {
+	z-index: 2;
+	isolation: isolate;
+	position: relative;
+}
+
+section {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
