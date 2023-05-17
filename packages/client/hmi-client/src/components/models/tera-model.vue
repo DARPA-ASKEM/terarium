@@ -198,127 +198,6 @@
 					@click="addModelConfiguration"
 				/>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					State variables<span class="artifact-amount">({{ model?.content?.S.length }})</span>
-				</template>
-				<template v-if="!isEditable">
-					<DataTable
-						:value="model?.content?.S"
-						selectionMode="single"
-						v-model:selection="selectedRow"
-						@row-select="onStateVariableClick"
-						@row-unselect="onStateVariableClick"
-						v-model:filters="globalFilter"
-						filterDisplay="row"
-					>
-						<Column field="sname" header="Name" />
-						<Column header="Type">
-							<template #body="slotProps">
-								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.type }}
-							</template>
-						</Column>
-						<Column header="Default">
-							<template #body="slotProps">
-								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.default_value }}
-							</template>
-						</Column>
-						<Column field="miraIds" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li
-										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
-										:key="ontology.curie"
-									>
-										<a :href="ontology.link">{{ ontology.title }}</a
-										><br />{{ ontology.description }}
-									</li>
-								</ul>
-							</template>
-						</Column>
-					</DataTable>
-				</template>
-				<template v-else>
-					<model-parameter-list
-						:parameters="filteredStates"
-						attribute="parameters"
-						:selected-variable="selectedVariable"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
-				</template>
-				<template v-if="!isEditable">
-					<DataTable :value="betterParams" v-model:filters="globalFilter" filterDisplay="row">
-						<Column field="name" header="Name" />
-						<Column field="type" header="Type" />
-						<Column field="default_value" header="Default" />
-					</DataTable>
-				</template>
-				<template v-else>
-					<model-parameter-list
-						:parameters="filteredParams"
-						attribute="parameters"
-						:selected-variable="selectedVariable"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab
-				:header="`Extractions ${
-					extractions?.length ? extractions?.length : ': No Extractions Found'
-				}`"
-			>
-				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
-					<Column field="name" header="Name" />
-					<Column field="id" header="ID" />
-					<Column field="text_annotations" header="Text">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.text_annotations" :key="key">
-									{{ text }}
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="dkg_annotations" header="Concepts">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
-									<a :href="`http://34.230.33.149:8772/${text[0]}`">{{ text[1] }}</a>
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="data_annotations" header="Data">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.data_annotations" :key="key">
-									{{ `${text[0]}: ${text[1]}` }}
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="file" header="File" />
-					<Column field="doi" header="doi">
-						<template #body="slotProps">
-							<a :href="slotProps.data.doi">{{ slotProps.data.doi }}</a>
-						</template>
-					</Column>
-					<Column field="equation_annotations" header="Equations">
-						<template #body="slotProps">
-							<div style="word-wrap: break-word">
-								<katex-element :expression="Object.keys(slotProps.data.equation_annotations)[0]" />
-							</div>
-						</template>
-					</Column>
-				</DataTable>
-			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
 					<Column field="name" header="Models"></Column>
@@ -429,7 +308,6 @@ import SplitterPanel from 'primevue/splitterpanel';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
-import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
@@ -465,7 +343,6 @@ const props = defineProps({
 const resources = useResourcesStore();
 const router = useRouter();
 
-const extractions = ref([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
@@ -478,7 +355,6 @@ const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
-const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
 const equationLatex = ref<string>('');
@@ -614,57 +490,23 @@ const mathEditorSelected = computed(() => {
 	return '';
 });
 
-const betterStates = computed(() => {
-	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
-	const statesFromContent: any[] = model.value?.content?.S ?? [];
-
-	statesFromContent.forEach((stateFromContent) => {
-		statesFromParams.forEach((stateFromParams) => {
-			if (stateFromParams.name === stateFromContent.sname) {
-				stateFromParams.label = stateFromContent?.sname;
-				stateFromParams.concepts = [...stateFromContent.miraIds, ...stateFromContent.miraContext];
-			}
-		});
-	});
-	return statesFromParams;
-});
-
-const betterParams = computed(() => {
-	const params = model.value?.parameters.filter((p) => !p.state_variable);
-	const transitions: any[] = model.value?.content?.T ?? [];
-
-	transitions.forEach((transition) => {
-		params.forEach((param) => {
-			if (param.name === transition.parameter_name) {
-				param.label = transition?.tname;
-				param.template_type = transition?.template_type;
-			}
-		});
-	});
-	return params;
-});
-
 const globalFilter = ref({
 	// @ts-ignore
 	// eslint-disable-line
 	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
 });
 
-const filteredStates = computed(() =>
-	betterStates.value?.filter(
-		(p) =>
-			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
-			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
-	)
-);
-
-const filteredParams = computed(() =>
-	betterParams.value?.filter(
-		(p) =>
-			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
-			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
-	)
-);
+// States/transitions aren't selected like this anymore - maybe somehow later?
+// const onStateVariableClick = () => {
+// 	if (selectedRow.value) {
+// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
+// 			selectedRow.value.sname,
+// 			String.raw`{\color{red}${selectedRow.value.sname}}`
+// 		);
+// 	} else {
+// 		equationLatex.value = equationLatexOriginal.value;
+// 	}
+// };
 
 const onVariableSelected = (variable: string) => {
 	if (variable) {
@@ -679,17 +521,6 @@ const onVariableSelected = (variable: string) => {
 			);
 		}
 		renderer?.toggoleNodeSelectionByLabel(variable);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
-
-const onStateVariableClick = () => {
-	if (selectedRow.value) {
-		equationLatex.value = equationLatexOriginal.value.replaceAll(
-			selectedRow.value.sname,
-			String.raw`{\color{red}${selectedRow.value.sname}}`
-		);
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
 	}
@@ -728,13 +559,6 @@ const fetchRelatedTerariumArtifacts = async () => {
 		relatedTerariumArtifacts.value = [];
 	}
 };
-
-function updateParamaterRow(attribute: string, newParameterRow) {
-	if (model?.value?.[attribute]) {
-		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
-		model.value[attribute][rowIndex] = { ...newParameterRow };
-	}
-}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
