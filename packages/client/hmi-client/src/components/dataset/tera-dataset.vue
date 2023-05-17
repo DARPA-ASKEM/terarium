@@ -95,7 +95,7 @@
 								</section>
 								<section>
 									<header>GADM level</header>
-									<section>{{ annotation.gadm_level }}</section>
+									<section>{{ annotation.gadmLevel }}</section>
 								</section>
 							</section>
 						</section>
@@ -118,7 +118,7 @@
 								</section>
 								<section>
 									<header>Time format</header>
-									<section>{{ annotation.time_format }}</section>
+									<section>{{ annotation.timeFormat }}</section>
 								</section>
 							</section>
 						</section>
@@ -132,9 +132,9 @@
 					</template>
 					<ol class="numbered-list">
 						<li v-for="(feature, index) of annotations?.feature" :key="index">
-							<span>{{ feature.display_name || feature.name }}</span
+							<span>{{ feature.displayName || feature.name }}</span
 							>:
-							<span class="feature-type">{{ feature.feature_type }}</span>
+							<span class="feature-type">{{ feature.featureType }}</span>
 						</li>
 					</ol>
 				</AccordionTab>

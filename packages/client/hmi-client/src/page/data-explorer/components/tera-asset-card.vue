@@ -241,9 +241,9 @@ const formatDetails = computed(() => {
 
 // Format features for dataset type
 const formatFeatures = () => {
-	const features = props.asset.annotations.annotations.feature ?? [];
+	const features = props.asset.annotations?.annotations.feature ?? [];
 	if (!features || features.length === 0) return [];
-	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
+	const featuresNames = features.map((f) => (f.displayName !== '' ? f.displayName : f.name));
 	const max = 5;
 	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
 };
