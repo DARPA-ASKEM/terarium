@@ -10,7 +10,7 @@
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import ChattyInput from '@/components/widgets/chatty-input.vue';
-import { ref, watch, computed } from 'vue';
+import { watch } from 'vue';
 
 console.log('Loaded');
 

@@ -129,7 +129,7 @@ const onEnter = () => {
 	submitQuery(inputElement.value?.value);
 };
 
-const iopubMessageHandler = (session, message: IIOPubMessage) => {
+const iopubMessageHandler = (_, message: IIOPubMessage) => {
 	if (message.msg_type === 'status') {
 		const newState: KernelState = KernelState[message.content.execution_state];
 		kernelState.value = newState;
