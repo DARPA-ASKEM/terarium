@@ -26,16 +26,16 @@ function "check_suffix" {
 
 # ---------------------------------
 group "prod" {
-  targets = ["hmi-client", "hmi-server", "hmi-server-native", "hmi-extraction-server"]
+  targets = ["hmi-client", "hmi-server", "hmi-server-native"]
 }
 
 # Simplified build without the `native` version for quicker turnaround staging deployments
 group "staging" {
-  targets = ["hmi-client", "hmi-server", "hmi-extraction-server"]
+  targets = ["hmi-client", "hmi-server"]
 }
 
 group "default" {
-  targets = ["hmi-client-base", "hmi-server-base", "hmi-extraction-server"]
+  targets = ["hmi-client-base", "hmi-server-base"]
 }
 
 # ---------------------------------
@@ -67,14 +67,4 @@ target "hmi-server-native" {
 	context = "packages/services/hmi-server/docker/native"
   dockerfile = "Dockerfile.native"
   tags = tag("hmi-server", "", "native")
-}
-
-target "hmi-extraction-server-base" {
-	context = "packages/services/extraction-server/docker"
-	dockerfile = "Dockerfile"
-	tags = tag("hmi-extraction-server", "", "")
-}
-
-target "hmi-extraction-server" {
-  inherits = ["_platforms", "hmi-extraction-server-base"]
 }

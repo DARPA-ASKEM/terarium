@@ -191,22 +191,25 @@ async function getPDFContents(
 ): Promise<PDFExtractionResponseType> {
 	const formData = new FormData();
 	formData.append('file', file);
-	formData.append('extraction_method', extractionMode);
-	formData.append('extract_images', extractImages);
 
-	// const result = await API.post(`/extract/convertpdftask/`, formData);
-	const result = await fetch(`http://localhost:5000/convertpdftask`, {
-		method: 'POST',
-		body: formData
+	const result = await API.post(`/extract/convertpdftask/`, formData, {
+		params: {
+			extraction_method: extractionMode,
+			extract_images: extractImages
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		}
 	});
 
 	if (result) {
-		const taskID = await result.json();
+		const taskID = result.data.task_id;
+
 		const poller = new Poller<object>()
 			.setInterval(2000)
 			.setThreshold(90)
 			.setPollAction(async () => {
-				const response = await API.get(`/extract/task-result/${taskID.task_id}`);
+				const response = await API.get(`/extract/task-result/${taskID}`);
 
 				if (response.data.status === 'SUCCESS' && response.data.result) {
 					return {
@@ -221,7 +224,6 @@ async function getPDFContents(
 					error: null
 				};
 			});
-
 		const pollerResults = await poller.start();
 
 		if (pollerResults.data) {
