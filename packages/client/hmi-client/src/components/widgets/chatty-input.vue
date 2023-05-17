@@ -44,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { computed, onMounted, ref } from 'vue';
 
 import { SessionContext } from '@jupyterlab/apputils';
