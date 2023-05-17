@@ -84,6 +84,23 @@ export const convertToGraph = (petri: PetriNetModel) => {
 			});
 		});
 	});
+	return result;
+};
 
+export const convertToPetriNetModel = (g: IGraph<PetriNetState | PetriNetTransition, EdgeData>) => {
+	const result: PetriNetModel = {
+		states: [],
+		transitions: [],
+		metadata: undefined,
+		parameters: undefined
+	};
+
+	// Copy
+	result.metadata = g.metadata;
+	result.parameters = g.parameters;
+	result.states = g.nodes.filter((d) => d.type === 'state').map((d) => d.data) as PetriNetState[];
+	result.transitions = g.nodes
+		.filter((d) => d.type === 'transition')
+		.map((d) => d.data) as PetriNetTransition[];
 	return result;
 };

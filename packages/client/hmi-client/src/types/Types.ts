@@ -31,6 +31,17 @@ export interface DocumentAsset {
     xdd_uri: string;
 }
 
+export interface Model {
+    id: string;
+    name: string;
+    description: string;
+    schema: string;
+    model: { [index: string]: any };
+    properties: { [index: string]: any };
+    metadata: ModelMetadata;
+    content: ModelContent;
+}
+
 export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
@@ -44,6 +55,13 @@ export interface Simulation {
     simulationParams: SimulationParams;
     result?: string;
     modelId: number;
+}
+
+export interface PetriNetModel {
+    states: PetriNetState[];
+    transitions: PetriNetTransition[];
+    parameters?: ModelParameter[];
+    metadata?: ModelMetadata;
 }
 
 export interface CalibrationParams {
@@ -63,11 +81,48 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     facets: { [index: string]: XDDFacetsItemResponse };
 }
 
+export interface ModelMetadata {
+    processed_at: number;
+    processed_by: string;
+    variable_statements: VariableStatement[];
+}
+
+export interface ModelContent {
+    metadata: any;
+    I: { [index: string]: number }[];
+    O: { [index: string]: number }[];
+    S: Species[];
+    T: { [index: string]: string }[];
+}
+
 export interface SimulationParams {
     model: string;
     initials: { [index: string]: number };
     tspan: number[];
     params: { [index: string]: number };
+}
+
+export interface PetriNetState {
+    id: string;
+    name: string;
+    grounding: ModelGrounding;
+    initial: ModelExpression;
+}
+
+export interface PetriNetTransition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding: ModelGrounding;
+    properties: PetriNetTransitionProperties;
+}
+
+export interface ModelParameter {
+    id: string;
+    description: string;
+    value: number;
+    grounding: ModelGrounding;
+    distribution: ModelDistribution;
 }
 
 export interface Document {
@@ -105,6 +160,41 @@ export interface XDDResponseOK {
     license: string;
 }
 
+export interface VariableStatement {
+    id: string;
+    variable: Variable;
+    value: StatementValue;
+    metadata: VariableStatementMetadata[];
+    provenance: ProvenanceInfo;
+}
+
+export interface Species {
+    sname: string;
+    miraIds: Ontology[];
+    miraContext: Ontology[];
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context: { [index: string]: any };
+}
+
+export interface ModelExpression {
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface PetriNetTransitionProperties {
+    name: string;
+    grounding: ModelGrounding;
+    rate: ModelExpression;
+}
+
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -123,6 +213,40 @@ export interface KnownEntities {
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
+}
+
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: Equation[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
+    type: string;
+    dkg_grounding: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
+}
+
+export interface Ontology {
+    name: string;
+    curie: string;
+    title: string;
+    description: string;
+    link: string;
 }
 
 export interface ExtractionProperties {
@@ -148,6 +272,41 @@ export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface VariableMetadata {
+    type: string;
+    value: string;
+}
+
+export interface DataColumn {
+    id: string;
+    name: string;
+    dataset: Dataset;
+}
+
+export interface Paper {
+    id: string;
+    doi: string;
+    file_directory: string;
+}
+
+export interface Equation {
+    id: string;
+    text: string;
+    image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
+}
+
+export interface Dataset {
+    id: string;
+    name: string;
+    metadata: string;
 }
 
 export enum EventType {
