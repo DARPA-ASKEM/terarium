@@ -53,19 +53,16 @@
 			<marker
 				class="edge-marker-end"
 				id="arrowhead"
-				viewBox="0 0 10 10"
-				refX="7.5"
-				refY="5"
+				viewBox="0 0 32 32"
+				refX="16"
+				refY="16"
 				orient="auto"
-				markerWidth="20"
-				markerHeight="20"
+				markerWidth="32"
+				markerHeight="32"
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path
-					d="M 0.5 0.5 L 7.5 5 L 0.25 9.5"
-					style="fill: var(--petri-lineColor); fill-opacity: 0; stroke: #1b8073; stroke-width: 1"
-				></path>
+				<path d="M 0 8 L 8 16 L 0 24 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
 		</template>
 		<template #background>
@@ -75,7 +72,6 @@
 				stroke="#1B8073"
 				stroke-dasharray="8"
 				stroke-width="2"
-				marker-end="url(#arrowhead)"
 			/>
 			<path
 				v-for="(edge, index) of wf.edges"

@@ -28,7 +28,10 @@
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
-					<div class="input port" :style="portStyle" />
+					<div
+						class="input port"
+						:style="portStyle(input.status === WorkflowPortStatus.CONNECTED ? -1 : 0)"
+					/>
 					{{ input.label }}
 				</div>
 			</li>
@@ -50,7 +53,10 @@
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
-					<div class="output port" :style="portStyle" />
+					<div
+						class="output port"
+						:style="portStyle(output.status === WorkflowPortStatus.CONNECTED ? 1 : 0)"
+					/>
 					{{ output.label }}
 				</div>
 			</li>
@@ -81,10 +87,22 @@ const nodeStyle = computed(() => ({
 }));
 
 const portBaseSize: number = 8;
-const portStyle = computed(() => ({
-	width: `${portBaseSize}px`,
-	height: `${portBaseSize * 2}px`
-}));
+const portStyle = (connectionDirection: number) => {
+	if (connectionDirection) {
+		return {
+			width: `${portBaseSize * 2}px`,
+			height: `${portBaseSize * 2}px`,
+			backgroundColor: `var(--primary-color)`,
+			border: `2px solid var(--primary-color)`,
+			borderRadius: `8px`,
+			left: `${connectionDirection * portBaseSize}px`
+		};
+	}
+	return {
+		width: `${portBaseSize}px`,
+		height: `${portBaseSize * 2}px`
+	};
+};
 
 const workflowNode = ref<HTMLElement>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -161,7 +179,7 @@ function mouseoverPort(event) {
 	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
-	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2 + 1;
+	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
 }
@@ -239,8 +257,8 @@ ul li {
 .port {
 	display: inline-block;
 	border: 2px solid var(--surface-border);
-	position: relative;
 	background: var(--surface-100);
+	position: relative;
 }
 
 .port:hover {
