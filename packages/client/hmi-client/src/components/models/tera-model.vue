@@ -180,7 +180,7 @@
 					<Column
 						v-for="(value, i) of [...model.content.S, ...model.content.T]"
 						:key="i"
-						:field="value.sname ?? value.tname"
+						:field="value['sname'] ?? value['tname']"
 					>
 						<template #body="{ data, field }">
 							{{ data[field] }}
@@ -458,8 +458,8 @@ function generateModelConfigValues() {
 		openedWorkflowNodeStore.parameterValues !== null
 	) {
 		// Shallow copy
-		initialValues.value = openedWorkflowNodeStore.initialValues;
-		parameterValues.value = openedWorkflowNodeStore.parameterValues;
+		initialValues.value = openedWorkflowNodeStore.initialValues as any; // Not sure why the typing doesn't match
+		parameterValues.value = openedWorkflowNodeStore.parameterValues as any;
 
 		if (modelConfigNames.value.length < initialValues.value.length - 1) {
 			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
