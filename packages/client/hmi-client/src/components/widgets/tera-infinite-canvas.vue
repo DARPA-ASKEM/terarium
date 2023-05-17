@@ -1,12 +1,22 @@
 <template>
 	<main ref="canvasRef">
-		<svg class="background-layer" ref="backgroundLayerRef" :width="width" :height="height">
-			<slot name="background" />
+		<svg
+			class="canvas-layer background-layer"
+			ref="backgroundLayerRef"
+			:width="width"
+			:height="height"
+		>
+			<defs>
+				<slot name="backgroundDefs" />
+			</defs>
+			<g ref="svgRef">
+				<slot name="background" />
+			</g>
 		</svg>
-		<div class="data-layer" ref="dataLayerRef">
+		<div class="canvas-layer data-layer" ref="dataLayerRef">
 			<slot name="data" />
 		</div>
-		<div>
+		<div class="canvas-layer foreground-layer">
 			<slot name="foreground" />
 		</div>
 	</main>
@@ -28,7 +38,7 @@ const props = withDefaults(
 		lastTransform: undefined
 	}
 );
-
+//
 const emit = defineEmits(['save-transform']);
 
 let x: d3.ScaleLinear<number, number, never>;
@@ -44,6 +54,7 @@ const height = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
+const svgRef = ref<SVGElement>();
 
 function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>) {
 	container.attr('transform', e.transform);
@@ -61,7 +72,7 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 }
 
 function handleZoomEnd() {
-	emit('save-transform', currentTransform);
+	emit('save-transform', { x: currentTransform.x, y: currentTransform.y, k: currentTransform.k });
 }
 
 function updateDimensions() {
@@ -101,13 +112,22 @@ const resizeObserver = new ResizeObserver(() => updateDimensions());
 
 onMounted(() => {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
-	const container = svg.append('g'); // Pan/zoom area
+	const svgContainer = d3.select(svgRef.value as SVGGElement); // Pan/zoom area
 
 	// Zoom config is applied and event handler
 	const zoom = d3
 		.zoom()
+		.filter((evt: any) => {
+			const classStr = d3.select(evt.target).attr('class') || '';
+			if ((classStr && classStr.includes('canvas-layer')) || evt.type === 'wheel') {
+				return true;
+			}
+			return false;
+		})
 		.scaleExtent(props.scaleExtent)
-		.on('zoom', (e) => handleZoom(e, container))
+		.on('zoom', (e) => {
+			handleZoom(e, svgContainer);
+		})
 		.on('end', handleZoomEnd);
 	svg.call(zoom as any).on('dblclick.zoom', null);
 
@@ -129,8 +149,6 @@ onMounted(() => {
 		// Default position - triggers handleZoom which in turn sets currentTransform
 		svg.transition().call(zoom.transform as any, d3.zoomIdentity);
 	}
-
-	container.append('circle').attr('cx', 400).attr('cy', 300).attr('r', 20).attr('fill', 'red');
 });
 </script>
 
@@ -146,11 +164,13 @@ main > * {
 
 .background-layer {
 	cursor: grab;
-	width: 100%;
-	height: 100%;
 }
 
 .background-layer:deep(.tick line) {
+	color: var(--surface-border);
+}
+
+.background-layer:deep(.tick text) {
 	color: var(--surface-border);
 }
 

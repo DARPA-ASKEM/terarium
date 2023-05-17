@@ -143,7 +143,7 @@ const goToSimulationResultsPage = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
-			assetType: ProjectAssetTypes.SIMULATION_RUNS
+			pageType: ProjectAssetTypes.SIMULATION_RUNS
 		}
 	});
 };

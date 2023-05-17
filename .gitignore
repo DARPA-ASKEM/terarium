@@ -56,3 +56,11 @@ build
 create.sql
 .eslintcache
 **/.venv/
+
+# Python
+__pycache__/
+response.txt
+response.zip
+supervisord*.*
+output
+uploads

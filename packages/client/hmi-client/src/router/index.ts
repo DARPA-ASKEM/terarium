@@ -10,14 +10,15 @@ import ModelRunnerView from '@/temp/ModelRunner.vue';
 import TA2Playground from '@/temp/TA2Playground.vue';
 import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
 import TheiaView from '@/temp/theia.vue';
+import SSE from '@/temp/sse.vue';
 import WorkflowPlayground from '@/temp/workflow-playground/WorkflowPlayground.vue';
-import SimulationWorkflow from '@/temp/tera-simulation-workflow.vue';
 import JupyterTransform from '@/temp/jupyter-transform.vue';
+import SimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
 	Home = '/',
-	Project = '/projects/:projectId/:assetType?/:assetName?/:assetId?',
+	Project = '/projects/:projectId/:pageType?/:assetName?/:assetId?',
 	DataExplorer = '/explorer',
 	Unauthorized = '/unauthorized',
 
@@ -49,9 +50,10 @@ const routes = [
 	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
 	{ path: RoutePath.ModelEditor, component: ModelEditorView },
 	{ path: RoutePath.ModelRunner, component: ModelRunnerView },
-	{ path: '/simulation-workflow', component: SimulationWorkflow },
 	{ path: '/workflow-playground', component: WorkflowPlayground },
-	{ path: '/transform', component: JupyterTransform }
+	{ path: '/simulation-workflow', component: SimulationWorkflow },
+	{ path: '/transform', component: JupyterTransform },
+	{ path: '/sse', component: SSE }
 ];
 
 const router = createRouter({

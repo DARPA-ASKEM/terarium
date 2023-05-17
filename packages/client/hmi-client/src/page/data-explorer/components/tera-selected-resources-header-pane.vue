@@ -25,8 +25,7 @@
 import { computed, onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResultType } from '@/types/common';
-import { DocumentType } from '@/types/Document';
-import { DocumentAsset } from '@/types/Types';
+import { Document, DocumentAsset } from '@/types/Types';
 import useResourcesStore from '@/stores/resources';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import dropdown from 'primevue/dropdown';
@@ -57,8 +56,8 @@ const addResourcesToProject = async (projectId: string) => {
 	props.selectedSearchItems.forEach(async (selectedItem) => {
 		if (isDocument(selectedItem)) {
 			const body: DocumentAsset = {
-				xdd_uri: (selectedItem as DocumentType).gddId,
-				title: (selectedItem as DocumentType).title
+				xdd_uri: (selectedItem as Document).gddId,
+				title: (selectedItem as Document).title
 			};
 
 			// FIXME: handle cases where assets is already added to the project

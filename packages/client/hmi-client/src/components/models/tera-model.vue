@@ -21,7 +21,7 @@
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
-				label="Create New Model"
+				label="Create new model"
 				class="p-button-sm"
 			/>
 			<Button
@@ -275,7 +275,7 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
+import { watch, ref, computed, onMounted, onUnmounted, onUpdated, PropType } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -291,10 +291,11 @@ import {
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import { separateEquations, MathEditorModes } from '@/utils/math';
-import { getModel, updateModel } from '@/services/model';
+import { getModel, updateModel, createModel, addModelToProject } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import useResourcesStore from '@/stores/resources';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
@@ -307,8 +308,7 @@ import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
-import { DocumentType } from '@/types/Document';
-import { ProvenanceType } from '@/types/Types';
+import { Document, ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
@@ -317,14 +317,18 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
-
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
-const emit = defineEmits(['create-new-model', 'update-tab-name', 'close-preview', 'asset-loaded']);
-
-const extractions = ref([]);
+// Get rid of these emits
+const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
 
 const props = defineProps({
+	project: {
+		type: Object as PropType<IProject> | null,
+		default: null,
+		required: false
+	},
 	assetId: {
 		type: String,
 		required: true
@@ -340,6 +344,10 @@ const props = defineProps({
 	}
 });
 
+const resources = useResourcesStore();
+const router = useRouter();
+
+const extractions = ref([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
@@ -373,6 +381,11 @@ const equationPanelMaxSize = ref<number>(100);
 const mathPanelSize = ref<number>(50);
 const mathPanelMinSize = ref<number>(0);
 const mathPanelMaxSize = ref<number>(100);
+
+const graphElement = ref<HTMLDivElement | null>(null);
+let renderer: PetrinetRenderer | null = null;
+let eventX = 0;
+let eventY = 0;
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -476,6 +489,7 @@ const onVariableSelected = (variable: string) => {
 				String.raw`{\color{red}${variable}}`
 			);
 		}
+		renderer?.toggoleNodeSelectionByLabel(variable);
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
 	}
@@ -514,7 +528,7 @@ const relatedTerariumDatasets = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]
 );
 const relatedTerariumDocuments = computed(
-	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as DocumentType[]
+	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
 const fetchRelatedTerariumArtifacts = async () => {
@@ -577,11 +591,6 @@ onUpdated(() => {
 		emit('asset-loaded');
 	}
 });
-
-const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
 
 const editorKeyHandler = (event: KeyboardEvent) => {
 	// Ignore backspace if the current focus is a text/input box
@@ -680,6 +689,16 @@ watch(
 
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
+
+			// de-select node if selection exists
+			if (selectedVariable.value) {
+				onVariableSelected(selectedVariable.value);
+			}
+		});
+
+		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
+			// Note: do not change the renderer's visuals, this is done internally
+			onVariableSelected(d.label);
 		});
 
 		// Render graph
@@ -739,15 +758,32 @@ const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
 };
 
 const createNewModel = async () => {
-	const newModel = {
-		name: newModelName.value,
-		framework: 'Petri Net',
-		description: newDescription.value,
-		content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
-	};
-	emit('create-new-model', newModel);
-	isEditingEQ.value = false;
-	isMathMLValid.value = true;
+	if (props.project) {
+		const newModel = {
+			name: newModelName.value,
+			framework: 'Petri Net',
+			description: newDescription.value,
+			content: JSON.stringify(newPetri.value ?? { S: [], T: [], I: [], O: [] })
+		};
+		const newModelResp = await createModel(newModel);
+		if (newModelResp) {
+			const modelId = newModelResp.id.toString();
+			emit('close-current-tab');
+			await addModelToProject(props.project.id, modelId, resources);
+
+			// Go to the model you just created
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: {
+					assetName: newModelName.value,
+					assetId: modelId,
+					pageType: ProjectAssetTypes.MODELS
+				}
+			});
+		}
+		isEditingEQ.value = false;
+		isMathMLValid.value = true;
+	}
 };
 
 const validateMathML = async (mathMlString: string, editMode: boolean) => {
@@ -782,7 +818,6 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 	}
 };
 
-const router = useRouter();
 const goToSimulationRunPage = () => {
 	showForecastLauncher.value = false;
 	router.push({
@@ -790,7 +825,7 @@ const goToSimulationRunPage = () => {
 		params: {
 			assetId: model.value?.id ?? 0 + 1000,
 			assetName: highlightSearchTerms(model.value?.name ?? ''),
-			assetType: 'simulation_runs'
+			pageType: 'simulation_runs'
 		}
 	});
 };
@@ -810,6 +845,9 @@ const toggleEditMode = () => {
 	if (!isEditing.value && model.value && renderer) {
 		model.value.content = parseIGraph2PetriNet(renderer.graph);
 		updateModel(model.value);
+	} else if (isEditing.value && selectedVariable.value) {
+		// de-select node if selection exists
+		onVariableSelected(selectedVariable.value);
 	}
 };
 

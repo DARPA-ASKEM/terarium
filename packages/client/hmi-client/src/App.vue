@@ -34,7 +34,6 @@
 			</a>
 		</div>
 	</footer>
-
 	<tera-modal
 		v-if="isAboutModalVisible"
 		class="modal"
