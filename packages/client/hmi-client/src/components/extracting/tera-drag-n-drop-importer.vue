@@ -225,8 +225,7 @@ const hasPDF = computed(() => {
 
 const hasCSV = computed(() => {
 	if (importFiles.value.length === 0) return false;
-
-	return importFiles.value.some(file => (file.type as AcceptedTypes) === AcceptedTypes.CSV);
+	return importFiles.value.some((file) => (file.type as AcceptedTypes) === AcceptedTypes.CSV);
 });
 
 const canImport = computed(() => importFiles.value.length > 0);
