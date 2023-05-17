@@ -31,7 +31,6 @@
 				:disabled="isEditing"
 				class="p-button-sm"
 			/>
-			<Button @click="printConfig(9)" label="Print config" class="p-button-sm" />
 		</template>
 		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 			<AccordionTab header="Description">
@@ -310,6 +309,7 @@ import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 interface StringValueMap {
@@ -390,6 +390,7 @@ const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
 const selectedModelConfig = ref();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const modelConfiguration = computed(() => {
 	const newModelConfiguration: any[] = [];
@@ -404,10 +405,6 @@ const modelConfiguration = computed(() => {
 
 	return newModelConfiguration;
 });
-
-function printConfig(i = 9) {
-	console.log(i, modelConfiguration.value, model.value, selectedModelConfig.value);
-}
 
 function addModelConfiguration() {
 	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
@@ -451,6 +448,52 @@ function updateModelConfigValue() {
 
 	openValueConfig.value = false;
 }
+
+function generateModelConfigValues() {
+	// Sync with workflow
+	if (
+		model.value &&
+		openedWorkflowNodeStore.assetId === model.value.id.toString() &&
+		openedWorkflowNodeStore.initialValues !== null &&
+		openedWorkflowNodeStore.parameterValues !== null
+	) {
+		// Shallow copy
+		initialValues.value = openedWorkflowNodeStore.initialValues;
+		parameterValues.value = openedWorkflowNodeStore.parameterValues;
+	}
+	// Default values
+	else if (model.value) {
+		model.value?.content.S.forEach((s) => {
+			initialValues.value[0][s.sname] = `${1}`;
+		});
+
+		model.value?.content.T.forEach((s) => {
+			parameterValues.value[0][s.tname] = `${0.0005}`;
+		});
+	}
+}
+
+watch(
+	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
+	() => {
+		generateModelConfigValues();
+	},
+	{ deep: true }
+);
+
+watch(
+	() => model.value,
+	async () => {
+		// Reset model config on model change
+		modelConfigNames.value = [{ name: 'Config 1' }];
+		fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
+		initialValues.value = [{}];
+		parameterValues.value = [{}];
+		openValueConfig.value = false;
+		cellValueToEdit.value = { data: {}, field: '', index: 0 };
+		generateModelConfigValues();
+	}
+);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -898,29 +941,6 @@ const addTransition = async () => {
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
-
-watch(
-	() => model.value,
-	async () => {
-		if (model.value) {
-			// Reset model config on model change
-			modelConfigNames.value = [{ name: 'Config 1' }];
-			fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
-			initialValues.value = [{}];
-			parameterValues.value = [{}];
-			openValueConfig.value = false;
-			cellValueToEdit.value = { data: {}, field: '', index: 0 };
-
-			model.value?.content.S.forEach((s) => {
-				initialValues.value[0][s.sname] = `${1}`;
-			});
-
-			model.value?.content.T.forEach((s) => {
-				parameterValues.value[0][s.tname] = `${0.0005}`;
-			});
-		}
-	}
-);
 </script>
 
 <style scoped>

@@ -57,6 +57,7 @@ import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -138,7 +139,7 @@ function showNodeDrilldown() {
 		if (pageType && assetId) {
 			openedWorkflowNodeStore.set(assetId, pageType);
 		}
-	} else alert('Node needs a valid output');
+	} else logger.error('Node needs a valid output');
 }
 
 function mouseoverPort(event) {
