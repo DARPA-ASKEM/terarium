@@ -4,7 +4,10 @@
 		:style="{ width: isOpen ? contentWidth : tabWidth }"
 	>
 		<div class="slider-content-container" :style="{ width: isOpen ? contentWidth : 0 }">
-			<section class="slider-content" :style="sidePanelContentStyle">
+			<section
+				class="slider-content"
+				:style="{ height: thisSlider?.slots.footerButtons ? 'calc(100% - 5rem)' : '' }"
+			>
 				<slot name="content" />
 			</section>
 			<footer>
@@ -49,10 +52,6 @@ const directionMap = {
 		tab: () => 'margin-right: auto;'
 	}
 };
-
-const sidePanelContentStyle = computed(() =>
-	thisSlider?.slots.footerButtons ? 'height: calc(100% - 5rem);' : ''
-);
 
 const sidePanelTabStyle = computed(
 	() => `width: ${props.tabWidth}; ${directionMap[props.direction].tab()}`

@@ -2,7 +2,7 @@
 	<div
 		ref="textContainerRef"
 		:class="{ default: !expanded, expanded: expanded }"
-		:style="`--lines: ${lines}`"
+		:style="{ '--lines': `${lines ?? 0}` }"
 	>
 		<div v-html="text"></div>
 	</div>

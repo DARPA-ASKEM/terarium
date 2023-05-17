@@ -153,10 +153,10 @@ const onFileChange = () => {
  * @param {DragEvent} event
  * @returns {any}
  */
-const onDrop = (event: DragEvent) => {
+const onDrop = (event) => {
 	event.preventDefault();
 	dragOver.value = false;
-	const addedFiles = event.dataTransfer?.files ? Array.from(event.dataTransfer?.files) : undefined;
+	const addedFiles: File[] = event.dataTransfer?.files ? Array.from(event.dataTransfer?.files) : [];
 	addFiles(addedFiles);
 };
 
