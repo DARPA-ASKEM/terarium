@@ -5,6 +5,8 @@
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { CsvAsset, Dataset } from '@/types/Types';
+import { addAsset } from '@/services/project';
+import { ProjectAssetTypes } from '@/types/Project';
 
 /**
  * Get all datasets
@@ -52,8 +54,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
 async function downloadRawFile(datasetId: string, binCount?: number): Promise<CsvAsset | null> {
-	// FIXME: review exposing the "wide_format" and "data_annotation_flag" later
-	let URL = `/datasets/${datasetId}/files?wide_format=false&row_limit=50`;
+	let URL = `/datasets/${datasetId}/files?row_limit=50`;
 	if (binCount) URL += `&binCount=${binCount}`;
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
@@ -61,4 +62,66 @@ async function downloadRawFile(datasetId: string, binCount?: number): Promise<Cs
 	return response?.data ?? null;
 }
 
-export { getAll, getDataset, getBulkDatasets, downloadRawFile };
+/**
+ * Creates a new dataset in TDS from the dataset given (required name, url, description).
+ * @param dataset the dataset with updated storage ID from tds
+ */
+async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
+	const resp = await API.post('/datasets', dataset);
+	if (resp && resp.status < 400 && resp.data) {
+		return resp.data;
+	}
+	console.log(`Error creating new dataset ${resp?.status}`);
+	return null;
+}
+
+/**
+ * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
+ * share the same name as the file and can optionally have a description
+ * @param file the CSV file
+ * @param projectId the current project ID to add this dataset to
+ * @param description description of the file. Optional. If not given description will be just the csv name
+ */
+async function createNewDatasetFromCSV(
+	file: File,
+	projectId: string,
+	description?: string
+): Promise<CsvAsset | null> {
+	// Remove the file extension from the name, if any
+	const name = file.name.substring(
+		0,
+		file.name.lastIndexOf('.') > 0 ? file.name.lastIndexOf('.') : file.name.length
+	);
+
+	const dataset: Dataset = {
+		name,
+		url: '',
+		description: description || file.name
+	};
+
+	const newDataSet: Dataset | null = await createNewDataset(dataset);
+	if (!newDataSet) return null;
+
+	const formData = new FormData();
+	formData.append('file', file);
+	let resp = await API.post(`/datasets/${newDataSet.id}/files?filename=${file.name}`, formData);
+	if (resp && resp.status < 400 && resp.data) {
+		resp = await addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+	} else {
+		console.log(`Error adding asset ${resp?.status}`);
+		return null;
+	}
+
+	if (!newDataSet.id) return null;
+
+	return downloadRawFile(newDataSet.id.toString());
+}
+
+export {
+	getAll,
+	getDataset,
+	getBulkDatasets,
+	downloadRawFile,
+	createNewDatasetFromCSV,
+	createNewDataset
+};

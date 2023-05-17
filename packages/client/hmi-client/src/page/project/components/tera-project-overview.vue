@@ -151,10 +151,10 @@
 </template>
 
 <script setup lang="ts">
-import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { IProject } from '@/types/Project';
 import { nextTick, ref } from 'vue';
 import InputText from 'primevue/inputtext';
-import { addAsset, update as updateProject } from '@/services/project';
+import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -169,7 +169,7 @@ import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
-import { Dataset } from '@/types/Types';
+import { createNewDatasetFromCSV } from '@/services/dataset';
 
 const props = defineProps<{
 	project: IProject;
@@ -239,37 +239,8 @@ async function processFiles(
 ) {
 	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
-			const name = file.name.substring(
-				0,
-				file.name.lastIndexOf('.') > 0 ? file.name.lastIndexOf('.') : file.name.length
-			);
-
-			let dataset: Dataset = {
-				name,
-				url: '',
-				description: csvDescription || file.name
-			};
-
-			let resp = await API.post('/datasets', dataset);
-			if (resp && resp.status < 400 && resp.data) {
-				dataset = resp.data;
-			} else {
-				console.log(`Error creating new dataset ${resp?.status}`);
-				return {};
-			}
-
-			const formData = new FormData();
-			formData.append('file', file);
-			resp = await API.post(`/datasets/${dataset.id}/files?filename=${file.name}`, formData);
-			if (resp && resp.status < 400 && resp.data) {
-				resp = await addAsset(props.project.id, ProjectAssetTypes.DATASETS, dataset.id);
-			} else {
-				console.log(`Error adding asset ${resp?.status}`);
-				return {};
-			}
-
-			resp = await API.get(`/datasets/${dataset.id}/files?row_limit=10`);
-			const text = resp.data.csv.join('\r\n');
+			const addedCSV = await createNewDatasetFromCSV(file, props.project.id, csvDescription);
+			const text = addedCSV?.csv.join('\r\n');
 			const images = [];
 
 			return { file, error: false, response: { text, images } };
