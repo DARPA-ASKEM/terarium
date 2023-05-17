@@ -47,10 +47,9 @@
 <script setup lang="ts">
 import { ref, computed, PropType } from 'vue';
 import { XDDExtractionType } from '@/types/XDD';
-import { Document, XDDFacetsItemResponse } from '@/types/Types';
+import { Document, XDDFacetsItemResponse, Dataset } from '@/types/Types';
 import useQueryStore from '@/stores/query';
 import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
 import { SearchResults, ResourceType, ResultType } from '@/types/common';
 import Chip from 'primevue/chip';
 import { ClauseValue } from '@/types/Filter';

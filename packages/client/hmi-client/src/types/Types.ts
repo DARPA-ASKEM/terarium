@@ -46,6 +46,65 @@ export interface Simulation {
     modelId: number;
 }
 
+export interface Annotations {
+    geo: DatasetAnnotatedGeo[];
+    date: DatasetAnnotatedDate[];
+    feature: DatasetAnnotatedFeature[];
+}
+
+export interface Dataset {
+    id?: number;
+    name: string;
+    url: string;
+    description: string;
+    timestamp?: Date;
+    deprecated?: boolean;
+    sensitivity?: string;
+    quality?: string;
+    temporalResolution?: string;
+    geospatialResolution?: string;
+    annotations?: DatasetAnnotations;
+    maintainer?: string;
+    simulationRun?: boolean;
+}
+
+export interface DatasetAnnotatedDate extends DatasetAnnotatedField {
+    dateType: string;
+    primaryDate: boolean;
+    timeFormat: string;
+}
+
+export interface DatasetAnnotatedFeature extends DatasetAnnotatedField {
+    featureType: string;
+    units: string;
+    unitsDescription: string;
+    primaryOntologyId: string;
+    qualifierRole: string;
+}
+
+export interface DatasetAnnotatedField {
+    name: string;
+    displayName: string;
+    description: string;
+    type: string;
+    qualifies: string[];
+    aliases: any;
+}
+
+export interface DatasetAnnotatedGeo extends DatasetAnnotatedField {
+    geoType: string;
+    primaryGeo: boolean;
+    resolveToGadm: boolean;
+    isGeoPair: string;
+    coordFormat: string;
+    gadmLevel: string;
+}
+
+export interface DatasetAnnotations {
+    dataPaths: string[];
+    annotations: Annotations;
+}
+
 export interface CalibrationParams {
     model: string;
     initials: { [index: string]: number };

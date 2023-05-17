@@ -1,5 +1,4 @@
-import { DocumentAsset, Document } from '@/types/Types';
-import { Dataset } from '@/types/Dataset';
+import { DocumentAsset, Document, Dataset } from '@/types/Types';
 import { Model } from './Model';
 
 export enum ProjectAssetTypes {
@@ -26,7 +25,7 @@ export type ProjectAssets = {
 	[ProjectAssetTypes.MODELS]: Model[];
 	[ProjectAssetTypes.PLANS]: any[]; // FIXME: add proper type
 	[ProjectAssetTypes.SIMULATION_RUNS]: any[]; // FIXME: add proper type
-	[ProjectAssetTypes.DATASETS]: Dataset[]; // FIXME: add proper type
+	[ProjectAssetTypes.DATASETS]: Dataset[];
 	[ProjectAssetTypes.CODE]: any[];
 };
 

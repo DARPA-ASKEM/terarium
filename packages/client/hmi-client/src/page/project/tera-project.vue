@@ -38,6 +38,7 @@
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
+					@update-project="updateProject"
 				/>
 			</SplitterPanel>
 			<SplitterPanel
@@ -335,6 +336,10 @@ const loadingTabIndex = ref<number | null>(null);
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	loadingTabIndex.value = null;
+}
+
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
 }
 
 function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {

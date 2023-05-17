@@ -13,13 +13,14 @@ import { applyFacetFilters, isDataset, isModel, isDocument } from '@/utils/data-
 import { ConceptFacets, CONCEPT_FACETS_FIELD } from '@/types/Concept';
 import { ProjectAssetTypes } from '@/types/Project';
 import { Clause, ClauseValue } from '@/types/Filter';
-import { Dataset, DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
+import { DatasetSearchParams, DATASET_FILTER_FIELDS } from '@/types/Dataset';
 import {
 	DocumentsResponseOK,
 	Document,
 	ProvenanceType,
 	XDDFacetsItemResponse,
-	Extraction
+	Extraction,
+	Dataset
 } from '@/types/Types';
 import {
 	XDDDictionary,
@@ -289,9 +290,9 @@ const getAssets = async (params: GetAssetsParams) => {
 	//        should be added for datasets and other resource types
 	const allAssets = assetList.map((a) => ({
 		...a,
-		temporalResolution: a?.temporal_resolution, // Dataset attribute
-		geospatialResolution: a?.geospatial_resolution, // Dataset attribute
-		simulationRun: a?.simulation_run, // Dataset attribute
+		temporalResolution: a?.temporalResolution, // Dataset attribute
+		geospatialResolution: a?.geospatialResolution, // Dataset attribute
+		simulationRun: a?.simulationRun, // Dataset attribute
 		type: resourceType
 	}));
 

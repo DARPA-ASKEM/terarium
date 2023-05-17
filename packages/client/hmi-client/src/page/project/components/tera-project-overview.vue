@@ -103,18 +103,20 @@
 				<Dialog
 					v-model:visible="visible"
 					modal
-					header="Resource Importer"
+					header="Upload resources"
 					:style="{ width: '60vw' }"
 				>
+					<div>Add resources to your project here</div>
 					<tera-drag-and-drop-importer
 						:show-preview="true"
 						:accept-types="[
 							AcceptedTypes.PDF,
 							AcceptedTypes.JPG,
 							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG
+							AcceptedTypes.PNG,
+							AcceptedTypes.CSV
 						]"
-						:import-action="processPDFs"
+						:import-action="processFiles"
 						@import-completed="importCompleted"
 					></tera-drag-and-drop-importer>
 
@@ -150,7 +152,7 @@
 
 <script setup lang="ts">
 import { IProject } from '@/types/Project';
-import { ref, nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -167,11 +169,12 @@ import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
+import { createNewDatasetFromCSV } from '@/services/dataset';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow']);
+const emit = defineEmits(['open-workflow', 'update-project']);
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -230,15 +233,26 @@ async function getPDFContents(
 	return { text: '', images: [] } as PDFExtractionResponseType;
 }
 
-async function processPDFs(files, extractionMode, extractImages) {
-	const processedFiles = await files.map(async (file) => {
+async function processFiles(
+	files: File[],
+	extractionMode: string,
+	extractImages: string,
+	csvDescription: string
+) {
+	return files.map(async (file) => {
+		if (file.type === AcceptedTypes.CSV) {
+			const addedCSV = await createNewDatasetFromCSV(file, props.project.id, csvDescription);
+			const text = addedCSV?.csv.join('\r\n');
+			const images = [];
+
+			return { file, error: false, response: { text, images } };
+		}
+		// PDF
 		const resp = await getPDFContents(file, extractionMode, extractImages);
 		const text = resp.text ? resp.text : '';
 		const images = resp.images ? resp.images : [];
 		return { file, error: false, response: { text, images } };
 	});
-
-	return processedFiles;
 }
 
 async function openImportModal() {
@@ -249,7 +263,14 @@ async function openImportModal() {
 function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
-	results.value = newResults;
+	// This is a hacky override for dealing with CSVs
+	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+		results.value = null;
+		emit('update-project', props.project.id);
+		visible.value = false;
+	} else {
+		results.value = newResults;
+	}
 }
 
 async function editProject() {
