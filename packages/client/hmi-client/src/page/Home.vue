@@ -26,10 +26,10 @@
 							</div>
 						</section>
 						<div v-else class="carousel">
-							<div class="chevron-left" @click="scroll('left', $event)">
+							<div class="chevron-left" @click="scrollLeft">
 								<i class="pi pi-chevron-left" />
 							</div>
-							<div class="chevron-right" @click="scroll('right', $event)">
+							<div class="chevron-right" @click="scrollRight">
 								<i class="pi pi-chevron-right" />
 							</div>
 							<ul v-if="isLoadingProjects">
@@ -73,10 +73,10 @@
 				<div v-for="(project, index) in projectsToDisplay" :key="index">
 					<p>{{ project.name }}</p>
 					<div class="carousel">
-						<div class="chevron-left" @click="scroll('left', $event)">
+						<div class="chevron-left" @click="scrollLeft">
 							<i class="pi pi-chevron-left" />
 						</div>
-						<div class="chevron-right" @click="scroll('right', $event)">
+						<div class="chevron-right" @click="scrollRight">
 							<i class="pi pi-chevron-right" />
 						</div>
 						<ul>
@@ -237,7 +237,13 @@ const close = () => {
 };
 
 const SCROLL_INCREMENT_IN_REM = 18.5 * 6; // (card width + margin) * number of cards to display at once
-const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
+function scrollLeft(event) {
+	scroll('left', event);
+}
+function scrollRight(event) {
+	scroll('right', event);
+}
+const scroll = (direction: 'right' | 'left', event: Event) => {
 	const chevronElement = event.target as HTMLElement;
 	const cardListElement =
 		chevronElement.nodeName === 'svg'
@@ -260,8 +266,7 @@ const scroll = (direction: 'right' | 'left', event: MouseEvent) => {
 	const currentMarginLeft = parseFloat(marginLeftString);
 	const changeInRem = direction === 'right' ? -SCROLL_INCREMENT_IN_REM : SCROLL_INCREMENT_IN_REM;
 	const newMarginLeft = currentMarginLeft + changeInRem;
-	// Don't let the list scroll far enough left that we see space before the
-	//	first card.
+	// Don't let the list scroll far enough left that we see space before the first card.
 	cardListElement.style.marginLeft = `${newMarginLeft > 0 ? 0.5 : newMarginLeft}rem`;
 };
 
