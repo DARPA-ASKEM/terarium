@@ -460,6 +460,10 @@ function generateModelConfigValues() {
 		// Shallow copy
 		initialValues.value = openedWorkflowNodeStore.initialValues;
 		parameterValues.value = openedWorkflowNodeStore.parameterValues;
+
+		if (modelConfigNames.value.length < initialValues.value.length - 1) {
+			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+		}
 	}
 	// Default values
 	else if (model.value) {
