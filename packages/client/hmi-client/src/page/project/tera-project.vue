@@ -42,7 +42,11 @@
 			</SplitterPanel>
 			<SplitterPanel
 				class="project-page"
-				v-if="openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType"
+				v-if="
+					openedWorkflowNodeStore.assetId &&
+					openedWorkflowNodeStore.pageType &&
+					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW
+				"
 				:size="20"
 			>
 				<tera-project-page
