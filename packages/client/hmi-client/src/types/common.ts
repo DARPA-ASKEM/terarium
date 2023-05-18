@@ -1,6 +1,6 @@
-import { XDDFacetsItemResponse, Document, Extraction } from '@/types/Types';
+import { XDDFacetsItemResponse, Document, Extraction, Dataset } from '@/types/Types';
 import { ConceptFacets } from './Concept';
-import { Dataset, DatasetSearchParams } from './Dataset';
+import { DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
 import { ProjectAssetTypes, ProjectPages } from './Project';
@@ -92,7 +92,8 @@ export enum AcceptedTypes {
 	PDF = 'application/pdf',
 	JPG = 'image/jpg',
 	JPEG = 'image/jpeg',
-	PNG = 'image/png'
+	PNG = 'image/png',
+	CSV = 'text/csv'
 }
 
 export interface PDFExtractionResponseType {

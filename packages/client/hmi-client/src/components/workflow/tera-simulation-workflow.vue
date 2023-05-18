@@ -114,7 +114,7 @@ import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject } from '@/types/Project';
-import { Dataset } from '@/types/Dataset';
+import { Dataset } from '@/types/Types';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
