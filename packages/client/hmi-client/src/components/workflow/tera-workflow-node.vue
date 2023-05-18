@@ -96,7 +96,7 @@ const portStyle = (connectionDirection: number) => {
 		return {
 			width: `${portBaseSize * 2}px`,
 			height: `${portBaseSize * 2}px`,
-			backgroundColor: `var(--primary-color)`,
+			// backgroundColor: `var(--primary-color)`,
 			border: `2px solid var(--primary-color)`,
 			borderRadius: `8px`,
 			left: `${connectionDirection * portBaseSize}px`
@@ -283,6 +283,14 @@ ul li {
 
 .port-connected {
 	background: var(--surface-border);
+}
+
+.port-connected .port {
+	background-color: var(--primary-color);
+}
+
+.port-connected .port:hover {
+	background-color: var(--surface-0);
 }
 
 .inputs > li:hover .port,
