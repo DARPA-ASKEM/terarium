@@ -1,70 +1,70 @@
 <template>
-	<section class="annotation-panel-container">
-		<div v-for="(annotation, idx) of annotations" :key="idx">
-			<div v-if="isEditingNote && idx === selectedNoteIndex" class="annotation-input-container">
-				<div class="annotation-header">
-					<Dropdown
-						placeholder="Unassigned"
-						class="p-button p-button-text notes-dropdown-button"
-						:options="noteOptions"
-						v-model="selectedNoteSection[idx]"
-					/>
-				</div>
-				<Textarea
-					v-model="annotation.content"
-					ref="annotationTextInput"
-					rows="5"
-					cols="30"
-					aria-labelledby="annotation"
-				/>
-				<div class="save-cancel-buttons">
-					<Button
-						@click="isEditingNote = false"
-						label="Cancel"
-						class="p-button p-button-secondary"
-						size="small"
-					/>
-					<Button @click="updateNote" label="Save" class="p-button" size="small" />
-				</div>
-			</div>
-			<div v-else>
-				<div class="annotation-header">
-					<Dropdown
-						disabled
-						placeholder="Unassigned"
-						class="p-button p-button-text notes-dropdown-button"
-						:options="noteOptions"
-						v-model="selectedNoteSection[idx]"
-					/>
-					<Button
-						icon="pi pi-ellipsis-v"
-						class="p-button-rounded p-button-secondary"
-						@click="
-							(event) => {
-								toggleAnnotationMenu(event);
-								selectedNoteIndex = idx;
-							}
-						"
-					/>
-				</div>
-				<div>
-					<p>{{ annotation.content }}</p>
-					<div class="annotation-author-date">
-						{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+	<main>
+		<ul>
+			<li v-for="(annotation, idx) of annotations" :key="idx">
+				<template v-if="isEditingNote && idx === selectedNoteIndex">
+					<div class="annotation-header">
+						<Dropdown
+							placeholder="Unassigned"
+							class="p-button p-button-text notes-dropdown-button"
+							:options="noteOptions"
+							v-model="selectedNoteSection[idx]"
+						/>
 					</div>
-				</div>
-			</div>
-		</div>
-		<Menu
-			ref="annotationMenu"
-			:model="menuItemsToDisplay"
-			:popup="true"
-			@hide="onHide"
-			@click.stop
-		/>
-	</section>
-	<div class="annotation-input-box">
-		<div v-if="isAnnotationInputOpen" class="annotation-input-container">
+					<Textarea
+						v-model="annotation.content"
+						ref="annotationTextInput"
+						rows="5"
+						cols="30"
+						aria-labelledby="annotation"
+					/>
+					<div class="save-cancel-buttons">
+						<Button
+							@click="isEditingNote = false"
+							label="Cancel"
+							class="p-button p-button-secondary"
+							size="small"
+						/>
+						<Button @click="updateNote" label="Save" class="p-button" size="small" />
+					</div>
+				</template>
+				<template v-else>
+					<div class="annotation-header">
+						<Dropdown
+							disabled
+							placeholder="Unassigned"
+							class="p-button p-button-text notes-dropdown-button"
+							:options="noteOptions"
+							v-model="selectedNoteSection[idx]"
+						/>
+						<Button
+							icon="pi pi-ellipsis-v"
+							class="p-button-rounded p-button-secondary"
+							@click="
+								(event) => {
+									toggleAnnotationMenu(event);
+									selectedNoteIndex = idx;
+								}
+							"
+						/>
+					</div>
+					<div>
+						<p>{{ annotation.content }}</p>
+						<div class="annotation-author-date">
+							{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
+						</div>
+					</div>
+				</template>
+			</li>
+			<Menu
+				ref="annotationMenu"
+				:model="menuItemsToDisplay"
+				:popup="true"
+				@hide="onHide"
+				@click.stop
+			/>
+		</ul>
+		<section v-if="isAnnotationInputOpen">
 			<div class="annotation-header">
 				<Dropdown
 					placeholder="Unassigned"
@@ -89,16 +89,15 @@
 				/>
 				<Button @click="addNote" label=" Save" class="p-button" size="small" />
 			</div>
-		</div>
-		<div v-else>
-			<Button
-				@click="toggleAnnotationInput"
-				icon="pi pi-plus"
-				label="Add note"
-				class="p-button-text p-button-flat"
-			/>
-		</div>
-	</div>
+		</section>
+		<Button
+			v-else
+			@click="toggleAnnotationInput"
+			icon="pi pi-plus"
+			label="Add note"
+			class="p-button-text p-button-flat"
+		/>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -147,6 +146,7 @@ const menuItems = ref([
 		icon: 'pi pi-fw pi-file-edit',
 		command: () => {
 			isEditingNote.value = true;
+			showDeletetionConfirmation.value = false;
 		}
 	},
 	{
@@ -258,20 +258,25 @@ watch(
 </script>
 
 <style scoped>
-.annotation-header {
-	display: flex;
-	justify-content: space-between;
-}
-
-.annotation-header .p-button.p-button-secondary {
-	background-color: var(--surface-section);
-}
-
-.annotation-panel-container {
+main {
+	padding: 0 0.5rem 0 1rem;
+	overflow-x: hidden;
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 0 0.5rem 0 1rem;
+	gap: 1rem;
+}
+
+ul {
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.annotation-header {
+	height: 2rem;
+	display: flex;
+	justify-content: space-between;
 }
 
 .notes-dropdown-button {
@@ -298,28 +303,14 @@ watch(
 	padding: 0rem 0.5rem 0rem 0.5rem;
 }
 
-.annotation-input-container {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.annotation-input-box {
-	padding: 16px 16px 8px 16px;
-}
-
-.annotation-input-box .p-inputtext {
+.p-inputtext {
 	border-color: var(--surface-border);
 	max-width: 100%;
 	min-width: 100%;
 }
 
-.annotation-input-box .p-inputtext:hover {
+.p-inputtext:hover {
 	border-color: var(--primary-color) !important;
-}
-
-.annotation-header {
-	height: 2rem;
 }
 
 .save-cancel-buttons {
