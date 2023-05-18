@@ -47,10 +47,7 @@
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
-			<!--
-			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible"><path d="M 0,-3.25 L 5 ,0 L 0,3.25" style="fill: var(--petri-lineColor); fill-opacity: 0.5; stroke: none;"></path></marker>
-			-->
-			<marker
+			<!-- <marker
 				class="edge-marker-end"
 				id="arrowhead"
 				viewBox="0 0 32 32"
@@ -63,23 +60,39 @@
 				xoverflow="visible"
 			>
 				<path d="M 0 8 L 8 16 L 0 24 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+			</marker> -->
+			<marker
+				id="arrow"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="16"
+				markerHeight="16"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
-				:d="drawPath(newEdge.points)"
+				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 				stroke="#1B8073"
 				stroke-dasharray="8"
 				stroke-width="2"
+				marker-mid="url(#arrow)"
+				fill="none"
 			/>
 			<path
 				v-for="(edge, index) of wf.edges"
-				:d="drawPath(edge.points)"
+				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#1B8073"
 				stroke-width="2"
-				marker-end="url(#arrowhead)"
+				marker-mid="url(#arrow)"
 				:key="index"
+				fill="none"
 			/>
 		</template>
 	</tera-infinite-canvas>
@@ -313,6 +326,11 @@ const updatePosition = (node: WorkflowNode, { x, y }) => {
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
 };
+
+function interpolatePointsForCurve(a: Position, b: Position): Position[] {
+	const controlXOffset = 50;
+	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
+}
 
 const pathFn = d3
 	.line<{ x: number; y: number }>()
