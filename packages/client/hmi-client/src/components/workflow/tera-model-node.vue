@@ -16,7 +16,7 @@
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[openedWorkflowNodeStore.openedOutputIndex][s.sname]"
+					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.sname]"
 				/>
 			</li>
 		</ul>
@@ -29,7 +29,7 @@
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[openedWorkflowNodeStore.openedOutputIndex][t.tname]"
+					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.tname]"
 				/>
 			</li>
 		</ul>

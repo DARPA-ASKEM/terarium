@@ -40,8 +40,8 @@
 			>
 				<div
 					class="output-name"
-					:active="openedWorkflowNodeStore.openedOutputIndex === index"
-					@click="openedWorkflowNodeStore.openedOutputIndex = index"
+					:active="openedWorkflowNodeStore.selectedOutputIndex === index"
+					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
 				>
 					{{ output.label }}
 				</div>
@@ -143,9 +143,9 @@ function showNodeDrilldown() {
 				break;
 		}
 		if (pageType && assetId) {
-			openedWorkflowNodeStore.set(assetId, pageType);
+			openedWorkflowNodeStore.setDrilldown(assetId, pageType);
 		}
-	} else logger.error('Node needs a valid output');
+	} else logger.error('Node needs a valid output', { silent: true });
 }
 
 function mouseoverPort(event) {
