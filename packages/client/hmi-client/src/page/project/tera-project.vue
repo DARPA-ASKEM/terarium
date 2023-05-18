@@ -436,8 +436,12 @@ tabStore.$subscribe(() => {
 });
 
 async function getAndPopulateAnnotations() {
-	annotations.value = await getAnnotations(props.assetId, props.pageType);
-	selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	if (props.assetId && props.pageType) {
+		annotations.value = await getAnnotations(props.assetId, props.pageType);
+		selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	} else {
+		selectedNoteSection.value = [];
+	}
 }
 
 const addNote = async () => {
