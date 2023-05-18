@@ -20,7 +20,7 @@
 			</template>
 		</tera-slider-panel>
 		<Splitter>
-			<SplitterPanel :size="20">
+			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
 					class="tab-group"
@@ -42,7 +42,12 @@
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				v-if="openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType"
+				class="project-page"
+				v-if="
+					openedWorkflowNodeStore.assetId &&
+					openedWorkflowNodeStore.pageType &&
+					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW
+				"
 				:size="20"
 			>
 				<tera-project-page
@@ -495,19 +500,20 @@ function formatAuthorTimestamp(username, timestamp) {
 	position: relative;
 }
 
-section {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	overflow-x: auto;
-	overflow-y: hidden;
-}
-
 .p-splitter {
 	display: flex;
 	flex: 1;
 	background: none;
 	border: none;
+}
+
+section,
+.p-splitter:deep(.project-page) {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
