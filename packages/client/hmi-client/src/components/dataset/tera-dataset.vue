@@ -2,7 +2,7 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:overline="dataset?.simulation_run ? 'Simulation run' : ''"
+		:overline="dataset?.simulationRun ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
@@ -95,7 +95,7 @@
 								</section>
 								<section>
 									<header>GADM level</header>
-									<section>{{ annotation.gadm_level }}</section>
+									<section>{{ annotation.gadmLevel }}</section>
 								</section>
 							</section>
 						</section>
@@ -118,7 +118,7 @@
 								</section>
 								<section>
 									<header>Time format</header>
-									<section>{{ annotation.time_format }}</section>
+									<section>{{ annotation.timeFormat }}</section>
 								</section>
 							</section>
 						</section>
@@ -132,9 +132,9 @@
 					</template>
 					<ol class="numbered-list">
 						<li v-for="(feature, index) of annotations?.feature" :key="index">
-							<span>{{ feature.display_name || feature.name }}</span
+							<span>{{ feature.displayName || feature.name }}</span
 							>:
-							<span class="feature-type">{{ feature.feature_type }}</span>
+							<span class="feature-type">{{ feature.featureType }}</span>
 						</li>
 					</ol>
 				</AccordionTab>
@@ -152,14 +152,13 @@
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { Dataset } from '@/types/Dataset';
 import { computed, ref, watch, onUpdated } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import { CsvAsset } from '@/types/Types';
+import { CsvAsset, Dataset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
@@ -229,9 +228,9 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations.annotations);
+const annotations = computed(() => dataset.value?.annotations?.annotations);
 const showAccordion = computed(() =>
-	dataset.value?.annotations.annotations.date && dataset.value?.annotations.annotations.geo
+	dataset.value?.annotations?.annotations.date && dataset.value?.annotations.annotations.geo
 		? [2]
 		: [0]
 );

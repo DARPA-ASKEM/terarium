@@ -21,10 +21,9 @@ import { onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
 import { Model } from '@/types/Model';
-import { Document } from '@/types/Types';
+import { Document, Dataset } from '@/types/Types';
 import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
-import { Dataset } from '@/types/Dataset';
 import Menu from 'primevue/menu';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
 
@@ -62,10 +61,10 @@ const getMenuItemsForItem = (item: ResultType) => [
 
 const getType = (item: ResultType) => {
 	if (isModel(item)) {
-		return (item as Model).type;
+		return ResourceType.MODEL;
 	}
 	if (isDataset(item)) {
-		return (item as Dataset).type;
+		return ResourceType.DATASET;
 	}
 	if (isDocument(item)) {
 		return ResourceType.XDD;
