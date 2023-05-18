@@ -24,20 +24,11 @@
 						class="p-button p-button-secondary"
 						size="small"
 					/>
-					<Button
-						@click="
-							updateNote();
-							isEditingNote = false;
-						"
-						label=" Save"
-						class="p-button"
-						size="small"
-					/>
+					<Button @click="updateNote" label="Save" class="p-button" size="small" />
 				</div>
 			</div>
 			<div v-else>
 				<div class="annotation-header">
-					<!-- TODO: Dropdown menu is for selecting which section to assign the note to: Unassigned, Abstract, Methods, etc. -->
 					<Dropdown
 						disabled
 						placeholder="Unassigned"
@@ -45,7 +36,6 @@
 						:options="noteOptions"
 						v-model="selectedNoteSection[idx]"
 					/>
-					<!-- TODO: Ellipsis button should open a menu with options to: Edit note & Delete note -->
 					<Button
 						icon="pi pi-ellipsis-v"
 						class="p-button-rounded p-button-secondary"
@@ -60,16 +50,14 @@
 				<div>
 					<p>{{ annotation.content }}</p>
 					<div class="annotation-author-date">
-						<div>
-							{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
-						</div>
+						{{ formatAuthorTimestamp(annotation.username, annotation.timestampMillis) }}
 					</div>
 				</div>
 			</div>
 		</div>
 		<Menu
 			ref="annotationMenu"
-			:model="annotationMenuItems"
+			:model="menuItemsToDisplay"
 			:popup="true"
 			@hide="onHide"
 			@click.stop
@@ -94,25 +82,17 @@
 			/>
 			<div class="save-cancel-buttons">
 				<Button
-					@click="toggleAnnotationInput()"
+					@click="toggleAnnotationInput"
 					label="Cancel"
 					class="p-button p-button-secondary"
 					size="small"
 				/>
-				<Button
-					@click="
-						addNote();
-						toggleAnnotationInput();
-					"
-					label=" Save"
-					class="p-button"
-					size="small"
-				/>
+				<Button @click="addNote" label=" Save" class="p-button" size="small" />
 			</div>
 		</div>
 		<div v-else>
 			<Button
-				@click="toggleAnnotationInput()"
+				@click="toggleAnnotationInput"
 				icon="pi pi-plus"
 				label="Add note"
 				class="p-button-text p-button-flat"
@@ -122,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
@@ -161,12 +141,7 @@ const noteOptions = ref([
 	NoteSection.References
 ]);
 
-const noteDeletionConfirmationMenuItem = {
-	label: 'Are you sure?',
-	icon: '',
-	items: [{ label: 'Yes, delete this note', command: () => deleteNote() }]
-};
-const annotationMenuItems = ref([
+const menuItems = ref([
 	{
 		label: 'Edit',
 		icon: 'pi pi-fw pi-file-edit',
@@ -178,14 +153,17 @@ const annotationMenuItems = ref([
 		label: 'Delete',
 		icon: 'pi pi-fw pi-trash',
 		command: () => {
-			if (!isNoteDeletionConfirmation.value) {
-				// @ts-ignore
-				annotationMenuItems.value.push(noteDeletionConfirmationMenuItem);
-				isNoteDeletionConfirmation.value = true;
-			}
+			showDeletetionConfirmation.value = true;
 		}
+	},
+	{
+		label: 'Are you sure?',
+		items: [{ label: 'Yes, delete this note', command: () => deleteNote() }]
 	}
 ]);
+const menuItemsToDisplay = computed(() =>
+	showDeletetionConfirmation.value ? menuItems.value : menuItems.value.slice(0, 2)
+);
 
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
@@ -194,16 +172,13 @@ const annotationMenu = ref();
 const menuOpenEvent = ref();
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
-const isNoteDeletionConfirmation = ref(false);
+const showDeletetionConfirmation = ref(false);
 const selectedNoteSection = ref<string[]>([]);
 const newNoteSection = ref();
 
 function onHide() {
-	if (isNoteDeletionConfirmation.value) {
+	if (showDeletetionConfirmation.value) {
 		annotationMenu.value.show(menuOpenEvent.value);
-		isNoteDeletionConfirmation.value = false;
-	} else if (annotationMenuItems.value.length > 2) {
-		annotationMenuItems.value.pop();
 	}
 }
 
@@ -237,6 +212,7 @@ const addNote = async () => {
 	annotationContent.value = '';
 	newNoteSection.value = NoteSection.Unassigned;
 	await getAndPopulateAnnotations();
+	toggleAnnotationInput();
 };
 
 async function updateNote() {
@@ -247,9 +223,11 @@ async function updateNote() {
 			: null;
 	await updateAnnotation(noteToUpdate.id, section, noteToUpdate.content);
 	await getAndPopulateAnnotations();
+	isEditingNote.value = false;
 }
 
 async function deleteNote() {
+	showDeletetionConfirmation.value = false;
 	const noteToDelete: Annotation = annotations.value[selectedNoteIndex.value];
 	await deleteAnnotation(noteToDelete.id);
 	await getAndPopulateAnnotations();
@@ -293,7 +271,7 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	padding: 0 16px 0 16px;
+	padding: 0 0.5rem 0 1rem;
 }
 
 .notes-dropdown-button {
