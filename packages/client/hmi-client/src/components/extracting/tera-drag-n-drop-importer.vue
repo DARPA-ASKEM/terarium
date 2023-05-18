@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, computed } from 'vue';
+import { ref, computed } from 'vue';
 import API from '@/api/api';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';

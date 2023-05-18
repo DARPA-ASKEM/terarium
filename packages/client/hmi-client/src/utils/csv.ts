@@ -1,3 +1,5 @@
+import { isArray } from 'lodash';
+
 export type Record = {
 	[key: string]: string;
 };
@@ -24,7 +26,7 @@ export const csvToRecords = (csv: string) => {
 };
 
 export const getColumns = (record: Record[] | Record) => {
-	if (record.length && record.length > 0) {
+	if (isArray(record) && record.length && record.length > 0) {
 		return Object.keys((record as Record[])[0]);
 	}
 	return Object.keys(record);
