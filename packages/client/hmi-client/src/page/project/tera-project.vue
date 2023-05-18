@@ -296,6 +296,7 @@ const toggleAnnotationMenu = (event) => {
 	annotationMenu.value.toggle(event);
 };
 
+//
 enum NoteSection {
 	Unassigned = 'Unassigned',
 	Abstract = 'Abstract',
@@ -487,6 +488,7 @@ function formatAuthorTimestamp(username, timestamp) {
 	z-index: 2;
 	isolation: isolate;
 }
+
 .tab-group {
 	z-index: 2;
 	isolation: isolate;
