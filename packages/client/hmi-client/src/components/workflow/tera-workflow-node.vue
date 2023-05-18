@@ -22,9 +22,11 @@
 			>
 				<div
 					class="input-port-container"
-					@mouseover="mouseoverPort"
+					@mouseover="
+						(event) => mouseoverPort(event, input.status === WorkflowPortStatus.CONNECTED)
+					"
 					@mouseleave="emit('port-mouseleave')"
-					@click.stop="selectPort(input)"
+					@click.stop="emit('port-selected', input, 'input')"
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
@@ -47,9 +49,11 @@
 			>
 				<div
 					class="output-port-container"
-					@mouseover="mouseoverPort"
+					@mouseover="
+						(event) => mouseoverPort(event, output.status === WorkflowPortStatus.CONNECTED)
+					"
 					@mouseleave="emit('port-mouseleave')"
-					@click.stop="selectPort(output)"
+					@click.stop="emit('port-selected', output, 'output')"
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
@@ -65,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
@@ -147,10 +151,6 @@ onMounted(() => {
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
-function selectPort(port: WorkflowPort) {
-	emit('port-selected', port);
-}
-
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
 		let pageType;
@@ -173,12 +173,14 @@ function showNodeDrilldown() {
 	} else alert('Node needs a valid output');
 }
 
-function mouseoverPort(event) {
+function mouseoverPort(event, isConnected: boolean) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.firstChild as HTMLElement) ?? el;
 	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
+	const connectedOffset = isConnected ? portBaseSize : 0;
+	const totalOffsetX =
+		portElement.offsetLeft + (portDirection === 'input' ? 0 + connectedOffset : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);

@@ -16,7 +16,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
+				@port-selected="(port: WorkflowPort, direction: string) => createNewEdge(node, port, direction)"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
@@ -82,7 +82,6 @@
 				stroke="#1B8073"
 				stroke-dasharray="8"
 				stroke-width="2"
-				marker-mid="url(#arrow)"
 				fill="none"
 			/>
 			<path
@@ -243,7 +242,7 @@ const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
-function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
+function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: string) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -255,7 +254,8 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 			source: node.id,
 			sourcePortId: port.id,
 			target: '',
-			targetPortId: ''
+			targetPortId: '',
+			directedFrom: direction
 		};
 	} else {
 		workflowService.addEdge(
@@ -293,14 +293,15 @@ let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
+		const pointIndex = newEdge.value?.directedFrom === 'output' ? 1 : 0;
 		if (isMouseOverPort) {
-			newEdge.value!.points[1].x = currentPortPosition.x;
-			newEdge.value!.points[1].y = currentPortPosition.y;
+			newEdge.value!.points[pointIndex].x = currentPortPosition.x;
+			newEdge.value!.points[pointIndex].y = currentPortPosition.y;
 		} else {
 			const dx = event.x - prevX;
 			const dy = event.y - prevY;
-			newEdge.value!.points[1].x += dx / canvasTransform.k;
-			newEdge.value!.points[1].y += dy / canvasTransform.k;
+			newEdge.value!.points[pointIndex].x += dx / canvasTransform.k;
+			newEdge.value!.points[pointIndex].y += dy / canvasTransform.k;
 		}
 	}
 	prevX = event.x;

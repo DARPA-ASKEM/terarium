@@ -73,6 +73,8 @@ export interface WorkflowEdge {
 
 	target: WorkflowNode['id'];
 	targetPortId: string;
+
+	directedFrom: string;
 }
 
 export interface Workflow {
