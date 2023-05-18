@@ -16,7 +16,7 @@
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[s.sname]"
+					v-model="initialValues[openedWorkflowNodeStore.openedOutputIndex][s.sname]"
 				/>
 			</li>
 		</ul>
@@ -29,7 +29,7 @@
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[t.tname]"
+					v-model="parameterValues[openedWorkflowNodeStore.openedOutputIndex][t.tname]"
 				/>
 			</li>
 		</ul>
@@ -46,6 +46,8 @@ import { Model } from '@/types/Model';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import { ModelConfig } from '@/types/ModelConfig';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { cloneDeep } from 'lodash';
 
 defineProps<{
 	models: Model[];
@@ -57,11 +59,13 @@ interface StringValueMap {
 	[key: string]: number;
 }
 
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+
 const selectedModel = ref<Model>();
 const model = ref<Model | null>();
 
-const initialValues = ref<StringValueMap>({});
-const parameterValues = ref<StringValueMap>({});
+const initialValues = ref<StringValueMap[]>([{}]);
+const parameterValues = ref<StringValueMap[]>([{}]);
 
 function run() {
 	if (ModelOperation.action) {
@@ -70,12 +74,26 @@ function run() {
 			label: model.value?.name,
 			value: {
 				model: model.value,
-				initialValues: initialValues.value,
-				parameterValues: parameterValues.value
+				initialValues: initialValues.value[0],
+				parameterValues: parameterValues.value[0]
 			} as ModelConfig
 		});
 	}
+	addModelConfiguration();
 }
+
+function addModelConfiguration() {
+	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
+	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+}
+
+watch(
+	() => [initialValues.value, parameterValues.value],
+	() => {
+		openedWorkflowNodeStore.setModelConfig(initialValues.value, parameterValues.value);
+	},
+	{ deep: true }
+);
 
 watch(
 	() => selectedModel.value,
@@ -84,11 +102,11 @@ watch(
 			model.value = await getModel(selectedModel.value.id.toString());
 
 			model.value?.content.S.forEach((s) => {
-				initialValues.value[s.sname] = 1;
+				initialValues.value[0][s.sname] = 1;
 			});
 
 			model.value?.content.T.forEach((s) => {
-				parameterValues.value[s.tname] = 0.0005;
+				parameterValues.value[0][s.tname] = 0.0005;
 			});
 		}
 	}

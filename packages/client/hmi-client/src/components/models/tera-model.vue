@@ -128,126 +128,74 @@
 					</TeraResizablePanel>
 				</section>
 			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					State variables<span class="artifact-amount">({{ model?.content?.S.length }})</span>
-				</template>
-				<template v-if="!isEditable">
-					<DataTable
-						:value="model?.content?.S"
-						selectionMode="single"
-						v-model:selection="selectedRow"
-						@row-select="onStateVariableClick"
-						@row-unselect="onStateVariableClick"
-						v-model:filters="globalFilter"
-						filterDisplay="row"
+			<AccordionTab v-if="model">
+				<template #header> Model configurations </template>
+				<DataTable
+					class="model-configuration"
+					v-model:selection="selectedModelConfig"
+					:value="modelConfiguration"
+					editMode="cell"
+					showGridlines
+					@cell-edit-init="onCellEditStart"
+					@cell-edit-complete="onCellEditComplete"
+				>
+					<ColumnGroup type="header">
+						<!--Style top rows-->
+						<Row>
+							<Column header="" />
+							<Column header="" />
+							<Column header="Initial conditions" :colspan="model.content.S.length" />
+							<Column header="Parameters" :colspan="model.content?.T.length" />
+							<!-- <Column header="Observables" /> -->
+						</Row>
+						<Row>
+							<Column selection-mode="multiple" headerStyle="width: 3rem" />
+							<Column header="Select all" />
+							<Column v-for="(s, i) of model.content.S" :key="i" :header="s.sname" />
+							<Column v-for="(t, i) of model.content.T" :key="i" :header="t.tname" />
+						</Row>
+						<!-- <Row> Add show in workflow later
+							<Column header="Show in workflow" />
+							<Column v-for="(s, i) of model.content.S" :key="i">
+								<template #header>
+									<Checkbox :binary="true" />
+								</template>
+							</Column>
+							<Column v-for="(t, i) of model.content.T" :key="i">
+								<template #header>
+									<Checkbox :binary="true" />
+								</template>
+							</Column>
+						</Row> -->
+					</ColumnGroup>
+					<Column selection-mode="multiple" headerStyle="width: 3rem" />
+					<Column field="name">
+						<template #body="{ data, field }">
+							{{ data[field] }}
+						</template>
+						<template #editor="{ data, field }">
+							<InputText v-model="data[field]" autofocus />
+						</template>
+					</Column>
+					<Column
+						v-for="(value, i) of [...model.content.S, ...model.content.T]"
+						:key="i"
+						:field="value['sname'] ?? value['tname']"
 					>
-						<Column field="sname" header="Name" />
-						<Column header="Type">
-							<template #body="slotProps">
-								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.type }}
-							</template>
-						</Column>
-						<Column header="Default">
-							<template #body="slotProps">
-								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.default_value }}
-							</template>
-						</Column>
-						<Column field="miraIds" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li
-										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
-										:key="ontology.curie"
-									>
-										<a :href="ontology.link">{{ ontology.title }}</a
-										><br />{{ ontology.description }}
-									</li>
-								</ul>
-							</template>
-						</Column>
-					</DataTable>
-				</template>
-				<template v-else>
-					<model-parameter-list
-						:parameters="filteredStates"
-						attribute="parameters"
-						:selected-variable="selectedVariable"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
-				</template>
-				<template v-if="!isEditable">
-					<DataTable :value="betterParams" v-model:filters="globalFilter" filterDisplay="row">
-						<Column field="name" header="Name" />
-						<Column field="type" header="Type" />
-						<Column field="default_value" header="Default" />
-					</DataTable>
-				</template>
-				<template v-else>
-					<model-parameter-list
-						:parameters="filteredParams"
-						attribute="parameters"
-						:selected-variable="selectedVariable"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab
-				:header="`Extractions ${
-					extractions?.length ? extractions?.length : ': No Extractions Found'
-				}`"
-			>
-				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
-					<Column field="name" header="Name" />
-					<Column field="id" header="ID" />
-					<Column field="text_annotations" header="Text">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.text_annotations" :key="key">
-									{{ text }}
-								</li>
-							</ul>
+						<template #body="{ data, field }">
+							{{ data[field] }}
 						</template>
-					</Column>
-					<Column field="dkg_annotations" header="Concepts">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
-									<a :href="`http://34.230.33.149:8772/${text[0]}`">{{ text[1] }}</a>
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="data_annotations" header="Data">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.data_annotations" :key="key">
-									{{ `${text[0]}: ${text[1]}` }}
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="file" header="File" />
-					<Column field="doi" header="doi">
-						<template #body="slotProps">
-							<a :href="slotProps.data.doi">{{ slotProps.data.doi }}</a>
-						</template>
-					</Column>
-					<Column field="equation_annotations" header="Equations">
-						<template #body="slotProps">
-							<div style="word-wrap: break-word">
-								<katex-element :expression="Object.keys(slotProps.data.equation_annotations)[0]" />
-							</div>
+						<template #editor="{ data, field }">
+							{{ data[field] }}
 						</template>
 					</Column>
 				</DataTable>
+				<Button
+					class="p-button-sm p-button-outlined"
+					icon="pi pi-plus"
+					label="Add configuration"
+					@click="addModelConfiguration"
+				/>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
@@ -269,11 +217,50 @@
 				@launch-forecast="goToSimulationRunPage"
 			/>
 		</Teleport>
+		<Teleport to="body">
+			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+				<template #header>
+					<h4>{{ cellValueToEdit.field }}</h4>
+					<span>Select a value for this configuration</span>
+				</template>
+				<template #default>
+					<TabView>
+						<TabPanel v-for="(tab, i) in fakeExtractions" :key="tab" :header="tab">
+							<div>
+								<label for="name">Name</label>
+								<InputText class="p-inputtext-sm" v-model="fakeExtractions[i]" />
+							</div>
+							<div>
+								<label for="name">Source</label>
+								<InputText class="p-inputtext-sm" />
+							</div>
+							<div>
+								<label for="name">Value</label>
+								<InputText
+									class="p-inputtext-sm"
+									v-model="cellValueToEdit.data[cellValueToEdit.field]"
+								/>
+							</div>
+						</TabPanel>
+					</TabView>
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add value"
+						@click="addConfigValue"
+					/>
+				</template>
+				<template #footer>
+					<Button label="OK" @click="updateModelConfigValue" />
+					<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+				</template>
+			</tera-modal>
+		</Teleport>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
+import { remove, isEmpty, pickBy, isArray, cloneDeep } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated, PropType } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -299,9 +286,13 @@ import useResourcesStore from '@/stores/resources';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Row from 'primevue/row';
+import ColumnGroup from 'primevue/columngroup';
 import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
@@ -315,9 +306,14 @@ import SplitterPanel from 'primevue/splitterpanel';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
-import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+
+interface StringValueMap {
+	[key: string]: string;
+}
 
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
@@ -346,7 +342,6 @@ const props = defineProps({
 const resources = useResourcesStore();
 const router = useRouter();
 
-const extractions = ref([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
@@ -359,7 +354,6 @@ const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
-const selectedRow = ref<any>(null);
 const selectedVariable = ref('');
 
 const equationLatex = ref<string>('');
@@ -385,6 +379,124 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
+
+const modelConfigNames = ref([{ name: 'Config 1' }]);
+const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
+
+const initialValues = ref<StringValueMap[]>([{}]);
+const parameterValues = ref<StringValueMap[]>([{}]);
+const openValueConfig = ref(false);
+const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
+
+const selectedModelConfig = ref();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+
+const modelConfiguration = computed(() => {
+	const newModelConfiguration: any[] = [];
+
+	for (let i = 0; i < modelConfigNames.value.length; i++) {
+		newModelConfiguration.push({
+			name: modelConfigNames.value[i].name,
+			...initialValues.value[i],
+			...parameterValues.value[i]
+		});
+	}
+
+	return newModelConfiguration;
+});
+
+function addModelConfiguration() {
+	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
+	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+}
+
+function addConfigValue() {
+	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1}`);
+}
+
+const onCellEditComplete = (event) => {
+	const { data, newValue, field } = event;
+
+	switch (field) {
+		case 'name':
+			data[field] = newValue;
+			break;
+		default:
+			break;
+	}
+};
+
+const onCellEditStart = (event) => {
+	const { data, field, index } = event;
+
+	if (field !== 'name') {
+		openValueConfig.value = true;
+		cellValueToEdit.value = { data, field, index };
+	}
+};
+
+function updateModelConfigValue() {
+	const { data, field, index } = cellValueToEdit.value;
+
+	if (initialValues.value[index][field]) {
+		initialValues.value[index][field] = data[field];
+	} else if (parameterValues.value[index][field]) {
+		parameterValues.value[index][field] = data[field];
+	}
+
+	openValueConfig.value = false;
+}
+
+function generateModelConfigValues() {
+	// Sync with workflow
+	if (
+		model.value &&
+		openedWorkflowNodeStore.assetId === model.value.id.toString() &&
+		openedWorkflowNodeStore.initialValues !== null &&
+		openedWorkflowNodeStore.parameterValues !== null
+	) {
+		// Shallow copy
+		initialValues.value = openedWorkflowNodeStore.initialValues as any; // Not sure why the typing doesn't match
+		parameterValues.value = openedWorkflowNodeStore.parameterValues as any;
+
+		if (modelConfigNames.value.length < initialValues.value.length - 1) {
+			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+		}
+	}
+	// Default values
+	else if (model.value) {
+		model.value?.content.S.forEach((s) => {
+			initialValues.value[0][s.sname] = `${1}`;
+		});
+
+		model.value?.content.T.forEach((s) => {
+			parameterValues.value[0][s.tname] = `${0.0005}`;
+		});
+	}
+}
+
+watch(
+	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
+	() => {
+		generateModelConfigValues();
+	},
+	{ deep: true }
+);
+
+watch(
+	() => model.value,
+	async () => {
+		// Reset model config on model change
+		modelConfigNames.value = [{ name: 'Config 1' }];
+		fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
+		initialValues.value = [{}];
+		parameterValues.value = [{}];
+		openValueConfig.value = false;
+		cellValueToEdit.value = { data: {}, field: '', index: 0 };
+		generateModelConfigValues();
+	}
+);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -424,57 +536,23 @@ const mathEditorSelected = computed(() => {
 	return '';
 });
 
-const betterStates = computed(() => {
-	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
-	const statesFromContent: any[] = model.value?.content?.S ?? [];
-
-	statesFromContent.forEach((stateFromContent) => {
-		statesFromParams.forEach((stateFromParams) => {
-			if (stateFromParams.name === stateFromContent.sname) {
-				stateFromParams.label = stateFromContent?.sname;
-				stateFromParams.concepts = [...stateFromContent.miraIds, ...stateFromContent.miraContext];
-			}
-		});
-	});
-	return statesFromParams;
-});
-
-const betterParams = computed(() => {
-	const params = model.value?.parameters.filter((p) => !p.state_variable);
-	const transitions: any[] = model.value?.content?.T ?? [];
-
-	transitions.forEach((transition) => {
-		params.forEach((param) => {
-			if (param.name === transition.parameter_name) {
-				param.label = transition?.tname;
-				param.template_type = transition?.template_type;
-			}
-		});
-	});
-	return params;
-});
-
 const globalFilter = ref({
 	// @ts-ignore
 	// eslint-disable-line
 	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
 });
 
-const filteredStates = computed(() =>
-	betterStates.value?.filter(
-		(p) =>
-			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
-			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
-	)
-);
-
-const filteredParams = computed(() =>
-	betterParams.value?.filter(
-		(p) =>
-			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
-			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
-	)
-);
+// States/transitions aren't selected like this anymore - maybe somehow later?
+// const onStateVariableClick = () => {
+// 	if (selectedRow.value) {
+// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
+// 			selectedRow.value.sname,
+// 			String.raw`{\color{red}${selectedRow.value.sname}}`
+// 		);
+// 	} else {
+// 		equationLatex.value = equationLatexOriginal.value;
+// 	}
+// };
 
 const onVariableSelected = (variable: string) => {
 	if (variable) {
@@ -489,17 +567,6 @@ const onVariableSelected = (variable: string) => {
 			);
 		}
 		renderer?.toggoleNodeSelectionByLabel(variable);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
-
-const onStateVariableClick = () => {
-	if (selectedRow.value) {
-		equationLatex.value = equationLatexOriginal.value.replaceAll(
-			selectedRow.value.sname,
-			String.raw`{\color{red}${selectedRow.value.sname}}`
-		);
 	} else {
 		equationLatex.value = equationLatexOriginal.value;
 	}
@@ -538,13 +605,6 @@ const fetchRelatedTerariumArtifacts = async () => {
 		relatedTerariumArtifacts.value = [];
 	}
 };
-
-function updateParamaterRow(attribute: string, newParameterRow) {
-	if (model?.value?.[attribute]) {
-		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
-		model.value[attribute][rowIndex] = { ...newParameterRow };
-	}
-}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -966,12 +1026,89 @@ section math-editor {
 	height: 100%;
 }
 
+.p-datatable:deep(td:hover) {
+	background-color: var(--surface-secondary);
+	cursor: pointer;
+}
+
+.p-tabview {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	justify-content: space-between;
+}
+
+.p-tabview:deep(> *) {
+	width: 50vw;
+	height: 50vh;
+	overflow: auto;
+}
+
+.p-tabview:deep(.p-tabview-nav) {
+	flex-direction: column;
+}
+
+.p-tabview:deep(label) {
+	display: block;
+	font-size: var(--font-caption);
+	margin-bottom: 0.25rem;
+}
+
+.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	background-color: var(--surface-ground);
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.p-tabview:deep(.p-tabview-nav li) {
+	border-left: 3px solid transparent;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
+	border-bottom: 1px solid var(--surface-border-light);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight) {
+	border-left: 3px solid var(--primary-color);
+	background: var(--surface-highlight);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+	background: none;
+}
+
+.p-tabview:deep(.p-inputtext) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
+	display: none;
+}
+
 .tera-split-panel {
 	position: relative;
 	height: 100%;
 	display: flex;
 	align-items: center;
 	width: 100%;
+}
+
+.model-configuration:deep(.p-column-header-content) {
+	color: var(--text-color-subdued);
+}
+
+.model-configuration {
+	margin-bottom: 1rem;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */
