@@ -58,7 +58,7 @@
 			/>
 		</template>
 		<template v-if="modelView === ModelView.DESCRIPTION">
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
@@ -76,7 +76,7 @@
 					<template #header>
 						<header id="Parameters">Parameters</header>
 					</template>
-					<DataTable :value="amr?.model.parameters">
+					<DataTable class="p-datatable-sm" :value="amr?.model.parameters">
 						<Column field="id" header="ID"></Column>
 						<Column field="value" header="Value"></Column>
 					</DataTable>
@@ -85,7 +85,7 @@
 					<template #header>
 						<header id="State variables">State variables</header>
 					</template>
-					<DataTable :value="amr?.model.states">
+					<DataTable class="p-datatable-sm" :value="amr?.model.states">
 						<Column field="id" header="ID"></Column>
 						<Column field="name" header="Name"></Column>
 						<Column field="grounding.context" header="Context"></Column>
@@ -96,13 +96,38 @@
 					<template #header>
 						<header id="Transitions">Transitions</header>
 					</template>
-					<DataTable :value="amr?.model.transitions">
+					<DataTable class="p-datatable-sm" :value="amr?.model.transitions">
 						<Column field="id" header="ID"></Column>
-						<Column field="properties.name" header=""></Column>
+						<Column field="properties.name" header="Name"></Column>
 						<Column field="input" header="Input"></Column>
 						<Column field="output" header="Output"></Column>
-						<Column field="properties.rate.expression" header="Expression"></Column>
-						<Column field="properties.rate.expression_mathml" header="MathML"></Column>
+						<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
+						<Column field="properties.rate.expression_mathml" header="Equation">
+							<template #body="slotProps">
+								<katex-element :expression="latexExpression(slotProps)" />
+							</template>
+						</Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="Variable Statements">Variable Statements</header>
+					</template>
+					<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
+						<Column field="id" header="ID"></Column>
+						<Column field="variable.name" header="Variable"></Column>
+						<Column field="value.value" header="Value"></Column>
+						<Column header="Extraction Type">
+							<template #body="slotProps">
+								<Tag :value="getExtractionType(slotProps)" />
+							</template>
+						</Column>
+						<Column header="Source">
+							<template #body="slotProps">
+								<div>{{ getSource(slotProps) }}</div>
+							</template>
+						</Column>
+						<Column field="variable.equations ?? ''" header="Equations"></Column>
 					</DataTable>
 				</AccordionTab>
 			</Accordion>
@@ -353,6 +378,7 @@ import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
+import Tag from 'primevue/tag';
 import Accordion from 'primevue/accordion';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -380,6 +406,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
+import Mathml2latex from 'mathml-to-latex';
 
 interface StringValueMap {
 	[key: string]: string;
@@ -404,7 +431,7 @@ const modelContent = computed(() => [
 	{ key: 'Parameters', value: amr.value?.model.parameters },
 	{ key: 'State variables', value: amr.value?.model.states },
 	{ key: 'Transitions', value: amr.value?.model.transitions },
-	{ key: 'Metadata', value: null }
+	{ key: 'Variable Statements', value: amr.value?.metadata?.variable_statements }
 ]);
 
 const modelView = ref(ModelView.DESCRIPTION);
@@ -519,6 +546,18 @@ const modelTransitions = computed(() => {
 		return amr.value.model.transitions;
 	}
 	return model.value?.content.T;
+});
+
+const metaData = computed(() => {
+	if (amr.value) {
+		const extractions = amr.value.metadata.variable_statements.map((staments) => {
+			console.log(staments);
+			return staments.id;
+		});
+		console.log(extractions);
+		return amr.value.metadata.variable_statements;
+	}
+	return null;
 });
 
 // const modelParameters = computed(() =>{
@@ -1074,7 +1113,32 @@ const addTransition = async () => {
 };
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
-const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
+const description = computed(() => {
+	if (amr.value) {
+		return highlightSearchTerms(amr.value?.description);
+	}
+	return highlightSearchTerms(model.value?.description);
+});
+
+function getExtractionType(sp) {
+	if (sp.data.variable.column.length > 0) {
+		return 'DataSet';
+	}
+	return 'Document';
+}
+
+function getSource(sp) {
+	if (sp.data.variable.column.length > 0) {
+		return sp.data.variable.column[0].dataset.name;
+	}
+	return sp.data.variable.paper.name;
+}
+
+function latexExpression(sp) {
+	console.log(sp.data.properties.rate);
+	console.log(Mathml2latex.convert(sp.data.properties.rate?.expression));
+	return sp.data.properties.rate?.expression;
+}
 </script>
 
 <style scoped>
