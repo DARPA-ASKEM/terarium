@@ -243,7 +243,8 @@ ul li {
 	align-items: center;
 }
 
-.input-port-container {
+.input-port-container,
+.output-port-container {
 	display: flex;
 	gap: 4px;
 }
