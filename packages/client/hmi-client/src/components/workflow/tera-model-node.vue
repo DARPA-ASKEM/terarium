@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { Model } from '@/types/Model';
@@ -41,6 +41,10 @@ import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { cloneDeep } from 'lodash';
 
+const props = defineProps<{
+	modelId: string;
+}>();
+
 const emit = defineEmits(['append-output-port']);
 
 interface StringValueMap {
@@ -49,7 +53,6 @@ interface StringValueMap {
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
-const selectedModel = ref<Model>();
 const model = ref<Model | null>();
 
 const initialValues = ref<StringValueMap[]>([{}]);
@@ -83,22 +86,17 @@ watch(
 	{ deep: true }
 );
 
-watch(
-	() => selectedModel.value,
-	async () => {
-		if (selectedModel.value) {
-			model.value = await getModel(selectedModel.value.id.toString());
+onMounted(async () => {
+	model.value = await getModel(props.modelId);
 
-			model.value?.content.S.forEach((s) => {
-				initialValues.value[0][s.sname] = 1;
-			});
+	model.value?.content.S.forEach((s) => {
+		initialValues.value[0][s.sname] = 1;
+	});
 
-			model.value?.content.T.forEach((s) => {
-				parameterValues.value[0][s.tname] = 0.0005;
-			});
-		}
-	}
-);
+	model.value?.content.T.forEach((s) => {
+		parameterValues.value[0][s.tname] = 0.0005;
+	});
+});
 </script>
 
 <style scoped>

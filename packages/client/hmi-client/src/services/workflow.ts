@@ -37,12 +37,14 @@ export const addNode = (
 	wf: Workflow,
 	op: Operation,
 	pos: Position,
-	size: Size = { width: 180, height: 220 }
+	size: Size = { width: 180, height: 220 },
+	assetId?: string
 ) => {
 	const node: WorkflowNode = {
 		id: uuidv4(),
 		workflowId: wf.id,
 		operationType: op.name,
+		assetId,
 		x: pos.x,
 		y: pos.y,
 

@@ -48,6 +48,7 @@ export interface WorkflowNode {
 	id: string;
 	workflowId: string;
 	operationType: string;
+	assetId?: string;
 
 	// Position on canvas
 	x: number;

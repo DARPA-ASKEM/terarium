@@ -75,7 +75,7 @@
 					@click="emit('open-asset', tab)"
 				>
 					<span
-						draggable="true"
+						:draggable="activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
 						@dragstart="startDrag(tab.assetId, tab.pageType)"
 						@dragend="endDrag"
 					>

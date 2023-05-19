@@ -27,7 +27,8 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation'"
+						v-if="node.operationType === 'ModelOperation' && node.assetId"
+						:model-id="node.assetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
@@ -108,7 +109,6 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
-// import { Model } from '@/types/Model';
 import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
@@ -124,15 +124,16 @@ const props = defineProps<{
 
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
-const wf = ref<Workflow>(workflowService.create());
-const contextMenu = ref();
-
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
+let isMouseOverPort: boolean = false;
+
 const newEdge = ref<WorkflowEdge | undefined>();
 const isMouseOverCanvas = ref<boolean>(false);
-let isMouseOverPort: boolean = false;
+
+const wf = ref<Workflow>(workflowService.create());
+const contextMenu = ref();
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -183,12 +184,6 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'New model',
-		command: () => {
-			// Expand model resources
-		}
-	},
-	{
 		label: 'New calibration',
 		command: () => {
 			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
@@ -203,10 +198,16 @@ const contextMenuItems = ref([
 	{
 		label: 'New Simulation',
 		command: () => {
-			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
-				width: 420,
-				height: 220
-			});
+			workflowService.addNode(
+				wf.value,
+				SimulateOperation,
+				newNodePosition,
+				{
+					width: 420,
+					height: 220
+				},
+				undefined
+			);
 		}
 	}
 ]);
@@ -235,7 +236,9 @@ function onDrop(event) {
 				return;
 		}
 
-		workflowService.addNode(wf.value, operation, newNodePosition);
+		console.log(wf.value, operation);
+
+		workflowService.addNode(wf.value, operation, newNodePosition, undefined, assetId);
 	}
 }
 
