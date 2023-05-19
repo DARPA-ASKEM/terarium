@@ -6,6 +6,31 @@
 		:is-creating-asset="assetId === ''"
 		@close-preview="emit('close-preview')"
 	>
+		<template #nav>
+			<tera-asset-nav
+				:asset-content="modelContent"
+				:show-header-links="modelView === ModelView.DESCRIPTION"
+			>
+				<template #viewing-mode>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Description"
+							icon="pi pi-list"
+							@click="modelView = ModelView.DESCRIPTION"
+							:active="modelView === ModelView.DESCRIPTION"
+						/>
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Model"
+							icon="pi pi-file"
+							@click="modelView = ModelView.MODEL"
+							:active="modelView === ModelView.MODEL"
+						/>
+					</span>
+				</template>
+			</tera-asset-nav>
+		</template>
 		<template #name-input>
 			<InputText v-model="newModelName" placeholder="Title of new model" />
 		</template>
@@ -32,7 +57,7 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
+		<template v-if="modelView === ModelView.DESCRIPTION">
 			<AccordionTab header="Description">
 				<p v-if="assetId !== ''" v-html="description" />
 				<template v-else>
@@ -43,118 +68,121 @@
 					/>
 				</template>
 			</AccordionTab>
-			<AccordionTab header="Model diagram">
-				<section class="model_diagram">
-					<TeraResizablePanel>
-						<div ref="splitterContainer" class="splitter-container">
-							<Splitter :gutterSize="5" :layout="layout">
-								<SplitterPanel
-									class="tera-split-panel"
-									:size="equationPanelSize"
-									:minSize="equationPanelMinSize"
-									:maxSize="equationPanelMaxSize"
-								>
-									<section class="graph-element">
-										<Toolbar>
-											<template #start>
-												<Button
-													@click="resetZoom"
-													label="Reset zoom"
-													class="p-button-sm p-button-outlined toolbar-button"
-												/>
-											</template>
-											<template #center>
-												<span class="toolbar-subgroup">
+		</template>
+		<template v-if="modelView === ModelView.MODEL">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
+				<AccordionTab header="Model diagram">
+					<section class="model_diagram">
+						<TeraResizablePanel>
+							<div ref="splitterContainer" class="splitter-container">
+								<Splitter :gutterSize="5" :layout="layout">
+									<SplitterPanel
+										class="tera-split-panel"
+										:size="equationPanelSize"
+										:minSize="equationPanelMinSize"
+										:maxSize="equationPanelMaxSize"
+									>
+										<section class="graph-element">
+											<Toolbar>
+												<template #start>
 													<Button
-														v-if="isEditing"
-														@click="addState"
-														label="Add state"
+														@click="resetZoom"
+														label="Reset zoom"
 														class="p-button-sm p-button-outlined toolbar-button"
 													/>
-													<Button
-														v-if="isEditing"
-														@click="addTransition"
-														label="Add transition"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-												</span>
-											</template>
-											<template #end>
-												<span class="toolbar-subgroup">
-													<Button
-														v-if="isEditing"
-														@click="cancelEdit"
-														label="Cancel"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-													<Button
-														@click="toggleEditMode"
-														:label="isEditing ? 'Save model' : 'Edit model'"
-														:class="
-															isEditing
-																? 'p-button-sm toolbar-button-saveModel'
-																: 'p-button-sm p-button-outlined toolbar-button'
-														"
-													/>
-												</span>
-											</template>
-										</Toolbar>
-										<div v-if="model" ref="graphElement" class="graph-element" />
-										<ContextMenu ref="menu" :model="contextMenuItems" />
-									</section>
-								</SplitterPanel>
-								<SplitterPanel
-									class="tera-split-panel"
-									:size="mathPanelSize"
-									:minSize="mathPanelMinSize"
-									:maxSize="mathPanelMaxSize"
-								>
-									<section class="math-editor-container" :class="mathEditorSelected">
-										<tera-math-editor
-											:is-editable="isEditable"
-											:latex-equation="equationLatex"
-											:is-editing-eq="isEditingEQ"
-											:is-math-ml-valid="isMathMLValid"
-											:math-mode="MathEditorModes.KATEX"
-											@cancel-editing="cancelEditng"
-											@equation-updated="setNewLatexFormula"
-											@validate-mathml="validateMathML"
-											@set-editing="isEditingEQ = true"
-										></tera-math-editor>
-									</section>
-								</SplitterPanel>
-							</Splitter>
-						</div>
-					</TeraResizablePanel>
-				</section>
-			</AccordionTab>
-			<AccordionTab v-if="model">
-				<template #header> Model configurations </template>
-				<DataTable
-					class="model-configuration"
-					v-model:selection="selectedModelConfig"
-					:value="modelConfiguration"
-					editMode="cell"
-					showGridlines
-					@cell-edit-init="onCellEditStart"
-					@cell-edit-complete="onCellEditComplete"
-				>
-					<ColumnGroup type="header">
-						<!--Style top rows-->
-						<Row>
-							<Column header="" />
-							<Column header="" />
-							<Column header="Initial conditions" :colspan="model.content.S.length" />
-							<Column header="Parameters" :colspan="model.content?.T.length" />
-							<!-- <Column header="Observables" /> -->
-						</Row>
-						<Row>
-							<Column selection-mode="multiple" headerStyle="width: 3rem" />
-							<Column header="Select all" />
-							<Column v-for="(s, i) of model.content.S" :key="i" :header="s.sname" />
-							<Column v-for="(t, i) of model.content.T" :key="i" :header="t.tname" />
-						</Row>
-						<!-- <Row> Add show in workflow later
+												</template>
+												<template #center>
+													<span class="toolbar-subgroup">
+														<Button
+															v-if="isEditing"
+															@click="addState"
+															label="Add state"
+															class="p-button-sm p-button-outlined toolbar-button"
+														/>
+														<Button
+															v-if="isEditing"
+															@click="addTransition"
+															label="Add transition"
+															class="p-button-sm p-button-outlined toolbar-button"
+														/>
+													</span>
+												</template>
+												<template #end>
+													<span class="toolbar-subgroup">
+														<Button
+															v-if="isEditing"
+															@click="cancelEdit"
+															label="Cancel"
+															class="p-button-sm p-button-outlined toolbar-button"
+														/>
+														<Button
+															@click="toggleEditMode"
+															:label="isEditing ? 'Save model' : 'Edit model'"
+															:class="
+																isEditing
+																	? 'p-button-sm toolbar-button-saveModel'
+																	: 'p-button-sm p-button-outlined toolbar-button'
+															"
+														/>
+													</span>
+												</template>
+											</Toolbar>
+											<div v-if="model" ref="graphElement" class="graph-element" />
+											<ContextMenu ref="menu" :model="contextMenuItems" />
+										</section>
+									</SplitterPanel>
+									<SplitterPanel
+										class="tera-split-panel"
+										:size="mathPanelSize"
+										:minSize="mathPanelMinSize"
+										:maxSize="mathPanelMaxSize"
+									>
+										<section class="math-editor-container" :class="mathEditorSelected">
+											<tera-math-editor
+												:is-editable="isEditable"
+												:latex-equation="equationLatex"
+												:is-editing-eq="isEditingEQ"
+												:is-math-ml-valid="isMathMLValid"
+												:math-mode="MathEditorModes.LIVE"
+												@cancel-editing="cancelEditng"
+												@equation-updated="setNewLatexFormula"
+												@validate-mathml="validateMathML"
+												@set-editing="isEditingEQ = true"
+											></tera-math-editor>
+										</section>
+									</SplitterPanel>
+								</Splitter>
+							</div>
+						</TeraResizablePanel>
+					</section>
+				</AccordionTab>
+				<AccordionTab v-if="model">
+					<template #header> Model configurations </template>
+					<DataTable
+						class="model-configuration"
+						v-model:selection="selectedModelConfig"
+						:value="modelConfiguration"
+						editMode="cell"
+						showGridlines
+						@cell-edit-init="onCellEditStart"
+						@cell-edit-complete="onCellEditComplete"
+					>
+						<ColumnGroup type="header">
+							<!--Style top rows-->
+							<Row>
+								<Column header="" />
+								<Column header="" />
+								<Column header="Initial conditions" :colspan="model.content.S.length" />
+								<Column header="Parameters" :colspan="paramLength" />
+								<!-- <Column header="Observables" /> -->
+							</Row>
+							<Row>
+								<Column selection-mode="multiple" headerStyle="width: 3rem" />
+								<Column header="Select all" />
+								<Column v-for="(s, i) of modelStates" :key="i" :header="s.sname ?? s.id" />
+								<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.tname ?? t.id" />
+							</Row>
+							<!-- <Row> Add show in workflow later
 							<Column header="Show in workflow" />
 							<Column v-for="(s, i) of model.content.S" :key="i">
 								<template #header>
@@ -167,48 +195,49 @@
 								</template>
 							</Column>
 						</Row> -->
-					</ColumnGroup>
-					<Column selection-mode="multiple" headerStyle="width: 3rem" />
-					<Column field="name">
-						<template #body="{ data, field }">
-							{{ data[field] }}
-						</template>
-						<template #editor="{ data, field }">
-							<InputText v-model="data[field]" autofocus />
-						</template>
-					</Column>
-					<Column
-						v-for="(value, i) of [...model.content.S, ...model.content.T]"
-						:key="i"
-						:field="value['sname'] ?? value['tname']"
-					>
-						<template #body="{ data, field }">
-							{{ data[field] }}
-						</template>
-						<template #editor="{ data, field }">
-							{{ data[field] }}
-						</template>
-					</Column>
-				</DataTable>
-				<Button
-					class="p-button-sm p-button-outlined"
-					icon="pi pi-plus"
-					label="Add configuration"
-					@click="addModelConfiguration"
-				/>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
-			</AccordionTab>
-		</Accordion>
+						</ColumnGroup>
+						<Column selection-mode="multiple" headerStyle="width: 3rem" />
+						<Column field="name">
+							<template #body="{ data, field }">
+								{{ data[field] }}
+							</template>
+							<template #editor="{ data, field }">
+								<InputText v-model="data[field]" autofocus />
+							</template>
+						</Column>
+						<Column
+							v-for="(value, i) of [...model.content.S, ...model.content.T]"
+							:key="i"
+							:field="value['sname'] ?? value['tname']"
+						>
+							<template #body="{ data, field }">
+								{{ data[field] }}
+							</template>
+							<template #editor="{ data, field }">
+								{{ data[field] }}
+							</template>
+						</Column>
+					</DataTable>
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add configuration"
+						@click="addModelConfiguration"
+					/>
+				</AccordionTab>
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+					<DataTable :value="relatedTerariumModels">
+						<Column field="name" header="Models"></Column>
+					</DataTable>
+					<DataTable :value="relatedTerariumDatasets">
+						<Column field="name" header="Datasets"></Column>
+					</DataTable>
+					<DataTable :value="relatedTerariumDocuments">
+						<Column field="name" header="Documents"></Column>
+					</DataTable>
+				</AccordionTab>
+			</Accordion>
+		</template>
 		<Teleport to="body">
 			<ForecastLauncher
 				v-if="showForecastLauncher && model"
@@ -276,6 +305,7 @@ import {
 	NodeType
 } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
+import { bucky } from '@/temp/buckyAMR';
 import InputText from 'primevue/inputtext';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { getModel, updateModel, createModel, addModelToProject } from '@/services/model';
@@ -298,6 +328,7 @@ import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
+import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import { ResultType } from '@/types/common';
 import { Document, ProvenanceType, Dataset } from '@/types/Types';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
@@ -309,11 +340,35 @@ import { FilterMatchMode } from 'primevue/api';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 
 interface StringValueMap {
 	[key: string]: string;
 }
+
+enum ModelView {
+	DESCRIPTION = 'description',
+	MODEL = 'model'
+}
+
+const modelContent = computed(() => [
+	{ key: 'Description', value: description },
+	{ key: 'Intended Use', value: null },
+	{ key: 'Training Data', value: null },
+	{ key: 'Evaluation Data', value: null },
+	{ key: 'Metrics', value: null },
+	{ key: 'Training', value: null },
+	{ key: 'Model Output', value: null },
+	{ key: 'Ethical Considerations', value: null },
+	{ key: 'Authors and Contributors', value: null },
+	{ key: 'License', value: null },
+	{ key: 'Paramters', value: null },
+	{ key: 'State Variables', value: 'something' },
+	{ key: 'Metadata', value: null }
+]);
+
+const modelView = ref(ModelView.DESCRIPTION);
 
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
@@ -346,6 +401,7 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
+const amr = ref<AskemModelRepresentationType | null>(null);
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
@@ -404,6 +460,34 @@ const modelConfiguration = computed(() => {
 
 	return newModelConfiguration;
 });
+
+const paramLength = computed(() => {
+	if (amr.value) {
+		return amr.value.model.parameters.length;
+	}
+	return model.value?.content.T.length;
+});
+
+const modelStates = computed(() => {
+	if (amr.value) {
+		return amr.value.model.states;
+	}
+	return model.value?.content.S;
+});
+
+const modelTransitions = computed(() => {
+	if (amr.value) {
+		return amr.value.model.transitions;
+	}
+	return model.value?.content.T;
+});
+
+// const modelParameters = computed(() =>{
+// 	if (amr.value){
+// 		return amr.value.model.parameters;
+// 	}
+// 	return model.value?.content.parameters;
+// })
 
 function addModelConfiguration() {
 	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
@@ -549,7 +633,7 @@ const globalFilter = ref({
 // 			selectedRow.value.sname,
 // 			String.raw`{\color{red}${selectedRow.value.sname}}`
 // 		);
-// 	} else {
+// 	} else {@vnode-mounted
 // 		equationLatex.value = equationLatexOriginal.value;
 // 	}
 // };
@@ -619,9 +703,17 @@ watch(
 	() => [props.assetId],
 	async () => {
 		updateLatexFormula('');
+		amr.value = null;
 		if (props.assetId !== '') {
 			const result = await getModel(props.assetId);
-			model.value = result;
+			if (result && result.name === 'Bucky') {
+				amr.value = bucky;
+				console.log(bucky);
+				console.log(result);
+				model.value = result;
+			} else {
+				model.value = result;
+			}
 			fetchRelatedTerariumArtifacts();
 			if (model.value) {
 				const data = await petriToLatex(model.value.content);
