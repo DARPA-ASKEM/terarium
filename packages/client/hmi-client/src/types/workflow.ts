@@ -68,13 +68,18 @@ export interface WorkflowEdge {
 	workflowId: string;
 	points: Position[];
 
-	source: WorkflowNode['id'];
-	sourcePortId: string;
+	source?: WorkflowNode['id'];
+	sourcePortId?: string;
 
-	target: WorkflowNode['id'];
-	targetPortId: string;
+	target?: WorkflowNode['id'];
+	targetPortId?: string;
 
-	directedFrom: string;
+	direction?: WorkflowDirection; // is this edge being started from an input or output?
+}
+
+export enum WorkflowDirection {
+	FROM_INPUT,
+	FROM_OUTPUT
 }
 
 export interface Workflow {

@@ -75,9 +75,9 @@ export const addNode = (
 export const addEdge = (
 	wf: Workflow,
 	sourceId: string,
-	sourceOutputPortId: string,
+	sourcePortId: string,
 	targetId: string,
-	targetInputPortId: string,
+	targetPortId: string,
 	points: Position[]
 ) => {
 	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
@@ -85,8 +85,8 @@ export const addEdge = (
 	if (!sourceNode) return;
 	if (!targetNode) return;
 
-	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourceOutputPortId);
-	const targetInputPort = targetNode.inputs.find((d) => d.id === targetInputPortId);
+	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
+	const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
 
 	if (!sourceOutputPort) return;
 	if (!targetInputPort) return;
@@ -95,9 +95,9 @@ export const addEdge = (
 	const existingEdge = wf.edges.find(
 		(d) =>
 			d.source === sourceId &&
-			d.sourcePortId === sourceOutputPortId &&
+			d.sourcePortId === sourcePortId &&
 			d.target === targetId &&
-			d.targetPortId === targetInputPortId
+			d.targetPortId === targetPortId
 	);
 
 	if (existingEdge) return;
@@ -116,9 +116,9 @@ export const addEdge = (
 		id: uuidv4(),
 		workflowId: wf.id,
 		source: sourceId,
-		sourcePortId: sourceOutputPortId,
+		sourcePortId,
 		target: targetId,
-		targetPortId: targetInputPortId,
+		targetPortId,
 		points: _.cloneDeep(points)
 	};
 

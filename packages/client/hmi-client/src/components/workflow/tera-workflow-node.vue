@@ -26,7 +26,7 @@
 						(event) => mouseoverPort(event, input.status === WorkflowPortStatus.CONNECTED)
 					"
 					@mouseleave="emit('port-mouseleave')"
-					@click.stop="emit('port-selected', input, 'input')"
+					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
@@ -53,7 +53,7 @@
 						(event) => mouseoverPort(event, output.status === WorkflowPortStatus.CONNECTED)
 					"
 					@mouseleave="emit('port-mouseleave')"
-					@click.stop="emit('port-selected', output, 'output')"
+					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';

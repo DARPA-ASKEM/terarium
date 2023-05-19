@@ -16,7 +16,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				@port-selected="(port: WorkflowPort, direction: string) => createNewEdge(node, port, direction)"
+				@port-selected="(port: WorkflowPort, direction: EdgeDirection) => createNewEdge(node, port, direction)"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
@@ -82,6 +82,7 @@
 				stroke="#1B8073"
 				stroke-dasharray="8"
 				stroke-width="2"
+				marker-end="url(#arrow)"
 				fill="none"
 			/>
 			<path
@@ -108,7 +109,8 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPort,
-	WorkflowPortStatus
+	WorkflowPortStatus,
+	WorkflowDirection
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
@@ -242,7 +244,7 @@ const isCreatingNewEdge = computed(
 	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
 );
 
-function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: string) {
+function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -251,19 +253,19 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: string
 				{ x: currentPortPosition.x, y: currentPortPosition.y },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
 			],
-			source: node.id,
-			sourcePortId: port.id,
-			target: '',
-			targetPortId: '',
-			directedFrom: direction
+			source: direction === WorkflowDirection.FROM_OUTPUT ? node.id : undefined,
+			sourcePortId: direction === WorkflowDirection.FROM_OUTPUT ? port.id : undefined,
+			target: direction === WorkflowDirection.FROM_OUTPUT ? undefined : node.id,
+			targetPortId: direction === WorkflowDirection.FROM_OUTPUT ? undefined : port.id,
+			direction
 		};
 	} else {
 		workflowService.addEdge(
 			wf.value,
-			newEdge.value!.source,
-			newEdge.value!.sourcePortId,
-			node.id,
-			port.id,
+			newEdge.value!.source ?? node.id,
+			newEdge.value!.sourcePortId ?? port.id,
+			newEdge.value!.target ?? node.id,
+			newEdge.value!.targetPortId ?? port.id,
 			newEdge.value!.points
 		);
 		cancelNewEdge();
@@ -293,7 +295,7 @@ let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
 	if (isCreatingNewEdge.value) {
-		const pointIndex = newEdge.value?.directedFrom === 'output' ? 1 : 0;
+		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
 		if (isMouseOverPort) {
 			newEdge.value!.points[pointIndex].x = currentPortPosition.x;
 			newEdge.value!.points[pointIndex].y = currentPortPosition.y;
@@ -311,6 +313,7 @@ function mouseUpdate(event: MouseEvent) {
 // TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {
 	wf.value.edges.forEach((edge) => {
+		console.log(edge);
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
 			edge.points[0].y += y / canvasTransform.k;
