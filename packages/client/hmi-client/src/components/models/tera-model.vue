@@ -104,7 +104,7 @@
 						<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
 						<Column field="properties.rate.expression_mathml" header="Equation">
 							<template #body="slotProps">
-								<katex-element :expression="latexExpression(slotProps)" />
+								<katex-element :expression="slotProps.data.properties.rate?.expression" />
 							</template>
 						</Column>
 					</DataTable>
@@ -406,7 +406,6 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
-import Mathml2latex from 'mathml-to-latex';
 
 interface StringValueMap {
 	[key: string]: string;
@@ -550,11 +549,9 @@ const modelTransitions = computed(() => {
 
 const metaData = computed(() => {
 	if (amr.value) {
-		const extractions = amr.value.metadata.variable_statements.map((staments) => {
-			console.log(staments);
-			return staments.id;
-		});
-		console.log(extractions);
+		// const extractions = amr.value.metadata.variable_statements.map((staments) => {
+		// 	return staments.id;
+		// });
 		return amr.value.metadata.variable_statements;
 	}
 	return null;
@@ -786,8 +783,6 @@ watch(
 			const result = await getModel(props.assetId);
 			if (result && result.name === 'Bucky') {
 				amr.value = bucky;
-				console.log(bucky);
-				console.log(result);
 				model.value = result;
 			} else {
 				model.value = result;
@@ -1132,12 +1127,6 @@ function getSource(sp) {
 		return sp.data.variable.column[0].dataset.name;
 	}
 	return sp.data.variable.paper.name;
-}
-
-function latexExpression(sp) {
-	console.log(sp.data.properties.rate);
-	console.log(Mathml2latex.convert(sp.data.properties.rate?.expression));
-	return sp.data.properties.rate?.expression;
 }
 </script>
 
