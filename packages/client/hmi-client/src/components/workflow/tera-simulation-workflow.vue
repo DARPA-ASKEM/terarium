@@ -19,8 +19,9 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				@port-selected="(port: WorkflowPort) => createNewEdge(node, port)"
+				@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 				@port-mouseover="onPortMouseover"
+				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				:canDrag="isMouseOverCanvas"
 			>
@@ -48,43 +49,38 @@
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
-			<!--
-			<marker class="edge-marker-end" id="arrowhead" viewBox="-5 -5 10 10" refX="6" refY="0" orient="auto" markerWidth="20" markerHeight="20" markerUnits="userSpaceOnUse" xoverflow="visible"><path d="M 0,-3.25 L 5 ,0 L 0,3.25" style="fill: var(--petri-lineColor); fill-opacity: 0.5; stroke: none;"></path></marker>
-			-->
 			<marker
-				class="edge-marker-end"
-				id="arrowhead"
-				viewBox="-5 -5 10 10"
-				refX="6"
-				refY="0"
+				id="arrow"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
 				orient="auto"
-				markerWidth="20"
-				markerHeight="20"
+				markerWidth="16"
+				markerHeight="16"
 				markerUnits="userSpaceOnUse"
 				xoverflow="visible"
 			>
-				<path
-					d="M 0 -4.875 L 7.5 0 L 0 4.875"
-					style="fill: var(--petri-lineColor); fill-opacity: 0.9; stroke: none"
-				></path>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
-				:d="drawPath(newEdge.points)"
-				stroke="green"
-				stroke-dasharray="4"
-				stroke-width="4"
-				marker-end="url(#arrowhead)"
+				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
+				stroke="#1B8073"
+				stroke-dasharray="8"
+				stroke-width="2"
+				marker-end="url(#arrow)"
+				fill="none"
 			/>
 			<path
 				v-for="(edge, index) of wf.edges"
-				:d="drawPath(edge.points)"
-				stroke="black"
-				stroke-width="4"
-				marker-end="url(#arrowhead)"
+				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
+				stroke="#1B8073"
+				stroke-width="2"
+				marker-mid="url(#arrow)"
 				:key="index"
+				fill="none"
 			/>
 		</template>
 	</tera-infinite-canvas>
@@ -101,7 +97,8 @@ import {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPort,
-	WorkflowPortStatus
+	WorkflowPortStatus,
+	WorkflowDirection
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
@@ -132,10 +129,10 @@ const contextMenu = ref();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
-let isCreatingNewEdge = false;
 let currentPortPosition: Position = { x: 0, y: 0 };
 const newEdge = ref<WorkflowEdge | undefined>();
 const isMouseOverCanvas = ref<boolean>(false);
+let isMouseOverPort: boolean = false;
 
 const testOperation: Operation = {
 	name: 'Test operation',
@@ -261,8 +258,12 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.k = newTransform.k;
 }
 
-function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
-	if (isCreatingNewEdge === false) {
+const isCreatingNewEdge = computed(
+	() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2
+);
+
+function createNewEdge(node: WorkflowNode, port: WorkflowPort, direction: WorkflowDirection) {
+	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
 			workflowId: '0',
@@ -270,48 +271,58 @@ function createNewEdge(node: WorkflowNode, port: WorkflowPort) {
 				{ x: currentPortPosition.x, y: currentPortPosition.y },
 				{ x: currentPortPosition.x, y: currentPortPosition.y }
 			],
-			source: node.id,
-			sourcePortId: port.id,
-			target: '',
-			targetPortId: ''
+			source: direction === WorkflowDirection.FROM_OUTPUT ? node.id : undefined,
+			sourcePortId: direction === WorkflowDirection.FROM_OUTPUT ? port.id : undefined,
+			target: direction === WorkflowDirection.FROM_OUTPUT ? undefined : node.id,
+			targetPortId: direction === WorkflowDirection.FROM_OUTPUT ? undefined : port.id,
+			direction
 		};
-		isCreatingNewEdge = true;
-	} else if (newEdge.value) {
+	} else {
 		workflowService.addEdge(
 			wf.value,
-			newEdge.value.source,
-			newEdge.value.sourcePortId,
-			node.id,
-			port.id,
-			newEdge.value.points
+			newEdge.value!.source ?? node.id,
+			newEdge.value!.sourcePortId ?? port.id,
+			newEdge.value!.target ?? node.id,
+			newEdge.value!.targetPortId ?? port.id,
+			newEdge.value!.points
 		);
 		cancelNewEdge();
 	}
 }
 
 function onCanvasClick() {
-	if (isCreatingNewEdge === true) {
+	if (isCreatingNewEdge.value) {
 		cancelNewEdge();
 	}
 }
 
 function cancelNewEdge() {
-	isCreatingNewEdge = false;
 	newEdge.value = undefined;
 }
 
 function onPortMouseover(position: Position) {
 	currentPortPosition = position;
+	isMouseOverPort = true;
+}
+
+function onPortMouseleave() {
+	isMouseOverPort = false;
 }
 
 let prevX = 0;
 let prevY = 0;
 function mouseUpdate(event: MouseEvent) {
-	if (newEdge.value && newEdge.value.points && newEdge.value.points.length === 2) {
-		const dx = event.x - prevX;
-		const dy = event.y - prevY;
-		newEdge.value.points[1].x += dx / canvasTransform.k;
-		newEdge.value.points[1].y += dy / canvasTransform.k;
+	if (isCreatingNewEdge.value) {
+		const pointIndex = newEdge.value?.direction === WorkflowDirection.FROM_OUTPUT ? 1 : 0;
+		if (isMouseOverPort) {
+			newEdge.value!.points[pointIndex].x = currentPortPosition.x;
+			newEdge.value!.points[pointIndex].y = currentPortPosition.y;
+		} else {
+			const dx = event.x - prevX;
+			const dy = event.y - prevY;
+			newEdge.value!.points[pointIndex].x += dx / canvasTransform.k;
+			newEdge.value!.points[pointIndex].y += dy / canvasTransform.k;
+		}
 	}
 	prevX = event.x;
 	prevY = event.y;
@@ -336,6 +347,11 @@ const updatePosition = (node: WorkflowNode, { x, y }) => {
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
 };
+
+function interpolatePointsForCurve(a: Position, b: Position): Position[] {
+	const controlXOffset = 50;
+	return [a, { x: a.x + controlXOffset, y: a.y }, { x: b.x - controlXOffset, y: b.y }, b];
+}
 
 const pathFn = d3
 	.line<{ x: number; y: number }>()
