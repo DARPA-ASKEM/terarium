@@ -89,7 +89,7 @@
 						<Column field="grounding.identifiers" header="Identifiers"></Column>
 					</DataTable>
 				</AccordionTab>
-				<AccordionTab header="Transitions">
+				<AccordionTab>
 					<template #header>
 						<header id="Transitions">Transitions</header>
 					</template>
