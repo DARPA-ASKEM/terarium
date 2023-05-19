@@ -22,9 +22,7 @@
 			>
 				<div
 					class="input-port-container"
-					@mouseover="
-						(event) => mouseoverPort(event, input.status === WorkflowPortStatus.CONNECTED)
-					"
+					@mouseover="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 					@focus="() => {}"
@@ -49,9 +47,7 @@
 			>
 				<div
 					class="output-port-container"
-					@mouseover="
-						(event) => mouseoverPort(event, output.status === WorkflowPortStatus.CONNECTED)
-					"
+					@mouseover="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
@@ -173,14 +169,12 @@ function showNodeDrilldown() {
 	} else alert('Node needs a valid output');
 }
 
-function mouseoverPort(event, isConnected: boolean) {
+function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.firstChild as HTMLElement) ?? el;
 	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const connectedOffset = isConnected ? portBaseSize : 0;
-	const totalOffsetX =
-		portElement.offsetLeft + (portDirection === 'input' ? 0 + connectedOffset : portBaseSize);
+	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
 	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
@@ -289,12 +283,13 @@ ul li {
 	background-color: var(--primary-color);
 }
 
-.port-connected .port:hover {
-	background-color: var(--surface-0);
-}
-
 .inputs > li:hover .port,
 .outputs > li:hover .port {
 	background: var(--surface-border);
+}
+
+.inputs > .port-connected:hover .port,
+.outputs > .port-connected:hover .port {
+	background: var(--primary-color);
 }
 </style>

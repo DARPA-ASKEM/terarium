@@ -16,7 +16,7 @@
 				v-for="(node, index) in wf.nodes"
 				:key="index"
 				:node="node"
-				@port-selected="(port: WorkflowPort, direction: EdgeDirection) => createNewEdge(node, port, direction)"
+				@port-selected="(port: WorkflowPort, direction: WorkflowDirection) => createNewEdge(node, port, direction)"
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
@@ -47,20 +47,6 @@
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
-			<!-- <marker
-				class="edge-marker-end"
-				id="arrowhead"
-				viewBox="0 0 32 32"
-				refX="16"
-				refY="16"
-				orient="auto"
-				markerWidth="32"
-				markerHeight="32"
-				markerUnits="userSpaceOnUse"
-				xoverflow="visible"
-			>
-				<path d="M 0 8 L 8 16 L 0 24 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
-			</marker> -->
 			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
@@ -313,7 +299,6 @@ function mouseUpdate(event: MouseEvent) {
 // TODO: rename/refactor
 function updateEdgePositions(node: WorkflowNode, { x, y }) {
 	wf.value.edges.forEach((edge) => {
-		console.log(edge);
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
 			edge.points[0].y += y / canvasTransform.k;
