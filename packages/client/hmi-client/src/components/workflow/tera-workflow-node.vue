@@ -243,10 +243,11 @@ ul li {
 	align-items: center;
 }
 
-.input-port-container,
-.output-port-container {
+.input-port-container {
 	display: flex;
 	gap: 4px;
+}
+.output-port-container {
 	flex-direction: row-reverse;
 }
 
