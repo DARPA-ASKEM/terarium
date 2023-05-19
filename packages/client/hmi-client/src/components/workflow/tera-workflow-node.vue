@@ -28,10 +28,7 @@
 					@focus="() => {}"
 					@focusout="() => {}"
 				>
-					<div
-						class="input port"
-						:style="portStyle(input.status === WorkflowPortStatus.CONNECTED ? -1 : 0)"
-					/>
+					<div class="input port" />
 					{{ input.label }}
 				</div>
 			</li>
@@ -55,10 +52,7 @@
 					:active="openedWorkflowNodeStore.selectedOutputIndex === index"
 					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
 				>
-					<div
-						class="output port"
-						:style="portStyle(output.status === WorkflowPortStatus.CONNECTED ? 1 : 0)"
-					/>
+					<div class="output port" />
 					{{ output.label }}
 				</div>
 			</li>
@@ -90,23 +84,6 @@ const nodeStyle = computed(() => ({
 }));
 
 const portBaseSize: number = 8;
-const portStyle = (connectionDirection: number) => {
-	if (connectionDirection) {
-		return {
-			width: `${portBaseSize * 2}px`,
-			height: `${portBaseSize * 2}px`,
-			// backgroundColor: `var(--primary-color)`,
-			border: `2px solid var(--primary-color)`,
-			borderRadius: `8px`,
-			left: `${connectionDirection * portBaseSize}px`
-		};
-	}
-	return {
-		width: `${portBaseSize}px`,
-		height: `${portBaseSize * 2}px`
-	};
-};
-
 const workflowNode = ref<HTMLElement>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
@@ -266,6 +243,25 @@ ul li {
 	border: 2px solid var(--surface-border);
 	background: var(--surface-100);
 	position: relative;
+	width: var(--port-base-size);
+	height: calc(var(--port-base-size) * 2);
+}
+
+.port-connected .input.port,
+.port-connected .output.port {
+	width: calc(var(--port-base-size) * 2);
+	height: calc(var(--port-base-size) * 2);
+	border: 2px solid var(--primary-color);
+	border-radius: var(--port-base-size);
+	left: calc(-1 * var(--port-base-size));
+}
+
+.port-connected .input.port {
+	left: calc(-1 * var(--port-base-size));
+}
+
+.port-connected .output.port {
+	left: var(--port-base-size);
 }
 
 .port:hover {
