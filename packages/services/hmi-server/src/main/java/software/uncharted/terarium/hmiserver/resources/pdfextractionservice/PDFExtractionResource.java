@@ -2,20 +2,25 @@ package software.uncharted.terarium.hmiserver.resources.pdfextractionservice;
 
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import javax.inject.Inject;
 
+import org.jboss.resteasy.annotations.Query;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
+
 import software.uncharted.terarium.hmiserver.proxies.pdfextractionservice.PDFExtractionServiceProxy;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 @Path("/api/extract")
 @Slf4j
@@ -27,7 +32,6 @@ public class PDFExtractionResource {
 	@RestClient
 	PDFExtractionServiceProxy extractionProxy;
 
-	//
 	// takes a URL of a PDF, downloads it and then extracts the text. Returns a
 	// task_id
 	@GET
@@ -40,20 +44,30 @@ public class PDFExtractionResource {
 		return extractionProxy.convertPDFURL(url, extractionMethod, extractImages);
 	}
 
-	//
 	// takes a pdf file and extracts the text.
 	@POST
 	@Path("/convertpdftask")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public Response convertPDFTask(@MultipartForm PDFExtractionMultipartBody formData) throws Exception {
-		log.error("THIS IS GOOD");
-		log.error(formData.fileName);
+	public Response convertPDFTask(@FormDataParam("file") InputStream file,
+			@DefaultValue("pymupdf") @QueryParam("extraction_method") String extractionMethod,
+			@DefaultValue("true") @QueryParam("extract_images") String extractImages)
+			throws IOException {
 
-		PDFExtractionMultipartBody body = new PDFExtractionMultipartBody();
-		body.fileName = "greeting.txt";
-		body.file = new ByteArrayInputStream("HELLO WORLD".getBytes(StandardCharsets.UTF_8));
-		return extractionProxy.convertPDFTask(body);
-
+		MultipartFormDataOutput pdfExtractionData = new MultipartFormDataOutput();
+		pdfExtractionData.addFormData("file", file.readAllBytes(), MediaType.APPLICATION_OCTET_STREAM_TYPE, "foo.pdf");
+		try {
+			return extractionProxy.convertPDFTask(pdfExtractionData, extractionMethod, extractImages);
+		} catch (HmiResponseExceptionMapper.ResponseRuntimeException e) {
+			log.error(e.toString());
+			if (e.getStatus() == 404) {
+				return Response.noContent().build();
+			} else {
+				return Response
+						.status(Response.Status.INTERNAL_SERVER_ERROR)
+						.type(MediaType.APPLICATION_JSON)
+						.build();
+			}
+		}
 	}
 
 	// checks a taskId status

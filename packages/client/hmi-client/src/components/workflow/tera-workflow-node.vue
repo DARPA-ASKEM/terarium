@@ -52,6 +52,8 @@
 					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
 					@focusout="() => {}"
+					:active="openedWorkflowNodeStore.selectedOutputIndex === index"
+					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
 				>
 					<div
 						class="output port"
@@ -71,6 +73,7 @@ import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -164,9 +167,9 @@ function showNodeDrilldown() {
 				break;
 		}
 		if (pageType && assetId) {
-			openedWorkflowNodeStore.set(assetId, pageType);
+			openedWorkflowNodeStore.setDrilldown(assetId, pageType);
 		}
-	} else alert('Node needs a valid output');
+	} else logger.error('Node needs a valid output', { silent: true });
 }
 
 function mouseoverPort(event) {
@@ -244,10 +247,16 @@ ul li {
 .output-port-container {
 	display: flex;
 	gap: 4px;
+	flex-direction: row-reverse;
 }
 
-.output-port-container {
-	flex-direction: row-reverse;
+.output-port-container:hover {
+	cursor: pointer;
+	background-color: var(--surface-highlight);
+}
+
+.output-port-container[active='true'] {
+	color: var(--primary-color);
 }
 
 .port {

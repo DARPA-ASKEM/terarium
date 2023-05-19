@@ -29,13 +29,15 @@ dependencies {
 	implementation "io.quarkus:quarkus-smallrye-openapi"
 	implementation "io.quarkus:quarkus-arc"
 	implementation "io.quarkus:quarkus-logging-json"
-
+	// Multipart file upload/download
+	implementation 'org.glassfish.jersey.media:jersey-media-multipart:3.1.1'
+	implementation 'org.glassfish.jersey.core:jersey-server:3.1.1'
 	// Persistence
 	implementation "io.quarkus:quarkus-hibernate-orm"
 	implementation "io.quarkus:quarkus-jdbc-postgresql"
 	implementation "io.quarkus:quarkus-hibernate-orm-panache"
 	annotationProcessor "io.quarkus:quarkus-panache-common"
-
+	
 	// Caching
 	implementation "io.quarkus:quarkus-cache"
 	implementation "io.quarkus:quarkus-scheduler"

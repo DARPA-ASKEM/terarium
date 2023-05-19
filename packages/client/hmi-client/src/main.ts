@@ -30,3 +30,10 @@ await auth.fetchSSO();
 
 app.mount('body');
 logger.info('Application Mounted', { showToast: false, silent: true });
+
+// Allow the use of CSS custom properties
+declare module '@vue/runtime-dom' {
+	export interface CSSProperties {
+		[key: `--${string}`]: string | undefined;
+	}
+}
