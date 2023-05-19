@@ -242,8 +242,8 @@
 							<Row>
 								<Column selection-mode="multiple" headerStyle="width: 3rem" />
 								<Column header="Select all" />
-								<Column v-for="(s, i) of modelStates" :key="i" :header="s.sname ?? s.id" />
-								<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.tname ?? t.id" />
+								<Column v-for="(s, i) of modelStates" :key="i" :header="s.name" />
+								<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.name" />
 							</Row>
 							<!-- <Row> Add show in workflow later
 							<Column header="Show in workflow" />
@@ -354,7 +354,16 @@
 <script setup lang="ts">
 import { remove, isEmpty, pickBy, isArray, cloneDeep } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated, PropType } from 'vue';
+import {
+	watch,
+	ref,
+	computed,
+	onMounted,
+	onUnmounted,
+	onUpdated,
+	PropType,
+	ComputedRef
+} from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
 import {
@@ -533,18 +542,18 @@ const paramLength = computed(() => {
 	return model.value?.content.T.length;
 });
 
-const modelStates = computed(() => {
+const modelStates: ComputedRef<Array<{ name: string }> | undefined> = computed(() => {
 	if (amr.value) {
-		return amr.value.model.states;
+		return amr.value.model.states.map((state) => ({ name: state.id }));
 	}
-	return model.value?.content.S;
+	return model.value?.content.S.map((state) => ({ name: state.sname }));
 });
 
-const modelTransitions = computed(() => {
+const modelTransitions: ComputedRef<Array<{ name: string }> | undefined> = computed(() => {
 	if (amr.value) {
-		return amr.value.model.transitions;
+		return amr.value.model.transitions.map((transitions) => ({ name: transitions.id }));
 	}
-	return model.value?.content.T;
+	return model.value?.content.T.map((state) => ({ name: state.tname }));
 });
 
 const metaData = computed(() => {
