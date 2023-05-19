@@ -58,16 +58,51 @@
 			/>
 		</template>
 		<template v-if="modelView === ModelView.DESCRIPTION">
-			<AccordionTab header="Description">
-				<p v-if="assetId !== ''" v-html="description" />
-				<template v-else>
-					<label for="placeholder" /><Textarea
-						v-model="newDescription"
-						rows="5"
-						placeholder="Description of new model"
-					/>
-				</template>
-			</AccordionTab>
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+				<AccordionTab header="Description">
+					<p v-if="assetId !== ''" v-html="description" />
+					<template v-else>
+						<label for="placeholder" /><Textarea
+							v-model="newDescription"
+							rows="5"
+							placeholder="Description of new model"
+						/>
+					</template>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="Parameters">Parameters</header>
+					</template>
+					<DataTable :value="amr?.model.parameters">
+						<Column field="id" header="ID"></Column>
+						<Column field="value" header="Value"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="State variables">State variables</header>
+					</template>
+					<DataTable :value="amr?.model.states">
+						<Column field="id" header="ID"></Column>
+						<Column field="name" header="Name"></Column>
+						<Column field="grounding.context" header="Context"></Column>
+						<Column field="grounding.identifiers" header="Identifiers"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab header="Transitions">
+					<template #header>
+						<header id="Transitions">Transitions</header>
+					</template>
+					<DataTable :value="amr?.model.transitions">
+						<Column field="id" header="ID"></Column>
+						<Column field="properties.name" header=""></Column>
+						<Column field="input" header="Input"></Column>
+						<Column field="output" header="Output"></Column>
+						<Column field="properties.rate.expression" header="Expression"></Column>
+						<Column field="properties.rate.expression_mathml" header="MathML"></Column>
+					</DataTable>
+				</AccordionTab>
+			</Accordion>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
@@ -363,8 +398,9 @@ const modelContent = computed(() => [
 	{ key: 'Ethical Considerations', value: null },
 	{ key: 'Authors and Contributors', value: null },
 	{ key: 'License', value: null },
-	{ key: 'Paramters', value: null },
+	{ key: 'Parameters', value: 'something' },
 	{ key: 'State Variables', value: 'something' },
+	{ key: 'Transitions', value: 'something' },
 	{ key: 'Metadata', value: null }
 ]);
 
