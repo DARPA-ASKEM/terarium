@@ -115,7 +115,7 @@
 											:latex-equation="equationLatex"
 											:is-editing-eq="isEditingEQ"
 											:is-math-ml-valid="isMathMLValid"
-											:math-mode="MathEditorModes.KATEX"
+											:math-mode="MathEditorModes.LIVE"
 											@cancel-editing="cancelEditng"
 											@equation-updated="setNewLatexFormula"
 											@validate-mathml="validateMathML"
