@@ -59,7 +59,10 @@
 		</template>
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
-				<AccordionTab header="Description">
+				<AccordionTab>
+					<template #header>
+						<header id="Description">Description</header>
+					</template>
 					<p v-if="assetId !== ''" v-html="description" />
 					<template v-else>
 						<label for="placeholder" /><Textarea
@@ -398,9 +401,9 @@ const modelContent = computed(() => [
 	{ key: 'Ethical Considerations', value: null },
 	{ key: 'Authors and Contributors', value: null },
 	{ key: 'License', value: null },
-	{ key: 'Parameters', value: 'something' },
-	{ key: 'State Variables', value: 'something' },
-	{ key: 'Transitions', value: 'something' },
+	{ key: 'Parameters', value: amr.value?.model.parameters },
+	{ key: 'State variables', value: amr.value?.model.states },
+	{ key: 'Transitions', value: amr.value?.model.transitions },
 	{ key: 'Metadata', value: null }
 ]);
 
