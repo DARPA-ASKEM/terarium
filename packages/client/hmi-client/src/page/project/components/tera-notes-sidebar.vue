@@ -40,12 +40,7 @@
 						<Button
 							icon="pi pi-ellipsis-v"
 							class="p-button-rounded p-button-secondary"
-							@click="
-								(event) => {
-									toggleAnnotationMenu(event);
-									selectedNoteIndex = idx;
-								}
-							"
+							@click="selectedNoteIndex = idx"
 						/>
 					</div>
 					<div>
@@ -56,13 +51,7 @@
 					</div>
 				</template>
 			</li>
-			<Menu
-				ref="annotationMenu"
-				:model="menuItemsToDisplay"
-				:popup="true"
-				@hide="onHide"
-				@click.stop
-			/>
+			<TieredMenu :model="menuItems" :popup="true" @click.stop />
 		</ul>
 		<section v-if="isAnnotationInputOpen">
 			<div class="annotation-header">
@@ -101,11 +90,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import Menu from 'primevue/menu';
+import TieredMenu from 'primevue/tieredmenu';
 import { Annotation } from '@/types/common';
 import { formatDdMmmYyyy, formatLocalTime, isDateToday } from '@/utils/date';
 import {
@@ -152,46 +141,20 @@ const menuItems = ref([
 	{
 		label: 'Delete',
 		icon: 'pi pi-fw pi-trash',
-		command: () => {
-			showDeletetionConfirmation.value = true;
-		}
+		items: [{ label: 'Yes, delete this note', command: () => deleteNote() }]
 	},
 	{
-		label: 'Are you sure?',
-		items: [{ label: 'Yes, delete this note', command: () => deleteNote() }]
+		label: 'Are you sure?'
 	}
 ]);
-const menuItemsToDisplay = computed(() =>
-	showDeletetionConfirmation.value ? menuItems.value : menuItems.value.slice(0, 2)
-);
-
 const annotations = ref<Annotation[]>([]);
 const annotationContent = ref<string>('');
 const isAnnotationInputOpen = ref(false);
-const annotationMenu = ref();
-const menuOpenEvent = ref();
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
 const showDeletetionConfirmation = ref(false);
 const selectedNoteSection = ref<string[]>([]);
 const newNoteSection = ref();
-
-function onHide() {
-	if (showDeletetionConfirmation.value) {
-		annotationMenu.value.show(menuOpenEvent.value);
-	}
-}
-
-const toggleAnnotationMenu = (event) => {
-	// Fake object to allow the Menu component to not hide after clicking an item.
-	// Actually I am immediately showing it again after it automatically hides.
-	// I need to save and pass event.currentTarget in a ref to use when I want to manually show the menu.
-	// Kind of a hack/workaround due to the restrictive nature of this component.
-	menuOpenEvent.value = {
-		currentTarget: event.currentTarget
-	};
-	annotationMenu.value.toggle(event);
-};
 
 async function getAndPopulateAnnotations() {
 	if (props.assetId && props.pageType) {
