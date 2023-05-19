@@ -1,11 +1,4 @@
 <template>
-	<Dropdown
-		class="w-full"
-		v-model="selectedModel"
-		:options="models"
-		option-label="name"
-		placeholder="Select a model"
-	/>
 	<template v-if="model">
 		<h6>Initial values</h6>
 		<ul>
@@ -39,7 +32,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { Model } from '@/types/Model';
@@ -48,10 +40,6 @@ import { getModel } from '@/services/model';
 import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { cloneDeep } from 'lodash';
-
-defineProps<{
-	models: Model[];
-}>();
 
 const emit = defineEmits(['append-output-port']);
 

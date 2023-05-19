@@ -47,8 +47,15 @@
 				})
 			"
 		>
-			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
-			<span class="p-button-label">Overview</span>
+			<span>
+				<vue-feather
+					class="p-button-icon-left"
+					type="layout"
+					size="1rem"
+					stroke="rgb(16, 24, 40)"
+				/>
+				<span class="p-button-label">Overview</span>
+			</span>
 		</Button>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
@@ -67,19 +74,25 @@
 					size="small"
 					@click="emit('open-asset', tab)"
 				>
-					<vue-feather
-						v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
-						class="p-button-icon-left icon"
-						:type="getAssetIcon(tab.pageType ?? null)"
-						size="1rem"
-						stroke="rgb(16, 24, 40)"
-					/>
-					<component
-						v-else
-						:is="getAssetIcon(tab.pageType ?? null)"
-						class="p-button-icon-left icon"
-					/>
-					<span class="p-button-label">{{ tab.assetName }}</span>
+					<span
+						draggable="true"
+						@dragstart="startDrag(tab.assetId, tab.pageType)"
+						@dragend="endDrag"
+					>
+						<vue-feather
+							v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
+							class="p-button-icon-left icon"
+							:type="getAssetIcon(tab.pageType ?? null)"
+							size="1rem"
+							stroke="rgb(16, 24, 40)"
+						/>
+						<component
+							v-else
+							:is="getAssetIcon(tab.pageType ?? null)"
+							class="p-button-icon-left icon"
+						/>
+						<span class="p-button-label">{{ tab.assetName }}</span>
+					</span>
 				</Button>
 			</AccordionTab>
 		</Accordion>
@@ -117,6 +130,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { useDragEvent } from '@/services/drag-drop';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
@@ -157,6 +171,16 @@ function removeAsset(asset = props.activeTab) {
 	emit('remove-asset', asset);
 	isRemovalModal.value = false;
 }
+
+const { setDragData, deleteDragData } = useDragEvent();
+
+function startDrag(assetId?: string, assetType?: ProjectAssetTypes | ProjectPages) {
+	if (assetId && assetType) setDragData('initAssetNode', { assetId, assetType });
+}
+
+function endDrag() {
+	deleteDragData('assetNode');
+}
 </script>
 
 <style scoped>
@@ -195,7 +219,14 @@ header {
 ::v-deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
+	padding: 0;
+}
+
+::v-deep(.asset-button.p-button > span) {
+	display: inline-flex;
+	width: 100%;
 	padding: 0.375rem 1rem;
+	overflow: hidden;
 }
 
 ::v-deep(.asset-button.p-button[active='true']) {
