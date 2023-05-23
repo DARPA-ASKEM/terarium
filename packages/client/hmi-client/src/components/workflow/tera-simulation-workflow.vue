@@ -60,6 +60,19 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
+			<marker
+				id="arrow-offset"
+				viewBox="0 0 16 16"
+				refX="16"
+				refY="8"
+				orient="auto"
+				markerWidth="16"
+				markerHeight="16"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
@@ -76,7 +89,7 @@
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#1B8073"
 				stroke-width="2"
-				marker-mid="url(#arrow)"
+				marker-end="url(#arrow-offset)"
 				:key="index"
 				fill="none"
 			/>
@@ -136,7 +149,8 @@ const testOperation: Operation = {
 	name: 'Test operation',
 	description: 'A test operation',
 	inputs: [
-		{ type: 'number', label: 'Number input' },
+		{ type: 'number', label: 'Number input', acceptMultiple: false },
+		{ type: 'number', label: 'Multi number input', acceptMultiple: true },
 		{ type: 'string', label: 'String input' }
 	],
 	outputs: [{ type: 'number', label: 'Number output' }],
@@ -149,28 +163,15 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: port.value,
+		value: [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
-	if (node.outputs.length === 0) {
-		node.outputs.push({
-			id: uuidv4(),
-			label: 'test',
-			value: null,
-			type: 'number',
-			status: WorkflowPortStatus.NOT_CONNECTED
-		});
-	}
-
-	if (node.inputs[0].value !== null) {
-		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
-	} else {
-		node.outputs[0].value = Math.round(Math.random() * 10);
-	}
+	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
+	appendOutputPort(node, { type: 'number', label: value.toString(), value });
 };
 
 const contextMenuItems = ref([
