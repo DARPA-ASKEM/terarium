@@ -27,8 +27,8 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && node.assetId"
-						:model-id="node.assetId"
+						v-if="node.operationType === 'ModelOperation' && node.outputs[0].value.assetId"
+						:model-id="node.outputs[0].value.assetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
@@ -198,16 +198,10 @@ const contextMenuItems = ref([
 	{
 		label: 'New Simulation',
 		command: () => {
-			workflowService.addNode(
-				wf.value,
-				SimulateOperation,
-				newNodePosition,
-				{
-					width: 420,
-					height: 220
-				},
-				undefined
-			);
+			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
+				width: 420,
+				height: 220
+			});
 		}
 	}
 ]);
@@ -224,10 +218,12 @@ function onDrop(event) {
 		updateNewNodePosition(event);
 
 		let operation: Operation;
+		let label = '';
 
 		switch (assetType) {
 			case ProjectAssetTypes.MODELS:
 				operation = ModelOperation;
+				label = 'Config';
 				break;
 			case ProjectAssetTypes.DATASETS:
 				operation = DatasetOperation;
@@ -236,9 +232,12 @@ function onDrop(event) {
 				return;
 		}
 
-		console.log(wf.value, operation);
-
-		workflowService.addNode(wf.value, operation, newNodePosition, undefined, assetId);
+		workflowService.addNode(wf.value, operation, newNodePosition);
+		appendOutputPort(wf.value.nodes[wf.value.nodes.length - 1], {
+			type: operation.outputs[0].type,
+			label,
+			value: { assetId }
+		});
 	}
 }
 

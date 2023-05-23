@@ -53,7 +53,7 @@
 					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
 				>
 					<div class="output port" />
-					{{ output.label }}
+					{{ output.label }} {{ index + 1 }}
 				</div>
 			</li>
 		</ul>
@@ -225,6 +225,7 @@ ul li {
 	display: flex;
 	gap: 4px;
 }
+
 .output-port-container {
 	flex-direction: row-reverse;
 }

@@ -1,5 +1,6 @@
 <template>
 	<template v-if="model">
+		<h5>{{ model.name }}</h5>
 		<h6>Initial values</h6>
 		<ul>
 			<li v-for="(s, i) of model.content.S" :key="i">
@@ -26,7 +27,7 @@
 				/>
 			</li>
 		</ul>
-		<Button @click="run">Run</Button>
+		<Button label="Add config" @click="createModelConfigOutput" />
 	</template>
 </template>
 
@@ -58,18 +59,20 @@ const model = ref<Model | null>();
 const initialValues = ref<StringValueMap[]>([{}]);
 const parameterValues = ref<StringValueMap[]>([{}]);
 
-function run() {
+function createModelConfigOutput() {
 	if (ModelOperation.action) {
 		emit('append-output-port', {
 			type: ModelOperation.outputs[0].type,
-			label: model.value?.name,
+			label: 'Config',
 			value: {
-				model: model.value,
+				id: props.modelId,
 				initialValues: initialValues.value[0],
 				parameterValues: parameterValues.value[0]
 			} as ModelConfig
 		});
 	}
+
+	console.log(props.modelId, initialValues.value, parameterValues.value);
 	addModelConfiguration();
 }
 
