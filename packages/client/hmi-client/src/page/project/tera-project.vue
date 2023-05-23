@@ -41,10 +41,15 @@
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				v-if="openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType"
+				v-if="openedWorkflowNodeStore.assetId || openedWorkflowNodeStore.node"
 				:size="20"
 			>
+				<tera-calibration-side-panel
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
+					:node="openedWorkflowNodeStore.node"
+				/>
 				<tera-project-page
+					v-else
 					:project="project"
 					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
 					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
@@ -217,6 +222,8 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraCalibrationSidePanel from '@/components/workflow/tera-calibration-side-panel.vue';
+import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route

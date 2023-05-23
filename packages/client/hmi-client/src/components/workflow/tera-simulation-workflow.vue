@@ -30,6 +30,7 @@
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset'"

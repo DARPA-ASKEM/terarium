@@ -1,39 +1,41 @@
 <template>
-	<Dropdown
-		placeholder="Timestep Column Name"
-		class="p-button dropdown-button"
-		:options="datasetColumnNames"
-		v-model="timestepColumnName"
-	/>
-	<table v-if="featureMap">
-		<tr>
-			<th>Dataset Column Name</th>
-			<th>Model Column Name</th>
-		</tr>
-		<tr v-for="(content, index) in featureMap" :key="index">
-			<Dropdown
-				placeholder="Dataset Column Name"
-				class="p-button dropdown-button"
-				:options="datasetColumnNames"
-				v-model="featureMap[index][0]"
-			/>
-			<td>{{ content[1] }}</td>
-		</tr>
-	</table>
-	<Button @click="startCalibration">Start Calibration Job</Button>
-	<form>
-		<label for="calibrationStatus">
-			<input v-model="runId" type="text" placeholder="Run ID" />
-		</label>
-		<Button @click="getCalibrationStatus"> Get Run Status </Button>
-	</form>
+	<tera-asset :name="'CALIBRATION NAME HERE'" :is-editable="false">
+		<Dropdown
+			placeholder="Timestep Column Name"
+			class="p-button dropdown-button"
+			:options="datasetColumnNames"
+			v-model="timestepColumnName"
+		/>
+		<table v-if="featureMap">
+			<tr>
+				<th>Dataset Column Name</th>
+				<th>Model Column Name</th>
+			</tr>
+			<tr v-for="(content, index) in featureMap" :key="index">
+				<Dropdown
+					placeholder="Dataset Column Name"
+					class="p-button dropdown-button"
+					:options="datasetColumnNames"
+					v-model="featureMap[index][0]"
+				/>
+				<td>{{ content[1] }}</td>
+			</tr>
+		</table>
+		<Button @click="startCalibration">Start Calibration Job</Button>
+		<form>
+			<label for="calibrationStatus">
+				<input v-model="runId" type="text" placeholder="Run ID" />
+			</label>
+			<Button @click="getCalibrationStatus"> Get Run Status </Button>
+		</form>
 
-	<form>
-		<label for="calibrationResult">
-			<input v-model="runId" type="text" placeholder="Run ID" />
-		</label>
-		<Button @click="getCalibrationResults"> Get Run Results </Button>
-	</form>
+		<form>
+			<label for="calibrationResult">
+				<input v-model="runId" type="text" placeholder="Run ID" />
+			</label>
+			<Button @click="getCalibrationResults"> Get Run Results </Button>
+		</form>
+	</tera-asset>
 </template>
 
 <script setup lang="ts">
@@ -45,7 +47,11 @@ import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
+import TeraAsset from '@/components/asset/tera-asset.vue';
+// import { calibrationParamExample } from '@/temp/calibrationExample';
+
+console.log('Tera calibration side panel');
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -53,7 +59,7 @@ const props = defineProps<{
 const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
-const runId = ref('');
+const runId = computed(() => props.node.outputs[0].value as number | undefined);
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
@@ -61,9 +67,7 @@ const modelColumnNames = computed(() =>
 );
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
-const featureMap = ref();
-
-const emit = defineEmits(['append-output-port']);
+const featureMap = computed(() => modelColumnNames.value.map((stateName) => ['', stateName]));
 
 const startCalibration = async () => {
 	// Make calibration job.
@@ -100,22 +104,12 @@ const startCalibration = async () => {
 			console.log(calibrationParam);
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
-			const outputPort: WorkflowPort = {
-				id: '1',
-				type: 'String',
-				status: WorkflowPortStatus.CONNECTED,
-				value: runId.value
-			};
-			emit('append-output-port', {
-				type: 'string',
-				label: 'Calibration Job ID',
-				value: { outputPort }
-			});
 		}
 	}
 };
 
 const getCalibrationStatus = async () => {
+	console.log('Getting status of run');
 	const results = await getRunStatus(Number(runId.value));
 	console.log('Done');
 	console.log(results);
@@ -127,16 +121,6 @@ const getCalibrationResults = async () => {
 	console.log('Done');
 	console.log(results);
 };
-
-watch(
-	() => modelConfig.value,
-	async () => {
-		if (modelConfig.value) {
-			// initialize featureMap
-			featureMap.value = modelColumnNames.value.map((stateName) => ['', stateName]);
-		}
-	}
-);
 
 watch(
 	() => datasetId.value, // When dataset ID changes, update datasetColumnNames

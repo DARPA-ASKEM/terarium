@@ -135,9 +135,7 @@ function showNodeDrilldown() {
 			default:
 				break;
 		}
-		if (pageType && assetId) {
-			openedWorkflowNodeStore.set(assetId, pageType);
-		}
+		openedWorkflowNodeStore.set(assetId, pageType, props.node);
 	} else alert('Node needs a valid output');
 }
 
