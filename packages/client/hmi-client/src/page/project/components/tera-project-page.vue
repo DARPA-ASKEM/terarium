@@ -10,19 +10,19 @@
 	<code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
 		:initial-code="code"
-		@vnode-mounted="emit('asset-loaded')"
+		@vue:mounted="emit('asset-loaded')"
 	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
-		@vnode-mounted="emit('asset-loaded')"
+		@vue:mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
 		@update-project="updateProject"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
 		:project="project"
-		@vnode-mounted="emit('asset-loaded')"
+		@vue:mounted="emit('asset-loaded')"
 	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
