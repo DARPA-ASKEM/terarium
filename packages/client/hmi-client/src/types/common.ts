@@ -1,4 +1,4 @@
-import { XDDFacetsItemResponse, Document, Extraction, Dataset } from '@/types/Types';
+import { XDDFacetsItemResponse, Document, Dataset } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
 import { Model, ModelSearchParams } from './Model';
@@ -40,7 +40,6 @@ export type SearchResults = {
 	results: ResultType[];
 	facets?: { [p: string]: XDDFacetsItemResponse } | Facets;
 	rawConceptFacets?: ConceptFacets | null;
-	xddExtractions?: Extraction[]; // the result from searching XDD artifacts against a given search term
 	searchSubsystem: string;
 	hits?: number;
 	hasMore?: boolean;
