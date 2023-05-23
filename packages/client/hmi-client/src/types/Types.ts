@@ -46,63 +46,29 @@ export interface Simulation {
     modelId: number;
 }
 
-export interface Annotations {
-    geo: DatasetAnnotatedGeo[];
-    date: DatasetAnnotatedDate[];
-    feature: DatasetAnnotatedFeature[];
-}
-
 export interface Dataset {
-    id?: number;
+    id?: string;
     name: string;
-    url: string;
-    description: string;
-    timestamp?: Date;
-    deprecated?: boolean;
-    sensitivity?: string;
-    quality?: string;
-    temporalResolution?: string;
-    geospatialResolution?: string;
-    annotations?: DatasetAnnotations;
-    maintainer?: string;
-    simulationRun?: boolean;
+    description?: string;
+    url?: string;
+    columns?: DatasetColumn[];
+    metadata?: any;
+    source?: string;
+    grounding?: Grounding;
 }
 
-export interface DatasetAnnotatedDate extends DatasetAnnotatedField {
-    dateType: string;
-    primaryDate: boolean;
-    timeFormat: string;
-}
-
-export interface DatasetAnnotatedFeature extends DatasetAnnotatedField {
-    featureType: string;
-    units: string;
-    unitsDescription: string;
-    primaryOntologyId: string;
-    qualifierRole: string;
-}
-
-export interface DatasetAnnotatedField {
+export interface DatasetColumn {
     name: string;
-    displayName: string;
-    description: string;
-    type: string;
-    qualifies: string[];
-    aliases: any;
+    dataType: ColumnType;
+    formatStr?: string;
+    annotations: { [index: string]: string[] };
+    metadata?: { [index: string]: any };
+    grounding?: { [index: string]: Grounding };
 }
 
-export interface DatasetAnnotatedGeo extends DatasetAnnotatedField {
-    geoType: string;
-    primaryGeo: boolean;
-    resolveToGadm: boolean;
-    isGeoPair: string;
-    coordFormat: string;
-    gadmLevel: string;
-}
-
-export interface DatasetAnnotations {
-    dataPaths: string[];
-    annotations: Annotations;
+export interface Grounding {
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: any };
 }
 
 export interface CalibrationParams {
@@ -225,4 +191,19 @@ export enum ProvenanceType {
     Project = "Project",
     Concept = "Concept",
     SimulationRun = "SimulationRun",
+}
+
+export enum ColumnType {
+    Unknown = "UNKNOWN",
+    Boolean = "BOOLEAN",
+    String = "STRING",
+    Char = "CHAR",
+    Integer = "INTEGER",
+    Int = "INT",
+    Float = "FLOAT",
+    Double = "DOUBLE",
+    Timestamp = "TIMESTAMP",
+    Datetime = "DATETIME",
+    Date = "DATE",
+    Time = "TIME",
 }

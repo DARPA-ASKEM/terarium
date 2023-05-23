@@ -64,7 +64,7 @@ export function isModel(item: ResultType): item is Model {
 }
 
 export function isDataset(item: ResultType): item is Dataset {
-	return (<Dataset>item).annotations !== undefined;
+	return (<Dataset>item).columns !== undefined;
 }
 
 export function isDocument(item: ResultType): item is Document {

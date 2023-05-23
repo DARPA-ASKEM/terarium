@@ -1,3 +1,5 @@
+/** TODO: This entire class needs to be revisited to handle the new annotations format in the
+dataset class. **/
 <template>
 	<tera-asset
 		v-if="dataset"
@@ -211,7 +213,7 @@ watch(
 	async () => {
 		if (props.assetId !== '') {
 			rawContent.value = await downloadRawFile(props.assetId, 10);
-			const datasetTemp = await getDataset(props.assetId);
+			const datasetTemp: Dataset | null = await getDataset(props.assetId);
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -228,7 +230,7 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations?.annotations);
+const annotations = computed(() => dataset.value?.annotations);
 const showAccordion = computed(() =>
 	dataset.value?.annotations?.annotations.date && dataset.value?.annotations.annotations.geo
 		? [2]
