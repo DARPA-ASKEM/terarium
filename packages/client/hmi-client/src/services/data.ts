@@ -184,20 +184,6 @@ const searchXDDDocuments = async (
 	return undefined;
 };
 
-const searchXDDExtractions = async (term: string): Promise<Extraction[]> => {
-	// also, perform search across extractions
-	let extractionsSearchResults = [] as Extraction[];
-	if (term !== '') {
-		// Temporary call to get a sufficient amount of extractions
-		// (Every call is limited to providing 30 extractions)
-		extractionsSearchResults = [
-			...(await getXDDArtifacts(term, [XDDExtractionType.Figure, XDDExtractionType.Table])),
-			...(await getXDDArtifacts(term, [XDDExtractionType.Doc]))
-		];
-	}
-	return extractionsSearchResults;
-};
-
 const filterAssets = <T extends Model | Dataset>(
 	allAssets: T[],
 	resourceType: ResourceType,
@@ -260,7 +246,6 @@ const getAssets = async (params: GetAssetsParams) => {
 	let assetList: Model[] | Dataset[] | Document[] = [];
 	let projectAssetType: ProjectAssetTypes;
 	let xddResults: DocumentsResponseOK | undefined;
-	let xddExtractions: Extraction[] | undefined;
 	let hits: number | undefined;
 
 	switch (resourceType) {
@@ -278,7 +263,6 @@ const getAssets = async (params: GetAssetsParams) => {
 				assetList = xddResults.data;
 				hits = xddResults.hits;
 			}
-			xddExtractions = await searchXDDExtractions(term);
 			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;
 		default:
@@ -437,7 +421,6 @@ const getAssets = async (params: GetAssetsParams) => {
 		const newFacets: { [p: string]: XDDFacetsItemResponse } = xddResults ? xddResults.facets : {};
 		results.allDataFilteredWithFacets = {
 			results: xddResults ? xddResults.data : [],
-			xddExtractions,
 			searchSubsystem: resourceType,
 			facets: newFacets,
 			rawConceptFacets: conceptFacets
