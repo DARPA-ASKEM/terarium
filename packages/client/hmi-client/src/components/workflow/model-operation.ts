@@ -1,4 +1,4 @@
-import { Operation } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { Model } from '@/types/Model';
 
 interface StringValueMap {
@@ -6,7 +6,7 @@ interface StringValueMap {
 }
 
 export const ModelOperation: Operation = {
-	name: 'ModelOperation',
+	name: WorkflowOperationTypes.MODEL,
 	description: 'Select a model and configure its initial and parameter values.',
 	isRunnable: true,
 	inputs: [],

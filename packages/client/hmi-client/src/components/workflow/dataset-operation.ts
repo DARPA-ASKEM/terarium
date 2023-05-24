@@ -1,7 +1,7 @@
-import { Operation } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 
 export const DatasetOperation: Operation = {
-	name: 'Dataset',
+	name: WorkflowOperationTypes.DATASET,
 	description: 'Select a dataset',
 	isRunnable: true,
 	inputs: [],
