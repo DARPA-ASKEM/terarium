@@ -9,6 +9,8 @@ export interface ModelConfigDB {
 	parameterValues: { [key: string]: number };
 }
 
+// On the frontend its more convenient to use this to pass data through nodes
+// Otherwise you'd have to getModel(modelId) in every node
 export interface ModelConfig {
 	model: Model;
 	initialValues: { [key: string]: number };

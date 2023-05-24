@@ -27,7 +27,7 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && (!isEmpty(node.outputs) || newAssetId)"
+						v-if="node.operationType === 'ModelOperation'"
 						:model-id="
 							isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.model.id.toString()
 						"
@@ -40,7 +40,7 @@
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset'"
-						:datasets="datasets"
+						:datasetId="isEmpty(node.outputs) ? newAssetId : node.outputs[0].value"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
@@ -115,18 +115,16 @@ import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Dataset } from '@/types/Types';
+import { /* IProject, */ ProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
 import { isEmpty } from 'lodash';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
-const props = defineProps<{
-	project: IProject;
-}>();
-
-const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
+// Will probably be used later to save the workflow in the project
+// const props = defineProps<{
+// 	project: IProject;
+// }>();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
