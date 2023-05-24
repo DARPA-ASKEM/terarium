@@ -11,6 +11,7 @@ module.exports = {
 	rules: {
 		'class-methods-use-this': 'off',
 		'func-names': 'off',
+		'no-alert': 'off',
 		'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
 		'no-continue': 'off',
 		'no-param-reassign': 'off',

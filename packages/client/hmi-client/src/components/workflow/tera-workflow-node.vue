@@ -18,15 +18,19 @@
 			<li
 				v-for="(input, index) in node.inputs"
 				:key="index"
-				:class="input.status === WorkflowPortStatus.CONNECTED ? 'port-connected' : ''"
+				:class="{ 'port-connected': input.status === WorkflowPortStatus.CONNECTED }"
 			>
 				<div
-					class="port"
-					@click.stop="selectPort(input)"
-					@mouseover="mouseoverPort"
+					class="input-port-container"
+					@mouseover="(event) => mouseoverPort(event)"
+					@mouseleave="emit('port-mouseleave')"
+					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 					@focus="() => {}"
-				></div>
-				{{ input.label }}
+					@focusout="() => {}"
+				>
+					<div class="input port" />
+					{{ input.label }}
+				</div>
 			</li>
 		</ul>
 		<section>
@@ -38,32 +42,39 @@
 				:key="index"
 				:class="{ 'port-connected': output.status === WorkflowPortStatus.CONNECTED }"
 			>
-				{{ output.label }}
 				<div
-					class="port"
-					@click.stop="selectPort(output)"
-					@mouseover="mouseoverPort"
+					class="output-port-container"
+					@mouseover="(event) => mouseoverPort(event)"
+					@mouseleave="emit('port-mouseleave')"
+					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
-				></div>
+					@focusout="() => {}"
+					:active="openedWorkflowNodeStore.selectedOutputIndex === index"
+					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
+				>
+					<div class="output port" />
+					{{ output.label }}
+				</div>
 			</li>
 		</ul>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
+import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	node: WorkflowNode;
 	canDrag: boolean;
 }>();
 
-const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover']);
+const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'port-mouseleave']);
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -72,6 +83,7 @@ const nodeStyle = computed(() => ({
 	left: `${props.node.x}px`
 }));
 
+const portBaseSize: number = 8;
 const workflowNode = ref<HTMLElement>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
@@ -115,10 +127,6 @@ onMounted(() => {
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
-function selectPort(port: WorkflowPort) {
-	emit('port-selected', port);
-}
-
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
 		let pageType;
@@ -136,14 +144,16 @@ function showNodeDrilldown() {
 				break;
 		}
 		openedWorkflowNodeStore.set(assetId, pageType, props.node);
-	} else alert('Node needs a valid output');
+	} else logger.error('Node needs a valid output', { silent: true });
 }
 
 function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
+	const portElement = (el.firstChild as HTMLElement) ?? el;
+	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
-	const totalOffsetX = el.offsetLeft;
-	const totalOffsetY = el.offsetTop + el.offsetHeight / 2 + 1;
+	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
+	const totalOffsetY = portElement.offsetTop + portElement.offsetHeight / 2;
 	const portPosition = { x: nodePosition.x + totalOffsetX, y: nodePosition.y + totalOffsetY };
 	emit('port-mouseover', portPosition);
 }
@@ -208,13 +218,48 @@ ul li {
 	align-items: center;
 }
 
+.input-port-container,
+.output-port-container {
+	display: flex;
+	gap: 4px;
+}
+.output-port-container {
+	flex-direction: row-reverse;
+}
+
+.output-port-container:hover {
+	cursor: pointer;
+	background-color: var(--surface-highlight);
+}
+
+.output-port-container[active='true'] {
+	color: var(--primary-color);
+}
+
 .port {
 	display: inline-block;
-	height: 16px;
-	width: 8px;
 	border: 2px solid var(--surface-border);
-	position: relative;
 	background: var(--surface-100);
+	position: relative;
+	width: var(--port-base-size);
+	height: calc(var(--port-base-size) * 2);
+}
+
+.port-connected .input.port,
+.port-connected .output.port {
+	width: calc(var(--port-base-size) * 2);
+	height: calc(var(--port-base-size) * 2);
+	border: 2px solid var(--primary-color);
+	border-radius: var(--port-base-size);
+	left: calc(-1 * var(--port-base-size));
+}
+
+.port-connected .input.port {
+	left: calc(-1 * var(--port-base-size));
+}
+
+.port-connected .output.port {
+	left: var(--port-base-size);
 }
 
 .port:hover {
@@ -237,5 +282,19 @@ ul li {
 
 .port-connected {
 	background: var(--surface-border);
+}
+
+.port-connected .port {
+	background-color: var(--primary-color);
+}
+
+.inputs > li:hover .port,
+.outputs > li:hover .port {
+	background: var(--surface-border);
+}
+
+.inputs > .port-connected:hover .port,
+.outputs > .port-connected:hover .port {
+	background: var(--primary-color);
 }
 </style>

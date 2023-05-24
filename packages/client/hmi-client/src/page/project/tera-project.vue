@@ -20,7 +20,7 @@
 			</template>
 		</tera-slider-panel>
 		<Splitter>
-			<SplitterPanel :size="20">
+			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
 					class="tab-group"
@@ -38,10 +38,17 @@
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
+					@update-project="updateProject"
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				v-if="openedWorkflowNodeStore.assetId || openedWorkflowNodeStore.node"
+				class="project-page"
+				v-if="
+					(openedWorkflowNodeStore.assetId &&
+						openedWorkflowNodeStore.pageType &&
+						pageType === ProjectAssetTypes.SIMULATION_WORKFLOW) ||
+					openedWorkflowNodeStore.node
+				"
 				:size="20"
 			>
 				<tera-calibration-side-panel
@@ -339,6 +346,10 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
+}
+
 function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
@@ -433,8 +444,12 @@ tabStore.$subscribe(() => {
 });
 
 async function getAndPopulateAnnotations() {
-	annotations.value = await getAnnotations(props.assetId, props.pageType);
-	selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	if (props.assetId && props.pageType) {
+		annotations.value = await getAnnotations(props.assetId, props.pageType);
+		selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	} else {
+		selectedNoteSection.value = [];
+	}
 }
 
 const addNote = async () => {
@@ -485,18 +500,11 @@ function formatAuthorTimestamp(username, timestamp) {
 	z-index: 2;
 	isolation: isolate;
 }
+
 .tab-group {
 	z-index: 2;
 	isolation: isolate;
 	position: relative;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	overflow-x: auto;
-	overflow-y: hidden;
 }
 
 .p-splitter {
@@ -504,6 +512,15 @@ section {
 	flex: 1;
 	background: none;
 	border: none;
+}
+
+section,
+.p-splitter:deep(.project-page) {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
