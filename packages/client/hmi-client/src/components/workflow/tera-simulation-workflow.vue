@@ -28,7 +28,9 @@
 				<template #body>
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && (!isEmpty(node.outputs) || newAssetId)"
-						:model-id="isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.id"
+						:model-id="
+							isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.model.id.toString()
+						"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
