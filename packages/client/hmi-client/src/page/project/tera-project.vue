@@ -343,6 +343,7 @@ const loadingTabIndex = ref<number | null>(null);
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	loadingTabIndex.value = null;
+	console.log('projectContext.value', projectContext.value);
 }
 
 function updateProject(id: IProject['id']) {
@@ -402,6 +403,13 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
+		if (projectContext.value) {
+			// Automatically go to overview page when project is opened
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+			});
+		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
