@@ -4,6 +4,7 @@
 		:overline="model?.framework"
 		:is-editable="isEditable"
 		:is-creating-asset="assetId === ''"
+		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
 	>
 		<template #nav>
@@ -29,20 +30,23 @@
 						/>
 					</span>
 				</template>
+				<template #page-search>
+					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText
+							v-model="globalFilter['global'].value"
+							placeholder="Find in page"
+							class="p-inputtext-sm"
+						/>
+					</span>
+				</template>
 			</tera-asset-nav>
 		</template>
 		<template #name-input>
 			<InputText v-model="newModelName" placeholder="Title of new model" />
 		</template>
 		<template #edit-buttons>
-			<span class="p-input-icon-left">
-				<i class="pi pi-search" />
-				<InputText
-					v-model="globalFilter['global'].value"
-					class="p-inputtext-sm"
-					placeholder="Search keyword"
-				/>
-			</span>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
