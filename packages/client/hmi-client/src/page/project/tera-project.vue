@@ -44,13 +44,18 @@
 			<SplitterPanel
 				class="project-page"
 				v-if="
-					openedWorkflowNodeStore.assetId &&
-					openedWorkflowNodeStore.pageType &&
-					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW
+					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
+					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
+						openedWorkflowNodeStore.node)
 				"
 				:size="20"
 			>
+				<tera-calibration
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
+					:node="openedWorkflowNodeStore.node"
+				/>
 				<tera-project-page
+					v-else
 					:project="project"
 					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
 					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
@@ -223,6 +228,8 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -396,6 +403,13 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
+		if (projectContext.value) {
+			// Automatically go to overview page when project is opened
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+			});
+		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)

@@ -3,7 +3,7 @@
 		<header v-for="(tab, index) in tabs" :key="index">
 			<div
 				class="tab"
-				@click="emit('select-tab', index)"
+				@click="activeTabIndex !== index && emit('select-tab', index)"
 				:active="activeTabIndex === index"
 				:loading="loadingTabIndex === index"
 			>

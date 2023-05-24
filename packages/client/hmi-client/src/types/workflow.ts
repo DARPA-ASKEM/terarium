@@ -1,3 +1,12 @@
+export enum WorkflowOperationTypes {
+	ADD = 'add', // temp for test to work
+	TEST = 'TestOperation',
+	CALIBRATION = 'CalibrationOperation',
+	DATASET = 'Dataset',
+	MODEL = 'ModelOperation',
+	SIMULATE = 'SimulateOperation'
+}
+
 export enum WorkflowStatus {
 	INVALID = 'invalid',
 	FAILED = 'failed',
@@ -19,7 +28,7 @@ export interface OperationData {
 
 // Defines a function: eg: model, simulate, calibrate
 export interface Operation {
-	name: string;
+	name: WorkflowOperationTypes;
 	description: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
