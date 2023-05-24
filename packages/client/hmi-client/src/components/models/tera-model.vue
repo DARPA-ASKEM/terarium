@@ -135,7 +135,11 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab header="Model diagram">
-					<tera-model-diagram :model="model" :is-editable="props.isEditable" />
+					<tera-model-diagram
+						:model="model"
+						:is-editable="props.isEditable"
+						@update-model-content="updateModelContent"
+					/>
 				</AccordionTab>
 				<AccordionTab v-if="model">
 					<template #header> Model configurations </template>
@@ -272,7 +276,7 @@
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
 import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
-import { PetriNet } from '@/petrinet/petrinet-service';
+import { PetriNet, parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
 import { createModel, addModelToProject, getModel } from '@/services/model';
@@ -460,6 +464,10 @@ const onCellEditComplete = (event) => {
 			break;
 	}
 };
+
+function updateModelContent(rendererGraph) {
+	if (model.value) model.value.content = parseIGraph2PetriNet(rendererGraph);
+}
 
 const onCellEditStart = (event) => {
 	const { data, field, index } = event;

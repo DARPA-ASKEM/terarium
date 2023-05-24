@@ -39,7 +39,8 @@
 										<Button
 											v-if="isEditing"
 											@click="cancelEdit"
-											label="Cancel"
+											l
+											abel="Cancel"
 											class="p-button-sm p-button-outlined toolbar-button"
 										/>
 										<Button
@@ -75,7 +76,8 @@
 								@equation-updated="setNewLatexFormula"
 								@validate-mathml="validateMathML"
 								@set-editing="isEditingEQ = true"
-							></tera-math-editor>
+							>
+							</tera-math-editor>
 						</section>
 					</SplitterPanel>
 				</Splitter>
@@ -85,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray, cloneDeep } from 'lodash';
+import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -95,7 +97,6 @@ import {
 	PetriNet,
 	NodeData,
 	EdgeData,
-	parseIGraph2PetriNet,
 	mathmlToPetri,
 	petriToLatex,
 	NodeType
@@ -113,16 +114,20 @@ import Toolbar from 'primevue/toolbar';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
-const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
+const emit = defineEmits([
+	'update-tab-name',
+	'close-preview',
+	'asset-loaded',
+	'close-current-tab',
+	'update-model-content'
+]);
 
 const props = defineProps<{
 	model: ITypedModel<PetriNet> | null;
-	isEditable: Boolean;
+	isEditable: boolean;
 }>();
 
 const menu = ref();
-
-const model = ref<ITypedModel<PetriNet> | null>(null);
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
@@ -170,7 +175,6 @@ const handleResize = () => {
 };
 
 onMounted(() => {
-	model.value = cloneDeep(props.model);
 	window.addEventListener('resize', handleResize);
 	handleResize();
 });
@@ -227,8 +231,8 @@ watch(
 	() => [props.model],
 	async () => {
 		updateLatexFormula('');
-		if (model.value) {
-			const data = await petriToLatex(model.value.content);
+		if (props.model) {
+			const data = await petriToLatex(props.model.content);
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -247,7 +251,7 @@ watch(
 );
 
 onUpdated(() => {
-	if (model.value) {
+	if (props.model) {
 		emit('asset-loaded');
 	}
 });
@@ -318,11 +322,11 @@ const contextMenuItems = ref([
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
-	[model, graphElement],
+	[props.model, graphElement],
 	async () => {
-		if (model.value === null || graphElement.value === null) return;
+		if (props.model === null || graphElement.value === null) return;
 		// Convert petri net into a graph
-		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(props.model.content, {
 			S: { width: 60, height: 60 },
 			T: { width: 40, height: 40 }
 		});
@@ -364,7 +368,7 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(model.value.content);
+		const latexFormula = await petriToLatex(props.model.content);
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {
@@ -457,9 +461,9 @@ onUnmounted(() => {
 const toggleEditMode = () => {
 	isEditing.value = !isEditing.value;
 	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && model.value && renderer) {
-		model.value.content = parseIGraph2PetriNet(renderer.graph);
-		updateModel(model.value);
+	if (!isEditing.value && props.model && renderer) {
+		emit('update-model-content', renderer.graph);
+		updateModel(props.model);
 	} else if (isEditing.value && selectedVariable.value) {
 		// de-select node if selection exists
 		onVariableSelected(selectedVariable.value);
@@ -470,10 +474,10 @@ const toggleEditMode = () => {
 // - Resets changs to the model structure
 const cancelEdit = async () => {
 	isEditing.value = false;
-	if (!model.value) return;
+	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
+	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(props.model.content, {
 		S: { width: 60, height: 60 },
 		T: { width: 40, height: 40 }
 	});
