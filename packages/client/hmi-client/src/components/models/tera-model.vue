@@ -1217,6 +1217,7 @@ section math-editor {
 .model_diagram {
 	display: flex;
 	height: 100%;
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
 	overflow: auto;
 }
