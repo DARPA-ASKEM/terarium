@@ -72,7 +72,7 @@
 					</Button>
 					<Button size="large" class="p-button p-button-secondary quick-link-button">
 						<compare-models-icon class="icon" />
-						<span class="p-button-label">Compare Models</span>
+						<span class="p-button-label">Compare models</span>
 					</Button>
 					<Button
 						label="New simulation"
@@ -331,7 +331,7 @@ section {
 }
 
 .description {
-	margin-top: 0.5rem;
+	margin-top: 1rem;
 	margin-bottom: 0.5rem;
 }
 
@@ -407,8 +407,8 @@ button .icon {
 
 .keyword-search {
 	border-color: transparent;
-	padding-top: 0.75rem;
-	padding-bottom: 0.75rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
 }
 
 .keyword-search:hover {
