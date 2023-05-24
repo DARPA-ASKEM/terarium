@@ -39,8 +39,7 @@
 										<Button
 											v-if="isEditing"
 											@click="cancelEdit"
-											l
-											abel="Cancel"
+											label="Cancel"
 											class="p-button-sm p-button-outlined toolbar-button"
 										/>
 										<Button

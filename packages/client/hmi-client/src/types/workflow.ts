@@ -1,4 +1,5 @@
 export enum WorkflowOperationTypes {
+	TEST = 'TestOperation',
 	CALIBRATION = 'CalibrationOperation',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',

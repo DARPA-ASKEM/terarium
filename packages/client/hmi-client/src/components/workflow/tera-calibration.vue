@@ -56,7 +56,7 @@ const props = defineProps<{
 const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
-const runId = computed(() => props.node.outputs[0].value as number | undefined);
+const runId = ref(props.node.outputs[0].value as number | undefined);
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
@@ -142,6 +142,7 @@ watch(
 :deep(.p-dropdown .p-dropdown-label.p-inputtext) {
 	color: white;
 }
+
 :deep(.p-inputtext) {
 	color: white;
 }

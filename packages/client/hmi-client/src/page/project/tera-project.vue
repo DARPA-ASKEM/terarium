@@ -50,7 +50,7 @@
 				"
 				:size="20"
 			>
-				<tera-calibration-side-panel
+				<tera-calibration
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
 					:node="openedWorkflowNodeStore.node"
 				/>
@@ -228,7 +228,7 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
-import TeraCalibrationSidePanel from '@/components/workflow/tera-calibration-side-panel.vue';
+import TeraCalibration from '@/components/workflow/tera-calibration.vue';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
@@ -343,7 +343,6 @@ const loadingTabIndex = ref<number | null>(null);
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	loadingTabIndex.value = null;
-	console.log('projectContext.value', projectContext.value);
 }
 
 function updateProject(id: IProject['id']) {
