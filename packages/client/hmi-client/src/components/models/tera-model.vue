@@ -275,7 +275,7 @@ import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import { createModel, addModelToProject } from '@/services/model';
+import { createModel, addModelToProject, getModel } from '@/services/model';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
@@ -295,13 +295,14 @@ import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import { ResultType } from '@/types/common';
-import { Document, Dataset } from '@/types/Types';
+import { Document, Dataset, ProvenanceType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FilterMatchMode } from 'primevue/api';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import { getRelatedArtifacts } from '@/services/provenance';
 import TeraModelDiagram from './tera-model-diagram.vue';
 
 interface StringValueMap {
@@ -566,6 +567,28 @@ function highlightSearchTerms(text: string | undefined): string {
 	}
 	return text ?? '';
 }
+const fetchRelatedTerariumArtifacts = async () => {
+	if (model.value) {
+		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.ModelRevision);
+		relatedTerariumArtifacts.value = results;
+	} else {
+		relatedTerariumArtifacts.value = [];
+	}
+};
+
+watch(
+	() => [props.assetId],
+	async () => {
+		if (props.assetId !== '') {
+			const result = await getModel(props.assetId);
+			model.value = result;
+			fetchRelatedTerariumArtifacts();
+		} else {
+			model.value = null;
+		}
+	},
+	{ immediate: true }
+);
 
 watch(
 	() => newModelName.value,
