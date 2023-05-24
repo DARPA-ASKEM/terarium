@@ -486,7 +486,7 @@ function formatAuthorTimestamp(username, timestamp) {
 	}
 	return `${username} on ${formatDdMmmYyyy(timestamp)}`;
 }
-
+/*
 // if this is a fresh load, open the overview page
 const freshLoad = ref(true);
 function openOverview() {
@@ -501,6 +501,19 @@ function openOverview() {
 	}
 }
 openOverview();
+
+*/
+watch(
+	() => projectContext.value,
+	() => {
+		if (projectContext.value) {
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+			});
+		}
+	}
+);
 </script>
 
 <style scoped>
