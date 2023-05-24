@@ -279,6 +279,7 @@ import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
 import { PetriNet, parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
+import { bucky } from '@/temp/buckyAMR';
 import { createModel, addModelToProject, getModel } from '@/services/model';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -588,8 +589,10 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			const result = await getModel(props.assetId);
-			model.value = result;
+			model.value = await getModel(props.assetId);
+			if (model.value && model.value.name === 'Bucky') {
+				amr.value = bucky;
+			}
 			fetchRelatedTerariumArtifacts();
 		} else {
 			model.value = null;
