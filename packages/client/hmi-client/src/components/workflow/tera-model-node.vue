@@ -27,7 +27,7 @@
 				/>
 			</li>
 		</ul>
-		<Button label="Add config" @click="createModelConfigOutput" />
+		<Button label="Add config" @click="addModelConfiguration" />
 	</template>
 </template>
 
@@ -44,6 +44,7 @@ import { cloneDeep } from 'lodash';
 
 const props = defineProps<{
 	modelId: string;
+	outputAmount: number;
 }>();
 
 const emit = defineEmits(['append-output-port']);
@@ -63,22 +64,20 @@ function createModelConfigOutput() {
 	if (ModelOperation.action) {
 		emit('append-output-port', {
 			type: ModelOperation.outputs[0].type,
-			label: 'Config',
+			label: `Config ${props.outputAmount}`,
 			value: {
-				id: props.modelId,
-				initialValues: initialValues.value[0],
-				parameterValues: parameterValues.value[0]
+				model: model.value,
+				initialValues: initialValues.value[initialValues.value.length - 1],
+				parameterValues: parameterValues.value[parameterValues.value.length - 1]
 			} as ModelConfig
 		});
 	}
-
-	console.log(props.modelId, initialValues.value, parameterValues.value);
-	addModelConfiguration();
 }
 
 function addModelConfiguration() {
 	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
 	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+	createModelConfigOutput();
 }
 
 watch(
@@ -99,6 +98,8 @@ onMounted(async () => {
 	model.value?.content.T.forEach((s) => {
 		parameterValues.value[0][s.tname] = 0.0005;
 	});
+
+	createModelConfigOutput();
 });
 </script>
 

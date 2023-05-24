@@ -27,8 +27,9 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation' && node.outputs[0].value.assetId"
-						:model-id="node.outputs[0].value.assetId"
+						v-if="node.operationType === 'ModelOperation' && (!isEmpty(node.outputs) || newAssetId)"
+						:model-id="isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.id"
+						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
@@ -115,6 +116,7 @@ import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
+import { isEmpty } from 'lodash';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
@@ -130,6 +132,7 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
+const newAssetId = ref('');
 const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.create());
@@ -218,12 +221,10 @@ function onDrop(event) {
 		updateNewNodePosition(event);
 
 		let operation: Operation;
-		let label = '';
 
 		switch (assetType) {
 			case ProjectAssetTypes.MODELS:
 				operation = ModelOperation;
-				label = 'Config';
 				break;
 			case ProjectAssetTypes.DATASETS:
 				operation = DatasetOperation;
@@ -233,11 +234,7 @@ function onDrop(event) {
 		}
 
 		workflowService.addNode(wf.value, operation, newNodePosition);
-		appendOutputPort(wf.value.nodes[wf.value.nodes.length - 1], {
-			type: operation.outputs[0].type,
-			label,
-			value: { assetId }
-		});
+		newAssetId.value = assetId;
 	}
 }
 

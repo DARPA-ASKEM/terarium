@@ -53,7 +53,7 @@
 					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
 				>
 					<div class="output port" />
-					{{ output.label }} {{ index + 1 }}
+					{{ output.label }}
 				</div>
 			</li>
 		</ul>
@@ -129,12 +129,13 @@ onMounted(() => {
 
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
+		console.log(props.node.outputs);
 		let pageType;
 		let assetId;
 		switch (props.node.operationType) {
 			case 'ModelOperation':
 				pageType = ProjectAssetTypes.MODELS;
-				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+				assetId = props.node.outputs[props.node.outputs.length - 1].value.id.toString();
 				break;
 			case 'Dataset':
 				pageType = ProjectAssetTypes.DATASETS;
