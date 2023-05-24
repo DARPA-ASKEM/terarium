@@ -237,8 +237,8 @@
 						<ColumnGroup type="header">
 							<!--Style top rows-->
 							<Row>
-								<Column header="" />
-								<Column header="" />
+								<Column header="" style="border: none" />
+								<Column header="" style="border: none" />
 								<Column header="Initial conditions" :colspan="model.content.S.length" />
 								<Column header="Parameters" :colspan="paramLength" />
 								<!-- <Column header="Observables" /> -->
@@ -1217,6 +1217,8 @@ section math-editor {
 .model_diagram {
 	display: flex;
 	height: 100%;
+	border-radius: var(--border-radius);
+	overflow: auto;
 }
 
 .p-splitter {
