@@ -143,7 +143,7 @@ function showNodeDrilldown() {
 			default:
 				break;
 		}
-		openedWorkflowNodeStore.set(assetId, pageType, props.node);
+		openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 	} else logger.error('Node needs a valid output', { silent: true });
 }
 
