@@ -1,20 +1,28 @@
 <template>
-	<section class="result-container">
+	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate()">Run</Button>
-		<div class="options">
-			<div class="dropdown-group">
-				<span>Select variables to plot</span>
-				<MultiSelect
-					v-model="selectedVariable"
-					:options="stateVariablesList"
-					optionLabel="code"
-					placeholder="Select a State Variable"
-				/>
-			</div>
-		</div>
-		<div class="result">
-			<Chart type="line" :data="chartData" :options="chartOptions" />
-		</div>
+		<div class="multiselect-title">Select variables to plot</div>
+		<MultiSelect
+			v-model="selectedVariable"
+			:options="stateVariablesList"
+			optionLabel="code"
+			placeholder="Select a State Variable"
+		>
+			<template v-slot:value>
+				<span
+					class="selected-label-item"
+					v-for="variable in selectedVariable"
+					:key="variable.code"
+					:style="{ color: getVariableColor(variable.code) }"
+				>
+					{{ variable.code }}
+				</span>
+			</template>
+		</MultiSelect>
+		<Chart type="line" :data="chartData" :options="chartOptions" />
+	</section>
+	<section v-else>
+		<div>loading...</div>
 	</section>
 </template>
 
@@ -37,9 +45,28 @@ type DatasetType = {
 	tension: number;
 };
 
+const VIRIDIS_14 = [
+	'#fde725',
+	'#cde11d',
+	'#98d83e',
+	'#67cc5c',
+	'#40bd72',
+	'#25ac82',
+	'#1f998a',
+	'#24878e',
+	'#2b748e',
+	'#34618d',
+	'#3d4d8a',
+	'#453581',
+	'#481c6e',
+	'#440154'
+];
+
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+const showSpinner = ref(false);
 
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
@@ -53,30 +80,35 @@ const selectedRun = ref<null | { code: string }>(null);
 
 const chartData = ref({});
 const chartOptions = {
+	devicePixelRatio: 4,
 	maintainAspectRatio: false,
 	pointStyle: false,
 	plugins: {
 		legend: {
-			labels: {
-				color: '#000'
-			}
+			display: false
 		}
 	},
 	scales: {
 		x: {
 			ticks: {
-				color: '#000'
+				color: '#aaa',
+				maxTicksLimit: 5,
+				includeBounds: true
 			},
 			grid: {
-				color: '#AAA'
+				color: '#fff',
+				borderColor: '#fff'
 			}
 		},
 		y: {
 			ticks: {
-				color: '#000'
+				color: '#aaa',
+				maxTicksLimit: 3,
+				includeBounds: true
 			},
 			grid: {
-				color: '#AAA'
+				color: '#fff',
+				borderColor: '#fff'
 			}
 		}
 	}
@@ -97,6 +129,7 @@ const runSimulate = async () => {
 
 		// start polling for run status
 		getStatus();
+		showSpinner.value = true;
 	}
 };
 
@@ -129,6 +162,7 @@ const getStatus = async () => {
 
 	if (currentRunStatus.every(({ status }) => status === 'done')) {
 		completedRunIdList.value = startedRunIdList.value;
+		showSpinner.value = false;
 	} else if (currentRunStatus.some(({ status }) => status === 'queuing')) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
@@ -167,6 +201,11 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 };
 watch(() => completedRunIdList.value, watchCompletedRunList);
 
+const getVariableColor = (variableCode: string) => {
+	const codeIdx = selectedVariable.value.findIndex(({ code }) => code === variableCode);
+	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.value.length) * VIRIDIS_14.length)];
+};
+
 const renderGraph = (params) => {
 	const datasets: DatasetType[] = [];
 	params[0].forEach(({ code }) =>
@@ -179,7 +218,8 @@ const renderGraph = (params) => {
 					),
 					label: `${completedRunIdList.value[runIdx]} - ${code}`,
 					fill: false,
-					tension: 0.4
+					tension: 0.4,
+					borderColor: getVariableColor(code)
 				};
 				datasets.push(dataset);
 			})
@@ -201,28 +241,27 @@ section {
 	background: var(--surface-overlay);
 }
 
-.result {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: row;
+.multiselect-title {
+	font-size: smaller;
+	font-weight: 700;
+}
+
+.selected-label-item::after {
+	color: black;
+	content: ', ';
+}
+.selected-label-item:last-child::after {
+	content: '';
 }
 
 .p-chart {
 	width: 100%;
-}
-
-.options {
-	display: flex;
-	margin-bottom: 10px;
-}
-
-.dropdown-group {
-	flex-grow: 1;
-	flex-basis: 0%;
+	height: 200px;
+	margin-top: 0.5em;
 }
 
 .p-multiselect {
-	width: 50%;
+	width: 100%;
+	border-color: lightgrey;
 }
 </style>
