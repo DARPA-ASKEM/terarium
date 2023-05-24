@@ -6,7 +6,7 @@ import { WorkflowNode } from '@/types/workflow';
 export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 	state: () => ({
 		assetId: null as string | null,
-		pageType: null as ProjectAssetTypes | null, // Should this be replaced by WorkflowOperationTypes?
+		pageType: null as ProjectAssetTypes | null,
 		node: null as WorkflowNode | null
 	}),
 	actions: {
