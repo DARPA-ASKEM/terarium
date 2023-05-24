@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
+import { remove, isEmpty, pickBy, isArray, cloneDeep } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -101,14 +101,11 @@ import {
 	NodeType
 } from '@/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
-import { getModel, updateModel } from '@/services/model';
-import { getRelatedArtifacts } from '@/services/provenance';
+import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { ITypedModel } from '@/types/Model';
-import { ResultType } from '@/types/common';
-import { ProvenanceType } from '@/types/Types';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -118,18 +115,11 @@ import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
 
-const props = defineProps({
-	assetId: {
-		type: String,
-		required: true
-	},
-	isEditable: {
-		type: Boolean,
-		required: true
-	}
-});
+const props = defineProps<{
+	model: ITypedModel<PetriNet> | null;
+	isEditable: Boolean;
+}>();
 
-const relatedTerariumArtifacts = ref<ResultType[]>([]);
 const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
@@ -180,13 +170,9 @@ const handleResize = () => {
 };
 
 onMounted(() => {
+	model.value = cloneDeep(props.model);
 	window.addEventListener('resize', handleResize);
 	handleResize();
-	// new model
-	if (props.assetId === '') {
-		isEditingEQ.value = true;
-		isMathMLValid.value = false;
-	}
 });
 
 onUnmounted(() => {
@@ -236,31 +222,16 @@ const cancelEditng = () => {
 	updateLatexFormula(equationLatexOriginal.value);
 };
 
-const fetchRelatedTerariumArtifacts = async () => {
-	if (model.value) {
-		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.ModelRevision);
-		relatedTerariumArtifacts.value = results;
-	} else {
-		relatedTerariumArtifacts.value = [];
-	}
-};
 // Whenever selectedModelId changes, fetch model with that ID
 watch(
-	() => [props.assetId],
+	() => [props.model],
 	async () => {
 		updateLatexFormula('');
-		if (props.assetId !== '') {
-			const result = await getModel(props.assetId);
-			model.value = result;
-			fetchRelatedTerariumArtifacts();
-			if (model.value) {
-				const data = await petriToLatex(model.value.content);
-				if (data) {
-					updateLatexFormula(data);
-				}
+		if (model.value) {
+			const data = await petriToLatex(model.value.content);
+			if (data) {
+				updateLatexFormula(data);
 			}
-		} else {
-			model.value = null;
 		}
 	},
 	{ immediate: true }
@@ -475,7 +446,7 @@ const validateMathML = async (mathMlString: string, editMode: boolean) => {
 };
 
 onMounted(async () => {
-	fetchRelatedTerariumArtifacts();
+	// fetchRelatedTerariumArtifacts();
 	document.addEventListener('keyup', editorKeyHandler);
 });
 

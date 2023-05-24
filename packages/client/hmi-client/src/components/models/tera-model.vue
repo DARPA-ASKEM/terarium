@@ -135,7 +135,7 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab header="Model diagram">
-					<tera-model-diagram :asset-id="props.assetId" :is-editable="props.isEditable" />
+					<tera-model-diagram :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="model">
 					<template #header> Model configurations </template>
