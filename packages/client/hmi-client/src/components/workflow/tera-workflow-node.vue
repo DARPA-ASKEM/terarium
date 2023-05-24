@@ -129,7 +129,6 @@ onMounted(() => {
 
 function showNodeDrilldown() {
 	if (!isEmpty(props.node.outputs)) {
-		console.log(props.node.outputs);
 		let pageType;
 		let assetId;
 		switch (props.node.operationType) {
