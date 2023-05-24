@@ -1,25 +1,15 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate()">Run</Button>
-		<div class="multiselect-title">Select variables to plot</div>
-		<MultiSelect
-			v-model="selectedVariable"
-			:options="stateVariablesList"
-			optionLabel="code"
-			placeholder="Select a State Variable"
-		>
-			<template v-slot:value>
-				<span
-					class="selected-label-item"
-					v-for="variable in selectedVariable"
-					:key="variable.code"
-					:style="{ color: getVariableColor(variable.code) }"
-				>
-					{{ variable.code }}
-				</span>
-			</template>
-		</MultiSelect>
-		<Chart type="line" :data="chartData" :options="chartOptions" />
+		<div class="chart-container">
+			<SimulateChart
+				v-for="index in numCharts"
+				:key="index"
+				:run-results="runResults"
+				:run-id-list="completedRunIdList"
+			/>
+		</div>
+		<Button text @click="numCharts++" label="Add Chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -32,87 +22,21 @@ import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { shimPetriModel } from '@/services/models/petri-shim';
 
-import MultiSelect from 'primevue/multiselect';
-import Chart from 'primevue/chart';
-
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 
-type DatasetType = {
-	data: number[];
-	label: string;
-	fill: boolean;
-	tension: number;
-};
-
-const VIRIDIS_14 = [
-	'#fde725',
-	'#cde11d',
-	'#98d83e',
-	'#67cc5c',
-	'#40bd72',
-	'#25ac82',
-	'#1f998a',
-	'#24878e',
-	'#2b748e',
-	'#34618d',
-	'#3d4d8a',
-	'#453581',
-	'#481c6e',
-	'#440154'
-];
+import SimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
 const showSpinner = ref(false);
+const numCharts = ref(1);
 
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
 let runResults = {};
-
-// data for rendering ui
-let stateVariablesList: { code: string }[] = [];
-const selectedVariable = ref<{ code: string }[]>([]);
-let runList = [] as any[];
-const selectedRun = ref<null | { code: string }>(null);
-
-const chartData = ref({});
-const chartOptions = {
-	devicePixelRatio: 4,
-	maintainAspectRatio: false,
-	pointStyle: false,
-	plugins: {
-		legend: {
-			display: false
-		}
-	},
-	scales: {
-		x: {
-			ticks: {
-				color: '#aaa',
-				maxTicksLimit: 5,
-				includeBounds: true
-			},
-			grid: {
-				color: '#fff',
-				borderColor: '#fff'
-			}
-		},
-		y: {
-			ticks: {
-				color: '#aaa',
-				maxTicksLimit: 3,
-				includeBounds: true
-			},
-			grid: {
-				color: '#fff',
-				borderColor: '#fff'
-			}
-		}
-	}
-};
 
 const runSimulate = async () => {
 	const port = props.node.inputs[0];
@@ -186,50 +110,8 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		})
 	);
 	runResults = newRunResults;
-	// process data retrieved
-
-	// assume that the state variables for all runs will be identical
-	// take first run and parse it for state variables
-	if (!stateVariablesList.length) {
-		stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
-			.filter((key) => key !== 'timestep')
-			.map((key) => ({ code: key }));
-	}
-	selectedVariable.value = [stateVariablesList[0]];
-	runList = runIdList.map((runId, index) => ({ code: runId, index }));
-	selectedRun.value = runList[0];
 };
 watch(() => completedRunIdList.value, watchCompletedRunList);
-
-const getVariableColor = (variableCode: string) => {
-	const codeIdx = selectedVariable.value.findIndex(({ code }) => code === variableCode);
-	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.value.length) * VIRIDIS_14.length)];
-};
-
-const renderGraph = (params) => {
-	const datasets: DatasetType[] = [];
-	params[0].forEach(({ code }) =>
-		completedRunIdList.value
-			.map((runId) => runResults[runId])
-			.forEach((run, runIdx) => {
-				const dataset = {
-					data: run.map(
-						(datum: { [key: string]: number }) => datum[code] // - runResults[selectedRun.value.code][timeIdx][code]
-					),
-					label: `${completedRunIdList.value[runIdx]} - ${code}`,
-					fill: false,
-					tension: 0.4,
-					borderColor: getVariableColor(code)
-				};
-				datasets.push(dataset);
-			})
-	);
-	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestep)),
-		datasets
-	};
-};
-watch(() => [selectedVariable.value, selectedRun.value], renderGraph);
 </script>
 
 <style scoped>
@@ -241,27 +123,7 @@ section {
 	background: var(--surface-overlay);
 }
 
-.multiselect-title {
-	font-size: smaller;
-	font-weight: 700;
-}
-
-.selected-label-item::after {
-	color: black;
-	content: ', ';
-}
-.selected-label-item:last-child::after {
-	content: '';
-}
-
-.p-chart {
-	width: 100%;
-	height: 200px;
-	margin-top: 0.5em;
-}
-
-.p-multiselect {
-	width: 100%;
-	border-color: lightgrey;
+.simulate-chart {
+	margin: 1em 0em;
 }
 </style>
