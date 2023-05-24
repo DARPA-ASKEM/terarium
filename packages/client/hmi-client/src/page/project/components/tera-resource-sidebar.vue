@@ -78,6 +78,7 @@
 						:draggable="activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
 						@dragstart="startDrag(tab.assetId, tab.pageType)"
 						@dragend="endDrag"
+						:class="draggedAssetId === tab.assetId ? 'dragged-asset' : ''"
 					>
 						<vue-feather
 							v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
@@ -143,6 +144,7 @@ const props = defineProps<{
 const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
 const isRemovalModal = ref(false);
+const draggedAssetId = ref('');
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -175,11 +177,15 @@ function removeAsset(asset = props.activeTab) {
 const { setDragData, deleteDragData } = useDragEvent();
 
 function startDrag(assetId?: string, assetType?: ProjectAssetTypes | ProjectPages) {
-	if (assetId && assetType) setDragData('initAssetNode', { assetId, assetType });
+	if (assetId && assetType) {
+		setDragData('initAssetNode', { assetId, assetType });
+		draggedAssetId.value = assetId;
+	}
 }
 
 function endDrag() {
 	deleteDragData('assetNode');
+	draggedAssetId.value = '';
 }
 </script>
 
@@ -197,6 +203,11 @@ header {
 .icon {
 	fill: var(--text-color-primary);
 	overflow: visible;
+}
+
+.dragged-asset {
+	background-color: var(--primary-color);
+	color: var(--gray-0);
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {
