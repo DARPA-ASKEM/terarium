@@ -49,9 +49,6 @@ import { downloadRawFile } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-// import { calibrationParamExample } from '@/temp/calibrationExample';
-
-console.log('Tera calibration side panel');
 
 const props = defineProps<{
 	node: WorkflowNode;
