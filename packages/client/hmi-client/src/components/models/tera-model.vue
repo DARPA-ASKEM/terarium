@@ -44,89 +44,7 @@
 				</template>
 			</AccordionTab>
 			<AccordionTab header="Model diagram">
-				<section class="model_diagram">
-					<TeraResizablePanel>
-						<div ref="splitterContainer" class="splitter-container">
-							<Splitter :gutterSize="5" :layout="layout">
-								<SplitterPanel
-									class="tera-split-panel"
-									:size="equationPanelSize"
-									:minSize="equationPanelMinSize"
-									:maxSize="equationPanelMaxSize"
-								>
-									<section class="graph-element">
-										<Toolbar>
-											<template #start>
-												<Button
-													@click="resetZoom"
-													label="Reset zoom"
-													class="p-button-sm p-button-outlined toolbar-button"
-												/>
-											</template>
-											<template #center>
-												<span class="toolbar-subgroup">
-													<Button
-														v-if="isEditing"
-														@click="addState"
-														label="Add state"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-													<Button
-														v-if="isEditing"
-														@click="addTransition"
-														label="Add transition"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-												</span>
-											</template>
-											<template #end>
-												<span class="toolbar-subgroup">
-													<Button
-														v-if="isEditing"
-														@click="cancelEdit"
-														label="Cancel"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-													<Button
-														@click="toggleEditMode"
-														:label="isEditing ? 'Save model' : 'Edit model'"
-														:class="
-															isEditing
-																? 'p-button-sm toolbar-button-saveModel'
-																: 'p-button-sm p-button-outlined toolbar-button'
-														"
-													/>
-												</span>
-											</template>
-										</Toolbar>
-										<div v-if="model" ref="graphElement" class="graph-element" />
-										<ContextMenu ref="menu" :model="contextMenuItems" />
-									</section>
-								</SplitterPanel>
-								<SplitterPanel
-									class="tera-split-panel"
-									:size="mathPanelSize"
-									:minSize="mathPanelMinSize"
-									:maxSize="mathPanelMaxSize"
-								>
-									<section class="math-editor-container" :class="mathEditorSelected">
-										<tera-math-editor
-											:is-editable="isEditable"
-											:latex-equation="equationLatex"
-											:is-editing-eq="isEditingEQ"
-											:is-math-ml-valid="isMathMLValid"
-											:math-mode="MathEditorModes.KATEX"
-											@cancel-editing="cancelEditng"
-											@equation-updated="setNewLatexFormula"
-											@validate-mathml="validateMathML"
-											@set-editing="isEditingEQ = true"
-										></tera-math-editor>
-									</section>
-								</SplitterPanel>
-							</Splitter>
-						</div>
-					</TeraResizablePanel>
-				</section>
+				<tera-model-diagram :asset-id="props.assetId" :is-editable="props.isEditable" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
@@ -273,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
+import { remove, isEmpty } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated, PropType } from 'vue';
 import { runDagreLayout } from '@/services/graph';
@@ -283,26 +201,20 @@ import {
 	PetriNet,
 	NodeData,
 	EdgeData,
-	parseIGraph2PetriNet,
-	mathmlToPetri,
-	petriToLatex,
-	NodeType
+	petriToLatex
 } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import { separateEquations, MathEditorModes } from '@/utils/math';
-import { getModel, updateModel, createModel, addModelToProject } from '@/services/model';
+import { getModel, createModel, addModelToProject } from '@/services/model';
 import { getRelatedArtifacts } from '@/services/provenance';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
-import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import ContextMenu from 'primevue/contextmenu';
 import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
@@ -310,15 +222,11 @@ import { ITypedModel, Model } from '@/types/Model';
 import { ResultType } from '@/types/common';
 import { Document, ProvenanceType } from '@/types/Types';
 import { Dataset } from '@/types/Dataset';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
 import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import teraModelDiagram from './tera-model-diagram.vue';
 
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
@@ -365,7 +273,6 @@ const selectedVariable = ref('');
 
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
-const equationLatexNew = ref<string>('');
 const isMathMLValid = ref<boolean>(true);
 
 const splitterContainer = ref<HTMLElement | null>(null);
@@ -374,18 +281,8 @@ const showForecastLauncher = ref(false);
 
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
 
-const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(0);
-const equationPanelMaxSize = ref<number>(100);
-
-const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(0);
-const mathPanelMaxSize = ref<number>(100);
-
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -413,16 +310,6 @@ onMounted(() => {
 
 onUnmounted(() => {
 	window.removeEventListener('resize', handleResize);
-});
-
-const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
-	}
-	if (isEditingEQ.value) {
-		return 'math-editor-selected';
-	}
-	return '';
 });
 
 const betterStates = computed(() => {
@@ -506,19 +393,9 @@ const onStateVariableClick = () => {
 	}
 };
 
-const setNewLatexFormula = (formulaString: string) => {
-	equationLatexNew.value = formulaString;
-};
-
 const updateLatexFormula = (formulaString: string) => {
 	equationLatex.value = formulaString;
 	equationLatexOriginal.value = formulaString;
-};
-
-const cancelEditng = () => {
-	isEditingEQ.value = false;
-	isMathMLValid.value = true;
-	updateLatexFormula(equationLatexOriginal.value);
 };
 
 const relatedTerariumModels = computed(
@@ -633,28 +510,6 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 	}
 };
 
-// Model editor context menu
-const contextMenuItems = ref([
-	{
-		label: 'Add state',
-		icon: 'pi pi-fw pi-circle',
-		command: () => {
-			if (renderer) {
-				renderer.addNode('S', '?', { x: eventX, y: eventY });
-			}
-		}
-	},
-	{
-		label: 'Add transition',
-		icon: 'pi pi-fw pi-stop',
-		command: () => {
-			if (renderer) {
-				renderer.addNode('T', '?', { x: eventX, y: eventY });
-			}
-		}
-	}
-]);
-
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
@@ -714,47 +569,8 @@ watch(
 	{ deep: true }
 );
 
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
-
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
-	updateLatexFormula(equationLatexNew.value);
-};
-
 const launchForecast = () => {
 	showForecastLauncher.value = true;
-};
-
-const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
-	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
-	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
 const createNewModel = async () => {
@@ -786,38 +602,6 @@ const createNewModel = async () => {
 	}
 };
 
-const validateMathML = async (mathMlString: string, editMode: boolean) => {
-	isEditingEQ.value = true;
-	isMathMLValid.value = false;
-	const cleanedMathML = separateEquations(mathMlString);
-	if (mathMlString === '') {
-		isMathMLValid.value = true;
-		isEditingEQ.value = false;
-	} else if (!editMode) {
-		try {
-			newPetri.value = await mathmlToPetri(cleanedMathML);
-			if (
-				(isArray(newPetri.value) && newPetri.value.length > 0) ||
-				(!isArray(newPetri.value) &&
-					Object.keys(newPetri.value).length > 0 &&
-					hasNoEmptyKeys(newPetri.value))
-			) {
-				isMathMLValid.value = true;
-				isEditingEQ.value = false;
-				updatePetri(newPetri.value);
-			} else {
-				logger.error(
-					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-				);
-			}
-		} catch (e) {
-			isMathMLValid.value = false;
-		}
-	} else if (editMode) {
-		isMathMLValid.value = true;
-	}
-};
-
 const goToSimulationRunPage = () => {
 	showForecastLauncher.value = false;
 	router.push({
@@ -838,50 +622,6 @@ onMounted(async () => {
 onUnmounted(() => {
 	document.removeEventListener('keyup', editorKeyHandler);
 });
-
-const toggleEditMode = () => {
-	isEditing.value = !isEditing.value;
-	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && model.value && renderer) {
-		model.value.content = parseIGraph2PetriNet(renderer.graph);
-		updateModel(model.value);
-	} else if (isEditing.value && selectedVariable.value) {
-		// de-select node if selection exists
-		onVariableSelected(selectedVariable.value);
-	}
-};
-
-// Cancel existing edits, currently this will:
-// - Resets changs to the model structure
-const cancelEdit = async () => {
-	isEditing.value = false;
-	if (!model.value) return;
-
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	if (renderer) {
-		renderer.setEditMode(false);
-		await renderer.setData(graphData);
-		renderer.isGraphDirty = true;
-		await renderer.render();
-	}
-};
-
-const resetZoom = async () => {
-	renderer?.setToDefaultZoom();
-};
-
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
-};
-
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
-};
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
