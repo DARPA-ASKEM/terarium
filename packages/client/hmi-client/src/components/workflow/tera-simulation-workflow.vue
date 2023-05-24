@@ -193,12 +193,6 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'New dataset',
-		command: () => {
-			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
-		}
-	},
-	{
 		label: 'New Simulation',
 		command: () => {
 			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {

@@ -1,5 +1,6 @@
 <template>
 	<section v-if="dataset">
+		<h5>{{ dataset.name }}</h5>
 		<Accordion>
 			<AccordionTab header="Data preview">
 				<section v-if="csvContent">
