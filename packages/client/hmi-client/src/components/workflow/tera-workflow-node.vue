@@ -134,7 +134,7 @@ function showNodeDrilldown() {
 		switch (props.node.operationType) {
 			case 'ModelOperation':
 				pageType = ProjectAssetTypes.MODELS;
-				assetId = props.node.outputs[props.node.outputs.length - 1].value.id.toString();
+				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
 				break;
 			case 'Dataset':
 				pageType = ProjectAssetTypes.DATASETS;

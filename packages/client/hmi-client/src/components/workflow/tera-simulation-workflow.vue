@@ -193,7 +193,7 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'New Simulation',
+		label: 'New simulation',
 		command: () => {
 			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
 				width: 420,
