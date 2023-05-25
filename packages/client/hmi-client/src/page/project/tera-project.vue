@@ -336,7 +336,6 @@ const loadingTabIndex = ref<number | null>(null);
 function setActiveTab() {
 	activeTabIndex.value = tabStore.getActiveTabIndex(projectContext.value);
 	loadingTabIndex.value = null;
-	console.log('projectContext.value', projectContext.value);
 }
 
 function updateProject(id: IProject['id']) {
@@ -486,23 +485,8 @@ function formatAuthorTimestamp(username, timestamp) {
 	}
 	return `${username} on ${formatDdMmmYyyy(timestamp)}`;
 }
-/*
-// if this is a fresh load, open the overview page
-const freshLoad = ref(true);
-function openOverview() {
-	if (freshLoad.value) {
-		freshLoad.value = false;
-		tabStore.addTab(projectContext.value, {
-			assetName: 'Overview',
-			pageType: ProjectPages.OVERVIEW,
-			assetId: undefined
-		});
-		tabStore.setActiveTabIndex(projectContext.value, 0);
-	}
-}
-openOverview();
 
-*/
+// if this is a fresh load, open the overview page
 watch(
 	() => projectContext.value,
 	() => {
