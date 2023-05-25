@@ -167,11 +167,10 @@ main > * {
 }
 
 .background-layer:deep(.tick line) {
-	color: var(--surface-border);
+	color: var(--surface-border-light);
 }
-
 .background-layer:deep(.tick text) {
-	color: var(--surface-border);
+	color: transparent;
 }
 
 svg:active {

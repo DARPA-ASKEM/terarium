@@ -48,6 +48,9 @@
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
+			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
+				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+			</marker>
 			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
@@ -67,8 +70,9 @@
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 				stroke="#1B8073"
-				stroke-dasharray="8"
+				stroke-dasharray="2"
 				stroke-width="2"
+				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
 				fill="none"
 			/>
@@ -77,6 +81,7 @@
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#1B8073"
 				stroke-width="2"
+				marker-start="url(#circle)"
 				marker-mid="url(#arrow)"
 				:key="index"
 				fill="none"
