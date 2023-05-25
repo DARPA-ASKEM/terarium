@@ -44,7 +44,7 @@ import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
-import { WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { shimPetriModel } from '@/services/models/petri-shim';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
@@ -88,16 +88,10 @@ const startCalibration = async () => {
 			console.log(calibrationParam);
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
-			const outputPort: WorkflowPort = {
-				id: '1',
-				type: 'String',
-				status: WorkflowPortStatus.CONNECTED,
-				value: runId.value
-			};
 			emit('append-output-port', {
 				type: 'string',
 				label: 'Calibration Job ID',
-				value: { outputPort }
+				value: runId.value
 			});
 		}
 	}
