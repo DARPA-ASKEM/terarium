@@ -12,7 +12,7 @@
 					class="selected-label-item"
 					v-for="variable in selectedVariable"
 					:key="variable.code"
-					:style="{ color: getVariableColor(variable.code) }"
+					:style="{ background: getVariableColor(variable.code) }"
 				>
 					{{ variable.code }}
 				</span>
@@ -162,12 +162,11 @@ watch(() => [selectedVariable.value, selectedRun.value], renderGraph, { immediat
 	font-weight: 700;
 }
 
-.selected-label-item::after {
-	color: black;
-	content: ', ';
-}
-.selected-label-item:last-child::after {
-	content: '';
+.selected-label-item {
+	padding: 0em 0.5em;
+	margin: 0em 0.25em;
+	border-radius: 2px;
+	text-shadow: 0 0 0.25em white;
 }
 
 .p-chart {
