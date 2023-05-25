@@ -112,7 +112,6 @@ export const addEdge = (
 
 	// TODO: Need to fix for multi-values
 	if (targetInputPort.acceptMultiple && targetInputPort.value) {
-		console.log(targetInputPort.value);
 		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
 	} else {
 		targetInputPort.label = sourceOutputPort.label;
