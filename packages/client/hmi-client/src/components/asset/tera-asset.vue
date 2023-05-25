@@ -188,11 +188,11 @@ header section:deep(> input) {
 
 .overline,
 .authors {
-	color: var(--primary-color-dark);
+	color: var(--text-color-primary);
 }
 
 .authors i {
-	color: var(--text-color-subdued);
+	color: var(--text-color-primary);
 	margin-right: 0.5rem;
 }
 

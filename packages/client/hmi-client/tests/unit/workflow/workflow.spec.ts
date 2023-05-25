@@ -4,12 +4,13 @@ import {
 	WorkflowPort,
 	Operation,
 	WorkflowNode,
-	WorkflowEdge
+	WorkflowEdge,
+	WorkflowOperationTypes
 } from '@/types/workflow';
 import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
-	name: 'add',
+	name: WorkflowOperationTypes.ADD,
 	description: 'add two numbers',
 	inputs: [{ type: 'number' }, { type: 'number' }],
 	outputs: [{ type: 'number' }],
