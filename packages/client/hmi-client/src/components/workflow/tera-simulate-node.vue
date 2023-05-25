@@ -36,7 +36,7 @@ const numCharts = ref(1);
 
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
-let runResults = {};
+const runResults = ref({});
 
 const runSimulate = async () => {
 	const port = props.node.inputs[0];
@@ -87,7 +87,7 @@ const getStatus = async () => {
 	if (currentRunStatus.every(({ status }) => status === 'done')) {
 		completedRunIdList.value = startedRunIdList.value;
 		showSpinner.value = false;
-	} else if (currentRunStatus.some(({ status }) => status === 'queuing')) {
+	} else if (currentRunStatus.some(({ status }) => status === 'running')) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
@@ -101,15 +101,15 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 	const newRunResults = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {
-			if (runResults[runId]) {
-				newRunResults[runId] = runResults[runId];
+			if (runResults.value[runId]) {
+				newRunResults[runId] = runResults.value[runId];
 			} else {
 				const resultCsv = await getRunResult(runId);
 				newRunResults[runId] = csvParse(resultCsv);
 			}
 		})
 	);
-	runResults = newRunResults;
+	runResults.value = newRunResults;
 };
 watch(() => completedRunIdList.value, watchCompletedRunList);
 </script>

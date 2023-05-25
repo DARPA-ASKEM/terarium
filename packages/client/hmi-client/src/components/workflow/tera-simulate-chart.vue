@@ -24,6 +24,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { isEmpty } from 'lodash';
 
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
@@ -104,8 +105,9 @@ const getVariableColor = (variableCode: string) => {
 	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.value.length) * VIRIDIS_14.length)];
 };
 
-const watchCompletedRunList = async (runIdList: number[]) => {
-	if (!runIdList.length) {
+const watchRunResults = async (runResults) => {
+	const { runIdList } = props;
+	if (!runIdList.length || isEmpty(runResults)) {
 		return;
 	}
 
@@ -120,12 +122,12 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 	runList = runIdList.map((runId, index) => ({ code: runId, index }));
 	selectedRun.value = runList[0];
 };
-watch(() => props.runIdList, watchCompletedRunList, { immediate: true });
+watch(() => props.runResults, watchRunResults, { immediate: true });
 
 const renderGraph = () => {
 	const { runResults, runIdList } = props;
 
-	if (!runIdList.length) {
+	if (!runIdList.length || isEmpty(runResults)) {
 		return;
 	}
 
