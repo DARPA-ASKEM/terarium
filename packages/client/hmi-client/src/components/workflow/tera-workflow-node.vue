@@ -3,15 +3,13 @@
 		<header>
 			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<span>
+				<!-- options menu -->
 				<Button
 					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleNodeMenu"
 				/>
-				<Button
-					@click="showNodeDrilldown"
-					icon="pi pi-external-link"
-					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-				/>
+				<Menu ref="nodeMenu" :model="nodeMenuItems" :popup="true" />
 			</span>
 		</header>
 		<ul class="inputs">
@@ -68,6 +66,7 @@ import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import Menu from 'primevue/menu';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -165,6 +164,23 @@ onBeforeUnmount(() => {
 		workflowNode.value.removeEventListener('mouseup', stopDrag);
 	}
 });
+
+function removeNode() {
+	// TODO: remove node
+	console.log('remove node');
+}
+
+/*
+ * User Menu
+ */
+const nodeMenu = ref();
+const nodeMenuItems = ref([
+	{ label: 'Open side panel', command: showNodeDrilldown },
+	{ label: 'Remove', command: removeNode }
+]);
+const toggleNodeMenu = (event) => {
+	nodeMenu.value.toggle(event);
+};
 </script>
 
 <style scoped>
