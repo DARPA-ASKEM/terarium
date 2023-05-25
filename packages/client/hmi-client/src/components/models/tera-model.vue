@@ -728,7 +728,7 @@ section math-editor {
 }
 
 .graph-element {
-	background-color: var(--surface-secondary);
+	background-color: var(--surface-0);
 	height: 100%;
 	max-height: 100%;
 	flex-grow: 1;
