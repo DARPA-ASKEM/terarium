@@ -1,11 +1,18 @@
 <template>
+	<!-- If no model is selected, show the dropdown selector -->
+	<h6 v-if="model">{{ selectedModel ? selectedModel.name : '-' }}</h6>
 	<Dropdown
-		class="w-full"
+		v-else
+		class="w-full p-button-sm p-button-outlined"
 		v-model="selectedModel"
 		:options="models"
 		option-label="name"
 		placeholder="Select a model"
 	/>
+
+	<!-- If a model is selected, show the diagram -->
+
+	<!-- This stuff is temporary, it's only supposed to appear in the drilldown panel -->
 	<template v-if="model">
 		<h6>Initial values</h6>
 		<ul>
@@ -126,6 +133,13 @@ li {
 	justify-content: space-between;
 	align-items: center;
 	width: 100%;
+}
+
+.p-button-sm.p-button-outlined {
+	border: 1px solid var(--surface-border);
+}
+.p-button-sm.p-button-outlined:hover {
+	border: 1px solid var(--surface-border-hover);
 }
 
 .p-inputtext.p-inputtext-sm {
