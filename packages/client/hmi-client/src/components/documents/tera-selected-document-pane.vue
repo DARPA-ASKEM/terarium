@@ -71,7 +71,7 @@ const addResourcesToProject = async (projectId: string) => {
 };
 
 const formatAbstract = (item: Document) =>
-	item.abstract !== undefined ? item.abstract : '[no abstract]';
+	item.abstractText !== undefined ? item.abstractText : '[no abstract]';
 
 const addAssetsToProject = async (projectName?: string) => {
 	let projectId = '';

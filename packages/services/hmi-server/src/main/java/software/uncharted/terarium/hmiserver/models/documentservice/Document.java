@@ -23,7 +23,7 @@ public class Document implements Serializable {
 
 	private String title;
 
-	@JsonProperty("abstract")
+	@JsonAlias("abstract")
 	private String abstractText;
 
 	private String journal;

@@ -268,7 +268,7 @@ const executeSearch = async () => {
 			facets: true, // include facets aggregation data in the search results
 			match: true,
 			additional_fields: 'title,abstract',
-			known_entities: 'url_extractions'
+			known_entities: 'url_extractions,askem_object'
 		},
 		model: {},
 		dataset: {}

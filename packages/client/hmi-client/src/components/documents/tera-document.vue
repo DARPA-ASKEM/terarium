@@ -192,7 +192,7 @@
 					<li v-for="ex in otherExtractions" :key="ex.askemId" class="extracted-item">
 						<b v-html="highlightSearchTerms(ex.properties.title)" />
 						<span v-html="highlightSearchTerms(ex.properties.caption)" />
-						<span v-html="highlightSearchTerms(ex.properties.abstract)" />
+						<span v-html="highlightSearchTerms(ex.properties.abstractText)" />
 						<span v-html="highlightSearchTerms(ex.properties.contentText)" />
 					</li>
 				</ul>
@@ -319,8 +319,8 @@ const docLink = computed(() =>
 );
 
 const formattedAbstract = computed(() => {
-	if (!doc.value || !doc.value.abstract) return '';
-	return highlightSearchTerms(doc.value.abstract);
+	if (!doc.value || !doc.value.abstractText) return '';
+	return highlightSearchTerms(doc.value.abstractText);
 });
 
 const doi = computed(() => getDocumentDoi(doc.value));

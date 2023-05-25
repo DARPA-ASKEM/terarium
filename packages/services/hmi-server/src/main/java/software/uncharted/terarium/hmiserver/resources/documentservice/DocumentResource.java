@@ -2,10 +2,13 @@ package software.uncharted.terarium.hmiserver.resources.documentservice;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import software.uncharted.terarium.hmiserver.models.documentservice.Document;
+import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxyV2;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.DocumentsResponseOK;
 import software.uncharted.terarium.hmiserver.resources.documentservice.responses.XDDResponse;
 import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentProxy;
@@ -13,6 +16,7 @@ import software.uncharted.terarium.hmiserver.proxies.documentservice.DocumentPro
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Optional;
 
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,6 +28,12 @@ public class DocumentResource {
 
 	@RestClient
 	DocumentProxy proxy;
+
+	@RestClient
+	DocumentProxyV2 proxyV2;
+
+	@ConfigProperty(name = "xdd.api_es_key")
+	Optional<String> devKey;
 
 	// NOTE: the query parameters match the proxy version and the type XDDSearchPayload
 	@GET
@@ -80,19 +90,43 @@ public class DocumentResource {
 				match = null;
 			}
 			try {
+
+
+				String apiKey = "";
+				if (devKey.isPresent())
+					apiKey = devKey.get();
+				else {
+					log.error("XDD API key missing. ES will fail.");
+					return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+				}
+
+
+
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, max, per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url);
+					min_published, max_published, pubname, publisher, additional_fields, match, null, github_url);
 
+
+				/*
+				XDDResponse<DocumentsResponseOK> doc = proxyV2.getDocuments(apiKey,
+					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, "500", per_page, dict, facets,
+					min_published, max_published, pubname, publisher, additional_fields, match, "askem_object", github_url);
+
+				 */
 
 				if (doc.getErrorMessage() != null) {
-					Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+					return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
 						.entity(doc.getErrorMessage())
 						.build();
 				}
 
 				if (doc.getSuccess() == null || doc.getSuccess().getData().isEmpty()) {
 					return Response.noContent().build();
+				}
+				for(Document d : doc.getSuccess().getData()) {
+					if(d.getKnownEntities() != null && d.getKnownEntities().getAskemObjects() != null) {
+						System.out.println(d.getKnownEntities().getAskemObjects().size());
+					}
 				}
 				return Response.status(Response.Status.OK).entity(doc).build();
 

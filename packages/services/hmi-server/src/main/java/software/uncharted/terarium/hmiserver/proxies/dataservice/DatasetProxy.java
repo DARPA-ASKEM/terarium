@@ -127,7 +127,6 @@ public interface DatasetProxy {
 	@Path("/{id}/file")
 	Response getCsv(
 		@PathParam("id") String id,
-		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
 		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
 	);
 

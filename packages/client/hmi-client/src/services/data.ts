@@ -455,7 +455,7 @@ const getRelatedDocuments = async (docid: string, dataset: string | null) => {
 			const documentsRaw = rawdata.data.map((a) => a.bibjson);
 			return documentsRaw.map((a) => ({
 				...a,
-				abstractText: a.abstract
+				abstractText: a.abstractText
 			}));
 		}
 	}
@@ -482,7 +482,7 @@ const getAutocomplete = async (searchTerm: string) => {
 const getDocumentById = async (docid: string): Promise<Document | null> => {
 	const searchParams: XDDSearchParams = {
 		docid,
-		known_entities: 'url_extractions,summaries'
+		known_entities: 'askem_object,url_extractions,summaries'
 	};
 	const xddRes: DocumentsResponseOK | undefined = await searchXDDDocuments('', searchParams);
 	if (xddRes) {

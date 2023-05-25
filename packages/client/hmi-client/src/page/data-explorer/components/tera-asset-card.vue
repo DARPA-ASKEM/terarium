@@ -10,7 +10,7 @@
 				{{ resourceType.toUpperCase() }}
 				<div
 					class="asset-filters"
-					v-if="resourceType === ResourceType.XDD && asset.relatedExtractions"
+					v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects"
 				>
 					<template
 						v-for="icon in [
@@ -51,7 +51,7 @@
 			<footer><!--pill tags if already in another project--></footer>
 		</main>
 		<aside class="preview-and-options">
-			<figure v-if="resourceType === ResourceType.XDD && asset.relatedExtractions">
+			<figure v-if="resourceType === ResourceType.XDD && asset.knownEntities?.askemObjects">
 				<template v-if="relatedAsset">
 					<img
 						v-if="relatedAsset.properties.image"
@@ -139,8 +139,8 @@ const chosenExtractionFilter = ref<XDDExtractionType | 'Asset'>('Asset');
 const urlExtractions = computed(() => {
 	const urls: UrlExtraction[] = [];
 
-	if (props.asset.relatedExtractions) {
-		const documentsWithUrls = props.asset.relatedExtractions.filter(
+	if (props.asset.knownEntities.askemObjects) {
+		const documentsWithUrls = props.asset.knownEntities.askemObjects.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Doc &&
 				ex.properties.documentBibjson.knownEntities != null &&
@@ -164,9 +164,9 @@ const urlExtractions = computed(() => {
 });
 
 const extractions: ComputedRef<UrlExtraction[] & Extraction[]> = computed(() => {
-	if (props.asset.relatedExtractions) {
+	if (props.asset.knownEntities.askemObjects) {
 		const allExtractions = [
-			...(props.asset.relatedExtractions as UrlExtraction[] & Extraction[]),
+			...(props.asset.knownEntities.askemObjects as UrlExtraction[] & Extraction[]),
 			...(urlExtractions.value as UrlExtraction[] & Extraction[])
 		];
 

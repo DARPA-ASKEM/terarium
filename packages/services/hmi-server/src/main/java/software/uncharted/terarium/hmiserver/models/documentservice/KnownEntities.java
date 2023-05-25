@@ -15,6 +15,9 @@ public class KnownEntities implements Serializable {
 	@JsonAlias("url_extractions")
 	private List<XDDUrlExtraction> urlExtractions;
 
+	@JsonAlias("askem_objects")
+	private List<Extraction> askemObjects;
+
 	private Map<String, Map<String, String>> summaries;
 
 

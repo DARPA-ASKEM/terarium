@@ -23,7 +23,7 @@ public class DocumentsResponseOK extends XDDResponseOK implements Serializable {
 
 	private String scrollId;
 
-	private Number hits;
+	private Object hits;
 
 	private Map<String, XDDFacetsItemResponse> facets;
 }

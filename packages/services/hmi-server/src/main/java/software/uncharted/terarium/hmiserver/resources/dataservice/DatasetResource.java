@@ -184,7 +184,6 @@ public class DatasetResource {
 	@Path("/{id}/files")
 	public Response getCsv(
 		@PathParam("id") final String id,
-		@DefaultValue("false") @QueryParam("wide_format") final Boolean wideFormat,
 		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit,
 		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
 	) {
@@ -193,7 +192,7 @@ public class DatasetResource {
 		Response returnResponse;
 		String rawCsvString;
 		try {
-			returnResponse = proxy.getCsv(id, wideFormat, rowLimit);
+			returnResponse = proxy.getCsv(id, rowLimit);
 			rawCsvString = returnResponse.readEntity(String.class);
 			if (rawCsvString.length() == 0){
 				log.debug("No CSV assosiated with this ID");
