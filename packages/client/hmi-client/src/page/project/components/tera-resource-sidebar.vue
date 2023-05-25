@@ -75,17 +75,21 @@
 					@click="emit('open-asset', tab)"
 				>
 					<span
-						:draggable="activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
-						@dragstart="startDrag(tab.assetId, tab.pageType)"
+						:draggable="
+							activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
+							(tab.pageType === ProjectAssetTypes.MODELS ||
+								tab.pageType === ProjectAssetTypes.DATASETS)
+						"
+						@dragstart="startDrag(tab)"
 						@dragend="endDrag"
-						:class="draggedAssetId === tab.assetId ? 'dragged-asset' : ''"
+						:class="isEqual(draggedAsset, tab) ? 'dragged-asset' : ''"
 					>
 						<vue-feather
 							v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
 							class="p-button-icon-left icon"
 							:type="getAssetIcon(tab.pageType ?? null)"
 							size="1rem"
-							stroke="rgb(16, 24, 40)"
+							:stroke="isEqual(draggedAsset, tab) ? 'white' : 'rgb(16, 24, 40)'"
 						/>
 						<component
 							v-else
@@ -144,7 +148,7 @@ const props = defineProps<{
 const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
 const isRemovalModal = ref(false);
-const draggedAssetId = ref('');
+const draggedAsset = ref<Tab | null>(null);
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -176,16 +180,18 @@ function removeAsset(asset = props.activeTab) {
 
 const { setDragData, deleteDragData } = useDragEvent();
 
-function startDrag(assetId?: string, assetType?: ProjectAssetTypes | ProjectPages) {
-	if (assetId && assetType) {
-		setDragData('initAssetNode', { assetId, assetType });
-		draggedAssetId.value = assetId;
+function startDrag(tab: Tab) {
+	const { assetId, pageType } = tab;
+	if (assetId && pageType) {
+		setDragData('initAssetNode', { assetId, assetType: pageType });
+		draggedAsset.value = tab;
 	}
+	console.log(draggedAsset.value, tab);
 }
 
 function endDrag() {
 	deleteDragData('assetNode');
-	draggedAssetId.value = '';
+	draggedAsset.value = null;
 }
 </script>
 
@@ -208,6 +214,10 @@ header {
 .dragged-asset {
 	background-color: var(--primary-color);
 	color: var(--gray-0);
+}
+
+.dragged-asset .icon {
+	fill: var(--gray-0);
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {
