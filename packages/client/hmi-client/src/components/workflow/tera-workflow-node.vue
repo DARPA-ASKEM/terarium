@@ -77,7 +77,6 @@ const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'port-m
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
-	minHeight: `${props.node.height}px`,
 	top: `${props.node.y}px`,
 	left: `${props.node.x}px`
 }));
@@ -211,7 +210,8 @@ header .p-button.p-button-text:enabled:hover {
 }
 
 section {
-	margin: 0.5rem;
+	margin-left: 1rem;
+	margin-right: 1rem;
 }
 
 section,

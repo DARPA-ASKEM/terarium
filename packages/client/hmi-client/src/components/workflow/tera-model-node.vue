@@ -1,6 +1,6 @@
 <template>
 	<!-- If no model is selected, show the dropdown selector -->
-	<h6 v-if="model">{{ selectedModel ? selectedModel.name : '-' }}</h6>
+	<h5 v-if="model">{{ selectedModel ? selectedModel.name : '-' }}</h5>
 	<Dropdown
 		v-else
 		class="w-full p-button-sm p-button-outlined"
@@ -133,6 +133,12 @@ li {
 	justify-content: space-between;
 	align-items: center;
 	width: 100%;
+}
+
+.node-title {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	padding-bottom: 0.5rem;
 }
 
 .p-button-sm.p-button-outlined {
