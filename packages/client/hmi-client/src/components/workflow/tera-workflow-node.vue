@@ -223,6 +223,7 @@ ul li {
 	display: flex;
 	gap: 4px;
 }
+
 .output-port-container {
 	flex-direction: row-reverse;
 }

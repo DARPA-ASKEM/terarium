@@ -2,7 +2,7 @@ import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { Model } from '@/types/Model';
 
 interface StringValueMap {
-	[key: string]: string;
+	[key: string]: number;
 }
 
 export const ModelOperation: Operation = {
