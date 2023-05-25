@@ -194,7 +194,7 @@ main {
 
 header {
 	display: flex;
-	padding: 0.25rem 0.5rem;
+	padding: 0.25rem 0.25rem 0.25rem 1rem;
 	justify-content: space-between;
 	align-items: center;
 	color: var(--gray-0);
@@ -237,10 +237,15 @@ ul li {
 .input-port-container,
 .output-port-container {
 	display: flex;
-	gap: 4px;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
 }
 .output-port-container {
 	flex-direction: row-reverse;
+	padding-left: 0.5rem;
+	padding-top: 0.25rem;
+	padding-bottom: 0.25rem;
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
 .output-port-container:hover {
@@ -248,8 +253,11 @@ ul li {
 	background-color: var(--surface-highlight);
 }
 
+.output-port-container[active='false'] {
+	color: var(--text-color-secondary);
+}
 .output-port-container[active='true'] {
-	color: var(--primary-color);
+	color: var(--text-color-primary);
 }
 
 .port {
