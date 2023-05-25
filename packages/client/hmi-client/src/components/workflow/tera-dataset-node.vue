@@ -1,5 +1,5 @@
 <template>
-	<section v-if="dataset">
+	<template v-if="dataset">
 		<h5>{{ dataset.name }}</h5>
 		<Accordion>
 			<AccordionTab header="Data preview">
@@ -17,21 +17,31 @@
 				</section>
 			</AccordionTab>
 		</Accordion>
-	</section>
+	</template>
+	<Dropdown
+		v-else
+		class="w-full"
+		:options="datasets"
+		option-label="name"
+		v-model="dataset"
+		placeholder="Select a dataset"
+	/>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { CsvAsset, Dataset } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { DatasetOperation } from './dataset-operation';
 
 const props = defineProps<{
-	datasetId: string;
+	datasetId: string | null;
+	datasets: Dataset[];
 }>();
 
 const emit = defineEmits(['append-output-port']);
@@ -41,15 +51,23 @@ const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
+watch(
+	() => dataset.value,
+	async () => {
+		if (dataset?.value?.id) {
+			rawContent.value = await downloadRawFile(dataset.value.id.toString(), 10);
+			emit('append-output-port', {
+				type: DatasetOperation.outputs[0].type,
+				label: dataset.value.name,
+				value: dataset.value.id
+			});
+		}
+	}
+);
+
 onMounted(async () => {
-	dataset.value = await getDataset(props.datasetId);
-	if (dataset.value) {
-		rawContent.value = await downloadRawFile(props.datasetId, 10);
-		emit('append-output-port', {
-			type: DatasetOperation.outputs[0].type,
-			label: dataset.value.name,
-			value: props.datasetId
-		});
+	if (props.datasetId) {
+		dataset.value = await getDataset(props.datasetId);
 	}
 });
 </script>

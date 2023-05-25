@@ -27,7 +27,8 @@
 			>
 				<template #body>
 					<tera-model-node
-						v-if="node.operationType === 'ModelOperation'"
+						v-if="node.operationType === 'ModelOperation' && models"
+						:models="models"
 						:model-id="
 							isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.model.id.toString()
 						"
@@ -40,8 +41,9 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset'"
-						:datasetId="isEmpty(node.outputs) ? newAssetId : node.outputs[0].value"
+						v-else-if="node.operationType === 'Dataset' && datasets"
+						:datasets="datasets"
+						:datasetId="isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.toString()"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
@@ -117,16 +119,18 @@ import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { /* IProject, */ ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { Dataset } from '@/types/Types';
+import { Model } from '@/types/Model';
 import { useDragEvent } from '@/services/drag-drop';
 import { isEmpty } from 'lodash';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
 // Will probably be used later to save the workflow in the project
-// const props = defineProps<{
-// 	project: IProject;
-// }>();
+const props = defineProps<{
+	project: IProject;
+}>();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
@@ -134,7 +138,7 @@ let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
-const newAssetId = ref('');
+const newAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.create());
@@ -151,6 +155,9 @@ const testOperation: Operation = {
 	action: () => {},
 	isRunnable: true
 };
+
+const models = computed<Model[]>(() => props.project.assets?.models ?? []);
+const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
@@ -186,6 +193,20 @@ const contextMenuItems = ref([
 		label: 'New operation',
 		command: () => {
 			workflowService.addNode(wf.value, testOperation, newNodePosition);
+		}
+	},
+	{
+		label: 'New model',
+		command: () => {
+			newAssetId.value = null;
+			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+		}
+	},
+	{
+		label: 'New dataset',
+		command: () => {
+			newAssetId.value = null;
+			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 		}
 	},
 	{

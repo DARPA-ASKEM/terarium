@@ -12,7 +12,7 @@ export const ModelOperation: Operation = {
 	inputs: [],
 	outputs: [{ type: 'modelConfig' }],
 	action: async (modelConfig: {
-		id: Model;
+		model: Model;
 		intialValues: StringValueMap;
 		parameterValues: StringValueMap;
 	}) => [{ type: 'modelConfig', value: modelConfig }]
