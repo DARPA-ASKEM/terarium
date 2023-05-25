@@ -186,7 +186,6 @@ function startDrag(tab: Tab) {
 		setDragData('initAssetNode', { assetId, assetType: pageType });
 		draggedAsset.value = tab;
 	}
-	console.log(draggedAsset.value, tab);
 }
 
 function endDrag() {

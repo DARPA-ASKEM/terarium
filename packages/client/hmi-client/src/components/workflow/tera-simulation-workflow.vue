@@ -29,9 +29,7 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:model-id="
-							isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.model.id.toString()
-						"
+						:model-id="node.outputs?.[0]?.value.model.id.toString() ?? newAssetId"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -43,7 +41,7 @@
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="isEmpty(node.outputs) ? newAssetId : node.outputs[0].value.toString()"
+						:datasetId="node.outputs?.[0]?.value.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
@@ -123,7 +121,6 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset } from '@/types/Types';
 import { Model } from '@/types/Model';
 import { useDragEvent } from '@/services/drag-drop';
-import { isEmpty } from 'lodash';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
