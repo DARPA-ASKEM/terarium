@@ -31,6 +31,7 @@
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset'"
@@ -96,7 +97,8 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection
+	WorkflowDirection,
+	WorkflowOperationTypes
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
@@ -133,7 +135,7 @@ const isMouseOverCanvas = ref<boolean>(false);
 let isMouseOverPort: boolean = false;
 
 const testOperation: Operation = {
-	name: 'Test operation',
+	name: WorkflowOperationTypes.TEST,
 	description: 'A test operation',
 	inputs: [
 		{ type: 'number', label: 'Number input' },
