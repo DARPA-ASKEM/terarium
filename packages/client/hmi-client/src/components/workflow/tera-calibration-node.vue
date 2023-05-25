@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
-import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { makeCalibrateJob, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
@@ -92,9 +92,9 @@ const startCalibration = async () => {
 
 const getCalibrationStatus = async () => {
 	console.log('Getting status of run');
-	const results = await getRunStatus(Number(runId.value));
+	// const results = await getRunStatus(Number(runId.value));
 	console.log('Done');
-	console.log(results);
+	// console.log(results);
 };
 
 const getCalibrationResults = async () => {
