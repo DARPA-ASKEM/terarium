@@ -23,7 +23,7 @@
 			</tera-asset-nav>
 		</template>
 		<template v-if="calibrationView === CalibrationView.INPUT && modelConfig">
-			<tera-model-diagram :model="modelConfig.model" is-editable />
+			<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
 			<!-- @update-model-content="updateModelContent" -->
 			<tera-model-configuration :model="modelConfig.model" />
 		</template>

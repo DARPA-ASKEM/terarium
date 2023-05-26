@@ -61,106 +61,110 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<template v-if="modelView === ModelView.DESCRIPTION">
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab>
-					<template #header>
-						<header id="Description">Description</header>
-					</template>
-					<p v-if="assetId !== ''" v-html="description" />
-					<template v-else>
-						<label for="placeholder" /><Textarea
-							v-model="newDescription"
-							rows="5"
-							placeholder="Description of new model"
-						/>
-					</template>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="Parameters">Parameters</header>
-					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.parameters">
-						<Column field="id" header="ID"></Column>
-						<Column field="value" header="Value"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="State variables">State variables</header>
-					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.states">
-						<Column field="id" header="ID"></Column>
-						<Column field="name" header="Name"></Column>
-						<Column field="grounding.context" header="Context"></Column>
-						<Column field="grounding.identifiers" header="Identifiers"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="Transitions">Transitions</header>
-					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.transitions">
-						<Column field="id" header="ID"></Column>
-						<Column field="properties.name" header="Name"></Column>
-						<Column field="input" header="Input"></Column>
-						<Column field="output" header="Output"></Column>
-						<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
-						<Column field="properties.rate.expression_mathml" header="Equation">
-							<template #body="slotProps">
-								<katex-element :expression="slotProps.data.properties.rate?.expression" />
-							</template>
-						</Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="Variable Statements">Variable Statements</header>
-					</template>
-					<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
-						<Column field="id" header="ID"></Column>
-						<Column field="variable.name" header="Variable"></Column>
-						<Column field="value.value" header="Value"></Column>
-						<Column header="Extraction Type">
-							<template #body="slotProps">
-								<Tag :value="getExtractionType(slotProps)" />
-							</template>
-						</Column>
-						<Column header="Source">
-							<template #body="slotProps">
-								<div>{{ getSource(slotProps) }}</div>
-							</template>
-						</Column>
-						<Column field="variable.equations ?? ''" header="Equations"></Column>
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</template>
-		<template v-if="modelView === ModelView.MODEL">
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab header="Model diagram">
-					<tera-model-diagram
-						:model="model"
-						:is-editable="props.isEditable"
-						@update-model-content="updateModelContent"
+		<Accordion
+			v-if="modelView === ModelView.DESCRIPTION"
+			:multiple="true"
+			:active-index="[0, 1, 2, 3, 4]"
+		>
+			<AccordionTab>
+				<template #header>
+					<header id="Description">Description</header>
+				</template>
+				<p v-if="assetId !== ''" v-html="description" />
+				<template v-else>
+					<label for="placeholder" /><Textarea
+						v-model="newDescription"
+						rows="5"
+						placeholder="Description of new model"
 					/>
-				</AccordionTab>
-				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration :model="model" :amr="amr" />
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-					<DataTable :value="relatedTerariumModels">
-						<Column field="name" header="Models"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDatasets">
-						<Column field="name" header="Datasets"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Documents"></Column>
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</template>
+				</template>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="Parameters">Parameters</header>
+				</template>
+				<DataTable class="p-datatable-sm" :value="amr?.model.parameters">
+					<Column field="id" header="ID"></Column>
+					<Column field="value" header="Value"></Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="State variables">State variables</header>
+				</template>
+				<DataTable class="p-datatable-sm" :value="amr?.model.states">
+					<Column field="id" header="ID"></Column>
+					<Column field="name" header="Name"></Column>
+					<Column field="grounding.context" header="Context"></Column>
+					<Column field="grounding.identifiers" header="Identifiers"></Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="Transitions">Transitions</header>
+				</template>
+				<DataTable class="p-datatable-sm" :value="amr?.model.transitions">
+					<Column field="id" header="ID"></Column>
+					<Column field="properties.name" header="Name"></Column>
+					<Column field="input" header="Input"></Column>
+					<Column field="output" header="Output"></Column>
+					<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
+					<Column field="properties.rate.expression_mathml" header="Equation">
+						<template #body="slotProps">
+							<katex-element :expression="slotProps.data.properties.rate?.expression" />
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="Variable Statements">Variable Statements</header>
+				</template>
+				<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
+					<Column field="id" header="ID"></Column>
+					<Column field="variable.name" header="Variable"></Column>
+					<Column field="value.value" header="Value"></Column>
+					<Column header="Extraction Type">
+						<template #body="slotProps">
+							<Tag :value="getExtractionType(slotProps)" />
+						</template>
+					</Column>
+					<Column header="Source">
+						<template #body="slotProps">
+							<div>{{ getSource(slotProps) }}</div>
+						</template>
+					</Column>
+					<Column field="variable.equations ?? ''" header="Equations"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
+		<Accordion
+			v-else-if="modelView === ModelView.MODEL"
+			:multiple="true"
+			:active-index="[0, 1, 2, 3, 4]"
+		>
+			<AccordionTab header="Model diagram">
+				<tera-model-diagram
+					:model="model"
+					:is-editable="props.isEditable"
+					@update-model-content="updateModelContent"
+				/>
+			</AccordionTab>
+			<AccordionTab v-if="model" header="Model configurations">
+				<tera-model-configuration :model="model" :amr="amr" />
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
 		<Teleport to="body">
 			<ForecastLauncher
 				v-if="showForecastLauncher && model"
