@@ -1,88 +1,86 @@
 <template>
-	<section class="model_diagram">
-		<TeraResizablePanel>
-			<div ref="splitterContainer" class="splitter-container">
-				<Splitter :gutterSize="5" :layout="layout">
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="equationPanelSize"
-						:minSize="equationPanelMinSize"
-						:maxSize="equationPanelMaxSize"
-					>
-						<section class="graph-element">
-							<Toolbar>
-								<template #start>
+	<TeraResizablePanel>
+		<div ref="splitterContainer" class="splitter-container">
+			<Splitter :gutterSize="5" :layout="layout">
+				<SplitterPanel
+					class="tera-split-panel"
+					:size="equationPanelSize"
+					:minSize="equationPanelMinSize"
+					:maxSize="equationPanelMaxSize"
+				>
+					<section class="graph-element">
+						<Toolbar>
+							<template #start>
+								<Button
+									@click="resetZoom"
+									label="Reset zoom"
+									class="p-button-sm p-button-outlined toolbar-button"
+								/>
+							</template>
+							<template #center>
+								<span class="toolbar-subgroup">
 									<Button
-										@click="resetZoom"
-										label="Reset zoom"
+										v-if="isEditing"
+										@click="addState"
+										label="Add state"
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
-								</template>
-								<template #center>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="addState"
-											label="Add state"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											v-if="isEditing"
-											@click="addTransition"
-											label="Add transition"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-									</span>
-								</template>
-								<template #end>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											:class="
-												isEditing
-													? 'p-button-sm toolbar-button-saveModel'
-													: 'p-button-sm p-button-outlined toolbar-button'
-											"
-										/>
-									</span>
-								</template>
-							</Toolbar>
-							<div v-if="model" ref="graphElement" class="graph-element" />
-							<ContextMenu ref="menu" :model="contextMenuItems" />
-						</section>
-					</SplitterPanel>
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="mathPanelSize"
-						:minSize="mathPanelMinSize"
-						:maxSize="mathPanelMaxSize"
-					>
-						<section class="math-editor-container" :class="mathEditorSelected">
-							<tera-math-editor
-								:is-editable="isEditable"
-								:latex-equation="equationLatex"
-								:is-editing-eq="isEditingEQ"
-								:is-math-ml-valid="isMathMLValid"
-								:math-mode="MathEditorModes.LIVE"
-								@cancel-editing="cancelEditng"
-								@equation-updated="setNewLatexFormula"
-								@validate-mathml="validateMathML"
-								@set-editing="isEditingEQ = true"
-							>
-							</tera-math-editor>
-						</section>
-					</SplitterPanel>
-				</Splitter>
-			</div>
-		</TeraResizablePanel>
-	</section>
+									<Button
+										v-if="isEditing"
+										@click="addTransition"
+										label="Add transition"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+								</span>
+							</template>
+							<template #end>
+								<span class="toolbar-subgroup">
+									<Button
+										v-if="isEditing"
+										@click="cancelEdit"
+										label="Cancel"
+										class="p-button-sm p-button-outlined toolbar-button"
+									/>
+									<Button
+										@click="toggleEditMode"
+										:label="isEditing ? 'Save model' : 'Edit model'"
+										:class="
+											isEditing
+												? 'p-button-sm toolbar-button-saveModel'
+												: 'p-button-sm p-button-outlined toolbar-button'
+										"
+									/>
+								</span>
+							</template>
+						</Toolbar>
+						<div v-if="model" ref="graphElement" class="graph-element" />
+						<ContextMenu ref="menu" :model="contextMenuItems" />
+					</section>
+				</SplitterPanel>
+				<SplitterPanel
+					class="tera-split-panel"
+					:size="mathPanelSize"
+					:minSize="mathPanelMinSize"
+					:maxSize="mathPanelMaxSize"
+				>
+					<section class="math-editor-container" :class="mathEditorSelected">
+						<tera-math-editor
+							:is-editable="isEditable"
+							:latex-equation="equationLatex"
+							:is-editing-eq="isEditingEQ"
+							:is-math-ml-valid="isMathMLValid"
+							:math-mode="MathEditorModes.LIVE"
+							@cancel-editing="cancelEditng"
+							@equation-updated="setNewLatexFormula"
+							@validate-mathml="validateMathML"
+							@set-editing="isEditingEQ = true"
+						>
+						</tera-math-editor>
+					</section>
+				</SplitterPanel>
+			</Splitter>
+		</div>
+	</TeraResizablePanel>
 </template>
 
 <script setup lang="ts">
@@ -571,11 +569,6 @@ section math-editor {
 .math-editor-error {
 	border: 4px solid var(--surface-border-warning);
 	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-
-.model_diagram {
-	display: flex;
-	height: 100%;
 }
 
 .p-splitter {

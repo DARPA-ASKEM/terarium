@@ -1,5 +1,32 @@
 <template>
-	<tera-asset :name="'CALIBRATION NAME HERE'" :is-editable="false">
+	<tera-asset :name="'Calibrate'" :is-editable="false" stretch-content>
+		<template #nav>
+			<tera-asset-nav :show-header-links="false">
+				<template #viewing-mode>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Input"
+							icon="pi pi-sign-in"
+							@click="calibrationView = CalibrationView.INPUT"
+							:active="calibrationView === CalibrationView.INPUT"
+						/>
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Output"
+							icon="pi pi-sign-out"
+							@click="calibrationView = CalibrationView.OUTPUT"
+							:active="calibrationView === CalibrationView.OUTPUT"
+						/>
+					</span>
+				</template>
+			</tera-asset-nav>
+		</template>
+		<template v-if="calibrationView === CalibrationView.INPUT && modelConfig">
+			<tera-model-diagram :model="modelConfig.model" is-editable />
+			<!-- @update-model-content="updateModelContent" -->
+			<tera-model-configuration :model="modelConfig.model" />
+		</template>
 		<Dropdown
 			placeholder="Timestep Column Name"
 			class="p-button dropdown-button"
@@ -49,14 +76,23 @@ import { downloadRawFile } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
+import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
+
+enum CalibrationView {
+	INPUT = 'input',
+	OUTPUT = 'output'
+}
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
 const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
-const runId = ref(props.node.outputs[0].value as number | undefined);
+const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
@@ -65,22 +101,21 @@ const modelColumnNames = computed(() =>
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
 const featureMap = computed(() => modelColumnNames.value.map((stateName) => ['', stateName]));
+const calibrationView = ref(CalibrationView.INPUT);
 
 const startCalibration = async () => {
 	// Make calibration job.
 	// FIXME: current need to strip out metadata, should do serverside
-	const cleanedModel: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
+
 	if (modelConfig.value) {
+		const { S, T, I, O } = modelConfig.value.model.content;
 		// Take out all the extra content in model.content
-		cleanedModel.S = modelConfig.value.model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = modelConfig.value.model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = modelConfig.value.model.content.I;
-		cleanedModel.O = modelConfig.value.model.content.O;
+		const cleanedModel: PetriNet = {
+			S: S.map((s) => ({ sname: s.sname })),
+			T: T.map((t) => ({ tname: t.tname })),
+			I,
+			O
+		};
 
 		if (featureMap.value) {
 			const featureObject: { [index: string]: string } = {};
@@ -98,9 +133,11 @@ const startCalibration = async () => {
 				feature_mappings: featureObject,
 				dataset: datasetValue.value
 			};
-			console.log(calibrationParam);
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
+
+			console.table(calibrationParam);
+			console.log(results);
 		}
 	}
 };

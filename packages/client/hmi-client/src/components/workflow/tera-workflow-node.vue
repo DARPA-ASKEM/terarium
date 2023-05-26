@@ -61,7 +61,13 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import {
+	Position,
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowDirection,
+	WorkflowOperationTypes
+} from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
@@ -128,15 +134,18 @@ onMounted(() => {
 });
 
 function showNodeDrilldown() {
-	if (!isEmpty(props.node.outputs)) {
-		let pageType;
-		let assetId;
+	if (
+		!isEmpty(props.node.outputs) ||
+		props.node.operationType === WorkflowOperationTypes.CALIBRATION
+	) {
+		let pageType: ProjectAssetTypes | null = null;
+		let assetId: string | null = null;
 		switch (props.node.operationType) {
-			case 'ModelOperation':
+			case WorkflowOperationTypes.MODEL:
 				pageType = ProjectAssetTypes.MODELS;
 				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
 				break;
-			case 'Dataset':
+			case WorkflowOperationTypes.DATASET:
 				pageType = ProjectAssetTypes.DATASETS;
 				assetId = props.node.outputs[0].value.toString();
 				break;
