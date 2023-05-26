@@ -83,6 +83,12 @@ span {
 
 .p-button-sm.p-button-outlined {
 	border: 1px solid var(--surface-border);
+	padding-top: 0rem;
+	padding-bottom: 0rem;
+}
+
+.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
+	padding: 0.5rem;
 }
 .p-button-sm.p-button-outlined:hover {
 	border: 1px solid var(--surface-border-hover);

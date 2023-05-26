@@ -1,4 +1,17 @@
 <template>
+	<toolbar>
+		<h5>Workflow name</h5>
+		<div class="button-group">
+			<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
+			<Dropdown
+				icon="pi pi-plus"
+				class="primary-dropdown"
+				option-label="label"
+				:options="contextMenuItems"
+				placeholder="Add component"
+			/>
+		</div>
+	</toolbar>
 	<tera-infinite-canvas
 		debug-mode
 		@click="onCanvasClick()"
@@ -119,6 +132,7 @@ import { CalibrationOperation } from '@/components/workflow/calibrate-operation'
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
@@ -191,33 +205,33 @@ const testNode = (node: WorkflowNode) => {
 
 const contextMenuItems = ref([
 	{
-		label: 'New operation',
+		label: 'Test operation',
 		command: () => {
 			workflowService.addNode(wf.value, testOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New model',
+		label: 'Model',
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New dataset',
+		label: 'Dataset',
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New calibration',
+		label: 'Calibrate',
 		command: () => {
 			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New simulation',
+		label: 'Simulate',
 		command: () => {
 			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
 				width: 420,
@@ -385,4 +399,53 @@ onMounted(() => {
 onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 });
+
+function cleanUpLayout() {
+	// TODO: remove clean up layout
+	console.log('clean up layout');
+}
 </script>
+<style scoped>
+toolbar {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	background-color: var(--surface-0);
+	padding: 0.5rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
+	z-index: 1000;
+}
+
+.button-group {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+/* We should make a proper secondary outline button. Until then this works. */
+toolbar .button-group .secondary-button {
+	color: var(--text-color-secondary);
+	border: 1px solid var(--surface-border-light);
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+toolbar .button-group .secondary-button:hover {
+	color: var(--text-color-secondary) !important;
+	background-color: var(--surface-highlight) !important;
+}
+
+toolbar .button-group .primary-dropdown {
+	background-color: var(--primary-color);
+	border: 1px solid var(--primary-color);
+}
+toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
+toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
+	color: var(--surface-0);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+</style>

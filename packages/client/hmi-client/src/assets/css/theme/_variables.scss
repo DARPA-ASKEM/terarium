@@ -20,6 +20,7 @@ $overlayColor: #000000 !default;
 
 $primaryColorRGB: 45, 142, 45;
 $primaryColor: #1B8073;
+$primaryColorHover: #198c7d;
 $primaryColorLighter: #bceae4;
 $primaryColorLight: #86d3c9;
 $primaryColorDark: #166359;
@@ -886,6 +887,7 @@ $petri-inputBox: var(--gray-300);
 	--inline-spacing: #{$inlineSpacing};
 	--maskbg: #{$maskBg};
 	--primary-color: #{$primaryColor};
+	--primary-color-hover: #{$primaryColorHover};
 	--primary-color-dark: #{$primaryColorDark};
 	--primary-color-lighter: #{$primaryColorLighter};
 	--primary-color-light: #{$primaryColorLight};
@@ -931,4 +933,6 @@ $petri-inputBox: var(--gray-300);
 	--petri-lineColor: #{$petri-lineColor};
 	--petri-inputBox: #{$petri-inputBox};
 	--port-base-size: 8px;
+	--overlayMenuShadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+	--overlayMenuShadowHover: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 8px 0 rgba(0, 0, 0, 0.3);
 }

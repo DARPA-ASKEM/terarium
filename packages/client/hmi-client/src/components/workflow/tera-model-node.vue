@@ -162,4 +162,8 @@ li {
 	font-size: 1rem;
 	margin-left: 1rem;
 }
+
+.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
+	padding: 0.5rem;
+}
 </style>

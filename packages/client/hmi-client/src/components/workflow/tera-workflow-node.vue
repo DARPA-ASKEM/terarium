@@ -166,13 +166,13 @@ onBeforeUnmount(() => {
 
 function removeNode() {
 	// TODO: remove node
-	console.log('remove node');
+	// console.log('remove node');
 }
 function bringToFront() {
 	// TODO: bring to front
 	// maybe there can be a z-index variable in the parent component
 	// and we can just increment it here, and add a z-index style to the node
-	console.log('bring to front');
+	// console.log('bring to front');
 }
 
 /*
@@ -180,9 +180,9 @@ function bringToFront() {
  */
 const nodeMenu = ref();
 const nodeMenuItems = ref([
-	{ label: 'Open side panel', command: showNodeDrilldown },
-	{ label: 'Remove', command: removeNode },
-	{ label: 'Bring to front', command: bringToFront }
+	{ icon: 'pi pi-sign-in', label: 'Show in side panel', command: showNodeDrilldown },
+	{ icon: 'pi pi-clone', label: 'Bring to front', command: bringToFront },
+	{ icon: 'pi pi-trash', label: 'Remove', command: removeNode }
 ]);
 const toggleNodeMenu = (event) => {
 	nodeMenu.value.toggle(event);
@@ -200,6 +200,9 @@ main {
 	box-shadow: var(--overlayMenuShadow);
 }
 
+main:hover {
+	box-shadow: var(--overlayMenuShadowHover);
+}
 header {
 	display: flex;
 	padding: 0.25rem 0.25rem 0.25rem 1rem;
@@ -210,6 +213,10 @@ header {
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
+}
+header:hover {
+	background-color: var(--primary-color-hover);
+	cursor: move;
 }
 
 header .p-button.p-button-icon-only,
