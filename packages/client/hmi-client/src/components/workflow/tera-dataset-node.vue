@@ -1,22 +1,20 @@
 <template>
 	<template v-if="dataset">
 		<h5>{{ dataset.name }}</h5>
-		<Accordion>
-			<AccordionTab header="Data preview">
-				<section v-if="csvContent">
-					<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
-					<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
-						<Column
-							v-for="(colName, index) of csvHeaders"
-							:key="index"
-							:field="index.toString()"
-							:header="colName"
-						/>
-					</DataTable>
-					<span>Showing first 5 rows</span>
-				</section>
-			</AccordionTab>
-		</Accordion>
+
+		<!-- display the data preview ** THIS ISN'T WORKING -->
+		<section v-if="csvContent">
+			<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
+			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
+				<Column
+					v-for="(colName, index) of csvHeaders"
+					:key="index"
+					:field="index.toString()"
+					:header="colName"
+				/>
+			</DataTable>
+			<span>Showing first 5 rows</span>
+		</section>
 	</template>
 	<Dropdown
 		v-else

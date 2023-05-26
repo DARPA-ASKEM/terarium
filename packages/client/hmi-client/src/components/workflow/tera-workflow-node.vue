@@ -197,6 +197,7 @@ main {
 	position: absolute;
 	width: 20rem;
 	user-select: none;
+	box-shadow: var(--overlayMenuShadow);
 }
 
 header {

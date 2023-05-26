@@ -51,6 +51,9 @@ let currentTransform: d3.ZoomTransform;
 
 const width = ref(0);
 const height = ref(0);
+const dashArrayYOffset = ref(0);
+const dashArrayGapSize = ref(0);
+const dashArrayStrokeWidth = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
@@ -62,6 +65,10 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 	d3.select(dataLayerRef.value as HTMLDivElement)
 		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
 		.style('transform-origin', '0 0');
+
+	dashArrayYOffset.value = e.transform.y * -1;
+	dashArrayGapSize.value = d3.scaleLog().domain([0.1, 10]).range([10, 40])(e.transform.k);
+	dashArrayStrokeWidth.value = d3.scaleLog().domain([0.1, 10]).range([2, 6])(e.transform.k);
 
 	if (props.debugMode) {
 		gX.call(xAxis.scale(e.transform.rescaleX(x)));
@@ -92,7 +99,7 @@ function updateDimensions() {
 			.range([-1, height.value + 1]);
 		xAxis = d3
 			.axisBottom(x)
-			.ticks(((width.value + 2) / (height.value + 2)) * 10)
+			.ticks(((width.value + 2) / (height.value + 2)) * 20)
 			.tickSize(height.value)
 			.tickPadding(8 - height.value);
 		yAxis = d3
@@ -169,9 +176,19 @@ main > * {
 
 .background-layer:deep(.tick line) {
 	color: var(--surface-border-light);
+	stroke-dasharray: 1px v-bind(dashArrayGapSize);
+	stroke-dashoffset: v-bind(dashArrayYOffset);
+	stroke-width: v-bind(dashArrayStrokeWidth);
+	stroke-linecap: round;
+	mix-blend-mode: darken;
 }
+
+.background-layer:deep(.axis.axis--y),
 .background-layer:deep(.tick text) {
-	color: transparent;
+	display: none;
+}
+.background-layer:deep(.axis.axis--x path) {
+	display: contents;
 }
 
 svg:active {

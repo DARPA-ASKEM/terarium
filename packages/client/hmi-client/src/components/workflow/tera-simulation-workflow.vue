@@ -76,7 +76,6 @@
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 				stroke="#1B8073"
-				stroke-dasharray="2"
 				stroke-width="2"
 				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
