@@ -84,6 +84,7 @@ const chartOptions = {
 
 const runSimulate = async () => {
 	const port = props.node.inputs[0];
+
 	if (port && port.value) {
 		const payload = {
 			model: shimPetriModel(port.value.model),

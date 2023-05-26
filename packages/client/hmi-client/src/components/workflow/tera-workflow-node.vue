@@ -240,6 +240,7 @@ ul li {
 	gap: 0.5rem;
 	margin-bottom: 0.5rem;
 }
+
 .output-port-container {
 	flex-direction: row-reverse;
 	padding-left: 0.5rem;
