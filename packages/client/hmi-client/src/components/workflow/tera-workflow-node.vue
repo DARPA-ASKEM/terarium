@@ -168,6 +168,12 @@ function removeNode() {
 	// TODO: remove node
 	console.log('remove node');
 }
+function bringToFront() {
+	// TODO: bring to front
+	// maybe there can be a z-index variable in the parent component
+	// and we can just increment it here, and add a z-index style to the node
+	console.log('bring to front');
+}
 
 /*
  * User Menu
@@ -175,7 +181,8 @@ function removeNode() {
 const nodeMenu = ref();
 const nodeMenuItems = ref([
 	{ label: 'Open side panel', command: showNodeDrilldown },
-	{ label: 'Remove', command: removeNode }
+	{ label: 'Remove', command: removeNode },
+	{ label: 'Bring to front', command: bringToFront }
 ]);
 const toggleNodeMenu = (event) => {
 	nodeMenu.value.toggle(event);
@@ -219,11 +226,10 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	gap: 0.5rem;
 }
 
 ul {
-	margin: 0.5rem 0;
+	margin: 0.25rem 0;
 	list-style: none;
 	font-size: var(--font-caption);
 }
@@ -234,18 +240,22 @@ ul li {
 	align-items: center;
 }
 
-.input-port-container,
-.output-port-container {
+.input-port-container {
 	display: flex;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	padding-right: 0.5rem;
 	gap: 0.5rem;
-	margin-bottom: 0.5rem;
 }
 
 .output-port-container {
+	display: flex;
+	gap: 0.5rem;
+	margin-left: 0.5rem;
 	flex-direction: row-reverse;
-	padding-left: 0.5rem;
-	padding-top: 0.25rem;
-	padding-bottom: 0.25rem;
+	padding-left: 0.75rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
@@ -288,7 +298,7 @@ ul li {
 }
 
 .port:hover {
-	background: var(--surface-border);
+	background: var(--primary-color);
 }
 
 .inputs .port {

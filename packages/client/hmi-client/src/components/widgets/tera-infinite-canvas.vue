@@ -164,6 +164,7 @@ main > * {
 
 .background-layer {
 	cursor: grab;
+	background-color: var(--surface-0);
 }
 
 .background-layer:deep(.tick line) {
