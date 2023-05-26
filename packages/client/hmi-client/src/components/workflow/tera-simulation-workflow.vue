@@ -83,6 +83,19 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
+			<marker
+				id="smallArrow"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="12"
+				markerHeight="12"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
@@ -100,7 +113,7 @@
 				stroke="#1B8073"
 				stroke-width="2"
 				marker-start="url(#circle)"
-				marker-mid="url(#arrow)"
+				marker-mid="url(#smallArrow)"
 				:key="index"
 				fill="none"
 			/>

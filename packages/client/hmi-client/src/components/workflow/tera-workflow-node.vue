@@ -324,7 +324,7 @@ ul li {
 }
 
 .port-connected {
-	background: var(--surface-border);
+	background: var(--surface-0);
 }
 
 .port-connected .port {
