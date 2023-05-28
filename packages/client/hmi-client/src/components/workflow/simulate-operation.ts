@@ -4,7 +4,7 @@ export const SimulateOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE,
 	description: 'given a model id, and configuration id, run a simulation',
 	inputs: [{ type: 'modelConfig' }],
-	outputs: [],
+	outputs: [{ type: 'simOutput' }],
 	isRunnable: true,
 
 	// TODO: Figure out mapping

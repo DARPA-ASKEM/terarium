@@ -3,13 +3,19 @@
 		<Button @click="runSimulate()">Run</Button>
 		<div class="chart-container">
 			<SimulateChart
-				v-for="index in numCharts"
+				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
 				:run-results="runResults"
 				:run-id-list="completedRunIdList"
+				:chart-idx="index"
 			/>
 		</div>
-		<Button text @click="numCharts++" label="Add Chart" icon="pi pi-plus"></Button>
+		<Button
+			text
+			@click="openedWorkflowNodeStore.appendChart"
+			label="Add Chart"
+			icon="pi pi-plus"
+		></Button>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -25,14 +31,17 @@ import { shimPetriModel } from '@/services/models/petri-shim';
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import SimulateChart from './tera-simulate-chart.vue';
+import { SimulateOperation } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+const emit = defineEmits(['append-output-port']);
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
-const numCharts = ref(1);
 
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
@@ -110,6 +119,16 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		})
 	);
 	runResults.value = newRunResults;
+
+	const port = props.node.inputs[0];
+	emit('append-output-port', {
+		type: SimulateOperation.outputs[0].type,
+		label: `${port.label} Results`,
+		value: {
+			runResults: runResults.value,
+			runIdList
+		}
+	});
 };
 watch(() => completedRunIdList.value, watchCompletedRunList);
 </script>

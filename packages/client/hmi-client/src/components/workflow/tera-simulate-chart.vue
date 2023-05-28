@@ -2,7 +2,8 @@
 	<div class="simulate-chart">
 		<div class="multiselect-title">Select variables to plot</div>
 		<MultiSelect
-			v-model="selectedVariable"
+			v-if="openedWorkflowNodeStore.chartConfigs[props.chartIdx]"
+			v-model="openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable"
 			:options="stateVariablesList"
 			optionLabel="code"
 			placeholder="Select a State Variable"
@@ -10,7 +11,7 @@
 			<template v-slot:value>
 				<span
 					class="selected-label-item"
-					v-for="variable in selectedVariable"
+					v-for="variable in openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable"
 					:key="variable.code"
 					:style="{ background: getVariableColor(variable.code) }"
 				>
@@ -18,6 +19,7 @@
 				</span>
 			</template>
 		</MultiSelect>
+		<MultiSelect v-else placeholder="No Data" :disabled="true" />
 		<Chart type="line" :data="chartData" :options="CHART_OPTIONS" />
 	</div>
 </template>
@@ -28,6 +30,8 @@ import { isEmpty } from 'lodash';
 
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
+
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 
 type DatasetType = {
 	data: number[];
@@ -74,13 +78,13 @@ const CHART_OPTIONS = {
 const props = defineProps<{
 	runResults: any;
 	runIdList: any;
+	chartIdx: number;
 }>();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 // data for rendering ui
 let stateVariablesList: { code: string }[] = [];
-const selectedVariable = ref<{ code: string }[]>([]);
 let runList = [] as any[];
-const selectedRun = ref<null | { code: string }>(null);
 const chartData = ref({});
 
 const getVariableColor = (variableCode: string) => {
@@ -101,8 +105,9 @@ const getVariableColor = (variableCode: string) => {
 		'#481c6e',
 		'#440154'
 	];
-	const codeIdx = selectedVariable.value.findIndex(({ code }) => code === variableCode);
-	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.value.length) * VIRIDIS_14.length)];
+	const { selectedVariable } = openedWorkflowNodeStore.chartConfigs[props.chartIdx];
+	const codeIdx = selectedVariable.findIndex(({ code }) => code === variableCode);
+	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
 };
 
 const watchRunResults = async (runResults) => {
@@ -118,9 +123,14 @@ const watchRunResults = async (runResults) => {
 			.filter((key) => key !== 'timestep')
 			.map((key) => ({ code: key }));
 	}
-	selectedVariable.value = [stateVariablesList[0]];
+
 	runList = runIdList.map((runId, index) => ({ code: runId, index }));
-	selectedRun.value = runList[0];
+	if (!openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
+		openedWorkflowNodeStore.setChartConfig(props.chartIdx, {
+			selectedVariable: [stateVariablesList[0]],
+			selectedRun: runList[0]
+		});
+	}
 };
 watch(() => props.runResults, watchRunResults, { immediate: true });
 
@@ -132,7 +142,7 @@ const renderGraph = () => {
 	}
 
 	const datasets: DatasetType[] = [];
-	selectedVariable.value.forEach(({ code }) =>
+	openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable.forEach(({ code }) =>
 		runIdList
 			.map((runId) => runResults[runId])
 			.forEach((run, runIdx) => {
@@ -153,7 +163,10 @@ const renderGraph = () => {
 		datasets
 	};
 };
-watch(() => [selectedVariable.value, selectedRun.value], renderGraph, { immediate: true });
+watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx], renderGraph, {
+	immediate: true,
+	deep: true
+});
 </script>
 
 <style scoped>

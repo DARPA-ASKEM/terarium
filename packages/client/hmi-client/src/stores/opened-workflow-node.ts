@@ -15,9 +15,13 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		// model node
 		initialValues: null as StringValueMap[] | null,
 		parameterValues: null as StringValueMap[] | null,
-		node: null as WorkflowNode | null
+		node: null as WorkflowNode | null,
+		// simulate node
+		numCharts: 1,
+		chartConfigs: [] as any[]
 	}),
 	actions: {
+		// model node
 		setDrilldown(
 			assetId: string | null,
 			pageType: ProjectAssetTypes | null,
@@ -30,6 +34,16 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		setModelConfig(initialValues: StringValueMap[], parameterValues: StringValueMap[]) {
 			this.initialValues = initialValues;
 			this.parameterValues = parameterValues;
+		},
+		// simulate node
+		appendChart() {
+			this.numCharts++;
+		},
+		setChartConfig(chartIdx: number, chartConfig) {
+			this.chartConfigs[chartIdx] = {
+				...this.chartConfigs[chartIdx],
+				...chartConfig
+			};
 		}
 	}
 });

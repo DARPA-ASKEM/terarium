@@ -54,6 +54,10 @@
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
 					:node="openedWorkflowNodeStore.node"
 				/>
+				<tera-simulate
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.SIMULATE"
+					:node="openedWorkflowNodeStore.node"
+				/>
 				<tera-project-page
 					v-else
 					:project="project"
@@ -229,6 +233,7 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
