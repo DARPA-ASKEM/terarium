@@ -1,11 +1,11 @@
-import { WorkflowPort, Operation } from '@/types/workflow';
+import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { CalibrationParams } from '@/types/Types';
 import { calibrationParamExample } from '@/temp/calibrationExample';
 import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 
 export const CalibrationOperation: Operation = {
-	name: 'CalibrationOperation',
+	name: WorkflowOperationTypes.CALIBRATION,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [{ type: 'modelConfig' }, { type: 'dataset' }],

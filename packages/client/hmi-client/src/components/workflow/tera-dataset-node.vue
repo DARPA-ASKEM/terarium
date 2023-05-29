@@ -1,13 +1,6 @@
 <template>
-	<section>
-		<Dropdown
-			class="w-full"
-			:options="datasets"
-			option-label="name"
-			v-model="selectedDataset"
-			placeholder="Select a dataset"
-		>
-		</Dropdown>
+	<template v-if="dataset">
+		<h5>{{ dataset.name }}</h5>
 		<Accordion>
 			<AccordionTab header="Data preview">
 				<section v-if="csvContent">
@@ -24,44 +17,59 @@
 				</section>
 			</AccordionTab>
 		</Accordion>
-	</section>
+	</template>
+	<Dropdown
+		v-else
+		class="w-full"
+		:options="datasets"
+		option-label="name"
+		v-model="dataset"
+		placeholder="Select a dataset"
+	/>
 </template>
 
 <script setup lang="ts">
-import Dropdown from 'primevue/dropdown';
-import { computed, ref, watch } from 'vue';
-import { downloadRawFile } from '@/services/dataset';
+import { computed, ref, onMounted, watch } from 'vue';
 import { CsvAsset, Dataset } from '@/types/Types';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Dropdown from 'primevue/dropdown';
+import { downloadRawFile, getDataset } from '@/services/dataset';
 import { DatasetOperation } from './dataset-operation';
 
-defineProps<{
+const props = defineProps<{
+	datasetId: string | null;
 	datasets: Dataset[];
 }>();
 
 const emit = defineEmits(['append-output-port']);
 
-const selectedDataset = ref<Dataset | null>(null);
+const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
 const csvContent = computed(() => rawContent.value?.csv);
 const csvHeaders = computed(() => rawContent.value?.headers);
 
 watch(
-	() => selectedDataset.value,
+	() => dataset.value,
 	async () => {
-		if (selectedDataset?.value?.id) {
-			rawContent.value = await downloadRawFile(selectedDataset.value.id.toString(), 10);
+		if (dataset?.value?.id) {
+			rawContent.value = await downloadRawFile(dataset.value.id.toString(), 10);
 			emit('append-output-port', {
 				type: DatasetOperation.outputs[0].type,
-				label: selectedDataset.value.name,
-				value: selectedDataset.value.id
+				label: dataset.value.name,
+				value: dataset.value.id
 			});
 		}
 	}
 );
+
+onMounted(async () => {
+	if (props.datasetId) {
+		dataset.value = await getDataset(props.datasetId);
+	}
+});
 </script>
 
 <style scoped>

@@ -143,9 +143,7 @@ function showNodeDrilldown() {
 			default:
 				break;
 		}
-		if (pageType && assetId) {
-			openedWorkflowNodeStore.setDrilldown(assetId, pageType);
-		}
+		openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 	} else logger.error('Node needs a valid output', { silent: true });
 }
 
@@ -225,6 +223,7 @@ ul li {
 	display: flex;
 	gap: 4px;
 }
+
 .output-port-container {
 	flex-direction: row-reverse;
 }

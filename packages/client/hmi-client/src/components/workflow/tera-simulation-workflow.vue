@@ -8,6 +8,9 @@
 		@mouseenter="isMouseOverCanvas = true"
 		@focus="() => {}"
 		@blur="() => {}"
+		@drop="onDrop"
+		@dragover.prevent
+		@dragenter.prevent
 	>
 		<!-- data -->
 		<template #data>
@@ -26,15 +29,19 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
+						:model-id="node.outputs?.[0]?.value.model.id.toString() ?? newAssetId"
+						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset'"
+						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
+						:datasetId="node.outputs?.[0]?.value.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
@@ -96,7 +103,8 @@ import {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowPortStatus,
-	WorkflowDirection
+	WorkflowDirection,
+	WorkflowOperationTypes
 } from '@/types/workflow';
 import TeraWorkflowNode from '@/components/workflow/tera-workflow-node.vue';
 import TeraModelNode from '@/components/workflow/tera-model-node.vue';
@@ -106,34 +114,35 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
-import { Model } from '@/types/Model';
 import Button from 'primevue/button';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { IProject } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset } from '@/types/Types';
+import { Model } from '@/types/Model';
+import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 
+// Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	project: IProject;
 }>();
 
-const models = computed<Model[]>(() => props.project.assets?.models ?? []);
-const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
+const newNodePosition = { x: 0, y: 0 };
+let canvasTransform = { x: 0, y: 0, k: 1 };
+let currentPortPosition: Position = { x: 0, y: 0 };
+let isMouseOverPort: boolean = false;
+
+const newEdge = ref<WorkflowEdge | undefined>();
+const newAssetId = ref<string | null>(null);
+const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.create());
 const contextMenu = ref();
 
-const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
-let canvasTransform = { x: 0, y: 0, k: 1 };
-let currentPortPosition: Position = { x: 0, y: 0 };
-const newEdge = ref<WorkflowEdge | undefined>();
-const isMouseOverCanvas = ref<boolean>(false);
-let isMouseOverPort: boolean = false;
-
 const testOperation: Operation = {
-	name: 'Test operation',
+	name: WorkflowOperationTypes.TEST,
 	description: 'A test operation',
 	inputs: [
 		{ type: 'number', label: 'Number input' },
@@ -143,6 +152,9 @@ const testOperation: Operation = {
 	action: () => {},
 	isRunnable: true
 };
+
+const models = computed<Model[]>(() => props.project.assets?.models ?? []);
+const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
@@ -177,31 +189,33 @@ const contextMenuItems = ref([
 	{
 		label: 'New operation',
 		command: () => {
-			workflowService.addNode(wf.value, testOperation, newNodePosition.value);
+			workflowService.addNode(wf.value, testOperation, newNodePosition);
 		}
 	},
 	{
 		label: 'New model',
 		command: () => {
-			workflowService.addNode(wf.value, ModelOperation, newNodePosition.value);
-		}
-	},
-	{
-		label: 'New calibration',
-		command: () => {
-			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition.value);
+			newAssetId.value = null;
+			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
 		}
 	},
 	{
 		label: 'New dataset',
 		command: () => {
-			workflowService.addNode(wf.value, DatasetOperation, newNodePosition.value);
+			newAssetId.value = null;
+			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New Simulation',
+		label: 'New calibration',
 		command: () => {
-			workflowService.addNode(wf.value, SimulateOperation, newNodePosition.value, {
+			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+		}
+	},
+	{
+		label: 'New simulation',
+		command: () => {
+			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
 				width: 420,
 				height: 220
 			});
@@ -209,12 +223,43 @@ const contextMenuItems = ref([
 	}
 ]);
 
+const { getDragData } = useDragEvent();
+
+function onDrop(event) {
+	const { assetId, assetType } = getDragData('initAssetNode') as {
+		assetId: string;
+		assetType: ProjectAssetTypes;
+	};
+
+	if (assetId && assetType) {
+		updateNewNodePosition(event);
+
+		let operation: Operation;
+
+		switch (assetType) {
+			case ProjectAssetTypes.MODELS:
+				operation = ModelOperation;
+				break;
+			case ProjectAssetTypes.DATASETS:
+				operation = DatasetOperation;
+				break;
+			default:
+				return;
+		}
+
+		workflowService.addNode(wf.value, operation, newNodePosition);
+		newAssetId.value = assetId;
+	}
+}
+
 function toggleContextMenu(event) {
 	contextMenu.value.show(event);
-	newNodePosition.value = {
-		x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
-		y: (event.offsetY - canvasTransform.y) / canvasTransform.k
-	};
+	updateNewNodePosition(event);
+}
+
+function updateNewNodePosition(event) {
+	newNodePosition.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
+	newNodePosition.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
