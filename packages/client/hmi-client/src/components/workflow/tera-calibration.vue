@@ -36,7 +36,11 @@
 				<!-- @update-model-content="updateModelContent" -->
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
-				<tera-model-configuration :model="modelConfig.model" :is-editable="false" />
+				<tera-model-configuration
+					:model="modelConfig.model"
+					:is-editable="false"
+					calibration-config
+				/>
 			</AccordionTab>
 			<AccordionTab header="Dataset name">
 				<tera-dataset-datatable :raw-content="csvAsset ?? null" />
@@ -48,21 +52,17 @@
 			:options="datasetColumnNames"
 			v-model="timestepColumnName"
 		/>
-		<table v-if="featureMap">
+		<!-- <table v-if="featureMap">
 			<tr>
 				<th>Dataset Column Name</th>
 				<th>Model Column Name</th>
 			</tr>
 			<tr v-for="(content, index) in featureMap" :key="index">
-				<Dropdown
-					placeholder="Dataset Column Name"
-					class="p-button dropdown-button"
-					:options="datasetColumnNames"
-					v-model="featureMap[index][0]"
-				/>
+				<Dropdown placeholder="Dataset Column Name" class="p-button dropdown-button" :options="datasetColumnNames"
+					v-model="featureMap[index][0]" />
 				<td>{{ content[1] }}</td>
 			</tr>
-		</table>
+		</table> -->
 		<Button @click="startCalibration">Start Calibration Job</Button>
 		<form>
 			<label for="calibrationStatus">
@@ -112,13 +112,16 @@ const datasetId = computed(() => props.node.inputs[1].value as number | undefine
 
 const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 const timestepColumnName = ref<string>('');
+
 const datasetColumnNames = ref<string[]>();
+const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const datasetValue = ref();
+
 const modelColumnNames = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const datasetValue = ref();
 const featureMap = computed(() => modelColumnNames.value.map((stateName) => ['', stateName]));
+
 const calibrationView = ref(CalibrationView.INPUT);
 
 const startCalibration = async () => {
@@ -126,6 +129,8 @@ const startCalibration = async () => {
 	// FIXME: current need to strip out metadata, should do serverside
 
 	if (modelConfig.value) {
+		console.log(modelConfig.value);
+
 		const { S, T, I, O } = modelConfig.value.model.content;
 		// Take out all the extra content in model.content
 		const cleanedModel: PetriNet = {

@@ -9,19 +9,18 @@
 		@cell-edit-complete="onCellEditComplete"
 	>
 		<ColumnGroup type="header">
-			<!--Style top rows-->
 			<Row>
 				<Column v-if="isEditable" header="" style="border: none" />
-				<Column v-if="isEditable" header="" style="border: none" />
-				<Column header="Initial conditions" :colspan="modelStates.length" />
-				<Column header="Parameters" :colspan="modelTransitions.length" />
+				<Column header="" style="border: none" />
+				<Column header="Initial conditions" :colspan="Object.keys(initialValues[0]).length" />
+				<Column header="Parameters" :colspan="Object.keys(parameterValues[0]).length" />
 				<!-- <Column header="Observables" /> -->
 			</Row>
 			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column v-if="isEditable" header="Select all" />
-				<Column v-for="(s, i) of modelStates" :key="i" :header="s.name" />
-				<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.name" />
+				<Column :header="isEditable ? 'Select all' : ''" />
+				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i" :header="name" />
+				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i" :header="name" />
 			</Row>
 			<!-- <Row> Add show in workflow later
 							<Column header="Show in workflow" />
@@ -37,29 +36,42 @@
 							</Column>
 						</Row> -->
 		</ColumnGroup>
-		<template v-if="isEditable">
-			<Column selection-mode="multiple" headerStyle="width: 3rem" />
-			<Column field="name">
-				<template #body="{ data, field }">
-					{{ data[field] }}
-				</template>
-				<template #editor="{ data, field }">
-					<InputText v-model="data[field]" autofocus />
-				</template>
-			</Column>
-			<Column
-				v-for="(value, i) of [...model.content.S, ...model.content.T]"
-				:key="i"
-				:field="value['sname'] ?? value['tname']"
-			>
-				<template #body="{ data, field }">
-					{{ data[field] }}
-				</template>
-				<template #editor="{ data, field }">
-					{{ data[field] }}
-				</template>
-			</Column>
-		</template>
+		<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
+		<Column field="name">
+			<template #body="{ data, field }">
+				{{ data[field] }}
+			</template>
+			<template #editor="{ data, field }">
+				<InputText v-model="data[field]" autofocus />
+			</template>
+		</Column>
+		<Column
+			v-for="(value, i) of [...model.content.S, ...model.content.T]"
+			:key="i"
+			:field="value['sname'] ?? value['tname']"
+		>
+			<template #body="{ data, field }">
+				{{ data[field] }}
+			</template>
+			<template #editor="{ data, field }">
+				{{ data[field] }}
+			</template>
+		</Column>
+		<ColumnGroup v-if="calibrationConfig" type="footer">
+			<Row>
+				<Column footer="Select variables and parameters to calibrate" />
+				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i">
+					<template #footer>
+						<Checkbox v-model="selectedStates" :inputId="i.toString()" :value="name" />
+					</template>
+				</Column>
+				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i">
+					<template #footer>
+						<Checkbox v-model="selectedTransitions" :inputId="i.toString()" :value="name" />
+					</template>
+				</Column>
+			</Row>
+		</ColumnGroup>
 	</DataTable>
 	<Button
 		v-if="isEditable"
@@ -110,9 +122,10 @@
 </template>
 
 <script setup lang="ts">
-import { watch, ref, computed, onMounted, ComputedRef } from 'vue';
+import { watch, ref, computed, onMounted } from 'vue';
 import { cloneDeep } from 'lodash';
 import DataTable from 'primevue/datatable';
+import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
@@ -133,6 +146,7 @@ const props = defineProps<{
 	model: Model;
 	amr?: AskemModelRepresentationType | null;
 	isEditable: boolean;
+	calibrationConfig?: boolean;
 }>();
 
 const selectedModelConfig = ref();
@@ -143,6 +157,10 @@ const initialValues = ref<StringValueMap[]>([{}]);
 const parameterValues = ref<StringValueMap[]>([{}]);
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
+
+// Selected columns
+const selectedStates = ref<string[]>([]);
+const selectedTransitions = ref<string[]>([]);
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
@@ -160,21 +178,6 @@ const modelConfiguration = computed(() => {
 	return newModelConfiguration;
 });
 
-// TODO: The modelStates/Transitions don't update properly when switching from an amr (Bucky) to a normal model that is already opened
-const modelStates: ComputedRef<Array<{ name: string }>> = computed(() => {
-	if (props.amr) {
-		return props.amr.model.states.map((s) => ({ name: s.id }));
-	}
-	return props.model.content.S.map((s) => ({ name: s.sname }));
-});
-
-const modelTransitions: ComputedRef<Array<{ name: string }>> = computed(() => {
-	if (props.amr) {
-		return props.amr.model.transitions.map((t) => ({ name: t.id }));
-	}
-	return props.model.content.T.map((t) => ({ name: t.tname }));
-});
-
 function addModelConfiguration() {
 	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
 	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
@@ -186,23 +189,27 @@ function addConfigValue() {
 }
 
 const onCellEditComplete = (event) => {
-	const { data, newValue, field } = event;
+	if (props.isEditable) {
+		const { data, newValue, field } = event;
 
-	switch (field) {
-		case 'name':
-			data[field] = newValue;
-			break;
-		default:
-			break;
+		switch (field) {
+			case 'name':
+				data[field] = newValue;
+				break;
+			default:
+				break;
+		}
 	}
 };
 
 const onCellEditStart = (event) => {
-	const { data, field, index } = event;
+	if (props.isEditable) {
+		const { data, field, index } = event;
 
-	if (field !== 'name') {
-		openValueConfig.value = true;
-		cellValueToEdit.value = { data, field, index };
+		if (field !== 'name') {
+			openValueConfig.value = true;
+			cellValueToEdit.value = { data, field, index };
+		}
 	}
 };
 
@@ -219,7 +226,7 @@ function updateModelConfigValue() {
 }
 
 function generateModelConfigValues() {
-	// Sync with workflow
+	// Sync with workflow (not compatible with amr yet)
 	if (
 		props.model &&
 		openedWorkflowNodeStore.assetId === props.model.id.toString() &&
@@ -234,16 +241,29 @@ function generateModelConfigValues() {
 			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
 		}
 	}
-	// Default values
+	// Default values petrinet format
 	else if (props.model) {
 		props.model?.content.S.forEach((s) => {
 			initialValues.value[0][s.sname] = `${1}`;
 		});
-
-		props.model?.content.T.forEach((s) => {
-			parameterValues.value[0][s.tname] = `${0.0005}`;
+		props.model?.content.T.forEach((t) => {
+			parameterValues.value[0][t.tname] = `${0.0005}`;
 		});
 	}
+	// Default values amr format
+	else if (props.amr) {
+		props.amr.model.states.forEach((s) => {
+			initialValues.value[0][s.id] = `${1}`;
+		});
+		props.amr.model.transitions.forEach((t) => {
+			parameterValues.value[0][t.id] = `${0.0005}`;
+		});
+	}
+
+	// Check all boxes for calibration
+	// if (props.calibrationConfig) {
+	// 	console.log(modelStates.value, modelTransitions.value)
+	// }
 }
 
 function resetModelConfiguration() {
@@ -262,6 +282,13 @@ watch(
 		generateModelConfigValues();
 	},
 	{ deep: true }
+);
+
+watch(
+	() => [selectedStates.value, selectedTransitions.value],
+	() => {
+		console.log(selectedStates.value, selectedTransitions.value);
+	}
 );
 
 watch(
