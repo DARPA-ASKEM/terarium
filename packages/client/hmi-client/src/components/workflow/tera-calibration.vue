@@ -1,5 +1,6 @@
 <template>
-	<tera-asset :name="'Calibrate'" :is-editable="false" stretch-content>
+	<!--Probably rename tera-asset to something even more abstract-->
+	<tera-asset :name="'Calibrate'" is-editable stretch-content>
 		<template #nav>
 			<tera-asset-nav :show-header-links="false">
 				<template #viewing-mode>
@@ -22,11 +23,25 @@
 				</template>
 			</tera-asset-nav>
 		</template>
-		<template v-if="calibrationView === CalibrationView.INPUT && modelConfig">
-			<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
-			<!-- @update-model-content="updateModelContent" -->
-			<tera-model-configuration :model="modelConfig.model" />
+		<template #edit-buttons>
+			<Button icon="pi pi-play" label="Run" class="p-button-sm" />
 		</template>
+		<Accordion
+			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
+			:multiple="true"
+			:active-index="[0, 1, 2]"
+		>
+			<AccordionTab :header="modelConfig.model.name">
+				<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
+				<!-- @update-model-content="updateModelContent" -->
+			</AccordionTab>
+			<AccordionTab header="Model configuation">
+				<tera-model-configuration :model="modelConfig.model" :is-editable="false" />
+			</AccordionTab>
+			<AccordionTab header="Dataset name">
+				<tera-dataset-datatable :raw-content="csvAsset ?? null" />
+			</AccordionTab>
+		</Accordion>
 		<Dropdown
 			placeholder="Timestep Column Name"
 			class="p-button dropdown-button"
@@ -72,6 +87,8 @@ import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/
 import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import { downloadRawFile } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
@@ -79,6 +96,7 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
 enum CalibrationView {
 	INPUT = 'input',
@@ -164,12 +182,17 @@ watch(
 			csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
 			datasetColumnNames.value = csvAsset.value?.headers;
 			datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
+			console.log(datasetValue.value);
 		}
 	}
 );
 </script>
 
 <style scoped>
+.p-accordion {
+	padding-top: 1rem;
+}
+
 .dropdown-button {
 	width: 156px;
 	height: 25px;

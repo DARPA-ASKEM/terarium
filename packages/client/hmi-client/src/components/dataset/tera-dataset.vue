@@ -159,7 +159,7 @@ import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
-import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 

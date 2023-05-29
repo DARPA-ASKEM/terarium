@@ -11,15 +11,15 @@
 		<ColumnGroup type="header">
 			<!--Style top rows-->
 			<Row>
-				<Column header="" style="border: none" />
-				<Column header="" style="border: none" />
+				<Column v-if="isEditable" header="" style="border: none" />
+				<Column v-if="isEditable" header="" style="border: none" />
 				<Column header="Initial conditions" :colspan="modelStates.length" />
 				<Column header="Parameters" :colspan="modelTransitions.length" />
 				<!-- <Column header="Observables" /> -->
 			</Row>
 			<Row>
-				<Column selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column header="Select all" />
+				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
+				<Column v-if="isEditable" header="Select all" />
 				<Column v-for="(s, i) of modelStates" :key="i" :header="s.name" />
 				<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.name" />
 			</Row>
@@ -37,29 +37,32 @@
 							</Column>
 						</Row> -->
 		</ColumnGroup>
-		<Column selection-mode="multiple" headerStyle="width: 3rem" />
-		<Column field="name">
-			<template #body="{ data, field }">
-				{{ data[field] }}
-			</template>
-			<template #editor="{ data, field }">
-				<InputText v-model="data[field]" autofocus />
-			</template>
-		</Column>
-		<Column
-			v-for="(value, i) of [...model.content.S, ...model.content.T]"
-			:key="i"
-			:field="value['sname'] ?? value['tname']"
-		>
-			<template #body="{ data, field }">
-				{{ data[field] }}
-			</template>
-			<template #editor="{ data, field }">
-				{{ data[field] }}
-			</template>
-		</Column>
+		<template v-if="isEditable">
+			<Column selection-mode="multiple" headerStyle="width: 3rem" />
+			<Column field="name">
+				<template #body="{ data, field }">
+					{{ data[field] }}
+				</template>
+				<template #editor="{ data, field }">
+					<InputText v-model="data[field]" autofocus />
+				</template>
+			</Column>
+			<Column
+				v-for="(value, i) of [...model.content.S, ...model.content.T]"
+				:key="i"
+				:field="value['sname'] ?? value['tname']"
+			>
+				<template #body="{ data, field }">
+					{{ data[field] }}
+				</template>
+				<template #editor="{ data, field }">
+					{{ data[field] }}
+				</template>
+			</Column>
+		</template>
 	</DataTable>
 	<Button
+		v-if="isEditable"
 		class="p-button-sm p-button-outlined"
 		icon="pi pi-plus"
 		label="Add configuration"
@@ -129,6 +132,7 @@ interface StringValueMap {
 const props = defineProps<{
 	model: Model;
 	amr?: AskemModelRepresentationType | null;
+	isEditable: boolean;
 }>();
 
 const selectedModelConfig = ref();

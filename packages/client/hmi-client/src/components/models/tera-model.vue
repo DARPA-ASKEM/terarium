@@ -151,7 +151,7 @@
 				/>
 			</AccordionTab>
 			<AccordionTab v-if="model" header="Model configurations">
-				<tera-model-configuration :model="model" :amr="amr" />
+				<tera-model-configuration :model="model" :amr="amr" :is-editable="props.isEditable" />
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
