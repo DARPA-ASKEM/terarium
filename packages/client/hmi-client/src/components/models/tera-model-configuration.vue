@@ -22,19 +22,7 @@
 				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i" :header="name" />
 				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i" :header="name" />
 			</Row>
-			<!-- <Row> Add show in workflow later
-							<Column header="Show in workflow" />
-							<Column v-for="(s, i) of model.content.S" :key="i">
-								<template #header>
-									<Checkbox :binary="true" />
-								</template>
-							</Column>
-							<Column v-for="(t, i) of model.content.T" :key="i">
-								<template #header>
-									<Checkbox :binary="true" />
-								</template>
-							</Column>
-						</Row> -->
+			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
 		</ColumnGroup>
 		<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
 		<Column field="name">
@@ -260,10 +248,11 @@ function generateModelConfigValues() {
 		});
 	}
 
-	// Check all boxes for calibration
-	// if (props.calibrationConfig) {
-	// 	console.log(modelStates.value, modelTransitions.value)
-	// }
+	// By default check all boxes for calibration
+	if (props.calibrationConfig) {
+		selectedStates.value = Object.keys(initialValues.value[0]);
+		selectedTransitions.value = Object.keys(parameterValues.value[0]);
+	}
 }
 
 function resetModelConfiguration() {

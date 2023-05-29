@@ -23,7 +23,6 @@
 			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
-					class="tab-group"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
 					:loading-tab-index="loadingTabIndex"
@@ -507,17 +506,12 @@ function formatAuthorTimestamp(username, timestamp) {
 	isolation: isolate;
 }
 
-.tab-group {
-	z-index: 2;
-	isolation: isolate;
-	position: relative;
-}
-
 .p-splitter {
 	display: flex;
 	flex: 1;
 	background: none;
 	border: none;
+	overflow-x: hidden;
 }
 
 section,
