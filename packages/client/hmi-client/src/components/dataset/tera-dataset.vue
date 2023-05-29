@@ -1,10 +1,7 @@
-/** TODO: This entire class needs to be revisited to handle the new annotations format in the
-dataset class. **/
 <template>
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:overline="dataset?.simulationRun ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
@@ -37,26 +34,14 @@ dataset class. **/
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<section class="metadata data-row">
 				<section>
-					<header>Maintainer</header>
-					<section>{{ dataset?.maintainer || '-' }}</section>
-				</section>
-				<section>
-					<header>Quality</header>
-					<section>{{ dataset?.quality || '-' }}</section>
+					<header>Metadata</header>
+					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
 					<header>URL</header>
 					<section>
 						<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
 					</section>
-				</section>
-				<section>
-					<header>Geospatial resolution</header>
-					<section>{{ dataset?.geospatialResolution || '-' }}</section>
-				</section>
-				<section>
-					<header>Temporal resolution</header>
-					<section>{{ dataset?.temporalResolution || '-' }}</section>
 				</section>
 				<section>
 					<header>Number of records</header>
@@ -68,77 +53,34 @@ dataset class. **/
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<p v-html="dataset.description" />
+					<p v-html="dataset?.description" />
 				</AccordionTab>
-				<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
+				<AccordionTab v-if="(annotations?.length || 0) > 0">
 					<template #header>
 						<header id="Annotations">
 							Annotations
-							<span class="artifact-amount">
-								({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})
-							</span>
+							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
 						</header>
 					</template>
-					<section v-if="annotations?.geo">
-						<header class="annotation-subheader">Geospatial annotations</header>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
 						<section class="annotation-group">
 							<section
-								v-for="annotation in annotations?.geo"
-								:key="annotation.name"
+								v-for="name in annotations.map((annotation) => annotation.name)"
+								:key="name"
 								class="annotation-row data-row"
 							>
 								<section>
 									<header>Name</header>
-									<section class="value">{{ annotation.name }}</section>
+									<section>{{ name }}</section>
 								</section>
 								<section>
 									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>GADM level</header>
-									<section>{{ annotation.gadmLevel }}</section>
+									<section>{{ annotations[name] }}</section>
 								</section>
 							</section>
 						</section>
 					</section>
-					<section v-if="annotations?.date">
-						<header class="annotation-subheader">Temporal annotations</header>
-						<section class="annotation-group">
-							<section
-								v-for="annotation in annotations?.date"
-								:key="annotation.name"
-								class="annotation-row data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ annotation.name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>Time format</header>
-									<section>{{ annotation.timeFormat }}</section>
-								</section>
-							</section>
-						</section>
-					</section>
-				</AccordionTab>
-				<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
-					<template #header>
-						<header id="Features">
-							Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
-						</header>
-					</template>
-					<ol class="numbered-list">
-						<li v-for="(feature, index) of annotations?.feature" :key="index">
-							<span>{{ feature.displayName || feature.name }}</span
-							>:
-							<span class="feature-type">{{ feature.featureType }}</span>
-						</li>
-					</ol>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -196,7 +138,7 @@ const datasetContent = computed(() => [
 	{ key: 'Description', value: dataset.value?.description },
 	{
 		key: 'Annotations',
-		value: [...(annotations.value?.geo ?? []), ...(annotations.value?.date ?? [])]
+		value: [...(annotations.value ?? [])]
 	},
 	{ key: 'Features', value: annotations.value?.feature }
 ]);
@@ -230,11 +172,9 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations);
+const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
 const showAccordion = computed(() =>
-	dataset.value?.annotations?.annotations.date && dataset.value?.annotations.annotations.geo
-		? [2]
-		: [0]
+	dataset.value?.columns?.map((column) => column.annotations).length > 0 ? [1] : [0]
 );
 </script>
 
