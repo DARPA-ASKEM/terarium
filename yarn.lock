@@ -2162,10 +2162,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.14.194":
-  version: 4.14.194
-  resolution: "@types/lodash@npm:4.14.194"
-  checksum: 113f34831c461469d91feca2dde737f88487732898b4d25e9eb23b087bb193985f864d1e1e0f3b777edc5022e460443588b6000a3b2348c966f72d17eedc35ea
+"@types/lodash@npm:4.14.195":
+  version: 4.14.195
+  resolution: "@types/lodash@npm:4.14.195"
+  checksum: 39b75ca635b3fa943d17d3d3aabc750babe4c8212485a4df166fe0516e39288e14b0c60afc6e21913cc0e5a84734633c71e617e2bd14eaa1cf51b8d7799c432e
   languageName: node
   linkType: hard
 
@@ -7232,7 +7232,7 @@ cors@latest:
   dependencies:
     "@types/d3": 7.4.0
     "@types/jest": 29.5.1
-    "@types/lodash": 4.14.194
+    "@types/lodash": 4.14.195
     "@typescript-eslint/eslint-plugin": 5.42.1
     "@typescript-eslint/parser": 5.42.1
     copy: 0.3.2
@@ -7401,7 +7401,7 @@ cors@latest:
     "@playwright/test": 1.31.2
     "@rushstack/eslint-patch": 1.2.0
     "@types/d3": 7.4.0
-    "@types/lodash": 4.14.194
+    "@types/lodash": 4.14.195
     "@types/node": 18.11.18
     "@types/p5": 1.5.0
     "@uncharted.software/design-tokens": 1.1.0
@@ -7419,7 +7419,7 @@ cors@latest:
     event-source-polyfill: 1.0.31
     feather-icons: 4.29.0
     graph-scaffolder: "*"
-    katex: 0.16.6
+    katex: 0.16.7
     lodash: 4.17.21
     mathlive: 0.89.2
     mathml-to-latex: 1.2.0
@@ -7433,7 +7433,7 @@ cors@latest:
     sass: 1.56.1
     typescript: 5.0.4
     uuid: 9.0.0
-    vite: 4.3.8
+    vite: 4.3.9
     vite-svg-loader: 4.0.0
     vitest: 0.24.5
     vue: 3.3.4
@@ -9004,7 +9004,18 @@ cors@latest:
   languageName: node
   linkType: hard
 
-"katex@npm:0.16.6, katex@npm:^0.16.2":
+"katex@npm:0.16.7":
+  version: 0.16.7
+  resolution: "katex@npm:0.16.7"
+  dependencies:
+    commander: ^8.3.0
+  bin:
+    katex: cli.js
+  checksum: 6c3f61e28820ecba074a149d17be6d731d8a950cdd7826851e16f2b0f3627c4119acd8c6e4fb86950063c4e99a6e478720ea6cca3dc82e59bbca81001ee00b70
+  languageName: node
+  linkType: hard
+
+"katex@npm:^0.16.2":
   version: 0.16.6
   resolution: "katex@npm:0.16.6"
   dependencies:
@@ -12547,9 +12558,9 @@ send@latest:
   languageName: node
   linkType: hard
 
-"vite@npm:4.3.8":
-  version: 4.3.8
-  resolution: "vite@npm:4.3.8"
+"vite@npm:4.3.9":
+  version: 4.3.9
+  resolution: "vite@npm:4.3.9"
   dependencies:
     esbuild: ^0.17.5
     fsevents: ~2.3.2
@@ -12580,7 +12591,7 @@ send@latest:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 454a7c0c1bd1fd5611c9df28c62e3adbe75f48e87fc787179c5af60c4ab9a87aa0eda44be446d898851a135766d36f65f8e7d56317556aa807d30e561de369c4
+  checksum: 8c45a516278d1e0425fac00c0877336790f71484a851a318346a70e0d2aef9f3b9651deb2f9f002c791ceb920eda7d6a3cda753bdefd657321c99f448b02dd25
   languageName: node
   linkType: hard
 
