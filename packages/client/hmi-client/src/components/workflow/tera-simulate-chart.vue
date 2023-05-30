@@ -104,7 +104,7 @@ const getVariableColor = (variableCode: string) => {
 		'#453581',
 		'#481c6e',
 		'#440154'
-	];
+	].reverse();
 	const { selectedVariable } = openedWorkflowNodeStore.chartConfigs[props.chartIdx];
 	const codeIdx = selectedVariable.findIndex(({ code }) => code === variableCode);
 	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
@@ -179,7 +179,7 @@ watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx], renderGraph, {
 	padding: 0em 0.5em;
 	margin: 0em 0.25em;
 	border-radius: 2px;
-	text-shadow: 0 0 0.25em white;
+	text-shadow: 0 0 0.15em white, 0 0 0.15em white, 0 0 0.15em white, 0 0 0.15em white;
 }
 
 .p-chart {

@@ -11,6 +11,7 @@
 			/>
 		</div>
 		<Button
+			class="add-chart"
 			text
 			@click="openedWorkflowNodeStore.appendChart"
 			label="Add Chart"
@@ -54,7 +55,7 @@ const runSimulate = async () => {
 			model: shimPetriModel(port.value.model),
 			initials: port.value.initialValues,
 			params: port.value.parameterValues,
-			tspan: [0, 100]
+			tspan: openedWorkflowNodeStore.tspan
 		};
 
 		const response = await makeForecast(payload);
@@ -125,8 +126,10 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		type: SimulateOperation.outputs[0].type,
 		label: `${port.label} Results`,
 		value: {
+			model: port.value.model,
 			runResults: runResults.value,
-			runIdList
+			runIdList,
+			runConfigs: [port.value]
 		}
 	});
 };
@@ -144,5 +147,9 @@ section {
 
 .simulate-chart {
 	margin: 1em 0em;
+}
+
+.add-chart {
+	width: 9em;
 }
 </style>
