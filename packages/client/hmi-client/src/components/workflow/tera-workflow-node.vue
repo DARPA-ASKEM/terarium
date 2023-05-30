@@ -3,7 +3,12 @@
 		<header>
 			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<span>
-				<!-- options menu -->
+				<Button
+					icon="pi pi-sign-in"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="showNodeDrilldown"
+				/>
+				<!-- 3-dot options menu -->
 				<Button
 					icon="pi pi-ellipsis-v"
 					class="p-button-icon-only p-button-text p-button-rounded"
@@ -180,7 +185,6 @@ function bringToFront() {
  */
 const nodeMenu = ref();
 const nodeMenuItems = ref([
-	{ icon: 'pi pi-sign-in', label: 'Show in side panel', command: showNodeDrilldown },
 	{ icon: 'pi pi-clone', label: 'Bring to front', command: bringToFront },
 	{ icon: 'pi pi-trash', label: 'Remove', command: removeNode }
 ]);
@@ -209,13 +213,13 @@ header {
 	justify-content: space-between;
 	align-items: center;
 	color: var(--gray-0);
-	background-color: var(--primary-color);
+	background-color: var(--node-header);
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
 }
 header:hover {
-	background-color: var(--primary-color-hover);
+	background-color: var(--node-header-hover);
 	cursor: move;
 }
 
