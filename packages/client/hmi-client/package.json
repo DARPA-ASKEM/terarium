@@ -31,7 +31,7 @@
 		"event-source-polyfill": "1.0.31",
 		"feather-icons": "4.29.0",
 		"graph-scaffolder": "*",
-		"katex": "0.16.6",
+		"katex": "0.16.7",
 		"lodash": "4.17.21",
 		"mathlive": "0.89.2",
 		"mathml-to-latex": "1.2.0",
