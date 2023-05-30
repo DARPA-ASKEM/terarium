@@ -242,7 +242,7 @@ const formatFeatures = () => {
 		const columns = props.asset.columns ?? [];
 		if (!columns || columns.length === 0) return [];
 		const annotations = columns.map((c) => (c.annotations ? c.annotations : []));
-		const annotationNames = annotations.map((a) => a.name);
+		const annotationNames = annotations.map((a) => (a.name ? a.name : ''));
 		const max = 5;
 		return annotationNames.length < max ? annotationNames : annotationNames.slice(0, max);
 	}
