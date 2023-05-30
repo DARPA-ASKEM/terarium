@@ -22,6 +22,7 @@
 		<Splitter>
 			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
+					class="tab-group"
 					v-if="!isEmpty(tabs)"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
@@ -42,6 +43,7 @@
 			</SplitterPanel>
 			<SplitterPanel
 				class="project-page"
+				style="z-index: 2; /** temporary styling to make drilldown contents above workflow nodes */"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
 					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
@@ -504,6 +506,12 @@ function formatAuthorTimestamp(username, timestamp) {
 .resource-panel {
 	z-index: 2;
 	isolation: isolate;
+}
+
+.tab-group {
+	z-index: 2;
+	isolation: isolate;
+	position: relative;
 }
 
 .p-splitter {

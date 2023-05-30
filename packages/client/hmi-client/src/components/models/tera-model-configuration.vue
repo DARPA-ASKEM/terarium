@@ -166,6 +166,12 @@ const modelConfiguration = computed(() => {
 	return newModelConfiguration;
 });
 
+const selectedStatesAndTransitions = computed(() => [
+	...selectedStates.value,
+	...selectedTransitions.value
+]);
+defineExpose({ selectedStatesAndTransitions });
+
 function addModelConfiguration() {
 	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
 	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));

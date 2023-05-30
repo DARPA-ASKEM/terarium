@@ -24,12 +24,12 @@
 			</tera-asset-nav>
 		</template>
 		<template #edit-buttons>
-			<Button icon="pi pi-play" label="Run" class="p-button-sm" />
+			<Button icon="pi pi-play" label="Run" class="p-button-sm" :disabled="isRunDisabled" />
 		</template>
 		<Accordion
 			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
 			:multiple="true"
-			:active-index="[0, 1, 2]"
+			:active-index="[0, 1, 2, 3, 4]"
 		>
 			<AccordionTab :header="modelConfig.model.name">
 				<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
@@ -37,6 +37,7 @@
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
 				<tera-model-configuration
+					ref="modelConfigurationRef"
 					:model="modelConfig.model"
 					:is-editable="false"
 					calibration-config
@@ -44,6 +45,36 @@
 			</AccordionTab>
 			<AccordionTab header="Dataset name">
 				<tera-dataset-datatable :raw-content="csvAsset ?? null" />
+			</AccordionTab>
+			<AccordionTab header="Train / Test ratio"> </AccordionTab>
+			<AccordionTab header="Mapping">
+				<div>
+					Select target variables from the model and the corresponding data column you want to match
+					them to.
+				</div>
+				<DataTable :value="mapping">
+					<ColumnGroup type="header">
+						<Row>
+							<Column header="" />
+							<Column header="Model variable" />
+							<Column header="Dataset variable" />
+						</Row>
+					</ColumnGroup>
+					<Column expander style="width: 5rem" />
+
+					<!-- 
+					<Column field="modelVariable" header="Model variable">
+						<template #body="slotProps">
+							<Dropdown />
+						</template>
+					</Column>
+					<Column field="datasetVariable" header="Dataset variable">
+						<template #body="slotProps">
+							<Dropdown />
+						</template>
+					</Column> -->
+				</DataTable>
+				<Button class="p-button-sm p-button-outlined" icon="pi pi-plus" label="Add mapping" />
 			</AccordionTab>
 		</Accordion>
 		<Dropdown
@@ -82,11 +113,16 @@
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
+import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
+import Row from 'primevue/row';
+import DataTable from 'primevue/datatable';
+import ColumnGroup from 'primevue/columngroup';
+import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { downloadRawFile } from '@/services/dataset';
@@ -107,6 +143,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
+const calibrationView = ref(CalibrationView.INPUT);
 const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
@@ -117,12 +154,33 @@ const datasetColumnNames = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
 
+const modelConfigurationRef = ref();
+
 const modelColumnNames = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );
 const featureMap = computed(() => modelColumnNames.value.map((stateName) => ['', stateName]));
 
-const calibrationView = ref(CalibrationView.INPUT);
+const isRunDisabled = computed(() => {
+	if (
+		modelConfigurationRef.value &&
+		isEmpty(modelConfigurationRef.value.selectedStatesAndTransitions)
+	) {
+		return true;
+	}
+	return false;
+});
+
+/**
+ * every row will have a dropdown but the uniqueness is what is selected
+ * the subrows are based on what is chosen in the dropdown
+ *
+ */
+
+const mapping = ref([
+	{ modelVariable: 'Infected', datasetVariable: 'I' },
+	{ modelVariable: 'Hospitalized', datasetVariable: 'H' }
+]);
 
 const startCalibration = async () => {
 	// Make calibration job.

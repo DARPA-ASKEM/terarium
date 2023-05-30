@@ -76,9 +76,6 @@ nav {
 	grid-auto-flow: column;
 	padding: 0.2rem 0.2rem 0 0.2rem;
 	background-color: var(--surface-ground);
-	z-index: 2;
-	isolation: isolate;
-	position: relative;
 }
 
 @keyframes show-tab {
