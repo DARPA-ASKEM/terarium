@@ -66,8 +66,8 @@
 						<header class="annotation-subheader">Annotations</header>
 						<section class="annotation-group">
 							<section
-								v-for="name in annotations.map((annotation) => annotation.name)"
-								:key="name"
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name[0]"
 								class="annotation-row data-row"
 							>
 								<section>
@@ -76,7 +76,7 @@
 								</section>
 								<section>
 									<header>Description</header>
-									<section>{{ annotations[name] }}</section>
+									<section>{{ annotations[name[0]] }}</section>
 								</section>
 							</section>
 						</section>
@@ -139,8 +139,7 @@ const datasetContent = computed(() => [
 	{
 		key: 'Annotations',
 		value: [...(annotations.value ?? [])]
-	},
-	{ key: 'Features', value: annotations.value?.feature }
+	}
 ]);
 
 onUpdated(() => {
@@ -174,7 +173,7 @@ watch(
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
 const showAccordion = computed(() =>
-	dataset.value?.columns?.map((column) => column.annotations).length > 0 ? [1] : [0]
+	dataset.value?.columns?.map((column) => column.annotations ?? 0).length > 0 ? [1] : [0]
 );
 </script>
 
