@@ -40,7 +40,7 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:model-id="node.outputs?.[0]?.value.model.id.toString() ?? newAssetId"
+						:model-id="node.outputs?.[0]?.value?.[0]?.model.id.toString() ?? newAssetId"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -52,7 +52,7 @@
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="node.outputs?.[0]?.value.toString() ?? newAssetId"
+						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
