@@ -47,18 +47,12 @@
 		</template>
 		<template #bottom-header-buttons>
 			<Button
+				v-if="!isEditable"
 				class="p-button-sm p-button-outlined"
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
 				:loading="!pdfLink && !linkIsPDF()"
-			/>
-			<Button
-				class="p-button-sm p-button-outlined"
-				@click="downloadPDF"
-				:icon="'pi pi-cloud-download'"
-				:loading="!pdfLink"
-				label="Download PDF"
 			/>
 		</template>
 		<Accordion
@@ -400,7 +394,8 @@ const fetchAssociatedResources = async () => {
 	}
 };
 
-// Better than wrapping download button with an anchor
+/*
+// Jamie: The 'Download PDF' button was removed from the UI but I left the code here in case we want to add it back in the future.
 function downloadPDF() {
 	if (pdfLink.value) {
 		const link = document.createElement('a');
@@ -409,7 +404,7 @@ function downloadPDF() {
 		link.click();
 	}
 }
-
+*/
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
 	return link.match(/^.*\.(pdf|PDF)$/);
