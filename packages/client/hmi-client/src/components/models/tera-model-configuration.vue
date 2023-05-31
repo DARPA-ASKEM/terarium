@@ -280,13 +280,6 @@ watch(
 );
 
 watch(
-	() => [selectedStates.value, selectedTransitions.value],
-	() => {
-		console.log(selectedStates.value, selectedTransitions.value);
-	}
-);
-
-watch(
 	() => props.model,
 	() => resetModelConfiguration(),
 	{ deep: true }

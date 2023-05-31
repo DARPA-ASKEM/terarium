@@ -48,48 +48,52 @@
 			</AccordionTab>
 			<AccordionTab header="Train / Test ratio"> </AccordionTab>
 			<AccordionTab header="Mapping">
-				<div>
-					Select target variables from the model and the corresponding data column you want to match
-					them to.
-				</div>
-				<DataTable :value="mapping">
-					<ColumnGroup type="header">
-						<Row>
-							<Column header="" />
-							<Column header="Model variable" />
-							<Column header="Dataset variable" />
-						</Row>
-					</ColumnGroup>
-					<Column expander style="width: 5rem" />
-
-					<!-- 
-					<Column field="modelVariable" header="Model variable">
-						<template #body="slotProps">
-							<Dropdown />
-						</template>
-					</Column>
-					<Column field="datasetVariable" header="Dataset variable">
-						<template #body="slotProps">
-							<Dropdown />
-						</template>
-					</Column> -->
-				</DataTable>
-				<Button class="p-button-sm p-button-outlined" icon="pi pi-plus" label="Add mapping" />
+				<section class="mapping">
+					<div>
+						Select target variables from the model and the corresponding data column you want to
+						match them to.
+					</div>
+					<DataTable :value="mapping">
+						<Column expander style="width: 5rem" />
+						<Column field="modelVariable.label" header="Model variable">
+							<template #body="{ data, field }">
+								<Dropdown
+									class="w-full"
+									placeholder="Select a variable"
+									v-model="data[field]"
+									:options="modelVariables"
+								/>
+							</template>
+						</Column>
+						<Column field="datasetVariable.label" header="Dataset variable">
+							<template #body="{ data, field }">
+								<Dropdown
+									class="w-full"
+									placeholder="Select a variable"
+									v-model="data[field]"
+									:options="datasetVariables"
+								/>
+							</template>
+						</Column>
+					</DataTable>
+					<div>
+						<Button
+							class="p-button-sm p-button-outlined"
+							icon="pi pi-plus"
+							label="Add mapping"
+							@click="addMapping"
+						/>
+					</div>
+				</section>
 			</AccordionTab>
 		</Accordion>
-		<Dropdown
-			placeholder="Timestep Column Name"
-			class="p-button dropdown-button"
-			:options="datasetColumnNames"
-			v-model="timestepColumnName"
-		/>
 		<!-- <table v-if="featureMap">
 			<tr>
 				<th>Dataset Column Name</th>
 				<th>Model Column Name</th>
 			</tr>
 			<tr v-for="(content, index) in featureMap" :key="index">
-				<Dropdown placeholder="Dataset Column Name" class="p-button dropdown-button" :options="datasetColumnNames"
+				<Dropdown placeholder="Dataset Column Name" class="p-button dropdown-button" :options="datasetVariables"
 					v-model="featureMap[index][0]" />
 				<td>{{ content[1] }}</td>
 			</tr>
@@ -112,16 +116,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue';
+import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
-import Row from 'primevue/row';
 import DataTable from 'primevue/datatable';
-import ColumnGroup from 'primevue/columngroup';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -143,23 +145,22 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
+const modelConfigurationRef = ref();
 const calibrationView = ref(CalibrationView.INPUT);
 const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
 const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
-const timestepColumnName = ref<string>('');
 
-const datasetColumnNames = ref<string[]>();
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const datasetValue = ref();
-
-const modelConfigurationRef = ref();
-
-const modelColumnNames = computed(() =>
+const modelVariables = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );
-const featureMap = computed(() => modelColumnNames.value.map((stateName) => ['', stateName]));
+const datasetVariables = ref<string[]>();
+const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const datasetContent = ref();
+
+const timestepColumnName = ref<string>('');
+const featureMap = computed(() => modelVariables.value.map((stateName) => ['', stateName]));
 
 const isRunDisabled = computed(() => {
 	if (
@@ -178,8 +179,10 @@ const isRunDisabled = computed(() => {
  */
 
 const mapping = ref([
-	{ modelVariable: 'Infected', datasetVariable: 'I' },
-	{ modelVariable: 'Hospitalized', datasetVariable: 'H' }
+	{
+		modelVariable: { label: null, name: null, units: null, concept: null },
+		datasetVariable: { label: null, name: null, units: null, concept: null }
+	}
 ]);
 
 const startCalibration = async () => {
@@ -212,7 +215,7 @@ const startCalibration = async () => {
 				params: modelConfig.value.parameterValues,
 				timesteps_column: timestepColumnName.value,
 				feature_mappings: featureObject,
-				dataset: datasetValue.value
+				dataset: datasetContent.value
 			};
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
@@ -222,6 +225,15 @@ const startCalibration = async () => {
 		}
 	}
 };
+
+function addMapping() {
+	mapping.value.push({
+		modelVariable: { label: null, name: null, units: null, concept: null },
+		datasetVariable: { label: null, name: null, units: null, concept: null }
+	});
+
+	// console.log(mapping.value)
+}
 
 const getCalibrationStatus = async () => {
 	console.log('Getting status of run');
@@ -237,17 +249,26 @@ const getCalibrationResults = async () => {
 	console.log(results);
 };
 
-watch(
-	() => datasetId.value, // When dataset ID changes, update datasetColumnNames
-	async () => {
-		if (datasetId.value) {
-			// Get dataset:
-			csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
-			datasetColumnNames.value = csvAsset.value?.headers;
-			datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
-			console.log(datasetValue.value);
-		}
+async function updateDataset() {
+	if (datasetId.value) {
+		csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
+		datasetVariables.value = csvAsset.value?.headers;
+		datasetContent.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
+
+		// Reset mapping on update for now
+		mapping.value = [
+			{
+				modelVariable: { label: null, name: null, units: null, concept: null },
+				datasetVariable: { label: null, name: null, units: null, concept: null }
+			}
+		];
 	}
+}
+
+onMounted(() => updateDataset());
+watch(
+	() => datasetId.value,
+	() => updateDataset()
 );
 </script>
 
@@ -262,11 +283,9 @@ watch(
 	border-radius: 6px;
 }
 
-:deep(.p-dropdown .p-dropdown-label.p-inputtext) {
-	color: white;
-}
-
-:deep(.p-inputtext) {
-	color: white;
+.mapping {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 </style>
