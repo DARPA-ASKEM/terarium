@@ -23,8 +23,8 @@
 			<simulate-chart
 				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
-				:run-results="props.node.outputs[0].value.runResults"
-				:run-id-list="props.node.outputs[0].value.runIdList"
+				:run-results="props.node.outputs[0].value?.[0].runResults"
+				:run-id-list="props.node.outputs[0].value?.[0].runIdList"
 				:chart-idx="index"
 			/>
 			<Button
@@ -40,12 +40,17 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ props.node.outputs[0].value.model.name }} </template>
-						<model-diagram :model="props.node.outputs[0].value.model" :is-editable="false" />
+						<template #header> {{ props.node.outputs[0].value?.[0].model.name }} </template>
+						<model-diagram :model="props.node.outputs[0].value?.[0].model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configurations ({{ simConfigs.length }}) </template>
-						<DataTable class="model-configuration" showGridlines :value="simConfigs">
+						<DataTable
+							v-if="props.node.outputs[0].value?.length"
+							class="model-configuration"
+							showGridlines
+							:value="simConfigs"
+						>
 							<ColumnGroup type="header">
 								<Row>
 									<Column selection-mode="multiple" headerStyle="width: 3rem" />
@@ -131,12 +136,12 @@ const TspanUnitList = computed(() =>
 
 const simVars = computed(() => [
 	'Configuration Name',
-	...props.node.outputs[0].value.model.content.S.map((state) => state.sname),
-	...props.node.outputs[0].value.model.content.T.map((state) => state.tname)
+	...(props.node.outputs[0].value as any[])[0].model.content.S.map((state) => state.sname),
+	...(props.node.outputs[0].value as any[])[0].model.content.T.map((state) => state.tname)
 ]);
 
 const simConfigs = computed(() =>
-	props.node.outputs[0].value.runConfigs.map(
+	props.node.outputs[0].value?.[0].runConfigs.map(
 		(runConfig: typeof openedWorkflowNodeStore, i: number) => ({
 			'Configuration Name': `Config ${i + 1}`,
 			...runConfig.initialValues,
