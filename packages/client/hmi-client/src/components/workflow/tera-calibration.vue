@@ -43,7 +43,7 @@
 					calibration-config
 				/>
 			</AccordionTab>
-			<AccordionTab header="Dataset name">
+			<AccordionTab :header="datasetName">
 				<tera-dataset-datatable :raw-content="csvAsset ?? null" />
 			</AccordionTab>
 			<AccordionTab header="Train / Test ratio"> </AccordionTab>
@@ -55,7 +55,7 @@
 					</div>
 					<DataTable :value="mapping">
 						<Column expander style="width: 5rem" />
-						<Column field="modelVariable.label" header="Model variable">
+						<Column field="modelVariable[label]" header="Model variable">
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
@@ -147,21 +147,21 @@ const props = defineProps<{
 
 const modelConfigurationRef = ref();
 const calibrationView = ref(CalibrationView.INPUT);
-const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
-const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
 
 const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 
-const modelVariables = computed(() =>
-	modelConfig.value?.model.content.S.map((state) => state.sname)
-);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetContent = ref();
-
 const timestepColumnName = ref<string>('');
-const featureMap = computed(() => modelVariables.value.map((stateName) => ['', stateName]));
 
+const datasetId = computed(() => props.node.inputs[1].value.toString() as string | undefined);
+const datasetName = computed(() => props.node.inputs[1].label);
+const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
+const modelVariables = computed(() =>
+	modelConfig.value?.model.content.S.map((state) => state.sname)
+);
+const featureMap = computed(() => modelVariables.value.map((stateName) => ['', stateName]));
 const isRunDisabled = computed(() => {
 	if (
 		modelConfigurationRef.value &&
@@ -251,7 +251,7 @@ const getCalibrationResults = async () => {
 
 async function updateDataset() {
 	if (datasetId.value) {
-		csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
+		csvAsset.value = (await downloadRawFile(datasetId.value)) as CsvAsset;
 		datasetVariables.value = csvAsset.value?.headers;
 		datasetContent.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 
