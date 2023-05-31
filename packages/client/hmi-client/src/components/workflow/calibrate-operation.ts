@@ -18,7 +18,7 @@ export const CalibrationOperation: Operation = {
 		// TODO Add more safety checks.
 		if (v.length) {
 			// TODO: The mapping is not 0 -> modelId as i am assuming here for testing
-			const modelId = v[0].value;
+			const modelId = v[0].value?.[0];
 			// let datasetId = v[1].value;
 			// let configuration = v[2].value; //TODO Not sure if this is a required input
 

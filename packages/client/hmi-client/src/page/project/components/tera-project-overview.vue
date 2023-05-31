@@ -100,51 +100,68 @@
 				</DataTable>
 			</section>
 			<section class="drag-n-drop">
-				<Dialog
-					v-model:visible="visible"
-					modal
-					header="Upload resources"
-					:style="{ width: '60vw' }"
+				<tera-modal
+					v-if="isUploadResourcesModalVisible"
+					class="modal"
+					@modal-mask-clicked="isUploadResourcesModalVisible = false"
 				>
-					<div>Add resources to your project here</div>
-					<tera-drag-and-drop-importer
-						:show-preview="true"
-						:accept-types="[
-							AcceptedTypes.PDF,
-							AcceptedTypes.JPG,
-							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG,
-							AcceptedTypes.CSV
-						]"
-						:import-action="processFiles"
-						@import-completed="importCompleted"
-					></tera-drag-and-drop-importer>
+					<template #header>
+						<h4>Upload resources</h4>
+					</template>
+					<template #default>
+						<p class="subheader">Add resources to your project here</p>
+						<tera-drag-and-drop-importer
+							:show-preview="true"
+							:accept-types="[
+								AcceptedTypes.PDF,
+								AcceptedTypes.JPG,
+								AcceptedTypes.JPEG,
+								AcceptedTypes.PNG,
+								AcceptedTypes.CSV
+							]"
+							:import-action="processFiles"
+							@import-completed="importCompleted"
+						></tera-drag-and-drop-importer>
 
-					<section v-if="results">
-						<Card v-for="(item, i) in results" :key="i" class="card">
-							<template #title>
-								<div class="card-img"></div>
-							</template>
-							<template #content>
-								<div class="card-content">
-									<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-									<div v-if="item.response" class="file-content">
-										<br />
-										<div>Extracted Text</div>
-										<div>{{ item.response.text }}</div>
-										<br />
-										<div v-if="item.response.images">Images Found</div>
-										<div v-for="image in item.response.images" :key="image">
-											<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+						<section v-if="isUploadResourcesModalVisible">
+							<Card v-for="(item, i) in results" :key="i" class="card">
+								<template #title>
+									<div class="card-img"></div>
+								</template>
+								<template #content>
+									<div class="card-content">
+										<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+										<div v-if="item.response" class="file-content">
+											<br />
+											<div>Extracted Text</div>
+											<div>{{ item.response.text }}</div>
+											<br />
+											<div v-if="item.response.images">Images Found</div>
+											<div v-for="image in item.response.images" :key="image">
+												<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+											</div>
+											<br />
+											<i class="pi pi-plus"></i>
 										</div>
-										<br />
-										<i class="pi pi-plus"></i>
 									</div>
-								</div>
-							</template>
-						</Card>
-					</section>
-				</Dialog>
+								</template>
+							</Card>
+						</section>
+					</template>
+					<template #footer>
+						<Button
+							label="Upload"
+							class="p-button-primary"
+							@click="isUploadResourcesModalVisible = false"
+							:disabled="!results"
+						/>
+						<Button
+							label="Cancel"
+							class="p-button-secondary"
+							@click="isUploadResourcesModalVisible = false"
+						/>
+					</template>
+				</tera-modal>
 			</section>
 		</section>
 	</tera-asset>
@@ -165,7 +182,7 @@ import { capitalize } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 import { AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
-import Dialog from 'primevue/dialog';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
@@ -256,7 +273,7 @@ async function processFiles(
 }
 
 async function openImportModal() {
-	visible.value = true;
+	isUploadResourcesModalVisible.value = true;
 	results.value = null;
 }
 
@@ -302,6 +319,8 @@ const projectMenuItems = ref([
 function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
+
+const isUploadResourcesModalVisible = ref(false);
 </script>
 
 <style scoped>
@@ -460,5 +479,9 @@ ul {
 
 .file-title {
 	font-size: 2em;
+}
+
+.subheader {
+	margin-bottom: 1rem;
 }
 </style>

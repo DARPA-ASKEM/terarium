@@ -50,11 +50,12 @@ const runResults = ref({});
 
 const runSimulate = async () => {
 	const port = props.node.inputs[0];
+
 	if (port && port.value) {
 		const payload = {
-			model: shimPetriModel(port.value.model),
-			initials: port.value.initialValues,
-			params: port.value.parameterValues,
+			model: shimPetriModel(port.value?.[0].model),
+			initials: port.value?.[0].initialValues,
+			params: port.value?.[0].parameterValues,
 			tspan: openedWorkflowNodeStore.tspan
 		};
 
@@ -126,10 +127,10 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		type: SimulateOperation.outputs[0].type,
 		label: `${port.label} Results`,
 		value: {
-			model: port.value.model,
+			model: port.value?.[0].model,
 			runResults: runResults.value,
 			runIdList,
-			runConfigs: [port.value]
+			runConfigs: port.value
 		}
 	});
 };
