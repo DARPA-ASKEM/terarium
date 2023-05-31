@@ -194,4 +194,8 @@ main > * {
 svg:active {
 	cursor: grabbing;
 }
+
+.foreground-layer {
+	position: relative;
+}
 </style>

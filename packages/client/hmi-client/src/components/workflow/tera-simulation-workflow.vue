@@ -1,17 +1,4 @@
 <template>
-	<toolbar>
-		<h5>Workflow name</h5>
-		<div class="button-group">
-			<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
-			<Dropdown
-				icon="pi pi-plus"
-				class="primary-dropdown"
-				option-label="label"
-				:options="contextMenuItems"
-				placeholder="Add component"
-			/>
-		</div>
-	</toolbar>
 	<tera-infinite-canvas
 		debug-mode
 		@click="onCanvasClick()"
@@ -25,6 +12,17 @@
 		@dragover.prevent
 		@dragenter.prevent
 	>
+		<!-- toolbar -->
+		<template #foreground>
+			<toolbar>
+				<h5>Workflow name</h5>
+				<div class="button-group">
+					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
+					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
+					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
+				</div>
+			</toolbar>
+		</template>
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
@@ -145,7 +143,7 @@ import { CalibrationOperation } from '@/components/workflow/calibrate-operation'
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
+import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
@@ -253,6 +251,8 @@ const contextMenuItems = ref([
 		}
 	}
 ]);
+const addComponentMenu = ref();
+const showAddComponentMenu = (event) => addComponentMenu.value.toggle(event);
 
 const { getDragData } = useDragEvent();
 
@@ -425,9 +425,7 @@ toolbar {
 	justify-content: space-between;
 	align-items: center;
 	background-color: var(--surface-0);
-	padding: 0.5rem;
-	padding-left: 1rem;
-	padding-right: 1rem;
+	padding: 0.5rem 1rem;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 1000;

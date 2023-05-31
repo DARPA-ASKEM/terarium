@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
+			<h5 class="truncate">{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
@@ -206,7 +206,13 @@ main {
 
 main:hover {
 	box-shadow: var(--overlayMenuShadowHover);
+	z-index: 2;
 }
+
+main:hover > header {
+	background-color: var(--node-header-hover);
+}
+
 header {
 	display: flex;
 	padding: 0.25rem 0.25rem 0.25rem 1rem;
@@ -223,9 +229,20 @@ header:hover {
 	cursor: move;
 }
 
+.truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 header .p-button.p-button-icon-only,
 header .p-button.p-button-text:enabled:hover {
 	color: var(--gray-0);
+	width: 1.5rem;
+	margin-right: 0.25rem;
+}
+
+header .p-button.p-button-text:enabled:hover {
+	color: var(--surface-highlight);
 }
 
 section {
