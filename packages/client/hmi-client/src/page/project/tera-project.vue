@@ -50,6 +50,14 @@
 				"
 				:size="20"
 			>
+				<tera-tab-group
+					v-if="openedWorkflowNodeStore.node"
+					class="tab-group"
+					:tabs="[{ assetName: openedWorkflowNodeStore.node.operationType }]"
+					:active-tab-index="0"
+					:loading-tab-index="null"
+					@close-tab="openedWorkflowNodeStore.node = openedWorkflowNodeStore.assetId = null"
+				/>
 				<tera-calibration
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
 					:node="openedWorkflowNodeStore.node"
