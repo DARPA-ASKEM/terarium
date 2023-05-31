@@ -53,28 +53,36 @@
 						Select target variables from the model and the corresponding data column you want to
 						match them to.
 					</div>
-					<DataTable :value="mapping">
+					<DataTable :value="mapping" v-model:expandedRows="expandedRows">
 						<Column expander style="width: 5rem" />
-						<Column field="modelVariable[label]" header="Model variable">
+						<Column field="modelVariable" header="Model variable">
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
 									placeholder="Select a variable"
-									v-model="data[field]"
+									v-model="data[field].label"
 									:options="modelVariables"
 								/>
 							</template>
 						</Column>
-						<Column field="datasetVariable.label" header="Dataset variable">
+						<Column field="datasetVariable" header="Dataset variable">
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
 									placeholder="Select a variable"
-									v-model="data[field]"
+									v-model="data[field].label"
 									:options="datasetVariables"
 								/>
 							</template>
 						</Column>
+						<template #expansion="slotProps">
+							<div>
+								Model: {{ slotProps.data.modelVariable }}
+								<br />
+								Dataset: {{ slotProps.data.datasetVariable }}
+								<!-- <DataTable> put above in table -->
+							</div>
+						</template>
 					</DataTable>
 					<div>
 						<Button
@@ -147,6 +155,7 @@ const props = defineProps<{
 
 const modelConfigurationRef = ref();
 const calibrationView = ref(CalibrationView.INPUT);
+const expandedRows = ref([]);
 
 const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 
@@ -180,8 +189,8 @@ const isRunDisabled = computed(() => {
 
 const mapping = ref([
 	{
-		modelVariable: { label: null, name: null, units: null, concept: null },
-		datasetVariable: { label: null, name: null, units: null, concept: null }
+		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
+		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	}
 ]);
 
@@ -228,11 +237,11 @@ const startCalibration = async () => {
 
 function addMapping() {
 	mapping.value.push({
-		modelVariable: { label: null, name: null, units: null, concept: null },
-		datasetVariable: { label: null, name: null, units: null, concept: null }
+		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
+		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	});
 
-	// console.log(mapping.value)
+	console.log(mapping.value);
 }
 
 const getCalibrationStatus = async () => {
@@ -258,8 +267,8 @@ async function updateDataset() {
 		// Reset mapping on update for now
 		mapping.value = [
 			{
-				modelVariable: { label: null, name: null, units: null, concept: null },
-				datasetVariable: { label: null, name: null, units: null, concept: null }
+				modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
+				datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 			}
 		];
 	}

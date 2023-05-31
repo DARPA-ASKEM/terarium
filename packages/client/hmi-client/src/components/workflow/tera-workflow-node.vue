@@ -136,7 +136,8 @@ onMounted(() => {
 function showNodeDrilldown() {
 	if (
 		!isEmpty(props.node.outputs) ||
-		props.node.operationType === WorkflowOperationTypes.CALIBRATION
+		props.node.operationType === WorkflowOperationTypes.CALIBRATION ||
+		props.node.operationType === WorkflowOperationTypes.SIMULATE
 	) {
 		let pageType: ProjectAssetTypes | null = null;
 		let assetId: string | null = null;
