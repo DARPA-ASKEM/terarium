@@ -48,7 +48,7 @@
 					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
-			<Accordion :multiple="true" :activeIndex="showAccordion">
+			<Accordion :multiple="true">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
@@ -172,9 +172,9 @@ watch(
 );
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
-const showAccordion = computed(() =>
-	dataset.value?.columns?.map((column) => column?.annotations ?? 0).length > 0 ? [1] : [0]
-);
+// const showAccordion = computed(() =>
+//	dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0 ? [1] : [0]
+// );
 </script>
 
 <style scoped>
