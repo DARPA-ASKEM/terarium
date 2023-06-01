@@ -124,6 +124,7 @@ $inputListHeaderMargin: 0 !default;
 $inputListHeaderBg: #ffffff !default;
 $inputListHeaderTextColor: $textColor !default;
 $inputListHeaderBorder: 1px solid rgba(0, 0, 0, .12) !default;
+$inputListMaxWidth: 24rem !default;
 
 //inputs with overlays (e.g. autocomplete, dropdown, multiselect)
 $inputOverlayBg: $inputListBg !default;
