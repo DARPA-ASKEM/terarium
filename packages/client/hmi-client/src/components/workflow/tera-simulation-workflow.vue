@@ -41,7 +41,7 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:model-id="node.outputs?.[0]?.value.model.id.toString() ?? newAssetId"
+						:model-id="node.outputs?.[0]?.value?.[0]?.model.id.toString() ?? newAssetId"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -53,7 +53,7 @@
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="node.outputs?.[0]?.value.toString() ?? newAssetId"
+						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
@@ -175,7 +175,8 @@ const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
 	description: 'A test operation',
 	inputs: [
-		{ type: 'number', label: 'Number input' },
+		{ type: 'number', label: 'Number input', acceptMultiple: false },
+		{ type: 'number', label: 'Multi number input', acceptMultiple: true },
 		{ type: 'string', label: 'String input' }
 	],
 	outputs: [{ type: 'number', label: 'Number output' }],
@@ -191,28 +192,15 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: port.value,
+		value: [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
-	if (node.outputs.length === 0) {
-		node.outputs.push({
-			id: uuidv4(),
-			label: 'test',
-			value: null,
-			type: 'number',
-			status: WorkflowPortStatus.NOT_CONNECTED
-		});
-	}
-
-	if (node.inputs[0].value !== null) {
-		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
-	} else {
-		node.outputs[0].value = Math.round(Math.random() * 10);
-	}
+	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
+	appendOutputPort(node, { type: 'number', label: value.toString(), value });
 };
 
 const contextMenuItems = ref([
