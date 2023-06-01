@@ -55,20 +55,21 @@ watch(
 );
 
 const runSimulate = async () => {
-	const port = props.node.inputs[0];
+	if (props.node.inputs[0].value?.length) {
+		startedRunIdList.value = await Promise.all(
+			props.node.inputs[0].value.map(async (config) => {
+				const payload = {
+					model: shimPetriModel(config.model),
+					initials: config.initialValues,
+					params: config.parameterValues,
+					tspan: openedWorkflowNodeStore.tspan
+				};
 
-	if (port && port.value) {
-		const payload = {
-			model: shimPetriModel(port.value?.[0].model),
-			initials: port.value?.[0].initialValues,
-			params: port.value?.[0].parameterValues,
-			tspan: openedWorkflowNodeStore.tspan
-		};
+				const response = await makeForecast(payload);
+				return response.id;
+			})
+		);
 
-		const response = await makeForecast(payload);
-		startedRunIdList.value = [response.id];
-
-		// start polling for run status
 		getStatus();
 		showSpinner.value = true;
 	}

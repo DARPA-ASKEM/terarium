@@ -110,15 +110,14 @@ export const addEdge = (
 		return;
 	}
 
-	// TODO: Need to fix for multi-values
+	// Transfer data value/reference
 	if (targetInputPort.acceptMultiple && targetInputPort.value) {
 		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
+		targetInputPort.value = [...targetInputPort.value, ...sourceOutputPort.value];
 	} else {
 		targetInputPort.label = sourceOutputPort.label;
+		targetInputPort.value = sourceOutputPort.value;
 	}
-
-	// Transfer data value/reference
-	targetInputPort.value = sourceOutputPort.value;
 
 	const edge: WorkflowEdge = {
 		id: uuidv4(),
