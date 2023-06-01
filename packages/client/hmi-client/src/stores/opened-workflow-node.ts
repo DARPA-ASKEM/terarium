@@ -32,13 +32,16 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		) {
 			this.assetId = assetId;
 			this.pageType = pageType;
-			this.node = node;
+			this.setNode(node);
 		},
 		setModelConfig(initialValues: StringValueMap[], parameterValues: StringValueMap[]) {
 			this.initialValues = initialValues;
 			this.parameterValues = parameterValues;
 		},
 		// simulate node
+		setNode(node: WorkflowNode | null) {
+			this.node = node;
+		},
 		appendChart() {
 			this.numCharts++;
 		},

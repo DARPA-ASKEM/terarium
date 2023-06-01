@@ -45,8 +45,8 @@
 				class="project-page"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
-						openedWorkflowNodeStore.node)
+					openedWorkflowNodeStore.assetId &&
+					openedWorkflowNodeStore.pageType
 				"
 				:size="20"
 			>

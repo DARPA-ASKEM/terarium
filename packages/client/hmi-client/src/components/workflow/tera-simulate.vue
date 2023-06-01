@@ -19,12 +19,15 @@
 			/>
 			<span class="simulate-header-label">Simulate</span>
 		</div>
-		<div v-if="activeTab === SimulateTabs.output" class="simulate-container">
+		<div
+			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
+			class="simulate-container"
+		>
 			<simulate-chart
 				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
-				:run-results="props.node.outputs[0].value?.[0].runResults"
-				:run-id-list="props.node.outputs[0].value?.[0].runIdList"
+				:run-results="node.outputs[0].value?.[0].runResults"
+				:run-id-list="node.outputs[0].value?.[0].runIdList"
 				:chart-idx="index"
 			/>
 			<Button
@@ -36,17 +39,17 @@
 				icon="pi pi-plus"
 			></Button>
 		</div>
-		<div v-else-if="activeTab === SimulateTabs.input" class="simulate-container">
+		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ props.node.outputs[0].value?.[0].model.name }} </template>
-						<model-diagram :model="props.node.outputs[0].value?.[0].model" :is-editable="false" />
+						<template #header> {{ node.inputs[0].value?.[0].model.name }} </template>
+						<model-diagram :model="node.inputs[0].value?.[0].model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Model configurations ({{ simConfigs.length }}) </template>
 						<DataTable
-							v-if="props.node.outputs[0].value?.length"
+							v-if="node.inputs[0].value?.length"
 							class="model-configuration"
 							showGridlines
 							:value="simConfigs"
@@ -110,7 +113,6 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { WorkflowNode } from '@/types/workflow';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { TspanUnits } from '@/types/SimulateConfig';
@@ -118,9 +120,6 @@ import { TspanUnits } from '@/types/SimulateConfig';
 import SimulateChart from './tera-simulate-chart.vue';
 import ModelDiagram from '../models/tera-model-diagram.vue';
 
-const props = defineProps<{
-	node: WorkflowNode;
-}>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 enum SimulateTabs {
@@ -129,6 +128,7 @@ enum SimulateTabs {
 }
 
 const activeTab = ref(SimulateTabs.input);
+const node = ref(openedWorkflowNodeStore.node);
 
 const TspanUnitList = computed(() =>
 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
@@ -136,18 +136,19 @@ const TspanUnitList = computed(() =>
 
 const simVars = computed(() => [
 	'Configuration Name',
-	...(props.node.outputs[0].value as any[])[0].model.content.S.map((state) => state.sname),
-	...(props.node.outputs[0].value as any[])[0].model.content.T.map((state) => state.tname)
+	...(node.value?.inputs[0].value as any[])[0].model.content.S.map((state) => state.sname),
+	...(node.value?.inputs[0].value as any[])[0].model.content.T.map((state) => state.tname)
 ]);
 
-const simConfigs = computed(() =>
-	props.node.outputs[0].value?.[0].runConfigs.map(
-		(runConfig: typeof openedWorkflowNodeStore, i: number) => ({
-			'Configuration Name': `Config ${i + 1}`,
-			...runConfig.initialValues,
-			...runConfig.parameterValues
-		})
-	)
+const simConfigs = computed(
+	() =>
+		node.value?.outputs[0]?.value?.[0].runConfigs.map(
+			(runConfig: typeof openedWorkflowNodeStore, i: number) => ({
+				'Configuration Name': `Config ${i + 1}`,
+				...runConfig.initialValues,
+				...runConfig.parameterValues
+			})
+		) || []
 );
 </script>
 

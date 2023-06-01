@@ -48,6 +48,12 @@ const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
 const runResults = ref({});
 
+watch(
+	() => props.node,
+	(node) => openedWorkflowNodeStore.setNode(node ?? null),
+	{ deep: true }
+);
+
 const runSimulate = async () => {
 	const port = props.node.inputs[0];
 
@@ -127,7 +133,6 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		type: SimulateOperation.outputs[0].type,
 		label: `${port.label} Results`,
 		value: {
-			model: port.value?.[0].model,
 			runResults: runResults.value,
 			runIdList,
 			runConfigs: port.value
