@@ -96,7 +96,7 @@
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { computed, ref, watch, onUpdated } from 'vue';
+import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
@@ -128,8 +128,8 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset = ref<Dataset | null>(null);
-const rawContent = ref<CsvAsset | null>(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
@@ -173,7 +173,7 @@ watch(
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
 const showAccordion = computed(() =>
-	dataset.value?.columns?.map((column) => column.annotations ?? 0).length > 0 ? [1] : [0]
+	dataset.value?.columns?.map((column) => column?.annotations ?? 0).length > 0 ? [1] : [0]
 );
 </script>
 
