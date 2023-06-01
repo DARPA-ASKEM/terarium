@@ -66,20 +66,21 @@ export interface ReferencedPaper {
 }
 
 export interface Model {
-	states: ModelStates[];
+	states: ModelState[];
 	transitions: ModelTransition[];
-	parameters: ModelParameters[];
+	parameters: ModelParameter[];
 }
 
-export interface ModelParameters {
+export interface ModelParameter {
 	id: string;
 	value: number;
+	name?: string;
 }
 
-export interface ModelStates {
+export interface ModelState {
 	id: string;
 	name: string;
-	grounding: ModelGrounding;
+	grounding?: ModelGrounding;
 }
 
 export interface ModelGrounding {
@@ -91,7 +92,7 @@ export interface ModelTransition {
 	id: string;
 	input: string[];
 	output: string[];
-	properties: TransitionProperties;
+	properties?: TransitionProperties;
 }
 
 export interface TransitionProperties {

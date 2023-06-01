@@ -87,9 +87,9 @@ const runSimulate = async () => {
 
 	if (port && port.value) {
 		const payload = {
-			model: shimPetriModel(port.value.model),
-			initials: port.value.initialValues,
-			params: port.value.parameterValues,
+			model: shimPetriModel(port.value?.[0].model),
+			initials: port.value?.[0].initialValues,
+			params: port.value?.[0].parameterValues,
 			tspan: [0, 100]
 		};
 

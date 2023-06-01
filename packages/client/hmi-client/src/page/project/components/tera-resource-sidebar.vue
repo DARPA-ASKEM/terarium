@@ -60,7 +60,8 @@
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
-					{{ capitalize(type) }}
+					<template v-if="type === ProjectAssetTypes.DOCUMENTS">Publications & Documents</template>
+					<template v-else>{{ capitalize(type) }}</template>
 					<aside>({{ tabs.size }})</aside>
 				</template>
 				<Button
@@ -271,6 +272,10 @@ header {
 
 .pi-spinner {
 	font-size: 4rem;
+}
+
+.remove-modal:deep(main) {
+	max-width: 50rem;
 }
 
 .remove-modal p {
