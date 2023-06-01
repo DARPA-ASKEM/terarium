@@ -45,8 +45,6 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubRepositoryContent, getGithubCode } from '@/services/github-import';
-import { Dataset } from '@/types/Types';
-import { createNewDataset } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
@@ -96,28 +94,16 @@ async function openContent(content?) {
 		return;
 	}
 
-	if (content.path.toUpperCase().endsWith('.CSV')) {
-		const dataset: Dataset = {
-			name: content.name,
-			url: content.html_url,
-			description: content.html_url
-		};
+	// Open file in code view
+	const code = await getGithubCode(repoOwnerAndName.value, content.path);
 
-		const newDataset: Dataset | null = await createNewDataset(dataset);
-
-		if (newDataset) console.log('new');
-	} else {
-		// Open file in code view
-		const code = await getGithubCode(repoOwnerAndName.value, content.path);
-
-		// Will be pasted into the code editor
-		emit(
-			'open-code',
-			{ assetName: 'New file', assetType: ProjectAssetTypes.CODE, assetId: undefined },
-			// { assetName: url.name, assetId: url.name, assetType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
-			code
-		);
-	}
+	// Will be pasted into the code editor
+	emit(
+		'open-code',
+		{ assetName: 'New file', pageType: ProjectAssetTypes.CODE, assetId: undefined },
+		// { assetName: url.name, assetId: url.name, pageType: ProjectAssetTypes.CODE }, // A new code asset would have to be created for this to work - leaving that for another issue
+		code
+	);
 }
 </script>
 
