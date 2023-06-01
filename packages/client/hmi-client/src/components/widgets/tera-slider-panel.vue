@@ -6,7 +6,7 @@
 		:is-open="isOpen"
 	>
 		<template v-slot:content>
-			<header class="slider-header content">
+			<header class="slider-header content sticky">
 				<i
 					:class="`slider-header-item pi ${directionMap[direction].iconOpen}`"
 					@click="emit('update:isOpen', false)"
@@ -137,5 +137,13 @@ i.slider-header-item {
 	height: 2rem;
 	line-height: 2rem;
 	font-weight: var(--font-weight);
+}
+
+.sticky {
+	z-index: 3;
+	position: sticky;
+	top: 0;
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(3px);
 }
 </style>

@@ -12,6 +12,17 @@
 		@dragover.prevent
 		@dragenter.prevent
 	>
+		<!-- toolbar -->
+		<template #foreground>
+			<toolbar>
+				<h5>Workflow name</h5>
+				<div class="button-group">
+					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
+					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
+					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
+				</div>
+			</toolbar>
+		</template>
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
@@ -29,7 +40,7 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:model-id="node.outputs?.[0]?.value.model.id.toString() ?? newAssetId"
+						:model-id="node.outputs?.[0]?.value?.[0]?.model.id.toString() ?? newAssetId"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -41,7 +52,7 @@
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="node.outputs?.[0]?.value.toString() ?? newAssetId"
+						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
@@ -54,6 +65,9 @@
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
+			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
+				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+			</marker>
 			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
@@ -67,14 +81,27 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
+			<marker
+				id="smallArrow"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="12"
+				markerHeight="12"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 				stroke="#1B8073"
-				stroke-dasharray="8"
 				stroke-width="2"
+				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
 				fill="none"
 			/>
@@ -83,7 +110,8 @@
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
 				stroke="#1B8073"
 				stroke-width="2"
-				marker-mid="url(#arrow)"
+				marker-start="url(#circle)"
+				marker-mid="url(#smallArrow)"
 				:key="index"
 				fill="none"
 			/>
@@ -115,6 +143,7 @@ import { CalibrationOperation } from '@/components/workflow/calibrate-operation'
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
@@ -145,7 +174,8 @@ const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
 	description: 'A test operation',
 	inputs: [
-		{ type: 'number', label: 'Number input' },
+		{ type: 'number', label: 'Number input', acceptMultiple: false },
+		{ type: 'number', label: 'Multi number input', acceptMultiple: true },
 		{ type: 'string', label: 'String input' }
 	],
 	outputs: [{ type: 'number', label: 'Number output' }],
@@ -161,59 +191,46 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: port.value,
+		value: [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
 }
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
-	if (node.outputs.length === 0) {
-		node.outputs.push({
-			id: uuidv4(),
-			label: 'test',
-			value: null,
-			type: 'number',
-			status: WorkflowPortStatus.NOT_CONNECTED
-		});
-	}
-
-	if (node.inputs[0].value !== null) {
-		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
-	} else {
-		node.outputs[0].value = Math.round(Math.random() * 10);
-	}
+	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
+	appendOutputPort(node, { type: 'number', label: value.toString(), value });
 };
 
 const contextMenuItems = ref([
 	{
-		label: 'New operation',
+		label: 'Test operation',
 		command: () => {
 			workflowService.addNode(wf.value, testOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New model',
+		label: 'Model',
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New dataset',
+		label: 'Dataset',
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New calibration',
+		label: 'Calibrate',
 		command: () => {
 			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
 		}
 	},
 	{
-		label: 'New simulation',
+		label: 'Simulate',
 		command: () => {
 			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
 				width: 420,
@@ -222,6 +239,8 @@ const contextMenuItems = ref([
 		}
 	}
 ]);
+const addComponentMenu = ref();
+const showAddComponentMenu = (event) => addComponentMenu.value.toggle(event);
 
 const { getDragData } = useDragEvent();
 
@@ -381,4 +400,51 @@ onMounted(() => {
 onUnmounted(() => {
 	document.removeEventListener('mousemove', mouseUpdate);
 });
+
+function cleanUpLayout() {
+	// TODO: remove clean up layout
+	console.log('clean up layout');
+}
 </script>
+<style scoped>
+toolbar {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	background-color: var(--surface-0);
+	padding: 0.5rem 1rem;
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
+	z-index: 1000;
+}
+
+.button-group {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+/* We should make a proper secondary outline button. Until then this works. */
+toolbar .button-group .secondary-button {
+	color: var(--text-color-secondary);
+	border: 1px solid var(--surface-border-light);
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+toolbar .button-group .secondary-button:hover {
+	color: var(--text-color-secondary) !important;
+	background-color: var(--surface-highlight) !important;
+}
+
+toolbar .button-group .primary-dropdown {
+	background-color: var(--primary-color);
+	border: 1px solid var(--primary-color);
+}
+toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
+toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
+	color: var(--surface-0);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+</style>
