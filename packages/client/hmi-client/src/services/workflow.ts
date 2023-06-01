@@ -111,7 +111,7 @@ export const addEdge = (
 	}
 
 	// Transfer data value/reference
-	if (targetInputPort.acceptMultiple && targetInputPort.value) {
+	if (targetInputPort.acceptMultiple && targetInputPort.value && sourceOutputPort.value) {
 		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
 		targetInputPort.value = [...targetInputPort.value, ...sourceOutputPort.value];
 	} else {
