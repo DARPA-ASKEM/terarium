@@ -239,12 +239,13 @@ const formatDetails = computed(() => {
 // Format features for dataset type
 const formatFeatures = () => {
 	if (props.resourceType === ResourceType.DATASET) {
-		const columns = props.asset.columns ?? [];
+		// TODO: Once we have enrichment and extraction working we can see what annotations will look like
+		/* const columns = props.asset.columns ?? [];
 		if (!columns || columns.length === 0) return [];
 		const annotations = columns.map((c) => (c.annotations ? c.annotations : []));
 		const annotationNames = annotations.map((a) => (a.name ? a.name : ''));
 		const max = 5;
-		return annotationNames.length < max ? annotationNames : annotationNames.slice(0, max);
+		return annotationNames.length < max ? annotationNames : annotationNames.slice(0, max); */
 	}
 	return [];
 };
