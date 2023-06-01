@@ -137,11 +137,11 @@ function showNodeDrilldown() {
 		switch (props.node.operationType) {
 			case 'ModelOperation':
 				pageType = ProjectAssetTypes.MODELS;
-				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+				assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0].model.id.toString();
 				break;
 			case 'Dataset':
 				pageType = ProjectAssetTypes.DATASETS;
-				assetId = props.node.outputs[0].value.toString();
+				assetId = props.node.outputs[0].value?.[0].toString();
 				break;
 			default:
 				break;
@@ -315,7 +315,6 @@ ul li {
 	height: calc(var(--port-base-size) * 2);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--port-base-size);
-	left: calc(-1 * var(--port-base-size));
 }
 
 .port-connected .input.port {
