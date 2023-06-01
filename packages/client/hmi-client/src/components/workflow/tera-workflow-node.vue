@@ -1,17 +1,20 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5>{{ node.operationType }} ({{ node.statusCode }})</h5>
+			<h5 class="truncate">{{ node.operationType }} ({{ node.statusCode }})</h5>
 			<span>
 				<Button
-					icon="pi pi-ellipsis-v"
-					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
-				/>
-				<Button
+					icon="pi pi-sign-in"
+					class="p-button-icon-only p-button-text p-button-rounded"
 					@click="showNodeDrilldown"
-					icon="pi pi-external-link"
-					class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 				/>
+				<!-- 3-dot options menu -->
+				<Button
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleNodeMenu"
+				/>
+				<Menu ref="nodeMenu" :model="nodeMenuItems" :popup="true" />
 			</span>
 		</header>
 		<ul class="inputs">
@@ -74,6 +77,7 @@ import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
+import Menu from 'primevue/menu';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -84,7 +88,6 @@ const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'port-m
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
-	minHeight: `${props.node.height}px`,
 	top: `${props.node.y}px`,
 	left: `${props.node.x}px`
 }));
@@ -144,11 +147,11 @@ function showNodeDrilldown() {
 		switch (props.node.operationType) {
 			case WorkflowOperationTypes.MODEL:
 				pageType = ProjectAssetTypes.MODELS;
-				assetId = props.node.outputs[props.node.outputs.length - 1].value.model.id.toString();
+				assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0].model.id.toString();
 				break;
 			case WorkflowOperationTypes.DATASET:
 				pageType = ProjectAssetTypes.DATASETS;
-				assetId = props.node.outputs[0].value.toString();
+				assetId = props.node.outputs[0].value?.[0].toString();
 				break;
 			default:
 				break;
@@ -175,6 +178,29 @@ onBeforeUnmount(() => {
 		workflowNode.value.removeEventListener('mouseup', stopDrag);
 	}
 });
+
+function removeNode() {
+	// TODO: remove node
+	// console.log('remove node');
+}
+function bringToFront() {
+	// TODO: bring to front
+	// maybe there can be a z-index variable in the parent component
+	// and we can just increment it here, and add a z-index style to the node
+	// console.log('bring to front');
+}
+
+/*
+ * User Menu
+ */
+const nodeMenu = ref();
+const nodeMenuItems = ref([
+	{ icon: 'pi pi-clone', label: 'Bring to front', command: bringToFront },
+	{ icon: 'pi pi-trash', label: 'Remove', command: removeNode }
+]);
+const toggleNodeMenu = (event) => {
+	nodeMenu.value.toggle(event);
+};
 </script>
 
 <style scoped>
@@ -185,27 +211,53 @@ main {
 	position: absolute;
 	width: 20rem;
 	user-select: none;
+	box-shadow: var(--overlayMenuShadow);
+}
+
+main:hover {
+	box-shadow: var(--overlayMenuShadowHover);
+	z-index: 2;
+}
+
+main:hover > header {
+	background-color: var(--node-header-hover);
 }
 
 header {
 	display: flex;
-	padding: 0.25rem 0.5rem;
+	padding: 0.25rem 0.25rem 0.25rem 1rem;
 	justify-content: space-between;
 	align-items: center;
 	color: var(--gray-0);
-	background-color: var(--primary-color);
+	background-color: var(--node-header);
 	white-space: nowrap;
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
+}
+header:hover {
+	background-color: var(--node-header-hover);
+	cursor: move;
+}
+
+.truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 header .p-button.p-button-icon-only,
 header .p-button.p-button-text:enabled:hover {
 	color: var(--gray-0);
+	width: 1.5rem;
+	margin-right: 0.25rem;
+}
+
+header .p-button.p-button-text:enabled:hover {
+	color: var(--surface-highlight);
 }
 
 section {
-	margin: 0.5rem;
+	margin-left: 1rem;
+	margin-right: 1rem;
 }
 
 section,
@@ -213,11 +265,10 @@ ul {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
-	gap: 0.5rem;
 }
 
 ul {
-	margin: 0.5rem 0;
+	margin: 0.25rem 0;
 	list-style: none;
 	font-size: var(--font-caption);
 }
@@ -228,14 +279,23 @@ ul li {
 	align-items: center;
 }
 
-.input-port-container,
-.output-port-container {
+.input-port-container {
 	display: flex;
-	gap: 4px;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	padding-right: 0.5rem;
+	gap: 0.5rem;
 }
 
 .output-port-container {
+	display: flex;
+	gap: 0.5rem;
+	margin-left: 0.5rem;
 	flex-direction: row-reverse;
+	padding-left: 0.75rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
 .output-port-container:hover {
@@ -243,8 +303,11 @@ ul li {
 	background-color: var(--surface-highlight);
 }
 
+.output-port-container[active='false'] {
+	color: var(--text-color-secondary);
+}
 .output-port-container[active='true'] {
-	color: var(--primary-color);
+	color: var(--text-color-primary);
 }
 
 .port {
@@ -262,7 +325,6 @@ ul li {
 	height: calc(var(--port-base-size) * 2);
 	border: 2px solid var(--primary-color);
 	border-radius: var(--port-base-size);
-	left: calc(-1 * var(--port-base-size));
 }
 
 .port-connected .input.port {
@@ -274,7 +336,7 @@ ul li {
 }
 
 .port:hover {
-	background: var(--surface-border);
+	background: var(--primary-color);
 }
 
 .inputs .port {
@@ -292,7 +354,7 @@ ul li {
 }
 
 .port-connected {
-	background: var(--surface-border);
+	background: var(--surface-0);
 }
 
 .port-connected .port {
