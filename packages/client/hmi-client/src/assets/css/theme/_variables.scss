@@ -227,6 +227,7 @@ $dangerButtonActiveBg: rgba(#D32F2F, .68) !default;
 $dangerButtonTextActiveColor: #ffffff !default;
 $dangerButtonActiveBorderColor: transparent !default;
 $dangerButtonFocusShadow: none !default;
+$dangerTextButton: #971414 !default;
 
 $linkButtonColor: $primaryColor !default;
 $linkButtonHoverColor: $primaryColor !default;
@@ -927,6 +928,7 @@ $petri-inputBox: var(--gray-300);
 	--text-color-secondary: #{$textSecondaryColor};
 	--text-color-subdued: rgb(102, 112, 133);
 	--text-color-light: rgb(152, 154, 160);
+	--text-color-danger: #{$dangerTextButton};
 	--constrain-width: 55rem;
 	color-scheme: light;
 	--petri-nodeBorder: #{$petri-nodeBorder};
