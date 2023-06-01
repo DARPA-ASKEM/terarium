@@ -80,7 +80,7 @@
 					<template #header>
 						<header id="Parameters">Parameters</header>
 					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.parameters">
+					<DataTable class="p-datatable-sm" :value="modelParameters">
 						<Column field="id" header="ID"></Column>
 						<Column field="value" header="Value"></Column>
 					</DataTable>
@@ -89,7 +89,7 @@
 					<template #header>
 						<header id="State variables">State variables</header>
 					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.states">
+					<DataTable class="p-datatable-sm" :value="modelStates">
 						<Column field="id" header="ID"></Column>
 						<Column field="name" header="Name"></Column>
 						<Column field="grounding.context" header="Context"></Column>
@@ -100,7 +100,7 @@
 					<template #header>
 						<header id="Transitions">Transitions</header>
 					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.transitions">
+					<DataTable class="p-datatable-sm" :value="modelTransitions">
 						<Column field="id" header="ID"></Column>
 						<Column field="properties.name" header="Name"></Column>
 						<Column field="input" header="Input"></Column>
@@ -108,7 +108,7 @@
 						<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
 						<Column field="properties.rate.expression_mathml" header="Equation">
 							<template #body="slotProps">
-								<katex-element :expression="slotProps.data.properties.rate?.expression" />
+								<katex-element :expression="slotProps.data.properties?.rate?.expression" />
 							</template>
 						</Column>
 					</DataTable>
@@ -145,7 +145,7 @@
 						@update-model-content="updateModelContent"
 					/>
 				</AccordionTab>
-				<AccordionTab v-if="model">
+				<AccordionTab v-if="model && modelStates && modelParameters">
 					<template #header> Model configurations </template>
 					<DataTable
 						class="model-configuration"
@@ -161,15 +161,15 @@
 							<Row>
 								<Column header="" style="border: none" />
 								<Column header="" style="border: none" />
-								<Column header="Initial conditions" :colspan="model.content.S.length" />
+								<Column header="Initial conditions" :colspan="modelStates?.length" />
 								<Column header="Parameters" :colspan="paramLength" />
 								<!-- <Column header="Observables" /> -->
 							</Row>
 							<Row>
 								<Column selection-mode="multiple" headerStyle="width: 3rem" />
 								<Column header="Select all" />
-								<Column v-for="(s, i) of modelStates" :key="i" :header="s.name" />
-								<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.name" />
+								<Column v-for="(s, ix) of modelStates" :key="ix" :header="s.id" />
+								<Column v-for="(t, it) of modelParameters" :key="it" :header="t.id" />
 							</Row>
 							<!-- <Row> Add show in workflow later
 							<Column header="Show in workflow" />
@@ -185,6 +185,7 @@
 							</Column>
 						</Row> -->
 						</ColumnGroup>
+
 						<Column selection-mode="multiple" headerStyle="width: 3rem" />
 						<Column field="name">
 							<template #body="{ data, field }">
@@ -195,15 +196,15 @@
 							</template>
 						</Column>
 						<Column
-							v-for="(value, i) of [...model.content.S, ...model.content.T]"
+							v-for="(value, i) of [...modelStates.values(), ...modelParameters?.values()]"
 							:key="i"
-							:field="value['sname'] ?? value['tname']"
+							:field="value.id"
 						>
 							<template #body="{ data, field }">
-								{{ data[field] }}
+								{{ data[field] ? data[field] : '' }}
 							</template>
 							<template #editor="{ data, field }">
-								{{ data[field] }}
+								{{ data[field] ? data[field] : '' }}
 							</template>
 						</Column>
 					</DataTable>
@@ -302,7 +303,12 @@ import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
+import {
+	AskemModelRepresentationType,
+	ModelParameter,
+	ModelTransition,
+	ModelState
+} from '@/types/AskemModelRepresentation';
 import { ResultType } from '@/types/common';
 import { Document, Dataset, ProvenanceType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -417,36 +423,44 @@ const paramLength = computed(() => {
 	return model.value?.content.T.length;
 });
 
-const modelStates: ComputedRef<Array<{ name: string }> | undefined> = computed(() => {
+const modelStates: ComputedRef<Array<ModelState> | undefined> = computed(() => {
 	if (amr.value) {
-		return amr.value.model.states.map((state) => ({ name: state.id }));
+		return amr.value.model.states.map((state) => ({
+			id: state.id,
+			name: state.name,
+			grounding: state.grounding
+		}));
 	}
-	return model.value?.content.S.map((state) => ({ name: state.sname }));
+	return model.value?.content.S.map((state) => ({ id: state.sname, name: state.sname }));
 });
 
-const modelTransitions: ComputedRef<Array<{ name: string }> | undefined> = computed(() => {
+const modelTransitions: ComputedRef<Array<ModelTransition> | undefined> = computed(() => {
 	if (amr.value) {
-		return amr.value.model.transitions.map((transitions) => ({ name: transitions.id }));
+		return amr.value.model.transitions.map((transition) => ({
+			id: transition.id,
+			input: transition.input,
+			output: transition.output,
+			properties: transition.properties
+		}));
 	}
-	return model.value?.content.T.map((state) => ({ name: state.tname }));
+	return model.value?.content.T.map((state) => ({ id: state.tname, input: [], output: [] }));
 });
 
 const metaData = computed(() => {
 	if (amr.value) {
-		// const extractions = amr.value.metadata.variable_statements.map((staments) => {
-		// 	return staments.id;
-		// });
 		return amr.value.metadata.variable_statements;
 	}
 	return null;
 });
 
-// const modelParameters = computed(() =>{
-// 	if (amr.value){
-// 		return amr.value.model.parameters;
-// 	}
-// 	return model.value?.content.parameters;
-// })
+const modelParameters: ComputedRef<Array<ModelParameter>> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.parameters;
+	}
+	return model.value?.parameters
+		.filter((param) => !param.state_variable)
+		.map((param) => ({ id: param.name, value: param.default_value }));
+});
 
 function addModelConfiguration() {
 	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
@@ -512,14 +526,16 @@ function generateModelConfigValues() {
 		}
 	}
 	// Default values
-	else if (model.value) {
-		model.value?.content.S.forEach((s) => {
-			initialValues.value[0][s.sname] = `${1}`;
+	else if (modelStates.value && modelParameters.value) {
+		modelStates.value.forEach((state) => {
+			initialValues.value[0][state.id] = `${1}`;
 		});
 
-		model.value?.content.T.forEach((s) => {
-			parameterValues.value[0][s.tname] = `${0.0005}`;
-		});
+		if (modelParameters.value) {
+			modelParameters.value.forEach((param) => {
+				parameterValues.value[0][param.id] = param.value.toString();
+			});
+		}
 	}
 }
 
@@ -596,6 +612,8 @@ watch(
 			model.value = await getModel(props.assetId);
 			if (model.value && model.value.name === 'Bucky') {
 				amr.value = bucky;
+			} else {
+				amr.value = null;
 			}
 			fetchRelatedTerariumArtifacts();
 		} else {
