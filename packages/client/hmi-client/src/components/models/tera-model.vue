@@ -24,7 +24,7 @@
 						<Button
 							class="p-button-secondary p-button-sm"
 							label="Model"
-							icon="pi pi-file"
+							icon="pi pi-share-alt"
 							@click="modelView = ModelView.MODEL"
 							:active="modelView === ModelView.MODEL"
 						/>
@@ -83,7 +83,7 @@
 				<template #header>
 					<header id="Parameters">Parameters</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="amr?.model.parameters">
+				<DataTable class="p-datatable-sm" :value="modelParameters">
 					<Column field="id" header="ID"></Column>
 					<Column field="value" header="Value"></Column>
 				</DataTable>
@@ -92,7 +92,7 @@
 				<template #header>
 					<header id="State variables">State variables</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="amr?.model.states">
+				<DataTable class="p-datatable-sm" :value="modelStates">
 					<Column field="id" header="ID"></Column>
 					<Column field="name" header="Name"></Column>
 					<Column field="grounding.context" header="Context"></Column>
@@ -103,7 +103,7 @@
 				<template #header>
 					<header id="Transitions">Transitions</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="amr?.model.transitions">
+				<DataTable class="p-datatable-sm" :value="modelTransitions">
 					<Column field="id" header="ID"></Column>
 					<Column field="properties.name" header="Name"></Column>
 					<Column field="input" header="Input"></Column>
@@ -178,7 +178,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { watch, ref, computed, onUpdated, PropType } from 'vue';
+import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
 import { PetriNet, parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
@@ -197,7 +197,12 @@ import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
+import {
+	AskemModelRepresentationType,
+	ModelParameter,
+	ModelTransition,
+	ModelState
+} from '@/types/AskemModelRepresentation';
 import { ResultType } from '@/types/common';
 import { Document, Dataset, ProvenanceType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -280,11 +285,40 @@ const globalFilter = ref({
 	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
 });
 
+const modelStates: ComputedRef<Array<ModelState> | undefined> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.states.map((state) => ({
+			id: state.id,
+			name: state.name,
+			grounding: state.grounding
+		}));
+	}
+	return model.value?.content.S.map((state) => ({ id: state.sname, name: state.sname }));
+});
+
+const modelTransitions: ComputedRef<Array<ModelTransition> | undefined> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.transitions.map((transition) => ({
+			id: transition.id,
+			input: transition.input,
+			output: transition.output,
+			properties: transition.properties
+		}));
+	}
+	return model.value?.content.T.map((state) => ({ id: state.tname, input: [], output: [] }));
+});
+
+const modelParameters: ComputedRef<Array<ModelParameter>> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.parameters;
+	}
+	return model.value?.parameters
+		.filter((param) => !param.state_variable)
+		.map((param) => ({ id: param.name, value: param.default_value }));
+});
+
 const metaData = computed(() => {
 	if (amr.value) {
-		// const extractions = amr.value.metadata.variable_statements.map((staments) => {
-		// 	return staments.id;
-		// });
 		return amr.value.metadata.variable_statements;
 	}
 	return null;
@@ -354,6 +388,8 @@ watch(
 			model.value = await getModel(props.assetId);
 			if (model.value && model.value.name === 'Bucky') {
 				amr.value = bucky;
+			} else {
+				amr.value = null;
 			}
 			fetchRelatedTerariumArtifacts();
 		} else {

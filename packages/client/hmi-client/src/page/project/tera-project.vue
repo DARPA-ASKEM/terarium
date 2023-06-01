@@ -42,8 +42,7 @@
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				class="project-page"
-				style="z-index: 2; /** temporary styling to make drilldown contents above workflow nodes */"
+				class="project-page top-z-index"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
 					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
@@ -529,6 +528,14 @@ section,
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
+}
+
+.p-splitter:deep(.p-splitter-gutter) {
+	z-index: 1000;
+}
+
+.top-z-index {
+	z-index: 1000;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
