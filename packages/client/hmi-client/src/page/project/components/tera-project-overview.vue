@@ -4,6 +4,7 @@
 		:authors="project?.username"
 		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
 		is-editable
+		class="overview-banner"
 	>
 		<template #name-input>
 			<InputText
@@ -22,7 +23,7 @@
 			/>
 			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
 		</template>
-		<section class="content-container">
+		<section>
 			<section class="summary">
 				<!-- This div is so that child elements will automatically collapse margins -->
 				<div>
@@ -41,130 +42,133 @@
 					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 				</div>
 			</section>
-			<!-- Quick link buttons go here -->
-			<section>
-				<div class="quick-links">
-					<Button
-						label="Upload resources"
-						size="large"
-						icon="pi pi-cloud-upload"
-						class="p-button p-button-secondary quick-link-button"
-						@click="openImportModal"
-					/>
-					<Button
-						label="New model"
-						size="large"
-						icon="pi pi-share-alt"
-						class="p-button p-button-secondary quick-link-button"
-					/>
-					<Button
-						size="large"
-						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-workflow')"
-					>
-						<vue-feather
-							class="p-button-icon-left"
-							type="git-merge"
-							size="1.25rem"
-							stroke="rgb(16, 24, 40)"
-						/>
-						<span class="p-button-label">New workflow</span>
-					</Button>
-					<Button size="large" class="p-button p-button-secondary quick-link-button">
-						<compare-models-icon class="icon" />
-						<span class="p-button-label">Compare models</span>
-					</Button>
-					<Button
-						label="New simulation"
-						size="large"
-						icon="pi pi-play"
-						class="p-button p-button-secondary quick-link-button"
-					/>
-				</div>
-			</section>
-			<!-- Resources list table goes here -->
-			<section class="resource-list">
-				<div class="resource-list-section-header">
-					<h4>File manager</h4>
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText placeholder="Keyword search" class="keyword-search" />
-					</span>
-				</div>
-				<!-- resource list data table -->
-				<DataTable dataKey="id" tableStyle="min-width: 50rem">
-					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-					<Column field="name" header="Name" sortable style="width: 45%"></Column>
-					<Column field="modified" header="Modified" sortable style="width: 15%"></Column>
-					<Column field="tags" header="Tags"></Column>
-				</DataTable>
-			</section>
-			<section class="drag-n-drop">
-				<tera-modal
-					v-if="isUploadResourcesModalVisible"
-					class="modal"
-					@modal-mask-clicked="isUploadResourcesModalVisible = false"
-				>
-					<template #header>
-						<h4>Upload resources</h4>
-					</template>
-					<template #default>
-						<p class="subheader">Add resources to your project here</p>
-						<tera-drag-and-drop-importer
-							:show-preview="true"
-							:accept-types="[
-								AcceptedTypes.PDF,
-								AcceptedTypes.JPG,
-								AcceptedTypes.JPEG,
-								AcceptedTypes.PNG,
-								AcceptedTypes.CSV
-							]"
-							:import-action="processFiles"
-							@import-completed="importCompleted"
-						></tera-drag-and-drop-importer>
-
-						<section v-if="isUploadResourcesModalVisible">
-							<Card v-for="(item, i) in results" :key="i" class="card">
-								<template #title>
-									<div class="card-img"></div>
-								</template>
-								<template #content>
-									<div class="card-content">
-										<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
-										<div v-if="item.response" class="file-content">
-											<br />
-											<div>Extracted Text</div>
-											<div>{{ item.response.text }}</div>
-											<br />
-											<div v-if="item.response.images">Images Found</div>
-											<div v-for="image in item.response.images" :key="image">
-												<img :src="`data:image/jpeg;base64,${image}`" alt="" />
-											</div>
-											<br />
-											<i class="pi pi-plus"></i>
-										</div>
-									</div>
-								</template>
-							</Card>
-						</section>
-					</template>
-					<template #footer>
-						<Button
-							label="Upload"
-							class="p-button-primary"
-							@click="isUploadResourcesModalVisible = false"
-							:disabled="!results"
-						/>
-						<Button
-							label="Cancel"
-							class="p-button-secondary"
-							@click="isUploadResourcesModalVisible = false"
-						/>
-					</template>
-				</tera-modal>
-			</section>
 		</section>
 	</tera-asset>
+	<section class="content-container">
+		<h5>Quick links</h5>
+		<!-- Quick link buttons go here -->
+		<section>
+			<div class="quick-links">
+				<Button
+					label="Upload resources"
+					size="large"
+					icon="pi pi-cloud-upload"
+					class="p-button p-button-secondary quick-link-button"
+					@click="openImportModal"
+				/>
+				<Button
+					label="New model"
+					size="large"
+					icon="pi pi-share-alt"
+					class="p-button p-button-secondary quick-link-button"
+				/>
+				<Button
+					size="large"
+					class="p-button p-button-secondary quick-link-button"
+					@click="emit('open-workflow')"
+				>
+					<vue-feather
+						class="p-button-icon-left"
+						type="git-merge"
+						size="1.25rem"
+						stroke="rgb(16, 24, 40)"
+					/>
+					<span class="p-button-label">New workflow</span>
+				</Button>
+				<Button size="large" class="p-button p-button-secondary quick-link-button">
+					<compare-models-icon class="icon" />
+					<span class="p-button-label">Compare models</span>
+				</Button>
+				<Button
+					label="New simulation"
+					size="large"
+					icon="pi pi-play"
+					class="p-button p-button-secondary quick-link-button"
+				/>
+			</div>
+		</section>
+		<!-- Resources list table goes here -->
+		<section class="resource-list">
+			<div class="resource-list-section-header">
+				<h4>File manager</h4>
+				<span class="p-input-icon-left">
+					<i class="pi pi-search" />
+					<InputText placeholder="Keyword search" class="keyword-search" />
+				</span>
+			</div>
+			<!-- resource list data table -->
+			<DataTable dataKey="id" tableStyle="min-width: 50rem">
+				<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
+				<Column field="name" header="Name" sortable style="width: 45%"></Column>
+				<Column field="modified" header="Modified" sortable style="width: 15%"></Column>
+				<Column field="tags" header="Tags"></Column>
+			</DataTable>
+		</section>
+		<section class="drag-n-drop">
+			<tera-modal
+				v-if="isUploadResourcesModalVisible"
+				class="modal"
+				@modal-mask-clicked="isUploadResourcesModalVisible = false"
+			>
+				<template #header>
+					<h4>Upload resources</h4>
+				</template>
+				<template #default>
+					<p class="subheader">Add resources to your project here</p>
+					<tera-drag-and-drop-importer
+						:show-preview="true"
+						:accept-types="[
+							AcceptedTypes.PDF,
+							AcceptedTypes.JPG,
+							AcceptedTypes.JPEG,
+							AcceptedTypes.PNG,
+							AcceptedTypes.CSV
+						]"
+						:import-action="processFiles"
+						@import-completed="importCompleted"
+					></tera-drag-and-drop-importer>
+
+					<section v-if="isUploadResourcesModalVisible">
+						<Card v-for="(item, i) in results" :key="i" class="card">
+							<template #title>
+								<div class="card-img"></div>
+							</template>
+							<template #content>
+								<div class="card-content">
+									<div v-if="item.file" class="file-title">{{ item.file.name }}</div>
+									<div v-if="item.response" class="file-content">
+										<br />
+										<div>Extracted Text</div>
+										<div>{{ item.response.text }}</div>
+										<br />
+										<div v-if="item.response.images">Images Found</div>
+										<div v-for="image in item.response.images" :key="image">
+											<img :src="`data:image/jpeg;base64,${image}`" alt="" />
+										</div>
+										<br />
+										<i class="pi pi-plus"></i>
+									</div>
+								</div>
+							</template>
+						</Card>
+					</section>
+				</template>
+				<template #footer>
+					<Button
+						label="Upload"
+						class="p-button-primary"
+						@click="isUploadResourcesModalVisible = false"
+						:disabled="!results"
+					/>
+					<Button
+						label="Cancel"
+						class="p-button-secondary"
+						@click="isUploadResourcesModalVisible = false"
+					/>
+				</template>
+			</tera-modal>
+		</section>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -328,30 +332,19 @@ a {
 	text-decoration: underline;
 }
 
+.overview-banner {
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 64px center,
+		linear-gradient(45deg, rgb(209, 239, 227) 0%, rgb(249, 255, 245) 100%) no-repeat;
+	height: auto;
+}
 .content-container {
-	margin-left: 1rem;
-	margin-right: 1rem;
-}
-
-.overview-header {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin: 1rem;
-}
-
-header {
-	margin: 1rem;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
+	padding: 1rem;
+	background: var(--surface-0);
+	flex: 1;
 }
 
 .description {
-	margin-top: 1rem;
-	margin-bottom: 0.5rem;
+	margin: 1rem;
 }
 
 .contributors {
@@ -363,13 +356,12 @@ section {
 .summary-KPI-bar {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
-	border: 1px solid var(--surface-border);
-	border-radius: var(--border-radius);
-	padding: 1.5rem 5rem 1.5rem 3rem;
-	background-color: var(--gray-50);
-	margin-top: 1rem;
-	margin-bottom: 1rem;
+	justify-content: space-evenly;
+	margin: 1rem;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.5);
+	border-radius: var(border-radius);
+	backdrop-filter: blur(5px);
 }
 
 .summary-KPI {
@@ -396,8 +388,8 @@ button .icon {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	margin-top: 0.5rem;
-	margin-bottom: 0.5rem;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 	gap: 1rem;
 }
 
