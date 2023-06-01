@@ -42,7 +42,7 @@
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				class="project-page"
+				class="project-page top-z-index"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
 					openedWorkflowNodeStore.assetId &&
@@ -541,7 +541,13 @@ section,
 	overflow-x: auto;
 	overflow-y: hidden;
 }
+.p-splitter:deep(.p-splitter-gutter) {
+	z-index: 1000;
+}
 
+.top-z-index {
+	z-index: 1000;
+}
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
 	max-width: 15rem;
