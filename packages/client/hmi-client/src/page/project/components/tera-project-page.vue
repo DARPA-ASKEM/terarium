@@ -132,7 +132,9 @@ async function openCode(codeRequests: CodeRequest[]) {
 
 async function openNextCodeFile() {
 	if (queuedCodeRequests.value.length > 0) {
-		const currentRequest: CodeRequest = queuedCodeRequests.value.pop();
+		const currentRequest: CodeRequest | undefined = queuedCodeRequests.value.pop();
+
+		if (!currentRequest) return;
 
 		code.value = currentRequest.code;
 		await router.push({

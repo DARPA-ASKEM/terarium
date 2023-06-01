@@ -12,7 +12,8 @@
 			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
 				<template #header>
 					<h4>
-						{{ directoryContent.totalFiles }} files found at https://github.com/{{ repoOwnerAndName
+						{{ directoryContent?.totalFiles }} files found at https://github.com/{{
+							repoOwnerAndName
 						}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
 					</h4>
 					<b>Select which files you want to import</b>
@@ -29,12 +30,12 @@
 									<header>
 										<b>Directories</b>
 										<span class="artifact-amount"
-											>({{ directoryContent.files.Directory.length }})</span
+											>({{ directoryContent?.files.Directory?.length }})</span
 										>
 									</header>
 								</li>
 								<li
-									v-for="(content, index) in directoryContent.files.Directory"
+									v-for="(content, index) in directoryContent?.files.Directory"
 									:key="index"
 									@click="openDirectory(content.path)"
 								>
@@ -44,11 +45,13 @@
 								<li v-if="hasCode">
 									<header>
 										<b>Code</b>
-										<span class="artifact-amount">({{ directoryContent.files.Code.length }})</span>
+										<span class="artifact-amount"
+											>({{ directoryContent?.files.Code?.length }})</span
+										>
 									</header>
 								</li>
 								<li
-									v-for="(content, index) in directoryContent.files.Code"
+									v-for="(content, index) in directoryContent?.files.Code"
 									:key="index"
 									@click="previewTextFile(content)"
 								>
@@ -64,11 +67,13 @@
 								<li v-if="hasData">
 									<header>
 										<b>Data</b>
-										<span class="artifact-amount">({{ directoryContent.files.Data.length }})</span>
+										<span class="artifact-amount"
+											>({{ directoryContent?.files.Data?.length }})</span
+										>
 									</header>
 								</li>
 								<li
-									v-for="(content, index) in directoryContent.files.Data"
+									v-for="(content, index) in directoryContent?.files.Data"
 									:key="index"
 									@click="previewTextFile(content)"
 								>
@@ -85,12 +90,12 @@
 									<header>
 										<b>Documents</b>
 										<span class="artifact-amount"
-											>({{ directoryContent.files.Documents.length }})</span
+											>({{ directoryContent?.files.Documents?.length }})</span
 										>
 									</header>
 								</li>
 								<li
-									v-for="(content, index) in directoryContent.files.Documents"
+									v-for="(content, index) in directoryContent?.files.Documents"
 									:key="index"
 									@click="previewTextFile(content)"
 								>
@@ -106,10 +111,12 @@
 								<li v-if="hasOther">
 									<header>
 										<b>Unknown File Types</b>
-										<span class="artifact-amount">({{ directoryContent.files.Other.length }})</span>
+										<span class="artifact-amount"
+											>({{ directoryContent?.files.Other?.length }})</span
+										>
 									</header>
 								</li>
-								<li v-for="(content, index) in directoryContent.files.Other" :key="index">
+								<li v-for="(content, index) in directoryContent?.files.Other" :key="index">
 									<i class="pi pi-file" />
 									{{ content.name }}
 								</li>
@@ -164,7 +171,7 @@ const emit = defineEmits(['open-code']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
-const directoryContent: Ref<GithubRepo> = ref();
+const directoryContent: Ref<GithubRepo | null> = ref(null);
 const isModalVisible: Ref<boolean> = ref(false);
 const selectedFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
@@ -174,15 +181,15 @@ const displayCode: Ref<string> = ref('');
 const isInDirectory: ComputedRef<boolean> = computed(() => !isEmpty(currentDirectory.value));
 // There may be a more concise way to do this?
 const hasDirectories: ComputedRef<boolean> = computed(
-	() => !isEmpty(directoryContent.value?.files?.Directory)
+	() => !isEmpty(directoryContent?.value?.files?.Directory)
 );
 const hasCode: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent.value?.files?.Code));
 const hasData: ComputedRef<boolean> = computed(() => !isEmpty(directoryContent.value?.files?.Data));
 const hasDocuments: ComputedRef<boolean> = computed(
-	() => !isEmpty(directoryContent.value?.files?.Documents)
+	() => !isEmpty(directoryContent?.value?.files?.Documents)
 );
 const hasOther: ComputedRef<boolean> = computed(
-	() => !isEmpty(directoryContent.value?.files?.Other)
+	() => !isEmpty(directoryContent?.value?.files?.Other)
 );
 
 async function initializeCodeBrowser() {
