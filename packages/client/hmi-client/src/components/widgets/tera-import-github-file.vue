@@ -130,11 +130,11 @@
 				</template>
 
 				<template #footer>
-					<Button
-						label="Import files"
-						:disabled="selectedFiles.length < 1"
-						@click="openSelectedFiles()"
-					/>
+					<Button :disabled="selectedFiles.length < 1" @click="openSelectedFiles()"
+						>Import {{ selectedFiles.length }} file{{
+							selectedFiles.length == 1 ? '' : 's'
+						}}</Button
+					>
 					<Button class="p-button-outlined" label="Cancel" @click="isModalVisible = false" />
 				</template>
 			</tera-modal>
