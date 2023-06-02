@@ -140,7 +140,6 @@ const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const datasetContent = ref();
 
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
@@ -171,7 +170,7 @@ const startCalibration = async () => {
 	// Make calibration job.
 	// FIXME: current need to strip out metadata, should do serverside
 
-	if (modelConfig.value) {
+	if (modelConfig.value && csvAsset.value) {
 		console.log(modelConfig.value);
 
 		const { S, T, I, O } = modelConfig.value.model.content;
@@ -197,7 +196,7 @@ const startCalibration = async () => {
 				params: modelConfig.value.parameterValues,
 				timesteps_column: timestepColumnName,
 				feature_mappings: featureObject,
-				dataset: datasetContent.value
+				dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
 			};
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
@@ -235,7 +234,6 @@ async function updateDataset() {
 	if (datasetId.value) {
 		csvAsset.value = (await downloadRawFile(datasetId.value)) as CsvAsset;
 		datasetVariables.value = csvAsset.value?.headers;
-		datasetContent.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 
 		// Reset mapping on update for now
 		mapping.value = [
