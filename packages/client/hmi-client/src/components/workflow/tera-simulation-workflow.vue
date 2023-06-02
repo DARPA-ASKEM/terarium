@@ -14,14 +14,14 @@
 	>
 		<!-- toolbar -->
 		<template #foreground>
-			<toolbar>
+			<header>
 				<h5>Workflow name</h5>
 				<div class="button-group">
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
 				</div>
-			</toolbar>
+			</header>
 		</template>
 		<!-- data -->
 		<template #data>
@@ -407,7 +407,7 @@ function cleanUpLayout() {
 }
 </script>
 <style scoped>
-toolbar {
+header {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -424,25 +424,27 @@ toolbar {
 	flex-direction: row;
 	gap: 1rem;
 }
+
 /* We should make a proper secondary outline button. Until then this works. */
-toolbar .button-group .secondary-button {
+header .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	border: 1px solid var(--surface-border-light);
 	padding-top: 0px;
 	padding-bottom: 0px;
 }
 
-toolbar .button-group .secondary-button:hover {
+header .button-group .secondary-button:hover {
 	color: var(--text-color-secondary) !important;
 	background-color: var(--surface-highlight) !important;
 }
 
-toolbar .button-group .primary-dropdown {
+header .button-group .primary-dropdown {
 	background-color: var(--primary-color);
 	border: 1px solid var(--primary-color);
 }
-toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
-toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
+
+header .button-group .primary-dropdown:deep(.p-dropdown-label),
+header .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
 	color: var(--surface-0);
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;

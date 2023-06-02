@@ -164,9 +164,9 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetContent = ref();
 const timestepColumnName = ref<string>('');
 
-const datasetId = computed(() => props.node.inputs[1].value.toString() as string | undefined);
-const datasetName = computed(() => props.node.inputs[1].label);
-const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
+const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
+const datasetName = computed(() => props.node.inputs[1].label?.[0]);
+const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0].value?.[0]);
 const modelVariables = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );

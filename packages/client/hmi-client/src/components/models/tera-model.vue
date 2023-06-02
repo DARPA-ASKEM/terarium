@@ -111,7 +111,7 @@
 					<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
 					<Column field="properties.rate.expression_mathml" header="Equation">
 						<template #body="slotProps">
-							<katex-element :expression="slotProps.data.properties.rate?.expression" />
+							<katex-element :expression="slotProps.data.properties?.rate?.expression" />
 						</template>
 					</Column>
 				</DataTable>
@@ -356,7 +356,7 @@ const relatedTerariumDocuments = computed(
 // 			selectedRow.value.sname,
 // 			String.raw`{\color{red}${selectedRow.value.sname}}`
 // 		);
-// 	} else {@vnode-mounted
+// 	} else {
 // 		equationLatex.value = equationLatexOriginal.value;
 // 	}
 // };

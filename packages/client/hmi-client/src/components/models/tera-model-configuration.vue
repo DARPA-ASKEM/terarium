@@ -152,19 +152,13 @@ const selectedTransitions = ref<string[]>([]);
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
-const modelConfiguration = computed(() => {
-	const newModelConfiguration: any[] = [];
-
-	for (let i = 0; i < modelConfigNames.value.length; i++) {
-		newModelConfiguration.push({
-			name: modelConfigNames.value[i].name,
-			...initialValues.value[i],
-			...parameterValues.value[i]
-		});
-	}
-
-	return newModelConfiguration;
-});
+const modelConfiguration = computed(() =>
+	modelConfigNames.value.map((m, i) => ({
+		name: m.name,
+		...initialValues.value[i],
+		...parameterValues.value[i]
+	}))
+);
 
 const selectedStatesAndTransitions = computed(() => [
 	...selectedStates.value,
