@@ -31,6 +31,7 @@ import { shimPetriModel } from '@/services/models/petri-shim';
 
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
+import { RunResults } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import SimulateChart from './tera-simulate-chart.vue';
@@ -46,7 +47,7 @@ const showSpinner = ref(false);
 
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
-const runResults = ref({});
+const runResults = ref<RunResults>({});
 
 watch(
 	() => props.node,

@@ -116,6 +116,7 @@ import InputNumber from 'primevue/inputnumber';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { TspanUnits } from '@/types/SimulateConfig';
+import { ModelConfig } from '@/types/ModelConfig';
 
 import SimulateChart from './tera-simulate-chart.vue';
 import ModelDiagram from '../models/tera-model-diagram.vue';
@@ -142,13 +143,11 @@ const simVars = computed(() => [
 
 const simConfigs = computed(
 	() =>
-		node.value?.outputs[0]?.value?.[0].runConfigs.map(
-			(runConfig: typeof openedWorkflowNodeStore, i: number) => ({
-				'Configuration Name': `Config ${i + 1}`,
-				...runConfig.initialValues,
-				...runConfig.parameterValues
-			})
-		) || []
+		node.value?.outputs[0]?.value?.[0].runConfigs.map((runConfig: ModelConfig, i: number) => ({
+			'Configuration Name': `Config ${i + 1}`,
+			...runConfig.initialValues,
+			...runConfig.parameterValues
+		})) || []
 );
 </script>
 

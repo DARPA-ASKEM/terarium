@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ProjectAssetTypes } from '@/types/Project';
 import { WorkflowNode } from '@/types/workflow';
-import { TspanUnits } from '@/types/SimulateConfig';
+import { TspanUnits, ChartConfig } from '@/types/SimulateConfig';
 
 interface StringValueMap {
 	[key: string]: number;
@@ -19,7 +19,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		node: null as WorkflowNode | null,
 		// simulate node
 		numCharts: 1,
-		chartConfigs: [] as any[],
+		chartConfigs: [] as ChartConfig[],
 		tspanUnit: TspanUnits[0],
 		tspan: [0, 100]
 	}),
@@ -45,7 +45,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		appendChart() {
 			this.numCharts++;
 		},
-		setChartConfig(chartIdx: number, chartConfig) {
+		setChartConfig(chartIdx: number, chartConfig: ChartConfig) {
 			this.chartConfigs[chartIdx] = {
 				...this.chartConfigs[chartIdx],
 				...chartConfig
