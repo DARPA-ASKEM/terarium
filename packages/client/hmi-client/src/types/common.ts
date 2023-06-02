@@ -87,6 +87,11 @@ export type Tab = {
 	pageType?: ProjectAssetTypes | ProjectPages;
 };
 
+export type CodeRequest = {
+	asset: Tab;
+	code?: string;
+};
+
 export enum AcceptedTypes {
 	PDF = 'application/pdf',
 	JPG = 'image/jpg',
