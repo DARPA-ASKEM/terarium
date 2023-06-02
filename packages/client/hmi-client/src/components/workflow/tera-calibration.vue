@@ -141,7 +141,6 @@ const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetContent = ref();
-const timestepColumnName = ref<string>('');
 
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
@@ -150,9 +149,13 @@ const modelVariables = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );
 const featureMap = computed(() => modelVariables.value.map((stateName) => ['', stateName]));
+
 const isRunDisabled = computed(
 	() =>
-		modelConfigurationRef.value && isEmpty(modelConfigurationRef.value.selectedStatesAndTransitions)
+		modelConfigurationRef.value &&
+		isEmpty(modelConfigurationRef.value.selectedStatesAndTransitions) &&
+		mapping.value?.[0].modelVariable.label &&
+		mapping.value?.[0].datasetVariable.label
 );
 
 const mapping = ref([
@@ -161,6 +164,8 @@ const mapping = ref([
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	}
 ]);
+
+const timestepColumnName = '';
 
 const startCalibration = async () => {
 	// Make calibration job.
@@ -190,7 +195,7 @@ const startCalibration = async () => {
 				model: JSON.stringify(cleanedModel),
 				initials: modelConfig.value.initialValues,
 				params: modelConfig.value.parameterValues,
-				timesteps_column: timestepColumnName.value,
+				timesteps_column: timestepColumnName,
 				feature_mappings: featureObject,
 				dataset: datasetContent.value
 			};

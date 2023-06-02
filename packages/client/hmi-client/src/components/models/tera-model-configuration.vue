@@ -137,8 +137,9 @@ const props = defineProps<{
 	calibrationConfig?: boolean;
 }>();
 
+const modelConfigNames = ref(['Config 1']);
+
 const selectedModelConfig = ref();
-const modelConfigNames = ref([{ name: 'Config 1' }]);
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
 const initialValues = ref<StringValueMap[]>([{}]);
@@ -153,8 +154,8 @@ const selectedTransitions = ref<string[]>([]);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const modelConfiguration = computed(() =>
-	modelConfigNames.value.map((m, i) => ({
-		name: m.name,
+	modelConfigNames.value.map((name, i) => ({
+		name,
 		...initialValues.value[i],
 		...parameterValues.value[i]
 	}))
@@ -167,7 +168,7 @@ const selectedStatesAndTransitions = computed(() => [
 defineExpose({ selectedStatesAndTransitions });
 
 function addModelConfiguration() {
-	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
 	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
 	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
 }
@@ -226,7 +227,7 @@ function generateModelConfigValues() {
 		parameterValues.value = openedWorkflowNodeStore.parameterValues as any;
 
 		if (modelConfigNames.value.length < initialValues.value.length - 1) {
-			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
 		}
 	}
 	// Default values petrinet format
@@ -256,7 +257,7 @@ function generateModelConfigValues() {
 }
 
 function resetModelConfiguration() {
-	modelConfigNames.value = [{ name: 'Config 1' }];
+	modelConfigNames.value = ['Config 1'];
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
 	initialValues.value = [{}];
 	parameterValues.value = [{}];
