@@ -3,8 +3,10 @@ package software.uncharted.terarium.hmiserver.resources.code;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.CodeRequest;
+import software.uncharted.terarium.hmiserver.models.code.CodeRequest;
 import software.uncharted.terarium.hmiserver.models.StoredModel;
+import software.uncharted.terarium.hmiserver.models.code.GithubFile;
+import software.uncharted.terarium.hmiserver.models.code.GithubRepo;
 import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
@@ -18,6 +20,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Map;
 
 @Path("/api/code")
@@ -120,11 +123,12 @@ public class CodeResource {
 
 	@GET
 	@Path("/repo-content")
-	public Response getGithubRepositoryContent(
+	public GithubRepo getGithubRepositoryContent(
 		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
 		@QueryParam("path") final String path
 	) {
-		return githubProxy.getGithubRepositoryContent(repoOwnerAndName, path);
+		List<GithubFile> files =  githubProxy.getGithubRepositoryContent(repoOwnerAndName, path);
+		return new GithubRepo(files);
 	}
 
 	@GET
