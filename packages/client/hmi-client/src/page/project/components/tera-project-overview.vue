@@ -333,8 +333,9 @@ a {
 }
 
 .overview-banner {
-	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 64px center,
-		linear-gradient(45deg, rgb(209, 239, 227) 0%, rgb(249, 255, 245) 100%) no-repeat;
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 10% center,
+		linear-gradient(45deg, #d5e8e5 0%, #f0f4f0 100%) no-repeat;
+	background-size: 25%, 100%;
 	height: auto;
 }
 .content-container {
@@ -360,7 +361,7 @@ a {
 	margin: 1rem;
 	padding: 1rem;
 	background: rgba(255, 255, 255, 0.5);
-	border-radius: var(border-radius);
+	border-radius: var(--border-radius);
 	backdrop-filter: blur(5px);
 }
 
