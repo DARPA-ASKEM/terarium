@@ -3,10 +3,10 @@
 		<slot name="nav" />
 		<header v-if="shrinkHeader" class="shrinked">
 			<h4 v-html="name" />
-			<aside>
-				<slot v-if="isEditable" name="edit-buttons" />
+			<aside class="spread-out">
+				<slot name="edit-buttons" />
 				<Button
-					v-else
+					v-if="!isEditable"
 					icon="pi pi-times"
 					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 					@click="emit('close-preview')"
@@ -34,10 +34,10 @@
 						<slot name="bottom-header-buttons" />
 					</div>
 				</section>
-				<aside class="vertical-align-center">
-					<slot v-if="isEditable" name="edit-buttons" />
+				<aside class="spread-out">
+					<slot name="edit-buttons" />
 					<Button
-						v-else
+						v-if="!isEditable"
 						icon="pi pi-times"
 						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						@click="emit('close-preview')"
@@ -255,5 +255,11 @@ main:deep(input) {
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.spread-out {
+	align-items: center;
+	justify-content: space-between;
+	flex-grow: 1;
 }
 </style>
