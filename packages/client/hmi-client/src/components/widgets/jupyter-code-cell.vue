@@ -1,24 +1,24 @@
 <template>
 	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
 		<div>
-			<button @click="run">Run</button>
+			<button type="button" @click="run">Run</button>
 		</div>
-		<component ref="codeCell" />
+		<component ref="codeCell" :is="Widget" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
-import { getCodeBlock, mimeService, renderMime } from '@/utils/jupyter';
+import { mimeService, renderMime } from '@/utils/jupyter';
 
 import {
-  Completer,
-  CompleterModel,
-  CompletionHandler,
-  CompletionConnector,
+	Completer,
+	CompleterModel,
+	CompletionHandler,
+	CompletionConnector
 } from '@jupyterlab/completer';
 
 import { CommandRegistry } from '@lumino/commands';
@@ -27,6 +27,7 @@ import '@jupyterlab/application/style/index.css';
 import '@jupyterlab/cells/style/index.css';
 import '@jupyterlab/theme-light-extension/style/theme.css';
 import '@jupyterlab/completer/style/index.css';
+import { Widget } from '@lumino/widgets';
 
 const props = defineProps({
 	jupyterContext: {
@@ -40,15 +41,15 @@ const props = defineProps({
 	},
 	language: {
 		type: String,
-		default: "python"
+		default: 'python'
 	},
 	code: {
 		type: String,
-		default: "",
+		default: ''
 	},
 	autorun: {
 		type: Boolean,
-		default: false,
+		default: false
 	},
 	context: {
 		type: String,
@@ -56,33 +57,32 @@ const props = defineProps({
 	},
 	context_info: {
 		type: Object,
-		default: {}
+		default: () => {}
 	}
 });
 const codeCell = ref(null);
 
 const codeCellContent = ref(props.code);
-const sessionContext = props.jupyterContext;
 
 const cellWidget = new CodeCell({
-    rendermime: renderMime,
+	rendermime: renderMime,
 	editorConfig: {
-		lineNumbers: true,
+		lineNumbers: true
 	},
-    model: new CodeCellModel({
+	model: new CodeCellModel({
 		cell: {
-			cell_type: "code",
+			cell_type: 'code',
 			metadata: {},
-			source: props.code,
+			source: props.code
 		}
 	})
-  }).initializeState();
+}).initializeState();
 
 // Set up a completer.
 const editor = cellWidget.editor;
 const model = new CompleterModel();
 const completer = new Completer({ editor, model });
-const connector = new CompletionConnector({editor, session: sessionContext.session});
+const connector = new CompletionConnector({ editor, session: props.jupyterContext.session });
 const handler = new CompletionHandler({ completer, connector });
 
 const commands = new CommandRegistry();
@@ -94,7 +94,7 @@ commands.addCommand('invoke:completer', {
 	}
 });
 commands.addCommand('run:cell', {
-	execute: () => CodeCell.execute(cellWidget, sessionContext)
+	execute: () => CodeCell.execute(cellWidget, props.jupyterContext)
 });
 
 commands.addKeyBinding({
@@ -108,13 +108,11 @@ commands.addKeyBinding({
 	command: 'run:cell'
 });
 
-
-
 // const setKernelContext = async (kernel, context_info) => {
 // 	// TODO: Update filename. -- Maybe a global value passed around, since this is used in the chatty kernel
 // 	const setupCode = getCodeBlock("python", "read_csv", {filename: `http://data-service:8000/datasets/${context_info.context_info.id}/download/rawfile?wide_format=true`});
 // 	const future = kernel?.requestExecute({
-//         code: setupCode, 
+//         code: setupCode,
 //         silent: false,
 //         store_history: true,
 //       }, false);
@@ -127,14 +125,14 @@ commands.addKeyBinding({
 // }
 
 onMounted(() => {
-	void sessionContext.ready.then(() => {
-		void sessionContext.session?.kernel?.info.then(info => {
+	props.jupyterContext.ready.then(() => {
+		props.jupyterContext.session?.kernel?.info.then((info) => {
 			const lang = info.language_info;
 			const mimeType = mimeService.getMimeTypeByLanguage(lang);
 			cellWidget.model.mimeType = mimeType;
 		});
 		// setKernelContext(
-		// 	sessionContext.session?.kernel, 
+		// 	props.jupyterContext.session?.kernel,
 		// 	{
 		// 		context: props.context,
 		// 		context_info: props.context_info,
@@ -146,28 +144,29 @@ onMounted(() => {
 	// Setup keydown listener to capture events inside code cell.
 	cellWidget.node.addEventListener(
 		'keydown',
-		event => {
+		(event) => {
 			commands.processKeydownEvent(event);
 		},
 		true
 	);
 	if (props.autorun) {
-		sessionContext.ready.then(() => {run()});
+		props.jupyterContext.ready.then(() => {
+			run();
+		});
 		// run();
 	}
 });
 
 const run = () => {
 	console.log(codeCellContent.value);
-	CodeCell.execute(cellWidget, sessionContext);
+	CodeCell.execute(cellWidget, props.jupyterContext);
 };
 
 cellWidget.activate();
 </script>
 
 <style lang="scss" global>
-	.jp-CodeCell {
-		min-width: 300px;
-	}
-
+.jp-CodeCell {
+	min-width: 300px;
+}
 </style>

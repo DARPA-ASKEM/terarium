@@ -7,11 +7,9 @@ import {
 } from '@jupyterlab/services';
 import { CodeMirrorMimeTypeService } from '@jupyterlab/codemirror';
 import {
-  standardRendererFactories as initialFactories,  // TODO: Check
-  RenderMimeRegistry
+	standardRendererFactories as initialFactories, // TODO: Check
+	RenderMimeRegistry
 } from '@jupyterlab/rendermime';
-
-
 
 // TODO: These settings should be pulled from the environment variables or appropriate config setup.
 export const serverSettings = ServerConnection.makeSettings({
@@ -36,17 +34,15 @@ export const mimeService = new CodeMirrorMimeTypeService();
 export const renderMime = new RenderMimeRegistry({ initialFactories });
 
 export const newSession = (kernel, name) => {
-    const sessionContext = new SessionContext({
-        sessionManager,
-        specsManager,
-        name: name,
-        kernelPreference: {
-            name: kernel
-        }
-    });
- 
-    sessionContext.
-	
-	sessionContext.initialize();
-    return sessionContext;
-}
+	const sessionContext = new SessionContext({
+		sessionManager,
+		specsManager,
+		name,
+		kernelPreference: {
+			name: kernel
+		}
+	});
+
+	sessionContext.sessionContext.initialize();
+	return sessionContext;
+};

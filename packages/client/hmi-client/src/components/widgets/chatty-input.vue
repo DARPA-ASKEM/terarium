@@ -18,10 +18,11 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(['newCodeCell', 'newMessage']);
 import { computed, onMounted, ref } from 'vue';
 import { SessionContext } from '@jupyterlab/apputils';
-import { createMessage, IIOPubMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+
+const emit = defineEmits(['newCodeCell', 'newMessage']);
 
 const props = defineProps({
 	llmContext: {
@@ -52,20 +53,19 @@ const props = defineProps({
 	},
 	context_info: {
 		type: Object,
-		default: {}
+		default: () => {}
 	}
 });
-const llmContext = props.llmContext;
-llmContext.kernelChanged.connect((_context, kernelInfo) => {
+
+props.llmContext.kernelChanged.connect((_context, kernelInfo) => {
 	const kernel = kernelInfo.newValue;
 	if (kernel?.name === 'llmkernel') {
 		setKernelContext(kernel, {
 			context: props.context,
-			context_info: props.context_info,
+			context_info: props.context_info
 		});
 	}
 });
-
 
 const inputStyle = computed(() => `--placeholder-color:${props.placeholderColor}`);
 
@@ -86,8 +86,6 @@ enum KernelState {
 
 const queryString = ref('');
 const kernelState = ref<KernelState>(KernelState.idle);
-const messages = ref<Array<IIOPubMessage>>([]);
-
 
 const onEnter = () => {
 	submitQuery(inputElement.value?.value);
@@ -96,15 +94,15 @@ const onEnter = () => {
 const setKernelContext = (kernel, context_info) => {
 	// let kernel = sessionContext.session?.kernel;
 	const message = createMessage({
-		session: llmContext.session?.name,
+		session: props.llmContext.session?.name,
 		channel: 'shell',
 		content: context_info,
 		msgType: 'context_setup_request',
-		msgId: `${kernel.id}-setcontext`,
+		msgId: `${kernel.id}-setcontext`
 	});
 	kernel?.sendControlMessage(message);
 	kernelState.value = KernelState.busy;
-}
+};
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.msg_type === 'status') {
@@ -114,24 +112,24 @@ const iopubMessageHandler = (_session, message) => {
 	}
 	emit('newMessage', message);
 };
-llmContext.iopubMessage.connect(iopubMessageHandler);
+props.llmContext.iopubMessage.connect(iopubMessageHandler);
 
 const submitQuery = (inputStr: string | undefined) => {
 	if (inputStr !== undefined) {
-		const kernel = llmContext.session?.kernel;
+		const kernel = props.llmContext.session?.kernel;
 		if (kernel === undefined) {
 			return;
 		}
 		kernelState.value = KernelState.busy;
 		const message = createMessage({
-			session: llmContext.session?.name,
+			session: props.llmContext.session?.name,
 			channel: 'shell',
-			content: {"request": inputStr},
+			content: { request: inputStr },
 			msgType: 'llm_request',
-			msgId: `${kernel.id}-setcontext`,
+			msgId: `${kernel.id}-setcontext`
 		});
 		kernel?.sendControlMessage(message);
-		emit('newMessage', {...message, msg_type: "llm_request"});
+		emit('newMessage', { ...message, msg_type: 'llm_request' });
 	}
 };
 
@@ -140,8 +138,6 @@ onMounted(() => {
 		inputElement.value?.focus();
 	}
 });
-
-// llmContext.initialize();
 </script>
 
 <style scoped>
