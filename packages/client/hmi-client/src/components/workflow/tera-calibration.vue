@@ -95,36 +95,15 @@
 				</section>
 			</AccordionTab>
 		</Accordion>
-		<!-- <table v-if="featureMap">
-			<tr>
-				<th>Dataset Column Name</th>
-				<th>Model Column Name</th>
-			</tr>
-			<tr v-for="(content, index) in featureMap" :key="index">
-				<Dropdown placeholder="Dataset Column Name" class="p-button dropdown-button" :options="datasetVariables"
-					v-model="featureMap[index][0]" />
-				<td>{{ content[1] }}</td>
-			</tr>
-		</table> -->
+		<div>Run ID: {{ runId }}</div>
+		<Button @click="getCalibrationStatus"> Get Run Status </Button>
+		<Button @click="getCalibrationResults"> Get Run Results </Button>
 		<Button @click="startCalibration">Start Calibration Job</Button>
-		<form>
-			<label for="calibrationStatus">
-				<input v-model="runId" type="text" placeholder="Run ID" />
-			</label>
-			<Button @click="getCalibrationStatus"> Get Run Status </Button>
-		</form>
-
-		<form>
-			<label for="calibrationResult">
-				<input v-model="runId" type="text" placeholder="Run ID" />
-			</label>
-			<Button @click="getCalibrationResults"> Get Run Results </Button>
-		</form>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch, onMounted } from 'vue';
+import { computed, ref, shallowRef, watch } from 'vue';
 import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
@@ -171,15 +150,10 @@ const modelVariables = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );
 const featureMap = computed(() => modelVariables.value.map((stateName) => ['', stateName]));
-const isRunDisabled = computed(() => {
-	if (
-		modelConfigurationRef.value &&
-		isEmpty(modelConfigurationRef.value.selectedStatesAndTransitions)
-	) {
-		return true;
-	}
-	return false;
-});
+const isRunDisabled = computed(
+	() =>
+		modelConfigurationRef.value && isEmpty(modelConfigurationRef.value.selectedStatesAndTransitions)
+);
 
 const mapping = ref([
 	{
@@ -268,10 +242,12 @@ async function updateDataset() {
 	}
 }
 
-onMounted(() => updateDataset());
 watch(
 	() => datasetId.value,
-	() => updateDataset()
+	() => updateDataset(),
+	{
+		immediate: true
+	}
 );
 </script>
 
