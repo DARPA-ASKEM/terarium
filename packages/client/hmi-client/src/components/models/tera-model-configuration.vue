@@ -123,6 +123,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Model';
+import { ModelConfig } from '@/types/ModelConfig';
 import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 
@@ -134,6 +135,7 @@ const props = defineProps<{
 	model: Model;
 	amr?: AskemModelRepresentationType | null;
 	isEditable: boolean;
+	modelConfig?: ModelConfig;
 	calibrationConfig?: boolean;
 }>();
 
