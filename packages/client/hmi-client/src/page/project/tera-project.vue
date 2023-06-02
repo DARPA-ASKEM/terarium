@@ -44,9 +44,10 @@
 			<SplitterPanel
 				class="project-page top-z-index"
 				v-if="
-					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-					openedWorkflowNodeStore.assetId &&
-					openedWorkflowNodeStore.pageType
+					(pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
+						openedWorkflowNodeStore.assetId &&
+						openedWorkflowNodeStore.pageType) ||
+					openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION
 				"
 				:size="20"
 			>

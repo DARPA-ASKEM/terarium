@@ -139,8 +139,12 @@ function showNodeDrilldown() {
 	let pageType;
 	let assetId;
 	switch (props.node.operationType) {
-		case 'SimulateOperation':
+		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;
+			assetId = props.node.id;
+			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+			break;
+		case WorkflowOperationTypes.CALIBRATION:
 			assetId = props.node.id;
 			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 			break;
