@@ -76,7 +76,6 @@ import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
-import { logger } from '@/utils/logger';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -137,13 +136,18 @@ onMounted(() => {
 });
 
 function showNodeDrilldown() {
-	if (
-		!isEmpty(props.node.outputs) ||
-		props.node.operationType === WorkflowOperationTypes.CALIBRATION ||
-		props.node.operationType === WorkflowOperationTypes.SIMULATE
-	) {
-		let pageType: ProjectAssetTypes | null = null;
-		let assetId: string | null = null;
+	let pageType;
+	let assetId;
+	switch (props.node.operationType) {
+		case 'SimulateOperation':
+			pageType = ProjectAssetTypes.SIMULATIONS;
+			assetId = props.node.id;
+			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+			break;
+		default:
+			break;
+	}
+	if (!isEmpty(props.node.outputs)) {
 		switch (props.node.operationType) {
 			case WorkflowOperationTypes.MODEL:
 				pageType = ProjectAssetTypes.MODELS;
@@ -157,7 +161,7 @@ function showNodeDrilldown() {
 				break;
 		}
 		openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
-	} else logger.error('Node needs a valid output', { silent: true });
+	}
 }
 
 function mouseoverPort(event) {
@@ -234,6 +238,7 @@ header {
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
 }
+
 header:hover {
 	background-color: var(--node-header-hover);
 	cursor: move;
@@ -306,6 +311,7 @@ ul li {
 .output-port-container[active='false'] {
 	color: var(--text-color-secondary);
 }
+
 .output-port-container[active='true'] {
 	color: var(--text-color-primary);
 }
