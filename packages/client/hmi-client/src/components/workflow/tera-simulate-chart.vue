@@ -145,7 +145,6 @@ const renderGraph = () => {
 		runIdList
 			.map((runId) => runResults[runId])
 			.forEach((run, runIdx) => {
-				console.log(run);
 				const dataset = {
 					data: run.map(
 						(datum: { [key: string]: number }) => datum[variable] // - runResults[selectedRun.value][timeIdx][code]
