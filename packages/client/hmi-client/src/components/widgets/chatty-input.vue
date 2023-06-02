@@ -117,7 +117,7 @@ props.llmContext.iopubMessage.connect(iopubMessageHandler);
 const submitQuery = (inputStr: string | undefined) => {
 	if (inputStr !== undefined) {
 		const kernel = props.llmContext.session?.kernel;
-		if (kernel === undefined) {
+		if (kernel === undefined || kernel === null) {
 			return;
 		}
 		kernelState.value = KernelState.busy;

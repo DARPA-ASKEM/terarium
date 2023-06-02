@@ -33,7 +33,7 @@ export const sessionManager = new SessionManager({
 export const mimeService = new CodeMirrorMimeTypeService();
 export const renderMime = new RenderMimeRegistry({ initialFactories });
 
-export const newSession = (kernel, name) => {
+export const newSession = (kernel: string, name: string) => {
 	const sessionContext = new SessionContext({
 		sessionManager,
 		specsManager,
@@ -43,6 +43,6 @@ export const newSession = (kernel, name) => {
 		}
 	});
 
-	sessionContext.sessionContext.initialize();
+	sessionContext.initialize();
 	return sessionContext;
 };

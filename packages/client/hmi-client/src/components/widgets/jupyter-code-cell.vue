@@ -60,7 +60,7 @@ const props = defineProps({
 		default: () => {}
 	}
 });
-const codeCell = ref(null);
+const codeCell = ref<HTMLElement|null>(null);
 
 const codeCellContent = ref(props.code);
 
@@ -139,6 +139,7 @@ onMounted(() => {
 		// 	}
 		// );
 	});
+	// console.log(codeCell.value);
 	// Replace templated component with contents of jupyter node.
 	codeCell.value?.replace(cellWidget.node);
 	// Setup keydown listener to capture events inside code cell.
