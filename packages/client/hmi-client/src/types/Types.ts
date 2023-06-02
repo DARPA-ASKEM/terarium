@@ -10,6 +10,29 @@ export interface Event {
     value?: string;
 }
 
+export interface GithubFile {
+    type: FileType;
+    encoding: string;
+    size: number;
+    name: string;
+    path: string;
+    content: string;
+    sha: string;
+    url: string;
+    gitUrl: string;
+    htmlUrl: string;
+    downloadUrl: string;
+    links: Links;
+    submoduleGitUrl: string;
+    target: string;
+    fileCategory: FileCategory;
+}
+
+export interface GithubRepo {
+    files: { [P in FileCategory]?: GithubFile[] };
+    totalFiles: number;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -86,6 +109,12 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     scrollId: string;
     hits: number;
     facets: { [index: string]: XDDFacetsItemResponse };
+}
+
+export interface Links {
+    html: string;
+    git: string;
+    self: string;
 }
 
 export interface SimulationParams {
@@ -177,6 +206,21 @@ export interface XDDUrlExtraction {
 
 export enum EventType {
     Search = "SEARCH",
+}
+
+export enum FileType {
+    File = "file",
+    Dir = "dir",
+    Symlink = "symlink",
+    Submodule = "submodule",
+}
+
+export enum FileCategory {
+    Directory = "Directory",
+    Code = "Code",
+    Data = "Data",
+    Documents = "Documents",
+    Other = "Other",
 }
 
 export enum ProvenanceType {
