@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -11,6 +12,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
+import software.uncharted.terarium.hmiserver.models.dataservice.petrinet.PetriNetModel;
+import software.uncharted.terarium.hmiserver.models.dataservice.petrinet.PetriNetState;
+import software.uncharted.terarium.hmiserver.models.dataservice.petrinet.PetriNetTransition;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
 import software.uncharted.terarium.hmiserver.models.petrinet.Species;
@@ -23,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.smallrye.jwt.config.ConfigLogging.log;
@@ -243,5 +248,43 @@ public class ModelResource {
 		@PathParam("id") final String id,
 		final ModelOperationCopy modelOperationCopy) {
 		return proxy.copyModel(modelOperationCopy);
+	}
+
+	@PUT
+	@Path("/generate-age-strata-model")
+	public Response generateAgeStrata(
+		@QueryParam("n") final int n,
+		@QueryParam("states") final String stateNames) {
+		PetriNetModel petriNetModel = new PetriNetModel();
+		List<PetriNetState> petriNetStates;
+		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
+		String[] splitStateNames = stateNames != null ? stateNames.split(",") : new String[]{""};
+		petriNetStates = IntStream.range(0, n).mapToObj(i -> {
+				PetriNetState petriNetState = new PetriNetState();
+				petriNetState.setId('A'+ Integer.toString(i + 1));
+			 	if (splitStateNames.length < 1 || StringUtils.isBlank(splitStateNames[0]) || i >= splitStateNames.length) {
+					petriNetState.setName('A'+ Integer.toString(i + 1));
+				} else {
+					petriNetState.setName(splitStateNames[i]);
+				}
+				return petriNetState;
+			}).collect(Collectors.toList());
+		for (int i = 0; i < petriNetStates.size(); i++) {
+			for (int j = 0; j < petriNetStates.size(); j++){
+				PetriNetTransition petriNetTransition = new PetriNetTransition();
+				petriNetTransition.setId('a' + Integer.toString(i + 1) + (j+1));
+				petriNetTransition.setInput(Arrays.asList(petriNetStates.get(i).getId(), petriNetStates.get(j).getId()));
+				petriNetTransition.setOutput(Arrays.asList(petriNetStates.get(i).getId(), petriNetStates.get(j).getId()));
+				petriNetTransitions.add(petriNetTransition);
+			}
+		}
+		petriNetModel.setTransitions(petriNetTransitions);
+		petriNetModel.setStates(petriNetStates);
+//		System.out.println(petriNetModel);
+
+		return Response
+			.status(Response.Status.OK)
+			.entity(petriNetModel)
+			.build();
 	}
 }
