@@ -19,7 +19,7 @@
 					<span v-if="overline" class="overline">{{ overline }}</span>
 					<!--For naming asset such as model or code file-->
 					<slot v-if="isCreatingAsset" name="name-input" />
-					<h4 v-else v-html="name" />
+					<h4 v-else v-html="name" class="nudge-down" />
 					<!--put model contributors here too-->
 					<span class="authors" v-if="authors">
 						<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
@@ -34,7 +34,7 @@
 						<slot name="bottom-header-buttons" />
 					</div>
 				</section>
-				<aside>
+				<aside class="vertical-align-center">
 					<slot v-if="isEditable" name="edit-buttons" />
 					<Button
 						v-else
@@ -119,15 +119,16 @@ main > section {
 }
 
 header {
+	display: flex;
+	flex-direction: row;
 	height: fit-content;
 	grid-column-start: 2;
 	color: var(--text-color-subdued);
-	padding: 1rem;
-	padding-bottom: 0;
+	padding: 0.5rem 1rem;
 	transition: 0.2s;
 	display: flex;
-	gap: 0.5rem;
-	justify-content: space-between;
+	gap: 1rem;
+	align-items: center;
 }
 
 header.shrinked {
@@ -176,6 +177,9 @@ header.shrinked aside {
 	align-self: center;
 }
 
+.nudge-down {
+	margin-top: 0.25rem;
+}
 main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
 }

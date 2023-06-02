@@ -11,40 +11,6 @@
 		:hide-header="documentView === DocumentView.PDF"
 		:stretch-content="documentView === DocumentView.PDF"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="documentContent"
-				:show-header-links="documentView === DocumentView.EXRACTIONS"
-				v-if="isEditable"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Extractions"
-							icon="pi pi-list"
-							@click="documentView = DocumentView.EXRACTIONS"
-							:active="documentView === DocumentView.EXRACTIONS"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="PDF"
-							icon="pi pi-file"
-							:loading="!pdfLink"
-							@click="documentView = DocumentView.PDF"
-							:active="documentView === DocumentView.PDF"
-						/>
-					</span>
-				</template>
-				<template #page-search>
-					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText placeholder="Find in page" class="p-inputtext-sm" />
-					</span>
-				</template>
-			</tera-asset-nav>
-		</template>
 		<template #bottom-header-buttons>
 			<Button
 				v-if="!isEditable"
@@ -54,6 +20,25 @@
 				@click="openPDF"
 				:loading="!pdfLink && !linkIsPDF()"
 			/>
+		</template>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Extractions"
+					icon="pi pi-list"
+					@click="documentView = DocumentView.EXRACTIONS"
+					:active="documentView === DocumentView.EXRACTIONS"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="PDF"
+					icon="pi pi-file"
+					:loading="!pdfLink"
+					@click="documentView = DocumentView.PDF"
+					:active="documentView === DocumentView.PDF"
+				/>
+			</span>
 		</template>
 		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
@@ -252,9 +237,7 @@ import { Extraction, ProvenanceType, Document, Dataset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
-import InputText from 'primevue/inputtext';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -359,7 +342,10 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
 );
-
+/*
+// This is the model content that is displayed in the scroll-to-section featuer
+// That feature was removed, but way may want to bring it back.
+// I suggest we keep this unil we decide to remove it for good.
 const documentContent = computed(() => [
 	{ key: 'Abstract', value: formattedAbstract.value },
 	{ key: 'Section-Summaries', value: doc.value?.knownEntities?.summaries?.sections },
@@ -372,6 +358,7 @@ const documentContent = computed(() => [
 	{ key: 'References', value: doc.value?.citationList },
 	{ key: 'Associated-Resources', value: associatedResources.value }
 ]);
+*/
 
 // This fetches various parts of the document: figures, tables, equations ... etc
 const fetchDocumentArtifacts = async () => {
@@ -462,12 +449,10 @@ onUpdated(() => {
 });
 </script>
 <style scoped>
-.find-in-page {
-	border: 1px solid var(--surface-border-light) !important;
-	padding: 0.75rem;
-	width: 11.75rem;
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
 }
-
 .extracted-item {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;
