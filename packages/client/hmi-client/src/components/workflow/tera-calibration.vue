@@ -181,12 +181,6 @@ const isRunDisabled = computed(() => {
 	return false;
 });
 
-/**
- * every row will have a dropdown but the uniqueness is what is selected
- * the subrows are based on what is chosen in the dropdown
- *
- */
-
 const mapping = ref([
 	{
 		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
