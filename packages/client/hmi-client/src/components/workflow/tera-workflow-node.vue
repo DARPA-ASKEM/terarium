@@ -77,7 +77,13 @@ const props = defineProps<{
 	canDrag: boolean;
 }>();
 
-const emit = defineEmits(['dragging', 'port-selected', 'port-mouseover', 'port-mouseleave']);
+const emit = defineEmits([
+	'dragging',
+	'port-selected',
+	'port-mouseover',
+	'port-mouseleave',
+	'remove-node'
+]);
 
 const nodeStyle = computed(() => ({
 	minWidth: `${props.node.width}px`,
@@ -178,8 +184,8 @@ onBeforeUnmount(() => {
 });
 
 function removeNode() {
-	// TODO: remove node
-	// console.log('remove node');
+	console.log(props.node);
+	emit('remove-node', props.node.id);
 }
 function bringToFront() {
 	// TODO: bring to front
