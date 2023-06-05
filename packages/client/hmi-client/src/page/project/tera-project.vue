@@ -20,7 +20,7 @@
 			</template>
 		</tera-slider-panel>
 		<Splitter>
-			<SplitterPanel :size="20">
+			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
 					v-if="!isEmpty(tabs)"
 					class="tab-group"
@@ -38,13 +38,36 @@
 					v-model:tabs="tabs"
 					@asset-loaded="setActiveTab"
 					@close-current-tab="removeClosedTab(activeTabIndex as number)"
+					@update-project="updateProject"
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				v-if="openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType"
+				class="project-page top-z-index"
+				v-if="
+					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
+					openedWorkflowNodeStore.assetId &&
+					openedWorkflowNodeStore.pageType
+				"
 				:size="20"
 			>
+				<tera-tab-group
+					v-if="openedWorkflowNodeStore.node"
+					class="tab-group"
+					:tabs="[{ assetName: openedWorkflowNodeStore.node.operationType }]"
+					:active-tab-index="0"
+					:loading-tab-index="null"
+					@close-tab="openedWorkflowNodeStore.node = openedWorkflowNodeStore.assetId = null"
+				/>
+				<tera-calibration
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
+					:node="openedWorkflowNodeStore.node"
+				/>
+				<tera-simulate
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.SIMULATE"
+					:node="openedWorkflowNodeStore.node"
+				/>
 				<tera-project-page
+					v-else
 					:project="project"
 					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
 					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
@@ -217,6 +240,9 @@ import {
 import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraSimulate from '@/components/workflow/tera-simulate.vue';
+import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -332,6 +358,10 @@ function setActiveTab() {
 	loadingTabIndex.value = null;
 }
 
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
+}
+
 function openAsset(index: number = tabStore.getActiveTabIndex(projectContext.value)) {
 	activeTabIndex.value = null;
 	const asset: Tab = tabs.value[index];
@@ -385,6 +415,13 @@ async function removeAsset(asset: Tab) {
 watch(
 	() => projectContext.value,
 	() => {
+		if (projectContext.value) {
+			// Automatically go to overview page when project is opened
+			router.push({
+				name: RouteName.ProjectRoute,
+				params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
+			});
+		}
 		if (
 			tabs.value.length > 0 &&
 			tabs.value.length >= tabStore.getActiveTabIndex(projectContext.value)
@@ -426,8 +463,12 @@ tabStore.$subscribe(() => {
 });
 
 async function getAndPopulateAnnotations() {
-	annotations.value = await getAnnotations(props.assetId, props.pageType);
-	selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	if (props.assetId && props.pageType) {
+		annotations.value = await getAnnotations(props.assetId, props.pageType);
+		selectedNoteSection.value = annotations.value?.map((note) => note.section);
+	} else {
+		selectedNoteSection.value = [];
+	}
 }
 
 const addNote = async () => {
@@ -478,18 +519,11 @@ function formatAuthorTimestamp(username, timestamp) {
 	z-index: 2;
 	isolation: isolate;
 }
+
 .tab-group {
 	z-index: 2;
 	isolation: isolate;
 	position: relative;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	overflow-x: auto;
-	overflow-y: hidden;
 }
 
 .p-splitter {
@@ -499,6 +533,21 @@ section {
 	border: none;
 }
 
+section,
+.p-splitter:deep(.project-page) {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+.p-splitter:deep(.p-splitter-gutter) {
+	z-index: 1000;
+}
+
+.top-z-index {
+	z-index: 1000;
+}
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
 	max-width: 15rem;

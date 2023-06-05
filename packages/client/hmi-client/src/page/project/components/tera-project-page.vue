@@ -10,18 +10,22 @@
 	<code-editor
 		v-else-if="pageType === ProjectAssetTypes.CODE"
 		:initial-code="code"
-		@vnode-mounted="emit('asset-loaded')"
+		@vue:mounted="
+			emit('asset-loaded');
+			openNextCodeFile();
+		"
 	/>
 	<tera-project-overview
 		v-else-if="pageType === ProjectPages.OVERVIEW"
 		:project="project"
-		@vnode-mounted="emit('asset-loaded')"
+		@vue:mounted="emit('asset-loaded')"
 		@open-workflow="openWorkflow"
+		@update-project="updateProject"
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
 		:project="project"
-		@vnode-mounted="emit('asset-loaded')"
+		@vue:mounted="emit('asset-loaded')"
 	/>
 	<!--Add new process/asset views here-->
 	<template v-else-if="assetId && (!isEmpty(tabs) || isDrilldown)">
@@ -56,13 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, Ref } from 'vue';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes, ProjectPages, IProject } from '@/types/Project';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import { isEmpty, cloneDeep } from 'lodash';
-import { Tab } from '@/types/common';
+import { CodeRequest, Tab } from '@/types/common';
 import Button from 'primevue/button';
 import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
@@ -82,11 +86,18 @@ const props = defineProps<{
 	isDrilldown?: boolean; // temp just to preview one workflow node
 }>();
 
-const emit = defineEmits(['update:tabs', 'asset-loaded', 'update-tab-name', 'close-current-tab']);
+const emit = defineEmits([
+	'update:tabs',
+	'asset-loaded',
+	'update-tab-name',
+	'close-current-tab',
+	'update-project'
+]);
 
 const router = useRouter();
 
 const code = ref<string>();
+const queuedCodeRequests: Ref<CodeRequest[]> = ref([]);
 
 // This conversion should maybe be done in the document component - tera-preview-panel.vue does this conversion differently though...
 const getXDDuri = (assetId: Tab['assetId']): string =>
@@ -103,18 +114,34 @@ const openWorkflow = () => {
 		}
 	});
 };
+
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
+}
+
 const openOverview = () => {
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: { assetName: 'Overview', pageType: ProjectPages.OVERVIEW, assetId: undefined }
 	});
 };
-function openCode(assetToOpen: Tab, newCode?: string) {
-	code.value = newCode;
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: assetToOpen
-	});
+async function openCode(codeRequests: CodeRequest[]) {
+	queuedCodeRequests.value = codeRequests;
+	await openNextCodeFile();
+}
+
+async function openNextCodeFile() {
+	if (queuedCodeRequests.value.length > 0) {
+		const currentRequest: CodeRequest | undefined = queuedCodeRequests.value.pop();
+
+		if (!currentRequest) return;
+
+		code.value = currentRequest.code;
+		await router.push({
+			name: RouteName.ProjectRoute,
+			params: currentRequest.asset
+		});
+	}
 }
 
 // Just preserving this as this didn't even work when it was in tera-project.vue - same error occurs on staging

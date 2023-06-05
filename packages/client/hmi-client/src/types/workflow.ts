@@ -1,3 +1,12 @@
+export enum WorkflowOperationTypes {
+	ADD = 'add', // temp for test to work
+	TEST = 'TestOperation',
+	CALIBRATION = 'CalibrationOperation',
+	DATASET = 'Dataset',
+	MODEL = 'ModelOperation',
+	SIMULATE = 'SimulateOperation'
+}
+
 export enum WorkflowStatus {
 	INVALID = 'invalid',
 	FAILED = 'failed',
@@ -15,11 +24,12 @@ export enum WorkflowPortStatus {
 export interface OperationData {
 	type: string;
 	label?: string;
+	acceptMultiple?: boolean;
 }
 
 // Defines a function: eg: model, simulate, calibrate
 export interface Operation {
-	name: string;
+	name: WorkflowOperationTypes;
 	description: string;
 
 	// The operation is self-runnable, that is, given just the inputs we can derive the outputs
@@ -39,7 +49,8 @@ export interface WorkflowPort {
 	type: string;
 	status: WorkflowPortStatus;
 	label?: string;
-	value?: any;
+	value?: any[] | null;
+	acceptMultiple?: boolean;
 }
 
 // Node definition in the workflow
@@ -68,11 +79,20 @@ export interface WorkflowEdge {
 	workflowId: string;
 	points: Position[];
 
-	source: WorkflowNode['id'];
-	sourcePortId: string;
+	source?: WorkflowNode['id'];
+	sourcePortId?: string;
 
-	target: WorkflowNode['id'];
-	targetPortId: string;
+	target?: WorkflowNode['id'];
+	targetPortId?: string;
+
+	// is this edge being started from an input or output?
+	// not persisted; only used during edge creation
+	direction?: WorkflowDirection;
+}
+
+export enum WorkflowDirection {
+	FROM_INPUT,
+	FROM_OUTPUT
 }
 
 export interface Workflow {

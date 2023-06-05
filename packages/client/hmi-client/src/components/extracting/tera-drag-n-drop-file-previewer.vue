@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import { AcceptedTypes } from '@/types/common';

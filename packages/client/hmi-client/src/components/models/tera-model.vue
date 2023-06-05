@@ -4,20 +4,49 @@
 		:overline="model?.framework"
 		:is-editable="isEditable"
 		:is-creating-asset="assetId === ''"
+		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
 	>
+		<template #nav>
+			<tera-asset-nav
+				:asset-content="modelContent"
+				:show-header-links="modelView === ModelView.DESCRIPTION"
+			>
+				<template #viewing-mode>
+					<span class="p-buttonset">
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Description"
+							icon="pi pi-list"
+							@click="modelView = ModelView.DESCRIPTION"
+							:active="modelView === ModelView.DESCRIPTION"
+						/>
+						<Button
+							class="p-button-secondary p-button-sm"
+							label="Model"
+							icon="pi pi-file"
+							@click="modelView = ModelView.MODEL"
+							:active="modelView === ModelView.MODEL"
+						/>
+					</span>
+				</template>
+				<template #page-search>
+					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
+					<span class="p-input-icon-left">
+						<i class="pi pi-search" />
+						<InputText
+							v-model="globalFilter['global'].value"
+							placeholder="Find in page"
+							class="p-inputtext-sm"
+						/>
+					</span>
+				</template>
+			</tera-asset-nav>
+		</template>
 		<template #name-input>
 			<InputText v-model="newModelName" placeholder="Title of new model" />
 		</template>
 		<template #edit-buttons>
-			<span class="p-input-icon-left">
-				<i class="pi pi-search" />
-				<InputText
-					v-model="globalFilter['global'].value"
-					class="p-inputtext-sm"
-					placeholder="Search keyword"
-				/>
-			</span>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
@@ -32,235 +61,173 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
-			<AccordionTab header="Description">
-				<p v-if="assetId !== ''" v-html="description" />
-				<template v-else>
-					<label for="placeholder" /><Textarea
-						v-model="newDescription"
-						rows="5"
-						placeholder="Description of new model"
+		<template v-if="modelView === ModelView.DESCRIPTION">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
+				<AccordionTab>
+					<template #header>
+						<header id="Description">Description</header>
+					</template>
+					<p v-if="assetId !== ''" v-html="description" />
+					<template v-else>
+						<label for="placeholder" /><Textarea
+							v-model="newDescription"
+							rows="5"
+							placeholder="Description of new model"
+						/>
+					</template>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="Parameters">Parameters</header>
+					</template>
+					<DataTable class="p-datatable-sm" :value="modelParameters">
+						<Column field="id" header="ID"></Column>
+						<Column field="value" header="Value"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="State variables">State variables</header>
+					</template>
+					<DataTable class="p-datatable-sm" :value="modelStates">
+						<Column field="id" header="ID"></Column>
+						<Column field="name" header="Name"></Column>
+						<Column field="grounding.context" header="Context"></Column>
+						<Column field="grounding.identifiers" header="Identifiers"></Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="Transitions">Transitions</header>
+					</template>
+					<DataTable class="p-datatable-sm" :value="modelTransitions">
+						<Column field="id" header="ID"></Column>
+						<Column field="properties.name" header="Name"></Column>
+						<Column field="input" header="Input"></Column>
+						<Column field="output" header="Output"></Column>
+						<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
+						<Column field="properties.rate.expression_mathml" header="Equation">
+							<template #body="slotProps">
+								<katex-element :expression="slotProps.data.properties?.rate?.expression" />
+							</template>
+						</Column>
+					</DataTable>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="Variable Statements">Variable Statements</header>
+					</template>
+					<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
+						<Column field="id" header="ID"></Column>
+						<Column field="variable.name" header="Variable"></Column>
+						<Column field="value.value" header="Value"></Column>
+						<Column header="Extraction Type">
+							<template #body="slotProps">
+								<Tag :value="getExtractionType(slotProps)" />
+							</template>
+						</Column>
+						<Column header="Source">
+							<template #body="slotProps">
+								<div>{{ getSource(slotProps) }}</div>
+							</template>
+						</Column>
+						<Column field="variable.equations ?? ''" header="Equations"></Column>
+					</DataTable>
+				</AccordionTab>
+			</Accordion>
+		</template>
+		<template v-if="modelView === ModelView.MODEL">
+			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
+				<AccordionTab header="Model diagram">
+					<tera-model-diagram
+						:model="model"
+						:is-editable="props.isEditable"
+						@update-model-content="updateModelContent"
 					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab header="Model diagram">
-				<section class="model_diagram">
-					<TeraResizablePanel>
-						<div ref="splitterContainer" class="splitter-container">
-							<Splitter :gutterSize="5" :layout="layout">
-								<SplitterPanel
-									class="tera-split-panel"
-									:size="equationPanelSize"
-									:minSize="equationPanelMinSize"
-									:maxSize="equationPanelMaxSize"
-								>
-									<section class="graph-element">
-										<Toolbar>
-											<template #start>
-												<Button
-													@click="resetZoom"
-													label="Reset zoom"
-													class="p-button-sm p-button-outlined toolbar-button"
-												/>
-											</template>
-											<template #center>
-												<span class="toolbar-subgroup">
-													<Button
-														v-if="isEditing"
-														@click="addState"
-														label="Add state"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-													<Button
-														v-if="isEditing"
-														@click="addTransition"
-														label="Add transition"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-												</span>
-											</template>
-											<template #end>
-												<span class="toolbar-subgroup">
-													<Button
-														v-if="isEditing"
-														@click="cancelEdit"
-														label="Cancel"
-														class="p-button-sm p-button-outlined toolbar-button"
-													/>
-													<Button
-														@click="toggleEditMode"
-														:label="isEditing ? 'Save model' : 'Edit model'"
-														:class="
-															isEditing
-																? 'p-button-sm toolbar-button-saveModel'
-																: 'p-button-sm p-button-outlined toolbar-button'
-														"
-													/>
-												</span>
-											</template>
-										</Toolbar>
-										<div v-if="model" ref="graphElement" class="graph-element" />
-										<ContextMenu ref="menu" :model="contextMenuItems" />
-									</section>
-								</SplitterPanel>
-								<SplitterPanel
-									class="tera-split-panel"
-									:size="mathPanelSize"
-									:minSize="mathPanelMinSize"
-									:maxSize="mathPanelMaxSize"
-								>
-									<section class="math-editor-container" :class="mathEditorSelected">
-										<tera-math-editor
-											:is-editable="isEditable"
-											:latex-equation="equationLatex"
-											:is-editing-eq="isEditingEQ"
-											:is-math-ml-valid="isMathMLValid"
-											:math-mode="MathEditorModes.KATEX"
-											@cancel-editing="cancelEditng"
-											@equation-updated="setNewLatexFormula"
-											@validate-mathml="validateMathML"
-											@set-editing="isEditingEQ = true"
-										></tera-math-editor>
-									</section>
-								</SplitterPanel>
-							</Splitter>
-						</div>
-					</TeraResizablePanel>
-				</section>
-			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					State variables<span class="artifact-amount">({{ model?.content?.S.length }})</span>
-				</template>
-				<template v-if="!isEditable">
+				</AccordionTab>
+				<AccordionTab v-if="model && modelStates && modelParameters">
+					<template #header> Model configurations </template>
 					<DataTable
-						:value="model?.content?.S"
-						selectionMode="single"
-						v-model:selection="selectedRow"
-						@row-select="onStateVariableClick"
-						@row-unselect="onStateVariableClick"
-						v-model:filters="globalFilter"
-						filterDisplay="row"
+						class="model-configuration"
+						v-model:selection="selectedModelConfig"
+						:value="modelConfiguration"
+						editMode="cell"
+						showGridlines
+						@cell-edit-init="onCellEditStart"
+						@cell-edit-complete="onCellEditComplete"
 					>
-						<Column field="sname" header="Name" />
-						<Column header="Type">
-							<template #body="slotProps">
-								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.type }}
+						<ColumnGroup type="header">
+							<!--Style top rows-->
+							<Row>
+								<Column header="" style="border: none" />
+								<Column header="" style="border: none" />
+								<Column header="Initial conditions" :colspan="modelStates?.length" />
+								<Column header="Parameters" :colspan="paramLength" />
+								<!-- <Column header="Observables" /> -->
+							</Row>
+							<Row>
+								<Column selection-mode="multiple" headerStyle="width: 3rem" />
+								<Column header="Select all" />
+								<Column v-for="(s, ix) of modelStates" :key="ix" :header="s.id" />
+								<Column v-for="(t, it) of modelParameters" :key="it" :header="t.id" />
+							</Row>
+							<!-- <Row> Add show in workflow later
+							<Column header="Show in workflow" />
+							<Column v-for="(s, i) of model.content.S" :key="i">
+								<template #header>
+									<Checkbox :binary="true" />
+								</template>
+							</Column>
+							<Column v-for="(t, i) of model.content.T" :key="i">
+								<template #header>
+									<Checkbox :binary="true" />
+								</template>
+							</Column>
+						</Row> -->
+						</ColumnGroup>
+
+						<Column selection-mode="multiple" headerStyle="width: 3rem" />
+						<Column field="name">
+							<template #body="{ data, field }">
+								{{ data[field] }}
+							</template>
+							<template #editor="{ data, field }">
+								<InputText v-model="data[field]" autofocus />
 							</template>
 						</Column>
-						<Column header="Default">
-							<template #body="slotProps">
-								{{ model?.parameters.find((p) => p.name === slotProps.data.sname)?.default_value }}
+						<Column
+							v-for="(value, i) of [...modelStates.values(), ...modelParameters?.values()]"
+							:key="i"
+							:field="value.id"
+						>
+							<template #body="{ data, field }">
+								{{ data[field] ? data[field] : '' }}
 							</template>
-						</Column>
-						<Column field="miraIds" header="Concepts">
-							<template #body="slotProps">
-								<ul>
-									<li
-										v-for="ontology in [...slotProps.data.miraIds, ...slotProps.data.miraContext]"
-										:key="ontology.curie"
-									>
-										<a :href="ontology.link">{{ ontology.title }}</a
-										><br />{{ ontology.description }}
-									</li>
-								</ul>
+							<template #editor="{ data, field }">
+								{{ data[field] ? data[field] : '' }}
 							</template>
 						</Column>
 					</DataTable>
-				</template>
-				<template v-else>
-					<model-parameter-list
-						:parameters="filteredStates"
-						attribute="parameters"
-						:selected-variable="selectedVariable"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add configuration"
+						@click="addModelConfiguration"
 					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab>
-				<template #header>
-					Parameters<span class="artifact-amount">({{ betterParams?.length }})</span>
-				</template>
-				<template v-if="!isEditable">
-					<DataTable :value="betterParams" v-model:filters="globalFilter" filterDisplay="row">
-						<Column field="name" header="Name" />
-						<Column field="type" header="Type" />
-						<Column field="default_value" header="Default" />
+				</AccordionTab>
+				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+					<DataTable :value="relatedTerariumModels">
+						<Column field="name" header="Models"></Column>
 					</DataTable>
-				</template>
-				<template v-else>
-					<model-parameter-list
-						:parameters="filteredParams"
-						attribute="parameters"
-						:selected-variable="selectedVariable"
-						@update-parameter-row="updateParamaterRow"
-						@parameter-click="onVariableSelected"
-					/>
-				</template>
-			</AccordionTab>
-			<AccordionTab
-				:header="`Extractions ${
-					extractions?.length ? extractions?.length : ': No Extractions Found'
-				}`"
-			>
-				<DataTable :value="extractions" v-model:filters="globalFilter" filterDisplay="row">
-					<Column field="name" header="Name" />
-					<Column field="id" header="ID" />
-					<Column field="text_annotations" header="Text">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.text_annotations" :key="key">
-									{{ text }}
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="dkg_annotations" header="Concepts">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.dkg_annotations" :key="key">
-									<a :href="`http://34.230.33.149:8772/${text[0]}`">{{ text[1] }}</a>
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="data_annotations" header="Data">
-						<template #body="slotProps">
-							<ul>
-								<li v-for="(text, key) in slotProps.data.data_annotations" :key="key">
-									{{ `${text[0]}: ${text[1]}` }}
-								</li>
-							</ul>
-						</template>
-					</Column>
-					<Column field="file" header="File" />
-					<Column field="doi" header="doi">
-						<template #body="slotProps">
-							<a :href="slotProps.data.doi">{{ slotProps.data.doi }}</a>
-						</template>
-					</Column>
-					<Column field="equation_annotations" header="Equations">
-						<template #body="slotProps">
-							<div style="word-wrap: break-word">
-								<katex-element :expression="Object.keys(slotProps.data.equation_annotations)[0]" />
-							</div>
-						</template>
-					</Column>
-				</DataTable>
-			</AccordionTab>
-			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-				<DataTable :value="relatedTerariumModels">
-					<Column field="name" header="Models"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDatasets">
-					<Column field="name" header="Datasets"></Column>
-				</DataTable>
-				<DataTable :value="relatedTerariumDocuments">
-					<Column field="name" header="Documents"></Column>
-				</DataTable>
-			</AccordionTab>
-		</Accordion>
+					<DataTable :value="relatedTerariumDatasets">
+						<Column field="name" header="Datasets"></Column>
+					</DataTable>
+					<DataTable :value="relatedTerariumDocuments">
+						<Column field="name" header="Documents"></Column>
+					</DataTable>
+				</AccordionTab>
+			</Accordion>
+		</template>
 		<Teleport to="body">
 			<ForecastLauncher
 				v-if="showForecastLauncher && model"
@@ -269,56 +236,117 @@
 				@launch-forecast="goToSimulationRunPage"
 			/>
 		</Teleport>
+		<Teleport to="body">
+			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+				<template #header>
+					<h4>{{ cellValueToEdit.field }}</h4>
+					<span>Select a value for this configuration</span>
+				</template>
+				<template #default>
+					<TabView>
+						<TabPanel v-for="(tab, i) in fakeExtractions" :key="tab" :header="tab">
+							<div>
+								<label for="name">Name</label>
+								<InputText class="p-inputtext-sm" v-model="fakeExtractions[i]" />
+							</div>
+							<div>
+								<label for="name">Source</label>
+								<InputText class="p-inputtext-sm" />
+							</div>
+							<div>
+								<label for="name">Value</label>
+								<InputText
+									class="p-inputtext-sm"
+									v-model="cellValueToEdit.data[cellValueToEdit.field]"
+								/>
+							</div>
+						</TabPanel>
+					</TabView>
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add value"
+						@click="addConfigValue"
+					/>
+				</template>
+				<template #footer>
+					<Button label="OK" @click="updateModelConfigValue" />
+					<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+				</template>
+			</tera-modal>
+		</Teleport>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
-import { IGraph } from '@graph-scaffolder/index';
-import { watch, ref, computed, onMounted, onUnmounted, onUpdated, PropType } from 'vue';
-import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
-import {
-	parsePetriNet2IGraph,
-	PetriNet,
-	NodeData,
-	EdgeData,
-	parseIGraph2PetriNet,
-	mathmlToPetri,
-	petriToLatex,
-	NodeType
-} from '@/petrinet/petrinet-service';
+import { isEmpty, cloneDeep } from 'lodash';
+import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
+import { PetriNet, parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import { separateEquations, MathEditorModes } from '@/utils/math';
-import { getModel, updateModel, createModel, addModelToProject } from '@/services/model';
-import { getRelatedArtifacts } from '@/services/provenance';
+import { bucky } from '@/temp/buckyAMR';
+import { createModel, addModelToProject, getModel } from '@/services/model';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
-import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
+import Tag from 'primevue/tag';
 import Accordion from 'primevue/accordion';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import ContextMenu from 'primevue/contextmenu';
+import Row from 'primevue/row';
+import ColumnGroup from 'primevue/columngroup';
 import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
+import {
+	AskemModelRepresentationType,
+	ModelParameter,
+	ModelTransition,
+	ModelState
+} from '@/types/AskemModelRepresentation';
 import { ResultType } from '@/types/common';
-import { Document, ProvenanceType } from '@/types/Types';
-import { Dataset } from '@/types/Dataset';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
-import Splitter from 'primevue/splitter';
-import SplitterPanel from 'primevue/splitterpanel';
+import { Document, Dataset, ProvenanceType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import Toolbar from 'primevue/toolbar';
 import { FilterMatchMode } from 'primevue/api';
-import ModelParameterList from '@/components/models/tera-model-parameter-list.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import { getRelatedArtifacts } from '@/services/provenance';
+import TeraModelDiagram from './tera-model-diagram.vue';
+
+interface StringValueMap {
+	[key: string]: string;
+}
+
+enum ModelView {
+	DESCRIPTION = 'description',
+	MODEL = 'model'
+}
+
+const modelContent = computed(() => [
+	{ key: 'Description', value: description },
+	{ key: 'Intended Use', value: null },
+	{ key: 'Training Data', value: null },
+	{ key: 'Evaluation Data', value: null },
+	{ key: 'Metrics', value: null },
+	{ key: 'Training', value: null },
+	{ key: 'Model Output', value: null },
+	{ key: 'Ethical Considerations', value: null },
+	{ key: 'Authors and Contributors', value: null },
+	{ key: 'License', value: null },
+	{ key: 'Parameters', value: amr.value?.model.parameters },
+	{ key: 'State variables', value: amr.value?.model.states },
+	{ key: 'Transitions', value: amr.value?.model.transitions },
+	{ key: 'Variable Statements', value: amr.value?.metadata?.variable_statements }
+]);
+
+const modelView = ref(ModelView.DESCRIPTION);
 
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
@@ -347,11 +375,10 @@ const props = defineProps({
 const resources = useResourcesStore();
 const router = useRouter();
 
-const extractions = ref([]);
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
-const menu = ref();
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
+const amr = ref<AskemModelRepresentationType | null>(null);
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
@@ -360,100 +387,179 @@ const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
-const selectedRow = ref<any>(null);
-const selectedVariable = ref('');
-
-const equationLatex = ref<string>('');
-const equationLatexOriginal = ref<string>('');
-const equationLatexNew = ref<string>('');
 const isMathMLValid = ref<boolean>(true);
 
-const splitterContainer = ref<HTMLElement | null>(null);
-const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
 const showForecastLauncher = ref(false);
 
-const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
+const modelConfigNames = ref([{ name: 'Config 1' }]);
+const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
-const equationPanelSize = ref<number>(50);
-const equationPanelMinSize = ref<number>(0);
-const equationPanelMaxSize = ref<number>(100);
+const initialValues = ref<StringValueMap[]>([{}]);
+const parameterValues = ref<StringValueMap[]>([{}]);
+const openValueConfig = ref(false);
+const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
-const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(0);
-const mathPanelMaxSize = ref<number>(100);
+const selectedModelConfig = ref();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
-const graphElement = ref<HTMLDivElement | null>(null);
-let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
+const modelConfiguration = computed(() => {
+	const newModelConfiguration: any[] = [];
 
-const updateLayout = () => {
-	if (splitterContainer.value) {
-		layout.value =
-			(splitterContainer.value.offsetWidth / window.innerWidth) * 100 < switchWidthPercent.value ||
-			window.innerWidth < 800
-				? 'vertical'
-				: 'horizontal';
+	for (let i = 0; i < modelConfigNames.value.length; i++) {
+		newModelConfiguration.push({
+			name: modelConfigNames.value[i].name,
+			...initialValues.value[i],
+			...parameterValues.value[i]
+		});
+	}
+
+	return newModelConfiguration;
+});
+
+const paramLength = computed(() => {
+	if (amr.value) {
+		return amr.value.model.parameters.length;
+	}
+	return model.value?.content.T.length;
+});
+
+const modelStates: ComputedRef<Array<ModelState> | undefined> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.states.map((state) => ({
+			id: state.id,
+			name: state.name,
+			grounding: state.grounding
+		}));
+	}
+	return model.value?.content.S.map((state) => ({ id: state.sname, name: state.sname }));
+});
+
+const modelTransitions: ComputedRef<Array<ModelTransition> | undefined> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.transitions.map((transition) => ({
+			id: transition.id,
+			input: transition.input,
+			output: transition.output,
+			properties: transition.properties
+		}));
+	}
+	return model.value?.content.T.map((state) => ({ id: state.tname, input: [], output: [] }));
+});
+
+const metaData = computed(() => {
+	if (amr.value) {
+		return amr.value.metadata.variable_statements;
+	}
+	return null;
+});
+
+const modelParameters: ComputedRef<Array<ModelParameter>> = computed(() => {
+	if (amr.value) {
+		return amr.value.model.parameters;
+	}
+	return model.value?.parameters
+		.filter((param) => !param.state_variable)
+		.map((param) => ({ id: param.name, value: param.default_value }));
+});
+
+function addModelConfiguration() {
+	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
+	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+}
+
+function addConfigValue() {
+	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1}`);
+}
+
+const onCellEditComplete = (event) => {
+	const { data, newValue, field } = event;
+
+	switch (field) {
+		case 'name':
+			data[field] = newValue;
+			break;
+		default:
+			break;
 	}
 };
 
-const handleResize = () => {
-	updateLayout();
+function updateModelContent(rendererGraph) {
+	if (model.value) model.value.content = parseIGraph2PetriNet(rendererGraph);
+}
+
+const onCellEditStart = (event) => {
+	const { data, field, index } = event;
+
+	if (field !== 'name') {
+		openValueConfig.value = true;
+		cellValueToEdit.value = { data, field, index };
+	}
 };
 
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-	handleResize();
-	// new model
-	if (props.assetId === '') {
-		isEditingEQ.value = true;
-		isMathMLValid.value = false;
+function updateModelConfigValue() {
+	const { data, field, index } = cellValueToEdit.value;
+
+	if (initialValues.value[index][field]) {
+		initialValues.value[index][field] = data[field];
+	} else if (parameterValues.value[index][field]) {
+		parameterValues.value[index][field] = data[field];
 	}
-});
 
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
+	openValueConfig.value = false;
+}
 
-const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
+function generateModelConfigValues() {
+	// Sync with workflow
+	if (
+		model.value &&
+		openedWorkflowNodeStore.assetId === model.value.id.toString() &&
+		openedWorkflowNodeStore.initialValues !== null &&
+		openedWorkflowNodeStore.parameterValues !== null
+	) {
+		// Shallow copy
+		initialValues.value = openedWorkflowNodeStore.initialValues as any; // Not sure why the typing doesn't match
+		parameterValues.value = openedWorkflowNodeStore.parameterValues as any;
+
+		if (modelConfigNames.value.length < initialValues.value.length - 1) {
+			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
+		}
 	}
-	if (isEditingEQ.value) {
-		return 'math-editor-selected';
-	}
-	return '';
-});
-
-const betterStates = computed(() => {
-	const statesFromParams = model.value?.parameters.filter((p) => p.state_variable);
-	const statesFromContent: any[] = model.value?.content?.S ?? [];
-
-	statesFromContent.forEach((stateFromContent) => {
-		statesFromParams.forEach((stateFromParams) => {
-			if (stateFromParams.name === stateFromContent.sname) {
-				stateFromParams.label = stateFromContent?.sname;
-				stateFromParams.concepts = [...stateFromContent.miraIds, ...stateFromContent.miraContext];
-			}
+	// Default values
+	else if (modelStates.value && modelParameters.value) {
+		modelStates.value.forEach((state) => {
+			initialValues.value[0][state.id] = `${1}`;
 		});
-	});
-	return statesFromParams;
-});
 
-const betterParams = computed(() => {
-	const params = model.value?.parameters.filter((p) => !p.state_variable);
-	const transitions: any[] = model.value?.content?.T ?? [];
+		if (modelParameters.value) {
+			modelParameters.value.forEach((param) => {
+				parameterValues.value[0][param.id] = param.value.toString();
+			});
+		}
+	}
+}
 
-	transitions.forEach((transition) => {
-		params.forEach((param) => {
-			if (param.name === transition.parameter_name) {
-				param.label = transition?.tname;
-				param.template_type = transition?.template_type;
-			}
-		});
-	});
-	return params;
-});
+watch(
+	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
+	() => {
+		generateModelConfigValues();
+	},
+	{ deep: true }
+);
+
+watch(
+	() => model.value,
+	async () => {
+		// Reset model config on model change
+		modelConfigNames.value = [{ name: 'Config 1' }];
+		fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
+		initialValues.value = [{}];
+		parameterValues.value = [{}];
+		openValueConfig.value = false;
+		cellValueToEdit.value = { data: {}, field: '', index: 0 };
+		generateModelConfigValues();
+	}
+);
 
 const globalFilter = ref({
 	// @ts-ignore
@@ -461,65 +567,17 @@ const globalFilter = ref({
 	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
 });
 
-const filteredStates = computed(() =>
-	betterStates.value?.filter(
-		(p) =>
-			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
-			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
-	)
-);
-
-const filteredParams = computed(() =>
-	betterParams.value?.filter(
-		(p) =>
-			p.name.toLowerCase().includes(globalFilter.value.global.value.toLowerCase()) ||
-			p.label.toLowerCase().includes(globalFilter.value.global.value.toLowerCase())
-	)
-);
-
-const onVariableSelected = (variable: string) => {
-	if (variable) {
-		if (variable === selectedVariable.value) {
-			selectedVariable.value = '';
-			equationLatex.value = equationLatexOriginal.value;
-		} else {
-			selectedVariable.value = variable;
-			equationLatex.value = equationLatexOriginal.value.replaceAll(
-				selectedVariable.value,
-				String.raw`{\color{red}${variable}}`
-			);
-		}
-		renderer?.toggoleNodeSelectionByLabel(variable);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
-
-const onStateVariableClick = () => {
-	if (selectedRow.value) {
-		equationLatex.value = equationLatexOriginal.value.replaceAll(
-			selectedRow.value.sname,
-			String.raw`{\color{red}${selectedRow.value.sname}}`
-		);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
-
-const setNewLatexFormula = (formulaString: string) => {
-	equationLatexNew.value = formulaString;
-};
-
-const updateLatexFormula = (formulaString: string) => {
-	equationLatex.value = formulaString;
-	equationLatexOriginal.value = formulaString;
-};
-
-const cancelEditng = () => {
-	isEditingEQ.value = false;
-	isMathMLValid.value = true;
-	updateLatexFormula(equationLatexOriginal.value);
-};
+// States/transitions aren't selected like this anymore - maybe somehow later?
+// const onStateVariableClick = () => {
+// 	if (selectedRow.value) {
+// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
+// 			selectedRow.value.sname,
+// 			String.raw`{\color{red}${selectedRow.value.sname}}`
+// 		);
+// 	} else {@vnode-mounted
+// 		equationLatex.value = equationLatexOriginal.value;
+// 	}
+// };
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -531,6 +589,13 @@ const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
+// Highlight strings based on props.highlight
+function highlightSearchTerms(text: string | undefined): string {
+	if (!!props.highlight && !!text) {
+		return textUtil.highlight(text, props.highlight);
+	}
+	return text ?? '';
+}
 const fetchRelatedTerariumArtifacts = async () => {
 	if (model.value) {
 		const results = await getRelatedArtifacts(props.assetId, ProvenanceType.ModelRevision);
@@ -540,36 +605,17 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
-function updateParamaterRow(attribute: string, newParameterRow) {
-	if (model?.value?.[attribute]) {
-		const rowIndex = model.value[attribute].findIndex(({ id }) => id === newParameterRow.id);
-		model.value[attribute][rowIndex] = { ...newParameterRow };
-	}
-}
-
-// Highlight strings based on props.highlight
-function highlightSearchTerms(text: string | undefined): string {
-	if (!!props.highlight && !!text) {
-		return textUtil.highlight(text, props.highlight);
-	}
-	return text ?? '';
-}
-
-// Whenever selectedModelId changes, fetch model with that ID
 watch(
 	() => [props.assetId],
 	async () => {
-		updateLatexFormula('');
 		if (props.assetId !== '') {
-			const result = await getModel(props.assetId);
-			model.value = result;
-			fetchRelatedTerariumArtifacts();
-			if (model.value) {
-				const data = await petriToLatex(model.value.content);
-				if (data) {
-					updateLatexFormula(data);
-				}
+			model.value = await getModel(props.assetId);
+			if (model.value && model.value.name === 'Bucky') {
+				amr.value = bucky;
+			} else {
+				amr.value = null;
 			}
+			fetchRelatedTerariumArtifacts();
 		} else {
 			model.value = null;
 		}
@@ -592,169 +638,8 @@ onUpdated(() => {
 	}
 });
 
-const editorKeyHandler = (event: KeyboardEvent) => {
-	// Ignore backspace if the current focus is a text/input box
-	if ((event.target as HTMLElement).tagName === 'INPUT') {
-		return;
-	}
-
-	if (event.key === 'Backspace' && renderer) {
-		if (renderer && renderer.nodeSelection) {
-			const nodeData = renderer.nodeSelection.datum();
-			remove(renderer.graph.edges, (e) => e.source === nodeData.id || e.target === nodeData.id);
-			remove(renderer.graph.nodes, (n) => n.id === nodeData.id);
-			renderer.nodeSelection = null;
-			renderer.render();
-		}
-
-		if (renderer && renderer.edgeSelection) {
-			const edgeData = renderer.edgeSelection.datum();
-			remove(
-				renderer.graph.edges,
-				(e) => e.source === edgeData.source && e.target === edgeData.target
-			);
-			renderer.edgeSelection = null;
-			renderer.render();
-		}
-	}
-	if (event.key === 'Enter' && renderer) {
-		if (renderer.nodeSelection) {
-			renderer.deselectNode(renderer.nodeSelection);
-			renderer.nodeSelection
-				.selectAll('.no-drag')
-				.style('opacity', 0)
-				.style('visibility', 'hidden');
-			renderer.nodeSelection = null;
-		}
-		if (renderer.edgeSelection) {
-			renderer.deselectEdge(renderer.edgeSelection);
-			renderer.edgeSelection = null;
-		}
-	}
-};
-
-// Model editor context menu
-const contextMenuItems = ref([
-	{
-		label: 'Add state',
-		icon: 'pi pi-fw pi-circle',
-		command: () => {
-			if (renderer) {
-				renderer.addNode('S', '?', { x: eventX, y: eventY });
-			}
-		}
-	},
-	{
-		label: 'Add transition',
-		icon: 'pi pi-fw pi-stop',
-		command: () => {
-			if (renderer) {
-				renderer.addNode('T', '?', { x: eventX, y: eventY });
-			}
-		}
-	}
-]);
-
-// Render graph whenever a new model is fetched or whenever the HTML element
-//	that we render the graph to changes.
-watch(
-	[model, graphElement],
-	async () => {
-		if (model.value === null || graphElement.value === null) return;
-		// Convert petri net into a graph
-		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
-			S: { width: 60, height: 60 },
-			T: { width: 40, height: 40 }
-		});
-
-		// Create renderer
-		renderer = new PetrinetRenderer({
-			el: graphElement.value as HTMLDivElement,
-			useAStarRouting: false,
-			useStableZoomPan: true,
-			runLayout: runDagreLayout,
-			dragSelector: 'no-drag'
-		});
-
-		renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-			renderer?.addEdge(d.source, d.target);
-		});
-
-		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-			if (!renderer?.editMode) return;
-			eventX = pos.x;
-			eventY = pos.y;
-			menu.value.show(evt);
-		});
-
-		renderer.on('background-click', () => {
-			if (menu.value) menu.value.hide();
-
-			// de-select node if selection exists
-			if (selectedVariable.value) {
-				onVariableSelected(selectedVariable.value);
-			}
-		});
-
-		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-			// Note: do not change the renderer's visuals, this is done internally
-			onVariableSelected(d.label);
-		});
-
-		// Render graph
-		await renderer?.setData(graphData);
-		await renderer?.render();
-		const latexFormula = await petriToLatex(model.value.content);
-		if (latexFormula) {
-			updateLatexFormula(latexFormula);
-		} else {
-			updateLatexFormula('');
-		}
-	},
-	{ deep: true }
-);
-
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
-
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
-	updateLatexFormula(equationLatexNew.value);
-};
-
 const launchForecast = () => {
 	showForecastLauncher.value = true;
-};
-
-const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
-	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
-	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
 };
 
 const createNewModel = async () => {
@@ -786,38 +671,6 @@ const createNewModel = async () => {
 	}
 };
 
-const validateMathML = async (mathMlString: string, editMode: boolean) => {
-	isEditingEQ.value = true;
-	isMathMLValid.value = false;
-	const cleanedMathML = separateEquations(mathMlString);
-	if (mathMlString === '') {
-		isMathMLValid.value = true;
-		isEditingEQ.value = false;
-	} else if (!editMode) {
-		try {
-			newPetri.value = await mathmlToPetri(cleanedMathML);
-			if (
-				(isArray(newPetri.value) && newPetri.value.length > 0) ||
-				(!isArray(newPetri.value) &&
-					Object.keys(newPetri.value).length > 0 &&
-					hasNoEmptyKeys(newPetri.value))
-			) {
-				isMathMLValid.value = true;
-				isEditingEQ.value = false;
-				updatePetri(newPetri.value);
-			} else {
-				logger.error(
-					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-				);
-			}
-		} catch (e) {
-			isMathMLValid.value = false;
-		}
-	} else if (editMode) {
-		isMathMLValid.value = true;
-	}
-};
-
 const goToSimulationRunPage = () => {
 	showForecastLauncher.value = false;
 	router.push({
@@ -830,61 +683,27 @@ const goToSimulationRunPage = () => {
 	});
 };
 
-onMounted(async () => {
-	fetchRelatedTerariumArtifacts();
-	document.addEventListener('keyup', editorKeyHandler);
-});
-
-onUnmounted(() => {
-	document.removeEventListener('keyup', editorKeyHandler);
-});
-
-const toggleEditMode = () => {
-	isEditing.value = !isEditing.value;
-	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && model.value && renderer) {
-		model.value.content = parseIGraph2PetriNet(renderer.graph);
-		updateModel(model.value);
-	} else if (isEditing.value && selectedVariable.value) {
-		// de-select node if selection exists
-		onVariableSelected(selectedVariable.value);
-	}
-};
-
-// Cancel existing edits, currently this will:
-// - Resets changs to the model structure
-const cancelEdit = async () => {
-	isEditing.value = false;
-	if (!model.value) return;
-
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(model.value.content, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	if (renderer) {
-		renderer.setEditMode(false);
-		await renderer.setData(graphData);
-		renderer.isGraphDirty = true;
-		await renderer.render();
-	}
-};
-
-const resetZoom = async () => {
-	renderer?.setToDefaultZoom();
-};
-
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
-};
-
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
-};
-
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
-const description = computed(() => highlightSearchTerms(model.value?.description ?? ''));
+const description = computed(() => {
+	if (amr.value) {
+		return highlightSearchTerms(amr.value?.description);
+	}
+	return highlightSearchTerms(model.value?.description);
+});
+
+function getExtractionType(sp) {
+	if (sp.data.variable.column.length > 0) {
+		return 'DataSet';
+	}
+	return 'Document';
+}
+
+function getSource(sp) {
+	if (sp.data.variable.column.length > 0) {
+		return sp.data.variable.column[0].dataset.name;
+	}
+	return sp.data.variable.paper.name;
+}
 </script>
 
 <style scoped>
@@ -927,7 +746,7 @@ section math-editor {
 }
 
 .graph-element {
-	background-color: var(--surface-secondary);
+	background-color: var(--surface-0);
 	height: 100%;
 	max-height: 100%;
 	flex-grow: 1;
@@ -961,10 +780,82 @@ section math-editor {
 .model_diagram {
 	display: flex;
 	height: 100%;
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: auto;
 }
 
 .p-splitter {
 	height: 100%;
+}
+
+.p-datatable:deep(td:hover) {
+	background-color: var(--surface-secondary);
+	cursor: pointer;
+}
+
+.p-tabview {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	justify-content: space-between;
+}
+
+.p-tabview:deep(> *) {
+	width: 50vw;
+	height: 50vh;
+	overflow: auto;
+}
+
+.p-tabview:deep(.p-tabview-nav) {
+	flex-direction: column;
+}
+
+.p-tabview:deep(label) {
+	display: block;
+	font-size: var(--font-caption);
+	margin-bottom: 0.25rem;
+}
+
+.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-panels) {
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	background-color: var(--surface-ground);
+}
+
+.p-tabview:deep(.p-tabview-panel) {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.p-tabview:deep(.p-tabview-nav li) {
+	border-left: 3px solid transparent;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
+	border-bottom: 1px solid var(--surface-border-light);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight) {
+	border-left: 3px solid var(--primary-color);
+	background: var(--surface-highlight);
+}
+
+.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
+	background: none;
+}
+
+.p-tabview:deep(.p-inputtext) {
+	width: 100%;
+}
+
+.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
+	display: none;
 }
 
 .tera-split-panel {
@@ -973,6 +864,14 @@ section math-editor {
 	display: flex;
 	align-items: center;
 	width: 100%;
+}
+
+.model-configuration:deep(.p-column-header-content) {
+	color: var(--text-color-subdued);
+}
+
+.model-configuration {
+	margin-bottom: 1rem;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */

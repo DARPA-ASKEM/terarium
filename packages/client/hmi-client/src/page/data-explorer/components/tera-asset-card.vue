@@ -105,9 +105,8 @@
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { Document, Extraction, XDDUrlExtraction } from '@/types/Types';
+import { Document, Extraction, XDDUrlExtraction, Dataset } from '@/types/Types';
 import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
 import { ResourceType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';
@@ -242,9 +241,9 @@ const formatDetails = computed(() => {
 
 // Format features for dataset type
 const formatFeatures = () => {
-	const features = props.asset.annotations.annotations.feature ?? [];
+	const features = props.asset.annotations?.annotations.feature ?? [];
 	if (!features || features.length === 0) return [];
-	const featuresNames = features.map((f) => (f.display_name !== '' ? f.display_name : f.name));
+	const featuresNames = features.map((f) => (f.displayName !== '' ? f.displayName : f.name));
 	const max = 5;
 	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
 };

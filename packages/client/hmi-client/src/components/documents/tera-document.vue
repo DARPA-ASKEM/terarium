@@ -47,18 +47,12 @@
 		</template>
 		<template #bottom-header-buttons>
 			<Button
+				v-if="!isEditable"
 				class="p-button-sm p-button-outlined"
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
 				:loading="!pdfLink && !linkIsPDF()"
-			/>
-			<Button
-				class="p-button-sm p-button-outlined"
-				@click="downloadPDF"
-				:icon="'pi pi-cloud-download'"
-				:loading="!pdfLink"
-				label="Download PDF"
 			/>
 		</template>
 		<Accordion
@@ -159,7 +153,7 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<tera-import-code-button
+						<tera-import-github-file
 							:urlString="url"
 							:show-import-button="isEditable"
 							@open-code="openCode"
@@ -248,14 +242,13 @@ import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, Tab } from '@/types/common';
+import { CodeRequest, ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import TeraImportCodeButton from '@/components/widgets/tera-import-code-button.vue';
+import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
-import { Extraction, ProvenanceType, Document } from '@/types/Types';
+import { Extraction, ProvenanceType, Document, Dataset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
@@ -281,8 +274,8 @@ const documentView = ref(DocumentView.EXRACTIONS);
 
 const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
-function openCode(assetToOpen: Tab, newCode?: string) {
-	emit('open-code', assetToOpen, newCode);
+function openCode(codeRequests: CodeRequest[]) {
+	emit('open-code', codeRequests);
 }
 
 // Highlight strings based on props.highlight
@@ -401,7 +394,8 @@ const fetchAssociatedResources = async () => {
 	}
 };
 
-// Better than wrapping download button with an anchor
+/*
+// Jamie: The 'Download PDF' button was removed from the UI but I left the code here in case we want to add it back in the future.
 function downloadPDF() {
 	if (pdfLink.value) {
 		const link = document.createElement('a');
@@ -410,7 +404,7 @@ function downloadPDF() {
 		link.click();
 	}
 }
-
+*/
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
 	return link.match(/^.*\.(pdf|PDF)$/);

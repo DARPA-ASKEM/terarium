@@ -10,6 +10,29 @@ export interface Event {
     value?: string;
 }
 
+export interface GithubFile {
+    type: FileType;
+    encoding: string;
+    size: number;
+    name: string;
+    path: string;
+    content: string;
+    sha: string;
+    url: string;
+    gitUrl: string;
+    htmlUrl: string;
+    downloadUrl: string;
+    links: Links;
+    submoduleGitUrl: string;
+    target: string;
+    fileCategory: FileCategory;
+}
+
+export interface GithubRepo {
+    files: { [P in FileCategory]?: GithubFile[] };
+    totalFiles: number;
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -46,6 +69,65 @@ export interface Simulation {
     modelId: number;
 }
 
+export interface Annotations {
+    geo: DatasetAnnotatedGeo[];
+    date: DatasetAnnotatedDate[];
+    feature: DatasetAnnotatedFeature[];
+}
+
+export interface Dataset {
+    id?: number;
+    name: string;
+    url: string;
+    description: string;
+    timestamp?: Date;
+    deprecated?: boolean;
+    sensitivity?: string;
+    quality?: string;
+    temporalResolution?: string;
+    geospatialResolution?: string;
+    annotations?: DatasetAnnotations;
+    maintainer?: string;
+    simulationRun?: boolean;
+}
+
+export interface DatasetAnnotatedDate extends DatasetAnnotatedField {
+    dateType: string;
+    primaryDate: boolean;
+    timeFormat: string;
+}
+
+export interface DatasetAnnotatedFeature extends DatasetAnnotatedField {
+    featureType: string;
+    units: string;
+    unitsDescription: string;
+    primaryOntologyId: string;
+    qualifierRole: string;
+}
+
+export interface DatasetAnnotatedField {
+    name: string;
+    displayName: string;
+    description: string;
+    type: string;
+    qualifies: string[];
+    aliases: any;
+}
+
+export interface DatasetAnnotatedGeo extends DatasetAnnotatedField {
+    geoType: string;
+    primaryGeo: boolean;
+    resolveToGadm: boolean;
+    isGeoPair: string;
+    coordFormat: string;
+    gadmLevel: string;
+}
+
+export interface DatasetAnnotations {
+    dataPaths: string[];
+    annotations: Annotations;
+}
+
 export interface CalibrationParams {
     model: string;
     initials: { [index: string]: number };
@@ -61,6 +143,12 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     scrollId: string;
     hits: number;
     facets: { [index: string]: XDDFacetsItemResponse };
+}
+
+export interface Links {
+    html: string;
+    git: string;
+    self: string;
 }
 
 export interface SimulationParams {
@@ -152,6 +240,21 @@ export interface XDDUrlExtraction {
 
 export enum EventType {
     Search = "SEARCH",
+}
+
+export enum FileType {
+    File = "file",
+    Dir = "dir",
+    Symlink = "symlink",
+    Submodule = "submodule",
+}
+
+export enum FileCategory {
+    Directory = "Directory",
+    Code = "Code",
+    Data = "Data",
+    Documents = "Documents",
+    Other = "Other",
 }
 
 export enum ProvenanceType {

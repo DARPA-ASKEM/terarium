@@ -1,121 +1,78 @@
 <template>
-	<section class="result-container">
+	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate()">Run</Button>
-		<div class="options">
-			<div class="dropdown-group">
-				<span>Select variables to plot</span>
-				<MultiSelect
-					v-model="selectedVariable"
-					:options="stateVariablesList"
-					optionLabel="code"
-					placeholder="Select a State Variable"
-				/>
-			</div>
+		<div class="chart-container">
+			<SimulateChart
+				v-for="index in openedWorkflowNodeStore.numCharts"
+				:key="index"
+				:run-results="runResults"
+				:run-id-list="completedRunIdList"
+				:chart-idx="index"
+			/>
 		</div>
-		<div class="result">
-			<Chart type="line" :data="chartData" :options="chartOptions" />
-		</div>
+		<Button
+			class="add-chart"
+			text
+			@click="openedWorkflowNodeStore.appendChart"
+			label="Add Chart"
+			icon="pi pi-plus"
+		></Button>
+	</section>
+	<section v-else>
+		<div>loading...</div>
 	</section>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { PetriNet } from '@/petrinet/petrinet-service';
-import { ITypedModel } from '@/types/Model';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
-
-import MultiSelect from 'primevue/multiselect';
-import Chart from 'primevue/chart';
+import { shimPetriModel } from '@/services/models/petri-shim';
 
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
+import { RunResults } from '@/types/SimulateConfig';
 
-type DatasetType = {
-	data: number[];
-	label: string;
-	fill: boolean;
-	tension: number;
-};
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import SimulateChart from './tera-simulate-chart.vue';
+import { SimulateOperation } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+const emit = defineEmits(['append-output-port']);
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+
+const showSpinner = ref(false);
 
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
-let runResults = {};
+const runResults = ref<RunResults>({});
 
-// data for rendering ui
-let stateVariablesList: { code: string }[] = [];
-const selectedVariable = ref<{ code: string }[]>([]);
-let runList = [] as any[];
-const selectedRun = ref<null | { code: string }>(null);
-
-const chartData = ref({});
-const chartOptions = {
-	maintainAspectRatio: false,
-	pointStyle: false,
-	plugins: {
-		legend: {
-			labels: {
-				color: '#000'
-			}
-		}
-	},
-	scales: {
-		x: {
-			ticks: {
-				color: '#000'
-			},
-			grid: {
-				color: '#AAA'
-			}
-		},
-		y: {
-			ticks: {
-				color: '#000'
-			},
-			grid: {
-				color: '#AAA'
-			}
-		}
-	}
-};
-
-// FIXME: adapt to new model representation
-// FIXME: adapt to new simulation-service id-based API
-const scrubModel = (model: ITypedModel<PetriNet>) => {
-	const cleanedModel: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
-	};
-	if (model) {
-		cleanedModel.S = model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = model.content.I;
-		cleanedModel.O = model.content.O;
-	}
-	return JSON.stringify(cleanedModel);
-};
+watch(
+	() => props.node,
+	(node) => openedWorkflowNodeStore.setNode(node ?? null),
+	{ deep: true }
+);
 
 const runSimulate = async () => {
-	const port = props.node.inputs[0];
-	if (port && port.value) {
-		const payload = {
-			model: scrubModel(port.value.model),
-			initials: port.value.initialValues,
-			params: port.value.parameterValues,
-			tspan: [0, 100]
-		};
+	if (props.node.inputs[0].value?.length) {
+		startedRunIdList.value = await Promise.all(
+			props.node.inputs[0].value.map(async (config) => {
+				const payload = {
+					model: shimPetriModel(config.model),
+					initials: config.initialValues,
+					params: config.parameterValues,
+					tspan: openedWorkflowNodeStore.tspan
+				};
 
-		const response = await makeForecast(payload);
-		startedRunIdList.value = [response.id];
+				const response = await makeForecast(payload);
+				return response.id;
+			})
+		);
 
-		// start polling for run status
 		getStatus();
+		showSpinner.value = true;
 	}
 };
 
@@ -148,7 +105,8 @@ const getStatus = async () => {
 
 	if (currentRunStatus.every(({ status }) => status === 'done')) {
 		completedRunIdList.value = startedRunIdList.value;
-	} else if (currentRunStatus.some(({ status }) => status === 'queuing')) {
+		showSpinner.value = false;
+	} else if (currentRunStatus.some(({ status }) => status === 'running')) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
@@ -162,53 +120,28 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 	const newRunResults = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {
-			if (runResults[runId]) {
-				newRunResults[runId] = runResults[runId];
+			if (runResults.value[runId]) {
+				newRunResults[runId] = runResults.value[runId];
 			} else {
 				const resultCsv = await getRunResult(runId);
 				newRunResults[runId] = csvParse(resultCsv);
 			}
 		})
 	);
-	runResults = newRunResults;
-	// process data retrieved
+	runResults.value = newRunResults;
 
-	// assume that the state variables for all runs will be identical
-	// take first run and parse it for state variables
-	if (!stateVariablesList.length) {
-		stateVariablesList = Object.keys(runResults[Object.keys(runResults)[0]][0])
-			.filter((key) => key !== 'timestep')
-			.map((key) => ({ code: key }));
-	}
-	selectedVariable.value = [stateVariablesList[0]];
-	runList = runIdList.map((runId, index) => ({ code: runId, index }));
-	selectedRun.value = runList[0];
+	const port = props.node.inputs[0];
+	emit('append-output-port', {
+		type: SimulateOperation.outputs[0].type,
+		label: `${port.label} Results`,
+		value: {
+			runResults: runResults.value,
+			runIdList,
+			runConfigs: port.value
+		}
+	});
 };
 watch(() => completedRunIdList.value, watchCompletedRunList);
-
-const renderGraph = (params) => {
-	const datasets: DatasetType[] = [];
-	params[0].forEach(({ code }) =>
-		completedRunIdList.value
-			.map((runId) => runResults[runId])
-			.forEach((run, runIdx) => {
-				const dataset = {
-					data: run.map(
-						(datum: { [key: string]: number }) => datum[code] // - runResults[selectedRun.value.code][timeIdx][code]
-					),
-					label: `${completedRunIdList.value[runIdx]} - ${code}`,
-					fill: false,
-					tension: 0.4
-				};
-				datasets.push(dataset);
-			})
-	);
-	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestep)),
-		datasets
-	};
-};
-watch(() => [selectedVariable.value, selectedRun.value], renderGraph);
 </script>
 
 <style scoped>
@@ -220,28 +153,11 @@ section {
 	background: var(--surface-overlay);
 }
 
-.result {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: row;
+.simulate-chart {
+	margin: 1em 0em;
 }
 
-.p-chart {
-	width: 100%;
-}
-
-.options {
-	display: flex;
-	margin-bottom: 10px;
-}
-
-.dropdown-group {
-	flex-grow: 1;
-	flex-basis: 0%;
-}
-
-.p-multiselect {
-	width: 50%;
+.add-chart {
+	width: 9em;
 }
 </style>

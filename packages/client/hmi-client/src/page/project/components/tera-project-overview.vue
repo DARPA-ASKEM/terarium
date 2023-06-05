@@ -4,6 +4,7 @@
 		:authors="project?.username"
 		:publisher="`Last updated ${DateUtils.formatLong(project?.timestamp)}`"
 		is-editable
+		class="overview-banner"
 	>
 		<template #name-input>
 			<InputText
@@ -22,7 +23,7 @@
 			/>
 			<Menu ref="projectMenu" :model="projectMenuItems" :popup="true" />
 		</template>
-		<section class="content-container">
+		<section>
 			<section class="summary">
 				<!-- This div is so that child elements will automatically collapse margins -->
 				<div>
@@ -41,84 +42,93 @@
 					<span class="summary-KPI-label">{{ capitalize(type) }}</span>
 				</div>
 			</section>
-			<!-- Quick link buttons go here -->
-			<section>
-				<div class="quick-links">
-					<Button
-						label="Upload resources"
-						size="large"
-						icon="pi pi-cloud-upload"
-						class="p-button p-button-secondary quick-link-button"
-						@click="openImportModal"
-					/>
-					<Button
-						label="New model"
-						size="large"
-						icon="pi pi-share-alt"
-						class="p-button p-button-secondary quick-link-button"
-					/>
-					<Button
-						size="large"
-						class="p-button p-button-secondary quick-link-button"
-						@click="emit('open-workflow')"
-					>
-						<vue-feather
-							class="p-button-icon-left"
-							type="git-merge"
-							size="1.25rem"
-							stroke="rgb(16, 24, 40)"
-						/>
-						<span class="p-button-label">New workflow</span>
-					</Button>
-					<Button size="large" class="p-button p-button-secondary quick-link-button">
-						<compare-models-icon class="icon" />
-						<span class="p-button-label">Compare Models</span>
-					</Button>
-					<Button
-						label="New simulation"
-						size="large"
-						icon="pi pi-play"
-						class="p-button p-button-secondary quick-link-button"
-					/>
-				</div>
-			</section>
-			<!-- Resources list table goes here -->
-			<section class="resource-list">
-				<div class="resource-list-section-header">
-					<h4>File manager</h4>
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText placeholder="Keyword search" class="keyword-search" />
-					</span>
-				</div>
-				<!-- resource list data table -->
-				<DataTable dataKey="id" tableStyle="min-width: 50rem">
-					<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-					<Column field="name" header="Name" sortable style="width: 45%"></Column>
-					<Column field="modified" header="Modified" sortable style="width: 15%"></Column>
-					<Column field="tags" header="Tags"></Column>
-				</DataTable>
-			</section>
-			<section class="drag-n-drop">
-				<Dialog
-					v-model:visible="visible"
-					modal
-					header="Resource Importer"
-					:style="{ width: '60vw' }"
+		</section>
+	</tera-asset>
+	<section class="content-container">
+		<h5>Quick links</h5>
+		<!-- Quick link buttons go here -->
+		<section>
+			<div class="quick-links">
+				<Button
+					label="Upload resources"
+					size="large"
+					icon="pi pi-cloud-upload"
+					class="p-button p-button-secondary quick-link-button"
+					@click="openImportModal"
+				/>
+				<Button
+					label="New model"
+					size="large"
+					icon="pi pi-share-alt"
+					class="p-button p-button-secondary quick-link-button"
+				/>
+				<Button
+					size="large"
+					class="p-button p-button-secondary quick-link-button"
+					@click="emit('open-workflow')"
 				>
+					<vue-feather
+						class="p-button-icon-left"
+						type="git-merge"
+						size="1.25rem"
+						stroke="rgb(16, 24, 40)"
+					/>
+					<span class="p-button-label">New workflow</span>
+				</Button>
+				<Button size="large" class="p-button p-button-secondary quick-link-button">
+					<compare-models-icon class="icon" />
+					<span class="p-button-label">Compare models</span>
+				</Button>
+				<Button
+					label="New simulation"
+					size="large"
+					icon="pi pi-play"
+					class="p-button p-button-secondary quick-link-button"
+				/>
+			</div>
+		</section>
+		<!-- Resources list table goes here -->
+		<section class="resource-list">
+			<div class="resource-list-section-header">
+				<h4>File manager</h4>
+				<span class="p-input-icon-left">
+					<i class="pi pi-search" />
+					<InputText placeholder="Keyword search" class="keyword-search" />
+				</span>
+			</div>
+			<!-- resource list data table -->
+			<DataTable dataKey="id" tableStyle="min-width: 50rem">
+				<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
+				<Column field="name" header="Name" sortable style="width: 45%"></Column>
+				<Column field="modified" header="Modified" sortable style="width: 15%"></Column>
+				<Column field="tags" header="Tags"></Column>
+			</DataTable>
+		</section>
+		<section class="drag-n-drop">
+			<tera-modal
+				v-if="isUploadResourcesModalVisible"
+				class="modal"
+				@modal-mask-clicked="isUploadResourcesModalVisible = false"
+			>
+				<template #header>
+					<h4>Upload resources</h4>
+				</template>
+				<template #default>
+					<p class="subheader">Add resources to your project here</p>
 					<tera-drag-and-drop-importer
 						:show-preview="true"
 						:accept-types="[
 							AcceptedTypes.PDF,
 							AcceptedTypes.JPG,
 							AcceptedTypes.JPEG,
-							AcceptedTypes.PNG
+							AcceptedTypes.PNG,
+							AcceptedTypes.CSV
 						]"
-						:import-action="processPDFs"
+						:import-action="processFiles"
 						@import-completed="importCompleted"
 					></tera-drag-and-drop-importer>
 
-					<section v-if="results">
+					<section v-if="isUploadResourcesModalVisible">
 						<Card v-for="(item, i) in results" :key="i" class="card">
 							<template #title>
 								<div class="card-img"></div>
@@ -142,15 +152,28 @@
 							</template>
 						</Card>
 					</section>
-				</Dialog>
-			</section>
+				</template>
+				<template #footer>
+					<Button
+						label="Upload"
+						class="p-button-primary"
+						@click="isUploadResourcesModalVisible = false"
+						:disabled="!results"
+					/>
+					<Button
+						label="Cancel"
+						class="p-button-secondary"
+						@click="isUploadResourcesModalVisible = false"
+					/>
+				</template>
+			</tera-modal>
 		</section>
-	</tera-asset>
+	</section>
 </template>
 
 <script setup lang="ts">
 import { IProject } from '@/types/Project';
-import { ref, nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -163,15 +186,16 @@ import { capitalize } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
 import { AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
-import Dialog from 'primevue/dialog';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
+import { createNewDatasetFromCSV } from '@/services/dataset';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow']);
+const emit = defineEmits(['open-workflow', 'update-project']);
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -188,22 +212,25 @@ async function getPDFContents(
 ): Promise<PDFExtractionResponseType> {
 	const formData = new FormData();
 	formData.append('file', file);
-	formData.append('extraction_method', extractionMode);
-	formData.append('extract_images', extractImages);
 
-	// const result = await API.post(`/extract/convertpdftask/`, formData);
-	const result = await fetch(`http://localhost:5000/convertpdftask`, {
-		method: 'POST',
-		body: formData
+	const result = await API.post(`/extract/convertpdftask/`, formData, {
+		params: {
+			extraction_method: extractionMode,
+			extract_images: extractImages
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
+		}
 	});
 
 	if (result) {
-		const taskID = await result.json();
+		const taskID = result.data.task_id;
+
 		const poller = new Poller<object>()
 			.setInterval(2000)
 			.setThreshold(90)
 			.setPollAction(async () => {
-				const response = await API.get(`/extract/task-result/${taskID.task_id}`);
+				const response = await API.get(`/extract/task-result/${taskID}`);
 
 				if (response.data.status === 'SUCCESS' && response.data.result) {
 					return {
@@ -218,7 +245,6 @@ async function getPDFContents(
 					error: null
 				};
 			});
-
 		const pollerResults = await poller.start();
 
 		if (pollerResults.data) {
@@ -228,26 +254,44 @@ async function getPDFContents(
 	return { text: '', images: [] } as PDFExtractionResponseType;
 }
 
-async function processPDFs(files, extractionMode, extractImages) {
-	const processedFiles = await files.map(async (file) => {
+async function processFiles(
+	files: File[],
+	extractionMode: string,
+	extractImages: string,
+	csvDescription: string
+) {
+	return files.map(async (file) => {
+		if (file.type === AcceptedTypes.CSV) {
+			const addedCSV = await createNewDatasetFromCSV(file, props.project.id, csvDescription);
+			const text = addedCSV?.csv.join('\r\n');
+			const images = [];
+
+			return { file, error: false, response: { text, images } };
+		}
+		// PDF
 		const resp = await getPDFContents(file, extractionMode, extractImages);
 		const text = resp.text ? resp.text : '';
 		const images = resp.images ? resp.images : [];
 		return { file, error: false, response: { text, images } };
 	});
-
-	return processedFiles;
 }
 
 async function openImportModal() {
-	visible.value = true;
+	isUploadResourcesModalVisible.value = true;
 	results.value = null;
 }
 
 function importCompleted(
 	newResults: { file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 ) {
-	results.value = newResults;
+	// This is a hacky override for dealing with CSVs
+	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+		results.value = null;
+		emit('update-project', props.project.id);
+		visible.value = false;
+	} else {
+		results.value = newResults;
+	}
 }
 
 async function editProject() {
@@ -279,6 +323,8 @@ const projectMenuItems = ref([
 function showProjectMenu(event: any) {
 	projectMenu.value.toggle(event);
 }
+
+const isUploadResourcesModalVisible = ref(false);
 </script>
 
 <style scoped>
@@ -286,30 +332,20 @@ a {
 	text-decoration: underline;
 }
 
+.overview-banner {
+	background: url('@/assets/svg/terarium-icon-transparent.svg') no-repeat right 10% center,
+		linear-gradient(45deg, #d5e8e5 0%, #f0f4f0 100%) no-repeat;
+	background-size: 25%, 100%;
+	height: auto;
+}
 .content-container {
-	margin-left: 1rem;
-	margin-right: 1rem;
-}
-
-.overview-header {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin: 1rem;
-}
-
-header {
-	margin: 1rem;
-}
-
-section {
-	display: flex;
-	flex-direction: column;
+	padding: 1rem;
+	background: var(--surface-0);
+	flex: 1;
 }
 
 .description {
-	margin-top: 0.5rem;
-	margin-bottom: 0.5rem;
+	margin: 1rem;
 }
 
 .contributors {
@@ -321,13 +357,12 @@ section {
 .summary-KPI-bar {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
-	border: 1px solid var(--surface-border);
+	justify-content: space-evenly;
+	margin: 1rem;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.5);
 	border-radius: var(--border-radius);
-	padding: 1.5rem 5rem 1.5rem 3rem;
-	background-color: var(--gray-50);
-	margin-top: 1rem;
-	margin-bottom: 1rem;
+	backdrop-filter: blur(5px);
 }
 
 .summary-KPI {
@@ -354,8 +389,8 @@ button .icon {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	margin-top: 0.5rem;
-	margin-bottom: 0.5rem;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
 	gap: 1rem;
 }
 
@@ -384,8 +419,8 @@ button .icon {
 
 .keyword-search {
 	border-color: transparent;
-	padding-top: 0.75rem;
-	padding-bottom: 0.75rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
 }
 
 .keyword-search:hover {
@@ -437,5 +472,9 @@ ul {
 
 .file-title {
 	font-size: 2em;
+}
+
+.subheader {
+	margin-bottom: 1rem;
 }
 </style>

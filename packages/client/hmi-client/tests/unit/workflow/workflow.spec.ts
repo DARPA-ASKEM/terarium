@@ -4,12 +4,13 @@ import {
 	WorkflowPort,
 	Operation,
 	WorkflowNode,
-	WorkflowEdge
+	WorkflowEdge,
+	WorkflowOperationTypes
 } from '@/types/workflow';
 import { describe, expect, it } from 'vitest';
 
 const addOperation: Operation = {
-	name: 'add',
+	name: WorkflowOperationTypes.ADD,
 	description: 'add two numbers',
 	inputs: [{ type: 'number' }, { type: 'number' }],
 	outputs: [{ type: 'number' }],
@@ -18,8 +19,8 @@ const addOperation: Operation = {
 	// This is the brain of the operation, it will make changes, API-calls, that type of stuff
 	// and returns an outputs to the node
 	action: (v: WorkflowPort[]) => {
-		if (v.length && v[0].type === 'number') {
-			return [{ id: '0', type: 'number', value: v[0].value + v[1].value }];
+		if (v.length && v[0].type === 'number' && v[0].value && v[1].value) {
+			return [{ id: '0', type: 'number', value: [v[0].value[0] + v[1].value[0]] }];
 		}
 		return [{ id: '0', type: null, value: null }];
 	}
@@ -116,19 +117,19 @@ describe('basic tests to make sure it all works', () => {
 		let temp: WorkflowPort | undefined;
 		temp = X.inputs.find((d) => d.id === '0');
 		if (temp) {
-			temp.value = 1;
+			temp.value = [1];
 		}
 		temp = X.inputs.find((d) => d.id === '1');
 		if (temp) {
-			temp.value = 2;
+			temp.value = [2];
 		}
 		temp = Y.inputs.find((d) => d.id === '0');
 		if (temp) {
-			temp.value = 3;
+			temp.value = [3];
 		}
 		temp = Y.inputs.find((d) => d.id === '1');
 		if (temp) {
-			temp.value = 4;
+			temp.value = [4];
 		}
 
 		runNode(X); // should be 3
@@ -140,6 +141,6 @@ describe('basic tests to make sure it all works', () => {
 
 		// Run
 		expect(Z.outputs.length).to.eq(1);
-		expect(Z.outputs[0].value).to.eq(10);
+		expect(Z.outputs[0].value?.[0]).to.eq(10);
 	});
 });

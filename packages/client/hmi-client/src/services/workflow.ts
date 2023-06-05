@@ -51,7 +51,8 @@ export const addNode = (
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
 		/*
@@ -75,9 +76,9 @@ export const addNode = (
 export const addEdge = (
 	wf: Workflow,
 	sourceId: string,
-	sourceOutputPortId: string,
+	sourcePortId: string,
 	targetId: string,
-	targetInputPortId: string,
+	targetPortId: string,
 	points: Position[]
 ) => {
 	const sourceNode = wf.nodes.find((d) => d.id === sourceId);
@@ -85,8 +86,8 @@ export const addEdge = (
 	if (!sourceNode) return;
 	if (!targetNode) return;
 
-	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourceOutputPortId);
-	const targetInputPort = targetNode.inputs.find((d) => d.id === targetInputPortId);
+	const sourceOutputPort = sourceNode.outputs.find((d) => d.id === sourcePortId);
+	const targetInputPort = targetNode.inputs.find((d) => d.id === targetPortId);
 
 	if (!sourceOutputPort) return;
 	if (!targetInputPort) return;
@@ -95,9 +96,9 @@ export const addEdge = (
 	const existingEdge = wf.edges.find(
 		(d) =>
 			d.source === sourceId &&
-			d.sourcePortId === sourceOutputPortId &&
+			d.sourcePortId === sourcePortId &&
 			d.target === targetId &&
-			d.targetPortId === targetInputPortId
+			d.targetPortId === targetPortId
 	);
 
 	if (existingEdge) return;
@@ -105,20 +106,26 @@ export const addEdge = (
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
 	if (sourceOutputPort.type !== targetInputPort.type) return;
+	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+		return;
+	}
 
 	// Transfer data value/reference
-	targetInputPort.value = sourceOutputPort.value;
-
-	// TODO: Need to fix for multi-values
-	targetInputPort.label = sourceOutputPort.label;
+	if (targetInputPort.acceptMultiple && targetInputPort.value && sourceOutputPort.value) {
+		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
+		targetInputPort.value = [...targetInputPort.value, ...sourceOutputPort.value];
+	} else {
+		targetInputPort.label = sourceOutputPort.label;
+		targetInputPort.value = sourceOutputPort.value;
+	}
 
 	const edge: WorkflowEdge = {
 		id: uuidv4(),
 		workflowId: wf.id,
 		source: sourceId,
-		sourcePortId: sourceOutputPortId,
+		sourcePortId,
 		target: targetId,
-		targetPortId: targetInputPortId,
+		targetPortId,
 		points: _.cloneDeep(points)
 	};
 

@@ -1,11 +1,11 @@
-import { WorkflowPort, Operation } from '@/types/workflow';
+import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { CalibrationParams } from '@/types/Types';
 import { calibrationParamExample } from '@/temp/calibrationExample';
 import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 
 export const CalibrationOperation: Operation = {
-	name: 'CalibrationOperation',
+	name: WorkflowOperationTypes.CALIBRATION,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
 	inputs: [{ type: 'modelConfig' }, { type: 'dataset' }],
@@ -18,7 +18,7 @@ export const CalibrationOperation: Operation = {
 		// TODO Add more safety checks.
 		if (v.length) {
 			// TODO: The mapping is not 0 -> modelId as i am assuming here for testing
-			const modelId = v[0].value;
+			const modelId = v[0].value?.[0];
 			// let datasetId = v[1].value;
 			// let configuration = v[2].value; //TODO Not sure if this is a required input
 
