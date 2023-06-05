@@ -280,7 +280,6 @@ public class ModelResource {
 		}
 		petriNetModel.setTransitions(petriNetTransitions);
 		petriNetModel.setStates(petriNetStates);
-//		System.out.println(petriNetModel);
 
 		return Response
 			.status(Response.Status.OK)
