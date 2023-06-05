@@ -55,7 +55,11 @@
 						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
-					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
+					<tera-simulate-node
+						v-else-if="node.operationType === 'SimulateOperation'"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
