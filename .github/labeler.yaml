@@ -1,0 +1,6 @@
+feature:
+  - '/^\[?[Ff][Ee][Aa][Tt]\]?/'
+task:
+  - '/^\[?[Tt][Aa][Ss][Kk]\]?/'
+bug:
+  - '/^\[?[Bb][Uu][Gg]\]?/'
