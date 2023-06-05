@@ -302,10 +302,9 @@ import ColumnGroup from 'primevue/columngroup';
 import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ITypedModel, Model } from '@/types/Model';
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
+import { ITypedModel } from '@/types/Model';
+import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { ResultType } from '@/types/common';
-import { Document, Dataset, ProvenanceType } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { FilterMatchMode } from 'primevue/api';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
@@ -373,7 +372,7 @@ const router = useRouter();
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const model = ref<ITypedModel<PetriNet> | null>(null);
-const amr = ref<AskemModelRepresentationType | null>(null);
+const amr = ref<Model | null>(null);
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);

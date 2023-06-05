@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class StatementValue {
 
 	@JsonAlias("dkg_grounding")
 	@JsonSetter("dkg_grounding")
+	@TSOptional
 	private DKGConcept dkgGrounding;
 }
 
