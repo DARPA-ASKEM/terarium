@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.SimulationPlan;
 import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRun;
 import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRunDescription;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
@@ -24,31 +23,6 @@ public class SimulationResource {
 	@RestClient
 	SimulationProxy proxy;
 
-	@GET
-	@Path("/plans")
-	public Response getSimulationPlans(
-		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page
-	) {
-		return proxy.getSimulationPlans(pageSize, page);
-	}
-
-	@POST
-	@Path("/plans")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createSimulationPlan(
-		final SimulationPlan plan
-	) {
-		return proxy.createSimulationPlan(plan);
-	}
-
-	@GET
-	@Path("/plans/{id}")
-	public Response getSimulationPlan(
-		@PathParam("id") final String id
-	) {
-		return proxy.getSimulationPlan(id);
-	}
 
 	@GET
 	@Path("/runs/descriptions")
