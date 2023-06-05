@@ -3,7 +3,6 @@ import { AxiosError } from 'axios';
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import _ from 'lodash';
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 
 export interface PetriNet {
 	S: State[]; // List of state names
@@ -301,119 +300,6 @@ export const parsePetriNet2IGraph = (
 			}
 		});
 	}
-	return result;
-};
-
-// Used to traffic control AMRS.
-// Totally useless right now as there is only 1 type of AMR (petrinet)
-export const parseAMR2IGraph = (
-	amr: AskemModelRepresentationType,
-	config: PetriSizeConfig = defaultSizeConfig
-) => {
-	if (amr.schema.toLowerCase().includes('petri')) return parseAMRPetriNet2IGraph(amr, config);
-
-	logger.error(`Schema not recognized${amr}`);
-	const emptyGraph: IGraph<NodeData, EdgeData> = {
-		width: 500,
-		height: 500,
-		nodes: [],
-		edges: []
-	};
-	return emptyGraph;
-};
-
-// Convert an AMR Petrinet -> IGraph
-export const parseAMRPetriNet2IGraph = (
-	amr: AskemModelRepresentationType,
-	config: PetriSizeConfig = defaultSizeConfig
-) => {
-	const result: IGraph<NodeData, EdgeData> = {
-		width: 500,
-		height: 500,
-		nodes: [],
-		edges: []
-	};
-
-	// add each nodes in S
-	for (let i = 0; i < amr.model.states.length; i++) {
-		const aNode = amr.model.states[i];
-		result.nodes.push({
-			id: aNode.id,
-			label: aNode.name,
-			x: 0,
-			y: 0,
-			height: config.S.height,
-			width: config.S.width,
-			data: { type: NodeType.State, uid: aNode.grounding.identifiers.ido },
-			nodes: []
-		});
-	}
-
-	// Add each node found in T
-	for (let i = 0; i < amr.model.transitions.length; i++) {
-		const aTransition = amr.model.transitions[i];
-		// Add the node for this transition
-		result.nodes.push({
-			id: aTransition.id,
-			label: aTransition.properties.name,
-			x: 0,
-			y: 0,
-			height: config.T.height,
-			width: config.T.width,
-			data: { type: NodeType.Transition, uid: undefined },
-			nodes: []
-		});
-
-		// Add input edge(s) for this transition:
-		for (let j = 0; j < aTransition.input.length; j++) {
-			const sourceId = aTransition.input[j];
-			const targetId = aTransition.id;
-
-			// Collapse hyper edges
-			const existingEdge = result.edges.find(
-				(edge) => edge.source === sourceId && edge.target === targetId
-			);
-
-			if (existingEdge && existingEdge.data) {
-				existingEdge.data.numEdges++;
-				continue;
-			}
-
-			result.edges.push({
-				source: sourceId,
-				target: targetId,
-				points: [],
-				data: {
-					numEdges: 1
-				}
-			});
-		}
-		// Add output edge(s) for this transition:
-		for (let j = 0; j < aTransition.output.length; j++) {
-			const sourceId = aTransition.id;
-			const targetId = aTransition.output[j];
-
-			// Collapse hyper edges
-			const existingEdge = result.edges.find(
-				(edge) => edge.source === sourceId && edge.target === targetId
-			);
-
-			if (existingEdge && existingEdge.data) {
-				existingEdge.data.numEdges++;
-				continue;
-			}
-
-			result.edges.push({
-				source: sourceId,
-				target: targetId,
-				points: [],
-				data: {
-					numEdges: 1
-				}
-			});
-		}
-	} // end T
-
 	return result;
 };
 
