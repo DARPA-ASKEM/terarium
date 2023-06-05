@@ -12,7 +12,6 @@ public class Paper {
 	private String id;
 
 	@JsonAlias("file_directory")
-	@JsonSetter("file_directory")
 	private String fileDirectory;
 
 	private String doi;

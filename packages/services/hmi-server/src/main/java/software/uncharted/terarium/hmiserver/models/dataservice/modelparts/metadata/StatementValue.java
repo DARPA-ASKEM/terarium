@@ -16,7 +16,6 @@ public class StatementValue {
 	private String type;
 
 	@JsonAlias("dkg_grounding")
-	@JsonSetter("dkg_grounding")
 	@TSOptional
 	private DKGConcept dkgGrounding;
 }

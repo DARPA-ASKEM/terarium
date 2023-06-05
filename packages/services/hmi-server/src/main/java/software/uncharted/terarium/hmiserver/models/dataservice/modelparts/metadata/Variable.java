@@ -16,7 +16,6 @@ public class Variable {
 	private List<VariableMetadata> metadata;
 
 	@JsonAlias("dkg_groundings")
-	@JsonSetter("dkg_groundings")
 	private List<DKGConcept> dkgGroundings;
 
 	private List<DataColumn> column;

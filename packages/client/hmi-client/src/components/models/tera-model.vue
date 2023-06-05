@@ -597,8 +597,6 @@ watch(
 			model.value = await getModel(props.assetId);
 			if (model.value && model.value.name === 'Bucky') {
 				amr.value = bucky;
-				console.log('Test case hit');
-				console.log(amr.value);
 			}
 			fetchRelatedTerariumArtifacts();
 		} else {

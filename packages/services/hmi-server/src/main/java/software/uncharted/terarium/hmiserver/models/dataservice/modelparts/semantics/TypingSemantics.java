@@ -14,6 +14,5 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 public class TypingSemantics {
 
 	@JsonAlias("type_system")
-	@JsonSetter("type_system")
 	private TypeSystem typeSystem;
 }

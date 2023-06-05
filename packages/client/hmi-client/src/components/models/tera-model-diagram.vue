@@ -111,7 +111,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
+import { Model } from '@/types/Types';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -126,7 +126,7 @@ const emit = defineEmits([
 const props = defineProps<{
 	model: ITypedModel<PetriNet> | null;
 	isEditable: boolean;
-	amr?: AskemModelRepresentationType | null;
+	amr?: Model | null;
 }>();
 
 const menu = ref();
@@ -329,10 +329,9 @@ watch(
 		if (props.model === null || graphElement.value === null) return;
 		let graphData: IGraph<NodeData, EdgeData>;
 		if (props.amr) {
-			console.log('Proof of parsing');
 			graphData = parseAMR2IGraph(props.amr);
-			console.log(graphData);
 		} else {
+			// TODO: Remove this when we only use AMR
 			// Convert petri net into a graph
 			graphData = parsePetriNet2IGraph(props.model.content, {
 				S: { width: 60, height: 60 },

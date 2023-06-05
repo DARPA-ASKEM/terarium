@@ -12,7 +12,6 @@ public class ModelExpression {
 	private String expression;
 
 	@JsonAlias("expression_mathml")
-	@JsonSetter("expression_mathml")
 	private String expressionMathml;
 }
 
