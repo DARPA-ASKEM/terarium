@@ -1,6 +1,6 @@
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
+import { Model } from '@/types/Types';
 
-export const sir: AskemModelRepresentationType = {
+export const sir: Model = {
 	name: 'SIR Model',
 	schema:
 		'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
