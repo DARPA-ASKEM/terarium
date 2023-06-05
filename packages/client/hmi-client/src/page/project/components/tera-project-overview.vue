@@ -477,4 +477,8 @@ ul {
 .subheader {
 	margin-bottom: 1rem;
 }
+
+.modal:deep(main) {
+	width: 50rem;
+}
 </style>
