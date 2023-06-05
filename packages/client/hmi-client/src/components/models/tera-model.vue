@@ -141,6 +141,7 @@
 				<AccordionTab header="Model diagram">
 					<tera-model-diagram
 						:model="model"
+						:amr="amr"
 						:is-editable="props.isEditable"
 						@update-model-content="updateModelContent"
 					/>
@@ -471,6 +472,7 @@ const onCellEditComplete = (event) => {
 };
 
 function updateModelContent(rendererGraph) {
+	// Tom todo: update amr content based off of below helper
 	if (model.value) model.value.content = parseIGraph2PetriNet(rendererGraph);
 }
 
@@ -596,6 +598,8 @@ watch(
 			model.value = await getModel(props.assetId);
 			if (model.value && model.value.name === 'Bucky') {
 				amr.value = bucky;
+				console.log('Test case hit');
+				console.log(amr.value);
 			}
 			fetchRelatedTerariumArtifacts();
 		} else {

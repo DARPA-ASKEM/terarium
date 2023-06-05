@@ -5,22 +5,35 @@ export type AskemModelRepresentationType = {
 	model_version: string;
 	model: Model;
 	metadata: Metadata;
+	semantics: Semantics;
+};
+
+export type Semantics = {
+	// TOM TODO: Fill this in
 };
 
 export interface Metadata {
+	processed_at?: number;
+	processed_by?: string;
 	variable_statements: VariableStatement[];
 }
 
 export interface VariableStatement {
 	id: string;
 	variable: Variable;
-	value: VariableValue;
+	value?: VariableValue; // Tom TODO: Does this still exist?
 	metadata: VariableMetaData[];
+	provenance?: VariableProvenance;
 }
 
 export interface VariableMetaData {
 	type: string;
 	value: string;
+}
+
+export interface VariableProvenance {
+	method?: string;
+	description?: string;
 }
 
 export interface VariableValue {
@@ -48,7 +61,7 @@ export interface VariableColumn {
 export interface Dataset {
 	id: string;
 	name: string;
-	metadata: null;
+	metadata: string | null;
 }
 
 export interface DkgGrounding {
@@ -59,8 +72,8 @@ export interface DkgGrounding {
 
 export interface ReferencedPaper {
 	id: string;
-	name: string;
-	md5: string;
+	name?: string;
+	md5?: string;
 	file_directory: string;
 	doi: string;
 }
@@ -68,7 +81,6 @@ export interface ReferencedPaper {
 export interface Model {
 	states: ModelStates[];
 	transitions: ModelTransition[];
-	parameters: ModelParameters[];
 }
 
 export interface ModelParameters {
@@ -83,8 +95,12 @@ export interface ModelStates {
 }
 
 export interface ModelGrounding {
-	identifiers: {};
-	context: {};
+	identifiers: ModelIdentifiers;
+	context?: {}; // TOM TODO: Check if this has been removed?
+}
+
+export interface ModelIdentifiers {
+	ido?: string;
 }
 
 export interface ModelTransition {
@@ -96,7 +112,7 @@ export interface ModelTransition {
 
 export interface TransitionProperties {
 	name: string;
-	rate: TransitionRate;
+	rate?: TransitionRate;
 }
 
 export interface TransitionRate {

@@ -98,7 +98,8 @@ import {
 	EdgeData,
 	mathmlToPetri,
 	petriToLatex,
-	NodeType
+	NodeType,
+	parseAMR2IGraph
 } from '@/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
@@ -110,6 +111,7 @@ import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
+import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -124,6 +126,7 @@ const emit = defineEmits([
 const props = defineProps<{
 	model: ITypedModel<PetriNet> | null;
 	isEditable: boolean;
+	amr?: AskemModelRepresentationType | null;
 }>();
 
 const menu = ref();
@@ -324,11 +327,18 @@ watch(
 	[props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		// Convert petri net into a graph
-		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(props.model.content, {
-			S: { width: 60, height: 60 },
-			T: { width: 40, height: 40 }
-		});
+		let graphData: IGraph<NodeData, EdgeData>;
+		if (props.amr) {
+			console.log('Proof of parsing');
+			graphData = parseAMR2IGraph(props.amr);
+			console.log(graphData);
+		} else {
+			// Convert petri net into a graph
+			graphData = parsePetriNet2IGraph(props.model.content, {
+				S: { width: 60, height: 60 },
+				T: { width: 40, height: 40 }
+			});
+		}
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
