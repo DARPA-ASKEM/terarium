@@ -50,12 +50,12 @@
 				<Column footer="Select variables and parameters to calibrate" />
 				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i">
 					<template #footer>
-						<Checkbox v-model="selectedStates" :inputId="i.toString()" :value="name" />
+						<Checkbox v-model="selectedInitials" :inputId="i.toString()" :value="name" />
 					</template>
 				</Column>
 				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i">
 					<template #footer>
-						<Checkbox v-model="selectedTransitions" :inputId="i.toString()" :value="name" />
+						<Checkbox v-model="selectedParameters" :inputId="i.toString()" :value="name" />
 					</template>
 				</Column>
 			</Row>
@@ -135,7 +135,7 @@ const props = defineProps<{
 	model: Model;
 	amr?: AskemModelRepresentationType | null;
 	isEditable: boolean;
-	modelConfig?: ModelConfig;
+	modelConfigNodeInput?: ModelConfig;
 	calibrationConfig?: boolean;
 }>();
 
@@ -150,8 +150,8 @@ const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
 // Selected columns
-const selectedStates = ref<string[]>([]);
-const selectedTransitions = ref<string[]>([]);
+const selectedInitials = ref<string[]>([]);
+const selectedParameters = ref<string[]>([]);
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
@@ -163,11 +163,11 @@ const modelConfiguration = computed(() =>
 	}))
 );
 
-const selectedStatesAndTransitions = computed(() => [
-	...selectedStates.value,
-	...selectedTransitions.value
+const selectedModelVariables = computed(() => [
+	...selectedInitials.value,
+	...selectedParameters.value
 ]);
-defineExpose({ selectedStatesAndTransitions });
+defineExpose({ selectedModelVariables });
 
 function addModelConfiguration() {
 	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
@@ -232,6 +232,11 @@ function generateModelConfigValues() {
 			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
 		}
 	}
+	// Copy node input in here if that's just what we want to show
+	else if (props.modelConfigNodeInput) {
+		initialValues.value[0] = props.modelConfigNodeInput.initialValues as any;
+		parameterValues.value[0] = props.modelConfigNodeInput.parameterValues as any;
+	}
 	// Default values petrinet format
 	else if (props.model) {
 		props.model?.content.S.forEach((s) => {
@@ -253,8 +258,8 @@ function generateModelConfigValues() {
 
 	// By default check all boxes for calibration
 	if (props.calibrationConfig) {
-		selectedStates.value = Object.keys(initialValues.value[0]);
-		selectedTransitions.value = Object.keys(parameterValues.value[0]);
+		selectedInitials.value = Object.keys(initialValues.value[0]);
+		selectedParameters.value = Object.keys(parameterValues.value[0]);
 	}
 }
 

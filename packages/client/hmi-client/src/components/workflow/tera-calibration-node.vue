@@ -1,10 +1,4 @@
 <template>
-	<Dropdown
-		placeholder="Timestep Column Name"
-		class="p-button dropdown-button"
-		:options="datasetColumnNames"
-		v-model="timestepColumnName"
-	/>
 	<table v-if="featureMap">
 		<tr>
 			<th>Dataset Column Name</th>
@@ -55,7 +49,6 @@ const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfi
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
 
 const runId = ref('');
-const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
@@ -81,10 +74,11 @@ const startCalibration = async () => {
 				model: shimPetriModel(modelConfig.value.model),
 				initials: modelConfig.value.initialValues,
 				params: modelConfig.value.parameterValues,
-				timesteps_column: timestepColumnName.value,
+				timesteps_column: 'timestamp',
 				feature_mappings: featureObject,
 				dataset: datasetValue.value
 			};
+			console.log('hufihuifhui');
 			console.log(calibrationParam);
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
@@ -144,6 +138,7 @@ watch(
 :deep(.p-dropdown .p-dropdown-label.p-inputtext) {
 	color: white;
 }
+
 :deep(.p-inputtext) {
 	color: white;
 }

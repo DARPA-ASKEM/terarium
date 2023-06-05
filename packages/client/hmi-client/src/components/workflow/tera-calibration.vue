@@ -24,7 +24,13 @@
 			</tera-asset-nav>
 		</template>
 		<template #edit-buttons>
-			<Button icon="pi pi-play" label="Run" class="p-button-sm" :disabled="isRunDisabled" />
+			<Button
+				icon="pi pi-play"
+				label="Run"
+				class="p-button-sm"
+				:disabled="disableRunButton"
+				@click="calibrate"
+			/>
 		</template>
 		<Accordion
 			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
@@ -40,6 +46,7 @@
 					ref="modelConfigurationRef"
 					:model="modelConfig.model"
 					:is-editable="false"
+					:model-config-node-input="modelConfig"
 					calibration-config
 				/>
 			</AccordionTab>
@@ -53,6 +60,12 @@
 						Select target variables from the model and the corresponding data column you want to
 						match them to.
 					</div>
+					<Dropdown
+						class="w-full"
+						placeholder="Timestep column"
+						v-model="timestepColumn"
+						:options="datasetVariables"
+					/>
 					<DataTable :value="mapping" v-model:expandedRows="expandedRows">
 						<Column expander style="width: 5rem" />
 						<Column field="modelVariable" header="Model variable">
@@ -98,13 +111,12 @@
 		<div>Run ID: {{ runId }}</div>
 		<Button @click="getCalibrationStatus"> Get Run Status </Button>
 		<Button @click="getCalibrationResults"> Get Run Results </Button>
-		<Button @click="startCalibration">Start Calibration Job</Button>
+		<Button @click="calibrate">Start Calibration Job</Button>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
-import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
@@ -141,32 +153,36 @@ const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
+const timestepColumn = ref('');
+
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
 const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0].value?.[0]);
-const modelVariables = computed(() =>
-	modelConfig.value?.model.content.S.map((state) => state.sname)
-);
-const featureMap = computed(() => modelVariables.value.map((stateName) => ['', stateName]));
 
-const isRunDisabled = computed(
-	() =>
-		modelConfigurationRef.value &&
-		isEmpty(modelConfigurationRef.value.selectedStatesAndTransitions) &&
-		mapping.value?.[0].modelVariable.label &&
-		mapping.value?.[0].datasetVariable.label
+// Model variables checked in the model configuration will be options in the mapping dropdown
+const modelVariables = computed(() => {
+	if (modelConfigurationRef.value) {
+		const filteredVariables = modelConfig.value?.model.content.S.filter((state) =>
+			modelConfigurationRef.value.selectedModelVariables.includes(state.sname)
+		);
+
+		return filteredVariables.map((state) => state.sname);
+	}
+	return modelConfig.value?.model.content.S.map((state) => state.sname);
+});
+
+const disableRunButton = computed(
+	() => !mapping.value?.[0].modelVariable.label || !mapping.value?.[0].datasetVariable.label
 );
 
-const mapping = ref([
+const mapping = ref<any[]>([
 	{
 		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	}
 ]);
 
-const timestepColumnName = '';
-
-const startCalibration = async () => {
+const calibrate = async () => {
 	// Make calibration job.
 	// FIXME: current need to strip out metadata, should do serverside
 
@@ -182,28 +198,29 @@ const startCalibration = async () => {
 			O
 		};
 
-		if (featureMap.value) {
-			const featureObject: { [index: string]: string } = {};
-			// Go from 2D array to a index: value like they want
-			// was just easier to work with 2D array for user input
-			for (let i = 0; i < featureMap.value.length; i++) {
-				featureObject[featureMap.value[i][0]] = featureMap.value[i][1];
+		const featureMappings: { [index: string]: string } = {};
+		// Go from 2D array to a index: value like they want
+		// was just easier to work with 2D array for user input
+		for (let i = 0; i < mapping.value.length; i++) {
+			if (mapping.value[i].modelVariable.label && mapping.value[i].datasetVariable.label) {
+				featureMappings[mapping.value[i].datasetVariable.label] =
+					mapping.value[i].modelVariable.label;
 			}
-
-			const calibrationParam: CalibrationParams = {
-				model: JSON.stringify(cleanedModel),
-				initials: modelConfig.value.initialValues,
-				params: modelConfig.value.parameterValues,
-				timesteps_column: timestepColumnName,
-				feature_mappings: featureObject,
-				dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
-			};
-			const results = await makeCalibrateJob(calibrationParam);
-			runId.value = results.id;
-
-			console.table(calibrationParam);
-			console.log(results);
 		}
+
+		const calibrationParam: CalibrationParams = {
+			model: JSON.stringify(cleanedModel),
+			initials: modelConfig.value.initialValues,
+			params: modelConfig.value.parameterValues,
+			timesteps_column: timestepColumn.value,
+			feature_mappings: featureMappings,
+			dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
+		};
+		const results = await makeCalibrateJob(calibrationParam);
+		runId.value = results.id;
+
+		console.log(calibrationParam, modelConfig);
+		console.log(results);
 	}
 };
 
