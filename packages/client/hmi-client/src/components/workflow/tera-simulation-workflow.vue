@@ -1,6 +1,5 @@
 <template>
 	<tera-infinite-canvas
-		debug-mode
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -171,7 +170,7 @@ const newEdge = ref<WorkflowEdge | undefined>();
 const newAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 
-const wf = ref<Workflow>(workflowService.create());
+const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
 
 const testOperation: Operation = {
