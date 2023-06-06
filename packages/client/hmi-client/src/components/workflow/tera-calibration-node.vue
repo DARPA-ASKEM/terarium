@@ -1,8 +1,13 @@
 <template>
-	<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
-		<AccordionTab header="Mapping"> </AccordionTab>
-		<AccordionTab header="Loss"> </AccordionTab>
-		<AccordionTab header="Parameters"> </AccordionTab>
+	<Accordion :multiple="true" :active-index="[0, 3]">
+		<AccordionTab header="Mapping">
+			<DataTable class="p-datatable-xsm" :value="openedWorkflowNodeStore.readOnlyMapping">
+				<Column field="modelVariable" header="Model" />
+				<Column field="datasetVariable" header="Dataset" />
+			</DataTable>
+		</AccordionTab>
+		<AccordionTab header="Loss"></AccordionTab>
+		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables">
 			<tera-simulate-chart
 				v-for="index in openedWorkflowNodeStore.calibrateNumCharts"
@@ -18,10 +23,11 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
 import { CsvAsset } from '@/types/Types';
-import { ModelConfig } from '@/types/ModelConfig';
+// import { ModelConfig } from '@/types/ModelConfig';
 import { downloadRawFile } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
-// import DataTable from 'primevue/datatable';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
@@ -31,17 +37,13 @@ import TeraSimulateChart from './tera-simulate-chart.vue';
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
+// const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 // const runId = ref('');
 const datasetColumnNames = ref<string[]>();
-const modelColumnNames = computed(() =>
-	modelConfig.value?.model.content.S.map((state) => state.sname)
-);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
-const featureMap = ref();
 
 // const emit = defineEmits(['append-output-port']);
 // 			emit('append-output-port', {
@@ -49,16 +51,6 @@ const featureMap = ref();
 // 				label: 'Calibration Job ID',
 // 				value: runId.value
 // 			});
-
-watch(
-	() => modelConfig.value,
-	async () => {
-		if (modelConfig.value) {
-			// initialize featureMap
-			featureMap.value = modelColumnNames.value.map((stateName) => ['', stateName]);
-		}
-	}
-);
 
 watch(
 	() => datasetId.value, // When dataset ID changes, update datasetColumnNames

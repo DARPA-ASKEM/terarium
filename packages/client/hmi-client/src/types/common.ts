@@ -15,7 +15,8 @@ export type Annotation = {
 	section: string;
 };
 
-// temp
+// TODO: Wherever this is used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
+// But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
 export interface StringValueMap {
 	[key: string]: string;
 }

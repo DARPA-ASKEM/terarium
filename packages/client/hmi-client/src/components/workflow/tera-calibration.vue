@@ -239,6 +239,13 @@ const mapping = ref<any[]>([
 	}
 ]);
 
+const mappingSimplified = computed(() =>
+	mapping.value.map((m) => ({
+		modelVariable: m.modelVariable.label,
+		datasetVariable: m.datasetVariable.label
+	}))
+);
+
 const calibrate = async () => {
 	// Make calibration job.
 	if (modelConfig.value && csvAsset.value) {
@@ -315,7 +322,8 @@ const calibrate = async () => {
 			csvAsset.value,
 			result as any,
 			indexOfTimestep,
-			featureMappings
+			featureMappings,
+			mappingSimplified.value
 		);
 	}
 };
@@ -325,8 +333,6 @@ function addMapping() {
 		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	});
-
-	console.log(mapping.value);
 }
 
 const getCalibrationStatus = async () => {

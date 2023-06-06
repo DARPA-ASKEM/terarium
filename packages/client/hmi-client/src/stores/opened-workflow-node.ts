@@ -26,7 +26,8 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		// calibrate node
 		calibrateNumCharts: 1,
 		calibrateRunIdList: [] as number[],
-		calibrateRunResults: {}
+		calibrateRunResults: {},
+		readOnlyMapping: null as any[] | null
 	}),
 	actions: {
 		// model node
@@ -61,8 +62,10 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 			datasetData: CsvAsset,
 			simulateData: { [stateVarName: string]: number }[],
 			indexOfTimestep: number,
-			featureMapping: { [datasetFeature: string]: string }
+			featureMapping: { [datasetFeature: string]: string },
+			readOnlyMapping: any[] | null
 		) {
+			this.readOnlyMapping = readOnlyMapping;
 			const datasetFeatures = Object.keys(featureMapping);
 			const modelFeatures = Object.values(featureMapping);
 

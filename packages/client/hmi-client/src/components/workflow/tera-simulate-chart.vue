@@ -8,14 +8,16 @@
 			placeholder="Select a State Variable"
 		>
 			<template v-slot:value>
-				<span
-					class="selected-label-item"
-					v-for="variable in openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable"
-					:key="variable"
-					:style="{ background: getVariableColor(variable) }"
+				<template
+					v-for="(variable, index) in openedWorkflowNodeStore.chartConfigs[props.chartIdx]
+						.selectedVariable"
+					:key="index"
 				>
-					{{ variable }}
-				</span>
+					<template v-if="index > 0">,&nbsp;</template>
+					<span class="selected-label-item" :style="{ color: getVariableColor(variable) }">{{
+						variable
+					}}</span>
+				</template>
 			</template>
 		</MultiSelect>
 		<MultiSelect v-else placeholder="No Data" :disabled="true" />
@@ -118,13 +120,22 @@ const watchRunResults = async (runResults) => {
 		return;
 	}
 
+	// TODO: pass mappings here for easy variable list genreation
+
 	// assume that the state variables for all runs will be identical
 	// take first run and parse it for state variables
 	if (!stateVariablesList.length) {
 		stateVariablesList = Object.keys(props.runResults[Object.keys(props.runResults)[0]][0]).filter(
-			(key) => key !== 'timestep'
+			(key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date'
 		);
 	}
+
+	// grab variable columns here?
+	// console.log(stateVariablesList)
+	// console.log(props.runResults)
+	// console.log(Object.keys(props.runResults[Object.keys(props.runResults)[0]][0]).filter(
+	// 	(key) => (key !== 'timestep' && key !== 'timestamp' && key !== 'date')
+	// ))
 
 	if (!openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
 		openedWorkflowNodeStore.setChartConfig(props.chartIdx, {
@@ -177,10 +188,7 @@ watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx], renderGraph, {
 }
 
 .selected-label-item {
-	padding: 0em 0.5em;
-	margin: 0em 0.25em;
-	border-radius: 2px;
-	text-shadow: 0 0 0.15em white, 0 0 0.15em white, 0 0 0.15em white, 0 0 0.15em white;
+	font-weight: bold;
 }
 
 .p-chart {
