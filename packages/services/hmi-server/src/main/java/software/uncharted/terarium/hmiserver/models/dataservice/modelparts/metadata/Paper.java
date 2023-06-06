@@ -2,8 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @Data
@@ -11,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 public class Paper {
 	private String id;
 
-	@JsonAlias("file_directory")
+	@JsonProperty("file_directory")
 	private String fileDirectory;
 
 	private String doi;

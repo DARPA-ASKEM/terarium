@@ -110,9 +110,9 @@ export interface ModelSemantics {
 }
 
 export interface ModelMetadata {
-    processedAt: number;
-    processedBy: string;
-    variableStatements: VariableStatement[];
+    processed_at: number;
+    processed_by: string;
+    variable_statements: VariableStatement[];
 }
 
 export interface ModelContent {
@@ -247,16 +247,16 @@ export interface Variable {
     id: string;
     name: string;
     metadata: VariableMetadata[];
-    dkgGroundings: DKGConcept[];
     column: DataColumn[];
     paper: Paper;
     equations: Equation[];
+    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
     value: string;
     type: string;
-    dkgGrounding?: DKGConcept;
+    dkg_grounding?: DKGConcept;
 }
 
 export interface VariableStatementMetadata {
@@ -307,12 +307,6 @@ export interface VariableMetadata {
     value: string;
 }
 
-export interface DKGConcept {
-    id: string;
-    name: string;
-    score: number;
-}
-
 export interface DataColumn {
     id: string;
     name: string;
@@ -321,14 +315,20 @@ export interface DataColumn {
 
 export interface Paper {
     id: string;
-    fileDirectory: string;
     doi: string;
+    file_directory: string;
 }
 
 export interface Equation {
     id: string;
     text: string;
     image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
 }
 
 export interface MetadataDataset {

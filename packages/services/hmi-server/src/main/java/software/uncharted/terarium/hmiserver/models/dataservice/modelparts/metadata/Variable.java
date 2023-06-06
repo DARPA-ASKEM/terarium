@@ -2,8 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.meta
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 import java.util.List;
@@ -15,7 +14,7 @@ public class Variable {
 	private String name;
 	private List<VariableMetadata> metadata;
 
-	@JsonAlias("dkg_groundings")
+	@JsonProperty("dkg_groundings")
 	private List<DKGConcept> dkgGroundings;
 
 	private List<DataColumn> column;
