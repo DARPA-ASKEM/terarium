@@ -51,9 +51,9 @@ let currentTransform: d3.ZoomTransform;
 
 const width = ref(0);
 const height = ref(0);
-const dashArrayYOffset = ref(0);
-const dashArrayGapSize = ref(0);
-const dashArrayStrokeWidth = ref(0);
+const dotPatternXOffset = ref(0);
+const dotPatternYOffset = ref(0);
+const dotPatternScale = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
@@ -66,9 +66,16 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
 		.style('transform-origin', '0 0');
 
-	dashArrayYOffset.value = e.transform.y * -1;
-	dashArrayGapSize.value = d3.scaleLog().domain([0.1, 10]).range([10, 40])(e.transform.k);
-	dashArrayStrokeWidth.value = d3.scaleLog().domain([0.1, 10]).range([2, 6])(e.transform.k);
+	dotPatternYOffset.value = e.transform.y;
+	dotPatternXOffset.value = e.transform.x;
+	dotPatternScale.value = d3.scaleLog().domain([0.1, 10]).range([0.5, 5])(e.transform.k);
+
+	document
+		.querySelector('#dotPattern')
+		?.setAttribute(
+			'patternTransform',
+			`translate(${dotPatternXOffset.value}, ${dotPatternYOffset.value}) scale(${dotPatternScale.value})`
+		);
 
 	if (props.debugMode) {
 		gX.call(xAxis.scale(e.transform.rescaleX(x)));
@@ -80,6 +87,12 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 
 function handleZoomEnd() {
 	emit('save-transform', { x: currentTransform.x, y: currentTransform.y, k: currentTransform.k });
+	document
+		.querySelector('#dotPattern')
+		?.setAttribute(
+			'patternTransform',
+			`translate(${dotPatternXOffset.value}, ${dotPatternYOffset.value}) scale(${dotPatternScale.value})`
+		);
 }
 
 function updateDimensions() {
@@ -142,6 +155,29 @@ onMounted(() => {
 	updateDimensions();
 	if (canvasRef.value) resizeObserver.observe(canvasRef.value);
 
+	// Draw dot pattern in background
+	svg
+		.append('defs')
+		.append('pattern')
+		.attr('id', 'dotPattern')
+		.attr('width', 8)
+		.attr('height', 8)
+		.attr('patternUnits', 'userSpaceOnUse')
+		.append('circle')
+		.attr('fill', 'var(--surface-border-light)')
+		.attr('cx', 8)
+		.attr('cy', 8)
+		.attr('r', 1);
+
+	svg
+		.append('rect')
+		.attr('x', 0)
+		.attr('y', 0)
+		.attr('width', '100%')
+		.attr('height', '100%')
+		.attr('pointer-events', 'none')
+		.attr('fill', 'url(#dotPattern)');
+
 	// Assign debug grid
 	if (props.debugMode) {
 		gX = svg.append('g').attr('class', 'axis axis--x').call(xAxis);
@@ -176,19 +212,16 @@ main > * {
 
 .background-layer:deep(.tick line) {
 	color: var(--surface-border-light);
-	stroke-dasharray: 1px v-bind(dashArrayGapSize);
-	stroke-dashoffset: v-bind(dashArrayYOffset);
-	stroke-width: v-bind(dashArrayStrokeWidth);
+	stroke-dasharray: 1px v-bind(dotPatternScale);
+	stroke-dashoffset: v-bind(dotPatternYOffset);
+	stroke-width: 1px;
 	stroke-linecap: round;
 	mix-blend-mode: darken;
 }
 
 .background-layer:deep(.axis.axis--y),
 .background-layer:deep(.tick text) {
-	display: none;
-}
-.background-layer:deep(.axis.axis--x path) {
-	display: contents;
+	display: block;
 }
 
 svg:active {

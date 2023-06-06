@@ -1,6 +1,6 @@
 <template>
+	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
-		debug-mode
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
