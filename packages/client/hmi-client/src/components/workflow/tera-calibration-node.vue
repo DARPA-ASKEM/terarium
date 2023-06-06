@@ -1,45 +1,21 @@
 <template>
-	<table v-if="featureMap">
-		<tr>
-			<th>Dataset Column Name</th>
-			<th>Model Column Name</th>
-		</tr>
-		<tr v-for="(content, index) in featureMap" :key="index">
-			<Dropdown
-				placeholder="Dataset Column Name"
-				class="p-button dropdown-button"
-				:options="datasetColumnNames"
-				v-model="featureMap[index][0]"
-			/>
-			<td>{{ content[1] }}</td>
-		</tr>
-	</table>
-	<Button @click="startCalibration">Start Calibration Job</Button>
-	<form>
-		<label for="calibrationStatus">
-			<input v-model="runId" type="text" placeholder="Run ID" />
-		</label>
-		<Button @click="getCalibrationStatus"> Get Run Status </Button>
-	</form>
-
-	<form>
-		<label for="calibrationResult">
-			<input v-model="runId" type="text" placeholder="Run ID" />
-		</label>
-		<Button @click="getCalibrationResults"> Get Run Results </Button>
-	</form>
+	<Accordion :multiple="true" :active-index="[0, 1, 2, 3]">
+		<AccordionTab header="Mapping"> </AccordionTab>
+		<AccordionTab header="Loss"> </AccordionTab>
+		<AccordionTab header="Parameters"> </AccordionTab>
+		<AccordionTab header="Variables"> </AccordionTab>
+	</Accordion>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
-import Button from 'primevue/button';
-import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
-import { CalibrationParams, CsvAsset } from '@/types/Types';
+import { CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
-import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
-import { shimPetriModel } from '@/services/models/petri-shim';
+// import DataTable from 'primevue/datatable';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
@@ -48,7 +24,7 @@ const props = defineProps<{
 const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
 
-const runId = ref('');
+// const runId = ref('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
@@ -57,53 +33,12 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
 const featureMap = ref();
 
-const emit = defineEmits(['append-output-port']);
-
-const startCalibration = async () => {
-	// Make calibration job.
-	if (modelConfig.value) {
-		if (featureMap.value) {
-			const featureObject: { [index: string]: string } = {};
-			// Go from 2D array to a index: value like they want
-			// was just easier to work with 2D array for user input
-			for (let i = 0; i < featureMap.value.length; i++) {
-				featureObject[featureMap.value[i][0]] = featureMap.value[i][1];
-			}
-
-			const calibrationParam: CalibrationParams = {
-				model: shimPetriModel(modelConfig.value.model),
-				initials: modelConfig.value.initialValues,
-				params: modelConfig.value.parameterValues,
-				timesteps_column: 'timestamp',
-				feature_mappings: featureObject,
-				dataset: datasetValue.value
-			};
-			console.log('hufihuifhui');
-			console.log(calibrationParam);
-			const results = await makeCalibrateJob(calibrationParam);
-			runId.value = results.id;
-			emit('append-output-port', {
-				type: 'string',
-				label: 'Calibration Job ID',
-				value: runId.value
-			});
-		}
-	}
-};
-
-const getCalibrationStatus = async () => {
-	console.log('Getting status of run');
-	const results = await getRunStatus(Number(runId.value));
-	console.log('Done');
-	console.log(results);
-};
-
-const getCalibrationResults = async () => {
-	console.log('Getting results of run');
-	const results = await getRunResult(Number(runId.value));
-	console.log('Done');
-	console.log(results);
-};
+// const emit = defineEmits(['append-output-port']);
+// 			emit('append-output-port', {
+// 				type: 'string',
+// 				label: 'Calibration Job ID',
+// 				value: runId.value
+// 			});
 
 watch(
 	() => modelConfig.value,

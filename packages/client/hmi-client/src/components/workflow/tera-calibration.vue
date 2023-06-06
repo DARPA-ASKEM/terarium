@@ -39,7 +39,6 @@
 		>
 			<AccordionTab :header="modelConfig.model.name">
 				<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
-				<!-- @update-model-content="updateModelContent" -->
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
 				<tera-model-configuration
@@ -51,24 +50,39 @@
 				/>
 			</AccordionTab>
 			<AccordionTab :header="datasetName">
-				<tera-dataset-datatable :raw-content="csvAsset ?? null" />
+				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
 			</AccordionTab>
-			<AccordionTab header="Train / Test ratio"> </AccordionTab>
+			<AccordionTab header="Train / Test ratio"></AccordionTab>
 			<AccordionTab header="Mapping">
 				<section class="mapping">
 					<div>
 						Select target variables from the model and the corresponding data column you want to
 						match them to.
 					</div>
-					<Dropdown
-						class="w-full"
-						placeholder="Timestep column"
-						v-model="timestepColumn"
-						:options="datasetVariables"
-					/>
 					<DataTable :value="mapping" v-model:expandedRows="expandedRows">
+						<ColumnGroup type="header">
+							<Row>
+								<Column />
+								<Column header="Model variable" />
+								<Column header="Dataset variable" />
+							</Row>
+							<Row>
+								<Column />
+								<Column header="Timestep" style="font-weight: normal" />
+								<Column>
+									<template #header>
+										<Dropdown
+											class="w-full"
+											placeholder="Timestep column"
+											v-model="timestepColumn"
+											:options="datasetVariables"
+										/>
+									</template>
+								</Column>
+							</Row>
+						</ColumnGroup>
 						<Column expander style="width: 5rem" />
-						<Column field="modelVariable" header="Model variable">
+						<Column field="modelVariable">
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
@@ -78,7 +92,7 @@
 								/>
 							</template>
 						</Column>
-						<Column field="datasetVariable" header="Dataset variable">
+						<Column field="datasetVariable">
 							<template #body="{ data, field }">
 								<Dropdown
 									class="w-full"
@@ -111,7 +125,6 @@
 		<div>Run ID: {{ runId }}</div>
 		<Button @click="getCalibrationStatus"> Get Run Status </Button>
 		<Button @click="getCalibrationResults"> Get Run Results </Button>
-		<Button @click="calibrate">Start Calibration Job</Button>
 	</tera-asset>
 </template>
 
@@ -119,15 +132,17 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { shimPetriModel } from '@/services/models/petri-shim';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import DataTable from 'primevue/datatable';
+import Row from 'primevue/row';
+import ColumnGroup from 'primevue/columngroup';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { downloadRawFile } from '@/services/dataset';
-import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
@@ -184,19 +199,8 @@ const mapping = ref<any[]>([
 
 const calibrate = async () => {
 	// Make calibration job.
-	// FIXME: current need to strip out metadata, should do serverside
-
 	if (modelConfig.value && csvAsset.value) {
 		console.log(modelConfig.value);
-
-		const { S, T, I, O } = modelConfig.value.model.content;
-		// Take out all the extra content in model.content
-		const cleanedModel: PetriNet = {
-			S: S.map((s) => ({ sname: s.sname })),
-			T: T.map((t) => ({ tname: t.tname })),
-			I,
-			O
-		};
 
 		const featureMappings: { [index: string]: string } = {};
 		// Go from 2D array to a index: value like they want
@@ -209,7 +213,7 @@ const calibrate = async () => {
 		}
 
 		const calibrationParam: CalibrationParams = {
-			model: JSON.stringify(cleanedModel),
+			model: shimPetriModel(modelConfig.value.model), // FIXME: current need to strip out metadata, should do serverside
 			initials: modelConfig.value.initialValues,
 			params: modelConfig.value.parameterValues,
 			timesteps_column: timestepColumn.value,
@@ -236,14 +240,12 @@ function addMapping() {
 const getCalibrationStatus = async () => {
 	console.log('Getting status of run');
 	const results = await getRunStatus(Number(runId.value));
-	console.log('Done');
 	console.log(results);
 };
 
 const getCalibrationResults = async () => {
 	console.log('Getting results of run');
 	const results = await getRunResult(Number(runId.value));
-	console.log('Done');
 	console.log(results);
 };
 

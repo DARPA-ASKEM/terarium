@@ -3,17 +3,12 @@ import { PetriNet } from '@/petrinet/petrinet-service';
 import { ITypedModel } from '@/types/Model';
 
 export const shimPetriModel = (model: ITypedModel<PetriNet>) => {
+	const { S, T, I, O } = model.content;
 	const cleanedModel: PetriNet = {
-		S: [],
-		T: [],
-		I: [],
-		O: []
+		S: S.map((s) => ({ sname: s.sname })),
+		T: T.map((t) => ({ tname: t.tname })),
+		I,
+		O
 	};
-	if (model) {
-		cleanedModel.S = model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = model.content.I;
-		cleanedModel.O = model.content.O;
-	}
 	return JSON.stringify(cleanedModel);
 };

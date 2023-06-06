@@ -1,7 +1,6 @@
 <template>
 	<template v-if="dataset">
 		<h5>{{ dataset.name }}</h5>
-
 		<!-- display the data preview ** THIS ISN'T WORKING -->
 		<section v-if="csvContent">
 			<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
@@ -90,6 +89,7 @@ span {
 .p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
 	padding: 0.5rem;
 }
+
 .p-button-sm.p-button-outlined:hover {
 	border: 1px solid var(--surface-border-hover);
 }
