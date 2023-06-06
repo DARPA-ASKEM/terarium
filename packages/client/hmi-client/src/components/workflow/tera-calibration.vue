@@ -122,6 +122,37 @@
 				</section>
 			</AccordionTab>
 		</Accordion>
+		<Accordion
+			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
+			:multiple="true"
+			:active-index="[0, 1]"
+		>
+			<AccordionTab header="Variables">
+				<tera-simulate-chart
+					v-for="index in openedWorkflowNodeStore.calibrateNumCharts"
+					:key="index"
+					:run-results="openedWorkflowNodeStore.calibrateRunResults"
+					:run-id-list="openedWorkflowNodeStore.calibrateRunIdList"
+					:chart-idx="index"
+				/>
+				<Button
+					class="add-chart"
+					text
+					:outlined="true"
+					@click="openedWorkflowNodeStore.calibrateNumCharts++"
+					label="Add Chart"
+					icon="pi pi-plus"
+				></Button>
+			</AccordionTab>
+			<AccordionTab header="Calibrated parameter values">
+				<tera-model-configuration
+					:model="modelConfig.model"
+					:is-editable="false"
+					:model-config-node-input="modelConfig"
+					calibration-config
+				/>
+			</AccordionTab>
+		</Accordion>
 		<div>Run ID: {{ runId }}</div>
 		<Button @click="getCalibrationStatus"> Get Run Status </Button>
 		<Button @click="getCalibrationResults"> Get Run Results </Button>
@@ -130,8 +161,15 @@
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
+import { csvParse } from 'd3';
 import Button from 'primevue/button';
-import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { Poller } from '@/api/api';
+import {
+	makeCalibrateJob,
+	makeForecast,
+	getRunStatus,
+	getRunResult
+} from '@/services/models/simulation-service';
 import { shimPetriModel } from '@/services/models/petri-shim';
 import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
@@ -149,6 +187,10 @@ import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import TeraSimulateChart from './tera-simulate-chart.vue';
+
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 enum CalibrationView {
 	INPUT = 'input',
@@ -223,8 +265,58 @@ const calibrate = async () => {
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
 
-		console.log(calibrationParam, modelConfig);
-		console.log(results);
+		// do polling and retrieve calibration result
+
+		// use fake calibration params for SIR model
+		const calibratedParams = {
+			t2: 0.11923213709379274,
+			t1: 0.28589833658579455
+		};
+
+		const { csv, headers } = csvAsset.value;
+		const indexOfTimestep = headers.indexOf(timestepColumn.value);
+		const payload = {
+			model: shimPetriModel(modelConfig.value.model),
+			initials: modelConfig.value.initialValues,
+			params: calibratedParams,
+			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
+		};
+
+		const forecastResponse = await makeForecast(payload);
+		const poller = new Poller<object>()
+			.setInterval(2000)
+			.setThreshold(90)
+			.setPollAction(async () => {
+				const statusResponse = await getRunStatus(forecastResponse.id);
+
+				if (statusResponse.status === 'done') {
+					return {
+						data: statusResponse,
+						progress: null,
+						error: null
+					};
+				}
+				if (statusResponse.status !== 'running') {
+					throw Error('failed forecast');
+				}
+
+				return {
+					data: null,
+					progress: null,
+					error: null
+				};
+			});
+		await poller.start();
+
+		const resultCsv = await getRunResult(forecastResponse.id);
+		const result = csvParse(resultCsv);
+
+		openedWorkflowNodeStore.setCalibrateResults(
+			csvAsset.value,
+			result as any,
+			indexOfTimestep,
+			featureMappings
+		);
 	}
 };
 
