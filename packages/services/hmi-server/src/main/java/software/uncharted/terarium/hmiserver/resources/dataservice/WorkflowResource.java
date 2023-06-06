@@ -20,7 +20,6 @@ public class WorkflowResource {
 	WorkflowProxy proxy;
 
 	@GET
-	@Path("/")
 	public Response getWorkflows() {
 		return proxy.getWorkflows();
 	}

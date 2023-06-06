@@ -16,13 +16,10 @@ import java.util.*;
 @RegisterProvider(HmiResponseExceptionMapper.class)
 public interface WorkflowProxy {
 	@GET
-	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response getWorkflows();
 
-
 	@POST
-	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createWorkflow(
 		Workflow workflow
