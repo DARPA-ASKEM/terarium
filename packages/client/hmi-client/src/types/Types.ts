@@ -32,6 +32,8 @@ export interface DocumentAsset {
 }
 
 export interface Model {
+    id: number;
+    framework: string;
     name: string;
     description: string;
     model_version: string;
@@ -107,6 +109,8 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 }
 
 export interface ModelSemantics {
+    ode: OdeSemantics;
+    typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
@@ -117,10 +121,10 @@ export interface ModelMetadata {
 
 export interface ModelContent {
     metadata: any;
-    S: Species[];
-    T: { [index: string]: string }[];
     I: { [index: string]: number }[];
     O: { [index: string]: number }[];
+    S: Species[];
+    T: { [index: string]: string }[];
 }
 
 export interface SimulationParams {
@@ -147,10 +151,10 @@ export interface PetriNetTransition {
 
 export interface ModelParameter {
     id: string;
-    description: string;
-    value: number;
-    grounding: ModelGrounding;
-    distribution: ModelDistribution;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface Document {
@@ -186,6 +190,17 @@ export interface XDDFacetsItemResponse {
 export interface XDDResponseOK {
     v: number;
     license: string;
+}
+
+export interface OdeSemantics {
+    rates: Rate[];
+    initials?: any[];
+    parameters?: ModelParameter[];
+}
+
+export interface TypingSemantics {
+    type_system: TypeSystem;
+    type_map: string[][];
 }
 
 export interface VariableStatement {
@@ -241,6 +256,17 @@ export interface KnownEntities {
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
+}
+
+export interface Rate {
+    target: string;
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
 }
 
 export interface Variable {
@@ -302,6 +328,21 @@ export interface XDDUrlExtraction {
     extractedFrom: string[];
 }
 
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
+}
+
 export interface VariableMetadata {
     type: string;
     value: string;
@@ -329,6 +370,12 @@ export interface DKGConcept {
     id: string;
     name: string;
     score: number;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface MetadataDataset {
