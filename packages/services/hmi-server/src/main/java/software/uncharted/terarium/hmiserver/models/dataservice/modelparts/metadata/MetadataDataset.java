@@ -7,7 +7,7 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
-public class Dataset {
+public class MetadataDataset {
 	private String id;
 	private String name;
 	private String metadata;

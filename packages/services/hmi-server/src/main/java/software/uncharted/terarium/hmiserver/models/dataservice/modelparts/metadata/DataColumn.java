@@ -10,6 +10,6 @@ import java.util.Map;
 public class DataColumn {
 	private String id;
 	private String name;
-	private Dataset dataset;
+	private MetadataDataset dataset;
 }
 

@@ -32,14 +32,14 @@ export interface DocumentAsset {
 }
 
 export interface Model {
-    id: string;
     name: string;
     description: string;
+    model_version: string;
     schema: string;
     model: { [index: string]: any };
-    properties: { [index: string]: any };
+    semantics: ModelSemantics;
     metadata: ModelMetadata;
-    content: ModelContent;
+    content?: ModelContent;
 }
 
 export interface ProvenanceQueryParam {
@@ -57,64 +57,31 @@ export interface Simulation {
     modelId: number;
 }
 
-export interface Annotations {
-    geo: DatasetAnnotatedGeo[];
-    date: DatasetAnnotatedDate[];
-    feature: DatasetAnnotatedFeature[];
-}
-
 export interface Dataset {
-    id?: number;
+    id?: string;
     name: string;
-    url: string;
-    description: string;
-    timestamp?: Date;
-    deprecated?: boolean;
-    sensitivity?: string;
-    quality?: string;
-    temporalResolution?: string;
-    geospatialResolution?: string;
-    annotations?: DatasetAnnotations;
-    maintainer?: string;
-    simulationRun?: boolean;
+    description?: string;
+    url?: string;
+    columns?: DatasetColumn[];
+    metadata?: any;
+    source?: string;
+    grounding?: Grounding;
 }
 
-export interface DatasetAnnotatedDate extends DatasetAnnotatedField {
-    dateType: string;
-    primaryDate: boolean;
-    timeFormat: string;
-}
-
-export interface DatasetAnnotatedFeature extends DatasetAnnotatedField {
-    featureType: string;
-    units: string;
-    unitsDescription: string;
-    primaryOntologyId: string;
-    qualifierRole: string;
-}
-
-export interface DatasetAnnotatedField {
+export interface DatasetColumn {
     name: string;
-    displayName: string;
-    description: string;
-    type: string;
-    qualifies: string[];
-    aliases: any;
+    dataType: ColumnType;
+    formatStr?: string;
+    annotations: { [index: string]: string[] };
+    metadata?: { [index: string]: any };
+    grounding?: { [index: string]: Grounding };
 }
 
-export interface DatasetAnnotatedGeo extends DatasetAnnotatedField {
-    geoType: string;
-    primaryGeo: boolean;
-    resolveToGadm: boolean;
-    isGeoPair: string;
-    coordFormat: string;
-    gadmLevel: string;
+export interface Grounding {
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: any };
 }
 
-export interface DatasetAnnotations {
-    dataPaths: string[];
-    annotations: Annotations;
-}
 export interface PetriNetModel {
     states: PetriNetState[];
     transitions: PetriNetTransition[];
@@ -139,6 +106,9 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     facets: { [index: string]: XDDFacetsItemResponse };
 }
 
+export interface ModelSemantics {
+}
+
 export interface ModelMetadata {
     processed_at: number;
     processed_by: string;
@@ -147,10 +117,10 @@ export interface ModelMetadata {
 
 export interface ModelContent {
     metadata: any;
-    I: { [index: string]: number }[];
-    O: { [index: string]: number }[];
     S: Species[];
     T: { [index: string]: string }[];
+    I: { [index: string]: number }[];
+    O: { [index: string]: number }[];
 }
 
 export interface SimulationParams {
@@ -221,9 +191,9 @@ export interface XDDResponseOK {
 export interface VariableStatement {
     id: string;
     variable: Variable;
-    value: StatementValue;
-    metadata: VariableStatementMetadata[];
-    provenance: ProvenanceInfo;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
 }
 
 export interface Species {
@@ -234,12 +204,12 @@ export interface Species {
 
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
-    context: { [index: string]: any };
+    context?: { [index: string]: any };
 }
 
 export interface ModelExpression {
     expression: string;
-    expression_mathml: string;
+    expressionMathml: string;
 }
 
 export interface PetriNetTransitionProperties {
@@ -286,7 +256,7 @@ export interface Variable {
 export interface StatementValue {
     value: string;
     type: string;
-    dkg_grounding: DKGConcept;
+    dkg_grounding?: DKGConcept;
 }
 
 export interface VariableStatementMetadata {
@@ -340,7 +310,7 @@ export interface VariableMetadata {
 export interface DataColumn {
     id: string;
     name: string;
-    dataset: Dataset;
+    dataset: MetadataDataset;
 }
 
 export interface Paper {
@@ -361,7 +331,7 @@ export interface DKGConcept {
     score: number;
 }
 
-export interface Dataset {
+export interface MetadataDataset {
     id: string;
     name: string;
     metadata: string;
@@ -383,4 +353,19 @@ export enum ProvenanceType {
     Project = "Project",
     Concept = "Concept",
     SimulationRun = "SimulationRun",
+}
+
+export enum ColumnType {
+    Unknown = "UNKNOWN",
+    Boolean = "BOOLEAN",
+    String = "STRING",
+    Char = "CHAR",
+    Integer = "INTEGER",
+    Int = "INT",
+    Float = "FLOAT",
+    Double = "DOUBLE",
+    Timestamp = "TIMESTAMP",
+    Datetime = "DATETIME",
+    Date = "DATE",
+    Time = "TIME",
 }
