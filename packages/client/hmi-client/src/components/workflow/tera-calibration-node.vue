@@ -3,7 +3,15 @@
 		<AccordionTab header="Mapping"> </AccordionTab>
 		<AccordionTab header="Loss"> </AccordionTab>
 		<AccordionTab header="Parameters"> </AccordionTab>
-		<AccordionTab header="Variables"> </AccordionTab>
+		<AccordionTab header="Variables">
+			<tera-simulate-chart
+				v-for="index in openedWorkflowNodeStore.calibrateNumCharts"
+				:key="index"
+				:run-results="openedWorkflowNodeStore.calibrateRunResults"
+				:run-id-list="openedWorkflowNodeStore.calibrateRunIdList"
+				:chart-idx="index"
+			/>
+		</AccordionTab>
 	</Accordion>
 </template>
 
@@ -16,6 +24,8 @@ import { WorkflowNode } from '@/types/workflow';
 // import DataTable from 'primevue/datatable';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
@@ -23,7 +33,7 @@ const props = defineProps<{
 }>();
 const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
-
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 // const runId = ref('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>

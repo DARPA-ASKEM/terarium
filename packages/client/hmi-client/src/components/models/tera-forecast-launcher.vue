@@ -36,10 +36,7 @@ import Button from 'primevue/button';
 import { makeForecast, createSimulation } from '@/services/models/simulation-service';
 import { Simulation, SimulationParams } from '@/types/Types';
 import { shimPetriModel } from '@/services/models/petri-shim';
-
-interface StringValueMap {
-	[key: string]: string;
-}
+import { StringValueMap } from '@/types/common';
 
 interface NumericValueMap {
 	[key: string]: number;

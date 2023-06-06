@@ -126,10 +126,7 @@ import { Model } from '@/types/Model';
 import { ModelConfig } from '@/types/ModelConfig';
 import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-
-interface StringValueMap {
-	[key: string]: string;
-}
+import { StringValueMap } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;

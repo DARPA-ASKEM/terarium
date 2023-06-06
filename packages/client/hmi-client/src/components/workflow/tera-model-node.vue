@@ -153,6 +153,7 @@ li {
 .p-button-sm.p-button-outlined {
 	border: 1px solid var(--surface-border);
 }
+
 .p-button-sm.p-button-outlined:hover {
 	border: 1px solid var(--surface-border-hover);
 }

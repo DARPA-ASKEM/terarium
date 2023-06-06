@@ -55,7 +55,9 @@ const CHART_OPTIONS = {
 			ticks: {
 				color: '#aaa',
 				maxTicksLimit: 5,
-				includeBounds: true
+				includeBounds: true,
+				// this rounds the tick label to nearest int
+				callback: (num) => num
 			},
 			grid: {
 				color: '#fff',

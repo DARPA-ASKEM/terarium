@@ -15,6 +15,11 @@ export type Annotation = {
 	section: string;
 };
 
+// temp
+export interface StringValueMap {
+	[key: string]: string;
+}
+
 export enum ViewType {
 	LIST = 'list',
 	MATRIX = 'matrix',
