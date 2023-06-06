@@ -184,7 +184,6 @@ onBeforeUnmount(() => {
 });
 
 function removeNode() {
-	console.log(props.node);
 	emit('remove-node', props.node.id);
 }
 function bringToFront() {
