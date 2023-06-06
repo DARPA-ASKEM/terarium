@@ -253,23 +253,23 @@ public class ModelResource {
 	@PUT
 	@Path("/generate-location-strata-model")
 	public Response generateLocationStrataModel (
-		@QueryParam("n") final int n,
 		@QueryParam("states") final String states) {
-		if (n < 1) {
-			return Response.status(Response.Status.BAD_REQUEST).build();
-		}
 		PetriNetModel petriNetModel = new PetriNetModel();
 		List<PetriNetState> petriNetStates;
 		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
 		String[] splitStateNames = states != null ? states.split(",") : new String[]{""};
-		petriNetStates = IntStream.range(0, n).mapToObj(i -> {
+		if (splitStateNames.length < 1) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+		for (String stateName : splitStateNames) {
+			if (stateName.contains("_")) {
+				return Response.status(Response.Status.BAD_REQUEST).build();
+			}
+		}
+		petriNetStates = IntStream.range(0, splitStateNames.length).mapToObj(i -> {
 			PetriNetState petriNetState = new PetriNetState();
 			petriNetState.setId('L'+ Integer.toString(i + 1));
-			if (splitStateNames.length < 1 || StringUtils.isBlank(splitStateNames[0]) || i >= splitStateNames.length) {
-				petriNetState.setName('L'+ Integer.toString(i + 1));
-			} else {
-				petriNetState.setName(splitStateNames[i]);
-			}
+			petriNetState.setName(splitStateNames[i]);
 			return petriNetState;
 		}).collect(Collectors.toList());
 		for (int i = 0; i < petriNetStates.size(); i++) {
@@ -285,7 +285,6 @@ public class ModelResource {
 		}
 		petriNetModel.setTransitions(petriNetTransitions);
 		petriNetModel.setStates(petriNetStates);
-
 		return Response
 			.status(Response.Status.OK)
 			.entity(petriNetModel)
@@ -295,23 +294,23 @@ public class ModelResource {
 	@PUT
 	@Path("/generate-age-strata-model")
 	public Response generateAgeStrataModel(
-		@QueryParam("n") final int n,
 		@QueryParam("states") final String states) {
-		if (n < 1) {
-			return Response.status(Response.Status.BAD_REQUEST).build();
-		}
 		PetriNetModel petriNetModel = new PetriNetModel();
 		List<PetriNetState> petriNetStates;
 		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
 		String[] splitStateNames = states != null ? states.split(",") : new String[]{""};
-		petriNetStates = IntStream.range(0, n).mapToObj(i -> {
+		if (splitStateNames.length < 1) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+		for (String stateName : splitStateNames) {
+			if (stateName.contains("_")) {
+				return Response.status(Response.Status.BAD_REQUEST).build();
+			}
+		}
+		petriNetStates = IntStream.range(0, splitStateNames.length).mapToObj(i -> {
 				PetriNetState petriNetState = new PetriNetState();
 				petriNetState.setId('A'+ Integer.toString(i + 1));
-			 	if (splitStateNames.length < 1 || StringUtils.isBlank(splitStateNames[0]) || i >= splitStateNames.length) {
-					petriNetState.setName('A'+ Integer.toString(i + 1));
-				} else {
-					petriNetState.setName(splitStateNames[i]);
-				}
+				petriNetState.setName(splitStateNames[i]);
 				return petriNetState;
 			}).collect(Collectors.toList());
 		for (int i = 0; i < petriNetStates.size(); i++) {
@@ -325,7 +324,6 @@ public class ModelResource {
 		}
 		petriNetModel.setTransitions(petriNetTransitions);
 		petriNetModel.setStates(petriNetStates);
-
 		return Response
 			.status(Response.Status.OK)
 			.entity(petriNetModel)
