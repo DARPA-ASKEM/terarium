@@ -2028,6 +2028,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lumino/coreutils@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "@lumino/coreutils@npm:2.1.1"
+  checksum: dfdeb2b0282caae17b6c3edfebadf4ce7c75fc879fa60cacfef9b154412f4b35e4ffd95b1833b99d8dacb99aaaa04513570129ae2024c3f33e2677a01f0576ce
+  languageName: node
+  linkType: hard
+
 "@lumino/disposable@npm:^1.10.0 || ^2.0.0, @lumino/disposable@npm:^1.10.0 || ^2.0.0-alpha.6, @lumino/disposable@npm:^2.1.0":
   version: 2.1.0
   resolution: "@lumino/disposable@npm:2.1.0"
@@ -8577,6 +8584,7 @@ cors@latest:
     "@jupyterlab/theme-light-extension": ^3.6.3
     "@jupyterlab/ui-components": ^3.6.3
     "@lumino/commands": ^2.1.0
+    "@lumino/coreutils": ^2.1.1
     "@lumino/widgets": ^2.1.0
     "@pinia/testing": 0.0.16
     "@playwright/experimental-ct-vue": 1.31.2

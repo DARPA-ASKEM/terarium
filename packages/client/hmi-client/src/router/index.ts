@@ -53,7 +53,7 @@ const routes = [
 	{ path: '/simulation-workflow', component: SimulationWorkflow },
 	{ path: '/sse', component: SSE },
 	{ path: '/transform', component: JupyterTransform },
-	{ path: '/workflow-playground', component: WorkflowPlayground },
+	{ path: '/workflow-playground', component: WorkflowPlayground }
 ];
 
 const router = createRouter({

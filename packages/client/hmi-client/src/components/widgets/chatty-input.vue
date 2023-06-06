@@ -20,7 +20,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { SessionContext } from '@jupyterlab/apputils';
+import { JupyterMessage } from 'src/utils/jupyter';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
+import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 
 const emit = defineEmits(['newCodeCell', 'newMessage']);
 
@@ -91,22 +93,22 @@ const onEnter = () => {
 	submitQuery(inputElement.value?.value);
 };
 
-const setKernelContext = (kernel, context_info) => {
-	// let kernel = sessionContext.session?.kernel;
-	const message = createMessage({
-		session: props.llmContext.session?.name,
+const setKernelContext = (kernel: IKernelConnection, context_info) => {
+	const messageBody = {
+		session: props.llmContext.session?.name || '',
 		channel: 'shell',
 		content: context_info,
 		msgType: 'context_setup_request',
 		msgId: `${kernel.id}-setcontext`
-	});
-	kernel?.sendControlMessage(message);
+	};
+	const message: JupyterMessage = createMessage(messageBody);
+	kernel?.sendJupyterMessage(message);
 	kernelState.value = KernelState.busy;
 };
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.msg_type === 'status') {
-		const newState: KernelState = KernelState[message.content.execution_state];
+		const newState: KernelState = KernelState[KernelState[message.content.execution_state]];
 		kernelState.value = newState;
 		return;
 	}
@@ -121,14 +123,14 @@ const submitQuery = (inputStr: string | undefined) => {
 			return;
 		}
 		kernelState.value = KernelState.busy;
-		const message = createMessage({
-			session: props.llmContext.session?.name,
+		const message: JupyterMessage = createMessage({
+			session: props.llmContext.session?.name || '',
 			channel: 'shell',
 			content: { request: inputStr },
 			msgType: 'llm_request',
 			msgId: `${kernel.id}-setcontext`
 		});
-		kernel?.sendControlMessage(message);
+		kernel?.sendJupyterMessage(message);
 		emit('newMessage', { ...message, msg_type: 'llm_request' });
 	}
 };
