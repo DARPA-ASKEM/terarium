@@ -251,14 +251,59 @@ public class ModelResource {
 	}
 
 	@PUT
-	@Path("/generate-age-strata-model")
-	public Response generateAgeStrata(
+	@Path("/generate-location-strata-model")
+	public Response generateLocationStrataModel (
 		@QueryParam("n") final int n,
-		@QueryParam("states") final String stateNames) {
+		@QueryParam("states") final String states) {
+		if (n < 1) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
 		PetriNetModel petriNetModel = new PetriNetModel();
 		List<PetriNetState> petriNetStates;
 		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
-		String[] splitStateNames = stateNames != null ? stateNames.split(",") : new String[]{""};
+		String[] splitStateNames = states != null ? states.split(",") : new String[]{""};
+		petriNetStates = IntStream.range(0, n).mapToObj(i -> {
+			PetriNetState petriNetState = new PetriNetState();
+			petriNetState.setId('L'+ Integer.toString(i + 1));
+			if (splitStateNames.length < 1 || StringUtils.isBlank(splitStateNames[0]) || i >= splitStateNames.length) {
+				petriNetState.setName('L'+ Integer.toString(i + 1));
+			} else {
+				petriNetState.setName(splitStateNames[i]);
+			}
+			return petriNetState;
+		}).collect(Collectors.toList());
+		for (int i = 0; i < petriNetStates.size(); i++) {
+			for (int j = 0; j < petriNetStates.size(); j++) {
+				if (i != j) {
+					PetriNetTransition petriNetTransition = new PetriNetTransition();
+					petriNetTransition.setId('t' + Integer.toString(i + 1) + (j + 1));
+					petriNetTransition.setInput(Arrays.asList(petriNetStates.get(i).getId()));
+					petriNetTransition.setOutput(Arrays.asList(petriNetStates.get(j).getId()));
+					petriNetTransitions.add(petriNetTransition);
+				}
+			}
+		}
+		petriNetModel.setTransitions(petriNetTransitions);
+		petriNetModel.setStates(petriNetStates);
+
+		return Response
+			.status(Response.Status.OK)
+			.entity(petriNetModel)
+			.build();
+	}
+
+	@PUT
+	@Path("/generate-age-strata-model")
+	public Response generateAgeStrataModel(
+		@QueryParam("n") final int n,
+		@QueryParam("states") final String states) {
+		if (n < 1) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+		PetriNetModel petriNetModel = new PetriNetModel();
+		List<PetriNetState> petriNetStates;
+		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
+		String[] splitStateNames = states != null ? states.split(",") : new String[]{""};
 		petriNetStates = IntStream.range(0, n).mapToObj(i -> {
 				PetriNetState petriNetState = new PetriNetState();
 				petriNetState.setId('A'+ Integer.toString(i + 1));
@@ -272,7 +317,7 @@ public class ModelResource {
 		for (int i = 0; i < petriNetStates.size(); i++) {
 			for (int j = 0; j < petriNetStates.size(); j++){
 				PetriNetTransition petriNetTransition = new PetriNetTransition();
-				petriNetTransition.setId('a' + Integer.toString(i + 1) + (j+1));
+				petriNetTransition.setId('c' + Integer.toString(i + 1) + (j+1));
 				petriNetTransition.setInput(Arrays.asList(petriNetStates.get(i).getId(), petriNetStates.get(j).getId()));
 				petriNetTransition.setOutput(Arrays.asList(petriNetStates.get(i).getId(), petriNetStates.get(j).getId()));
 				petriNetTransitions.add(petriNetTransition);
