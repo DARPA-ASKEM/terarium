@@ -13,5 +13,7 @@ import java.util.List;
 @Data
 @Accessors(chain = true)
 public class Rate {
-	private List<Item> items;
+	private String target;
+	private String expression;
+	private String expression_mathml;
 }

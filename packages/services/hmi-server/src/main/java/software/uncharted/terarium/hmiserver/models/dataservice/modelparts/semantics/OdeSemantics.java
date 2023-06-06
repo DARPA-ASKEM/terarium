@@ -15,8 +15,8 @@ import java.util.List;
 public class OdeSemantics {
 	private List<Rate> rates;
 	@TSOptional
-	private Object initials;
+	private List<Object> initials;
 
 	@TSOptional
-	private ModelParameter parameters;
+	private List<ModelParameter> parameters;
 }
