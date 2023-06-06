@@ -18,7 +18,10 @@ import java.util.Map;
 @Accessors(chain = true)
 @TSModel
 public class Model implements Serializable {
+	private int id;
 
+	private String framework;
+	
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)
