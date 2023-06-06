@@ -17,7 +17,7 @@ public class Transition {
     private List<TransitionItem> input;
     private List<TransitionItem> output;
     @TSOptional
-    private Grounding grounding;
+    private ModelGrounding grounding;
     @TSOptional
     private Properties properties;
 }
