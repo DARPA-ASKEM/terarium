@@ -76,7 +76,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 			// start from index 1 because index 0 contains csv headers
 			for (let i = 1; i < datasetData.csv.length; i++) {
 				const datasetRow = datasetData.csv[i];
-				const outputRow = {};
+				const outputRow = { timestep: 0 };
 				datasetPickedIndexes.forEach((datasetIndex) => {
 					const indexOfFeatureName = datasetFeatures.indexOf(datasetData.headers[datasetIndex]);
 					const resultKey = modelFeatures[indexOfFeatureName];
@@ -87,7 +87,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 			}
 
 			const simulate = simulateData.map((simulateRow) => {
-				const outputRow = {};
+				const outputRow = { timestep: 0 };
 				modelFeatures.forEach((key) => {
 					outputRow[key] = simulateRow[key];
 				});
