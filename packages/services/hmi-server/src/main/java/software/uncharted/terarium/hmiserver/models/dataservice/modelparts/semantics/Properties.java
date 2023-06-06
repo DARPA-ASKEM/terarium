@@ -17,4 +17,7 @@ public class Properties {
     
     @TSOptional
     private ModelGrounding grounding;
+
+    @TSOptional
+    private String description;
 }

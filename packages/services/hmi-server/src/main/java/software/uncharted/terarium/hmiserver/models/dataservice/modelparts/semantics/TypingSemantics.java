@@ -3,8 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
@@ -13,6 +12,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 @Accessors(chain = true)
 public class TypingSemantics {
 
-	@JsonAlias("type_system")
+	@JsonProperty("type_system")
 	private TypeSystem typeSystem;
+
+	@JsonProperty("type_map")
+	private List<List<String>> typeMap;
 }
