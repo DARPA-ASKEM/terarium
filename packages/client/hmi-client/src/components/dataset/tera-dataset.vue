@@ -43,10 +43,10 @@
 				</section>
 				<section>
 					<header>Date uploaded</header>
-					<section>{{ dataset?.timestamp?.toString() || '-' }}</section>
+					<section>{{ new Date(dataset?.timestamp).toLocaleString('eu-ZA') || '-' }}</section>
 				</section>
 				<section>
-					<header>Uploaded</header>
+					<header>Uploaded by</header>
 					<section>{{ dataset?.uploadedBy || '-' }}</section>
 				</section>
 			</section>
