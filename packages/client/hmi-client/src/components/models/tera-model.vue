@@ -34,6 +34,12 @@
 			/>
 		</template>
 		<template v-if="modelView === ModelView.DESCRIPTION">
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page describes the model. Use the content switcher above to see the diagram and
+					manage configurations.</Message
+				>
+			</div>
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab>
 					<template #header>
@@ -263,6 +269,7 @@ import { RouteName } from '@/router/routes';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
+import Message from 'primevue/message';
 import Accordion from 'primevue/accordion';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -298,27 +305,7 @@ enum ModelView {
 	DESCRIPTION = 'description',
 	MODEL = 'model'
 }
-/*
-// This is the model content that is displayed in the scroll-to-section featuer
-// That feature was removed, but way may want to bring it back.
-// I suggest we keep this unil we decide to remove it for good.
-const modelContent = computed(() => [
-	{ key: 'Description', value: description },
-	{ key: 'Intended Use', value: null },
-	{ key: 'Training Data', value: null },
-	{ key: 'Evaluation Data', value: null },
-	{ key: 'Metrics', value: null },
-	{ key: 'Training', value: null },
-	{ key: 'Model Output', value: null },
-	{ key: 'Ethical Considerations', value: null },
-	{ key: 'Authors and Contributors', value: null },
-	{ key: 'License', value: null },
-	{ key: 'Parameters', value: amr.value?.model.parameters },
-	{ key: 'State variables', value: amr.value?.model.states },
-	{ key: 'Transitions', value: amr.value?.model.transitions },
-	{ key: 'Variable Statements', value: amr.value?.metadata?.variable_statements }
-]);
-*/
+
 const modelView = ref(ModelView.DESCRIPTION);
 
 // Get rid of these emits
@@ -535,27 +522,6 @@ watch(
 	}
 );
 
-/*
-// apparently this is never used?
-const globalFilter = ref({
-	// @ts-ignore
-	// eslint-disable-line
-	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
-});
-*/
-
-// States/transitions aren't selected like this anymore - maybe somehow later?
-// const onStateVariableClick = () => {
-// 	if (selectedRow.value) {
-// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
-// 			selectedRow.value.sname,
-// 			String.raw`{\color{red}${selectedRow.value.sname}}`
-// 		);
-// 	} else {@vnode-mounted
-// 		equationLatex.value = equationLatexOriginal.value;
-// 	}
-// };
-
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
 );
@@ -687,6 +653,20 @@ function getSource(sp) {
 </script>
 
 <style scoped>
+.container {
+	margin-left: 1rem;
+	margin-right: 1rem;
+	max-width: 70rem;
+}
+.inline-message:deep(.p-message-wrapper) {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
+	border-radius: var(--border-radius);
+	border: 4px solid var(--primary-color);
+	border-width: 0px 0px 0px 6px;
+}
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;

@@ -26,6 +26,12 @@
 			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page describes the dataset. Use the content switcher above to see the data table and
+					transformation tools.</Message
+				>
+			</div>
 			<section class="metadata data-row">
 				<section>
 					<header>Maintainer</header>
@@ -150,6 +156,7 @@ import { computed, ref, watch, onUpdated } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
+import Message from 'primevue/message';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
@@ -233,6 +240,20 @@ const showAccordion = computed(() =>
 </script>
 
 <style scoped>
+.container {
+	margin-left: 1rem;
+	margin-right: 1rem;
+	max-width: 70rem;
+}
+.inline-message:deep(.p-message-wrapper) {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
+	border-radius: var(--border-radius);
+	border: 4px solid var(--primary-color);
+	border-width: 0px 0px 0px 6px;
+}
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;
