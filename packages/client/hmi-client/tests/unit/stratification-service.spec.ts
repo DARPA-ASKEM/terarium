@@ -1,6 +1,122 @@
-import { expect, it, test } from 'vitest';
-import { fetchStratificationResult } from '@/services/models/stratification-service';
+import { describe, expect, it, test } from 'vitest';
+import {
+	fetchStratificationResult,
+	generateAgeStrataModel,
+	generateLocationStrataModel
+} from '@/services/models/stratification-service';
 import { PetriNet } from '@/petrinet/petrinet-service';
+
+describe('test generate age strata model', () => {
+	it(`with inputs 'Young,Old'`, () => {
+		const stateNames = ['Young', 'Old'];
+		const model = generateAgeStrataModel(stateNames);
+		expect(model).toEqual({
+			name: 'Age-contact strata model',
+			description: 'Age-contact strata model',
+			model: {
+				states: [
+					{
+						id: 'A1',
+						name: 'Young',
+						description:
+							'Number of individuals relative to the total population that are in age group A1'
+					},
+					{
+						id: 'A2',
+						name: 'Old',
+						description:
+							'Number of individuals relative to the total population that are in age group A2'
+					}
+				],
+				transitions: [
+					{
+						id: 'c11',
+						input: ['A1', 'A1'],
+						output: ['A1', 'A1'],
+						properties: {
+							name: 'c&#8321&#8321',
+							description: 'Infective interaction between individuals'
+						}
+					},
+					{
+						id: 'c12',
+						input: ['A1', 'A2'],
+						output: ['A1', 'A2'],
+						properties: {
+							name: 'c&#8321&#8322',
+							description: 'Infective interaction between individuals'
+						}
+					},
+					{
+						id: 'c21',
+						input: ['A2', 'A1'],
+						output: ['A2', 'A1'],
+						properties: {
+							name: 'c&#8322&#8321',
+							description: 'Infective interaction between individuals'
+						}
+					},
+					{
+						id: 'c22',
+						input: ['A2', 'A2'],
+						output: ['A2', 'A2'],
+						properties: {
+							name: 'c&#8322&#8322',
+							description: 'Infective interaction between individuals'
+						}
+					}
+				]
+			}
+		});
+	});
+});
+
+describe('test generate location strata model', () => {
+	it(`with inputs 'Toronto,Montreal'`, () => {
+		const stateNames = ['Toronto', 'Montreal'];
+		const model = generateLocationStrataModel(stateNames);
+		expect(model).toEqual({
+			name: 'Location-travel strata model',
+			description: 'Location-travel strata model',
+			model: {
+				states: [
+					{
+						id: 'L1',
+						name: 'Toronto',
+						description:
+							'Number of individuals relative to the total population that are in location L1'
+					},
+					{
+						id: 'L2',
+						name: 'Montreal',
+						description:
+							'Number of individuals relative to the total population that are in location L2'
+					}
+				],
+				transitions: [
+					{
+						id: 't12',
+						input: ['L1'],
+						output: ['L2'],
+						properties: {
+							name: 't&#8321&#8322',
+							description: 'Travel of an individual from location L1 and L2'
+						}
+					},
+					{
+						id: 't21',
+						input: ['L2'],
+						output: ['L1'],
+						properties: {
+							name: 't&#8322&#8321',
+							description: 'Travel of an individual from location L2 and L1'
+						}
+					}
+				]
+			}
+		});
+	});
+});
 
 // const SIRDModel: PetriNet = {
 // 	T: [{ tname: 'inf' }, { tname: 'recover' }, { tname: 'death' }],

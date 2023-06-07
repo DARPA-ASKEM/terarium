@@ -11,9 +11,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
-import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
-import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
@@ -22,8 +19,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
