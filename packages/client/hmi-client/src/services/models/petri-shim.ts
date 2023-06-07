@@ -1,8 +1,6 @@
-/** FIXME: A temporary shim until the official mdoel-representation comes online - May 2023 * */
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { Model } from '@/types/Types';
 
-export const shimPetriModel = (model: Model) => {
+export const shimPetriModel = (model: PetriNet) => {
 	const cleanedModel: PetriNet = {
 		S: [],
 		T: [],
@@ -10,15 +8,10 @@ export const shimPetriModel = (model: Model) => {
 		O: []
 	};
 	if (model) {
-		console.log(
-			'TODO: Is this needed at all? What format is sim servuce expecting post AMR update??'
-		);
-		console.log('TODO: I and O conversion if this is required');
-		cleanedModel.S = model.model.states.map((s) => ({ name: s.name }));
-		cleanedModel.T = model.model.transitions.map((t) => ({ name: t.name }));
-		cleanedModel.I = [];
-		cleanedModel.O = [];
+		cleanedModel.S = model.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = model.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = model.I;
+		cleanedModel.O = model.O;
 	}
-
 	return JSON.stringify(cleanedModel);
 };

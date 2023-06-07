@@ -34,6 +34,7 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { makeForecast, createSimulation } from '@/services/models/simulation-service';
 import { shimPetriModel } from '@/services/models/petri-shim';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 
 interface StringValueMap {
 	[key: string]: string;
@@ -72,7 +73,7 @@ const launch = async () => {
 	});
 
 	const payload: SimulationParams = {
-		model: shimPetriModel(props.model),
+		model: shimPetriModel(AMRToPetri(props.model)),
 		initials,
 		params,
 		tspan: [0, 50]
