@@ -407,7 +407,7 @@ const modelConfiguration = computed(() => {
 	return newModelConfiguration;
 });
 
-const paramLength = computed(() => model.value?.model.parameters.length);
+const paramLength = computed(() => model.value?.semantics?.ode?.parameters?.length);
 
 const modelStates: ComputedRef<Array<{ name: string }> | undefined> = computed(() =>
 	model.value?.model.states.map((state) => ({ name: state.id }))
