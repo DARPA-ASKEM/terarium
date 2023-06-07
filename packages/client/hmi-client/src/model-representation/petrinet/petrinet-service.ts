@@ -246,6 +246,8 @@ export const parseAMRPetriNet2IGraph = (
 	return result;
 };
 
+// This is a temp helper function.
+// This is just used to go from new format -> old format as we calibration, simulation, and latex converter all need this old format while the switch over is happening.
 export const AMRToPetri = (model: Model) => {
 	const tempGraph = parseAMR2IGraph(model);
 	return parseIGraph2PetriNet(tempGraph);
