@@ -97,9 +97,10 @@ import {
 	NodeData,
 	EdgeData,
 	mathmlToPetri,
-	NodeType
+	NodeType,
+	petriToLatex
 } from '@/petrinet/petrinet-service';
-import { parseAMR2IGraph } from '@/model-representation/petrinet/petrinet-service';
+import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
@@ -232,7 +233,7 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			const data = null; // TODO: await petriToLatex(props.model.content);
+			const data = await petriToLatex(AMRToPetri(props.model));
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -368,7 +369,7 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = null; // TODO: await petriToLatex(props.model);
+		const latexFormula = await petriToLatex(AMRToPetri(props.model));
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {

@@ -494,11 +494,11 @@ function generateModelConfigValues() {
 	// TOM TODO: Check below is correct
 	else if (model.value) {
 		model.value?.model.states.forEach((s) => {
-			initialValues.value[0][s.sname] = `${1}`;
+			initialValues.value[0][s.name] = `${1}`;
 		});
 
 		model.value?.model.transitions.forEach((s) => {
-			parameterValues.value[0][s.tname] = `${0.0005}`;
+			parameterValues.value[0][s.name] = `${0.0005}`;
 		});
 	}
 }

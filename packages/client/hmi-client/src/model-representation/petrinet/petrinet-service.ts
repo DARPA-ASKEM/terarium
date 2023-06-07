@@ -1,5 +1,6 @@
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, PetriNetState, PetriNetTransition, Model } from '@/types/Types';
+import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
 
 /**
@@ -243,4 +244,9 @@ export const parseAMRPetriNet2IGraph = (
 	} // end T
 
 	return result;
+};
+
+export const AMRToPetri = (model: Model) => {
+	const tempGraph = parseAMR2IGraph(model);
+	return parseIGraph2PetriNet(tempGraph);
 };
