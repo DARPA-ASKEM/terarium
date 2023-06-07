@@ -153,8 +153,10 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId, 10);
 			const datasetTemp: Dataset | null = await getDataset(props.assetId);
+
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {

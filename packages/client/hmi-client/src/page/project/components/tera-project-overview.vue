@@ -269,7 +269,7 @@ async function processFiles(
 				props.project.id,
 				csvDescription
 			);
-			const text: string = addedCSV?.csv?.join('\r\n');
+			const text: string = addedCSV?.csv?.join('\r\n') ?? '';
 			const images = [];
 
 			return { file, error: false, response: { text, images } };

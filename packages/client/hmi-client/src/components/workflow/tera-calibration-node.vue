@@ -40,10 +40,10 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
-import { CalibrationParams, CsvAsset } from '@/types/Types';
+import { CalibrationParams, CsvAsset, Dataset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
-import { downloadRawFile } from '@/services/dataset';
+import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import { shimPetriModel } from '@/services/models/petri-shim';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
@@ -60,7 +60,7 @@ const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
 	modelConfig.value?.model.content.S.map((state) => state.sname)
 );
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const csvAsset = shallowRef<CsvAsset | null>(null);
 const datasetValue = ref();
 const featureMap = ref();
 
@@ -126,7 +126,14 @@ watch(
 	async () => {
 		if (datasetId.value) {
 			// Get dataset:
-			csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
+
+			const dataset: Dataset | null = await getDataset(datasetId.value as string);
+
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			csvAsset.value = (await downloadRawFile(
+				datasetId.value as string,
+				dataset?.fileNames?.[0] ?? ''
+			)) as CsvAsset;
 			datasetColumnNames.value = csvAsset.value?.headers;
 			datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 		}
