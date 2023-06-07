@@ -153,7 +153,6 @@
 					:model="modelConfig.model"
 					:is-editable="false"
 					:model-config-node-input="modelConfig"
-					calibration-config
 				/>
 			</AccordionTab>
 		</Accordion>
@@ -220,6 +219,7 @@ const mapping = ref<any[]>([
 ]);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const calibratedModelConfig = ref<ModelConfig | undefined>(undefined);
 
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
@@ -290,6 +290,9 @@ const calibrate = async () => {
 			params: calibratedParams,
 			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
 		};
+
+		calibratedModelConfig.value = modelConfig.value;
+		calibratedModelConfig.value.parameterValues = calibratedParams;
 
 		const forecastResponse = await makeForecast(payload);
 		const poller = new Poller<object>()
