@@ -86,12 +86,11 @@ const runSimulate = async () => {
 
 	if (port && port.value) {
 		const payload = {
-			model: shimPetriModel(AMRToPetri(port.value.model)),
-			initials: port.value.initialValues,
-			params: port.value.parameterValues,
+			model: shimPetriModel(AMRToPetri(port.value[0].model)),
+			initials: port.value[0].initialValues,
+			params: port.value[0].parameterValues,
 			tspan: [0, 100]
 		};
-		console.log(payload);
 		const response = await makeForecast(payload);
 		startedRunIdList.value = [response.id];
 

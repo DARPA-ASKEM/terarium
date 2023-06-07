@@ -162,10 +162,10 @@ export const parseAMRPetriNet2IGraph = (
 		nodes: [],
 		edges: []
 	};
-
+	const petrinet = amr.model as PetriNetModel;
 	// add each nodes in S
-	for (let i = 0; i < amr.model.states.length; i++) {
-		const aNode = amr.model.states[i];
+	for (let i = 0; i < petrinet.states.length; i++) {
+		const aNode = petrinet.states[i];
 		result.nodes.push({
 			id: aNode.id,
 			label: aNode.name,
@@ -179,8 +179,8 @@ export const parseAMRPetriNet2IGraph = (
 	}
 
 	// Add each node found in T
-	for (let i = 0; i < amr.model.transitions.length; i++) {
-		const aTransition = amr.model.transitions[i];
+	for (let i = 0; i < petrinet.transitions.length; i++) {
+		const aTransition = petrinet.transitions[i];
 		// Add the node for this transition
 		result.nodes.push({
 			id: aTransition.id,
@@ -250,5 +250,5 @@ export const parseAMRPetriNet2IGraph = (
 // This is just used to go from new format -> old format as we calibration, simulation, and latex converter all need this old format while the switch over is happening.
 export const AMRToPetri = (model: Model) => {
 	const tempGraph = parseAMR2IGraph(model);
-	return parseIGraph2PetriNet(tempGraph);
+	return parseIGraph2PetriNet(tempGraph); // TODO: Ensure this step properly parses back to O
 };
