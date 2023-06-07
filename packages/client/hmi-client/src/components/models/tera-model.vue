@@ -40,6 +40,7 @@
 					manage configurations.</Message
 				>
 			</div>
+			<RelatedPublications />
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab>
 					<template #header>
@@ -296,6 +297,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraModelDiagram from './tera-model-diagram.vue';
+import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 interface StringValueMap {
 	[key: string]: string;

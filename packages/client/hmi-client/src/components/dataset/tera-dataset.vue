@@ -60,7 +60,7 @@
 					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
-
+			<RelatedPublications />
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
@@ -162,6 +162,7 @@ import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -259,12 +260,7 @@ const showAccordion = computed(() =>
 	margin-left: 0.5rem;
 }
 .metadata {
-	margin: 1rem;
-	margin-bottom: 0.5rem;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--gray-50);
-	padding: 0.25rem;
+	margin: 1rem 1rem 2rem;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
@@ -312,9 +308,6 @@ ol.numbered-list li::marker {
 
 main .annotation-group {
 	padding: 0.25rem;
-	border: solid 1px var(--surface-border-light);
-	background-color: var(--gray-50);
-	border-radius: var(--border-radius);
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
