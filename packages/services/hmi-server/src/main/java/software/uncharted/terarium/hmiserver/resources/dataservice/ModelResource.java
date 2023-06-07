@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -15,9 +14,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCo
 import software.uncharted.terarium.hmiserver.models.dataservice.petrinet.PetriNetModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.petrinet.PetriNetState;
 import software.uncharted.terarium.hmiserver.models.dataservice.petrinet.PetriNetTransition;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
-import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
-import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
@@ -28,7 +24,6 @@ import javax.ws.rs.core.Response;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
@@ -198,11 +193,7 @@ public class ModelResource {
 
 	@PUT
 	@Path("/generate-location-strata-model")
-	public Response generateLocationStrataModel (
-		@QueryParam("states") final String states) {
-		PetriNetModel petriNetModel = new PetriNetModel();
-		List<PetriNetState> petriNetStates;
-		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
+	public Response generateLocationStrataModel (final String states) {
 		String[] splitStateNames = states != null ? states.split(",") : new String[]{""};
 		if (splitStateNames.length < 1) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
@@ -212,10 +203,21 @@ public class ModelResource {
 				return Response.status(Response.Status.BAD_REQUEST).build();
 			}
 		}
-		petriNetStates = IntStream.range(0, splitStateNames.length).mapToObj(i -> {
+		PetriNetModel petriNetModel = generateLocationStrataModel(splitStateNames);
+		return Response
+			.status(Response.Status.OK)
+			.entity(petriNetModel)
+			.build();
+	}
+
+	private PetriNetModel generateLocationStrataModel(String[] states){
+		PetriNetModel petriNetModel = new PetriNetModel();
+		List<PetriNetState> petriNetStates;
+		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
+		petriNetStates = IntStream.range(0, states.length).mapToObj(i -> {
 			PetriNetState petriNetState = new PetriNetState();
 			petriNetState.setId('L'+ Integer.toString(i + 1));
-			petriNetState.setName(splitStateNames[i]);
+			petriNetState.setName(states[i]);
 			return petriNetState;
 		}).collect(Collectors.toList());
 		for (int i = 0; i < petriNetStates.size(); i++) {
@@ -231,19 +233,12 @@ public class ModelResource {
 		}
 		petriNetModel.setTransitions(petriNetTransitions);
 		petriNetModel.setStates(petriNetStates);
-		return Response
-			.status(Response.Status.OK)
-			.entity(petriNetModel)
-			.build();
+		return petriNetModel;
 	}
 
 	@PUT
 	@Path("/generate-age-strata-model")
-	public Response generateAgeStrataModel(
-		@QueryParam("states") final String states) {
-		PetriNetModel petriNetModel = new PetriNetModel();
-		List<PetriNetState> petriNetStates;
-		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
+	public Response generateAgeStrataModel(final String states) {
 		String[] splitStateNames = states != null ? states.split(",") : new String[]{""};
 		if (splitStateNames.length < 1) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
@@ -253,12 +248,25 @@ public class ModelResource {
 				return Response.status(Response.Status.BAD_REQUEST).build();
 			}
 		}
-		petriNetStates = IntStream.range(0, splitStateNames.length).mapToObj(i -> {
-				PetriNetState petriNetState = new PetriNetState();
-				petriNetState.setId('A'+ Integer.toString(i + 1));
-				petriNetState.setName(splitStateNames[i]);
-				return petriNetState;
-			}).collect(Collectors.toList());
+
+		PetriNetModel petriNetModel = generateAgeStrataModel(splitStateNames);
+		return Response
+			.status(Response.Status.OK)
+			.entity(petriNetModel)
+			.build();
+	}
+
+	private PetriNetModel generateAgeStrataModel(String[] states){
+		PetriNetModel petriNetModel = new PetriNetModel();
+		List<PetriNetState> petriNetStates;
+		List<PetriNetTransition> petriNetTransitions = new ArrayList<>();
+
+		petriNetStates = IntStream.range(0, states.length).mapToObj(i -> {
+			PetriNetState petriNetState = new PetriNetState();
+			petriNetState.setId('A'+ Integer.toString(i + 1));
+			petriNetState.setName(states[i]);
+			return petriNetState;
+		}).collect(Collectors.toList());
 		for (int i = 0; i < petriNetStates.size(); i++) {
 			for (int j = 0; j < petriNetStates.size(); j++){
 				PetriNetTransition petriNetTransition = new PetriNetTransition();
@@ -270,9 +278,6 @@ public class ModelResource {
 		}
 		petriNetModel.setTransitions(petriNetTransitions);
 		petriNetModel.setStates(petriNetStates);
-		return Response
-			.status(Response.Status.OK)
-			.entity(petriNetModel)
-			.build();
+		return petriNetModel;
 	}
 }
