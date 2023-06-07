@@ -34,30 +34,32 @@
 			</div>
 			<section class="metadata data-row">
 				<section>
-					<header>Maintainer</header>
-					<section>{{ dataset?.maintainer || '-' }}</section>
+					<header>Rows</header>
+					<section>{{ csvContent?.length || '-' }}</section>
 				</section>
 				<section>
-					<header>Quality</header>
-					<section>{{ dataset?.quality || '-' }}</section>
+					<header>Columns</header>
+					<section>{{ rawContent?.stats?.length || '-' }}</section>
 				</section>
 				<section>
-					<header>URL</header>
+					<header>Date uploaded</header>
+					<section>{{ dataset?.timestamp?.toString() || '-' }}</section>
+				</section>
+				<section>
+					<header>Uploaded</header>
+					<section>{{ dataset?.timestamp?.toString() || '-' }}</section>
+				</section>
+			</section>
+			<section class="metadata data-row">
+				<section>
+					<header>Source Name</header>
+					<section>{{ dataset?.sourceName || '-' }}</section>
+				</section>
+				<section>
+					<header>Source URL</header>
 					<section>
 						<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
 					</section>
-				</section>
-				<section>
-					<header>Geospatial resolution</header>
-					<section>{{ dataset?.geospatialResolution || '-' }}</section>
-				</section>
-				<section>
-					<header>Temporal resolution</header>
-					<section>{{ dataset?.temporalResolution || '-' }}</section>
-				</section>
-				<section>
-					<header>Number of records</header>
-					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
 			<RelatedPublications />
@@ -260,7 +262,7 @@ const showAccordion = computed(() =>
 	margin-left: 0.5rem;
 }
 .metadata {
-	margin: 1rem 1rem 2rem;
+	margin: 1rem;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
