@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { Model } from '@/types/Types';
 
 export const bucky: Model = {
