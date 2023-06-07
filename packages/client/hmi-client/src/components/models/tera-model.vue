@@ -80,7 +80,7 @@
 					<template #header>
 						<header id="Parameters">Parameters</header>
 					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.parameters">
+					<DataTable class="p-datatable-sm" :value="model?.model.parameters">
 						<Column field="id" header="ID"></Column>
 						<Column field="value" header="Value"></Column>
 					</DataTable>
@@ -89,7 +89,7 @@
 					<template #header>
 						<header id="State variables">State variables</header>
 					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.states">
+					<DataTable class="p-datatable-sm" :value="model?.model.states">
 						<Column field="id" header="ID"></Column>
 						<Column field="name" header="Name"></Column>
 						<Column field="grounding.context" header="Context"></Column>
@@ -100,7 +100,7 @@
 					<template #header>
 						<header id="Transitions">Transitions</header>
 					</template>
-					<DataTable class="p-datatable-sm" :value="amr?.model.transitions">
+					<DataTable class="p-datatable-sm" :value="model?.model.transitions">
 						<Column field="id" header="ID"></Column>
 						<Column field="properties.name" header="Name"></Column>
 						<Column field="input" header="Input"></Column>
@@ -139,9 +139,9 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab header="Model diagram">
+					<!-- TOM TODO: Fix props here -->
 					<tera-model-diagram
 						:model="model"
-						:amr="amr"
 						:is-editable="props.isEditable"
 						@update-model-content="updateModelContent"
 					/>
@@ -162,7 +162,7 @@
 							<Row>
 								<Column header="" style="border: none" />
 								<Column header="" style="border: none" />
-								<Column header="Initial conditions" :colspan="model.content.S.length" />
+								<Column header="Initial conditions" :colspan="model.model.states.length" />
 								<Column header="Parameters" :colspan="paramLength" />
 								<!-- <Column header="Observables" /> -->
 							</Row>
@@ -196,9 +196,9 @@
 							</template>
 						</Column>
 						<Column
-							v-for="(value, i) of [...model.content.S, ...model.content.T]"
+							v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
 							:key="i"
-							:field="value['sname'] ?? value['tname']"
+							:field="value['name'] ?? value['name']"
 						>
 							<template #body="{ data, field }">
 								{{ data[field] }}
@@ -281,10 +281,9 @@
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
 import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
-import { PetriNet, parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
+import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
-import { bucky } from '@/temp/buckyAMR';
 import { createModel, addModelToProject, getModel } from '@/services/model';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
@@ -302,7 +301,6 @@ import ColumnGroup from 'primevue/columngroup';
 import * as textUtil from '@/utils/text';
 import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ITypedModel } from '@/types/Model';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { ResultType } from '@/types/common';
 import TeraAsset from '@/components/asset/tera-asset.vue';
@@ -334,10 +332,10 @@ const modelContent = computed(() => [
 	{ key: 'Ethical Considerations', value: null },
 	{ key: 'Authors and Contributors', value: null },
 	{ key: 'License', value: null },
-	{ key: 'Parameters', value: amr.value?.model.parameters },
-	{ key: 'State variables', value: amr.value?.model.states },
-	{ key: 'Transitions', value: amr.value?.model.transitions },
-	{ key: 'Variable Statements', value: amr.value?.metadata?.variable_statements }
+	{ key: 'Parameters', value: model.value?.semantics?.ode?.parameters },
+	{ key: 'State variables', value: model.value?.model.states },
+	{ key: 'Transitions', value: model.value?.model.transitions },
+	{ key: 'Variable Statements', value: model.value?.metadata?.variable_statements }
 ]);
 
 const modelView = ref(ModelView.DESCRIPTION);
@@ -371,8 +369,7 @@ const router = useRouter();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
-const model = ref<ITypedModel<PetriNet> | null>(null);
-const amr = ref<Model | null>(null);
+const model = ref<Model | null>(null);
 
 const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
@@ -410,36 +407,17 @@ const modelConfiguration = computed(() => {
 	return newModelConfiguration;
 });
 
-const paramLength = computed(() => {
-	if (amr.value) {
-		return amr.value.model.parameters.length;
-	}
-	return model.value?.content.T.length;
-});
+const paramLength = computed(() => model.value?.model.parameters.length);
 
-const modelStates: ComputedRef<Array<{ name: string }> | undefined> = computed(() => {
-	if (amr.value) {
-		return amr.value.model.states.map((state) => ({ name: state.id }));
-	}
-	return model.value?.content.S.map((state) => ({ name: state.sname }));
-});
+const modelStates: ComputedRef<Array<{ name: string }> | undefined> = computed(() =>
+	model.value?.model.states.map((state) => ({ name: state.id }))
+);
 
-const modelTransitions: ComputedRef<Array<{ name: string }> | undefined> = computed(() => {
-	if (amr.value) {
-		return amr.value.model.transitions.map((transitions) => ({ name: transitions.id }));
-	}
-	return model.value?.content.T.map((state) => ({ name: state.tname }));
-});
+const modelTransitions: ComputedRef<Array<{ name: string }> | undefined> = computed(() =>
+	model.value?.model.transitions.map((transitions) => ({ name: transitions.id }))
+);
 
-const metaData = computed(() => {
-	if (amr.value) {
-		// const extractions = amr.value.metadata.variable_statements.map((staments) => {
-		// 	return staments.id;
-		// });
-		return amr.value.metadata.variable_statements;
-	}
-	return null;
-});
+const metaData = computed(() => model.value?.metadata?.variable_statements);
 
 // const modelParameters = computed(() =>{
 // 	if (amr.value){
@@ -471,8 +449,7 @@ const onCellEditComplete = (event) => {
 };
 
 function updateModelContent(rendererGraph) {
-	// Tom todo: update amr content based off of below helper
-	if (model.value) model.value.content = parseIGraph2PetriNet(rendererGraph);
+	if (model.value) model.value.model = parseIGraph2PetriNet(rendererGraph);
 }
 
 const onCellEditStart = (event) => {
@@ -513,12 +490,14 @@ function generateModelConfigValues() {
 		}
 	}
 	// Default values
+
+	// TOM TODO: Check below is correct
 	else if (model.value) {
-		model.value?.content.S.forEach((s) => {
+		model.value?.model.states.forEach((s) => {
 			initialValues.value[0][s.sname] = `${1}`;
 		});
 
-		model.value?.content.T.forEach((s) => {
+		model.value?.model.transitions.forEach((s) => {
 			parameterValues.value[0][s.tname] = `${0.0005}`;
 		});
 	}
@@ -593,11 +572,9 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
+		console.log(props);
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
-			if (model.value && model.value.name === 'Bucky') {
-				amr.value = bucky;
-			}
 			fetchRelatedTerariumArtifacts();
 		} else {
 			model.value = null;
@@ -667,12 +644,7 @@ const goToSimulationRunPage = () => {
 };
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
-const description = computed(() => {
-	if (amr.value) {
-		return highlightSearchTerms(amr.value?.description);
-	}
-	return highlightSearchTerms(model.value?.description);
-});
+const description = computed(() => highlightSearchTerms(model.value?.description));
 
 function getExtractionType(sp) {
 	if (sp.data.variable.column.length > 0) {

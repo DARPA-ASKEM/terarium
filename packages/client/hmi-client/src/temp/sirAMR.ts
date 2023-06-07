@@ -2,7 +2,7 @@
 import { Model } from '@/types/Types';
 
 export const sir: Model = {
-	id: 1,
+	id: '1',
 	framework: 'Petri Net',
 	name: 'SIR Model',
 	schema:
@@ -197,7 +197,7 @@ export const sir: Model = {
 };
 
 export const typedSir: Model = {
-	id: 2,
+	id: '2',
 	framework: 'Petri Net',
 	name: 'SIR Model',
 	schema:

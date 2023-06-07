@@ -1,8 +1,38 @@
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, PetriNetState, PetriNetTransition } from '@/types/Types';
+import { PetriNetModel, PetriNetState, PetriNetTransition, Model } from '@/types/Types';
+import { logger } from '@/utils/logger';
 
-interface EdgeData {
+/**
+ * Given a petrinet model convert to an IGraph representation g
+ * for the renderer
+ * First add each node found in S and T, then add each edge found in I and O
+ */
+interface PetriSizeConfig {
+	S: {
+		width: number;
+		height: number;
+	};
+	T: {
+		width: number;
+		height: number;
+	};
+}
+const defaultSizeConfig: PetriSizeConfig = {
+	S: { width: 40, height: 40 },
+	T: { width: 40, height: 40 }
+};
+
+export interface NodeData {
+	type: string;
+	uid?: string | number;
+}
+
+export interface EdgeData {
 	numEdges: number;
+}
+export enum NodeType {
+	State = 'S',
+	Transition = 'T'
 }
 
 export const convertToGraph = (petri: PetriNetModel) => {
@@ -102,5 +132,115 @@ export const convertToPetriNetModel = (g: IGraph<PetriNetState | PetriNetTransit
 	result.transitions = g.nodes
 		.filter((d) => d.type === 'transition')
 		.map((d) => d.data) as PetriNetTransition[];
+	return result;
+};
+
+// Used to traffic control AMRS.
+// Totally useless right now as there is only 1 type of AMR (petrinet)
+export const parseAMR2IGraph = (amr: Model, config: PetriSizeConfig = defaultSizeConfig) => {
+	if (amr.schema.toLowerCase().includes('petri')) return parseAMRPetriNet2IGraph(amr, config);
+
+	logger.warn(`Schema not recognized${amr}`);
+	const emptyGraph: IGraph<NodeData, EdgeData> = {
+		width: 500,
+		height: 500,
+		nodes: [],
+		edges: []
+	};
+	return emptyGraph;
+};
+
+// Convert an AMR Petrinet -> IGraph
+export const parseAMRPetriNet2IGraph = (
+	amr: Model,
+	config: PetriSizeConfig = defaultSizeConfig
+) => {
+	const result: IGraph<NodeData, EdgeData> = {
+		width: 500,
+		height: 500,
+		nodes: [],
+		edges: []
+	};
+
+	// add each nodes in S
+	for (let i = 0; i < amr.model.states.length; i++) {
+		const aNode = amr.model.states[i];
+		result.nodes.push({
+			id: aNode.id,
+			label: aNode.name,
+			x: 0,
+			y: 0,
+			height: config.S.height,
+			width: config.S.width,
+			data: { type: NodeType.State, uid: aNode.grounding.identifiers.ido },
+			nodes: []
+		});
+	}
+
+	// Add each node found in T
+	for (let i = 0; i < amr.model.transitions.length; i++) {
+		const aTransition = amr.model.transitions[i];
+		// Add the node for this transition
+		result.nodes.push({
+			id: aTransition.id,
+			label: aTransition.properties.name,
+			x: 0,
+			y: 0,
+			height: config.T.height,
+			width: config.T.width,
+			data: { type: NodeType.Transition, uid: undefined },
+			nodes: []
+		});
+
+		// Add input edge(s) for this transition:
+		for (let j = 0; j < aTransition.input.length; j++) {
+			const sourceId = aTransition.input[j];
+			const targetId = aTransition.id;
+
+			// Collapse hyper edges
+			const existingEdge = result.edges.find(
+				(edge) => edge.source === sourceId && edge.target === targetId
+			);
+
+			if (existingEdge && existingEdge.data) {
+				existingEdge.data.numEdges++;
+				continue;
+			}
+
+			result.edges.push({
+				source: sourceId,
+				target: targetId,
+				points: [],
+				data: {
+					numEdges: 1
+				}
+			});
+		}
+		// Add output edge(s) for this transition:
+		for (let j = 0; j < aTransition.output.length; j++) {
+			const sourceId = aTransition.id;
+			const targetId = aTransition.output[j];
+
+			// Collapse hyper edges
+			const existingEdge = result.edges.find(
+				(edge) => edge.source === sourceId && edge.target === targetId
+			);
+
+			if (existingEdge && existingEdge.data) {
+				existingEdge.data.numEdges++;
+				continue;
+			}
+
+			result.edges.push({
+				source: sourceId,
+				target: targetId,
+				points: [],
+				data: {
+					numEdges: 1
+				}
+			});
+		}
+	} // end T
+
 	return result;
 };

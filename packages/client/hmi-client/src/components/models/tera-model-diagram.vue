@@ -97,16 +97,15 @@ import {
 	NodeData,
 	EdgeData,
 	mathmlToPetri,
-	petriToLatex,
-	NodeType,
-	parseAMR2IGraph
+	NodeType
 } from '@/petrinet/petrinet-service';
+import { parseAMR2IGraph } from '@/model-representation/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { ITypedModel } from '@/types/Model';
+// import { ITypedModel } from '@/types/Model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -124,9 +123,8 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	model: ITypedModel<PetriNet> | null;
+	model: Model | null;
 	isEditable: boolean;
-	amr?: Model | null;
 }>();
 
 const menu = ref();
@@ -234,7 +232,7 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			const data = await petriToLatex(props.model.content);
+			const data = null; // TODO: await petriToLatex(props.model.content);
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -327,17 +325,11 @@ watch(
 	[props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		let graphData: IGraph<NodeData, EdgeData>;
-		if (props.amr) {
-			graphData = parseAMR2IGraph(props.amr);
-		} else {
-			// TODO: Remove this when we only use AMR
-			// Convert petri net into a graph
-			graphData = parsePetriNet2IGraph(props.model.content, {
-				S: { width: 60, height: 60 },
-				T: { width: 40, height: 40 }
-			});
-		}
+		const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
+			S: { width: 60, height: 60 },
+			T: { width: 40, height: 40 }
+		});
+		console.log(graphData);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
@@ -376,7 +368,7 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(props.model.content);
+		const latexFormula = null; // TODO: await petriToLatex(props.model);
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {
@@ -485,7 +477,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(props.model.content, {
+	const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
 		S: { width: 60, height: 60 },
 		T: { width: 40, height: 40 }
 	});

@@ -39,9 +39,12 @@
 				<li v-for="(snippet, index) in snippets" :key="index" v-html="snippet" />
 			</ul>
 			<div class="description" v-html="highlightSearchTerms(asset.description)" />
-			<div class="parameters" v-if="resourceType === ResourceType.MODEL && asset.parameters">
+			<div
+				class="parameters"
+				v-if="resourceType === ResourceType.MODEL && asset?.semantics?.ode?.parameters"
+			>
 				PARAMETERS:
-				{{ asset.parameters }}
+				{{ asset.semantics.ode.parameters }}
 				<!--may need a formatting function this attribute is always undefined at the moment-->
 			</div>
 			<div class="features" v-else-if="resourceType === ResourceType.DATASET">
@@ -105,8 +108,7 @@
 import { watch, ref, computed, ComputedRef } from 'vue';
 import { isEmpty } from 'lodash';
 import { XDDExtractionType } from '@/types/XDD';
-import { Document, Extraction, XDDUrlExtraction, Dataset } from '@/types/Types';
-import { Model } from '@/types/Model';
+import { Document, Extraction, XDDUrlExtraction, Dataset, Model } from '@/types/Types';
 import { ResourceType } from '@/types/common';
 import * as textUtil from '@/utils/text';
 import { useDragEvent } from '@/services/drag-drop';

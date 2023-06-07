@@ -1,13 +1,13 @@
 import { ResourceType, ResultType } from '@/types/common';
 import { Filters } from '@/types/Filter';
 import { isEmpty } from 'lodash';
-import { Model, FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
+import { FACET_FIELDS as MODEL_FACET_FIELDS } from '@/types/Model';
+import { Model, Document, Dataset } from '@/types/Types';
 import IconDocument20 from '@carbon/icons-vue/es/document/20';
 import IconDocumentBlank20 from '@carbon/icons-vue/es/document--blank/20';
 import IconMachineLearningModel20 from '@carbon/icons-vue/es/machine-learning-model/20';
 import IconTableSplit20 from '@carbon/icons-vue/es/table--split/20';
 import { FACET_FIELDS as DATASET_FACET_FIELDS } from '@/types/Dataset';
-import { Document, Dataset } from '@/types/Types';
 
 // source: https://www.crossref.org/blog/dois-and-matching-regular-expressions/
 const DOI_VALIDATION_PATTERN = /^10.\d{4,9}\/[-._;()/:A-Z0-9]+$/i;
@@ -60,7 +60,7 @@ export const getResourceTypeIcon = (type: string) => {
 
 // TEMP FUNCTIONS
 export function isModel(item: ResultType): item is Model {
-	return (<Model>item).framework !== undefined;
+	return (<Model>item).model_version !== undefined;
 }
 
 export function isDataset(item: ResultType): item is Dataset {
