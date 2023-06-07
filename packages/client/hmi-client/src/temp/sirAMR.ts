@@ -1,6 +1,9 @@
+//This is a temp file just to be used for testing purposes while transitioning to AMR
 import { Model } from '@/types/Types';
 
 export const sir: Model = {
+	id: 1,
+	framework: 'Petri Net',
 	name: 'SIR Model',
 	schema:
 		'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
@@ -194,6 +197,8 @@ export const sir: Model = {
 };
 
 export const typedSir: Model = {
+	id: 2,
+	framework: 'Petri Net',
 	name: 'SIR Model',
 	schema:
 		'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',

@@ -32,14 +32,15 @@ export interface DocumentAsset {
 }
 
 export interface Model {
+    id: string;
+    framework: string;
     name: string;
     description: string;
     model_version: string;
     schema: string;
     model: { [index: string]: any };
-    semantics: ModelSemantics;
+    semantics?: ModelSemantics;
     metadata: ModelMetadata;
-    content?: ModelContent;
 }
 
 export interface ProvenanceQueryParam {
@@ -54,7 +55,7 @@ export interface Simulation {
     description?: string;
     simulationParams: SimulationParams;
     result?: string;
-    modelId: number;
+    modelId: string;
 }
 
 export interface Dataset {
@@ -107,20 +108,14 @@ export interface DocumentsResponseOK extends XDDResponseOK {
 }
 
 export interface ModelSemantics {
+    ode: OdeSemantics;
+    typing?: TypingSemantics;
 }
 
 export interface ModelMetadata {
     processed_at: number;
     processed_by: string;
     variable_statements: VariableStatement[];
-}
-
-export interface ModelContent {
-    metadata: any;
-    S: Species[];
-    T: { [index: string]: string }[];
-    I: { [index: string]: number }[];
-    O: { [index: string]: number }[];
 }
 
 export interface SimulationParams {
@@ -147,10 +142,10 @@ export interface PetriNetTransition {
 
 export interface ModelParameter {
     id: string;
-    description: string;
-    value: number;
-    grounding: ModelGrounding;
-    distribution: ModelDistribution;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface Document {
@@ -188,18 +183,23 @@ export interface XDDResponseOK {
     license: string;
 }
 
+export interface OdeSemantics {
+    rates: Rate[];
+    initials?: any[];
+    parameters?: ModelParameter[];
+}
+
+export interface TypingSemantics {
+    type_system: TypeSystem;
+    type_map: string[][];
+}
+
 export interface VariableStatement {
     id: string;
     variable: Variable;
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
-}
-
-export interface Species {
-    sname: string;
-    miraIds: Ontology[];
-    miraContext: Ontology[];
 }
 
 export interface ModelGrounding {
@@ -243,6 +243,17 @@ export interface XDDFacetBucket {
     docCount: string;
 }
 
+export interface Rate {
+    target: string;
+    expression: string;
+    expression_mathml: string;
+}
+
+export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
+}
+
 export interface Variable {
     id: string;
     name: string;
@@ -269,14 +280,6 @@ export interface ProvenanceInfo {
     description: string;
 }
 
-export interface Ontology {
-    name: string;
-    curie: string;
-    title: string;
-    description: string;
-    link: string;
-}
-
 export interface ExtractionProperties {
     title: string;
     trustScore: string;
@@ -300,6 +303,21 @@ export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
 }
 
 export interface VariableMetadata {
@@ -329,6 +347,12 @@ export interface DKGConcept {
     id: string;
     name: string;
     score: number;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
 }
 
 export interface MetadataDataset {

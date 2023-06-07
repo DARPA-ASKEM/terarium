@@ -163,60 +163,6 @@ public class ModelResource {
 			return Response.noContent().build();
 		}
 
-		// Resolve the ontology curies
-		final List<Species> species = model.getContent().getS();
-
-		if (species != null && !species.isEmpty()) {
-			// Get the curies from all species, as one string, comma separated without duplicate
-			final String curies = species.stream()
-				.flatMap(s -> Stream.concat(
-					s.getMiraIds().stream().map(Ontology::getCurie),
-					s.getMiraContext().stream().map(Ontology::getCurie)
-				))
-				.filter(Objects::nonNull)
-				.distinct()
-				.collect(Collectors.joining(","));
-
-			// Fetch the ontology information from the DKG
-			List<DKG> entities = new ArrayList<>();
-			try {
-				entities = dkgProxy.getEntities(curies);
-			} catch (RuntimeException e) {
-				log.error("Unable to get the ontology entity for curies: " + curies, e);
-			}
-
-			if (!entities.isEmpty()) {
-				entities.forEach(entity -> entity.setLink(metaRegistryURL + "/" + entity.getCurie()));
-
-				// Transform the entities to a Map
-				Map<String, DKG> ontologies =
-					entities.stream().collect(Collectors.toMap(DKG::getCurie, entity -> entity));
-
-				// Now add the ontologies to each species mira_ids and mira_context
-				species.forEach(s -> {
-					s.getMiraIds().forEach(miraId -> {
-						if (ontologies.containsKey(miraId.getCurie())) {
-							final DKG ontology = ontologies.get(miraId.getCurie());
-							miraId
-								.setTitle(ontology.getName())
-								.setDescription(ontology.getDescription())
-								.setLink(ontology.getLink());
-						}
-					});
-
-					s.getMiraContext().forEach(context -> {
-						if (ontologies.containsKey(context.getCurie())) {
-							final DKG ontology = ontologies.get(context.getCurie());
-							context
-								.setTitle(ontology.getName())
-								.setDescription(ontology.getDescription())
-								.setLink(ontology.getLink());
-						}
-					});
-				});
-			}
-		}
-
 		// Return the model
 		return Response
 			.status(Response.Status.OK)

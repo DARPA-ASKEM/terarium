@@ -18,7 +18,10 @@ import java.util.Map;
 @Accessors(chain = true)
 @TSModel
 public class Model implements Serializable {
+	private String id;
 
+	private String framework;
+	
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)
@@ -30,11 +33,9 @@ public class Model implements Serializable {
 
 	private Map<String, Object> model;
 
+	@TSOptional
 	private ModelSemantics semantics;
 
 	private ModelMetadata metadata;
 
-	// FIXME: deprecated, remove
-	@TSOptional
-	private ModelContent content;
 }

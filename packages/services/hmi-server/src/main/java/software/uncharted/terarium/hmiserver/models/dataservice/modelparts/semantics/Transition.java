@@ -14,8 +14,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metad
 @Accessors(chain = true)
 public class Transition {
 	private String id;
-    private List<TransitionItem> input;
-    private List<TransitionItem> output;
+    private List<String> input;
+    private List<String> output;
     @TSOptional
     private ModelGrounding grounding;
     @TSOptional
