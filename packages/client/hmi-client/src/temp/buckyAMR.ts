@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable */
 import { Model } from '@/types/Types';
 

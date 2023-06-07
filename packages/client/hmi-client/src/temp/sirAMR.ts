@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable */
 //This is a temp file just to be used for testing purposes while transitioning to AMR
 import { Model } from '@/types/Types';
