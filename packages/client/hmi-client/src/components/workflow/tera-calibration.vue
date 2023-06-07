@@ -103,12 +103,16 @@
 							</template>
 						</Column>
 						<template #expansion="slotProps">
-							<div>
-								Model: {{ slotProps.data.modelVariable }}
-								<br />
-								Dataset: {{ slotProps.data.datasetVariable }}
-								<!-- <DataTable> put above in table -->
-							</div>
+							<DataTable
+								class="p-datatable-sm"
+								:value="[slotProps.data.modelVariable, slotProps.data.datasetVariable]"
+							>
+								<Column field="label" header="Label" />
+								<Column field="name" header="Name" />
+								<Column field="units" header="Units" />
+								<Column field="concept" header="Concept" />
+								<Column field="definition" header="Definition" />
+							</DataTable>
 						</template>
 					</DataTable>
 					<div>
@@ -207,10 +211,15 @@ const expandedRows = ref([]);
 
 const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
 
+const timestepColumn = ref('');
+const mapping = ref<any[]>([
+	{
+		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
+		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
+	}
+]);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-
-const timestepColumn = ref('');
 
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
@@ -231,13 +240,6 @@ const modelVariables = computed(() => {
 const disableRunButton = computed(
 	() => !mapping.value?.[0].modelVariable.label || !mapping.value?.[0].datasetVariable.label
 );
-
-const mapping = ref<any[]>([
-	{
-		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
-		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
-	}
-]);
 
 const mappingSimplified = computed(() =>
 	mapping.value.map((m) => ({
@@ -347,11 +349,14 @@ const getCalibrationResults = async () => {
 	console.log(results);
 };
 
-async function updateDataset() {
-	if (datasetId.value) {
-		csvAsset.value = (await downloadRawFile(datasetId.value)) as CsvAsset;
-		datasetVariables.value = csvAsset.value?.headers;
-
+watch(
+	() => datasetId.value,
+	async () => {
+		// Trouble getting these as computed values
+		if (datasetId.value) {
+			csvAsset.value = (await downloadRawFile(datasetId.value)) as CsvAsset;
+			datasetVariables.value = csvAsset.value?.headers;
+		}
 		// Reset mapping on update for now
 		mapping.value = [
 			{
@@ -359,12 +364,7 @@ async function updateDataset() {
 				datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 			}
 		];
-	}
-}
-
-watch(
-	() => datasetId.value,
-	() => updateDataset(),
+	},
 	{
 		immediate: true
 	}
