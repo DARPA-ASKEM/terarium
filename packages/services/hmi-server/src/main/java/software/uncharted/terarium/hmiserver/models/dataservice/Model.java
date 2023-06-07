@@ -18,7 +18,7 @@ import java.util.Map;
 @Accessors(chain = true)
 @TSModel
 public class Model implements Serializable {
-	private int id;
+	private String id;
 
 	private String framework;
 	
@@ -33,11 +33,9 @@ public class Model implements Serializable {
 
 	private Map<String, Object> model;
 
+	@TSOptional
 	private ModelSemantics semantics;
 
 	private ModelMetadata metadata;
 
-	// FIXME: deprecated, remove
-	@TSOptional
-	private ModelContent content;
 }

@@ -32,16 +32,15 @@ export interface DocumentAsset {
 }
 
 export interface Model {
-    id: number;
+    id: string;
     framework: string;
     name: string;
     description: string;
     model_version: string;
     schema: string;
     model: { [index: string]: any };
-    semantics: ModelSemantics;
+    semantics?: ModelSemantics;
     metadata: ModelMetadata;
-    content?: ModelContent;
 }
 
 export interface ProvenanceQueryParam {
@@ -56,7 +55,7 @@ export interface Simulation {
     description?: string;
     simulationParams: SimulationParams;
     result?: string;
-    modelId: number;
+    modelId: string;
 }
 
 export interface Dataset {
@@ -117,14 +116,6 @@ export interface ModelMetadata {
     processed_at: number;
     processed_by: string;
     variable_statements: VariableStatement[];
-}
-
-export interface ModelContent {
-    metadata: any;
-    I: { [index: string]: number }[];
-    O: { [index: string]: number }[];
-    S: Species[];
-    T: { [index: string]: string }[];
 }
 
 export interface SimulationParams {
@@ -211,12 +202,6 @@ export interface VariableStatement {
     provenance?: ProvenanceInfo;
 }
 
-export interface Species {
-    sname: string;
-    miraIds: Ontology[];
-    miraContext: Ontology[];
-}
-
 export interface ModelGrounding {
     identifiers: { [index: string]: any };
     context?: { [index: string]: any };
@@ -293,14 +278,6 @@ export interface VariableStatementMetadata {
 export interface ProvenanceInfo {
     method: string;
     description: string;
-}
-
-export interface Ontology {
-    name: string;
-    curie: string;
-    title: string;
-    description: string;
-    link: string;
 }
 
 export interface ExtractionProperties {
