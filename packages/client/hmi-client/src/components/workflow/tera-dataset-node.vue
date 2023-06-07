@@ -50,7 +50,7 @@ const csvHeaders = computed(() => rawContent.value?.headers);
 watch(
 	() => dataset.value,
 	async () => {
-		if (dataset?.value?.id && dataset?.value?.fileNames?.length > 0) {
+		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0]);
 			emit('append-output-port', {
 				type: DatasetOperation.outputs[0].type,
