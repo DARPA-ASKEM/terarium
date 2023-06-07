@@ -201,14 +201,6 @@
 			</Accordion>
 		</template>
 		<Teleport to="body">
-			<ForecastLauncher
-				v-if="showForecastLauncher && model"
-				:model="model"
-				@close="showForecastLauncher = false"
-				@launch-forecast="goToSimulationRunPage"
-			/>
-		</Teleport>
-		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 				<template #header>
 					<h4>{{ cellValueToEdit.field }}</h4>
@@ -272,7 +264,6 @@ import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
 import * as textUtil from '@/utils/text';
-import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { ITypedModel, Model } from '@/types/Model';
 import {
@@ -362,8 +353,6 @@ const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
 const isMathMLValid = ref<boolean>(true);
-
-const showForecastLauncher = ref(false);
 
 const modelConfigNames = ref([{ name: 'Config 1' }]);
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
@@ -535,15 +524,6 @@ watch(
 	}
 );
 
-/*
-// apparently this is never used?
-const globalFilter = ref({
-	// @ts-ignore
-	// eslint-disable-line
-	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
-});
-*/
-
 // States/transitions aren't selected like this anymore - maybe somehow later?
 // const onStateVariableClick = () => {
 // 	if (selectedRow.value) {
@@ -615,13 +595,6 @@ onUpdated(() => {
 	}
 });
 
-/*
-// apparently this is never used?
-const launchForecast = () => {
-	showForecastLauncher.value = true;
-};
-*/
-
 const createNewModel = async () => {
 	if (props.project) {
 		const newModel = {
@@ -649,18 +622,6 @@ const createNewModel = async () => {
 		isEditingEQ.value = false;
 		isMathMLValid.value = true;
 	}
-};
-
-const goToSimulationRunPage = () => {
-	showForecastLauncher.value = false;
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetId: model.value?.id ?? 0 + 1000,
-			assetName: highlightSearchTerms(model.value?.name ?? ''),
-			pageType: 'simulation_runs'
-		}
-	});
 };
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
