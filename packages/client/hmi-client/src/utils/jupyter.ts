@@ -13,20 +13,12 @@ import {
 import { JSONObject } from '@lumino/coreutils';
 import * as messages from '@jupyterlab/services/lib/kernel/messages';
 import * as kernel from '@jupyterlab/services/lib/kernel/kernel';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as _translationKernel from '@jupyterlab/translation/node_modules/@jupyterlab/services/lib/kernel/kernel';
 import { KernelConnection as JupyterKernelConnection } from '@jupyterlab/services/lib/kernel';
 
 declare module '@jupyterlab/services/lib/kernel/messages' {
 	export function createMessage(options: JSONObject): JupyterMessage;
 }
 
-declare module '@jupyterlab/translation/node_modules/@jupyterlab/services/lib/kernel/kernel' {
-	interface IKernelConnection {
-		sendJupyterMessage<T extends JupyterMessage>(msg: T): void;
-		sendShellMessage<T extends JupyterMessage>(msg: T): void;
-	}
-}
 declare module '@jupyterlab/services/lib/kernel/kernel' {
 	interface IKernelConnection {
 		sendJupyterMessage<T extends JupyterMessage>(msg: T): void;
