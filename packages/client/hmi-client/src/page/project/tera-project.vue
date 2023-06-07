@@ -42,16 +42,28 @@
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				class="project-page"
+				class="project-page top-z-index"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
-						openedWorkflowNodeStore.node)
+					openedWorkflowNodeStore.assetId &&
+					openedWorkflowNodeStore.pageType
 				"
 				:size="20"
 			>
+				<tera-tab-group
+					v-if="openedWorkflowNodeStore.node"
+					class="tab-group"
+					:tabs="[{ assetName: openedWorkflowNodeStore.node.operationType }]"
+					:active-tab-index="0"
+					:loading-tab-index="null"
+					@close-tab="openedWorkflowNodeStore.node = openedWorkflowNodeStore.assetId = null"
+				/>
 				<tera-calibration
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
+					:node="openedWorkflowNodeStore.node"
+				/>
+				<tera-simulate
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.SIMULATE"
 					:node="openedWorkflowNodeStore.node"
 				/>
 				<tera-project-page
@@ -229,6 +241,7 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
@@ -528,7 +541,13 @@ section,
 	overflow-x: auto;
 	overflow-y: hidden;
 }
+.p-splitter:deep(.p-splitter-gutter) {
+	z-index: 1000;
+}
 
+.top-z-index {
+	z-index: 1000;
+}
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
 	max-width: 15rem;

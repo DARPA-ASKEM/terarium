@@ -44,15 +44,15 @@ import { CalibrationParams, CsvAsset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
-import { WorkflowNode, WorkflowPort, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { shimPetriModel } from '@/services/models/petri-shim';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
-const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
+const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
+const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
 
 const runId = ref('');
 const timestepColumnName = ref<string>('');
@@ -88,22 +88,17 @@ const startCalibration = async () => {
 			console.log(calibrationParam);
 			const results = await makeCalibrateJob(calibrationParam);
 			runId.value = results.id;
-			const outputPort: WorkflowPort = {
-				id: '1',
-				type: 'String',
-				status: WorkflowPortStatus.CONNECTED,
-				value: runId.value
-			};
 			emit('append-output-port', {
 				type: 'string',
 				label: 'Calibration Job ID',
-				value: { outputPort }
+				value: runId.value
 			});
 		}
 	}
 };
 
 const getCalibrationStatus = async () => {
+	console.log('Getting status of run');
 	const results = await getRunStatus(Number(runId.value));
 	console.log('Done');
 	console.log(results);

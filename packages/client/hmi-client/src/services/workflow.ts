@@ -51,7 +51,8 @@ export const addNode = (
 			type: port.type,
 			label: port.label,
 			status: WorkflowPortStatus.NOT_CONNECTED,
-			value: null
+			value: null,
+			acceptMultiple: port.acceptMultiple
 		})),
 		outputs: [],
 		/*
@@ -105,12 +106,18 @@ export const addEdge = (
 	// Check if type is compatible
 	if (sourceOutputPort.value === null) return;
 	if (sourceOutputPort.type !== targetInputPort.type) return;
+	if (!targetInputPort.acceptMultiple && targetInputPort.status === WorkflowPortStatus.CONNECTED) {
+		return;
+	}
 
 	// Transfer data value/reference
-	targetInputPort.value = sourceOutputPort.value;
-
-	// TODO: Need to fix for multi-values
-	targetInputPort.label = sourceOutputPort.label;
+	if (targetInputPort.acceptMultiple && targetInputPort.value && sourceOutputPort.value) {
+		targetInputPort.label = `${sourceOutputPort.label},${targetInputPort.label}`;
+		targetInputPort.value = [...targetInputPort.value, ...sourceOutputPort.value];
+	} else {
+		targetInputPort.label = sourceOutputPort.label;
+		targetInputPort.value = sourceOutputPort.value;
+	}
 
 	const edge: WorkflowEdge = {
 		id: uuidv4(),
