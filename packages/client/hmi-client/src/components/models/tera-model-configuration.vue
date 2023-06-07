@@ -296,6 +296,11 @@ onMounted(() => resetModelConfiguration());
 	margin-bottom: 1rem;
 }
 
+/**This isn't applying for some reason... */
+.model-configuration:deep(.p-datatable-tbody > tr > td:empty) {
+	content: '--';
+}
+
 .p-tabview {
 	display: flex;
 	gap: 1rem;

@@ -152,18 +152,16 @@
 				<tera-model-configuration
 					:model="modelConfig.model"
 					:is-editable="false"
-					:model-config-node-input="modelConfig"
+					:model-config-node-input="calibratedModelConfig"
 				/>
 			</AccordionTab>
 		</Accordion>
-		<div>Run ID: {{ runId }}</div>
-		<Button @click="getCalibrationStatus"> Get Run Status </Button>
-		<Button @click="getCalibrationResults"> Get Run Results </Button>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
+import { cloneDeep } from 'lodash';
 import { csvParse } from 'd3';
 import Button from 'primevue/button';
 import { Poller } from '@/api/api';
@@ -208,7 +206,7 @@ const modelConfigurationRef = ref();
 const calibrationView = ref(CalibrationView.INPUT);
 const expandedRows = ref([]);
 
-const runId = ref(props.node.outputs?.[0]?.value ?? undefined);
+const runId = ref<number>(0);
 
 const timestepColumn = ref('');
 const mapping = ref<any[]>([
@@ -274,13 +272,36 @@ const calibrate = async () => {
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
 
-		// do polling and retrieve calibration result
+		const calibratePoller = new Poller<object>()
+			.setInterval(2000)
+			.setThreshold(90)
+			.setPollAction(async () => {
+				const statusResponse = await getRunStatus(results.id);
 
-		// use fake calibration params for SIR model
-		const calibratedParams = {
-			t2: 0.11923213709379274,
-			t1: 0.28589833658579455
-		};
+				if (statusResponse.status === 'done') {
+					return {
+						data: statusResponse,
+						progress: null,
+						error: null
+					};
+				}
+				if (statusResponse.status !== 'running') {
+					throw Error('failed calibrate');
+				}
+
+				return {
+					data: null,
+					progress: null,
+					error: null
+				};
+			});
+		await calibratePoller.start();
+
+		const calibratedParams = await getRunResult(results.id);
+		console.log(calibratedParams, results.id);
+
+		const resultsHaveNull =
+			calibratedParams === null || Object.values(calibratedParams).some((v) => v === null);
 
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
@@ -291,45 +312,50 @@ const calibrate = async () => {
 			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
 		};
 
-		calibratedModelConfig.value = modelConfig.value;
-		calibratedModelConfig.value.parameterValues = calibratedParams;
+		calibratedModelConfig.value = cloneDeep(modelConfig.value);
+		if (calibratedParams) {
+			calibratedModelConfig.value.parameterValues = calibratedParams;
+		}
 
-		const forecastResponse = await makeForecast(payload);
-		const poller = new Poller<object>()
-			.setInterval(2000)
-			.setThreshold(90)
-			.setPollAction(async () => {
-				const statusResponse = await getRunStatus(forecastResponse.id);
+		if (!resultsHaveNull) {
+			// do polling and retrieve calibration result
+			const forecastResponse = await makeForecast(payload);
+			const forecastPoller = new Poller<object>()
+				.setInterval(2000)
+				.setThreshold(90)
+				.setPollAction(async () => {
+					const statusResponse = await getRunStatus(forecastResponse.id);
 
-				if (statusResponse.status === 'done') {
+					if (statusResponse.status === 'done') {
+						return {
+							data: statusResponse,
+							progress: null,
+							error: null
+						};
+					}
+					if (statusResponse.status !== 'running') {
+						throw Error('failed forecast');
+					}
+
 					return {
-						data: statusResponse,
+						data: null,
 						progress: null,
 						error: null
 					};
-				}
-				if (statusResponse.status !== 'running') {
-					throw Error('failed forecast');
-				}
+				});
+			await forecastPoller.start();
 
-				return {
-					data: null,
-					progress: null,
-					error: null
-				};
-			});
-		await poller.start();
+			const resultCsv = await getRunResult(forecastResponse.id);
+			const result = csvParse(resultCsv);
 
-		const resultCsv = await getRunResult(forecastResponse.id);
-		const result = csvParse(resultCsv);
-
-		openedWorkflowNodeStore.setCalibrateResults(
-			csvAsset.value,
-			result as any,
-			indexOfTimestep,
-			featureMappings,
-			mappingSimplified.value
-		);
+			openedWorkflowNodeStore.setCalibrateResults(
+				csvAsset.value,
+				result as any,
+				indexOfTimestep,
+				featureMappings,
+				mappingSimplified.value
+			);
+		}
 	}
 };
 
@@ -339,18 +365,6 @@ function addMapping() {
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	});
 }
-
-const getCalibrationStatus = async () => {
-	console.log('Getting status of run');
-	const results = await getRunStatus(Number(runId.value));
-	console.log(results);
-};
-
-const getCalibrationResults = async () => {
-	console.log('Getting results of run');
-	const results = await getRunResult(Number(runId.value));
-	console.log(results);
-};
 
 watch(
 	() => datasetId.value,

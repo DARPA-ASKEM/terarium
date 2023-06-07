@@ -15,6 +15,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		pageType: null as ProjectAssetTypes | null,
 		selectedOutputIndex: 0 as number,
 		// model node
+		// FIXME: won't need a store for model config values once workflow/model configs are saved
 		initialValues: null as StringValueMap[] | null,
 		parameterValues: null as StringValueMap[] | null,
 		node: null as WorkflowNode | null,
