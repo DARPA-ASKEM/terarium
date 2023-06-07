@@ -92,33 +92,7 @@ watch(
 	}
 );
 
-const messages = ref<JupyterMessage[]>([
-	{
-		header: {
-			msg_id: '1c007cea-414bc80e7b287430fcb77ea3_14_20',
-			msg_type: 'code_cell',
-			username: 'username',
-			session: '1c007cea-414bc80e7b287430fcb77ea3',
-			date: '2023-05-17T19:12:17.525761Z',
-			version: '5.3'
-		},
-		parent_header: {
-			date: '2023-05-17T19:11:39.841000Z',
-			msg_id: 'babbefae-9780-4da4-8ec7-969055b51428',
-			msg_type: 'execute_request',
-			session: 'c3c4acea-4cde-4309-87c2-87b64524634b',
-			username: '',
-			version: '5.2'
-		},
-		metadata: {},
-		content: {
-			language: 'python',
-			code: "import matplotlib.pyplot as plt\n\n# Convert timestamp to datetime\ndf['timestamp'] = pd.to_datetime(df['timestamp'])\n\n# Calculate the rate of change of infected\ndf['dI_dt'] = df['I'].diff()\n\n# Plot the rate of change of infected over time\nplt.figure(figsize=(10, 6))\nplt.plot(df['timestamp'], df['dI_dt'])\nplt.xlabel('Time')\nplt.ylabel('Rate of Change of Infected')\nplt.title('Rate of Change of Infected Over Time')\nplt.grid()\nplt.show()"
-		},
-		buffers: [],
-		channel: 'iopub'
-	}
-]);
+const messages = ref<JupyterMessage[]>([]);
 const datasetPreview = ref(null);
 
 const newMessage = (event) => {
