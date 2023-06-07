@@ -47,7 +47,7 @@
 				</section>
 				<section>
 					<header>Uploaded</header>
-					<section>{{ dataset?.timestamp?.toString() || '-' }}</section>
+					<section>{{ dataset?.uploadedBy || '-' }}</section>
 				</section>
 			</section>
 			<section class="metadata data-row">
@@ -58,18 +58,21 @@
 				<section>
 					<header>Source URL</header>
 					<section>
-						<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<span v-else>-</span>
 					</section>
 				</section>
 			</section>
 			<RelatedPublications />
-			<Accordion :multiple="true" :activeIndex="showAccordion">
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
 					<p v-html="dataset.description" />
 				</AccordionTab>
+
+				<!-- ## TODO: Confirm with Pascale that this is not needed ##
 				<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
 					<template #header>
 						<header id="Annotations">
@@ -85,7 +88,7 @@
 							<section
 								v-for="annotation in annotations?.geo"
 								:key="annotation.name"
-								class="annotation-row data-row"
+								class="metadata data-row"
 							>
 								<section>
 									<header>Name</header>
@@ -104,11 +107,10 @@
 					</section>
 					<section v-if="annotations?.date">
 						<header class="annotation-subheader">Temporal annotations</header>
-						<section class="annotation-group">
 							<section
 								v-for="annotation in annotations?.date"
 								:key="annotation.name"
-								class="annotation-row data-row"
+								class="metadata data-row"
 							>
 								<section>
 									<header>Name</header>
@@ -123,22 +125,23 @@
 									<section>{{ annotation.timeFormat }}</section>
 								</section>
 							</section>
-						</section>
 					</section>
 				</AccordionTab>
+				-->
+
 				<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
 					<template #header>
-						<header id="Features">
-							Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
+						<header id="Variables">
+							Variables<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
 						</header>
 					</template>
-					<ol class="numbered-list">
-						<li v-for="(feature, index) of annotations?.feature" :key="index">
-							<span>{{ feature.displayName || feature.name }}</span
-							>:
-							<span class="feature-type">{{ feature.featureType }}</span>
-						</li>
-					</ol>
+					<DataTable :value="annotations?.feature">
+						<Column field="name" header="Name"></Column>
+						<Column field="featureType" header="Type"></Column>
+						<Column field="description" header="Definition"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="concept" header="Concept"></Column>
+					</DataTable>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -164,6 +167,8 @@ import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
@@ -225,6 +230,7 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
+				console.log(dataset.value);
 			}
 		} else {
 			dataset.value = null;
@@ -235,11 +241,6 @@ watch(
 );
 
 const annotations = computed(() => dataset.value?.annotations?.annotations);
-const showAccordion = computed(() =>
-	dataset.value?.annotations?.annotations.date && dataset.value?.annotations.annotations.geo
-		? [2]
-		: [0]
-);
 </script>
 
 <style scoped>
@@ -270,7 +271,6 @@ const showAccordion = computed(() =>
 
 .metadata > section {
 	flex: 1;
-	padding: 0.5rem;
 }
 
 /* Datatable  */
@@ -283,21 +283,6 @@ const showAccordion = computed(() =>
 	font-size: var(--font-body-small);
 }
 
-.annotation-row > section {
-	flex: 1;
-	padding: 0.5rem;
-}
-
-.numbered-list {
-	list-style: numbered-list;
-	margin-left: 2rem;
-	list-style-position: outside;
-}
-
-ol.numbered-list li::marker {
-	color: var(--text-color-subdued);
-}
-
 .feature-type {
 	color: var(--text-color-subdued);
 }
@@ -306,25 +291,6 @@ ol.numbered-list li::marker {
 	padding: 1rem;
 	padding-bottom: 0.5rem;
 	max-width: var(--constrain-width);
-}
-
-main .annotation-group {
-	padding: 0.25rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
-	max-width: var(--constrain-width);
-}
-
-.annotation-subheader {
-	font-weight: var(--font-weight-semibold);
-}
-
-.annotation-row {
-	display: flex;
-	flex-direction: row;
-	gap: 3rem;
 }
 
 .layout-topbar {

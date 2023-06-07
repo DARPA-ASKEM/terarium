@@ -2,11 +2,11 @@
 	<Accordion :activeIndex="0">
 		<AccordionTab>
 			<template #header>
-				<header id="Description">Description</header>
+				<header>Related publications</header>
 			</template>
 			<p>
-				Terarium can extract information from papers and other resources to describe this model.
-				Select the resources you would like to use.
+				Terarium can extract information from papers and other resources to add relevant information
+				to this resource.
 			</p>
 			<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
 
