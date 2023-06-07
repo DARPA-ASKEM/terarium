@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ProjectAssetTypes } from '@/types/Project';
 import { WorkflowNode } from '@/types/workflow';
+import { TspanUnits, ChartConfig } from '@/types/SimulateConfig';
 
 interface StringValueMap {
 	[key: string]: number;
@@ -15,9 +16,15 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		// model node
 		initialValues: null as StringValueMap[] | null,
 		parameterValues: null as StringValueMap[] | null,
-		node: null as WorkflowNode | null
+		node: null as WorkflowNode | null,
+		// simulate node
+		numCharts: 1,
+		chartConfigs: [] as ChartConfig[],
+		tspanUnit: TspanUnits[0],
+		tspan: [0, 100]
 	}),
 	actions: {
+		// model node
 		setDrilldown(
 			assetId: string | null,
 			pageType: ProjectAssetTypes | null,
@@ -25,11 +32,24 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		) {
 			this.assetId = assetId;
 			this.pageType = pageType;
-			this.node = node;
+			this.setNode(node);
 		},
 		setModelConfig(initialValues: StringValueMap[], parameterValues: StringValueMap[]) {
 			this.initialValues = initialValues;
 			this.parameterValues = parameterValues;
+		},
+		// simulate node
+		setNode(node: WorkflowNode | null) {
+			this.node = node;
+		},
+		appendChart() {
+			this.numCharts++;
+		},
+		setChartConfig(chartIdx: number, chartConfig: ChartConfig) {
+			this.chartConfigs[chartIdx] = {
+				...this.chartConfigs[chartIdx],
+				...chartConfig
+			};
 		}
 	}
 });

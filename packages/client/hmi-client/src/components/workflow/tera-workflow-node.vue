@@ -70,7 +70,6 @@ import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
 import { ProjectAssetTypes } from '@/types/Project';
-import { logger } from '@/utils/logger';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -131,9 +130,18 @@ onMounted(() => {
 });
 
 function showNodeDrilldown() {
+	let pageType;
+	let assetId;
+	switch (props.node.operationType) {
+		case 'SimulateOperation':
+			pageType = ProjectAssetTypes.SIMULATIONS;
+			assetId = props.node.id;
+			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+			break;
+		default:
+			break;
+	}
 	if (!isEmpty(props.node.outputs)) {
-		let pageType;
-		let assetId;
 		switch (props.node.operationType) {
 			case 'ModelOperation':
 				pageType = ProjectAssetTypes.MODELS;
@@ -147,7 +155,7 @@ function showNodeDrilldown() {
 				break;
 		}
 		openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
-	} else logger.error('Node needs a valid output', { silent: true });
+	}
 }
 
 function mouseoverPort(event) {
