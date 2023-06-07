@@ -330,7 +330,6 @@ watch(
 			S: { width: 60, height: 60 },
 			T: { width: 40, height: 40 }
 		});
-		console.log(graphData);
 
 		// Create renderer
 		renderer = new PetrinetRenderer({
