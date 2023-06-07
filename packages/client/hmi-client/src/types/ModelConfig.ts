@@ -1,4 +1,4 @@
-import { Model } from '@/types/Model';
+import { Model } from '@/types/Types';
 
 // This is temp as it will be replaced by types/Types when this is more finalized and moved to hmi-server
 

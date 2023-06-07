@@ -139,7 +139,6 @@
 		<template v-if="modelView === ModelView.MODEL">
 			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
 				<AccordionTab header="Model diagram">
-					<!-- TOM TODO: Fix props here -->
 					<tera-model-diagram
 						:model="model"
 						:is-editable="props.isEditable"
@@ -490,8 +489,6 @@ function generateModelConfigValues() {
 		}
 	}
 	// Default values
-
-	// TOM TODO: Check below is correct
 	else if (model.value) {
 		model.value?.model.states.forEach((s) => {
 			initialValues.value[0][s.name] = `${1}`;

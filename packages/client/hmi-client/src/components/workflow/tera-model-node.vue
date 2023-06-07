@@ -3,27 +3,27 @@
 		<h5>{{ model.name }}</h5>
 		<h6>Initial values</h6>
 		<ul>
-			<li v-for="(s, i) of model.content.S" :key="i">
+			<li v-for="(s, i) of model.model.states" :key="i">
 				<span>{{ s.sname }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.sname]"
+					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.name]"
 				/>
 			</li>
 		</ul>
 		<h6>Parameter values</h6>
 		<ul>
-			<li v-for="(t, i) of model.content?.T" :key="i">
+			<li v-for="(t, i) of model.model?.transitions" :key="i">
 				<span>{{ t.tname }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.tname]"
+					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.name]"
 				/>
 			</li>
 		</ul>
@@ -43,13 +43,13 @@
 import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { Model } from '@/types/Model';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
+import { Model } from '@/types/Types';
 
 const props = defineProps<{
 	modelId: string | null;
@@ -92,12 +92,13 @@ function addModelConfiguration() {
 }
 
 function initDefaultConfig() {
-	model.value?.content.S.forEach((s) => {
-		initialValues.value[0][s.sname] = 1;
+	console.log(model.value?.model);
+	model.value?.model.states.forEach((s) => {
+		initialValues.value[0][s.name] = 1;
 	});
 
-	model.value?.content.T.forEach((s) => {
-		parameterValues.value[0][s.tname] = 0.0005;
+	model.value?.model.transitions.forEach((t) => {
+		parameterValues.value[0][t.name] = 0.0005;
 	});
 
 	createModelConfigOutput();
