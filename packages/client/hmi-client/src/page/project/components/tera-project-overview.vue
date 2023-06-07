@@ -173,7 +173,7 @@
 
 <script setup lang="ts">
 import { IProject } from '@/types/Project';
-import { nextTick, ref } from 'vue';
+import { nextTick, Ref, ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
@@ -191,6 +191,7 @@ import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
 import { createNewDatasetFromCSV } from '@/services/dataset';
+import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	project: IProject;
@@ -200,7 +201,7 @@ const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
-const visible = ref(false);
+const visible: Ref<boolean> = ref(false);
 const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
@@ -262,8 +263,13 @@ async function processFiles(
 ) {
 	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
-			const addedCSV = await createNewDatasetFromCSV(file, props.project.id, csvDescription);
-			const text = addedCSV?.csv.join('\r\n');
+			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
+				file,
+				props.project.username,
+				props.project.id,
+				csvDescription
+			);
+			const text: string = addedCSV?.csv?.join('\r\n');
 			const images = [];
 
 			return { file, error: false, response: { text, images } };

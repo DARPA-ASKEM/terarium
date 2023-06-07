@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -20,6 +21,14 @@ public class Dataset {
 	@TSOptional
 	private String id; //Is this a UUID?
 
+	/** Timestamp of when the dataset was created **/
+	@TSOptional
+	private Instant timestamp;
+
+	/** Username of the user who created the dataset **/
+	@TSOptional
+	private String username;
+
 	/** Name of the dataset **/
 	private String name;
 
@@ -27,9 +36,19 @@ public class Dataset {
 	@TSOptional
 	private String description;
 
+	/** (Optional) data source date **/
+	@TSOptional
+	@JsonAlias("data_source_date")
+	private String dataSourceDate;
+
+	/** (Optional) list of file names associated with the dataset **/
+	@TSOptional
+	@JsonAlias("file_names")
+	private List<String> fileNames;
+
 	/** (Optional) Url from which the dataset can be downloaded/fetched **/
 	@TSOptional
-	@JsonAlias("data_url")
+	@JsonAlias("dataset_url")
 	private String url;
 
 	/** Information regarding the columns that make up the dataset **/
