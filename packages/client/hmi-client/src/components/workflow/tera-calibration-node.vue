@@ -52,7 +52,7 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
-const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
+const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 
 const runId = ref('');
 const timestepColumnName = ref<string>('');
