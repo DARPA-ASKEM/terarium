@@ -23,12 +23,11 @@ import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { shimPetriModel } from '@/services/models/petri-shim';
-
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
-
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 
 type DatasetType = {
 	data: number[];
@@ -87,12 +86,12 @@ const runSimulate = async () => {
 
 	if (port && port.value) {
 		const payload = {
-			model: shimPetriModel(port.value.model),
+			model: shimPetriModel(AMRToPetri(port.value.model)),
 			initials: port.value.initialValues,
 			params: port.value.parameterValues,
 			tspan: [0, 100]
 		};
-
+		console.log(payload);
 		const response = await makeForecast(payload);
 		startedRunIdList.value = [response.id];
 
