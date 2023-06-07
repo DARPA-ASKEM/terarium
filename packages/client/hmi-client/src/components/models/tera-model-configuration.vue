@@ -296,8 +296,7 @@ onMounted(() => resetModelConfiguration());
 	margin-bottom: 1rem;
 }
 
-/**This isn't applying for some reason... */
-.model-configuration:deep(.p-datatable-tbody > tr > td:empty) {
+.model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
 	content: '--';
 }
 

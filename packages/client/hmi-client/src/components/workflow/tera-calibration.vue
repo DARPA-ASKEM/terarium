@@ -189,6 +189,7 @@ import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { logger } from '@/utils/logger';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -317,7 +318,9 @@ const calibrate = async () => {
 			calibratedModelConfig.value.parameterValues = calibratedParams;
 		}
 
-		if (!resultsHaveNull) {
+		if (resultsHaveNull) {
+			logger.error("The resulting parameters include null value(s) which can't be simulated.");
+		} else {
 			// do polling and retrieve calibration result
 			const forecastResponse = await makeForecast(payload);
 			const forecastPoller = new Poller<object>()
