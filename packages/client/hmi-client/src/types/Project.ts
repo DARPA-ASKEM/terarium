@@ -9,7 +9,8 @@ export enum ProjectAssetTypes {
 	SIMULATION_RUNS = 'simulation_runs',
 	SIMULATION_WORKFLOW = 'simulation_workflow',
 	DATASETS = 'datasets',
-	CODE = 'code'
+	CODE = 'code',
+	WORKFLOWS = 'workflows'
 }
 
 export enum ProjectPages {
