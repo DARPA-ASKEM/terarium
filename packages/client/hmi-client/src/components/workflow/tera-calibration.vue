@@ -250,8 +250,6 @@ const mappingSimplified = computed(() =>
 const calibrate = async () => {
 	// Make calibration job.
 	if (modelConfig.value && csvAsset.value) {
-		console.log(modelConfig.value);
-
 		const featureMappings: { [index: string]: string } = {};
 		// Go from 2D array to a index: value like they want
 		// was just easier to work with 2D array for user input
@@ -299,7 +297,6 @@ const calibrate = async () => {
 		await calibratePoller.start();
 
 		const calibratedParams = await getRunResult(results.id);
-		console.log(calibratedParams, results.id);
 
 		const resultsHaveNull =
 			calibratedParams === null || Object.values(calibratedParams).some((v) => v === null);
