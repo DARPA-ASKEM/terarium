@@ -232,7 +232,7 @@ const assets = computed(() => {
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
 				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
 				const pageType = asset?.type ?? projectAssetType;
-				const assetId = `${assetName}-${asset?.id.toString()}`;
+				const assetId = asset?.id.toString();
 				return { assetName, pageType, assetId };
 			});
 			result.push(...typeAssets);
