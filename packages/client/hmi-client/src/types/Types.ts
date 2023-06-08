@@ -275,7 +275,7 @@ export interface XDDFacetBucket {
 export interface Rate {
     target: string;
     expression: string;
-    expression_mathml: string;
+    expressionMathml: string;
 }
 
 export interface TypeSystem {

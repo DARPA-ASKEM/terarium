@@ -15,5 +15,6 @@ import java.util.List;
 public class Rate {
 	private String target;
 	private String expression;
-	private String expression_mathml;
+	@JsonAlias("expression_mathml")
+	private String expressionMathml;
 }

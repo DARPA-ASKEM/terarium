@@ -46,6 +46,7 @@ import Dropdown from 'primevue/dropdown';
 import { downloadRawFile } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import { shimPetriModel } from '@/services/models/petri-shim';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
@@ -58,7 +59,7 @@ const runId = ref('');
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
-	modelConfig.value?.model.content.S.map((state) => state.sname)
+	modelConfig.value?.model.model.states.map((state) => state.sname)
 );
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
@@ -78,7 +79,7 @@ const startCalibration = async () => {
 			}
 
 			const calibrationParam: CalibrationParams = {
-				model: shimPetriModel(modelConfig.value.model),
+				model: shimPetriModel(AMRToPetri(modelConfig.value.model)),
 				initials: modelConfig.value.initialValues,
 				params: modelConfig.value.parameterValues,
 				timesteps_column: timestepColumnName.value,
