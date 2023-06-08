@@ -6,6 +6,7 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -123,20 +124,17 @@ public interface DatasetProxy {
 		@PathParam("id") String id
 	);
 
+
 	@GET
-	@Path("/{id}/file")
-	Response getCsv(
+	@Path("/{id}/upload-url")
+	PresignedURL getUploadUrl(
 		@PathParam("id") String id,
-		@DefaultValue("true") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit
+		@QueryParam("filename") String filename
 	);
 
-	@POST
-	@Path("/{id}/file")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	Response uploadFile(
-		@PathParam("id") String id,
-		@QueryParam("filename") String filename,
-		@FormDataParam("file") MultipartFormDataOutput file
+	@GET
+	@Path("/{id}/download-url")
+	PresignedURL getDownloadUrl(
+		@PathParam("id") String id, @QueryParam("filename") String filename
 	);
 }

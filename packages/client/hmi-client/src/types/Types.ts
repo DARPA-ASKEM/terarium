@@ -83,8 +83,12 @@ export interface Simulation {
 
 export interface Dataset {
     id?: string;
+    timestamp?: Date;
+    username?: string;
     name: string;
     description?: string;
+    dataSourceDate?: string;
+    fileNames?: string[];
     url?: string;
     columns?: DatasetColumn[];
     metadata?: any;
@@ -104,6 +108,11 @@ export interface DatasetColumn {
 export interface Grounding {
     identifiers: { [index: string]: string };
     context?: { [index: string]: any };
+}
+
+export interface PresignedURL {
+    url: string;
+    method: string;
 }
 
 export interface PetriNetModel {

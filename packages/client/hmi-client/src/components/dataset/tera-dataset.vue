@@ -48,7 +48,7 @@
 					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
-			<Accordion :multiple="true" :activeIndex="showAccordion">
+			<Accordion :multiple="true">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
@@ -66,8 +66,8 @@
 						<header class="annotation-subheader">Annotations</header>
 						<section class="annotation-group">
 							<section
-								v-for="name in annotations.map((annotation) => annotation.name)"
-								:key="name"
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name[0]"
 								class="annotation-row data-row"
 							>
 								<section>
@@ -76,7 +76,7 @@
 								</section>
 								<section>
 									<header>Description</header>
-									<section>{{ annotations[name] }}</section>
+									<section>{{ annotations[name[0]] }}</section>
 								</section>
 							</section>
 						</section>
@@ -96,7 +96,7 @@
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { computed, ref, watch, onUpdated } from 'vue';
+import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
@@ -128,8 +128,8 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset = ref<Dataset | null>(null);
-const rawContent = ref<CsvAsset | null>(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
@@ -139,8 +139,7 @@ const datasetContent = computed(() => [
 	{
 		key: 'Annotations',
 		value: [...(annotations.value ?? [])]
-	},
-	{ key: 'Features', value: annotations.value?.feature }
+	}
 ]);
 
 onUpdated(() => {
@@ -154,8 +153,10 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId, 10);
 			const datasetTemp: Dataset | null = await getDataset(props.assetId);
+
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -173,9 +174,9 @@ watch(
 );
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
-const showAccordion = computed(() =>
-	dataset.value?.columns?.map((column) => column.annotations).length > 0 ? [1] : [0]
-);
+// const showAccordion = computed(() =>
+//	dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0 ? [1] : [0]
+// );
 </script>
 
 <style scoped>

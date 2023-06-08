@@ -156,6 +156,7 @@
 						<tera-import-github-file
 							:urlString="url"
 							:show-import-button="isEditable"
+							:project="project"
 							@open-code="openCode"
 						/>
 					</li>
@@ -255,6 +256,7 @@ import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import InputText from 'primevue/inputtext';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import { IProject } from '@/types/Project';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -266,6 +268,7 @@ const props = defineProps<{
 	isEditable: boolean;
 	highlight?: string;
 	previewLineLimit?: number;
+	project?: IProject;
 }>();
 
 const doc = ref<Document | null>(null);

@@ -29,9 +29,6 @@
 					</template>
 				</div>
 				<div v-else-if="resourceType === ResourceType.MODEL">{{ asset.framework }}</div>
-				<div v-else-if="resourceType === ResourceType.DATASET && asset.simulationRun === true">
-					Simulation run
-				</div>
 			</div>
 			<header class="title" v-html="title" />
 			<div class="details" v-html="formatDetails" />
@@ -243,11 +240,16 @@ const formatDetails = computed(() => {
 
 // Format features for dataset type
 const formatFeatures = () => {
-	const features = props.asset.annotations?.annotations.feature ?? [];
-	if (!features || features.length === 0) return [];
-	const featuresNames = features.map((f) => (f.displayName !== '' ? f.displayName : f.name));
-	const max = 5;
-	return featuresNames.length < max ? featuresNames : featuresNames.slice(0, max);
+	if (props.resourceType === ResourceType.DATASET) {
+		// TODO: Once we have enrichment and extraction working we can see what annotations will look like
+		/* const columns = props.asset.columns ?? [];
+		if (!columns || columns.length === 0) return [];
+		const annotations = columns.map((c) => (c.annotations ? c.annotations : []));
+		const annotationNames = annotations.map((a) => (a.name ? a.name : ''));
+		const max = 5;
+		return annotationNames.length < max ? annotationNames : annotationNames.slice(0, max); */
+	}
+	return [];
 };
 
 const { setDragData, deleteDragData } = useDragEvent();
