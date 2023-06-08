@@ -1,8 +1,6 @@
-/** FIXME: A temporary shim until the official mdoel-representation comes online - May 2023 * */
 import { PetriNet } from '@/petrinet/petrinet-service';
-import { ITypedModel } from '@/types/Model';
 
-export const shimPetriModel = (model: ITypedModel<PetriNet>) => {
+export const shimPetriModel = (model: PetriNet) => {
 	const cleanedModel: PetriNet = {
 		S: [],
 		T: [],
@@ -10,10 +8,10 @@ export const shimPetriModel = (model: ITypedModel<PetriNet>) => {
 		O: []
 	};
 	if (model) {
-		cleanedModel.S = model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = model.content.I;
-		cleanedModel.O = model.content.O;
+		cleanedModel.S = model.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = model.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = model.I;
+		cleanedModel.O = model.O;
 	}
 	return JSON.stringify(cleanedModel);
 };

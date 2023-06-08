@@ -1,5 +1,4 @@
-import { DocumentAsset, Document, Dataset } from '@/types/Types';
-import { Model } from './Model';
+import { DocumentAsset, Document, Dataset, Model } from '@/types/Types';
 
 export enum ProjectAssetTypes {
 	DOCUMENTS = 'publications',
