@@ -42,27 +42,28 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import Button from 'primevue/button';
 import { makeCalibrateJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
-import { CalibrationParams, CsvAsset } from '@/types/Types';
+import { CalibrationParams, CsvAsset, Dataset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
-import { downloadRawFile } from '@/services/dataset';
+import { downloadRawFile, getDataset } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 const modelConfig = computed(() => props.node.inputs[0].value as ModelConfig | undefined);
-const datasetId = computed(() => props.node.inputs[1].value as number | undefined);
+const datasetId = computed(() => props.node.inputs[1].value as string | undefined);
 
 const runId = ref(props.node.outputs[0].value as number | undefined);
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
-	modelConfig.value?.model.content.S.map((state) => state.sname)
+	modelConfig.value?.model.model.states.map((state) => state.sname)
 );
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const csvAsset = shallowRef<CsvAsset | null>(null);
 const datasetValue = ref();
 const featureMap = computed(() => modelColumnNames.value.map((stateName) => ['', stateName]));
 
@@ -77,10 +78,11 @@ const startCalibration = async () => {
 	};
 	if (modelConfig.value) {
 		// Take out all the extra content in model.content
-		cleanedModel.S = modelConfig.value.model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = modelConfig.value.model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = modelConfig.value.model.content.I;
-		cleanedModel.O = modelConfig.value.model.content.O;
+		const tempModel = AMRToPetri(modelConfig.value.model);
+		cleanedModel.S = tempModel.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = tempModel.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = tempModel.I;
+		cleanedModel.O = tempModel.O;
 
 		if (featureMap.value) {
 			const featureObject: { [index: string]: string } = {};
@@ -122,9 +124,15 @@ const getCalibrationResults = async () => {
 watch(
 	() => datasetId.value, // When dataset ID changes, update datasetColumnNames
 	async () => {
-		if (datasetId.value) {
+		if (datasetId.value !== undefined) {
 			// Get dataset:
-			csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
+
+			const dataset: Dataset | null = await getDataset(datasetId.value as string);
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			csvAsset.value = (await downloadRawFile(
+				datasetId.value as string,
+				dataset?.fileNames?.[0] ?? ''
+			)) as CsvAsset;
 			datasetColumnNames.value = csvAsset.value?.headers;
 			datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 		}
