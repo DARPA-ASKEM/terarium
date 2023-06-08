@@ -6,30 +6,23 @@
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="datasetContent"
-				:show-header-links="datasetView === DatasetView.DESCRIPTION"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Description"
-							icon="pi pi-list"
-							@click="datasetView = DatasetView.DESCRIPTION"
-							:active="datasetView === DatasetView.DESCRIPTION"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Data"
-							icon="pi pi-file"
-							@click="datasetView = DatasetView.DATA"
-							:active="datasetView === DatasetView.DATA"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Description"
+					icon="pi pi-list"
+					@click="datasetView = DatasetView.DESCRIPTION"
+					:active="datasetView === DatasetView.DESCRIPTION"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Data"
+					icon="pi pi-file"
+					@click="datasetView = DatasetView.DATA"
+					:active="datasetView === DatasetView.DATA"
+				/>
+			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<section class="metadata data-row">
@@ -48,7 +41,8 @@
 					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
-			<Accordion :multiple="true">
+
+			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
@@ -105,7 +99,6 @@ import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -134,6 +127,8 @@ const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
 
+/*
+// apparently this isn't used?
 const datasetContent = computed(() => [
 	{ key: 'Description', value: dataset.value?.description },
 	{
@@ -141,6 +136,7 @@ const datasetContent = computed(() => [
 		value: [...(annotations.value ?? [])]
 	}
 ]);
+*/
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -180,6 +176,10 @@ const annotations = computed(() => dataset.value?.columns?.map((column) => colum
 </script>
 
 <style scoped>
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
+}
 .metadata {
 	margin: 1rem;
 	margin-bottom: 0.5rem;

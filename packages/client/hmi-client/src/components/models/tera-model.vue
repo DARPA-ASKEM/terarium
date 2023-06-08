@@ -1,63 +1,35 @@
 <template>
 	<tera-asset
 		:name="name"
-		:overline="model?.framework"
 		:is-editable="isEditable"
 		:is-creating-asset="assetId === ''"
 		:stretch-content="modelView === ModelView.MODEL"
 		@close-preview="emit('close-preview')"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="modelContent"
-				:show-header-links="modelView === ModelView.DESCRIPTION"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Description"
-							icon="pi pi-list"
-							@click="modelView = ModelView.DESCRIPTION"
-							:active="modelView === ModelView.DESCRIPTION"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Model"
-							icon="pi pi-file"
-							@click="modelView = ModelView.MODEL"
-							:active="modelView === ModelView.MODEL"
-						/>
-					</span>
-				</template>
-				<template #page-search>
-					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText
-							v-model="globalFilter['global'].value"
-							placeholder="Find in page"
-							class="p-inputtext-sm"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
-		</template>
 		<template #name-input>
 			<InputText v-model="newModelName" placeholder="Title of new model" />
 		</template>
 		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Description"
+					icon="pi pi-list"
+					@click="modelView = ModelView.DESCRIPTION"
+					:active="modelView === ModelView.DESCRIPTION"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Model"
+					icon="pi pi-file"
+					@click="modelView = ModelView.MODEL"
+					:active="modelView === ModelView.MODEL"
+				/>
+			</span>
 			<Button
 				v-if="assetId === ''"
 				@click="createNewModel"
 				label="Create new model"
-				class="p-button-sm"
-			/>
-			<Button
-				v-else
-				@click="launchForecast"
-				label="Open simulation space"
-				:disabled="isEditing"
 				class="p-button-sm"
 			/>
 		</template>
@@ -228,14 +200,6 @@
 			</Accordion>
 		</template>
 		<Teleport to="body">
-			<ForecastLauncher
-				v-if="showForecastLauncher && model"
-				:model="model"
-				@close="showForecastLauncher = false"
-				@launch-forecast="goToSimulationRunPage"
-			/>
-		</Teleport>
-		<Teleport to="body">
 			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 				<template #header>
 					<h4>{{ cellValueToEdit.field }}</h4>
@@ -298,16 +262,13 @@ import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
 import * as textUtil from '@/utils/text';
-import ForecastLauncher from '@/components/models/tera-forecast-launcher.vue';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { ResultType } from '@/types/common';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import { FilterMatchMode } from 'primevue/api';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraModelDiagram from './tera-model-diagram.vue';
 
@@ -319,7 +280,10 @@ enum ModelView {
 	DESCRIPTION = 'description',
 	MODEL = 'model'
 }
-
+/*
+// This is the model content that is displayed in the scroll-to-section featuer
+// That feature was removed, but way may want to bring it back.
+// I suggest we keep this unil we decide to remove it for good.
 const modelContent = computed(() => [
 	{ key: 'Description', value: description },
 	{ key: 'Intended Use', value: null },
@@ -336,7 +300,7 @@ const modelContent = computed(() => [
 	{ key: 'Transitions', value: model.value?.model.transitions },
 	{ key: 'Variable Statements', value: model.value?.metadata?.variable_statements }
 ]);
-
+*/
 const modelView = ref(ModelView.DESCRIPTION);
 
 // Get rid of these emits
@@ -370,7 +334,8 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const model = ref<Model | null>(null);
 
-const isEditing = ref<boolean>(false);
+// apparently this is never used?
+// const isEditing = ref<boolean>(false);
 const isEditingEQ = ref<boolean>(false);
 
 const newModelName = ref('New Model');
@@ -378,8 +343,6 @@ const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
 const isMathMLValid = ref<boolean>(true);
-
-const showForecastLauncher = ref(false);
 
 const modelConfigNames = ref([{ name: 'Config 1' }]);
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
@@ -522,12 +485,6 @@ watch(
 	}
 );
 
-const globalFilter = ref({
-	// @ts-ignore
-	// eslint-disable-line
-	global: { value: '', matchMode: FilterMatchMode.CONTAINS }
-});
-
 // States/transitions aren't selected like this anymore - maybe somehow later?
 // const onStateVariableClick = () => {
 // 	if (selectedRow.value) {
@@ -594,10 +551,6 @@ onUpdated(() => {
 	}
 });
 
-const launchForecast = () => {
-	showForecastLauncher.value = true;
-};
-
 const createNewModel = async () => {
 	if (props.project) {
 		const newModel = {
@@ -627,18 +580,6 @@ const createNewModel = async () => {
 	}
 };
 
-const goToSimulationRunPage = () => {
-	showForecastLauncher.value = false;
-	router.push({
-		name: RouteName.ProjectRoute,
-		params: {
-			assetId: model.value?.id ?? 0 + 1000,
-			assetName: highlightSearchTerms(model.value?.name ?? ''),
-			pageType: 'simulation_runs'
-		}
-	});
-};
-
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 
@@ -658,6 +599,10 @@ function getSource(sp) {
 </script>
 
 <style scoped>
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
+}
 .p-toolbar {
 	position: absolute;
 	width: 100%;

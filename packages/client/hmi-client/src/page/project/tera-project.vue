@@ -516,7 +516,7 @@ function formatAuthorTimestamp(username, timestamp) {
 
 <style scoped>
 .resource-panel {
-	z-index: 2;
+	z-index: 1000;
 	isolation: isolate;
 }
 
