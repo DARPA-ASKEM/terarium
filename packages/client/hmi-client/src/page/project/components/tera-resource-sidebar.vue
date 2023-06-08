@@ -143,7 +143,6 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { useDragEvent } from '@/services/drag-drop';
-import 'primeicons/primeicons.css';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
