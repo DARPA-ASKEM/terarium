@@ -228,11 +228,9 @@ const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0]
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelVariables = computed(() => {
 	if (modelConfigurationRef.value) {
-		const filteredVariables = modelConfig.value?.model.model.states.filter((state) =>
-			modelConfigurationRef.value.selectedModelVariables.includes(state.sname)
-		);
-
-		return filteredVariables.map((state) => state.sname);
+		return modelConfig.value?.model.model.states
+			.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.sname))
+			.map((state) => state.sname);
 	}
 	return modelConfig.value?.model.model.states.map((state) => state.sname);
 });
