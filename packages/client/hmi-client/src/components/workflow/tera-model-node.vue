@@ -50,6 +50,7 @@ import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
+import { NumericValueMap } from '@/types/common';
 
 const props = defineProps<{
 	modelId: string | null;
@@ -59,17 +60,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output-port']);
 
-interface StringValueMap {
-	[key: string]: number;
-}
-
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const model = ref<Model | null>();
 const selectedModel = ref<Model>();
 
-const initialValues = ref<StringValueMap[]>([{}]);
-const parameterValues = ref<StringValueMap[]>([{}]);
+const initialValues = ref<NumericValueMap[]>([{}]);
+const parameterValues = ref<NumericValueMap[]>([{}]);
 
 function createModelConfigOutput() {
 	if (ModelOperation.action) {

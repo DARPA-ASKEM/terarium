@@ -36,11 +36,7 @@ import Button from 'primevue/button';
 import { makeForecast, createSimulation } from '@/services/models/simulation-service';
 import { Simulation, SimulationParams } from '@/types/Types';
 import { shimPetriModel } from '@/services/models/petri-shim';
-import { StringValueMap } from '@/types/common';
-
-interface NumericValueMap {
-	[key: string]: number;
-}
+import { StringValueMap, NumericValueMap } from '@/types/common';
 
 const props = defineProps<{
 	model: ITypedModel<PetriNet>;

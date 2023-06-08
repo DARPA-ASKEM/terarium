@@ -3,10 +3,7 @@ import { CsvAsset } from '@/types/Types';
 import { ProjectAssetTypes } from '@/types/Project';
 import { WorkflowNode } from '@/types/workflow';
 import { TspanUnits, ChartConfig } from '@/types/SimulateConfig';
-
-interface StringValueMap {
-	[key: string]: number;
-}
+import { NumericValueMap } from '@/types/common';
 
 // Probably will be an array later
 export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
@@ -16,8 +13,8 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		selectedOutputIndex: 0 as number,
 		// model node
 		// FIXME: won't need a store for model config values once workflow/model configs are saved
-		initialValues: null as StringValueMap[] | null,
-		parameterValues: null as StringValueMap[] | null,
+		initialValues: null as NumericValueMap[] | null,
+		parameterValues: null as NumericValueMap[] | null,
 		node: null as WorkflowNode | null,
 		// simulate node
 		numCharts: 1,
@@ -41,7 +38,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 			this.pageType = pageType;
 			this.setNode(node);
 		},
-		setModelConfig(initialValues: StringValueMap[], parameterValues: StringValueMap[]) {
+		setModelConfig(initialValues: NumericValueMap[], parameterValues: NumericValueMap[]) {
 			this.initialValues = initialValues;
 			this.parameterValues = parameterValues;
 		},
@@ -75,7 +72,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 				return acc;
 			}, [] as number[]);
 
-			const dataset: StringValueMap[] = [];
+			const dataset: any = []; // temp typing
 
 			// start from index 1 because index 0 contains csv headers
 			for (let i = 1; i < datasetData.csv.length; i++) {

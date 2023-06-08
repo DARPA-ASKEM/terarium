@@ -126,7 +126,7 @@ import { Model } from '@/types/Model';
 import { ModelConfig } from '@/types/ModelConfig';
 import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { StringValueMap } from '@/types/common';
+import { NumericValueMap } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
@@ -141,8 +141,8 @@ const modelConfigNames = ref(['Config 1']);
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
-const initialValues = ref<StringValueMap[]>([{}]);
-const parameterValues = ref<StringValueMap[]>([{}]);
+const initialValues = ref<NumericValueMap[]>([{}]);
+const parameterValues = ref<NumericValueMap[]>([{}]);
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
@@ -222,8 +222,8 @@ function generateModelConfigValues() {
 		openedWorkflowNodeStore.parameterValues !== null
 	) {
 		// Shallow copy
-		initialValues.value = openedWorkflowNodeStore.initialValues as any; // Not sure why the typing doesn't match
-		parameterValues.value = openedWorkflowNodeStore.parameterValues as any;
+		initialValues.value = openedWorkflowNodeStore.initialValues;
+		parameterValues.value = openedWorkflowNodeStore.parameterValues;
 
 		if (modelConfigNames.value.length < initialValues.value.length - 1) {
 			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
@@ -231,25 +231,25 @@ function generateModelConfigValues() {
 	}
 	// Copy node input in here if that's just what we want to show
 	else if (props.modelConfigNodeInput) {
-		initialValues.value[0] = props.modelConfigNodeInput.initialValues as any;
-		parameterValues.value[0] = props.modelConfigNodeInput.parameterValues as any;
+		initialValues.value[0] = props.modelConfigNodeInput.initialValues;
+		parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
 	}
 	// Default values petrinet format
 	else if (props.model) {
 		props.model?.content.S.forEach((s) => {
-			initialValues.value[0][s.sname] = `${1}`;
+			initialValues.value[0][s.sname] = 1;
 		});
 		props.model?.content.T.forEach((t) => {
-			parameterValues.value[0][t.tname] = `${0.0005}`;
+			parameterValues.value[0][t.tname] = 0.0005;
 		});
 	}
 	// Default values amr format
 	else if (props.amr) {
 		props.amr.model.states.forEach((s) => {
-			initialValues.value[0][s.id] = `${1}`;
+			initialValues.value[0][s.id] = 1;
 		});
 		props.amr.model.transitions.forEach((t) => {
-			parameterValues.value[0][t.id] = `${0.0005}`;
+			parameterValues.value[0][t.id] = 0.0005;
 		});
 	}
 
