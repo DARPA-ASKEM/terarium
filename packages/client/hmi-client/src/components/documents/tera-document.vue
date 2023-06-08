@@ -147,6 +147,7 @@
 						<tera-import-github-file
 							:urlString="url"
 							:show-import-button="isEditable"
+							:project="project"
 							@open-code="openCode"
 						/>
 					</li>
@@ -239,12 +240,12 @@ import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { Model } from '@/types/Model';
-import { Extraction, ProvenanceType, Document, Dataset } from '@/types/Types';
+import { Model, Extraction, ProvenanceType, Document, Dataset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import { IProject } from '@/types/Project';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -256,6 +257,7 @@ const props = defineProps<{
 	isEditable: boolean;
 	highlight?: string;
 	previewLineLimit?: number;
+	project?: IProject;
 }>();
 
 const doc = ref<Document | null>(null);

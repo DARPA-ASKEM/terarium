@@ -2,7 +2,6 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:overline="dataset?.simulationRun ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
@@ -40,20 +39,24 @@
 				<section>
 					<header>Columns</header>
 					<section>{{ rawContent?.stats?.length || '-' }}</section>
+					<header>Metadata</header>
+					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
 					<header>Date uploaded</header>
-					<section>{{ new Date(dataset?.timestamp).toLocaleString('eu-ZA') || '-' }}</section>
+					<section>
+						{{ new Date(dataset?.timestamp as Date).toLocaleString('eu-ZA') || '-' }}
+					</section>
 				</section>
 				<section>
 					<header>Uploaded by</header>
-					<section>{{ dataset?.uploadedBy || '-' }}</section>
+					<section>{{ dataset?.username || '-' }}</section>
 				</section>
 			</section>
 			<section class="metadata data-row">
 				<section>
 					<header>Source Name</header>
-					<section>{{ dataset?.sourceName || '-' }}</section>
+					<section>{{ dataset?.source || '-' }}</section>
 				</section>
 				<section>
 					<header>Source URL</header>
@@ -64,43 +67,70 @@
 				</section>
 			</section>
 			<RelatedPublications />
-			<Accordion :multiple="true" :activeIndex="[0, 1]">
+			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<p v-html="dataset.description" />
+					<p v-html="dataset?.description" />
 				</AccordionTab>
-
-				<!-- ## TODO: Confirm with Pascale that this is not needed ##
-				<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
+				<AccordionTab v-if="(annotations?.length || 0) > 0">
 					<template #header>
 						<header id="Annotations">
 							Annotations
-							<span class="artifact-amount">
-								({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})
-							</span>
+							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
 						</header>
 					</template>
-					<section v-if="annotations?.geo">
-						<header class="annotation-subheader">Geospatial annotations</header>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
 						<section class="annotation-group">
 							<section
-								v-for="annotation in annotations?.geo"
-								:key="annotation.name"
-								class="metadata data-row"
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name[0]"
+								class="annotation-row data-row"
 							>
 								<section>
 									<header>Name</header>
-									<section class="value">{{ annotation.name }}</section>
+									<section>{{ name }}</section>
 								</section>
 								<section>
 									<header>Description</header>
-									<section>{{ annotation.description }}</section>
+									<section>{{ annotations[name[0]] }}</section>
+								</section>
+							</section>
+						</section>
+					</section>
+				</AccordionTab>
+			</Accordion>
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<!-- 	<AccordionTab>
+					<template #header>
+						<header id="Description">Description</header>
+					</template>
+					<p v-html="dataset?.description" />
+				</AccordionTab>
+				<AccordionTab v-if="(annotations?.length || 0) > 0">
+					<template #header>
+						<header id="Annotations">
+							Annotations
+							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
+						</header>
+					</template>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
+						<section class="annotation-group">
+							<section
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name[0]"
+								class="annotation-row data-row"
+							>
+								<section>
+									<header>Name</header>
+									<section>{{ name }}</section>
 								</section>
 								<section>
-									<header>GADM level</header>
-									<section>{{ annotation.gadmLevel }}</section>
+									<header>Description</header>
+									<section>{{ annotations[name[0]] }}</section>
 								</section>
 							</section>
 						</section>
@@ -157,7 +187,7 @@
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { computed, ref, watch, onUpdated } from 'vue';
+import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
@@ -192,8 +222,8 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset = ref<Dataset | null>(null);
-const rawContent = ref<CsvAsset | null>(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
@@ -204,9 +234,8 @@ const datasetContent = computed(() => [
 	{ key: 'Description', value: dataset.value?.description },
 	{
 		key: 'Annotations',
-		value: [...(annotations.value?.geo ?? []), ...(annotations.value?.date ?? [])]
-	},
-	{ key: 'Features', value: annotations.value?.feature }
+		value: [...(annotations.value ?? [])]
+	}
 ]);
 */
 
@@ -221,8 +250,10 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId, 10);
-			const datasetTemp = await getDataset(props.assetId);
+			const datasetTemp: Dataset | null = await getDataset(props.assetId);
+
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -240,7 +271,16 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations?.annotations);
+const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
+const showAccordion = computed(() => {
+	if (dataset.value?.columns) {
+		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
+			? [1]
+			: [0];
+	}
+
+	return [0];
+});
 </script>
 
 <style scoped>

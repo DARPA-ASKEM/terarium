@@ -15,10 +15,9 @@
 </template>
 
 <script setup lang="ts">
-import { Document, Dataset } from '@/types/Types';
+import { Document, Dataset, Model } from '@/types/Types';
 import { computed } from 'vue';
 import Button from 'primevue/button';
-import { Model } from '@/types/Model';
 import { isDocument, isDataset, isModel } from '@/utils/data-util';
 import { ResultType, ResourceType } from '@/types/common';
 import TeraAssetCard from '@/page/data-explorer/components/tera-asset-card.vue';
