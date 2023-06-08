@@ -4,26 +4,26 @@
 		<h6>Initial values</h6>
 		<ul>
 			<li v-for="(s, i) of model.model.states" :key="i">
-				<span>{{ s.sname }}</span>
+				<span>{{ s.id }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.name]"
+					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.id]"
 				/>
 			</li>
 		</ul>
 		<h6>Parameter values</h6>
 		<ul>
 			<li v-for="(t, i) of model.model?.transitions" :key="i">
-				<span>{{ t.tname }}</span>
+				<span>{{ t.id }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.name]"
+					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.id]"
 				/>
 			</li>
 		</ul>
@@ -91,11 +91,11 @@ function addModelConfiguration() {
 function initDefaultConfig() {
 	console.log(model.value?.model);
 	model.value?.model.states.forEach((s) => {
-		initialValues.value[0][s.name] = 1;
+		initialValues.value[0][s.id] = 1;
 	});
 
 	model.value?.model.transitions.forEach((t) => {
-		parameterValues.value[0][t.name] = 0.0005;
+		parameterValues.value[0][t.id] = 0.0005;
 	});
 
 	createModelConfigOutput();

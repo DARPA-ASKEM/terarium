@@ -36,7 +36,7 @@
 		<Column
 			v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
 			:key="i"
-			:field="value['sname'] ?? value['tname']"
+			:field="value['id']"
 		>
 			<template #body="{ data, field }">
 				{{ data[field] }}
@@ -235,10 +235,10 @@ function generateModelConfigValues() {
 	// Default values petrinet format
 	else if (props.model) {
 		props.model.model.states.forEach((s) => {
-			initialValues.value[0][s.sname] = 1;
+			initialValues.value[0][s.id] = 1;
 		});
 		props.model.model.transitions.forEach((t) => {
-			parameterValues.value[0][t.tname] = 0.0005;
+			parameterValues.value[0][t.id] = 0.0005;
 		});
 	}
 
@@ -250,6 +250,7 @@ function generateModelConfigValues() {
 }
 
 function resetModelConfiguration() {
+	console.log(props.model);
 	modelConfigNames.value = ['Config 1'];
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
 	initialValues.value = [{}];
