@@ -34,6 +34,7 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
+				@remove-node="(event) => removeNode(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
@@ -204,6 +205,10 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
+};
+
+const removeNode = (event) => {
+	workflowService.removeNode(wf.value, event);
 };
 
 const contextMenuItems = ref([
