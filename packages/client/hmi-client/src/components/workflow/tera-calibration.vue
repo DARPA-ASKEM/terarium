@@ -49,6 +49,7 @@ import { downloadRawFile } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -60,7 +61,7 @@ const runId = ref(props.node.outputs[0].value as number | undefined);
 const timestepColumnName = ref<string>('');
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = computed(() =>
-	modelConfig.value?.model.content.S.map((state) => state.sname)
+	modelConfig.value?.model.model.states.map((state) => state.sname)
 );
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetValue = ref();
@@ -77,10 +78,11 @@ const startCalibration = async () => {
 	};
 	if (modelConfig.value) {
 		// Take out all the extra content in model.content
-		cleanedModel.S = modelConfig.value.model.content.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = modelConfig.value.model.content.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = modelConfig.value.model.content.I;
-		cleanedModel.O = modelConfig.value.model.content.O;
+		const tempModel = AMRToPetri(modelConfig.value.model);
+		cleanedModel.S = tempModel.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = tempModel.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = tempModel.I;
+		cleanedModel.O = tempModel.O;
 
 		if (featureMap.value) {
 			const featureObject: { [index: string]: string } = {};
