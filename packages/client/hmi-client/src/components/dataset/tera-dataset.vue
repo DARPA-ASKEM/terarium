@@ -170,9 +170,15 @@ watch(
 );
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
-// const showAccordion = computed(() =>
-//	dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0 ? [1] : [0]
-// );
+const showAccordion = computed(() => {
+	if (dataset.value?.columns) {
+		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
+			? [1]
+			: [0];
+	}
+
+	return [0];
+});
 </script>
 
 <style scoped>
