@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Model } from '@/types/Model';
+import { Model } from '@/types/Types';
 
 /**
  * Create a project
