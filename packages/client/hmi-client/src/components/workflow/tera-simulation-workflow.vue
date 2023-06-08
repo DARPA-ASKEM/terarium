@@ -1,6 +1,6 @@
 <template>
+	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
-		debug-mode
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -17,6 +17,7 @@
 			<header>
 				<h5>Workflow name</h5>
 				<div class="button-group">
+					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
@@ -410,7 +411,11 @@ onUnmounted(() => {
 });
 
 function cleanUpLayout() {
-	// TODO: remove clean up layout
+	// TODO: clean up layout of nodes
+	console.log('clean up layout');
+}
+function resetZoom() {
+	// TODO: reset zoom level and position
 	console.log('clean up layout');
 }
 </script>
@@ -420,11 +425,15 @@ header {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	background-color: var(--surface-0);
 	padding: 0.5rem 1rem;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
+}
+
+.glass {
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(10px);
 }
 
 .button-group {
@@ -436,6 +445,7 @@ header {
 /* We should make a proper secondary outline button. Until then this works. */
 header .button-group .secondary-button {
 	color: var(--text-color-secondary);
+	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	padding-top: 0px;
 	padding-bottom: 0px;
