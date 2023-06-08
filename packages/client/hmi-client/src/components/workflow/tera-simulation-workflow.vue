@@ -34,6 +34,7 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
+				@remove-node="(event) => removeNode(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
@@ -151,8 +152,7 @@ import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Dataset } from '@/types/Types';
-import { Model } from '@/types/Model';
+import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
@@ -204,6 +204,10 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
+};
+
+const removeNode = (event) => {
+	workflowService.removeNode(wf.value, event);
 };
 
 const contextMenuItems = ref([

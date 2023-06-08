@@ -11,9 +11,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
-import software.uncharted.terarium.hmiserver.models.petrinet.Ontology;
-import software.uncharted.terarium.hmiserver.models.petrinet.Species;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
@@ -22,8 +19,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.smallrye.jwt.config.ConfigLogging.log;
 
@@ -156,60 +151,6 @@ public class ModelResource {
 
 		if (model == null) {
 			return Response.noContent().build();
-		}
-
-		// Resolve the ontology curies
-		final List<Species> species = model.getContent().getS();
-
-		if (species != null && !species.isEmpty()) {
-			// Get the curies from all species, as one string, comma separated without duplicate
-			final String curies = species.stream()
-				.flatMap(s -> Stream.concat(
-					s.getMiraIds().stream().map(Ontology::getCurie),
-					s.getMiraContext().stream().map(Ontology::getCurie)
-				))
-				.filter(Objects::nonNull)
-				.distinct()
-				.collect(Collectors.joining(","));
-
-			// Fetch the ontology information from the DKG
-			List<DKG> entities = new ArrayList<>();
-			try {
-				entities = dkgProxy.getEntities(curies);
-			} catch (RuntimeException e) {
-				log.error("Unable to get the ontology entity for curies: " + curies, e);
-			}
-
-			if (!entities.isEmpty()) {
-				entities.forEach(entity -> entity.setLink(metaRegistryURL + "/" + entity.getCurie()));
-
-				// Transform the entities to a Map
-				Map<String, DKG> ontologies =
-					entities.stream().collect(Collectors.toMap(DKG::getCurie, entity -> entity));
-
-				// Now add the ontologies to each species mira_ids and mira_context
-				species.forEach(s -> {
-					s.getMiraIds().forEach(miraId -> {
-						if (ontologies.containsKey(miraId.getCurie())) {
-							final DKG ontology = ontologies.get(miraId.getCurie());
-							miraId
-								.setTitle(ontology.getName())
-								.setDescription(ontology.getDescription())
-								.setLink(ontology.getLink());
-						}
-					});
-
-					s.getMiraContext().forEach(context -> {
-						if (ontologies.containsKey(context.getCurie())) {
-							final DKG ontology = ontologies.get(context.getCurie());
-							context
-								.setTitle(ontology.getName())
-								.setDescription(ontology.getDescription())
-								.setLink(ontology.getLink());
-						}
-					});
-				});
-			}
 		}
 
 		// Return the model

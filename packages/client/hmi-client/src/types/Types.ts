@@ -54,6 +54,18 @@ export interface DocumentAsset {
     xdd_uri: string;
 }
 
+export interface Model {
+    id: string;
+    framework: string;
+    name: string;
+    description: string;
+    model_version: string;
+    schema: string;
+    model: { [index: string]: any };
+    semantics?: ModelSemantics;
+    metadata: ModelMetadata;
+}
+
 export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
@@ -66,66 +78,48 @@ export interface Simulation {
     description?: string;
     simulationParams: SimulationParams;
     result?: string;
-    modelId: number;
-}
-
-export interface Annotations {
-    geo: DatasetAnnotatedGeo[];
-    date: DatasetAnnotatedDate[];
-    feature: DatasetAnnotatedFeature[];
+    modelId: string;
 }
 
 export interface Dataset {
-    id?: number;
-    name: string;
-    url: string;
-    description: string;
+    id?: string;
     timestamp?: Date;
-    deprecated?: boolean;
-    sensitivity?: string;
-    quality?: string;
-    temporalResolution?: string;
-    geospatialResolution?: string;
-    annotations?: DatasetAnnotations;
-    maintainer?: string;
-    simulationRun?: boolean;
-}
-
-export interface DatasetAnnotatedDate extends DatasetAnnotatedField {
-    dateType: string;
-    primaryDate: boolean;
-    timeFormat: string;
-}
-
-export interface DatasetAnnotatedFeature extends DatasetAnnotatedField {
-    featureType: string;
-    units: string;
-    unitsDescription: string;
-    primaryOntologyId: string;
-    qualifierRole: string;
-}
-
-export interface DatasetAnnotatedField {
+    username?: string;
     name: string;
-    displayName: string;
-    description: string;
-    type: string;
-    qualifies: string[];
-    aliases: any;
+    description?: string;
+    dataSourceDate?: string;
+    fileNames?: string[];
+    url?: string;
+    columns?: DatasetColumn[];
+    metadata?: any;
+    source?: string;
+    grounding?: Grounding;
 }
 
-export interface DatasetAnnotatedGeo extends DatasetAnnotatedField {
-    geoType: string;
-    primaryGeo: boolean;
-    resolveToGadm: boolean;
-    isGeoPair: string;
-    coordFormat: string;
-    gadmLevel: string;
+export interface DatasetColumn {
+    name: string;
+    dataType: ColumnType;
+    formatStr?: string;
+    annotations: { [index: string]: string[] };
+    metadata?: { [index: string]: any };
+    grounding?: { [index: string]: Grounding };
 }
 
-export interface DatasetAnnotations {
-    dataPaths: string[];
-    annotations: Annotations;
+export interface Grounding {
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: any };
+}
+
+export interface PresignedURL {
+    url: string;
+    method: string;
+}
+
+export interface PetriNetModel {
+    states: PetriNetState[];
+    transitions: PetriNetTransition[];
+    parameters?: ModelParameter[];
+    metadata?: ModelMetadata;
 }
 
 export interface CalibrationParams {
@@ -151,11 +145,45 @@ export interface Links {
     self: string;
 }
 
+export interface ModelSemantics {
+    ode: OdeSemantics;
+    typing?: TypingSemantics;
+}
+
+export interface ModelMetadata {
+    processed_at: number;
+    processed_by: string;
+    variable_statements: VariableStatement[];
+}
+
 export interface SimulationParams {
     model: string;
     initials: { [index: string]: number };
     tspan: number[];
     params: { [index: string]: number };
+}
+
+export interface PetriNetState {
+    id: string;
+    name: string;
+    grounding: ModelGrounding;
+    initial: ModelExpression;
+}
+
+export interface PetriNetTransition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding: ModelGrounding;
+    properties: PetriNetTransitionProperties;
+}
+
+export interface ModelParameter {
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface Document {
@@ -193,6 +221,46 @@ export interface XDDResponseOK {
     license: string;
 }
 
+export interface OdeSemantics {
+    rates: Rate[];
+    initials?: any[];
+    parameters?: ModelParameter[];
+}
+
+export interface TypingSemantics {
+    type_system: TypeSystem;
+    type_map: string[][];
+}
+
+export interface VariableStatement {
+    id: string;
+    variable: Variable;
+    value?: StatementValue;
+    metadata?: VariableStatementMetadata[];
+    provenance?: ProvenanceInfo;
+}
+
+export interface ModelGrounding {
+    identifiers: { [index: string]: any };
+    context?: { [index: string]: any };
+}
+
+export interface ModelExpression {
+    expression: string;
+    expressionMathml: string;
+}
+
+export interface PetriNetTransitionProperties {
+    name: string;
+    grounding: ModelGrounding;
+    rate: ModelExpression;
+}
+
+export interface ModelDistribution {
+    type: string;
+    parameters: { [index: string]: any };
+}
+
 export interface Extraction {
     id: number;
     askemClass: string;
@@ -211,6 +279,43 @@ export interface KnownEntities {
 export interface XDDFacetBucket {
     key: string;
     docCount: string;
+}
+
+export interface Rate {
+    target: string;
+    expression: string;
+    expressionMathml: string;
+}
+
+export interface TypeSystem {
+    states: State[];
+    transitions: Transition[];
+}
+
+export interface Variable {
+    id: string;
+    name: string;
+    metadata: VariableMetadata[];
+    column: DataColumn[];
+    paper: Paper;
+    equations: Equation[];
+    dkg_groundings: DKGConcept[];
+}
+
+export interface StatementValue {
+    value: string;
+    type: string;
+    dkg_grounding?: DKGConcept;
+}
+
+export interface VariableStatementMetadata {
+    type: string;
+    value: string;
+}
+
+export interface ProvenanceInfo {
+    method: string;
+    description: string;
 }
 
 export interface ExtractionProperties {
@@ -236,6 +341,62 @@ export interface XDDUrlExtraction {
     url: string;
     resourceTitle: string;
     extractedFrom: string[];
+}
+
+export interface State {
+    id: string;
+    name?: string;
+    description?: string;
+    grounding?: ModelGrounding;
+}
+
+export interface Transition {
+    id: string;
+    input: string[];
+    output: string[];
+    grounding?: ModelGrounding;
+    properties?: Properties;
+}
+
+export interface VariableMetadata {
+    type: string;
+    value: string;
+}
+
+export interface DataColumn {
+    id: string;
+    name: string;
+    dataset: MetadataDataset;
+}
+
+export interface Paper {
+    id: string;
+    doi: string;
+    file_directory: string;
+}
+
+export interface Equation {
+    id: string;
+    text: string;
+    image: string;
+}
+
+export interface DKGConcept {
+    id: string;
+    name: string;
+    score: number;
+}
+
+export interface Properties {
+    name: string;
+    grounding?: ModelGrounding;
+    description?: string;
+}
+
+export interface MetadataDataset {
+    id: string;
+    name: string;
+    metadata: string;
 }
 
 export enum EventType {
@@ -269,4 +430,19 @@ export enum ProvenanceType {
     Project = "Project",
     Concept = "Concept",
     SimulationRun = "SimulationRun",
+}
+
+export enum ColumnType {
+    Unknown = "UNKNOWN",
+    Boolean = "BOOLEAN",
+    String = "STRING",
+    Char = "CHAR",
+    Integer = "INTEGER",
+    Int = "INT",
+    Float = "FLOAT",
+    Double = "DOUBLE",
+    Timestamp = "TIMESTAMP",
+    Datetime = "DATETIME",
+    Date = "DATE",
+    Time = "TIME",
 }

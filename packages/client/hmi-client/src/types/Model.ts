@@ -31,7 +31,7 @@ export type ModelSearchParams = {
 export const ID = 'id';
 export const NAME = 'name';
 export const DESCRIPTION = 'description';
-export const FRAMEWORK = 'framework';
+export const FRAMEWORK = 'schema';
 
 export const DISPLAY_NAMES: { [key: string]: string } = {
 	[NAME]: 'Model Name',

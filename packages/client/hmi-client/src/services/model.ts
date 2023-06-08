@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { Model } from '@/types/Model';
+import { Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -52,7 +52,7 @@ export async function updateModel(model: Model) {
 		name: model.name,
 		description: model.description,
 		framework: model.framework,
-		content: JSON.stringify(model.content)
+		content: JSON.stringify(model.model)
 	});
 	return response?.data ?? null;
 }
