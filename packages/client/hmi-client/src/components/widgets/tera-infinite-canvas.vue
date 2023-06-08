@@ -28,11 +28,13 @@ import * as d3 from 'd3';
 
 const props = withDefaults(
 	defineProps<{
+		background?: string | undefined;
 		debugMode?: boolean;
 		scaleExtent?: [number, number];
 		lastTransform?: { k: number; x: number; y: number };
 	}>(),
 	{
+		background: 'dots',
 		debugMode: false,
 		scaleExtent: () => [0.1, 10],
 		lastTransform: undefined
@@ -51,9 +53,6 @@ let currentTransform: d3.ZoomTransform;
 
 const width = ref(0);
 const height = ref(0);
-const dotPatternXOffset = ref(0);
-const dotPatternYOffset = ref(0);
-const dotPatternScale = ref(0);
 const canvasRef = ref<HTMLElement>();
 const dataLayerRef = ref<HTMLDivElement>();
 const backgroundLayerRef = ref<SVGElement>();
@@ -66,33 +65,35 @@ function handleZoom(e: any, container: d3.Selection<SVGGElement, any, null, any>
 		.style('transform', `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`)
 		.style('transform-origin', '0 0');
 
-	dotPatternYOffset.value = e.transform.y;
-	dotPatternXOffset.value = e.transform.x;
-	dotPatternScale.value = d3.scaleLog().domain([0.1, 10]).range([0.5, 5])(e.transform.k);
-
-	document
-		.querySelector('#dotPattern')
-		?.setAttribute(
-			'patternTransform',
-			`translate(${dotPatternXOffset.value}, ${dotPatternYOffset.value}) scale(${dotPatternScale.value})`
-		);
-
 	if (props.debugMode) {
 		gX.call(xAxis.scale(e.transform.rescaleX(x)));
 		gY.call(yAxis.scale(e.transform.rescaleY(y)));
 	}
 
 	currentTransform = e.transform;
+
+	if (props.background === 'dots') {
+		const background = d3.select(svgRef.value as SVGGElement);
+		background
+			.select('#dotPattern')
+			.style(
+				'patternTransform',
+				`translate(${currentTransform.x}, ${currentTransform.y}) scale(${currentTransform.k})`
+			);
+	}
 }
 
 function handleZoomEnd() {
 	emit('save-transform', { x: currentTransform.x, y: currentTransform.y, k: currentTransform.k });
-	document
-		.querySelector('#dotPattern')
-		?.setAttribute(
-			'patternTransform',
-			`translate(${dotPatternXOffset.value}, ${dotPatternYOffset.value}) scale(${dotPatternScale.value})`
-		);
+	if (props.background === 'dots') {
+		const background = d3.select(svgRef.value as SVGGElement);
+		background
+			.select('#dotPattern')
+			.style(
+				'patternTransform',
+				`translate(${currentTransform.x}, ${currentTransform.y}) scale(${currentTransform.k})`
+			);
+	}
 }
 
 function updateDimensions() {
@@ -160,14 +161,14 @@ onMounted(() => {
 		.append('defs')
 		.append('pattern')
 		.attr('id', 'dotPattern')
-		.attr('width', 8)
-		.attr('height', 8)
+		.attr('width', 12)
+		.attr('height', 12)
 		.attr('patternUnits', 'userSpaceOnUse')
 		.append('circle')
 		.attr('fill', 'var(--surface-border-light)')
-		.attr('cx', 8)
-		.attr('cy', 8)
-		.attr('r', 1);
+		.attr('cx', 12)
+		.attr('cy', 12)
+		.attr('r', 2);
 
 	svg
 		.append('rect')
