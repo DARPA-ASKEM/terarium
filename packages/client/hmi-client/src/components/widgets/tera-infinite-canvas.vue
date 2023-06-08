@@ -213,11 +213,7 @@ main > * {
 
 .background-layer:deep(.tick line) {
 	color: var(--surface-border-light);
-	stroke-dasharray: 1px v-bind(dotPatternScale);
-	stroke-dashoffset: v-bind(dotPatternYOffset);
 	stroke-width: 1px;
-	stroke-linecap: round;
-	mix-blend-mode: darken;
 }
 
 .background-layer:deep(.axis.axis--y),
