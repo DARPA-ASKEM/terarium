@@ -21,17 +21,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue';
-import { CsvAsset } from '@/types/Types';
-// import { ModelConfig } from '@/types/ModelConfig';
-import { downloadRawFile } from '@/services/dataset';
+import { computed, shallowRef, watch } from 'vue';
+import { downloadRawFile, getDataset } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { CsvAsset, Dataset } from '@/types/Types';
 import TeraSimulateChart from './tera-simulate-chart.vue';
+// import { ModelConfig } from '@/types/ModelConfig';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
@@ -41,9 +41,9 @@ const props = defineProps<{
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 // const runId = ref('');
-const datasetColumnNames = ref<string[]>();
+// const datasetColumnNames = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const datasetValue = ref();
+// const datasetValue = ref();
 
 // const emit = defineEmits(['append-output-port']);
 // 			emit('append-output-port', {
@@ -57,9 +57,14 @@ watch(
 	async () => {
 		if (datasetId.value) {
 			// Get dataset:
-			csvAsset.value = (await downloadRawFile(datasetId.value.toString())) as CsvAsset;
-			datasetColumnNames.value = csvAsset.value?.headers;
-			datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
+			const dataset: Dataset | null = await getDataset(datasetId.value.toString());
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			csvAsset.value = (await downloadRawFile(
+				datasetId.value.toString(),
+				dataset?.fileNames?.[0] ?? ''
+			)) as CsvAsset;
+			// datasetColumnNames.value = csvAsset.value?.headers;
+			// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 		}
 	}
 );

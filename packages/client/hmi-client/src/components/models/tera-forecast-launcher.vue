@@ -4,18 +4,18 @@
 			<!-- initial values -->
 			<h4>Initial values</h4>
 			<section>
-				<div v-for="(s, i) of props.model.content.S" :key="i" class="row">
-					<span>{{ s.sname }}</span>
-					<InputText class="p-inputtext-sm" v-model="initialValues[s.sname]" />
+				<div v-for="(s, i) of props.model.model.states" :key="i" class="row">
+					<span>{{ s.name }}</span>
+					<InputText class="p-inputtext-sm" v-model="initialValues[s.name]" />
 				</div>
 			</section>
 
 			<!-- params -->
 			<h4>Parameter values</h4>
 			<section>
-				<div v-for="(t, i) of props.model.content.T" :key="i" class="row">
-					<span>{{ t.tname }}</span>
-					<InputText class="p-inputtext-sm" v-model="parameterValues[t.tname]" />
+				<div v-for="(t, i) of props.model.model.transitions" :key="i" class="row">
+					<span>{{ t.name }}</span>
+					<InputText class="p-inputtext-sm" v-model="parameterValues[t.name]" />
 				</div>
 			</section>
 		</template>
@@ -28,28 +28,27 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ITypedModel } from '@/types/Model';
-import { PetriNet } from '@/petrinet/petrinet-service';
+import { Model, Simulation, SimulationParams } from '@/types/Types';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { makeForecast, createSimulation } from '@/services/models/simulation-service';
-import { Simulation, SimulationParams } from '@/types/Types';
 import { shimPetriModel } from '@/services/models/petri-shim';
 import { StringValueMap, NumericValueMap } from '@/types/common';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 
 const props = defineProps<{
-	model: ITypedModel<PetriNet>;
+	model: Model;
 }>();
 
 const initialValues = ref<StringValueMap>({});
 const parameterValues = ref<StringValueMap>({});
 
-props.model.content.S.forEach((s) => {
-	initialValues.value[s.sname] = `${1}`;
+props.model.model.states.forEach((s) => {
+	initialValues.value[s.name] = `${1}`;
 });
-props.model.content.T.forEach((s) => {
-	parameterValues.value[s.tname] = `${0.5}`;
+props.model.model.transitions.forEach((s) => {
+	parameterValues.value[s.name] = `${0.5}`;
 });
 
 const emit = defineEmits(['close', 'launch-forecast']);
@@ -67,7 +66,7 @@ const launch = async () => {
 	});
 
 	const payload: SimulationParams = {
-		model: shimPetriModel(props.model),
+		model: shimPetriModel(AMRToPetri(props.model)),
 		initials,
 		params,
 		tspan: [0, 50]
@@ -79,7 +78,7 @@ const launch = async () => {
 		name: 'New simulation',
 		simulationParams: payload,
 		result: run.id,
-		modelId: props.model.id as number
+		modelId: props.model.id as string
 	};
 	await createSimulation(simulation);
 

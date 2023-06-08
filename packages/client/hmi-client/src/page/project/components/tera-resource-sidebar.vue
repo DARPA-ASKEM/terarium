@@ -164,7 +164,7 @@ const assets = computed((): IProjectAssetTabs => {
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
 				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
 				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id.toString();
+				const assetId = asset?.id?.toString();
 				return { assetName, pageType, assetId };
 			}) as Tab[];
 			tabs.set(projectAssetType, new Set(typeAssets));

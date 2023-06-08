@@ -153,7 +153,7 @@
 import { computed, ComputedRef, ref, Ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
 import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
@@ -161,10 +161,12 @@ import { CodeRequest, Tab } from '@/types/common';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
+import { createNewDatasetFromCSV } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
 	showImportButton: boolean;
+	project?: IProject;
 }>();
 
 const emit = defineEmits(['open-code']);
@@ -224,13 +226,24 @@ async function openSelectedFiles() {
 	const selectedCodeFiles: GithubFile[] = selectedFiles.value.filter(
 		(file) => file.fileCategory === FileCategory.Code
 	);
-	// const selectedDataFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Data);
-	// const selectedDocumentFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Documents);
 
 	// Import code files, if any were selected
 	if (selectedCodeFiles.length > 0) {
 		await openCodeFiles(selectedCodeFiles);
 	}
+	const selectedDataFiles: GithubFile[] = selectedFiles.value.filter(
+		(file) => file.fileCategory === FileCategory.Data
+	);
+
+	if (selectedDataFiles.length > 0) {
+		await importDataFiles(selectedDataFiles);
+	}
+
+	/* const selectedDocumentFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Documents);
+
+	if(selectedDocumentFiles.length > 0){
+		await openDocumentFiles(selectedDocumentFiles);
+	} */
 }
 
 /**
@@ -257,6 +270,24 @@ async function previewTextFile(file: GithubFile) {
 	displayCode.value = await getGithubCode(repoOwnerAndName.value, file.path);
 	const mode = getModeForPath(file.path);
 	editor.value?.session.setMode(mode);
+}
+
+/**
+ * async function to import the selected data files and create new datasets from them
+ * @param githubFiles the data files to open
+ */
+async function importDataFiles(githubFiles: GithubFile[]) {
+	// iterate through our files and fetch their contents
+	githubFiles.forEach(async (githubFile) => {
+		const data: string = await getGithubCode(repoOwnerAndName.value, githubFile.path);
+
+		// create a File from this string
+		const blob: Blob = new Blob([data], { type: 'text/plain' });
+		const file: File = new File([blob], githubFile.name, { type: 'text/plain' });
+
+		// now, create a new dataset from this csv
+		await createNewDatasetFromCSV(file, props.project?.username ?? '', props.project?.id ?? '');
+	});
 }
 
 /**

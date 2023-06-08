@@ -171,9 +171,6 @@ import {
 	getRunStatus,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { shimPetriModel } from '@/services/models/petri-shim';
-import { CalibrationParams, CsvAsset } from '@/types/Types';
-import { ModelConfig } from '@/types/ModelConfig';
 import Dropdown from 'primevue/dropdown';
 import DataTable from 'primevue/datatable';
 import Row from 'primevue/row';
@@ -181,7 +178,6 @@ import ColumnGroup from 'primevue/columngroup';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { downloadRawFile } from '@/services/dataset';
 import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
@@ -190,6 +186,11 @@ import TeraModelConfiguration from '@/components/models/tera-model-configuration
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { logger } from '@/utils/logger';
+import { CalibrationParams, CsvAsset, Dataset } from '@/types/Types';
+import { ModelConfig } from '@/types/ModelConfig';
+import { downloadRawFile, getDataset } from '@/services/dataset';
+import { PetriNet } from '@/petrinet/petrinet-service';
+import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -227,13 +228,13 @@ const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0]
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelVariables = computed(() => {
 	if (modelConfigurationRef.value) {
-		const filteredVariables = modelConfig.value?.model.content.S.filter((state) =>
+		const filteredVariables = modelConfig.value?.model.model.states.filter((state) =>
 			modelConfigurationRef.value.selectedModelVariables.includes(state.sname)
 		);
 
 		return filteredVariables.map((state) => state.sname);
 	}
-	return modelConfig.value?.model.content.S.map((state) => state.sname);
+	return modelConfig.value?.model.model.states.map((state) => state.sname);
 });
 
 const disableRunButton = computed(
@@ -260,8 +261,22 @@ const calibrate = async () => {
 			}
 		}
 
+		// FIXME: current need to strip out metadata, should do serverside
+		const cleanedModel: PetriNet = {
+			S: [],
+			T: [],
+			I: [],
+			O: []
+		};
+		// Take out all the extra content in model.content
+		const tempModel = AMRToPetri(modelConfig.value.model); // shim but with step
+		cleanedModel.S = tempModel.S.map((s) => ({ sname: s.sname }));
+		cleanedModel.T = tempModel.T.map((t) => ({ tname: t.tname }));
+		cleanedModel.I = tempModel.I;
+		cleanedModel.O = tempModel.O;
+
 		const calibrationParam: CalibrationParams = {
-			model: shimPetriModel(modelConfig.value.model), // FIXME: current need to strip out metadata, should do serverside
+			model: JSON.stringify(cleanedModel),
 			initials: modelConfig.value.initialValues,
 			params: modelConfig.value.parameterValues,
 			timesteps_column: timestepColumn.value,
@@ -304,7 +319,7 @@ const calibrate = async () => {
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
 		const payload = {
-			model: shimPetriModel(modelConfig.value.model),
+			model: JSON.stringify(cleanedModel),
 			initials: modelConfig.value.initialValues,
 			params: calibratedParams,
 			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
@@ -371,7 +386,13 @@ watch(
 	async () => {
 		// Trouble getting these as computed values
 		if (datasetId.value) {
-			csvAsset.value = (await downloadRawFile(datasetId.value)) as CsvAsset;
+			// Get dataset:
+			const dataset: Dataset | null = await getDataset(datasetId.value.toString());
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			csvAsset.value = (await downloadRawFile(
+				datasetId.value.toString(),
+				dataset?.fileNames?.[0] ?? ''
+			)) as CsvAsset;
 			datasetVariables.value = csvAsset.value?.headers;
 		}
 		// Reset mapping on update for now

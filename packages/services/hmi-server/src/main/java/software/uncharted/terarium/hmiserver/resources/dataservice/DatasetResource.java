@@ -1,21 +1,24 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import org.apache.james.mime4j.dom.field.FieldName;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.jboss.resteasy.plugins.providers.multipart.*;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.Feature;
 import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -181,26 +184,17 @@ public class DatasetResource {
 	}
 
 	@GET
-	@Path("/{id}/files")
+	@Path("/{datasetId}/downloadCSV")
 	public Response getCsv(
-		@PathParam("id") final String id,
-		@DefaultValue("false") @QueryParam("wide_format") final Boolean wideFormat,
-		@DefaultValue("50") @QueryParam("row_limit") final Integer rowLimit,
-		@DefaultValue("0") @QueryParam("binCount") final Integer binCount
+		@PathParam("datasetId") final String id,
+		@QueryParam("filename") final String filename
 	) {
 
 		log.debug("Getting CSV content");
-		Response returnResponse;
-		String rawCsvString;
+		PresignedURL downloadUrl;
+
 		try {
-			returnResponse = proxy.getCsv(id, wideFormat, rowLimit);
-			rawCsvString = returnResponse.readEntity(String.class);
-			if (rawCsvString.length() == 0){
-				log.debug("No CSV assosiated with this ID");
-				return Response
-					.noContent()
-					.build();
-			}
+			downloadUrl = proxy.getDownloadUrl(id, filename);
 		} catch (RuntimeException e) {
 			log.error("Unable to get CSV", e);
 			return Response
@@ -209,16 +203,28 @@ public class DatasetResource {
 				.build();
 		}
 
+		HttpRequest request = HttpRequest.newBuilder()
+			.uri(URI.create(downloadUrl.getUrl()))
+			.GET()
+			.build();
 
-		List<List<String>> csv = csvToRecords(rawCsvString);
+		HttpClient client = HttpClient.newHttpClient();
+		AtomicReference<String> rawCsvString = new AtomicReference<>();
+		client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+			.thenApply(HttpResponse::body)
+			.thenAccept(body -> rawCsvString.set(body))
+			.join();
+
+
+
+		List<List<String>> csv = csvToRecords(rawCsvString.get());
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
-		if (binCount > 0){
-			for (int i = 0; i < csv.get(0).size(); i++){
-				List<String> column = getColumn(csv,i);
-				CsvColumnStats.add(getStats(column.subList(1,column.size()), binCount)); //remove first as it is header:
-			}
+		for (int i = 0; i < csv.get(0).size(); i++){
+			List<String> column = getColumn(csv,i);
+			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
 		}
+
 
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
@@ -229,38 +235,6 @@ public class DatasetResource {
 
 	}
 
-	/**
-	 *
-	 * @param id the dataset id to load this csv into
-	 * @param fileName filename for the csv
-	 * @param file multipart form input which contains a single csv file.
-	 * @return response from TDS
-	 */
-	@POST
-	@Path("/{id}/files")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@APIResponses({
-		@APIResponse(responseCode = "415", description = "Currently only CSV files can be uploaded. Non CSV mimetype will throw a 415"),
-		@APIResponse(responseCode = "500", description = "An error occurred uploading a file")})
-	@Tag(description = "Upload a csv file to TDS")
-	public Response uploadFile(@PathParam("id") final String id, @QueryParam("filename") final String fileName, @FormDataParam("file") MultipartFormDataInput file) {
-
-		if(id.isEmpty() || fileName.isEmpty() || file == null)
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Parameters cannot be empty or null").build();
-
-		if(file.getParts().size() != 1)
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Only a single CSV can be uploaded").build();
-
-		if(!file.getParts().get(0).getMediaType().equals(MEDIA_TYPE_CSV))
-			return Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), "File is not a csv").build();
-
-		MultipartFormDataOutput fileOutput = fromFormDataInputToFormDataOutput(file, fileName);
-
-		if(fileOutput.getFormData().size() < 1)
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "An error occurred converting to output form type").build();
-
-		return proxy.uploadFile(id, fileName, fileOutput);
-	}
 
 	/**
 	 * Converting a multipart form input to an output to pass along to a proxied endpoint.
@@ -314,10 +288,9 @@ public class DatasetResource {
 	/**
 	 * Given a column and an amount of bins create a CsvColumnStats object.
 	 * @param aCol
-	 * @param binCount
 	 * @return
 	 */
-	private CsvColumnStats getStats(List<String> aCol, Integer binCount){
+	private CsvColumnStats getStats(List<String> aCol){
 		List<Integer> bins = new ArrayList<>();
 		try {
 			// set up row as numbers. may fail here.
@@ -329,7 +302,7 @@ public class DatasetResource {
 			double meanValue = Stats.meanOf(numberList);
 			double medianValue = Quantiles.median().compute(numberList);
 			double sdValue = Stats.of(numberList).populationStandardDeviation();
-
+			int binCount = 50;
 			//Set up bins
 			for (int i = 0; i < binCount; i++){
 				bins.add(0);
@@ -349,5 +322,31 @@ public class DatasetResource {
 			//Cannot convert column to double, just return empty list.
 			return new CsvColumnStats(bins,0,0,0,0,0);
 		}
+	}
+
+	/**
+	 * Get a signed url for uploading a file.
+	 * @param id
+	 * @param fileName
+	 * @return signed URL
+	 */
+	@GET
+	@Path("/{id}/upload-url")
+	@Tag(description = "Get a signed url for uploading a file")
+	public PresignedURL getUploadUrl(@PathParam("id") final String id, @QueryParam("filename") final String fileName){
+		return proxy.getUploadUrl(id, fileName);
+	}
+
+	/**
+	 * Get a download url for a file.
+	 * @param id
+	 * @param filename
+	 * @return signed URL
+	 */
+	@GET
+	@Path("/{id}/download-url")
+	@Tag(description = "Get a download url for a file")
+	public PresignedURL getDownloadUrl(@PathParam("id") final String id,  @QueryParam("filename") String filename) {
+		return proxy.getDownloadUrl(id, filename);
 	}
 }

@@ -34,7 +34,7 @@
 			</template>
 		</Column>
 		<Column
-			v-for="(value, i) of [...model.content.S, ...model.content.T]"
+			v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
 			:key="i"
 			:field="value['sname'] ?? value['tname']"
 		>
@@ -122,15 +122,13 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import { Model } from '@/types/Model';
+import { Model } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
-import { AskemModelRepresentationType } from '@/types/AskemModelRepresentation';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { NumericValueMap } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
-	amr?: AskemModelRepresentationType | null;
 	isEditable: boolean;
 	modelConfigNodeInput?: ModelConfig;
 	calibrationConfig?: boolean;
@@ -236,20 +234,11 @@ function generateModelConfigValues() {
 	}
 	// Default values petrinet format
 	else if (props.model) {
-		props.model?.content.S.forEach((s) => {
+		props.model.model.states.forEach((s) => {
 			initialValues.value[0][s.sname] = 1;
 		});
-		props.model?.content.T.forEach((t) => {
+		props.model.model.transitions.forEach((t) => {
 			parameterValues.value[0][t.tname] = 0.0005;
-		});
-	}
-	// Default values amr format
-	else if (props.amr) {
-		props.amr.model.states.forEach((s) => {
-			initialValues.value[0][s.id] = 1;
-		});
-		props.amr.model.transitions.forEach((t) => {
-			parameterValues.value[0][t.id] = 0.0005;
 		});
 	}
 
