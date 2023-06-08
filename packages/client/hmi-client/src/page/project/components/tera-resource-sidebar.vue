@@ -67,11 +67,10 @@
 					text
 					size="small"
 					@click="emit('open-asset', tab)"
-					@mouseover="hover[tab?.assetId || 0] = true"
-					@mouseleave="hover[tab?.assetId || 0] = false"
-					@focus="hover[tab?.assetId || 0] = true"
-					@focusout="hover[tab?.assetId || 0] = false"
-					@dragstart="hover[tab?.assetId || 0] = false"
+					@mouseover="activeAssetId = tab.assetId"
+					@mouseleave="activeAssetId = undefined"
+					@focus="activeAssetId = tab.assetId"
+					@focusout="activeAssetId = undefined"
 				>
 					<span
 						:draggable="
@@ -101,7 +100,7 @@
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->
 					<i
-						v-if="hover[tab?.assetId || 0] == true"
+						v-if="activeAssetId && activeAssetId === tab.assetId"
 						class="pi pi-times removeResourceButton"
 						@click="isRemovalModal = true"
 					/>
@@ -154,7 +153,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
-const hover = ref([] as boolean[]);
+const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 
