@@ -2,13 +2,6 @@
 	<nav>
 		<header>
 			<Button
-				icon="pi pi-trash"
-				:disabled="!activeTab.assetId || activeTab.assetName === ProjectPages.OVERVIEW"
-				v-tooltip="`Remove ${activeTab.assetName}`"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="isRemovalModal = true"
-			/>
-			<Button
 				icon="pi pi-code"
 				v-tooltip="`New code file`"
 				class="p-button-icon-only p-button-text p-button-rounded"
@@ -74,6 +67,10 @@
 					text
 					size="small"
 					@click="emit('open-asset', tab)"
+					@mouseover="activeAssetId = tab.assetId"
+					@mouseleave="activeAssetId = undefined"
+					@focus="activeAssetId = tab.assetId"
+					@focusout="activeAssetId = undefined"
 				>
 					<span
 						:draggable="
@@ -84,13 +81,15 @@
 						@dragstart="startDrag(tab)"
 						@dragend="endDrag"
 						:class="isEqual(draggedAsset, tab) ? 'dragged-asset' : ''"
+						fallback-class="original-asset"
+						:force-fallback="true"
 					>
 						<vue-feather
 							v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
 							class="p-button-icon-left icon"
 							:type="getAssetIcon(tab.pageType ?? null)"
 							size="1rem"
-							:stroke="isEqual(draggedAsset, tab) ? 'white' : 'rgb(16, 24, 40)'"
+							:stroke="isEqual(draggedAsset, tab) ? 'var(--text-color-primary)' : 'rgb(16, 24, 40)'"
 						/>
 						<component
 							v-else
@@ -99,6 +98,12 @@
 						/>
 						<span class="p-button-label">{{ tab.assetName }}</span>
 					</span>
+					<!-- This 'x' only shows while hovering over the row -->
+					<i
+						v-if="activeAssetId && activeAssetId === tab.assetId"
+						class="pi pi-times removeResourceButton"
+						@click="isRemovalModal = true"
+					/>
 				</Button>
 			</AccordionTab>
 		</Accordion>
@@ -148,6 +153,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
+const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
 const draggedAsset = ref<Tab | null>(null);
 
@@ -211,13 +217,17 @@ header {
 	overflow: visible;
 }
 
-.dragged-asset {
-	background-color: var(--primary-color);
-	color: var(--gray-0);
+.removeResourceButton {
+	color: var(--text-color-subdued);
+	margin-right: 0.75rem;
+	font-size: 0.75rem;
 }
-
-.dragged-asset .icon {
-	fill: var(--gray-0);
+.removeResourceButton:hover {
+	color: var(--text-color-danger);
+}
+.dragged-asset {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {
