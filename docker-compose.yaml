@@ -10,6 +10,7 @@ services:
       - hmi_server_host=hmi-server
       - hmi_server_port=3000
       - VITE_JUPYTER_TOKEN=89f73481102c46c0bc13b2998f9a4fce
+      - COMPOSED=true
     volumes:
       - ./packages/client/hmi-client/src:/hmi-client/src
     ports:

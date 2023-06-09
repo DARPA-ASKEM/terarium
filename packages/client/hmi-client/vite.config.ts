@@ -6,7 +6,9 @@ import * as path from 'path';
 
 const node_modules_dir = path.resolve(
 	__dirname,
-	process.env.NODE_ENV === 'development' ? '../../../node_modules/' : './node_modules/'
+	process.env.NODE_ENV === 'development' && process.env.COMPOSED !== 'true'
+		? '../../../node_modules/'
+		: './node_modules/'
 );
 
 /**
