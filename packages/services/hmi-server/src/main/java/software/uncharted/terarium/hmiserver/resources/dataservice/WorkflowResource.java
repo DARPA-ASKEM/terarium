@@ -29,6 +29,15 @@ public class WorkflowResource {
 		return proxy.createWorkflow(item);
 	}
 
+	@PUT
+	@Path("/{id}")
+	public Response updateWorkflow(
+		@PathParam("id") String id
+		Workflow workflow
+	) {
+		return proxy.updateWorkflow(id, workflow);
+	}
+
 	@GET
 	@Path("/{id}")
 	public Response getWorkflows(

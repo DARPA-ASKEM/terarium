@@ -25,6 +25,15 @@ public interface WorkflowProxy {
 		Workflow workflow
 	);
 
+	@PUT
+	@Path("/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response updateWorkflow(
+		@PathParam("id") String id
+		Workflow workflow
+	);
+
+
 	@GET
 	@Path("/{id}")
 	Response getWorkflowById(

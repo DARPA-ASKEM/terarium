@@ -127,7 +127,7 @@
 
 <script setup lang="ts">
 import { v4 as uuidv4 } from 'uuid';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -161,12 +161,17 @@ import TeraDatasetNode from './tera-dataset-node.vue';
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	project: IProject;
+	assetId: {
+		type: String;
+		required: true;
+	};
 }>();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
+let saveTimer: Timer | null = null;
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const newAssetId = ref<string | null>(null);
@@ -403,10 +408,30 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+watch(
+	() => [props.assetId],
+	async () => {
+		console.log('watcher fired', props.assetId);
+		console.log('before', wf.value);
+		const workflowId = props.assetId;
+		if (!workflowId) return;
+		wf.value = await workflowService.getWorkflow(workflowId);
+		console.log('after', wf.value);
+	},
+	{ immediate: true }
+);
+
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+	saveTimer = setInterval(() => {
+		console.log('saving workflow');
+		workflowService.updateWorkflow(wf.value);
+	}, 8000);
 });
 onUnmounted(() => {
+	if (saveTimer) {
+		clearInterval(saveTimer);
+	}
 	document.removeEventListener('mousemove', mouseUpdate);
 });
 
