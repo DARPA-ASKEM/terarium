@@ -1,6 +1,6 @@
 <template>
+	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
-		debug-mode
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -14,9 +14,10 @@
 	>
 		<!-- toolbar -->
 		<template #foreground>
-			<toolbar>
+			<toolbar class="glass">
 				<h5>Workflow name</h5>
 				<div class="button-group">
+					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
@@ -34,6 +35,7 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
+				@remove-node="(event) => removeNode(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
@@ -151,8 +153,7 @@ import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Dataset } from '@/types/Types';
-import { Model } from '@/types/Model';
+import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
@@ -204,6 +205,10 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
+};
+
+const removeNode = (event) => {
+	workflowService.removeNode(wf.value, event);
 };
 
 const contextMenuItems = ref([
@@ -406,7 +411,11 @@ onUnmounted(() => {
 });
 
 function cleanUpLayout() {
-	// TODO: remove clean up layout
+	// TODO: clean up layout of nodes
+	console.log('clean up layout');
+}
+function resetZoom() {
+	// TODO: reset zoom level and position
 	console.log('clean up layout');
 }
 </script>
@@ -416,11 +425,14 @@ toolbar {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	background-color: var(--surface-0);
 	padding: 0.5rem 1rem;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
-	z-index: 1000;
+	z-index: 900;
+}
+.glass {
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(10px);
 }
 
 .button-group {
@@ -431,6 +443,7 @@ toolbar {
 /* We should make a proper secondary outline button. Until then this works. */
 toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
+	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	padding-top: 0px;
 	padding-bottom: 0px;

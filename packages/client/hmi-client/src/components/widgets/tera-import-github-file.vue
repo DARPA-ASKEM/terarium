@@ -9,18 +9,20 @@
 		/>
 		<a :href="urlString" rel="noreferrer noopener">{{ urlString }}</a>
 		<Teleport to="body">
-			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="isModalVisible = false">
+			<tera-modal v-if="isModalVisible" class="modal" @modal-mask-clicked="!isModalVisible">
 				<template #header>
-					<h4>
-						{{ directoryContent?.totalFiles }} files found at https://github.com/{{
-							repoOwnerAndName
+					<h2>
+						https://github.com/{{ repoOwnerAndName
 						}}<template v-if="isInDirectory">/{{ currentDirectory }}</template>
-					</h4>
-					<b>Select which files you want to import</b>
+					</h2>
+					<b>({{ directoryContent?.totalFiles }}) files found in: </b>
+					<div class="flex justify-content-left">
+						<Breadcrumb :home="home" :model="directories" style="color: black" />
+					</div>
 				</template>
 				<template #default>
 					<div style="display: flex; flex-direction: row">
-						<div style="max-width: 30%; width: 30%">
+						<div style="max-width: 90%; width: 30%">
 							<ul>
 								<li v-if="isInDirectory" @click="openDirectory('')">
 									<i class="pi pi-folder-open" />
@@ -55,13 +57,13 @@
 									:key="index"
 									@click="previewTextFile(content)"
 								>
-									<input
-										type="checkbox"
-										:id="content.name"
-										:value="content"
+									<Checkbox
+										class="file-checkboxes"
 										v-model="selectedFiles"
+										:inputId="content.name"
+										:value="content"
 									/>
-									<i class="pi pi-file" />
+									<i class="pi pi-file file-checkboxes" />
 									<label :for="content.name">{{ content.name }}</label>
 								</li>
 								<li v-if="hasData">
@@ -77,13 +79,13 @@
 									:key="index"
 									@click="previewTextFile(content)"
 								>
-									<input
-										type="checkbox"
-										:id="content.name"
-										:value="content"
+									<Checkbox
+										class="file-checkboxes"
 										v-model="selectedFiles"
+										:inputId="content.name"
+										:value="content"
 									/>
-									<i class="pi pi-file" />
+									<i class="pi pi-file file-checkboxes" />
 									<label :for="content.name">{{ content.name }}</label>
 								</li>
 								<li v-if="hasDocuments">
@@ -99,13 +101,13 @@
 									:key="index"
 									@click="previewTextFile(content)"
 								>
-									<input
-										type="checkbox"
-										:id="content.name"
-										:value="content"
+									<Checkbox
+										class="file-checkboxes"
 										v-model="selectedFiles"
+										:inputId="content.name"
+										:value="content"
 									/>
-									<i class="pi pi-file" />
+									<i class="pi pi-file file-checkboxes" />
 									<label :for="content.name">{{ content.name }}</label>
 								</li>
 								<li v-if="hasOther">
@@ -116,29 +118,56 @@
 										>
 									</header>
 								</li>
-								<li v-for="(content, index) in directoryContent?.files.Other" :key="index">
-									<i class="pi pi-file" />
-									{{ content.name }}
+								<li
+									class="t"
+									v-for="(content, index) in directoryContent?.files.Other"
+									:key="index"
+									@click="previewTextFile(content)"
+								>
+									<div class="unknown-check">
+										<Checkbox
+											v-model="selectedUnknownFiles"
+											:inputId="content.name"
+											:value="content"
+										/>
+										<i class="pi pi-file unknown-icon" />
+										{{ content.name }}
+									</div>
+									<div>
+										<Dropdown
+											v-model="content.fileCategory"
+											:options="asDocumentTypes"
+											optionLabel="name"
+											placeholder="Select a document type"
+											style="width: 90%; margin: 2px"
+										/>
+									</div>
 								</li>
 							</ul>
 						</div>
-						<div style="width: 70%">
-							<h4>Preview</h4>
-							<v-ace-editor
-								v-model:value="displayCode"
-								@init="initialize"
-								lang="python"
-								theme="chrome"
-								style="height: 100%; width: 100%"
-								class="code-editor"
-							/>
-						</div>
+						<section class="preview-container" style="width: 70%">
+							<div class="code-editor-container">
+								<h4 class="preview-title">Preview</h4>
+								<v-ace-editor
+									v-model:value="displayCode"
+									@init="initialize"
+									lang="python"
+									theme="chrome"
+									class="code-editor"
+								/>
+							</div>
+							<div class="provenance-container">
+								<h4 class="provenance-title">Provenance</h4>
+								<div>{{ provenanceDescription }}</div>
+							</div>
+						</section>
 					</div>
 				</template>
-
 				<template #footer>
-					<Button :disabled="selectedFiles.length < 1" @click="openSelectedFiles()"
-						>Import {{ selectedFiles.length }} file{{
+					<Button
+						:disabled="selectedFiles.length + selectedUnknownFiles.length < 1"
+						@click="openSelectedFiles()"
+						>Import {{ selectedFiles.length + selectedUnknownFiles.length }} file{{
 							selectedFiles.length == 1 ? '' : 's'
 						}}</Button
 					>
@@ -153,7 +182,7 @@
 import { computed, ComputedRef, ref, Ref } from 'vue';
 import Button from 'primevue/button';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { ProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
 import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
@@ -161,10 +190,15 @@ import { CodeRequest, Tab } from '@/types/common';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
+import Checkbox from 'primevue/checkbox';
+import Dropdown from 'primevue/dropdown';
+import Breadcrumb from 'primevue/breadcrumb';
+import { createNewDatasetFromCSV } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
 	showImportButton: boolean;
+	project?: IProject;
 }>();
 
 const emit = defineEmits(['open-code']);
@@ -174,9 +208,26 @@ const currentDirectory: Ref<string> = ref('');
 const directoryContent: Ref<GithubRepo | null> = ref(null);
 const isModalVisible: Ref<boolean> = ref(false);
 const selectedFiles: Ref<GithubFile[]> = ref([]);
+const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
 const selectedText: Ref<string> = ref('');
 const displayCode: Ref<string> = ref('');
+
+// Breadcrumb home setup
+const home = ref({
+	icon: 'pi pi-home',
+	disabled: true
+});
+
+const asDocumentTypes = ref([
+	{ name: 'Import as document', code: FileCategory.Documents },
+	{ name: 'Import as code', code: FileCategory.Code },
+	{ name: 'Import as data', code: FileCategory.Data }
+]);
+
+const directories = computed(() =>
+	currentDirectory.value.split('/').map((d) => ({ label: d, disabled: true }))
+);
 
 const isInDirectory: ComputedRef<boolean> = computed(() => !isEmpty(currentDirectory.value));
 // There may be a more concise way to do this?
@@ -190,6 +241,11 @@ const hasDocuments: ComputedRef<boolean> = computed(
 );
 const hasOther: ComputedRef<boolean> = computed(
 	() => !isEmpty(directoryContent?.value?.files?.Other)
+);
+
+const provenanceDescription: ComputedRef<string> = computed(
+	() =>
+		`These files were found in the following repository: https://github.com/${repoOwnerAndName.value}`
 );
 
 async function initializeCodeBrowser() {
@@ -221,16 +277,29 @@ function onSelectedTextChange() {
  */
 async function openSelectedFiles() {
 	// split the selected files into their respective categories
-	const selectedCodeFiles: GithubFile[] = selectedFiles.value.filter(
-		(file) => file.fileCategory === FileCategory.Code
-	);
-	// const selectedDataFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Data);
-	// const selectedDocumentFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Documents);
+	const selectedCodeFiles: GithubFile[] = [
+		...selectedFiles.value,
+		...selectedUnknownFiles.value
+	].filter((file) => file.fileCategory === FileCategory.Code);
 
 	// Import code files, if any were selected
 	if (selectedCodeFiles.length > 0) {
 		await openCodeFiles(selectedCodeFiles);
 	}
+	const selectedDataFiles: GithubFile[] = [
+		...selectedFiles.value,
+		...selectedUnknownFiles.value
+	].filter((file) => file.fileCategory === FileCategory.Data);
+
+	if (selectedDataFiles.length > 0) {
+		await importDataFiles(selectedDataFiles);
+	}
+
+	/* const selectedDocumentFiles : GithubFile[] = selectedFiles.value.filter(file => file.fileCategory === FileCategory.Documents);
+
+	if(selectedDocumentFiles.length > 0){
+		await openDocumentFiles(selectedDocumentFiles);
+	} */
 }
 
 /**
@@ -260,6 +329,24 @@ async function previewTextFile(file: GithubFile) {
 }
 
 /**
+ * async function to import the selected data files and create new datasets from them
+ * @param githubFiles the data files to open
+ */
+async function importDataFiles(githubFiles: GithubFile[]) {
+	// iterate through our files and fetch their contents
+	githubFiles.forEach(async (githubFile) => {
+		const data: string = await getGithubCode(repoOwnerAndName.value, githubFile.path);
+
+		// create a File from this string
+		const blob: Blob = new Blob([data], { type: 'text/plain' });
+		const file: File = new File([blob], githubFile.name, { type: 'text/plain' });
+
+		// now, create a new dataset from this csv
+		await createNewDatasetFromCSV(file, props.project?.username ?? '', props.project?.id ?? '');
+	});
+}
+
+/**
  * Opens the code editor with the selected file
  * @param githubFiles The code files to open
  */
@@ -274,7 +361,6 @@ async function openCodeFiles(githubFiles: GithubFile[]) {
 			pageType: ProjectAssetTypes.CODE,
 			assetId: undefined
 		};
-
 		codeRequests.push({
 			asset,
 			code
@@ -305,16 +391,62 @@ ul li {
 	padding: 0.25rem;
 	cursor: pointer;
 	border-radius: 0.5rem;
-	max-width: 30%;
-	width: 30%;
+	max-width: 90%;
 }
 
 ul li:hover {
 	background-color: var(--surface-hover);
 }
 
+.preview-container {
+	width: 70%;
+	margin: 10px;
+}
+
+.preview-title {
+	padding-bottom: 10px;
+}
+
+.code-editor-container {
+	background-color: rgb(231, 231, 231);
+	border-radius: 5px;
+	padding: 15px;
+	height: 70%;
+}
+
 .code-editor {
 	border-top: 1px solid var(--surface-border-light);
-	width: 75%;
+	width: 100%;
+	height: 95%;
+	border-radius: 5px;
+}
+
+.provenance-title {
+	padding-bottom: 10px;
+}
+
+.provenance-container {
+	background-color: rgb(231, 231, 231);
+	border-radius: 5px;
+	height: 30%;
+	margin-top: 10px;
+	padding: 15px;
+}
+
+.file-checkboxes {
+	margin-left: 10px;
+}
+.t {
+	display: flex;
+	flex-direction: column;
+	margin-left: 10px;
+}
+
+.unknown-check {
+	padding-bottom: 8px;
+}
+
+.unknown-icon {
+	padding-left: 10px;
 }
 </style>

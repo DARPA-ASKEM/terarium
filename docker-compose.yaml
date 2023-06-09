@@ -55,6 +55,9 @@ services:
       NEO4J_driver: neo4j://neo4j:7687
       AWS_ACCESS_KEY_ID: miniouser
       AWS_SECRET_ACCESS_KEY: miniopass
+      S3_BUCKET: askem
+      S3_DATASET_PATH: "datasets"
+      S3_RESULTS_PATH: "simulations"
     depends_on:
       - minio
       - neo4j

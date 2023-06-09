@@ -6,50 +6,64 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.List;
 
+/**
+ * Represents a dataset document from TDS
+ */
 @Data
 @Accessors(chain = true)
 @TSModel
-public class Dataset implements Serializable {
+public class Dataset {
 
+	/** Universally unique identifier for the dataset **/
 	@TSOptional
-	private Long id;
+	private String id; //Is this a UUID?
 
+	/** Timestamp of when the dataset was created **/
+	@TSOptional
+	private Instant timestamp;
+
+	/** Username of the user who created the dataset **/
+	@TSOptional
+	private String username;
+
+	/** Name of the dataset **/
 	private String name;
 
-	private String url;
-
+	/** (Optional) textual description of the dataset **/
+	@TSOptional
 	private String description;
 
+	/** (Optional) data source date **/
 	@TSOptional
-	private LocalDateTime timestamp;
+	@JsonAlias("data_source_date")
+	private String dataSourceDate;
 
+	/** (Optional) list of file names associated with the dataset **/
 	@TSOptional
-	private Boolean deprecated;
+	@JsonAlias("file_names")
+	private List<String> fileNames;
 
+	/** (Optional) Url from which the dataset can be downloaded/fetched **/
 	@TSOptional
-	private String sensitivity;
+	@JsonAlias("dataset_url")
+	private String url;
 
+	/** Information regarding the columns that make up the dataset **/
 	@TSOptional
-	private String quality;
+	private List<DatasetColumn> columns;
 
+	/** (Optional) Unformatted metadata about the dataset **/
 	@TSOptional
-	@JsonAlias("temporal_resolution")
-	private String temporalResolution;
+	private Object metadata;
 
+	/** (Optional) Source of dataset **/
 	@TSOptional
-	@JsonAlias("geospatial_resolution")
-	private String geospatialResolution;
+	private String source;
 
+	/** (Optional) Grounding of ontological concepts related to the dataset as a whole **/
 	@TSOptional
-	private DatasetAnnotations annotations;
-
-	@TSOptional
-	private String maintainer;
-
-	@TSOptional
-	@JsonAlias("simulation_run")
-	private Boolean simulationRun;
+	private Grounding grounding;
 }

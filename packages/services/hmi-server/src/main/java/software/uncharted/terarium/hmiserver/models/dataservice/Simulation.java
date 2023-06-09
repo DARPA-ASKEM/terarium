@@ -18,5 +18,5 @@ public class Simulation {
 	private SimulationParams simulationParams;
 	@TSOptional
 	private String result;
-	private Long modelId;
+	private String modelId;
 }

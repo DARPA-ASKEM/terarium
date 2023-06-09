@@ -20,8 +20,7 @@
 import { onMounted, PropType, ref } from 'vue';
 import { isDataset, isModel, isDocument } from '@/utils/data-util';
 import { ResourceType, ResultType } from '@/types/common';
-import { Model } from '@/types/Model';
-import { Document, Dataset } from '@/types/Types';
+import { Document, Dataset, Model } from '@/types/Types';
 import { IProject } from '@/types/Project';
 import * as ProjectService from '@/services/project';
 import Menu from 'primevue/menu';

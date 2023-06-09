@@ -102,7 +102,7 @@ const props = defineProps({
 	// custom import action can be passed in as prop
 	importAction: {
 		type: Function,
-		required: false,
+		required: true,
 		/**
 		 * Default import action which just logs the click event.
 		 * @param {Array<File>} currentFiles
