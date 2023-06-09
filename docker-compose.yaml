@@ -111,7 +111,7 @@ services:
     ports:
       - "3030:8080"
   jupyter:
-    image: jupyter-llm:latest
+    image: ghcr.io/darpa-askem/jupyter-llm:latest
     ports:
       - "8889:8888"
     environment:

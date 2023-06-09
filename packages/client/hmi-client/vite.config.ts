@@ -4,6 +4,11 @@ import vue from '@vitejs/plugin-vue';
 import svgLoader from 'vite-svg-loader';
 import * as path from 'path';
 
+const node_modules_dir = path.resolve(
+	__dirname,
+	process.env.NODE_ENV === 'development' ? '../../../node_modules/' : './node_modules/'
+);
+
 /**
  * Vite Configuration
  *
@@ -19,11 +24,11 @@ export default defineConfig({
 	// Syntax sugar for specifying imports
 	resolve: {
 		alias: [
-			{ find: /^~/, replacement: path.resolve(__dirname, './node_modules') + '/' },
-			{ find: 'path', replacement: path.resolve(__dirname, './node_modules/path-browserify/') },
+			{ find: /^~/, replacement: node_modules_dir + '/' },
+			{ find: 'path', replacement: path.resolve(node_modules_dir, 'path-browserify/') },
 			{ find: '@', replacement: path.resolve(__dirname, './src') },
 			{ find: '@assets', replacement: path.resolve(__dirname, './src/assets') },
-			{ find: '@node_modules', replacement: path.resolve(__dirname, '../../../node_modules') },
+			{ find: '@node_modules', replacement: node_modules_dir },
 			{ find: '@graph-scaffolder', replacement: path.resolve(__dirname, '../graph-scaffolder/src') }
 		]
 	},
