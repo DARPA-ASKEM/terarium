@@ -1,6 +1,6 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
-		<Button @click="runSimulate()">Run</Button>
+		<Button @click="runSimulate">Run</Button>
 		<div class="chart-container">
 			<SimulateChart
 				v-for="index in openedWorkflowNodeStore.numCharts"
@@ -68,7 +68,7 @@ const runSimulate = async () => {
 				};
 
 				const response = await makeForecast(payload);
-
+				console.log(payload);
 				return response.id;
 			})
 		);
