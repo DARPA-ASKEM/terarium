@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<TeraResizablePanel>
+		<TeraResizablePanel v-if="!nodePreview">
 			<div ref="splitterContainer" class="splitter-container">
 				<Splitter :gutterSize="5" :layout="layout">
 					<SplitterPanel
@@ -82,6 +82,9 @@
 				</Splitter>
 			</div>
 		</TeraResizablePanel>
+		<section v-else-if="model" class="graph-element preview">
+			<div ref="graphElement" class="graph-element preview" />
+		</section>
 	</main>
 </template>
 
@@ -126,6 +129,7 @@ const emit = defineEmits([
 const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;
+	nodePreview?: boolean;
 }>();
 
 const menu = ref();
@@ -509,6 +513,15 @@ main {
 	border-radius: var(--border-radius);
 	overflow: auto;
 }
+
+/* .preview {
+	height: 5rem;
+	background-color: var(--surface-secondary);
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+} */
 
 .p-toolbar {
 	position: absolute;

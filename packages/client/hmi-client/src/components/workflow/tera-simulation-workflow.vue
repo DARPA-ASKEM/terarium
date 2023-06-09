@@ -14,7 +14,7 @@
 	>
 		<!-- toolbar -->
 		<template #foreground>
-			<header>
+			<header class="glass">
 				<h5>Workflow name</h5>
 				<div class="button-group">
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />

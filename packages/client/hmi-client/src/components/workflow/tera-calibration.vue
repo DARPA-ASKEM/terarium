@@ -52,7 +52,12 @@
 			<AccordionTab :header="datasetName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
 			</AccordionTab>
-			<AccordionTab header="Train / Test ratio"></AccordionTab>
+			<AccordionTab header="Train / Test ratio">
+				<section class="train-test-ratio">
+					<InputNumber v-model="trainTestValue" />
+					<Slider v-model="trainTestValue" />
+				</section>
+			</AccordionTab>
 			<AccordionTab header="Mapping">
 				<section class="mapping">
 					<div>
@@ -191,6 +196,8 @@ import { ModelConfig } from '@/types/ModelConfig';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { PetriNet } from '@/petrinet/petrinet-service';
 import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+import Slider from 'primevue/slider';
+import InputNumber from 'primevue/inputnumber';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -209,6 +216,7 @@ const calibrationView = ref(CalibrationView.INPUT);
 const expandedRows = ref([]);
 
 const runId = ref<number>(0);
+const trainTestValue = ref(80);
 
 const timestepColumn = ref('');
 const mapping = ref<any[]>([
@@ -416,6 +424,17 @@ watch(
 	width: 156px;
 	height: 25px;
 	border-radius: 6px;
+}
+
+.train-test-ratio {
+	display: flex;
+	gap: 1rem;
+	margin: 0.5rem 0;
+}
+
+.train-test-ratio > .p-slider {
+	margin-top: 1rem;
+	width: 100%;
 }
 
 .mapping {

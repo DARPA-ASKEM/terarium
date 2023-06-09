@@ -1,6 +1,7 @@
 <template>
 	<template v-if="model">
 		<h5>{{ model.name }}</h5>
+		<tera-model-diagram :model="model" :is-editable="false" nodePreview />
 		<h6>Initial values</h6>
 		<ul>
 			<li v-for="(s, i) of model.model.states" :key="i">
@@ -51,6 +52,7 @@ import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import { NumericValueMap } from '@/types/common';
 import { Model } from '@/types/Types';
+import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 
 const props = defineProps<{
 	modelId: string | null;

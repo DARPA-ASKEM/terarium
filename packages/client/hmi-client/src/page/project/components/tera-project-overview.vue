@@ -379,6 +379,7 @@ a {
 	background-size: 25%, 100%;
 	height: auto;
 }
+
 .content-container {
 	padding: 1rem;
 	background: var(--surface-0);
