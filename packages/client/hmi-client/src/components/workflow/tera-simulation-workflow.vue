@@ -161,7 +161,7 @@ import TeraDatasetNode from './tera-dataset-node.vue';
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	project: IProject;
-	assetId: String;
+	assetId: string;
 }>();
 
 const newNodePosition = { x: 0, y: 0 };
