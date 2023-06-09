@@ -90,18 +90,28 @@
 		<!-- Resources list table goes here -->
 		<section class="resource-list">
 			<div class="resource-list-section-header">
-				<h4>File manager</h4>
+				<h4>Resource Manager</h4>
 				<span class="p-input-icon-left">
 					<i class="pi pi-search" />
 					<InputText placeholder="Keyword search" class="keyword-search" />
 				</span>
 			</div>
 			<!-- resource list data table -->
-			<DataTable dataKey="id" tableStyle="min-width: 50rem">
-				<Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-				<Column field="name" header="Name" sortable style="width: 45%"></Column>
-				<Column field="modified" header="Modified" sortable style="width: 15%"></Column>
+			<DataTable
+				v-model:selection="selectedResources"
+				dataKey="id"
+				tableStyle="min-width: 50rem"
+				:value="assets"
+			>
+				<Column selection-mode="multiple" headerStyle="width: 3rem" />
+				<Column field="assetName" header="Name" sortable style="width: 45%"></Column>
+				<Column field="" header="Modified" sortable style="width: 15%"></Column>
 				<Column field="tags" header="Tags"></Column>
+				<Column header="Resource Type" sortable>
+					<template #body="slotProps">
+						<Tag :value="slotProps.data.pageType" />
+					</template>
+				</Column>
 			</DataTable>
 		</section>
 		<section class="drag-n-drop">
@@ -172,9 +182,10 @@
 </template>
 
 <script setup lang="ts">
-import { IProject } from '@/types/Project';
-import { nextTick, Ref, ref } from 'vue';
+import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+import { nextTick, Ref, ref, computed } from 'vue';
 import InputText from 'primevue/inputtext';
+import Tag from 'primevue/tag';
 import { update as updateProject } from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
@@ -182,15 +193,15 @@ import Menu from 'primevue/menu';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as DateUtils from '@/utils/date';
-import { capitalize } from 'lodash';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import CompareModelsIcon from '@/assets/svg/icons/compare-models.svg?component';
-import { AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
+import { Tab, AcceptedTypes, PDFExtractionResponseType } from '@/types/common';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import Card from 'primevue/card';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import API, { Poller } from '@/api/api';
 import { createNewDatasetFromCSV } from '@/services/dataset';
+import { capitalize, isEmpty } from 'lodash';
 import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
@@ -205,6 +216,30 @@ const visible: Ref<boolean> = ref(false);
 const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
+const selectedResources = ref();
+
+const assets = computed(() => {
+	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
+
+	const projectAssets = props.project?.assets;
+	if (!projectAssets) return tabs;
+
+	const result = <any>[];
+	// Run through all the assets type within the project
+	Object.keys(projectAssets).forEach((type) => {
+		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
+			const projectAssetType = type as ProjectAssetTypes;
+			const typeAssets = projectAssets[projectAssetType].map((asset) => {
+				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
+				const pageType = asset?.type ?? projectAssetType;
+				const assetId = asset?.id.toString();
+				return { assetName, pageType, assetId };
+			});
+			result.push(...typeAssets);
+		}
+	});
+	return result;
+});
 
 async function getPDFContents(
 	file: string | Blob,

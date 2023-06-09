@@ -542,11 +542,11 @@ section,
 	overflow-y: hidden;
 }
 .p-splitter:deep(.p-splitter-gutter) {
-	z-index: 1000;
+	z-index: 900;
 }
 
 .top-z-index {
-	z-index: 1000;
+	z-index: 900;
 }
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
