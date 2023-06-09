@@ -544,11 +544,11 @@ section,
 }
 
 .p-splitter:deep(.p-splitter-gutter) {
-	z-index: 900;
+	z-index: 1000;
 }
 
 .top-z-index {
-	z-index: 900;
+	z-index: 1000;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
