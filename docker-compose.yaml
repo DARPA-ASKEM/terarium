@@ -46,6 +46,9 @@ services:
     environment:
       DATASET_STORAGE_BASE_URL: s3://datasets/
       STORAGE_HOST: http://minio:9000
+      S3_BUCKET: askem
+      S3_DATASET_PATH: datasets
+      S3_RESULT_PATH: simulations
       OPENAI_KEY: sk
       SQL_URL: data-service-dev-db
       SQL_PORT: 5432
@@ -55,9 +58,9 @@ services:
       NEO4J_driver: neo4j://neo4j:7687
       AWS_ACCESS_KEY_ID: miniouser
       AWS_SECRET_ACCESS_KEY: miniopass
-      S3_BUCKET: askem
-      S3_DATASET_PATH: "datasets"
-      S3_RESULTS_PATH: "simulations"
+      ES_URL: http://elasticsearch:9200
+      ELASTIC_PASSWORD: tdsElasticPass
+      KIBANA_PASSWORD: tdsKibanaPass
     depends_on:
       - minio
       - neo4j
@@ -121,6 +124,16 @@ services:
       - JUPYTER_TOKEN=89f73481102c46c0bc13b2998f9a4fce
     env_file:
       - .openai.env
+  elasticsearch:
+    image: elasticsearch:8.5.3
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+      - action.auto_create_index=false
+    ports:
+      - target: 9200
+        published: 9200
 volumes:
   terarium-db-storage:
   minio-data:
