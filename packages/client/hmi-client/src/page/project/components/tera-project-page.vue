@@ -77,6 +77,8 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+import { emptyWorkflow, createWorkflow } from '@/services/workflow';
+import { addAsset } from '@/services/project';
 
 const props = defineProps<{
 	project: IProject;
@@ -105,7 +107,19 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
 // These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
-const openWorkflow = () => {
+const openWorkflow = async () => {
+	// Create a new workflow
+	const wf = emptyWorkflow('workflow', '');
+
+	// FIXME: TDS bug thinks that k is z
+	// @ts-ignore
+	wf.transform.z = 1;
+
+	// Add the workflow to the project
+	const response = await createWorkflow(wf);
+	const workflowId = response.id;
+	await addAsset(props.project.id, ProjectAssetTypes.SIMULATION_WORKFLOW, workflowId);
+
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
