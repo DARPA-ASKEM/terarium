@@ -29,7 +29,7 @@ public interface WorkflowProxy {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateWorkflow(
-		@PathParam("id") String id
+		@PathParam("id") String id,
 		Workflow workflow
 	);
 

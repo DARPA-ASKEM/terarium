@@ -32,7 +32,7 @@ public class WorkflowResource {
 	@PUT
 	@Path("/{id}")
 	public Response updateWorkflow(
-		@PathParam("id") String id
+		@PathParam("id") String id,
 		Workflow workflow
 	) {
 		return proxy.updateWorkflow(id, workflow);
