@@ -121,12 +121,14 @@ const openWorkflow = async () => {
 	const workflowId = response.id;
 	await addAsset(props.project.id, ProjectAssetTypes.SIMULATION_WORKFLOW, workflowId);
 
+	emit('update-project', props.project.id);
+
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
 			assetName: 'Workflow',
 			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
-			assetId: undefined
+			assetId: workflowId
 		}
 	});
 };

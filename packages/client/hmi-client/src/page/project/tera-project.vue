@@ -392,13 +392,7 @@ async function removeAsset(asset: Tab) {
 	const { assetName, assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (
-		assetId &&
-		pageType &&
-		isProjectAssetTypes(pageType) &&
-		pageType !== ProjectPages.OVERVIEW &&
-		pageType !== ProjectAssetTypes.SIMULATION_WORKFLOW
-	) {
+	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
 		const isRemoved = await ProjectService.deleteAsset(props.project.id, pageType, assetId);
 
 		if (isRemoved) {
