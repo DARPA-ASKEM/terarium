@@ -161,17 +161,14 @@ import TeraDatasetNode from './tera-dataset-node.vue';
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	project: IProject;
-	assetId: {
-		type: String;
-		required: true;
-	};
+	assetId: String;
 }>();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
-let saveTimer: Timer | null = null;
+let saveTimer: any = null;
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const newAssetId = ref<string | null>(null);
@@ -411,12 +408,9 @@ const drawPath = (v: any) => pathFn(v) as string;
 watch(
 	() => [props.assetId],
 	async () => {
-		console.log('watcher fired', props.assetId);
-		console.log('before', wf.value);
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
-		console.log('after', wf.value);
 	},
 	{ immediate: true }
 );

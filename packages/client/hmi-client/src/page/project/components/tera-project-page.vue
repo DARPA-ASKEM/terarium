@@ -24,7 +24,7 @@
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
-		:asset-id="assetId"
+		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 	/>
