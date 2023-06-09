@@ -129,9 +129,9 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 	// States and transitions
 	graph.nodes.forEach((node) => {
 		if (node.data.type === NodeType.State) {
-			result.S.push({ sname: node.label });
+			result.S.push({ sname: node.id });
 		} else {
-			result.T.push({ tname: node.label });
+			result.T.push({ tname: node.id });
 		}
 	});
 
