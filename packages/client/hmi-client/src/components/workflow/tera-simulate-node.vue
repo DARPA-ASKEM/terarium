@@ -68,7 +68,7 @@ const runSimulate = async () => {
 				};
 
 				const response = await makeForecast(payload);
-				console.log(payload);
+				console.log(payload, config.model, AMRToPetri(config.model));
 				return response.id;
 			})
 		);
