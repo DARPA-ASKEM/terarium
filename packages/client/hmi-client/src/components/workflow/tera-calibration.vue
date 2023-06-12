@@ -311,7 +311,7 @@ const calibrate = async () => {
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
 		const payload = {
-			model: JSON.stringify(AMRToPetri(modelConfig.value.model)),
+			model: calibrationParam.model,
 			initials: modelConfig.value.initialValues,
 			params: calibratedParams,
 			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
