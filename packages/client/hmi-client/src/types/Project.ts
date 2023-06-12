@@ -6,7 +6,7 @@ export enum ProjectAssetTypes {
 	PLANS = 'plans',
 	SIMULATIONS = 'simulations',
 	SIMULATION_RUNS = 'simulation_runs',
-	SIMULATION_WORKFLOW = 'simulation_workflow',
+	SIMULATION_WORKFLOW = 'workflows',
 	DATASETS = 'datasets',
 	CODE = 'code'
 }
