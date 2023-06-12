@@ -228,11 +228,11 @@ const assets = computed(() => {
 	// Run through all the assets type within the project
 	Object.keys(projectAssets).forEach((type) => {
 		if (isProjectAssetTypes(type) && !isEmpty(projectAssets[type])) {
-			const projectAssetType = type as ProjectAssetTypes;
+			const projectAssetType: ProjectAssetTypes = type as ProjectAssetTypes;
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
 				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
 				const pageType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id.toString();
+				const assetId = asset?.id ?? '';
 				return { assetName, pageType, assetId };
 			});
 			result.push(...typeAssets);
