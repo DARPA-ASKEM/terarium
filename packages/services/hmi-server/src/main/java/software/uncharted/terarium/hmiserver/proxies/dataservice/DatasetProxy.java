@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
@@ -28,7 +29,7 @@ public interface DatasetProxy {
 	@Path("/features")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createFeatures(
-		Feature feature
+		JsonNode feature
 	);
 
 	@GET
@@ -48,7 +49,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateFeature(
 		@PathParam("id") String id,
-		Feature feature
+		JsonNode feature
 	);
 
 	@GET
@@ -62,7 +63,7 @@ public interface DatasetProxy {
 	@Path("/qualifiers")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createQualifiers(
-		Qualifier qualifier
+		JsonNode qualifier
 	);
 
 	@GET
@@ -82,7 +83,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateQualifier(
 		@PathParam("id") String id,
-		Qualifier qualifier
+		JsonNode qualifier
 	);
 
 	@GET
@@ -94,7 +95,7 @@ public interface DatasetProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createDatasets(
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@GET
@@ -114,7 +115,7 @@ public interface DatasetProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateDataset(
 		@PathParam("id") String id,
-		Dataset dataset
+		JsonNode dataset
 	);
 
 	@POST

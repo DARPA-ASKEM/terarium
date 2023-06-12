@@ -421,7 +421,7 @@ li {
 
 .selected-document-modal-mask {
 	position: fixed;
-	z-index: 98;
+	z-index: 998;
 	top: 0;
 	left: 0;
 	width: 100%;
