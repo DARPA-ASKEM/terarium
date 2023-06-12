@@ -32,6 +32,7 @@
 					@click="getAndPopulateAnnotations()"
 				/>
 				<tera-project-page
+					v-if="project"
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
