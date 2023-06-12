@@ -32,6 +32,7 @@
 					@click="getAndPopulateAnnotations()"
 				/>
 				<tera-project-page
+					v-if="project"
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
@@ -392,13 +393,7 @@ async function removeAsset(asset: Tab) {
 	const { assetName, assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (
-		assetId &&
-		pageType &&
-		isProjectAssetTypes(pageType) &&
-		pageType !== ProjectPages.OVERVIEW &&
-		pageType !== ProjectAssetTypes.SIMULATION_WORKFLOW
-	) {
+	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
 		const isRemoved = await ProjectService.deleteAsset(props.project.id, pageType, assetId);
 
 		if (isRemoved) {
@@ -542,11 +537,11 @@ section,
 	overflow-y: hidden;
 }
 .p-splitter:deep(.p-splitter-gutter) {
-	z-index: 900;
+	z-index: 1000;
 }
 
 .top-z-index {
-	z-index: 900;
+	z-index: 1000;
 }
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
@@ -568,6 +563,7 @@ section,
 .annotation-header {
 	display: flex;
 	justify-content: space-between;
+	height: 2rem;
 }
 
 .annotation-header .p-button.p-button-secondary {
@@ -600,10 +596,6 @@ section,
 	padding-right: 1rem;
 }
 
-.annotation-content {
-	padding: 0rem 0.5rem 0rem 0.5rem;
-}
-
 .annotation-input-container {
 	display: flex;
 	flex-direction: column;
@@ -622,10 +614,6 @@ section,
 
 .annotation-input-box .p-inputtext:hover {
 	border-color: var(--primary-color) !important;
-}
-
-.annotation-header {
-	height: 2rem;
 }
 
 .save-cancel-buttons {

@@ -83,7 +83,7 @@ export interface Simulation {
 
 export interface Dataset {
     id?: string;
-    timestamp?: Date;
+    timestamp?: any;
     username?: string;
     name: string;
     description?: string;

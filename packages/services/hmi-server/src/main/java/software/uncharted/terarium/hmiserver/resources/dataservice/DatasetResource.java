@@ -1,5 +1,10 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import org.apache.james.mime4j.dom.field.FieldName;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -59,7 +64,7 @@ public class DatasetResource {
 	public Response createFeatures(
 		final Feature feature
 	) {
-		return proxy.createFeatures(feature);
+		return proxy.createFeatures(convertObjectToSnakeCaseJsonNode(feature));
 	}
 
 	@GET
@@ -85,7 +90,7 @@ public class DatasetResource {
 		@PathParam("id") final String id,
 		final Feature feature
 	) {
-		return proxy.updateFeature(id, feature);
+		return proxy.updateFeature(id, convertObjectToSnakeCaseJsonNode(feature));
 	}
 
 	@GET
@@ -103,7 +108,7 @@ public class DatasetResource {
 	public Response createQualifiers(
 		final Qualifier qualifier
 	) {
-		return proxy.createQualifiers(qualifier);
+		return proxy.createQualifiers(convertObjectToSnakeCaseJsonNode(qualifier));
 	}
 
 	@GET
@@ -129,7 +134,7 @@ public class DatasetResource {
 		@PathParam("id") final String id,
 		final Qualifier qualifier
 	) {
-		return proxy.updateQualifier(id, qualifier);
+		return proxy.updateQualifier(id, convertObjectToSnakeCaseJsonNode(qualifier));
 	}
 
 	@GET
@@ -142,10 +147,11 @@ public class DatasetResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createDatasets(
+	public Response createDataset(
 		final Dataset dataset
 	) {
-		return proxy.createDatasets(dataset);
+		JsonNode node = convertObjectToSnakeCaseJsonNode(dataset);
+		return proxy.createDatasets(node);
 	}
 
 	@GET
@@ -171,7 +177,7 @@ public class DatasetResource {
 		@PathParam("id") final String id,
 		final Dataset dataset
 	) {
-		return proxy.updateDataset(id, dataset);
+		return proxy.updateDataset(id, convertObjectToSnakeCaseJsonNode(dataset));
 	}
 
 	@POST
@@ -349,4 +355,19 @@ public class DatasetResource {
 	public PresignedURL getDownloadUrl(@PathParam("id") final String id,  @QueryParam("filename") String filename) {
 		return proxy.getDownloadUrl(id, filename);
 	}
+
+	/**
+	 * Serialize a given object to be in snake-case instead of camelCase, as may be
+	 * required by the proxied endpoint.
+	 * @param object
+	 * @return
+	 */
+	private JsonNode convertObjectToSnakeCaseJsonNode(Object object) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+		return mapper.convertValue(object, JsonNode.class);
+	}
+
 }

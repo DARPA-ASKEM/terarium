@@ -22,8 +22,9 @@ public class Dataset {
 	private String id; //Is this a UUID?
 
 	/** Timestamp of when the dataset was created **/
+	//TODO: This should be "Instant" but there is an issue and a time crunch here...
 	@TSOptional
-	private Instant timestamp;
+	private Object timestamp;
 
 	/** Username of the user who created the dataset **/
 	@TSOptional
