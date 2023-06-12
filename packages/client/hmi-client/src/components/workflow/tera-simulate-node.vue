@@ -61,7 +61,7 @@ const runSimulate = async () => {
 		startedRunIdList.value = await Promise.all(
 			props.node.inputs[0].value.map(async (config) => {
 				const payload = {
-					model: shimPetriModel(AMRToPetri(config.model)),
+					model: shimPetriModel(AMRToPetri(config.model, 'id')),
 					initials: config.initialValues,
 					params: config.parameterValues,
 					tspan: openedWorkflowNodeStore.tspan

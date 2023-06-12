@@ -116,7 +116,10 @@ export enum NodeType {
  *
  * Because the index positions could have changed, however it should have parity in terms of semantics.
  */
-export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
+export const parseIGraph2PetriNet = (
+	graph: IGraph<NodeData, EdgeData>,
+	attributeForName?: string
+) => {
 	const result: PetriNet = {
 		S: [],
 		T: [],
@@ -124,14 +127,16 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 		O: []
 	};
 
+	const name = attributeForName || 'label';
+
 	const findNodeById = (id: string) => graph.nodes.find((n) => n.id === id);
 
 	// States and transitions
 	graph.nodes.forEach((node) => {
 		if (node.data.type === NodeType.State) {
-			result.S.push({ sname: node.id });
+			result.S.push({ sname: node[name] });
 		} else {
-			result.T.push({ tname: node.id });
+			result.T.push({ tname: node[name] });
 		}
 	});
 
@@ -150,11 +155,11 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 
 			const otNode = findNodeById(target);
 			if (otNode) {
-				os = result.S.findIndex((d) => d.sname === otNode.id);
+				os = result.S.findIndex((d) => d.sname === otNode[name]);
 			}
 			const osNode = findNodeById(source);
 			if (osNode) {
-				ot = result.T.findIndex((d) => d.tname === osNode.id);
+				ot = result.T.findIndex((d) => d.tname === osNode[name]);
 			}
 
 			// Julia index starts at 1
@@ -171,12 +176,12 @@ export const parseIGraph2PetriNet = (graph: IGraph<NodeData, EdgeData>) => {
 			let is = -1;
 			const itNode = findNodeById(target);
 			if (itNode) {
-				it = result.T.findIndex((d) => d.tname === itNode.id);
+				it = result.T.findIndex((d) => d.tname === itNode[name]);
 			}
 
 			const isNode = findNodeById(source);
 			if (isNode) {
-				is = result.S.findIndex((d) => d.sname === isNode.id);
+				is = result.S.findIndex((d) => d.sname === isNode[name]);
 			}
 
 			// Julia index starts at 1
