@@ -110,9 +110,13 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 // These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
 const openWorkflow = async () => {
 	// Create a new workflow
-	const wf = emptyWorkflow('workflow', '');
+	let wfName = 'workflow';
+	if (props.project && props.project.assets) {
+		wfName = `workflow ${props.project.assets[ProjectAssetTypes.SIMULATION_WORKFLOW].length + 1}`;
+	}
+	const wf = emptyWorkflow(wfName, '');
 
-	// FIXME: TDS bug thinks that k is z
+	// FIXME: TDS bug thinks that k is z, June 2023
 	// @ts-ignore
 	wf.transform.z = 1;
 

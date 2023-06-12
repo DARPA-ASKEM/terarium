@@ -15,7 +15,7 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<toolbar class="glass">
-				<h5>Workflow name</h5>
+				<h5>{{ wf.name }}</h5>
 				<div class="button-group">
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
