@@ -514,14 +514,14 @@ main {
 	overflow: auto;
 }
 
-/* .preview {
+.preview {
 	height: 5rem;
 	background-color: var(--surface-secondary);
 	flex-grow: 1;
 	overflow: hidden;
 	border: none;
 	position: relative;
-} */
+}
 
 .p-toolbar {
 	position: absolute;
