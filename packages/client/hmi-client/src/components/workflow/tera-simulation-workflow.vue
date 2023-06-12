@@ -14,15 +14,15 @@
 	>
 		<!-- toolbar -->
 		<template #foreground>
-			<toolbar class="glass">
-				<h5>Workflow name</h5>
+			<div class="toolbar glass">
+				<h5>{{ wf.name }}</h5>
 				<div class="button-group">
 					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
 					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
 					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
 					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
 				</div>
-			</toolbar>
+			</div>
 		</template>
 		<!-- data -->
 		<template #data>
@@ -127,7 +127,7 @@
 
 <script setup lang="ts">
 import { v4 as uuidv4 } from 'uuid';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -161,18 +161,20 @@ import TeraDatasetNode from './tera-dataset-node.vue';
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	project: IProject;
+	assetId: string;
 }>();
 
 const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
+let saveTimer: any = null;
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const newAssetId = ref<string | null>(null);
 const isMouseOverCanvas = ref<boolean>(false);
 
-const wf = ref<Workflow>(workflowService.create());
+const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
 
 const testOperation: Operation = {
@@ -403,10 +405,27 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+watch(
+	() => [props.assetId],
+	async () => {
+		const workflowId = props.assetId;
+		if (!workflowId) return;
+		wf.value = await workflowService.getWorkflow(workflowId);
+	},
+	{ immediate: true }
+);
+
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+	saveTimer = setInterval(() => {
+		console.log('saving workflow');
+		workflowService.updateWorkflow(wf.value);
+	}, 8000);
 });
 onUnmounted(() => {
+	if (saveTimer) {
+		clearInterval(saveTimer);
+	}
 	document.removeEventListener('mousemove', mouseUpdate);
 });
 
@@ -420,7 +439,7 @@ function resetZoom() {
 }
 </script>
 <style scoped>
-toolbar {
+.toolbar {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
@@ -428,7 +447,7 @@ toolbar {
 	padding: 0.5rem 1rem;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
-	z-index: 1000;
+	z-index: 900;
 }
 .glass {
 	background-color: rgba(255, 255, 255, 0.8);
@@ -441,7 +460,7 @@ toolbar {
 	gap: 1rem;
 }
 /* We should make a proper secondary outline button. Until then this works. */
-toolbar .button-group .secondary-button {
+.toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
@@ -449,17 +468,17 @@ toolbar .button-group .secondary-button {
 	padding-bottom: 0px;
 }
 
-toolbar .button-group .secondary-button:hover {
+.toolbar .button-group .secondary-button:hover {
 	color: var(--text-color-secondary) !important;
 	background-color: var(--surface-highlight) !important;
 }
 
-toolbar .button-group .primary-dropdown {
+.toolbar .button-group .primary-dropdown {
 	background-color: var(--primary-color);
 	border: 1px solid var(--primary-color);
 }
-toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
-toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
+.toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
+.toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
 	color: var(--surface-0);
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;

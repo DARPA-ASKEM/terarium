@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import API from '@/api/api';
 import _ from 'lodash';
 import {
 	Operation,
@@ -20,11 +21,11 @@ import {
  * - Should we update workflow node status on modification???
  */
 
-export const create = () => {
+export const emptyWorkflow = (name: string = 'test', description: string = '') => {
 	const workflow: Workflow = {
 		id: uuidv4(),
-		name: 'test',
-		description: '',
+		name,
+		description,
 
 		transform: { x: 0, y: 0, k: 1 },
 		nodes: [],
@@ -159,4 +160,27 @@ export const removeNode = (wf: Workflow, id: string) => {
 
 	// Remove the node
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
+};
+
+/**
+ * API hooks: Handles reading and writing back to the store
+ * */
+
+// Create
+export const createWorkflow = async (workflow: Workflow) => {
+	const response = await API.post('/workflows', workflow);
+	return response?.data ?? null;
+};
+
+// Update
+export const updateWorkflow = async (workflow: Workflow) => {
+	const id = workflow.id;
+	const response = await API.put(`/workflows/${id}`, workflow);
+	return response?.data ?? null;
+};
+
+// Get
+export const getWorkflow = async (id: string) => {
+	const response = await API.get(`/workflows/${id}`);
+	return response?.data ?? null;
 };

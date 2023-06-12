@@ -24,6 +24,7 @@
 	/>
 	<tera-simulation-workflow
 		v-else-if="pageType === ProjectAssetTypes.SIMULATION_WORKFLOW"
+		:asset-id="assetId ?? ''"
 		:project="project"
 		@vue:mounted="emit('asset-loaded')"
 	/>
@@ -77,6 +78,8 @@ import SimulationPlan from '@/page/project/components/Simulation.vue';
 import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
+import { emptyWorkflow, createWorkflow } from '@/services/workflow';
+import { addAsset } from '@/services/project';
 
 const props = defineProps<{
 	project: IProject;
@@ -105,13 +108,31 @@ const getXDDuri = (assetId: Tab['assetId']): string =>
 	ProjectService.getDocumentAssetXddUri(props?.project, assetId) ?? '';
 
 // These 3 open functions can potentially make use of openAssetFromSidebar in tera-project.vue
-const openWorkflow = () => {
+const openWorkflow = async () => {
+	// Create a new workflow
+	let wfName = 'workflow';
+	if (props.project && props.project.assets) {
+		wfName = `workflow ${props.project.assets[ProjectAssetTypes.SIMULATION_WORKFLOW].length + 1}`;
+	}
+	const wf = emptyWorkflow(wfName, '');
+
+	// FIXME: TDS bug thinks that k is z, June 2023
+	// @ts-ignore
+	wf.transform.z = 1;
+
+	// Add the workflow to the project
+	const response = await createWorkflow(wf);
+	const workflowId = response.id;
+	await addAsset(props.project.id, ProjectAssetTypes.SIMULATION_WORKFLOW, workflowId);
+
+	emit('update-project', props.project.id);
+
 	router.push({
 		name: RouteName.ProjectRoute,
 		params: {
 			assetName: 'Workflow',
 			pageType: ProjectAssetTypes.SIMULATION_WORKFLOW,
-			assetId: undefined
+			assetId: workflowId
 		}
 	});
 };
