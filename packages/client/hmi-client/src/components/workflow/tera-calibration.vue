@@ -49,7 +49,7 @@
 					calibration-config
 				/>
 			</AccordionTab>
-			<AccordionTab :header="datasetName">
+			<AccordionTab v-if="datasetId" :header="datasetName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
 			</AccordionTab>
 			<AccordionTab header="Train / Test ratio">
@@ -194,7 +194,7 @@ import { logger } from '@/utils/logger';
 import { CalibrationParams, CsvAsset, Dataset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { PetriNet } from '@/petrinet/petrinet-service';
+import { shimPetriModel } from '@/services/models/petri-shim';
 import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
@@ -267,22 +267,8 @@ const calibrate = async () => {
 			}
 		}
 
-		// FIXME: current need to strip out metadata, should do serverside
-		const cleanedModel: PetriNet = {
-			S: [],
-			T: [],
-			I: [],
-			O: []
-		};
-		// Take out all the extra content in model.content
-		const tempModel = AMRToPetri(modelConfig.value.model); // shim but with step
-		cleanedModel.S = tempModel.S.map((s) => ({ sname: s.sname }));
-		cleanedModel.T = tempModel.T.map((t) => ({ tname: t.tname }));
-		cleanedModel.I = tempModel.I;
-		cleanedModel.O = tempModel.O;
-
 		const calibrationParam: CalibrationParams = {
-			model: JSON.stringify(cleanedModel),
+			model: shimPetriModel(AMRToPetri(modelConfig.value.model)), // Take out all the extra content in model
 			initials: modelConfig.value.initialValues,
 			params: modelConfig.value.parameterValues,
 			timesteps_column: timestepColumn.value,
@@ -325,7 +311,7 @@ const calibrate = async () => {
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
 		const payload = {
-			model: JSON.stringify(cleanedModel),
+			model: JSON.stringify(AMRToPetri(modelConfig.value.model)),
 			initials: modelConfig.value.initialValues,
 			params: calibratedParams,
 			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
