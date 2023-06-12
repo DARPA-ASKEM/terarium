@@ -14,7 +14,7 @@
 					:key="index"
 				>
 					<template v-if="index > 0">,&nbsp;</template>
-					<span class="selected-label-item" :style="{ color: getVariableColor(variable) }">{{
+					<span class="selected-label-item" :style="{ color: getVariableColor(variable, 0) }">{{
 						variable
 					}}</span>
 				</template>
@@ -91,7 +91,21 @@ const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 let stateVariablesList: string[] = [];
 const chartData = ref({});
 
-const getVariableColor = (variableName: string) => {
+const lightenHexStr = (hex, v) => {
+	let r = parseInt(hex.substring(1, 3), 16);
+	let g = parseInt(hex.substring(3, 5), 16);
+	let b = parseInt(hex.substring(5, 7), 16);
+
+	r += Math.floor((255 - r) * v);
+	g += Math.floor((255 - g) * v);
+	b += Math.floor((255 - b) * v);
+
+	return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b
+		.toString(16)
+		.padStart(2, '0')}`;
+};
+
+const getVariableColor = (variableName: string, runIdx: number) => {
 	// temp
 	const VIRIDIS_14 = [
 		'#440154',
@@ -111,7 +125,8 @@ const getVariableColor = (variableName: string) => {
 	];
 	const { selectedVariable } = openedWorkflowNodeStore.chartConfigs[props.chartIdx];
 	const codeIdx = selectedVariable.findIndex((variable) => variable === variableName);
-	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
+	const baseColor = VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
+	return lightenHexStr(baseColor, runIdx / props.runIdList.length);
 };
 
 const watchRunResults = async (runResults) => {
@@ -165,7 +180,7 @@ const renderGraph = () => {
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
 					tension: 0.4,
-					borderColor: getVariableColor(variable)
+					borderColor: getVariableColor(variable, runIdx)
 				};
 				datasets.push(dataset);
 			})
