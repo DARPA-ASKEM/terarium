@@ -29,7 +29,8 @@
 							:show-preview="props.showPreview"
 							:is-processing="isProcessing"
 							@remove-file="removeFile(importFiles.indexOf(file))"
-						></TeraDragAndDropFilePreviewer>
+						>
+						</TeraDragAndDropFilePreviewer>
 					</div>
 				</div>
 				<br />
@@ -241,6 +242,7 @@ const canImport = computed(() => importFiles.value.length > 0);
 	height: 100%;
 	overflow-x: hidden;
 }
+
 .dropzone-container {
 	flex-direction: column;
 	display: flex;

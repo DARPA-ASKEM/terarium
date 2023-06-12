@@ -64,7 +64,13 @@
 </template>
 
 <script setup lang="ts">
-import { Position, WorkflowNode, WorkflowPortStatus, WorkflowDirection } from '@/types/workflow';
+import {
+	Position,
+	WorkflowNode,
+	WorkflowPortStatus,
+	WorkflowDirection,
+	WorkflowOperationTypes
+} from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
@@ -139,8 +145,12 @@ function showNodeDrilldown() {
 	let pageType;
 	let assetId;
 	switch (props.node.operationType) {
-		case 'SimulateOperation':
+		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;
+			assetId = props.node.id;
+			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+			break;
+		case WorkflowOperationTypes.CALIBRATION:
 			assetId = props.node.id;
 			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 			break;
@@ -149,11 +159,11 @@ function showNodeDrilldown() {
 	}
 	if (!isEmpty(props.node.outputs)) {
 		switch (props.node.operationType) {
-			case 'ModelOperation':
+			case WorkflowOperationTypes.MODEL:
 				pageType = ProjectAssetTypes.MODELS;
 				assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0].model.id.toString();
 				break;
-			case 'Dataset':
+			case WorkflowOperationTypes.DATASET:
 				pageType = ProjectAssetTypes.DATASETS;
 				assetId = props.node.outputs[0].value?.[0].toString();
 				break;
@@ -237,6 +247,7 @@ header {
 	border-top-right-radius: var(--border-radius);
 	border-top-left-radius: var(--border-radius);
 }
+
 header:hover {
 	background-color: var(--node-header-hover);
 	cursor: move;
@@ -309,6 +320,7 @@ ul li {
 .output-port-container[active='false'] {
 	color: var(--text-color-secondary);
 }
+
 .output-port-container[active='true'] {
 	color: var(--text-color-primary);
 }

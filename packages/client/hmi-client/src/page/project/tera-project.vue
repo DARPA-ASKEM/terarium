@@ -22,8 +22,8 @@
 		<Splitter>
 			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
-					v-if="!isEmpty(tabs)"
 					class="tab-group"
+					v-if="!isEmpty(tabs)"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
 					:loading-tab-index="loadingTabIndex"
@@ -46,8 +46,8 @@
 				class="project-page top-z-index"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-					openedWorkflowNodeStore.assetId &&
-					openedWorkflowNodeStore.pageType
+					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
+						openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION)
 				"
 				:size="20"
 			>
@@ -526,6 +526,7 @@ function formatAuthorTimestamp(username, timestamp) {
 	flex: 1;
 	background: none;
 	border: none;
+	overflow-x: hidden;
 }
 
 section,
@@ -536,6 +537,7 @@ section,
 	overflow-x: auto;
 	overflow-y: hidden;
 }
+
 .p-splitter:deep(.p-splitter-gutter) {
 	z-index: 1000;
 }
@@ -543,6 +545,7 @@ section,
 .top-z-index {
 	z-index: 1000;
 }
+
 .p-tabmenu:deep(.p-tabmenuitem) {
 	display: inline;
 	max-width: 15rem;

@@ -33,217 +33,116 @@
 				class="p-button-sm"
 			/>
 		</template>
-		<template v-if="modelView === ModelView.DESCRIPTION">
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab>
-					<template #header>
-						<header id="Description">Description</header>
-					</template>
-					<p v-if="assetId !== ''" v-html="description" />
-					<template v-else>
-						<label for="placeholder" /><Textarea
-							v-model="newDescription"
-							rows="5"
-							placeholder="Description of new model"
-						/>
-					</template>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="Parameters">Parameters</header>
-					</template>
-					<DataTable class="p-datatable-sm" :value="model?.model.parameters">
-						<Column field="id" header="ID"></Column>
-						<Column field="value" header="Value"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="State variables">State variables</header>
-					</template>
-					<DataTable class="p-datatable-sm" :value="model?.model.states">
-						<Column field="id" header="ID"></Column>
-						<Column field="name" header="Name"></Column>
-						<Column field="grounding.context" header="Context"></Column>
-						<Column field="grounding.identifiers" header="Identifiers"></Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="Transitions">Transitions</header>
-					</template>
-					<DataTable class="p-datatable-sm" :value="model?.model.transitions">
-						<Column field="id" header="ID"></Column>
-						<Column field="properties.name" header="Name"></Column>
-						<Column field="input" header="Input"></Column>
-						<Column field="output" header="Output"></Column>
-						<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
-						<Column field="properties.rate.expression_mathml" header="Equation">
-							<template #body="slotProps">
-								<katex-element :expression="slotProps.data.properties.rate?.expression" />
-							</template>
-						</Column>
-					</DataTable>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<header id="Variable Statements">Variable Statements</header>
-					</template>
-					<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
-						<Column field="id" header="ID"></Column>
-						<Column field="variable.name" header="Variable"></Column>
-						<Column field="value.value" header="Value"></Column>
-						<Column header="Extraction Type">
-							<template #body="slotProps">
-								<Tag :value="getExtractionType(slotProps)" />
-							</template>
-						</Column>
-						<Column header="Source">
-							<template #body="slotProps">
-								<div>{{ getSource(slotProps) }}</div>
-							</template>
-						</Column>
-						<Column field="variable.equations ?? ''" header="Equations"></Column>
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</template>
-		<template v-if="modelView === ModelView.MODEL">
-			<Accordion :multiple="true" :active-index="[0, 1, 2, 3, 4]">
-				<AccordionTab header="Model diagram">
-					<tera-model-diagram
-						:model="model"
-						:is-editable="props.isEditable"
-						@update-model-content="updateModelContent"
-					/>
-				</AccordionTab>
-				<AccordionTab v-if="model">
-					<template #header> Model configurations </template>
-					<DataTable
-						class="model-configuration"
-						v-model:selection="selectedModelConfig"
-						:value="modelConfiguration"
-						editMode="cell"
-						showGridlines
-						@cell-edit-init="onCellEditStart"
-						@cell-edit-complete="onCellEditComplete"
-					>
-						<ColumnGroup type="header">
-							<!--Style top rows-->
-							<Row>
-								<Column header="" style="border: none" />
-								<Column header="" style="border: none" />
-								<Column header="Initial conditions" :colspan="model.model.states.length" />
-								<Column header="Parameters" :colspan="paramLength" />
-								<!-- <Column header="Observables" /> -->
-							</Row>
-							<Row>
-								<Column selection-mode="multiple" headerStyle="width: 3rem" />
-								<Column header="Select all" />
-								<Column v-for="(s, i) of modelStates" :key="i" :header="s.name" />
-								<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.name" />
-							</Row>
-							<!-- <Row> Add show in workflow later
-							<Column header="Show in workflow" />
-							<Column v-for="(s, i) of model.content.S" :key="i">
-								<template #header>
-									<Checkbox :binary="true" />
-								</template>
-							</Column>
-							<Column v-for="(t, i) of model.content.T" :key="i">
-								<template #header>
-									<Checkbox :binary="true" />
-								</template>
-							</Column>
-						</Row> -->
-						</ColumnGroup>
-						<Column selection-mode="multiple" headerStyle="width: 3rem" />
-						<Column field="name">
-							<template #body="{ data, field }">
-								{{ data[field] }}
-							</template>
-							<template #editor="{ data, field }">
-								<InputText v-model="data[field]" autofocus />
-							</template>
-						</Column>
-						<Column
-							v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
-							:key="i"
-							:field="value['name'] ?? value['name']"
-						>
-							<template #body="{ data, field }">
-								{{ data[field] }}
-							</template>
-							<template #editor="{ data, field }">
-								{{ data[field] }}
-							</template>
-						</Column>
-					</DataTable>
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add configuration"
-						@click="addModelConfiguration"
-					/>
-				</AccordionTab>
-				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
-					<DataTable :value="relatedTerariumModels">
-						<Column field="name" header="Models"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDatasets">
-						<Column field="name" header="Datasets"></Column>
-					</DataTable>
-					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Documents"></Column>
-					</DataTable>
-				</AccordionTab>
-			</Accordion>
-		</template>
-		<Teleport to="body">
-			<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
+		<Accordion
+			v-if="modelView === ModelView.DESCRIPTION"
+			:multiple="true"
+			:active-index="[0, 1, 2, 3, 4]"
+		>
+			<AccordionTab>
 				<template #header>
-					<h4>{{ cellValueToEdit.field }}</h4>
-					<span>Select a value for this configuration</span>
+					<header id="Description">Description</header>
 				</template>
-				<template #default>
-					<TabView>
-						<TabPanel v-for="(tab, i) in fakeExtractions" :key="tab" :header="tab">
-							<div>
-								<label for="name">Name</label>
-								<InputText class="p-inputtext-sm" v-model="fakeExtractions[i]" />
-							</div>
-							<div>
-								<label for="name">Source</label>
-								<InputText class="p-inputtext-sm" />
-							</div>
-							<div>
-								<label for="name">Value</label>
-								<InputText
-									class="p-inputtext-sm"
-									v-model="cellValueToEdit.data[cellValueToEdit.field]"
-								/>
-							</div>
-						</TabPanel>
-					</TabView>
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add value"
-						@click="addConfigValue"
+				<p v-if="assetId !== ''" v-html="description" />
+				<template v-else>
+					<label for="placeholder" /><Textarea
+						v-model="newDescription"
+						rows="5"
+						placeholder="Description of new model"
 					/>
 				</template>
-				<template #footer>
-					<Button label="OK" @click="updateModelConfigValue" />
-					<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="Parameters">Parameters</header>
 				</template>
-			</tera-modal>
-		</Teleport>
+				<DataTable class="p-datatable-sm" :value="model?.model.parameterss">
+					<Column field="id" header="ID"></Column>
+					<Column field="value" header="Value"></Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="State variables">State variables</header>
+				</template>
+				<DataTable class="p-datatable-sm" :value="model?.model.states">
+					<Column field="id" header="ID"></Column>
+					<Column field="name" header="Name"></Column>
+					<Column field="grounding.context" header="Context"></Column>
+					<Column field="grounding.identifiers" header="Identifiers"></Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="Transitions">Transitions</header>
+				</template>
+				<DataTable class="p-datatable-sm" :value="model?.model.transitions">
+					<Column field="id" header="ID"></Column>
+					<Column field="properties.name" header="Name"></Column>
+					<Column field="input" header="Input"></Column>
+					<Column field="output" header="Output"></Column>
+					<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
+					<Column field="properties.rate.expression_mathml" header="Equation">
+						<template #body="slotProps">
+							<katex-element :expression="slotProps.data.properties?.rate?.expression" />
+						</template>
+					</Column>
+				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header id="Variable Statements">Variable Statements</header>
+				</template>
+				<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
+					<Column field="id" header="ID"></Column>
+					<Column field="variable.name" header="Variable"></Column>
+					<Column field="value.value" header="Value"></Column>
+					<Column header="Extraction Type">
+						<template #body="slotProps">
+							<Tag :value="getExtractionType(slotProps)" />
+						</template>
+					</Column>
+					<Column header="Source">
+						<template #body="slotProps">
+							<div>{{ getSource(slotProps) }}</div>
+						</template>
+					</Column>
+					<Column field="variable.equations ?? ''" header="Equations"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
+		<Accordion
+			v-else-if="modelView === ModelView.MODEL"
+			:multiple="true"
+			:active-index="[0, 1, 2, 3, 4]"
+		>
+			<AccordionTab header="Model diagram">
+				<tera-model-diagram
+					:model="model"
+					:is-editable="props.isEditable"
+					@update-model-content="updateModelContent"
+				/>
+			</AccordionTab>
+			<AccordionTab v-if="model" header="Model configurations">
+				<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+			</AccordionTab>
+			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
+				<DataTable :value="relatedTerariumModels">
+					<Column field="name" header="Models"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDatasets">
+					<Column field="name" header="Datasets"></Column>
+				</DataTable>
+				<DataTable :value="relatedTerariumDocuments">
+					<Column field="name" header="Documents"></Column>
+				</DataTable>
+			</AccordionTab>
+		</Accordion>
 	</tera-asset>
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
-import { watch, ref, computed, onUpdated, PropType, ComputedRef } from 'vue';
+import { isEmpty } from 'lodash';
+import { watch, ref, computed, onUpdated, PropType } from 'vue';
 import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import Textarea from 'primevue/textarea';
 import InputText from 'primevue/inputtext';
@@ -254,27 +153,18 @@ import useResourcesStore from '@/stores/resources';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Accordion from 'primevue/accordion';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Row from 'primevue/row';
-import ColumnGroup from 'primevue/columngroup';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { ResultType } from '@/types/common';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraModelDiagram from './tera-model-diagram.vue';
-
-interface StringValueMap {
-	[key: string]: string;
-}
+import TeraModelConfiguration from './tera-model-configuration.vue';
 
 enum ModelView {
 	DESCRIPTION = 'description',
@@ -301,7 +191,6 @@ const modelContent = computed(() => [
 	{ key: 'Variable Statements', value: model.value?.metadata?.variable_statements }
 ]);
 */
-const modelView = ref(ModelView.DESCRIPTION);
 
 // Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
@@ -327,6 +216,7 @@ const props = defineProps({
 	}
 });
 
+const modelView = ref(ModelView.DESCRIPTION);
 const resources = useResourcesStore();
 const router = useRouter();
 
@@ -344,158 +234,10 @@ const newPetri = ref();
 
 const isMathMLValid = ref<boolean>(true);
 
-const modelConfigNames = ref([{ name: 'Config 1' }]);
-const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
-
-const initialValues = ref<StringValueMap[]>([{}]);
-const parameterValues = ref<StringValueMap[]>([{}]);
-const openValueConfig = ref(false);
-const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
-
-const selectedModelConfig = ref();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
-
-const modelConfiguration = computed(() => {
-	const newModelConfiguration: any[] = [];
-
-	for (let i = 0; i < modelConfigNames.value.length; i++) {
-		newModelConfiguration.push({
-			name: modelConfigNames.value[i].name,
-			...initialValues.value[i],
-			...parameterValues.value[i]
-		});
-	}
-
-	return newModelConfiguration;
-});
-
-const paramLength = computed(() => model.value?.semantics?.ode?.parameters?.length);
-
-const modelStates: ComputedRef<Array<{ name: string }> | undefined> = computed(() =>
-	model.value?.model.states.map((state) => ({ name: state.id }))
-);
-
-const modelTransitions: ComputedRef<Array<{ name: string }> | undefined> = computed(() =>
-	model.value?.model.transitions.map((transitions) => ({ name: transitions.id }))
-);
-
 const metaData = computed(() => model.value?.metadata?.variable_statements);
 
-// const modelParameters = computed(() =>{
-// 	if (amr.value){
-// 		return amr.value.model.parameters;
-// 	}
-// 	return model.value?.content.parameters;
-// })
-
-function addModelConfiguration() {
-	modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
-	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
-	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
-}
-
-function addConfigValue() {
-	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1}`);
-}
-
-const onCellEditComplete = (event) => {
-	const { data, newValue, field } = event;
-
-	switch (field) {
-		case 'name':
-			data[field] = newValue;
-			break;
-		default:
-			break;
-	}
-};
-
-function updateModelContent(rendererGraph) {
-	if (model.value) model.value.model = parseIGraph2PetriNet(rendererGraph);
-}
-
-const onCellEditStart = (event) => {
-	const { data, field, index } = event;
-
-	if (field !== 'name') {
-		openValueConfig.value = true;
-		cellValueToEdit.value = { data, field, index };
-	}
-};
-
-function updateModelConfigValue() {
-	const { data, field, index } = cellValueToEdit.value;
-
-	if (initialValues.value[index][field]) {
-		initialValues.value[index][field] = data[field];
-	} else if (parameterValues.value[index][field]) {
-		parameterValues.value[index][field] = data[field];
-	}
-
-	openValueConfig.value = false;
-}
-
-function generateModelConfigValues() {
-	// Sync with workflow
-	if (
-		model.value &&
-		openedWorkflowNodeStore.assetId === model.value.id.toString() &&
-		openedWorkflowNodeStore.initialValues !== null &&
-		openedWorkflowNodeStore.parameterValues !== null
-	) {
-		// Shallow copy
-		initialValues.value = openedWorkflowNodeStore.initialValues as any; // Not sure why the typing doesn't match
-		parameterValues.value = openedWorkflowNodeStore.parameterValues as any;
-
-		if (modelConfigNames.value.length < initialValues.value.length - 1) {
-			modelConfigNames.value.push({ name: `Config ${modelConfigNames.value.length + 1}` });
-		}
-	}
-	// Default values
-	else if (model.value) {
-		model.value?.model.states.forEach((s) => {
-			initialValues.value[0][s.name] = `${1}`;
-		});
-
-		model.value?.model.transitions.forEach((s) => {
-			parameterValues.value[0][s.name] = `${0.0005}`;
-		});
-	}
-}
-
-watch(
-	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
-	() => {
-		generateModelConfigValues();
-	},
-	{ deep: true }
-);
-
-watch(
-	() => model.value,
-	async () => {
-		// Reset model config on model change
-		modelConfigNames.value = [{ name: 'Config 1' }];
-		fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
-		initialValues.value = [{}];
-		parameterValues.value = [{}];
-		openValueConfig.value = false;
-		cellValueToEdit.value = { data: {}, field: '', index: 0 };
-		generateModelConfigValues();
-	}
-);
-
-// States/transitions aren't selected like this anymore - maybe somehow later?
-// const onStateVariableClick = () => {
-// 	if (selectedRow.value) {
-// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
-// 			selectedRow.value.sname,
-// 			String.raw`{\color{red}${selectedRow.value.sname}}`
-// 		);
-// 	} else {@vnode-mounted
-// 		equationLatex.value = equationLatexOriginal.value;
-// 	}
-// };
+const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const description = computed(() => highlightSearchTerms(model.value?.description));
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -506,6 +248,22 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
+
+// States/transitions aren't selected like this anymore - maybe somehow later?
+// const onStateVariableClick = () => {
+// 	if (selectedRow.value) {
+// 		equationLatex.value = equationLatexOriginal.value.replaceAll(
+// 			selectedRow.value.sname,
+// 			String.raw`{\color{red}${selectedRow.value.sname}}`
+// 		);
+// 	} else {
+// 		equationLatex.value = equationLatexOriginal.value;
+// 	}
+// };
+
+function updateModelContent(rendererGraph) {
+	if (model.value) model.value.model = parseIGraph2PetriNet(rendererGraph);
+}
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -580,9 +338,6 @@ const createNewModel = async () => {
 	}
 };
 
-const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
-const description = computed(() => highlightSearchTerms(model.value?.description));
-
 function getExtractionType(sp) {
 	if (sp.data.variable.column.length > 0) {
 		return 'DataSet';
@@ -603,6 +358,7 @@ function getSource(sp) {
 	white-space: nowrap;
 	margin-left: 0.5rem;
 }
+
 .p-toolbar {
 	position: absolute;
 	width: 100%;
@@ -690,84 +446,12 @@ section math-editor {
 	cursor: pointer;
 }
 
-.p-tabview {
-	display: flex;
-	gap: 1rem;
-	margin-bottom: 1rem;
-	justify-content: space-between;
-}
-
-.p-tabview:deep(> *) {
-	width: 50vw;
-	height: 50vh;
-	overflow: auto;
-}
-
-.p-tabview:deep(.p-tabview-nav) {
-	flex-direction: column;
-}
-
-.p-tabview:deep(label) {
-	display: block;
-	font-size: var(--font-caption);
-	margin-bottom: 0.25rem;
-}
-
-.p-tabview:deep(.p-tabview-nav-container, .p-tabview-nav-content) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-panels) {
-	border-radius: var(--border-radius);
-	border: 1px solid var(--surface-border-light);
-	background-color: var(--surface-ground);
-}
-
-.p-tabview:deep(.p-tabview-panel) {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.p-tabview:deep(.p-tabview-nav li) {
-	border-left: 3px solid transparent;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-header:nth-last-child(n + 3)) {
-	border-bottom: 1px solid var(--surface-border-light);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight) {
-	border-left: 3px solid var(--primary-color);
-	background: var(--surface-highlight);
-}
-
-.p-tabview:deep(.p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-	background: none;
-}
-
-.p-tabview:deep(.p-inputtext) {
-	width: 100%;
-}
-
-.p-tabview:deep(.p-tabview-nav .p-tabview-ink-bar) {
-	display: none;
-}
-
 .tera-split-panel {
 	position: relative;
 	height: 100%;
 	display: flex;
 	align-items: center;
 	width: 100%;
-}
-
-.model-configuration:deep(.p-column-header-content) {
-	color: var(--text-color-subdued);
-}
-
-.model-configuration {
-	margin-bottom: 1rem;
 }
 
 /* Let svg dynamically resize when the sidebar opens/closes or page resizes */

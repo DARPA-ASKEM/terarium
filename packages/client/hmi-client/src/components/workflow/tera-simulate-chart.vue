@@ -4,18 +4,23 @@
 		<MultiSelect
 			v-if="openedWorkflowNodeStore.chartConfigs[props.chartIdx]"
 			v-model="openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable"
+			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
 			placeholder="Select a State Variable"
 		>
 			<template v-slot:value>
-				<span
-					class="selected-label-item"
-					v-for="variable in openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable"
-					:key="variable"
-					:style="{ background: getVariableColor(variable) }"
+				<template
+					v-for="(variable, index) in openedWorkflowNodeStore.chartConfigs[props.chartIdx]
+						.selectedVariable"
+					:key="index"
 				>
-					{{ variable }}
-				</span>
+					<template v-if="index > 0">,&nbsp;</template>
+					<span
+						class="selected-label-item"
+						:style="{ color: hasMultiRuns ? 'black' : getVariableColorByVar(variable) }"
+						>{{ variable }}</span
+					>
+				</template>
 			</template>
 		</MultiSelect>
 		<MultiSelect v-else placeholder="No Data" :disabled="true" />
@@ -24,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { isEmpty } from 'lodash';
 
 import MultiSelect from 'primevue/multiselect';
@@ -55,7 +60,9 @@ const CHART_OPTIONS = {
 			ticks: {
 				color: '#aaa',
 				maxTicksLimit: 5,
-				includeBounds: true
+				includeBounds: true,
+				// this rounds the tick label to nearest int
+				callback: (num) => num
 			},
 			grid: {
 				color: '#fff',
@@ -87,28 +94,34 @@ const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 let stateVariablesList: string[] = [];
 const chartData = ref({});
 
-const getVariableColor = (variableName: string) => {
-	// temp
-	const VIRIDIS_14 = [
-		'#440154',
-		'#481c6e',
-		'#453581',
-		'#3d4d8a',
-		'#34618d',
-		'#2b748e',
-		'#24878e',
-		'#1f998a',
-		'#25ac82',
-		'#40bd72',
-		'#67cc5c',
-		'#98d83e',
-		'#cde11d',
-		'#fde725'
-	];
+// temp
+const VIRIDIS_14 = [
+	'#440154',
+	'#481c6e',
+	'#453581',
+	'#3d4d8a',
+	'#34618d',
+	'#2b748e',
+	'#24878e',
+	'#1f998a',
+	'#25ac82',
+	'#40bd72',
+	'#67cc5c',
+	'#98d83e',
+	'#cde11d',
+	'#fde725'
+];
+
+const getVariableColorByVar = (variableName: string) => {
 	const { selectedVariable } = openedWorkflowNodeStore.chartConfigs[props.chartIdx];
 	const codeIdx = selectedVariable.findIndex((variable) => variable === variableName);
 	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
 };
+
+const getVariableColorByRunIdx = (runIdx: number) =>
+	VIRIDIS_14[Math.floor((runIdx / props.runIdList.length) * VIRIDIS_14.length)];
+
+const hasMultiRuns = computed(() => props.runIdList.length > 1);
 
 const watchRunResults = async (runResults) => {
 	const { runIdList } = props;
@@ -116,13 +129,22 @@ const watchRunResults = async (runResults) => {
 		return;
 	}
 
+	// TODO: pass mappings here for easy variable list genreation
+
 	// assume that the state variables for all runs will be identical
 	// take first run and parse it for state variables
 	if (!stateVariablesList.length) {
 		stateVariablesList = Object.keys(props.runResults[Object.keys(props.runResults)[0]][0]).filter(
-			(key) => key !== 'timestep'
+			(key) => key !== 'timestep' && key !== 'timestamp' && key !== 'date'
 		);
 	}
+
+	// grab variable columns here?
+	// console.log(stateVariablesList)
+	// console.log(props.runResults)
+	// console.log(Object.keys(props.runResults[Object.keys(props.runResults)[0]][0]).filter(
+	// 	(key) => (key !== 'timestep' && key !== 'timestamp' && key !== 'date')
+	// ))
 
 	if (!openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
 		openedWorkflowNodeStore.setChartConfig(props.chartIdx, {
@@ -152,7 +174,9 @@ const renderGraph = () => {
 					label: `${runIdList[runIdx]} - ${variable}`,
 					fill: false,
 					tension: 0.4,
-					borderColor: getVariableColor(variable)
+					borderColor: hasMultiRuns.value
+						? getVariableColorByRunIdx(runIdx)
+						: getVariableColorByVar(variable)
 				};
 				datasets.push(dataset);
 			})
@@ -175,10 +199,7 @@ watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx], renderGraph, {
 }
 
 .selected-label-item {
-	padding: 0em 0.5em;
-	margin: 0em 0.25em;
-	border-radius: 2px;
-	text-shadow: 0 0 0.15em white, 0 0 0.15em white, 0 0 0.15em white, 0 0 0.15em white;
+	font-weight: bold;
 }
 
 .p-chart {

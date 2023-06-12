@@ -449,6 +449,7 @@ function resetZoom() {
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
 }
+
 .glass {
 	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(10px);
@@ -459,6 +460,7 @@ function resetZoom() {
 	flex-direction: row;
 	gap: 1rem;
 }
+
 /* We should make a proper secondary outline button. Until then this works. */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
@@ -477,6 +479,7 @@ function resetZoom() {
 	background-color: var(--primary-color);
 	border: 1px solid var(--primary-color);
 }
+
 .toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
 .toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
 	color: var(--surface-0);
