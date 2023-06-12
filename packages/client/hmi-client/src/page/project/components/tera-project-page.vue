@@ -45,14 +45,6 @@
 			is-editable
 			@asset-loaded="emit('asset-loaded')"
 		/>
-		<simulation-plan
-			v-else-if="pageType === ProjectAssetTypes.PLANS"
-			@asset-loaded="emit('asset-loaded')"
-		/>
-		<simulation-run
-			v-else-if="pageType === ProjectAssetTypes.SIMULATION_RUNS"
-			@asset-loaded="emit('asset-loaded')"
-		/>
 	</template>
 	<section v-else>
 		<img src="@assets/svg/seed.svg" alt="Seed" />
@@ -74,8 +66,6 @@ import TeraDocument from '@/components/documents/tera-document.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraModel from '@/components/models/tera-model.vue';
 import CodeEditor from '@/page/project/components/code-editor.vue';
-import SimulationPlan from '@/page/project/components/Simulation.vue';
-import SimulationRun from '@/temp/SimulationResult3.vue';
 import TeraProjectOverview from '@/page/project/components/tera-project-overview.vue';
 import TeraSimulationWorkflow from '@/components/workflow/tera-simulation-workflow.vue';
 import { emptyWorkflow, createWorkflow } from '@/services/workflow';
