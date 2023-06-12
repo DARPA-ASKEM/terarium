@@ -447,7 +447,7 @@ toolbar {
 	padding: 0.5rem 1rem;
 	border-top: 1px solid var(--surface-border-light);
 	border-bottom: 1px solid var(--surface-border-light);
-	z-index: 900;
+	z-index: 1000;
 }
 .glass {
 	background-color: rgba(255, 255, 255, 0.8);
