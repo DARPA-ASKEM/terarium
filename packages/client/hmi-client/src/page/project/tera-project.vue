@@ -67,6 +67,9 @@
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.SIMULATE"
 					:node="openedWorkflowNodeStore.node"
 				/>
+				<tera-stratify
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.STRATIFY"
+				/>
 				<tera-project-page
 					v-else
 					:project="project"
@@ -244,6 +247,7 @@ import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
 import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import { WorkflowOperationTypes } from '@/types/workflow';
+import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
