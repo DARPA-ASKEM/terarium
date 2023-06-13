@@ -71,12 +71,12 @@
 
 <script setup lang="ts">
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
+import { ref, watch } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import ChattyInput from '@/components/widgets/chatty-input.vue';
-import JupyterCodeCell from '@/components/widgets/jupyter-code-cell.vue';
-import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
-import { ref, watch } from 'vue';
+import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
 import { newSession, JupyterMessage } from '@/services/jupyter';
+import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
 
 const jupyterSession = newSession('llmkernel', 'ChattyNode');
 

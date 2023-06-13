@@ -16,6 +16,19 @@
 					</h2>
 					<div class="date">{{ msg.header.date }}</div>
 				</div>
+				<div v-else-if="msg.header.msg_type === 'code_cell'" class="code-cell">
+					<jupyter-code-cell
+						:jupyter-session="jupyterSession"
+						:language="msg.content['language']"
+						:code="msg.content['code']"
+						:autorun="true"
+						context="dataset"
+						:context_info="{
+							id:
+								props.assetId !== undefined ? props.assetId : 'a035cc6f-e1a5-416b-9320-c3822255ab19'
+						}"
+					/>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -25,6 +38,7 @@ import { JupyterMessage } from '@/services/jupyter';
 // 'stream', 'code_cell', 'llm_request', 'chatty_response'
 const props = defineProps<{
 	message: JupyterMessage[];
+	assetId?: string;
 }>();
 </script>
 <style scoped>
