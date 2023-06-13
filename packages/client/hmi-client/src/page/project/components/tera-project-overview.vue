@@ -397,6 +397,7 @@ a {
 }
 
 .content-container {
+	overflow-y: auto;
 	padding: 1rem;
 	background: var(--surface-0);
 	flex: 1;
