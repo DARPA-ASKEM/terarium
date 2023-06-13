@@ -108,9 +108,14 @@
 					<Column field="input" header="Input"></Column>
 					<Column field="output" header="Output"></Column>
 					<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
-					<Column field="properties.rate.expression_mathml" header="Equation">
+					<Column field="properties.rate.expression_mathml" header="Expression">
 						<template #body="slotProps">
-							<katex-element :expression="slotProps.data.properties?.rate?.expression" />
+							<katex-element
+								:expression="
+									model?.semantics?.ode.rates.find((rate) => rate.target === slotProps.data.id)
+										?.expression
+								"
+							/>
 						</template>
 					</Column>
 				</DataTable>
