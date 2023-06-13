@@ -195,7 +195,6 @@ main {
 	min-width: 0;
 	display: flex;
 	flex-grow: 1;
-	overflow: visible;
 }
 
 footer {

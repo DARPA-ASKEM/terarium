@@ -9,18 +9,39 @@
 		@cell-edit-complete="onCellEditComplete"
 	>
 		<ColumnGroup type="header">
-			<Row>
+			<Row v-if="model.semantics?.ode">
 				<Column v-if="isEditable" header="" style="border: none" />
 				<Column header="" style="border: none" />
-				<Column header="Initial conditions" :colspan="Object.keys(initialValues[0]).length" />
-				<Column header="Parameters" :colspan="Object.keys(parameterValues[0]).length" />
-				<!-- <Column header="Observables" /> -->
+				<Column
+					v-for="(header, i) in Object.keys(model.semantics.ode)"
+					:header="capitalize(header)"
+					:colspan="model.semantics.ode[header].length"
+					:key="i"
+				/>
 			</Row>
-			<Row>
+			<Row v-if="model.semantics?.ode">
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
 				<Column :header="isEditable ? 'Select all' : ''" />
-				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i" :header="name" />
-				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i" :header="name" />
+				<!-- Can't do a loop inside a loop within the datatable 
+				<template v-for="header in Object.keys(model.semantics.ode)">
+					<Column v-if="model.semantics?.ode" v-for="(variableName, i) in model.semantics.ode[header]"
+						:header="variableName.target" :key="i" />
+				</template> -->
+				<Column
+					v-for="(variableName, i) in model.semantics.ode.rates"
+					:header="variableName.target"
+					:key="i"
+				/>
+				<Column
+					v-for="(variableName, i) in model.semantics.ode.initials"
+					:header="variableName.target"
+					:key="i"
+				/>
+				<Column
+					v-for="(variableName, i) in model.semantics.ode.parameters"
+					:header="variableName.id"
+					:key="i"
+				/>
 			</Row>
 			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
 		</ColumnGroup>
@@ -34,9 +55,13 @@
 			</template>
 		</Column>
 		<Column
-			v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
+			v-for="(value, i) of [
+				...model.semantics.ode.rates,
+				...model.semantics.ode.initials,
+				...model.semantics.ode.parameters
+			]"
 			:key="i"
-			:field="value['id']"
+			:field="value['id'] ?? value['target'] ?? value['expression']"
 		>
 			<template #body="{ data, field }">
 				{{ data[field] }}
@@ -111,7 +136,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, capitalize } from 'lodash';
 import DataTable from 'primevue/datatable';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
@@ -123,18 +148,19 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Types';
-import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { NumericValueMap } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
 	isEditable: boolean;
-	modelConfigNodeInput?: ModelConfig;
+	modelConfigNodeInput?: Model;
 	calibrationConfig?: boolean;
 }>();
 
 const modelConfigNames = ref(['Config 1']);
+
+// const modelToEdit = ref(cloneDeep(props.model));
 
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
@@ -150,13 +176,15 @@ const selectedParameters = ref<string[]>([]);
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
-const modelConfiguration = computed(() =>
-	modelConfigNames.value.map((name, i) => ({
+const modelConfiguration = computed(() => {
+	console.log(Object.keys(props.model.semantics.ode));
+
+	return modelConfigNames.value.map((name, i) => ({
 		name,
 		...initialValues.value[i],
 		...parameterValues.value[i]
-	}))
-);
+	}));
+});
 
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
@@ -212,6 +240,15 @@ function updateModelConfigValue() {
 }
 
 function generateModelConfigValues() {
+	console.log(props.model);
+
+	if (props.model.semantics?.ode) {
+		for (let i = 0; i < props.model.semantics.ode.initials.length; i++) {
+			console.log(props.model.semantics.ode.initials[i]);
+			console.log(i);
+		}
+	}
+
 	// Sync with workflow (not compatible with amr yet)
 	if (
 		props.model &&
@@ -220,8 +257,8 @@ function generateModelConfigValues() {
 		openedWorkflowNodeStore.parameterValues !== null
 	) {
 		// Shallow copy
-		initialValues.value = openedWorkflowNodeStore.initialValues;
-		parameterValues.value = openedWorkflowNodeStore.parameterValues;
+		// initialValues.value = openedWorkflowNodeStore.initialValues;
+		// parameterValues.value = openedWorkflowNodeStore.parameterValues;
 
 		if (modelConfigNames.value.length < initialValues.value.length - 1) {
 			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
@@ -229,18 +266,35 @@ function generateModelConfigValues() {
 	}
 	// Copy node input in here if that's just what we want to show
 	else if (props.modelConfigNodeInput) {
-		initialValues.value[0] = props.modelConfigNodeInput.initialValues;
-		parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
+		console.log(props.modelConfigNodeInput);
+		// initialValues.value[0] = props.modelConfigNodeInput.initialValues;
+		// parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
 	}
+
+	if (props.model.semantics?.ode?.initials) {
+		props.model.semantics?.ode.initials.forEach((i) => {
+			initialValues.value[0][i.target] = i.expression;
+		});
+	}
+	if (props.model.semantics?.ode?.parameters) {
+		props.model.semantics?.ode.parameters.forEach((p) => {
+			parameterValues.value[0][p.id] = p.value ?? 0;
+		});
+	}
+	// if (props.model.semantics?.ode?.rates) {
+	// 	props.model.semantics?.ode.rates.forEach((r) => {
+	// 		parameterValues.value[0][r.id] = r.value ?? 0;
+	// 	});
+	// }
 	// Default values petrinet format
-	else if (props.model) {
-		props.model.model.states.forEach((s) => {
-			initialValues.value[0][s.id] = 1;
-		});
-		props.model.model.transitions.forEach((t) => {
-			parameterValues.value[0][t.id] = 0.0005;
-		});
-	}
+	// else if (props.model.semantics?.ode?.initials) {
+	// 	props.model.semantics?.ode.initials.forEach((s) => {
+	// 		initialValues.value[0][s.id] = 1;
+	// 	});
+	// 	props.model.model.transitions.forEach((t) => {
+	// 		parameterValues.value[0][t.id] = 0.0005;
+	// 	});
+	// }
 
 	// By default check all boxes for calibration
 	if (props.calibrationConfig) {
@@ -260,13 +314,13 @@ function resetModelConfiguration() {
 	generateModelConfigValues();
 }
 
-watch(
-	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
-	() => {
-		generateModelConfigValues();
-	},
-	{ deep: true }
-);
+// watch(
+// 	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
+// 	() => {
+// 		generateModelConfigValues();
+// 	},
+// 	{ deep: true }
+// );
 
 watch(
 	() => props.model,

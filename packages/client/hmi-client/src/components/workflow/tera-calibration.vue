@@ -45,7 +45,7 @@
 					ref="modelConfigurationRef"
 					:model="modelConfig.model"
 					:is-editable="false"
-					:model-config-node-input="modelConfig"
+					:model-config-node-input="modelConfig.model"
 					calibration-config
 				/>
 			</AccordionTab>
