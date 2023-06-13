@@ -540,24 +540,24 @@ ul {
 .modal:deep(main) {
 	width: 50rem;
 }
-::v-deep(.asset-button.p-button) {
+:deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
 	padding: 0;
 }
 
-::v-deep(.asset-button.p-button > span) {
+:deep(.asset-button.p-button > span) {
 	display: inline-flex;
 	width: 100%;
 	padding: 0.375rem 1rem;
 	overflow: hidden;
 }
 
-::v-deep(.asset-button.p-button[active='true']) {
+:deep(.asset-button.p-button[active='true']) {
 	background-color: var(--surface-highlight);
 }
 
-::v-deep(.asset-button.p-button .p-button-label) {
+:deep(.asset-button.p-button .p-button-label) {
 	overflow: hidden;
 	text-align: left;
 	text-overflow: ellipsis;
