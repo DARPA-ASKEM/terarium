@@ -4,6 +4,8 @@
 		tableStyle="width:auto"
 		class="p-datatable-sm"
 		:value="csvContent?.slice(1, csvContent.length)"
+		:paginator="props.rows != 0"
+		:rows="props.rows"
 		removableSort
 		resizable-columns
 		showGridlines
@@ -16,7 +18,7 @@
 			sortable
 		>
 			<!-- column summary charts below -->
-			<template #header>
+			<template #header v-if="props.rawContent?.stats">
 				<div class="histogram">
 					<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>
 					<Chart type="bar" :height="800" :data="chartData?.at(index)" :options="chartOptions" />
@@ -39,6 +41,7 @@ import { CsvAsset } from '@/types/Types';
 
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
+	rows: number;
 }>();
 
 const CATEGORYPERCENTAGE = 0.9;

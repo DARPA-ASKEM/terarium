@@ -12,16 +12,14 @@ import { onMounted, ref } from 'vue';
 
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
-import { mimeService, renderMime } from '@/utils/jupyter';
-
 import {
 	Completer,
 	CompleterModel,
 	CompletionHandler,
 	CompletionConnector
 } from '@jupyterlab/completer';
-
 import { CommandRegistry } from '@lumino/commands';
+import { mimeService, renderMime } from '@/services/jupyter';
 
 const props = defineProps({
 	jupyterSession: {
@@ -139,6 +137,7 @@ cellWidget.activate();
 @import '@jupyterlab/completer/style/index.css';
 
 .jp-CodeCell {
+	background-color: red;
 	min-width: 300px;
 }
 </style>

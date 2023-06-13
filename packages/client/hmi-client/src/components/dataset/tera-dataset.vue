@@ -22,6 +22,13 @@
 					@click="datasetView = DatasetView.DATA"
 					:active="datasetView === DatasetView.DATA"
 				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Transform"
+					icon="pi pi-sync"
+					@click="openDatesetChatTab"
+					:active="datasetView === DatasetView.LLM"
+				/>
 			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
@@ -56,59 +63,75 @@
 							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
 						</header>
 					</template>
-					<section v-if="annotations">
-						<header class="annotation-subheader">Annotations</header>
-						<section class="annotation-group">
-							<section
-								v-for="name in annotations.map((annotation) => annotation['name'])"
-								:key="name[0]"
-								class="annotation-row data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotations[name[0]] }}</section>
-								</section>
-							</section>
-						</section>
-					</section>
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<Accordion v-else-if="DatasetView.DATA" :activeIndex="0">
-			<AccordionTab>
-				<template #header>
-					Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-				</template>
-				<tera-dataset-datatable :raw-content="rawContent" />
-			</AccordionTab>
-		</Accordion>
+		<template v-else-if="datasetView === DatasetView.DATA">
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<AccordionTab>
+					<template #header>
+						Data preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
+					</template>
+					<tera-dataset-datatable :rows="100" :raw-content="rawContent" />
+				</AccordionTab>
+			</Accordion>
+		</template>
+		<template v-else-if="datasetView === DatasetView.LLM">
+			<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="[0, 1]">
+				<AccordionTab>
+					<template #header>
+						Live Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
+					</template>
+					<tera-dataset-datatable v-if="jupyterCsv" :rows="10" :raw-content="jupyterCsv" />
+					<div class="card flex justify-content-center"></div>
+				</AccordionTab>
+				<AccordionTab>
+					<template #header>
+						<header id="Annotations">Terarium-GPT</header>
+					</template>
+					<tera-jupyter-chat
+						class="llm"
+						:project="props.project"
+						@update-data="updateJupyterCsv"
+						@jupyter-event="updateJupyterHistory"
+					/>
+					<tera-jupyter-response :message="jupyterHistory" />
+				</AccordionTab>
+			</Accordion>
+		</template>
 	</tera-asset>
 </template>
 <script setup lang="ts">
-import { downloadRawFile, getDataset } from '@/services/dataset';
 import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
-import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
+import { downloadRawFile, getDataset } from '@/services/dataset';
+import * as textUtil from '@/utils/text';
 import { CsvAsset, Dataset } from '@/types/Types';
 import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
+import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
+import { IProject } from '@/types/Project';
+import { JupyterMessage } from '@/services/jupyter';
 
 enum DatasetView {
 	DESCRIPTION = 'description',
-	DATA = 'data'
+	DATA = 'data',
+	LLM = 'llm'
 }
+
+const jupyterHistory = ref<JupyterMessage[]>([]);
+const newCsvConent: any = ref(null);
+const newCsvHeader: any = ref(null);
 
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
 	highlight?: string;
+	project: IProject;
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
@@ -123,9 +146,23 @@ function highlightSearchTerms(text: string | undefined): string {
 
 const dataset: Ref<Dataset | null> = ref(null);
 const rawContent: Ref<CsvAsset | null> = ref(null);
+const jupyterCsv: Ref<CsvAsset | null> = ref(null);
 const datasetView = ref(DatasetView.DESCRIPTION);
 
+const openDatesetChatTab = () => {
+	datasetView.value = DatasetView.LLM;
+	jupyterCsv.value = null;
+};
+
 const csvContent = computed(() => rawContent.value?.csv);
+
+const updateJupyterCsv = (newJupyterCsv) => {
+	jupyterCsv.value = newJupyterCsv;
+};
+
+const updateJupyterHistory = (jMessage: JupyterMessage[]) => {
+	jupyterHistory.value = jMessage;
+};
 
 /*
 // apparently this isn't used?
@@ -143,6 +180,16 @@ onUpdated(() => {
 		emit('asset-loaded');
 	}
 });
+
+watch(
+	() => [jupyterCsv.value?.csv],
+	() => {
+		if (jupyterCsv.value?.csv) {
+			newCsvConent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
+			newCsvHeader.value = jupyterCsv.value.headers;
+		}
+	}
+);
 
 // Whenever assetId changes, fetch dataset with that ID
 watch(
@@ -263,5 +310,11 @@ main .annotation-group {
 .layout-topbar {
 	top: 20px;
 	background-color: red;
+}
+
+.llm {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
 }
 </style>

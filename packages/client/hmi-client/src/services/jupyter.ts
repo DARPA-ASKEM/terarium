@@ -101,9 +101,6 @@ export interface IJupyterMessage<T extends JupyterMessageType = JupyterMessageTy
 	 * The parent message
 	 */
 	parent_header: messages.IHeader | {};
-
-	// msg_type: T;
-	// msg_id: string;
 }
 
 export declare type JupyterMessage = IJupyterMessage | messages.Message;

@@ -6,8 +6,7 @@
 			<div>
 				<chatty-input
 					:llm-context="jupyterSession"
-					placeholder-message="What do you want to do?"
-					@new-message="newMessage"
+					@new-message="newJupyterResponse"
 					context="dataset"
 					:context_info="{
 						id: props.assetId !== undefined ? props.assetId : 'a035cc6f-e1a5-416b-9320-c3822255ab19'
@@ -64,7 +63,7 @@
 				</div>
 			</div>
 		</div>
-		<div v-if="props.showHistory && datasetPreview">
+		<div v-if="showHistory && datasetPreview">
 			<JupyterDataPreview :jupyter-session="jupyterSession" :raw-content="datasetPreview" />
 		</div>
 	</div>
@@ -77,8 +76,8 @@ import ChattyInput from '@/components/widgets/chatty-input.vue';
 import JupyterCodeCell from '@/components/widgets/jupyter-code-cell.vue';
 import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
 import { ref, watch } from 'vue';
-
 import { newSession, JupyterMessage } from '@/services/jupyter';
+
 const jupyterSession = newSession('llmkernel', 'ChattyNode');
 
 const emit = defineEmits(['update-data', 'jupyter-event']);
@@ -92,6 +91,8 @@ const props = defineProps<{
 	showHistory?: { value: boolean; default: false };
 }>();
 
+console.log(props);
+
 watch(
 	() => [
 		props.assetId, // Once the route name changes, add/switch to another tab
@@ -102,20 +103,22 @@ watch(
 	}
 );
 
-const messages = ref<JupyterMessage[]>([]);
+const messages = ref<{ datetime: Date; message: JupyterMessage }[]>([]);
 const datasetPreview = ref(null);
 
-const newMessage = (event) => {
+const newJupyterResponse = (jupyterResponse) => {
 	if (
-		['stream', 'code_cell', 'llm_request', 'chatty_response'].indexOf(event.header.msg_type) > -1
+		['stream', 'code_cell', 'llm_request', 'chatty_response'].indexOf(
+			jupyterResponse.header.msg_type
+		) > -1
 	) {
-		messages.value.push(event);
+		messages.value.push(jupyterResponse);
 		emit('jupyter-event', messages.value);
-	} else if (event.header.msg_type == 'dataset') {
-		datasetPreview.value = event.content;
+	} else if (jupyterResponse.header.msg_type === 'dataset') {
+		datasetPreview.value = jupyterResponse.content;
 		emit('update-data', datasetPreview.value);
 	} else {
-		console.log('Unknown Jupyter event', event);
+		console.log('Unknown Jupyter event', jupyterResponse);
 	}
 };
 </script>

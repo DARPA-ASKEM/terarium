@@ -1,28 +1,35 @@
 <template>
 	<div class="chatty-container" ref="containerElement">
 		<label for="chatt-input"></label>
-		<input
+		<InputText
+			class="chatty"
 			ref="inputElement"
-			id="chatty-input"
 			v-model="queryString"
 			type="text"
 			:disabled="kernelState !== KernelState.idle"
 			:style="inputStyle"
-			:placeholder="placeholderMessage"
+			:placeholder="kernelState === KernelState.idle ? 'What do you want to do?' : 'Please wait...'"
 			@keydown.enter="onEnter"
 		/>
-		<div style="width: 3em; padding: 5%">
+		<ProgressBar
+			v-if="kernelState !== KernelState.idle"
+			mode="indeterminate"
+			style="height: 3px"
+		></ProgressBar>
+		<!-- <div>
 			<i v-if="kernelState !== KernelState.idle" class="pi pi-spin pi-spinner" />
-		</div>
+		</div> -->
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import ProgressBar from 'primevue/progressbar';
 import { SessionContext } from '@jupyterlab/apputils';
-import { JupyterMessage } from 'src/utils/jupyter';
+import { JupyterMessage } from 'src/services/jupyter';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
+import InputText from 'primevue/inputtext';
 
 const emit = defineEmits(['newCodeCell', 'newMessage']);
 
@@ -76,21 +83,21 @@ const inputElement = ref<HTMLInputElement | null>(null);
 
 // Lower case staes to match the naming in the messages.
 enum KernelState {
-	unknown,
-	starting,
-	idle,
-	busy,
-	terminating,
-	restarting,
-	autorestarting,
-	dead
+	unknown = 'unknown',
+	starting = 'starting',
+	idle = 'idle',
+	busy = 'busy',
+	terminating = 'terminating',
+	restarting = 'restarting',
+	autorestarting = 'autorestarting',
+	dead = 'dead'
 }
 
 const queryString = ref('');
 const kernelState = ref<KernelState>(KernelState.idle);
 
 const onEnter = () => {
-	submitQuery(inputElement.value?.value);
+	submitQuery(queryString.value);
 };
 
 const setKernelContext = (kernel: IKernelConnection, context_info) => {
@@ -114,6 +121,7 @@ const iopubMessageHandler = (_session, message) => {
 	}
 	emit('newMessage', message);
 };
+
 props.llmContext.iopubMessage.connect(iopubMessageHandler);
 
 const submitQuery = (inputStr: string | undefined) => {
@@ -145,14 +153,13 @@ onMounted(() => {
 <style scoped>
 .chatty-container {
 	display: flex;
-	position: relative;
+	flex-direction: column;
 	flex-grow: 1;
-	height: auto;
 }
 
 #chatty-input {
 	flex-grow: 1;
-	height: fit-content;
+	color: black;
 }
 
 #chatty-history {
@@ -180,5 +187,12 @@ onMounted(() => {
 .error {
 	color: darkred;
 	white-space: pre-wrap;
+}
+
+.chatty {
+	background-color: var(--gray-50);
+	width: 100%;
+	height: fit-content;
+	color: black;
 }
 </style>
