@@ -71,9 +71,20 @@
 				<template #header>
 					<header id="Parameters">Parameters</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="model?.model.parameterss">
+				<DataTable
+					class="p-datatable-sm"
+					:value="modelParameters"
+					rowGroupMode="subheader"
+					groupRowsBy="description"
+				>
+					<Column field="description" header="description"></Column>
 					<Column field="id" header="ID"></Column>
 					<Column field="value" header="Value"></Column>
+					<template #groupfooter="modelParameters">
+						<div>
+							<span class="parameter-description">{{ modelParameters.data.description }}</span>
+						</div>
+					</template>
 				</DataTable>
 			</AccordionTab>
 			<AccordionTab>
@@ -254,6 +265,7 @@ const metaData = computed(() => model.value?.metadata?.variable_statements);
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description));
+const modelParameters = computed(() => model.value?.semantics?.ode.parameters);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -370,6 +382,11 @@ function getSource(sp) {
 </script>
 
 <style scoped>
+.parameter-description {
+	font-weight: 500;
+	font-size: var(--font-body-small);
+	color: var(--text-color-secondary);
+}
 .model-biblio {
 	padding: 1rem;
 }
