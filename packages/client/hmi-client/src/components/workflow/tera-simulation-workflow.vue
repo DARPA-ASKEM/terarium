@@ -169,6 +169,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+let workflowDirty: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const newAssetId = ref<string | null>(null);
@@ -201,6 +202,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		value: [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
+	workflowDirty = true;
 }
 
 // Run testOperation
@@ -218,6 +220,7 @@ const contextMenuItems = ref([
 		label: 'Test operation',
 		command: () => {
 			workflowService.addNode(wf.value, testOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
@@ -225,6 +228,7 @@ const contextMenuItems = ref([
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
@@ -232,12 +236,14 @@ const contextMenuItems = ref([
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Calibrate',
 		command: () => {
 			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
@@ -247,6 +253,7 @@ const contextMenuItems = ref([
 				width: 420,
 				height: 220
 			});
+			workflowDirty = true;
 		}
 	}
 ]);
@@ -299,6 +306,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.x = newTransform.x;
 	t.y = newTransform.y;
 	t.k = newTransform.k;
+	workflowDirty = true;
 }
 
 const isCreatingNewEdge = computed(
@@ -389,6 +397,7 @@ const updatePosition = (node: WorkflowNode, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
+	workflowDirty = true;
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
@@ -418,11 +427,16 @@ watch(
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	saveTimer = setInterval(() => {
-		console.log('saving workflow');
-		workflowService.updateWorkflow(wf.value);
+		if (workflowDirty) {
+			workflowService.updateWorkflow(wf.value);
+			workflowDirty = false;
+		}
 	}, 8000);
 });
 onUnmounted(() => {
+	if (workflowDirty) {
+		workflowService.updateWorkflow(wf.value);
+	}
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
