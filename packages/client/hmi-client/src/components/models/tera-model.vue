@@ -33,6 +33,22 @@
 				class="p-button-sm"
 			/>
 		</template>
+		<table class="model-biblio">
+			<tr>
+				<th class="model-biblio-header">Framework</th>
+				<th class="model-biblio-header">Model Version</th>
+				<th class="model-biblio-header">Date Created</th>
+				<th class="model-biblio-header">Created By</th>
+				<th class="model-biblio-header">Source</th>
+			</tr>
+			<tr>
+				<td class="model-biblio-column">{{ model?.framework }}</td>
+				<td class="model-biblio-column">{{ model?.model_version }}</td>
+				<td class="model-biblio-column">{{ model?.metadata.processed_at }}</td>
+				<td class="model-biblio-column">{{ model?.description }}</td>
+				<td class="model-biblio-column">{{ model?.metadata.processed_by }}</td>
+			</tr>
+		</table>
 		<Accordion
 			v-if="modelView === ModelView.DESCRIPTION"
 			:multiple="true"
@@ -354,6 +370,29 @@ function getSource(sp) {
 </script>
 
 <style scoped>
+.model-biblio {
+	padding: 1rem;
+}
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	font-size: var(--font-body-medium);
+	font-weight: 600;
+	color: var(--text-color-primary);
+}
+.model-biblio-header {
+	padding-right: 2rem;
+	font-family: var(--font-family);
+	font-weight: 500;
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
+	text-align: left;
+}
+.model-biblio-column {
+	padding-right: 50px;
+	font-family: var(--font-family);
+	font-weight: 400;
+	font-size: var(--font-body-small);
+}
+
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;
