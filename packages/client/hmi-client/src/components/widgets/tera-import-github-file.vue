@@ -156,10 +156,6 @@
 									class="code-editor"
 								/>
 							</div>
-							<div class="provenance-container">
-								<h4 class="provenance-title">Provenance</h4>
-								<div>{{ provenanceDescription }}</div>
-							</div>
 						</section>
 					</div>
 				</template>
@@ -241,11 +237,6 @@ const hasDocuments: ComputedRef<boolean> = computed(
 );
 const hasOther: ComputedRef<boolean> = computed(
 	() => !isEmpty(directoryContent?.value?.files?.Other)
-);
-
-const provenanceDescription: ComputedRef<string> = computed(
-	() =>
-		`These files were found in the following repository: https://github.com/${repoOwnerAndName.value}`
 );
 
 async function initializeCodeBrowser() {
@@ -419,18 +410,6 @@ ul li:hover {
 	width: 100%;
 	height: 95%;
 	border-radius: 5px;
-}
-
-.provenance-title {
-	padding-bottom: 10px;
-}
-
-.provenance-container {
-	background-color: rgb(231, 231, 231);
-	border-radius: 5px;
-	height: 30%;
-	margin-top: 10px;
-	padding: 15px;
 }
 
 .file-checkboxes {
