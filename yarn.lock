@@ -7435,7 +7435,7 @@ cors@latest:
     pinia: 2.0.33
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
-    primeflex: 3.3.0
+    primeflex: 3.3.1
     primeicons: 6.0.1
     primevue: 3.25.0
     sass: 1.56.1
@@ -10619,10 +10619,10 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"primeflex@npm:3.3.0":
-  version: 3.3.0
-  resolution: "primeflex@npm:3.3.0"
-  checksum: 26ac5d5a4d6131e6e864aa03ba3ea96c031e65eaa0ab73201fa7c2ea4f78c8e75787dc7fa4275190e51f44cc0ba0a21f5990c8a799576b927132b261d7a75957
+"primeflex@npm:3.3.1":
+  version: 3.3.1
+  resolution: "primeflex@npm:3.3.1"
+  checksum: 3811f48d9b453141a13bdbfb17f272d01a0bb02fc507d4b77dcd5471feccd4d9e80f10f67dfdfc8571672a568c1aadf03179dd6a4d8536b3f60f7fa060e5bfad
   languageName: node
   linkType: hard
 
