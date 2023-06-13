@@ -32,7 +32,16 @@
 					@focusout="() => {}"
 				>
 					<div class="input port" />
-					{{ input.label }}
+					<div>
+						<span
+							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
+							:key="labelIdx"
+							class="input-label"
+							:style="{ color: getInputLabelColor(labelIdx) }"
+						>
+							{{ label }}
+						</span>
+					</div>
 				</div>
 			</li>
 		</ul>
@@ -140,6 +149,30 @@ onMounted(() => {
 	document.addEventListener('mousemove', drag);
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
+
+// FIXME: temporary function to color input port labels of simulate
+const VIRIDIS_14 = [
+	'#440154',
+	'#481c6e',
+	'#453581',
+	'#3d4d8a',
+	'#34618d',
+	'#2b748e',
+	'#24878e',
+	'#1f998a',
+	'#25ac82',
+	'#40bd72',
+	'#67cc5c',
+	'#98d83e',
+	'#cde11d',
+	'#fde725'
+];
+const getInputLabelColor = (edgeIdx: number) => {
+	const numRuns = props.node.inputs[0].value?.length ?? 0;
+	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE
+		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
+		: 'inherit';
+};
 
 function showNodeDrilldown() {
 	let pageType;
@@ -384,5 +417,13 @@ ul li {
 .inputs > .port-connected:hover .port,
 .outputs > .port-connected:hover .port {
 	background: var(--primary-color);
+}
+
+.input-label::after {
+	color: var(--text-color-primary);
+	content: ', ';
+}
+.input-label:last-child::after {
+	content: '';
 }
 </style>
