@@ -402,7 +402,7 @@ ul li:hover {
 	background-color: rgb(231, 231, 231);
 	border-radius: 5px;
 	padding: 15px;
-	height: 70%;
+	height: 90%;
 }
 
 .code-editor {
