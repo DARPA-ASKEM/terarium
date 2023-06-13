@@ -69,7 +69,9 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Parameters">Parameters</header>
+					<header id="Parameters">
+						parameters<span class="artifact-amount">({{ modelParameters?.length }})</span>
+					</header>
 				</template>
 				<DataTable
 					class="p-datatable-sm"
@@ -89,7 +91,9 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="State variables">State variables</header>
+					<header id="State variables">
+						State variables<span class="artifact-amount">({{ model?.model.states.length }})</span>
+					</header>
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.states">
 					<Column field="id" header="ID"></Column>
@@ -100,7 +104,9 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Transitions">Transitions</header>
+					<header id="Transitions">
+						Transitions<span class="artifact-amount">({{ model?.model.transitions.length }})</span>
+					</header>
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.transitions">
 					<Column field="id" header="ID"></Column>
@@ -122,7 +128,9 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Variable Statements">Variable Statements</header>
+					<header id="Variable Statements">
+						Variable Statements<span class="artifact-amount">({{ metaData?.length }})</span>
+					</header>
 				</template>
 				<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
 					<Column field="id" header="ID"></Column>
