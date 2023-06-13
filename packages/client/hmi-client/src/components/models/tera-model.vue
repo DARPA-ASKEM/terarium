@@ -70,7 +70,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Parameters">
-						parameters<span class="artifact-amount">({{ modelParameters?.length }})</span>
+						Parameters<span class="artifact-amount">({{ modelParameters?.length }})</span>
 					</header>
 				</template>
 				<DataTable
@@ -328,7 +328,6 @@ watch(
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
-			console.log(model.value);
 		} else {
 			model.value = null;
 		}
