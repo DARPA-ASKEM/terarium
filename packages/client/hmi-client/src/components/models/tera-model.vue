@@ -77,9 +77,9 @@
 					rowGroupMode="subheader"
 					groupRowsBy="description"
 				>
-					<Column field="description" header="description"></Column>
-					<Column field="id" header="ID"></Column>
-					<Column field="value" header="Value"></Column>
+					<Column class="borderless-row" field="description" header="description"></Column>
+					<Column class="borderless-row" field="id" header="ID"></Column>
+					<Column class="borderless-row" field="value" header="Value"></Column>
 					<template #groupfooter="modelParameters">
 						<div>
 							<span class="parameter-description">{{ modelParameters.data.description }}</span>
@@ -315,6 +315,7 @@ watch(
 		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
+			console.log(model.value);
 		} else {
 			model.value = null;
 		}
@@ -382,6 +383,13 @@ function getSource(sp) {
 </script>
 
 <style scoped>
+/* :deep(.p-datatable .p-datatable-tbody > .p-rowgroup-footer > td){
+	border: none;
+} */
+
+:deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
+	border-bottom: none;
+}
 .parameter-description {
 	font-weight: 500;
 	font-size: var(--font-body-small);
