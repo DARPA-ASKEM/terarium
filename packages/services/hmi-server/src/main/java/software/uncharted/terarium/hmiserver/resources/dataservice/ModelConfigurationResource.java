@@ -9,25 +9,24 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
+import java.util.*;
 
 @Path("/api/model_configurations")
 @Produces(MediaType.APPLICATION_JSON)
-@Tag(name = "Model Cnfiguration REST Endpoints")
+@Tag(name = "Model Configuration REST Endpoints")
 public class ModelConfigurationResource {
-
 	@Inject
 	@RestClient
 	ModelConfigurationProxy proxy;
 
 	@GET
-	Response getModelConfigurations() {
+	public Response getModelConfigurations() {
 		return proxy.getModelConfigurations();
 	}
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response createModelConfiguration(
+	public Response createModelConfiguration(
 			ModelConfiguration config
 	) {
 		return proxy.createModelConfiguration(config);
@@ -35,7 +34,7 @@ public class ModelConfigurationResource {
 
 	@GET
 	@Path("/{id}")
-	Response getModelConfiguration(
+	public Response getModelConfiguration(
 			@PathParam("id") String id
 	) {
 		return proxy.getModelConfiguration(id);
@@ -44,7 +43,7 @@ public class ModelConfigurationResource {
 	@PUT
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response updateModelConfiguration(
+	public Response updateModelConfiguration(
 		@PathParam("id") String id,
 		ModelConfiguration config
 	) {
@@ -54,7 +53,7 @@ public class ModelConfigurationResource {
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response deleteModelConfiguration(
+	public Response deleteModelConfiguration(
 		@PathParam("id") String id
 	) {
 		return proxy.deleteModelConfiguration(id);
