@@ -1,29 +1,31 @@
 <template>
 	<template v-if="model">
 		<h5>{{ model.name }}</h5>
+		<!--branching off calibration-v1 to work on this-->
+		<!-- <tera-model-diagram :model="model" :is-editable="false" nodePreview /> -->
 		<h6>Initial values</h6>
 		<ul>
 			<li v-for="(s, i) of model.model.states" :key="i">
-				<span>{{ s.sname }}</span>
+				<span>{{ s.id }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.name]"
+					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.id]"
 				/>
 			</li>
 		</ul>
 		<h6>Parameter values</h6>
 		<ul>
 			<li v-for="(t, i) of model.model?.transitions" :key="i">
-				<span>{{ t.tname }}</span>
+				<span>{{ t.id }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.name]"
+					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.id]"
 				/>
 			</li>
 		</ul>
@@ -49,7 +51,9 @@ import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { cloneDeep } from 'lodash';
 import Dropdown from 'primevue/dropdown';
+import { NumericValueMap } from '@/types/common';
 import { Model } from '@/types/Types';
+// import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 
 const props = defineProps<{
 	modelId: string | null;
@@ -59,17 +63,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output-port']);
 
-interface StringValueMap {
-	[key: string]: number;
-}
-
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const model = ref<Model | null>();
 const selectedModel = ref<Model>();
 
-const initialValues = ref<StringValueMap[]>([{}]);
-const parameterValues = ref<StringValueMap[]>([{}]);
+const initialValues = ref<NumericValueMap[]>([{}]);
+const parameterValues = ref<NumericValueMap[]>([{}]);
 
 function createModelConfigOutput() {
 	if (ModelOperation.action) {
@@ -94,11 +94,11 @@ function addModelConfiguration() {
 function initDefaultConfig() {
 	console.log(model.value?.model);
 	model.value?.model.states.forEach((s) => {
-		initialValues.value[0][s.name] = 1;
+		initialValues.value[0][s.id] = 1;
 	});
 
 	model.value?.model.transitions.forEach((t) => {
-		parameterValues.value[0][t.name] = 0.0005;
+		parameterValues.value[0][t.id] = 0.0005;
 	});
 
 	createModelConfigOutput();
@@ -154,6 +154,7 @@ li {
 .p-button-sm.p-button-outlined {
 	border: 1px solid var(--surface-border);
 }
+
 .p-button-sm.p-button-outlined:hover {
 	border: 1px solid var(--surface-border-hover);
 }

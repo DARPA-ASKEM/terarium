@@ -137,8 +137,8 @@ const TspanUnitList = computed(() =>
 
 const simVars = computed(() => [
 	'Configuration Name',
-	...(node.value?.inputs[0].value as any[])[0].model.content.S.map((state) => state.sname),
-	...(node.value?.inputs[0].value as any[])[0].model.content.T.map((state) => state.tname)
+	...(node.value?.inputs[0].value as any[])[0].model.model.states.map((state) => state.id),
+	...(node.value?.inputs[0].value as any[])[0].model.model.transitions.map((state) => state.id)
 ]);
 
 const simConfigs = computed(
@@ -167,6 +167,7 @@ const simConfigs = computed(
 	display: flex;
 	margin: 1em;
 }
+
 .simulate-header-label {
 	display: flex;
 	align-items: center;
@@ -187,12 +188,14 @@ const simConfigs = computed(
 	display: flex;
 	gap: 1em;
 }
+
 .sim-tspan-group {
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
 	flex-basis: 0;
 }
+
 ::v-deep .p-inputnumber-input,
 .p-inputwrapper {
 	width: 100%;

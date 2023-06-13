@@ -75,6 +75,17 @@
 				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
 			</marker>
 			<marker
+				v-for="i in wf.edges.length"
+				:key="i"
+				:id="`circle${i - 1}`"
+				markerWidth="8"
+				markerHeight="8"
+				refX="5"
+				refY="5"
+			>
+				<circle cx="5" cy="5" r="3" :style="`fill: ${getVariableColorByRunIdx(i - 1)}`" />
+			</marker>
+			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
 				refX="8"
@@ -100,6 +111,24 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
+			<marker
+				v-for="i in wf.edges.length"
+				:key="i"
+				:id="`smallArrow${i - 1}`"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="12"
+				markerHeight="12"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					:style="`fill: ${getVariableColorByRunIdx(i - 1)}; fill-opacity: 1`"
+				></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
@@ -114,10 +143,10 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				stroke="#1B8073"
+				:stroke="isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index) : '#1B8073'"
 				stroke-width="2"
-				marker-start="url(#circle)"
-				marker-mid="url(#smallArrow)"
+				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
+				:marker-mid="`url(#smallArrow${isEdgeTargetSim(edge) ? index : ''})`"
 				:key="index"
 				fill="none"
 			/>
@@ -176,6 +205,31 @@ const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
+
+// FIXME: temporary function to color edges with simulate
+const VIRIDIS_14 = [
+	'#440154',
+	'#481c6e',
+	'#453581',
+	'#3d4d8a',
+	'#34618d',
+	'#2b748e',
+	'#24878e',
+	'#1f998a',
+	'#25ac82',
+	'#40bd72',
+	'#67cc5c',
+	'#98d83e',
+	'#cde11d',
+	'#fde725'
+];
+const getVariableColorByRunIdx = (edgeIdx: number) =>
+	wf.value.edges.length > 1
+		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
+		: '#1B8073';
+const isEdgeTargetSim = (edge) =>
+	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
+	WorkflowOperationTypes.SIMULATE;
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
@@ -449,6 +503,7 @@ function resetZoom() {
 	border-bottom: 1px solid var(--surface-border-light);
 	z-index: 900;
 }
+
 .glass {
 	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(10px);
@@ -459,6 +514,7 @@ function resetZoom() {
 	flex-direction: row;
 	gap: 1rem;
 }
+
 /* We should make a proper secondary outline button. Until then this works. */
 .toolbar .button-group .secondary-button {
 	color: var(--text-color-secondary);
@@ -477,6 +533,7 @@ function resetZoom() {
 	background-color: var(--primary-color);
 	border: 1px solid var(--primary-color);
 }
+
 .toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
 .toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
 	color: var(--surface-0);

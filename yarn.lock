@@ -2270,14 +2270,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pinia/testing@npm:0.0.16":
-  version: 0.0.16
-  resolution: "@pinia/testing@npm:0.0.16"
+"@pinia/testing@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@pinia/testing@npm:0.1.2"
   dependencies:
-    vue-demi: "*"
+    vue-demi: ">=0.14.5"
   peerDependencies:
-    pinia: ">=2.0.34"
-  checksum: d1157624d1b9f6c45b947b03e583068d44fe3e46fd43cb2414d663c2436a5b28716217bb021cecadb1402d9658db7cb2a57c0b2bd54fb7db70158e43863da035
+    pinia: ">=2.1.2"
+  checksum: 18f24860175bda02a3c0a20946137b93b12e72dad5843a9707f9dfc323dee369b58d31f2fa426e7af51389500ca074e04c70016143464d338c2745e558033e8a
   languageName: node
   linkType: hard
 
@@ -8587,7 +8587,7 @@ cors@latest:
     "@lumino/commands": ^2.1.0
     "@lumino/coreutils": ^2.1.1
     "@lumino/widgets": ^2.1.0
-    "@pinia/testing": 0.0.16
+    "@pinia/testing": 0.1.2
     "@playwright/experimental-ct-vue": 1.31.2
     "@playwright/test": 1.31.2
     "@rushstack/eslint-patch": 1.2.0
@@ -8620,7 +8620,7 @@ cors@latest:
     pinia: 2.0.33
     pixi-viewport: 4.37.0
     pixi.js: 7.0.5
-    primeflex: 3.3.0
+    primeflex: 3.3.1
     primeicons: 6.0.1
     primevue: 3.25.0
     sass: 1.56.1
@@ -12111,10 +12111,10 @@ opn@latest:
   languageName: node
   linkType: hard
 
-"primeflex@npm:3.3.0":
-  version: 3.3.0
-  resolution: "primeflex@npm:3.3.0"
-  checksum: 26ac5d5a4d6131e6e864aa03ba3ea96c031e65eaa0ab73201fa7c2ea4f78c8e75787dc7fa4275190e51f44cc0ba0a21f5990c8a799576b927132b261d7a75957
+"primeflex@npm:3.3.1":
+  version: 3.3.1
+  resolution: "primeflex@npm:3.3.1"
+  checksum: 3811f48d9b453141a13bdbfb17f272d01a0bb02fc507d4b77dcd5471feccd4d9e80f10f67dfdfc8571672a568c1aadf03179dd6a4d8536b3f60f7fa060e5bfad
   languageName: node
   linkType: hard
 
@@ -14432,6 +14432,22 @@ send@latest:
     vue-demi-fix: bin/vue-demi-fix.js
     vue-demi-switch: bin/vue-demi-switch.js
   checksum: 0fbe9bf8ab7fe498ffa2bbd0cfc8f6f43a6bbaa5eda3e20ef1b70dca7c8b0ddb216a7ff2f632b694fe0735805638975abb441c621ec0bd2e6d4656353f316c15
+  languageName: node
+  linkType: hard
+
+"vue-demi@npm:>=0.14.5":
+  version: 0.14.5
+  resolution: "vue-demi@npm:0.14.5"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: ff44b9372b8224590514252a2f73363cced6062205f9628a6b130dccb80e2023d55cd9d1da94aeb68d5539b7ea9eedcecf88ab281a3a9ff48b8db4c5366b9643
   languageName: node
   linkType: hard
 

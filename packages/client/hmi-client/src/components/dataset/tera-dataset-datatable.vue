@@ -2,7 +2,7 @@
 <template>
 	<DataTable
 		tableStyle="width:auto"
-		class="p-datatable-sm"
+		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
 		:value="csvContent?.slice(1, csvContent.length)"
 		:paginator="props.rows != 0"
 		:rows="props.rows"
@@ -18,7 +18,7 @@
 			sortable
 		>
 			<!-- column summary charts below -->
-			<template #header v-if="props.rawContent?.stats">
+			<template #header v-if="!previewMode && props.rawContent?.stats">
 				<div class="histogram">
 					<div class="histogram-label-min">Min: {{ csvMinsToDisplay?.at(index) }}</div>
 					<Chart type="bar" :height="800" :data="chartData?.at(index)" :options="chartOptions" />
@@ -42,6 +42,7 @@ import { CsvAsset } from '@/types/Types';
 const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
 	rows: number;
+	previewMode?: boolean;
 }>();
 
 const CATEGORYPERCENTAGE = 0.9;
@@ -144,26 +145,31 @@ const setChartOptions = () => {
 	background: var(--surface-0);
 	border-bottom: 1px solid var(--surface-border-light);
 }
+
 .summary-chart-column {
 	border-left: 1.111px solid transparent;
 	border-right: 1.111px solid transparent;
 	text-align: left;
 	padding-bottom: 1rem;
 }
+
 .histogram {
 	width: 40px;
 }
+
 .histogram-label-max {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	padding-left: 0.5rem;
 }
+
 .histogram-label-other {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
 	padding-left: 0.5rem;
 	text-align: left;
 }
+
 .histogram-label-min {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);

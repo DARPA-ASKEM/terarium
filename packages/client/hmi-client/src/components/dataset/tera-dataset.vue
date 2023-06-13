@@ -110,7 +110,7 @@ import { isString } from 'lodash';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import * as textUtil from '@/utils/text';
 import { CsvAsset, Dataset } from '@/types/Types';
-import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
