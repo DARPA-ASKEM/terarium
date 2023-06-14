@@ -480,6 +480,9 @@ const drawPath = (v: any) => pathFn(v) as string;
 watch(
 	() => [props.assetId],
 	async () => {
+		if (wf.value && workflowDirty) {
+			workflowService.updateWorkflow(wf.value);
+		}
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
