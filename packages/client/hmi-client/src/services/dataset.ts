@@ -122,6 +122,8 @@ async function createNewDatasetFromCSV(
 			}
 		});
 
+		// for some reason a hook sees this as an empty commit so heres a comment!
+
 		if (!s3response || s3response.status >= 400) {
 			console.log('Unable to post file.');
 			return null;
