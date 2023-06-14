@@ -37,7 +37,7 @@ dependencies {
 	implementation "io.quarkus:quarkus-jdbc-postgresql"
 	implementation "io.quarkus:quarkus-hibernate-orm-panache"
 	annotationProcessor "io.quarkus:quarkus-panache-common"
-	
+
 	// Caching
 	implementation "io.quarkus:quarkus-cache"
 	implementation "io.quarkus:quarkus-scheduler"
@@ -73,6 +73,12 @@ dependencies {
 	implementation "org.elasticsearch:elasticsearch:${elasticsearchVersion}"
 	implementation "org.elasticsearch.client:elasticsearch-rest-client:${elasticsearchVersion}"
 	implementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${elasticsearchVersion}"
+
+	//aws
+	implementation platform('software.amazon.awssdk:bom:2.20.85')
+	implementation 'software.amazon.awssdk:s3'
+
+
 }
 
 group "software.uncharted"
