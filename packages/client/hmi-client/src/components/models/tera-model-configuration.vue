@@ -55,12 +55,7 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<Column
-			v-for="(value, i) of modelToEdit.semantics.ode.rates"
-			:key="i"
-			:field="value['target']"
-			dataType="rates"
-		>
+		<Column v-for="(value, i) of modelToEdit.semantics.ode.rates" :key="i" :field="value['target']">
 			<template #body="{ data, field }">
 				{{ data[field]?.value }}
 			</template>
@@ -72,7 +67,6 @@
 			v-for="(value, i) of modelToEdit.semantics.ode.initials"
 			:key="i"
 			:field="value['target']"
-			dataType="initials"
 		>
 			<template #body="{ data, field }">
 				{{ data[field]?.value }}
@@ -85,7 +79,6 @@
 			v-for="(value, i) of modelToEdit.semantics.ode.parameters"
 			:key="i"
 			:field="value['id']"
-			dataType="parameters"
 		>
 			<template #body="{ data, field }">
 				{{ data[field]?.value }}
@@ -172,9 +165,8 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Types';
-// import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { NumericValueMap, AnyValueMap } from '@/types/common';
-// import { createModelConfiguration, updateModelConfiguration } from '@/services/model-configurations';
+import { AnyValueMap } from '@/types/common';
+import { createModelConfiguration } from '@/services/model-configurations';
 
 const props = defineProps<{
 	model: Model;
@@ -190,8 +182,6 @@ const modelToEdit = ref(cloneDeep(props.model));
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
-const initialValues = ref<NumericValueMap[]>([{}]);
-const parameterValues = ref<NumericValueMap[]>([{}]);
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
@@ -215,6 +205,7 @@ const odes = computed(() => {
 			});
 		}
 	}
+	console.log(0);
 
 	return ODEs;
 });
@@ -249,6 +240,8 @@ const modelConfigurationTable = computed(() => {
 		...variables[i]
 	}));
 });
+
+// const
 
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
@@ -302,19 +295,12 @@ function updateModelConfigValue() {
 	}
 
 	// CALL updateModelConfiguration here
+	// updateModelConfiguration(modelToEdit.value.id)
 
 	openValueConfig.value = false;
 }
 
 // function generateModelConfigValues() {
-// 	console.log(props.model);
-
-// 	createModelConfiguration({
-// 		name: modelToEdit.value.name,
-// 		description: 'test',
-// 		modelId: modelToEdit.value.id,
-// 		configuration: modelToEdit.value
-// 	});
 
 // 	console.log(odes.value);
 
@@ -348,23 +334,25 @@ function updateModelConfigValue() {
 // 	}
 // }
 
-function resetModelConfiguration() {
+function resetDummyValues() {
 	console.log(props.model);
 	modelConfigNames.value = ['Config 1'];
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
-	initialValues.value = [{}];
-	parameterValues.value = [{}];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '', index: 0 };
 }
 
 watch(
 	() => props.model,
-	() => resetModelConfiguration(),
+	() => resetDummyValues(),
 	{ deep: true }
 );
 
-onMounted(() => resetModelConfiguration());
+onMounted(() => {
+	resetDummyValues();
+
+	createModelConfiguration(modelToEdit.value.name, 'test', modelToEdit.value.id, modelToEdit.value);
+});
 </script>
 
 <style scoped>
