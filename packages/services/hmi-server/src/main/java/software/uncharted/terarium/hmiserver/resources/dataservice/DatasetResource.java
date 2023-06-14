@@ -1,14 +1,22 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import org.apache.james.mime4j.dom.field.FieldName;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.jboss.resteasy.plugins.providers.multipart.*;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -17,13 +25,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Qualifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.PresignedURL;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.DatasetProxy;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -44,6 +49,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DatasetResource {
 	private static final MediaType MEDIA_TYPE_CSV = new MediaType("text","csv", "UTF-8");
+
+	@ConfigProperty(name = "aws.bucket")
+	Optional<String> bucket;
+
+	@ConfigProperty(name = "aws.data_set_path")
+	Optional<String> dataSetPath;
+
+	@ConfigProperty(name = "aws.access_key_id")
+	Optional<String> accessKeyId;
+
+	@ConfigProperty(name = "aws.secret_access_key")
+	Optional<String> secretAccessKey;
+
+	@ConfigProperty(name = "storage.host")
+	Optional<String> storageHost;
+
+	@ConfigProperty(name = "aws.region")
+	Optional<String> region;
+
 
 	@Inject
 	@RestClient
@@ -192,38 +216,41 @@ public class DatasetResource {
 	@GET
 	@Path("/{datasetId}/downloadCSV")
 	public Response getCsv(
-		@PathParam("datasetId") final String id,
+		@PathParam("datasetId") final String datasetId,
 		@QueryParam("filename") final String filename
 	) {
 
 		log.debug("Getting CSV content");
-		PresignedURL downloadUrl;
 
-		try {
-			downloadUrl = proxy.getDownloadUrl(id, filename);
-		} catch (RuntimeException e) {
-			log.error("Unable to get CSV", e);
+		//verify that dataSetPath and bucket are set. If not, return an error
+		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
+			log.error("S3 information not set. Cannot upload CSV.");
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
 				.build();
 		}
 
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create(downloadUrl.getUrl()))
-			.GET()
-			.build();
+		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
+			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
 
-		HttpClient client = HttpClient.newHttpClient();
-		AtomicReference<String> rawCsvString = new AtomicReference<>();
-		client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-			.thenApply(HttpResponse::body)
-			.thenAccept(body -> rawCsvString.set(body))
-			.join();
+		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
+
+		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
+
+		GetObjectRequest request = GetObjectRequest.builder()
+			.bucket(bucket.get()).key(objectKey).build();
+
+		ResponseInputStream<GetObjectResponse> s3objectResponse = client
+			.getObject(request);
+
+		String csvString = new BufferedReader(new InputStreamReader(s3objectResponse))
+			.lines()
+			.collect(Collectors.joining("\n"));
 
 
 
-		List<List<String>> csv = csvToRecords(rawCsvString.get());
+		List<List<String>> csv = csvToRecords(csvString);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
 		for (int i = 0; i < csv.get(0).size(); i++){
@@ -241,33 +268,51 @@ public class DatasetResource {
 
 	}
 
-
 	/**
-	 * Converting a multipart form input to an output to pass along to a proxied endpoint.
-	 * @param input non null input
-	 * @param fileName non null file name
-	 * @return a multi part form data output object, which could be empty if we ran into any issues
+	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push
+	 * the file to S3.
+	 * @param datasetId ID of the dataset to upload to
+	 * @param filename CSV file to upload
+	 * @return
 	 */
-	private MultipartFormDataOutput fromFormDataInputToFormDataOutput(MultipartFormDataInput input, String fileName) {
-		MultipartFormDataOutput mdo = new MultipartFormDataOutput();
-		int i = 0;
-		for (Map.Entry < String, List < InputPart >> inputPartEntry: input.getFormDataMap().entrySet()) {
-			String partId = inputPartEntry.getKey();
-			List < InputPart > inputParts = inputPartEntry.getValue();
+	@PUT
+	@Path("/{datasetId}/uploadCSV")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	public Response uploadCsv(
+		@PathParam("datasetId") final String datasetId,
+		@QueryParam("filename") final String filename,
+		Map<String, InputStream> input
+	) throws IOException {
 
-			for (InputPart part: inputParts) {
-				InputStream inputStream;
-				try {
-					inputStream = part.getBody(InputStream.class, null);
-					OutputPart objPart = mdo.addFormData(partId , inputStream, part.getMediaType());
-					objPart.getHeaders().putSingle(FieldName.CONTENT_DISPOSITION, "form-data; name=" + partId + "; filename=" + fileName);
-				} catch (IOException e) {
-					log.error("Error converting to MultipartFormDataInput", e);
-				}
-			}
+		log.debug("Uploading CSV file to dataset {}", datasetId);
+
+		//verify that dataSetPath and bucket are set. If not, return an error
+		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
+			log.error("S3 information not set. Cannot upload CSV.");
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
 		}
 
-		return mdo;
+		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
+
+
+		//init our S3 client
+		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
+			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
+		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
+
+		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket.get()).key(objectKey).build();
+
+		client.putObject(request, RequestBody.fromBytes(input.get("file").readAllBytes()));
+
+		return Response
+			.status(Response.Status.OK)
+			.type(MediaType.APPLICATION_JSON)
+			.build();
+
+
 	}
 
 
@@ -369,5 +414,8 @@ public class DatasetResource {
 		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 		return mapper.convertValue(object, JsonNode.class);
 	}
+
+
+
 
 }
