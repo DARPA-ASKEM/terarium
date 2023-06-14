@@ -248,8 +248,6 @@ public class DatasetResource {
 			.lines()
 			.collect(Collectors.joining("\n"));
 
-
-
 		List<List<String>> csv = csvToRecords(csvString);
 		List<String> headers = csv.get(0);
 		List<CsvColumnStats> CsvColumnStats = new ArrayList<>();
@@ -257,15 +255,13 @@ public class DatasetResource {
 			List<String> column = getColumn(csv,i);
 			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
 		}
-
-
+		
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)
 			.entity(csvAsset)
 			.type(MediaType.APPLICATION_JSON)
 			.build();
-
 	}
 
 	/**
@@ -311,8 +307,6 @@ public class DatasetResource {
 			.status(Response.Status.OK)
 			.type(MediaType.APPLICATION_JSON)
 			.build();
-
-
 	}
 
 
@@ -414,8 +408,4 @@ public class DatasetResource {
 		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 		return mapper.convertValue(object, JsonNode.class);
 	}
-
-
-
-
 }
