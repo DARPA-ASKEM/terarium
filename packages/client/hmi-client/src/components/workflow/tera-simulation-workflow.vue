@@ -62,6 +62,7 @@
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
+					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -73,6 +74,17 @@
 		<template #backgroundDefs>
 			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
 				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+			</marker>
+			<marker
+				v-for="i in wf.edges.length"
+				:key="i"
+				:id="`circle${i - 1}`"
+				markerWidth="8"
+				markerHeight="8"
+				refX="5"
+				refY="5"
+			>
+				<circle cx="5" cy="5" r="3" :style="`fill: ${getVariableColorByRunIdx(i - 1)}`" />
 			</marker>
 			<marker
 				id="arrow"
@@ -100,6 +112,24 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
+			<marker
+				v-for="i in wf.edges.length"
+				:key="i"
+				:id="`smallArrow${i - 1}`"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="12"
+				markerHeight="12"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					:style="`fill: ${getVariableColorByRunIdx(i - 1)}; fill-opacity: 1`"
+				></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
@@ -114,10 +144,10 @@
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				stroke="#1B8073"
+				:stroke="isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index) : '#1B8073'"
 				stroke-width="2"
-				marker-start="url(#circle)"
-				marker-mid="url(#smallArrow)"
+				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
+				:marker-mid="`url(#smallArrow${isEdgeTargetSim(edge) ? index : ''})`"
 				:key="index"
 				fill="none"
 			/>
@@ -147,6 +177,7 @@ import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
+import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -157,6 +188,7 @@ import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
+import TeraStratifyNode from './tera-stratify-node.vue';
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -177,6 +209,31 @@ const isMouseOverCanvas = ref<boolean>(false);
 
 const wf = ref<Workflow>(workflowService.emptyWorkflow());
 const contextMenu = ref();
+
+// FIXME: temporary function to color edges with simulate
+const VIRIDIS_14 = [
+	'#440154',
+	'#481c6e',
+	'#453581',
+	'#3d4d8a',
+	'#34618d',
+	'#2b748e',
+	'#24878e',
+	'#1f998a',
+	'#25ac82',
+	'#40bd72',
+	'#67cc5c',
+	'#98d83e',
+	'#cde11d',
+	'#fde725'
+];
+const getVariableColorByRunIdx = (edgeIdx: number) =>
+	wf.value.edges.length > 1
+		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
+		: '#1B8073';
+const isEdgeTargetSim = (edge) =>
+	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
+	WorkflowOperationTypes.SIMULATE;
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
@@ -254,6 +311,12 @@ const contextMenuItems = ref([
 				height: 220
 			});
 			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Stratify',
+		command: () => {
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
 		}
 	}
 ]);

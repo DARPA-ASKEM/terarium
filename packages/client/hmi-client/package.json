@@ -52,7 +52,7 @@
 		"vue3-draggable-resizable": "1.6.5"
 	},
 	"devDependencies": {
-		"@pinia/testing": "0.0.16",
+		"@pinia/testing": "0.1.2",
 		"@playwright/experimental-ct-vue": "1.31.2",
 		"@playwright/test": "1.31.2",
 		"@rushstack/eslint-patch": "1.2.0",

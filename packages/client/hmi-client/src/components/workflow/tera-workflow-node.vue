@@ -32,7 +32,16 @@
 					@focusout="() => {}"
 				>
 					<div class="input port" />
-					{{ input.label }}
+					<div>
+						<span
+							v-for="(label, labelIdx) in input.label?.split(',') ?? []"
+							:key="labelIdx"
+							class="input-label"
+							:style="{ color: getInputLabelColor(labelIdx) }"
+						>
+							{{ label }}
+						</span>
+					</div>
 				</div>
 			</li>
 		</ul>
@@ -75,7 +84,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
-import { ProjectAssetTypes } from '@/types/Project';
+import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -141,6 +150,30 @@ onMounted(() => {
 	workflowNode.value.addEventListener('mouseup', stopDrag);
 });
 
+// FIXME: temporary function to color input port labels of simulate
+const VIRIDIS_14 = [
+	'#440154',
+	'#481c6e',
+	'#453581',
+	'#3d4d8a',
+	'#34618d',
+	'#2b748e',
+	'#24878e',
+	'#1f998a',
+	'#25ac82',
+	'#40bd72',
+	'#67cc5c',
+	'#98d83e',
+	'#cde11d',
+	'#fde725'
+];
+const getInputLabelColor = (edgeIdx: number) => {
+	const numRuns = props.node.inputs[0].value?.length ?? 0;
+	return numRuns > 1 && props.node.operationType === WorkflowOperationTypes.SIMULATE
+		? VIRIDIS_14[Math.floor((edgeIdx / numRuns) * VIRIDIS_14.length)]
+		: 'inherit';
+};
+
 function showNodeDrilldown() {
 	let pageType;
 	let assetId;
@@ -148,15 +181,20 @@ function showNodeDrilldown() {
 		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;
 			assetId = props.node.id;
-			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+
 			break;
 		case WorkflowOperationTypes.CALIBRATION:
+			pageType = ProjectPages.CALIBRATE;
 			assetId = props.node.id;
-			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+			break;
+		case WorkflowOperationTypes.STRATIFY:
+			pageType = ProjectPages.STRATIFY;
+			assetId = props.node.id;
 			break;
 		default:
 			break;
 	}
+
 	if (!isEmpty(props.node.outputs)) {
 		switch (props.node.operationType) {
 			case WorkflowOperationTypes.MODEL:
@@ -170,8 +208,9 @@ function showNodeDrilldown() {
 			default:
 				break;
 		}
-		openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 	}
+
+	openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 }
 
 function mouseoverPort(event) {
@@ -384,5 +423,13 @@ ul li {
 .inputs > .port-connected:hover .port,
 .outputs > .port-connected:hover .port {
 	background: var(--primary-color);
+}
+
+.input-label::after {
+	color: var(--text-color-primary);
+	content: ', ';
+}
+.input-label:last-child::after {
+	content: '';
 }
 </style>

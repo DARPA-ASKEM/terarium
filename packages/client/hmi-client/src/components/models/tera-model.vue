@@ -33,6 +33,22 @@
 				class="p-button-sm"
 			/>
 		</template>
+		<table class="model-biblio">
+			<tr>
+				<th class="model-biblio-header">Framework</th>
+				<th class="model-biblio-header">Model Version</th>
+				<th class="model-biblio-header">Date Created</th>
+				<th class="model-biblio-header">Created By</th>
+				<th class="model-biblio-header">Source</th>
+			</tr>
+			<tr>
+				<td class="model-biblio-column">{{ model?.framework }}</td>
+				<td class="model-biblio-column">{{ model?.model_version }}</td>
+				<td class="model-biblio-column">{{ model?.metadata.processed_at }}</td>
+				<td class="model-biblio-column">{{ model?.description }}</td>
+				<td class="model-biblio-column">{{ model?.metadata.processed_by }}</td>
+			</tr>
+		</table>
 		<Accordion
 			v-if="modelView === ModelView.DESCRIPTION"
 			:multiple="true"
@@ -53,16 +69,31 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Parameters">Parameters</header>
+					<header id="Parameters">
+						Parameters<span class="artifact-amount">({{ modelParameters?.length }})</span>
+					</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="model?.model.parameterss">
-					<Column field="id" header="ID"></Column>
-					<Column field="value" header="Value"></Column>
+				<DataTable
+					class="p-datatable-sm"
+					:value="modelParameters"
+					rowGroupMode="subheader"
+					groupRowsBy="description"
+				>
+					<Column class="borderless-row" field="description" header="description"></Column>
+					<Column class="borderless-row" field="id" header="ID"></Column>
+					<Column class="borderless-row" field="value" header="Value"></Column>
+					<template #groupfooter="modelParameters">
+						<div>
+							<span class="parameter-description">{{ modelParameters.data.description }}</span>
+						</div>
+					</template>
 				</DataTable>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="State variables">State variables</header>
+					<header id="State variables">
+						State variables<span class="artifact-amount">({{ model?.model.states.length }})</span>
+					</header>
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.states">
 					<Column field="id" header="ID"></Column>
@@ -73,7 +104,9 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Transitions">Transitions</header>
+					<header id="Transitions">
+						Transitions<span class="artifact-amount">({{ model?.model.transitions.length }})</span>
+					</header>
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.transitions">
 					<Column field="id" header="ID"></Column>
@@ -81,16 +114,23 @@
 					<Column field="input" header="Input"></Column>
 					<Column field="output" header="Output"></Column>
 					<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
-					<Column field="properties.rate.expression_mathml" header="Equation">
+					<Column field="properties.rate.expression_mathml" header="Expression">
 						<template #body="slotProps">
-							<katex-element :expression="slotProps.data.properties?.rate?.expression" />
+							<katex-element
+								:expression="
+									model?.semantics?.ode.rates.find((rate) => rate.target === slotProps.data.id)
+										?.expression
+								"
+							/>
 						</template>
 					</Column>
 				</DataTable>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Variable Statements">Variable Statements</header>
+					<header id="Variable Statements">
+						Variable Statements<span class="artifact-amount">({{ metaData?.length }})</span>
+					</header>
 				</template>
 				<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
 					<Column field="id" header="ID"></Column>
@@ -238,6 +278,7 @@ const metaData = computed(() => model.value?.metadata?.variable_statements);
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description));
+const modelParameters = computed(() => model.value?.semantics?.ode.parameters);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -354,6 +395,41 @@ function getSource(sp) {
 </script>
 
 <style scoped>
+/* :deep(.p-datatable .p-datatable-tbody > .p-rowgroup-footer > td){
+	border: none;
+} */
+
+:deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
+	border-bottom: none;
+}
+.parameter-description {
+	font-weight: 500;
+	font-size: var(--font-body-small);
+	color: var(--text-color-secondary);
+}
+.model-biblio {
+	padding: 1rem;
+}
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	font-size: var(--font-body-medium);
+	font-weight: 600;
+	color: var(--text-color-primary);
+}
+.model-biblio-header {
+	padding-right: 2rem;
+	font-family: var(--font-family);
+	font-weight: 500;
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
+	text-align: left;
+}
+.model-biblio-column {
+	padding-right: 50px;
+	font-family: var(--font-family);
+	font-weight: 400;
+	font-size: var(--font-body-small);
+}
+
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;
