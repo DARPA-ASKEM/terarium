@@ -62,6 +62,7 @@
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
+					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -176,6 +177,7 @@ import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
+import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -186,6 +188,7 @@ import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
+import TeraStratifyNode from './tera-stratify-node.vue';
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -198,6 +201,7 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
+let workflowDirty: boolean = false;
 
 const newEdge = ref<WorkflowEdge | undefined>();
 const newAssetId = ref<string | null>(null);
@@ -255,6 +259,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		value: [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
+	workflowDirty = true;
 }
 
 // Run testOperation
@@ -272,6 +277,7 @@ const contextMenuItems = ref([
 		label: 'Test operation',
 		command: () => {
 			workflowService.addNode(wf.value, testOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
@@ -279,6 +285,7 @@ const contextMenuItems = ref([
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
@@ -286,12 +293,14 @@ const contextMenuItems = ref([
 		command: () => {
 			newAssetId.value = null;
 			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
 		label: 'Calibrate',
 		command: () => {
 			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
@@ -301,6 +310,13 @@ const contextMenuItems = ref([
 				width: 420,
 				height: 220
 			});
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Stratify',
+		command: () => {
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
 		}
 	}
 ]);
@@ -353,6 +369,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.x = newTransform.x;
 	t.y = newTransform.y;
 	t.k = newTransform.k;
+	workflowDirty = true;
 }
 
 const isCreatingNewEdge = computed(
@@ -443,6 +460,7 @@ const updatePosition = (node: WorkflowNode, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
+	workflowDirty = true;
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
@@ -462,6 +480,9 @@ const drawPath = (v: any) => pathFn(v) as string;
 watch(
 	() => [props.assetId],
 	async () => {
+		if (wf.value && workflowDirty) {
+			workflowService.updateWorkflow(wf.value);
+		}
 		const workflowId = props.assetId;
 		if (!workflowId) return;
 		wf.value = await workflowService.getWorkflow(workflowId);
@@ -472,11 +493,16 @@ watch(
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
 	saveTimer = setInterval(() => {
-		console.log('saving workflow');
-		workflowService.updateWorkflow(wf.value);
+		if (workflowDirty) {
+			workflowService.updateWorkflow(wf.value);
+			workflowDirty = false;
+		}
 	}, 8000);
 });
 onUnmounted(() => {
+	if (workflowDirty) {
+		workflowService.updateWorkflow(wf.value);
+	}
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}

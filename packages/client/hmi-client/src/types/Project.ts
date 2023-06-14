@@ -13,6 +13,8 @@ export enum ProjectAssetTypes {
 
 export enum ProjectPages {
 	OVERVIEW = 'overview',
+	CALIBRATE = 'calibrate',
+	STRATIFY = 'stratify',
 	EMPTY = ''
 }
 
