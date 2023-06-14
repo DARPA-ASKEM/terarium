@@ -7,6 +7,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
 
 
 @RegisterRestClient(configKey = "simulation-service")
@@ -15,8 +16,15 @@ public interface SimulationServiceProxy {
 	@POST
 	@Path("/calls/simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
-	Response makeForecastRun(
+	JobResponse makeForecastRun(
 		SimulationRequest request
+	);
+
+	@POST
+	@Path("/calibrate")
+	@Consumes(MediaType.APPLICATION_JSON)
+	JobResponse makeCalibrateJob(
+		CalibrationRequest calibrationRequest
 	);
 
 	@GET
@@ -31,12 +39,5 @@ public interface SimulationServiceProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response getRunResult(
 		@PathParam("runId") String runId
-	);
-
-	@POST
-	@Path("/calibrate")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response makeCalibrateJob(
-		CalibrationRequest calibrationRequest
 	);
 }

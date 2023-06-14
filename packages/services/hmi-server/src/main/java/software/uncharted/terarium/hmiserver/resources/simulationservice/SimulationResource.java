@@ -6,6 +6,8 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
+import software.uncharted.terarium.hmiserver.models.simulationservice.JobResponse;
+
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
 
@@ -56,7 +58,23 @@ public class SimulationResource {
 	public Response makeForecastRun(
 		final SimulationRequest request
 	) {
-		return simulationServiceProxy.makeForecastRun(request);
+		final JobResponse res = simulationServiceProxy.makeForecastRun(request);
+		final Simulation sim = new Simulation();
+		sim.setId(res.getSimulationId());
+		sim.setType("simulation");
+		return simulationProxy.createSimulation(sim);
+	}
+
+	@POST
+	@Path("/calibrate")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Tag(name = "Create calibrate job")
+	public Response makeCalibrateJob(
+		final CalibrationRequest calibrationRequest
+	) {
+		final JobResponse res = simulationServiceProxy.makeCalibrateJob(calibrationRequest);
+		return null;
 	}
 
 	@GET
@@ -79,14 +97,4 @@ public class SimulationResource {
 		return simulationServiceProxy.getRunResult(runId);
 	}
 
-	@POST
-	@Path("/calibrate")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Tag(name = "Create calibrate job")
-	public Response makeCalibrateJob(
-		final CalibrationRequest calibrationRequest
-	) {
-		return simulationServiceProxy.makeCalibrateJob(calibrationRequest);
-	}
 }
