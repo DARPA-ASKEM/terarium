@@ -67,6 +67,7 @@ export interface Model {
 }
 
 export interface ModelConfiguration {
+    id: string;
     name: string;
     description?: string;
     modelId: string;
