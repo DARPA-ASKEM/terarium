@@ -116,7 +116,7 @@ const setKernelContext = (kernel: IKernelConnection, context_info) => {
 const iopubMessageHandler = (_session, message) => {
 	if (message.msg_type === 'status') {
 		const newState: KernelState = KernelState[KernelState[message.content.execution_state]];
-		kernelState.value = newState;
+		kernelState.value = KernelState[newState];
 		return;
 	}
 	emit('newMessage', message);
