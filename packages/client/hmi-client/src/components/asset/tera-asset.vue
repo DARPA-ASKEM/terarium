@@ -16,10 +16,22 @@
 		<header id="asset-top" ref="headerRef">
 			<template v-if="!hideHeader">
 				<section>
-					<span v-if="overline" class="overline">{{ overline }}</span>
+					<!-- put the buttons above the title if there is an overline -->
+					<div v-if="overline" class="vertically-center">
+						<span class="overline">{{ overline }}</span>
+						<slot name="edit-buttons" />
+					</div>
+
 					<!--For naming asset such as model or code file-->
-					<slot v-if="isCreatingAsset" name="name-input" />
-					<h4 v-else v-html="name" class="nudge-down" />
+					<div class="vertically-center">
+						<slot v-if="isCreatingAsset" name="name-input" />
+						<h4 v-else v-html="name" class="nudge-down" />
+
+						<div v-if="!overline" class="vertically-center">
+							<slot name="edit-buttons" />
+						</div>
+					</div>
+
 					<!--put model contributors here too-->
 					<span class="authors" v-if="authors">
 						<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
@@ -35,7 +47,6 @@
 					</div>
 				</section>
 				<aside class="spread-out">
-					<slot name="edit-buttons" />
 					<Button
 						v-if="!isEditable"
 						icon="pi pi-times"
@@ -179,6 +190,13 @@ header.shrinked aside {
 
 .nudge-down {
 	margin-top: 0.25rem;
+}
+
+.vertically-center {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 1rem;
 }
 main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
