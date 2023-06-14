@@ -78,19 +78,22 @@ describe('test generate location strata model', () => {
 		expect(model).toEqual({
 			name: 'Location-travel strata model',
 			description: 'Location-travel strata model',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+			model_version: '0.1',
 			model: {
 				states: [
 					{
 						id: 'L1',
 						name: 'Toronto',
 						description:
-							'Number of individuals relative to the total population that are in location L1'
+							'Number of individuals relative to the total population that are in location L1.'
 					},
 					{
 						id: 'L2',
 						name: 'Montreal',
 						description:
-							'Number of individuals relative to the total population that are in location L2'
+							'Number of individuals relative to the total population that are in location L2.'
 					}
 				],
 				transitions: [
@@ -100,7 +103,7 @@ describe('test generate location strata model', () => {
 						output: ['L2'],
 						properties: {
 							name: 't&#8321&#8322',
-							description: 'Travel of an individual from location L1 and L2'
+							description: 'Travel of an individual from location L1 and L2.'
 						}
 					},
 					{
@@ -109,11 +112,44 @@ describe('test generate location strata model', () => {
 						output: ['L1'],
 						properties: {
 							name: 't&#8322&#8321',
-							description: 'Travel of an individual from location L2 and L1'
+							description: 'Travel of an individual from location L2 and L1.'
 						}
 					}
 				]
-			}
+			},
+			semantics: {
+				ode: {},
+				typing: {
+					type_system: {
+						states: [
+							{
+								id: 'Pop',
+								name: 'Pop',
+								description: 'Compartment of individuals in a human population.'
+							}
+						],
+						transitions: [
+							{
+								id: 'Strata',
+								input: ['Pop'],
+								output: ['Pop'],
+								properties: {
+									name: 'Strata',
+									description:
+										'1-to-1 process that represents a change in the demographic division of a human individual.'
+								}
+							}
+						]
+					},
+					type_map: [
+						['L1', 'Pop'],
+						['L2', 'Pop'],
+						['t12', 'Strata'],
+						['t21', 'Strata']
+					]
+				}
+			},
+			metadata: {}
 		});
 	});
 });
