@@ -73,10 +73,10 @@ const addResourcesToProject = async (projectId: string) => {
 const formatAbstract = (item: Document) =>
 	item.abstract !== undefined ? item.abstract : '[no abstract]';
 
-const addAssetsToProject = async (projectName?: string) => {
+const addAssetsToProject = async (projectName) => {
 	let projectId = '';
-	if (projectName !== undefined) {
-		const project = projectsList.value.find((p) => p.name === projectName);
+	if (projectName !== undefined && typeof projectName.value === 'string') {
+		const project = projectsList.value.find((p) => p.name === projectName.value);
 		projectId = project?.id as string;
 	} else {
 		if (!validProject.value) return;
