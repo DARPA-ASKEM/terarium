@@ -1,4 +1,5 @@
 <template>
+	{{ modelConfigurationTable }}
 	<DataTable
 		v-if="model.semantics?.ode && modelToEdit.semantics?.ode"
 		class="model-configuration"
@@ -55,14 +56,30 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
+		<Column v-for="(value, i) of modelToEdit.semantics.ode.rates" :key="i" :field="value['target']">
+			<template #body="{ data, field }">
+				{{ data[field] }}
+			</template>
+			<template #editor="{ data, field }">
+				{{ data[field] }}
+			</template>
+		</Column>
 		<Column
-			v-for="(value, i) of [
-				...modelToEdit.semantics.ode.rates,
-				...modelToEdit.semantics.ode.initials,
-				...modelToEdit.semantics.ode.parameters
-			]"
+			v-for="(value, i) of modelToEdit.semantics.ode.initials"
 			:key="i"
-			:field="value['id'] ?? value['target']"
+			:field="value['target']"
+		>
+			<template #body="{ data, field }">
+				{{ data[field] }}
+			</template>
+			<template #editor="{ data, field }">
+				{{ data[field] }}
+			</template>
+		</Column>
+		<Column
+			v-for="(value, i) of modelToEdit.semantics.ode.parameters"
+			:key="i"
+			:field="value['id']"
 		>
 			<template #body="{ data, field }">
 				{{ data[field] }}
@@ -151,6 +168,7 @@ import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Types';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { NumericValueMap, AnyValueMap } from '@/types/common';
+// import { createModelConfiguration, updateModelConfiguration } from '@/services/model-configurations';
 
 const props = defineProps<{
 	model: Model;
@@ -238,6 +256,7 @@ const onCellEditComplete = (event) => {
 };
 
 const onCellEditStart = (event) => {
+	console.log(event);
 	if (props.isEditable) {
 		const { data, field, index } = event;
 
@@ -263,6 +282,24 @@ function updateModelConfigValue() {
 function generateModelConfigValues() {
 	console.log(props.model);
 
+	if (props.model.semantics?.ode) {
+		// eslint-disable-next-line
+		for (const key of Object.keys(props.model.semantics.ode)) {
+			odes.value[0][key] = [];
+
+			props.model.semantics?.ode[key].forEach((value) => {
+				const newPair = {};
+				newPair[value.target ?? value.id] = value.expression ?? value.value;
+				odes.value[0][key].push(newPair);
+			});
+		}
+	}
+
+	// createModelConfiguration(modelToEdit);
+
+	console.log(odes.value);
+
+	// Old stuff
 	// Sync with workflow
 	if (
 		props.model &&
@@ -284,48 +321,6 @@ function generateModelConfigValues() {
 		// initialValues.value[0] = props.modelConfigNodeInput.initialValues;
 		// parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
 	}
-
-	if (props.model.semantics?.ode) {
-		// eslint-disable-next-line
-		for (const key of Object.keys(props.model.semantics.ode)) {
-			odes.value[0][key] = [];
-
-			props.model.semantics?.ode[key].forEach((value) => {
-				const newPair = {};
-				newPair[value.target ?? value.id] = value.expression ?? value.value;
-				odes.value[0][key].push(newPair);
-			});
-		}
-		console.log(odes.value);
-	}
-
-	console.log(odes.value);
-
-	// if (props.model.semantics?.ode?.initials) {
-	// 	props.model.semantics?.ode.initials.forEach((i) => {
-	// 		initialValues.value[0][i.target] = i.expression;
-	// 	});
-	// }
-	// if (props.model.semantics?.ode?.parameters) {
-	// 	props.model.semantics?.ode.parameters.forEach((p) => {
-	// 		parameterValues.value[0][p.id] = p.value ?? 0;
-	// 	});
-	// }
-
-	// if (props.model.semantics?.ode?.rates) {
-	// 	props.model.semantics?.ode.rates.forEach((r) => {
-	// 		parameterValues.value[0][r.id] = r.value ?? 0;
-	// 	});
-	// }
-	// Default values petrinet format
-	// else if (props.model.semantics?.ode?.initials) {
-	// 	props.model.semantics?.ode.initials.forEach((s) => {
-	// 		initialValues.value[0][s.id] = 1;
-	// 	});
-	// 	props.model.model.transitions.forEach((t) => {
-	// 		parameterValues.value[0][t.id] = 0.0005;
-	// 	});
-	// }
 
 	// By default check all boxes for calibration
 	if (props.calibrationConfig) {
