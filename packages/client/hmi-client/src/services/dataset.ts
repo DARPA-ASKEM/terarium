@@ -116,7 +116,9 @@ async function createNewDatasetFromCSV(
 	try {
 		const s3response: AxiosResponse<any> = await axios.put(urlResponse.data.url, file, {
 			headers: {
-				'Content-Type': 'application/octet-stream'
+				'Content-Type': 'application/octet-stream',
+				Bucket: 'askem-staging-data-service',
+				Key: `datasets/${newDataSet.id}/${file.name}`
 			}
 		});
 
