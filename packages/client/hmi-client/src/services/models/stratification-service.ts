@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { State, Transition } from '@/types/Types';
+import { ModelSemantics, State, Transition } from '@/types/Types';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
@@ -28,7 +28,7 @@ export function generateAgeStrataModel(stateNames: string[]) {
 		name,
 		description: `Number of individuals relative to the total population that are in age group A${
 			index + 1
-		}`
+		}.`
 	}));
 	const transitions: Transition[] = [];
 	states.forEach((outerState, i) =>
@@ -39,18 +39,55 @@ export function generateAgeStrataModel(stateNames: string[]) {
 				output: [outerState.id, innerState.id],
 				properties: {
 					name: `c&#832${i + 1}&#832${j + 1}`,
-					description: 'Infective interaction between individuals'
+					description: 'Infective interaction between individuals.'
 				}
 			});
 		})
 	);
+	const typeMap: string[][] = states
+		.map((state) => [state.id, 'Pop'])
+		.concat(transitions.map((transition) => [transition.id, 'Strata']));
+	const semantics: ModelSemantics = {
+		ode: {
+			rates: []
+		},
+		typing: {
+			type_system: {
+				states: [
+					{
+						id: 'Pop',
+						name: 'Pop',
+						description: 'Compartment of individuals in a human population.'
+					}
+				],
+				transitions: [
+					{
+						id: 'Strata',
+						input: ['Pop'],
+						output: ['Pop'],
+						properties: {
+							name: 'Strata',
+							description:
+								'1-to-1 process that represents a change in the demographic division of a human individual.'
+						}
+					}
+				]
+			},
+			type_map: typeMap
+		}
+	};
 	return {
 		name: 'Age-contact strata model',
 		description: 'Age-contact strata model',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+		model_version: '0.1',
 		model: {
 			states,
 			transitions
-		}
+		},
+		semantics,
+		metadata: {}
 	};
 }
 
@@ -60,7 +97,7 @@ export function generateLocationStrataModel(stateNames: string[]) {
 		name,
 		description: `Number of individuals relative to the total population that are in location L${
 			index + 1
-		}`
+		}.`
 	}));
 	const transitions: Transition[] = [];
 	states.forEach((outerState, i) =>
@@ -72,18 +109,55 @@ export function generateLocationStrataModel(stateNames: string[]) {
 					output: [innerState.id],
 					properties: {
 						name: `t&#832${i + 1}&#832${j + 1}`,
-						description: `Travel of an individual from location L${i + 1} and L${j + 1}`
+						description: `Travel of an individual from location L${i + 1} and L${j + 1}.`
 					}
 				});
 			}
 		})
 	);
+	const typeMap: string[][] = states
+		.map((state) => [state.id, 'Pop'])
+		.concat(transitions.map((transition) => [transition.id, 'Strata']));
+	const semantics: ModelSemantics = {
+		ode: {
+			rates: []
+		},
+		typing: {
+			type_system: {
+				states: [
+					{
+						id: 'Pop',
+						name: 'Pop',
+						description: 'Compartment of individuals in a human population.'
+					}
+				],
+				transitions: [
+					{
+						id: 'Strata',
+						input: ['Pop'],
+						output: ['Pop'],
+						properties: {
+							name: 'Strata',
+							description:
+								'1-to-1 process that represents a change in the demographic division of a human individual.'
+						}
+					}
+				]
+			},
+			type_map: typeMap
+		}
+	};
 	return {
 		name: 'Location-travel strata model',
 		description: 'Location-travel strata model',
+		schema:
+			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+		model_version: '0.1',
 		model: {
 			states,
 			transitions
-		}
+		},
+		semantics,
+		metadata: {}
 	};
 }

@@ -13,19 +13,22 @@ describe('test generate age strata model', () => {
 		expect(model).toEqual({
 			name: 'Age-contact strata model',
 			description: 'Age-contact strata model',
+			schema:
+				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+			model_version: '0.1',
 			model: {
 				states: [
 					{
 						id: 'A1',
 						name: 'Young',
 						description:
-							'Number of individuals relative to the total population that are in age group A1'
+							'Number of individuals relative to the total population that are in age group A1.'
 					},
 					{
 						id: 'A2',
 						name: 'Old',
 						description:
-							'Number of individuals relative to the total population that are in age group A2'
+							'Number of individuals relative to the total population that are in age group A2.'
 					}
 				],
 				transitions: [
@@ -35,7 +38,7 @@ describe('test generate age strata model', () => {
 						output: ['A1', 'A1'],
 						properties: {
 							name: 'c&#8321&#8321',
-							description: 'Infective interaction between individuals'
+							description: 'Infective interaction between individuals.'
 						}
 					},
 					{
@@ -44,7 +47,7 @@ describe('test generate age strata model', () => {
 						output: ['A1', 'A2'],
 						properties: {
 							name: 'c&#8321&#8322',
-							description: 'Infective interaction between individuals'
+							description: 'Infective interaction between individuals.'
 						}
 					},
 					{
@@ -53,7 +56,7 @@ describe('test generate age strata model', () => {
 						output: ['A2', 'A1'],
 						properties: {
 							name: 'c&#8322&#8321',
-							description: 'Infective interaction between individuals'
+							description: 'Infective interaction between individuals.'
 						}
 					},
 					{
@@ -62,11 +65,48 @@ describe('test generate age strata model', () => {
 						output: ['A2', 'A2'],
 						properties: {
 							name: 'c&#8322&#8322',
-							description: 'Infective interaction between individuals'
+							description: 'Infective interaction between individuals.'
 						}
 					}
 				]
-			}
+			},
+			semantics: {
+				ode: {
+					rates: []
+				},
+				typing: {
+					type_system: {
+						states: [
+							{
+								id: 'Pop',
+								name: 'Pop',
+								description: 'Compartment of individuals in a human population.'
+							}
+						],
+						transitions: [
+							{
+								id: 'Strata',
+								input: ['Pop'],
+								output: ['Pop'],
+								properties: {
+									name: 'Strata',
+									description:
+										'1-to-1 process that represents a change in the demographic division of a human individual.'
+								}
+							}
+						]
+					},
+					type_map: [
+						['A1', 'Pop'],
+						['A2', 'Pop'],
+						['c11', 'Strata'],
+						['c12', 'Strata'],
+						['c21', 'Strata'],
+						['c22', 'Strata']
+					]
+				}
+			},
+			metadata: {}
 		});
 	});
 });
@@ -118,7 +158,9 @@ describe('test generate location strata model', () => {
 				]
 			},
 			semantics: {
-				ode: {},
+				ode: {
+					rates: []
+				},
 				typing: {
 					type_system: {
 						states: [
