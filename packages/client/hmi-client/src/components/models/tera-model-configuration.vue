@@ -1,5 +1,4 @@
 <template>
-	{{ modelConfigurationTable }}
 	<DataTable
 		v-if="model.semantics?.ode && modelToEdit.semantics?.ode"
 		class="model-configuration"
@@ -188,7 +187,7 @@ const modelConfigurationTable = computed(() => {
 	for (let i = 0; i < odes.value.length; i++) {
 		variables[i] = {};
 		// eslint-disable-next-line
-		for (const values in Object.values(odes.value[i])) {
+		for (const values of Object.values(odes.value[i])) {
 			const flattenedObj = {};
 
 			if (isArray(values)) {
