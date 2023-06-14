@@ -1,5 +1,4 @@
 <template>
-	{{ modelConfigurationTable }}
 	<DataTable
 		v-if="model.semantics?.ode && modelToEdit.semantics?.ode"
 		class="model-configuration"
@@ -56,36 +55,43 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<Column v-for="(value, i) of modelToEdit.semantics.ode.rates" :key="i" :field="value['target']">
+		<Column
+			v-for="(value, i) of modelToEdit.semantics.ode.rates"
+			:key="i"
+			:field="value['target']"
+			dataType="rates"
+		>
 			<template #body="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 			<template #editor="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 		</Column>
 		<Column
 			v-for="(value, i) of modelToEdit.semantics.ode.initials"
 			:key="i"
 			:field="value['target']"
+			dataType="initials"
 		>
 			<template #body="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 			<template #editor="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 		</Column>
 		<Column
 			v-for="(value, i) of modelToEdit.semantics.ode.parameters"
 			:key="i"
 			:field="value['id']"
+			dataType="parameters"
 		>
 			<template #body="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 			<template #editor="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 		</Column>
 		<!-- <ColumnGroup v-if="calibrationConfig" type="footer">
@@ -132,7 +138,7 @@
 							<label for="name">Value</label>
 							<InputText
 								class="p-inputtext-sm"
-								v-model="cellValueToEdit.data[cellValueToEdit.field]"
+								v-model="cellValueToEdit.data[cellValueToEdit.field].value"
 							/>
 						</div>
 					</TabPanel>
@@ -166,7 +172,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Types';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+// import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { NumericValueMap, AnyValueMap } from '@/types/common';
 // import { createModelConfiguration, updateModelConfiguration } from '@/services/model-configurations';
 
@@ -184,8 +190,6 @@ const modelToEdit = ref(cloneDeep(props.model));
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
-const odes = ref([{}]);
-
 const initialValues = ref<NumericValueMap[]>([{}]);
 const parameterValues = ref<NumericValueMap[]>([{}]);
 const openValueConfig = ref(false);
@@ -195,9 +199,25 @@ const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
-
 // const variableTypes = computed(() => props.model.semantics ? Object.keys(props.model.semantics.ode) : []);
+const odes = computed(() => {
+	const ODEs = [{}];
+
+	if (modelToEdit.value.semantics?.ode) {
+		// eslint-disable-next-line
+		for (const key of Object.keys(modelToEdit.value.semantics.ode)) {
+			ODEs[0][key] = [];
+
+			modelToEdit.value.semantics?.ode[key].forEach((value) => {
+				const newPair = {};
+				newPair[value.target ?? value.id] = value.expression ?? value.value;
+				ODEs[0][key].push(newPair);
+			});
+		}
+	}
+
+	return ODEs;
+});
 
 const modelConfigurationTable = computed(() => {
 	const variables: AnyValueMap[] = [];
@@ -205,16 +225,20 @@ const modelConfigurationTable = computed(() => {
 	for (let i = 0; i < odes.value.length; i++) {
 		variables[i] = {};
 		// eslint-disable-next-line
-		for (const values of Object.values(odes.value[i])) {
+		for (const [key, values] of Object.entries(odes.value[i])) {
+			// for (const values of Object.values(odes.value[i])) {
 			const flattenedObj = {};
 
 			if (isArray(values)) {
 				// @ts-ignore
 				// eslint-disable-next-line
 				for (let j = 0; j < values.length; j++) {
-					Object.assign(flattenedObj, values[j]);
+					const newKey: string = Object.keys(values[j])[0];
+					const newVal = {};
+					newVal[newKey] = { value: Object.values(values[j])[0], type: key, name: newKey };
+					Object.assign(flattenedObj, newVal);
 				}
-				console.log(flattenedObj, values);
+				console.log(flattenedObj, values, key);
 			}
 			variables[i] = { ...variables[i], ...flattenedObj };
 		}
@@ -233,12 +257,12 @@ const selectedModelVariables = computed(() => [
 defineExpose({ selectedModelVariables });
 
 function addModelConfiguration() {
-	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
-	odes.value.push(cloneDeep(odes.value[odes.value.length - 1]));
+	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1} `);
+	// odes.value.push(cloneDeep(odes.value[odes.value.length - 1]));
 }
 
 function addConfigValue() {
-	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1}`);
+	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1} `);
 }
 
 const onCellEditComplete = (event) => {
@@ -268,66 +292,61 @@ const onCellEditStart = (event) => {
 };
 
 function updateModelConfigValue() {
-	const { data, field, index } = cellValueToEdit.value;
+	const { data, field } = cellValueToEdit.value;
+	const { name, type, value } = data[field];
 
-	if (initialValues.value[index][field]) {
-		initialValues.value[index][field] = data[field];
-	} else if (parameterValues.value[index][field]) {
-		parameterValues.value[index][field] = data[field];
+	console.log(data[field].value, data[field].type, data[field]);
+
+	if (modelToEdit.value.semantics) {
+		modelToEdit.value.semantics.ode[type][name] = value;
 	}
+
+	// CALL updateModelConfiguration here
 
 	openValueConfig.value = false;
 }
 
-function generateModelConfigValues() {
-	console.log(props.model);
+// function generateModelConfigValues() {
+// 	console.log(props.model);
 
-	if (props.model.semantics?.ode) {
-		// eslint-disable-next-line
-		for (const key of Object.keys(props.model.semantics.ode)) {
-			odes.value[0][key] = [];
+// 	createModelConfiguration({
+// 		name: modelToEdit.value.name,
+// 		description: 'test',
+// 		modelId: modelToEdit.value.id,
+// 		configuration: modelToEdit.value
+// 	});
 
-			props.model.semantics?.ode[key].forEach((value) => {
-				const newPair = {};
-				newPair[value.target ?? value.id] = value.expression ?? value.value;
-				odes.value[0][key].push(newPair);
-			});
-		}
-	}
+// 	console.log(odes.value);
 
-	// createModelConfiguration(modelToEdit);
+// 	// Old stuff
+// 	// Sync with workflow
+// 	if (
+// 		props.model &&
+// 		openedWorkflowNodeStore.assetId === props.model.id.toString() &&
+// 		openedWorkflowNodeStore.initialValues !== null &&
+// 		openedWorkflowNodeStore.parameterValues !== null
+// 	) {
+// 		// Shallow copy
+// 		// initialValues.value = openedWorkflowNodeStore.initialValues;
+// 		// parameterValues.value = openedWorkflowNodeStore.parameterValues;
 
-	console.log(odes.value);
+// 		if (modelConfigNames.value.length < initialValues.value.length - 1) {
+// 			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1} `);
+// 		}
+// 	}
+// 	// Copy node input in here if that's just what we want to show
+// 	else if (props.modelConfigNodeInput) {
+// 		console.log(props.modelConfigNodeInput);
+// 		// initialValues.value[0] = props.modelConfigNodeInput.initialValues;
+// 		// parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
+// 	}
 
-	// Old stuff
-	// Sync with workflow
-	if (
-		props.model &&
-		openedWorkflowNodeStore.assetId === props.model.id.toString() &&
-		openedWorkflowNodeStore.initialValues !== null &&
-		openedWorkflowNodeStore.parameterValues !== null
-	) {
-		// Shallow copy
-		// initialValues.value = openedWorkflowNodeStore.initialValues;
-		// parameterValues.value = openedWorkflowNodeStore.parameterValues;
-
-		if (modelConfigNames.value.length < initialValues.value.length - 1) {
-			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
-		}
-	}
-	// Copy node input in here if that's just what we want to show
-	else if (props.modelConfigNodeInput) {
-		console.log(props.modelConfigNodeInput);
-		// initialValues.value[0] = props.modelConfigNodeInput.initialValues;
-		// parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
-	}
-
-	// By default check all boxes for calibration
-	if (props.calibrationConfig) {
-		selectedInitials.value = Object.keys(initialValues.value[0]);
-		selectedParameters.value = Object.keys(parameterValues.value[0]);
-	}
-}
+// 	// By default check all boxes for calibration
+// 	if (props.calibrationConfig) {
+// 		selectedInitials.value = Object.keys(initialValues.value[0]);
+// 		selectedParameters.value = Object.keys(parameterValues.value[0]);
+// 	}
+// }
 
 function resetModelConfiguration() {
 	console.log(props.model);
@@ -337,16 +356,7 @@ function resetModelConfiguration() {
 	parameterValues.value = [{}];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '', index: 0 };
-	generateModelConfigValues();
 }
-
-// watch(
-// 	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
-// 	() => {
-// 		generateModelConfigValues();
-// 	},
-// 	{ deep: true }
-// );
 
 watch(
 	() => props.model,
