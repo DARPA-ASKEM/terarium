@@ -4,6 +4,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -27,9 +28,9 @@ public class ModelConfigurationResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModelConfiguration(
-			ModelConfiguration config
+			String config, String description, String model_id, Model model
 	) {
-		return proxy.createModelConfiguration(config);
+		return proxy.createModelConfiguration(config, description, model_id, model);
 	}
 
 	@GET
