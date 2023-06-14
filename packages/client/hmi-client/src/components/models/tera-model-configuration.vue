@@ -1,15 +1,17 @@
 <template>
+	{{ modelConfigurationTable }}
 	<DataTable
+		v-if="model.semantics?.ode && modelToEdit.semantics?.ode"
 		class="model-configuration"
 		v-model:selection="selectedModelConfig"
-		:value="modelConfiguration"
+		:value="modelConfigurationTable"
 		editMode="cell"
 		showGridlines
 		@cell-edit-init="onCellEditStart"
 		@cell-edit-complete="onCellEditComplete"
 	>
 		<ColumnGroup type="header">
-			<Row v-if="model.semantics?.ode">
+			<Row>
 				<Column v-if="isEditable" header="" style="border: none" />
 				<Column header="" style="border: none" />
 				<Column
@@ -19,7 +21,7 @@
 					:key="i"
 				/>
 			</Row>
-			<Row v-if="model.semantics?.ode">
+			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
 				<Column :header="isEditable ? 'Select all' : ''" />
 				<!-- Can't do a loop inside a loop within the datatable 
@@ -56,12 +58,12 @@
 		</Column>
 		<Column
 			v-for="(value, i) of [
-				...model.semantics.ode.rates,
-				...model.semantics.ode.initials,
-				...model.semantics.ode.parameters
+				...modelToEdit.semantics.ode.rates,
+				...modelToEdit.semantics.ode.initials,
+				...modelToEdit.semantics.ode.parameters
 			]"
 			:key="i"
-			:field="value['id'] ?? value['target'] ?? value['expression']"
+			:field="value['id'] ?? value['target']"
 		>
 			<template #body="{ data, field }">
 				{{ data[field] }}
@@ -70,7 +72,7 @@
 				{{ data[field] }}
 			</template>
 		</Column>
-		<ColumnGroup v-if="calibrationConfig" type="footer">
+		<!-- <ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
 				<Column footer="Select variables and parameters to calibrate" />
 				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i">
@@ -84,7 +86,7 @@
 					</template>
 				</Column>
 			</Row>
-		</ColumnGroup>
+		</ColumnGroup> -->
 	</DataTable>
 	<Button
 		v-if="isEditable"
@@ -136,9 +138,9 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize } from 'lodash';
+import { cloneDeep, capitalize, isArray } from 'lodash';
 import DataTable from 'primevue/datatable';
-import Checkbox from 'primevue/checkbox';
+// import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
@@ -149,7 +151,7 @@ import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
 import { Model } from '@/types/Types';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { NumericValueMap } from '@/types/common';
+import { NumericValueMap, AnyValueMap } from '@/types/common';
 
 const props = defineProps<{
 	model: Model;
@@ -160,10 +162,12 @@ const props = defineProps<{
 
 const modelConfigNames = ref(['Config 1']);
 
-// const modelToEdit = ref(cloneDeep(props.model));
+const modelToEdit = ref(cloneDeep(props.model));
 
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
+
+const odes = ref([{}]);
 
 const initialValues = ref<NumericValueMap[]>([{}]);
 const parameterValues = ref<NumericValueMap[]>([{}]);
@@ -176,13 +180,32 @@ const selectedParameters = ref<string[]>([]);
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
-const modelConfiguration = computed(() => {
-	console.log(Object.keys(props.model.semantics.ode));
+// const variableTypes = computed(() => props.model.semantics ? Object.keys(props.model.semantics.ode) : []);
+
+const modelConfigurationTable = computed(() => {
+	const variables: AnyValueMap[] = [];
+	// eslint-disable-next-line
+	for (let i = 0; i < odes.value.length; i++) {
+		variables[i] = {};
+		// eslint-disable-next-line
+		for (const values in Object.values(odes.value[i])) {
+			const flattenedObj = {};
+
+			if (isArray(values)) {
+				// @ts-ignore
+				// eslint-disable-next-line
+				for (let j = 0; j < values.length; j++) {
+					Object.assign(flattenedObj, values[j]);
+				}
+				console.log(flattenedObj, values);
+			}
+			variables[i] = { ...variables[i], ...flattenedObj };
+		}
+	}
 
 	return modelConfigNames.value.map((name, i) => ({
 		name,
-		...initialValues.value[i],
-		...parameterValues.value[i]
+		...variables[i]
 	}));
 });
 
@@ -194,8 +217,7 @@ defineExpose({ selectedModelVariables });
 
 function addModelConfiguration() {
 	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
-	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
-	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+	odes.value.push(cloneDeep(odes.value[odes.value.length - 1]));
 }
 
 function addConfigValue() {
@@ -242,14 +264,7 @@ function updateModelConfigValue() {
 function generateModelConfigValues() {
 	console.log(props.model);
 
-	if (props.model.semantics?.ode) {
-		for (let i = 0; i < props.model.semantics.ode.initials.length; i++) {
-			console.log(props.model.semantics.ode.initials[i]);
-			console.log(i);
-		}
-	}
-
-	// Sync with workflow (not compatible with amr yet)
+	// Sync with workflow
 	if (
 		props.model &&
 		openedWorkflowNodeStore.assetId === props.model.id.toString() &&
@@ -271,16 +286,33 @@ function generateModelConfigValues() {
 		// parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
 	}
 
-	if (props.model.semantics?.ode?.initials) {
-		props.model.semantics?.ode.initials.forEach((i) => {
-			initialValues.value[0][i.target] = i.expression;
-		});
+	if (props.model.semantics?.ode) {
+		// eslint-disable-next-line
+		for (const key of Object.keys(props.model.semantics.ode)) {
+			odes.value[0][key] = [];
+
+			props.model.semantics?.ode[key].forEach((value) => {
+				const newPair = {};
+				newPair[value.target ?? value.id] = value.expression ?? value.value;
+				odes.value[0][key].push(newPair);
+			});
+		}
+		console.log(odes.value);
 	}
-	if (props.model.semantics?.ode?.parameters) {
-		props.model.semantics?.ode.parameters.forEach((p) => {
-			parameterValues.value[0][p.id] = p.value ?? 0;
-		});
-	}
+
+	console.log(odes.value);
+
+	// if (props.model.semantics?.ode?.initials) {
+	// 	props.model.semantics?.ode.initials.forEach((i) => {
+	// 		initialValues.value[0][i.target] = i.expression;
+	// 	});
+	// }
+	// if (props.model.semantics?.ode?.parameters) {
+	// 	props.model.semantics?.ode.parameters.forEach((p) => {
+	// 		parameterValues.value[0][p.id] = p.value ?? 0;
+	// 	});
+	// }
+
 	// if (props.model.semantics?.ode?.rates) {
 	// 	props.model.semantics?.ode.rates.forEach((r) => {
 	// 		parameterValues.value[0][r.id] = r.value ?? 0;

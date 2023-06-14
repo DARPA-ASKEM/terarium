@@ -71,7 +71,7 @@ export interface ModelConfiguration {
     name: string;
     description?: string;
     modelId: string;
-    configuration: Model;
+    configuration: any;
 }
 
 export interface ProvenanceQueryParam {
