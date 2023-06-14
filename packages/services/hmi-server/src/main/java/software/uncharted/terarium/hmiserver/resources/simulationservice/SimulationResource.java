@@ -4,7 +4,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
-import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationParams;
+import software.uncharted.terarium.hmiserver.models.simulationservice.SimulationRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequest;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.proxies.simulationservice.SimulationServiceProxy;
@@ -54,9 +54,9 @@ public class SimulationResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Make new forecast simulation")
 	public Response makeForecastRun(
-		final SimulationParams simulationParams
+		final SimulationRequest request
 	) {
-		return simulationServiceProxy.makeForecastRun(simulationParams);
+		return simulationServiceProxy.makeForecastRun(request);
 	}
 
 	@GET
