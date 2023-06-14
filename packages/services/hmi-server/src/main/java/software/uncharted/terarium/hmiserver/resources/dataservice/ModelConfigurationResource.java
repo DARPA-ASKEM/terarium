@@ -28,9 +28,9 @@ public class ModelConfigurationResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response createModelConfiguration(
-			String config, String description, String model_id, Model model
+			String model_id, String name, String description, Model configuration
 	) {
-		return proxy.createModelConfiguration(config, description, model_id, model);
+		return proxy.createModelConfiguration(model_id, name, description,  configuration);
 	}
 
 	@GET

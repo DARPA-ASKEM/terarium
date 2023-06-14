@@ -22,7 +22,7 @@ public interface ModelConfigurationProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createModelConfiguration(
-		String config, String description, String model_id, Model model
+		String model_id, String name, String description, Model configuration
 	);
 
 	@GET

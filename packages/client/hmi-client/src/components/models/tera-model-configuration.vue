@@ -351,7 +351,7 @@ watch(
 onMounted(() => {
 	resetDummyValues();
 
-	createModelConfiguration(modelToEdit.value.name, 'test', modelToEdit.value.id, modelToEdit.value);
+	createModelConfiguration(modelToEdit.value.id, modelToEdit.value.name, 'test', modelToEdit.value);
 });
 </script>
 

@@ -18,9 +18,9 @@ export const createModelConfiguration = async (
 	configuration: Model
 ) => {
 	const response = await API.post(`/model_configurations`, {
+		model_id,
 		name,
 		description,
-		model_id,
 		configuration
 	});
 	return response?.data ?? null;
