@@ -62,6 +62,7 @@
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
+					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -176,6 +177,7 @@ import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
+import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from 'primevue/contextmenu';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -186,6 +188,7 @@ import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
+import TeraStratifyNode from './tera-stratify-node.vue';
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -301,6 +304,12 @@ const contextMenuItems = ref([
 				width: 420,
 				height: 220
 			});
+		}
+	},
+	{
+		label: 'Stratify',
+		command: () => {
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
 		}
 	}
 ]);
