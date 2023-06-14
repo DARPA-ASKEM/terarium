@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRun;
@@ -23,7 +24,7 @@ public interface SimulationProxy {
 
 	@POST
 	Simulation createSimulation(
-		Simulation simulation
+		JsonNode simulation
 	);
 
 	@PATCH

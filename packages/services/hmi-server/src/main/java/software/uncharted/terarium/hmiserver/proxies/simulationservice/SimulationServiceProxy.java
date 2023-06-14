@@ -14,7 +14,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.JobRespons
 @Produces(MediaType.APPLICATION_JSON)
 public interface SimulationServiceProxy {
 	@POST
-	@Path("/calls/simulate")
+	@Path("/simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	JobResponse makeForecastRun(
 		SimulationRequest request

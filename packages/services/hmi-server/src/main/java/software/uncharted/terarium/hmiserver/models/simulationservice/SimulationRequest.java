@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import java.io.Serializable;
 import java.util.List;
 
-
 @Data
 @Accessors(chain = true)
 public class SimulationRequest implements Serializable {
@@ -17,6 +16,8 @@ public class SimulationRequest implements Serializable {
 	private String modelConfigId;
 
 	@JsonAlias("time_span")
-	private List<Double> timespan;
+	private TimeSpan timespan;
 	private Object extra;
+
+	private String engine;
 }
