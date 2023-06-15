@@ -5,6 +5,7 @@ import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import software.uncharted.terarium.hmiserver.exceptions.HmiResponseExceptionMapper;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -22,7 +23,7 @@ public interface ModelConfigurationProxy {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createModelConfiguration(
-		String model_id, String name, String description, Model configuration
+		JsonNode config
 	);
 
 	@GET

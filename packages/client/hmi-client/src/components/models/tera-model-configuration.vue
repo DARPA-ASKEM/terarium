@@ -350,13 +350,18 @@ watch(
 );
 
 function createConfig() {
-	createModelConfiguration(modelToEdit.value.name, 'test', modelToEdit.value.id, modelToEdit.value);
+	createModelConfiguration(
+		modelToEdit.value.name,
+		'shawntest',
+		modelToEdit.value.id,
+		modelToEdit.value
+	);
 }
 
 onMounted(() => {
 	resetDummyValues();
 
-	createModelConfiguration(modelToEdit.value.name, 'test', modelToEdit.value.id, modelToEdit.value);
+	createConfig();
 });
 </script>
 
