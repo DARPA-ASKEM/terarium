@@ -21,32 +21,18 @@
 		</header>
 		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
-				<TabView>
-					<TabPanel :disabled="true">
-						<template #header>
-							<div class="step-header">
-								<h5>Step 1</h5>
-								Define strata
-							</div>
-						</template>
-					</TabPanel>
-					<TabPanel :disabled="true">
-						<template #header>
-							<div class="step-header">
-								<h5>Step 2</h5>
-								Assign types
-							</div>
-						</template>
-					</TabPanel>
-					<TabPanel :disabled="true">
-						<template #header>
-							<div class="step-header">
-								<h5>Step 3</h5>
-								Manage interactions
-							</div>
-						</template>
-					</TabPanel>
-				</TabView>
+				<div class="step-header" :active="stratifyStep === 1">
+					<h5>Step 1</h5>
+					Define strata
+				</div>
+				<div class="step-header" :active="stratifyStep === 2">
+					<h5>Step 2</h5>
+					Assign types
+				</div>
+				<div class="step-header" :active="stratifyStep === 3">
+					<h5>Step 3</h5>
+					Manage interactions
+				</div>
 			</nav>
 		</section>
 	</main>
@@ -55,14 +41,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Button from 'primevue/button';
-import TabView from 'primevue/tabview';
-import TabPanel from 'primevue/tabpanel';
 
 enum StratifyView {
 	Input,
 	Output
 }
 const stratifyView = ref(StratifyView.Input);
+const stratifyStep = ref(1);
 </script>
 
 <style scoped>
@@ -81,6 +66,7 @@ header {
 
 nav {
 	padding-left: 1rem;
+	display: flex;
 }
 
 .step-header {
@@ -88,29 +74,15 @@ nav {
 	flex-direction: column;
 	color: var(--primary-color-dark);
 	font-size: var(--font-body-small);
+	padding: 1rem;
+	border-radius: 8px;
+}
+
+.step-header[active='true'] {
+	background-color: var(--surface-highlight);
 }
 
 .step-header h5 {
 	color: var(--text-color-primary);
-}
-
-:deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-	background-color: var(--surface-highlight);
-}
-
-li.p-highlight .step-header h5 {
-	color: var(--primary-color-dark);
-}
-
-:deep(.p-tabview .p-tabview-nav .p-tabview-ink-bar) {
-	visibility: hidden;
-}
-
-:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
-	border-radius: 8px;
-}
-
-:deep(.p-disabled, .p-component:disabled) {
-	opacity: 100;
 }
 </style>
