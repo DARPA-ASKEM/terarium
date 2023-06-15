@@ -84,7 +84,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { isEmpty } from 'lodash';
-import { ProjectAssetTypes } from '@/types/Project';
+import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -181,15 +181,20 @@ function showNodeDrilldown() {
 		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;
 			assetId = props.node.id;
-			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+
 			break;
 		case WorkflowOperationTypes.CALIBRATION:
+			pageType = ProjectPages.CALIBRATE;
 			assetId = props.node.id;
-			openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+			break;
+		case WorkflowOperationTypes.STRATIFY:
+			pageType = ProjectPages.STRATIFY;
+			assetId = props.node.id;
 			break;
 		default:
 			break;
 	}
+
 	if (!isEmpty(props.node.outputs)) {
 		switch (props.node.operationType) {
 			case WorkflowOperationTypes.MODEL:
@@ -203,8 +208,9 @@ function showNodeDrilldown() {
 			default:
 				break;
 		}
-		openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 	}
+
+	openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
 }
 
 function mouseoverPort(event) {

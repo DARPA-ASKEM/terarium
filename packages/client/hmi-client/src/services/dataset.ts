@@ -4,8 +4,7 @@
 
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
-import { CsvAsset, Dataset, PresignedURL } from '@/types/Types';
-import axios, { AxiosResponse } from 'axios';
+import { CsvAsset, Dataset } from '@/types/Types';
 import { addAsset } from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
 
@@ -104,28 +103,19 @@ async function createNewDatasetFromCSV(
 	const newDataSet: Dataset | null = await createNewDataset(dataset);
 	if (!newDataSet || !newDataSet.id) return null;
 
-	// Now, get a signed URL from TDS and upload the file to S3
-	const urlResponse: AxiosResponse<PresignedURL> = await API.get(
-		`/datasets/${newDataSet.id}/upload-url?filename=${file.name}`
-	);
-	if (!urlResponse || urlResponse.status >= 400 || !urlResponse.data || !urlResponse.data.url) {
-		return null;
-	}
+	const formData = new FormData();
+	formData.append('file', file);
 
-	// Upload the file to S3
-	try {
-		const s3response: AxiosResponse<any> = await axios.put(urlResponse.data.url, file, {
-			headers: {
-				'Content-Type': 'application/octet-stream'
-			}
-		});
-
-		if (!s3response || s3response.status >= 400) {
-			console.log('Unable to post file.');
-			return null;
+	const urlResponse = await API.put(`/datasets/${newDataSet.id}/uploadCSV`, formData, {
+		params: {
+			filename: file.name
+		},
+		headers: {
+			'Content-Type': 'multipart/form-data'
 		}
-	} catch (e) {
-		console.log(e);
+	});
+
+	if (!urlResponse || urlResponse.status >= 400) {
 		return null;
 	}
 
