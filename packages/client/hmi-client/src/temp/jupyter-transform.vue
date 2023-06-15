@@ -10,6 +10,7 @@
 					@new-message="newMessage"
 					context="dataset"
 					:context_info="{
+					    id: props.assetId !== undefined ? props.assetId : 'f664c2bf-4c6a-4948-810c-0686e555de83'
 						id: props.assetId !== undefined ? props.assetId : 'a035cc6f-e1a5-416b-9320-c3822255ab19'
 					}"
 				/>
@@ -54,7 +55,7 @@
 									id:
 										props.assetId !== undefined
 											? props.assetId
-											: 'a035cc6f-e1a5-416b-9320-c3822255ab19'
+											: 'f664c2bf-4c6a-4948-810c-0686e555de83'
 								}"
 							/>
 						</div>
@@ -106,9 +107,10 @@ const messages = ref<JupyterMessage[]>([]);
 const datasetPreview = ref(null);
 
 const newMessage = (event) => {
-	if (
-		['stream', 'code_cell', 'llm_request', 'chatty_response'].indexOf(event.header.msg_type) > -1
-	) {
+	if (['stream', 'code_cell', 'llm_request', 'llm_response'].indexOf(event.header.msg_type) > -1) {
+		if (event.header.msg_type === 'stream' && /tool: final_answer/.test(String(event))) {
+			return;
+		}
 		messages.value.push(event);
 		emit('jupyter-event', messages.value);
 	} else if (event.header.msg_type == 'dataset') {
