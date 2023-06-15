@@ -30,7 +30,7 @@ public class DatasetColumn {
 	private String formatStr;
 
 	/** Column annotations from the MIT data profiling tool **/
-	private Map<String, List<String>> annotations;
+	private List<String> annotations;
 
 	/** (Optional) Unformatted metadata about the dataset **/
 	@TSOptional
@@ -38,7 +38,7 @@ public class DatasetColumn {
 
 	/** (Optional) Grounding of ontological concepts related to the column **/
 	@TSOptional
-	private Map<String, Grounding> grounding;
+	private Grounding grounding;
 
 	enum ColumnType {
 		@JsonAlias("unknown")
