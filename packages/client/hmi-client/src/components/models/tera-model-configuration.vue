@@ -110,6 +110,7 @@
 		label="Add configuration"
 		@click="addModelConfiguration"
 	/>
+	<Button @click="createConfig" label="Create" />
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
@@ -348,10 +349,14 @@ watch(
 	{ deep: true }
 );
 
+function createConfig() {
+	createModelConfiguration(modelToEdit.value.name, 'test', modelToEdit.value.id, modelToEdit.value);
+}
+
 onMounted(() => {
 	resetDummyValues();
 
-	createModelConfiguration(modelToEdit.value.id, modelToEdit.value.name, 'test', modelToEdit.value);
+	createModelConfiguration(modelToEdit.value.name, 'test', modelToEdit.value.id, modelToEdit.value);
 });
 </script>
 
