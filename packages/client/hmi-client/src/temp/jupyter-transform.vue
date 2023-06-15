@@ -10,7 +10,8 @@
 					@new-message="newMessage"
 					context="dataset"
 					:context_info="{
-					    id: props.assetId !== undefined ? props.assetId : 'f664c2bf-4c6a-4948-810c-0686e555de83'
+						id:
+							props.assetId !== undefined ? props.assetId : 'f664c2bf-4c6a-4948-810c-0686e555de83',
 						id: props.assetId !== undefined ? props.assetId : 'a035cc6f-e1a5-416b-9320-c3822255ab19'
 					}"
 				/>
@@ -74,9 +75,9 @@
 <script setup lang="ts">
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import ChattyInput from '@/components/widgets/chatty-input.vue';
-import JupyterCodeCell from '@/components/widgets/jupyter-code-cell.vue';
-import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
+import ChattyInput from '@/components/llm/tera-jupyter-chat.vue';
+import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
+import JupyterDataPreview from '@/components/llm/jupyter-dataset-preview.vue';
 import { ref, watch } from 'vue';
 
 import { newSession, JupyterMessage } from '@/services/jupyter';

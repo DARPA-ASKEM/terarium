@@ -76,7 +76,7 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import ChattyInput from '@/components/widgets/chatty-input.vue';
 import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
 import { newSession, JupyterMessage } from '@/services/jupyter';
-import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
+import JupyterDataPreview from '@/components/llm/jupyter-dataset-preview.vue';
 
 const jupyterSession = newSession('llmkernel', 'ChattyNode');
 
