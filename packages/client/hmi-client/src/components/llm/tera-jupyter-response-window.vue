@@ -39,7 +39,7 @@
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
 import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
-import TeraJupyterResponseThought from '@/components/llm/tera-jupyter-response-though.vue';
+import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
 
 // <div class="thought" :ref="(el) => refHandler(el, 0)">
 // 					{{ startTyping(0, cleanMessage(msg.content['text']), 0, 100) }}
