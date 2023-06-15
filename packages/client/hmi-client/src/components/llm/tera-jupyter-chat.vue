@@ -1,88 +1,41 @@
 <template>
 	<div>
-		{{ assetName }}
-		{{ assetType }}
 		<div>
-			<div>
-				<chatty-input
-					:llm-context="jupyterSession"
-					@new-message="newJupyterResponse"
-					context="dataset"
-					:context_info="{
-						id: props.assetId !== undefined ? props.assetId : 'a035cc6f-e1a5-416b-9320-c3822255ab19'
-					}"
-				/>
-				<div v-if="showHistory" id="chatty-history">
-					<div v-for="message in messages" :key="message.header.msg_id">
-						<div v-if="message.header.msg_type === 'llm_request'" class="query">
-							Query: {{ message.content['request'] }}
-						</div>
-						<div
-							v-else-if="
-								message.header.msg_type === 'llm_response' &&
-								message.content['name'] === 'response_text'
-							"
-							class="answer"
-						>
-							Response: {{ message.content['text'] }}
-						</div>
-						<div
-							v-else-if="
-								message.header.msg_type === 'stream' && message.content['name'] === 'stdout'
-							"
-							class="thought"
-						>
-							{{ message.content['text'] }}
-						</div>
-						<div
-							v-else-if="
-								message.header.msg_type === 'stream' && message.content['name'] === 'stderr'
-							"
-							class="error"
-						>
-							Error: {{ message.content['text'] }}
-						</div>
-						<div v-else-if="message.header.msg_type === 'code_cell'" class="code-cell">
-							<jupyter-code-cell
-								:jupyter-session="jupyterSession"
-								:language="message.content['language']"
-								:code="message.content['code']"
-								:autorun="true"
-								context="dataset"
-								:context_info="{
-									id:
-										props.assetId !== undefined
-											? props.assetId
-											: 'a035cc6f-e1a5-416b-9320-c3822255ab19'
-								}"
-							/>
-						</div>
-						<div v-else>Other: {{ message }}</div>
-						<hr />
-					</div>
-				</div>
-			</div>
+			<tera-chatty-input
+				:llm-context="jupyterSession"
+				@update-kernel-status="updateKernelStatus"
+				@new-message="newJupyterResponse"
+				context="dataset"
+				:context_info="{
+					id: props.assetId
+				}"
+			/>
+			<tera-jupyter-response-window
+				v-for="(message, index) in messagesHistory"
+				:key="index"
+				:jupyter-session="jupyterSession"
+				:asset-id="props.assetId"
+				:msg="message"
+			/>
 		</div>
-		<div v-if="showHistory && datasetPreview">
-			<JupyterDataPreview :jupyter-session="jupyterSession" :raw-content="datasetPreview" />
-		</div>
+		<!-- <div>{{test}}</div> -->
 	</div>
 </template>
 
 <script setup lang="ts">
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
-import { ref, watch } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import ChattyInput from '@/components/widgets/chatty-input.vue';
-import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
+import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import { newSession, JupyterMessage } from '@/services/jupyter';
-import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
+import TeraJupyterResponseWindow from '@/components/llm/tera-jupyter-response-window.vue';
 
 const jupyterSession = newSession('llmkernel', 'ChattyNode');
+console.log(jupyterSession);
+const messagesHistory = ref<JupyterMessage[]>([]);
 
-const emit = defineEmits(['update-data', 'jupyter-event']);
+const emit = defineEmits(['update-table-preview', 'jupyter-event', 'update-kernel-status']);
 
-// Asset props are extracted from route
 const props = defineProps<{
 	project: IProject;
 	assetName?: string;
@@ -90,8 +43,6 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes;
 	showHistory?: { value: boolean; default: false };
 }>();
-
-console.log(props);
 
 watch(
 	() => [
@@ -103,8 +54,9 @@ watch(
 	}
 );
 
-const messages = ref<{ datetime: Date; message: JupyterMessage }[]>([]);
-const datasetPreview = ref(null);
+const updateKernelStatus = (kernelStatus) => {
+	emit('update-kernel-status', kernelStatus);
+};
 
 const newJupyterResponse = (jupyterResponse) => {
 	if (
@@ -112,15 +64,20 @@ const newJupyterResponse = (jupyterResponse) => {
 			jupyterResponse.header.msg_type
 		) > -1
 	) {
-		messages.value.push(jupyterResponse);
-		emit('jupyter-event', messages.value);
+		messagesHistory.value.push(jupyterResponse);
+		emit('jupyter-event', messagesHistory.value);
 	} else if (jupyterResponse.header.msg_type === 'dataset') {
-		datasetPreview.value = jupyterResponse.content;
-		emit('update-data', datasetPreview.value);
+		emit('update-table-preview', jupyterResponse.content);
 	} else {
 		console.log('Unknown Jupyter event', jupyterResponse);
 	}
 };
+// 2ef46c20-2568-4565-b46c-719863bd6fd2
+onUnmounted(() => {
+	console.log('jupyter chat unmounted');
+	jupyterSession.shutdown();
+	// jupyterSession.changeKernel()
+});
 </script>
 
 <style scoped>
@@ -129,69 +86,5 @@ section {
 	flex-direction: column;
 	flex: 1;
 	overflow: auto;
-}
-
-.asset {
-	padding-top: 1rem;
-}
-
-.p-tabmenu:deep(.p-tabmenuitem) {
-	display: inline;
-	max-width: 15rem;
-}
-
-.p-tabmenu:deep(.p-tabmenu-nav .p-tabmenuitem .p-menuitem-link) {
-	padding: 1rem;
-	text-decoration: none;
-}
-
-.p-tabmenu:deep(.p-menuitem-text) {
-	height: 1rem;
-	display: inline-block;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.chatty-container {
-	display: flex;
-	position: relative;
-	flex-grow: 1;
-}
-
-#chatty-input {
-	flex-grow: 1;
-	height: fit-content;
-}
-
-#chatty-history {
-	max-height: 30vh;
-	flex-direction: column;
-	flex-basis: auto;
-	overflow-y: scroll;
-}
-
-.query {
-	color: green;
-	white-space: pre;
-}
-
-.answer {
-	color: darkblue;
-	white-space: pre-wrap;
-}
-
-.thought {
-	color: blueviolet;
-	white-space: pre-wrap;
-}
-
-.error {
-	color: darkred;
-	white-space: pre-wrap;
-}
-
-.code-cell {
-	flex-direction: row;
-	display: flex;
 }
 </style>

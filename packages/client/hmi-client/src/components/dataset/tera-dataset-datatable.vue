@@ -1,7 +1,6 @@
 <!-- column summary charts below -->
 <template>
 	<DataTable
-		tableStyle="width:auto"
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
 		:value="csvContent?.slice(1, csvContent.length)"
 		:paginator="props.rows != 0"
@@ -15,6 +14,7 @@
 			:key="index"
 			:field="index.toString()"
 			:header="colName"
+			:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 			sortable
 		>
 			<!-- column summary charts below -->
@@ -43,6 +43,7 @@ const props = defineProps<{
 	rawContent: CsvAsset | null; // Temporary - this is also any in ITypeModel
 	rows: number;
 	previewMode?: boolean;
+	previousHeaders?: String[] | null;
 }>();
 
 const CATEGORYPERCENTAGE = 0.9;

@@ -77,25 +77,32 @@
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.LLM">
-			<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="[0, 1]">
+			<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="getActiveIndex">
 				<AccordionTab>
 					<template #header>
 						Live Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
 					</template>
-					<tera-dataset-datatable v-if="jupyterCsv" :rows="10" :raw-content="jupyterCsv" />
-					<div class="card flex justify-content-center"></div>
+					<tera-dataset-datatable
+						class="live-preview"
+						v-if="jupyterCsv"
+						:rows="10"
+						:raw-content="jupyterCsv"
+						:previous-headers="oldCsvHeaders"
+					/>
 				</AccordionTab>
 				<AccordionTab>
 					<template #header>
-						<header id="Annotations">Terarium-GPT</header>
+						<i class="pi pi-circle-fill kernel-status" :style="statusStyle" />
+						<div><header id="GPT">TGPT</header></div>
 					</template>
 					<tera-jupyter-chat
-						class="llm"
+						class="tera-jupyter-chat"
 						:project="props.project"
-						@update-data="updateJupyterCsv"
+						:asset-id="props.assetId"
+						@update-table-preview="updateJupyterTable"
 						@jupyter-event="updateJupyterHistory"
+						@update-kernel-status="updateKernelStatus"
 					/>
-					<tera-jupyter-response :message="jupyterHistory" />
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -113,9 +120,10 @@ import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
-import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IProject } from '@/types/Project';
 import { JupyterMessage } from '@/services/jupyter';
+
+// const jupyterSession = ref(<any>newSession('llmkernel', 'ChattyNode'));
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -124,8 +132,9 @@ enum DatasetView {
 }
 
 const jupyterHistory = ref<JupyterMessage[]>([]);
-const newCsvConent: any = ref(null);
+const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
+const oldCsvHeaders: any = ref(null);
 
 const props = defineProps<{
 	assetId: string;
@@ -135,6 +144,23 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
+const kernelStatus = ref('');
+
+const updateKernelStatus = (status) => {
+	kernelStatus.value = status;
+};
+
+const statusStyle = computed(() => {
+	if (kernelStatus.value === 'idle') {
+		return 'color: green';
+	}
+
+	if (kernelStatus.value === 'busy') {
+		return 'color: orange';
+	}
+
+	return 'color: red';
+});
 
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
@@ -156,7 +182,7 @@ const openDatesetChatTab = () => {
 
 const csvContent = computed(() => rawContent.value?.csv);
 
-const updateJupyterCsv = (newJupyterCsv) => {
+const updateJupyterTable = (newJupyterCsv: CsvAsset) => {
 	jupyterCsv.value = newJupyterCsv;
 };
 
@@ -164,16 +190,12 @@ const updateJupyterHistory = (jMessage: JupyterMessage[]) => {
 	jupyterHistory.value = jMessage;
 };
 
-/*
-// apparently this isn't used?
-const datasetContent = computed(() => [
-	{ key: 'Description', value: dataset.value?.description },
-	{
-		key: 'Annotations',
-		value: [...(annotations.value ?? [])]
+const getActiveIndex = computed(() => {
+	if (!jupyterCsv.value) {
+		return [1];
 	}
-]);
-*/
+	return [0, 1];
+});
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -185,7 +207,8 @@ watch(
 	() => [jupyterCsv.value?.csv],
 	() => {
 		if (jupyterCsv.value?.csv) {
-			newCsvConent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
+			oldCsvHeaders.value = newCsvHeader.value;
+			newCsvContent.value = jupyterCsv.value.csv.slice(1, jupyterCsv.value.csv.length);
 			newCsvHeader.value = jupyterCsv.value.headers;
 		}
 	}
@@ -312,9 +335,16 @@ main .annotation-group {
 	background-color: red;
 }
 
-.llm {
+.tera-jupyter-chat {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+}
+.live-preview {
+	width: 100%;
+}
+
+.kernel-status {
+	margin-right: 10px;
 }
 </style>

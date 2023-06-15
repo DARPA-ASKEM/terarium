@@ -149,7 +149,7 @@ services:
       test: curl http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1
       interval: 10s
       timeout: 20s
-      retries: 5   
+      retries: 5
   data-service-migrations:
     container_name: data-service-migrations
     image: ghcr.io/darpa-askem/data-service-migrations:latest

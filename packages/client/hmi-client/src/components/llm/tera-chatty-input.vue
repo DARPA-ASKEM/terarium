@@ -28,12 +28,12 @@
 import { computed, onMounted, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import { SessionContext } from '@jupyterlab/apputils';
-import { JupyterMessage, KernelState } from 'src/services/jupyter';
+import { JupyterMessage } from 'src/services/jupyter';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
 import InputText from 'primevue/inputtext';
 
-const emit = defineEmits(['newCodeCell', 'newMessage', 'update-kernel-status']);
+const emit = defineEmits(['new-message', 'update-kernel-status']);
 
 const props = defineProps({
 	llmContext: {
@@ -82,6 +82,19 @@ const inputStyle = computed(() => `--placeholder-color:${props.placeholderColor}
 
 const containerElement = ref<HTMLElement | null>(null);
 const inputElement = ref<HTMLInputElement | null>(null);
+
+// Lower case staes to match the naming in the messages.
+enum KernelState {
+	unknown = 'unknown',
+	starting = 'starting',
+	idle = 'idle',
+	busy = 'busy',
+	terminating = 'terminating',
+	restarting = 'restarting',
+	autorestarting = 'autorestarting',
+	dead = 'dead'
+}
+
 const queryString = ref('');
 const kernelState = ref<KernelState>(KernelState.idle);
 
@@ -110,7 +123,7 @@ const iopubMessageHandler = (_session, message) => {
 		emit('update-kernel-status', kernelState.value);
 		return;
 	}
-	emit('newMessage', message);
+	emit('new-message', message);
 };
 
 props.llmContext.iopubMessage.connect(iopubMessageHandler);
@@ -131,7 +144,7 @@ const submitQuery = (inputStr: string | undefined) => {
 			msgId: `${kernel.id}-setcontext`
 		});
 		kernel?.sendJupyterMessage(message);
-		emit('newMessage', { ...message, msg_type: 'llm_request' });
+		emit('new-message', { ...message, msg_type: 'llm_request' });
 		queryString.value = '';
 	}
 };
@@ -144,46 +157,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+::placeholder {
+	color: var(--gray-700);
+}
 .chatty-container {
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
 }
 
-#chatty-input {
-	flex-grow: 1;
-	color: black;
-}
-
-#chatty-history {
-	height: auto;
-	flex-direction: column;
-	flex-basis: auto;
-	overflow-y: scroll;
-}
-
-.query {
-	color: green;
-	white-space: pre;
-}
-
-.answer {
-	color: darkblue;
-	white-space: pre-wrap;
-}
-
-.thought {
-	color: blueviolet;
-	white-space: pre-wrap;
-}
-
-.error {
-	color: darkred;
-	white-space: pre-wrap;
-}
-
 .chatty {
-	background-color: var(--gray-50);
+	background-color: var(--gray-300);
 	width: 100%;
 	height: fit-content;
 	color: black;

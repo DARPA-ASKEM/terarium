@@ -75,8 +75,8 @@
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import ChattyInput from '@/components/widgets/chatty-input.vue';
-import JupyterCodeCell from '@/components/widgets/jupyter-code-cell.vue';
-import JupyterDataPreview from '@/components/widgets/jupyter-dataset-preview.vue';
+import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
+import JupyterDataPreview from '@/components/llm/jupyter-dataset-preview.vue';
 import { ref, watch } from 'vue';
 
 import { newSession, JupyterMessage } from '@/services/jupyter';

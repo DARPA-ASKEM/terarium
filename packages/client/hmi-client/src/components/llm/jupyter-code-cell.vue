@@ -1,7 +1,7 @@
 <template>
 	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
-		<div>
-			<button type="button" @click="run">Run</button>
+		<div class="run-button">
+			<Button type="button" @click="run">Run</Button>
 		</div>
 		<template ref="codeCell" />
 	</div>
@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-
+import Button from 'primevue/button';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
@@ -106,6 +106,8 @@ onMounted(() => {
 			cellWidget.model.mimeType = mimeType;
 		});
 	});
+	console.log(props.context);
+	console.log(props.context_info);
 	// Replace templated component with contents of jupyter node.
 	codeCell.value?.replaceWith(cellWidget.node);
 	// Setup keydown listener to capture events inside code cell.
@@ -137,7 +139,12 @@ cellWidget.activate();
 @import '@jupyterlab/completer/style/index.css';
 
 .jp-CodeCell {
-	background-color: red;
+	background-color: var(--gray-50);
 	min-width: 300px;
+}
+
+.run-button {
+	padding-top: 10px;
+	flex-direction: row;
 }
 </style>

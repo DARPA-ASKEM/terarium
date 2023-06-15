@@ -68,6 +68,17 @@ export interface IJupyterHeader<T extends JupyterMessageType> {
 	 */
 	version: string;
 }
+// Lower case staes to match the naming in the messages.
+export enum KernelState {
+	unknown = 'unknown',
+	starting = 'starting',
+	idle = 'idle',
+	busy = 'busy',
+	terminating = 'terminating',
+	restarting = 'restarting',
+	autorestarting = 'autorestarting',
+	dead = 'dead'
+}
 
 export interface IJupyterMessageContent {
 	request?: string;
@@ -140,3 +151,8 @@ export const newSession = (kernelName: string, name: string) => {
 	sessionContext.initialize();
 	return sessionContext;
 };
+
+export interface IMessageHistory {
+	message: string;
+	messageType: string;
+}
