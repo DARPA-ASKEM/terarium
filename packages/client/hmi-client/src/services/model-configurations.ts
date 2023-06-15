@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, Model } from '@/types/Types';
 
 export const getModelConfigurations = async () => {
 	const response = await API.get(`/model_configurations`);
@@ -9,6 +9,21 @@ export const getModelConfigurations = async () => {
 export const getModelConfigurationById = async (id: string) => {
 	const response = await API.get(`/model_configurations/${id}`);
 	return (response?.data as ModelConfiguration) ?? null;
+};
+
+export const createModelConfiguration = async (
+	name: string,
+	description: string,
+	model_id: string,
+	configuration: Model
+) => {
+	const response = await API.post(`/model_configurations`, {
+		model_id,
+		name,
+		description,
+		configuration
+	});
+	return response?.data ?? null;
 };
 
 export const updateModelConfiguration = async (config: ModelConfiguration) => {

@@ -4,6 +4,10 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelConfigurationProxy;
+import software.uncharted.terarium.hmiserver.models.dataservice.Model;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import software.uncharted.terarium.hmiserver.utils.Converter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -26,10 +30,8 @@ public class ModelConfigurationResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createModelConfiguration(
-			ModelConfiguration config
-	) {
-		return proxy.createModelConfiguration(config);
+	public Response createModelConfiguration(Object config) {
+		return proxy.createModelConfiguration(Converter.convertObjectToSnakeCaseJsonNode(config));
 	}
 
 	@GET
