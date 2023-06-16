@@ -60,7 +60,7 @@ public class SimulationResource {
 	public Simulation makeForecastRun(
 		final SimulationRequest request
 	) {
-		final JobResponse res = simulationServiceProxy.makeForecastRun(request);
+		final JobResponse res = simulationServiceProxy.makeForecastRun(Converter.convertObjectToSnakeCaseJsonNode(request));
 
 		Simulation sim = new Simulation();
 		sim.setId(res.getSimulationId());

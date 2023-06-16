@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.proxies.simulationservice;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -17,7 +18,7 @@ public interface SimulationServiceProxy {
 	@Path("/simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	JobResponse makeForecastRun(
-		SimulationRequest request
+		JsonNode request
 	);
 
 	@POST
