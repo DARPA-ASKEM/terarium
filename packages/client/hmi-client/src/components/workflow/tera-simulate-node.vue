@@ -24,10 +24,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { shimPetriModel } from '@/services/models/petri-shim';
+import { ModelConfiguration } from '@/types/Types';
 
 import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
@@ -35,6 +36,7 @@ import { RunResults } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateOperation } from './simulate-operation';
 
@@ -49,6 +51,9 @@ const showSpinner = ref(false);
 const startedRunIdList = ref<number[]>([]);
 const completedRunIdList = ref<number[]>([]);
 const runResults = ref<RunResults>({});
+
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
 watch(
 	() => props.node,
@@ -143,6 +148,15 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		}
 	});
 };
+
+watch(
+	() => modelConfigId.value,
+	async () => {
+		if (modelConfigId.value) {
+			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
+		}
+	}
+);
 
 watch(() => completedRunIdList.value, watchCompletedRunList);
 </script>

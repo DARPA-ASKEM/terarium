@@ -31,13 +31,12 @@ import AccordionTab from 'primevue/accordiontab';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { CsvAsset, Dataset } from '@/types/Types';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-// import { ModelConfig } from '@/types/ModelConfig';
 // import { calibrationParamExample } from '@/temp/calibrationExample';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-// const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfig | undefined);
+// const modelConfig = computed(() => props.node.inputs[0].value?.[0] as ModelConfiguration | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as number | undefined);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 // const runId = ref('');
@@ -56,6 +55,7 @@ watch(
 	() => datasetId.value, // When dataset ID changes, update datasetColumnNames
 	async () => {
 		if (datasetId.value) {
+			// console.log(modelConfig);
 			// Get dataset:
 			const dataset: Dataset | null = await getDataset(datasetId.value.toString());
 			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.

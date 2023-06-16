@@ -49,7 +49,7 @@ public class ModelConfigurationResource {
 		@PathParam("id") String id,
 		ModelConfiguration config
 	) {
-		return proxy.updateModelConfiguration(id, config);
+		return proxy.updateModelConfiguration(id, Converter.convertObjectToSnakeCaseJsonNode(config));
 	}
 
 	@DELETE

@@ -12,9 +12,9 @@ export const getModelConfigurationById = async (id: string) => {
 };
 
 export const createModelConfiguration = async (
+	model_id: string,
 	name: string,
 	description: string,
-	model_id: string,
 	configuration: Model
 ) => {
 	const response = await API.post(`/model_configurations`, {
