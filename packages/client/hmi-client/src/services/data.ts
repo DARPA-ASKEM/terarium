@@ -198,9 +198,11 @@ const filterAssets = <T extends Model | Dataset>(
 		let finalAssets: T[] = [];
 
 		AssetFilterAttributes.forEach((attribute) => {
-			finalAssets = allAssets.filter((d) =>
-				(d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase())
-			);
+			finalAssets = allAssets.filter((d) => {
+				if (d[attribute as keyof T])
+					return (d[attribute as keyof T] as string).toLowerCase().includes(term.toLowerCase());
+				return '';
+			});
 		});
 
 		// if no assets match keyword search considering the AssetFilterAttributes

@@ -4,7 +4,8 @@ export enum WorkflowOperationTypes {
 	CALIBRATION = 'CalibrationOperation',
 	DATASET = 'Dataset',
 	MODEL = 'ModelOperation',
-	SIMULATE = 'SimulateOperation'
+	SIMULATE = 'SimulateOperation',
+	STRATIFY = 'Stratify'
 }
 
 export enum WorkflowStatus {
@@ -24,6 +25,7 @@ export enum WorkflowPortStatus {
 export interface OperationData {
 	type: string;
 	label?: string;
+	acceptMultiple?: boolean;
 }
 
 // Defines a function: eg: model, simulate, calibrate
@@ -48,7 +50,8 @@ export interface WorkflowPort {
 	type: string;
 	status: WorkflowPortStatus;
 	label?: string;
-	value?: any;
+	value?: any[] | null;
+	acceptMultiple?: boolean;
 }
 
 // Node definition in the workflow
@@ -83,7 +86,9 @@ export interface WorkflowEdge {
 	target?: WorkflowNode['id'];
 	targetPortId?: string;
 
-	direction?: WorkflowDirection; // is this edge being started from an input or output?
+	// is this edge being started from an input or output?
+	// not persisted; only used during edge creation
+	direction?: WorkflowDirection;
 }
 
 export enum WorkflowDirection {

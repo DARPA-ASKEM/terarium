@@ -22,8 +22,8 @@
 		<Splitter>
 			<SplitterPanel class="project-page" :size="20">
 				<tera-tab-group
-					v-if="!isEmpty(tabs)"
 					class="tab-group"
+					v-if="!isEmpty(tabs)"
 					:tabs="tabs"
 					:active-tab-index="activeTabIndex"
 					:loading-tab-index="loadingTabIndex"
@@ -32,6 +32,7 @@
 					@click="getAndPopulateAnnotations()"
 				/>
 				<tera-project-page
+					v-if="project"
 					:project="project"
 					:asset-id="assetId"
 					:page-type="pageType"
@@ -42,17 +43,32 @@
 				/>
 			</SplitterPanel>
 			<SplitterPanel
-				class="project-page"
+				class="project-page top-z-index"
 				v-if="
 					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
 					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
-						openedWorkflowNodeStore.node)
+						openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION)
 				"
 				:size="20"
 			>
+				<tera-tab-group
+					v-if="openedWorkflowNodeStore.node"
+					class="tab-group"
+					:tabs="[{ assetName: openedWorkflowNodeStore.node.operationType }]"
+					:active-tab-index="0"
+					:loading-tab-index="null"
+					@close-tab="openedWorkflowNodeStore.node = openedWorkflowNodeStore.assetId = null"
+				/>
 				<tera-calibration
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
 					:node="openedWorkflowNodeStore.node"
+				/>
+				<tera-simulate
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.SIMULATE"
+					:node="openedWorkflowNodeStore.node"
+				/>
+				<tera-stratify
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.STRATIFY"
 				/>
 				<tera-project-page
 					v-else
@@ -229,7 +245,9 @@ import Menu from 'primevue/menu';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
+import TeraSimulate from '@/components/workflow/tera-simulate.vue';
 import { WorkflowOperationTypes } from '@/types/workflow';
+import TeraStratify from '@/components/workflow/tera-stratify.vue';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -379,14 +397,12 @@ async function removeAsset(asset: Tab) {
 	const { assetName, assetId, pageType } = asset;
 
 	// Delete only Asset with an ID and of ProjectAssetType
-	if (
-		assetId &&
-		pageType &&
-		isProjectAssetTypes(pageType) &&
-		pageType !== ProjectPages.OVERVIEW &&
-		pageType !== ProjectAssetTypes.SIMULATION_WORKFLOW
-	) {
-		const isRemoved = await ProjectService.deleteAsset(props.project.id, pageType, assetId);
+	if (assetId && pageType && isProjectAssetTypes(pageType) && pageType !== ProjectPages.OVERVIEW) {
+		const isRemoved = await ProjectService.deleteAsset(
+			props.project.id,
+			pageType as ProjectAssetTypes,
+			assetId
+		);
 
 		if (isRemoved) {
 			emit('update-project', props.project.id);
@@ -503,7 +519,7 @@ function formatAuthorTimestamp(username, timestamp) {
 
 <style scoped>
 .resource-panel {
-	z-index: 2;
+	z-index: 1000;
 	isolation: isolate;
 }
 
@@ -518,6 +534,7 @@ function formatAuthorTimestamp(username, timestamp) {
 	flex: 1;
 	background: none;
 	border: none;
+	overflow-x: hidden;
 }
 
 section,
@@ -527,6 +544,14 @@ section,
 	flex: 1;
 	overflow-x: auto;
 	overflow-y: hidden;
+}
+
+.p-splitter:deep(.p-splitter-gutter) {
+	z-index: 1000;
+}
+
+.top-z-index {
+	z-index: 1000;
 }
 
 .p-tabmenu:deep(.p-tabmenuitem) {
@@ -549,6 +574,7 @@ section,
 .annotation-header {
 	display: flex;
 	justify-content: space-between;
+	height: 2rem;
 }
 
 .annotation-header .p-button.p-button-secondary {
@@ -581,10 +607,6 @@ section,
 	padding-right: 1rem;
 }
 
-.annotation-content {
-	padding: 0rem 0.5rem 0rem 0.5rem;
-}
-
 .annotation-input-container {
 	display: flex;
 	flex-direction: column;
@@ -603,10 +625,6 @@ section,
 
 .annotation-input-box .p-inputtext:hover {
 	border-color: var(--primary-color) !important;
-}
-
-.annotation-header {
-	height: 2rem;
 }
 
 .save-cancel-buttons {

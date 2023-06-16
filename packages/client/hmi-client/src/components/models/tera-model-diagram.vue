@@ -1,6 +1,6 @@
 <template>
-	<section class="model_diagram">
-		<TeraResizablePanel>
+	<main>
+		<TeraResizablePanel v-if="!nodePreview">
 			<div ref="splitterContainer" class="splitter-container">
 				<Splitter :gutterSize="5" :layout="layout">
 					<SplitterPanel
@@ -82,7 +82,10 @@
 				</Splitter>
 			</div>
 		</TeraResizablePanel>
-	</section>
+		<section v-else-if="model" class="graph-element preview">
+			<div ref="graphElement" class="graph-element preview" />
+		</section>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -97,19 +100,21 @@ import {
 	NodeData,
 	EdgeData,
 	mathmlToPetri,
-	petriToLatex,
-	NodeType
+	NodeType,
+	petriToLatex
 } from '@/petrinet/petrinet-service';
+import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import { separateEquations, MathEditorModes } from '@/utils/math';
 import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { ITypedModel } from '@/types/Model';
+// import { ITypedModel } from '@/types/Model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
+import { Model } from '@/types/Types';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -122,8 +127,9 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-	model: ITypedModel<PetriNet> | null;
+	model: Model | null;
 	isEditable: boolean;
+	nodePreview?: boolean;
 }>();
 
 const menu = ref();
@@ -231,7 +237,7 @@ watch(
 	async () => {
 		updateLatexFormula('');
 		if (props.model) {
-			const data = await petriToLatex(props.model.content);
+			const data = await petriToLatex(AMRToPetri(props.model));
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -324,8 +330,7 @@ watch(
 	[props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
-		// Convert petri net into a graph
-		const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(props.model.content, {
+		const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
 			S: { width: 60, height: 60 },
 			T: { width: 40, height: 40 }
 		});
@@ -367,7 +372,7 @@ watch(
 		// Render graph
 		await renderer?.setData(graphData);
 		await renderer?.render();
-		const latexFormula = await petriToLatex(props.model.content);
+		const latexFormula = await petriToLatex(AMRToPetri(props.model));
 		if (latexFormula) {
 			updateLatexFormula(latexFormula);
 		} else {
@@ -476,7 +481,7 @@ const cancelEdit = async () => {
 	if (!props.model) return;
 
 	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(props.model.content, {
+	const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
 		S: { width: 60, height: 60 },
 		T: { width: 40, height: 40 }
 	});
@@ -503,6 +508,21 @@ const addTransition = async () => {
 </script>
 
 <style scoped>
+main {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: auto;
+}
+
+/* .preview {
+	height: 5rem;
+	background-color: var(--surface-secondary);
+	flex-grow: 1;
+	overflow: hidden;
+	border: none;
+	position: relative;
+} */
+
 .p-toolbar {
 	position: absolute;
 	width: 100%;
@@ -573,12 +593,8 @@ section math-editor {
 	transition: outline 0.3s ease-in-out, color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
-.model_diagram {
-	display: flex;
-	height: 100%;
-}
-
 .p-splitter {
+	border: none;
 	height: 100%;
 }
 

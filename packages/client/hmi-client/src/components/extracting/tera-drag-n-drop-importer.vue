@@ -1,18 +1,23 @@
 <template>
 	<section class="drag-n-drop">
-		<div class="dropzone-container" @drop="onDrop" @dragover="onDragOver" @dragleave="onDragLeave">
+		<div
+			:class="dragOver != true ? 'dropzone-container' : 'dropzone-container-dragOver'"
+			@drop="onDrop"
+			@dragover="onDragOver"
+			@dragleave="onDragLeave"
+		>
 			<input
 				id="fileInput"
 				type="file"
 				ref="fileInput"
 				@change="onFileChange"
 				multiple
-				class="hidden-input"
 				accept=".pdf,.csv"
+				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
 				<div v-if="dragOver">Release mouse button to add files to import</div>
-				<div v-else>Drop resources here or <u>upload a file</u>.</div>
+				<div v-else>Drop resources here or <span class="text-link">upload a file</span>.</div>
 			</label>
 			<br />
 
@@ -24,7 +29,8 @@
 							:show-preview="props.showPreview"
 							:is-processing="isProcessing"
 							@remove-file="removeFile(importFiles.indexOf(file))"
-						></TeraDragAndDropFilePreviewer>
+						>
+						</TeraDragAndDropFilePreviewer>
 					</div>
 				</div>
 				<br />
@@ -41,10 +47,6 @@
 						<label for="extractImage" class="ml-2"> Extract Images </label>
 					</div>
 				</div>
-				<div v-if="hasCSV" class="options-container">
-					Description:
-					<InputText v-model="csvDescription" type="text" class="p-inputtext-sm" />
-				</div>
 			</div>
 			<br />
 			<Button
@@ -52,7 +54,7 @@
 				type="button"
 				class="import-button"
 				@click="processFiles(importFiles)"
-				label="Import Data"
+				label="Import data"
 			></Button>
 		</div>
 	</section>
@@ -65,7 +67,6 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import { AcceptedTypes } from '@/types/common';
-import InputText from 'primevue/inputtext';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
 const emit = defineEmits(['import-completed']);
@@ -102,7 +103,7 @@ const props = defineProps({
 	// custom import action can be passed in as prop
 	importAction: {
 		type: Function,
-		required: false,
+		required: true,
 		/**
 		 * Default import action which just logs the click event.
 		 * @param {Array<File>} currentFiles
@@ -223,10 +224,12 @@ const hasPDF = computed(() => {
 	return false;
 });
 
+/* Apparently this is never used (?)
 const hasCSV = computed(() => {
 	if (importFiles.value.length === 0) return false;
 	return importFiles.value.some((file) => (file.type as AcceptedTypes) === AcceptedTypes.CSV);
 });
+*/
 
 const canImport = computed(() => importFiles.value.length > 0);
 </script>
@@ -239,11 +242,23 @@ const canImport = computed(() => importFiles.value.length > 0);
 	height: 100%;
 	overflow-x: hidden;
 }
+
 .dropzone-container {
 	flex-direction: column;
 	display: flex;
-	padding: 15px;
-	border: 3px dashed #e2e8f0;
+	padding: 1rem;
+	border: 1px dashed var(--surface-border);
+	border-radius: var(--border-radius);
+	background-color: var(--surface-secondary);
+}
+
+.dropzone-container-dragOver {
+	flex-direction: column;
+	display: flex;
+	padding: 1rem;
+	border: 1px solid var(--primary-color);
+	border-radius: var(--border-radius);
+	background-color: var(--surface-highlight);
 }
 
 .hidden-input {
@@ -255,10 +270,16 @@ const canImport = computed(() => importFiles.value.length > 0);
 }
 
 .file-label {
-	font-size: 20px;
+	font-size: var(--font-body-small);
 	display: flex;
 	flex-direction: column;
 	cursor: pointer;
+	align-items: center;
+	padding-top: 2.5rem;
+}
+
+.text-link {
+	color: var(--primary-color);
 }
 
 .options-container {
@@ -273,19 +294,12 @@ const canImport = computed(() => importFiles.value.length > 0);
 .preview-container {
 	display: flex;
 	flex-direction: column;
-	margin-top: 2rem;
-	border-radius: 0.25rem;
-	cursor: pointer;
-	border: 1px solid var(--surface-border);
+	gap: 1rem;
 }
 
 .file-preview {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid #a2a2a2;
-	padding: 5px;
-	margin: 5px;
-	/* overflow: hidden !important; */
 }
 
 .import-button {

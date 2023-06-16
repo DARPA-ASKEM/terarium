@@ -3,10 +3,10 @@
 		<slot name="nav" />
 		<header v-if="shrinkHeader" class="shrinked">
 			<h4 v-html="name" />
-			<aside>
-				<slot v-if="isEditable" name="edit-buttons" />
+			<aside class="spread-out">
+				<slot name="edit-buttons" />
 				<Button
-					v-else
+					v-if="!isEditable"
 					icon="pi pi-times"
 					class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 					@click="emit('close-preview')"
@@ -16,10 +16,22 @@
 		<header id="asset-top" ref="headerRef">
 			<template v-if="!hideHeader">
 				<section>
-					<span v-if="overline" class="overline">{{ overline }}</span>
+					<!-- put the buttons above the title if there is an overline -->
+					<div v-if="overline" class="vertically-center">
+						<span class="overline">{{ overline }}</span>
+						<slot name="edit-buttons" />
+					</div>
+
 					<!--For naming asset such as model or code file-->
-					<slot v-if="isCreatingAsset" name="name-input" />
-					<h4 v-else v-html="name" />
+					<div class="vertically-center">
+						<slot v-if="isCreatingAsset" name="name-input" />
+						<h4 v-else v-html="name" class="nudge-down" />
+
+						<div v-if="!overline" class="vertically-center">
+							<slot name="edit-buttons" />
+						</div>
+					</div>
+
 					<!--put model contributors here too-->
 					<span class="authors" v-if="authors">
 						<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
@@ -34,10 +46,9 @@
 						<slot name="bottom-header-buttons" />
 					</div>
 				</section>
-				<aside>
-					<slot v-if="isEditable" name="edit-buttons" />
+				<aside class="spread-out">
 					<Button
-						v-else
+						v-if="!isEditable"
 						icon="pi pi-times"
 						class="close p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small"
 						@click="emit('close-preview')"
@@ -119,15 +130,16 @@ main > section {
 }
 
 header {
+	display: flex;
+	flex-direction: row;
 	height: fit-content;
 	grid-column-start: 2;
 	color: var(--text-color-subdued);
-	padding: 1rem;
-	padding-bottom: 0;
+	padding: 0.5rem 1rem;
 	transition: 0.2s;
 	display: flex;
-	gap: 0.5rem;
-	justify-content: space-between;
+	gap: 1rem;
+	align-items: center;
 }
 
 header.shrinked {
@@ -176,6 +188,16 @@ header.shrinked aside {
 	align-self: center;
 }
 
+.nudge-down {
+	margin-top: 0.25rem;
+}
+
+.vertically-center {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 1rem;
+}
 main:deep(.p-inputtext.p-inputtext-sm) {
 	padding: 0.65rem 0.65rem 0.65rem 3rem;
 }
@@ -251,5 +273,11 @@ main:deep(input) {
 main:deep(.p-button.p-button-outlined) {
 	color: var(--text-color-primary);
 	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
+}
+
+.spread-out {
+	align-items: center;
+	justify-content: space-between;
+	flex-grow: 1;
 }
 </style>

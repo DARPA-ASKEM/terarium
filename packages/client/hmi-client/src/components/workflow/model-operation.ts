@@ -1,9 +1,6 @@
 import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { Model } from '@/types/Model';
-
-interface StringValueMap {
-	[key: string]: string;
-}
+import { NumericValueMap } from '@/types/common';
 
 export const ModelOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL,
@@ -13,7 +10,7 @@ export const ModelOperation: Operation = {
 	outputs: [{ type: 'modelConfig' }],
 	action: async (modelConfig: {
 		model: Model;
-		intialValues: StringValueMap;
-		parameterValues: StringValueMap;
+		intialValues: NumericValueMap;
+		parameterValues: NumericValueMap;
 	}) => [{ type: 'modelConfig', value: modelConfig }]
 };

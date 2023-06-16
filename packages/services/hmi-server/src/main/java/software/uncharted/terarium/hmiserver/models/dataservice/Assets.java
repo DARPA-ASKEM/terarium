@@ -16,7 +16,7 @@ public class Assets implements Serializable {
 	List<Dataset> datasets;
 	List<Extraction> extractions;
 	List<Model> models;
-	List<SimulationPlan> plans;
 	List<DocumentAsset> publications;
 	List<SimulationRun> simulationRuns;
+	List<Workflow> workflows;
 }

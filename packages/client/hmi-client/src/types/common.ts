@@ -1,7 +1,7 @@
-import { XDDFacetsItemResponse, Document, Dataset } from '@/types/Types';
+import { XDDFacetsItemResponse, Document, Dataset, Model } from '@/types/Types';
 import { ConceptFacets } from './Concept';
 import { DatasetSearchParams } from './Dataset';
-import { Model, ModelSearchParams } from './Model';
+import { ModelSearchParams } from './Model';
 import { XDDSearchParams } from './XDD';
 import { ProjectAssetTypes, ProjectPages } from './Project';
 
@@ -14,6 +14,16 @@ export type Annotation = {
 	username: number;
 	section: string;
 };
+
+// TODO: Wherever these are used - investigate using an actual map instead, this has been avoided due to v-model not playing well with maps
+// But a solution might be found here: https://stackoverflow.com/questions/37130105/does-vue-support-reactivity-on-map-and-set-data-types/64512468#64512468
+export interface StringValueMap {
+	[key: string]: string;
+}
+
+export interface NumericValueMap {
+	[key: string]: number;
+}
 
 export enum ViewType {
 	LIST = 'list',
@@ -85,6 +95,11 @@ export type Tab = {
 	icon?: string;
 	assetId?: string;
 	pageType?: ProjectAssetTypes | ProjectPages;
+};
+
+export type CodeRequest = {
+	asset: Tab;
+	code?: string;
 };
 
 export enum AcceptedTypes {

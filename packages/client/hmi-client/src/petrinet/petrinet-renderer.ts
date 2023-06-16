@@ -31,6 +31,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		d3.select(this.svgEl)
 			.style('border', '4px solid transparent')
+			.style('background', 'var(--surface-0')
 			.style('border-radius', 'var(--border-radius) 0px 0px var(--border-radius)');
 	}
 

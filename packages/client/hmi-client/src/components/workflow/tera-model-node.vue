@@ -1,90 +1,107 @@
 <template>
-	<Dropdown
-		class="w-full"
-		v-model="selectedModel"
-		:options="models"
-		option-label="name"
-		placeholder="Select a model"
-	/>
 	<template v-if="model">
+		<h5>{{ model.name }}</h5>
+		<!--branching off calibration-v1 to work on this-->
+		<!-- <tera-model-diagram :model="model" :is-editable="false" nodePreview /> -->
 		<h6>Initial values</h6>
 		<ul>
-			<li v-for="(s, i) of model.content.S" :key="i">
-				<span>{{ s.sname }}</span>
+			<li v-for="(s, i) of model.model.states" :key="i">
+				<span>{{ s.id }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.sname]"
+					v-model="initialValues[openedWorkflowNodeStore.selectedOutputIndex][s.id]"
 				/>
 			</li>
 		</ul>
 		<h6>Parameter values</h6>
 		<ul>
-			<li v-for="(t, i) of model.content?.T" :key="i">
-				<span>{{ t.tname }}</span>
+			<li v-for="(t, i) of model.model?.transitions" :key="i">
+				<span>{{ t.id }}</span>
 				<InputNumber
 					inputId="minmaxfraction"
 					:minFractionDigits="0"
 					:maxFractionDigits="10"
 					class="p-inputtext-sm"
-					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.tname]"
+					v-model="parameterValues[openedWorkflowNodeStore.selectedOutputIndex][t.id]"
 				/>
 			</li>
 		</ul>
-		<Button @click="run">Run</Button>
+		<Button label="Add config" @click="addModelConfiguration" />
 	</template>
+	<Dropdown
+		v-else
+		class="w-full p-button-sm p-button-outlined"
+		v-model="selectedModel"
+		:options="models"
+		option-label="name"
+		placeholder="Select a model"
+	/>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import Dropdown from 'primevue/dropdown';
+import { ref, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { Model } from '@/types/Model';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import { ModelConfig } from '@/types/ModelConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { cloneDeep } from 'lodash';
+import Dropdown from 'primevue/dropdown';
+import { NumericValueMap } from '@/types/common';
+import { Model } from '@/types/Types';
+// import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 
-defineProps<{
+const props = defineProps<{
+	modelId: string | null;
 	models: Model[];
+	outputAmount: number;
 }>();
 
 const emit = defineEmits(['append-output-port']);
 
-interface StringValueMap {
-	[key: string]: number;
-}
-
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
-const selectedModel = ref<Model>();
 const model = ref<Model | null>();
+const selectedModel = ref<Model>();
 
-const initialValues = ref<StringValueMap[]>([{}]);
-const parameterValues = ref<StringValueMap[]>([{}]);
+const initialValues = ref<NumericValueMap[]>([{}]);
+const parameterValues = ref<NumericValueMap[]>([{}]);
 
-function run() {
+function createModelConfigOutput() {
 	if (ModelOperation.action) {
 		emit('append-output-port', {
 			type: ModelOperation.outputs[0].type,
-			label: model.value?.name,
+			label: `Config ${props.outputAmount}`,
 			value: {
 				model: model.value,
-				initialValues: initialValues.value[0],
-				parameterValues: parameterValues.value[0]
+				initialValues: initialValues.value[initialValues.value.length - 1],
+				parameterValues: parameterValues.value[parameterValues.value.length - 1]
 			} as ModelConfig
 		});
 	}
-	addModelConfiguration();
 }
 
 function addModelConfiguration() {
 	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
 	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+	createModelConfigOutput();
+}
+
+function initDefaultConfig() {
+	console.log(model.value?.model);
+	model.value?.model.states.forEach((s) => {
+		initialValues.value[0][s.id] = 1;
+	});
+
+	model.value?.model.transitions.forEach((t) => {
+		parameterValues.value[0][t.id] = 0.0005;
+	});
+
+	createModelConfigOutput();
 }
 
 watch(
@@ -100,17 +117,17 @@ watch(
 	async () => {
 		if (selectedModel.value) {
 			model.value = await getModel(selectedModel.value.id.toString());
-
-			model.value?.content.S.forEach((s) => {
-				initialValues.value[0][s.sname] = 1;
-			});
-
-			model.value?.content.T.forEach((s) => {
-				parameterValues.value[0][s.tname] = 0.0005;
-			});
+			initDefaultConfig();
 		}
 	}
 );
+
+onMounted(async () => {
+	if (props.modelId) {
+		model.value = await getModel(props.modelId);
+		initDefaultConfig();
+	}
+});
 </script>
 
 <style scoped>
@@ -128,9 +145,27 @@ li {
 	width: 100%;
 }
 
+.node-title {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+
+.p-button-sm.p-button-outlined {
+	border: 1px solid var(--surface-border);
+}
+
+.p-button-sm.p-button-outlined:hover {
+	border: 1px solid var(--surface-border-hover);
+}
+
 .p-inputtext.p-inputtext-sm {
 	padding: 0.25rem 0.5rem;
 	font-size: 1rem;
 	margin-left: 1rem;
+}
+
+.p-button-sm.p-button-outlined:deep(.p-dropdown-label) {
+	padding: 0.5rem;
 }
 </style>

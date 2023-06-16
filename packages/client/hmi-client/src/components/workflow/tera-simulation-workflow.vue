@@ -1,6 +1,6 @@
 <template>
+	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
-		debug-mode
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -8,7 +8,22 @@
 		@mouseenter="isMouseOverCanvas = true"
 		@focus="() => {}"
 		@blur="() => {}"
+		@drop="onDrop"
+		@dragover.prevent
+		@dragenter.prevent
 	>
+		<!-- toolbar -->
+		<template #foreground>
+			<div class="toolbar glass">
+				<h5>{{ wf.name }}</h5>
+				<div class="button-group">
+					<Button label="Show all" class="secondary-button" text @click="resetZoom" />
+					<Button label="Clean up layout" class="secondary-button" text @click="cleanUpLayout" />
+					<Button icon="pi pi-plus" label="Add component" @click="showAddComponentMenu" />
+					<Menu ref="addComponentMenu" :model="contextMenuItems" :popup="true" />
+				</div>
+			</div>
+		</template>
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" />
@@ -20,12 +35,15 @@
 				@port-mouseover="onPortMouseover"
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
+				@remove-node="(event) => removeNode(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
+						:model-id="node.outputs?.[0]?.value?.[0]?.model.id.toString() ?? newAssetId"
+						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-calibration-node
@@ -34,11 +52,17 @@
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
-						v-else-if="node.operationType === 'Dataset'"
+						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
+						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
-					<tera-simulate-node v-else-if="node.operationType === 'SimulateOperation'" :node="node" />
+					<tera-simulate-node
+						v-else-if="node.operationType === 'SimulateOperation'"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
 						<Button @click="testNode(node)">Test run</Button
 						><span v-if="node.outputs[0]">{{ node.outputs[0].value }}</span>
@@ -48,6 +72,20 @@
 		</template>
 		<!-- background -->
 		<template #backgroundDefs>
+			<marker id="circle" markerWidth="8" markerHeight="8" refX="5" refY="5">
+				<circle cx="5" cy="5" r="3" style="fill: var(--primary-color)" />
+			</marker>
+			<marker
+				v-for="i in wf.edges.length"
+				:key="i"
+				:id="`circle${i - 1}`"
+				markerWidth="8"
+				markerHeight="8"
+				refX="5"
+				refY="5"
+			>
+				<circle cx="5" cy="5" r="3" :style="`fill: ${getVariableColorByRunIdx(i - 1)}`" />
+			</marker>
 			<marker
 				id="arrow"
 				viewBox="0 0 16 16"
@@ -61,23 +99,55 @@
 			>
 				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
 			</marker>
+			<marker
+				id="smallArrow"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="12"
+				markerHeight="12"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path d="M 0 0 L 8 8 L 0 16 z" style="fill: var(--primary-color); fill-opacity: 1"></path>
+			</marker>
+			<marker
+				v-for="i in wf.edges.length"
+				:key="i"
+				:id="`smallArrow${i - 1}`"
+				viewBox="0 0 16 16"
+				refX="8"
+				refY="8"
+				orient="auto"
+				markerWidth="12"
+				markerHeight="12"
+				markerUnits="userSpaceOnUse"
+				xoverflow="visible"
+			>
+				<path
+					d="M 0 0 L 8 8 L 0 16 z"
+					:style="`fill: ${getVariableColorByRunIdx(i - 1)}; fill-opacity: 1`"
+				></path>
+			</marker>
 		</template>
 		<template #background>
 			<path
 				v-if="newEdge?.points"
 				:d="drawPath(interpolatePointsForCurve(newEdge.points[0], newEdge.points[1]))"
 				stroke="#1B8073"
-				stroke-dasharray="8"
 				stroke-width="2"
+				marker-start="url(#circle)"
 				marker-end="url(#arrow)"
 				fill="none"
 			/>
 			<path
 				v-for="(edge, index) of wf.edges"
 				:d="drawPath(interpolatePointsForCurve(edge.points[0], edge.points[1]))"
-				stroke="#1B8073"
+				:stroke="isEdgeTargetSim(edge) ? getVariableColorByRunIdx(index) : '#1B8073'"
 				stroke-width="2"
-				marker-mid="url(#arrow)"
+				:marker-start="`url(#circle${isEdgeTargetSim(edge) ? index : ''})`"
+				:marker-mid="`url(#smallArrow${isEdgeTargetSim(edge) ? index : ''})`"
 				:key="index"
 				fill="none"
 			/>
@@ -87,7 +157,7 @@
 
 <script setup lang="ts">
 import { v4 as uuidv4 } from 'uuid';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -107,38 +177,70 @@ import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
+import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from 'primevue/contextmenu';
-import { Model } from '@/types/Model';
 import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
 import * as d3 from 'd3';
-import { IProject } from '@/types/Project';
-import { Dataset } from '@/types/Types';
+import { IProject, ProjectAssetTypes } from '@/types/Project';
+import { Dataset, Model } from '@/types/Types';
+import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
+import TeraStratifyNode from './tera-stratify-node.vue';
 
+// Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	project: IProject;
+	assetId: string;
 }>();
 
-const models = computed<Model[]>(() => props.project.assets?.models ?? []);
-const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
-
-const wf = ref<Workflow>(workflowService.create());
-const contextMenu = ref();
-
-const newNodePosition = ref<{ x: number; y: number }>({ x: 0, y: 0 });
+const newNodePosition = { x: 0, y: 0 };
 let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
-const newEdge = ref<WorkflowEdge | undefined>();
-const isMouseOverCanvas = ref<boolean>(false);
 let isMouseOverPort: boolean = false;
+let saveTimer: any = null;
+let workflowDirty: boolean = false;
+
+const newEdge = ref<WorkflowEdge | undefined>();
+const newAssetId = ref<string | null>(null);
+const isMouseOverCanvas = ref<boolean>(false);
+
+const wf = ref<Workflow>(workflowService.emptyWorkflow());
+const contextMenu = ref();
+
+// FIXME: temporary function to color edges with simulate
+const VIRIDIS_14 = [
+	'#440154',
+	'#481c6e',
+	'#453581',
+	'#3d4d8a',
+	'#34618d',
+	'#2b748e',
+	'#24878e',
+	'#1f998a',
+	'#25ac82',
+	'#40bd72',
+	'#67cc5c',
+	'#98d83e',
+	'#cde11d',
+	'#fde725'
+];
+const getVariableColorByRunIdx = (edgeIdx: number) =>
+	wf.value.edges.length > 1
+		? VIRIDIS_14[Math.floor((edgeIdx / wf.value.edges.length) * VIRIDIS_14.length)]
+		: '#1B8073';
+const isEdgeTargetSim = (edge) =>
+	wf.value.nodes.find((node) => node.id === edge.target)?.operationType ===
+	WorkflowOperationTypes.SIMULATE;
 
 const testOperation: Operation = {
 	name: WorkflowOperationTypes.TEST,
 	description: 'A test operation',
 	inputs: [
-		{ type: 'number', label: 'Number input' },
+		{ type: 'number', label: 'Number input', acceptMultiple: false },
+		{ type: 'number', label: 'Multi number input', acceptMultiple: true },
 		{ type: 'string', label: 'String input' }
 	],
 	outputs: [{ type: 'number', label: 'Number output' }],
@@ -146,77 +248,118 @@ const testOperation: Operation = {
 	isRunnable: true
 };
 
+const models = computed<Model[]>(() => props.project.assets?.models ?? []);
+const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
+
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: port.value,
+		value: [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
+	workflowDirty = true;
 }
 
 // Run testOperation
 const testNode = (node: WorkflowNode) => {
-	if (node.outputs.length === 0) {
-		node.outputs.push({
-			id: uuidv4(),
-			label: 'test',
-			value: null,
-			type: 'number',
-			status: WorkflowPortStatus.NOT_CONNECTED
-		});
-	}
+	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
+	appendOutputPort(node, { type: 'number', label: value.toString(), value });
+};
 
-	if (node.inputs[0].value !== null) {
-		node.outputs[0].value = node.inputs[0].value + Math.round(Math.random() * 10);
-	} else {
-		node.outputs[0].value = Math.round(Math.random() * 10);
-	}
+const removeNode = (event) => {
+	workflowService.removeNode(wf.value, event);
 };
 
 const contextMenuItems = ref([
 	{
-		label: 'New operation',
+		label: 'Test operation',
 		command: () => {
-			workflowService.addNode(wf.value, testOperation, newNodePosition.value);
+			workflowService.addNode(wf.value, testOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
-		label: 'New model',
+		label: 'Model',
 		command: () => {
-			workflowService.addNode(wf.value, ModelOperation, newNodePosition.value);
+			newAssetId.value = null;
+			workflowService.addNode(wf.value, ModelOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
-		label: 'New calibration',
+		label: 'Dataset',
 		command: () => {
-			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition.value);
+			newAssetId.value = null;
+			workflowService.addNode(wf.value, DatasetOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
-		label: 'New dataset',
+		label: 'Calibrate',
 		command: () => {
-			workflowService.addNode(wf.value, DatasetOperation, newNodePosition.value);
+			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+			workflowDirty = true;
 		}
 	},
 	{
-		label: 'New Simulation',
+		label: 'Simulate',
 		command: () => {
-			workflowService.addNode(wf.value, SimulateOperation, newNodePosition.value, {
+			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
 				width: 420,
 				height: 220
 			});
+			workflowDirty = true;
+		}
+	},
+	{
+		label: 'Stratify',
+		command: () => {
+			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
 		}
 	}
 ]);
+const addComponentMenu = ref();
+const showAddComponentMenu = (event) => addComponentMenu.value.toggle(event);
+
+const { getDragData } = useDragEvent();
+
+function onDrop(event) {
+	const { assetId, assetType } = getDragData('initAssetNode') as {
+		assetId: string;
+		assetType: ProjectAssetTypes;
+	};
+
+	if (assetId && assetType) {
+		updateNewNodePosition(event);
+
+		let operation: Operation;
+
+		switch (assetType) {
+			case ProjectAssetTypes.MODELS:
+				operation = ModelOperation;
+				break;
+			case ProjectAssetTypes.DATASETS:
+				operation = DatasetOperation;
+				break;
+			default:
+				return;
+		}
+
+		workflowService.addNode(wf.value, operation, newNodePosition);
+		newAssetId.value = assetId;
+	}
+}
 
 function toggleContextMenu(event) {
 	contextMenu.value.show(event);
-	newNodePosition.value = {
-		x: (event.offsetX - canvasTransform.x) / canvasTransform.k,
-		y: (event.offsetY - canvasTransform.y) / canvasTransform.k
-	};
+	updateNewNodePosition(event);
+}
+
+function updateNewNodePosition(event) {
+	newNodePosition.x = (event.offsetX - canvasTransform.x) / canvasTransform.k;
+	newNodePosition.y = (event.offsetY - canvasTransform.y) / canvasTransform.k;
 }
 
 function saveTransform(newTransform: { k: number; x: number; y: number }) {
@@ -226,6 +369,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 	t.x = newTransform.x;
 	t.y = newTransform.y;
 	t.k = newTransform.k;
+	workflowDirty = true;
 }
 
 const isCreatingNewEdge = computed(
@@ -316,6 +460,7 @@ const updatePosition = (node: WorkflowNode, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
+	workflowDirty = true;
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
@@ -332,10 +477,93 @@ const pathFn = d3
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
 
+watch(
+	() => [props.assetId],
+	async () => {
+		if (wf.value && workflowDirty) {
+			workflowService.updateWorkflow(wf.value);
+		}
+		const workflowId = props.assetId;
+		if (!workflowId) return;
+		wf.value = await workflowService.getWorkflow(workflowId);
+	},
+	{ immediate: true }
+);
+
 onMounted(() => {
 	document.addEventListener('mousemove', mouseUpdate);
+	saveTimer = setInterval(() => {
+		if (workflowDirty) {
+			workflowService.updateWorkflow(wf.value);
+			workflowDirty = false;
+		}
+	}, 8000);
 });
 onUnmounted(() => {
+	if (workflowDirty) {
+		workflowService.updateWorkflow(wf.value);
+	}
+	if (saveTimer) {
+		clearInterval(saveTimer);
+	}
 	document.removeEventListener('mousemove', mouseUpdate);
 });
+
+function cleanUpLayout() {
+	// TODO: clean up layout of nodes
+	console.log('clean up layout');
+}
+function resetZoom() {
+	// TODO: reset zoom level and position
+	console.log('clean up layout');
+}
 </script>
+<style scoped>
+.toolbar {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem 1rem;
+	border-top: 1px solid var(--surface-border-light);
+	border-bottom: 1px solid var(--surface-border-light);
+	z-index: 900;
+}
+
+.glass {
+	background-color: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(10px);
+}
+
+.button-group {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+
+/* We should make a proper secondary outline button. Until then this works. */
+.toolbar .button-group .secondary-button {
+	color: var(--text-color-secondary);
+	background-color: var(--surface-0);
+	border: 1px solid var(--surface-border-light);
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+.toolbar .button-group .secondary-button:hover {
+	color: var(--text-color-secondary) !important;
+	background-color: var(--surface-highlight) !important;
+}
+
+.toolbar .button-group .primary-dropdown {
+	background-color: var(--primary-color);
+	border: 1px solid var(--primary-color);
+}
+
+.toolbar .button-group .primary-dropdown:deep(.p-dropdown-label),
+.toolbar .button-group .primary-dropdown:deep(.p-dropdown-trigger) {
+	color: var(--surface-0);
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+</style>

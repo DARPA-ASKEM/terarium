@@ -80,6 +80,8 @@ async function getAll(): Promise<IProject[] | null> {
 
 /**
  * Get project assets for a given project per id
+ * @param projectId projet id to get assets for
+ * @param types optional list of types. If none are given we assume you want it all
  * @return ProjectAssets|null - the appropriate project, or null if none returned by API
  */
 async function getAssets(projectId: string, types?: string[]): Promise<ProjectAssets | null> {
@@ -90,6 +92,9 @@ async function getAssets(projectId: string, types?: string[]): Promise<ProjectAs
 				// add URL with format: ...?types=A&types=B&types=C
 				url += `${indx === 0 ? '?' : '&'}types=${type}`;
 			});
+		} else {
+			url +=
+				'?types=datasets&types=model_configurations&types=models&types=publications&types=simulations&types=workflows';
 		}
 		const response = await API.get(url);
 		const { status, data } = response;

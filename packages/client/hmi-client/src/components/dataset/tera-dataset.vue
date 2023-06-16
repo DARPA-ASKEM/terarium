@@ -2,45 +2,33 @@
 	<tera-asset
 		v-if="dataset"
 		:name="dataset?.name"
-		:overline="dataset?.simulationRun ? 'Simulation run' : ''"
 		:is-editable="isEditable"
 		:stretch-content="datasetView === DatasetView.DATA"
 		@close-preview="emit('close-preview')"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="datasetContent"
-				:show-header-links="datasetView === DatasetView.DESCRIPTION"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Description"
-							icon="pi pi-list"
-							@click="datasetView = DatasetView.DESCRIPTION"
-							:active="datasetView === DatasetView.DESCRIPTION"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Data"
-							icon="pi pi-file"
-							@click="datasetView = DatasetView.DATA"
-							:active="datasetView === DatasetView.DATA"
-						/>
-					</span>
-				</template>
-			</tera-asset-nav>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Description"
+					icon="pi pi-list"
+					@click="datasetView = DatasetView.DESCRIPTION"
+					:active="datasetView === DatasetView.DESCRIPTION"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Data"
+					icon="pi pi-file"
+					@click="datasetView = DatasetView.DATA"
+					:active="datasetView === DatasetView.DATA"
+				/>
+			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<section class="metadata data-row">
 				<section>
-					<header>Maintainer</header>
-					<section>{{ dataset?.maintainer || '-' }}</section>
-				</section>
-				<section>
-					<header>Quality</header>
-					<section>{{ dataset?.quality || '-' }}</section>
+					<header>Metadata</header>
+					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
 					<header>URL</header>
@@ -49,94 +37,44 @@
 					</section>
 				</section>
 				<section>
-					<header>Geospatial resolution</header>
-					<section>{{ dataset?.geospatialResolution || '-' }}</section>
-				</section>
-				<section>
-					<header>Temporal resolution</header>
-					<section>{{ dataset?.temporalResolution || '-' }}</section>
-				</section>
-				<section>
 					<header>Number of records</header>
 					<section>{{ csvContent?.length }}</section>
 				</section>
 			</section>
+
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<p v-html="dataset.description" />
+					<p v-html="dataset?.description" />
 				</AccordionTab>
-				<AccordionTab v-if="(annotations?.geo?.length || 0) + (annotations?.date?.length || 0) > 0">
+				<AccordionTab v-if="(annotations?.length || 0) > 0">
 					<template #header>
 						<header id="Annotations">
 							Annotations
-							<span class="artifact-amount">
-								({{ (annotations?.geo?.length || 0) + (annotations?.date?.length || 0) }})
-							</span>
+							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
 						</header>
 					</template>
-					<section v-if="annotations?.geo">
-						<header class="annotation-subheader">Geospatial annotations</header>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
 						<section class="annotation-group">
 							<section
-								v-for="annotation in annotations?.geo"
-								:key="annotation.name"
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name[0]"
 								class="annotation-row data-row"
 							>
 								<section>
 									<header>Name</header>
-									<section class="value">{{ annotation.name }}</section>
+									<section>{{ name }}</section>
 								</section>
 								<section>
 									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>GADM level</header>
-									<section>{{ annotation.gadmLevel }}</section>
+									<section>{{ annotations[name[0]] }}</section>
 								</section>
 							</section>
 						</section>
 					</section>
-					<section v-if="annotations?.date">
-						<header class="annotation-subheader">Temporal annotations</header>
-						<section class="annotation-group">
-							<section
-								v-for="annotation in annotations?.date"
-								:key="annotation.name"
-								class="annotation-row data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ annotation.name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>Time format</header>
-									<section>{{ annotation.timeFormat }}</section>
-								</section>
-							</section>
-						</section>
-					</section>
-				</AccordionTab>
-				<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
-					<template #header>
-						<header id="Features">
-							Features<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
-						</header>
-					</template>
-					<ol class="numbered-list">
-						<li v-for="(feature, index) of annotations?.feature" :key="index">
-							<span>{{ feature.displayName || feature.name }}</span
-							>:
-							<span class="feature-type">{{ feature.featureType }}</span>
-						</li>
-					</ol>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -152,16 +90,15 @@
 </template>
 <script setup lang="ts">
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { computed, ref, watch, onUpdated } from 'vue';
+import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
-import teraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -184,20 +121,22 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset = ref<Dataset | null>(null);
-const rawContent = ref<CsvAsset | null>(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
 
+/*
+// apparently this isn't used?
 const datasetContent = computed(() => [
 	{ key: 'Description', value: dataset.value?.description },
 	{
 		key: 'Annotations',
-		value: [...(annotations.value?.geo ?? []), ...(annotations.value?.date ?? [])]
-	},
-	{ key: 'Features', value: annotations.value?.feature }
+		value: [...(annotations.value ?? [])]
+	}
 ]);
+*/
 
 onUpdated(() => {
 	if (dataset.value) {
@@ -210,8 +149,10 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (props.assetId !== '') {
-			rawContent.value = await downloadRawFile(props.assetId, 10);
-			const datasetTemp = await getDataset(props.assetId);
+			const datasetTemp: Dataset | null = await getDataset(props.assetId);
+
+			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+			rawContent.value = await downloadRawFile(props.assetId, datasetTemp?.fileNames?.[0] ?? '');
 			if (datasetTemp) {
 				Object.entries(datasetTemp).forEach(([key, value]) => {
 					if (isString(value)) {
@@ -228,15 +169,23 @@ watch(
 	{ immediate: true }
 );
 
-const annotations = computed(() => dataset.value?.annotations?.annotations);
-const showAccordion = computed(() =>
-	dataset.value?.annotations?.annotations.date && dataset.value?.annotations.annotations.geo
-		? [2]
-		: [0]
-);
+const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
+const showAccordion = computed(() => {
+	if (dataset.value?.columns) {
+		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
+			? [1]
+			: [0];
+	}
+
+	return [0];
+});
 </script>
 
 <style scoped>
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
+}
 .metadata {
 	margin: 1rem;
 	margin-bottom: 0.5rem;
