@@ -57,7 +57,7 @@
 							</div>
 							<div class="buttons">
 								<Button
-									class="p-button-secondary p-button-sm"
+									class="p-button-sm p-button-outlined"
 									label="Add another strata group"
 									icon="pi pi-plus"
 								/>
