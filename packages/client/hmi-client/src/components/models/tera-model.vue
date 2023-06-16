@@ -163,7 +163,11 @@
 				/>
 			</AccordionTab>
 			<AccordionTab v-if="model" header="Model configurations">
-				<tera-model-configuration :model="model" :is-editable="props.isEditable" />
+				<tera-model-configuration
+					v-if="modelConfiguration"
+					:model-configuration="modelConfiguration"
+					:is-editable="props.isEditable"
+				/>
 			</AccordionTab>
 			<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 				<DataTable :value="relatedTerariumModels">
@@ -198,11 +202,13 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import * as textUtil from '@/utils/text';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
-import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
+import { Model, Document, Dataset, ProvenanceType, ModelConfiguration } from '@/types/Types';
 import { ResultType } from '@/types/common';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { getRelatedArtifacts } from '@/services/provenance';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -259,10 +265,13 @@ const props = defineProps({
 const modelView = ref(ModelView.DESCRIPTION);
 const resources = useResourcesStore();
 const router = useRouter();
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const model = ref<Model | null>(null);
+
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 // apparently this is never used?
 // const isEditing = ref<boolean>(false);
@@ -325,7 +334,16 @@ const fetchRelatedTerariumArtifacts = async () => {
 watch(
 	() => [props.assetId],
 	async () => {
-		if (props.assetId !== '') {
+		if (openedWorkflowNodeStore.node?.operationType === 'ModelOperation') {
+			const modelConfigId = openedWorkflowNodeStore.node.outputs?.[0]?.value?.[0];
+
+			if (modelConfigId) {
+				const response = await getModelConfigurationById(modelConfigId);
+				modelConfiguration.value = response;
+				model.value = await getModel(response.configuration.id);
+				fetchRelatedTerariumArtifacts();
+			}
+		} else if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
 		} else {
@@ -402,19 +420,23 @@ function getSource(sp) {
 :deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
 	border-bottom: none;
 }
+
 .parameter-description {
 	font-weight: 500;
 	font-size: var(--font-body-small);
 	color: var(--text-color-secondary);
 }
+
 .model-biblio {
 	padding: 1rem;
 }
+
 :deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	color: var(--text-color-primary);
 }
+
 .model-biblio-header {
 	padding-right: 2rem;
 	font-family: var(--font-family);
@@ -423,6 +445,7 @@ function getSource(sp) {
 	color: var(--text-color-secondary);
 	text-align: left;
 }
+
 .model-biblio-column {
 	padding-right: 50px;
 	font-family: var(--font-family);
