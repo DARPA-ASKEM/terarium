@@ -104,7 +104,20 @@
 				:value="assets"
 			>
 				<Column selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column field="assetName" header="Name" sortable style="width: 45%"></Column>
+				<Column field="assetName" header="Name" sortable style="width: 45%">
+					<template #body="slotProps">
+						<Button
+							:title="slotProps.data.assetName"
+							class="asset-button"
+							plain
+							text
+							size="small"
+							@click="router.push({ name: RouteName.ProjectRoute, params: slotProps.data })"
+						>
+							<span class="p-button-label">{{ slotProps.data.assetName }}</span>
+						</Button>
+					</template>
+				</Column>
 				<Column field="" header="Modified" sortable style="width: 15%"></Column>
 				<Column field="tags" header="Tags"></Column>
 				<Column header="Resource Type" sortable>
@@ -203,11 +216,14 @@ import API, { Poller } from '@/api/api';
 import { createNewDatasetFromCSV } from '@/services/dataset';
 import { capitalize, isEmpty } from 'lodash';
 import { CsvAsset } from '@/types/Types';
+import { useRouter } from 'vue-router';
+import { RouteName } from '@/router/routes';
 
 const props = defineProps<{
 	project: IProject;
 }>();
-const emit = defineEmits(['open-workflow', 'update-project']);
+const emit = defineEmits(['open-workflow', 'update-project', 'open-asset']);
+const router = useRouter();
 const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -381,6 +397,7 @@ a {
 }
 
 .content-container {
+	overflow-y: auto;
 	padding: 1rem;
 	background: var(--surface-0);
 	flex: 1;
@@ -522,5 +539,28 @@ ul {
 
 .modal:deep(main) {
 	width: 50rem;
+}
+:deep(.asset-button.p-button) {
+	display: inline-flex;
+	overflow: hidden;
+	padding: 0;
+}
+
+:deep(.asset-button.p-button > span) {
+	display: inline-flex;
+	width: 100%;
+	padding: 0.375rem 1rem;
+	overflow: hidden;
+}
+
+:deep(.asset-button.p-button[active='true']) {
+	background-color: var(--surface-highlight);
+}
+
+:deep(.asset-button.p-button .p-button-label) {
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 </style>
