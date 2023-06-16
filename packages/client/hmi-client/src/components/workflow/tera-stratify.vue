@@ -19,7 +19,7 @@
 				/>
 			</span>
 		</header>
-		<section v-if="stratifyView === StratifyView.Input" class="input-view">
+		<section v-if="stratifyView === StratifyView.Input">
 			<nav>
 				<div class="step-header" :active="stratifyStep === 1">
 					<h5>Step 1</h5>
@@ -39,7 +39,7 @@
 				<Accordion :active-index="0">
 					<AccordionTab header="Model">
 						<div class="step-1-inner">
-							<tera-model-diagram :model="null" :is-editable="false" />
+							<tera-model-diagram :model="model" :is-editable="false" />
 							<div class="input">
 								<label for="strata-type">Select a strata type</label>
 								<Dropdown
@@ -48,21 +48,31 @@
 									:options="['Age groups', 'Location-travel']"
 								/>
 							</div>
-							<div class="input">
-								<label for="labels"
-									>Enter a comma separated list of labels for each group. (Max 100)</label
-								>
-								<Textarea id="labels" v-model="labels" />
-								<span><i class="pi pi-info-circle" />Or drag a CSV file into this box</span>
-							</div>
-							<div class="buttons">
-								<Button
-									class="p-button-sm p-button-outlined"
-									label="Add another strata group"
-									icon="pi pi-plus"
-								/>
-								<Button class="p-button-secondary p-button-sm" label="Generate strata" />
-							</div>
+							<section v-if="!strataModel">
+								<div class="input">
+									<label for="labels"
+										>Enter a comma separated list of labels for each group. (Max 100)</label
+									>
+									<Textarea id="labels" v-model="labels" />
+									<span><i class="pi pi-info-circle" />Or drag a CSV file into this box</span>
+								</div>
+								<div class="buttons">
+									<Button
+										class="p-button-sm p-button-outlined"
+										label="Add another strata group"
+										icon="pi pi-plus"
+									/>
+									<Button
+										class="p-button-sm"
+										:disabled="!(strataType && labels)"
+										label="Generate strata"
+										@click="generateStrataModel"
+									/>
+								</div>
+							</section>
+							<section v-else>
+								<tera-model-diagram :model="strataModel" :is-editable="false" />
+							</section>
 						</div>
 					</AccordionTab>
 				</Accordion>
@@ -72,13 +82,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
+import {
+	generateAgeStrataModel,
+	generateLocationStrataModel
+} from '@/services/models/stratification-service';
+import { Model } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
 import TeraModelDiagram from '../models/tera-model-diagram.vue';
+
+const props = defineProps<{
+	node: WorkflowNode;
+}>();
 
 enum StratifyView {
 	Input,
@@ -88,6 +108,19 @@ const stratifyView = ref(StratifyView.Input);
 const stratifyStep = ref(1);
 const strataType = ref();
 const labels = ref();
+const strataModel = ref<Model>();
+const model = computed(() => props.node.inputs[0].value?.[0].model);
+
+function generateStrataModel() {
+	if (strataType.value && labels.value) {
+		const stateNames = labels.value.split(',');
+		if (strataType.value === 'Age groups') {
+			strataModel.value = generateAgeStrataModel(stateNames);
+		} else if (strataType.value === 'Location-travel') {
+			strataModel.value = generateLocationStrataModel(stateNames);
+		}
+	}
+}
 </script>
 
 <style scoped>
@@ -108,7 +141,12 @@ header {
 nav {
 	padding-left: 1rem;
 	display: flex;
-	margin-bottom: 1rem;
+}
+
+section {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 }
 
 .step-header {
@@ -134,7 +172,6 @@ nav {
 
 .step-1 > div:first-of-type {
 	padding-left: 0.5rem;
-	margin-bottom: 1rem;
 }
 
 .input {
@@ -166,5 +203,10 @@ nav {
 .buttons {
 	display: flex;
 	justify-content: space-between;
+}
+
+:deep(.p-button.p-button-outlined) {
+	color: var(--text-color-primary);
+	box-shadow: var(--text-color-disabled) inset 0 0 0 1px;
 }
 </style>

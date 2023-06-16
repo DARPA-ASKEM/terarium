@@ -173,7 +173,7 @@ export const parseAMRPetriNet2IGraph = (
 			y: 0,
 			height: config.S.height,
 			width: config.S.width,
-			data: { type: NodeType.State, uid: aNode.grounding.identifiers.ido },
+			data: { type: NodeType.State, uid: aNode.grounding?.identifiers?.ido ?? undefined },
 			nodes: []
 		});
 	}

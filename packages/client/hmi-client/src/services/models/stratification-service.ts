@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { ModelSemantics, State, Transition } from '@/types/Types';
+import { Model, ModelSemantics, State, Transition } from '@/types/Types';
 
 // Providing the ID of 3 Models (model A, model B, and the type Model)
 // Create a new model of based off of the stratification
@@ -22,7 +22,7 @@ export async function fetchStratificationResult(modelA: string, modelB: string, 
 	// this.createModel(output, true);
 }
 
-export function generateAgeStrataModel(stateNames: string[]) {
+export function generateAgeStrataModel(stateNames: string[]): Model {
 	const states: State[] = stateNames.map((name, index) => ({
 		id: `A${index + 1}`,
 		name,
@@ -77,6 +77,8 @@ export function generateAgeStrataModel(stateNames: string[]) {
 		}
 	};
 	return {
+		id: '',
+		framework: '',
 		name: 'Age-contact strata model',
 		description: 'Age-contact strata model',
 		schema:
@@ -87,7 +89,11 @@ export function generateAgeStrataModel(stateNames: string[]) {
 			transitions
 		},
 		semantics,
-		metadata: {}
+		metadata: {
+			processed_at: 0,
+			processed_by: '',
+			variable_statements: []
+		}
 	};
 }
 
@@ -148,6 +154,8 @@ export function generateLocationStrataModel(stateNames: string[]) {
 		}
 	};
 	return {
+		id: '',
+		framework: '',
 		name: 'Location-travel strata model',
 		description: 'Location-travel strata model',
 		schema:
@@ -158,6 +166,10 @@ export function generateLocationStrataModel(stateNames: string[]) {
 			transitions
 		},
 		semantics,
-		metadata: {}
+		metadata: {
+			processed_at: 0,
+			processed_by: '',
+			variable_statements: []
+		}
 	};
 }

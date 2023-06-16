@@ -69,6 +69,7 @@
 				/>
 				<tera-stratify
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.STRATIFY"
+					:node="openedWorkflowNodeStore.node"
 				/>
 				<tera-project-page
 					v-else
