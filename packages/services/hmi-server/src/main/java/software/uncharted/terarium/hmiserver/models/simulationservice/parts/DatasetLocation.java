@@ -16,4 +16,5 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 public class DatasetLocation {
     private String id;
     private String filename;
+    private Object mappings;
 }

@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 @Data
@@ -17,7 +18,10 @@ public class CalibrationRequest implements Serializable {
 	@JsonAlias("model_config_id")
 	private String modelConfigId;
 	private Object extra;
-	private List<Integer> timespan;
+
+	@TSOptional
+	private TimeSpan timespan;
+	
 	private DatasetLocation dataset;
 	private String engine;
 }

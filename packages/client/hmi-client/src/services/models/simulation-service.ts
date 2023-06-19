@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Simulation, SimulationParams, CalibrationParams } from '@/types/Types';
+import { Simulation, SimulationParams, CalibrationRequest } from '@/types/Types';
 
 export async function makeForecast(simulationParam: SimulationParams) {
 	try {
@@ -92,7 +92,7 @@ export async function deleteAnnotation(id: Simulation['id']) {
 	}
 }
 
-export async function makeCalibrateJob(calibrationParams: CalibrationParams) {
+export async function makeCalibrateJob(calibrationParams: CalibrationRequest) {
 	try {
 		const resp = await API.post('simulation/calibrate', calibrationParams);
 		const output = resp.data;

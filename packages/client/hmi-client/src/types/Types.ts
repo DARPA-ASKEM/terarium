@@ -113,9 +113,9 @@ export interface DatasetColumn {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
-    annotations: { [index: string]: string[] };
+    annotations: string[];
     metadata?: { [index: string]: any };
-    grounding?: { [index: string]: Grounding };
+    grounding?: Grounding;
 }
 
 export interface Grounding {
@@ -138,7 +138,7 @@ export interface PetriNetModel {
 export interface CalibrationRequest {
     modelConfigId: string;
     extra: any;
-    timespan: number[];
+    timespan?: TimeSpan;
     dataset: DatasetLocation;
     engine: string;
 }
@@ -146,6 +146,12 @@ export interface CalibrationRequest {
 export interface DatasetLocation {
     id: string;
     filename: string;
+    mappings: any;
+}
+
+export interface TimeSpan {
+    start: number;
+    end: number;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {

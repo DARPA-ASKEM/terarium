@@ -191,11 +191,9 @@ import TeraModelConfiguration from '@/components/models/tera-model-configuration
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { logger } from '@/utils/logger';
-import { CalibrationParams, CsvAsset, Dataset } from '@/types/Types';
+import { CalibrationRequest, CsvAsset, Dataset } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { shimPetriModel } from '@/services/models/petri-shim';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import TeraSimulateChart from './tera-simulate-chart.vue';
@@ -234,14 +232,15 @@ const datasetName = computed(() => props.node.inputs[1].label?.[0]);
 const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0].value?.[0]);
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelVariables = computed(() => {
-	if (modelConfigurationRef.value) {
-		return modelConfig.value?.model.model.states
-			.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.sname))
-			.map((state) => state.sname);
-	}
-	return modelConfig.value?.model.model.states.map((state) => state.sname);
-});
+const modelVariables = computed(() =>
+	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1243
+	// if (modelConfigurationRef.value) {
+	// 	return modelConfig.value?.model.model.states
+	// 		.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.name))
+	// 		.map((state) => state.name);
+	// }
+	modelConfig.value?.model.model.states.map((state) => state.name)
+);
 
 const disableRunButton = computed(
 	() => !mapping.value?.[0].modelVariable.label || !mapping.value?.[0].datasetVariable.label
@@ -256,7 +255,7 @@ const mappingSimplified = computed(() =>
 
 const calibrate = async () => {
 	// Make calibration job.
-	if (modelConfig.value && csvAsset.value) {
+	if (modelConfig.value?.id && csvAsset.value && datasetId.value && datasetName.value) {
 		const featureMappings: { [index: string]: string } = {};
 		// Go from 2D array to a index: value like they want
 		// was just easier to work with 2D array for user input
@@ -266,14 +265,12 @@ const calibrate = async () => {
 					mapping.value[i].modelVariable.label;
 			}
 		}
-
-		const calibrationParam: CalibrationParams = {
-			model: shimPetriModel(AMRToPetri(modelConfig.value.model)), // Take out all the extra content in model
-			initials: modelConfig.value.initialValues,
-			params: modelConfig.value.parameterValues,
-			timesteps_column: timestepColumn.value,
-			feature_mappings: featureMappings,
-			dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
+		featureMappings.timestep = timestepColumn.value;
+		const calibrationParam: CalibrationRequest = {
+			modelConfigId: modelConfig.value.id, // Take out all the extra content in model
+			extra: {},
+			dataset: { id: datasetId.value, filename: datasetName.value, mappings: featureMappings },
+			engine: 'CIEMSS'
 		};
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
