@@ -127,13 +127,21 @@ describe('test generate location strata model', () => {
 						id: 'L1',
 						name: 'Toronto',
 						description:
-							'Number of individuals relative to the total population that are in location L1.'
+							'Number of individuals relative to the total population that are in location L1.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
 					},
 					{
 						id: 'L2',
 						name: 'Montreal',
 						description:
-							'Number of individuals relative to the total population that are in location L2.'
+							'Number of individuals relative to the total population that are in location L2.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
 					}
 				],
 				transitions: [
@@ -142,7 +150,7 @@ describe('test generate location strata model', () => {
 						input: ['L1'],
 						output: ['L2'],
 						properties: {
-							name: 't&#8321&#8322',
+							name: 'tU+2081U+2082',
 							description: 'Travel of an individual from location L1 and L2.'
 						}
 					},
@@ -151,7 +159,7 @@ describe('test generate location strata model', () => {
 						input: ['L2'],
 						output: ['L1'],
 						properties: {
-							name: 't&#8322&#8321',
+							name: 'tU+2082U+2081',
 							description: 'Travel of an individual from location L2 and L1.'
 						}
 					}
@@ -159,7 +167,68 @@ describe('test generate location strata model', () => {
 			},
 			semantics: {
 				ode: {
-					rates: []
+					rates: [
+						{
+							target: 't12',
+							expression: 'L1*tau_12',
+							expression_mathml: ''
+						},
+						{
+							target: 't21',
+							expression: 'L2*tau_21',
+							expression_mathml: ''
+						}
+					],
+					initials: [
+						{
+							target: 'L1',
+							expression: 'L1_0',
+							expression_mathml: '<ci>L1_0</ci>'
+						},
+						{
+							target: 'L2',
+							expression: 'L2_0',
+							expression_mathml: '<ci>L2_0</ci>'
+						}
+					],
+					parameters: [
+						{
+							id: 'tau_12',
+							name: 'U+03C4U+2081U+2082',
+							description: 'Travel rate from Location 1 to Location 2',
+							value: 0.5,
+							units: {
+								expression: '1/(person*day)',
+								expression_mathml:
+									'<apply><divide/><cn>1</cn><apply><times/><ci>person</ci><ci>day</ci></apply></apply>'
+							}
+						},
+						{
+							id: 'tau_21',
+							name: 'U+03C4U+2082U+2081',
+							description: 'Travel rate from Location 2 to Location 1',
+							value: 0.5,
+							units: {
+								expression: '1/(person*day)',
+								expression_mathml:
+									'<apply><divide/><cn>1</cn><apply><times/><ci>person</ci><ci>day</ci></apply></apply>'
+							}
+						},
+						{
+							id: 'L1_0',
+							name: 'L1U+2080',
+							description:
+								'Number of individuals relative to the total population that are in location L1 at timestep 0',
+							value: 0.5
+						},
+						{
+							id: 'L2_0',
+							name: 'L2U+2080',
+							description:
+								'Number of individuals relative to the total population that are in location L2 at timestep 0',
+							value: 0.5
+						}
+					]
 				},
 				typing: {
 					type_system: {
