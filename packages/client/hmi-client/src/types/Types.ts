@@ -108,9 +108,9 @@ export interface DatasetColumn {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
-    annotations: { [index: string]: string[] };
+    annotations: string[];
     metadata?: { [index: string]: any };
-    grounding?: { [index: string]: Grounding };
+    grounding?: Grounding;
 }
 
 export interface Grounding {
