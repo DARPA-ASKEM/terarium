@@ -67,6 +67,7 @@ const runSimulate = async () => {
 					tspan: openedWorkflowNodeStore.tspan
 				};
 
+				// FIXME: TS1225 adapt new payload
 				const response = await makeForecastJob(payload);
 				console.log(payload, config.model, AMRToPetri(config.model));
 				return response.id;

@@ -13,6 +13,7 @@ export async function makeForecastJob(simulationParam: SimulationRequest) {
 	}
 }
 
+// FIXME: TS1225 Consolidated to getSimuation
 export async function getRunStatus(runId: number) {
 	try {
 		const resp = await API.get(`simulation/${runId}/status`);
@@ -24,6 +25,7 @@ export async function getRunStatus(runId: number) {
 	}
 }
 
+// FIXME: TS1225 Consolidate to getSimulation
 export async function getRunResult(runId: number) {
 	try {
 		const resp = await API.get(`simulation/${runId}/result`);
