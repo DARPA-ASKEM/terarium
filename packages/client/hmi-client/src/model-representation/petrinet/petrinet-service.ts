@@ -1,5 +1,11 @@
 import { IGraph } from '@graph-scaffolder/types';
-import { PetriNetModel, PetriNetState, PetriNetTransition, Model } from '@/types/Types';
+import {
+	PetriNetModel,
+	PetriNetState,
+	PetriNetTransition,
+	Model,
+	TypingSemantics
+} from '@/types/Types';
 import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
 
@@ -26,6 +32,7 @@ const defaultSizeConfig: PetriSizeConfig = {
 export interface NodeData {
 	type: string;
 	uid?: string | number;
+	strataType?: string;
 }
 
 export interface EdgeData {
@@ -163,9 +170,12 @@ export const parseAMRPetriNet2IGraph = (
 		edges: []
 	};
 	const petrinet = amr.model as PetriNetModel;
+	const typing: TypingSemantics | undefined = amr.semantics?.typing;
 	// add each nodes in S
 	for (let i = 0; i < petrinet.states.length; i++) {
 		const aNode = petrinet.states[i];
+		const typeMap = typing?.type_map.find((map) => map.length === 2 && aNode.id === map[0]);
+		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
 			id: aNode.id,
 			label: aNode.name,
@@ -173,7 +183,11 @@ export const parseAMRPetriNet2IGraph = (
 			y: 0,
 			height: config.S.height,
 			width: config.S.width,
-			data: { type: NodeType.State, uid: aNode.grounding?.identifiers?.ido ?? undefined },
+			data: {
+				type: NodeType.State,
+				uid: aNode.grounding?.identifiers?.ido ?? undefined,
+				strataType
+			},
 			nodes: []
 		});
 	}
@@ -181,6 +195,8 @@ export const parseAMRPetriNet2IGraph = (
 	// Add each node found in T
 	for (let i = 0; i < petrinet.transitions.length; i++) {
 		const aTransition = petrinet.transitions[i];
+		const typeMap = typing?.type_map.find((map) => map.length === 2 && aTransition.id === map[0]);
+		const strataType = typeMap?.[1] ?? '';
 		// Add the node for this transition
 		result.nodes.push({
 			id: aTransition.id,
@@ -189,7 +205,7 @@ export const parseAMRPetriNet2IGraph = (
 			y: 0,
 			height: config.T.height,
 			width: config.T.width,
-			data: { type: NodeType.Transition, uid: undefined },
+			data: { type: NodeType.Transition, uid: undefined, strataType },
 			nodes: []
 		});
 

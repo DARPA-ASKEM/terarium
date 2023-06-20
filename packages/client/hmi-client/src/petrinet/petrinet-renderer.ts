@@ -19,6 +19,23 @@ const EDGE_OPACITY = 0.5;
 const HANDLE_SIZE = 4;
 const HANDLE_SIZE_HOVER = 8;
 
+const typeColors = [
+	'#fde725',
+	'#cde11d',
+	'#98d83e',
+	'#67cc5c',
+	'#40bd72',
+	'#25ac82',
+	'#1f998a',
+	'#24878e',
+	'#2b748e',
+	'#34618d',
+	'#3d4d8a',
+	'#453581',
+	'#481c6e',
+	'#440154'
+];
+
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
@@ -78,6 +95,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		const transitions = selection.filter(
 			(d) => d.data.type === 'T' || d.data.type === NodeType.Transition
 		);
+		const strataTypes: string[] = [];
+		selection.each((d) => {
+			const strataType = d.data.strataType;
+			if (!strataTypes.includes(strataType)) {
+				strataTypes.push(strataType);
+			}
+		});
 
 		// transitions
 		transitions
@@ -89,7 +113,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', '#FFF')
+			.style('fill', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -132,7 +156,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', '#FFF')
+			.style('stroke', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
 			.style('stroke-width', '6px')
 			.style('stroke-linecap', 'butt')
 			.style('stroke-linejoin', 'matter')
@@ -145,7 +169,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', '#FFF')
+			.attr('fill', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
@@ -174,7 +198,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', '#FFF')
+			.style('stroke', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
 			.style('stroke-width', '6px')
 			.style('stroke-linecap', 'butt')
 			.style('stroke-linejoin', 'matter')

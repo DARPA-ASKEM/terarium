@@ -35,7 +35,23 @@
 				</div>
 			</nav>
 			<section class="step-1">
-				<div class="instructions">Define the groups you want to stratify your model with.</div>
+				<div class="instructions">
+					<div class="buttons" v-if="strataModel">
+						<Button
+							class="p-button-sm p-button-outlined"
+							label="Go back"
+							icon="pi pi-arrow-left"
+							@click="strataModel = null"
+						/>
+						<Button
+							class="p-button-sm"
+							label="Continue to step 2: Assign types"
+							icon="pi pi-arrow-right"
+							@click="generateStrataModel"
+						/>
+					</div>
+					<span v-else>Define the groups you want to stratify your model with.</span>
+				</div>
 				<Accordion :active-index="0">
 					<AccordionTab header="Model">
 						<div class="step-1-inner">
@@ -108,7 +124,7 @@ const stratifyView = ref(StratifyView.Input);
 const stratifyStep = ref(1);
 const strataType = ref();
 const labels = ref();
-const strataModel = ref<Model>();
+const strataModel = ref<Model | null>(null);
 const model = computed(() => props.node.inputs[0].value?.[0].model);
 
 function generateStrataModel() {
