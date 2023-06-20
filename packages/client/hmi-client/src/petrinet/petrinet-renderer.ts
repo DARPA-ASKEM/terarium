@@ -138,7 +138,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke-linejoin', 'matter')
 			.style('fill', 'var(--text-color-primary')
 			.style('pointer-events', 'none')
-			.text((d) => d.label);
+			.html((d) => d.label);
 
 		// species
 		species
