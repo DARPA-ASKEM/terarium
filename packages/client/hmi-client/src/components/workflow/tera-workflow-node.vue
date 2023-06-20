@@ -216,8 +216,6 @@ function showNodeDrilldown() {
 function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.firstChild as HTMLElement) ?? el;
-	console.log(el);
-	console.log(portElement);
 	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
