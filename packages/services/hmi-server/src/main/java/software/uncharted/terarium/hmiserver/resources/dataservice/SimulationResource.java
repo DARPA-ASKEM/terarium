@@ -25,6 +25,9 @@ public class SimulationResource {
 	public Response getSimulation(
 		@PathParam("id") final String id
 	) {
-		return proxy.getSimulation(id);
+		return Response
+			.ok(Response.Status.OK)
+			.entity(proxy.getSimulation(id))
+			.build();
 	}
 }

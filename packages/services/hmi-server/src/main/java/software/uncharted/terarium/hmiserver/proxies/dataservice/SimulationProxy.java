@@ -42,13 +42,13 @@ public interface SimulationProxy {
 	@Path("/{id}/upload-url")
 	String getUploadURL(
 		@PathParam("id") String id,
-		@QueryParam("filename" String filename
+		@QueryParam("filename") String filename
 	);
 
 	@GET
 	@Path("/{id}/download-url")
 	String getDownloadURL(
 		@PathParam("id") String id,
-		@QueryParam("filename" String filename
+		@QueryParam("filename") String filename
 	);
 }
