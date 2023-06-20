@@ -164,8 +164,8 @@
 			</AccordionTab>
 			<AccordionTab v-if="model" header="Model configurations">
 				<tera-model-configuration
-					v-if="modelConfiguration"
-					:model-configuration="modelConfiguration"
+					v-if="modelConfigurations"
+					:model-configurations="modelConfigurations"
 					:is-editable="props.isEditable"
 				/>
 			</AccordionTab>
@@ -271,7 +271,7 @@ const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const model = ref<Model | null>(null);
 
-const modelConfiguration = ref<ModelConfiguration | null>(null);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
 
 // apparently this is never used?
 // const isEditing = ref<boolean>(false);
@@ -335,13 +335,20 @@ watch(
 	() => [props.assetId],
 	async () => {
 		if (openedWorkflowNodeStore.node?.operationType === 'ModelOperation') {
-			const modelConfigId = openedWorkflowNodeStore.node.outputs?.[0]?.value?.[0];
+			const modelConfigIds = openedWorkflowNodeStore.node.outputs;
 
-			if (modelConfigId) {
-				const response = await getModelConfigurationById(modelConfigId);
-				modelConfiguration.value = response;
-				model.value = await getModel(response.configuration.id);
-				fetchRelatedTerariumArtifacts();
+			if (modelConfigIds) {
+				for (let i = 0; i < modelConfigIds.length; i++) {
+					const modelConfigId = modelConfigIds[i].value?.[0];
+					// Don't need eslint-disable once we can pass in a list of ids
+					// eslint-disable-next-line
+					const response = await getModelConfigurationById(modelConfigId);
+					modelConfigurations.value.push(response);
+				}
+				if (modelConfigurations.value) {
+					model.value = await getModel(modelConfigurations.value[0].configuration.id);
+					fetchRelatedTerariumArtifacts();
+				}
 			}
 		} else if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
