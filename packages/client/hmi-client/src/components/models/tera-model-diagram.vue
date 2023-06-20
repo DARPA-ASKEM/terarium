@@ -327,7 +327,7 @@ const contextMenuItems = ref([
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
-	[props.model, graphElement],
+	[() => props.model, graphElement],
 	async () => {
 		if (props.model === null || graphElement.value === null) return;
 		const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
