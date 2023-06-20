@@ -65,23 +65,6 @@ export async function createSimulation(simulation: Simulation): Promise<Simulati
 	}
 }
 
-export async function updateSimulation(
-	id: Simulation['id'],
-	name: Simulation['name'],
-	description: Simulation['description']
-): Promise<Simulation | null> {
-	try {
-		const response = await API.patch(`/simulation/${id}`, {
-			name,
-			description
-		});
-		return response.data;
-	} catch (error) {
-		logger.error(error);
-		return null;
-	}
-}
-
 export async function deleteAnnotation(id: Simulation['id']) {
 	try {
 		const response = await API.delete(`/simulation/${id}`);
