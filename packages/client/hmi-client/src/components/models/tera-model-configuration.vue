@@ -14,7 +14,7 @@
 				<Column v-if="isEditable" header="" style="border: none" />
 				<Column header="" style="border: none" />
 				<Column
-					v-for="(header, i) in ['initials', 'parameters']"
+					v-for="(header, i) in Object.keys(configurations[0])"
 					:header="capitalize(header)"
 					:colspan="configurations[0][header].length"
 					:key="i"
@@ -28,6 +28,11 @@
 					<Column v-if="model.semantics?.ode" v-for="(variableName, i) in model.semantics.ode[header]"
 						:header="variableName.target" :key="i" />
 				</template> -->
+				<Column
+					v-for="(variableName, i) in configurations[0].rates"
+					:header="variableName.target"
+					:key="i"
+				/>
 				<Column
 					v-for="(variableName, i) in configurations[0].initials"
 					:header="variableName.target"
@@ -52,7 +57,7 @@
 		</Column>
 		<Column
 			v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
-				3,
+				1,
 				Object.keys(modelConfigurationTable[0]).length
 			)"
 			:key="i"
@@ -308,7 +313,8 @@ const onCellEditStart = (event) => {
 function updateModelConfigValue() {
 	const { data, field } = cellValueToEdit.value;
 	const { type, value, typeIndex, configIndex } = data[field];
-	console.log(data[field]);
+
+	// just create the clone within here
 
 	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
 		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
