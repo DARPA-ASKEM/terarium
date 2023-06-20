@@ -25,7 +25,7 @@
 			>
 				<div
 					class="input-port-container"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseenter="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', input, WorkflowDirection.FROM_INPUT)"
 					@focus="() => {}"
@@ -56,7 +56,7 @@
 			>
 				<div
 					class="output-port-container"
-					@mouseover="(event) => mouseoverPort(event)"
+					@mouseenter="(event) => mouseoverPort(event)"
 					@mouseleave="emit('port-mouseleave')"
 					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
@@ -216,6 +216,8 @@ function showNodeDrilldown() {
 function mouseoverPort(event) {
 	const el = event.target as HTMLElement;
 	const portElement = (el.firstChild as HTMLElement) ?? el;
+	console.log(el);
+	console.log(portElement);
 	const portDirection = portElement.className.split(' ')[0];
 	const nodePosition: Position = { x: props.node.x, y: props.node.y };
 	const totalOffsetX = portElement.offsetLeft + (portDirection === 'input' ? 0 : portBaseSize);
