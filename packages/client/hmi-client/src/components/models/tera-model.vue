@@ -35,18 +35,18 @@
 		</template>
 		<table class="model-biblio">
 			<tr>
-				<th class="model-biblio-header">Framework</th>
-				<th class="model-biblio-header">Model Version</th>
-				<th class="model-biblio-header">Date Created</th>
-				<th class="model-biblio-header">Created By</th>
-				<th class="model-biblio-header">Source</th>
+				<th>Framework</th>
+				<th>Model Version</th>
+				<th>Date Created</th>
+				<th>Created By</th>
+				<th>Source</th>
 			</tr>
 			<tr>
-				<td class="model-biblio-column">{{ model?.framework }}</td>
-				<td class="model-biblio-column">{{ model?.model_version }}</td>
-				<td class="model-biblio-column">{{ model?.metadata.processed_at }}</td>
-				<td class="model-biblio-column">{{ model?.description }}</td>
-				<td class="model-biblio-column">{{ model?.metadata.processed_by }}</td>
+				<td>{{ model?.framework }}</td>
+				<td>{{ model?.model_version }}</td>
+				<td>{{ model?.metadata.processed_at }}</td>
+				<td>{{ model?.description }}</td>
+				<td>{{ model?.metadata.processed_by }}</td>
 			</tr>
 		</table>
 		<Accordion
@@ -395,10 +395,6 @@ function getSource(sp) {
 </script>
 
 <style scoped>
-/* :deep(.p-datatable .p-datatable-tbody > .p-rowgroup-footer > td){
-	border: none;
-} */
-
 :deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
 	border-bottom: none;
 }
@@ -415,7 +411,7 @@ function getSource(sp) {
 	font-weight: 600;
 	color: var(--text-color-primary);
 }
-.model-biblio-header {
+.model-biblio th {
 	padding-right: 2rem;
 	font-family: var(--font-family);
 	font-weight: 500;
@@ -423,7 +419,7 @@ function getSource(sp) {
 	color: var(--text-color-secondary);
 	text-align: left;
 }
-.model-biblio-column {
+.model-biblio td {
 	padding-right: 50px;
 	font-family: var(--font-family);
 	font-weight: 400;
