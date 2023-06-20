@@ -1,8 +1,8 @@
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
-import { Simulation, SimulationParams, CalibrationRequest } from '@/types/Types';
+import { Simulation, SimulationRequest, CalibrationRequest } from '@/types/Types';
 
-export async function makeForecast(simulationParam: SimulationParams) {
+export async function makeForecast(simulationParam: SimulationRequest) {
 	try {
 		const resp = await API.post('simulation/forecast', simulationParam);
 		const output = resp.data;

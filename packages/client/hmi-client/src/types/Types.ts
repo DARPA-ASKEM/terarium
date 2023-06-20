@@ -149,6 +149,13 @@ export interface DatasetLocation {
     mappings: any;
 }
 
+export interface SimulationRequest {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
 export interface TimeSpan {
     start: number;
     end: number;

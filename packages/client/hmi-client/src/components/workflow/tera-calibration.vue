@@ -191,7 +191,7 @@ import TeraModelConfiguration from '@/components/models/tera-model-configuration
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { logger } from '@/utils/logger';
-import { CalibrationRequest, CsvAsset, Dataset } from '@/types/Types';
+import { CalibrationRequest, CsvAsset, Dataset, SimulationRequest } from '@/types/Types';
 import { ModelConfig } from '@/types/ModelConfig';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import Slider from 'primevue/slider';
@@ -267,10 +267,10 @@ const calibrate = async () => {
 		}
 		featureMappings.timestep = timestepColumn.value;
 		const calibrationParam: CalibrationRequest = {
-			modelConfigId: modelConfig.value.id, // Take out all the extra content in model
+			modelConfigId: modelConfig.value.id,
 			extra: {},
 			dataset: { id: datasetId.value, filename: datasetName.value, mappings: featureMappings },
-			engine: 'CIEMSS'
+			engine: 'SciML'
 		};
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
@@ -307,11 +307,14 @@ const calibrate = async () => {
 
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
-		const payload = {
-			model: calibrationParam.model,
-			initials: modelConfig.value.initialValues,
-			params: calibratedParams,
-			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
+		const payload: SimulationRequest = {
+			modelConfigId: calibrationParam.modelConfigId,
+			timespan: {
+				start: Number(csv[1][indexOfTimestep]),
+				end: Number(csv[csv.length - 1][indexOfTimestep])
+			},
+			extra: {},
+			engine: 'SciML'
 		};
 
 		calibratedModelConfig.value = cloneDeep(modelConfig.value);
