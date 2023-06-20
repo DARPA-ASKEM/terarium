@@ -50,20 +50,21 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<template v-for="(config, i) in configurations">
-			<Column
-				v-for="(value, j) of [...config.initials, ...config.parameters]"
-				:key="i + j"
-				:field="value['target'] ?? value['id']"
-			>
-				<template #body="{ data, field }">
-					{{ data[field]?.value }}
-				</template>
-				<template #editor="{ data, field }">
-					{{ data[field]?.value }}
-				</template>
-			</Column>
-		</template>
+		<Column
+			v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
+				3,
+				Object.keys(modelConfigurationTable[0]).length
+			)"
+			:key="i"
+			:field="value"
+		>
+			<template #body="{ data, field }">
+				{{ data[field]?.value }}
+			</template>
+			<template #editor="{ data, field }">
+				{{ data[field]?.value }}
+			</template>
+		</Column>
 		<!-- Add checkboxes for calibrate in a seperate PR
 			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
@@ -263,11 +264,11 @@ async function addModelConfiguration() {
 		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
 	);
 
-	// console.log(response);
+	console.log(response.id);
 
 	openedWorkflowNodeStore.appendOutputPort({
 		type: ModelOperation.outputs[0].type,
-		label: `Config ${props.modelConfigurations.length}`,
+		label: `Config ${props.modelConfigurations.length + 1}`,
 		value: response.id
 	});
 
@@ -307,6 +308,7 @@ const onCellEditStart = (event) => {
 function updateModelConfigValue() {
 	const { data, field } = cellValueToEdit.value;
 	const { type, value, typeIndex, configIndex } = data[field];
+	console.log(data[field]);
 
 	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
 		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
@@ -318,8 +320,6 @@ function updateModelConfigValue() {
 			typeIndex
 		].expression = value;
 	}
-
-	// Casing fix needs work
 	updateModelConfiguration(editableModelConfigs.value[configIndex]);
 
 	openValueConfig.value = false;
