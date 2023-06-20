@@ -331,25 +331,40 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
+async function getModelConfigurations() {
+	if (openedWorkflowNodeStore.node) {
+		const modelConfigIds = openedWorkflowNodeStore.node.outputs;
+		modelConfigurations.value = [];
+
+		if (modelConfigIds) {
+			for (let i = 0; i < modelConfigIds.length; i++) {
+				const modelConfigId = modelConfigIds[i].value?.[0];
+				// Don't need to eslint-disable no await in for loop once we are able to pass in a list of ids
+				// eslint-disable-next-line
+				const response = await getModelConfigurationById(modelConfigId);
+				modelConfigurations.value.push(response);
+			}
+			if (modelConfigurations.value) {
+				model.value = await getModel(modelConfigurations.value[0].configuration.id);
+				fetchRelatedTerariumArtifacts();
+			}
+		}
+	}
+}
+
+watch(
+	() => [openedWorkflowNodeStore.node?.outputs],
+	() => {
+		getModelConfigurations();
+	},
+	{ deep: true }
+);
+
 watch(
 	() => [props.assetId],
 	async () => {
 		if (openedWorkflowNodeStore.node?.operationType === 'ModelOperation') {
-			const modelConfigIds = openedWorkflowNodeStore.node.outputs;
-
-			if (modelConfigIds) {
-				for (let i = 0; i < modelConfigIds.length; i++) {
-					const modelConfigId = modelConfigIds[i].value?.[0];
-					// Don't need eslint-disable once we can pass in a list of ids
-					// eslint-disable-next-line
-					const response = await getModelConfigurationById(modelConfigId);
-					modelConfigurations.value.push(response);
-				}
-				if (modelConfigurations.value) {
-					model.value = await getModel(modelConfigurations.value[0].configuration.id);
-					fetchRelatedTerariumArtifacts();
-				}
-			}
+			getModelConfigurations();
 		} else if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
