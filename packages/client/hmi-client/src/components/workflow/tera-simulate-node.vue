@@ -29,7 +29,7 @@ import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { shimPetriModel } from '@/services/models/petri-shim';
 
-import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { makeForecastJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
 
@@ -67,7 +67,7 @@ const runSimulate = async () => {
 					tspan: openedWorkflowNodeStore.tspan
 				};
 
-				const response = await makeForecast(payload);
+				const response = await makeForecastJob(payload);
 				console.log(payload, config.model, AMRToPetri(config.model));
 				return response.id;
 			})
@@ -84,7 +84,7 @@ const runSimulate = async () => {
 // 	async (inputList) => {
 // 		const forecastOutputList = await Promise.all(
 // 			inputList.map(({ value }) =>
-// 				makeForecast({
+// 				makeForecastJob({
 // 					model: value.model.id,
 // 					initials: value.initialValues,
 // 					params: value.parameterValues,

@@ -172,7 +172,7 @@ import Button from 'primevue/button';
 import { Poller } from '@/api/api';
 import {
 	makeCalibrateJob,
-	makeForecast,
+	makeForecastJob,
 	getRunStatus,
 	getRunResult
 } from '@/services/models/simulation-service';
@@ -326,7 +326,7 @@ const calibrate = async () => {
 			logger.error("The resulting parameters include null value(s) which can't be simulated.");
 		} else {
 			// do polling and retrieve calibration result
-			const forecastResponse = await makeForecast(payload);
+			const forecastResponse = await makeForecastJob(payload);
 			const forecastPoller = new Poller<object>()
 				.setInterval(2000)
 				.setThreshold(90)
