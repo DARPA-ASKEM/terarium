@@ -263,7 +263,7 @@ const getAssets = async (params: GetAssetsParams) => {
 			xddResults = await searchXDDDocuments(term, searchParam);
 			if (xddResults) {
 				assetList = xddResults.data;
-				hits = xddResults.hits;
+				hits = xddResults.hits.value;
 			}
 			projectAssetType = ProjectAssetTypes.DOCUMENTS;
 			break;

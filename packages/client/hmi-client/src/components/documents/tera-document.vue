@@ -318,7 +318,7 @@ const equations = computed(
 	() => artifacts.value.filter((d) => d.askemClass === XDDExtractionType.Equation) || []
 );
 const otherUrls = computed(() =>
-	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions.length > 0
+	doc.value?.knownEntities && doc.value.knownEntities.urlExtractions?.length > 0
 		? uniqWith(doc.value.knownEntities.urlExtractions, isEqual) // removes duplicate urls
 		: []
 );

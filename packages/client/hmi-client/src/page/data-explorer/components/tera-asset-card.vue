@@ -61,7 +61,7 @@
 					/>
 					<div class="link" v-else-if="relatedAsset.properties.doi">
 						<a
-							v-if="relatedAsset.properties.documentBibjson.link"
+							v-if="relatedAsset.properties.documentBibjson?.link"
 							:href="relatedAsset.properties.documentBibjson.link[0].url"
 							@click.stop
 							rel="noreferrer noopener"
@@ -142,7 +142,7 @@ const urlExtractions = computed(() => {
 		const documentsWithUrls = props.asset.knownEntities.askemObjects.filter(
 			(ex) =>
 				ex.askemClass === XDDExtractionType.Doc &&
-				ex.properties.documentBibjson.knownEntities != null &&
+				ex.properties.documentBibjson?.knownEntities &&
 				!isEmpty(ex.properties.documentBibjson.knownEntities.urlExtractions)
 		);
 

@@ -100,9 +100,9 @@ export interface DatasetColumn {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
-    annotations: { [index: string]: string[] };
+    annotations: string[];
     metadata?: { [index: string]: any };
-    grounding?: { [index: string]: Grounding };
+    grounding?: Grounding;
 }
 
 export interface Grounding {
@@ -122,6 +122,11 @@ export interface PetriNetModel {
     metadata?: ModelMetadata;
 }
 
+export interface Hits {
+    value: number;
+    relation: string;
+}
+
 export interface CalibrationParams {
     model: string;
     initials: { [index: string]: number };
@@ -135,7 +140,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     data: Document[];
     nextPage: string;
     scrollId: string;
-    hits: any;
+    hits: Hits;
     facets: { [index: string]: XDDFacetsItemResponse };
 }
 
