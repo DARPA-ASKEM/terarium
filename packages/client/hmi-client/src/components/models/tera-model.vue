@@ -42,7 +42,7 @@
 				<th>Source</th>
 			</tr>
 			<tr>
-				<td>{{ model?.framework }}</td>
+				<td>{{ model?.framework ?? 'PetriNet' }}</td>
 				<td>{{ model?.model_version }}</td>
 				<td>{{ model?.metadata.processed_at }}</td>
 				<td>{{ model?.description }}</td>
@@ -60,11 +60,8 @@
 				</template>
 				<p v-if="assetId !== ''" v-html="description" />
 				<template v-else>
-					<label for="placeholder" /><Textarea
-						v-model="newDescription"
-						rows="5"
-						placeholder="Description of new model"
-					/>
+					<label for="placeholder" />
+					<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
 				</template>
 			</AccordionTab>
 			<AccordionTab>
@@ -128,8 +125,8 @@
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
-					<header id="Variable Statements">
-						Variable Statements<span class="artifact-amount">({{ metaData?.length }})</span>
+					<header id="Other extractions">
+						Other extractions<span class="artifact-amount">({{ metaData?.length }})</span>
 					</header>
 				</template>
 				<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
@@ -210,6 +207,7 @@ enum ModelView {
 	DESCRIPTION = 'description',
 	MODEL = 'model'
 }
+
 /*
 // This is the model content that is displayed in the scroll-to-section featuer
 // That feature was removed, but way may want to bring it back.
@@ -228,7 +226,7 @@ const modelContent = computed(() => [
 	{ key: 'Parameters', value: model.value?.semantics?.ode?.parameters },
 	{ key: 'State variables', value: model.value?.model.states },
 	{ key: 'Transitions', value: model.value?.model.transitions },
-	{ key: 'Variable Statements', value: model.value?.metadata?.variable_statements }
+	{ key: 'Other extractions', value: model.value?.metadata?.variable_statements }
 ]);
 */
 
