@@ -11,6 +11,8 @@ describe('test generate age strata model', () => {
 		const stateNames = ['Young', 'Old'];
 		const model = generateAgeStrataModel(stateNames);
 		expect(model).toEqual({
+			id: '',
+			framework: '',
 			name: 'Age-contact strata model',
 			description: 'Age-contact strata model',
 			schema:
@@ -22,13 +24,21 @@ describe('test generate age strata model', () => {
 						id: 'A1',
 						name: 'Young',
 						description:
-							'Number of individuals relative to the total population that are in age group A1.'
+							'Number of individuals relative to the total population that are in age group A1.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
 					},
 					{
 						id: 'A2',
 						name: 'Old',
 						description:
-							'Number of individuals relative to the total population that are in age group A2.'
+							'Number of individuals relative to the total population that are in age group A2.',
+						units: {
+							expression: 'person',
+							expression_mathml: '<ci>person</ci>'
+						}
 					}
 				],
 				transitions: [
@@ -106,7 +116,11 @@ describe('test generate age strata model', () => {
 					]
 				}
 			},
-			metadata: {}
+			metadata: {
+				processed_at: 0,
+				processed_by: '',
+				variable_statements: []
+			}
 		});
 	});
 });
@@ -116,6 +130,8 @@ describe('test generate location strata model', () => {
 		const stateNames = ['Toronto', 'Montreal'];
 		const model = generateLocationStrataModel(stateNames);
 		expect(model).toEqual({
+			id: '',
+			framework: '',
 			name: 'Location-travel strata model',
 			description: 'Location-travel strata model',
 			schema:
@@ -199,7 +215,11 @@ describe('test generate location strata model', () => {
 					]
 				}
 			},
-			metadata: {}
+			metadata: {
+				processed_at: 0,
+				processed_by: '',
+				variable_statements: []
+			}
 		});
 	});
 });

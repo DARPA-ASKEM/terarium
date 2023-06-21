@@ -28,7 +28,11 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		name,
 		description: `Number of individuals relative to the total population that are in age group A${
 			index + 1
-		}.`
+		}.`,
+		units: {
+			expression: 'person',
+			expression_mathml: '<ci>person</ci>'
+		}
 	}));
 	const transitions: Transition[] = [];
 	states.forEach((outerState, i) =>
@@ -103,7 +107,11 @@ export function generateLocationStrataModel(stateNames: string[]) {
 		name,
 		description: `Number of individuals relative to the total population that are in location L${
 			index + 1
-		}.`
+		}.`,
+		units: {
+			expression: 'person',
+			expression_mathml: '<ci>person</ci>'
+		}
 	}));
 	const transitions: Transition[] = [];
 	states.forEach((outerState, i) =>
