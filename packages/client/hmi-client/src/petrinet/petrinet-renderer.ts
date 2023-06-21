@@ -81,9 +81,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		);
 		const strataTypes: string[] = [];
 		selection.each((d) => {
-			const strataType: string = d.data.strataType;
+			const strataType = d.data.strataType;
 			if (strataType && !strataTypes.includes(strataType)) {
-				strataTypes.push(strataType);
+				strataTypes.push(strataType as string);
 			}
 		});
 
