@@ -1,6 +1,5 @@
 <template>
 	<tera-slider
-		class="preview-slider"
 		:content-width="contentWidth"
 		tab-width="0"
 		direction="right"
@@ -11,7 +10,6 @@
 				v-if="previewItemResourceType === ResourceType.XDD"
 				:xdd-uri="previewItemId"
 				:previewLineLimit="3"
-				:project="resources.activeProject"
 				:highlight="searchTerm"
 				:is-editable="false"
 				@close-preview="closePreview"
@@ -19,7 +17,6 @@
 			<tera-dataset
 				v-else-if="previewItemResourceType === ResourceType.DATASET"
 				:asset-id="previewItemId"
-				:project="resources.activeProject"
 				:highlight="searchTerm"
 				:is-editable="false"
 				@close-preview="closePreview"
@@ -27,7 +24,7 @@
 			<tera-model
 				v-else-if="previewItemResourceType === ResourceType.MODEL"
 				:asset-id="previewItemId"
-				:project="resources.activeProject"
+				:project="(resources.activeProject as IProject)"
 				:highlight="searchTerm"
 				:is-editable="false"
 				@close-preview="closePreview"
@@ -60,6 +57,7 @@ import TeraModel from '@/components/models/tera-model.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 import TeraSlider from '@/components/widgets/tera-slider.vue';
 import TeraDocument from '@/components/documents/tera-document.vue';
+import { IProject } from '@/types/Project';
 
 const resources = useResourcesStore();
 
@@ -77,7 +75,6 @@ const props = defineProps({
 		type: String,
 		default: '0'
 	},
-
 	// slider-panel props
 	selectedSearchItems: {
 		type: Array as PropType<ResultType[]>,
@@ -101,6 +98,14 @@ const props = defineProps({
 const previewItemState = ref(props.previewItem);
 const previewItemResourceType = ref<ResourceType | null>(null);
 
+const previewItemId = computed(() => {
+	if (!previewItemState.value) return '';
+	if (isDocument(previewItemState.value)) {
+		return previewItemState.value.gddId;
+	}
+	return previewItemState.value.id as string;
+});
+
 const emit = defineEmits(['update:previewItem', 'toggle-data-item-selected']);
 
 watch(
@@ -116,14 +121,6 @@ watch(
 function closePreview() {
 	emit('update:previewItem', null);
 }
-
-const previewItemId = computed(() => {
-	if (!previewItemState.value) return '';
-	if (isDocument(previewItemState.value)) {
-		return previewItemState.value.gddId;
-	}
-	return previewItemState.value.id as string;
-});
 
 const previewItemSelected = computed(() =>
 	props.selectedSearchItems.some((selectedItem) => selectedItem === props.previewItem)

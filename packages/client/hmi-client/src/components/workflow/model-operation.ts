@@ -1,19 +1,16 @@
-import { Operation } from '@/types/workflow';
+import { Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { Model } from '@/types/Model';
-
-interface StringValueMap {
-	[key: string]: string;
-}
+import { NumericValueMap } from '@/types/common';
 
 export const ModelOperation: Operation = {
-	name: 'ModelOperation',
+	name: WorkflowOperationTypes.MODEL,
 	description: 'Select a model and configure its initial and parameter values.',
 	isRunnable: true,
 	inputs: [],
 	outputs: [{ type: 'modelConfig' }],
 	action: async (modelConfig: {
 		model: Model;
-		intialValues: StringValueMap;
-		parameterValues: StringValueMap;
+		intialValues: NumericValueMap;
+		parameterValues: NumericValueMap;
 	}) => [{ type: 'modelConfig', value: modelConfig }]
 };

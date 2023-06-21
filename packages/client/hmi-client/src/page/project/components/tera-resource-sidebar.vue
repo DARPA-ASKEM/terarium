@@ -2,20 +2,13 @@
 	<nav>
 		<header>
 			<Button
-				icon="pi pi-trash"
-				:disabled="!activeTab.assetId || activeTab.assetName === 'overview'"
-				v-tooltip="`Remove ${activeTab.assetName}`"
-				class="p-button-icon-only p-button-text p-button-rounded"
-				@click="isRemovalModal = true"
-			/>
-			<Button
 				icon="pi pi-code"
 				v-tooltip="`New code file`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
 					emit('open-asset', {
 						assetName: 'New file',
-						assetType: ProjectAssetTypes.CODE,
+						pageType: ProjectAssetTypes.CODE,
 						assetId: undefined
 					})
 				"
@@ -25,9 +18,9 @@
 				v-tooltip="`Create model from Equation`"
 				class="p-button-icon-only p-button-text p-button-rounded"
 				@click="
-					emit('create-asset', {
+					emit('open-asset', {
 						assetName: 'New Model',
-						assetType: ProjectAssetTypes.MODELS,
+						pageType: ProjectAssetTypes.MODELS,
 						assetId: undefined
 					})
 				"
@@ -35,19 +28,33 @@
 		</header>
 		<Button
 			class="asset-button"
-			:active="activeTab.assetType === 'overview'"
+			:active="activeTab.pageType === ProjectPages.OVERVIEW"
 			plain
 			text
 			size="small"
-			@click="emit('open-overview')"
+			@click="
+				emit('open-asset', {
+					assetName: 'Overview',
+					pageType: ProjectPages.OVERVIEW,
+					assetId: undefined
+				})
+			"
 		>
-			<vue-feather class="p-button-icon-left" type="layout" size="1rem" stroke="rgb(16, 24, 40)" />
-			<span class="p-button-label">Overview</span>
+			<span>
+				<vue-feather
+					class="p-button-icon-left"
+					type="layout"
+					size="1rem"
+					stroke="rgb(16, 24, 40)"
+				/>
+				<span class="p-button-label">Overview</span>
+			</span>
 		</Button>
 		<Accordion v-if="!isEmpty(assets)" :multiple="true">
 			<AccordionTab v-for="[type, tabs] in assets" :key="type">
 				<template #header>
-					{{ capitalize(type) }}
+					<template v-if="type === ProjectAssetTypes.DOCUMENTS">Publications & Documents</template>
+					<template v-else>{{ capitalize(type) }}</template>
 					<aside>({{ tabs.size }})</aside>
 				</template>
 				<Button
@@ -60,20 +67,43 @@
 					text
 					size="small"
 					@click="emit('open-asset', tab)"
+					@mouseover="activeAssetId = tab.assetId"
+					@mouseleave="activeAssetId = undefined"
+					@focus="activeAssetId = tab.assetId"
+					@focusout="activeAssetId = undefined"
 				>
-					<vue-feather
-						v-if="typeof getAssetIcon(tab.assetType ?? null) === 'string'"
-						class="p-button-icon-left icon"
-						:type="getAssetIcon(tab.assetType ?? null)"
-						size="1rem"
-						stroke="rgb(16, 24, 40)"
+					<span
+						:draggable="
+							activeTab.pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
+							(tab.pageType === ProjectAssetTypes.MODELS ||
+								tab.pageType === ProjectAssetTypes.DATASETS)
+						"
+						@dragstart="startDrag(tab)"
+						@dragend="endDrag"
+						:class="isEqual(draggedAsset, tab) ? 'dragged-asset' : ''"
+						fallback-class="original-asset"
+						:force-fallback="true"
+					>
+						<vue-feather
+							v-if="typeof getAssetIcon(tab.pageType ?? null) === 'string'"
+							class="p-button-icon-left icon"
+							:type="getAssetIcon(tab.pageType ?? null)"
+							size="1rem"
+							:stroke="isEqual(draggedAsset, tab) ? 'var(--text-color-primary)' : 'rgb(16, 24, 40)'"
+						/>
+						<component
+							v-else
+							:is="getAssetIcon(tab.pageType ?? null)"
+							class="p-button-icon-left icon"
+						/>
+						<span class="p-button-label">{{ tab.assetName }}</span>
+					</span>
+					<!-- This 'x' only shows while hovering over the row -->
+					<i
+						v-if="activeAssetId && activeAssetId === tab.assetId"
+						class="pi pi-times removeResourceButton"
+						@click="isRemovalModal = true"
 					/>
-					<component
-						v-else
-						:is="getAssetIcon(tab.assetType ?? null)"
-						class="p-button-icon-left icon"
-					/>
-					<span class="p-button-label">{{ tab.assetName }}</span>
 				</Button>
 			</AccordionTab>
 		</Accordion>
@@ -110,7 +140,8 @@ import { getAssetIcon } from '@/services/project';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { IProject, ProjectAssetTypes, isProjectAssetTypes } from '@/types/Project';
+import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
+import { useDragEvent } from '@/services/drag-drop';
 
 type IProjectAssetTabs = Map<ProjectAssetTypes, Set<Tab>>;
 
@@ -120,15 +151,11 @@ const props = defineProps<{
 	tabs: Tab[];
 }>();
 
-const emit = defineEmits([
-	'open-asset',
-	'open-overview',
-	'remove-asset',
-	'close-tab',
-	'create-asset'
-]);
+const emit = defineEmits(['open-asset', 'open-overview', 'remove-asset', 'close-tab']);
 
+const activeAssetId = ref<string | undefined>('');
 const isRemovalModal = ref(false);
+const draggedAsset = ref<Tab | null>(null);
 
 const assets = computed((): IProjectAssetTabs => {
 	const tabs = new Map<ProjectAssetTypes, Set<Tab>>();
@@ -142,9 +169,9 @@ const assets = computed((): IProjectAssetTabs => {
 			const projectAssetType = type as ProjectAssetTypes;
 			const typeAssets = projectAssets[projectAssetType].map((asset) => {
 				const assetName = (asset?.name || asset?.title || asset?.id)?.toString();
-				const assetType = asset?.type ?? projectAssetType;
-				const assetId = asset?.id.toString();
-				return { assetName, assetType, assetId };
+				const pageType = asset?.type ?? projectAssetType;
+				const assetId = asset?.id?.toString();
+				return { assetName, pageType, assetId };
 			}) as Tab[];
 			tabs.set(projectAssetType, new Set(typeAssets));
 		}
@@ -156,6 +183,21 @@ const assets = computed((): IProjectAssetTabs => {
 function removeAsset(asset = props.activeTab) {
 	emit('remove-asset', asset);
 	isRemovalModal.value = false;
+}
+
+const { setDragData, deleteDragData } = useDragEvent();
+
+function startDrag(tab: Tab) {
+	const { assetId, pageType } = tab;
+	if (assetId && pageType) {
+		setDragData('initAssetNode', { assetId, assetType: pageType });
+		draggedAsset.value = tab;
+	}
+}
+
+function endDrag() {
+	deleteDragData('assetNode');
+	draggedAsset.value = null;
 }
 </script>
 
@@ -173,6 +215,19 @@ header {
 .icon {
 	fill: var(--text-color-primary);
 	overflow: visible;
+}
+
+.removeResourceButton {
+	color: var(--text-color-subdued);
+	margin-right: 0.75rem;
+	font-size: 0.75rem;
+}
+.removeResourceButton:hover {
+	color: var(--text-color-danger);
+}
+.dragged-asset {
+	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
 }
 
 ::v-deep(.p-accordion .p-accordion-content) {
@@ -195,7 +250,14 @@ header {
 ::v-deep(.asset-button.p-button) {
 	display: inline-flex;
 	overflow: hidden;
+	padding: 0;
+}
+
+::v-deep(.asset-button.p-button > span) {
+	display: inline-flex;
+	width: 100%;
 	padding: 0.375rem 1rem;
+	overflow: hidden;
 }
 
 ::v-deep(.asset-button.p-button[active='true']) {
@@ -220,6 +282,10 @@ header {
 
 .pi-spinner {
 	font-size: 4rem;
+}
+
+.remove-modal:deep(main) {
+	max-width: 50rem;
 }
 
 .remove-modal p {

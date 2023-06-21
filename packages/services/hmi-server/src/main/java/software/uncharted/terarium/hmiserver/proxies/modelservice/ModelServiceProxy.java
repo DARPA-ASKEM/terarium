@@ -16,6 +16,7 @@ import software.uncharted.terarium.hmiserver.models.modelservice.ModelCompositio
 @Produces(MediaType.APPLICATION_JSON)
 public interface ModelServiceProxy {
 	@PUT
+	@Path("/api/models")
 	Response createModel();
 
 	@POST

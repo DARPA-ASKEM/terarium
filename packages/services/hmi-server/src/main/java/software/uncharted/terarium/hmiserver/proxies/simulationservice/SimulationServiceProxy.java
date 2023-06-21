@@ -13,7 +13,7 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.Calibratio
 @Produces(MediaType.APPLICATION_JSON)
 public interface SimulationServiceProxy {
 	@POST
-	@Path("/calls/forecast")
+	@Path("/calls/simulate")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response makeForecastRun(
 		SimulationParams simulationParams

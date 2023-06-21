@@ -3,6 +3,8 @@ import { useToastService } from '@/services/toast';
 import axios from 'axios';
 import { isEmpty } from 'lodash';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const LOGS = axios.create({
 	baseURL: '/api'
 });
@@ -30,7 +32,7 @@ export class LogBuffer {
 		this.logs.push(log);
 	};
 
-	isEmpty = (): boolean => isEmpty(this.logs.length);
+	isEmpty = (): boolean => isEmpty(this.logs);
 
 	getLogBuffer = (): LogDetailsType[] => this.logs;
 
@@ -52,7 +54,9 @@ export class LogBuffer {
 				}
 			} catch (error: any) {
 				console.error(error);
-				toast.error('Error Sending Logs', error);
+				if (!isProduction) {
+					toast.error('Error Sending Logs', error);
+				}
 			}
 		}
 	};

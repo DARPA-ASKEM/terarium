@@ -38,7 +38,7 @@
 				</template>
 			</Dialog>
 		</section>
-		<aside class="suggested-terms" v-if="!isEmpty(terms)">
+		<aside class="suggested-terms" v-if="!isEmpty(terms) && isDataExplorer">
 			Suggested terms:
 			<Chip v-for="term in terms" :key="term" removable remove-icon="pi pi-times">
 				<span @click="searchBarRef?.addToQuery(term)">{{ term }}</span>
@@ -128,8 +128,10 @@ function closeLogoutDialog() {
 const searchBarRef = ref();
 const terms = ref<string[]>([]);
 
-async function updateRelatedTerms(q?: string) {
-	terms.value = await getRelatedTerms(q);
+async function updateRelatedTerms(query?: string) {
+	// Don't update related terms if the query is empty as we will stay in the previous one
+	// Accept the empty query once we get out of the data explorer route
+	if (!isEmpty(query) || !isDataExplorer.value) terms.value = await getRelatedTerms(query);
 }
 
 function searchByExampleModalToggled() {

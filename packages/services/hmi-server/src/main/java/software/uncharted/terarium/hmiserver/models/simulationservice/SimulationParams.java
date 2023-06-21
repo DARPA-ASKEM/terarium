@@ -10,7 +10,7 @@ import java.util.Map;
 @Data
 @Accessors(chain = true)
 public class SimulationParams implements Serializable {
-	private String petri;
+	private String model;
 	private Map<String, Double> initials;
 	private List<Double> tspan;
 	private Map<String, Double> params;

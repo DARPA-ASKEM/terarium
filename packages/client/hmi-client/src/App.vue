@@ -92,8 +92,8 @@ import * as ProjectService from '@/services/project';
 import useResourcesStore from '@/stores/resources';
 import { IProject } from '@/types/Project';
 import { ResourceType } from '@/types/common';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { useCurrentRoute } from './router/index';
-import TeraModal from './components/widgets/tera-modal.vue';
 
 const toast = useToastService();
 /**

@@ -11,55 +11,34 @@
 		:hide-header="documentView === DocumentView.PDF"
 		:stretch-content="documentView === DocumentView.PDF"
 	>
-		<template #nav>
-			<tera-asset-nav
-				:asset-content="documentContent"
-				:show-header-links="documentView === DocumentView.EXRACTIONS"
-				v-if="isEditable"
-			>
-				<template #viewing-mode>
-					<span class="p-buttonset">
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="Extractions"
-							icon="pi pi-list"
-							@click="documentView = DocumentView.EXRACTIONS"
-							:active="documentView === DocumentView.EXRACTIONS"
-						/>
-						<Button
-							class="p-button-secondary p-button-sm"
-							label="PDF"
-							icon="pi pi-file"
-							:loading="!pdfLink"
-							@click="documentView = DocumentView.PDF"
-							:active="documentView === DocumentView.PDF"
-						/>
-					</span>
-				</template>
-				<template #page-search>
-					<!-- TODO: Add search on page function (highlight matches and scroll to the next one?)-->
-					<span class="p-input-icon-left">
-						<i class="pi pi-search" />
-						<InputText placeholder="Find in page" class="p-inputtext-sm" />
-					</span>
-				</template>
-			</tera-asset-nav>
-		</template>
 		<template #bottom-header-buttons>
 			<Button
+				v-if="!isEditable"
 				class="p-button-sm p-button-outlined"
 				icon="pi pi-external-link"
 				label="Open PDF"
 				@click="openPDF"
 				:loading="!pdfLink && !linkIsPDF()"
 			/>
-			<Button
-				class="p-button-sm p-button-outlined"
-				@click="downloadPDF"
-				:icon="'pi pi-cloud-download'"
-				:loading="!pdfLink"
-				label="Download PDF"
-			/>
+		</template>
+		<template #edit-buttons>
+			<span class="p-buttonset">
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="Extractions"
+					icon="pi pi-list"
+					@click="documentView = DocumentView.EXRACTIONS"
+					:active="documentView === DocumentView.EXRACTIONS"
+				/>
+				<Button
+					class="p-button-secondary p-button-sm"
+					label="PDF"
+					icon="pi pi-file"
+					:loading="!pdfLink"
+					@click="documentView = DocumentView.PDF"
+					:active="documentView === DocumentView.PDF"
+				/>
+			</span>
 		</template>
 		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
@@ -159,7 +138,12 @@
 				</template>
 				<ul>
 					<li class="extracted-item" v-for="(url, index) in githubUrls" :key="index">
-						<tera-import-code-button v-if="isEditable" :urlString="url" @open-code="openCode" />
+						<tera-import-github-file
+							:urlString="url"
+							:show-import-button="isEditable"
+							:project="project"
+							@open-code="openCode"
+						/>
 					</li>
 				</ul>
 			</AccordionTab>
@@ -244,20 +228,17 @@ import Button from 'primevue/button';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
-import { ResultType, Tab } from '@/types/common';
+import { CodeRequest, ResultType } from '@/types/common';
 import { getRelatedArtifacts } from '@/services/provenance';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import TeraImportCodeButton from '@/components/widgets/tera-import-code-button.vue';
+import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
-import { Model } from '@/types/Model';
-import { Dataset } from '@/types/Dataset';
-import { Extraction, ProvenanceType, Document } from '@/types/Types';
+import { Model, Extraction, ProvenanceType, Document, Dataset } from '@/types/Types';
 import * as textUtil from '@/utils/text';
 import Image from 'primevue/image';
 import { generatePdfDownloadLink } from '@/services/generate-download-link';
-import InputText from 'primevue/inputtext';
 import TeraAsset from '@/components/asset/tera-asset.vue';
-import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
+import { IProject } from '@/types/Project';
 
 enum DocumentView {
 	EXRACTIONS = 'extractions',
@@ -269,16 +250,17 @@ const props = defineProps<{
 	isEditable: boolean;
 	highlight?: string;
 	previewLineLimit?: number;
+	project?: IProject;
 }>();
 
 const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-asset', 'close-preview', 'asset-loaded']);
+const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
 
-function openCode(assetToOpen: Tab, newCode?: string) {
-	emit('open-asset', assetToOpen, newCode);
+function openCode(codeRequests: CodeRequest[]) {
+	emit('open-code', codeRequests);
 }
 
 // Highlight strings based on props.highlight
@@ -362,7 +344,10 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => associatedResources.value.filter((d) => isDocument(d)) as Document[]
 );
-
+/*
+// This is the model content that is displayed in the scroll-to-section featuer
+// That feature was removed, but way may want to bring it back.
+// I suggest we keep this unil we decide to remove it for good.
 const documentContent = computed(() => [
 	{ key: 'Abstract', value: formattedAbstract.value },
 	{ key: 'Section-Summaries', value: doc.value?.knownEntities?.summaries?.sections },
@@ -375,6 +360,7 @@ const documentContent = computed(() => [
 	{ key: 'References', value: doc.value?.citationList },
 	{ key: 'Associated-Resources', value: associatedResources.value }
 ]);
+*/
 
 // This fetches various parts of the document: figures, tables, equations ... etc
 const fetchDocumentArtifacts = async () => {
@@ -397,7 +383,8 @@ const fetchAssociatedResources = async () => {
 	}
 };
 
-// Better than wrapping download button with an anchor
+/*
+// Jamie: The 'Download PDF' button was removed from the UI but I left the code here in case we want to add it back in the future.
 function downloadPDF() {
 	if (pdfLink.value) {
 		const link = document.createElement('a');
@@ -406,7 +393,7 @@ function downloadPDF() {
 		link.click();
 	}
 }
-
+*/
 function linkIsPDF() {
 	const link = docLink.value ?? doi.value;
 	return link.match(/^.*\.(pdf|PDF)$/);
@@ -464,12 +451,10 @@ onUpdated(() => {
 });
 </script>
 <style scoped>
-.find-in-page {
-	border: 1px solid var(--surface-border-light) !important;
-	padding: 0.75rem;
-	width: 11.75rem;
+.p-buttonset {
+	white-space: nowrap;
+	margin-left: 0.5rem;
 }
-
 .extracted-item {
 	border: 1px solid var(--surface-border-light);
 	padding: 1rem;

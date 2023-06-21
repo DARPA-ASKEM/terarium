@@ -234,7 +234,7 @@ math-field[disabled] {
 .controls {
 	display: flex;
 	flex-direction: row;
-	margin: 10px 10px 0px 10px;
+	margin: 0.5rem 0.5rem 0px 10px;
 	justify-content: flex-end;
 }
 

@@ -55,7 +55,6 @@
 			/>
 		</div>
 		<tera-preview-panel
-			class="preview-slider"
 			:content-width="`${sliderWidth.slice(0, -1)} - 20px)`"
 			tab-width="0"
 			direction="right"
@@ -508,7 +507,13 @@ const clearItemSelected = () => {
 // };
 
 async function executeNewQuery() {
-	searchTerm.value = route.query?.q?.toString() ?? searchTerm.value;
+	// If search query is not empty update the search term
+	if (!isEmpty(route.query?.q?.toString()) && route.query?.q?.toString()) {
+		searchTerm.value = route.query?.q?.toString();
+	}
+
+	// If the search term is empty or is the same as the previous term don't execute a search
+
 	// search term has changed, so all search results are dirty; need re-fetch
 	disableSearchByExample();
 
