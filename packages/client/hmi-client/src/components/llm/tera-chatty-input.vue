@@ -1,21 +1,23 @@
 <template>
-	<div class="chatty-container" ref="containerElement">
+	<div class="tera-chatty-container" ref="containerElement">
 		<!-- <label for="chatt-input"></label> -->
-		<span class="p-input-icon-left">
-			<i class="pi pi-comment" />
-			<InputText
-				class="chatty"
-				ref="inputElement"
-				v-model="queryString"
-				type="text"
-				:disabled="kernelState !== KernelState.idle"
-				:style="inputStyle"
-				:placeholder="
-					kernelState === KernelState.idle ? 'What do you want to do?' : 'Please wait...'
-				"
-				@keydown.enter="onEnter"
-			/>
-		</span>
+		<div class="chat-input-container">
+			<span class="p-input-icon-left">
+				<i class="pi pi-comment" />
+				<InputText
+					:style="{ width: fixedDivWidth + 'px' }"
+					class="input"
+					ref="inputElement"
+					v-model="queryString"
+					type="text"
+					:disabled="kernelState !== KernelState.idle"
+					:placeholder="
+						kernelState === KernelState.idle ? 'What do you want to do?' : 'Please wait...'
+					"
+					@keydown.enter="onEnter"
+				></InputText>
+			</span>
+		</div>
 		<ProgressBar
 			v-if="kernelState !== KernelState.idle"
 			mode="indeterminate"
@@ -25,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref } from 'vue';
 import ProgressBar from 'primevue/progressbar';
 import { SessionContext } from '@jupyterlab/apputils';
 import { JupyterMessage } from 'src/services/jupyter';
@@ -77,8 +79,6 @@ props.llmContext.kernelChanged.connect((_context, kernelInfo) => {
 		});
 	}
 });
-
-const inputStyle = computed(() => `--placeholder-color:${props.placeholderColor}`);
 
 const containerElement = ref<HTMLElement | null>(null);
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -148,11 +148,24 @@ const submitQuery = (inputStr: string | undefined) => {
 		queryString.value = '';
 	}
 };
-
+const fixedDivWidth = ref(0);
 onMounted(() => {
 	if (props.focusInput) {
 		inputElement.value?.focus();
 	}
+
+	const updateWidth = () => {
+		fixedDivWidth.value = containerElement.value?.offsetWidth
+			? containerElement.value?.offsetWidth
+			: fixedDivWidth.value;
+	};
+
+	updateWidth(); // Update once on mount
+	window.addEventListener('resize', updateWidth); // Update on window resize
+
+	onBeforeUnmount(() => {
+		window.removeEventListener('resize', updateWidth); // Clean up listener
+	});
 });
 </script>
 
@@ -160,16 +173,27 @@ onMounted(() => {
 ::placeholder {
 	color: var(--gray-700);
 }
-.chatty-container {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
+.tera-chatty-container {
+	display: relative;
+	padding-top: 5px;
+	padding-bottom: 35px;
 }
 
-.chatty {
-	background-color: var(--gray-300);
-	width: 100%;
+.chat-input-container {
+	position: fixed;
+	bottom: 50px;
 	height: fit-content;
+	z-index: 30000;
+}
+
+.input {
 	color: black;
+	background-color: var(--gray-300);
+}
+
+.input:disabled {
+	color: black;
+	opacity: 100;
+	background-color: var(--gray-300);
 }
 </style>

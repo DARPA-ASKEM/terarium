@@ -30,6 +30,10 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
+			<span v-if="datasetView === DatasetView.LLM">
+				<i class="pi pi-cog" @click="toggleMenu" />
+				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
+			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
 			<section class="metadata data-row">
@@ -77,34 +81,37 @@
 			</Accordion>
 		</template>
 		<template v-else-if="datasetView === DatasetView.LLM">
-			<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="getActiveIndex">
-				<AccordionTab>
-					<template #header>
-						Live Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-					</template>
-					<tera-dataset-datatable
-						class="live-preview"
-						v-if="jupyterCsv"
-						:rows="10"
-						:raw-content="jupyterCsv"
-						:previous-headers="oldCsvHeaders"
-					/>
-				</AccordionTab>
-				<AccordionTab>
-					<template #header>
-						<i class="pi pi-circle-fill kernel-status" :style="statusStyle" />
-						<div><header id="GPT">TGPT</header></div>
-					</template>
+			<div class="data-transform-container">
+				<div>
+					<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="getActiveIndex">
+						<AccordionTab>
+							<template #header>
+								Data Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
+							</template>
+							<tera-dataset-datatable
+								class="tera-dataset-datatable"
+								v-if="jupyterCsv"
+								:rows="10"
+								:raw-content="jupyterCsv"
+								:previous-headers="oldCsvHeaders"
+							/>
+						</AccordionTab>
+					</Accordion>
+
+					<div class="gpt-header">
+						<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
+						<span> <header id="GPT">TGPT</header></span>
+					</div>
+
 					<tera-jupyter-chat
-						class="tera-jupyter-chat"
 						:project="props.project"
 						:asset-id="props.assetId"
+						:show-jupyter-settings="showKernelSettings"
 						@update-table-preview="updateJupyterTable"
-						@jupyter-event="updateJupyterHistory"
 						@update-kernel-status="updateKernelStatus"
 					/>
-				</AccordionTab>
-			</Accordion>
+				</div>
+			</div>
 		</template>
 	</tera-asset>
 </template>
@@ -121,9 +128,33 @@ import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vu
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IProject } from '@/types/Project';
-import { JupyterMessage } from '@/services/jupyter';
+import Menu from 'primevue/menu';
 
-// const jupyterSession = ref(<any>newSession('llmkernel', 'ChattyNode'));
+const showKernelSettings = ref(<boolean>false);
+
+const menu = ref();
+
+const settingsLabel = computed(() =>
+	showKernelSettings.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
+);
+
+const items = ref([
+	{
+		label: 'Jupyter Options',
+		items: [
+			{
+				label: settingsLabel,
+				command: () => {
+					showKernelSettings.value = !showKernelSettings.value;
+				}
+			}
+		]
+	}
+]);
+
+const toggleMenu = (event) => {
+	menu.value.toggle(event);
+};
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -131,7 +162,6 @@ enum DatasetView {
 	LLM = 'llm'
 }
 
-const jupyterHistory = ref<JupyterMessage[]>([]);
 const newCsvContent: any = ref(null);
 const newCsvHeader: any = ref(null);
 const oldCsvHeaders: any = ref(null);
@@ -184,10 +214,6 @@ const csvContent = computed(() => rawContent.value?.csv);
 
 const updateJupyterTable = (newJupyterCsv: CsvAsset) => {
 	jupyterCsv.value = newJupyterCsv;
-};
-
-const updateJupyterHistory = (jMessage: JupyterMessage[]) => {
-	jupyterHistory.value = jMessage;
 };
 
 const getActiveIndex = computed(() => {
@@ -334,17 +360,24 @@ main .annotation-group {
 	top: 20px;
 	background-color: red;
 }
-
-.tera-jupyter-chat {
-	display: flex;
-	flex-direction: column;
+.tera-dataset-datatable {
 	width: 100%;
 }
-.live-preview {
-	width: 100%;
+
+.data-transform-container {
+	display: flex;
+	flex-direction: column-reverse;
+	overflow: auto;
+	padding: 0.5rem;
+	margin: 0.5rem;
 }
 
 .kernel-status {
 	margin-right: 10px;
+}
+
+.gpt-header {
+	display: flex;
+	width: 90%;
 }
 </style>

@@ -1,46 +1,68 @@
 <template>
-	<template>
-		<h5>Thoguht</h5>
-		<div class="thought" ref="elem">
-			{{ startTyping(props.thought, 0, 100) }}
+	<div class="response-thought-container">
+		<div
+			ref="responseThought"
+			class="thought"
+			:class="{ hide: hasBeenDrawn && !props.showThought, show: props.showThought }"
+		>
+			{{ displayedText }}<span v-if="!hasBeenDrawn" class="blinking-cursor">|</span>
 		</div>
-	</template>
+	</div>
 </template>
-
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watchEffect, computed } from 'vue';
+// import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+
+const emit = defineEmits(['has-been-drawn', 'delete']);
+const responseThought = ref(<HTMLElement | null>null);
+const hasBeenDrawn = ref(false);
 
 const props = defineProps<{
 	thought: string;
+	showThought?: boolean;
+	hasBeenDrawn?: boolean;
 }>();
 
-const elem = ref(<HTMLElement | null>null);
+const charIndex = ref(0);
 
-function startTyping(text: string, charIndex: number, speed: number) {
-	if (elem.value) {
-		if (charIndex < text.length) {
-			elem.value.innerHTML = `${text.slice(0, charIndex)}<span class="blinking-cursor">|</span>`;
-			charIndex++;
-			setTimeout(() => {
-				startTyping(text, charIndex, speed);
-			}, speed);
-		} else {
-			elem.value.innerHTML = `${text.slice(0, charIndex)}`;
+watchEffect(() => {
+	const typing = setInterval(() => {
+		responseThought.value?.scrollTo();
+		charIndex.value++;
+		if (charIndex.value > props.thought.length) {
+			clearInterval(typing);
+			hasBeenDrawn.value = true;
+			emit('has-been-drawn');
 		}
-	}
-}
+	}, 10); // adjust speed here
+});
+
+const displayedText = computed(() =>
+	charIndex.value < props.thought.length
+		? `${props.thought.slice(0, charIndex.value)}`
+		: props.thought
+);
 </script>
 
 <style scoped>
 .thought {
-	padding: 5px;
+	border-radius: 5px;
 	white-space: pre-line;
 	color: green;
+	max-height: 10000px;
+	overflow: hidden;
+}
+.hide {
+	max-height: 0;
+	overflow: hidden;
+	margin: 0;
+	opacity: 0;
+	padding: 0;
+	transition: opacity 1s, margin 1s ease-in, padding 1s ease-in, max-height 1.5s ease;
 }
 
-.thought:hover {
-	white-space: pre-line;
-	border: 2px solid var(--gray-500);
+.show {
+	transition: margin 2.5s ease-in, opacity 2.5s ease-in, max-height 2s ease-out;
 }
 
 .blinking-cursor {
@@ -59,5 +81,10 @@ function startTyping(text: string, charIndex: number, speed: number) {
 	100% {
 		opacity: 0;
 	}
+}
+
+.response-thought-container {
+	display: flex;
+	flex-direction: column;
 }
 </style>

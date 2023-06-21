@@ -1,15 +1,24 @@
 <template>
 	<div class="code-cell" @keyup.ctrl.enter.prevent="run" @keyup.shift.enter.prevent="run">
-		<div class="run-button">
-			<Button type="button" @click="run">Run</Button>
-		</div>
 		<template ref="codeCell" />
+		<div class="controls">
+			<i class="pi pi-play x" @click="run"></i>
+			<div class="run">Run again</div>
+			<i class="pi pi-check-circle check"></i>
+			<div class="run">Success</div>
+		</div>
+		<div class="save-file-container">
+			<div class="save-as">Save As:</div>
+			<div class="saved-name">{{ props.savedName }}</div>
+			<InputText class="post-fix" :style="`padding:3px;`" />
+			<i class="pi pi-times x"></i>
+			<i class="pi pi-check check" @click="saveFile"></i>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import Button from 'primevue/button';
 import { CodeCell, CodeCellModel } from '@jupyterlab/cells';
 import { SessionContext } from '@jupyterlab/apputils';
 import {
@@ -20,6 +29,7 @@ import {
 } from '@jupyterlab/completer';
 import { CommandRegistry } from '@lumino/commands';
 import { mimeService, renderMime } from '@/services/jupyter';
+import InputText from 'primevue/inputtext';
 
 const props = defineProps({
 	jupyterSession: {
@@ -50,6 +60,14 @@ const props = defineProps({
 	context_info: {
 		type: Object,
 		default: () => {}
+	},
+	savedName: {
+		type: String,
+		default: 'Dataset Name_'
+	},
+	postFix: {
+		type: String,
+		default: 'new'
 	}
 });
 const codeCell = ref<HTMLElement | null>(null);
@@ -98,6 +116,10 @@ commands.addKeyBinding({
 	command: 'run:cell'
 });
 
+const saveFile = () => {
+	console.log('save file');
+};
+
 onMounted(() => {
 	props.jupyterSession.ready.then(() => {
 		props.jupyterSession.session?.kernel?.info.then((info) => {
@@ -106,8 +128,6 @@ onMounted(() => {
 			cellWidget.model.mimeType = mimeType;
 		});
 	});
-	console.log(props.context);
-	console.log(props.context_info);
 	// Replace templated component with contents of jupyter node.
 	codeCell.value?.replaceWith(cellWidget.node);
 	// Setup keydown listener to capture events inside code cell.
@@ -143,8 +163,50 @@ cellWidget.activate();
 	min-width: 300px;
 }
 
-.run-button {
-	padding-top: 10px;
+.controls {
+	display: flex;
+	align-items: center;
+	padding-top: 15px;
+	padding-bottom: 10px;
 	flex-direction: row;
+	font-size: 0.8rem;
+}
+
+.run {
+	color: var(--gray-500);
+	font-family: var(--font-family);
+	padding-left: 5px;
+	padding-right: 10px;
+}
+.save-file-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding-bottom: 5px;
+	padding-top: 5px;
+	font-size: 1rem;
+}
+
+.saved-name {
+	display: flex;
+	flex-direction: row;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+.post-fix {
+	padding: 0px;
+	height: 20px;
+}
+
+.x {
+	color: var(--primary-color);
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.check {
+	color: var(--primary-color);
+	padding-left: 5px;
+	padding-right: 5px;
 }
 </style>
