@@ -43,17 +43,15 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ node.inputs[0].value?.[0].model.name }} </template>
-						<model-diagram :model="node.inputs[0].value?.[0].model" :is-editable="false" />
+						<template #header> {{ modelConfiguration?.configuration.name }} </template>
+						<model-diagram :model="modelConfiguration?.configuration" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
-						<template #header> Model configurations ({{ simConfigs.length }}) </template>
-						<DataTable
-							v-if="node.inputs[0].value?.length"
-							class="model-configuration"
-							showGridlines
-							:value="simConfigs"
-						>
+						<!-- use tera-model-configuration here just don't make it editable etc.
+							
+							<template #header> Model configurations ({{ simConfigs.length }}) </template>
+						<DataTable v-if="node.inputs[0].value?.length" class="model-configuration" showGridlines
+							:value="simConfigs">
 							<ColumnGroup type="header">
 								<Row>
 									<Column selection-mode="multiple" headerStyle="width: 3rem" />
@@ -62,7 +60,7 @@
 							</ColumnGroup>
 							<Column selection-mode="multiple" headerStyle="width: 3rem" />
 							<Column v-for="(value, i) of simVars" :key="i" :field="value"> </Column>
-						</DataTable>
+						</DataTable> -->
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation Time Range </template>
@@ -103,21 +101,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Column from 'primevue/column';
-import Row from 'primevue/row';
-import ColumnGroup from 'primevue/columngroup';
-import DataTable from 'primevue/datatable';
+// import Column from 'primevue/column';
+// import Row from 'primevue/row';
+// import ColumnGroup from 'primevue/columngroup';
+// import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import { ModelConfiguration } from '@/types/Types';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { TspanUnits } from '@/types/SimulateConfig';
-import { ModelConfig } from '@/types/ModelConfig';
 
+import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
 import ModelDiagram from '../models/tera-model-diagram.vue';
 
@@ -131,23 +130,37 @@ enum SimulateTabs {
 const activeTab = ref(SimulateTabs.input);
 const node = ref(openedWorkflowNodeStore.node);
 
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
+
 const TspanUnitList = computed(() =>
 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
 );
 
-const simVars = computed(() => [
-	'Configuration Name',
-	...(node.value?.inputs[0].value as any[])[0].model.model.states.map((state) => state.id),
-	...(node.value?.inputs[0].value as any[])[0].model.model.transitions.map((state) => state.id)
-]);
+// use modelConfiguration.value here
 
-const simConfigs = computed(
-	() =>
-		node.value?.outputs[0]?.value?.[0].runConfigs.map((runConfig: ModelConfig, i: number) => ({
-			'Configuration Name': `Config ${i + 1}`,
-			...runConfig.initialValues,
-			...runConfig.parameterValues
-		})) || []
+// const simVars = computed(() => [
+// 	'Configuration Name',
+// 	...(node.value?.inputs[0].value as any[])[0].model.model.states.map((state) => state.id),
+// 	...(node.value?.inputs[0].value as any[])[0].model.model.transitions.map((state) => state.id)
+// ]);
+
+// const simConfigs = computed(
+// 	() =>
+// 		node.value?.outputs[0]?.value?.[0].runConfigs.map((runConfig: ModelConfiguration, i: number) => ({
+// 			'Configuration Name': `Config ${i + 1}`,
+// 			...runConfig.initialValues,
+// 			...runConfig.parameterValues
+// 		})) || []
+// );
+
+watch(
+	() => modelConfigId.value,
+	async () => {
+		if (modelConfigId.value) {
+			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
+		}
+	}
 );
 </script>
 

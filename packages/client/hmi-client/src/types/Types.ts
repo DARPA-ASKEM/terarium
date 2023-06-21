@@ -66,6 +66,14 @@ export interface Model {
     metadata: ModelMetadata;
 }
 
+export interface ModelConfiguration {
+    id: string;
+    name: string;
+    description?: string;
+    modelId: string;
+    configuration: any;
+}
+
 export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
