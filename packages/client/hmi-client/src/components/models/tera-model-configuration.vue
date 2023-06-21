@@ -1,6 +1,6 @@
 <template>
 	<DataTable
-		v-if="model.semantics?.ode && modelToEdit.semantics?.ode"
+		v-if="configurations?.[0]?.initials && configurations?.[0]?.parameters"
 		class="model-configuration"
 		v-model:selection="selectedModelConfig"
 		:value="modelConfigurationTable"
@@ -14,32 +14,32 @@
 				<Column v-if="isEditable" header="" style="border: none" />
 				<Column header="" style="border: none" />
 				<Column
-					v-for="(header, i) in Object.keys(model.semantics.ode)"
+					v-for="(header, i) in Object.keys(configurations[0])"
 					:header="capitalize(header)"
-					:colspan="model.semantics.ode[header].length"
+					:colspan="configurations[0][header].length"
 					:key="i"
 				/>
 			</Row>
 			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
 				<Column :header="isEditable ? 'Select all' : ''" />
-				<!-- Can't do a loop inside a loop within the datatable 
-				<template v-for="header in Object.keys(model.semantics.ode)">
-					<Column v-if="model.semantics?.ode" v-for="(variableName, i) in model.semantics.ode[header]"
-						:header="variableName.target" :key="i" />
-				</template> -->
+				<!-- Having trouble getting this loop to work-->
+				<!--<template v-for="(header, i) in Object.keys(configurations[0])" :key="i">
+					<Column v-for="(variableName, j) in configurations[0][header]" :header="variableName.target"
+						:key="i + j" />
+				</template>-->
 				<Column
-					v-for="(variableName, i) in model.semantics.ode.rates"
+					v-for="(variableName, i) in configurations[0].rates"
 					:header="variableName.target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in model.semantics.ode.initials"
+					v-for="(variableName, i) in configurations[0].initials"
 					:header="variableName.target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in model.semantics.ode.parameters"
+					v-for="(variableName, i) in configurations[0].parameters"
 					:header="variableName.id"
 					:key="i"
 				/>
@@ -55,18 +55,14 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<Column v-for="(value, i) of modelToEdit.semantics.ode.rates" :key="i" :field="value['target']">
-			<template #body="{ data, field }">
-				{{ data[field]?.value }}
-			</template>
-			<template #editor="{ data, field }">
-				{{ data[field]?.value }}
-			</template>
-		</Column>
+		<!--TODO: The slice here skips the name attribute, see about skipping it and rates in a clearer way-->
 		<Column
-			v-for="(value, i) of modelToEdit.semantics.ode.initials"
+			v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
+				1,
+				Object.keys(modelConfigurationTable[0]).length
+			)"
 			:key="i"
-			:field="value['target']"
+			:field="value"
 		>
 			<template #body="{ data, field }">
 				{{ data[field]?.value }}
@@ -75,19 +71,8 @@
 				{{ data[field]?.value }}
 			</template>
 		</Column>
-		<Column
-			v-for="(value, i) of modelToEdit.semantics.ode.parameters"
-			:key="i"
-			:field="value['id']"
-		>
-			<template #body="{ data, field }">
-				{{ data[field]?.value }}
-			</template>
-			<template #editor="{ data, field }">
-				{{ data[field]?.value }}
-			</template>
-		</Column>
-		<!-- <ColumnGroup v-if="calibrationConfig" type="footer">
+		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
+			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
 				<Column footer="Select variables and parameters to calibrate" />
 				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i">
@@ -154,9 +139,9 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize, isArray } from 'lodash';
+import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
-// import Checkbox from 'primevue/checkbox';
+// import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
@@ -165,20 +150,24 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import { Model } from '@/types/Types';
+import { ModelConfiguration } from '@/types/Types';
 import { AnyValueMap } from '@/types/common';
-import { createModelConfiguration } from '@/services/model-configurations';
+import {
+	createModelConfiguration,
+	updateModelConfiguration
+} from '@/services/model-configurations';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { ModelOperation } from '@/components/workflow/model-operation';
+
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const props = defineProps<{
-	model: Model;
 	isEditable: boolean;
-	modelConfigNodeInput?: Model;
+	modelConfigurations: ModelConfiguration[];
 	calibrationConfig?: boolean;
 }>();
 
-const modelConfigNames = ref(['Config 1']);
-
-const modelToEdit = ref(cloneDeep(props.model));
+const editableModelConfigs = ref<ModelConfiguration[]>([]);
 
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
@@ -190,59 +179,72 @@ const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-// const variableTypes = computed(() => props.model.semantics ? Object.keys(props.model.semantics.ode) : []);
-const odes = computed(() => {
-	const ODEs = [{}];
+const configurations = computed<any[]>(
+	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
+);
 
-	if (modelToEdit.value.semantics?.ode) {
-		// eslint-disable-next-line
-		for (const key of Object.keys(modelToEdit.value.semantics.ode)) {
-			ODEs[0][key] = [];
-
-			modelToEdit.value.semantics?.ode[key].forEach((value) => {
-				const newPair = {};
-				newPair[value.target ?? value.id] = value.expression ?? value.value;
-				ODEs[0][key].push(newPair);
-			});
-		}
-	}
-	console.log(0);
-
-	return ODEs;
-});
-
+// TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
-	const variables: AnyValueMap[] = [];
-	// eslint-disable-next-line
-	for (let i = 0; i < odes.value.length; i++) {
-		variables[i] = {};
-		// eslint-disable-next-line
-		for (const [key, values] of Object.entries(odes.value[i])) {
-			// for (const values of Object.values(odes.value[i])) {
-			const flattenedObj = {};
+	if (editableModelConfigs.value && !isEmpty(configurations.value)) {
+		console.log('Configuration', configurations.value);
 
-			if (isArray(values)) {
-				// @ts-ignore
+		const odes: object[] = [];
+
+		for (let i = 0; i < configurations.value.length; i++) {
+			if (configurations.value[i]) {
+				odes.push({});
 				// eslint-disable-next-line
-				for (let j = 0; j < values.length; j++) {
-					const newKey: string = Object.keys(values[j])[0];
-					const newVal = {};
-					newVal[newKey] = { value: Object.values(values[j])[0], type: key, name: newKey };
-					Object.assign(flattenedObj, newVal);
+				for (const key of Object.keys(configurations.value[i])) {
+					odes[i][key] = [];
+
+					configurations.value[i][key].forEach((value) => {
+						const newPair = {};
+						newPair[value.target ?? value.id] = value.expression ?? value.value;
+						odes[i][key].push(newPair);
+					});
 				}
-				console.log(flattenedObj, values, key);
 			}
-			variables[i] = { ...variables[i], ...flattenedObj };
 		}
+		// console.log(odes);
+
+		const variables: AnyValueMap[] = [];
+		// eslint-disable-next-line
+		for (let i = 0; i < odes.length; i++) {
+			variables[i] = {};
+			// eslint-disable-next-line
+			for (const [key, values] of Object.entries(odes[i])) {
+				const flattenedObj = {};
+
+				if (isArray(values)) {
+					// @ts-ignore
+					// eslint-disable-next-line
+					for (let j = 0; j < values.length; j++) {
+						const newKey: string = Object.keys(values[j])[0];
+						const newVal = {};
+						newVal[newKey] = {
+							value: Object.values(values[j])[0],
+							type: key,
+							name: newKey,
+							typeIndex: j,
+							configIndex: i
+						};
+						Object.assign(flattenedObj, newVal);
+					}
+					// console.log(flattenedObj, values, key);
+				}
+				variables[i] = { ...variables[i], ...flattenedObj };
+			}
+		}
+
+		// console.log(variables);
+
+		return editableModelConfigs.value.map((modelConfig, i) => ({
+			name: modelConfig.name,
+			...variables[i]
+		}));
 	}
-
-	return modelConfigNames.value.map((name, i) => ({
-		name,
-		...variables[i]
-	}));
+	return [];
 });
-
-// const
 
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
@@ -250,9 +252,20 @@ const selectedModelVariables = computed(() => [
 ]);
 defineExpose({ selectedModelVariables });
 
-function addModelConfiguration() {
-	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1} `);
-	// odes.value.push(cloneDeep(odes.value[odes.value.length - 1]));
+async function addModelConfiguration() {
+	const response = await createModelConfiguration(
+		props.modelConfigurations[0].configuration.id, // model id
+		`Config ${props.modelConfigurations.length + 1}`,
+		'shawntest',
+		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
+	);
+
+	// FIXME: Not a good idea to update reactive variables through global storage
+	openedWorkflowNodeStore.appendOutputPort({
+		type: ModelOperation.outputs[0].type,
+		label: `Config ${props.modelConfigurations.length + 1}`,
+		value: response.id
+	});
 }
 
 function addConfigValue() {
@@ -287,81 +300,42 @@ const onCellEditStart = (event) => {
 
 function updateModelConfigValue() {
 	const { data, field } = cellValueToEdit.value;
-	const { name, type, value } = data[field];
+	const { type, value, typeIndex, configIndex } = data[field];
 
-	console.log(data[field].value, data[field].type, data[field]);
+	// just create the clone within here ?
 
-	if (modelToEdit.value.semantics) {
-		modelToEdit.value.semantics.ode[type][name] = value;
+	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
+			value;
+	} else if (
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].expression
+	) {
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][
+			typeIndex
+		].expression = value;
 	}
-
-	// CALL updateModelConfiguration here
-	// updateModelConfiguration(modelToEdit.value.id)
+	updateModelConfiguration(editableModelConfigs.value[configIndex]);
 
 	openValueConfig.value = false;
 }
 
-// function generateModelConfigValues() {
-
-// 	console.log(odes.value);
-
-// 	// Old stuff
-// 	// Sync with workflow
-// 	if (
-// 		props.model &&
-// 		openedWorkflowNodeStore.assetId === props.model.id.toString() &&
-// 		openedWorkflowNodeStore.initialValues !== null &&
-// 		openedWorkflowNodeStore.parameterValues !== null
-// 	) {
-// 		// Shallow copy
-// 		// initialValues.value = openedWorkflowNodeStore.initialValues;
-// 		// parameterValues.value = openedWorkflowNodeStore.parameterValues;
-
-// 		if (modelConfigNames.value.length < initialValues.value.length - 1) {
-// 			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1} `);
-// 		}
-// 	}
-// 	// Copy node input in here if that's just what we want to show
-// 	else if (props.modelConfigNodeInput) {
-// 		console.log(props.modelConfigNodeInput);
-// 		// initialValues.value[0] = props.modelConfigNodeInput.initialValues;
-// 		// parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
-// 	}
-
-// 	// By default check all boxes for calibration
-// 	if (props.calibrationConfig) {
-// 		selectedInitials.value = Object.keys(initialValues.value[0]);
-// 		selectedParameters.value = Object.keys(parameterValues.value[0]);
-// 	}
-// }
-
-function resetDummyValues() {
-	console.log(props.model);
-	modelConfigNames.value = ['Config 1'];
+function initializeConfigSpace() {
+	// console.log(props.modelConfigurations);
+	editableModelConfigs.value = [];
+	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '', index: 0 };
 }
 
 watch(
-	() => props.model,
-	() => resetDummyValues(),
+	() => props.modelConfigurations,
+	() => initializeConfigSpace(),
 	{ deep: true }
 );
 
-function createConfig() {
-	createModelConfiguration(
-		modelToEdit.value.name,
-		'shawntest',
-		modelToEdit.value.id,
-		modelToEdit.value
-	);
-}
-
 onMounted(() => {
-	resetDummyValues();
-
-	createConfig();
+	initializeConfigSpace();
 });
 </script>
 

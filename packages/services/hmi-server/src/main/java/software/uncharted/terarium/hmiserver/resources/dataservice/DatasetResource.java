@@ -224,7 +224,7 @@ public class DatasetResource {
 
 		//verify that dataSetPath and bucket are set. If not, return an error
 		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
-			log.error("S3 information not set. Cannot upload CSV.");
+			log.error("S3 information not set. Cannot download CSV.");
 			return Response
 				.status(Response.Status.INTERNAL_SERVER_ERROR)
 				.type(MediaType.APPLICATION_JSON)
@@ -255,7 +255,6 @@ public class DatasetResource {
 			List<String> column = getColumn(csv,i);
 			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
 		}
-		
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)

@@ -33,21 +33,19 @@
 			/>
 		</template>
 		<Accordion
-			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
+			v-if="calibrationView === CalibrationView.INPUT && modelConfiguration"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
-			<AccordionTab :header="modelConfig.model.name">
-				<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
+			<AccordionTab :header="modelConfiguration.configuration.model.name">
+				<tera-model-diagram :model="modelConfiguration.configuration.model" :is-editable="false" />
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
-				<tera-model-configuration
+				<!-- <tera-model-configuration
 					ref="modelConfigurationRef"
-					:model="modelConfig.model"
-					:is-editable="false"
-					:model-config-node-input="modelConfig.model"
+					:model-configuration="modelConfiguration"
 					calibration-config
-				/>
+				/> -->
 			</AccordionTab>
 			<AccordionTab v-if="datasetId" :header="datasetName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
@@ -132,7 +130,7 @@
 			</AccordionTab>
 		</Accordion>
 		<Accordion
-			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
+			v-if="calibrationView === CalibrationView.OUTPUT && modelConfiguration"
 			:multiple="true"
 			:active-index="[0, 1]"
 		>
@@ -154,11 +152,8 @@
 				></Button>
 			</AccordionTab>
 			<AccordionTab header="Calibrated parameter values">
-				<tera-model-configuration
-					:model="modelConfig.model"
-					:is-editable="false"
-					:model-config-node-input="calibratedModelConfig"
-				/>
+				<!-- <tera-model-configuration :model="modelConfig.model" :is-editable="false"
+					:model-config-node-input="calibratedModelConfig" /> -->
 			</AccordionTab>
 		</Accordion>
 	</tera-asset>
@@ -187,15 +182,15 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
-import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
+// import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { logger } from '@/utils/logger';
-import { CalibrationRequest, CsvAsset, Dataset, SimulationRequest } from '@/types/Types';
-import { ModelConfig } from '@/types/ModelConfig';
+import { CalibrationParams, CsvAsset, Dataset, ModelConfiguration } from '@/types/Types';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -225,22 +220,22 @@ const mapping = ref<any[]>([
 ]);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const calibratedModelConfig = ref<ModelConfig | undefined>(undefined);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const calibratedModelConfig = ref<ModelConfiguration | undefined>(undefined);
 
+const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
-const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0].value?.[0]);
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
-const modelVariables = computed(() =>
-	// TODO: https://github.com/DARPA-ASKEM/Terarium/issues/1243
-	// if (modelConfigurationRef.value) {
-	// 	return modelConfig.value?.model.model.states
-	// 		.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.name))
-	// 		.map((state) => state.name);
-	// }
-	modelConfig.value?.model.model.states.map((state) => state.name)
-);
+const modelVariables = computed(() => {
+	if (modelConfigurationRef.value) {
+		return modelConfiguration.value?.configuration.model.model.states
+			.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.sname))
+			.map((state) => state.sname);
+	}
+	return modelConfiguration.value?.configuration.model.model.states.map((state) => state.sname);
+});
 
 const disableRunButton = computed(
 	() => !mapping.value?.[0].modelVariable.label || !mapping.value?.[0].datasetVariable.label
@@ -255,7 +250,7 @@ const mappingSimplified = computed(() =>
 
 const calibrate = async () => {
 	// Make calibration job.
-	if (modelConfig.value?.id && csvAsset.value && datasetId.value && datasetName.value) {
+	if (modelConfiguration.value && csvAsset.value) {
 		const featureMappings: { [index: string]: string } = {};
 		// Go from 2D array to a index: value like they want
 		// was just easier to work with 2D array for user input
@@ -265,12 +260,14 @@ const calibrate = async () => {
 					mapping.value[i].modelVariable.label;
 			}
 		}
-		featureMappings.timestep = timestepColumn.value;
-		const calibrationParam: CalibrationRequest = {
-			modelConfigId: modelConfig.value.id,
-			extra: {},
-			dataset: { id: datasetId.value, filename: datasetName.value, mappings: featureMappings },
-			engine: 'SciML'
+
+		const calibrationParam: CalibrationParams = {
+			model: shimPetriModel(AMRToPetri(modelConfiguration.value.configuration.model)), // Take out all the extra content in model
+			initials: {}, // reconstruct from modelConfiguration.value.configuration
+			params: {},
+			timesteps_column: timestepColumn.value,
+			feature_mappings: featureMappings,
+			dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
 		};
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
@@ -307,19 +304,16 @@ const calibrate = async () => {
 
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
-		const payload: SimulationRequest = {
-			modelConfigId: calibrationParam.modelConfigId,
-			timespan: {
-				start: Number(csv[1][indexOfTimestep]),
-				end: Number(csv[csv.length - 1][indexOfTimestep])
-			},
-			extra: {},
-			engine: 'SciML'
+		const payload = {
+			model: calibrationParam.model,
+			initials: {}, // reconstruct from modelConfig.value.configuration
+			params: calibratedParams,
+			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
 		};
 
-		calibratedModelConfig.value = cloneDeep(modelConfig.value);
+		calibratedModelConfig.value = cloneDeep(modelConfiguration.value);
 		if (calibratedParams) {
-			calibratedModelConfig.value.parameterValues = calibratedParams;
+			// calibratedModelConfig.value.parameterValues = calibratedParams;
 		}
 
 		if (resultsHaveNull) {
@@ -372,6 +366,15 @@ function addMapping() {
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	});
 }
+
+watch(
+	() => modelConfigId.value,
+	async () => {
+		if (modelConfigId.value) {
+			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
+		}
+	}
+);
 
 watch(
 	() => datasetId.value,
