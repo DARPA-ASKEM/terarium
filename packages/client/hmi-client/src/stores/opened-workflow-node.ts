@@ -43,6 +43,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		setNode(node: WorkflowNode | null) {
 			this.node = node;
 		},
+		// FIXME: Not a good idea to update reactive variables through global storage
 		appendOutputPort(port: { type: string; label?: string; value: any }) {
 			if (this.node) {
 				this.node.outputs.push({

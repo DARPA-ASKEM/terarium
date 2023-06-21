@@ -23,11 +23,11 @@
 			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
 				<Column :header="isEditable ? 'Select all' : ''" />
-				<!-- Can't do a loop inside a loop within the datatable 
-				<template v-for="header in Object.keys(model.semantics.ode)">
-					<Column v-if="model.semantics?.ode" v-for="(variableName, i) in model.semantics.ode[header]"
-						:header="variableName.target" :key="i" />
-				</template> -->
+				<!-- Having trouble getting this loop to work-->
+				<!--<template v-for="(header, i) in Object.keys(configurations[0])" :key="i">
+					<Column v-for="(variableName, j) in configurations[0][header]" :header="variableName.target"
+						:key="i + j" />
+				</template>-->
 				<Column
 					v-for="(variableName, i) in configurations[0].rates"
 					:header="variableName.target"
@@ -55,6 +55,7 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
+		<!--TODO: The slice here skips the name attribute, see about skipping it and rates in a clearer way-->
 		<Column
 			v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
 				1,
@@ -70,7 +71,7 @@
 				{{ data[field]?.value }}
 			</template>
 		</Column>
-		<!-- Add checkboxes for calibrate in a seperate PR
+		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
 			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
 				<Column footer="Select variables and parameters to calibrate" />
@@ -173,22 +174,18 @@ const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
-// const
-
 // Selected columns
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-// const variableTypes = computed(() => props.model.semantics ? Object.keys(props.model.semantics.ode) : []);
-
-const configurations = computed(
-	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? null
+const configurations = computed<object[]>(
+	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
 );
 
 // TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
 	if (editableModelConfigs.value && configurations.value) {
-		console.log('Configuration', configurations.value);
+		// console.log('Configuration', configurations.value);
 
 		const odes: object[] = [];
 
@@ -207,7 +204,7 @@ const modelConfigurationTable = computed(() => {
 				}
 			}
 		}
-		console.log(odes);
+		// console.log(odes);
 
 		const variables: AnyValueMap[] = [];
 		// eslint-disable-next-line
@@ -238,14 +235,7 @@ const modelConfigurationTable = computed(() => {
 			}
 		}
 
-		console.log(variables);
-
-		console.log(
-			editableModelConfigs.value.map((modelConfig, i) => ({
-				name: modelConfig.name,
-				...variables[i]
-			}))
-		);
+		// console.log(variables);
 
 		return editableModelConfigs.value.map((modelConfig, i) => ({
 			name: modelConfig.name,
@@ -269,15 +259,12 @@ async function addModelConfiguration() {
 		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
 	);
 
-	console.log(response.id);
-
+	// FIXME: Not a good idea to update reactive variables through global storage
 	openedWorkflowNodeStore.appendOutputPort({
 		type: ModelOperation.outputs[0].type,
 		label: `Config ${props.modelConfigurations.length + 1}`,
 		value: response.id
 	});
-
-	// close reopen panel
 }
 
 function addConfigValue() {
@@ -314,7 +301,7 @@ function updateModelConfigValue() {
 	const { data, field } = cellValueToEdit.value;
 	const { type, value, typeIndex, configIndex } = data[field];
 
-	// just create the clone within here
+	// just create the clone within here ?
 
 	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
 		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
@@ -333,6 +320,7 @@ function updateModelConfigValue() {
 
 function initializeConfigSpace() {
 	console.log(props.modelConfigurations);
+	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
 	openValueConfig.value = false;
