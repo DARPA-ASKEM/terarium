@@ -85,6 +85,14 @@ services:
       - minio-data:/data
     ports:
       - "9000:9000"
+      S3_BUCKET: askem
+      S3_DATASET_PATH: "datasets"
+      S3_RESULTS_PATH: "simulations"
+    depends_on:
+      - neo4j
+      - data-service-dev-db
+    ports:
+      - "8000:8000"
   neo4j:
     image: ghcr.io/darpa-askem/data-service-graphdb:5.3.0.3
     expose:
