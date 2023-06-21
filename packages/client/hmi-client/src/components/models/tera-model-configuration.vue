@@ -138,9 +138,9 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize, isArray } from 'lodash';
+import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
-// import Checkbox from 'primevue/checkbox';
+// import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
@@ -178,14 +178,14 @@ const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-const configurations = computed<object[]>(
+const configurations = computed<any[]>(
 	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
 );
 
 // TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
-	if (editableModelConfigs.value && configurations.value) {
-		// console.log('Configuration', configurations.value);
+	if (editableModelConfigs.value && !isEmpty(configurations.value)) {
+		console.log('Configuration', configurations.value);
 
 		const odes: object[] = [];
 
