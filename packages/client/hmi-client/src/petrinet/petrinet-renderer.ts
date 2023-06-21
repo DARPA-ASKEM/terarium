@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
+import { strataTypeColors } from '@/utils/color-schemes';
 import { NodeData, EdgeData, NodeType } from './petrinet-service';
 
 const MARKER_VIEWBOX = '-5 -5 10 10';
@@ -18,23 +19,6 @@ const EDGE_OPACITY = 0.5;
 
 const HANDLE_SIZE = 4;
 const HANDLE_SIZE_HOVER = 8;
-
-const typeColors = [
-	'#fde725',
-	'#cde11d',
-	'#98d83e',
-	'#67cc5c',
-	'#40bd72',
-	'#25ac82',
-	'#1f998a',
-	'#24878e',
-	'#2b748e',
-	'#34618d',
-	'#3d4d8a',
-	'#453581',
-	'#481c6e',
-	'#440154'
-];
 
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
@@ -113,7 +97,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
+			.style('fill', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
 			.style('cursor', 'pointer')
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1);
@@ -156,7 +142,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
+			.style('stroke', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
 			.style('stroke-width', '6px')
 			.style('stroke-linecap', 'butt')
 			.style('stroke-linejoin', 'matter')
@@ -169,7 +157,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width) // FIXME: need to adjust edge from sqaure mapping to circle
-			.attr('fill', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
+			.attr('fill', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
 			.attr('stroke', 'var(--petri-nodeBorder)')
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
@@ -198,7 +188,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('y', () => 5)
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('stroke', (d) => typeColors[strataTypes.indexOf(d.data.strataType)])
+			.style('stroke', (d) =>
+				d.data.strataType ? strataTypeColors[strataTypes.indexOf(d.data.strataType)] : '#FFF'
+			)
 			.style('stroke-width', '6px')
 			.style('stroke-linecap', 'butt')
 			.style('stroke-linejoin', 'matter')

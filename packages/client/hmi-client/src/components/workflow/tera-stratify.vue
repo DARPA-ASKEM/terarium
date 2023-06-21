@@ -87,7 +87,7 @@
 								</div>
 							</section>
 							<section v-else>
-								<tera-model-diagram :model="strataModel" :is-editable="false" />
+								<tera-model-diagram :model="strataModel" :is-editable="false" strata-view />
 							</section>
 						</div>
 					</AccordionTab>

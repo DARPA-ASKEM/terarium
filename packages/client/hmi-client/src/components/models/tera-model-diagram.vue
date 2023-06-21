@@ -21,13 +21,13 @@
 								<template #center>
 									<span class="toolbar-subgroup">
 										<Button
-											v-if="isEditing"
+											v-if="!strataView && isEditing"
 											@click="addState"
 											label="Add state"
 											class="p-button-sm p-button-outlined toolbar-button"
 										/>
 										<Button
-											v-if="isEditing"
+											v-if="!strataView && isEditing"
 											@click="addTransition"
 											label="Add transition"
 											class="p-button-sm p-button-outlined toolbar-button"
@@ -37,12 +37,13 @@
 								<template #end>
 									<span class="toolbar-subgroup">
 										<Button
-											v-if="isEditing"
+											v-if="!strataView && isEditing"
 											@click="cancelEdit"
 											label="Cancel"
 											class="p-button-sm p-button-outlined toolbar-button"
 										/>
 										<Button
+											v-if="!strataView"
 											@click="toggleEditMode"
 											:label="isEditing ? 'Save model' : 'Edit model'"
 											:class="
@@ -54,6 +55,23 @@
 									</span>
 								</template>
 							</Toolbar>
+							<section v-if="strataView" class="legend">
+								<ul>
+									<li v-for="(type, i) in stateTypes" :key="i">
+										<div class="legend-state" :style="{ backgroundColor: strataTypeColors[i] }" />
+										{{ type }}
+									</li>
+								</ul>
+								<ul>
+									<li v-for="(type, i) in transitionTypes" :key="i">
+										<div
+											class="legend-transition"
+											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
+										/>
+										{{ type }}
+									</li>
+								</ul>
+							</section>
 							<div v-if="model" ref="graphElement" class="graph-element" />
 							<ContextMenu ref="menu" :model="contextMenuItems" />
 						</section>
@@ -115,6 +133,7 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+import { strataTypeColors } from '@/utils/color-schemes';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -130,6 +149,7 @@ const props = defineProps<{
 	model: Model | null;
 	isEditable: boolean;
 	nodePreview?: boolean;
+	strataView?: boolean;
 }>();
 
 const menu = ref();
@@ -164,6 +184,12 @@ const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
 let eventX = 0;
 let eventY = 0;
+
+const modelTypeSystem = computed(() => props.model?.semantics?.typing?.type_system);
+const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
+const transitionTypes = computed(() =>
+	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
+);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -522,6 +548,39 @@ main {
 	border: none;
 	position: relative;
 } */
+
+.legend {
+	position: absolute;
+	bottom: 0;
+	z-index: 1;
+	margin-bottom: 1rem;
+	margin-left: 1rem;
+	display: flex;
+	gap: 1rem;
+}
+.legend-state {
+	height: 24px;
+	width: 24px;
+	border-radius: 12px;
+}
+
+.legend-transition {
+	height: 16px;
+	width: 16px;
+	border-radius: 4px;
+}
+
+ul {
+	display: flex;
+	gap: 0.5rem;
+	list-style-type: none;
+}
+
+li {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
 
 .p-toolbar {
 	position: absolute;
