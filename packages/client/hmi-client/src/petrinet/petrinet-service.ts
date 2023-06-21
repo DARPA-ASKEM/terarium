@@ -98,7 +98,7 @@ export const petriNetValidator = (petrinet: PetriNet): string | true => {
 export interface NodeData {
 	type: string;
 	uid?: string | number;
-	strataType: string;
+	strataType?: string;
 }
 
 export interface EdgeData {
