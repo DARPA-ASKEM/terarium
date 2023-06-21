@@ -319,7 +319,7 @@ function updateModelConfigValue() {
 }
 
 function initializeConfigSpace() {
-	console.log(props.modelConfigurations);
+	// console.log(props.modelConfigurations);
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];

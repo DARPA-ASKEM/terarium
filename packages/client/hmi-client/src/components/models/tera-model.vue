@@ -337,8 +337,9 @@ async function getModelConfigurations() {
 		modelConfigurations.value = [];
 
 		// FIXME: If you keep the drilldown open while switching from one model node to the next you'll see a duplicate of the previous row
-		// It's a duplicate of a config that belongs to that node as they both have the same config id:
-		// console.log(modelConfigIds, openedWorkflowNodeStore.node.outputs)
+		// It's a duplicate of a config that belongs to that node as they both have the same config id
+		// Also this function seems to run twice and a bunch of petrinet service errors show up (when you switch nodes and drilldown is open)
+		// console.log(openedWorkflowNodeStore.node.outputs)
 
 		if (modelConfigIds) {
 			for (let i = 0; i < modelConfigIds.length; i++) {

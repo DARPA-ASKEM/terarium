@@ -55,7 +55,6 @@ watch(
 	() => datasetId.value, // When dataset ID changes, update datasetColumnNames
 	async () => {
 		if (datasetId.value) {
-			// console.log(modelConfig);
 			// Get dataset:
 			const dataset: Dataset | null = await getDataset(datasetId.value.toString());
 			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
