@@ -25,6 +25,10 @@ export interface NumericValueMap {
 	[key: string]: number;
 }
 
+export interface AnyValueMap {
+	[key: string]: any;
+}
+
 export enum ViewType {
 	LIST = 'list',
 	MATRIX = 'matrix',

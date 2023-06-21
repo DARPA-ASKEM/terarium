@@ -100,9 +100,7 @@
 				</Splitter>
 			</div>
 		</TeraResizablePanel>
-		<section v-else-if="model" class="graph-element preview">
-			<div ref="graphElement" class="graph-element preview" />
-		</section>
+		<div v-else-if="model" ref="graphElement" class="graph-element preview" />
 	</main>
 </template>
 
@@ -540,14 +538,14 @@ main {
 	overflow: auto;
 }
 
-/* .preview {
-	height: 5rem;
+.preview {
+	min-height: 8rem;
 	background-color: var(--surface-secondary);
 	flex-grow: 1;
 	overflow: hidden;
 	border: none;
 	position: relative;
-} */
+}
 
 .legend {
 	position: absolute;

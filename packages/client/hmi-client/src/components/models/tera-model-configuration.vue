@@ -1,8 +1,9 @@
 <template>
 	<DataTable
+		v-if="configurations?.[0]?.initials && configurations?.[0]?.parameters"
 		class="model-configuration"
 		v-model:selection="selectedModelConfig"
-		:value="modelConfiguration"
+		:value="modelConfigurationTable"
 		editMode="cell"
 		showGridlines
 		@cell-edit-init="onCellEditStart"
@@ -12,15 +13,36 @@
 			<Row>
 				<Column v-if="isEditable" header="" style="border: none" />
 				<Column header="" style="border: none" />
-				<Column header="Initial conditions" :colspan="Object.keys(initialValues[0]).length" />
-				<Column header="Parameters" :colspan="Object.keys(parameterValues[0]).length" />
-				<!-- <Column header="Observables" /> -->
+				<Column
+					v-for="(header, i) in Object.keys(configurations[0])"
+					:header="capitalize(header)"
+					:colspan="configurations[0][header].length"
+					:key="i"
+				/>
 			</Row>
 			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
 				<Column :header="isEditable ? 'Select all' : ''" />
-				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i" :header="name" />
-				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i" :header="name" />
+				<!-- Having trouble getting this loop to work-->
+				<!--<template v-for="(header, i) in Object.keys(configurations[0])" :key="i">
+					<Column v-for="(variableName, j) in configurations[0][header]" :header="variableName.target"
+						:key="i + j" />
+				</template>-->
+				<Column
+					v-for="(variableName, i) in configurations[0].rates"
+					:header="variableName.target"
+					:key="i"
+				/>
+				<Column
+					v-for="(variableName, i) in configurations[0].initials"
+					:header="variableName.target"
+					:key="i"
+				/>
+				<Column
+					v-for="(variableName, i) in configurations[0].parameters"
+					:header="variableName.id"
+					:key="i"
+				/>
 			</Row>
 			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
 		</ColumnGroup>
@@ -33,19 +55,24 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
+		<!--TODO: The slice here skips the name attribute, see about skipping it and rates in a clearer way-->
 		<Column
-			v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
+			v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
+				1,
+				Object.keys(modelConfigurationTable[0]).length
+			)"
 			:key="i"
-			:field="value['id']"
+			:field="value"
 		>
 			<template #body="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 			<template #editor="{ data, field }">
-				{{ data[field] }}
+				{{ data[field]?.value }}
 			</template>
 		</Column>
-		<ColumnGroup v-if="calibrationConfig" type="footer">
+		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
+			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
 				<Column footer="Select variables and parameters to calibrate" />
 				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i">
@@ -59,7 +86,7 @@
 					</template>
 				</Column>
 			</Row>
-		</ColumnGroup>
+		</ColumnGroup> -->
 	</DataTable>
 	<Button
 		v-if="isEditable"
@@ -89,7 +116,7 @@
 							<label for="name">Value</label>
 							<InputText
 								class="p-inputtext-sm"
-								v-model="cellValueToEdit.data[cellValueToEdit.field]"
+								v-model="cellValueToEdit.data[cellValueToEdit.field].value"
 							/>
 						</div>
 					</TabPanel>
@@ -111,9 +138,9 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
-import Checkbox from 'primevue/checkbox';
+// import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
@@ -122,25 +149,28 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import { Model } from '@/types/Types';
-import { ModelConfig } from '@/types/ModelConfig';
+import { ModelConfiguration } from '@/types/Types';
+import { AnyValueMap } from '@/types/common';
+import {
+	createModelConfiguration,
+	updateModelConfiguration
+} from '@/services/model-configurations';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { NumericValueMap } from '@/types/common';
+import { ModelOperation } from '@/components/workflow/model-operation';
+
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const props = defineProps<{
-	model: Model;
 	isEditable: boolean;
-	modelConfigNodeInput?: ModelConfig;
+	modelConfigurations: ModelConfiguration[];
 	calibrationConfig?: boolean;
 }>();
 
-const modelConfigNames = ref(['Config 1']);
+const editableModelConfigs = ref<ModelConfiguration[]>([]);
 
 const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
-const initialValues = ref<NumericValueMap[]>([{}]);
-const parameterValues = ref<NumericValueMap[]>([{}]);
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 
@@ -148,15 +178,72 @@ const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
-
-const modelConfiguration = computed(() =>
-	modelConfigNames.value.map((name, i) => ({
-		name,
-		...initialValues.value[i],
-		...parameterValues.value[i]
-	}))
+const configurations = computed<any[]>(
+	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
 );
+
+// TODO: Clean this up and use appropriate loops
+const modelConfigurationTable = computed(() => {
+	if (editableModelConfigs.value && !isEmpty(configurations.value)) {
+		console.log('Configuration', configurations.value);
+
+		const odes: object[] = [];
+
+		for (let i = 0; i < configurations.value.length; i++) {
+			if (configurations.value[i]) {
+				odes.push({});
+				// eslint-disable-next-line
+				for (const key of Object.keys(configurations.value[i])) {
+					odes[i][key] = [];
+
+					configurations.value[i][key].forEach((value) => {
+						const newPair = {};
+						newPair[value.target ?? value.id] = value.expression ?? value.value;
+						odes[i][key].push(newPair);
+					});
+				}
+			}
+		}
+		// console.log(odes);
+
+		const variables: AnyValueMap[] = [];
+		// eslint-disable-next-line
+		for (let i = 0; i < odes.length; i++) {
+			variables[i] = {};
+			// eslint-disable-next-line
+			for (const [key, values] of Object.entries(odes[i])) {
+				const flattenedObj = {};
+
+				if (isArray(values)) {
+					// @ts-ignore
+					// eslint-disable-next-line
+					for (let j = 0; j < values.length; j++) {
+						const newKey: string = Object.keys(values[j])[0];
+						const newVal = {};
+						newVal[newKey] = {
+							value: Object.values(values[j])[0],
+							type: key,
+							name: newKey,
+							typeIndex: j,
+							configIndex: i
+						};
+						Object.assign(flattenedObj, newVal);
+					}
+					// console.log(flattenedObj, values, key);
+				}
+				variables[i] = { ...variables[i], ...flattenedObj };
+			}
+		}
+
+		// console.log(variables);
+
+		return editableModelConfigs.value.map((modelConfig, i) => ({
+			name: modelConfig.name,
+			...variables[i]
+		}));
+	}
+	return [];
+});
 
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
@@ -164,14 +251,24 @@ const selectedModelVariables = computed(() => [
 ]);
 defineExpose({ selectedModelVariables });
 
-function addModelConfiguration() {
-	modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
-	initialValues.value.push(cloneDeep(initialValues.value[initialValues.value.length - 1]));
-	parameterValues.value.push(cloneDeep(parameterValues.value[parameterValues.value.length - 1]));
+async function addModelConfiguration() {
+	const response = await createModelConfiguration(
+		props.modelConfigurations[0].configuration.id, // model id
+		`Config ${props.modelConfigurations.length + 1}`,
+		'shawntest',
+		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
+	);
+
+	// FIXME: Not a good idea to update reactive variables through global storage
+	openedWorkflowNodeStore.appendOutputPort({
+		type: ModelOperation.outputs[0].type,
+		label: `Config ${props.modelConfigurations.length + 1}`,
+		value: response.id
+	});
 }
 
 function addConfigValue() {
-	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1}`);
+	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1} `);
 }
 
 const onCellEditComplete = (event) => {
@@ -189,6 +286,7 @@ const onCellEditComplete = (event) => {
 };
 
 const onCellEditStart = (event) => {
+	console.log(event);
 	if (props.isEditable) {
 		const { data, field, index } = event;
 
@@ -200,81 +298,44 @@ const onCellEditStart = (event) => {
 };
 
 function updateModelConfigValue() {
-	const { data, field, index } = cellValueToEdit.value;
+	const { data, field } = cellValueToEdit.value;
+	const { type, value, typeIndex, configIndex } = data[field];
 
-	if (initialValues.value[index][field]) {
-		initialValues.value[index][field] = data[field];
-	} else if (parameterValues.value[index][field]) {
-		parameterValues.value[index][field] = data[field];
+	// just create the clone within here ?
+
+	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
+			value;
+	} else if (
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].expression
+	) {
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][
+			typeIndex
+		].expression = value;
 	}
+	updateModelConfiguration(editableModelConfigs.value[configIndex]);
 
 	openValueConfig.value = false;
 }
 
-function generateModelConfigValues() {
-	// Sync with workflow (not compatible with amr yet)
-	if (
-		props.model &&
-		openedWorkflowNodeStore.assetId === props.model.id.toString() &&
-		openedWorkflowNodeStore.initialValues !== null &&
-		openedWorkflowNodeStore.parameterValues !== null
-	) {
-		// Shallow copy
-		initialValues.value = openedWorkflowNodeStore.initialValues;
-		parameterValues.value = openedWorkflowNodeStore.parameterValues;
-
-		if (modelConfigNames.value.length < initialValues.value.length - 1) {
-			modelConfigNames.value.push(`Config ${modelConfigNames.value.length + 1}`);
-		}
-	}
-	// Copy node input in here if that's just what we want to show
-	else if (props.modelConfigNodeInput) {
-		initialValues.value[0] = props.modelConfigNodeInput.initialValues;
-		parameterValues.value[0] = props.modelConfigNodeInput.parameterValues;
-	}
-	// Default values petrinet format
-	else if (props.model) {
-		props.model.model.states.forEach((s) => {
-			initialValues.value[0][s.id] = 1;
-		});
-		props.model.model.transitions.forEach((t) => {
-			parameterValues.value[0][t.id] = 0.0005;
-		});
-	}
-
-	// By default check all boxes for calibration
-	if (props.calibrationConfig) {
-		selectedInitials.value = Object.keys(initialValues.value[0]);
-		selectedParameters.value = Object.keys(parameterValues.value[0]);
-	}
-}
-
-function resetModelConfiguration() {
-	console.log(props.model);
-	modelConfigNames.value = ['Config 1'];
+function initializeConfigSpace() {
+	// console.log(props.modelConfigurations);
+	editableModelConfigs.value = [];
+	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
-	initialValues.value = [{}];
-	parameterValues.value = [{}];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '', index: 0 };
-	generateModelConfigValues();
 }
 
 watch(
-	() => [openedWorkflowNodeStore.initialValues, openedWorkflowNodeStore.parameterValues],
-	() => {
-		generateModelConfigValues();
-	},
+	() => props.modelConfigurations,
+	() => initializeConfigSpace(),
 	{ deep: true }
 );
 
-watch(
-	() => props.model,
-	() => resetModelConfiguration(),
-	{ deep: true }
-);
-
-onMounted(() => resetModelConfiguration());
+onMounted(() => {
+	initializeConfigSpace();
+});
 </script>
 
 <style scoped>

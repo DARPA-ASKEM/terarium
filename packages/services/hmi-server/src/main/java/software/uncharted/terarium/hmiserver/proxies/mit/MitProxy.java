@@ -29,22 +29,33 @@ public interface MitProxy {
 
 	@POST
 	@Path("/petri/get_pyacset")
-	String getPyAcset(@QueryParam("places_str") final String places,
-											@QueryParam("transitions_str") final String transitions,
-											@QueryParam("arcs_str") final String arcs);
+	String getPyAcset(
+		@QueryParam("places_str") final String places,
+		@QueryParam("transitions_str") final String transitions,
+		@QueryParam("arcs_str") final String arcs
+	);
 
 	@POST
 	@Path("/annotation/find_text_vars")
 	String findTextVars(
 		@QueryParam("async") final String async,
-		@QueryParam("text") final String text);
+		@QueryParam("text") final String text
+	);
 
 	@POST
 	@Path("/annotation/link_annos_to_pyacset")
 	String linkAnnotationsToAcset(
 		@QueryParam("pyacset_str") final String pyacset,
 		@QueryParam("annotations_str") final String annotations,
-		@QueryParam("info_str") final String info);
+		@QueryParam("info_str") final String info
+	);
+
+	@POST
+	@Path("/annotation/link_dataset_col_to_dkg")
+	String linkDatasetColToDKG(
+		@QueryParam("csv_str") final String csv,
+		@QueryParam("doc") final String doc
+	);
 
 	@GET
 	@Path("/response")

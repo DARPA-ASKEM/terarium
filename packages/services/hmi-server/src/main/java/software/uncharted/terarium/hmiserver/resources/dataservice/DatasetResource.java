@@ -255,7 +255,6 @@ public class DatasetResource {
 			List<String> column = getColumn(csv,i);
 			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
 		}
-
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)
