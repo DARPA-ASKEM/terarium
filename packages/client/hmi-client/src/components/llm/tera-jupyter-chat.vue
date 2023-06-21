@@ -41,6 +41,8 @@
 				:asset-id="props.assetId"
 				:msg="msg"
 				:has-been-drawn="renderedMessages.has(msg.query_id)"
+				:is-executing-code="isExecutingCode"
+				:show-chat-thought="props.showChatThought"
 				@has-been-drawn="hasBeenDrawn(msg.query_id)"
 			/>
 			<tera-chatty-input
@@ -78,6 +80,7 @@ const props = defineProps<{
 	assetType?: ProjectAssetTypes;
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
+	showChatThought?: boolean;
 }>();
 
 const isQuery = (message) => message.header.msg_type === 'llm_request';
@@ -159,6 +162,7 @@ const jupyterSession = newSession('llmkernel', 'ChattyNode');
 const messagesHistory = ref<JupyterMessage[]>([]);
 const selectedKernel = ref();
 const activeSessions = ref(sessionManager.running());
+const isExecutingCode = ref(false);
 
 const killKernel = () => {
 	shutdownKernel(selectedKernel.value.kernelId, serverSettings);
@@ -274,6 +278,10 @@ const newJupyterResponse = (jupyterResponse) => {
 		emit('new-message', messagesHistory.value);
 	} else if (jupyterResponse.header.msg_type === 'dataset') {
 		emit('update-table-preview', jupyterResponse.content);
+	} else if (jupyterResponse.header.msg_type === 'execute_input') {
+		isExecutingCode.value = true;
+	} else if (jupyterResponse.header.msg_type === 'execute_result') {
+		isExecutingCode.value = false;
 	} else {
 		console.log('Unknown Jupyter event', jupyterResponse);
 	}

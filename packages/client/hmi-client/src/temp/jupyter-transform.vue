@@ -4,15 +4,14 @@
 		{{ assetType }}
 		<div>
 			<div>
-				<chatty-input
+				<tera-jupyter-chat
 					:llm-context="jupyterSession"
+					:project="props.project"
 					placeholder-message="What do you want to do?"
 					@new-message="newMessage"
 					context="dataset"
 					:context_info="{
-						id:
-							props.assetId !== undefined ? props.assetId : 'f664c2bf-4c6a-4948-810c-0686e555de83',
-						id: props.assetId !== undefined ? props.assetId : 'a035cc6f-e1a5-416b-9320-c3822255ab19'
+						id: props.assetId !== undefined ? props.assetId : 'f664c2bf-4c6a-4948-810c-0686e555de83'
 					}"
 				/>
 				<div v-if="showHistory" id="chatty-history">
@@ -46,7 +45,7 @@
 							Error: {{ message.content['text'] }}
 						</div>
 						<div v-else-if="message.header.msg_type === 'code_cell'" class="code-cell">
-							<jupyter-code-cell
+							<tera-chatty-code-cell
 								:jupyter-session="jupyterSession"
 								:language="message.content['language']"
 								:code="message.content['code']"
@@ -75,8 +74,8 @@
 <script setup lang="ts">
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import ChattyInput from '@/components/llm/tera-jupyter-chat.vue';
-import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
+import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
+import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.vue';
 import JupyterDataPreview from '@/components/llm/jupyter-dataset-preview.vue';
 import { ref, watch } from 'vue';
 

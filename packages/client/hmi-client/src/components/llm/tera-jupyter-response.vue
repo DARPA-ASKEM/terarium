@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<section class="jupyter-message">
-			<div class="absolute">
+			<div class="menu-container">
 				<Button
 					v-if="msg.query"
 					icon="pi pi-ellipsis-v tool"
@@ -30,25 +30,26 @@
 							></i></span
 						>{{ msg.timestamp }}
 					</div>
+					<div v-if="props.isExecutingCode">Executing....</div>
 				</section>
 				<!----------------------------------------------------->
 				<div v-for="(m, index) in msg.messages" :key="index">
 					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
-						<div class="response">{{ m.content['chatty_response'] }}</div>
+						<div class="llm-response">{{ m.content['chatty_response'] }}</div>
 					</div>
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
 						<div class="error">{{ m.content['text'] }}</div>
 					</div>
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stdout'">
 						<tera-jupyter-response-thought
-							:thought="m.content['text'].trim()"
+							:thought="formattedThought(m.content['text'].trim())"
 							:has-been-drawn="props.hasBeenDrawn"
-							:show-thought="!msg.query || showThought"
+							:show-thought="!msg.query || showThought || props.showChatThought"
 							@has-been-drawn="thoughtHasBeenDrawn"
 						/>
 					</div>
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
-						<jupyter-code-cell
+						<tera-chatty-code-cell
 							:jupyter-session="jupyterSession"
 							:language="m.content['language']"
 							:code="m.content['code']"
@@ -67,7 +68,7 @@
 <script setup lang="ts">
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
-import JupyterCodeCell from '@/components/llm/jupyter-code-cell.vue';
+import TeraChattyCodeCell from '@/components/llm/tera-chatty-response-code-cell.vue';
 import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-thought.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
@@ -96,12 +97,38 @@ const chatWindowMenuItems = ref([
 
 const showChatWindowMenu = (event) => chatWindowMenu.value.toggle(event);
 
+const formattedThought = (input) => {
+	const lines = input.split('\n'); // Split the string into lines
+	const formattedLines = lines.map((line) => {
+		const index = line.indexOf(':');
+		if (index > -1) {
+			// Transform the category to title case and remove underscores
+			const category = toTitleCase(line.slice(0, index));
+			// Add a newline character after the colon
+			return `${category}:\n${line.slice(index + 2)}`;
+		}
+		return line;
+	});
+	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
+};
+
+function toTitleCase(str: string): string {
+	return str
+		.replace(/_/g, ' ')
+		.toLowerCase()
+		.split(' ')
+		.map((word) => word.charAt(0).toUpperCase() + word.substring(1))
+		.join(' ');
+}
+
 const emit = defineEmits(['has-been-drawn']);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
 	msg: { query: string; timestamp: string; messages: JupyterMessage[] };
+	showChatThought: boolean;
 	hasBeenDrawn: boolean;
+	isExecutingCode: boolean;
 	assetId?: string;
 }>();
 
@@ -109,7 +136,7 @@ const thoughtHasBeenDrawn = () => {
 	emit('has-been-drawn');
 };
 </script>
-<style>
+<style scoped>
 .query {
 	font-size: 24px;
 	font-family: var(--font-family);
@@ -131,20 +158,22 @@ const thoughtHasBeenDrawn = () => {
 	font-family: var(--font-family);
 	border-radius: 3px;
 	margin-top: 10px;
+	transition: background-color 0.3s, border 0.3s;
 }
 
-.jupyter-message .absolute {
+.jupyter-message:hover {
+	background-color: var(--gray-400);
+	border: 1px solid var(--gray-800);
+}
+
+.jupyter-message .menu-container {
 	display: none;
 	position: absolute;
 	top: 5px;
 	right: 10px;
 }
 
-.jupyter-message:hover .absolute {
-	display: block;
-}
-
-.response {
+.llm-response {
 	color: green;
 }
 

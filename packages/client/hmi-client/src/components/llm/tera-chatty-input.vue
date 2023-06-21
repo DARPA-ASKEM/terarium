@@ -2,8 +2,9 @@
 	<div class="tera-chatty-container" ref="containerElement">
 		<!-- <label for="chatt-input"></label> -->
 		<div class="chat-input-container">
-			<span class="p-input-icon-left">
-				<i class="pi pi-comment" />
+			<span class="p-input-icon-right">
+				<i class="pi pi-send" v-if="kernelState === KernelState.idle" />
+				<i class="pi pi-spin pi-spinner" v-else />
 				<InputText
 					:style="{ width: fixedDivWidth + 'px' }"
 					class="input"
@@ -17,12 +18,12 @@
 					@keydown.enter="onEnter"
 				></InputText>
 			</span>
+			<ProgressBar
+				v-if="kernelState !== KernelState.idle"
+				mode="indeterminate"
+				style="height: 3px"
+			></ProgressBar>
 		</div>
-		<ProgressBar
-			v-if="kernelState !== KernelState.idle"
-			mode="indeterminate"
-			style="height: 3px"
-		></ProgressBar>
 	</div>
 </template>
 
@@ -155,9 +156,12 @@ onMounted(() => {
 	}
 
 	const updateWidth = () => {
-		fixedDivWidth.value = containerElement.value?.offsetWidth
-			? containerElement.value?.offsetWidth
-			: fixedDivWidth.value;
+		if (containerElement.value) {
+			fixedDivWidth.value =
+				containerElement.value.offsetWidth - 20
+					? containerElement.value?.offsetWidth
+					: fixedDivWidth.value;
+		}
 	};
 
 	updateWidth(); // Update once on mount

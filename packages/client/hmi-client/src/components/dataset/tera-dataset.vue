@@ -102,11 +102,11 @@
 						<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 						<span> <header id="GPT">TGPT</header></span>
 					</div>
-
 					<tera-jupyter-chat
 						:project="props.project"
 						:asset-id="props.assetId"
-						:show-jupyter-settings="showKernelSettings"
+						:show-jupyter-settings="showKernels"
+						:show-chat-thought="showChatThoughts"
 						@update-table-preview="updateJupyterTable"
 						@update-kernel-status="updateKernelStatus"
 					/>
@@ -130,22 +130,39 @@ import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
 
-const showKernelSettings = ref(<boolean>false);
+const showKernels = ref(<boolean>false);
+const showChatThoughts = ref(<boolean>true);
 
 const menu = ref();
 
-const settingsLabel = computed(() =>
-	showKernelSettings.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
+const kernelSettingsLabel = computed(() =>
+	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
+);
+
+// const isExcecutingCode = (code) => {
+// 	console.log('tlkjlfkd');
+// 	console.log(code);
+// };
+
+const chatThoughtLabel = computed(() =>
+	showChatThoughts.value ? 'Turn off auto-hiding thoughts' : 'Auto hide thoughts'
 );
 
 const items = ref([
 	{
-		label: 'Jupyter Options',
+		label: 'Chat Options',
 		items: [
 			{
-				label: settingsLabel,
+				label: kernelSettingsLabel,
 				command: () => {
-					showKernelSettings.value = !showKernelSettings.value;
+					showKernels.value = !showKernels.value;
+				}
+			},
+			{
+				label: chatThoughtLabel,
+				command: () => {
+					showChatThoughts.value = !showChatThoughts.value;
+					console.log(showChatThoughts);
 				}
 			}
 		]

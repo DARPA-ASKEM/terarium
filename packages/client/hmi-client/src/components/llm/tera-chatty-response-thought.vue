@@ -48,9 +48,10 @@ const displayedText = computed(() =>
 .thought {
 	border-radius: 5px;
 	white-space: pre-line;
-	color: green;
+	color: var(--gray-600);
 	max-height: 10000px;
 	overflow: hidden;
+	padding: 5px;
 }
 .hide {
 	max-height: 0;
@@ -68,7 +69,6 @@ const displayedText = computed(() =>
 .blinking-cursor {
 	margin-left: 5px;
 	width: 8px;
-	background-color: green;
 	animation: blink 1s infinite;
 }
 
