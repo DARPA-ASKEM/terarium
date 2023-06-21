@@ -66,6 +66,14 @@ export interface Model {
     metadata: ModelMetadata;
 }
 
+export interface ModelConfiguration {
+    id: string;
+    name: string;
+    description?: string;
+    modelId: string;
+    configuration: any;
+}
+
 export interface ProvenanceQueryParam {
     rootId?: number;
     rootType?: ProvenanceType;
@@ -100,9 +108,9 @@ export interface DatasetColumn {
     name: string;
     dataType: ColumnType;
     formatStr?: string;
-    annotations: { [index: string]: string[] };
+    annotations: string[];
     metadata?: { [index: string]: any };
-    grounding?: { [index: string]: Grounding };
+    grounding?: Grounding;
 }
 
 export interface Grounding {
