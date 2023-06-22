@@ -81,23 +81,15 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Parameters">
-						Parameters<span class="artifact-amount">({{ modelParameters?.length }})</span>
+						Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 					</header>
 				</template>
-				<DataTable
-					class="p-datatable-sm"
-					:value="modelParameters"
-					rowGroupMode="subheader"
-					groupRowsBy="description"
-				>
-					<Column class="borderless-row" field="description" header="description"></Column>
-					<Column class="borderless-row" field="id" header="ID"></Column>
-					<Column class="borderless-row" field="value" header="Value"></Column>
-					<template #groupfooter="modelParameters">
-						<div>
-							<span class="parameter-description">{{ modelParameters.data.description }}</span>
-						</div>
-					</template>
+				<DataTable class="p-datatable-sm" :value="parameters">
+					<Column field="id" header="Label" />
+					<Column field="description" header="Description" />
+					<Column field="units" header="Units" />
+					<Column field="concept" header="Concept" />
+					<Column field="extractions" header="Extractions" />
 				</DataTable>
 			</AccordionTab>
 
@@ -109,7 +101,7 @@
 					</header>
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.states">
-					<Column field="id" header="ID"></Column>
+					<Column field="id" header="Label"></Column>
 					<Column field="name" header="Name"></Column>
 					<Column field="grounding.context" header="Context"></Column>
 					<Column field="grounding.identifiers" header="Identifiers"></Column>
@@ -307,7 +299,7 @@ const metaData = computed(() => model.value?.metadata?.variable_statements);
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description));
-const modelParameters = computed(() => model.value?.semantics?.ode.parameters);
+const parameters = computed(() => model.value?.semantics?.ode.parameters);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
