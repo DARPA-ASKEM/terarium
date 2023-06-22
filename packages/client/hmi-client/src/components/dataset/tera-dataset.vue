@@ -31,7 +31,7 @@
 				/>
 			</span>
 			<span v-if="datasetView === DatasetView.LLM">
-				<i class="pi pi-cog" @click="toggleMenu" />
+				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
 		</template>
@@ -130,23 +130,70 @@ import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
 
-const showKernels = ref(<boolean>false);
-const showChatThoughts = ref(<boolean>true);
+enum DatasetView {
+	DESCRIPTION = 'description',
+	DATA = 'data',
+	LLM = 'llm'
+}
 
+const props = defineProps<{
+	assetId: string;
+	isEditable: boolean;
+	highlight?: string;
+	project: IProject;
+}>();
+
+const emit = defineEmits(['close-preview', 'asset-loaded']);
+const kernelStatus = ref('');
+
+const showKernels = ref(<boolean>false);
+const showChatThoughts = ref(<boolean>false);
 const menu = ref();
+const newCsvContent: any = ref(null);
+const newCsvHeader: any = ref(null);
+const oldCsvHeaders: any = ref(null);
+const dataset: Ref<Dataset | null> = ref(null);
+const rawContent: Ref<CsvAsset | null> = ref(null);
+const jupyterCsv: Ref<CsvAsset | null> = ref(null);
+
+const toggleSettingsMenu = (event: Event) => {
+	menu.value.toggle(event);
+};
+
+const updateKernelStatus = (statusString: string) => {
+	kernelStatus.value = statusString;
+};
+
+const datasetView = ref(DatasetView.DESCRIPTION);
+
+const chatThoughtLabel = computed(() =>
+	showChatThoughts.value ? 'Auto hide chat thoughts' : 'Do not auto hide chat thoughts'
+);
 
 const kernelSettingsLabel = computed(() =>
 	showKernels.value ? 'Hide Kernel Settings' : 'Show Kernel Settings'
 );
 
-// const isExcecutingCode = (code) => {
-// 	console.log('tlkjlfkd');
-// 	console.log(code);
-// };
+const csvContent = computed(() => rawContent.value?.csv);
 
-const chatThoughtLabel = computed(() =>
-	showChatThoughts.value ? 'Turn off auto-hiding thoughts' : 'Auto hide thoughts'
-);
+const getActiveIndex = computed(() => {
+	if (!jupyterCsv.value) {
+		return [1];
+	}
+	return [0, 1];
+});
+
+const statusStyle = computed(() => {
+	if (kernelStatus.value === 'idle') {
+		return 'color: green';
+	}
+
+	if (kernelStatus.value === 'busy') {
+		return 'color: orange';
+	}
+
+	return 'color: red';
+});
 
 const items = ref([
 	{
@@ -169,46 +216,6 @@ const items = ref([
 	}
 ]);
 
-const toggleMenu = (event) => {
-	menu.value.toggle(event);
-};
-
-enum DatasetView {
-	DESCRIPTION = 'description',
-	DATA = 'data',
-	LLM = 'llm'
-}
-
-const newCsvContent: any = ref(null);
-const newCsvHeader: any = ref(null);
-const oldCsvHeaders: any = ref(null);
-
-const props = defineProps<{
-	assetId: string;
-	isEditable: boolean;
-	highlight?: string;
-	project: IProject;
-}>();
-
-const emit = defineEmits(['close-preview', 'asset-loaded']);
-const kernelStatus = ref('');
-
-const updateKernelStatus = (status) => {
-	kernelStatus.value = status;
-};
-
-const statusStyle = computed(() => {
-	if (kernelStatus.value === 'idle') {
-		return 'color: green';
-	}
-
-	if (kernelStatus.value === 'busy') {
-		return 'color: orange';
-	}
-
-	return 'color: red';
-});
-
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -217,28 +224,14 @@ function highlightSearchTerms(text: string | undefined): string {
 	return text ?? '';
 }
 
-const dataset: Ref<Dataset | null> = ref(null);
-const rawContent: Ref<CsvAsset | null> = ref(null);
-const jupyterCsv: Ref<CsvAsset | null> = ref(null);
-const datasetView = ref(DatasetView.DESCRIPTION);
-
 const openDatesetChatTab = () => {
 	datasetView.value = DatasetView.LLM;
 	jupyterCsv.value = null;
 };
 
-const csvContent = computed(() => rawContent.value?.csv);
-
 const updateJupyterTable = (newJupyterCsv: CsvAsset) => {
 	jupyterCsv.value = newJupyterCsv;
 };
-
-const getActiveIndex = computed(() => {
-	if (!jupyterCsv.value) {
-		return [1];
-	}
-	return [0, 1];
-});
 
 onUpdated(() => {
 	if (dataset.value) {

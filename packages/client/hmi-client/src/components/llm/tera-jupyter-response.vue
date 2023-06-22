@@ -1,7 +1,8 @@
 <template>
 	<div>
-		<section class="jupyter-message">
+		<section class="jupyter-response">
 			<div class="menu-container">
+				<!-- Button to show chat window menu -->
 				<Button
 					v-if="msg.query"
 					icon="pi pi-ellipsis-v tool"
@@ -9,37 +10,36 @@
 					@click.stop="showChatWindowMenu"
 				/>
 				<Menu ref="chatWindowMenu" :model="chatWindowMenuItems" :popup="true" />
-				<!-- <i class="pi pi-chevron-up tool" /> -->
 			</div>
 			<div class="resp">
 				<section class="query-title">
 					<div class="query">{{ msg.query }}</div>
 					<div class="date">
-						<span
-							><i
-								span
+						<span>
+							<!-- Show eye icon if the message has been drawn and there's a query -->
+							<i
 								v-if="props.hasBeenDrawn && msg.query"
 								class="pi pi-eye thought-icon"
 								v-tooltip="`Show/Hide Thought`"
 								@click="showThought = !showThought"
-							></i
-							><i
-								span
-								v-if="!props.hasBeenDrawn"
-								class="pi pi-spin pi-spinner thought-icon"
-							></i></span
-						>{{ msg.timestamp }}
+							></i>
+							<!-- Show spinning icon if the message is still being drawn -->
+							<i v-if="!props.hasBeenDrawn" class="pi pi-spin pi-spinner thought-icon"></i>
+						</span>
+						{{ msg.timestamp }}
 					</div>
 					<div v-if="props.isExecutingCode">Executing....</div>
 				</section>
-				<!----------------------------------------------------->
 				<div v-for="(m, index) in msg.messages" :key="index">
+					<!-- Handle llm_response type -->
 					<div v-if="m.header.msg_type === 'llm_response' && m.content['name'] === 'response_text'">
 						<div class="llm-response">{{ m.content['chatty_response'] }}</div>
 					</div>
+					<!-- Handle stream type for stderr -->
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stderr'">
 						<div class="error">{{ m.content['text'] }}</div>
 					</div>
+					<!-- Handle stream type for stdout -->
 					<div v-else-if="m.header.msg_type === 'stream' && m.content['name'] === 'stdout'">
 						<tera-jupyter-response-thought
 							:thought="formattedThought(m.content['text'].trim())"
@@ -48,6 +48,7 @@
 							@has-been-drawn="thoughtHasBeenDrawn"
 						/>
 					</div>
+					<!-- Handle code_cell type -->
 					<div v-else-if="m.header.msg_type === 'code_cell'" class="code-cell">
 						<tera-chatty-code-cell
 							:jupyter-session="jupyterSession"
@@ -55,16 +56,23 @@
 							:code="m.content['code']"
 							:autorun="true"
 							context="dataset"
-							:context_info="{
-								id: props.assetId
-							}"
+							:context_info="{ id: props.assetId }"
 						/>
 					</div>
 				</div>
+				<!-- Show dataset if available -->
+				<tera-dataset-datatable
+					class="tera-dataset-datatable"
+					v-if="msg.resultingCsv"
+					:rows="10"
+					:raw-content="msg.resultingCsv"
+					:preview-mode="true"
+				/>
 			</div>
 		</section>
 	</div>
 </template>
+
 <script setup lang="ts">
 import { JupyterMessage } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils';
@@ -73,14 +81,19 @@ import TeraJupyterResponseThought from '@/components/llm/tera-chatty-response-th
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import { ref, computed } from 'vue';
+import { CsvAsset } from '@/types/Types';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
+// Reference for showThought, initially set to false
 const showThought = ref(false);
 
+// Computed values for the labels and icons
 const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 'Show Reasoning'));
 const showHideIcon = computed(() =>
 	showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'
 );
 
+// Reference for the chat window menu and its items
 const chatWindowMenu = ref();
 const chatWindowMenuItems = ref([
 	{ label: 'Edit prompt', command: () => console.log('Edit prompt') },
@@ -95,9 +108,11 @@ const chatWindowMenuItems = ref([
 	{ label: 'Delete', icon: 'pi pi-fw pi-trash', command: () => console.log('Delete prompt') }
 ]);
 
-const showChatWindowMenu = (event) => chatWindowMenu.value.toggle(event);
+// show the chat window menu
+const showChatWindowMenu = (event: Event) => chatWindowMenu.value.toggle(event);
 
-const formattedThought = (input) => {
+// format the thought text
+const formattedThought = (input: string) => {
 	const lines = input.split('\n'); // Split the string into lines
 	const formattedLines = lines.map((line) => {
 		const index = line.indexOf(':');
@@ -112,6 +127,7 @@ const formattedThought = (input) => {
 	return formattedLines.join('\n\n'); // Combine the formatted lines into a single string with an extra newline between each
 };
 
+// Function to convert a string to Title Case
 function toTitleCase(str: string): string {
 	return str
 		.replace(/_/g, ' ')
@@ -125,17 +141,24 @@ const emit = defineEmits(['has-been-drawn']);
 
 const props = defineProps<{
 	jupyterSession: SessionContext;
-	msg: { query: string; timestamp: string; messages: JupyterMessage[] };
+	msg: {
+		query: string;
+		timestamp: string;
+		messages: JupyterMessage[];
+		resultingCsv: CsvAsset | null;
+	};
 	showChatThought: boolean;
 	hasBeenDrawn: boolean;
 	isExecutingCode: boolean;
 	assetId?: string;
 }>();
 
+// emit when the thought has been drawn
 const thoughtHasBeenDrawn = () => {
 	emit('has-been-drawn');
 };
 </script>
+
 <style scoped>
 .query {
 	font-size: 24px;
@@ -149,7 +172,7 @@ const thoughtHasBeenDrawn = () => {
 	padding-top: 10px;
 }
 
-.jupyter-message {
+.jupyter-response {
 	position: relative;
 	padding: 5px;
 	display: flex;
@@ -161,13 +184,20 @@ const thoughtHasBeenDrawn = () => {
 	transition: background-color 0.3s, border 0.3s;
 }
 
-.jupyter-message:hover {
-	background-color: var(--gray-400);
+.jupyter-response:hover {
+	background-color: var(--gray-300);
 	border: 1px solid var(--gray-800);
 }
 
-.jupyter-message .menu-container {
+.jupyter-response .menu-container {
 	display: none;
+	position: absolute;
+	top: 5px;
+	right: 10px;
+}
+
+.jupyter-response:hover .menu-container {
+	display: block;
 	position: absolute;
 	top: 5px;
 	right: 10px;

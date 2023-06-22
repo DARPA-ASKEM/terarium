@@ -1,8 +1,10 @@
 <template>
-	<ConfirmDialog></ConfirmDialog>
 	<div class="tera-jupyter-chat">
+		<ConfirmDialog></ConfirmDialog>
+		<!-- Jupyter Kernel Settings -->
 		<div class="settings-title" v-if="props.showJupyterSettings">Kernel Settings</div>
 		<div class="jupyter-settings" v-if="props.showJupyterSettings">
+			<!-- Kernel Dropdown Selector -->
 			<div class="kernel-dropdown">
 				<Dropdown
 					v-model="selectedKernel"
@@ -14,6 +16,8 @@
 					style="min-width: 100%; height: 30px; margin-bottom: 10px"
 				/>
 			</div>
+
+			<!-- Kernel Control Buttons -->
 			<Button
 				style="flex-grow: 0.2; height: 30px; margin: 0px 0px 10px 10px"
 				@click="confirmDelete"
@@ -33,6 +37,8 @@
 				>Reconnect</Button
 			>
 		</div>
+
+		<!-- Jupyter Response and Input -->
 		<div>
 			<tera-jupyter-response
 				v-for="(msg, index) in nestedMessages"
@@ -45,33 +51,45 @@
 				:show-chat-thought="props.showChatThought"
 				@has-been-drawn="hasBeenDrawn(msg.query_id)"
 			/>
+
+			<!-- Chatty Input -->
 			<tera-chatty-input
 				class="tera-chatty-input"
 				:llm-context="jupyterSession"
 				@update-kernel-status="updateKernelStatus"
 				@new-message="newJupyterResponse"
 				context="dataset"
-				:context_info="{
-					id: props.assetId
-				}"
+				:context_info="{ id: props.assetId }"
 			/>
 		</div>
 	</div>
 </template>
-
 <script setup lang="ts">
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { ref, watch, onUnmounted, onMounted, computed } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import { newSession, JupyterMessage, sessionManager, serverSettings } from '@/services/jupyter';
+import { CsvAsset } from '@/types/Types';
+import { useConfirm } from 'primevue/useconfirm';
+import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
 import TeraJupyterResponse from '@/components/llm/tera-jupyter-response.vue';
 import { IModel } from '@jupyterlab/services/lib/session/session';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
-import { useConfirm } from 'primevue/useconfirm';
 import ConfirmDialog from 'primevue/confirmdialog';
+
+let jupyterCsv: CsvAsset | null = null;
+
+function cloneCsvAsset(asset: CsvAsset): CsvAsset {
+	return {
+		csv: [...asset.csv.map((row) => [...row])], // create a copy of each sub-array
+		stats: asset.stats ? [...asset.stats] : undefined, // copy stats array if it exists
+		headers: [...asset.headers] // copy headers array
+	};
+}
+
+const emit = defineEmits(['new-message', 'update-table-preview', 'update-kernel-status']);
 
 const props = defineProps<{
 	project: IProject;
@@ -83,20 +101,31 @@ const props = defineProps<{
 	showChatThought?: boolean;
 }>();
 
-const isQuery = (message) => message.header.msg_type === 'llm_request';
+const confirm = useConfirm();
+const runningSessions = ref();
+
+const jupyterSession = newSession('llmkernel', 'ChattyNode');
+const messagesHistory = ref<JupyterMessage[]>([]);
+const selectedKernel = ref();
+const activeSessions = ref(sessionManager.running());
+const isExecutingCode = ref(false);
 
 const renderedMessages = ref(new Set<any>());
 
-const hasBeenDrawn = (message_id) => {
+const isQuery = (message) => message.header.msg_type === 'llm_request';
+const hasBeenDrawn = (message_id: string) => {
 	renderedMessages.value.add(message_id);
 };
 
 const nestedMessages = computed(() => {
+	// This computed property groups Jupyter messages into queries
+	// and stores resulting csv after each query.
 	const result: {
 		query_id: string;
 		query: string;
 		timestamp: string;
 		messages: JupyterMessage[];
+		resultingCsv: CsvAsset | null;
 	}[] = [];
 	let currentQuery = '';
 	let currentQueryId = '';
@@ -116,7 +145,8 @@ const nestedMessages = computed(() => {
 						query_id: currentQueryId,
 						query: currentQuery,
 						timestamp: currentTimestamp,
-						messages: currentMessages
+						messages: currentMessages,
+						resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
 					});
 					// Clear the currentMessages for new query
 					currentMessages = [];
@@ -126,7 +156,8 @@ const nestedMessages = computed(() => {
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 					query: message.content['request'],
 					timestamp: message.header.date,
-					messages: []
+					messages: [],
+					resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
 				});
 				// Update the currentQuery, currentQueryId and currentTimestamp with new values
 				// eslint-disable-next-line @typescript-eslint/dot-notation
@@ -147,22 +178,14 @@ const nestedMessages = computed(() => {
 					query_id: currentQueryId,
 					query: currentQuery,
 					timestamp: currentTimestamp,
-					messages: currentMessages
+					messages: currentMessages,
+					resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
 				});
 			}
 		}
 	}
 	return result;
 });
-
-const confirm = useConfirm();
-
-const jupyterSession = newSession('llmkernel', 'ChattyNode');
-
-const messagesHistory = ref<JupyterMessage[]>([]);
-const selectedKernel = ref();
-const activeSessions = ref(sessionManager.running());
-const isExecutingCode = ref(false);
 
 const killKernel = () => {
 	shutdownKernel(selectedKernel.value.kernelId, serverSettings);
@@ -176,9 +199,7 @@ const deleteAllKernels = () => {
 	updateKernelList();
 };
 
-const runningSessions = ref();
-const emit = defineEmits(['new-message', 'update-table-preview', 'update-kernel-status']);
-
+// Kernel Confirmation dialogs
 const confirmReconnect = () => {
 	confirm.require({
 		message: `Are you sure you want to proceed to terminate ${runningSessions.value.length} ?`,
@@ -275,13 +296,14 @@ const newJupyterResponse = (jupyterResponse) => {
 		) > -1
 	) {
 		messagesHistory.value.push(jupyterResponse);
+		isExecutingCode.value = false;
 		emit('new-message', messagesHistory.value);
 	} else if (jupyterResponse.header.msg_type === 'dataset') {
 		emit('update-table-preview', jupyterResponse.content);
+		jupyterCsv = jupyterResponse.content;
+		isExecutingCode.value = false;
 	} else if (jupyterResponse.header.msg_type === 'execute_input') {
 		isExecutingCode.value = true;
-	} else if (jupyterResponse.header.msg_type === 'execute_result') {
-		isExecutingCode.value = false;
 	} else {
 		console.log('Unknown Jupyter event', jupyterResponse);
 	}
