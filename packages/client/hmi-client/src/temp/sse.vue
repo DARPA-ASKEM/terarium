@@ -22,11 +22,7 @@ const models = ref<Array<string>>([]);
 
 function listen() {
 	const auth = useAuthStore();
-	const events = new EventSourcePolyfill('/api/user/server-sent-events', {
-		headers: {
-			Authorization: `Bearer ${auth.token}`
-		}
-	});
+	const events = new EventSourcePolyfill('/api/user/server-sent-events');
 	//const events = new EventSource("/api/server-sent-events", { withCredentials: true });
 	events.onmessage = (event) => {
 		const id: string = JSON.parse(event.data)?.id;
