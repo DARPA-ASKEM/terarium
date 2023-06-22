@@ -52,12 +52,16 @@
 		<Accordion
 			v-if="modelView === ModelView.DESCRIPTION"
 			:multiple="true"
-			:active-index="[0, 1, 2, 3, 4]"
+			:active-index="[0, 1, 2, 3, 4, 5, 6]"
 		>
 			<AccordionTab>
 				<template #header>
 					<header>Related publications</header>
 				</template>
+				<p>
+					Terarium can extract information from papers and other resources to describe this model.
+				</p>
+				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
