@@ -146,7 +146,7 @@ export interface CalibrationRequest {
 export interface DatasetLocation {
     id: string;
     filename: string;
-    mappings: any;
+    mappings?: any;
 }
 
 export interface SimulationRequest {
