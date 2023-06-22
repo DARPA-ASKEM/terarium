@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -108,8 +108,10 @@ import {
 	generateAgeStrataModel,
 	generateLocationStrataModel
 } from '@/services/models/stratification-service';
-import { Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModel } from '@/services/model';
 import TeraModelDiagram from '../models/tera-model-diagram.vue';
 
 const props = defineProps<{
@@ -125,7 +127,9 @@ const stratifyStep = ref(1);
 const strataType = ref();
 const labels = ref();
 const strataModel = ref<Model | null>(null);
-const model = computed(() => props.node.inputs[0].value?.[0].model);
+const modelConfiguration = ref<ModelConfiguration>();
+// const model = computed(() => modelConfiguration.value?.configuration.model);
+const model = ref<Model | null>(null);
 
 function generateStrataModel() {
 	if (strataType.value && labels.value) {
@@ -137,6 +141,20 @@ function generateStrataModel() {
 		}
 	}
 }
+
+watch(
+	() => props.node.inputs[0],
+	async () => {
+		const modelConfigurationId = props.node.inputs[0].value?.[0];
+		if (modelConfigurationId) {
+			modelConfiguration.value = await getModelConfigurationById(modelConfigurationId);
+			if (modelConfiguration.value) {
+				model.value = await getModel(modelConfiguration.value.configuration.id);
+			}
+		}
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
