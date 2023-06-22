@@ -54,8 +54,8 @@
 			:active-index="[0, 1, 2, 3, 4, 5, 6]"
 			multiple
 		>
-			<AccordionTab
-				><!-- Related publications -->
+			<!-- Related publications -->
+			<AccordionTab>
 				<template #header>
 					<header>Related publications</header>
 				</template>
@@ -64,8 +64,9 @@
 				</p>
 				<Button label="Add resources to describe this model" link icon="pi pi-plus" />
 			</AccordionTab>
-			<AccordionTab
-				><!-- Description -->
+
+			<!-- Description -->
+			<AccordionTab>
 				<template #header>
 					<header id="Description">Description</header>
 				</template>
@@ -75,8 +76,9 @@
 					<Textarea v-model="newDescription" rows="5" placeholder="Description of new model" />
 				</template>
 			</AccordionTab>
-			<AccordionTab
-				><!-- Parameters -->
+
+			<!-- Parameters -->
+			<AccordionTab>
 				<template #header>
 					<header id="Parameters">
 						Parameters<span class="artifact-amount">({{ modelParameters?.length }})</span>
@@ -98,8 +100,9 @@
 					</template>
 				</DataTable>
 			</AccordionTab>
-			<AccordionTab
-				><!-- State variables -->
+
+			<!-- State variables -->
+			<AccordionTab>
 				<template #header>
 					<header id="State variables">
 						State variables<span class="artifact-amount">({{ model?.model.states.length }})</span>
@@ -112,14 +115,16 @@
 					<Column field="grounding.identifiers" header="Identifiers"></Column>
 				</DataTable>
 			</AccordionTab>
-			<AccordionTab
-				><!-- Observables -->
+
+			<!-- Observables -->
+			<AccordionTab>
 				<template #header>
 					<header>Observables</header>
 				</template>
 			</AccordionTab>
-			<AccordionTab
-				><!-- Transitions -->
+
+			<!-- Transitions -->
+			<AccordionTab>
 				<template #header>
 					<header id="Transitions">
 						Transitions<span class="artifact-amount">({{ model?.model.transitions.length }})</span>
@@ -136,8 +141,9 @@
 					</Column>
 				</DataTable>
 			</AccordionTab>
-			<AccordionTab
-				><!-- Other extractions -->
+
+			<!-- Other extractions -->
+			<AccordionTab>
 				<template #header>
 					<header id="Other extractions">
 						Other extractions<span class="artifact-amount">({{ metaData?.length }})</span>
