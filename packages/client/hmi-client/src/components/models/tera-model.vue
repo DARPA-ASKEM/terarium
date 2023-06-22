@@ -126,19 +126,12 @@
 					</header>
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.transitions">
-					<Column field="id" header="ID"></Column>
-					<Column field="properties.name" header="Name"></Column>
-					<Column field="input" header="Input"></Column>
-					<Column field="output" header="Output"></Column>
-					<!-- <Column field="properties.rate.expression" header="Expression"></Column> -->
+					<Column field="properties.name" header="Label" />
+					<Column field="input" header="Input" />
+					<Column field="output" header="Output" />
 					<Column field="properties.rate.expression_mathml" header="Expression">
 						<template #body="slotProps">
-							<katex-element
-								:expression="
-									model?.semantics?.ode.rates.find((rate) => rate.target === slotProps.data.id)
-										?.expression
-								"
-							/>
+							<katex-element :expression="getTransitionExpression(slotProps.data.id)" />
 						</template>
 					</Column>
 				</DataTable>
@@ -448,6 +441,11 @@ function getExtractionType(sp) {
 		return 'DataSet';
 	}
 	return 'Document';
+}
+
+// Get the mathematical expression of a transition
+function getTransitionExpression(id): string {
+	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '';
 }
 
 function getSource(sp) {
