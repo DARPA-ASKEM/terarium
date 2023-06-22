@@ -146,7 +146,7 @@
 			<AccordionTab>
 				<template #header>
 					<header id="Other extractions">
-						Other extractions<span class="artifact-amount">({{ metaData?.length }})</span>
+						Other extractions<span class="artifact-amount">({{ 'unknown' }})</span>
 					</header>
 				</template>
 				<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
@@ -256,7 +256,7 @@ const modelContent = computed(() => [
 ]);
 */
 
-// Get rid of these emits
+// TODO - Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
 
 const props = defineProps({
@@ -291,15 +291,9 @@ const model = ref<Model | null>(null);
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
-// apparently this is never used?
-// const isEditing = ref<boolean>(false);
-const isEditingEQ = ref<boolean>(false);
-
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
-
-const isMathMLValid = ref<boolean>(true);
 
 const metaData = computed(() => model.value?.metadata?.variable_statements);
 
@@ -437,8 +431,6 @@ const createNewModel = async () => {
 				}
 			});
 		}
-		isEditingEQ.value = false;
-		isMathMLValid.value = true;
 	}
 };
 
