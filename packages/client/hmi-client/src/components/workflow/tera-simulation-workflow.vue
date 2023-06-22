@@ -42,7 +42,8 @@
 					<tera-model-node
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
-						:model-id="node.outputs?.[0]?.value?.[0]?.model.id.toString() ?? newAssetId"
+						:node="node"
+						:model-id="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
