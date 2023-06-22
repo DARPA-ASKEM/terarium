@@ -84,12 +84,22 @@
 						Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 					</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="parameters">
+				<DataTable
+					class="p-datatable-sm"
+					:value="parameters"
+					rowGroupMode="subheader"
+					groupRowsBy="description"
+				>
 					<Column field="id" header="Label" />
 					<Column field="description" header="Description" />
 					<Column field="units" header="Units" />
 					<Column field="concept" header="Concept" />
 					<Column field="extractions" header="Extractions" />
+					<template #groupfooter="modelParameters">
+						<div>
+							<span class="parameter-description">{{ modelParameters.data.description }}</span>
+						</div>
+					</template>
 				</DataTable>
 			</AccordionTab>
 
