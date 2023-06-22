@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.proxies.dataservice;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -40,14 +41,14 @@ public interface SimulationProxy {
 
 	@GET
 	@Path("/{id}/upload-url")
-	String getUploadURL(
+	PresignedURL getUploadURL(
 		@PathParam("id") String id,
 		@QueryParam("filename") String filename
 	);
 
 	@GET
 	@Path("/{id}/download-url")
-	String getDownloadURL(
+	PresignedURL getDownloadURL(
 		@PathParam("id") String id,
 		@QueryParam("filename") String filename
 	);

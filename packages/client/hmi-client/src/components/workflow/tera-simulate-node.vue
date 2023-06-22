@@ -27,7 +27,6 @@
 import { ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
-import { shimPetriModel } from '@/services/models/petri-shim';
 import { ModelConfiguration } from '@/types/Types';
 
 import { makeForecastJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
@@ -35,7 +34,6 @@ import { WorkflowNode } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateOperation } from './simulate-operation';
@@ -62,26 +60,35 @@ watch(
 );
 
 const runSimulate = async () => {
-	if (props.node.inputs[0].value?.length) {
-		startedRunIdList.value = await Promise.all(
-			props.node.inputs[0].value.map(async (config) => {
-				const payload = {
-					model: shimPetriModel(AMRToPetri(config.model, 'id')),
-					initials: config.initialValues,
-					params: config.parameterValues,
-					tspan: openedWorkflowNodeStore.tspan
-				};
+	const modelConfigurationList = props.node.inputs[0].value;
+	if (!modelConfigurationList?.length) return;
 
-				// FIXME: TS1225 adapt new payload
-				const response = await makeForecastJob(payload);
-				console.log(payload, config.model, AMRToPetri(config.model));
-				return response.id;
-			})
-		);
+	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
+		const payload = {
+			modelConfigId: configId,
+			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
+			extra: {
+				// FIXME: use real value
+				initials: {
+					S: 100,
+					I: 1,
+					R: 0
+				},
+				params: {
+					inf: 0.002,
+					rec: 0.004
+				}
+			},
+			engine: 'sciml'
+		};
+		const response = await makeForecastJob(payload);
+		console.log(response.id, payload);
+		return response.id;
+	});
 
-		getStatus();
-		showSpinner.value = true;
-	}
+	startedRunIdList.value = await Promise.all(simulationRequests);
+	getStatus();
+	showSpinner.value = true;
 };
 
 // watch for changes in node input
