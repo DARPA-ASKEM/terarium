@@ -132,8 +132,16 @@
 				</template>
 				<DataTable class="p-datatable-sm" :value="model?.model.transitions">
 					<Column field="properties.name" header="Label" />
-					<Column field="input" header="Input" />
-					<Column field="output" header="Output" />
+					<Column field="input" header="Input"
+						><template #body="slotProps">{{
+							slotProps.data.input.sort().join(', ')
+						}}</template></Column
+					>
+					<Column field="output" header="Output"
+						><template #body="slotProps">{{
+							slotProps.data.output.sort().join(', ')
+						}}</template></Column
+					>
 					<Column field="properties.rate.expression_mathml" header="Expression">
 						<template #body="slotProps">
 							<katex-element :expression="getTransitionExpression(slotProps.data.id)" />
@@ -311,6 +319,11 @@ const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
 
+// Get the mathematical expression of a transition
+function getTransitionExpression(id): string {
+	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '';
+}
+
 // States/transitions aren't selected like this anymore - maybe somehow later?
 // const onStateVariableClick = () => {
 // 	if (selectedRow.value) {
@@ -439,11 +452,6 @@ function getExtractionType(sp) {
 		return 'DataSet';
 	}
 	return 'Document';
-}
-
-// Get the mathematical expression of a transition
-function getTransitionExpression(id): string {
-	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '';
 }
 
 function getSource(sp) {
@@ -593,5 +601,11 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+	color: var(--text-color-light);
+	font-size: var(--font-caption);
+	text-transform: uppercase;
 }
 </style>
