@@ -56,6 +56,11 @@
 		>
 			<AccordionTab>
 				<template #header>
+					<header>Related publications</header>
+				</template>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
 					<header id="Description">Description</header>
 				</template>
 				<p v-if="assetId !== ''" v-html="description" />
@@ -98,6 +103,11 @@
 					<Column field="grounding.context" header="Context"></Column>
 					<Column field="grounding.identifiers" header="Identifiers"></Column>
 				</DataTable>
+			</AccordionTab>
+			<AccordionTab>
+				<template #header>
+					<header>Observables</header>
+				</template>
 			</AccordionTab>
 			<AccordionTab>
 				<template #header>
