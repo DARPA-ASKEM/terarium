@@ -9,7 +9,7 @@ export const CalibrationOperation: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	inputs: [{ type: 'modelConfig' }, { type: 'dataset' }],
+	inputs: [{ type: 'modelConfigId' }, { type: 'dataset' }],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 

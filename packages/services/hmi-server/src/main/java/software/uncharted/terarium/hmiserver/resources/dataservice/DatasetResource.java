@@ -255,7 +255,6 @@ public class DatasetResource {
 			List<String> column = getColumn(csv,i);
 			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
 		}
-
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)
@@ -347,7 +346,7 @@ public class DatasetResource {
 			double meanValue = Stats.meanOf(numberList);
 			double medianValue = Quantiles.median().compute(numberList);
 			double sdValue = Stats.of(numberList).populationStandardDeviation();
-			int binCount = 50;
+			int binCount = 10;
 			//Set up bins
 			for (int i = 0; i < binCount; i++){
 				bins.add(0);
