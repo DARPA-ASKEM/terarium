@@ -85,7 +85,7 @@ const CHART_OPTIONS = {
 
 const props = defineProps<{
 	runResults: RunResults;
-	runIdList: number[];
+	runIdList: string[];
 	chartIdx: number;
 }>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();

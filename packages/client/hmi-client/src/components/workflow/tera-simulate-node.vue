@@ -36,12 +36,12 @@ import { RunResults } from '@/types/SimulateConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
-// import { SimulateOperation } from './simulate-operation';
+import { SimulateOperation } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-// const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port']);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
@@ -151,6 +151,15 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		})
 	);
 	runResults.value = newRunResults;
+
+	const port = props.node.inputs[0];
+	emit('append-output-port', {
+		type: SimulateOperation.outputs[0].type,
+		label: `${port.label} Results`,
+		value: {
+			runIdList
+		}
+	});
 
 	/* commented out, causing serialization issues. DC June 22
 	const port = props.node.inputs[0];
