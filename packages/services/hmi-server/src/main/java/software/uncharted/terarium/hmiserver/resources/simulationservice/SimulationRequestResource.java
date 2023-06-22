@@ -17,11 +17,11 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/api/simulation")
+@Path("/api/simulation-request")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation Service REST Endpoint")
-public class SimulationResource {
+public class SimulationRequestResource {
 
 	@RestClient
 	SimulationServiceProxy simulationServiceProxy;
@@ -33,23 +33,6 @@ public class SimulationResource {
 	@Path("/{id}")
 	public Simulation getSimulation(@PathParam("id") final String id){
 		return simulationProxy.getSimulation(id);
-	}
-
-	@POST
-	public Simulation createSimulation(final Simulation simulation){
-		return simulationProxy.createSimulation(Converter.convertObjectToSnakeCaseJsonNode(simulation));
-	}
-
-	@PATCH
-	@Path("/{id}")
-	public Simulation updateSimulation(@PathParam("id") final String id, final Simulation simulation){
-		return simulationProxy.updateSimulation(id, simulation);
-	}
-
-	@DELETE
-	@Path("/{id}")
-	public String deleteSimulation(@PathParam("id") final String id){
-		return simulationProxy.deleteSimulation(id);
 	}
 
 	@POST
@@ -93,24 +76,4 @@ public class SimulationResource {
 		final JobResponse res = simulationServiceProxy.makeCalibrateJob(calibrationRequest);
 		return null;
 	}
-
-	// @GET
-	// @Path("/{runId}/status")
-	// @Produces(MediaType.APPLICATION_JSON)
-	// @Tag(name = "Get simulation status associated with run ID")
-	// public Response getRunStatus(
-	// 	@PathParam("runId") final String runId
-	// ) {
-	// 	return simulationServiceProxy.getRunStatus(runId);
-	// }
-
-	// @GET
-	// @Path("/{runId}/result")
-	// @Produces(MediaType.APPLICATION_JSON)
-	// @Tag(name = "Get simulation result associated with run ID")
-	// public Response getRunResult(
-	// 	@PathParam("runId") final String runId
-	// ) {
-	// 	return simulationServiceProxy.getRunResult(runId);
-	// }
 }

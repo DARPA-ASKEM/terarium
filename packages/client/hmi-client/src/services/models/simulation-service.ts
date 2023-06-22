@@ -4,7 +4,7 @@ import { Simulation, SimulationRequest, CalibrationRequest } from '@/types/Types
 
 export async function makeForecastJob(simulationParam: SimulationRequest) {
 	try {
-		const resp = await API.post('simulation/forecast', simulationParam);
+		const resp = await API.post('simulation-request/forecast', simulationParam);
 		const output = resp.data;
 		return output;
 	} catch (err) {
@@ -40,7 +40,7 @@ export async function getRunResult(runId: number, filename: string) {
 
 export async function getSimulation(id: Simulation['id']): Promise<Simulation | null> {
 	try {
-		const response = await API.get(`/simulation/${id}`);
+		const response = await API.get(`/simulations/${id}`);
 		return response.data;
 	} catch (error) {
 		logger.error(error);
@@ -50,7 +50,7 @@ export async function getSimulation(id: Simulation['id']): Promise<Simulation | 
 
 export async function makeCalibrateJob(calibrationParams: CalibrationRequest) {
 	try {
-		const resp = await API.post('simulation/calibrate', calibrationParams);
+		const resp = await API.post('simulation-request/calibrate', calibrationParams);
 		const output = resp.data;
 		return output;
 	} catch (err) {

@@ -1,9 +1,7 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -12,6 +10,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.commons.io.IOUtils;
 import java.nio.charset.StandardCharsets;
 
+import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
+import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
+import software.uncharted.terarium.hmiserver.utils.Converter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -28,6 +29,11 @@ public class SimulationResource {
 	@RestClient
 	SimulationProxy proxy;
 
+	@POST
+	public Simulation createSimulation(final Simulation simulation){
+		return proxy.createSimulation(Converter.convertObjectToSnakeCaseJsonNode(simulation));
+	}
+
 	@GET
 	@Path("/{id}")
 	public Response getSimulation(
@@ -38,6 +44,19 @@ public class SimulationResource {
 			.entity(proxy.getSimulation(id))
 			.build();
 	}
+
+	@PUT
+	@Path("/{id}")
+	public Simulation updateSimulation(@PathParam("id") final String id, final Simulation simulation){
+		return proxy.updateSimulation(id, simulation);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	public String deleteSimulation(@PathParam("id") final String id){
+		return proxy.deleteSimulation(id);
+	}
+
 
 	@GET
 	@Path("/{id}/result")
@@ -61,4 +80,7 @@ public class SimulationResource {
 			.entity(data)
 			.build();
 	}
+
+
+
 }
