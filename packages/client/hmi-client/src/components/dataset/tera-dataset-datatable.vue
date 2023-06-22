@@ -3,7 +3,7 @@
 	<DataTable
 		tableStyle="width:auto"
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-		paginator="true"
+		paginator
 		paginatorPosition="both"
 		:rows="50"
 		:value="csvContent?.slice(1, csvContent.length)"
