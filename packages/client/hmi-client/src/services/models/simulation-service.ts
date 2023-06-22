@@ -25,11 +25,10 @@ export async function getRunStatus(runId: number) {
 	}
 }
 
-export async function getRunResult(runId: number) {
+export async function getRunResult(runId: number, filename: string) {
 	try {
-		// FIXME: TS1225 Real filename
-		const resp = await API.get(`simulation/${runId}/result`, {
-			params: { filename: 'result.csv' }
+		const resp = await API.get(`simulations/${runId}/result`, {
+			params: { filename }
 		});
 		const output = resp.data;
 		return output;

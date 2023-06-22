@@ -94,23 +94,23 @@ public class SimulationResource {
 		return null;
 	}
 
-	@GET
-	@Path("/{runId}/status")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Tag(name = "Get simulation status associated with run ID")
-	public Response getRunStatus(
-		@PathParam("runId") final String runId
-	) {
-		return simulationServiceProxy.getRunStatus(runId);
-	}
+	// @GET
+	// @Path("/{runId}/status")
+	// @Produces(MediaType.APPLICATION_JSON)
+	// @Tag(name = "Get simulation status associated with run ID")
+	// public Response getRunStatus(
+	// 	@PathParam("runId") final String runId
+	// ) {
+	// 	return simulationServiceProxy.getRunStatus(runId);
+	// }
 
-	@GET
-	@Path("/{runId}/result")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Tag(name = "Get simulation result associated with run ID")
-	public Response getRunResult(
-		@PathParam("runId") final String runId
-	) {
-		return simulationServiceProxy.getRunResult(runId);
-	}
+	// @GET
+	// @Path("/{runId}/result")
+	// @Produces(MediaType.APPLICATION_JSON)
+	// @Tag(name = "Get simulation result associated with run ID")
+	// public Response getRunResult(
+	// 	@PathParam("runId") final String runId
+	// ) {
+	// 	return simulationServiceProxy.getRunResult(runId);
+	// }
 }

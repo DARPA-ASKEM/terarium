@@ -86,8 +86,8 @@ export interface Simulation {
     resultFiles?: string[];
     type: string;
     status: string;
-    startTime?: Date;
-    completedTime?: Date;
+    startTime?: string;
+    completedTime?: string;
     engine: string;
     workflowId: string;
     userId?: number;

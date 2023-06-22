@@ -25,11 +25,11 @@ public class Simulation {
 
 	@JsonAlias("start_time")
 	@TSOptional
-	private LocalDateTime startTime;
+	private String startTime;
 
 	@JsonAlias("completed_time")
 	@TSOptional
-	private LocalDateTime completedTime;
+	private String completedTime;
 	private String engine;
 
 	@JsonAlias("workflow_id")

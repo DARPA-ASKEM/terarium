@@ -182,7 +182,7 @@ const renderGraph = () => {
 			})
 	);
 	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestep)),
+		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestamp)),
 		datasets
 	};
 };

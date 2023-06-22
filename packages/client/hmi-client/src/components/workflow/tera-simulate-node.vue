@@ -29,25 +29,25 @@ import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { ModelConfiguration } from '@/types/Types';
 
-import { makeForecastJob, getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperation } from './simulate-operation';
+// import { SimulateOperation } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+// const emit = defineEmits(['append-output-port']);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
 
-const startedRunIdList = ref<number[]>([]);
-const completedRunIdList = ref<number[]>([]);
+const startedRunIdList = ref<string[]>([]);
+const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
@@ -68,7 +68,7 @@ const runSimulate = async () => {
 			modelConfigId: configId,
 			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
 			extra: {
-				// FIXME: use real value
+				// FIXME: need to use real value
 				initials: {
 					S: 100,
 					I: 1,
@@ -116,12 +116,18 @@ const runSimulate = async () => {
 // Retrieve run ids
 // FIXME: Replace with API.poller
 const getStatus = async () => {
-	const currentRunStatus = await Promise.all(startedRunIdList.value.map(getRunStatus));
+	const requestList: any[] = [];
+	startedRunIdList.value.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
 
-	if (currentRunStatus.every(({ status }) => status === 'done')) {
+	const currentSimulations = await Promise.all(requestList);
+	const ongoingStatusList = ['running', 'queued'];
+
+	if (currentSimulations.every(({ status }) => status === 'complete')) {
 		completedRunIdList.value = startedRunIdList.value;
 		showSpinner.value = false;
-	} else if (currentRunStatus.some(({ status }) => status === 'running')) {
+	} else if (currentSimulations.some(({ status }) => ongoingStatusList.includes(status))) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
@@ -138,13 +144,15 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 			if (runResults.value[runId]) {
 				newRunResults[runId] = runResults.value[runId];
 			} else {
-				const resultCsv = await getRunResult(runId);
-				newRunResults[runId] = csvParse(resultCsv);
+				const resultCsv = await getRunResult(runId, 'result.csv');
+				const csvData = csvParse(resultCsv);
+				newRunResults[runId] = csvData;
 			}
 		})
 	);
 	runResults.value = newRunResults;
 
+	/* commented out, causing serialization issues. DC June 22
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: SimulateOperation.outputs[0].type,
@@ -155,6 +163,7 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 			runConfigs: port.value
 		}
 	});
+	*/
 };
 
 watch(
