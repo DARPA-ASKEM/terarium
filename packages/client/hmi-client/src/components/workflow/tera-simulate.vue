@@ -44,7 +44,7 @@
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
 						<template #header> {{ modelConfiguration?.configuration.name }} </template>
-						<model-diagram :model="modelConfiguration?.configuration" :is-editable="false" />
+						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<!-- use tera-model-configuration here just don't make it editable etc.
@@ -111,7 +111,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, Model } from '@/types/Types';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { TspanUnits } from '@/types/SimulateConfig';
@@ -120,6 +120,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 
 import { getSimulation } from '@/services/models/simulation-service';
+import { getModel } from '@/services/model';
 import SimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -131,6 +132,8 @@ enum SimulateTabs {
 
 const activeTab = ref(SimulateTabs.input);
 const node = ref(openedWorkflowNodeStore.node);
+
+const model = ref<Model | null>(null);
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 // const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
@@ -192,6 +195,8 @@ onMounted(async () => {
 	console.log('simulation', simulationObj);
 	console.log('modelConfigId', modelConfigurationId);
 	console.log('modelConfig', modelConfigurationObj);
+	const modelId = modelConfigurationObj.modelId;
+	model.value = await getModel(modelId);
 
 	// 1. Fetch simulation
 	// const simulationObj = await getSimulation
