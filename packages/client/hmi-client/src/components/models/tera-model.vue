@@ -35,10 +35,10 @@
 		</template>
 		<template v-if="modelView === ModelView.DESCRIPTION">
 			<div class="container">
-				<Message class="inline-message" icon="none"
-					>This page describes the model. Use the content switcher above to see the diagram and
-					manage configurations.</Message
-				>
+				<Message class="inline-message" icon="none">
+					This page describes the model. Use the content switcher above to see the diagram and
+					manage configurations.
+				</Message>
 			</div>
 			<table class="model-biblio">
 				<tr>
@@ -49,7 +49,7 @@
 					<th>Source</th>
 				</tr>
 				<tr>
-					<td>{{ model?.framework ?? 'PetriNet' }}</td>
+					<td>{{ capitalize(model?.schema_name) }}</td>
 					<td>{{ model?.model_version }}</td>
 					<td>{{ model?.metadata.processed_at }}</td>
 					<td>{{ model?.description }}</td>
@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
+import { isEmpty, capitalize } from 'lodash';
 import { watch, ref, computed, onUpdated, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import Accordion from 'primevue/accordion';

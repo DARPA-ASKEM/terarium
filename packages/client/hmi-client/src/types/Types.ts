@@ -61,6 +61,7 @@ export interface Model {
     description: string;
     model_version: string;
     schema: string;
+    schema_name: string;
     model: { [index: string]: any };
     semantics?: ModelSemantics;
     metadata: ModelMetadata;
