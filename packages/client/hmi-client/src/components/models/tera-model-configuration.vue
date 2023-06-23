@@ -7,7 +7,6 @@
 		editMode="cell"
 		showGridlines
 		scrollable
-		@cell-edit-init="onCellEditStart"
 		@cell-edit-complete="onCellEditComplete"
 	>
 		<ColumnGroup type="header">
@@ -55,13 +54,15 @@
 				/>
 				<Column v-for="(variableName, i) in configurations[0].observables" :key="i">
 					<template #header>
-						{{ variableName.id }}
-						<Button
-							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small observable-header-menu"
-							icon="pi pi-ellipsis-v"
-							@click="($event) => showObservableHeaderMenu($event, i)"
-						/>
-						<Menu ref="observableHeaderMenu" :model="observableHeaderMenuItems" :popup="true" />
+						<section class="editable-cell">
+							<span>{{ variableName.id }}</span>
+							<Button
+								class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+								icon="pi pi-ellipsis-v"
+								@click="($event) => showObservableHeaderMenu($event, i)"
+							/>
+							<Menu ref="observableHeaderMenu" :model="observableHeaderMenuItems" :popup="true" />
+						</section>
 					</template>
 					<template #editor="{ data, field }">
 						<InputText v-model="data[field]" autofocus />
@@ -99,10 +100,17 @@
 			:field="value"
 		>
 			<template #body="{ data, field }">
-				{{ data[field]?.value }}
+				<section class="editable-cell">
+					<span>{{ data[field]?.value }}</span>
+					<Button
+						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"
+						@click.stop="openValueModal(data, field)"
+					/>
+				</section>
 			</template>
 			<template #editor="{ data, field }">
-				{{ data[field]?.value }}
+				<InputText v-if="data[field].value" v-model="data[field].value" autofocus />
 			</template>
 		</Column>
 		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
@@ -207,7 +215,7 @@ const selectedModelConfig = ref();
 const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
 
 const openValueConfig = ref(false);
-const cellValueToEdit = ref({ data: {}, field: '', index: 0 });
+const cellValueToEdit = ref({ data: {}, field: '' });
 
 // Selected columns
 const selectedInitials = ref<string[]>([]);
@@ -228,7 +236,7 @@ function addObservable() {
 		}
 
 		editableModelConfigs.value[i].configuration.semantics.ode.observables.push({
-			id: `Obs ${editableModelConfigs.value[0].configuration.semantics.ode.observables.length + 1}`,
+			id: `obs${editableModelConfigs.value[0].configuration.semantics.ode.observables.length + 1}`,
 			expression: 'expr'
 		});
 
@@ -324,6 +332,7 @@ const modelConfigurationTable = computed(() => {
 	return [];
 });
 
+// TODO: Reimplement this for calibration
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
 	...selectedParameters.value
@@ -352,37 +361,31 @@ function addConfigValue() {
 
 const onCellEditComplete = (event) => {
 	if (props.isEditable) {
-		const { data, newValue, field } = event;
-
-		switch (field) {
-			case 'name':
-				data[field] = newValue;
-				break;
-			default:
-				break;
-		}
+		const { data, field } = event;
+		cellValueToEdit.value = { data, field };
+		updateModelConfigValue(event.newValue, event.index);
 	}
 };
 
-const onCellEditStart = (event) => {
-	console.log(event);
+function openValueModal(data: any, field: string) {
 	if (props.isEditable) {
-		const { data, field, index } = event;
-
-		if (field !== 'name') {
-			openValueConfig.value = true;
-			cellValueToEdit.value = { data, field, index };
-		}
+		openValueConfig.value = true;
+		cellValueToEdit.value = { data, field };
 	}
-};
+}
 
-function updateModelConfigValue() {
+function updateModelConfigValue(
+	newValue?: string,
+	configIndex: number = cellValueToEdit.value.data[cellValueToEdit.value.field].configIndex
+) {
 	const { data, field } = cellValueToEdit.value;
-	const { type, value, typeIndex, configIndex } = data[field];
+	const { type, value, typeIndex } = data[field];
 
-	// just create the clone within here ?
-
-	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
+	if (field === 'name' && newValue) {
+		editableModelConfigs.value[configIndex].name = newValue;
+	} else if (
+		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value
+	) {
 		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
 			value;
 	} else if (
@@ -392,8 +395,8 @@ function updateModelConfigValue() {
 			typeIndex
 		].expression = value;
 	}
-	updateModelConfiguration(editableModelConfigs.value[configIndex]);
 
+	updateModelConfiguration(editableModelConfigs.value[configIndex]);
 	openValueConfig.value = false;
 }
 
@@ -403,7 +406,7 @@ function initializeConfigSpace() {
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
 	openValueConfig.value = false;
-	cellValueToEdit.value = { data: {}, field: '', index: 0 };
+	cellValueToEdit.value = { data: {}, field: '' };
 }
 
 watch(
@@ -430,11 +433,23 @@ onMounted(() => {
 	content: '--';
 }
 
-th .observable-header-menu {
+.cell-menu {
 	visibility: hidden;
 }
 
-th:hover .observable-header-menu {
+.p-datatable:deep(.editable-cell) {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	min-width: 3rem;
+}
+
+.p-datatable:deep(td) {
+	cursor: pointer;
+}
+
+th:hover .cell-menu,
+td:hover .cell-menu {
 	visibility: visible;
 }
 
