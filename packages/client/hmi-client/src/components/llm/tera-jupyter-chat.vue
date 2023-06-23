@@ -79,15 +79,15 @@ import Button from 'primevue/button';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
 import ConfirmDialog from 'primevue/confirmdialog';
 
-let jupyterCsv: CsvAsset | null = null;
+// let jupyterCsv: CsvAsset | null = null;
 
-function cloneCsvAsset(asset: CsvAsset): CsvAsset {
-	return {
-		csv: [...asset.csv.map((row) => [...row])], // create a copy of each sub-array
-		stats: asset.stats ? [...asset.stats] : undefined, // copy stats array if it exists
-		headers: [...asset.headers] // copy headers array
-	};
-}
+// function cloneCsvAsset(asset: CsvAsset): CsvAsset {
+// 	return {
+// 		csv: [...asset.csv.map((row) => [...row])], // create a copy of each sub-array
+// 		stats: asset.stats ? [...asset.stats] : undefined, // copy stats array if it exists
+// 		headers: [...asset.headers] // copy headers array
+// 	};
+// }
 
 const emit = defineEmits(['new-message', 'update-table-preview', 'update-kernel-status']);
 
@@ -146,7 +146,8 @@ const nestedMessages = computed(() => {
 						query: currentQuery,
 						timestamp: currentTimestamp,
 						messages: currentMessages,
-						resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
+						resultingCsv: null
+						// resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
 					});
 					// Clear the currentMessages for new query
 					currentMessages = [];
@@ -157,7 +158,8 @@ const nestedMessages = computed(() => {
 					query: message.content['request'],
 					timestamp: message.header.date,
 					messages: [],
-					resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
+					resultingCsv: null
+					// resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
 				});
 				// Update the currentQuery, currentQueryId and currentTimestamp with new values
 				// eslint-disable-next-line @typescript-eslint/dot-notation
@@ -179,7 +181,8 @@ const nestedMessages = computed(() => {
 					query: currentQuery,
 					timestamp: currentTimestamp,
 					messages: currentMessages,
-					resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
+					resultingCsv: null
+					// resultingCsv: jupyterCsv ? cloneCsvAsset(jupyterCsv) : null
 				});
 			}
 		}

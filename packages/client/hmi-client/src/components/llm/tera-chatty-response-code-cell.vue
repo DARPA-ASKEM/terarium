@@ -166,5 +166,76 @@ cellWidget.activate();
 @import '@jupyterlab/theme-light-extension/style/theme.css';
 @import '@jupyterlab/completer/style/index.css';
 
-// (the rest of your CSS goes here)
+.jp-CodeCell {
+	background-color: var(--gray-50);
+	min-width: 300px;
+}
+
+.controls {
+	display: flex;
+	align-items: center;
+	padding-top: 15px;
+	padding-bottom: 10px;
+	flex-direction: row;
+	font-size: 0.8rem;
+}
+
+.run {
+	color: var(--gray-800);
+	font-family: var(--font-family);
+	padding-left: 5px;
+	padding-right: 10px;
+}
+.save-file-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding-bottom: 5px;
+	padding-top: 5px;
+	font-size: 1rem;
+}
+
+.saved-name {
+	display: flex;
+	flex-direction: row;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+.post-fix {
+	padding: 0px;
+	height: 20px;
+}
+
+.play {
+	color: var(--primary-color);
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.play:hover {
+	color: green;
+}
+
+.check {
+	color: var(--primary-color);
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.clear {
+	color: red;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.save {
+	color: var(--primary-color);
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.i {
+	padding-left: 5px;
+	padding-right: 5px;
+}
 </style>
