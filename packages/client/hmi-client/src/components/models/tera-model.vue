@@ -90,14 +90,14 @@
 					rowGroupMode="subheader"
 					groupRowsBy="description"
 				>
-					<Column field="id" header="Label" />
-					<Column field="description" header="Description" />
+					<Column field="id" header="ID" />
+					<Column field="name" header="Name" />
 					<Column field="units" header="Units" />
 					<Column field="concept" header="Concept" />
 					<Column field="extractions" header="Extractions" />
-					<template #groupfooter="modelParameters">
+					<template #groupfooter="parameters">
 						<div>
-							<span class="parameter-description">{{ modelParameters.data.description }}</span>
+							<span class="parameter-description">{{ parameters.data.description }}</span>
 						</div>
 					</template>
 				</DataTable>
@@ -107,14 +107,24 @@
 			<AccordionTab>
 				<template #header>
 					<header id="State variables">
-						State variables<span class="artifact-amount">({{ model?.model.states.length }})</span>
+						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</header>
 				</template>
-				<DataTable class="p-datatable-sm" :value="model?.model.states">
-					<Column field="id" header="Label"></Column>
-					<Column field="name" header="Name"></Column>
-					<Column field="grounding.context" header="Context"></Column>
+				<DataTable
+					class="p-datatable-sm"
+					:value="states"
+					rowGroupMode="subheader"
+					groupRowsBy="description"
+				>
+					<Column field="id" header="ID" />
+					<Column field="name" header="Name" />
+					<Column field="grounding.context" header="Concept"></Column>
 					<Column field="grounding.identifiers" header="Identifiers"></Column>
+					<template #groupfooter="states">
+						<div>
+							<span class="parameter-description">{{ states.data.description }}</span>
+						</div>
+					</template>
 				</DataTable>
 			</AccordionTab>
 
@@ -244,28 +254,6 @@ enum ModelView {
 	MODEL = 'model'
 }
 
-/*
-// This is the model content that is displayed in the scroll-to-section featuer
-// That feature was removed, but way may want to bring it back.
-// I suggest we keep this unil we decide to remove it for good.
-const modelContent = computed(() => [
-	{ key: 'Description', value: description },
-	{ key: 'Intended Use', value: null },
-	{ key: 'Training Data', value: null },
-	{ key: 'Evaluation Data', value: null },
-	{ key: 'Metrics', value: null },
-	{ key: 'Training', value: null },
-	{ key: 'Model Output', value: null },
-	{ key: 'Ethical Considerations', value: null },
-	{ key: 'Authors and Contributors', value: null },
-	{ key: 'License', value: null },
-	{ key: 'Parameters', value: model.value?.semantics?.ode?.parameters },
-	{ key: 'State variables', value: model.value?.model.states },
-	{ key: 'Transitions', value: model.value?.model.transitions },
-	{ key: 'Other extractions', value: model.value?.metadata?.variable_statements }
-]);
-*/
-
 // TODO - Get rid of these emits
 const emit = defineEmits(['update-tab-name', 'close-preview', 'asset-loaded', 'close-current-tab']);
 
@@ -309,7 +297,8 @@ const metaData = computed(() => model.value?.metadata?.variable_statements);
 
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description));
-const parameters = computed(() => model.value?.semantics?.ode.parameters);
+const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
+const states = computed(() => model.value?.model?.states ?? []);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
