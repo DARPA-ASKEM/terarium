@@ -161,6 +161,17 @@
 				<AccordionTab>
 					<template #header>Other extractions</template>
 				</AccordionTab>
+
+				<!-- Time -->
+				<AccordionTab>
+					<template #header
+						>Time<span class="artifact-amount">({{ time.length }})</span></template
+					>
+					<DataTable class="p-datatable-sm" :value="time">
+						<Column field="id" header="ID" />
+						<Column field="units.expression" header="Units" />
+					</DataTable>
+				</AccordionTab>
 			</Accordion>
 		</template>
 		<template v-if="modelView === ModelView.MODEL">
@@ -286,6 +297,7 @@ const newPetri = ref();
 const name = computed(() => highlightSearchTerms(model.value?.name));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
+const time = computed(() => [model.value?.semantics?.ode.time] ?? []);
 const states = computed(() => model.value?.model?.states ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 const publications = computed(() =>
