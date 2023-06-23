@@ -67,6 +67,25 @@
 							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
 						</header>
 					</template>
+					<section v-if="annotations">
+						<header class="annotation-subheader">Annotations</header>
+						<section class="annotation-group">
+							<section
+								v-for="name in annotations.map((annotation) => annotation['name'])"
+								:key="name"
+								class="annotation-row data-row"
+							>
+								<section>
+									<header>Name</header>
+									<section>{{ name }}</section>
+								</section>
+								<section>
+									<header>Description</header>
+									<section>{{ annotations[name] }}</section>
+								</section>
+							</section>
+						</section>
+					</section>
 				</AccordionTab>
 			</Accordion>
 		</template>

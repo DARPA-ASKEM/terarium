@@ -85,7 +85,7 @@ const CHART_OPTIONS = {
 
 const props = defineProps<{
 	runResults: RunResults;
-	runIdList: number[];
+	runIdList: string[];
 	chartIdx: number;
 }>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -182,7 +182,7 @@ const renderGraph = () => {
 			})
 	);
 	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestep)),
+		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestamp)),
 		datasets
 	};
 };
