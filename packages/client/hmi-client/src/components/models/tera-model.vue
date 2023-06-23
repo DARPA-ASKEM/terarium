@@ -57,7 +57,7 @@
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]">
+			<Accordion multiple :active-index="[5]">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -135,9 +135,9 @@
 				<!-- Transitions -->
 				<AccordionTab>
 					<template #header>
-						Transitions<span class="artifact-amount">({{ model?.model.transitions.length }})</span>
+						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<DataTable class="p-datatable-sm" :value="model?.model.transitions">
+					<DataTable class="p-datatable-sm" :value="transitions">
 						<Column field="properties.name" header="Label" />
 						<Column field="input" header="Input">
 							<template #body="slotProps">
@@ -159,7 +159,15 @@
 
 				<!-- Other extractions -->
 				<AccordionTab>
-					<template #header>Other extractions</template>
+					<template #header
+						>Other extractions<span class="artifact-amount"
+							>({{ otherExtractions.length }})</span
+						></template
+					>
+					<DataTable class="p-datatable-sm" :value="otherExtractions">
+						<Column field="id" header="ID" />
+						<Column field="payload.id.id" header="payload id" />
+					</DataTable>
 				</AccordionTab>
 
 				<!-- Time -->
@@ -218,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, capitalize } from 'lodash';
+import { capitalize, groupBy, isEmpty } from 'lodash';
 import { watch, ref, computed, onUpdated, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import Accordion from 'primevue/accordion';
@@ -298,10 +306,22 @@ const description = computed(() => highlightSearchTerms(model.value?.description
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
 const time = computed(() => [model.value?.semantics?.ode.time] ?? []);
 const states = computed(() => model.value?.model?.states ?? []);
+const transitions = computed(() => model.value?.model?.transitions ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 const publications = computed(() =>
 	props.assetId === 'biomd0000000955-model-id' ? ['https://arxiv.org/pdf/2003.09861.pdf'] : []
 );
+const extractions = computed(() => {
+	const attributes = model.value?.metadata?.attributes ?? [];
+	return groupBy(attributes, 'amr_element_id');
+});
+const otherExtractions = computed(() => {
+	const ids = [...states.value.map((s) => s.id), ...transitions.value.map((t) => t.id)];
+	const key = Object.keys(extractions.value).find((k) => !ids.includes(k));
+	console.log(key);
+	if (key) return extractions.value[key.toString()];
+	return [];
+});
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
