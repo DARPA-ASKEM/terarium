@@ -3,11 +3,13 @@
 	<DataTable
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
 		:value="csvContent?.slice(1, csvContent.length)"
-		:paginator="props.rows != 0"
 		:rows="props.rows"
+		paginator
+		paginatorPosition="both"
 		removableSort
 		resizable-columns
 		showGridlines
+		tableStyle="width:auto"
 	>
 		<Column
 			v-for="(colName, index) of csvHeaders"
