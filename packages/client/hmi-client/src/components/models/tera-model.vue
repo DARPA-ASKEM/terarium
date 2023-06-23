@@ -52,7 +52,7 @@
 					<td>{{ capitalize(model?.schema_name) }}</td>
 					<td>{{ model?.model_version }}</td>
 					<td>{{ model?.metadata.processed_at }}</td>
-					<td>{{ model?.description }}</td>
+					<td>{{ model?.metadata?.authors?.join(', ') }}</td>
 					<td>{{ model?.metadata.processed_by }}</td>
 				</tr>
 			</table>

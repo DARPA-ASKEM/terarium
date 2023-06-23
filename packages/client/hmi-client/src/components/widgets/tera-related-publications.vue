@@ -2,16 +2,15 @@
 	<Accordion :activeIndex="0">
 		<AccordionTab>
 			<template #header> Related publications </template>
+			<p>
+				Terarium can extract information from papers and other resources to add relevant information
+				to this resource.
+			</p>
 			<ul>
 				<li v-for="(publication, index) in publications" :key="index">
 					<a :href="publication">{{ publication }}</a>
 				</li>
 			</ul>
-			<br />
-			<p>
-				Terarium can extract information from papers and other resources to add relevant information
-				to this resource.
-			</p>
 			<Button icon="pi pi-plus" label="Add resources" text @click="visible = true" />
 
 			<Dialog
@@ -86,5 +85,9 @@ function sendForEnrichments(_selectedResources) {
 .secondary-button:hover {
 	color: var(--text-color-secondary) !important;
 	background-color: var(--surface-highlight) !important;
+}
+
+ul {
+	margin: 1rem 0;
 }
 </style>
