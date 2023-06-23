@@ -57,7 +57,7 @@
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
-			<Accordion multiple :active-index="[5]">
+			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 6]">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -73,23 +73,36 @@
 					<template #header>
 						Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 					</template>
-					<DataTable
-						class="p-datatable-sm"
-						:value="parameters"
-						rowGroupMode="subheader"
-						groupRowsBy="description"
-					>
-						<Column field="id" header="ID" />
-						<Column field="name" header="Name" />
-						<Column field="units" header="Units" />
-						<Column field="concept" header="Concept" />
-						<Column field="extractions" header="Extractions" />
-						<template #groupfooter="parameters">
-							<div>
-								<span class="parameter-description">{{ parameters.data.description }}</span>
-							</div>
-						</template>
-					</DataTable>
+					<div class="p-datatable p-datatable-sm">
+						<table class="p-datatable-table">
+							<thead class="p-datatable-thead">
+								<tr>
+									<th>ID</th>
+									<th>Value</th>
+									<th>Distribution</th>
+									<th>Extractions</th>
+								</tr>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<tr v-for="parameter in parameters" :key="parameter.id">
+									<td>{{ parameter.id }}</td>
+									<td>{{ parameter.value }}</td>
+									<td>
+										[{{ parameter?.distribution?.parameters.minimum }},
+										{{ parameter?.distribution?.parameters.maximum }}]
+									</td>
+									<td>{{ parameter?.extractions }}</td>
+								</tr>
+								<!-- <tr class="p-rowgroup-footer">
+									<td colspan="5">
+										<span class="parameter-description">
+											{{ parameterGroup.data[0].description}}
+										</span>
+									</td>
+								</tr> -->
+							</tbody>
+						</table>
+					</div>
 				</AccordionTab>
 
 				<!-- State variables -->
@@ -97,23 +110,38 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<DataTable
-						class="p-datatable-sm"
-						:value="states"
-						rowGroupMode="subheader"
-						groupRowsBy="description"
-					>
-						<Column field="id" header="ID" />
-						<Column field="name" header="Name" />
-						<Column field="units.expression" header="Unit" />
-						<Column field="grounding.context" header="Concept" />
-						<Column field="grounding.identifiers" header="Identifiers" />
-						<template #groupfooter="states">
-							<div>
-								<span class="parameter-description">{{ states.data.description }}</span>
-							</div>
-						</template>
-					</DataTable>
+					<div class="p-datatable p-datatable-sm">
+						<table class="p-datatable-table">
+							<thead class="p-datatable-thead">
+								<tr>
+									<th>ID</th>
+									<th>Name</th>
+									<th>Unit</th>
+									<th>Concept</th>
+									<th>Identifiers</th>
+								</tr>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<tr v-for="state in states" :key="state.id">
+									<td>{{ state.id }}</td>
+									<td>{{ state.name }}</td>
+									<td>{{ state.units.expression }}</td>
+									<td>{{ state.grounding.context }}</td>
+									<td>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+												state.grounding.identifiers
+											)}`"
+										>
+											{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
+										</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</AccordionTab>
 
 				<!-- Observables -->
@@ -121,15 +149,26 @@
 					<template #header
 						>Observables <span class="artifact-amount">({{ observables.length }})</span></template
 					>
-					<DataTable class="p-datatable-sm" :value="observables">
-						<Column field="id" header="ID" />
-						<Column field="name" header="Name" />
-						<Column field="expression" header="Expression">
-							<template #body="slotProps">
-								<katex-element :expression="slotProps.data.expression" />
-							</template>
-						</Column>
-					</DataTable>
+					<div class="p-datatable p-datatable-sm">
+						<table class="p-datatable-table">
+							<thead class="p-datatable-thead">
+								<tr>
+									<th>ID</th>
+									<th>Name</th>
+									<th>Expression</th>
+								</tr>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<tr v-for="item in observables" :key="item.id">
+									<td>{{ item.id }}</td>
+									<td>{{ item.name }}</td>
+									<td>
+										<katex-element :expression="item.expression" />
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</AccordionTab>
 
 				<!-- Transitions -->
@@ -137,48 +176,93 @@
 					<template #header>
 						Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 					</template>
-					<DataTable class="p-datatable-sm" :value="transitions">
-						<Column field="properties.name" header="Label" />
-						<Column field="input" header="Input">
-							<template #body="slotProps">
-								{{ slotProps.data.input.sort().join(', ') }}
-							</template>
-						</Column>
-						<Column field="output" header="Output">
-							<template #body="slotProps">
-								{{ slotProps.data.output.sort().join(', ') }}
-							</template>
-						</Column>
-						<Column field="properties.rate.expression_mathml" header="Expression">
-							<template #body="slotProps">
-								<katex-element :expression="getTransitionExpression(slotProps.data.id)" />
-							</template>
-						</Column>
-					</DataTable>
+					<div class="p-datatable p-datatable-sm">
+						<table class="p-datatable-table">
+							<thead class="p-datatable-thead">
+								<tr>
+									<th>Label</th>
+									<th>Input</th>
+									<th>Output</th>
+									<th>Expression</th>
+								</tr>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<tr v-for="item in transitions" :key="item.properties.name">
+									<td>{{ item.properties.name }}</td>
+									<td>{{ item.input.sort().join(', ') }}</td>
+									<td>{{ item.output.sort().join(', ') }}</td>
+									<td>
+										<katex-element :expression="getTransitionExpression(item.id)" />
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</AccordionTab>
 
 				<!-- Other extractions -->
 				<AccordionTab>
-					<template #header
-						>Other extractions<span class="artifact-amount"
-							>({{ otherExtractions.length }})</span
-						></template
-					>
-					<DataTable class="p-datatable-sm" :value="otherExtractions">
-						<Column field="id" header="ID" />
-						<Column field="payload.id.id" header="payload id" />
-					</DataTable>
+					<template #header>
+						Other extractions
+						<span class="artifact-amount">({{ otherExtractions.length }})</span>
+					</template>
+					<div class="p-datatable p-datatable-sm">
+						<table class="p-datatable-table">
+							<thead class="p-datatable-thead">
+								<tr>
+									<th>payload id</th>
+									<th>names</th>
+									<th>descriptions</th>
+									<th>concept</th>
+								</tr>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<tr v-for="item in otherExtractions" :key="item.payload?.id?.id">
+									<td>{{ item.payload?.id?.id }}</td>
+									<td>{{ item.payload?.names?.map((n) => n?.name).join(', ') }}</td>
+									<td>{{ item.payload?.descriptions?.map((d) => d?.source).join(', ') }}</td>
+									<td>
+										<template
+											v-for="grounding in item.payload.groundings"
+											:key="grounding.grounding_id"
+										>
+											<a
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${grounding.grounding_id}`"
+											>
+												{{ grounding.grounding_text }}
+											</a>
+										</template>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</AccordionTab>
 
 				<!-- Time -->
 				<AccordionTab>
-					<template #header
-						>Time<span class="artifact-amount">({{ time.length }})</span></template
-					>
-					<DataTable class="p-datatable-sm" :value="time">
-						<Column field="id" header="ID" />
-						<Column field="units.expression" header="Units" />
-					</DataTable>
+					<template #header>
+						Time
+						<span class="artifact-amount">({{ time.length }})</span>
+					</template>
+					<div class="p-datatable p-datatable-sm">
+						<table class="p-datatable-table">
+							<thead class="p-datatable-thead">
+								<tr>
+									<th>ID</th>
+									<th>Units</th>
+								</tr>
+							</thead>
+							<tbody class="p-datatable-tbody">
+								<tr v-for="(item, index) in time" :key="index">
+									<td>{{ item?.id }}</td>
+									<td>{{ item?.units?.expression }}</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -316,9 +400,11 @@ const extractions = computed(() => {
 	return groupBy(attributes, 'amr_element_id');
 });
 const otherExtractions = computed(() => {
-	const ids = [...states.value.map((s) => s.id), ...transitions.value.map((t) => t.id)];
+	const ids = [
+		...(states.value?.map((s) => s.id) ?? []),
+		...(transitions.value?.map((t) => t.id) ?? [])
+	];
 	const key = Object.keys(extractions.value).find((k) => !ids.includes(k));
-	console.log(key);
 	if (key) return extractions.value[key.toString()];
 	return [];
 });
@@ -336,6 +422,14 @@ const relatedTerariumDocuments = computed(
 // Get the mathematical expression of a transition
 function getTransitionExpression(id): string {
 	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '';
+}
+
+function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
+	if (Object) {
+		const [key, value] = Object.entries(identifier)[0];
+		return `${key}:${value}`;
+	}
+	return '';
 }
 
 // States/transitions aren't selected like this anymore - maybe somehow later?
@@ -496,6 +590,7 @@ const createNewModel = async () => {
 	font-weight: 600;
 	color: var(--text-color-primary);
 }
+
 .model-biblio th {
 	padding-right: 2rem;
 	font-family: var(--font-family);
@@ -504,17 +599,20 @@ const createNewModel = async () => {
 	color: var(--text-color-secondary);
 	text-align: left;
 }
+
 .model-biblio td {
 	padding-right: 50px;
 	font-family: var(--font-family);
 	font-weight: 400;
 	font-size: var(--font-body-small);
 }
+
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;
 	max-width: 70rem;
 }
+
 .inline-message:deep(.p-message-wrapper) {
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
