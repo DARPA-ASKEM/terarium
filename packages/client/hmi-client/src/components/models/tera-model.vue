@@ -56,13 +56,11 @@
 					<td>{{ model?.metadata.processed_by }}</td>
 				</tr>
 			</table>
-			<RelatedPublications />
+			<RelatedPublications :publications="publications" />
 			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]">
 				<!-- Description -->
 				<AccordionTab>
-					<template #header>
-						<header id="Description">Description</header>
-					</template>
+					<template #header>Description</template>
 					<p v-if="assetId !== ''" v-html="description" />
 					<template v-else>
 						<label for="placeholder" />
@@ -73,9 +71,7 @@
 				<!-- Parameters -->
 				<AccordionTab>
 					<template #header>
-						<header id="Parameters">
-							Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
-						</header>
+						Parameters<span class="artifact-amount">({{ parameters?.length }})</span>
 					</template>
 					<DataTable
 						class="p-datatable-sm"
@@ -99,9 +95,7 @@
 				<!-- State variables -->
 				<AccordionTab>
 					<template #header>
-						<header id="State variables">
-							State variables<span class="artifact-amount">({{ states.length }})</span>
-						</header>
+						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
 					<DataTable
 						class="p-datatable-sm"
@@ -111,8 +105,9 @@
 					>
 						<Column field="id" header="ID" />
 						<Column field="name" header="Name" />
-						<Column field="grounding.context" header="Concept"></Column>
-						<Column field="grounding.identifiers" header="Identifiers"></Column>
+						<Column field="units.expression" header="Unit" />
+						<Column field="grounding.context" header="Concept" />
+						<Column field="grounding.identifiers" header="Identifiers" />
 						<template #groupfooter="states">
 							<div>
 								<span class="parameter-description">{{ states.data.description }}</span>
@@ -140,11 +135,7 @@
 				<!-- Transitions -->
 				<AccordionTab>
 					<template #header>
-						<header id="Transitions">
-							Transitions<span class="artifact-amount"
-								>({{ model?.model.transitions.length }})</span
-							>
-						</header>
+						Transitions<span class="artifact-amount">({{ model?.model.transitions.length }})</span>
 					</template>
 					<DataTable class="p-datatable-sm" :value="model?.model.transitions">
 						<Column field="properties.name" header="Label" />
@@ -169,7 +160,6 @@
 				<!-- Other extractions -->
 				<AccordionTab>
 					<template #header>Other extractions</template>
-					<DataTable />
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -230,6 +220,7 @@ import Message from 'primevue/message';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel } from '@/services/model';
@@ -292,11 +283,14 @@ const newPetri = ref();
 
 /* Model */
 // const metaData = computed(() => model.value?.metadata?.variable_statements);
-const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
+const name = computed(() => highlightSearchTerms(model.value?.name));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
 const states = computed(() => model.value?.model?.states ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
+const publications = computed(() =>
+	props.assetId === 'biomd0000000955-model-id' ? ['https://arxiv.org/pdf/2003.09861.pdf'] : []
+);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]

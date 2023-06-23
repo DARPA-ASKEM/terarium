@@ -1,9 +1,13 @@
 <template>
 	<Accordion :activeIndex="0">
 		<AccordionTab>
-			<template #header>
-				<header>Related publications</header>
-			</template>
+			<template #header> Related publications </template>
+			<ul>
+				<li v-for="(publication, index) in publications" :key="index">
+					<a :href="publication">{{ publication }}</a>
+				</li>
+			</ul>
+			<br />
 			<p>
 				Terarium can extract information from papers and other resources to add relevant information
 				to this resource.
@@ -53,11 +57,14 @@ const visible = ref(false);
 const resources = ref();
 const selectedResources = ref();
 
+defineProps<{ publications?: Array<string> }>();
+
 function sendForEnrichments(_selectedResources) {
 	console.log('sending these resources for enrichment:', _selectedResources);
 	/* TODO: send selected resources to backend for enrichment */
 }
 </script>
+
 <style scoped>
 .container {
 	margin: 1rem;
