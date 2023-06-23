@@ -6,23 +6,25 @@
 		:value="modelConfigurationTable"
 		editMode="cell"
 		showGridlines
+		scrollable
 		@cell-edit-init="onCellEditStart"
 		@cell-edit-complete="onCellEditComplete"
 	>
 		<ColumnGroup type="header">
 			<Row>
-				<Column v-if="isEditable" header="" style="border: none" />
-				<Column header="" style="border: none" />
+				<Column v-if="isEditable" header="" style="border: none" frozen />
+				<Column header="" style="border: none" frozen />
 				<Column
 					v-for="(header, i) in Object.keys(configurations[0])"
 					:header="capitalize(header)"
 					:colspan="configurations[0][header].length"
 					:key="i"
 				/>
+				<Column header="Observables" :colspan="observables.length + 1" />
 			</Row>
 			<Row>
-				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
-				<Column :header="isEditable ? 'Select all' : ''" />
+				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
+				<Column :header="isEditable ? 'Select all' : ''" frozen />
 				<!-- Having trouble getting this loop to work-->
 				<!--<template v-for="(header, i) in Object.keys(configurations[0])" :key="i">
 					<Column v-for="(variableName, j) in configurations[0][header]" :header="variableName.target"
@@ -43,11 +45,35 @@
 					:header="variableName.id"
 					:key="i"
 				/>
+				<Column v-for="(variableName, i) in observables" :key="i">
+					<template #header>
+						{{ variableName }}
+						<Button
+							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small observable-header-menu"
+							icon="pi pi-ellipsis-v"
+							@click="($event) => showObservableHeaderMenu($event, i)"
+						/>
+						<Menu ref="observableHeaderMenu" :model="observableHeaderMenuItems" :popup="true" />
+					</template>
+					<template #editor="{ data, field }">
+						<InputText v-model="data[field]" autofocus />
+					</template>
+				</Column>
+				<Column>
+					<template #header>
+						<Button
+							class="p-button-sm p-button-outlined"
+							label="Add"
+							icon="pi pi-plus"
+							@click="addObservable"
+						/>
+					</template>
+				</Column>
 			</Row>
 			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
 		</ColumnGroup>
-		<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" />
-		<Column field="name">
+		<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
+		<Column field="name" frozen>
 			<template #body="{ data, field }">
 				{{ data[field] }}
 			</template>
@@ -181,6 +207,31 @@ const selectedParameters = ref<string[]>([]);
 const configurations = computed<any[]>(
 	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
 );
+
+const observables = ref<string[]>([]);
+
+function addObservable() {
+	observables.value.push('Obs');
+}
+
+// const show
+
+const observableHeaderMenu = ref([]);
+const showObservableHeaderMenu = (event, i) => {
+	console.log(event, i, observableHeaderMenu.value[i]);
+	observableHeaderMenu.value[i].toggle(event);
+};
+
+const observableHeaderMenuItems = ref([
+	{
+		label: 'Edit name',
+		command: () => {}
+	},
+	{
+		label: 'Remove',
+		command: () => {}
+	}
+]);
 
 // TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
@@ -349,6 +400,14 @@ onMounted(() => {
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
 	content: '--';
+}
+
+th .observable-header-menu {
+	visibility: hidden;
+}
+
+th:hover .observable-header-menu {
+	visibility: visible;
 }
 
 .p-tabview {

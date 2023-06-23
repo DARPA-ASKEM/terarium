@@ -373,6 +373,17 @@ watch(
 		} else if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
+
+			// When not in drilldown just show defualt config for now
+			if (model.value) {
+				modelConfigurations.value.push({
+					id: 'default',
+					name: 'Default',
+					description: 'Default',
+					modelId: model.value.id,
+					configuration: model.value
+				});
+			}
 		} else {
 			model.value = null;
 		}
