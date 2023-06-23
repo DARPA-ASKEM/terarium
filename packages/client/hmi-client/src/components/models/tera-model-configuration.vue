@@ -95,7 +95,9 @@
 		label="Add configuration"
 		@click="addModelConfiguration"
 	/>
+	<!-- FIXME: what is this???
 	<Button @click="createConfig" label="Create" />
+	-->
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
