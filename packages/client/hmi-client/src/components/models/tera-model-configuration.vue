@@ -148,10 +148,10 @@
 			</template>
 			<template #default>
 				<TabView>
-					<TabPanel v-for="(tab, i) in fakeExtractions" :key="tab" :header="tab">
+					<TabPanel v-for="(tab, i) in extractions" :key="tab" :header="tab">
 						<div>
 							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" v-model="fakeExtractions[i]" />
+							<InputText class="p-inputtext-sm" v-model="extractions[i]" />
 						</div>
 						<div>
 							<label for="name">Source</label>
@@ -174,7 +174,7 @@
 				/>
 			</template>
 			<template #footer>
-				<Button label="OK" @click="updateModelConfigValue" />
+				<Button label="OK" @click="updateModelConfigValue()" />
 				<Button class="p-button-outlined" label="Cancel" @click="openValueConfig = false" />
 			</template>
 		</tera-modal>
@@ -215,7 +215,7 @@ const props = defineProps<{
 const editableModelConfigs = ref<ModelConfiguration[]>([]);
 
 const selectedModelConfig = ref();
-const fakeExtractions = ref(['Resource 1', 'Resource 2', 'Resource 3']);
+const extractions = ref<any[]>([]);
 
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '' });
@@ -359,7 +359,7 @@ async function addModelConfiguration() {
 }
 
 function addConfigValue() {
-	fakeExtractions.value.push(`Resource ${fakeExtractions.value.length + 1} `);
+	extractions.value.push(`Resource ${extractions.value.length + 1} `);
 }
 
 const onCellEditComplete = (event) => {
@@ -407,7 +407,7 @@ function initializeConfigSpace() {
 	// console.log(props.modelConfigurations);
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
-	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
+	extractions.value = ['Resource 1'];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '' };
 }
