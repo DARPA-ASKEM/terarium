@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.OdeSemantics;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.TypingSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.OdeSemantics;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.TypingSemantics;
 
 @Data
 @Accessors(chain = true)
