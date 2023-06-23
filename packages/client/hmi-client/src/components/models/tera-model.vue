@@ -91,7 +91,7 @@
 										[{{ parameter?.distribution?.parameters.minimum }},
 										{{ parameter?.distribution?.parameters.maximum }}]
 									</td>
-									<td>{{ parameter?.extractions }}</td>
+									<!-- <td>{{ parameter?.extractions }}</td> -->
 								</tr>
 								<!-- <tr class="p-rowgroup-footer">
 									<td colspan="5">
@@ -425,7 +425,7 @@ function getTransitionExpression(id): string {
 }
 
 function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
-	if (Object) {
+	if (identifier) {
 		const [key, value] = Object.entries(identifier)[0];
 		return `${key}:${value}`;
 	}
