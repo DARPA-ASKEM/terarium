@@ -192,84 +192,22 @@
 						@update-model-content="updateModelContent"
 					/>
 				</AccordionTab>
-				<AccordionTab v-if="model">
-					<template #header> Model configurations </template>
-					<DataTable
-						class="model-configuration"
-						v-model:selection="selectedModelConfig"
-						:value="modelConfiguration"
-						editMode="cell"
-						showGridlines
-						@cell-edit-init="onCellEditStart"
-						@cell-edit-complete="onCellEditComplete"
-					>
-						<ColumnGroup type="header">
-							<!--Style top rows-->
-							<Row>
-								<Column header="" style="border: none" />
-								<Column header="" style="border: none" />
-								<Column header="Initial conditions" :colspan="model.model.states.length" />
-								<Column header="Parameters" :colspan="paramLength" />
-								<!-- <Column header="Observables" /> -->
-							</Row>
-							<Row>
-								<Column selection-mode="multiple" headerStyle="width: 3rem" />
-								<Column header="Select all" />
-								<Column v-for="(s, i) of modelStates" :key="i" :header="s.name" />
-								<Column v-for="(t, i) of modelTransitions" :key="i" :header="t.name" />
-							</Row>
-							<!-- <Row> Add show in workflow later
-							<Column header="Show in workflow" />
-							<Column v-for="(s, i) of model.content.S" :key="i">
-								<template #header>
-									<Checkbox :binary="true" />
-								</template>
-							</Column>
-							<Column v-for="(t, i) of model.content.T" :key="i">
-								<template #header>
-									<Checkbox :binary="true" />
-								</template>
-							</Column>
-						</Row> -->
-						</ColumnGroup>
-						<Column selection-mode="multiple" headerStyle="width: 3rem" />
-						<Column field="name">
-							<template #body="{ data, field }">
-								{{ data[field] }}
-							</template>
-							<template #editor="{ data, field }">
-								<InputText v-model="data[field]" autofocus />
-							</template>
-						</Column>
-						<Column
-							v-for="(value, i) of [...model.model.states, ...model.model.transitions]"
-							:key="i"
-							:field="value['name'] ?? value['name']"
-						>
-							<template #body="{ data, field }">
-								{{ data[field] }}
-							</template>
-							<template #editor="{ data, field }">
-								{{ data[field] }}
-							</template>
-						</Column>
-					</DataTable>
-					<Button
-						class="p-button-sm p-button-outlined"
-						icon="pi pi-plus"
-						label="Add configuration"
-						@click="addModelConfiguration"
+				<AccordionTab v-if="model" header="Model configurations">
+					<tera-model-configuration
+						v-if="modelConfigurations"
+						:model-configurations="modelConfigurations"
+						:is-editable="props.isEditable"
 					/>
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
-						<Column field="name" header="Models"></Column>
+						<Column field="name" header="Models" />
 					</DataTable>
 					<DataTable :value="relatedTerariumDatasets">
-						<Column field="name" header="Datasets"></Column>
+						<Column field="name" header="Datasets" />
 					</DataTable>
 					<DataTable :value="relatedTerariumDocuments">
-						<Column field="name" header="Documents"></Column>
+						<Column field="name" header="Documents" />
 					</DataTable>
 				</AccordionTab>
 			</Accordion>
