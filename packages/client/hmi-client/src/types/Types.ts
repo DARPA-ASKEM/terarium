@@ -82,12 +82,17 @@ export interface ProvenanceQueryParam {
 }
 
 export interface Simulation {
-    id?: number;
-    name: string;
-    description?: string;
-    simulationParams: SimulationParams;
-    result?: string;
-    modelId: string;
+    id: string;
+    executionPayload: any;
+    resultFiles?: string[];
+    type: string;
+    status: string;
+    startTime?: string;
+    completedTime?: string;
+    engine: string;
+    workflowId: string;
+    userId?: number;
+    projectId?: number;
 }
 
 export interface Dataset {
@@ -131,13 +136,30 @@ export interface PetriNetModel {
     metadata?: ModelMetadata;
 }
 
-export interface CalibrationParams {
-    model: string;
-    initials: { [index: string]: number };
-    params: { [index: string]: number };
-    timesteps_column: string;
-    feature_mappings: { [index: string]: string };
-    dataset: string;
+export interface CalibrationRequest {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface DatasetLocation {
+    id: string;
+    filename: string;
+    mappings?: any;
+}
+
+export interface SimulationRequest {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
+export interface TimeSpan {
+    start: number;
+    end: number;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -164,13 +186,6 @@ export interface ModelMetadata {
     processed_by: string;
     variable_statements: VariableStatement[];
     annotations: Annotations;
-}
-
-export interface SimulationParams {
-    model: string;
-    initials: { [index: string]: number };
-    tspan: number[];
-    params: { [index: string]: number };
 }
 
 export interface PetriNetState {
