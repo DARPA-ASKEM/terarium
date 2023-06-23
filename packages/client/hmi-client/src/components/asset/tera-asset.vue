@@ -146,7 +146,7 @@ header.shrinked {
 	height: 3rem;
 	position: sticky;
 	top: -1px;
-	z-index: 1;
+	z-index: 100;
 	isolation: isolate;
 	background-color: rgba(255, 255, 255, 0.85);
 	backdrop-filter: blur(6px);
