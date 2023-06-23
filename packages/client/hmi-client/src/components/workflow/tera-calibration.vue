@@ -168,7 +168,7 @@ import { Poller } from '@/api/api';
 import {
 	makeCalibrateJob,
 	makeForecastJob,
-	getRunStatus,
+	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
 import Dropdown from 'primevue/dropdown';
@@ -280,16 +280,16 @@ const calibrate = async () => {
 			.setInterval(2000)
 			.setThreshold(90)
 			.setPollAction(async () => {
-				const statusResponse = await getRunStatus(results.id);
+				const statusResponse = await getSimulation(results.id);
 
-				if (statusResponse.status === 'done') {
+				if (statusResponse && statusResponse.status === 'done') {
 					return {
 						data: statusResponse,
 						progress: null,
 						error: null
 					};
 				}
-				if (statusResponse.status !== 'running') {
+				if (statusResponse && statusResponse.status !== 'running') {
 					throw Error('failed calibrate');
 				}
 
@@ -333,16 +333,16 @@ const calibrate = async () => {
 				.setInterval(2000)
 				.setThreshold(90)
 				.setPollAction(async () => {
-					const statusResponse = await getRunStatus(forecastResponse.id);
+					const statusResponse = await getSimulation(forecastResponse.id);
 
-					if (statusResponse.status === 'done') {
+					if (statusResponse && statusResponse.status === 'done') {
 						return {
 							data: statusResponse,
 							progress: null,
 							error: null
 						};
 					}
-					if (statusResponse.status !== 'running') {
+					if (statusResponse && statusResponse.status !== 'running') {
 						throw Error('failed forecast');
 					}
 
