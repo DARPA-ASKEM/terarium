@@ -66,7 +66,10 @@
 					</section>
 				</section>
 			</section>
-			<RelatedPublications @extracted-metadata="(extract) => (metadata = extract)" />
+			<RelatedPublications
+				@extracted-metadata="(extract) => (metadata = extract)"
+				:publications="[metadata?.source]"
+			/>
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
