@@ -27,7 +27,12 @@ const useAuthStore = defineStore('auth', {
 				this.isUser = true;
 			} else {
 				// Fetch or refresh the access token
-				const response = await fetch('/ua/user');
+				const response = await fetch('/ua/user', {
+					mode: 'cors',
+					headers: {
+						'Access-Control-Allow-Origin': '*'
+					}
+				});
 
 				const data = await response.json();
 				if (response.ok) {
