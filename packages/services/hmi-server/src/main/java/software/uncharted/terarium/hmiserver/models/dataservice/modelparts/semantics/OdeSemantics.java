@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import org.jose4j.json.internal.json_simple.JSONObject;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.util.List;
@@ -25,5 +25,5 @@ public class OdeSemantics {
 	private List<Observables> observables;
 
 	@TSOptional
-	private JSONObject time;
+	private JsonNode time;
 }

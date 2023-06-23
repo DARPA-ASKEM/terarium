@@ -235,7 +235,7 @@ export interface OdeSemantics {
     initials?: any[];
     parameters?: ModelParameter[];
     observables?: Observables[];
-    time?: ModelParameter[];
+    time?: any;
 }
 
 export interface TypingSemantics {
@@ -300,10 +300,9 @@ export interface Rate {
 
 export interface Observables {
     id: string;
-    description?: string;
-    value?: number;
-    grounding?: ModelGrounding;
-    distribution?: ModelDistribution;
+    name?: string;
+    expression?: string;
+    expression_mathml?: string;
 }
 
 export interface TypeSystem {
