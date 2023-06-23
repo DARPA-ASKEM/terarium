@@ -57,10 +57,11 @@
 								@click="($event) => showObservableHeaderMenu($event, i)"
 							/>
 							<Menu ref="observableHeaderMenu" :model="observableHeaderMenuItems" :popup="true" />
+							<InputText
+								v-if="cellValueToEdit?.data?.[cellValueToEdit.field]?.id"
+								v-model="cellValueToEdit.data[cellValueToEdit.field].id"
+							/>
 						</section>
-					</template>
-					<template #editor="{ data, field }">
-						<InputText v-model="data[field]" autofocus />
 					</template>
 				</Column>
 				<Column>

@@ -248,6 +248,7 @@ export interface OdeSemantics {
     rates: Rate[];
     initials?: any[];
     parameters?: ModelParameter[];
+    observables?: Observable[];
 }
 
 export interface TypingSemantics {
@@ -306,6 +307,14 @@ export interface XDDFacetBucket {
 
 export interface Rate {
     target: string;
+    expression: string;
+    expressionMathml: string;
+}
+
+export interface Observable {
+    id: string;
+    name: string;
+    states: string[];
     expression: string;
     expressionMathml: string;
 }
