@@ -32,11 +32,6 @@
 			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
 				<Column :header="isEditable ? 'Select all' : ''" frozen />
-				<!-- Having trouble getting this loop to work-->
-				<!--<template v-for="(header, i) in Object.keys(configurations[0])" :key="i">
-					<Column v-for="(variableName, j) in configurations[0][header]" :header="variableName.target"
-						:key="i + j" />
-				</template>-->
 				<Column
 					v-for="(variableName, i) in configurations[0].rates"
 					:header="variableName.target"
