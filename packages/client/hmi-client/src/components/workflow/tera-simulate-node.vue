@@ -137,7 +137,7 @@ const getStatus = async () => {
 	}
 };
 
-const watchCompletedRunList = async (runIdList: number[]) => {
+const watchCompletedRunList = async (runIdList: string[]) => {
 	const newRunResults = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {

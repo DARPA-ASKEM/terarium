@@ -25,7 +25,7 @@ export async function getRunStatus(runId: number) {
 	}
 }
 
-export async function getRunResult(runId: number, filename: string) {
+export async function getRunResult(runId: string, filename: string) {
 	try {
 		const resp = await API.get(`simulations/${runId}/result`, {
 			params: { filename }
