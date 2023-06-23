@@ -6,7 +6,6 @@
 				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
 				:run-results="runResults"
-				:run-id-list="completedRunIdList"
 				:chart-idx="index"
 			/>
 		</div>
@@ -91,28 +90,6 @@ const runSimulate = async () => {
 	showSpinner.value = true;
 };
 
-// watch for changes in node input
-// watch(
-// 	() => props.node.inputs,
-// 	async (inputList) => {
-// 		const forecastOutputList = await Promise.all(
-// 			inputList.map(({ value }) =>
-// 				makeForecastJob({
-// 					model: value.model.id,
-// 					initials: value.initialValues,
-// 					params: value.parameterValues,
-// 					tspan: [0.0, 90.0] // hardcoded timespan
-// 				})
-// 			)
-// 		);
-// 		startedRunIdList.value = forecastOutputList.map((forecastOutput) => forecastOutput.id);
-//
-// 		// start polling for run status
-// 		getStatus();
-// 	},
-// 	{ deep: true }
-// );
-
 // Retrieve run ids
 // FIXME: Replace with API.poller
 const getStatus = async () => {
@@ -138,6 +115,8 @@ const getStatus = async () => {
 };
 
 const watchCompletedRunList = async (runIdList: string[]) => {
+	if (runIdList.length === 0) return;
+
 	const newRunResults = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {
@@ -171,7 +150,7 @@ watch(
 	}
 );
 
-watch(() => completedRunIdList.value, watchCompletedRunList);
+watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
 
 onMounted(async () => {
 	const node = props.node;
@@ -180,7 +159,14 @@ onMounted(async () => {
 	const port = node.outputs[0];
 	if (!port) return;
 
-	completedRunIdList.value = (port.value as any)[0].runIdList;
+	const runIdList = (port.value as any)[0].runIdList as string[];
+	await Promise.all(
+		runIdList.map(async (runId) => {
+			const resultCsv = await getRunResult(runId, 'result.csv');
+			const csvData = csvParse(resultCsv);
+			runResults.value[runId] = csvData as any;
+		})
+	);
 });
 </script>
 

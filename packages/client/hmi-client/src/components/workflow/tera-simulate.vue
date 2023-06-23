@@ -116,7 +116,7 @@ import { ModelConfiguration } from '@/types/Types';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { TspanUnits } from '@/types/SimulateConfig';
 
-// import { getModelConfigurationById } from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 
 import { getSimulation } from '@/services/models/simulation-service';
@@ -184,12 +184,14 @@ onMounted(async () => {
 	const executionPayload = simulationObj.executionPayload;
 
 	if (!executionPayload) return;
+
+	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
+	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
+
 	console.log('execution payload', executionPayload);
-
-	// const modelConfigurationObj = await getModelConfigurationById(modelConfigId);
-
 	console.log('simulation', simulationObj);
-	// console.log('model-config', modelConfigurationObj);
+	console.log('modelConfigId', modelConfigurationId);
+	console.log('modelConfig', modelConfigurationObj);
 
 	// 1. Fetch simulation
 	// const simulationObj = await getSimulation

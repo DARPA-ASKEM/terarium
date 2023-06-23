@@ -85,7 +85,6 @@ const CHART_OPTIONS = {
 
 const props = defineProps<{
 	runResults: RunResults;
-	runIdList: string[];
 	chartIdx: number;
 }>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -118,13 +117,18 @@ const getVariableColorByVar = (variableName: string) => {
 	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
 };
 
-const getVariableColorByRunIdx = (runIdx: number) =>
-	VIRIDIS_14[Math.floor((runIdx / props.runIdList.length) * VIRIDIS_14.length)];
+const getVariableColorByRunIdx = (runIdx: number) => {
+	const runIdList = Object.keys(props.runResults) as string[];
+	return VIRIDIS_14[Math.floor((runIdx / runIdList.length) * VIRIDIS_14.length)];
+};
 
-const hasMultiRuns = computed(() => props.runIdList.length > 1);
+const hasMultiRuns = computed(() => {
+	const runIdList = Object.keys(props.runResults) as string[];
+	return runIdList.length > 1;
+});
 
 const watchRunResults = async (runResults) => {
-	const { runIdList } = props;
+	const runIdList = Object.keys(props.runResults) as string[];
 	if (!runIdList.length || isEmpty(runResults)) {
 		return;
 	}
@@ -152,11 +156,17 @@ const watchRunResults = async (runResults) => {
 			selectedRun: runIdList[0]
 		});
 	}
+	renderGraph();
 };
-watch(() => props.runResults, watchRunResults, { immediate: true });
+
+// FIXME: Should use deep, need to rewire the dependencies
+watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
 
 const renderGraph = () => {
-	const { runResults, runIdList } = props;
+	const { runResults } = props;
+	const runIdList = Object.keys(props.runResults) as string[];
+
+	console.log('renderGraph', runResults, runIdList);
 
 	if (!runIdList.length || isEmpty(runResults)) {
 		return;
@@ -186,10 +196,6 @@ const renderGraph = () => {
 		datasets
 	};
 };
-watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx], renderGraph, {
-	immediate: true,
-	deep: true
-});
 </script>
 
 <style scoped>
