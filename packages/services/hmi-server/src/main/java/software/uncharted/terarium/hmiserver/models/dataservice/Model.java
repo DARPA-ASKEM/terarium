@@ -21,7 +21,7 @@ public class Model implements Serializable {
 	private String id;
 
 	private String framework;
-	
+
 	private String name;
 
 	@JsonSetter(nulls = Nulls.SKIP)
@@ -30,6 +30,8 @@ public class Model implements Serializable {
 	private String model_version;
 
 	private String schema;
+
+	private String schema_name;
 
 	private Map<String, Object> model;
 
