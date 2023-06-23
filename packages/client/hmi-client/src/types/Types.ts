@@ -234,6 +234,8 @@ export interface OdeSemantics {
     rates: Rate[];
     initials?: any[];
     parameters?: ModelParameter[];
+    observables?: Observables[];
+    time?: ModelParameter[];
 }
 
 export interface TypingSemantics {
@@ -294,6 +296,14 @@ export interface Rate {
     target: string;
     expression: string;
     expressionMathml: string;
+}
+
+export interface Observables {
+    id: string;
+    description?: string;
+    value?: number;
+    grounding?: ModelGrounding;
+    distribution?: ModelDistribution;
 }
 
 export interface TypeSystem {

@@ -123,9 +123,18 @@
 
 				<!-- Observables -->
 				<AccordionTab>
-					<template #header>
-						<header>Observables</header>
-					</template>
+					<template #header
+						>Observables <span class="artifact-amount">({{ observables.length }})</span></template
+					>
+					<DataTable class="p-datatable-sm" :value="observables">
+						<Column field="id" header="ID" />
+						<Column field="name" header="Name" />
+						<Column field="expression" header="Expression">
+							<template #body="slotProps">
+								<katex-element :expression="slotProps.data.expression" />
+							</template>
+						</Column>
+					</DataTable>
 				</AccordionTab>
 
 				<!-- Transitions -->
@@ -139,16 +148,16 @@
 					</template>
 					<DataTable class="p-datatable-sm" :value="model?.model.transitions">
 						<Column field="properties.name" header="Label" />
-						<Column field="input" header="Input"
-							><template #body="slotProps">{{
-								slotProps.data.input.sort().join(', ')
-							}}</template></Column
-						>
-						<Column field="output" header="Output"
-							><template #body="slotProps">{{
-								slotProps.data.output.sort().join(', ')
-							}}</template></Column
-						>
+						<Column field="input" header="Input">
+							<template #body="slotProps">
+								{{ slotProps.data.input.sort().join(', ') }}
+							</template>
+						</Column>
+						<Column field="output" header="Output">
+							<template #body="slotProps">
+								{{ slotProps.data.output.sort().join(', ') }}
+							</template>
+						</Column>
 						<Column field="properties.rate.expression_mathml" header="Expression">
 							<template #body="slotProps">
 								<katex-element :expression="getTransitionExpression(slotProps.data.id)" />
@@ -159,27 +168,8 @@
 
 				<!-- Other extractions -->
 				<AccordionTab>
-					<template #header>
-						<header id="Other extractions">
-							Other extractions<span class="artifact-amount">({{ 'unknown' }})</span>
-						</header>
-					</template>
-					<DataTable paginator :rows="25" class="p-datatable-sm" :value="metaData">
-						<Column field="id" header="ID"></Column>
-						<Column field="variable.name" header="Variable"></Column>
-						<Column field="value.value" header="Value"></Column>
-						<Column header="Extraction Type">
-							<template #body="slotProps">
-								<Tag :value="getExtractionType(slotProps)" />
-							</template>
-						</Column>
-						<Column header="Source">
-							<template #body="slotProps">
-								<div>{{ getSource(slotProps) }}</div>
-							</template>
-						</Column>
-						<Column field="variable.equations ?? ''" header="Equations"></Column>
-					</DataTable>
+					<template #header>Other extractions</template>
+					<DataTable />
 				</AccordionTab>
 			</Accordion>
 		</template>
@@ -237,7 +227,6 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
-import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
@@ -254,6 +243,7 @@ import { Model, Document, Dataset, ProvenanceType, ModelConfiguration } from '@/
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import TeraModelDiagram from './tera-model-diagram.vue';
+import TeraModelConfiguration from './tera-model-configuration.vue';
 
 enum ModelView {
 	DESCRIPTION = 'description',
@@ -300,12 +290,13 @@ const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
-const metaData = computed(() => model.value?.metadata?.variable_statements);
-
+/* Model */
+// const metaData = computed(() => model.value?.metadata?.variable_statements);
 const name = computed(() => highlightSearchTerms(model.value?.name ?? ''));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);
 const states = computed(() => model.value?.model?.states ?? []);
+const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -445,19 +436,19 @@ const createNewModel = async () => {
 	}
 };
 
-function getExtractionType(sp) {
-	if (sp.data.variable.column.length > 0) {
-		return 'DataSet';
-	}
-	return 'Document';
-}
+// function getExtractionType(sp) {
+// 	if (sp.data.variable.column.length > 0) {
+// 		return 'DataSet';
+// 	}
+// 	return 'Document';
+// }
 
-function getSource(sp) {
-	if (sp.data.variable.column.length > 0) {
-		return sp.data.variable.column[0].dataset.name;
-	}
-	return sp.data.variable.paper.name;
-}
+// function getSource(sp) {
+// 	if (sp.data.variable.column.length > 0) {
+// 		return sp.data.variable.column[0].dataset.name;
+// 	}
+// 	return sp.data.variable.paper.name;
+// }
 </script>
 
 <style scoped>
