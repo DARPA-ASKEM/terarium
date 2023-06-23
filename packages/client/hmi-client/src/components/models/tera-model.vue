@@ -293,7 +293,6 @@ const newDescription = ref<string | undefined>('');
 const newPetri = ref();
 
 /* Model */
-// const metaData = computed(() => model.value?.metadata?.variable_statements);
 const name = computed(() => highlightSearchTerms(model.value?.name));
 const description = computed(() => highlightSearchTerms(model.value?.description));
 const parameters = computed(() => model.value?.semantics?.ode.parameters ?? []);

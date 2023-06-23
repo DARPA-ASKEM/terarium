@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -23,4 +24,7 @@ public class ModelMetadata {
 
 	@JsonProperty("annotations")
 	private Annotations annotations;
+
+	@JsonProperty("attributes")
+	private List<JsonNode> attributes;
 }

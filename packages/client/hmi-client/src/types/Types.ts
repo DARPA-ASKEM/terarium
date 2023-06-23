@@ -186,6 +186,7 @@ export interface ModelMetadata {
     processed_by: string;
     variable_statements: VariableStatement[];
     annotations: Annotations;
+    attributes: any[];
 }
 
 export interface PetriNetState {
