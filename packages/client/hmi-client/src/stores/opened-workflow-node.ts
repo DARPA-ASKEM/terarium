@@ -24,7 +24,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		tspan: [0, 100],
 		// calibrate node
 		calibrateNumCharts: 1,
-		calibrateRunIdList: [] as number[],
+		calibrateRunIdList: [] as string[],
 		calibrateRunResults: {},
 		readOnlyMapping: null as any[] | null
 	}),
@@ -105,7 +105,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 				return outputRow;
 			});
 
-			this.calibrateRunIdList = [1, 2];
+			this.calibrateRunIdList = ['1', '2'];
 
 			this.calibrateRunResults = {
 				1: dataset,

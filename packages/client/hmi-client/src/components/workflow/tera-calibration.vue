@@ -167,7 +167,7 @@ import Button from 'primevue/button';
 import { Poller } from '@/api/api';
 import {
 	makeCalibrateJob,
-	makeForecast,
+	makeForecastJob,
 	getRunStatus,
 	getRunResult
 } from '@/services/models/simulation-service';
@@ -186,10 +186,14 @@ import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { logger } from '@/utils/logger';
-import { CalibrationParams, CsvAsset, Dataset, ModelConfiguration } from '@/types/Types';
+import {
+	CalibrationRequest,
+	SimulationRequest,
+	CsvAsset,
+	Dataset,
+	ModelConfiguration
+} from '@/types/Types';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { shimPetriModel } from '@/services/models/petri-shim';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -263,13 +267,11 @@ const calibrate = async () => {
 			}
 		}
 
-		const calibrationParam: CalibrationParams = {
-			model: shimPetriModel(AMRToPetri(modelConfiguration.value.configuration.model)), // Take out all the extra content in model
-			initials: {}, // reconstruct from modelConfiguration.value.configuration
-			params: {},
-			timesteps_column: timestepColumn.value,
-			feature_mappings: featureMappings,
-			dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
+		const calibrationParam: CalibrationRequest = {
+			modelConfigId: modelConfiguration.value.id, // Take out all the extra content in model
+			dataset: { id: '1', filename: 'TS1225' },
+			extra: {},
+			engine: 'sciml'
 		};
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
@@ -299,18 +301,22 @@ const calibrate = async () => {
 			});
 		await calibratePoller.start();
 
-		const calibratedParams = await getRunResult(results.id);
+		const calibratedParams = await getRunResult(results.id, 'result.csv');
 
 		const resultsHaveNull =
 			calibratedParams === null || Object.values(calibratedParams).some((v) => v === null);
 
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
-		const payload = {
-			model: calibrationParam.model,
-			initials: {}, // reconstruct from modelConfig.value.configuration
-			params: calibratedParams,
-			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
+
+		const payload: SimulationRequest = {
+			modelConfigId: calibrationParam.modelConfigId,
+			extra: {}, // reconstruct from modelConfig.value.configuration
+			timespan: {
+				start: Number(csv[1][indexOfTimestep]),
+				end: Number(csv[csv.length - 1][indexOfTimestep])
+			},
+			engine: 'sciml'
 		};
 
 		calibratedModelConfig.value = cloneDeep(modelConfiguration.value);
@@ -322,7 +328,7 @@ const calibrate = async () => {
 			logger.error("The resulting parameters include null value(s) which can't be simulated.");
 		} else {
 			// do polling and retrieve calibration result
-			const forecastResponse = await makeForecast(payload);
+			const forecastResponse = await makeForecastJob(payload);
 			const forecastPoller = new Poller<object>()
 				.setInterval(2000)
 				.setThreshold(90)
@@ -348,7 +354,7 @@ const calibrate = async () => {
 				});
 			await forecastPoller.start();
 
-			const resultCsv = await getRunResult(forecastResponse.id);
+			const resultCsv = await getRunResult(forecastResponse.id, 'result.csv');
 			const result = csvParse(resultCsv);
 
 			openedWorkflowNodeStore.setCalibrateResults(

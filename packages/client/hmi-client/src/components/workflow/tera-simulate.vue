@@ -48,7 +48,7 @@
 					</AccordionTab>
 					<AccordionTab>
 						<!-- use tera-model-configuration here just don't make it editable etc.
-							
+
 							<template #header> Model configurations ({{ simConfigs.length }}) </template>
 						<DataTable v-if="node.inputs[0].value?.length" class="model-configuration" showGridlines
 							:value="simConfigs">
@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 // import Column from 'primevue/column';
@@ -116,9 +116,11 @@ import { ModelConfiguration } from '@/types/Types';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { TspanUnits } from '@/types/SimulateConfig';
 
-import { getModelConfigurationById } from '@/services/model-configurations';
+// import { getModelConfigurationById } from '@/services/model-configurations';
+import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+
+import { getSimulation } from '@/services/models/simulation-service';
 import SimulateChart from './tera-simulate-chart.vue';
-import ModelDiagram from '../models/tera-model-diagram.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
@@ -131,7 +133,7 @@ const activeTab = ref(SimulateTabs.input);
 const node = ref(openedWorkflowNodeStore.node);
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
-const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
+// const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
 
 const TspanUnitList = computed(() =>
 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
@@ -154,14 +156,46 @@ const TspanUnitList = computed(() =>
 // 		})) || []
 // );
 
-watch(
-	() => modelConfigId.value,
-	async () => {
-		if (modelConfigId.value) {
-			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
-		}
-	}
-);
+// watch(
+// 	() => modelConfigId.value,
+// 	async () => {
+// 		if (modelConfigId.value) {
+// 			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
+// 		}
+// 	}
+// );
+
+onMounted(async () => {
+	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
+	// e.g. just take the first one.
+	if (!node.value) return;
+
+	const nodeObj = node.value;
+
+	if (!nodeObj.outputs[0]) return;
+	const port = nodeObj.outputs[0];
+	if (!port.value) return;
+	const temp = port.value[0];
+	const simulationId = temp.runIdList[0];
+
+	const simulationObj = await getSimulation(simulationId as string);
+	if (!simulationObj) return;
+
+	const executionPayload = simulationObj.executionPayload;
+
+	if (!executionPayload) return;
+	console.log('execution payload', executionPayload);
+
+	// const modelConfigurationObj = await getModelConfigurationById(modelConfigId);
+
+	console.log('simulation', simulationObj);
+	// console.log('model-config', modelConfigurationObj);
+
+	// 1. Fetch simulation
+	// const simulationObj = await getSimulation
+	// 2. Fetch configuration
+	// 3. Fetch model
+});
 </script>
 
 <style scoped>

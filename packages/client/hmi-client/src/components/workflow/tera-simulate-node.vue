@@ -27,15 +27,13 @@
 import { ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
-import { shimPetriModel } from '@/services/models/petri-shim';
 import { ModelConfiguration } from '@/types/Types';
 
-import { makeForecast, getRunStatus, getRunResult } from '@/services/models/simulation-service';
+import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateOperation } from './simulate-operation';
@@ -48,8 +46,8 @@ const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
 
-const startedRunIdList = ref<number[]>([]);
-const completedRunIdList = ref<number[]>([]);
+const startedRunIdList = ref<string[]>([]);
+const completedRunIdList = ref<string[]>([]);
 const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
@@ -62,25 +60,35 @@ watch(
 );
 
 const runSimulate = async () => {
-	if (props.node.inputs[0].value?.length) {
-		startedRunIdList.value = await Promise.all(
-			props.node.inputs[0].value.map(async (config) => {
-				const payload = {
-					model: shimPetriModel(AMRToPetri(config.model, 'id')),
-					initials: config.initialValues,
-					params: config.parameterValues,
-					tspan: openedWorkflowNodeStore.tspan
-				};
+	const modelConfigurationList = props.node.inputs[0].value;
+	if (!modelConfigurationList?.length) return;
 
-				const response = await makeForecast(payload);
-				console.log(payload, config.model, AMRToPetri(config.model));
-				return response.id;
-			})
-		);
+	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
+		const payload = {
+			modelConfigId: configId,
+			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
+			extra: {
+				// FIXME: need to use real value
+				initials: {
+					S: 100,
+					I: 1,
+					R: 0
+				},
+				params: {
+					inf: 0.002,
+					rec: 0.004
+				}
+			},
+			engine: 'sciml'
+		};
+		const response = await makeForecastJob(payload);
+		console.log(response.id, payload);
+		return response.id;
+	});
 
-		getStatus();
-		showSpinner.value = true;
-	}
+	startedRunIdList.value = await Promise.all(simulationRequests);
+	getStatus();
+	showSpinner.value = true;
 };
 
 // watch for changes in node input
@@ -89,7 +97,7 @@ const runSimulate = async () => {
 // 	async (inputList) => {
 // 		const forecastOutputList = await Promise.all(
 // 			inputList.map(({ value }) =>
-// 				makeForecast({
+// 				makeForecastJob({
 // 					model: value.model.id,
 // 					initials: value.initialValues,
 // 					params: value.parameterValues,
@@ -108,12 +116,18 @@ const runSimulate = async () => {
 // Retrieve run ids
 // FIXME: Replace with API.poller
 const getStatus = async () => {
-	const currentRunStatus = await Promise.all(startedRunIdList.value.map(getRunStatus));
+	const requestList: any[] = [];
+	startedRunIdList.value.forEach((id) => {
+		requestList.push(getSimulation(id));
+	});
 
-	if (currentRunStatus.every(({ status }) => status === 'done')) {
+	const currentSimulations = await Promise.all(requestList);
+	const ongoingStatusList = ['running', 'queued'];
+
+	if (currentSimulations.every(({ status }) => status === 'complete')) {
 		completedRunIdList.value = startedRunIdList.value;
 		showSpinner.value = false;
-	} else if (currentRunStatus.some(({ status }) => status === 'running')) {
+	} else if (currentSimulations.some(({ status }) => ongoingStatusList.includes(status))) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {
@@ -123,15 +137,16 @@ const getStatus = async () => {
 	}
 };
 
-const watchCompletedRunList = async (runIdList: number[]) => {
+const watchCompletedRunList = async (runIdList: string[]) => {
 	const newRunResults = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {
 			if (runResults.value[runId]) {
 				newRunResults[runId] = runResults.value[runId];
 			} else {
-				const resultCsv = await getRunResult(runId);
-				newRunResults[runId] = csvParse(resultCsv);
+				const resultCsv = await getRunResult(runId, 'result.csv');
+				const csvData = csvParse(resultCsv);
+				newRunResults[runId] = csvData;
 			}
 		})
 	);
@@ -142,11 +157,22 @@ const watchCompletedRunList = async (runIdList: number[]) => {
 		type: SimulateOperation.outputs[0].type,
 		label: `${port.label} Results`,
 		value: {
+			runIdList
+		}
+	});
+
+	/* commented out, causing serialization issues. DC June 22
+	const port = props.node.inputs[0];
+	emit('append-output-port', {
+		type: SimulateOperation.outputs[0].type,
+		label: `${port.label} Results`,
+		value: {
 			runResults: runResults.value,
 			runIdList,
 			runConfigs: port.value
 		}
 	});
+	*/
 };
 
 watch(

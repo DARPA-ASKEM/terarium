@@ -9,6 +9,7 @@ import java.time.Instant;
 
 @Data
 @Accessors(chain = true)
+@Deprecated
 public class SimulationRunDescription implements Serializable {
 
 	private String id;
