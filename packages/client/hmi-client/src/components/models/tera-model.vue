@@ -493,6 +493,7 @@ function getSource(sp) {
 	font-family: var(--font-family);
 	font-weight: 400;
 	font-size: var(--font-body-small);
+}
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;

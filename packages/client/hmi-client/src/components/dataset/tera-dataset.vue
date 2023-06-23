@@ -159,13 +159,13 @@
 				</AccordionTab>
 				-->
 
-				<AccordionTab v-if="(annotations?.feature?.length || 0) > 0">
+				<AccordionTab v-if="(annotations?.['feature']?.length || 0) > 0">
 					<template #header>
 						<header id="Variables">
-							Variables<span class="artifact-amount">({{ annotations?.feature?.length }})</span>
+							Variables<span class="artifact-amount">({{ annotations?.['feature']?.length }})</span>
 						</header>
 					</template>
-					<DataTable :value="annotations?.feature">
+					<DataTable :value="annotations?.['feature']">
 						<Column field="name" header="Name"></Column>
 						<Column field="featureType" header="Type"></Column>
 						<Column field="description" header="Definition"></Column>
