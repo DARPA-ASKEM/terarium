@@ -31,7 +31,7 @@
 					transformation tools.</Message
 				>
 			</div>
-			<section class="metadata data-row">
+			<section class="metadata data-row" v-if="!metadata">
 				<section>
 					<header>Rows</header>
 					<section>{{ csvContent?.length || '-' }}</section>
@@ -53,7 +53,7 @@
 					<section>{{ dataset?.username || '-' }}</section>
 				</section>
 			</section>
-			<section class="metadata data-row">
+			<section class="metadata data-row" v-if="!metadata">
 				<section>
 					<header>Source Name</header>
 					<section>{{ dataset?.source || '-' }}</section>
@@ -66,13 +66,62 @@
 					</section>
 				</section>
 			</section>
-			<RelatedPublications />
+			<RelatedPublications @extracted-metadata="(extract) => (metadata = extract)" />
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<p v-html="dataset?.description" />
+					<section v-if="metadata">
+						<ul>
+							<li>Dataset name: {{ metadata.name }}</li>
+							<li>Dataset overview: {{ metadata.description }}</li>
+							<li>Dataset URL: {{ metadata.source }}</li>
+							<li>
+								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
+							</li>
+						</ul>
+					</section>
+					<p v-else v-html="dataset?.description" />
+				</AccordionTab>
+				<AccordionTab v-if="metadata">
+					<template #header>
+						<header id="Source">Source</header>
+					</template>
+					This data is sourced from {{ metadata.source }}
+				</AccordionTab>
+				<AccordionTab v-if="metadata">
+					<template #header>
+						<header id="Variables">Variables</header>
+					</template>
+					<div class="variables-table">
+						<div class="variables-header">
+							<div
+								v-for="(title, index) in [
+									'ID',
+									'NAME',
+									'DATA TYPE',
+									'UNITS',
+									'GROUNDING',
+									'EXTRACTIONS'
+								]"
+								:key="index"
+							>
+								{{ title }}
+							</div>
+						</div>
+						<div v-for="(column, index) in metadata.columns" class="variables-row" :key="index">
+							<div>{{ column.name }}</div>
+							<div>{{ formatName(column.name) }}</div>
+							<div>{{ column.data_type }}</div>
+							<div>-</div>
+							<div>
+								{{ column.grounding.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
+							</div>
+							<div></div>
+							<div class="variables-description">{{ column.description }}</div>
+						</div>
+					</div>
 				</AccordionTab>
 				<AccordionTab v-if="(annotations?.length || 0) > 0">
 					<template #header>
@@ -103,62 +152,6 @@
 				</AccordionTab>
 			</Accordion>
 			<Accordion :multiple="true" :activeIndex="[0, 1]">
-				<!-- 	<AccordionTab>
-					<template #header>
-						<header id="Description">Description</header>
-					</template>
-					<p v-html="dataset?.description" />
-				</AccordionTab>
-				<AccordionTab v-if="(annotations?.length || 0) > 0">
-					<template #header>
-						<header id="Annotations">
-							Annotations
-							<span class="artifact-amount"> ({{ annotations?.length || 0 }}) </span>
-						</header>
-					</template>
-					<section v-if="annotations">
-						<header class="annotation-subheader">Annotations</header>
-						<section class="annotation-group">
-							<section
-								v-for="name in annotations.map((annotation) => annotation['name'])"
-								:key="name[0]"
-								class="annotation-row data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotations[name[0]] }}</section>
-								</section>
-							</section>
-						</section>
-					</section>
-					<section v-if="annotations?.date">
-						<header class="annotation-subheader">Temporal annotations</header>
-							<section
-								v-for="annotation in annotations?.date"
-								:key="annotation.name"
-								class="metadata data-row"
-							>
-								<section>
-									<header>Name</header>
-									<section>{{ annotation.name }}</section>
-								</section>
-								<section>
-									<header>Description</header>
-									<section>{{ annotation.description }}</section>
-								</section>
-								<section>
-									<header>Time format</header>
-									<section>{{ annotation.timeFormat }}</section>
-								</section>
-							</section>
-					</section>
-				</AccordionTab>
-				-->
-
 				<AccordionTab v-if="(annotations?.['feature']?.length || 0) > 0">
 					<template #header>
 						<header id="Variables">
@@ -228,6 +221,12 @@ const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
 
+function formatName(name: string) {
+	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+}
+
+const metadata = ref();
+
 /*
 // apparently this isn't used?
 const datasetContent = computed(() => [
@@ -273,6 +272,9 @@ watch(
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
 const showAccordion = computed(() => {
+	if (metadata.value) {
+		return [0, 1, 2];
+	}
 	if (dataset.value?.columns) {
 		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
 			? [1]
@@ -336,5 +338,38 @@ const showAccordion = computed(() => {
 .layout-topbar {
 	top: 20px;
 	background-color: red;
+}
+
+.variables-table {
+	display: grid;
+	grid-template-columns: 1fr;
+}
+
+.variables-table div {
+	padding: 0.25rem;
+}
+
+.variables-header {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+}
+
+.variables-row {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-template-rows: 1fr 1fr;
+	border-top: 1px solid var(--surface-border);
+}
+
+.variables-row:hover {
+	background-color: var(--surface-highlight);
+}
+
+.variables-description {
+	grid-row: 2;
+	grid-column: 1 / span 6;
+	color: var(--text-color-subdued);
 }
 </style>
