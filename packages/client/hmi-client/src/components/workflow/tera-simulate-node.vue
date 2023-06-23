@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { ModelConfiguration } from '@/types/Types';
@@ -160,19 +160,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 			runIdList
 		}
 	});
-
-	/* commented out, causing serialization issues. DC June 22
-	const port = props.node.inputs[0];
-	emit('append-output-port', {
-		type: SimulateOperation.outputs[0].type,
-		label: `${port.label} Results`,
-		value: {
-			runResults: runResults.value,
-			runIdList,
-			runConfigs: port.value
-		}
-	});
-	*/
 };
 
 watch(
@@ -185,6 +172,16 @@ watch(
 );
 
 watch(() => completedRunIdList.value, watchCompletedRunList);
+
+onMounted(async () => {
+	const node = props.node;
+	if (!node) return;
+
+	const port = node.outputs[0];
+	if (!port) return;
+
+	completedRunIdList.value = (port.value as any)[0].runIdList;
+});
 </script>
 
 <style scoped>
