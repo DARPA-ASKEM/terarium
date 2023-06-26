@@ -128,6 +128,7 @@
 									<th>Unit</th>
 									<th>Concept</th>
 									<th>Identifiers</th>
+									<th>Extractions</th>
 								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
@@ -165,6 +166,12 @@
 											>
 												{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
 											</a>
+										</template>
+										<template v-else>--</template>
+									</td>
+									<td>
+										<template v-if="extractions?.[state?.id]">
+											<Tag :value="extractions?.[state?.id].length" />
 										</template>
 										<template v-else>--</template>
 									</td>
@@ -215,23 +222,34 @@
 									<th>Input</th>
 									<th>Output</th>
 									<th>Expression</th>
+									<th>Extractions</th>
 								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
-								<tr v-for="item in transitions" :key="item.properties.name">
-									<td>{{ item?.properties?.name ?? '--' }}</td>
+								<tr v-for="transition in transitions" :key="transition.id">
+									<td>{{ transition?.properties?.name ?? '--' }}</td>
 									<td>
 										{{
-											item?.input && item.input?.length > 0 ? item.input.sort().join(', ') : '--'
+											transition?.input && transition.input?.length > 0
+												? transition.input.sort().join(', ')
+												: '--'
 										}}
 									</td>
 									<td>
 										{{
-											item?.output && item.output?.length > 0 ? item.output.sort().join(', ') : '--'
+											transition?.output && transition.output?.length > 0
+												? transition.output.sort().join(', ')
+												: '--'
 										}}
 									</td>
 									<td>
-										<katex-element :expression="getTransitionExpression(item.id)" />
+										<katex-element :expression="getTransitionExpression(transition.id)" />
+									</td>
+									<td>
+										<template v-if="extractions?.[transition.id]">
+											<Tag :value="extractions?.[transition.id].length" />
+										</template>
+										<template v-else>--</template>
 									</td>
 								</tr>
 							</tbody>
@@ -375,6 +393,7 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
+import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import RelatedPublications from '@/components/widgets/tera-related-publications.vue';
