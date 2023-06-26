@@ -182,7 +182,7 @@ const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
 const configurations = computed<any[]>(
-	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
+	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
 );
 
 // TODO: Clean this up and use appropriate loops
@@ -256,7 +256,7 @@ defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
 	const response = await createModelConfiguration(
-		props.modelConfigurations[0].modelId, // model id
+		props.modelConfigurations[0].modelId,
 		`Config ${props.modelConfigurations.length + 1}`,
 		'shawntest',
 		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
@@ -306,13 +306,16 @@ function updateModelConfigValue() {
 
 	// just create the clone within here ?
 
-	if (editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value) {
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
+	if (
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value
+	) {
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value =
 			value;
 	} else if (
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].expression
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex]
+			.expression
 	) {
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][
 			typeIndex
 		].expression = value;
 	}

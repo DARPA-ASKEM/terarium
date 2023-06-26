@@ -49,8 +49,6 @@ async function createDefaultModelConfig() {
 			model.value
 		);
 
-		console.log(response);
-
 		if (ModelOperation.action) {
 			// Create output
 			emit('append-output-port', {
