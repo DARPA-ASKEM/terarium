@@ -49,11 +49,17 @@
 					<th>Source</th>
 				</tr>
 				<tr>
-					<td>{{ capitalize(model?.schema_name) }}</td>
-					<td>{{ model?.model_version }}</td>
-					<td>{{ model?.metadata.processed_at }}</td>
-					<td>{{ model?.metadata?.annotations?.authors?.join(', ') }}</td>
-					<td>{{ model?.metadata.processed_by }}</td>
+					<td>{{ capitalize(model?.schema_name) ?? '--' }}</td>
+					<td>{{ model?.model_version ?? '--' }}</td>
+					<td>{{ model?.metadata.processed_at ?? '--' }}</td>
+					<td>
+						{{
+							model?.metadata?.annotations?.authors?.length > 0
+								? model?.metadata?.annotations?.authors?.join(', ')
+								: '--'
+						}}
+					</td>
+					<td>{{ model?.metadata.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
@@ -85,13 +91,15 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="parameter in parameters" :key="parameter.id">
-									<td>{{ parameter.id }}</td>
-									<td>{{ parameter.value }}</td>
+									<td>{{ parameter?.id ?? '--' }}</td>
+									<td>{{ parameter?.value ?? '--' }}</td>
 									<td>
-										[{{ parameter?.distribution?.parameters.minimum }},
-										{{ parameter?.distribution?.parameters.maximum }}]
+										<template v-if="parameter?.distribution?.parameters">
+											[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
+											{{ round(parameter?.distribution?.parameters.maximum, 4) }}] </template
+										><template v-else>'--'</template>
 									</td>
-									<!-- <td>{{ parameter?.extractions }}</td> -->
+									<td>{{ parameter?.extractions ?? '--' }}</td>
 								</tr>
 								<!-- <tr class="p-rowgroup-footer">
 									<td colspan="5">
@@ -123,20 +131,22 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="state in states" :key="state.id">
-									<td>{{ state.id }}</td>
-									<td>{{ state.name }}</td>
-									<td>{{ state.units.expression }}</td>
-									<td>{{ state.grounding.context }}</td>
+									<td>{{ state.id ?? '--' }}</td>
+									<td>{{ state.name ?? '--' }}</td>
+									<td>{{ state.units.expression ?? '--' }}</td>
+									<td>{{ state.grounding.context ?? '--' }}</td>
 									<td>
-										<a
-											target="_blank"
-											rel="noopener noreferrer"
-											:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-												state.grounding.identifiers
-											)}`"
-										>
-											{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
-										</a>
+										<template v-if="state.grounding.identifiers">
+											<a
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+													state.grounding.identifiers
+												)}`"
+											>
+												{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
+											</a>
+										</template>
 									</td>
 								</tr>
 							</tbody>
@@ -160,10 +170,11 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="item in observables" :key="item.id">
-									<td>{{ item.id }}</td>
-									<td>{{ item.name }}</td>
+									<td>{{ item.id ?? '--' }}</td>
+									<td>{{ item.name ?? '--' }}</td>
 									<td>
-										<katex-element :expression="item.expression" />
+										<katex-element v-if="item.expression" :expression="item.expression" />
+										<template v-else>--</template>
 									</td>
 								</tr>
 							</tbody>
@@ -188,9 +199,9 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="item in transitions" :key="item.properties.name">
-									<td>{{ item.properties.name }}</td>
-									<td>{{ item.input.sort().join(', ') }}</td>
-									<td>{{ item.output.sort().join(', ') }}</td>
+									<td>{{ item.properties.name ?? '--' }}</td>
+									<td>{{ item.input.length > 0 ? item.input.sort().join(', ') : '--' }}</td>
+									<td>{{ item.output.length > 0 ? item.output.sort().join(', ') : '--' }}</td>
 									<td>
 										<katex-element :expression="getTransitionExpression(item.id)" />
 									</td>
@@ -218,11 +229,27 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="item in otherExtractions" :key="item.payload?.id?.id">
-									<td>{{ item.payload?.id?.id }}</td>
-									<td>{{ item.payload?.names?.map((n) => n?.name).join(', ') }}</td>
-									<td>{{ item.payload?.descriptions?.map((d) => d?.source).join(', ') }}</td>
+									<td>{{ item.payload?.id?.id ?? '--' }}</td>
 									<td>
+										{{
+											item.payload?.names?.length > 0
+												? item.payload?.names?.map((n) => n?.name).join(', ')
+												: '--'
+										}}
+									</td>
+									<td>
+										{{
+											item.payload?.descriptions?.length > 0
+												? item.payload?.descriptions?.map((d) => d?.source).join(', ')
+												: '--'
+										}}
+									</td>
+									<td>
+										<template v-if="!item.payload.groundings || item.payload.groundings.length < 1"
+											>--</template
+										>
 										<template
+											v-else
 											v-for="grounding in item.payload.groundings"
 											:key="grounding.grounding_id"
 										>
@@ -257,8 +284,8 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="(item, index) in time" :key="index">
-									<td>{{ item?.id }}</td>
-									<td>{{ item?.units?.expression }}</td>
+									<td>{{ item?.id ?? '--' }}</td>
+									<td>{{ item?.units?.expression ?? '--' }}</td>
 								</tr>
 							</tbody>
 						</table>
@@ -310,7 +337,7 @@
 </template>
 
 <script setup lang="ts">
-import { capitalize, groupBy, isEmpty } from 'lodash';
+import { capitalize, groupBy, isEmpty, round } from 'lodash';
 import { watch, ref, computed, onUpdated, PropType } from 'vue';
 import { useRouter } from 'vue-router';
 import Accordion from 'primevue/accordion';
@@ -421,7 +448,7 @@ const relatedTerariumDocuments = computed(
 
 // Get the mathematical expression of a transition
 function getTransitionExpression(id): string {
-	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '';
+	return model?.value?.semantics?.ode.rates.find((rate) => rate.target === id)?.expression ?? '--';
 }
 
 function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
