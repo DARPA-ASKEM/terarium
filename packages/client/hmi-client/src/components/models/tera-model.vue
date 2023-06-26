@@ -350,7 +350,7 @@ async function getModelConfigurations() {
 				modelConfigurations.value.push(response);
 			}
 			if (modelConfigurations.value) {
-				model.value = await getModel(modelConfigurations.value[0].configuration.id);
+				model.value = await getModel(modelConfigurations.value[0].modelId);
 				fetchRelatedTerariumArtifacts();
 			}
 		}

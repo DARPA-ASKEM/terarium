@@ -256,7 +256,7 @@ defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
 	const response = await createModelConfiguration(
-		props.modelConfigurations[0].configuration.id, // model id
+		props.modelConfigurations[0].modelId, // model id
 		`Config ${props.modelConfigurations.length + 1}`,
 		'shawntest',
 		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration

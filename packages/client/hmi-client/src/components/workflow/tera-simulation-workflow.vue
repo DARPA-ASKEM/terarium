@@ -253,6 +253,7 @@ const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
+	console.log(port.value);
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
