@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -300,12 +301,22 @@ public class DatasetResource {
 
 		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket.get()).key(objectKey).build();
 
-		client.putObject(request, RequestBody.fromBytes(input.get("file").readAllBytes()));
+		PutObjectResponse res = client.putObject(request, RequestBody.fromBytes(input.get("file").readAllBytes()));
 
-		return Response
-			.status(Response.Status.OK)
-			.type(MediaType.APPLICATION_JSON)
-			.build();
+		//find the status of the response
+		if (res.sdkHttpResponse().isSuccessful()) {
+			log.debug("Successfully uploaded CSV file to dataset {}", datasetId);
+			return Response
+				.status(Response.Status.OK)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		} else {
+			log.error("Failed to upload CSV file to dataset {}", datasetId);
+			return Response.status(res.sdkHttpResponse().statusCode(), res.sdkHttpResponse().statusText().get()).type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+
 	}
 
 
@@ -324,7 +335,10 @@ public class DatasetResource {
 	private List<String> getColumn(List<List<String>> maxtrix, int columnNumber){
 		List<String> column = new ArrayList<>();
 		for(int i = 0 ; i < maxtrix.size(); i++){
-		   column.add(i,maxtrix.get(i).get(columnNumber));
+			if(maxtrix.get(i).size() > columnNumber){
+				column.add(i,maxtrix.get(i).get(columnNumber));
+			}
+
 		}
 		return column;
 	}
