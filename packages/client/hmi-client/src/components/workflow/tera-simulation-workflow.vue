@@ -374,7 +374,6 @@ function onDrop(event) {
 }
 
 function toggleContextMenu(event) {
-	console.log('hi');
 	contextMenu.value.show(event);
 	updateNewNodePosition(event);
 }
