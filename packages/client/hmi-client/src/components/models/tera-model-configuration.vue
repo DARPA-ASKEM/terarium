@@ -23,11 +23,6 @@
 					"
 					:key="i"
 				/>
-				<Column
-					v-if="!Object.keys(configurations[0]).includes('observables')"
-					header="Observables"
-					:colspan="observables.length + 1"
-				/>
 			</Row>
 			<Row>
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
@@ -47,33 +42,6 @@
 					:header="variableName.id"
 					:key="i"
 				/>
-				<Column v-for="(variableName, i) in configurations[0].observables" :key="i">
-					<template #header>
-						<section class="editable-cell">
-							<span>{{ variableName.id }}</span>
-							<Button
-								class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-								icon="pi pi-ellipsis-v"
-								@click="($event) => showObservableHeaderMenu($event, i)"
-							/>
-							<Menu ref="observableHeaderMenu" :model="observableHeaderMenuItems" :popup="true" />
-							<InputText
-								v-if="cellValueToEdit?.data?.[cellValueToEdit.field]?.id"
-								v-model="cellValueToEdit.data[cellValueToEdit.field].id"
-							/>
-						</section>
-					</template>
-				</Column>
-				<Column>
-					<template #header>
-						<Button
-							class="p-button-sm p-button-outlined"
-							label="Add"
-							icon="pi pi-plus"
-							@click="addObservable"
-						/>
-					</template>
-				</Column>
 			</Row>
 			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
 		</ColumnGroup>
@@ -179,7 +147,6 @@ import { watch, ref, computed, onMounted } from 'vue';
 import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
-import Menu from 'primevue/menu';
 import Column from 'primevue/column';
 import Row from 'primevue/row';
 import ColumnGroup from 'primevue/columngroup';
@@ -217,56 +184,9 @@ const cellValueToEdit = ref({ data: {}, field: '' });
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-let chosenObservableIndex = 0;
-
 const configurations = computed<any[]>(
 	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
 );
-
-const observables = ref<any[]>([]);
-
-function addObservable() {
-	for (let i = 0; i < editableModelConfigs.value.length; i++) {
-		if (!editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables) {
-			editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables = [];
-		}
-
-		editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables.push({
-			id: `noninf`,
-			name: `Non-infectious`,
-			states: ['S', 'R'],
-			expression: 'S+R',
-			expression_mathml: '<apply><plus/><ci>S</ci><ci>R</ci></apply>'
-		});
-
-		updateModelConfiguration(editableModelConfigs.value[i]);
-	}
-}
-
-const observableHeaderMenu = ref();
-const showObservableHeaderMenu = (event, i) => {
-	chosenObservableIndex = i;
-	observableHeaderMenu.value[i].toggle(event);
-};
-
-const observableHeaderMenuItems = ref([
-	{
-		label: 'Edit name',
-		command: () => {}
-	},
-	{
-		label: 'Remove',
-		command: () => {
-			for (let i = 0; i < editableModelConfigs.value.length; i++) {
-				editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables.splice(
-					chosenObservableIndex,
-					1
-				);
-				updateModelConfiguration(editableModelConfigs.value[i]);
-			}
-		}
-	}
-]);
 
 // TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
@@ -380,23 +300,17 @@ function updateModelConfigValue(
 	const { data, field } = cellValueToEdit.value;
 	const { type, value, typeIndex } = data[field];
 
+	const configToUpdate = editableModelConfigs.value[configIndex];
+
 	if (field === 'name' && newValue) {
-		editableModelConfigs.value[configIndex].name = newValue;
-	} else if (
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value
-	) {
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value =
-			value;
-	} else if (
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex]
-			.expression
-	) {
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][
-			typeIndex
-		].expression = value;
+		configToUpdate.name = newValue;
+	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value) {
+		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value = value;
+	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression) {
+		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression = value;
 	}
 
-	updateModelConfiguration(editableModelConfigs.value[configIndex]);
+	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
 
