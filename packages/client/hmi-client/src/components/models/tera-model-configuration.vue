@@ -133,9 +133,6 @@
 		label="Add configuration"
 		@click="addModelConfiguration"
 	/>
-	<!-- FIXME: what is this???
-	<Button @click="createConfig" label="Create" />
-	-->
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
@@ -358,7 +355,7 @@ async function addModelConfiguration() {
 }
 
 function addConfigValue() {
-	extractions.value.push(`Resource ${extractions.value.length + 1} `);
+	extractions.value.push(`Untitled`);
 }
 
 const onCellEditComplete = (event) => {
