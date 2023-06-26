@@ -24,4 +24,7 @@ public class ModelConfiguration {
     private String modelId;
 
     private Object configuration;
+
+		@JsonAlias("amr_configuration")
+    private Object amrConfiguration;
 }

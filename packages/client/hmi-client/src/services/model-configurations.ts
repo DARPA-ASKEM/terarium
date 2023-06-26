@@ -24,7 +24,8 @@ export const createModelConfiguration = async (
 		model_id,
 		name,
 		description,
-		configuration: hackConfig
+		configuration: hackConfig,
+		amr_configuration: configuration
 	});
 	return response?.data ?? null;
 };
