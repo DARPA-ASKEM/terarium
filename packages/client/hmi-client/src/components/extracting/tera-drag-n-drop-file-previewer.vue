@@ -16,9 +16,9 @@
 	</div>
 	<div class="file-preview" scrolling="no">
 		<template v-if="props.isProcessing">
-			<p class="progress-message">Extracting...</p>
+			<p class="progress-message">Uploading...</p>
 			<div class="card">
-				<ProgressBar :value="progress"></ProgressBar>
+				<ProgressBar :value="props.progress"></ProgressBar>
 			</div>
 		</template>
 		<template v-else-if="props.showPreview">
@@ -36,7 +36,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import { AcceptedTypes } from '@/types/common';
@@ -59,33 +58,16 @@ const props = defineProps({
 	},
 	showError: {
 		type: Boolean
+	},
+	progress: {
+		type: Number,
+		default: undefined
 	}
 });
-
-const progress = ref(0);
-let progressUpdater;
-
-const updateProgress = () => {
-	if (progress.value < 98) {
-		progress.value += 1;
-	}
-};
 
 const getSrc = (file) => URL.createObjectURL(file);
 
 const emit = defineEmits(['remove-file']);
-
-watch(
-	() => props.isProcessing,
-	() => {
-		if (props.isProcessing) {
-			progress.value = 0;
-			progressUpdater = setInterval(updateProgress, 50);
-		} else {
-			clearInterval(progressUpdater);
-		}
-	}
-);
 </script>
 <style scoped>
 .file-preview {

@@ -181,7 +181,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { CsvAsset, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { CodeRequest, Tab } from '@/types/common';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -190,6 +190,7 @@ import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
 import { createNewDatasetFromCSV } from '@/services/dataset';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	urlString: string;
@@ -197,7 +198,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const emit = defineEmits(['open-code']);
+const emit = defineEmits(['open-code', 'update-project']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -208,6 +209,7 @@ const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
 const selectedText: Ref<string> = ref('');
 const displayCode: Ref<string> = ref('');
+const progress: Ref<number> = ref(0);
 
 // Breadcrumb home setup
 const home = ref({
@@ -333,8 +335,21 @@ async function importDataFiles(githubFiles: GithubFile[]) {
 		const file: File = new File([blob], githubFile.name, { type: 'text/plain' });
 
 		// now, create a new dataset from this csv
-		await createNewDatasetFromCSV(file, props.project?.username ?? '', props.project?.id ?? '');
+		const csvAsset: CsvAsset | null = await createNewDatasetFromCSV(
+			progress,
+			file,
+			props.project?.username ?? '',
+			props.project?.id ?? '',
+			undefined
+		);
+
+		if (csvAsset == null) {
+			logger.error('Failed to create dataset from CSV. Is it too large?', { showToast: true });
+		}
 	});
+
+	emit('update-project', props.project?.id);
+	isModalVisible.value = false;
 }
 
 /**
