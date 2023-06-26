@@ -86,8 +86,8 @@ const modelColumnNames = ref<string[]>();
 
 const mapping = ref<any[]>([
 	{
-		modelVariable: 'test',
-		datasetVariable: 'test'
+		modelVariable: '',
+		datasetVariable: ''
 	}
 ]);
 
@@ -109,6 +109,7 @@ watch(
 			console.log(modelConfig.value);
 			// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
 			modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
+			modelColumnNames.value?.push('timestep');
 		}
 	}
 );
@@ -136,12 +137,17 @@ const runCalibrate = async () => {
 
 	const calibrationRequest: CalibrationRequest = {
 		modelConfigId: modelConfigId.value,
-		dataset: { id: datasetId.value, filename: currentDatasetFileName.value, mappings: mapping },
+		dataset: {
+			id: datasetId.value,
+			filename: currentDatasetFileName.value,
+			mappings: mapping.value
+		},
 		extra: {},
 		engine: 'sciml'
 	};
 	const response = await makeCalibrateJob(calibrationRequest);
-	console.log(response.id, calibrationRequest);
+	console.log(response);
+	console.log(calibrationRequest);
 
 	startedRunId.value = response.id;
 	getStatus();
@@ -171,8 +177,8 @@ const getStatus = async () => {
 
 function addMapping() {
 	mapping.value.push({
-		modelVariable: 'test',
-		datasetVariable: 'test'
+		modelVariable: '',
+		datasetVariable: ''
 	});
 	console.log(mapping.value);
 	console.log(modelColumnNames.value);
@@ -184,13 +190,5 @@ function addMapping() {
 	width: 156px;
 	height: 25px;
 	border-radius: 6px;
-}
-
-:deep(.p-dropdown .p-dropdown-label.p-inputtext) {
-	color: white;
-}
-
-:deep(.p-inputtext) {
-	color: white;
 }
 </style>
