@@ -42,7 +42,7 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ modelConfiguration?.configuration.name }} </template>
+						<template #header> {{ modelConfiguration?.amrConfiguration.name }} </template>
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
