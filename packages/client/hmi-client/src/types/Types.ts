@@ -332,10 +332,10 @@ export interface Rate {
 
 export interface Observable {
     id: string;
-    name: string;
+    name?: string;
     states: string[];
-    expression: string;
-    expressionMathml: string;
+    expression?: string;
+    expressionMathml?: string;
 }
 
 export interface TypeSystem {
