@@ -45,7 +45,7 @@
 				<section>
 					<header>Date uploaded</header>
 					<section>
-						{{ new Date(dataset?.timestamp as Date).toLocaleString('eu-ZA') || '-' }}
+						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
 					</section>
 				</section>
 				<section>
