@@ -1,11 +1,37 @@
 <template>
+	<Button class="p-button-sm" label="Run" @click="runCalibrate" />
 	<Accordion :multiple="true" :active-index="[0, 3]">
-		<Button @click="runCalibrate">Run</Button>
 		<AccordionTab header="Mapping">
 			<DataTable class="p-datatable-xsm" :value="mapping">
-				<Column field="modelVariable" header="Model" />
-				<Column field="datasetVariable" header="Dataset" />
+				<Column field="modelVariable">
+					<template #body="{ data, field }">
+						<Dropdown
+							class="w-full"
+							placeholder="Select a variable"
+							v-model="data[field]"
+							:options="modelColumnNames"
+						/>
+					</template>
+				</Column>
+				<Column field="datasetVariable">
+					<template #body="{ data, field }">
+						<Dropdown
+							class="w-full"
+							placeholder="Select a variable"
+							v-model="data[field]"
+							:options="datasetColumnNames"
+						/>
+					</template>
+				</Column>
 			</DataTable>
+			<div>
+				<Button
+					class="p-button-sm p-button-outlined"
+					icon="pi pi-plus"
+					label="Add mapping"
+					@click="addMapping"
+				/>
+			</div>
 		</AccordionTab>
 		<AccordionTab header="Loss"></AccordionTab>
 		<AccordionTab header="Parameters"></AccordionTab>
@@ -28,7 +54,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
-// import Dropdown from 'primevue/dropdown';
+import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -45,6 +71,9 @@ import { makeCalibrateJob, getSimulation } from '@/services/models/simulation-se
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
+
+// const emit = defineEmits(['append-output-port']);
+
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
@@ -53,7 +82,14 @@ const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 
 const datasetColumnNames = ref<string[]>();
-const mapping = ref();
+const modelColumnNames = ref<string[]>();
+
+const mapping = ref<any[]>([
+	{
+		modelVariable: 'test',
+		datasetVariable: 'test'
+	}
+]);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 // const datasetValue = ref();
@@ -70,6 +106,9 @@ watch(
 	async () => {
 		if (modelConfigId.value) {
 			modelConfig.value = await getModelConfigurationById(modelConfigId.value);
+			console.log(modelConfig.value);
+			// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
+			modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
 		}
 	}
 );
@@ -129,6 +168,15 @@ const getStatus = async () => {
 		throw Error('Failed Runs');
 	}
 };
+
+function addMapping() {
+	mapping.value.push({
+		modelVariable: 'test',
+		datasetVariable: 'test'
+	});
+	console.log(mapping.value);
+	console.log(modelColumnNames.value);
+}
 </script>
 
 <style scoped>
