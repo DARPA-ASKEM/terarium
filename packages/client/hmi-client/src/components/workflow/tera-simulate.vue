@@ -26,8 +26,7 @@
 			<simulate-chart
 				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
-				:run-results="node.outputs[0].value?.[0].runResults"
-				:run-id-list="node.outputs[0].value?.[0].runIdList"
+				:run-results="runResults"
 				:chart-idx="index"
 			/>
 			<Button
@@ -112,15 +111,16 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { ModelConfiguration, Model } from '@/types/Types';
+import { RunResults, TspanUnits } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { TspanUnits } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 
-import { getSimulation } from '@/services/models/simulation-service';
+import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
+import { csvParse } from 'd3';
 import SimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -134,6 +134,7 @@ const activeTab = ref(SimulateTabs.input);
 const node = ref(openedWorkflowNodeStore.node);
 
 const model = ref<Model | null>(null);
+const runResults = ref<RunResults>({});
 
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 // const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
@@ -198,10 +199,14 @@ onMounted(async () => {
 	const modelId = modelConfigurationObj.modelId;
 	model.value = await getModel(modelId);
 
-	// 1. Fetch simulation
-	// const simulationObj = await getSimulation
-	// 2. Fetch configuration
-	// 3. Fetch model
+	// Fetch run results
+	await Promise.all(
+		temp.runIdList.map(async (runId) => {
+			const resultCsv = await getRunResult(runId, 'result.csv');
+			const csvData = csvParse(resultCsv);
+			runResults.value[runId] = csvData as any;
+		})
+	);
 });
 </script>
 

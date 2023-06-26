@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
 
 import MultiSelect from 'primevue/multiselect';
@@ -159,9 +159,6 @@ const watchRunResults = async (runResults) => {
 	renderGraph();
 };
 
-// FIXME: Should use deep, need to rewire the dependencies
-watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
-
 const renderGraph = () => {
 	const { runResults } = props;
 	const runIdList = Object.keys(props.runResults) as string[];
@@ -196,6 +193,15 @@ const renderGraph = () => {
 		datasets
 	};
 };
+
+onMounted(() => {
+	// FIXME: Should use deep, need to rewire the dependencies
+	watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
+
+	if (openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
+		watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable, renderGraph);
+	}
+});
 </script>
 
 <style scoped>
