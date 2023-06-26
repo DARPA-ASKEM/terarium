@@ -620,7 +620,8 @@ watch(
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
 
-			// When not in drilldown just show defualt config for now
+			// TODO: Display model config in model page (non-drilldown)
+			// When not in drilldown just show defualt config for now???
 			// if (model.value) {
 			// 	modelConfigurations.value.push({
 			// 		id: 'default',
@@ -628,6 +629,7 @@ watch(
 			// 		description: 'Default',
 			// 		modelId: model.value.id,
 			// 		amrConfiguration: model.value
+			//		// missing S, T, I, O configuration
 			// 	});
 			// }
 		} else {
