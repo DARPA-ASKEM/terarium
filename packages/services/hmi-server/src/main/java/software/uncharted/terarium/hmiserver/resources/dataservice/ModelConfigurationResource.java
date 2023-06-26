@@ -39,7 +39,10 @@ public class ModelConfigurationResource {
 	public Response getModelConfiguration(
 			@PathParam("id") String id
 	) {
-		return proxy.getModelConfiguration(id);
+		return Response
+			.ok(Response.Status.OK)
+			.entity(proxy.getModelConfiguration(id))
+			.build();
 	}
 
 	@PUT
