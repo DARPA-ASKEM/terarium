@@ -8,7 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.util.List;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Observables;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 
 @Data
