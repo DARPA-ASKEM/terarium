@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
+package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

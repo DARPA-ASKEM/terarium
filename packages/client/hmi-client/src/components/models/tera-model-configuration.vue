@@ -223,7 +223,7 @@ const selectedParameters = ref<string[]>([]);
 let chosenObservableIndex = 0;
 
 const configurations = computed<any[]>(
-	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
+	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
 );
 
 const observables = ref<any[]>([]);
@@ -274,7 +274,7 @@ const observableHeaderMenuItems = ref([
 // TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
 	if (editableModelConfigs.value && !isEmpty(configurations.value)) {
-		console.log('Configuration', configurations.value);
+		// console.log('Configuration', configurations.value);
 
 		const odes: object[] = [];
 
@@ -343,7 +343,7 @@ defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
 	const response = await createModelConfiguration(
-		props.modelConfigurations[0].configuration.id, // model id
+		props.modelConfigurations[0].modelId,
 		`Config ${props.modelConfigurations.length + 1}`,
 		'shawntest',
 		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
@@ -403,7 +403,6 @@ function updateModelConfigValue(
 }
 
 function initializeConfigSpace() {
-	// console.log(props.modelConfigurations);
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	extractions.value = ['Resource 1'];
