@@ -64,7 +64,7 @@
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
-			<Accordion multiple :active-index="[2]" @click="editInformation">
+			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editRow">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -137,7 +137,28 @@
 								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
-								<tr v-for="state in states" :key="state.id">
+								<tr v-for="state in states" :key="state.id" :class="`state-${state.id}`">
+									<!-- <template v-if="isRowEditable === `state-${state.id}`">
+										<td>
+											<input type="text" :value="state?.id ?? '--'" />
+										</td>
+										<td>
+											<input type="text" :value="state?.name ?? '--'" />
+										</td>
+										<td>
+											<input type="text" :value="state?.units?.expression ?? '--'" />
+										</td>
+										<td>
+											<label>Concept</label>
+										</td>
+										<td>
+											<label>Identifiers</label>
+										</td>
+										<td>
+											<button type="submit" label="submit" />	
+										</td>
+									</template>
+									<template v-else> -->
 									<td>{{ state?.id ?? '--' }}</td>
 									<td>{{ state?.name ?? '--' }}</td>
 									<td>{{ state?.units?.expression ?? '--' }}</td>
@@ -180,6 +201,7 @@
 										</template>
 										<template v-else>--</template>
 									</td>
+									<!-- </template> -->
 								</tr>
 							</tbody>
 						</table>
@@ -497,6 +519,7 @@ const otherExtractions = computed(() => {
 	if (key) return extractions.value[key.toString()];
 	return [];
 });
+const isRowEditable = ref<string>();
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -644,13 +667,12 @@ const createNewModel = async () => {
 	}
 };
 
-function editInformation(event: Event) {
+// Toggle rows to become editable
+function editRow(event: Event) {
 	if (!event?.target) return;
 	const row = (event.target as HTMLElement).closest('.p-datatable-tbody tr');
-
 	if (!row) return;
-
-	console.log(row);
+	isRowEditable.value = row.className;
 }
 </script>
 
