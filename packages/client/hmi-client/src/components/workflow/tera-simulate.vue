@@ -17,7 +17,7 @@
 				:active="activeTab === SimulateTabs.output"
 				@click="activeTab = SimulateTabs.output"
 			/>
-			<span class="simulate-header-label">Simulate</span>
+			<span class="simulate-header-label">Simulate (deterministic)</span>
 		</div>
 		<div
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
