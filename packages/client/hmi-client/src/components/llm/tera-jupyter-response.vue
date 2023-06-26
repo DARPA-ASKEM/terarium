@@ -11,7 +11,7 @@
 				/>
 				<Menu ref="chatWindowMenu" :model="chatWindowMenuItems" :popup="true" />
 			</div>
-			<div class="resp">
+			<div ref="resp" class="resp">
 				<section class="query-title">
 					<div class="query">{{ msg.query }}</div>
 					<div class="date">
@@ -21,7 +21,7 @@
 								v-if="props.hasBeenDrawn && msg.query"
 								class="pi pi-eye thought-icon"
 								v-tooltip="`Show/Hide Thought`"
-								@click="showThought = !showThought"
+								@click="showHideThought"
 							></i>
 							<!-- Show spinning icon if the message is still being drawn -->
 							<i v-if="!props.hasBeenDrawn" class="pi pi-spin pi-spinner thought-icon"></i>
@@ -84,6 +84,23 @@ import { ref, computed } from 'vue';
 import { CsvAsset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 
+const emit = defineEmits(['has-been-drawn']);
+
+const props = defineProps<{
+	jupyterSession: SessionContext;
+	msg: {
+		query: string;
+		timestamp: string;
+		messages: JupyterMessage[];
+		resultingCsv: CsvAsset | null;
+	};
+	showChatThought: boolean;
+	hasBeenDrawn: boolean;
+	isExecutingCode: boolean;
+	assetId?: string;
+}>();
+
+const resp = ref(<HTMLElement | null>null);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
 
@@ -92,6 +109,11 @@ const showThoughtLabel = computed(() => (showThought.value ? 'Hide reasoning' : 
 const showHideIcon = computed(() =>
 	showThought.value ? 'pi pi-fw pi-eye-slash' : 'pi pi-fw pi-eye'
 );
+
+const showHideThought = () => {
+	showThought.value = !showThought.value;
+	resp.value?.scrollTo();
+};
 
 // Reference for the chat window menu and its items
 const chatWindowMenu = ref();
@@ -136,22 +158,6 @@ function toTitleCase(str: string): string {
 		.map((word) => word.charAt(0).toUpperCase() + word.substring(1))
 		.join(' ');
 }
-
-const emit = defineEmits(['has-been-drawn']);
-
-const props = defineProps<{
-	jupyterSession: SessionContext;
-	msg: {
-		query: string;
-		timestamp: string;
-		messages: JupyterMessage[];
-		resultingCsv: CsvAsset | null;
-	};
-	showChatThought: boolean;
-	hasBeenDrawn: boolean;
-	isExecutingCode: boolean;
-	assetId?: string;
-}>();
 
 // emit when the thought has been drawn
 const thoughtHasBeenDrawn = () => {
@@ -209,16 +215,6 @@ const thoughtHasBeenDrawn = () => {
 
 .date {
 	font-family: var(--font-family);
-}
-
-.icon {
-	padding: 5px;
-}
-
-.tool {
-	padding-top: 3px;
-	padding-left: 5px;
-	vertical-align: top;
 }
 
 .thought-icon {

@@ -23,6 +23,7 @@
 					:active="datasetView === DatasetView.DATA"
 				/>
 				<Button
+					v-if="isEditable"
 					class="p-button-secondary p-button-sm"
 					label="Transform"
 					icon="pi pi-sync"
@@ -30,7 +31,7 @@
 					:active="datasetView === DatasetView.LLM"
 				/>
 			</span>
-			<span v-if="datasetView === DatasetView.LLM">
+			<span v-if="datasetView === DatasetView.LLM && isEditable">
 				<i class="pi pi-cog" @click="toggleSettingsMenu" />
 				<Menu ref="menu" id="overlay_menu" :model="items" :popup="true" />
 			</span>
@@ -99,37 +100,36 @@
 				</AccordionTab>
 			</Accordion>
 		</template>
-		<template v-else-if="datasetView === DatasetView.LLM">
+		<template v-else-if="datasetView === DatasetView.LLM && isEditable">
 			<div class="data-transform-container">
-				<div>
-					<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="getActiveIndex">
-						<AccordionTab>
-							<template #header>
-								Data Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
-							</template>
-							<tera-dataset-datatable
-								class="tera-dataset-datatable"
-								v-if="jupyterCsv"
-								:rows="10"
-								:raw-content="jupyterCsv"
-								:previous-headers="oldCsvHeaders"
-							/>
-						</AccordionTab>
-					</Accordion>
+				<Accordion :multiple="true" v-if="DatasetView.LLM" :activeIndex="getActiveIndex">
+					<AccordionTab>
+						<template #header>
+							Data Preview<span class="artifact-amount">({{ csvContent?.length }} rows)</span>
+						</template>
+						<tera-dataset-datatable
+							class="tera-dataset-datatable"
+							v-if="jupyterCsv"
+							:rows="10"
+							:raw-content="jupyterCsv"
+							:previous-headers="oldCsvHeaders"
+						/>
+					</AccordionTab>
+				</Accordion>
 
-					<div class="gpt-header">
-						<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
-						<span> <header id="GPT">TGPT</header></span>
-					</div>
-					<tera-jupyter-chat
-						:project="props.project"
-						:asset-id="props.assetId"
-						:show-jupyter-settings="showKernels"
-						:show-chat-thought="showChatThoughts"
-						@update-table-preview="updateJupyterTable"
-						@update-kernel-status="updateKernelStatus"
-					/>
+				<div class="gpt-header">
+					<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
+					<span> <header id="GPT">TGPT</header></span>
 				</div>
+				<tera-jupyter-chat
+					:project="props.project"
+					:asset-id="props.assetId"
+					:show-jupyter-settings="showKernels"
+					:show-chat-thought="showChatThoughts"
+					:jupyter-session="jupyterSession"
+					@update-table-preview="updateJupyterTable"
+					@update-kernel-status="updateKernelStatus"
+				/>
 			</div>
 		</template>
 	</tera-asset>
@@ -148,6 +148,9 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
+import { newSession } from '@/services/jupyter';
+
+const jupyterSession = newSession('llmkernel', 'ChattyNode');
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -385,20 +388,16 @@ main .annotation-group {
 	gap: 3rem;
 }
 
-.layout-topbar {
-	top: 20px;
-	background-color: red;
-}
 .tera-dataset-datatable {
 	width: 100%;
 }
 
 .data-transform-container {
 	display: flex;
-	flex-direction: column-reverse;
-	overflow: auto;
+	flex-direction: column;
 	padding: 0.5rem;
 	margin: 0.5rem;
+	max-height: 90%;
 }
 
 .kernel-status {

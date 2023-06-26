@@ -27,7 +27,7 @@ const charIndex = ref(0);
 
 watchEffect(() => {
 	const typing = setInterval(() => {
-		responseThought.value?.scrollTo();
+		// responseThought.value?.scrollTo();
 		charIndex.value++;
 		if (charIndex.value > props.thought.length) {
 			clearInterval(typing);
