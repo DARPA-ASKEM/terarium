@@ -75,7 +75,7 @@ onMounted(async () => {
 
 	if (modelConfigId) {
 		const response = await getModelConfigurationById(modelConfigId);
-		model.value = await getModel(response.configuration.id);
+		model.value = await getModel(response.modelId);
 	} else if (props.modelId) {
 		model.value = await getModel(props.modelId);
 		createDefaultModelConfig();

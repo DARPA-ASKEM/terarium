@@ -148,6 +148,7 @@
 							AcceptedTypes.CSV
 						]"
 						:import-action="processFiles"
+						:progress="progress"
 						@import-completed="importCompleted"
 					></tera-drag-and-drop-importer>
 
@@ -218,6 +219,7 @@ import { capitalize, isEmpty } from 'lodash';
 import { CsvAsset } from '@/types/Types';
 import { useRouter } from 'vue-router';
 import { RouteName } from '@/router/routes';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
 	project: IProject;
@@ -228,7 +230,7 @@ const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
-const visible: Ref<boolean> = ref(false);
+const progress: Ref<number> = ref(0);
 const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
 >(null);
@@ -315,15 +317,20 @@ async function processFiles(
 	return files.map(async (file) => {
 		if (file.type === AcceptedTypes.CSV) {
 			const addedCSV: CsvAsset | null = await createNewDatasetFromCSV(
+				progress,
 				file,
-				props.project.username,
+				props.project.username ?? '',
 				props.project.id,
 				csvDescription
 			);
-			const text: string = addedCSV?.csv?.join('\r\n') ?? '';
-			const images = [];
 
-			return { file, error: false, response: { text, images } };
+			if (addedCSV !== null) {
+				const text: string = addedCSV?.csv?.join('\r\n') ?? '';
+				const images = [];
+
+				return { file, error: false, response: { text, images } };
+			}
+			return { file, error: true, response: { text: '', images: [] } };
 		}
 		// PDF
 		const resp = await getPDFContents(file, extractionMode, extractImages);
@@ -343,9 +350,12 @@ function importCompleted(
 ) {
 	// This is a hacky override for dealing with CSVs
 	if (newResults && newResults.length === 1 && newResults[0].file.type === AcceptedTypes.CSV) {
+		if (newResults[0].error) {
+			logger.error('Failed to upload CSV. Is it too large?', { showToast: true });
+		}
 		results.value = null;
 		emit('update-project', props.project.id);
-		visible.value = false;
+		isUploadResourcesModalVisible.value = false;
 	} else {
 		results.value = newResults;
 	}

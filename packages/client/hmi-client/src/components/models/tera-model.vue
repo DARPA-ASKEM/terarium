@@ -594,8 +594,9 @@ async function getModelConfigurations() {
 				const response = await getModelConfigurationById(modelConfigId);
 				modelConfigurations.value.push(response);
 			}
-			if (modelConfigurations.value) {
-				model.value = await getModel(modelConfigurations.value[0].configuration.id);
+			// FIXME: Why is this called when switching from one drilldown panel to a different type (there is already a guard checking for operation type in the watcher that calls this function)
+			if (modelConfigurations.value[0].modelId) {
+				model.value = await getModel(modelConfigurations.value[0].modelId);
 				fetchRelatedTerariumArtifacts();
 			}
 		}
@@ -618,6 +619,19 @@ watch(
 		} else if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
+
+			// TODO: Display model config in model page (non-drilldown)
+			// When not in drilldown just show defualt config for now???
+			// if (model.value) {
+			// 	modelConfigurations.value.push({
+			// 		id: 'default',
+			// 		name: 'Default',
+			// 		description: 'Default',
+			// 		modelId: model.value.id,
+			// 		amrConfiguration: model.value
+			//		// missing S, T, I, O configuration
+			// 	});
+			// }
 		} else {
 			model.value = null;
 		}

@@ -37,6 +37,7 @@
 			:project="project"
 			is-editable
 			@open-code="openCode"
+			@update-project="updateProject"
 			@asset-loaded="emit('asset-loaded')"
 		/>
 		<tera-dataset
