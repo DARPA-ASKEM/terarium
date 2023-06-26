@@ -306,20 +306,14 @@ function updateModelConfigValue() {
 
 	// just create the clone within here ?
 
-	if (
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value
-	) {
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value =
-			value;
-	} else if (
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex]
-			.expression
-	) {
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][
-			typeIndex
-		].expression = value;
+	const configToUpdate = editableModelConfigs.value[configIndex];
+
+	if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value) {
+		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value = value;
+	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression) {
+		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression = value;
 	}
-	updateModelConfiguration(editableModelConfigs.value[configIndex]);
+	updateModelConfiguration(configToUpdate);
 
 	openValueConfig.value = false;
 }
