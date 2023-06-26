@@ -141,6 +141,8 @@ API.interceptors.response.use(
 );
 
 async function fetchProject(id: IProject['id']) {
+	resourcesStore.reset();
+
 	// fetch project metadata
 	project.value = await ProjectService.get(id, true);
 
