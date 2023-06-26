@@ -28,11 +28,6 @@
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
 				<Column :header="isEditable ? 'Select all' : ''" frozen />
 				<Column
-					v-for="(variableName, i) in configurations[0].rates"
-					:header="variableName.target"
-					:key="i"
-				/>
-				<Column
 					v-for="(variableName, i) in configurations[0].initials"
 					:header="variableName.target"
 					:key="i"
@@ -185,7 +180,14 @@ const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
 const configurations = computed<any[]>(
-	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
+	() =>
+		editableModelConfigs.value?.map((m) => {
+			const config = {
+				initials: m.amrConfiguration.semantics.ode.initials,
+				parameters: m.amrConfiguration.semantics.ode.parameters
+			};
+			return config;
+		}) ?? []
 );
 
 // TODO: Clean this up and use appropriate loops
