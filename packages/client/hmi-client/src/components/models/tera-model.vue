@@ -49,9 +49,9 @@
 					<th>Source</th>
 				</tr>
 				<tr>
-					<td>{{ capitalize(model?.schema_name) ?? '--' }}</td>
+					<td>{{ capitalize(model?.schema_name ?? '--') }}</td>
 					<td>{{ model?.model_version ?? '--' }}</td>
-					<td>{{ model?.metadata.processed_at ?? '--' }}</td>
+					<td>{{ model?.metadata?.processed_at ?? '--' }}</td>
 					<td>
 						{{
 							model?.metadata?.annotations?.authors &&
@@ -60,7 +60,7 @@
 								: '--'
 						}}
 					</td>
-					<td>{{ model?.metadata.processed_by ?? '--' }}</td>
+					<td>{{ model?.metadata?.processed_by ?? '--' }}</td>
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
@@ -98,7 +98,7 @@
 										<template v-if="parameter?.distribution?.parameters">
 											[{{ round(parameter?.distribution?.parameters.minimum, 4) }},
 											{{ round(parameter?.distribution?.parameters.maximum, 4) }}] </template
-										><template v-else>'--'</template>
+										><template v-else>--</template>
 									</td>
 									<!-- <td>{{ parameter?.extractions ?? '--' }}</td> -->
 								</tr>
@@ -132,12 +132,30 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="state in states" :key="state.id">
-									<td>{{ state.id ?? '--' }}</td>
-									<td>{{ state.name ?? '--' }}</td>
-									<td>{{ state.units.expression ?? '--' }}</td>
-									<td>{{ state.grounding.context ?? '--' }}</td>
+									<td>{{ state?.id ?? '--' }}</td>
+									<td>{{ state?.name ?? '--' }}</td>
+									<td>{{ state?.units?.expression ?? '--' }}</td>
 									<td>
-										<template v-if="state.grounding.identifiers">
+										<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
+											<template
+												v-for="[key, curie] in Object.entries(state.grounding.context)"
+												:key="key"
+											>
+												<a
+													target="_blank"
+													rel="noopener noreferrer"
+													:href="`http://34.230.33.149:8772/${curie}`"
+												>
+													{{ key }} ({{ curie }})</a
+												><br />
+											</template>
+										</template>
+										<template v-else>--</template>
+									</td>
+									<td>
+										<template
+											v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+										>
 											<a
 												target="_blank"
 												rel="noopener noreferrer"
@@ -148,6 +166,7 @@
 												{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
 											</a>
 										</template>
+										<template v-else>--</template>
 									</td>
 								</tr>
 							</tbody>
@@ -200,9 +219,17 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="item in transitions" :key="item.properties.name">
-									<td>{{ item.properties.name ?? '--' }}</td>
-									<td>{{ item.input.length > 0 ? item.input.sort().join(', ') : '--' }}</td>
-									<td>{{ item.output.length > 0 ? item.output.sort().join(', ') : '--' }}</td>
+									<td>{{ item?.properties?.name ?? '--' }}</td>
+									<td>
+										{{
+											item?.input && item.input?.length > 0 ? item.input.sort().join(', ') : '--'
+										}}
+									</td>
+									<td>
+										{{
+											item?.output && item.output?.length > 0 ? item.output.sort().join(', ') : '--'
+										}}
+									</td>
 									<td>
 										<katex-element :expression="getTransitionExpression(item.id)" />
 									</td>
@@ -453,7 +480,7 @@ function getTransitionExpression(id): string {
 }
 
 function getCurieFromGroudingIdentifier(identifier: Object | undefined): string {
-	if (identifier) {
+	if (!!identifier && !isEmpty(identifier)) {
 		const [key, value] = Object.entries(identifier)[0];
 		return `${key}:${value}`;
 	}
