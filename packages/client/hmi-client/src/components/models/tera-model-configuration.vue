@@ -216,7 +216,7 @@ const extractions = ref<any[]>([]);
 const openValueConfig = ref(false);
 const cellValueToEdit = ref({ data: {}, field: '' });
 
-// Selected columns
+// Selected columns - TODO: add in for filtering calibration dropdowns
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
@@ -235,8 +235,11 @@ function addObservable() {
 		}
 
 		editableModelConfigs.value[i].configuration.semantics.ode.observables.push({
-			id: `obs${editableModelConfigs.value[0].configuration.semantics.ode.observables.length + 1}`,
-			expression: 'expr'
+			id: `noninf`,
+			name: `Non-infectious`,
+			states: ['S', 'R'],
+			expression: 'S+R',
+			expression_mathml: '<apply><plus/><ci>S</ci><ci>R</ci></apply>'
 		});
 
 		updateModelConfiguration(editableModelConfigs.value[i]);
