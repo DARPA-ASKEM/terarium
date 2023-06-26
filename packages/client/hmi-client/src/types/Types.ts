@@ -61,6 +61,7 @@ export interface Model {
     description: string;
     model_version: string;
     schema: string;
+    schema_name: string;
     model: { [index: string]: any };
     semantics?: ModelSemantics;
     metadata: ModelMetadata;
@@ -185,6 +186,8 @@ export interface ModelMetadata {
     processed_at: number;
     processed_by: string;
     variable_statements: VariableStatement[];
+    annotations: Annotations;
+    attributes: any[];
 }
 
 export interface PetriNetState {
@@ -249,6 +252,8 @@ export interface OdeSemantics {
     rates: Rate[];
     initials?: any[];
     parameters?: ModelParameter[];
+    observables?: Observables[];
+    time?: any;
 }
 
 export interface TypingSemantics {
@@ -262,6 +267,20 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
+}
+
+export interface Annotations {
+    license?: string;
+    authors?: string[];
+    references?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
+    locations?: string[];
+    pathogens?: string[];
+    diseases?: string[];
+    hosts?: string[];
+    model_types?: string[];
 }
 
 export interface ModelGrounding {
@@ -309,6 +328,13 @@ export interface Rate {
     target: string;
     expression: string;
     expressionMathml: string;
+}
+
+export interface Observables {
+    id: string;
+    name?: string;
+    expression?: string;
+    expression_mathml?: string;
 }
 
 export interface TypeSystem {

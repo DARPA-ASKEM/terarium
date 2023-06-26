@@ -25,29 +25,106 @@
 			</span>
 		</template>
 		<template v-if="datasetView === DatasetView.DESCRIPTION">
-			<section class="metadata data-row">
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page describes the dataset. Use the content switcher above to see the data table and
+					transformation tools.</Message
+				>
+			</div>
+			<section class="metadata data-row" v-if="!metadata">
 				<section>
+					<header>Rows</header>
+					<section>{{ csvContent?.length || '-' }}</section>
+				</section>
+				<section>
+					<header>Columns</header>
+					<section>{{ rawContent?.stats?.length || '-' }}</section>
 					<header>Metadata</header>
 					<section>{{ dataset?.metadata || '-' }}</section>
 				</section>
 				<section>
-					<header>URL</header>
+					<header>Date uploaded</header>
 					<section>
-						<a :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						{{ new Date(dataset?.timestamp as Date).toLocaleString('en-US') || '-' }}
 					</section>
 				</section>
 				<section>
-					<header>Number of records</header>
-					<section>{{ csvContent?.length }}</section>
+					<header>Uploaded by</header>
+					<section>{{ dataset?.username || '-' }}</section>
 				</section>
 			</section>
-
+			<section class="metadata data-row" v-if="!metadata">
+				<section>
+					<header>Source Name</header>
+					<section>{{ dataset?.source || '-' }}</section>
+				</section>
+				<section>
+					<header>Source URL</header>
+					<section>
+						<a v-if="dataset?.url" :href="dataset?.url">{{ dataset?.url || '-' }}</a>
+						<span v-else>-</span>
+					</section>
+				</section>
+			</section>
+			<RelatedPublications
+				@extracted-metadata="(extract) => (metadata = extract)"
+				:publications="[metadata?.source]"
+			/>
 			<Accordion :multiple="true" :activeIndex="showAccordion">
 				<AccordionTab>
 					<template #header>
 						<header id="Description">Description</header>
 					</template>
-					<p v-html="dataset?.description" />
+					<section v-if="metadata">
+						<ul>
+							<li>Dataset name: {{ metadata.name }}</li>
+							<li>Dataset overview: {{ metadata.description }}</li>
+							<li>Dataset URL: {{ metadata.source }}</li>
+							<li>
+								Data size: This dataset currently contains {{ csvContent?.length || '-' }} rows.
+							</li>
+						</ul>
+					</section>
+					<p v-else v-html="dataset?.description" />
+				</AccordionTab>
+				<AccordionTab v-if="metadata">
+					<template #header>
+						<header id="Source">Source</header>
+					</template>
+					This data is sourced from {{ metadata.source }}
+				</AccordionTab>
+				<AccordionTab v-if="metadata">
+					<template #header>
+						<header id="Variables">Variables</header>
+					</template>
+					<div class="variables-table">
+						<div class="variables-header">
+							<div
+								v-for="(title, index) in [
+									'ID',
+									'NAME',
+									'DATA TYPE',
+									'UNITS',
+									'GROUNDING',
+									'EXTRACTIONS'
+								]"
+								:key="index"
+							>
+								{{ title }}
+							</div>
+						</div>
+						<div v-for="(column, index) in metadata.columns" class="variables-row" :key="index">
+							<div>{{ column.name }}</div>
+							<div>{{ formatName(column.name) }}</div>
+							<div>{{ column.data_type }}</div>
+							<div>-</div>
+							<div>
+								{{ column.grounding.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
+							</div>
+							<div></div>
+							<div class="variables-description">{{ column.description }}</div>
+						</div>
+					</div>
 				</AccordionTab>
 				<AccordionTab v-if="(annotations?.length || 0) > 0">
 					<template #header>
@@ -77,6 +154,22 @@
 					</section>
 				</AccordionTab>
 			</Accordion>
+			<Accordion :multiple="true" :activeIndex="[0, 1]">
+				<AccordionTab v-if="(annotations?.['feature']?.length || 0) > 0">
+					<template #header>
+						<header id="Variables">
+							Variables<span class="artifact-amount">({{ annotations?.['feature']?.length }})</span>
+						</header>
+					</template>
+					<DataTable :value="annotations?.['feature']">
+						<Column field="name" header="Name"></Column>
+						<Column field="featureType" header="Type"></Column>
+						<Column field="description" header="Definition"></Column>
+						<Column field="units" header="Units"></Column>
+						<Column field="concept" header="Concept"></Column>
+					</DataTable>
+				</AccordionTab>
+			</Accordion>
 		</template>
 		<Accordion v-else-if="DatasetView.DATA" :activeIndex="0">
 			<AccordionTab>
@@ -94,11 +187,15 @@ import { computed, ref, watch, onUpdated, Ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import Button from 'primevue/button';
 import AccordionTab from 'primevue/accordiontab';
+import Message from 'primevue/message';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
 import { CsvAsset, Dataset } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import RelatedPublications from '../widgets/tera-related-publications.vue';
 
 enum DatasetView {
 	DESCRIPTION = 'description',
@@ -126,6 +223,12 @@ const rawContent: Ref<CsvAsset | null> = ref(null);
 const datasetView = ref(DatasetView.DESCRIPTION);
 
 const csvContent = computed(() => rawContent.value?.csv);
+
+function formatName(name: string) {
+	return (name.charAt(0).toUpperCase() + name.slice(1)).replace('_', ' ');
+}
+
+const metadata = ref();
 
 /*
 // apparently this isn't used?
@@ -160,6 +263,7 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
+				console.log(dataset.value);
 			}
 		} else {
 			dataset.value = null;
@@ -171,6 +275,9 @@ watch(
 
 const annotations = computed(() => dataset.value?.columns?.map((column) => column.annotations));
 const showAccordion = computed(() => {
+	if (metadata.value) {
+		return [0, 1, 2];
+	}
 	if (dataset.value?.columns) {
 		return dataset.value?.columns?.map((column) => column?.annotations ?? 0)?.length > 0
 			? [1]
@@ -182,17 +289,26 @@ const showAccordion = computed(() => {
 </script>
 
 <style scoped>
+.container {
+	margin-left: 1rem;
+	margin-right: 1rem;
+	max-width: 70rem;
+}
+.inline-message:deep(.p-message-wrapper) {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
+	border-radius: var(--border-radius);
+	border: 4px solid var(--primary-color);
+	border-width: 0px 0px 0px 6px;
+}
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;
 }
 .metadata {
 	margin: 1rem;
-	margin-bottom: 0.5rem;
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background-color: var(--gray-50);
-	padding: 0.25rem;
 	display: flex;
 	flex-direction: row;
 	justify-content: space-evenly;
@@ -200,7 +316,6 @@ const showAccordion = computed(() => {
 
 .metadata > section {
 	flex: 1;
-	padding: 0.5rem;
 }
 
 /* Datatable  */
@@ -213,21 +328,6 @@ const showAccordion = computed(() => {
 	font-size: var(--font-body-small);
 }
 
-.annotation-row > section {
-	flex: 1;
-	padding: 0.5rem;
-}
-
-.numbered-list {
-	list-style: numbered-list;
-	margin-left: 2rem;
-	list-style-position: outside;
-}
-
-ol.numbered-list li::marker {
-	color: var(--text-color-subdued);
-}
-
 .feature-type {
 	color: var(--text-color-subdued);
 }
@@ -238,30 +338,41 @@ ol.numbered-list li::marker {
 	max-width: var(--constrain-width);
 }
 
-main .annotation-group {
-	padding: 0.25rem;
-	border: solid 1px var(--surface-border-light);
-	background-color: var(--gray-50);
-	border-radius: var(--border-radius);
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	margin-bottom: 1rem;
-	max-width: var(--constrain-width);
-}
-
-.annotation-subheader {
-	font-weight: var(--font-weight-semibold);
-}
-
-.annotation-row {
-	display: flex;
-	flex-direction: row;
-	gap: 3rem;
-}
-
 .layout-topbar {
 	top: 20px;
 	background-color: red;
+}
+
+.variables-table {
+	display: grid;
+	grid-template-columns: 1fr;
+}
+
+.variables-table div {
+	padding: 0.25rem;
+}
+
+.variables-header {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
+}
+
+.variables-row {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-template-rows: 1fr 1fr;
+	border-top: 1px solid var(--surface-border);
+}
+
+.variables-row:hover {
+	background-color: var(--surface-highlight);
+}
+
+.variables-description {
+	grid-row: 2;
+	grid-column: 1 / span 6;
+	color: var(--text-color-subdued);
 }
 </style>
