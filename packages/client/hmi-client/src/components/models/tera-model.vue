@@ -621,15 +621,15 @@ watch(
 			fetchRelatedTerariumArtifacts();
 
 			// When not in drilldown just show defualt config for now
-			if (model.value) {
-				modelConfigurations.value.push({
-					id: 'default',
-					name: 'Default',
-					description: 'Default',
-					modelId: model.value.id,
-					configuration: model.value
-				});
-			}
+			// if (model.value) {
+			// 	modelConfigurations.value.push({
+			// 		id: 'default',
+			// 		name: 'Default',
+			// 		description: 'Default',
+			// 		modelId: model.value.id,
+			// 		amrConfiguration: model.value
+			// 	});
+			// }
 		} else {
 			model.value = null;
 		}

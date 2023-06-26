@@ -230,11 +230,11 @@ const observables = ref<any[]>([]);
 
 function addObservable() {
 	for (let i = 0; i < editableModelConfigs.value.length; i++) {
-		if (!editableModelConfigs.value[i].configuration.semantics.ode.observables) {
-			editableModelConfigs.value[i].configuration.semantics.ode.observables = [];
+		if (!editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables) {
+			editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables = [];
 		}
 
-		editableModelConfigs.value[i].configuration.semantics.ode.observables.push({
+		editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables.push({
 			id: `noninf`,
 			name: `Non-infectious`,
 			states: ['S', 'R'],
@@ -261,7 +261,7 @@ const observableHeaderMenuItems = ref([
 		label: 'Remove',
 		command: () => {
 			for (let i = 0; i < editableModelConfigs.value.length; i++) {
-				editableModelConfigs.value[i].configuration.semantics.ode.observables.splice(
+				editableModelConfigs.value[i].amrConfiguration.semantics.ode.observables.splice(
 					chosenObservableIndex,
 					1
 				);
@@ -346,7 +346,7 @@ async function addModelConfiguration() {
 		props.modelConfigurations[0].modelId,
 		`Config ${props.modelConfigurations.length + 1}`,
 		'shawntest',
-		editableModelConfigs.value[editableModelConfigs.value.length - 1].configuration
+		editableModelConfigs.value[editableModelConfigs.value.length - 1].amrConfiguration
 	);
 
 	// FIXME: Not a good idea to update reactive variables through global storage
@@ -386,14 +386,15 @@ function updateModelConfigValue(
 	if (field === 'name' && newValue) {
 		editableModelConfigs.value[configIndex].name = newValue;
 	} else if (
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value
 	) {
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].value =
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value =
 			value;
 	} else if (
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][typeIndex].expression
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex]
+			.expression
 	) {
-		editableModelConfigs.value[configIndex].configuration.semantics.ode[type][
+		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][
 			typeIndex
 		].expression = value;
 	}
@@ -405,7 +406,7 @@ function updateModelConfigValue(
 function initializeConfigSpace() {
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
-	extractions.value = ['Resource 1'];
+	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '' };
 }
