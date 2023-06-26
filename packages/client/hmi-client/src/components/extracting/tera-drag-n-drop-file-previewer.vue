@@ -36,7 +36,6 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
 import Button from 'primevue/button';
 import ProgressBar from 'primevue/progressbar';
 import { AcceptedTypes } from '@/types/common';
@@ -69,11 +68,6 @@ const props = defineProps({
 const getSrc = (file) => URL.createObjectURL(file);
 
 const emit = defineEmits(['remove-file']);
-
-watch(
-	() => props.isProcessing,
-	() => props.progress
-);
 </script>
 <style scoped>
 .file-preview {
