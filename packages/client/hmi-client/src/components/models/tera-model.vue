@@ -64,7 +64,7 @@
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 6]">
+			<Accordion multiple :active-index="[2]" @click="editInformation">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -92,7 +92,7 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="parameter in parameters" :key="parameter.id">
-									<td>{{ parameter?.id ?? '--' }}</td>
+									<td>{{ parameter.id ?? '--' }}</td>
 									<td>{{ parameter?.value ?? '--' }}</td>
 									<td>
 										<template v-if="parameter?.distribution?.parameters">
@@ -100,7 +100,12 @@
 											{{ round(parameter?.distribution?.parameters.maximum, 4) }}] </template
 										><template v-else>--</template>
 									</td>
-									<!-- <td>{{ parameter?.extractions ?? '--' }}</td> -->
+									<td>
+										<template v-if="extractions?.[parameter.id]">
+											<Tag :value="extractions?.[parameter.id].length" />
+										</template>
+										<template v-else>--</template>
+									</td>
 								</tr>
 								<!-- <tr class="p-rowgroup-footer">
 									<td colspan="5">
@@ -193,14 +198,24 @@
 									<th>ID</th>
 									<th>Name</th>
 									<th>Expression</th>
+									<th>Extractions</th>
 								</tr>
 							</thead>
 							<tbody class="p-datatable-tbody">
-								<tr v-for="item in observables" :key="item.id">
-									<td>{{ item.id ?? '--' }}</td>
-									<td>{{ item.name ?? '--' }}</td>
+								<tr v-for="observable in observables" :key="observable.id">
+									<td>{{ observable.id ?? '--' }}</td>
+									<td>{{ observable.name ?? '--' }}</td>
 									<td>
-										<katex-element v-if="item.expression" :expression="item.expression" />
+										<katex-element
+											v-if="observable.expression"
+											:expression="observable.expression"
+										/>
+										<template v-else>--</template>
+									</td>
+									<td>
+										<template v-if="extractions?.[observable.id]">
+											<Tag :value="extractions?.[observable.id].length" />
+										</template>
 										<template v-else>--</template>
 									</td>
 								</tr>
@@ -629,19 +644,14 @@ const createNewModel = async () => {
 	}
 };
 
-// function getExtractionType(sp) {
-// 	if (sp.data.variable.column.length > 0) {
-// 		return 'DataSet';
-// 	}
-// 	return 'Document';
-// }
+function editInformation(event: Event) {
+	if (!event?.target) return;
+	const row = (event.target as HTMLElement).closest('.p-datatable-tbody tr');
 
-// function getSource(sp) {
-// 	if (sp.data.variable.column.length > 0) {
-// 		return sp.data.variable.column[0].dataset.name;
-// 	}
-// 	return sp.data.variable.paper.name;
-// }
+	if (!row) return;
+
+	console.log(row);
+}
 </script>
 
 <style scoped>
