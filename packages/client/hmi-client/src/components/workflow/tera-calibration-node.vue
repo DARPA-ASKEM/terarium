@@ -134,15 +134,28 @@ watch(
 
 const runCalibrate = async () => {
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
-
+	const formattedMap: { [index: string]: string } = {};
+	mapping.value.forEach((ele) => {
+		formattedMap[ele.datasetVariable] = ele.modelVariable;
+	});
 	const calibrationRequest: CalibrationRequest = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
-			mappings: mapping.value
+			mappings: formattedMap
 		},
-		extra: {},
+		extra: {
+			initials: {
+				S: 0.49457800495224524,
+				I: 0.4497387877393193,
+				R: 0.32807705995998604
+			},
+			params: {
+				inf: 0.16207166221196045,
+				rec: 0.7009195813964052
+			}
+		},
 		engine: 'sciml'
 	};
 	const response = await makeCalibrateJob(calibrationRequest);
@@ -165,7 +178,7 @@ const getStatus = async () => {
 		completedRunId.value = startedRunId.value;
 		console.log(completedRunId.value); // TOM TODO: Just console for testing:
 		// showSpinner.value = false;
-	} else if (currentSimulation && currentSimulation.status in ongoingStatusList) {
+	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
 		setTimeout(getStatus, 3000);
 	} else {

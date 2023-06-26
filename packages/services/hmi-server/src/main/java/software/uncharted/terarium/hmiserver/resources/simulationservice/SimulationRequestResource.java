@@ -79,9 +79,6 @@ public class SimulationRequestResource {
 		sim.setId(res.getSimulationId());
 		sim.setType("calibration");
 
-		// FIXME: engine is set twice, talk to TDS
-		request.setEngine("sciml");
-
 		sim.setExecutionPayload(request);
 
 		// FIXME: These fiels are arguable unnecessary
