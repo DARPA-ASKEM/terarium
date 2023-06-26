@@ -230,8 +230,6 @@ const resources = useResourcesStore();
 const isEditingProject = ref(false);
 const inputElement = ref<HTMLInputElement | null>(null);
 const newProjectName = ref<string>('');
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const visible: Ref<boolean> = ref(false);
 const progress: Ref<number> = ref(0);
 const results = ref<
 	{ file: File; error: boolean; response: { text: string; images: string[] } }[] | null
