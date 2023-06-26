@@ -202,6 +202,9 @@ const modelConfigurationTable = computed(() => {
 				for (const key of Object.keys(configurations.value[i])) {
 					odes[i][key] = [];
 
+					// FIXME: need to parse time correctly
+					if (key === 'time') continue;
+
 					configurations.value[i][key].forEach((value) => {
 						const newPair = {};
 						newPair[value.target ?? value.id] = value.expression ?? value.value;
