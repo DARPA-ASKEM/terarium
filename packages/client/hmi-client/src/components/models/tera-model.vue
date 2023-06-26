@@ -54,6 +54,7 @@
 					<td>{{ model?.metadata.processed_at ?? '--' }}</td>
 					<td>
 						{{
+							model?.metadata?.annotations?.authors &&
 							model?.metadata?.annotations?.authors?.length > 0
 								? model?.metadata?.annotations?.authors?.join(', ')
 								: '--'
@@ -99,7 +100,7 @@
 											{{ round(parameter?.distribution?.parameters.maximum, 4) }}] </template
 										><template v-else>'--'</template>
 									</td>
-									<td>{{ parameter?.extractions ?? '--' }}</td>
+									<!-- <td>{{ parameter?.extractions ?? '--' }}</td> -->
 								</tr>
 								<!-- <tr class="p-rowgroup-footer">
 									<td colspan="5">
