@@ -177,6 +177,7 @@ const getInputLabelColor = (edgeIdx: number) => {
 function showNodeDrilldown() {
 	let pageType;
 	let assetId;
+
 	switch (props.node.operationType) {
 		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;
@@ -191,7 +192,6 @@ function showNodeDrilldown() {
 			assetId = props.node.id;
 			break;
 		case WorkflowOperationTypes.MODEL:
-			console.log(props.node.outputs);
 			pageType = ProjectAssetTypes.MODELS;
 			assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0];
 			break;

@@ -349,7 +349,8 @@ async function getModelConfigurations() {
 				const response = await getModelConfigurationById(modelConfigId);
 				modelConfigurations.value.push(response);
 			}
-			if (modelConfigurations.value) {
+			// FIXME: Why is this called when switching from one drilldown panel to a different type (there is already a guard checking for operation type in the watcher that calls this function)
+			if (modelConfigurations.value[0].modelId) {
 				model.value = await getModel(modelConfigurations.value[0].modelId);
 				fetchRelatedTerariumArtifacts();
 			}

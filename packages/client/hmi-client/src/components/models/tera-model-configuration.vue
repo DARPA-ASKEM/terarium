@@ -188,7 +188,7 @@ const configurations = computed<any[]>(
 // TODO: Clean this up and use appropriate loops
 const modelConfigurationTable = computed(() => {
 	if (editableModelConfigs.value && !isEmpty(configurations.value)) {
-		console.log('Configuration', configurations.value);
+		// console.log('Configuration', configurations.value);
 
 		const odes: object[] = [];
 
@@ -325,7 +325,6 @@ function updateModelConfigValue() {
 }
 
 function initializeConfigSpace() {
-	// console.log(props.modelConfigurations);
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	fakeExtractions.value = ['Resource 1', 'Resource 2', 'Resource 3'];
