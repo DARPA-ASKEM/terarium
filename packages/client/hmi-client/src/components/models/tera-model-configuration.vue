@@ -380,23 +380,17 @@ function updateModelConfigValue(
 	const { data, field } = cellValueToEdit.value;
 	const { type, value, typeIndex } = data[field];
 
+	const configToUpdate = editableModelConfigs.value[configIndex];
+
 	if (field === 'name' && newValue) {
-		editableModelConfigs.value[configIndex].name = newValue;
-	} else if (
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value
-	) {
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex].value =
-			value;
-	} else if (
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][typeIndex]
-			.expression
-	) {
-		editableModelConfigs.value[configIndex].amrConfiguration.semantics.ode[type][
-			typeIndex
-		].expression = value;
+		configToUpdate.name = newValue;
+	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value) {
+		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value = value;
+	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression) {
+		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression = value;
 	}
 
-	updateModelConfiguration(editableModelConfigs.value[configIndex]);
+	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
 
