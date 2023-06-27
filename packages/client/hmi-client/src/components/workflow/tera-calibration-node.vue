@@ -156,8 +156,6 @@ const runCalibrate = async () => {
 		engine: 'sciml'
 	};
 	const response = await makeCalibrateJob(calibrationRequest);
-	console.log(response);
-	console.log(calibrationRequest);
 
 	startedRunId.value = response.id;
 	getStatus();
@@ -173,7 +171,6 @@ const getStatus = async () => {
 
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
-		console.log(completedRunId.value); // TOM TODO: Just console for testing:
 		updateOutputPorts(completedRunId);
 		// showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
