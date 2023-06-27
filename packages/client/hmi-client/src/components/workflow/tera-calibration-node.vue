@@ -101,6 +101,7 @@ const setupModelInput = async () => {
 		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
 		modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
 		modelColumnNames.value?.push('timestep');
+		console.log(modelConfig.value);
 	}
 };
 
@@ -133,18 +134,17 @@ const runCalibrate = async () => {
 		formattedMap[ele.datasetVariable] = ele.modelVariable;
 	});
 	// TODO: TS/1225 -> Should not have to rand results
-	// console.log(modelConfig.value as any);
-	// const initials = (modelConfig.value as any).semantics.ode.initials.map((d) => d.target);
-	// const rates = (modelConfig.value as any).semantics.ode.rates.map((d) => d.target);
-	// const initialsObj = {};
-	// const paramsObj = {};
+	const initials = modelConfig.value.amrConfiguration.semantics.ode.initials.map((d) => d.target);
+	const rates = modelConfig.value.amrConfiguration.semantics.ode.rates.map((d) => d.target);
+	const initialsObj = {};
+	const paramsObj = {};
 
-	// initials.forEach((d) => {
-	// 	initialsObj[d] = Math.random() * 100;
-	// });
-	// rates.forEach((d) => {
-	// 	paramsObj[d] = Math.random() * 0.05;
-	// });
+	initials.forEach((d) => {
+		initialsObj[d] = Math.random() * 100;
+	});
+	rates.forEach((d) => {
+		paramsObj[d] = Math.random() * 0.05;
+	});
 
 	const calibrationRequest: CalibrationRequest = {
 		modelConfigId: modelConfigId.value,
@@ -154,15 +154,8 @@ const runCalibrate = async () => {
 			mappings: formattedMap
 		},
 		extra: {
-			initials: {
-				S: 0.49457800495224524,
-				I: 0.4497387877393193,
-				R: 0.32807705995998604
-			},
-			params: {
-				inf: 0.16207166221196045,
-				rec: 0.7009195813964052
-			}
+			initials: initialsObj,
+			params: paramsObj
 		},
 		engine: 'sciml'
 	};
@@ -201,7 +194,7 @@ const updateOutputPorts = async (runId) => {
 	const port = props.node.inputs[0];
 	emit('append-output-port', {
 		type: CalibrationOperation.outputs[0].type,
-		label: `${port.label} Results`,
+		label: `${port.label} Result`,
 		value: {
 			runId
 		}
