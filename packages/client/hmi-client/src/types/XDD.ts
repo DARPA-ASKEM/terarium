@@ -89,7 +89,7 @@ export const VOL = 'vol'; // Volume
 export const NUMBER = 'number'; // Issue
 export const AUTHORS = 'authors'; // An array of objects, each containing a key 'name' and a value equal to the name of one author
 export const PUBLISHER = 'publisher'; // Publisher (or primary source) of the document (e.g. Elsevier, USGS)
-export const PAGES = 'pages'; // Document' page numbers within the issue
+export const PAGES = 'pages'; // Document page numbers within the issue
 export const YEAR = 'year'; // Year of document
 export const GITHUB_URL = 'github_urls';
 
@@ -103,7 +103,7 @@ export const DISPLAY_NAMES: { [key: string]: string } = {
 	[PUBLISHER]: 'Publisher',
 	[PAGES]: 'Number of pages',
 	[YEAR]: 'Publication year',
-	[GITHUB_URL]: 'Github Repositories'
+	[GITHUB_URL]: 'GitHub repositories'
 };
 
 // Initail implementation of facets by XDD team only supports the following fields
