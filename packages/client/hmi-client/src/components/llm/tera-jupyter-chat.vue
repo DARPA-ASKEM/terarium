@@ -66,7 +66,7 @@
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { ref, watch, onUnmounted, onMounted, computed } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { newSession, JupyterMessage, sessionManager, serverSettings } from '@/services/jupyter';
+import { JupyterMessage, sessionManager, serverSettings } from '@/services/jupyter';
 import { CsvAsset } from '@/types/Types';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
@@ -422,6 +422,7 @@ onMounted(() => {
 
 onUnmounted(() => {
 	jupyterSession.shutdown();
+	messagesHistory.value = [];
 });
 </script>
 

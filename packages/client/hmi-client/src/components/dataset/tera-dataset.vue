@@ -383,7 +383,6 @@ watch(
 					}
 				});
 				dataset.value = datasetTemp;
-				console.log(dataset.value);
 			}
 		} else {
 			dataset.value = null;
