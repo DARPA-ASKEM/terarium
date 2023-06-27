@@ -1,9 +1,9 @@
 package software.uncharted.terarium.hmiserver.proxies.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
-import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRun;
-import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRunDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -23,7 +23,7 @@ public interface SimulationProxy {
 
 	@POST
 	Simulation createSimulation(
-		Simulation simulation
+		JsonNode simulation
 	);
 
 	@PATCH
@@ -40,48 +40,16 @@ public interface SimulationProxy {
 	);
 
 	@GET
-	@Path("/runs/descriptions")
-	Response getSimulationRunDescriptions(
-		@DefaultValue("100") @QueryParam("page_size") Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") Integer page
-	);
-
-	@POST
-	@Path("/runs/descriptions")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response createSimulationRunFromDescription(
-		SimulationRunDescription description
+	@Path("/{id}/upload-url")
+	PresignedURL getUploadURL(
+		@PathParam("id") String id,
+		@QueryParam("filename") String filename
 	);
 
 	@GET
-	@Path("/runs/{id}/descriptions")
-	Response getSimulationRunDescription(
-		@PathParam("id") String id
-	);
-
-	@GET
-	@Path("/runs/{id}/parameters")
-	Response getSimulationRunParameters(
-		@PathParam("id") String id
-	);
-
-	@PUT
-	@Path("/runs/descriptions")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response updateSimulationRunParameters(
-		Map<String, String> parameters
-	);
-
-	@GET
-	@Path("/runs/{id}")
-	Response getSimulationRun(
-		@PathParam("id") String id
-	);
-
-	@POST
-	@Path("/runs")
-	@Consumes(MediaType.APPLICATION_JSON)
-	Response createSimulationRun(
-		SimulationRun run
+	@Path("/{id}/download-url")
+	PresignedURL getDownloadURL(
+		@PathParam("id") String id,
+		@QueryParam("filename") String filename
 	);
 }

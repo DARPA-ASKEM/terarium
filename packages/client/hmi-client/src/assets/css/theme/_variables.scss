@@ -391,7 +391,7 @@ $accordionSpacing: 0 !default;
 $accordionHeaderBorder: 0 none !default;
 $accordionHeaderBg: #ffffff !default;
 $accordionHeaderTextColor: $textColor !default;
-$accordionHeaderFontWeight: $fontWeight !default;
+$accordionHeaderFontWeight: $fontWeightSemiBold !default;
 $accordionHeaderFontSize: $fontBodyMedium !default;
 $accordionHeaderPadding: .5rem !default;
 
@@ -410,7 +410,7 @@ $accordionHeaderTextActiveHoverColor: $textColor !default;
 $accordionContentBorder: 0 none !default;
 $accordionContentBg: #ffffff !default;
 $accordionContentTextColor: $textColor !default;
-$accordionContentPadding: 0.5rem !default;
+$accordionContentPadding: 0.5rem 0.5rem 2rem !default;
 
 //tabview
 $tabviewNavBorder: solid rgba(0, 0, 0, .12) !default;

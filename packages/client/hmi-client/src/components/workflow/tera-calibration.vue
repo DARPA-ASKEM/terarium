@@ -33,21 +33,22 @@
 			/>
 		</template>
 		<Accordion
-			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
+			v-if="calibrationView === CalibrationView.INPUT && modelConfiguration"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
-			<AccordionTab :header="modelConfig.model.name">
-				<tera-model-diagram :model="modelConfig.model" :is-editable="false" />
+			<AccordionTab :header="modelConfiguration.amrConfiguration.model.name">
+				<tera-model-diagram
+					:model="modelConfiguration.amrConfiguration.model"
+					:is-editable="false"
+				/>
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
-				<tera-model-configuration
+				<!-- <tera-model-configuration
 					ref="modelConfigurationRef"
-					:model="modelConfig.model"
-					:is-editable="false"
-					:model-config-node-input="modelConfig"
+					:model-configuration="modelConfiguration"
 					calibration-config
-				/>
+				/> -->
 			</AccordionTab>
 			<AccordionTab v-if="datasetId" :header="datasetName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
@@ -132,7 +133,7 @@
 			</AccordionTab>
 		</Accordion>
 		<Accordion
-			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
+			v-if="calibrationView === CalibrationView.OUTPUT && modelConfiguration"
 			:multiple="true"
 			:active-index="[0, 1]"
 		>
@@ -154,11 +155,8 @@
 				></Button>
 			</AccordionTab>
 			<AccordionTab header="Calibrated parameter values">
-				<tera-model-configuration
-					:model="modelConfig.model"
-					:is-editable="false"
-					:model-config-node-input="calibratedModelConfig"
-				/>
+				<!-- <tera-model-configuration :model="modelConfig.model" :is-editable="false"
+					:model-config-node-input="calibratedModelConfig" /> -->
 			</AccordionTab>
 		</Accordion>
 	</tera-asset>
@@ -172,7 +170,7 @@ import Button from 'primevue/button';
 import { Poller } from '@/api/api';
 import {
 	makeCalibrateJob,
-	makeForecast,
+	makeForecastJob,
 	getRunStatus,
 	getRunResult
 } from '@/services/models/simulation-service';
@@ -187,17 +185,21 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
-import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
+// import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { logger } from '@/utils/logger';
-import { CalibrationParams, CsvAsset, Dataset } from '@/types/Types';
-import { ModelConfig } from '@/types/ModelConfig';
+import {
+	CalibrationRequest,
+	SimulationRequest,
+	CsvAsset,
+	Dataset,
+	ModelConfiguration
+} from '@/types/Types';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { shimPetriModel } from '@/services/models/petri-shim';
-import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -227,20 +229,21 @@ const mapping = ref<any[]>([
 ]);
 const datasetVariables = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const calibratedModelConfig = ref<ModelConfig | undefined>(undefined);
+const modelConfiguration = ref<ModelConfiguration | null>(null);
+const calibratedModelConfig = ref<ModelConfiguration | undefined>(undefined);
 
+const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
 const datasetName = computed(() => props.node.inputs[1].label?.[0]);
-const modelConfig = computed<ModelConfig | undefined>(() => props.node.inputs[0].value?.[0]);
 
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelVariables = computed(() => {
 	if (modelConfigurationRef.value) {
-		return modelConfig.value?.model.model.states
+		return modelConfiguration.value?.amrConfiguration.model.model.states
 			.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.sname))
 			.map((state) => state.sname);
 	}
-	return modelConfig.value?.model.model.states.map((state) => state.sname);
+	return modelConfiguration.value?.amrConfiguration.model.model.states.map((state) => state.sname);
 });
 
 const disableRunButton = computed(
@@ -256,7 +259,7 @@ const mappingSimplified = computed(() =>
 
 const calibrate = async () => {
 	// Make calibration job.
-	if (modelConfig.value && csvAsset.value) {
+	if (modelConfiguration.value && csvAsset.value) {
 		const featureMappings: { [index: string]: string } = {};
 		// Go from 2D array to a index: value like they want
 		// was just easier to work with 2D array for user input
@@ -267,13 +270,11 @@ const calibrate = async () => {
 			}
 		}
 
-		const calibrationParam: CalibrationParams = {
-			model: shimPetriModel(AMRToPetri(modelConfig.value.model)), // Take out all the extra content in model
-			initials: modelConfig.value.initialValues,
-			params: modelConfig.value.parameterValues,
-			timesteps_column: timestepColumn.value,
-			feature_mappings: featureMappings,
-			dataset: csvAsset.value.csv.map((row) => row.join(',')).join('\n')
+		const calibrationParam: CalibrationRequest = {
+			modelConfigId: modelConfiguration.value.id, // Take out all the extra content in model
+			dataset: { id: '1', filename: 'TS1225' },
+			extra: {},
+			engine: 'sciml'
 		};
 		const results = await makeCalibrateJob(calibrationParam);
 		runId.value = results.id;
@@ -303,30 +304,34 @@ const calibrate = async () => {
 			});
 		await calibratePoller.start();
 
-		const calibratedParams = await getRunResult(results.id);
+		const calibratedParams = await getRunResult(results.id, 'result.csv');
 
 		const resultsHaveNull =
 			calibratedParams === null || Object.values(calibratedParams).some((v) => v === null);
 
 		const { csv, headers } = csvAsset.value;
 		const indexOfTimestep = headers.indexOf(timestepColumn.value);
-		const payload = {
-			model: calibrationParam.model,
-			initials: modelConfig.value.initialValues,
-			params: calibratedParams,
-			tspan: [Number(csv[1][indexOfTimestep]), Number(csv[csv.length - 1][indexOfTimestep])]
+
+		const payload: SimulationRequest = {
+			modelConfigId: calibrationParam.modelConfigId,
+			extra: {}, // reconstruct from modelConfig.value.configuration
+			timespan: {
+				start: Number(csv[1][indexOfTimestep]),
+				end: Number(csv[csv.length - 1][indexOfTimestep])
+			},
+			engine: 'sciml'
 		};
 
-		calibratedModelConfig.value = cloneDeep(modelConfig.value);
+		calibratedModelConfig.value = cloneDeep(modelConfiguration.value);
 		if (calibratedParams) {
-			calibratedModelConfig.value.parameterValues = calibratedParams;
+			// calibratedModelConfig.value.parameterValues = calibratedParams;
 		}
 
 		if (resultsHaveNull) {
 			logger.error("The resulting parameters include null value(s) which can't be simulated.");
 		} else {
 			// do polling and retrieve calibration result
-			const forecastResponse = await makeForecast(payload);
+			const forecastResponse = await makeForecastJob(payload);
 			const forecastPoller = new Poller<object>()
 				.setInterval(2000)
 				.setThreshold(90)
@@ -352,7 +357,7 @@ const calibrate = async () => {
 				});
 			await forecastPoller.start();
 
-			const resultCsv = await getRunResult(forecastResponse.id);
+			const resultCsv = await getRunResult(forecastResponse.id, 'result.csv');
 			const result = csvParse(resultCsv);
 
 			openedWorkflowNodeStore.setCalibrateResults(
@@ -372,6 +377,15 @@ function addMapping() {
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	});
 }
+
+watch(
+	() => modelConfigId.value,
+	async () => {
+		if (modelConfigId.value) {
+			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
+		}
+	}
+);
 
 watch(
 	() => datasetId.value,

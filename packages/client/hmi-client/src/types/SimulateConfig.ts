@@ -5,7 +5,7 @@ export enum TspanUnits {
 
 export type ChartConfig = {
 	selectedVariable: string[];
-	selectedRun: number;
+	selectedRun: string;
 };
 
 export type RunResults = {

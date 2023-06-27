@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { isEmpty } from 'lodash';
 
 import MultiSelect from 'primevue/multiselect';
@@ -85,7 +85,6 @@ const CHART_OPTIONS = {
 
 const props = defineProps<{
 	runResults: RunResults;
-	runIdList: number[];
 	chartIdx: number;
 }>();
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
@@ -118,13 +117,18 @@ const getVariableColorByVar = (variableName: string) => {
 	return VIRIDIS_14[Math.floor((codeIdx / selectedVariable.length) * VIRIDIS_14.length)];
 };
 
-const getVariableColorByRunIdx = (runIdx: number) =>
-	VIRIDIS_14[Math.floor((runIdx / props.runIdList.length) * VIRIDIS_14.length)];
+const getVariableColorByRunIdx = (runIdx: number) => {
+	const runIdList = Object.keys(props.runResults) as string[];
+	return VIRIDIS_14[Math.floor((runIdx / runIdList.length) * VIRIDIS_14.length)];
+};
 
-const hasMultiRuns = computed(() => props.runIdList.length > 1);
+const hasMultiRuns = computed(() => {
+	const runIdList = Object.keys(props.runResults) as string[];
+	return runIdList.length > 1;
+});
 
 const watchRunResults = async (runResults) => {
-	const { runIdList } = props;
+	const runIdList = Object.keys(props.runResults) as string[];
 	if (!runIdList.length || isEmpty(runResults)) {
 		return;
 	}
@@ -152,11 +156,14 @@ const watchRunResults = async (runResults) => {
 			selectedRun: runIdList[0]
 		});
 	}
+	renderGraph();
 };
-watch(() => props.runResults, watchRunResults, { immediate: true });
 
 const renderGraph = () => {
-	const { runResults, runIdList } = props;
+	const { runResults } = props;
+	const runIdList = Object.keys(props.runResults) as string[];
+
+	console.log('renderGraph', runResults, runIdList);
 
 	if (!runIdList.length || isEmpty(runResults)) {
 		return;
@@ -182,13 +189,18 @@ const renderGraph = () => {
 			})
 	);
 	chartData.value = {
-		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestep)),
+		labels: runResults[Object.keys(runResults)[0]].map((datum) => Number(datum.timestamp)),
 		datasets
 	};
 };
-watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx], renderGraph, {
-	immediate: true,
-	deep: true
+
+onMounted(() => {
+	// FIXME: Should use deep, need to rewire the dependencies
+	watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
+
+	if (openedWorkflowNodeStore.chartConfigs[props.chartIdx]) {
+		watch(() => openedWorkflowNodeStore.chartConfigs[props.chartIdx].selectedVariable, renderGraph);
+	}
 });
 </script>
 

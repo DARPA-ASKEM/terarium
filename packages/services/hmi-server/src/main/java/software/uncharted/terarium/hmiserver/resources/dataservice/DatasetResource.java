@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
@@ -42,6 +43,7 @@ import com.google.common.math.Quantiles;
 
 
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 
 @Path("/api/datasets")
 @Produces(MediaType.APPLICATION_JSON)
@@ -72,6 +74,9 @@ public class DatasetResource {
 	@Inject
 	@RestClient
 	DatasetProxy proxy;
+
+	@RestClient
+	JsDelivrProxy jsdelivrProxy;
 
 	@GET
 	@Path("/features")
@@ -255,7 +260,6 @@ public class DatasetResource {
 			List<String> column = getColumn(csv,i);
 			CsvColumnStats.add(getStats(column.subList(1,column.size()))); //remove first as it is header:
 		}
-
 		CsvAsset csvAsset = new CsvAsset(csv,CsvColumnStats,headers);
 		return Response
 			.status(Response.Status.OK)
@@ -263,6 +267,57 @@ public class DatasetResource {
 			.type(MediaType.APPLICATION_JSON)
 			.build();
 	}
+
+	/**
+	 * Downloads a CSV file from github given the path and owner name, then uploads it to the dataset.
+	 */
+	@PUT
+	@Path("/{datasetId}/uploadCSVFromGithub")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response uploadCsvFromGithub(
+		@PathParam("datasetId") final String datasetId,
+		@QueryParam("path") final String path,
+		@QueryParam("repoOwnerAndName") final String repoOwnerAndName,
+		@QueryParam("filename") final String filename
+	){
+		log.debug("Uploading CSV file from github to dataset {}", datasetId);
+
+		//verify that dataSetPath and bucket are set. If not, return an error
+		if (!dataSetPath.isPresent() || !bucket.isPresent() || !accessKeyId.isPresent() || !secretAccessKey.isPresent()) {
+			log.error("S3 information not set. Cannot upload CSV from github.");
+			return Response
+				.status(Response.Status.INTERNAL_SERVER_ERROR)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+		//download CSV from github
+		String csvString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path);
+
+		//init our S3 client
+		AwsCredentialsProvider awsCredentials = StaticCredentialsProvider.create(
+			AwsBasicCredentials.create(accessKeyId.get(), secretAccessKey.get()));
+		S3Client client = S3Client.builder().region(Region.of(region.get())).credentialsProvider(awsCredentials).build();
+		String objectKey = String.format("%s/%s/%s", dataSetPath.get(), datasetId, filename);
+
+		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket.get()).key(objectKey).build();
+
+		PutObjectResponse res = client.putObject(request, RequestBody.fromString(csvString));
+
+		//find the status of the response
+		if (res.sdkHttpResponse().isSuccessful()) {
+			log.debug("Successfully uploaded CSV file to dataset {}", datasetId);
+			return Response
+				.status(Response.Status.OK)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		} else {
+			log.error("Failed to upload CSV file to dataset {}", datasetId);
+			return Response.status(res.sdkHttpResponse().statusCode(), res.sdkHttpResponse().statusText().get()).type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+	}
+
 
 	/**
 	 * Uploads a CSV file to the dataset. This will grab a presigned URL from TDS then push
@@ -301,12 +356,22 @@ public class DatasetResource {
 
 		PutObjectRequest request = PutObjectRequest.builder().bucket(bucket.get()).key(objectKey).build();
 
-		client.putObject(request, RequestBody.fromBytes(input.get("file").readAllBytes()));
+		PutObjectResponse res = client.putObject(request, RequestBody.fromBytes(input.get("file").readAllBytes()));
 
-		return Response
-			.status(Response.Status.OK)
-			.type(MediaType.APPLICATION_JSON)
-			.build();
+		//find the status of the response
+		if (res.sdkHttpResponse().isSuccessful()) {
+			log.debug("Successfully uploaded CSV file to dataset {}", datasetId);
+			return Response
+				.status(Response.Status.OK)
+				.type(MediaType.APPLICATION_JSON)
+				.build();
+		} else {
+			log.error("Failed to upload CSV file to dataset {}", datasetId);
+			return Response.status(res.sdkHttpResponse().statusCode(), res.sdkHttpResponse().statusText().get()).type(MediaType.APPLICATION_JSON)
+				.build();
+		}
+
+
 	}
 
 
@@ -322,10 +387,13 @@ public class DatasetResource {
 		return csv;
 	}
 
-	private List<String> getColumn(List<List<String>> maxtrix, int columnNumber){
+	private List<String> getColumn(List<List<String>> matrix, int columnNumber){
 		List<String> column = new ArrayList<>();
-		for(int i = 0 ; i < maxtrix.size(); i++){
-		   column.add(i,maxtrix.get(i).get(columnNumber));
+		for(int i = 0 ; i < matrix.size(); i++){
+			if(matrix.get(i).size() > columnNumber){
+					column.add(matrix.get(i).get(columnNumber));
+			}
+
 		}
 		return column;
 	}
@@ -347,7 +415,7 @@ public class DatasetResource {
 			double meanValue = Stats.meanOf(numberList);
 			double medianValue = Quantiles.median().compute(numberList);
 			double sdValue = Stats.of(numberList).populationStandardDeviation();
-			int binCount = 50;
+			int binCount = 10;
 			//Set up bins
 			for (int i = 0; i < binCount; i++){
 				bins.add(0);

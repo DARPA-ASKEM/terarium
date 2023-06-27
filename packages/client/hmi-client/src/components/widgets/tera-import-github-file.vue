@@ -189,7 +189,7 @@ import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
-import { createNewDatasetFromCSV } from '@/services/dataset';
+import { createNewDatasetFromGithubFile } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
@@ -197,7 +197,7 @@ const props = defineProps<{
 	project?: IProject;
 }>();
 
-const emit = defineEmits(['open-code']);
+const emit = defineEmits(['open-code', 'update-project']);
 
 const repoOwnerAndName: Ref<string> = ref('');
 const currentDirectory: Ref<string> = ref('');
@@ -291,6 +291,9 @@ async function openSelectedFiles() {
 	if(selectedDocumentFiles.length > 0){
 		await openDocumentFiles(selectedDocumentFiles);
 	} */
+
+	emit('update-project', props.project?.id);
+	isModalVisible.value = false;
 }
 
 /**
@@ -326,14 +329,13 @@ async function previewTextFile(file: GithubFile) {
 async function importDataFiles(githubFiles: GithubFile[]) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
-		const data: string = await getGithubCode(repoOwnerAndName.value, githubFile.path);
-
-		// create a File from this string
-		const blob: Blob = new Blob([data], { type: 'text/plain' });
-		const file: File = new File([blob], githubFile.name, { type: 'text/plain' });
-
-		// now, create a new dataset from this csv
-		await createNewDatasetFromCSV(file, props.project?.username ?? '', props.project?.id ?? '');
+		// Create a new dataset from this GitHub file
+		await createNewDatasetFromGithubFile(
+			repoOwnerAndName.value,
+			githubFile.path,
+			props.project?.username ?? '',
+			props.project?.id ?? ''
+		);
 	});
 }
 

@@ -1,11 +1,18 @@
 package software.uncharted.terarium.hmiserver.resources.dataservice;
 
-
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRun;
-import software.uncharted.terarium.hmiserver.models.dataservice.SimulationRunDescription;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.commons.io.IOUtils;
+import java.nio.charset.StandardCharsets;
+
 import software.uncharted.terarium.hmiserver.proxies.dataservice.SimulationProxy;
+import software.uncharted.terarium.hmiserver.models.dataservice.Simulation;
+import software.uncharted.terarium.hmiserver.utils.Converter;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -14,7 +21,6 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Path("/api/simulations")
-
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Simulation REST Endpoints")
 public class SimulationResource {
@@ -23,64 +29,58 @@ public class SimulationResource {
 	@RestClient
 	SimulationProxy proxy;
 
-
-	@GET
-	@Path("/runs/descriptions")
-	public Response getSimulationRunDescriptions(
-		@DefaultValue("100") @QueryParam("page_size") final Integer pageSize,
-		@DefaultValue("0") @QueryParam("page") final Integer page
-	) {
-		return proxy.getSimulationRunDescriptions(pageSize, page);
-	}
-
 	@POST
-	@Path("/runs/descriptions")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createSimulationRunFromDescription(
-		final SimulationRunDescription description
-	) {
-		return proxy.createSimulationRunFromDescription(description);
+	public Simulation createSimulation(final Simulation simulation){
+		return proxy.createSimulation(Converter.convertObjectToSnakeCaseJsonNode(simulation));
 	}
 
 	@GET
-	@Path("/runs/{id}/descriptions")
-	public Response getSimulationRunDescription(
+	@Path("/{id}")
+	public Response getSimulation(
 		@PathParam("id") final String id
 	) {
-		return proxy.getSimulationRunDescription(id);
-	}
-
-	@GET
-	@Path("/runs/{id}/parameters")
-	public Response getSimulationRunParameters(
-		@PathParam("id") final String id
-	) {
-		return proxy.getSimulationRunParameters(id);
+		return Response
+			.ok(Response.Status.OK)
+			.entity(proxy.getSimulation(id))
+			.build();
 	}
 
 	@PUT
-	@Path("/runs/descriptions")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response updateSimulationRunParameters(
-		final Map<String, String> parameters
-	) {
-		return proxy.updateSimulationRunParameters(parameters);
+	@Path("/{id}")
+	public Simulation updateSimulation(@PathParam("id") final String id, final Simulation simulation){
+		return proxy.updateSimulation(id, simulation);
 	}
+
+	@DELETE
+	@Path("/{id}")
+	public String deleteSimulation(@PathParam("id") final String id){
+		return proxy.deleteSimulation(id);
+	}
+
 
 	@GET
-	@Path("/runs/{id}")
-	public Response getSimulationRun(
-		@PathParam("id") final String id
-	) {
-		return proxy.getSimulationRun(id);
+	@Path("/{id}/result")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response getSimulation(
+		@PathParam("id") final String id,
+		@QueryParam("filename") final String filename
+	) throws Exception {
+		CloseableHttpClient httpclient = HttpClients.custom()
+				.disableRedirectHandling()
+				.build();
+
+		final PresignedURL presignedURL = proxy.getDownloadURL(id, filename);
+		final HttpGet get = new HttpGet(presignedURL.getUrl());
+		final HttpResponse response = httpclient.execute(get);
+		final String data = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+
+		// return response;
+		return Response
+			.ok(Response.Status.OK)
+			.entity(data)
+			.build();
 	}
 
-	@POST
-	@Path("/runs")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response createSimulationRun(
-		final SimulationRun run
-	) {
-		return proxy.createSimulationRun(run);
-	}
+
+
 }

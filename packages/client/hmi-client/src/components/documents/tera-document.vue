@@ -40,6 +40,12 @@
 				/>
 			</span>
 		</template>
+		<div class="container">
+			<Message class="inline-message" icon="none"
+				>This page contains extractions from the document. Use the content switcher above to see the
+				original PDF if it is available.</Message
+			>
+		</div>
 		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
 			:multiple="true"
@@ -143,6 +149,7 @@
 							:show-import-button="isEditable"
 							:project="project"
 							@open-code="openCode"
+							@update-project="updateProject"
 						/>
 					</li>
 				</ul>
@@ -225,6 +232,7 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
+import Message from 'primevue/message';
 import { getDocumentById, getXDDArtifacts } from '@/services/data';
 import { XDDExtractionType } from '@/types/XDD';
 import { getDocumentDoi, isModel, isDataset, isDocument } from '@/utils/data-util';
@@ -257,12 +265,15 @@ const doc = ref<Document | null>(null);
 const pdfLink = ref<string | null>(null);
 const documentView = ref(DocumentView.EXRACTIONS);
 
-const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded']);
+const emit = defineEmits(['open-code', 'close-preview', 'asset-loaded', 'update-project']);
 
 function openCode(codeRequests: CodeRequest[]) {
 	emit('open-code', codeRequests);
 }
 
+function updateProject(id: IProject['id']) {
+	emit('update-project', id);
+}
 // Highlight strings based on props.highlight
 function highlightSearchTerms(text: string | undefined): string {
 	if (!!props.highlight && !!text) {
@@ -451,6 +462,20 @@ onUpdated(() => {
 });
 </script>
 <style scoped>
+.container {
+	margin-left: 1rem;
+	margin-right: 1rem;
+	max-width: 70rem;
+}
+.inline-message:deep(.p-message-wrapper) {
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+	background-color: var(--surface-highlight);
+	color: var(--text-color-primary);
+	border-radius: var(--border-radius);
+	border: 4px solid var(--primary-color);
+	border-width: 0px 0px 0px 6px;
+}
 .p-buttonset {
 	white-space: nowrap;
 	margin-left: 0.5rem;

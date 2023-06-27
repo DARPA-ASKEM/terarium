@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
 import { CsvAsset } from '@/types/Types';
 import { ProjectAssetTypes } from '@/types/Project';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { TspanUnits, ChartConfig } from '@/types/SimulateConfig';
 import { NumericValueMap } from '@/types/common';
+import { v4 as uuidv4 } from 'uuid';
 
 // Probably will be an array later
 export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
@@ -23,7 +24,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 		tspan: [0, 100],
 		// calibrate node
 		calibrateNumCharts: 1,
-		calibrateRunIdList: [] as number[],
+		calibrateRunIdList: [] as string[],
 		calibrateRunResults: {},
 		readOnlyMapping: null as any[] | null
 	}),
@@ -38,13 +39,21 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 			this.pageType = pageType;
 			this.setNode(node);
 		},
-		setModelConfig(initialValues: NumericValueMap[], parameterValues: NumericValueMap[]) {
-			this.initialValues = initialValues;
-			this.parameterValues = parameterValues;
-		},
 		// simulate node
 		setNode(node: WorkflowNode | null) {
 			this.node = node;
+		},
+		// FIXME: Not a good idea to update reactive variables through global storage
+		appendOutputPort(port: { type: string; label?: string; value: any }) {
+			if (this.node) {
+				this.node.outputs.push({
+					id: uuidv4(),
+					type: port.type,
+					label: port.label,
+					value: [port.value],
+					status: WorkflowPortStatus.NOT_CONNECTED
+				});
+			}
 		},
 		appendChart() {
 			this.numCharts++;
@@ -96,7 +105,7 @@ export const useOpenedWorkflowNodeStore = defineStore('opened-workflow-node', {
 				return outputRow;
 			});
 
-			this.calibrateRunIdList = [1, 2];
+			this.calibrateRunIdList = ['1', '2'];
 
 			this.calibrateRunResults = {
 				1: dataset,

@@ -11,6 +11,7 @@ import java.util.Map;
 
 @Data
 @Accessors(chain = true)
+@Deprecated
 public class SimulationRun implements Serializable {
 
 	private Long id;

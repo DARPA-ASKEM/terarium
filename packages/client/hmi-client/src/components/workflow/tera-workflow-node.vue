@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5 class="truncate">{{ node.operationType }} ({{ node.statusCode }})</h5>
+			<h5 class="truncate">{{ node.operationType }}</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
@@ -177,11 +177,11 @@ const getInputLabelColor = (edgeIdx: number) => {
 function showNodeDrilldown() {
 	let pageType;
 	let assetId;
+
 	switch (props.node.operationType) {
 		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;
 			assetId = props.node.id;
-
 			break;
 		case WorkflowOperationTypes.CALIBRATION:
 			pageType = ProjectPages.CALIBRATE;
@@ -191,16 +191,16 @@ function showNodeDrilldown() {
 			pageType = ProjectPages.STRATIFY;
 			assetId = props.node.id;
 			break;
+		case WorkflowOperationTypes.MODEL:
+			pageType = ProjectAssetTypes.MODELS;
+			assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0];
+			break;
 		default:
 			break;
 	}
 
 	if (!isEmpty(props.node.outputs)) {
 		switch (props.node.operationType) {
-			case WorkflowOperationTypes.MODEL:
-				pageType = ProjectAssetTypes.MODELS;
-				assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0].model.id.toString();
-				break;
 			case WorkflowOperationTypes.DATASET:
 				pageType = ProjectAssetTypes.DATASETS;
 				assetId = props.node.outputs[0].value?.[0].toString();
@@ -429,6 +429,7 @@ ul li {
 	color: var(--text-color-primary);
 	content: ', ';
 }
+
 .input-label:last-child::after {
 	content: '';
 }

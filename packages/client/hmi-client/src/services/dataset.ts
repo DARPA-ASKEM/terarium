@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { CsvAsset, Dataset } from '@/types/Types';
 import { addAsset } from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
+import { Ref } from 'vue';
 
 /**
  * Get all datasets
@@ -74,15 +75,57 @@ async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
 	return null;
 }
 
+async function createNewDatasetFromGithubFile(
+	repoOwnerAndName: string,
+	path: string,
+	userName: string,
+	projectId: string
+) {
+	// Find the file name by removing the path portion
+	const fileName: string | undefined = path.split('/').pop();
+
+	if (!fileName) return null;
+
+	// Remove the file extension from the name, if any
+	const name: string = fileName?.replace(/\.[^/.]+$/, '');
+
+	// Create a new dataset with the same name as the file, and post the metadata to TDS
+	const dataset: Dataset = {
+		name,
+		url: '',
+		description: path,
+		fileNames: [fileName],
+		username: userName
+	};
+
+	const newDataSet: Dataset | null = await createNewDataset(dataset);
+	if (!newDataSet || !newDataSet.id) return null;
+
+	const urlResponse = await API.put(
+		`/datasets/${newDataSet.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		{
+			timeout: 30000
+		}
+	);
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		return null;
+	}
+
+	return addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+}
+
 /**
  * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
  * share the same name as the file and can optionally have a description
+ * @param progress reference to display in ui
  * @param file the CSV file
  * @param userName owner of this project
  * @param projectId the project ID
- * @param description description of the file. Optional. If not given description will be just the csv name
+ * @param description? description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromCSV(
+	progress: Ref<number>,
 	file: File,
 	userName: string,
 	projectId: string,
@@ -112,7 +155,14 @@ async function createNewDatasetFromCSV(
 		},
 		headers: {
 			'Content-Type': 'multipart/form-data'
-		}
+		},
+		onUploadProgress(progressEvent) {
+			progress.value = Math.min(
+				90,
+				Math.round((progressEvent.loaded * 100) / (progressEvent?.total ?? 100))
+			);
+		},
+		timeout: 30000
 	});
 
 	if (!urlResponse || urlResponse.status >= 400) {
@@ -131,5 +181,6 @@ export {
 	getBulkDatasets,
 	downloadRawFile,
 	createNewDatasetFromCSV,
-	createNewDataset
+	createNewDataset,
+	createNewDatasetFromGithubFile
 };
