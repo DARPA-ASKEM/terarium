@@ -1,7 +1,13 @@
 <template>
 	<Portal :appendTo="props.appendTo">
 		<div class="tera-context-menu" ref="container">
-			<Menu v-if="isVisible" :model="props.model" />
+			<Menu v-if="isVisible" :model="props.model">
+				<template v-slot:item="{ item }">
+					<a class="p-menuitem-link" @click="(e) => itemClick(e, item)">
+						<span class="p-menuitem-text">{{ item.label }}</span>
+					</a>
+				</template>
+			</Menu>
 		</div>
 	</Portal>
 </template>
@@ -62,6 +68,13 @@ defineExpose({
 	show,
 	hide
 });
+
+const itemClick = (e, item: MenuItem) => {
+	if (item.command) {
+		hide();
+		item.command(e);
+	}
+};
 
 // adapted from `position` method of primevue/contextmenu
 const setPosition = () => {
