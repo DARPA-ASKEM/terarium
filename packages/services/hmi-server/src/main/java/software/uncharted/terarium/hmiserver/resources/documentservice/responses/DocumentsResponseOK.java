@@ -6,7 +6,6 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.documentservice.Document;
-import software.uncharted.terarium.hmiserver.models.documentservice.Hits;
 
 import java.io.Serializable;
 import java.util.List;
@@ -24,7 +23,7 @@ public class DocumentsResponseOK extends XDDResponseOK implements Serializable {
 
 	private String scrollId;
 
-	private Hits hits;
+	private Number hits;
 
 	private Map<String, XDDFacetsItemResponse> facets;
 }

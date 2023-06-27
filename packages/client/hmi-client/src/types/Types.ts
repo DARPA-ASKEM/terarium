@@ -137,11 +137,6 @@ export interface PetriNetModel {
     metadata?: ModelMetadata;
 }
 
-export interface Hits {
-	value: number;
-	relation: string;
-}
-
 export interface CalibrationRequest {
     modelConfigId: string;
     extra: any;
@@ -172,7 +167,7 @@ export interface DocumentsResponseOK extends XDDResponseOK {
     data: Document[];
     nextPage: string;
     scrollId: string;
-    hits: Hits;
+    hits: number;
     facets: { [index: string]: XDDFacetsItemResponse };
 }
 

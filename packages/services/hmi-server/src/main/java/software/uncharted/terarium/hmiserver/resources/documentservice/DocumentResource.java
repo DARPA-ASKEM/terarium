@@ -97,7 +97,7 @@ public class DocumentResource {
 
 				XDDResponse<DocumentsResponseOK> doc = proxy.getDocuments(apiKey,
 					docid, doi, title, term, dataset, include_score, include_highlights, inclusive, full_results, "500", per_page, dict, facets,
-					min_published, max_published, pubname, publisher, additional_fields, match, "askem_object", github_url);
+					min_published, max_published, pubname, publisher, additional_fields, match, known_entities, github_url);
 
 
 
