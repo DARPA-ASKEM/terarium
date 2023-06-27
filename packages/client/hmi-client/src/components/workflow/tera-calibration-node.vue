@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref } from 'vue';
+import { computed, shallowRef, watch, ref, onMounted } from 'vue';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -93,44 +93,30 @@ const mapping = ref<any[]>([
 ]);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-// const datasetValue = ref();
 
-// const emit = defineEmits(['append-output-port']);
-// 			emit('append-output-port', {
-// 				type: 'string',
-// 				label: 'Calibration Job ID',
-// 				value: runId.value
-// 			});
-
-watch(
-	() => modelConfigId.value,
-	async () => {
-		if (modelConfigId.value) {
-			modelConfig.value = await getModelConfigurationById(modelConfigId.value);
-			// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
-			modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
-			modelColumnNames.value?.push('timestep');
-		}
+const setupModelInput = async () => {
+	if (modelConfigId.value) {
+		modelConfig.value = await getModelConfigurationById(modelConfigId.value);
+		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
+		modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
+		modelColumnNames.value?.push('timestep');
 	}
-);
+};
 
-watch(
-	() => datasetId.value, // When dataset ID changes, update datasetColumnNames
-	async () => {
-		if (datasetId.value) {
-			// Get dataset:
-			const dataset: Dataset | null = await getDataset(datasetId.value.toString());
-			currentDatasetFileName.value = dataset?.fileNames?.[0] ?? '';
-			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-			csvAsset.value = (await downloadRawFile(
-				datasetId.value.toString(),
-				currentDatasetFileName.value
-			)) as CsvAsset;
-			datasetColumnNames.value = csvAsset.value?.headers;
-			// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
-		}
+const setupDatasetInput = async () => {
+	if (datasetId.value) {
+		// Get dataset:
+		const dataset: Dataset | null = await getDataset(datasetId.value.toString());
+		currentDatasetFileName.value = dataset?.fileNames?.[0] ?? '';
+		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
+		csvAsset.value = (await downloadRawFile(
+			datasetId.value.toString(),
+			currentDatasetFileName.value
+		)) as CsvAsset;
+		datasetColumnNames.value = csvAsset.value?.headers;
+		// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
 	}
-);
+};
 
 const runCalibrate = async () => {
 	if (
@@ -229,6 +215,15 @@ function addMapping() {
 	console.log(mapping.value);
 	console.log(modelColumnNames.value);
 }
+
+onMounted(async () => {
+	setupModelInput();
+	setupDatasetInput();
+});
+
+watch(() => modelConfigId.value, setupModelInput, { immediate: true });
+
+watch(() => datasetId.value, setupDatasetInput, { immediate: true });
 </script>
 
 <style scoped>
