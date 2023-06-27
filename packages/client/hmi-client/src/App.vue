@@ -24,14 +24,24 @@
 	</main>
 	<footer class="footer">
 		<img src="@assets/svg/uncharted-logo-dark.svg" alt="logo" class="ml-2" />
-		<div class="footer-button-group">
-			<Button label="about" class="footer-button" text @click="isAboutModalVisible = true" />
-			<a href="https://terarium.canny.io/report-an-issue" class="no-text-decoration">
-				<Button label="report an issue" class="footer-button" text />{{ null }}
-			</a>
-			<a href="https://terarium.canny.io/request-a-feature" class="no-text-decoration">
-				<Button label="request a feature" class="footer-button" text />{{ null }}
-			</a>
+		<div class="footer-group">
+			<a target="_blank" rel="noopener noreferrer" :href="documentation">documentation</a>
+			<a
+				target="_blank"
+				rel="noopener noreferrer"
+				href="javascript:void;"
+				@click="isAboutModalVisible = true"
+				>about</a
+			>
+			<a target="_blank" rel="noopener noreferrer" href="https://terarium.canny.io/report-an-issue"
+				>report an issue</a
+			>
+			<a
+				target="_blank"
+				rel="noopener noreferrer"
+				href="https://terarium.canny.io/request-a-feature"
+				>request a feature</a
+			>
 		</div>
 	</footer>
 	<tera-modal
@@ -141,6 +151,8 @@ API.interceptors.response.use(
 );
 
 async function fetchProject(id: IProject['id']) {
+	resourcesStore.reset();
+
 	// fetch project metadata
 	project.value = await ProjectService.get(id, true);
 
@@ -172,6 +184,15 @@ resourcesStore.$subscribe((mutation, state) => {
 });
 
 const isAboutModalVisible = ref(false);
+
+const documentation = computed(() => {
+	const host = window.location.hostname ?? 'localhost';
+	if (host === 'localhost') {
+		return '//localhost:8000';
+	}
+	const url = host.replace(/\bapp\b/g, 'documentation');
+	return `https://${url}`;
+});
 </script>
 
 <style scoped>
@@ -202,25 +223,22 @@ footer {
 	background-color: var(--surface-section);
 	border-top: 1px solid var(--surface-border-light);
 	display: flex;
+	gap: 2rem;
 	grid-area: footer;
 	height: 3rem;
 	justify-content: space-between;
 }
 
-.footer-button-group {
-	padding-right: 3rem;
+.footer-group {
+	margin: 0 2rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-around;
+	gap: 2rem;
 }
 
-.no-text-decoration {
+.footer-group a {
 	text-decoration: none;
-}
-
-.p-button.p-component.p-button-text.footer-button {
-	color: var(--text-color-secondary);
-}
-
-.p-button.p-component.p-button-text.footer-button:hover {
-	color: var(--text-color-primary);
 }
 
 .about-modal-content {
@@ -257,9 +275,5 @@ footer {
 
 .constrain-width {
 	max-width: 40rem;
-}
-
-.subdued {
-	color: var(--text-color-secondary);
 }
 </style>

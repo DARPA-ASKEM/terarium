@@ -181,7 +181,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { isEmpty } from 'lodash';
 import { getGithubCode, getGithubRepositoryContent } from '@/services/github-import';
-import { CsvAsset, FileCategory, GithubFile, GithubRepo } from '@/types/Types';
+import { FileCategory, GithubFile, GithubRepo } from '@/types/Types';
 import { CodeRequest, Tab } from '@/types/common';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
@@ -189,8 +189,7 @@ import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
 import Breadcrumb from 'primevue/breadcrumb';
-import { createNewDatasetFromCSV } from '@/services/dataset';
-import { logger } from '@/utils/logger';
+import { createNewDatasetFromGithubFile } from '@/services/dataset';
 
 const props = defineProps<{
 	urlString: string;
@@ -209,7 +208,6 @@ const selectedUnknownFiles: Ref<GithubFile[]> = ref([]);
 const editor: Ref<VAceEditorInstance['_editor'] | null> = ref(null);
 const selectedText: Ref<string> = ref('');
 const displayCode: Ref<string> = ref('');
-const progress: Ref<number> = ref(0);
 
 // Breadcrumb home setup
 const home = ref({
@@ -293,6 +291,9 @@ async function openSelectedFiles() {
 	if(selectedDocumentFiles.length > 0){
 		await openDocumentFiles(selectedDocumentFiles);
 	} */
+
+	emit('update-project', props.project?.id);
+	isModalVisible.value = false;
 }
 
 /**
@@ -328,28 +329,14 @@ async function previewTextFile(file: GithubFile) {
 async function importDataFiles(githubFiles: GithubFile[]) {
 	// iterate through our files and fetch their contents
 	githubFiles.forEach(async (githubFile) => {
-		const data: string = await getGithubCode(repoOwnerAndName.value, githubFile.path);
-
-		// create a File from this string
-		const blob: Blob = new Blob([data], { type: 'text/plain' });
-		const file: File = new File([blob], githubFile.name, { type: 'text/plain' });
-
-		// now, create a new dataset from this csv
-		const csvAsset: CsvAsset | null = await createNewDatasetFromCSV(
-			progress,
-			file,
+		// Create a new dataset from this GitHub file
+		await createNewDatasetFromGithubFile(
+			repoOwnerAndName.value,
+			githubFile.path,
 			props.project?.username ?? '',
-			props.project?.id ?? '',
-			undefined
+			props.project?.id ?? ''
 		);
-
-		if (csvAsset == null) {
-			logger.error('Failed to create dataset from CSV. Is it too large?', { showToast: true });
-		}
 	});
-
-	emit('update-project', props.project?.id);
-	isModalVisible.value = false;
 }
 
 /**

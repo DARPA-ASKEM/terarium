@@ -64,7 +64,7 @@
 				</tr>
 			</table>
 			<RelatedPublications :publications="publications" />
-			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editRow">
+			<Accordion multiple :active-index="[0, 1, 2, 3, 4, 5, 6]" @click="editSection">
 				<!-- Description -->
 				<AccordionTab>
 					<template #header>Description</template>
@@ -124,88 +124,111 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Name</th>
-									<th>Unit</th>
-									<th>Concept</th>
-									<th>Identifiers</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="state in states" :key="state.id" :class="`state-${state.id}`">
-									<!-- <template v-if="isRowEditable === `state-${state.id}`">
-										<td>
-											<input type="text" :value="state?.id ?? '--'" />
-										</td>
-										<td>
-											<input type="text" :value="state?.name ?? '--'" />
-										</td>
-										<td>
-											<input type="text" :value="state?.units?.expression ?? '--'" />
-										</td>
-										<td>
-											<label>Concept</label>
-										</td>
-										<td>
-											<label>Identifiers</label>
-										</td>
-										<td>
-											<button type="submit" label="submit" />	
-										</td>
-									</template>
-									<template v-else> -->
-									<td>{{ state?.id ?? '--' }}</td>
-									<td>{{ state?.name ?? '--' }}</td>
-									<td>{{ state?.units?.expression ?? '--' }}</td>
-									<td>
-										<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
-											<template
-												v-for="[key, curie] in Object.entries(state.grounding.context)"
-												:key="key"
-											>
-												<a
-													target="_blank"
-													rel="noopener noreferrer"
-													:href="`http://34.230.33.149:8772/${curie}`"
-												>
-													{{ key }} ({{ curie }})</a
-												><br />
-											</template>
-										</template>
-										<template v-else>--</template>
-									</td>
-									<td>
+					<main class="datatable" style="--columns: 6">
+						<header>
+							<div>ID</div>
+							<div>Name</div>
+							<div>Unit</div>
+							<div>Concept</div>
+							<div>Identifiers</div>
+							<div>Extractions</div>
+						</header>
+						<section
+							v-for="state in states"
+							:key="state.id"
+							:class="[{ active: isSectionEditable === `state-${state.id}` }, `state-${state.id}`]"
+						>
+							<template v-if="isSectionEditable === `state-${state.id}`">
+								<div><input type="text" :value="state?.id ?? '--'" /></div>
+								<div><input type="text" :value="state?.name ?? '--'" /></div>
+								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
+								<div>
+									<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
 										<template
-											v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+											v-for="[key, curie] in Object.entries(state.grounding.context)"
+											:key="key"
 										>
 											<a
 												target="_blank"
 												rel="noopener noreferrer"
-												:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-													state.grounding.identifiers
-												)}`"
+												:href="`http://34.230.33.149:8772/${curie}`"
 											>
-												{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
-											</a>
+												{{ key }} ({{ curie }})</a
+											><br />
 										</template>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template v-if="extractions?.[state?.id]">
-											<Tag :value="extractions?.[state?.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+								<div>Identifiers</div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+								<div v-if="extractions?.[state?.id]">
+									<ul>
+										<li
+											v-for="extraction in extractions?.[state?.id]"
+											:key="extraction.payload.id.id"
+										>
+											<em>Name</em> {{ extraction.payload.names.map((n) => n.name).join(', ')
+											}}<br />
+											<em>Concept</em>
+											{{ extraction.payload.descriptions.map((n) => n.grounding_text).join(', ')
+											}}<br />
+											<em>Identifiers</em>
+											{{ extraction.payload.groundings.map((n) => n.grounding_text).join(', ')
+											}}<br />
+										</li>
+									</ul>
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ state?.id ?? '--' }}</div>
+								<div>{{ state?.name ?? '--' }}</div>
+								<div>{{ state?.units?.expression ?? '--' }}</div>
+								<div>
+									<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
+										<template
+											v-for="[key, curie] in Object.entries(state.grounding.context)"
+											:key="key"
+										>
+											<a
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${curie}`"
+											>
+												{{ key }} ({{ curie }})</a
+											><br />
 										</template>
-										<template v-else>--</template>
-									</td>
-									<!-- </template> -->
-								</tr>
-							</tbody>
-						</table>
-					</div>
+									</template>
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template
+										v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+									>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+												state.grounding.identifiers
+											)}`"
+										>
+											{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
+										</a>
+									</template>
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template v-if="extractions?.[state?.id]">
+										<Tag :value="extractions?.[state?.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Observables -->
@@ -504,7 +527,9 @@ const states = computed(() => model.value?.model?.states ?? []);
 const transitions = computed(() => model.value?.model?.transitions ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 const publications = computed(() =>
-	props.assetId === 'biomd0000000955-model-id' ? ['https://arxiv.org/pdf/2003.09861.pdf'] : []
+	['biomd0000000955-model-id', '58ba4f73-56e3-44a5-aa03-138224beec11'].includes(props.assetId)
+		? ['https://arxiv.org/pdf/2003.09861.pdf']
+		: []
 );
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
@@ -519,7 +544,7 @@ const otherExtractions = computed(() => {
 	if (key) return extractions.value[key.toString()];
 	return [];
 });
-const isRowEditable = ref<string>();
+const isSectionEditable = ref<string | null>();
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -619,6 +644,19 @@ watch(
 		} else if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
+
+			// TODO: Display model config in model page (non-drilldown)
+			// When not in drilldown just show defualt config for now???
+			// if (model.value) {
+			// 	modelConfigurations.value.push({
+			// 		id: 'default',
+			// 		name: 'Default',
+			// 		description: 'Default',
+			// 		modelId: model.value.id,
+			// 		amrConfiguration: model.value
+			//		// missing S, T, I, O configuration
+			// 	});
+			// }
 		} else {
 			model.value = null;
 		}
@@ -669,17 +707,55 @@ const createNewModel = async () => {
 };
 
 // Toggle rows to become editable
-function editRow(event: Event) {
+function editSection(event: Event) {
 	if (!event?.target) return;
-	const row = (event.target as HTMLElement).closest('.p-datatable-tbody tr');
-	if (!row) return;
-	isRowEditable.value = row.className;
+	const section = (event.target as HTMLElement).closest('.datatable section');
+	if (!section) return;
+	isSectionEditable.value =
+		isSectionEditable.value === section.className ? null : section.className;
 }
 </script>
 
 <style scoped>
-:deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
-	border-bottom: none;
+.datatable header,
+.datatable section {
+	align-items: center;
+	border-bottom: 1px solid var(--surface-border-light);
+	display: grid;
+	grid-template-columns: repeat(var(--columns), calc(100% / var(--columns)));
+	grid-auto-flow: row;
+	justify-items: start;
+}
+
+.datatable header > div,
+.datatable section > div {
+	padding: 0.5rem;
+}
+
+.datatable header {
+	color: var(--text-color-light);
+	font-size: var(--font-caption);
+	font-weight: var(--font-weight-semibold);
+	text-transform: uppercase;
+}
+
+.datatable section.active {
+	background-color: var(--surface-secondary);
+}
+
+.datatable section > div:nth-child(7) {
+	grid-row-start: 2;
+	grid-column: 1 / span 6;
+}
+
+.datatable em {
+	font-size: var(--font-caption);
+	font-weight: var(--font-weight-semibold);
+	text-transform: capitalize;
+}
+
+.datatable input {
+	width: 100%;
 }
 
 .parameter-description {
@@ -834,11 +910,5 @@ section math-editor {
 :deep(.graph-element svg) {
 	width: 100%;
 	height: 100%;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-	color: var(--text-color-light);
-	font-size: var(--font-caption);
-	text-transform: uppercase;
 }
 </style>

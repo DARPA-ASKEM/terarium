@@ -7,7 +7,7 @@ import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.util.List;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Observables;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 
 @Data
@@ -22,7 +22,7 @@ public class OdeSemantics {
 	private List<ModelParameter> parameters;
 
 	@TSOptional
-	private List<Observables> observables;
+	private List<Observable> observables;
 
 	@TSOptional
 	private JsonNode time;

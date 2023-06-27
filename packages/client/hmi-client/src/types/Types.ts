@@ -253,7 +253,7 @@ export interface OdeSemantics {
     rates: Rate[];
     initials?: any[];
     parameters?: ModelParameter[];
-    observables?: Observables[];
+    observables?: Observable[];
     time?: any;
 }
 
@@ -331,11 +331,12 @@ export interface Rate {
     expressionMathml: string;
 }
 
-export interface Observables {
+export interface Observable {
     id: string;
     name?: string;
+    states: string[];
     expression?: string;
-    expression_mathml?: string;
+    expressionMathml?: string;
 }
 
 export interface TypeSystem {
