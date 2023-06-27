@@ -219,7 +219,6 @@
 					:asset-id="props.assetId"
 					:show-jupyter-settings="showKernels"
 					:show-chat-thought="showChatThoughts"
-					:jupyter-session="jupyterSession"
 					@update-table-preview="updateJupyterTable"
 					@update-kernel-status="updateKernelStatus"
 				/>
@@ -242,20 +241,18 @@ import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraJupyterChat from '@/components/llm/tera-jupyter-chat.vue';
 import { IProject } from '@/types/Project';
 import Menu from 'primevue/menu';
-import { newSession } from '@/services/jupyter';
-
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import RelatedPublications from '../widgets/tera-related-publications.vue';
-
-const jupyterSession = newSession('llmkernel', 'ChattyNode');
+// import { newSession } from '@/services/jupyter';
+// import { SessionContext } from '@jupyterlab/apputils';
+// const jupyterSession = ref(<SessionContext | null>null);
 
 enum DatasetView {
 	DESCRIPTION = 'description',
 	DATA = 'data',
 	LLM = 'llm'
 }
-
 const props = defineProps<{
 	assetId: string;
 	isEditable: boolean;
@@ -264,8 +261,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close-preview', 'asset-loaded']);
-const kernelStatus = ref('');
-
+const kernelStatus = ref(<String>'');
+const metadata = ref();
 const showKernels = ref(<boolean>false);
 const showChatThoughts = ref(<boolean>false);
 const menu = ref();

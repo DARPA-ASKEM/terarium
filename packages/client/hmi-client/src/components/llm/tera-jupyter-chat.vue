@@ -43,7 +43,7 @@
 			<tera-jupyter-response
 				v-for="(msg, index) in nestedMessages"
 				:key="index"
-				:jupyter-session="props.jupyterSession"
+				:jupyter-session="jupyterSession"
 				:asset-id="props.assetId"
 				:msg="msg"
 				:has-been-drawn="renderedMessages.has(msg.query_id)"
@@ -55,11 +55,9 @@
 			<!-- Chatty Input -->
 			<tera-chatty-input
 				class="tera-chatty-input"
-				:llm-context="props.jupyterSession"
-				@update-kernel-status="updateKernelStatus"
-				@new-message="newJupyterResponse"
+				:kernel-is-busy="isBusy"
 				context="dataset"
-				:context_info="{ id: props.assetId }"
+				@submitQuery="submitQuery"
 			/>
 		</div>
 	</div>
@@ -68,7 +66,7 @@
 // import SliderPanel from '@/components/widgets/slider-panel.vue';
 import { ref, watch, onUnmounted, onMounted, computed } from 'vue';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { JupyterMessage, sessionManager, serverSettings } from '@/services/jupyter';
+import { newSession, JupyterMessage, sessionManager, serverSettings } from '@/services/jupyter';
 import { CsvAsset } from '@/types/Types';
 import { useConfirm } from 'primevue/useconfirm';
 import TeraChattyInput from '@/components/llm/tera-chatty-input.vue';
@@ -78,29 +76,19 @@ import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { shutdownKernel } from '@jupyterlab/services/lib/kernel/restapi';
 import ConfirmDialog from 'primevue/confirmdialog';
-import { SessionContext } from '@jupyterlab/apputils';
+import { IKernelConnection } from '@jupyterlab/services/lib/kernel/kernel';
+import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
 
+const jupyterSession = newSession('llmkernel', 'ChattyNode');
+
+const messagesHistory = ref<JupyterMessage[]>([]);
+const selectedKernel = ref();
+const activeSessions = ref(sessionManager.running());
+const isExecutingCode = ref(false);
+const renderedMessages = ref(new Set<any>());
 const messageContainer = ref(<HTMLElement | null>null);
-
-watch(
-	() => messageContainer.value,
-	() => {
-		if (messageContainer.value) {
-			messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
-		}
-	},
-	{ deep: true } // enable deep watching in case msg.messages is an array of objects
-);
-
-// let jupyterCsv: CsvAsset | null = null;
-
-// function cloneCsvAsset(asset: CsvAsset): CsvAsset {
-// 	return {
-// 		csv: [...asset.csv.map((row) => [...row])], // create a copy of each sub-array
-// 		stats: asset.stats ? [...asset.stats] : undefined, // copy stats array if it exists
-// 		headers: [...asset.headers] // copy headers array
-// 	};
-// }
+const confirm = useConfirm();
+const runningSessions = ref();
 
 const emit = defineEmits(['new-message', 'update-table-preview', 'update-kernel-status']);
 
@@ -112,25 +100,98 @@ const props = defineProps<{
 	showHistory?: { value: boolean; default: false };
 	showJupyterSettings?: boolean;
 	showChatThought?: boolean;
-	jupyterSession: SessionContext;
+	// jupyterSession: SessionContext;
 }>();
-
-const confirm = useConfirm();
-const runningSessions = ref();
-
-// const jupyterSession = newSession('llmkernel', 'ChattyNode');
-const messagesHistory = ref<JupyterMessage[]>([]);
-const selectedKernel = ref();
-const activeSessions = ref(sessionManager.running());
-const isExecutingCode = ref(false);
-
-const renderedMessages = ref(new Set<any>());
 
 const isQuery = (message) => message.header.msg_type === 'llm_request';
 const hasBeenDrawn = (message_id: string) => {
 	renderedMessages.value.add(message_id);
 	messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
 };
+
+jupyterSession.kernelChanged.connect((_context, kernelInfo) => {
+	const kernel = kernelInfo.newValue;
+	if (kernel?.name === 'llmkernel') {
+		setKernelContext(kernel as IKernelConnection, {
+			context: 'dataset',
+			context_info: { id: props.assetId }
+		});
+	}
+});
+
+// Lower case staes to match the naming in the messages.
+enum KernelState {
+	unknown = 'unknown',
+	starting = 'starting',
+	idle = 'idle',
+	busy = 'busy',
+	terminating = 'terminating',
+	restarting = 'restarting',
+	autorestarting = 'autorestarting',
+	dead = 'dead'
+}
+
+const isBusy = computed(() => activeKernelState.value !== KernelState.idle);
+
+const queryString = ref('');
+const activeKernelState = ref(<String>KernelState.idle);
+
+const setKernelContext = (kernel: IKernelConnection, context_info) => {
+	const messageBody = {
+		session: jupyterSession.session?.name || '',
+		channel: 'shell',
+		content: context_info,
+		msgType: 'context_setup_request',
+		msgId: `${kernel.id}-setcontext`
+	};
+	const message: JupyterMessage = createMessage(messageBody);
+	kernel?.sendJupyterMessage(message);
+	activeKernelState.value = KernelState.busy;
+};
+
+const iopubMessageHandler = (_session, message) => {
+	if (message.msg_type === 'status') {
+		const newState: KernelState = KernelState[KernelState[message.content.execution_state]];
+		activeKernelState.value = KernelState[newState];
+		updateKernelStatus(activeKernelState.value);
+		return;
+	}
+	newJupyterResponse(message);
+};
+
+jupyterSession.iopubMessage.connect(iopubMessageHandler);
+
+const submitQuery = (inputStr: string | undefined) => {
+	console.log(inputStr);
+	if (inputStr !== undefined) {
+		const kernel = jupyterSession.session?.kernel as IKernelConnection;
+		if (kernel === undefined || kernel === null) {
+			return;
+		}
+		activeKernelState.value = KernelState.busy;
+		updateKernelStatus(activeKernelState.value);
+		const message: JupyterMessage = createMessage({
+			session: jupyterSession.session?.name || '',
+			channel: 'shell',
+			content: { request: inputStr },
+			msgType: 'llm_request',
+			msgId: `${kernel.id}-setcontext`
+		});
+		kernel?.sendJupyterMessage(message);
+		newJupyterResponse({ ...message, msg_type: 'llm_request' });
+		queryString.value = '';
+	}
+};
+
+// let jupyterCsv: CsvAsset | null = null;
+
+// function cloneCsvAsset(asset: CsvAsset): CsvAsset {
+// 	return {
+// 		csv: [...asset.csv.map((row) => [...row])], // create a copy of each sub-array
+// 		stats: asset.stats ? [...asset.stats] : undefined, // copy stats array if it exists
+// 		headers: [...asset.headers] // copy headers array
+// 	};
+// }
 
 const nestedMessages = computed(() => {
 	// This computed property groups Jupyter messages into queries
@@ -205,6 +266,52 @@ const nestedMessages = computed(() => {
 	return result;
 });
 
+// eslint-disable-next-line vue/return-in-computed-property
+const updateKernelList = () => {
+	jupyterSession.ready.then(() => {
+		if (jupyterSession.session) {
+			const sessions = sessionManager.running();
+			const results: IModel[] = [];
+			let result = sessions.next();
+			while (result) {
+				result = sessions.next();
+			}
+			runningSessions.value = undefined;
+			runningSessions.value = results
+				.reverse()
+				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
+			selectedKernel.value = {
+				kernelId: jupyterSession.session?.kernel?.id,
+				value: jupyterSession.session?.id
+			};
+		}
+	});
+};
+
+const updateKernelStatus = (kernelStatus) => {
+	emit('update-kernel-status', kernelStatus);
+};
+
+const newJupyterResponse = (jupyterResponse) => {
+	if (
+		['stream', 'code_cell', 'llm_request', 'chatty_response'].indexOf(
+			jupyterResponse.header.msg_type
+		) > -1
+	) {
+		messagesHistory.value.push(jupyterResponse);
+		isExecutingCode.value = false;
+		emit('new-message', messagesHistory.value);
+	} else if (jupyterResponse.header.msg_type === 'dataset') {
+		emit('update-table-preview', jupyterResponse.content);
+		// jupyterCsv = jupyterResponse.content;
+		isExecutingCode.value = false;
+	} else if (jupyterResponse.header.msg_type === 'execute_input') {
+		isExecutingCode.value = true;
+	} else {
+		console.log('Unknown Jupyter event', jupyterResponse);
+	}
+};
+
 const killKernel = () => {
 	shutdownKernel(selectedKernel.value.kernelId, serverSettings);
 	updateKernelList();
@@ -254,7 +361,7 @@ const confirmDelete = () => {
 watch(
 	() => [activeSessions.value],
 	() => {
-		if (props.jupyterSession.session) {
+		if (jupyterSession.session) {
 			const sessions = sessionManager.running();
 			const results: IModel[] = [];
 			let result = sessions.next();
@@ -271,27 +378,15 @@ watch(
 	{ deep: true }
 );
 
-// eslint-disable-next-line vue/return-in-computed-property
-const updateKernelList = () => {
-	props.jupyterSession.ready.then(() => {
-		if (props.jupyterSession.session) {
-			const sessions = sessionManager.running();
-			const results: IModel[] = [];
-			let result = sessions.next();
-			while (result) {
-				result = sessions.next();
-			}
-			runningSessions.value = undefined;
-			runningSessions.value = results
-				.reverse()
-				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
-			selectedKernel.value = {
-				kernelId: props.jupyterSession.session?.kernel?.id,
-				value: props.jupyterSession.session?.id
-			};
+watch(
+	() => messageContainer.value,
+	() => {
+		if (messageContainer.value) {
+			messageContainer.value?.scrollIntoView({ behavior: 'smooth' });
 		}
-	});
-};
+	},
+	{ deep: true } // enable deep watching in case msg.messages is an array of objects
+);
 
 watch(
 	() => [
@@ -303,34 +398,10 @@ watch(
 	}
 );
 
-const updateKernelStatus = (kernelStatus) => {
-	emit('update-kernel-status', kernelStatus);
-};
-
-const newJupyterResponse = (jupyterResponse) => {
-	if (
-		['stream', 'code_cell', 'llm_request', 'chatty_response'].indexOf(
-			jupyterResponse.header.msg_type
-		) > -1
-	) {
-		messagesHistory.value.push(jupyterResponse);
-		isExecutingCode.value = false;
-		emit('new-message', messagesHistory.value);
-	} else if (jupyterResponse.header.msg_type === 'dataset') {
-		emit('update-table-preview', jupyterResponse.content);
-		// jupyterCsv = jupyterResponse.content;
-		isExecutingCode.value = false;
-	} else if (jupyterResponse.header.msg_type === 'execute_input') {
-		isExecutingCode.value = true;
-	} else {
-		console.log('Unknown Jupyter event', jupyterResponse);
-	}
-};
-
 onMounted(() => {
 	// for admin panel
-	props.jupyterSession.ready.then(() => {
-		if (props.jupyterSession.session) {
+	jupyterSession.ready.then(() => {
+		if (jupyterSession.session) {
 			const sessions = sessionManager.running();
 			const results: IModel[] = [];
 			let result = sessions.next();
@@ -342,15 +413,15 @@ onMounted(() => {
 				.reverse()
 				.map((r) => ({ kernelId: r.kernel?.id, value: r.id }));
 			selectedKernel.value = {
-				kernelId: props.jupyterSession.session?.kernel?.id,
-				value: props.jupyterSession.session?.id
+				kernelId: jupyterSession.session?.kernel?.id,
+				value: jupyterSession.session?.id
 			};
 		}
 	});
 });
 
 onUnmounted(() => {
-	props.jupyterSession.shutdown();
+	jupyterSession.shutdown();
 });
 </script>
 

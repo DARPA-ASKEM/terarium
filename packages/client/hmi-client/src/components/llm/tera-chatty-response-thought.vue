@@ -59,11 +59,11 @@ const displayedText = computed(() =>
 	margin: 0;
 	opacity: 0;
 	padding: 0;
-	transition: opacity 1s, margin 1s ease-in, padding 1s ease-in, max-height 1.5s ease;
+	transition: opacity 2s, margin 3s ease-in, padding 3s ease-in, max-height 2.2s ease-in;
 }
 
 .show {
-	transition: margin 2.5s ease-in, opacity 2.5s ease-in, max-height 2s ease-out;
+	transition: margin 2.5s ease-in, opacity 1s ease-in, max-height 2s ease-in;
 }
 
 .blinking-cursor {
