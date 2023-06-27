@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref } from 'vue';
+import { computed, shallowRef, watch, ref, ComputedRef } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
@@ -96,7 +96,9 @@ const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
 const calibrateNumCharts = ref<number>(1);
 const runResults = ref<RunResults>({});
-const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
+const simulationIds: ComputedRef<any | undefined> = computed(
+	<any | undefined>(() => props.node.outputs[0]?.value)
+);
 
 const mapping = ref<any[]>([
 	{
