@@ -67,12 +67,13 @@ import {
 } from '@/types/Types';
 // import TeraSimulateChart from './tera-simulate-chart.vue';
 import { makeCalibrateJob, getSimulation } from '@/services/models/simulation-service';
+import { CalibrationOperation } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
 
-// const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port']);
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -106,7 +107,6 @@ watch(
 	async () => {
 		if (modelConfigId.value) {
 			modelConfig.value = await getModelConfigurationById(modelConfigId.value);
-			console.log(modelConfig.value);
 			// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
 			modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
 			modelColumnNames.value?.push('timestep');
@@ -133,11 +133,32 @@ watch(
 );
 
 const runCalibrate = async () => {
-	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
+	if (
+		!modelConfigId.value ||
+		!datasetId.value ||
+		!currentDatasetFileName.value ||
+		!modelConfig.value
+	)
+		return;
+
 	const formattedMap: { [index: string]: string } = {};
 	mapping.value.forEach((ele) => {
 		formattedMap[ele.datasetVariable] = ele.modelVariable;
 	});
+	// TODO: TS/1225 -> Should not have to rand results
+	// console.log(modelConfig.value as any);
+	// const initials = (modelConfig.value as any).semantics.ode.initials.map((d) => d.target);
+	// const rates = (modelConfig.value as any).semantics.ode.rates.map((d) => d.target);
+	// const initialsObj = {};
+	// const paramsObj = {};
+
+	// initials.forEach((d) => {
+	// 	initialsObj[d] = Math.random() * 100;
+	// });
+	// rates.forEach((d) => {
+	// 	paramsObj[d] = Math.random() * 0.05;
+	// });
+
 	const calibrationRequest: CalibrationRequest = {
 		modelConfigId: modelConfigId.value,
 		dataset: {
@@ -177,6 +198,7 @@ const getStatus = async () => {
 	if (currentSimulation && currentSimulation.status === 'complete') {
 		completedRunId.value = startedRunId.value;
 		console.log(completedRunId.value); // TOM TODO: Just console for testing:
+		updateOutputPorts(completedRunId);
 		// showSpinner.value = false;
 	} else if (currentSimulation && ongoingStatusList.includes(currentSimulation.status)) {
 		// recursively call until all runs retrieved
@@ -186,6 +208,17 @@ const getStatus = async () => {
 		console.error('Failed', startedRunId.value);
 		throw Error('Failed Runs');
 	}
+};
+
+const updateOutputPorts = async (runId) => {
+	const port = props.node.inputs[0];
+	emit('append-output-port', {
+		type: CalibrationOperation.outputs[0].type,
+		label: `${port.label} Results`,
+		value: {
+			runId
+		}
+	});
 };
 
 function addMapping() {
