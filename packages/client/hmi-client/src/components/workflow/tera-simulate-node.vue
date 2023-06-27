@@ -62,26 +62,34 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
+	const modelConfigurationObj = modelConfiguration.value as any;
+	const semantics = modelConfigurationObj.amrConfiguration.semantics;
+	const ode = semantics.ode;
+
+	// FIXME: Dummy up the payload to make things work, but not correct results
+	const initials = ode.initials.map((d) => d.target);
+	const rates = ode.rates.map((d) => d.target);
+	const initialsObj = {};
+	const paramsObj = {};
+
+	initials.forEach((d) => {
+		initialsObj[d] = Math.random() * 100;
+	});
+	rates.forEach((d) => {
+		paramsObj[d] = Math.random() * 0.05;
+	});
+
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload = {
 			modelConfigId: configId,
 			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
 			extra: {
-				// FIXME: need to use real value
-				initials: {
-					S: 100,
-					I: 1,
-					R: 0
-				},
-				params: {
-					inf: 0.002,
-					rec: 0.004
-				}
+				initials: initialsObj,
+				params: paramsObj
 			},
 			engine: 'sciml'
 		};
 		const response = await makeForecastJob(payload);
-		console.log(response.id, payload);
 		return response.id;
 	});
 
@@ -147,7 +155,8 @@ watch(
 		if (modelConfigId.value) {
 			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
 		}
-	}
+	},
+	{ immediate: true }
 );
 
 watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });

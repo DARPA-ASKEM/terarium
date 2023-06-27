@@ -75,7 +75,7 @@
 		"@types/d3": "7.4.0",
 		"@types/lodash": "4.14.195",
 		"@types/node": "18.11.18",
-		"@types/p5": "1.5.0",
+		"@types/p5": "1.6.2",
 		"@vitejs/plugin-vue": "4.2.3",
 		"@vitest/coverage-c8": "0.24.5",
 		"typescript": "5.0.4",

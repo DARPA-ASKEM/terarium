@@ -75,6 +75,46 @@ async function createNewDataset(dataset: Dataset): Promise<Dataset | null> {
 	return null;
 }
 
+async function createNewDatasetFromGithubFile(
+	repoOwnerAndName: string,
+	path: string,
+	userName: string,
+	projectId: string
+) {
+	// Find the file name by removing the path portion
+	const fileName: string | undefined = path.split('/').pop();
+
+	if (!fileName) return null;
+
+	// Remove the file extension from the name, if any
+	const name: string = fileName?.replace(/\.[^/.]+$/, '');
+
+	// Create a new dataset with the same name as the file, and post the metadata to TDS
+	const dataset: Dataset = {
+		name,
+		url: '',
+		description: path,
+		fileNames: [fileName],
+		username: userName
+	};
+
+	const newDataSet: Dataset | null = await createNewDataset(dataset);
+	if (!newDataSet || !newDataSet.id) return null;
+
+	const urlResponse = await API.put(
+		`/datasets/${newDataSet.id}/uploadCSVFromGithub?filename=${fileName}&path=${path}&repoOwnerAndName=${repoOwnerAndName}`,
+		{
+			timeout: 30000
+		}
+	);
+
+	if (!urlResponse || urlResponse.status >= 400) {
+		return null;
+	}
+
+	return addAsset(projectId, ProjectAssetTypes.DATASETS, newDataSet.id);
+}
+
 /**
  * This is a helper function which creates a new dataset and adds a given CSV file to it. The data set will
  * share the same name as the file and can optionally have a description
@@ -141,5 +181,6 @@ export {
 	getBulkDatasets,
 	downloadRawFile,
 	createNewDatasetFromCSV,
-	createNewDataset
+	createNewDataset,
+	createNewDatasetFromGithubFile
 };

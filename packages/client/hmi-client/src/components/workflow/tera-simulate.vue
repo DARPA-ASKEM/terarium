@@ -17,7 +17,7 @@
 				:active="activeTab === SimulateTabs.output"
 				@click="activeTab = SimulateTabs.output"
 			/>
-			<span class="simulate-header-label">Simulate</span>
+			<span class="simulate-header-label">Simulate (deterministic)</span>
 		</div>
 		<div
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
@@ -42,7 +42,7 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ modelConfiguration?.configuration.name }} </template>
+						<template #header> {{ modelConfiguration?.amrConfiguration.name }} </template>
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>

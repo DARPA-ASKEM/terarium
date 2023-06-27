@@ -37,8 +37,11 @@
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
-			<AccordionTab :header="modelConfiguration.configuration.model.name">
-				<tera-model-diagram :model="modelConfiguration.configuration.model" :is-editable="false" />
+			<AccordionTab :header="modelConfiguration.amrConfiguration.model.name">
+				<tera-model-diagram
+					:model="modelConfiguration.amrConfiguration.model"
+					:is-editable="false"
+				/>
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
 				<!-- <tera-model-configuration
@@ -236,11 +239,11 @@ const datasetName = computed(() => props.node.inputs[1].label?.[0]);
 // Model variables checked in the model configuration will be options in the mapping dropdown
 const modelVariables = computed(() => {
 	if (modelConfigurationRef.value) {
-		return modelConfiguration.value?.configuration.model.model.states
+		return modelConfiguration.value?.amrConfiguration.model.model.states
 			.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.sname))
 			.map((state) => state.sname);
 	}
-	return modelConfiguration.value?.configuration.model.model.states.map((state) => state.sname);
+	return modelConfiguration.value?.amrConfiguration.model.model.states.map((state) => state.sname);
 });
 
 const disableRunButton = computed(
