@@ -155,7 +155,9 @@
 											<label>Identifiers</label>
 										</td>
 										<td>
-											<button type="submit" label="submit" />
+											<!-- TODO: needs to make those button active -->
+											<Button icon="pi pi-check" text rounded aria-label="Save" />
+											<Button icon="pi pi-times" text rounded aria-label="Discard" />
 										</td>
 									</template>
 									<template v-else>
