@@ -1,9 +1,9 @@
 <template>
 	<DataTable
-		v-if="configurations?.[0]?.initials && configurations?.[0]?.parameters"
+		v-if="!isEmpty(amrConfigurations) && !isEmpty(tableHeaders)"
 		class="model-configuration"
 		v-model:selection="selectedModelConfig"
-		:value="modelConfigurationTable"
+		:value="amrConfigurations"
 		editMode="cell"
 		showGridlines
 		scrollable
@@ -11,16 +11,12 @@
 	>
 		<ColumnGroup type="header">
 			<Row>
-				<Column v-if="isEditable" header="" style="border: none" frozen />
-				<Column header="" style="border: none" frozen />
+				<Column v-if="isEditable" header="" frozen />
+				<Column header="" frozen />
 				<Column
-					v-for="(header, i) in Object.keys(configurations[0])"
-					:header="capitalize(header)"
-					:colspan="
-						header === 'observables'
-							? configurations[0][header].length + 1
-							: configurations[0][header].length
-					"
+					v-for="({ name, colspan }, i) in tableHeaders"
+					:header="capitalize(name)"
+					:colspan="colspan"
 					:key="i"
 				/>
 			</Row>
@@ -28,17 +24,17 @@
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
 				<Column :header="isEditable ? 'Select all' : ''" frozen />
 				<Column
-					v-for="(variableName, i) in configurations[0].rates"
+					v-for="(variableName, i) in amrConfigurations[0]?.semantics?.ode.rates"
 					:header="variableName.target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in configurations[0].initials"
+					v-for="(variableName, i) in amrConfigurations[0]?.semantics?.ode.initials"
 					:header="variableName.target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in configurations[0].parameters"
+					v-for="(variableName, i) in amrConfigurations[0]?.semantics?.ode.parameters"
 					:header="variableName.id"
 					:key="i"
 				/>
@@ -46,6 +42,7 @@
 			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
 		</ColumnGroup>
 		<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
+		<!--Need to get from editableConfigs-->
 		<Column field="name" frozen>
 			<template #body="{ data, field }">
 				{{ data[field] }}
@@ -54,29 +51,66 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<!--TODO: The slice here skips the name attribute, see about skipping it and rates in a clearer way-->
-		<Column
-			v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
-				1,
-				Object.keys(modelConfigurationTable[0]).length
-			)"
-			:key="i"
-			:field="value"
-		>
-			<template #body="{ data, field }">
+		<Column v-for="(rate, i) of amrConfigurations[0]?.semantics?.ode.rates" :key="i">
+			<template #body>
 				<section class="editable-cell">
-					<span>{{ data[field]?.value }}</span>
+					<span>{{ rate.expression }}</span>
 					<Button
 						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 						icon="pi pi-ellipsis-v"
-						@click.stop="openValueModal(data, field)"
+						@click.stop="openValueModal(rate, 'expression')"
 					/>
+				</section>
+			</template>
+			<template #editor>
+				<InputText v-model="rate.expression" autofocus />
+			</template>
+		</Column>
+		<Column v-for="(initial, i) of amrConfigurations[0]?.semantics?.ode.initials" :key="i">
+			<template #body>
+				<section class="editable-cell">
+					<span>{{ initial.expression }}</span>
+					<Button
+						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"
+						@click.stop="openValueModal(initial, 'expression')"
+					/>
+				</section>
+			</template>
+			<template #editor>
+				<InputText v-model="initial.expression" autofocus />
+			</template>
+		</Column>
+		<Column v-for="(parameter, i) of amrConfigurations[0]?.semantics?.ode.parameters" :key="i">
+			<template #body>
+				<section class="editable-cell">
+					<span>{{ parameter.value }}</span>
+					<Button
+						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"
+						@click.stop="openValueModal(parameter, 'value')"
+					/>
+				</section>
+			</template>
+			<template #editor>
+				<InputText v-model="parameter.value" autofocus />
+			</template>
+		</Column>
+		<!-- <Column v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
+			1,
+			Object.keys(modelConfigurationTable[0]).length
+		)" :key="i" :field="value">
+			<template #body="{ data, field }">
+				<section class="editable-cell">
+					<span>{{ data[field]?.value }}</span>
+					<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v" @click.stop="openValueModal(data, field)" />
 				</section>
 			</template>
 			<template #editor="{ data, field }">
 				<InputText v-if="data[field].value" v-model="data[field].value" autofocus />
 			</template>
-		</Column>
+		</Column> -->
 		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
 			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
@@ -122,7 +156,7 @@
 							<label for="name">Value</label>
 							<InputText
 								class="p-inputtext-sm"
-								v-model="cellValueToEdit.data[cellValueToEdit.field].value"
+								v-model="cellValueToEdit.data[cellValueToEdit.field]"
 							/>
 						</div>
 					</TabPanel>
@@ -144,7 +178,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
+import { cloneDeep, capitalize, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
@@ -155,8 +189,7 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import { ModelConfiguration } from '@/types/Types';
-import { AnyValueMap } from '@/types/common';
+import { ModelConfiguration, Model } from '@/types/Types';
 import {
 	createModelConfiguration,
 	updateModelConfiguration
@@ -184,74 +217,25 @@ const cellValueToEdit = ref({ data: {}, field: '' });
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-const configurations = computed<any[]>(
-	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
+const amrConfigurations = computed<Model[]>(
+	() => editableModelConfigs.value?.map((m) => m.amrConfiguration) ?? []
 );
 
-// TODO: Clean this up and use appropriate loops
-const modelConfigurationTable = computed(() => {
-	if (editableModelConfigs.value && !isEmpty(configurations.value)) {
-		// console.log('Configuration', configurations.value);
+// Determines names of headers and how many columns they'll span eg. initials, parameters, observables
+const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
+	const headerNames =
+		Object.keys(props.modelConfigurations[0]?.amrConfiguration.semantics.ode) ?? [];
+	const result: { name: string; colspan: number }[] = [];
 
-		const odes: object[] = [];
-
-		for (let i = 0; i < configurations.value.length; i++) {
-			if (configurations.value[i]) {
-				odes.push({});
-				// eslint-disable-next-line
-				for (const key of Object.keys(configurations.value[i])) {
-					odes[i][key] = [];
-
-					// FIXME: need to parse time correctly
-					if (key === 'time') continue;
-
-					configurations.value[i][key].forEach((value) => {
-						const newPair = {};
-						newPair[value.target ?? value.id] = value.expression ?? value.value;
-						odes[i][key].push(newPair);
-					});
-				}
-			}
+	for (let i = 0; i < headerNames.length; i++) {
+		if (amrConfigurations.value?.[0]?.semantics?.ode[headerNames[i]]) {
+			result.push({
+				name: headerNames[i],
+				colspan: amrConfigurations.value?.[0]?.semantics?.ode[headerNames[i]].length
+			});
 		}
-		// console.log(odes);
-
-		const variables: AnyValueMap[] = [];
-		// eslint-disable-next-line
-		for (let i = 0; i < odes.length; i++) {
-			variables[i] = {};
-			// eslint-disable-next-line
-			for (const [key, values] of Object.entries(odes[i])) {
-				const flattenedObj = {};
-
-				if (isArray(values)) {
-					// @ts-ignore
-					// eslint-disable-next-line
-					for (let j = 0; j < values.length; j++) {
-						const newKey: string = Object.keys(values[j])[0];
-						const newVal = {};
-						newVal[newKey] = {
-							value: Object.values(values[j])[0],
-							type: key,
-							name: newKey,
-							typeIndex: j,
-							configIndex: i
-						};
-						Object.assign(flattenedObj, newVal);
-					}
-					// console.log(flattenedObj, values, key);
-				}
-				variables[i] = { ...variables[i], ...flattenedObj };
-			}
-		}
-
-		// console.log(variables);
-
-		return editableModelConfigs.value.map((modelConfig, i) => ({
-			name: modelConfig.name,
-			...variables[i]
-		}));
 	}
-	return [];
+	return result;
 });
 
 // TODO: Reimplement this for calibration
@@ -318,6 +302,9 @@ function updateModelConfigValue(
 }
 
 function initializeConfigSpace() {
+	const amr: Model = props.modelConfigurations[0].amrConfiguration;
+	console.log(amr);
+
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	extractions.value = ['Default'];
