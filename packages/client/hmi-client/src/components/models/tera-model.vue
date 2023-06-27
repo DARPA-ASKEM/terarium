@@ -510,7 +510,9 @@ const states = computed(() => model.value?.model?.states ?? []);
 const transitions = computed(() => model.value?.model?.transitions ?? []);
 const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
 const publications = computed(() =>
-	props.assetId === 'biomd0000000955-model-id' ? ['https://arxiv.org/pdf/2003.09861.pdf'] : []
+	['biomd0000000955-model-id', '58ba4f73-56e3-44a5-aa03-138224beec11'].includes(props.assetId)
+		? ['https://arxiv.org/pdf/2003.09861.pdf']
+		: []
 );
 const extractions = computed(() => {
 	const attributes = model.value?.metadata?.attributes ?? [];
