@@ -119,7 +119,7 @@
 							</div>
 						</div>
 						<div
-							v-for="(column, index) in dataset.columns"
+							v-for="(column, index) in editableRows"
 							class="variables-row"
 							:key="index"
 							@click="rowEditList[index] = true"
@@ -131,27 +131,27 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
-								@focus="setSuggestedValue(index, column.name)"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
 							/>
-							<div v-else>{{ column.name }}</div>
+							<div class="variables-value" v-else>{{ column.name }}</div>
 							<!-- name - currently just a formatted id -->
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.name"
-								@focus="setSuggestedValue(index, column.name)"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].name)"
 							/>
-							<div v-else>{{ formatName(column.name) }}</div>
+							<div class="variables-value" v-else>{{ formatName(column.name) }}</div>
 							<!-- data type -->
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.dataType"
-								@focus="setSuggestedValue(index, column.dataType)"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].dataType)"
 							/>
-							<div v-else>{{ column.dataType }}</div>
+							<div class="variables-value" v-else>{{ column.dataType }}</div>
 							<!-- units - field does not exist in tds yet -->
 							<InputText
 								class="p-inputtext-sm"
@@ -159,17 +159,24 @@
 								v-if="rowEditList[index]"
 								@focus="setSuggestedValue(index, '')"
 							/>
-							<div v-else>-</div>
+							<div class="variables-value" v-else>-</div>
 							<!-- grounding -->
 							<InputText
 								class="p-inputtext-sm"
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="groundingValues[index][0]"
-								@focus="setSuggestedValue(index, groundingValues[index][0])"
+								@focus="
+									setSuggestedValue(
+										index,
+										dataset.columns?.[index].grounding?.identifiers[
+											Object.keys(dataset.columns?.[index].grounding?.identifiers!)[0]
+										]
+									)
+								"
 							/>
-							<div v-else>
-								{{ column.grounding?.identifiers[Object.keys(column.grounding.identifiers)[0]] }}
+							<div class="variables-value" v-else>
+								{{ groundingValues[index][0] }}
 							</div>
 							<!-- extractions - field does not exist in tds yet -->
 							<InputText
@@ -178,10 +185,28 @@
 								v-if="rowEditList[index]"
 								@focus="setSuggestedValue(index, '')"
 							/>
-							<div v-else></div>
+							<div class="variables-value" v-else></div>
 							<div v-if="rowEditList[index]" class="row-edit-buttons">
-								<Button text icon="pi pi-times" @click.stop="rowEditList[index] = false" />
-								<Button text icon="pi pi-check" @click.stop="rowEditList[index] = false" />
+								<Button
+									text
+									icon="pi pi-times"
+									@click.stop="
+										() => {
+											rowEditList[index] = false;
+											cancelRowEdits(index);
+										}
+									"
+								/>
+								<Button
+									text
+									icon="pi pi-check"
+									@click.stop="
+										() => {
+											rowEditList[index] = false;
+											saveRowEdits(index);
+										}
+									"
+								/>
 							</div>
 							<!-- description -->
 							<InputText
@@ -189,9 +214,11 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="column.description"
-								@focus="setSuggestedValue(index, column.description)"
+								@focus="setSuggestedValue(index, dataset.columns?.[index].description)"
 							/>
-							<div class="variables-description" v-else>{{ column.description }}</div>
+							<div class="variables-description variables-value" v-else>
+								{{ column.description }}
+							</div>
 							<div v-if="rowEditList[index]" class="variables-suggested">
 								<span>Suggested value</span>
 								<div>
@@ -238,7 +265,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Message from 'primevue/message';
 import * as textUtil from '@/utils/text';
 import { isString } from 'lodash';
-import { CsvAsset, Dataset } from '@/types/Types';
+import { CsvAsset, Dataset, DatasetColumn } from '@/types/Types';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import InputText from 'primevue/inputtext';
@@ -289,13 +316,39 @@ function setSuggestedValue(index: number, suggestedValue: string | undefined) {
 }
 
 const rowEditList = ref<boolean[]>([]);
+const editableRows = ref<DatasetColumn[]>([]);
+
+function cancelRowEdits(index: number) {
+	if (dataset.value?.columns) {
+		editableRows.value[index] = { ...dataset.value.columns[index] };
+		groundingValues.value[index] = (() => {
+			const grounding = editableRows.value[index].grounding;
+			if (grounding) {
+				const keys = Object.keys(grounding.identifiers);
+				return keys.map((k) => grounding.identifiers[k]);
+			}
+			return [];
+		})();
+		console.log(groundingValues.value[index]);
+	}
+}
+
+function saveRowEdits(index: number) {
+	if (dataset.value?.columns) {
+		dataset.value.columns[index] = { ...editableRows.value[index] };
+	}
+}
 
 onUpdated(() => {
 	if (dataset.value) {
 		emit('asset-loaded');
+
+		// setting values related to editing rows in the variables table
 		if (dataset.value.columns) {
 			rowEditList.value = dataset.value.columns.map(() => false);
-			groundingValues.value = dataset.value.columns.map((column) => {
+			suggestedValues.value = dataset.value.columns.map(() => '');
+			editableRows.value = dataset.value.columns.map((c) => ({ ...c }));
+			groundingValues.value = editableRows.value.map((column) => {
 				const grounding = column.grounding;
 				if (grounding) {
 					const keys = Object.keys(grounding.identifiers);
@@ -303,7 +356,6 @@ onUpdated(() => {
 				}
 				return [];
 			});
-			suggestedValues.value = dataset.value.columns.map(() => '');
 		}
 	}
 });
