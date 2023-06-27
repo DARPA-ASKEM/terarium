@@ -3,6 +3,7 @@
 import { Model } from '@/types/Types';
 
 export const SIDARTHE: Model = {
+	id: 'biomd0000000955-model-id',
 	name: 'Giordano2020 - SIDARTHE model of COVID-19 spread in Italy',
 	schema:
 		'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.5/petrinet/petrinet_schema.json',
