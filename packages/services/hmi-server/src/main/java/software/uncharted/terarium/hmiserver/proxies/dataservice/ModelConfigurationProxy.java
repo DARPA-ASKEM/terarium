@@ -28,7 +28,7 @@ public interface ModelConfigurationProxy {
 
 	@GET
 	@Path("/{id}")
-	Response getModelConfiguration(
+	ModelConfiguration getModelConfiguration(
 		@PathParam("id") String id
 	);
 
@@ -37,7 +37,7 @@ public interface ModelConfigurationProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateModelConfiguration(
 		@PathParam("id") String id,
-		ModelConfiguration config
+		JsonNode config
 	);
 
 	@DELETE

@@ -179,7 +179,7 @@ import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
 import { SimulateOperation } from '@/components/workflow/simulate-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
-import ContextMenu from 'primevue/contextmenu';
+import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import * as workflowService from '@/services/workflow';
@@ -298,27 +298,47 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Calibrate',
-		command: () => {
-			workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
-			workflowDirty = true;
-		}
-	},
-	{
-		label: 'Simulate',
-		command: () => {
-			workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
-				width: 420,
-				height: 220
-			});
-			workflowDirty = true;
-		}
-	},
-	{
 		label: 'Stratify',
 		command: () => {
 			workflowService.addNode(wf.value, StratifyOperation, newNodePosition);
 		}
+	},
+	{
+		label: 'Deterministic',
+		items: [
+			{
+				label: 'Simulate',
+				command: () => {
+					workflowService.addNode(wf.value, SimulateOperation, newNodePosition, {
+						width: 420,
+						height: 220
+					});
+					workflowDirty = true;
+				}
+			},
+			{
+				label: 'Calibrate',
+				command: () => {
+					workflowService.addNode(wf.value, CalibrationOperation, newNodePosition);
+					workflowDirty = true;
+				}
+			}
+		]
+	},
+	{
+		label: 'Probabilistic',
+		items: [
+			{
+				label: 'Simulate',
+				disabled: true,
+				command: () => {}
+			},
+			{
+				label: 'Calibrate & Simulate',
+				disabled: true,
+				command: () => {}
+			}
+		]
 	}
 ]);
 const addComponentMenu = ref();

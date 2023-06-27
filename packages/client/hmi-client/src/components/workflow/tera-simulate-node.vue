@@ -6,7 +6,6 @@
 				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
 				:run-results="runResults"
-				:run-id-list="completedRunIdList"
 				:chart-idx="index"
 			/>
 		</div>
@@ -24,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
 import { ModelConfiguration } from '@/types/Types';
@@ -63,26 +62,34 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
+	const modelConfigurationObj = modelConfiguration.value as any;
+	const semantics = modelConfigurationObj.amrConfiguration.semantics;
+	const ode = semantics.ode;
+
+	// FIXME: Dummy up the payload to make things work, but not correct results
+	const initials = ode.initials.map((d) => d.target);
+	const rates = ode.rates.map((d) => d.target);
+	const initialsObj = {};
+	const paramsObj = {};
+
+	initials.forEach((d) => {
+		initialsObj[d] = Math.random() * 100;
+	});
+	rates.forEach((d) => {
+		paramsObj[d] = Math.random() * 0.05;
+	});
+
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload = {
 			modelConfigId: configId,
 			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
 			extra: {
-				// FIXME: need to use real value
-				initials: {
-					S: 100,
-					I: 1,
-					R: 0
-				},
-				params: {
-					inf: 0.002,
-					rec: 0.004
-				}
+				initials: initialsObj,
+				params: paramsObj
 			},
 			engine: 'sciml'
 		};
 		const response = await makeForecastJob(payload);
-		console.log(response.id, payload);
 		return response.id;
 	});
 
@@ -90,28 +97,6 @@ const runSimulate = async () => {
 	getStatus();
 	showSpinner.value = true;
 };
-
-// watch for changes in node input
-// watch(
-// 	() => props.node.inputs,
-// 	async (inputList) => {
-// 		const forecastOutputList = await Promise.all(
-// 			inputList.map(({ value }) =>
-// 				makeForecastJob({
-// 					model: value.model.id,
-// 					initials: value.initialValues,
-// 					params: value.parameterValues,
-// 					tspan: [0.0, 90.0] // hardcoded timespan
-// 				})
-// 			)
-// 		);
-// 		startedRunIdList.value = forecastOutputList.map((forecastOutput) => forecastOutput.id);
-//
-// 		// start polling for run status
-// 		getStatus();
-// 	},
-// 	{ deep: true }
-// );
 
 // Retrieve run ids
 // FIXME: Replace with API.poller
@@ -138,6 +123,8 @@ const getStatus = async () => {
 };
 
 const watchCompletedRunList = async (runIdList: string[]) => {
+	if (runIdList.length === 0) return;
+
 	const newRunResults = {};
 	await Promise.all(
 		runIdList.map(async (runId) => {
@@ -160,19 +147,6 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 			runIdList
 		}
 	});
-
-	/* commented out, causing serialization issues. DC June 22
-	const port = props.node.inputs[0];
-	emit('append-output-port', {
-		type: SimulateOperation.outputs[0].type,
-		label: `${port.label} Results`,
-		value: {
-			runResults: runResults.value,
-			runIdList,
-			runConfigs: port.value
-		}
-	});
-	*/
 };
 
 watch(
@@ -181,10 +155,28 @@ watch(
 		if (modelConfigId.value) {
 			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
 		}
-	}
+	},
+	{ immediate: true }
 );
 
-watch(() => completedRunIdList.value, watchCompletedRunList);
+watch(() => completedRunIdList.value, watchCompletedRunList, { immediate: true });
+
+onMounted(async () => {
+	const node = props.node;
+	if (!node) return;
+
+	const port = node.outputs[0];
+	if (!port) return;
+
+	const runIdList = (port.value as any)[0].runIdList as string[];
+	await Promise.all(
+		runIdList.map(async (runId) => {
+			const resultCsv = await getRunResult(runId, 'result.csv');
+			const csvData = csvParse(resultCsv);
+			runResults.value[runId] = csvData as any;
+		})
+	);
+});
 </script>
 
 <style scoped>

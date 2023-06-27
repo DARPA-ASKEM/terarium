@@ -39,7 +39,10 @@ public class ModelConfigurationResource {
 	public Response getModelConfiguration(
 			@PathParam("id") String id
 	) {
-		return proxy.getModelConfiguration(id);
+		return Response
+			.ok(Response.Status.OK)
+			.entity(proxy.getModelConfiguration(id))
+			.build();
 	}
 
 	@PUT
@@ -49,7 +52,7 @@ public class ModelConfigurationResource {
 		@PathParam("id") String id,
 		ModelConfiguration config
 	) {
-		return proxy.updateModelConfiguration(id, config);
+		return proxy.updateModelConfiguration(id, Converter.convertObjectToSnakeCaseJsonNode(config));
 	}
 
 	@DELETE
