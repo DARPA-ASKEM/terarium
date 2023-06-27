@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, shallowRef, watch, ref, onMounted } from 'vue';
+import { computed, shallowRef, watch, ref } from 'vue';
 import { downloadRawFile, getDataset } from '@/services/dataset';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -94,6 +94,7 @@ const mapping = ref<any[]>([
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
+// Used to setup modelConfig ref, as well as modelColumnNames which is used for mapping dropdown
 const setupModelInput = async () => {
 	if (modelConfigId.value) {
 		modelConfig.value = await getModelConfigurationById(modelConfigId.value);
@@ -207,6 +208,7 @@ const updateOutputPorts = async (runId) => {
 	});
 };
 
+// Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
@@ -215,11 +217,6 @@ function addMapping() {
 	console.log(mapping.value);
 	console.log(modelColumnNames.value);
 }
-
-onMounted(async () => {
-	setupModelInput();
-	setupDatasetInput();
-});
 
 watch(() => modelConfigId.value, setupModelInput, { immediate: true });
 
