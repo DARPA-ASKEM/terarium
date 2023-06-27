@@ -308,7 +308,7 @@ const calibrate = async () => {
 		});
 	await calibratePoller.start();
 
-	const calibratedParams = await getRunResult(results.id, 'result.csv');
+	const calibratedParams = await getRunResult(results.id, 'simulation.csv');
 	const result = csvParse(calibratedParams);
 	console.log(`TODO: Use this result for node's output${result}`);
 	// openedWorkflowNodeStore.setCalibrateResults(
