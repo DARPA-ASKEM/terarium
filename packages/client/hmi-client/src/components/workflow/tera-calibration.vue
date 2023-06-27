@@ -33,24 +33,21 @@
 			/>
 		</template>
 		<Accordion
-			v-if="calibrationView === CalibrationView.INPUT && modelConfiguration"
+			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
-			<AccordionTab :header="modelConfiguration.amrConfiguration.model.name">
-				<tera-model-diagram
-					:model="modelConfiguration.amrConfiguration.model"
-					:is-editable="false"
-				/>
+			<AccordionTab :header="modelConfig.amrConfiguration.name">
+				<tera-model-diagram :model="modelConfig.amrConfiguration" :is-editable="false" />
 			</AccordionTab>
 			<AccordionTab header="Model configuation">
 				<!-- <tera-model-configuration
-					ref="modelConfigurationRef"
-					:model-configuration="modelConfiguration"
+					ref="modelConfig"
+					:model-configuration="modelConfig"
 					calibration-config
 				/> -->
 			</AccordionTab>
-			<AccordionTab v-if="datasetId" :header="datasetName">
+			<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
 			</AccordionTab>
 			<AccordionTab header="Train / Test ratio">
@@ -81,7 +78,7 @@
 											class="w-full"
 											placeholder="Timestep column"
 											v-model="timestepColumn"
-											:options="datasetVariables"
+											:options="datasetColumnNames"
 										/>
 									</template>
 								</Column>
@@ -94,7 +91,7 @@
 									class="w-full"
 									placeholder="Select a variable"
 									v-model="data[field].label"
-									:options="modelVariables"
+									:options="modelColumnNames"
 								/>
 							</template>
 						</Column>
@@ -104,7 +101,7 @@
 									class="w-full"
 									placeholder="Select a variable"
 									v-model="data[field].label"
-									:options="datasetVariables"
+									:options="datasetColumnNames"
 								/>
 							</template>
 						</Column>
@@ -133,23 +130,23 @@
 			</AccordionTab>
 		</Accordion>
 		<Accordion
-			v-if="calibrationView === CalibrationView.OUTPUT && modelConfiguration"
+			v-if="calibrationView === CalibrationView.OUTPUT && modelConfig"
 			:multiple="true"
 			:active-index="[0, 1]"
 		>
 			<AccordionTab header="Variables">
 				<tera-simulate-chart
-					v-for="index in openedWorkflowNodeStore.calibrateNumCharts"
+					v-for="index in calibrateNumCharts"
 					:key="index"
-					:run-results="openedWorkflowNodeStore.calibrateRunResults"
-					:run-id-list="openedWorkflowNodeStore.calibrateRunIdList"
+					:run-results="runResults"
+					:run-id-list="simulationIds"
 					:chart-idx="index"
 				/>
 				<Button
 					class="add-chart"
 					text
 					:outlined="true"
-					@click="openedWorkflowNodeStore.calibrateNumCharts++"
+					@click="calibrateNumCharts++"
 					label="Add Chart"
 					icon="pi pi-plus"
 				></Button>
@@ -164,13 +161,11 @@
 
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue';
-import { cloneDeep } from 'lodash';
 import { csvParse } from 'd3';
 import Button from 'primevue/button';
 import { Poller } from '@/api/api';
 import {
 	makeCalibrateJob,
-	makeForecastJob,
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
@@ -181,40 +176,33 @@ import ColumnGroup from 'primevue/columngroup';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { WorkflowNode } from '@/types/workflow';
+// import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
 // import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { logger } from '@/utils/logger';
-import {
-	CalibrationRequest,
-	SimulationRequest,
-	CsvAsset,
-	Dataset,
-	ModelConfiguration
-} from '@/types/Types';
-import { downloadRawFile, getDataset } from '@/services/dataset';
+import { CalibrationRequest, CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import { RunResults } from '@/types/SimulateConfig';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+const node = ref(openedWorkflowNodeStore.node);
 
 enum CalibrationView {
 	INPUT = 'input',
 	OUTPUT = 'output'
 }
 
-const props = defineProps<{
-	node: WorkflowNode;
-}>();
+// Model variables checked in the model configuration will be options in the mapping dropdown
+const modelColumnNames = ref<string[] | undefined>();
 
-const modelConfigurationRef = ref();
 const calibrationView = ref(CalibrationView.INPUT);
+const calibrateNumCharts = ref<number>(1);
 const expandedRows = ref([]);
 
 const runId = ref<number>(0);
@@ -227,148 +215,109 @@ const mapping = ref<any[]>([
 		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
 	}
 ]);
-const datasetVariables = ref<string[]>();
+const datasetColumnNames = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-const modelConfiguration = ref<ModelConfiguration | null>(null);
-const calibratedModelConfig = ref<ModelConfiguration | undefined>(undefined);
 
-const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
-const datasetId = computed<string | undefined>(() => props.node.inputs[1].value?.[0]);
-const datasetName = computed(() => props.node.inputs[1].label?.[0]);
+const modelConfig = ref<ModelConfiguration>();
 
-// Model variables checked in the model configuration will be options in the mapping dropdown
-const modelVariables = computed(() => {
-	if (modelConfigurationRef.value) {
-		return modelConfiguration.value?.amrConfiguration.model.model.states
-			.filter((state) => modelConfigurationRef.value.selectedModelVariables.includes(state.sname))
-			.map((state) => state.sname);
-	}
-	return modelConfiguration.value?.amrConfiguration.model.model.states.map((state) => state.sname);
-});
+const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0]?.value?.[0]);
+const datasetId = computed<string | undefined>(() => node.value?.inputs[1]?.value?.[0]);
+const currentDatasetFileName = ref<string>();
+const simulationIds = computed<any | undefined>(() => node.value?.outputs[0]?.value);
+const runResults = ref<RunResults>({});
 
 const disableRunButton = computed(
-	() => !mapping.value?.[0].modelVariable.label || !mapping.value?.[0].datasetVariable.label
-);
-
-const mappingSimplified = computed(() =>
-	mapping.value.map((m) => ({
-		modelVariable: m.modelVariable.label,
-		datasetVariable: m.datasetVariable.label
-	}))
+	() =>
+		!currentDatasetFileName.value ||
+		!modelConfig.value ||
+		!csvAsset.value ||
+		!modelConfigId.value ||
+		!datasetId.value
 );
 
 const calibrate = async () => {
 	// Make calibration job.
-	if (modelConfiguration.value && csvAsset.value) {
-		const featureMappings: { [index: string]: string } = {};
-		// Go from 2D array to a index: value like they want
-		// was just easier to work with 2D array for user input
-		for (let i = 0; i < mapping.value.length; i++) {
-			if (mapping.value[i].modelVariable.label && mapping.value[i].datasetVariable.label) {
-				featureMappings[mapping.value[i].datasetVariable.label] =
-					mapping.value[i].modelVariable.label;
-			}
+	if (
+		!currentDatasetFileName.value ||
+		!modelConfig.value ||
+		!csvAsset.value ||
+		!modelConfigId.value ||
+		!datasetId.value
+	)
+		return;
+	const featureMappings: { [index: string]: string } = {};
+	// Go from 2D array to a index: value like they want
+	// was just easier to work with 2D array for user input
+	for (let i = 0; i < mapping.value.length; i++) {
+		if (mapping.value[i].modelVariable.label && mapping.value[i].datasetVariable.label) {
+			featureMappings[mapping.value[i].datasetVariable.label] =
+				mapping.value[i].modelVariable.label;
 		}
+	}
+	// TODO: TS/1225 -> Should not have to rand results
+	const initials = modelConfig.value.amrConfiguration.semantics.ode.initials.map((d) => d.target);
+	const rates = modelConfig.value.amrConfiguration.semantics.ode.rates.map((d) => d.target);
+	const initialsObj = {};
+	const paramsObj = {};
 
-		const calibrationParam: CalibrationRequest = {
-			modelConfigId: modelConfiguration.value.id, // Take out all the extra content in model
-			dataset: { id: '1', filename: 'TS1225' },
-			extra: {},
-			engine: 'sciml'
-		};
-		const results = await makeCalibrateJob(calibrationParam);
-		runId.value = results.id;
+	initials.forEach((d) => {
+		initialsObj[d] = Math.random() * 100;
+	});
+	rates.forEach((d) => {
+		paramsObj[d] = Math.random() * 0.05;
+	});
 
-		const calibratePoller = new Poller<object>()
-			.setInterval(2000)
-			.setThreshold(90)
-			.setPollAction(async () => {
-				const statusResponse = await getSimulation(results.id);
+	const calibrationRequest: CalibrationRequest = {
+		modelConfigId: modelConfigId.value,
+		dataset: {
+			id: datasetId.value,
+			filename: currentDatasetFileName.value,
+			mappings: featureMappings
+		},
+		extra: {
+			initials: initialsObj,
+			params: paramsObj
+		},
+		engine: 'sciml'
+	};
+	const results = await makeCalibrateJob(calibrationRequest);
+	runId.value = results.id;
 
-				if (statusResponse && statusResponse.status === 'done') {
-					return {
-						data: statusResponse,
-						progress: null,
-						error: null
-					};
-				}
-				if (statusResponse && statusResponse.status !== 'running') {
-					throw Error('failed calibrate');
-				}
+	const calibratePoller = new Poller<object>()
+		.setInterval(2000)
+		.setThreshold(90)
+		.setPollAction(async () => {
+			const statusResponse = await getSimulation(results.id);
 
+			if (statusResponse && statusResponse.status === 'done') {
 				return {
-					data: null,
+					data: statusResponse,
 					progress: null,
 					error: null
 				};
-			});
-		await calibratePoller.start();
+			}
+			if (statusResponse && statusResponse.status !== 'running') {
+				throw Error('failed calibrate');
+			}
 
-		const calibratedParams = await getRunResult(results.id, 'result.csv');
+			return {
+				data: null,
+				progress: null,
+				error: null
+			};
+		});
+	await calibratePoller.start();
 
-		const resultsHaveNull =
-			calibratedParams === null || Object.values(calibratedParams).some((v) => v === null);
-
-		const { csv, headers } = csvAsset.value;
-		const indexOfTimestep = headers.indexOf(timestepColumn.value);
-
-		const payload: SimulationRequest = {
-			modelConfigId: calibrationParam.modelConfigId,
-			extra: {}, // reconstruct from modelConfig.value.configuration
-			timespan: {
-				start: Number(csv[1][indexOfTimestep]),
-				end: Number(csv[csv.length - 1][indexOfTimestep])
-			},
-			engine: 'sciml'
-		};
-
-		calibratedModelConfig.value = cloneDeep(modelConfiguration.value);
-		if (calibratedParams) {
-			// calibratedModelConfig.value.parameterValues = calibratedParams;
-		}
-
-		if (resultsHaveNull) {
-			logger.error("The resulting parameters include null value(s) which can't be simulated.");
-		} else {
-			// do polling and retrieve calibration result
-			const forecastResponse = await makeForecastJob(payload);
-			const forecastPoller = new Poller<object>()
-				.setInterval(2000)
-				.setThreshold(90)
-				.setPollAction(async () => {
-					const statusResponse = await getSimulation(forecastResponse.id);
-
-					if (statusResponse && statusResponse.status === 'done') {
-						return {
-							data: statusResponse,
-							progress: null,
-							error: null
-						};
-					}
-					if (statusResponse && statusResponse.status !== 'running') {
-						throw Error('failed forecast');
-					}
-
-					return {
-						data: null,
-						progress: null,
-						error: null
-					};
-				});
-			await forecastPoller.start();
-
-			const resultCsv = await getRunResult(forecastResponse.id, 'result.csv');
-			const result = csvParse(resultCsv);
-
-			openedWorkflowNodeStore.setCalibrateResults(
-				csvAsset.value,
-				result as any,
-				indexOfTimestep,
-				featureMappings,
-				mappingSimplified.value
-			);
-		}
-	}
+	const calibratedParams = await getRunResult(results.id, 'result.csv');
+	const result = csvParse(calibratedParams);
+	console.log(`TODO: Use this result for node's output${result}`);
+	// openedWorkflowNodeStore.setCalibrateResults(
+	// 	csvAsset.value,
+	// 	result as any,
+	// 	indexOfTimestep,
+	// 	featureMappings,
+	// 	mappingSimplified.value
+	// );
 };
 
 function addMapping() {
@@ -378,40 +327,43 @@ function addMapping() {
 	});
 }
 
+// Set up model config + dropdown names
+// Note: Same as calibrate-node
 watch(
 	() => modelConfigId.value,
 	async () => {
-		if (modelConfigId.value) {
-			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
-		}
-	}
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
+			modelConfigId.value
+		);
+		modelConfig.value = modelConfiguration;
+		modelColumnNames.value = modelColumnNameOptions;
+	},
+	{ immediate: true }
 );
 
+// Set up csv + dropdown names
+// Note: Same as calibrate-node
 watch(
 	() => datasetId.value,
 	async () => {
-		// Trouble getting these as computed values
-		if (datasetId.value) {
-			// Get dataset:
-			const dataset: Dataset | null = await getDataset(datasetId.value.toString());
-			// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-			csvAsset.value = (await downloadRawFile(
-				datasetId.value.toString(),
-				dataset?.fileNames?.[0] ?? ''
-			)) as CsvAsset;
-			datasetVariables.value = csvAsset.value?.headers;
-		}
-		// Reset mapping on update for now
-		mapping.value = [
-			{
-				modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
-				datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
-			}
-		];
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		currentDatasetFileName.value = filename;
+		csvAsset.value = csv;
+		datasetColumnNames.value = csv?.headers;
 	},
-	{
-		immediate: true
-	}
+	{ immediate: true }
+);
+
+// Fetch simulation run results whenever output changes
+watch(
+	() => simulationIds.value,
+	async () => {
+		if (!simulationIds.value) return;
+		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		const csvData = csvParse(resultCsv);
+		runResults.value[simulationIds.value[0].runId] = csvData as any;
+	},
+	{ immediate: true }
 );
 </script>
 

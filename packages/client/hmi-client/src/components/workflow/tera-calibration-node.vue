@@ -49,8 +49,6 @@
 
 <script setup lang="ts">
 import { computed, shallowRef, watch, ref } from 'vue';
-import { downloadRawFile, getDataset } from '@/services/dataset';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
@@ -58,15 +56,11 @@ import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import {
-	CalibrationRequest,
-	CsvAsset,
-	Dataset,
-	Simulation,
-	ModelConfiguration
-} from '@/types/Types';
+import { CalibrationRequest, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
 // import TeraSimulateChart from './tera-simulate-chart.vue';
 import { makeCalibrateJob, getSimulation } from '@/services/models/simulation-service';
+import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { CalibrationOperation } from './calibrate-operation';
 
 const props = defineProps<{
@@ -74,6 +68,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['append-output-port']);
+const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -83,7 +78,7 @@ const startedRunId = ref<string>();
 const completedRunId = ref<string>();
 
 const datasetColumnNames = ref<string[]>();
-const modelColumnNames = ref<string[]>();
+const modelColumnNames = ref<string[] | undefined>();
 
 const mapping = ref<any[]>([
 	{
@@ -93,32 +88,6 @@ const mapping = ref<any[]>([
 ]);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-
-// Used to setup modelConfig ref, as well as modelColumnNames which is used for mapping dropdown
-const setupModelInput = async () => {
-	if (modelConfigId.value) {
-		modelConfig.value = await getModelConfigurationById(modelConfigId.value);
-		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
-		modelColumnNames.value = modelConfig.value.configuration.S.map((state) => state.sname);
-		modelColumnNames.value?.push('timestep');
-		console.log(modelConfig.value);
-	}
-};
-
-const setupDatasetInput = async () => {
-	if (datasetId.value) {
-		// Get dataset:
-		const dataset: Dataset | null = await getDataset(datasetId.value.toString());
-		currentDatasetFileName.value = dataset?.fileNames?.[0] ?? '';
-		// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-		csvAsset.value = (await downloadRawFile(
-			datasetId.value.toString(),
-			currentDatasetFileName.value
-		)) as CsvAsset;
-		datasetColumnNames.value = csvAsset.value?.headers;
-		// datasetValue.value = csvAsset.value?.csv.map((row) => row.join(',')).join('\n');
-	}
-};
 
 const runCalibrate = async () => {
 	if (
@@ -191,10 +160,10 @@ const getStatus = async () => {
 };
 
 const updateOutputPorts = async (runId) => {
-	const port = props.node.inputs[0];
+	const portLabel = props.node.inputs[0].label;
 	emit('append-output-port', {
 		type: CalibrationOperation.outputs[0].type,
-		label: `${port.label} Result`,
+		label: `${portLabel} Result`,
 		value: {
 			runId
 		}
@@ -207,13 +176,40 @@ function addMapping() {
 		modelVariable: '',
 		datasetVariable: ''
 	});
-	console.log(mapping.value);
-	console.log(modelColumnNames.value);
 }
 
-watch(() => modelConfigId.value, setupModelInput, { immediate: true });
+// Set up model config + dropdown names
+// Note: Same as calibrate side panel
+watch(
+	() => modelConfigId.value,
+	async () => {
+		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
+			modelConfigId.value
+		);
+		modelConfig.value = modelConfiguration;
+		modelColumnNames.value = modelColumnNameOptions;
+	},
+	{ immediate: true }
+);
 
-watch(() => datasetId.value, setupDatasetInput, { immediate: true });
+// Set up csv + dropdown names
+// Note: Same as calibrate side panel
+watch(
+	() => datasetId.value,
+	async () => {
+		const { filename, csv } = await setupDatasetInput(datasetId.value);
+		currentDatasetFileName.value = filename;
+		csvAsset.value = csv;
+		datasetColumnNames.value = csv?.headers;
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => props.node,
+	(node) => openedWorkflowNodeStore.setNode(node ?? null),
+	{ deep: true }
+);
 </script>
 
 <style scoped>
