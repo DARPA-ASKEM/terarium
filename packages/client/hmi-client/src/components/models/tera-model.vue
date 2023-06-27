@@ -124,94 +124,72 @@
 					<template #header>
 						State variables<span class="artifact-amount">({{ states.length }})</span>
 					</template>
-					<div class="p-datatable p-datatable-sm">
-						<table class="p-datatable-table">
-							<thead class="p-datatable-thead">
-								<tr>
-									<th>ID</th>
-									<th>Name</th>
-									<th>Unit</th>
-									<th>Concept</th>
-									<th>Identifiers</th>
-									<th>Extractions</th>
-								</tr>
-							</thead>
-							<tbody class="p-datatable-tbody">
-								<tr v-for="state in states" :key="state.id" :class="`state-${state.id}`">
-									<template v-if="isRowEditable === `state-${state.id}`">
-										<td>
-											<input type="text" :value="state?.id ?? '--'" />
-										</td>
-										<td>
-											<input type="text" :value="state?.name ?? '--'" />
-										</td>
-										<td>
-											<input type="text" :value="state?.units?.expression ?? '--'" />
-										</td>
-										<td>
-											<label>Concept</label>
-										</td>
-										<td>
-											<label>Identifiers</label>
-										</td>
-										<td>
-											<!-- TODO: needs to make those button active -->
-											<Button icon="pi pi-check" text rounded aria-label="Save" />
-											<Button icon="pi pi-times" text rounded aria-label="Discard" />
-										</td>
-									</template>
-									<template v-else>
-										<td>{{ state?.id ?? '--' }}</td>
-										<td>{{ state?.name ?? '--' }}</td>
-										<td>{{ state?.units?.expression ?? '--' }}</td>
-										<td>
-											<template
-												v-if="state?.grounding?.context && !isEmpty(state.grounding.context)"
+					<main class="datatable">
+						<header>
+							<div>ID</div>
+							<div>Name</div>
+							<div>Unit</div>
+							<div>Concept</div>
+							<div>Identifiers</div>
+							<div>Extractions</div>
+						</header>
+						<section v-for="state in states" :key="state.id" :class="`state-${state.id}`">
+							<template v-if="isSectionEditable === `state-${state.id}`">
+								<div><input type="text" :value="state?.id ?? '--'" /></div>
+								<div><input type="text" :value="state?.name ?? '--'" /></div>
+								<div><input type="text" :value="state?.units?.expression ?? '--'" /></div>
+								<div>
+									<!-- TODO: needs to make those button active -->
+									<Button icon="pi pi-check" text rounded aria-label="Save" />
+									<Button icon="pi pi-times" text rounded aria-label="Discard" />
+								</div>
+							</template>
+							<template v-else>
+								<div>{{ state?.id ?? '--' }}</div>
+								<div>{{ state?.name ?? '--' }}</div>
+								<div>{{ state?.units?.expression ?? '--' }}</div>
+								<div>
+									<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
+										<template
+											v-for="[key, curie] in Object.entries(state.grounding.context)"
+											:key="key"
+										>
+											<a
+												target="_blank"
+												rel="noopener noreferrer"
+												:href="`http://34.230.33.149:8772/${curie}`"
 											>
-												<template
-													v-for="[key, curie] in Object.entries(state.grounding.context)"
-													:key="key"
-												>
-													<a
-														target="_blank"
-														rel="noopener noreferrer"
-														:href="`http://34.230.33.149:8772/${curie}`"
-													>
-														{{ key }} ({{ curie }})</a
-													><br />
-												</template>
-											</template>
-											<template v-else>--</template>
-										</td>
-										<td>
-											<template
-												v-if="
-													state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)
-												"
-											>
-												<a
-													target="_blank"
-													rel="noopener noreferrer"
-													:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-														state.grounding.identifiers
-													)}`"
-												>
-													{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
-												</a>
-											</template>
-											<template v-else>--</template>
-										</td>
-										<td>
-											<template v-if="extractions?.[state?.id]">
-												<Tag :value="extractions?.[state?.id].length" />
-											</template>
-											<template v-else>--</template>
-										</td>
+												{{ key }} ({{ curie }})</a
+											><br />
+										</template>
 									</template>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template
+										v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
+									>
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+												state.grounding.identifiers
+											)}`"
+										>
+											{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
+										</a>
+									</template>
+									<template v-else>--</template>
+								</div>
+								<div>
+									<template v-if="extractions?.[state?.id]">
+										<Tag :value="extractions?.[state?.id].length" />
+									</template>
+									<template v-else>--</template>
+								</div>
+							</template>
+						</section>
+					</main>
 				</AccordionTab>
 
 				<!-- Observables -->
@@ -527,7 +505,7 @@ const otherExtractions = computed(() => {
 	if (key) return extractions.value[key.toString()];
 	return [];
 });
-const isRowEditable = ref<string | null>();
+const isSectionEditable = ref<string | null>();
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -692,13 +670,33 @@ const createNewModel = async () => {
 // Toggle rows to become editable
 function editRow(event: Event) {
 	if (!event?.target) return;
-	const row = (event.target as HTMLElement).closest('.p-datatable-tbody tr');
-	if (!row) return;
-	isRowEditable.value = isRowEditable.value ? null : row.className;
+	const section = (event.target as HTMLElement).closest('.datatable section');
+	if (!section) return;
+	isSectionEditable.value = isSectionEditable.value ? null : section.className;
 }
 </script>
 
 <style scoped>
+.datatable header,
+.datatable section {
+	border-bottom: 1px solid var(--surface-border-light);
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	justify-items: start;
+}
+
+.datatable header > div,
+.datatable section > div {
+	padding: 0.5rem;
+}
+
+.datatable header {
+	color: var(--text-color-light);
+	font-size: var(--font-caption);
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
 :deep(.p-datatable .p-datatable-tbody > tr > .borderless-row) {
 	border-bottom: none;
 }
