@@ -138,7 +138,7 @@
 							</thead>
 							<tbody class="p-datatable-tbody">
 								<tr v-for="state in states" :key="state.id" :class="`state-${state.id}`">
-									<!-- <template v-if="isRowEditable === `state-${state.id}`">
+									<template v-if="isRowEditable === `state-${state.id}`">
 										<td>
 											<input type="text" :value="state?.id ?? '--'" />
 										</td>
@@ -155,53 +155,57 @@
 											<label>Identifiers</label>
 										</td>
 										<td>
-											<button type="submit" label="submit" />	
+											<button type="submit" label="submit" />
 										</td>
 									</template>
-									<template v-else> -->
-									<td>{{ state?.id ?? '--' }}</td>
-									<td>{{ state?.name ?? '--' }}</td>
-									<td>{{ state?.units?.expression ?? '--' }}</td>
-									<td>
-										<template v-if="state?.grounding?.context && !isEmpty(state.grounding.context)">
+									<template v-else>
+										<td>{{ state?.id ?? '--' }}</td>
+										<td>{{ state?.name ?? '--' }}</td>
+										<td>{{ state?.units?.expression ?? '--' }}</td>
+										<td>
 											<template
-												v-for="[key, curie] in Object.entries(state.grounding.context)"
-												:key="key"
+												v-if="state?.grounding?.context && !isEmpty(state.grounding.context)"
+											>
+												<template
+													v-for="[key, curie] in Object.entries(state.grounding.context)"
+													:key="key"
+												>
+													<a
+														target="_blank"
+														rel="noopener noreferrer"
+														:href="`http://34.230.33.149:8772/${curie}`"
+													>
+														{{ key }} ({{ curie }})</a
+													><br />
+												</template>
+											</template>
+											<template v-else>--</template>
+										</td>
+										<td>
+											<template
+												v-if="
+													state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)
+												"
 											>
 												<a
 													target="_blank"
 													rel="noopener noreferrer"
-													:href="`http://34.230.33.149:8772/${curie}`"
+													:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
+														state.grounding.identifiers
+													)}`"
 												>
-													{{ key }} ({{ curie }})</a
-												><br />
+													{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
+												</a>
 											</template>
-										</template>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template
-											v-if="state?.grounding?.identifiers && !isEmpty(state.grounding.identifiers)"
-										>
-											<a
-												target="_blank"
-												rel="noopener noreferrer"
-												:href="`http://34.230.33.149:8772/${getCurieFromGroudingIdentifier(
-													state.grounding.identifiers
-												)}`"
-											>
-												{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
-											</a>
-										</template>
-										<template v-else>--</template>
-									</td>
-									<td>
-										<template v-if="extractions?.[state?.id]">
-											<Tag :value="extractions?.[state?.id].length" />
-										</template>
-										<template v-else>--</template>
-									</td>
-									<!-- </template> -->
+											<template v-else>--</template>
+										</td>
+										<td>
+											<template v-if="extractions?.[state?.id]">
+												<Tag :value="extractions?.[state?.id].length" />
+											</template>
+											<template v-else>--</template>
+										</td>
+									</template>
 								</tr>
 							</tbody>
 						</table>
