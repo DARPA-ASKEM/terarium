@@ -6,7 +6,7 @@ import { ProjectAssetTypes } from '@/types/Project';
 import { ResourceType } from '@/stores/resources';
 
 // TODO - to be removed after July 2023 Hackathon
-import { SIDARTHE } from '@/temp/models/BIOMD0000000955_askenet';
+// import { SIDARTHE } from '@/temp/models/BIOMD0000000955_askenet';
 
 export async function createModel(model): Promise<Model | null> {
 	const response = await API.post(`/models`, model);
@@ -19,7 +19,7 @@ export async function createModel(model): Promise<Model | null> {
  */
 export async function getModel(modelId: string): Promise<Model | null> {
 	// TODO - to be removed after July 2023 Hackathon
-	if (modelId === 'biomd0000000955-model-id') return SIDARTHE;
+	// if (modelId === 'biomd0000000955-model-id') return SIDARTHE;
 
 	const response = await API.get(`/models/${modelId}`);
 	return response?.data ?? null;
