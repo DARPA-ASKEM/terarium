@@ -118,6 +118,7 @@ export interface DatasetColumn {
     annotations: string[];
     metadata?: { [index: string]: any };
     grounding?: Grounding;
+    description?: string;
 }
 
 export interface Grounding {
