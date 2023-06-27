@@ -459,6 +459,14 @@ watch(
 	flex-direction: row;
 }
 
+li::after {
+	content: ' | ';
+}
+
+li:last-child::after {
+	content: '';
+}
+
 main :deep(.p-inputtext.p-inputtext-sm) {
 	padding-left: 0.65rem;
 }
