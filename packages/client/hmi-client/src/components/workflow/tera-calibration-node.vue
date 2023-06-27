@@ -1,5 +1,5 @@
 <template>
-	<Button class="p-button-sm" label="Run" @click="runCalibrate" />
+	<Button class="p-button-sm" label="Run" @click="runCalibrate" :disabled="disableRunButton" />
 	<Accordion :multiple="true" :active-index="[0, 3]">
 		<AccordionTab header="Mapping">
 			<DataTable class="p-datatable-xsm" :value="mapping">
@@ -33,17 +33,26 @@
 				/>
 			</div>
 		</AccordionTab>
-		<AccordionTab header="Loss"></AccordionTab>
-		<AccordionTab header="Parameters"></AccordionTab>
 		<AccordionTab header="Variables">
-			<!-- <tera-simulate-chart
+			<tera-simulate-chart
 				v-for="index in calibrateNumCharts"
 				:key="index"
-				:run-results="calibrateRunResults"
-				:run-id-list="calibrateRunIdList"
+				:run-results="runResults"
+				:run-id-list="simulationIds"
 				:chart-idx="index"
-			/> -->
+			/>
+			<Button
+				class="add-chart"
+				text
+				:outlined="true"
+				@click="calibrateNumCharts++"
+				label="Add Chart"
+				icon="pi pi-plus"
+			></Button>
 		</AccordionTab>
+		<!-- <AccordionTab header="Loss"></AccordionTab>
+		<AccordionTab header="Parameters"></AccordionTab>
+		<AccordionTab header="Variables"></AccordionTab> -->
 	</Accordion>
 </template>
 
@@ -57,11 +66,17 @@ import Column from 'primevue/column';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { CalibrationRequest, CsvAsset, Simulation, ModelConfiguration } from '@/types/Types';
-// import TeraSimulateChart from './tera-simulate-chart.vue';
-import { makeCalibrateJob, getSimulation } from '@/services/models/simulation-service';
+import {
+	makeCalibrateJob,
+	getSimulation,
+	getRunResult
+} from '@/services/models/simulation-service';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
+import { RunResults } from '@/types/SimulateConfig';
+import { csvParse } from 'd3';
 import { CalibrationOperation } from './calibrate-operation';
+import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -79,6 +94,9 @@ const completedRunId = ref<string>();
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
+const calibrateNumCharts = ref<number>(1);
+const runResults = ref<RunResults>({});
+const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
 
 const mapping = ref<any[]>([
 	{
@@ -88,6 +106,15 @@ const mapping = ref<any[]>([
 ]);
 
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+
+const disableRunButton = computed(
+	() =>
+		!currentDatasetFileName.value ||
+		!modelConfig.value ||
+		!csvAsset.value ||
+		!modelConfigId.value ||
+		!datasetId.value
+);
 
 const runCalibrate = async () => {
 	if (
@@ -209,6 +236,18 @@ watch(
 	() => props.node,
 	(node) => openedWorkflowNodeStore.setNode(node ?? null),
 	{ deep: true }
+);
+
+// Fetch simulation run results whenever output changes
+watch(
+	() => simulationIds.value,
+	async () => {
+		if (!simulationIds.value) return;
+		const resultCsv = await getRunResult(simulationIds.value[0].runId, 'simulation.csv');
+		const csvData = csvParse(resultCsv);
+		runResults.value[simulationIds.value[0].runId] = csvData as any;
+	},
+	{ immediate: true }
 );
 </script>
 

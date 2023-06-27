@@ -23,15 +23,6 @@
 				</template>
 			</tera-asset-nav>
 		</template>
-		<template #edit-buttons>
-			<Button
-				icon="pi pi-play"
-				label="Run"
-				class="p-button-sm"
-				:disabled="disableRunButton"
-				@click="calibrate"
-			/>
-		</template>
 		<Accordion
 			v-if="calibrationView === CalibrationView.INPUT && modelConfig"
 			:multiple="true"
@@ -40,13 +31,6 @@
 			<AccordionTab :header="modelConfig.amrConfiguration.name">
 				<tera-model-diagram :model="modelConfig.amrConfiguration" :is-editable="false" />
 			</AccordionTab>
-			<AccordionTab header="Model configuation">
-				<!-- <tera-model-configuration
-					ref="modelConfig"
-					:model-configuration="modelConfig"
-					calibration-config
-				/> -->
-			</AccordionTab>
 			<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
 			</AccordionTab>
@@ -54,78 +38,6 @@
 				<section class="train-test-ratio">
 					<InputNumber v-model="trainTestValue" />
 					<Slider v-model="trainTestValue" />
-				</section>
-			</AccordionTab>
-			<AccordionTab header="Mapping">
-				<section class="mapping">
-					<div>
-						Select target variables from the model and the corresponding data column you want to
-						match them to.
-					</div>
-					<DataTable :value="mapping" v-model:expandedRows="expandedRows">
-						<ColumnGroup type="header">
-							<Row>
-								<Column />
-								<Column header="Model variable" />
-								<Column header="Dataset variable" />
-							</Row>
-							<Row>
-								<Column />
-								<Column header="Timestep" style="font-weight: normal" />
-								<Column>
-									<template #header>
-										<Dropdown
-											class="w-full"
-											placeholder="Timestep column"
-											v-model="timestepColumn"
-											:options="datasetColumnNames"
-										/>
-									</template>
-								</Column>
-							</Row>
-						</ColumnGroup>
-						<Column expander style="width: 5rem" />
-						<Column field="modelVariable">
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full"
-									placeholder="Select a variable"
-									v-model="data[field].label"
-									:options="modelColumnNames"
-								/>
-							</template>
-						</Column>
-						<Column field="datasetVariable">
-							<template #body="{ data, field }">
-								<Dropdown
-									class="w-full"
-									placeholder="Select a variable"
-									v-model="data[field].label"
-									:options="datasetColumnNames"
-								/>
-							</template>
-						</Column>
-						<template #expansion="slotProps">
-							<DataTable
-								class="p-datatable-sm"
-								:value="[slotProps.data.modelVariable, slotProps.data.datasetVariable]"
-							>
-								<Column field="label" header="Label" />
-								<Column field="name" header="Name" />
-								<Column field="units" header="Units" />
-								<Column field="concept" header="Concept" />
-								<Column field="definition" header="Definition" />
-							</DataTable>
-						</template>
-					</DataTable>
-					<div>
-						<Button
-							class="p-button-sm p-button-outlined"
-							icon="pi pi-plus"
-							label="Add mapping"
-							@click="addMapping"
-						/>
-					</div>
 				</section>
 			</AccordionTab>
 		</Accordion>
@@ -163,27 +75,15 @@
 import { computed, ref, shallowRef, watch } from 'vue';
 import { csvParse } from 'd3';
 import Button from 'primevue/button';
-import { Poller } from '@/api/api';
-import {
-	makeCalibrateJob,
-	getSimulation,
-	getRunResult
-} from '@/services/models/simulation-service';
-import Dropdown from 'primevue/dropdown';
-import DataTable from 'primevue/datatable';
-import Row from 'primevue/row';
-import ColumnGroup from 'primevue/columngroup';
-import Column from 'primevue/column';
+import { getRunResult } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-// import { WorkflowNode } from '@/types/workflow';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetNav from '@/components/asset/tera-asset-nav.vue';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
-// import TeraModelConfiguration from '@/components/models/tera-model-configuration.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { CalibrationRequest, CsvAsset, ModelConfiguration } from '@/types/Types';
+import { CsvAsset, ModelConfiguration } from '@/types/Types';
 import Slider from 'primevue/slider';
 import InputNumber from 'primevue/inputnumber';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
@@ -203,18 +103,9 @@ const modelColumnNames = ref<string[] | undefined>();
 
 const calibrationView = ref(CalibrationView.INPUT);
 const calibrateNumCharts = ref<number>(1);
-const expandedRows = ref([]);
 
-const runId = ref<number>(0);
 const trainTestValue = ref(80);
 
-const timestepColumn = ref('');
-const mapping = ref<any[]>([
-	{
-		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
-		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
-	}
-]);
 const datasetColumnNames = ref<string[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
@@ -225,107 +116,6 @@ const datasetId = computed<string | undefined>(() => node.value?.inputs[1]?.valu
 const currentDatasetFileName = ref<string>();
 const simulationIds = computed<any | undefined>(() => node.value?.outputs[0]?.value);
 const runResults = ref<RunResults>({});
-
-const disableRunButton = computed(
-	() =>
-		!currentDatasetFileName.value ||
-		!modelConfig.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value
-);
-
-const calibrate = async () => {
-	// Make calibration job.
-	if (
-		!currentDatasetFileName.value ||
-		!modelConfig.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value
-	)
-		return;
-	const featureMappings: { [index: string]: string } = {};
-	// Go from 2D array to a index: value like they want
-	// was just easier to work with 2D array for user input
-	for (let i = 0; i < mapping.value.length; i++) {
-		if (mapping.value[i].modelVariable.label && mapping.value[i].datasetVariable.label) {
-			featureMappings[mapping.value[i].datasetVariable.label] =
-				mapping.value[i].modelVariable.label;
-		}
-	}
-	// TODO: TS/1225 -> Should not have to rand results
-	const initials = modelConfig.value.amrConfiguration.semantics.ode.initials.map((d) => d.target);
-	const rates = modelConfig.value.amrConfiguration.semantics.ode.rates.map((d) => d.target);
-	const initialsObj = {};
-	const paramsObj = {};
-
-	initials.forEach((d) => {
-		initialsObj[d] = Math.random() * 100;
-	});
-	rates.forEach((d) => {
-		paramsObj[d] = Math.random() * 0.05;
-	});
-
-	const calibrationRequest: CalibrationRequest = {
-		modelConfigId: modelConfigId.value,
-		dataset: {
-			id: datasetId.value,
-			filename: currentDatasetFileName.value,
-			mappings: featureMappings
-		},
-		extra: {
-			initials: initialsObj,
-			params: paramsObj
-		},
-		engine: 'sciml'
-	};
-	const results = await makeCalibrateJob(calibrationRequest);
-	runId.value = results.id;
-
-	const calibratePoller = new Poller<object>()
-		.setInterval(2000)
-		.setThreshold(90)
-		.setPollAction(async () => {
-			const statusResponse = await getSimulation(results.id);
-
-			if (statusResponse && statusResponse.status === 'done') {
-				return {
-					data: statusResponse,
-					progress: null,
-					error: null
-				};
-			}
-			if (statusResponse && statusResponse.status !== 'running') {
-				throw Error('failed calibrate');
-			}
-
-			return {
-				data: null,
-				progress: null,
-				error: null
-			};
-		});
-	await calibratePoller.start();
-
-	const calibratedParams = await getRunResult(results.id, 'simulation.csv');
-	const result = csvParse(calibratedParams);
-	console.log(`TODO: Use this result for node's output${result}`);
-	// openedWorkflowNodeStore.setCalibrateResults(
-	// 	csvAsset.value,
-	// 	result as any,
-	// 	indexOfTimestep,
-	// 	featureMappings,
-	// 	mappingSimplified.value
-	// );
-};
-
-function addMapping() {
-	mapping.value.push({
-		modelVariable: { label: null, name: null, units: null, concept: null, definition: null },
-		datasetVariable: { label: null, name: null, units: null, concept: null, definition: null }
-	});
-}
 
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
@@ -387,11 +177,5 @@ watch(
 .train-test-ratio > .p-slider {
 	margin-top: 1rem;
 	width: 100%;
-}
-
-.mapping {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
 }
 </style>
