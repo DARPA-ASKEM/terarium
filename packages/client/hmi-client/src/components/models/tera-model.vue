@@ -523,7 +523,7 @@ const otherExtractions = computed(() => {
 	if (key) return extractions.value[key.toString()];
 	return [];
 });
-const isRowEditable = ref<string>();
+const isRowEditable = ref<string | null>();
 
 const relatedTerariumModels = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]
@@ -690,7 +690,7 @@ function editRow(event: Event) {
 	if (!event?.target) return;
 	const row = (event.target as HTMLElement).closest('.p-datatable-tbody tr');
 	if (!row) return;
-	isRowEditable.value = row.className;
+	isRowEditable.value = isRowEditable.value ? null : row.className;
 }
 </script>
 
