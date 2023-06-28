@@ -122,7 +122,12 @@
 							v-for="(column, index) in editableRows"
 							class="variables-row"
 							:key="index"
-							@click="rowEditList[index] = true"
+							@click="
+								() => {
+									rowEditList[index] = true;
+									setUnsavedRowValues();
+								}
+							"
 							:active="rowEditList[index]"
 						>
 							<!-- id -->
@@ -166,14 +171,7 @@
 								type="text"
 								v-if="rowEditList[index]"
 								v-model="groundingValues[index][0]"
-								@focus="
-									setSuggestedValue(
-										index,
-										dataset.columns?.[index].grounding?.identifiers[
-											Object.keys(dataset.columns?.[index].grounding?.identifiers!)[0]
-										]
-									)
-								"
+								@focus="setSuggestedValue(index, originalGroundingValues[0])"
 							/>
 							<div class="variables-value" v-else>
 								{{ groundingValues[index][0] }}
@@ -197,16 +195,7 @@
 										}
 									"
 								/>
-								<Button
-									text
-									icon="pi pi-check"
-									@click.stop="
-										() => {
-											rowEditList[index] = false;
-											saveRowEdits(index);
-										}
-									"
-								/>
+								<Button text icon="pi pi-check" @click.stop="rowEditList[index] = false" />
 							</div>
 							<!-- description -->
 							<InputText
@@ -219,6 +208,7 @@
 							<div class="variables-description variables-value" v-else>
 								{{ column.description }}
 							</div>
+							<!-- suggested values -->
 							<div v-if="rowEditList[index]" class="variables-suggested">
 								<span>Suggested value</span>
 								<div>
@@ -306,9 +296,18 @@ function formatName(name: string) {
 const enriched = ref(false);
 
 const groundingValues = ref<string[][]>([]);
+// groundingValuesUnsaved is set to the value of the grounding value being edited, and is the value that is reverted back to if the user does not save their changes
+const groundingValuesUnsaved = ref<string[][]>([]);
+// originaGroundingValues are displayed as the first suggested value for concepts
+const originalGroundingValues = ref<string[]>([]);
 const suggestedValues = ref<string[]>([]);
 
-// quick and dirty function to populate one suggestd value per column, based on what column field user clicked; possible refactor
+function setUnsavedRowValues() {
+	editableRowsUnsaved.value = editableRows.value.map((row) => ({ ...row }));
+	groundingValuesUnsaved.value = groundingValues.value.map((g) => [...g]);
+}
+
+// quick and dirty function to populate one suggested value per column, based on what column field user clicked; possible refactor
 function setSuggestedValue(index: number, suggestedValue: string | undefined) {
 	if (suggestedValues.value.length > index && suggestedValue) {
 		suggestedValues.value[index] = suggestedValue;
@@ -316,26 +315,15 @@ function setSuggestedValue(index: number, suggestedValue: string | undefined) {
 }
 
 const rowEditList = ref<boolean[]>([]);
+// editableRows is are the dataset columns that can be edited by the user; transient data
 const editableRows = ref<DatasetColumn[]>([]);
+// editableRowsUnsaved is set to the value of the row being edited, and is the value that is reverted back to if the user does not save their changes
+const editableRowsUnsaved = ref<DatasetColumn[]>([]);
 
 function cancelRowEdits(index: number) {
 	if (dataset.value?.columns) {
-		editableRows.value[index] = { ...dataset.value.columns[index] };
-		groundingValues.value[index] = (() => {
-			const grounding = editableRows.value[index].grounding;
-			if (grounding) {
-				const keys = Object.keys(grounding.identifiers);
-				return keys.map((k) => grounding.identifiers[k]);
-			}
-			return [];
-		})();
-		console.log(groundingValues.value[index]);
-	}
-}
-
-function saveRowEdits(index: number) {
-	if (dataset.value?.columns) {
-		dataset.value.columns[index] = { ...editableRows.value[index] };
+		editableRows.value[index] = { ...editableRowsUnsaved.value[index] };
+		groundingValues.value[index] = [...groundingValuesUnsaved.value[index]];
 	}
 }
 
@@ -348,14 +336,15 @@ onUpdated(() => {
 			rowEditList.value = dataset.value.columns.map(() => false);
 			suggestedValues.value = dataset.value.columns.map(() => '');
 			editableRows.value = dataset.value.columns.map((c) => ({ ...c }));
-			groundingValues.value = editableRows.value.map((column) => {
-				const grounding = column.grounding;
+			groundingValues.value = editableRows.value.map((row) => {
+				const grounding = row.grounding;
 				if (grounding) {
 					const keys = Object.keys(grounding.identifiers);
 					return keys.map((k) => grounding.identifiers[k]);
 				}
 				return [];
 			});
+			originalGroundingValues.value = groundingValues.value.map((g) => g[0]);
 		}
 	}
 });
