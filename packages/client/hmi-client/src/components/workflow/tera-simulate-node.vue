@@ -3,10 +3,11 @@
 		<Button @click="runSimulate">Run</Button>
 		<div class="chart-container">
 			<SimulateChart
-				v-for="index in node.state.chartConfigs"
+				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
-				:chart-idx="index"
+				:chartConfig="cfg"
+				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
 		<Button
@@ -30,7 +31,7 @@ import { ModelConfiguration } from '@/types/Types';
 
 import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { WorkflowNode } from '@/types/workflow';
-import { RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -40,7 +41,7 @@ import { SimulateOperation, SimulateOperationState } from './simulate-operation'
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'configuration-change']);
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
@@ -52,6 +53,7 @@ const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
+// FIXME: Replace with event-bus
 watch(
 	() => props.node,
 	(node) => openedWorkflowNodeStore.setNode(node ?? null),
@@ -148,9 +150,14 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	emit('append-output-port', {
 		type: SimulateOperation.outputs[0].type,
 		label: `${port.label} Results`,
-		value: {
-			runIdList
-		}
+		value: runIdList
+	});
+};
+
+const configurationChange = (index: number, chartConfig: ChartConfig) => {
+	emit('configuration-change', {
+		index,
+		chartConfig
 	});
 };
 
@@ -173,7 +180,7 @@ onMounted(async () => {
 	const port = node.outputs[0];
 	if (!port) return;
 
-	const runIdList = (port.value as any)[0].runIdList as string[];
+	const runIdList = port.value as string[];
 	await Promise.all(
 		runIdList.map(async (runId) => {
 			const resultCsv = await getRunResult(runId, 'result.csv');
