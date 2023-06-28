@@ -51,66 +51,62 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<Column v-for="(rate, i) of amrConfigurations[0]?.semantics?.ode.rates" :key="i">
-			<template #body>
-				<section class="editable-cell">
-					<span>{{ rate.expression }}</span>
-					<Button
-						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-						icon="pi pi-ellipsis-v"
-						@click.stop="openValueModal(rate, 'expression')"
+		<template v-for="(amrConfig, i) in amrConfigurations">
+			<Column v-for="(rate, j) of amrConfig?.semantics?.ode.rates" :key="i + j">
+				<template #body>
+					<section class="editable-cell">
+						<span>{{ rate.expression }}</span>
+						<Button
+							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+							icon="pi pi-ellipsis-v"
+							@click.stop="openValueModal('rates', 'expression', i, j)"
+						/>
+					</section>
+				</template>
+				<template #editor>
+					<InputText
+						v-model="editableModelConfigs[i].amrConfiguration.semantics.ode.rates[j].expression"
+						autofocus
 					/>
-				</section>
-			</template>
-			<template #editor>
-				<InputText v-model="rate.expression" autofocus />
-			</template>
-		</Column>
-		<Column v-for="(initial, i) of amrConfigurations[0]?.semantics?.ode.initials" :key="i">
-			<template #body>
-				<section class="editable-cell">
-					<span>{{ initial.expression }}</span>
-					<Button
-						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-						icon="pi pi-ellipsis-v"
-						@click.stop="openValueModal(initial, 'expression')"
+				</template>
+			</Column>
+			<Column v-for="(initial, j) of amrConfig?.semantics?.ode.initials" :key="i + j">
+				<template #body>
+					<section class="editable-cell">
+						<span>{{ initial.expression }}</span>
+						<Button
+							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+							icon="pi pi-ellipsis-v"
+							@click.stop="openValueModal('initials', 'expression', i, j)"
+						/>
+					</section>
+				</template>
+				<template #editor>
+					<InputText
+						v-model="editableModelConfigs[i].amrConfiguration.semantics.ode.initials[j].expression"
+						autofocus
 					/>
-				</section>
-			</template>
-			<template #editor>
-				<InputText v-model="initial.expression" autofocus />
-			</template>
-		</Column>
-		<Column v-for="(parameter, i) of amrConfigurations[0]?.semantics?.ode.parameters" :key="i">
-			<template #body>
-				<section class="editable-cell">
-					<span>{{ parameter.value }}</span>
-					<Button
-						class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-						icon="pi pi-ellipsis-v"
-						@click.stop="openValueModal(parameter, 'value')"
+				</template>
+			</Column>
+			<Column v-for="(parameter, j) of amrConfig?.semantics?.ode.parameters" :key="i + j">
+				<template #body>
+					<section class="editable-cell">
+						<span>{{ parameter.value }}</span>
+						<Button
+							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+							icon="pi pi-ellipsis-v"
+							@click.stop="openValueModal('parameters', 'value', i, j)"
+						/>
+					</section>
+				</template>
+				<template #editor>
+					<InputText
+						v-model="editableModelConfigs[i].amrConfiguration.semantics.ode.parameters[j].value"
+						autofocus
 					/>
-				</section>
-			</template>
-			<template #editor>
-				<InputText v-model="parameter.value" autofocus />
-			</template>
-		</Column>
-		<!-- <Column v-for="(value, i) of Object.keys(modelConfigurationTable[0]).slice(
-			1,
-			Object.keys(modelConfigurationTable[0]).length
-		)" :key="i" :field="value">
-			<template #body="{ data, field }">
-				<section class="editable-cell">
-					<span>{{ data[field]?.value }}</span>
-					<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-						icon="pi pi-ellipsis-v" @click.stop="openValueModal(data, field)" />
-				</section>
-			</template>
-			<template #editor="{ data, field }">
-				<InputText v-if="data[field].value" v-model="data[field].value" autofocus />
-			</template>
-		</Column> -->
+				</template>
+			</Column>
+		</template>
 		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
 			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
@@ -138,7 +134,16 @@
 	<Teleport to="body">
 		<tera-modal v-if="openValueConfig" @modal-mask-clicked="openValueConfig = false">
 			<template #header>
-				<h4>{{ cellValueToEdit.field }}</h4>
+				<h4>
+					{{
+						editableModelConfigs[modalVal.configIndex].amrConfiguration.semantics.ode[
+							modalVal.odeType
+						][modalVal.odeObjIndex]['id'] ??
+						editableModelConfigs[modalVal.configIndex].amrConfiguration.semantics.ode[
+							modalVal.odeType
+						][modalVal.odeObjIndex]['target']
+					}}
+				</h4>
 				<span>Select a value for this configuration</span>
 			</template>
 			<template #default>
@@ -156,7 +161,11 @@
 							<label for="name">Value</label>
 							<InputText
 								class="p-inputtext-sm"
-								v-model="cellValueToEdit.data[cellValueToEdit.field]"
+								v-model="
+									editableModelConfigs[modalVal.configIndex].amrConfiguration.semantics.ode[
+										modalVal.odeType
+									][modalVal.odeObjIndex][modalVal.valueName]
+								"
 							/>
 						</div>
 					</TabPanel>
@@ -211,7 +220,7 @@ const selectedModelConfig = ref();
 const extractions = ref<any[]>([]);
 
 const openValueConfig = ref(false);
-const cellValueToEdit = ref({ data: {}, field: '' });
+const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 });
 
 // Selected columns - TODO: add in for filtering calibration dropdowns
 const selectedInitials = ref<string[]>([]);
@@ -265,51 +274,38 @@ function addConfigValue() {
 	extractions.value.push(`Untitled`);
 }
 
-const onCellEditComplete = (event) => {
+const onCellEditComplete = ({ newData, index }) => {
 	if (props.isEditable) {
-		const { data, field } = event;
-		cellValueToEdit.value = { data, field };
-		updateModelConfigValue(event.newValue, event.index);
+		editableModelConfigs.value[index].amrConfiguration = newData;
+		updateModelConfiguration(editableModelConfigs.value[index]);
 	}
 };
 
-function openValueModal(data: any, field: string) {
+function openValueModal(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
 	if (props.isEditable) {
 		openValueConfig.value = true;
-		cellValueToEdit.value = { data, field };
+		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
 	}
 }
 
-function updateModelConfigValue(
-	newValue?: string,
-	configIndex: number = cellValueToEdit.value.data[cellValueToEdit.value.field].configIndex
-) {
-	const { data, field } = cellValueToEdit.value;
-	const { type, value, typeIndex } = data[field];
-
+function updateModelConfigValue() {
+	const { configIndex } = modalVal.value;
 	const configToUpdate = editableModelConfigs.value[configIndex];
-
-	if (field === 'name' && newValue) {
-		configToUpdate.name = newValue;
-	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value) {
-		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value = value;
-	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression) {
-		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression = value;
-	}
-
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
 
 function initializeConfigSpace() {
-	const amr: Model = props.modelConfigurations[0].amrConfiguration;
-	console.log(amr);
-
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
-	cellValueToEdit.value = { data: {}, field: '' };
+	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 }
 
 watch(
