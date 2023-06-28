@@ -138,6 +138,13 @@ export interface PetriNetModel {
     metadata?: ModelMetadata;
 }
 
+export interface DKG {
+    curie: string;
+    name: string;
+    description: string;
+    link: string;
+}
+
 export interface CalibrationRequest {
     modelConfigId: string;
     extra: any;
