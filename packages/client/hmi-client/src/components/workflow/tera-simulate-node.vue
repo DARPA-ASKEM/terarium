@@ -3,7 +3,7 @@
 		<Button @click="runSimulate">Run</Button>
 		<div class="chart-container">
 			<SimulateChart
-				v-for="index in openedWorkflowNodeStore.numCharts"
+				v-for="index in node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
 				:chart-idx="index"
@@ -35,7 +35,7 @@ import { RunResults } from '@/types/SimulateConfig';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
-import { SimulateOperation } from './simulate-operation';
+import { SimulateOperation, SimulateOperationState } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -79,10 +79,15 @@ const runSimulate = async () => {
 		paramsObj[d] = Math.random() * 0.05;
 	});
 
+	const state = props.node.state as SimulateOperationState;
+
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
 		const payload = {
 			modelConfigId: configId,
-			timespan: { start: openedWorkflowNodeStore.tspan[0], end: openedWorkflowNodeStore.tspan[1] },
+			timespan: {
+				start: state.currentTimespan.start,
+				end: state.currentTimespan.end
+			},
 			extra: {
 				initials: initialsObj,
 				params: paramsObj

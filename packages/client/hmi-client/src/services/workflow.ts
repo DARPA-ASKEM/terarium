@@ -71,6 +71,10 @@ export const addNode = (
 		height: size.height
 	};
 
+	if (op.initState) {
+		node.state = op.initState();
+	}
+
 	wf.nodes.push(node);
 };
 
