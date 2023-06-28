@@ -6,11 +6,13 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Map;
+import java.util.List;
 
 @RegisterRestClient(configKey = "data-service")
 @Path("/models")
@@ -107,5 +109,11 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response copyModel(
 		ModelOperationCopy modelOperationCopy
+	);
+
+	@GET
+	@Path("/{id}/model_configurations")
+	List<ModelConfiguration> getModelConfigurations(
+			@PathParam("id") String id
 	);
 }
