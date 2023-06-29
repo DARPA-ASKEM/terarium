@@ -193,7 +193,7 @@ function showNodeDrilldown() {
 			break;
 		case WorkflowOperationTypes.MODEL:
 			pageType = ProjectAssetTypes.MODELS;
-			assetId = props.node.outputs[props.node.outputs.length - 1].value?.[0];
+			assetId = props.node.state.modelId;
 			break;
 		default:
 			break;

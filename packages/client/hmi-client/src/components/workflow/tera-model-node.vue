@@ -15,8 +15,6 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
-// import Button from 'primevue/button';
-// import InputNumber from 'primevue/inputnumber';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
@@ -35,7 +33,7 @@ const props = defineProps<{
 	outputAmount: number;
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['append-output-port', 'select-model']);
 
 const model = ref<Model | null>();
 const selectedModel = ref<Model>();
@@ -65,6 +63,7 @@ watch(
 	async () => {
 		if (selectedModel.value) {
 			model.value = await getModel(selectedModel.value.id.toString());
+			emit('select-model', { id: model.value?.id });
 			createDefaultModelConfig();
 		}
 	}
@@ -84,20 +83,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-ul {
-	list-style-type: none;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-li {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-}
-
 .node-title {
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;

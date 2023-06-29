@@ -46,6 +46,7 @@
 						:model-id="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
 						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
@@ -256,6 +257,10 @@ const testOperation: Operation = {
 
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
+
+function selectModel(node: WorkflowNode, data: { id: string }) {
+	node.state.modelId = data.id;
+}
 
 function chartConfigurationChange(node: WorkflowNode, data: { index: number; chartConfig: any }) {
 	node.state.chartConfigs[data.index] = data.chartConfig;

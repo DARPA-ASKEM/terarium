@@ -144,7 +144,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize, isArray, isEmpty } from 'lodash';
+import { capitalize, isArray, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
@@ -155,20 +155,17 @@ import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import TabPanel from 'primevue/tabpanel';
 import InputText from 'primevue/inputtext';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, Model } from '@/types/Types';
 import { AnyValueMap } from '@/types/common';
 import {
 	createModelConfiguration,
 	updateModelConfiguration
 } from '@/services/model-configurations';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { ModelOperation } from '@/components/workflow/model-operation';
-
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+import { getModelConfigurations } from '@/services/model';
 
 const props = defineProps<{
 	isEditable: boolean;
-	modelConfigurations: ModelConfiguration[];
+	model: Model;
 	calibrationConfig?: boolean;
 }>();
 
@@ -254,7 +251,6 @@ const modelConfigurationTable = computed(() => {
 	return [];
 });
 
-// TODO: Reimplement this for calibration
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
 	...selectedParameters.value
@@ -263,18 +259,14 @@ defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
 	const response = await createModelConfiguration(
-		props.modelConfigurations[0].modelId,
-		`Config ${props.modelConfigurations.length + 1}`,
+		props.model.id,
+		`Config ${editableModelConfigs.value.length + 1}`,
 		'shawntest',
 		editableModelConfigs.value[editableModelConfigs.value.length - 1].amrConfiguration
 	);
+	console.log(response);
 
-	// FIXME: Not a good idea to update reactive variables through global storage
-	openedWorkflowNodeStore.appendOutputPort({
-		type: ModelOperation.outputs[0].type,
-		label: `Config ${props.modelConfigurations.length + 1}`,
-		value: response.id
-	});
+	// TODO: notify change
 }
 
 function addConfigValue() {
@@ -317,16 +309,22 @@ function updateModelConfigValue(
 	openValueConfig.value = false;
 }
 
-function initializeConfigSpace() {
+async function initializeConfigSpace() {
 	editableModelConfigs.value = [];
-	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
+
+	const allConfigs = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+	editableModelConfigs.value = allConfigs.filter((d) => d.amrConfiguration);
+
+	console.log('number of configs', editableModelConfigs.value.length);
+	console.log('number of configs', allConfigs);
+
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	cellValueToEdit.value = { data: {}, field: '' };
 }
 
 watch(
-	() => props.modelConfigurations,
+	() => props.model,
 	() => initializeConfigSpace(),
 	{ deep: true }
 );
