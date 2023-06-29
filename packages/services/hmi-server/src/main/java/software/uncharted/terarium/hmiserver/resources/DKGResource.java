@@ -10,12 +10,10 @@ import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 @Path("/api/dkg")
-@Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "DKG REST Endpoints")
-@RegisterProvider(HmiResponseExceptionMapper.class)
 @Slf4j
 public class DKGResource {
 	@Inject
@@ -23,7 +21,7 @@ public class DKGResource {
 	DKGProxy proxy;
 
 	@GET
-	public DKG searchConcept(
+	public List<DKG> searchConcept(
 		@QueryParam("curies") final String curies
 	) {
 		try {

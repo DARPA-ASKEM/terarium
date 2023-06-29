@@ -217,6 +217,7 @@
 										>
 											{{ getCurieFromGroudingIdentifier(state.grounding.identifiers) }}
 										</a>
+										{{ nameOfCurie(getCurieFromGroudingIdentifier(state.grounding.identifiers)) }}
 									</template>
 									<template v-else>--</template>
 								</div>
@@ -460,6 +461,7 @@ import RelatedPublications from '@/components/widgets/tera-related-publications.
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
+import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRelatedArtifacts } from '@/services/provenance';
@@ -555,6 +557,12 @@ const relatedTerariumDatasets = computed(
 const relatedTerariumDocuments = computed(
 	() => relatedTerariumArtifacts.value.filter((d) => isDocument(d)) as Document[]
 );
+
+async function nameOfCurie(curie: string): Promise<string> {
+	const curies = await getCuriesEntities([curie]);
+	console.log(curies);
+	return curies?.[0].name ?? curie;
+}
 
 // Get the mathematical expression of a transition
 function getTransitionExpression(id): string {
