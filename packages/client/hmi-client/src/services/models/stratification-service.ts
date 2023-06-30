@@ -87,6 +87,7 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		description: 'Age-contact strata model',
 		schema:
 			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
 		model_version: '0.1',
 		model: {
 			states,
@@ -96,12 +97,14 @@ export function generateAgeStrataModel(stateNames: string[]): Model {
 		metadata: {
 			processed_at: 0,
 			processed_by: '',
-			variable_statements: []
+			variable_statements: [],
+			annotations: {},
+			attributes: []
 		}
 	};
 }
 
-export function generateLocationStrataModel(stateNames: string[]) {
+export function generateLocationStrataModel(stateNames: string[]): Model {
 	const states: State[] = stateNames.map((name, index) => ({
 		id: `L${index + 1}`,
 		name,
@@ -168,6 +171,7 @@ export function generateLocationStrataModel(stateNames: string[]) {
 		description: 'Location-travel strata model',
 		schema:
 			'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+		schema_name: 'petrinet',
 		model_version: '0.1',
 		model: {
 			states,
@@ -177,7 +181,9 @@ export function generateLocationStrataModel(stateNames: string[]) {
 		metadata: {
 			processed_at: 0,
 			processed_by: '',
-			variable_statements: []
+			variable_statements: [],
+			annotations: {},
+			attributes: []
 		}
 	};
 }
