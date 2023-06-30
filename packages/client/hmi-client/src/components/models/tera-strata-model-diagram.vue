@@ -18,65 +18,25 @@
 										class="p-button-sm p-button-outlined toolbar-button"
 									/>
 								</template>
-								<template #center>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="addState"
-											label="Add state"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											v-if="isEditing"
-											@click="addTransition"
-											label="Add transition"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-									</span>
-								</template>
-								<template #end>
-									<span class="toolbar-subgroup">
-										<Button
-											v-if="isEditing"
-											@click="cancelEdit"
-											label="Cancel"
-											class="p-button-sm p-button-outlined toolbar-button"
-										/>
-										<Button
-											@click="toggleEditMode"
-											:label="isEditing ? 'Save model' : 'Edit model'"
-											:class="
-												isEditing
-													? 'p-button-sm toolbar-button-saveModel'
-													: 'p-button-sm p-button-outlined toolbar-button'
-											"
-										/>
-									</span>
-								</template>
 							</Toolbar>
+							<section class="legend">
+								<ul>
+									<li v-for="(type, i) in stateTypes" :key="i">
+										<div class="legend-state" :style="{ backgroundColor: strataTypeColors[i] }" />
+										{{ type }}
+									</li>
+								</ul>
+								<ul>
+									<li v-for="(type, i) in transitionTypes" :key="i">
+										<div
+											class="legend-transition"
+											:style="{ backgroundColor: strataTypeColors[stateTypes?.length ?? 0 + i] }"
+										/>
+										{{ type }}
+									</li>
+								</ul>
+							</section>
 							<div v-if="model" ref="graphElement" class="graph-element" />
-							<ContextMenu ref="menu" :model="contextMenuItems" />
-						</section>
-					</SplitterPanel>
-					<SplitterPanel
-						class="tera-split-panel"
-						:size="mathPanelSize"
-						:minSize="mathPanelMinSize"
-						:maxSize="mathPanelMaxSize"
-					>
-						<section class="math-editor-container" :class="mathEditorSelected">
-							<tera-math-editor
-								:is-editable="isEditable"
-								:latex-equation="equationLatex"
-								:is-editing-eq="isEditingEQ"
-								:is-math-ml-valid="isMathMLValid"
-								:math-mode="MathEditorModes.LIVE"
-								@cancel-editing="cancelEditng"
-								@equation-updated="setNewLatexFormula"
-								@validate-mathml="validateMathML"
-								@set-editing="isEditingEQ = true"
-							>
-							</tera-math-editor>
 						</section>
 					</SplitterPanel>
 				</Splitter>
@@ -87,32 +47,19 @@
 </template>
 
 <script setup lang="ts">
-import { remove, isEmpty, pickBy, isArray } from 'lodash';
+import { remove } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
 import { PetrinetRenderer } from '@/petrinet/petrinet-renderer';
-import {
-	parsePetriNet2IGraph,
-	PetriNet,
-	NodeData,
-	EdgeData,
-	mathmlToPetri,
-	NodeType,
-	petriToLatex
-} from '@/petrinet/petrinet-service';
+import { NodeData, EdgeData, petriToLatex } from '@/petrinet/petrinet-service';
 import { parseAMR2IGraph, AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
-import { separateEquations, MathEditorModes } from '@/utils/math';
-import { updateModel } from '@/services/model';
-import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import ContextMenu from 'primevue/contextmenu';
-// import { ITypedModel } from '@/types/Model';
-import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import Toolbar from 'primevue/toolbar';
 import { Model } from '@/types/Types';
+import { strataTypeColors } from '@/utils/color-schemes';
 import TeraResizablePanel from '../widgets/tera-resizable-panel.vue';
 
 // Get rid of these emits
@@ -126,42 +73,26 @@ const emit = defineEmits([
 
 const props = defineProps<{
 	model: Model | null;
-	isEditable: boolean;
 	nodePreview?: boolean;
 }>();
 
-const menu = ref();
-
-const isEditing = ref<boolean>(false);
-const isEditingEQ = ref<boolean>(false);
-
 const newModelName = ref('New Model');
-const newPetri = ref();
-
 const selectedVariable = ref('');
-
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
-const equationLatexNew = ref<string>('');
-const isMathMLValid = ref<boolean>(true);
-
 const splitterContainer = ref<HTMLElement | null>(null);
 const layout = ref<'horizontal' | 'vertical' | undefined>('horizontal');
-
 const switchWidthPercent = ref<number>(50); // switch model layout when the size of the model window is < 50%
-
 const equationPanelSize = ref<number>(50);
 const equationPanelMinSize = ref<number>(0);
 const equationPanelMaxSize = ref<number>(100);
-
-const mathPanelSize = ref<number>(50);
-const mathPanelMinSize = ref<number>(0);
-const mathPanelMaxSize = ref<number>(100);
-
 const graphElement = ref<HTMLDivElement | null>(null);
 let renderer: PetrinetRenderer | null = null;
-let eventX = 0;
-let eventY = 0;
+const modelTypeSystem = computed(() => props.model?.semantics?.typing?.type_system);
+const stateTypes = computed(() => modelTypeSystem.value?.states.map((s) => s.name));
+const transitionTypes = computed(() =>
+	modelTypeSystem.value?.transitions.map((t) => t.properties?.name)
+);
 
 const updateLayout = () => {
 	if (splitterContainer.value) {
@@ -186,16 +117,6 @@ onUnmounted(() => {
 	window.removeEventListener('resize', handleResize);
 });
 
-const mathEditorSelected = computed(() => {
-	if (!isMathMLValid.value) {
-		return 'math-editor-error';
-	}
-	if (isEditingEQ.value) {
-		return 'math-editor-selected';
-	}
-	return '';
-});
-
 const onVariableSelected = (variable: string) => {
 	if (variable) {
 		if (variable === selectedVariable.value) {
@@ -214,19 +135,9 @@ const onVariableSelected = (variable: string) => {
 	}
 };
 
-const setNewLatexFormula = (formulaString: string) => {
-	equationLatexNew.value = formulaString;
-};
-
 const updateLatexFormula = (formulaString: string) => {
 	equationLatex.value = formulaString;
 	equationLatexOriginal.value = formulaString;
-};
-
-const cancelEditng = () => {
-	isEditingEQ.value = false;
-	isMathMLValid.value = true;
-	updateLatexFormula(equationLatexOriginal.value);
 };
 
 // Whenever selectedModelId changes, fetch model with that ID
@@ -300,28 +211,6 @@ const editorKeyHandler = (event: KeyboardEvent) => {
 	}
 };
 
-// Model editor context menu
-const contextMenuItems = ref([
-	{
-		label: 'Add state',
-		icon: 'pi pi-fw pi-circle',
-		command: () => {
-			if (renderer) {
-				renderer.addNode('S', '?', { x: eventX, y: eventY });
-			}
-		}
-	},
-	{
-		label: 'Add transition',
-		icon: 'pi pi-fw pi-stop',
-		command: () => {
-			if (renderer) {
-				renderer.addNode('T', '?', { x: eventX, y: eventY });
-			}
-		}
-	}
-]);
-
 // Render graph whenever a new model is fetched or whenever the HTML element
 //	that we render the graph to changes.
 watch(
@@ -346,22 +235,6 @@ watch(
 			renderer?.addEdge(d.source, d.target);
 		});
 
-		renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-			if (!renderer?.editMode) return;
-			eventX = pos.x;
-			eventY = pos.y;
-			menu.value.show(evt);
-		});
-
-		renderer.on('background-click', () => {
-			if (menu.value) menu.value.hide();
-
-			// de-select node if selection exists
-			if (selectedVariable.value) {
-				onVariableSelected(selectedVariable.value);
-			}
-		});
-
 		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
 			// Note: do not change the renderer's visuals, this is done internally
 			onVariableSelected(d.label);
@@ -380,77 +253,6 @@ watch(
 	{ deep: true }
 );
 
-const updatePetri = async (m: PetriNet) => {
-	// equationML.value = mathmlString;
-	// Convert petri net into a graph
-	const graphData: IGraph<NodeData, EdgeData> = parsePetriNet2IGraph(m, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	// Create renderer
-	renderer = new PetrinetRenderer({
-		el: graphElement.value as HTMLDivElement,
-		useAStarRouting: false,
-		useStableZoomPan: true,
-		runLayout: runDagreLayout,
-		dragSelector: 'no-drag'
-	});
-
-	renderer.on('add-edge', (_evtName, _evt, _selection, d) => {
-		renderer?.addEdge(d.source, d.target);
-	});
-
-	renderer.on('background-contextmenu', (_evtName, evt, _selection, _renderer, pos: any) => {
-		if (!renderer?.editMode) return;
-		eventX = pos.x;
-		eventY = pos.y;
-		menu.value.toggle(evt);
-	});
-
-	// Render graph
-	await renderer?.setData(graphData);
-	await renderer?.render();
-	updateLatexFormula(equationLatexNew.value);
-};
-
-const hasNoEmptyKeys = (obj: Record<string, unknown>): boolean => {
-	const nonEmptyKeysObj = pickBy(obj, (value) => !isEmpty(value));
-	return Object.keys(nonEmptyKeysObj).length === Object.keys(obj).length;
-};
-
-const validateMathML = async (mathMlString: string, editMode: boolean) => {
-	isEditingEQ.value = true;
-	isMathMLValid.value = false;
-	const cleanedMathML = separateEquations(mathMlString);
-	if (mathMlString === '') {
-		isMathMLValid.value = true;
-		isEditingEQ.value = false;
-	} else if (!editMode) {
-		try {
-			newPetri.value = await mathmlToPetri(cleanedMathML);
-			if (
-				(isArray(newPetri.value) && newPetri.value.length > 0) ||
-				(!isArray(newPetri.value) &&
-					Object.keys(newPetri.value).length > 0 &&
-					hasNoEmptyKeys(newPetri.value))
-			) {
-				isMathMLValid.value = true;
-				isEditingEQ.value = false;
-				updatePetri(newPetri.value);
-			} else {
-				logger.error(
-					'MathML cannot be converted to a Petrinet.  Please try again or click cancel.'
-				);
-			}
-		} catch (e) {
-			isMathMLValid.value = false;
-		}
-	} else if (editMode) {
-		isMathMLValid.value = true;
-	}
-};
-
 onMounted(async () => {
 	// fetchRelatedTerariumArtifacts();
 	document.addEventListener('keyup', editorKeyHandler);
@@ -460,48 +262,8 @@ onUnmounted(() => {
 	document.removeEventListener('keyup', editorKeyHandler);
 });
 
-const toggleEditMode = () => {
-	isEditing.value = !isEditing.value;
-	renderer?.setEditMode(isEditing.value);
-	if (!isEditing.value && props.model && renderer) {
-		emit('update-model-content', renderer.graph);
-		updateModel(props.model);
-	} else if (isEditing.value && selectedVariable.value) {
-		// de-select node if selection exists
-		onVariableSelected(selectedVariable.value);
-	}
-};
-
-// Cancel existing edits, currently this will:
-// - Resets changs to the model structure
-const cancelEdit = async () => {
-	isEditing.value = false;
-	if (!props.model) return;
-
-	// Convert petri net into a graph with raw input data
-	const graphData: IGraph<NodeData, EdgeData> = parseAMR2IGraph(props.model, {
-		S: { width: 60, height: 60 },
-		T: { width: 40, height: 40 }
-	});
-
-	if (renderer) {
-		renderer.setEditMode(false);
-		await renderer.setData(graphData);
-		renderer.isGraphDirty = true;
-		await renderer.render();
-	}
-};
-
 const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
-};
-
-const addState = async () => {
-	renderer?.addNodeCenter(NodeType.State, '?');
-};
-
-const addTransition = async () => {
-	renderer?.addNodeCenter(NodeType.Transition, '?');
 };
 </script>
 

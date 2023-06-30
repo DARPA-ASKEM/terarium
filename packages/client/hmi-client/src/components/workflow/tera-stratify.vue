@@ -87,7 +87,7 @@
 								</div>
 							</section>
 							<section v-else>
-								<tera-model-diagram :model="strataModel" :is-editable="false" strata-view />
+								<tera-strata-model-diagram :model="strataModel" :is-editable="false" strata-view />
 							</section>
 						</div>
 					</AccordionTab>
@@ -112,6 +112,7 @@ import { Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getModel } from '@/services/model';
+import TeraStrataModelDiagram from '../models/tera-strata-model-diagram.vue';
 import TeraModelDiagram from '../models/tera-model-diagram.vue';
 
 const props = defineProps<{
