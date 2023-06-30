@@ -29,10 +29,7 @@
 			</div>
 		</section>
 		<section v-if="mathMode === MathEditorModes.LIVE">
-			<math-field
-				class="mathlive-equation"
-				ref="mathLiveField"
-				:disabled="!isEditingEq"
+			<math-field class="mathlive-equation" ref="mathLiveField" :disabled="!isEditingEq"
 				><slot v-if="mathMode === MathEditorModes.LIVE"></slot
 			></math-field>
 		</section>
