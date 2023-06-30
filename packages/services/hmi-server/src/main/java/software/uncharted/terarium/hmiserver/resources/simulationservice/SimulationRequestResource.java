@@ -70,10 +70,25 @@ public class SimulationRequestResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Tag(name = "Create calibrate job")
-	public Response makeCalibrateJob(
-		final CalibrationRequest calibrationRequest
+	public Simulation makeCalibrateJob(
+		final CalibrationRequest request
 	) {
-		final JobResponse res = simulationServiceProxy.makeCalibrateJob(calibrationRequest);
-		return null;
+		final JobResponse res = simulationServiceProxy.makeCalibrateJob(Converter.convertObjectToSnakeCaseJsonNode(request));
+
+		Simulation sim = new Simulation();
+		sim.setId(res.getSimulationId());
+		sim.setType("calibration");
+
+		sim.setExecutionPayload(request);
+
+		// FIXME: These fiels are arguable unnecessary
+		sim.setStatus("queued");
+		sim.setWorkflowId("dummy");
+		sim.setUserId(0);
+		sim.setProjectId(0);
+		sim.setEngine("sciml");
+
+		JsonNode jn = Converter.convertObjectToSnakeCaseJsonNode(sim);
+		return simulationProxy.createSimulation(jn);
 	}
 }
