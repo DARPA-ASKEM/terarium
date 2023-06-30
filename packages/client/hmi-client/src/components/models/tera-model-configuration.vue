@@ -303,6 +303,7 @@ function updateModelConfigValue() {
 function initializeConfigSpace() {
 	editableModelConfigs.value = [];
 	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
+	console.log(props.modelConfigurations);
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
