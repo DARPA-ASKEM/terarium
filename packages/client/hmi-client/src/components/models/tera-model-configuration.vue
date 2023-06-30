@@ -51,11 +51,12 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<template v-for="(amrConfig, i) in configurations" :key="i">
-			<Column v-for="(rate, j) of amrConfig?.semantics?.ode.rates" :key="i + j">
+		<template v-for="({ configuration, id }, i) in [modelConfigs[0]]" :key="i">
+			<Column v-for="(rate, j) of configuration?.semantics?.ode.rates" :key="i + j">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ rate.expression }}{{ i + j }}</span>
+						<span>{{ rate.expression }}</span
+						>{{ id }}
 						<Button
 							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 							icon="pi pi-ellipsis-v"
@@ -70,10 +71,11 @@
 					/>
 				</template>
 			</Column>
-			<Column v-for="(initial, j) of amrConfig?.semantics?.ode.initials" :key="i + j + 100">
+			<Column v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="i + j + 100">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ initial.expression }}{{ i + j }}</span>
+						<span>{{ initial.expression }}</span
+						>{{ i + j }}
 						<Button
 							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 							icon="pi pi-ellipsis-v"
@@ -88,10 +90,11 @@
 					/>
 				</template>
 			</Column>
-			<Column v-for="(parameter, j) of amrConfig?.semantics?.ode.parameters" :key="i + j + 200">
+			<Column v-for="(parameter, j) of configuration?.semantics?.ode.parameters" :key="i + j + 200">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ parameter.value }}{{ i + j }}</span>
+						<span>{{ parameter.value }}</span
+						>{{ i + j }}
 						<Button
 							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 							icon="pi pi-ellipsis-v"
@@ -184,7 +187,6 @@
 		</tera-modal>
 	</Teleport>
 </template>
-
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
 import { capitalize, isEmpty } from 'lodash';
