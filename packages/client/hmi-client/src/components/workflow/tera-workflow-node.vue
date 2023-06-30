@@ -1,7 +1,7 @@
 <template>
 	<main :style="nodeStyle" ref="workflowNode">
 		<header>
-			<h5 class="truncate">{{ node.operationType }} ({{ node.statusCode }})</h5>
+			<h5 class="truncate">{{ node.operationType }}</h5>
 			<span>
 				<Button
 					icon="pi pi-sign-in"
@@ -177,6 +177,7 @@ const getInputLabelColor = (edgeIdx: number) => {
 function showNodeDrilldown() {
 	let pageType;
 	let assetId;
+
 	switch (props.node.operationType) {
 		case WorkflowOperationTypes.SIMULATE:
 			pageType = ProjectAssetTypes.SIMULATIONS;

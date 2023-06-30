@@ -28,7 +28,7 @@ public interface ModelConfigurationProxy {
 
 	@GET
 	@Path("/{id}")
-	Response getModelConfiguration(
+	ModelConfiguration getModelConfiguration(
 		@PathParam("id") String id
 	);
 

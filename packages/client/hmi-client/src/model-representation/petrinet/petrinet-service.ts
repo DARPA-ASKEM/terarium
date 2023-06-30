@@ -6,7 +6,7 @@ import {
 	Model,
 	TypingSemantics
 } from '@/types/Types';
-import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
+import { parseIGraph2PetriNet, PetriNet } from '@/petrinet/petrinet-service';
 import { logger } from '@/utils/logger';
 
 /**
@@ -42,6 +42,43 @@ export enum NodeType {
 	State = 'S',
 	Transition = 'T'
 }
+
+export const convertAMRToACSet = (amr: PetriNetModel) => {
+	const result: PetriNet = {
+		S: [],
+		T: [],
+		I: [],
+		O: []
+	};
+
+	amr.states.forEach((s) => {
+		result.S.push({ sname: s.id });
+	});
+
+	amr.transitions.forEach((t) => {
+		result.T.push({ tname: t.id });
+	});
+
+	amr.transitions.forEach((transition) => {
+		transition.input.forEach((input) => {
+			result.I.push({
+				is: result.S.findIndex((s) => s.sname === input) + 1,
+				it: result.T.findIndex((t) => t.tname === transition.id) + 1
+			});
+		});
+	});
+
+	amr.transitions.forEach((transition) => {
+		transition.output.forEach((output) => {
+			result.O.push({
+				os: result.S.findIndex((s) => s.sname === output) + 1,
+				ot: result.T.findIndex((t) => t.tname === transition.id) + 1
+			});
+		});
+	});
+
+	return result;
+};
 
 export const convertToGraph = (petri: PetriNetModel) => {
 	const result: IGraph<PetriNetState | PetriNetTransition, EdgeData> = {

@@ -110,7 +110,7 @@ export default defineComponent({
 				values.push({
 					label: labelName,
 					ratio: b.value / this.max,
-					value: `${b.selectedValue}/${b.value}`
+					value: `${b.selectedValue}`
 				});
 			}
 			return {

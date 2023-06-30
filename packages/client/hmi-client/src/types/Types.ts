@@ -61,6 +61,7 @@ export interface Model {
     description: string;
     model_version: string;
     schema: string;
+    schema_name: string;
     model: { [index: string]: any };
     semantics?: ModelSemantics;
     metadata: ModelMetadata;
@@ -72,6 +73,7 @@ export interface ModelConfiguration {
     description?: string;
     modelId: string;
     configuration: any;
+    amrConfiguration: any;
 }
 
 export interface ProvenanceQueryParam {
@@ -81,12 +83,17 @@ export interface ProvenanceQueryParam {
 }
 
 export interface Simulation {
-    id?: number;
-    name: string;
-    description?: string;
-    simulationParams: SimulationParams;
-    result?: string;
-    modelId: string;
+    id: string;
+    executionPayload: any;
+    resultFiles?: string[];
+    type: string;
+    status: string;
+    startTime?: string;
+    completedTime?: string;
+    engine: string;
+    workflowId: string;
+    userId?: number;
+    projectId?: number;
 }
 
 export interface Dataset {
@@ -130,13 +137,30 @@ export interface PetriNetModel {
     metadata?: ModelMetadata;
 }
 
-export interface CalibrationParams {
-    model: string;
-    initials: { [index: string]: number };
-    params: { [index: string]: number };
-    timesteps_column: string;
-    feature_mappings: { [index: string]: string };
-    dataset: string;
+export interface CalibrationRequest {
+    modelConfigId: string;
+    extra: any;
+    timespan?: TimeSpan;
+    dataset: DatasetLocation;
+    engine: string;
+}
+
+export interface DatasetLocation {
+    id: string;
+    filename: string;
+    mappings?: any;
+}
+
+export interface SimulationRequest {
+    modelConfigId: string;
+    timespan: TimeSpan;
+    extra: any;
+    engine: string;
+}
+
+export interface TimeSpan {
+    start: number;
+    end: number;
 }
 
 export interface DocumentsResponseOK extends XDDResponseOK {
@@ -162,13 +186,8 @@ export interface ModelMetadata {
     processed_at: number;
     processed_by: string;
     variable_statements: VariableStatement[];
-}
-
-export interface SimulationParams {
-    model: string;
-    initials: { [index: string]: number };
-    tspan: number[];
-    params: { [index: string]: number };
+    annotations: Annotations;
+    attributes: any[];
 }
 
 export interface PetriNetState {
@@ -233,6 +252,8 @@ export interface OdeSemantics {
     rates: Rate[];
     initials?: any[];
     parameters?: ModelParameter[];
+    observables?: Observable[];
+    time?: any;
 }
 
 export interface TypingSemantics {
@@ -246,6 +267,20 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
+}
+
+export interface Annotations {
+    license?: string;
+    authors?: string[];
+    references?: string[];
+    time_scale?: string;
+    time_start?: string;
+    time_end?: string;
+    locations?: string[];
+    pathogens?: string[];
+    diseases?: string[];
+    hosts?: string[];
+    model_types?: string[];
 }
 
 export interface ModelGrounding {
@@ -293,6 +328,14 @@ export interface Rate {
     target: string;
     expression: string;
     expressionMathml: string;
+}
+
+export interface Observable {
+    id: string;
+    name?: string;
+    states: string[];
+    expression?: string;
+    expressionMathml?: string;
 }
 
 export interface TypeSystem {

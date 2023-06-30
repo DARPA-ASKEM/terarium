@@ -1,15 +1,15 @@
 <!-- column summary charts below -->
 <template>
 	<DataTable
-		tableStyle="width:auto"
 		:class="previewMode ? 'p-datatable-xsm' : 'p-datatable-sm'"
-		paginator
-		paginatorPosition="both"
 		:rows="50"
 		:value="csvContent?.slice(1, csvContent.length)"
+		paginator
+		paginatorPosition="both"
 		removableSort
 		resizable-columns
 		showGridlines
+		tableStyle="width:auto"
 	>
 		<Column
 			v-for="(colName, index) of csvHeaders"

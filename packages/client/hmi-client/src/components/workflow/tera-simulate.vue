@@ -17,7 +17,7 @@
 				:active="activeTab === SimulateTabs.output"
 				@click="activeTab = SimulateTabs.output"
 			/>
-			<span class="simulate-header-label">Simulate</span>
+			<span class="simulate-header-label">Simulate (deterministic)</span>
 		</div>
 		<div
 			v-if="activeTab === SimulateTabs.output && node?.outputs.length"
@@ -26,8 +26,7 @@
 			<simulate-chart
 				v-for="index in openedWorkflowNodeStore.numCharts"
 				:key="index"
-				:run-results="node.outputs[0].value?.[0].runResults"
-				:run-id-list="node.outputs[0].value?.[0].runIdList"
+				:run-results="runResults"
 				:chart-idx="index"
 			/>
 			<Button
@@ -43,12 +42,12 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ modelConfiguration?.configuration.name }} </template>
-						<model-diagram :model="modelConfiguration?.configuration" :is-editable="false" />
+						<template #header> {{ modelConfiguration?.amrConfiguration.name }} </template>
+						<model-diagram v-if="model" :model="model" :is-editable="false" />
 					</AccordionTab>
 					<AccordionTab>
 						<!-- use tera-model-configuration here just don't make it editable etc.
-							
+
 							<template #header> Model configurations ({{ simConfigs.length }}) </template>
 						<DataTable v-if="node.inputs[0].value?.length" class="model-configuration" showGridlines
 							:value="simConfigs">
@@ -101,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 // import Column from 'primevue/column';
@@ -111,14 +110,18 @@ import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, Model } from '@/types/Types';
+import { RunResults, TspanUnits } from '@/types/SimulateConfig';
 
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { TspanUnits } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
+import ModelDiagram from '@/components/models/tera-model-diagram.vue';
+
+import { getSimulation, getRunResult } from '@/services/models/simulation-service';
+import { getModel } from '@/services/model';
+import { csvParse } from 'd3';
 import SimulateChart from './tera-simulate-chart.vue';
-import ModelDiagram from '../models/tera-model-diagram.vue';
 
 const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
@@ -130,8 +133,11 @@ enum SimulateTabs {
 const activeTab = ref(SimulateTabs.input);
 const node = ref(openedWorkflowNodeStore.node);
 
+const model = ref<Model | null>(null);
+const runResults = ref<RunResults>({});
+
 const modelConfiguration = ref<ModelConfiguration | null>(null);
-const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
+// const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
 
 const TspanUnitList = computed(() =>
 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
@@ -154,14 +160,54 @@ const TspanUnitList = computed(() =>
 // 		})) || []
 // );
 
-watch(
-	() => modelConfigId.value,
-	async () => {
-		if (modelConfigId.value) {
-			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
-		}
-	}
-);
+// watch(
+// 	() => modelConfigId.value,
+// 	async () => {
+// 		if (modelConfigId.value) {
+// 			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
+// 		}
+// 	}
+// );
+
+onMounted(async () => {
+	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
+	// e.g. just take the first one.
+	if (!node.value) return;
+
+	const nodeObj = node.value;
+
+	if (!nodeObj.outputs[0]) return;
+	const port = nodeObj.outputs[0];
+	if (!port.value) return;
+	const temp = port.value[0];
+	const simulationId = temp.runIdList[0];
+
+	const simulationObj = await getSimulation(simulationId as string);
+	if (!simulationObj) return;
+
+	const executionPayload = simulationObj.executionPayload;
+
+	if (!executionPayload) return;
+
+	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
+	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
+
+	console.log('execution payload', executionPayload);
+	console.log('simulation', simulationObj);
+	console.log('modelConfigId', modelConfigurationId);
+	console.log('modelConfig', modelConfigurationObj);
+	const modelId = modelConfigurationObj.modelId;
+	model.value = await getModel(modelId);
+
+	// Fetch run results
+	await Promise.all(
+		temp.runIdList.map(async (runId) => {
+			const resultCsv = await getRunResult(runId, 'result.csv');
+			const csvData = csvParse(resultCsv);
+			runResults.value[runId] = csvData as any;
+		})
+	);
+});
 </script>
 
 <style scoped>

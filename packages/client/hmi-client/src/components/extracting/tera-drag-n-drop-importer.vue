@@ -28,6 +28,7 @@
 							:file="file"
 							:show-preview="props.showPreview"
 							:is-processing="isProcessing"
+							:progress="props.progress"
 							@remove-file="removeFile(importFiles.indexOf(file))"
 						>
 						</TeraDragAndDropFilePreviewer>
@@ -86,6 +87,10 @@ const props = defineProps({
 	showPreview: {
 		type: Boolean,
 		required: true
+	},
+	progress: {
+		type: Number,
+		default: undefined
 	},
 	// list of accepted types of files
 	acceptTypes: {
