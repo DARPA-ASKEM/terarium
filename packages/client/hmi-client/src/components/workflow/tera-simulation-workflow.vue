@@ -43,8 +43,6 @@
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
 						:node="node"
-						:model-id="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
-						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 						@select-model="(event) => selectModel(node, event)"
 					/>

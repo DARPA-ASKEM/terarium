@@ -15,22 +15,15 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
-import { ModelOperation } from '@/components/workflow/model-operation';
 import { getModel } from '@/services/model';
 import Dropdown from 'primevue/dropdown';
 import { Model } from '@/types/Types';
 import TeraModelDiagram from '@/components/models/tera-model-diagram.vue';
-import {
-	createModelConfiguration,
-	getModelConfigurationById
-} from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode;
-	modelId?: string | null;
 	models: Model[];
-	outputAmount: number;
 }>();
 
 const emit = defineEmits(['append-output-port', 'select-model']);
@@ -38,46 +31,20 @@ const emit = defineEmits(['append-output-port', 'select-model']);
 const model = ref<Model | null>();
 const selectedModel = ref<Model>();
 
-async function createDefaultModelConfig() {
-	if (model.value) {
-		const response = await createModelConfiguration(
-			model.value?.id,
-			'Config 1',
-			'shawntest',
-			model.value
-		);
-
-		if (ModelOperation.action) {
-			// Create output
-			emit('append-output-port', {
-				type: ModelOperation.outputs[0].type,
-				label: `Config ${props.outputAmount}`,
-				value: response.id
-			});
-		}
-	}
-}
-
 watch(
 	() => selectedModel.value,
 	async () => {
 		if (selectedModel.value) {
 			model.value = await getModel(selectedModel.value.id.toString());
 			emit('select-model', { id: model.value?.id });
-			createDefaultModelConfig();
 		}
 	}
 );
 
 onMounted(async () => {
-	const modelConfigId = props.node.outputs?.[0]?.value?.[0];
-
-	if (modelConfigId) {
-		const response = await getModelConfigurationById(modelConfigId);
-		model.value = await getModel(response.modelId);
-	} else if (props.modelId) {
-		model.value = await getModel(props.modelId);
-		createDefaultModelConfig();
+	const state = props.node.state;
+	if (state.modelId) {
+		model.value = await getModel(state.modelId);
 	}
 });
 </script>
