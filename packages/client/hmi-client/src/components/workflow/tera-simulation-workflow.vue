@@ -43,9 +43,8 @@
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
 						:node="node"
-						:model-id="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
-						:outputAmount="node.outputs.length + 1"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@select-model="(event) => selectModel(node, event)"
 					/>
 					<tera-calibration-node
 						v-else-if="node.operationType === 'CalibrationOperation'"
@@ -62,6 +61,7 @@
 						v-else-if="node.operationType === 'SimulateOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
+						@configuration-change="(event) => chartConfigurationChange(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
@@ -157,6 +157,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
@@ -177,7 +178,10 @@ import TeraCalibrationNode from '@/components/workflow/tera-calibration-node.vue
 import TeraSimulateNode from '@/components/workflow/tera-simulate-node.vue';
 import { ModelOperation } from '@/components/workflow/model-operation';
 import { CalibrationOperation } from '@/components/workflow/calibrate-operation';
-import { SimulateOperation } from '@/components/workflow/simulate-operation';
+import {
+	SimulateOperation,
+	SimulateOperationState
+} from '@/components/workflow/simulate-operation';
 import { StratifyOperation } from '@/components/workflow/stratify-operation';
 import ContextMenu from '@/components/widgets/tera-context-menu.vue';
 import Button from 'primevue/button';
@@ -252,14 +256,35 @@ const testOperation: Operation = {
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
+function selectModel(node: WorkflowNode, data: { id: string }) {
+	node.state.modelId = data.id;
+}
+
+function chartConfigurationChange(node: WorkflowNode, data: { index: number; chartConfig: any }) {
+	node.state.chartConfigs[data.index] = data.chartConfig;
+}
+
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
 		id: uuidv4(),
 		type: port.type,
 		label: port.label,
-		value: [port.value],
+		value: _.isArray(port.value) ? port.value : [port.value],
 		status: WorkflowPortStatus.NOT_CONNECTED
 	});
+
+	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
+	// should be built into the Operation directly. What we are doing is to update the internal state
+	// and this feels it is leaking too much low-level information
+	if (node.operationType === 'SimulateOperation') {
+		const state = node.state as SimulateOperationState;
+		if (state.chartConfigs.length === 0) {
+			state.chartConfigs.push({
+				selectedRun: port.value[0],
+				selectedVariable: ['S']
+			});
+		}
+	}
 	workflowDirty = true;
 }
 

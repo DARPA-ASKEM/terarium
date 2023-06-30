@@ -2,7 +2,7 @@ import API from '@/api/api';
 import { ModelConfiguration, Model } from '@/types/Types';
 import * as AMRService from '@/model-representation/petrinet/petrinet-service';
 
-export const getModelConfigurations = async () => {
+export const getAllModelConfigurations = async () => {
 	const response = await API.get(`/model_configurations`);
 	return (response?.data as ModelConfiguration[]) ?? null;
 };

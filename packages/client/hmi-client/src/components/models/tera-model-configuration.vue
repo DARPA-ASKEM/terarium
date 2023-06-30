@@ -1,9 +1,9 @@
 <template>
 	<DataTable
-		v-if="!isEmpty(amrConfigurations) && !isEmpty(tableHeaders)"
+		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
 		class="model-configuration"
 		v-model:selection="selectedModelConfig"
-		:value="amrConfigurations"
+		:value="modelConfigs"
 		editMode="cell"
 		showGridlines
 		scrollable
@@ -24,17 +24,17 @@
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
 				<Column :header="isEditable ? 'Select all' : ''" frozen />
 				<Column
-					v-for="(variableName, i) in amrConfigurations[0]?.semantics?.ode.rates"
+					v-for="(variableName, i) in configurations[0]?.semantics?.ode.rates"
 					:header="variableName.target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in amrConfigurations[0]?.semantics?.ode.initials"
+					v-for="(variableName, i) in configurations[0]?.semantics?.ode.initials"
 					:header="variableName.target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in amrConfigurations[0]?.semantics?.ode.parameters"
+					v-for="(variableName, i) in configurations[0]?.semantics?.ode.parameters"
 					:header="variableName.id"
 					:key="i"
 				/>
@@ -51,11 +51,11 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<template v-for="(amrConfig, i) in amrConfigurations">
+		<template v-for="(amrConfig, i) in configurations" :key="i">
 			<Column v-for="(rate, j) of amrConfig?.semantics?.ode.rates" :key="i + j">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ rate.expression }}</span>
+						<span>{{ rate.expression }}{{ i + j }}</span>
 						<Button
 							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 							icon="pi pi-ellipsis-v"
@@ -65,15 +65,15 @@
 				</template>
 				<template #editor>
 					<InputText
-						v-model="editableModelConfigs[i].amrConfiguration.semantics.ode.rates[j].expression"
+						v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
 						autofocus
 					/>
 				</template>
 			</Column>
-			<Column v-for="(initial, j) of amrConfig?.semantics?.ode.initials" :key="i + j">
+			<Column v-for="(initial, j) of amrConfig?.semantics?.ode.initials" :key="i + j + 100">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ initial.expression }}</span>
+						<span>{{ initial.expression }}{{ i + j }}</span>
 						<Button
 							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 							icon="pi pi-ellipsis-v"
@@ -83,15 +83,15 @@
 				</template>
 				<template #editor>
 					<InputText
-						v-model="editableModelConfigs[i].amrConfiguration.semantics.ode.initials[j].expression"
+						v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
 						autofocus
 					/>
 				</template>
 			</Column>
-			<Column v-for="(parameter, j) of amrConfig?.semantics?.ode.parameters" :key="i + j">
+			<Column v-for="(parameter, j) of amrConfig?.semantics?.ode.parameters" :key="i + j + 200">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ parameter.value }}</span>
+						<span>{{ parameter.value }}{{ i + j }}</span>
 						<Button
 							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
 							icon="pi pi-ellipsis-v"
@@ -101,7 +101,7 @@
 				</template>
 				<template #editor>
 					<InputText
-						v-model="editableModelConfigs[i].amrConfiguration.semantics.ode.parameters[j].value"
+						v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
 						autofocus
 					/>
 				</template>
@@ -136,12 +136,12 @@
 			<template #header>
 				<h4>
 					{{
-						editableModelConfigs[modalVal.configIndex].amrConfiguration.semantics.ode[
-							modalVal.odeType
-						][modalVal.odeObjIndex]['id'] ??
-						editableModelConfigs[modalVal.configIndex].amrConfiguration.semantics.ode[
-							modalVal.odeType
-						][modalVal.odeObjIndex]['target']
+						modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
+							modalVal.odeObjIndex
+						]['id'] ??
+						modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
+							modalVal.odeObjIndex
+						]['target']
 					}}
 				</h4>
 				<span>Select a value for this configuration</span>
@@ -162,9 +162,9 @@
 							<InputText
 								class="p-inputtext-sm"
 								v-model="
-									editableModelConfigs[modalVal.configIndex].amrConfiguration.semantics.ode[
-										modalVal.odeType
-									][modalVal.odeObjIndex][modalVal.valueName]
+									modelConfigs[modalVal.configIndex].configuration.semantics.ode[modalVal.odeType][
+										modalVal.odeObjIndex
+									][modalVal.valueName]
 								"
 							/>
 						</div>
@@ -187,7 +187,7 @@
 
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { cloneDeep, capitalize, isEmpty } from 'lodash';
+import { capitalize, isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Column from 'primevue/column';
@@ -203,18 +203,15 @@ import {
 	createModelConfiguration,
 	updateModelConfiguration
 } from '@/services/model-configurations';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { ModelOperation } from '@/components/workflow/model-operation';
-
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+import { getModelConfigurations } from '@/services/model';
 
 const props = defineProps<{
 	isEditable: boolean;
-	modelConfigurations: ModelConfiguration[];
+	model: Model;
 	calibrationConfig?: boolean;
 }>();
 
-const editableModelConfigs = ref<ModelConfiguration[]>([]);
+const modelConfigs = ref<ModelConfiguration[]>([]);
 
 const selectedModelConfig = ref();
 const extractions = ref<any[]>([]);
@@ -226,28 +223,30 @@ const modalVal = ref({ odeType: '', valueName: '', configIndex: 0, odeObjIndex: 
 const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
-const amrConfigurations = computed<Model[]>(
-	() => editableModelConfigs.value?.map((m) => m.amrConfiguration) ?? []
+const configurations = computed<Model[]>(
+	() => modelConfigs.value?.map((m) => m.configuration) ?? []
 );
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
-	const headerNames =
-		Object.keys(props.modelConfigurations[0]?.amrConfiguration.semantics.ode) ?? [];
-	const result: { name: string; colspan: number }[] = [];
+	if (configurations.value?.[0].semantics) {
+		const headerNames = Object.keys(configurations.value[0]?.semantics.ode) ?? [];
+		const result: { name: string; colspan: number }[] = [];
 
-	for (let i = 0; i < headerNames.length; i++) {
-		if (amrConfigurations.value?.[0]?.semantics?.ode[headerNames[i]]) {
-			result.push({
-				name: headerNames[i],
-				colspan: amrConfigurations.value?.[0]?.semantics?.ode[headerNames[i]].length
-			});
+		for (let i = 0; i < headerNames.length; i++) {
+			if (configurations.value?.[0]?.semantics?.ode[headerNames[i]]) {
+				result.push({
+					name: headerNames[i],
+					colspan: configurations.value?.[0]?.semantics?.ode[headerNames[i]].length
+				});
+			}
 		}
+
+		return result;
 	}
-	return result;
+	return [];
 });
 
-// TODO: Reimplement this for calibration
 const selectedModelVariables = computed(() => [
 	...selectedInitials.value,
 	...selectedParameters.value
@@ -256,18 +255,14 @@ defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
 	const response = await createModelConfiguration(
-		props.modelConfigurations[0].modelId,
-		`Config ${props.modelConfigurations.length + 1}`,
+		props.model.id,
+		`Config ${modelConfigs.value.length + 1}`,
 		'shawntest',
-		editableModelConfigs.value[editableModelConfigs.value.length - 1].amrConfiguration
+		modelConfigs.value[modelConfigs.value.length - 1].configuration
 	);
+	console.log(response);
 
-	// FIXME: Not a good idea to update reactive variables through global storage
-	openedWorkflowNodeStore.appendOutputPort({
-		type: ModelOperation.outputs[0].type,
-		label: `Config ${props.modelConfigurations.length + 1}`,
-		value: response.id
-	});
+	// TODO: notify change
 }
 
 function addConfigValue() {
@@ -276,8 +271,8 @@ function addConfigValue() {
 
 const onCellEditComplete = ({ newData, index }) => {
 	if (props.isEditable) {
-		editableModelConfigs.value[index].amrConfiguration = newData;
-		updateModelConfiguration(editableModelConfigs.value[index]);
+		modelConfigs.value[index].configuration = newData;
+		updateModelConfiguration(modelConfigs.value[index]);
 	}
 };
 
@@ -295,22 +290,24 @@ function openValueModal(
 
 function updateModelConfigValue() {
 	const { configIndex } = modalVal.value;
-	const configToUpdate = editableModelConfigs.value[configIndex];
+	const configToUpdate = modelConfigs.value[configIndex];
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
 
-function initializeConfigSpace() {
-	editableModelConfigs.value = [];
-	editableModelConfigs.value = cloneDeep(props.modelConfigurations);
-	console.log(props.modelConfigurations);
+async function initializeConfigSpace() {
+	modelConfigs.value = [];
+	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
+
+	console.log('number of configs', modelConfigs.value);
+
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 }
 
 watch(
-	() => props.modelConfigurations,
+	() => props.model,
 	() => initializeConfigSpace(),
 	{ deep: true }
 );

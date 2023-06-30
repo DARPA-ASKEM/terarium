@@ -70,13 +70,16 @@
 				<tera-stratify
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.STRATIFY"
 				/>
-				<tera-project-page
-					v-else
+				<tera-model
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.MODEL"
+					:asset-id="openedWorkflowNodeStore.assetId as string"
 					:project="project"
-					:asset-id="openedWorkflowNodeStore.assetId ?? undefined"
-					:page-type="openedWorkflowNodeStore.pageType ?? undefined"
-					is-drilldown
-					@asset-loaded="setActiveTab"
+					is-editable
+				/>
+				<tera-dataset
+					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.DATASET"
+					:asset-id="openedWorkflowNodeStore.assetId as string"
+					is-editable
 				/>
 			</SplitterPanel>
 		</Splitter>
@@ -221,6 +224,9 @@
 import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty, isEqual } from 'lodash';
+import TeraModel from '@/components/models/tera-model.vue';
+import TeraDataset from '@/components/dataset/tera-dataset.vue';
+
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
