@@ -51,6 +51,8 @@
 				"
 				:size="20"
 			>
+				!! {{ openedWorkflowNodeStore?.node?.operationType }} <br />
+				!! {{ openedWorkflowNodeStore?.node?.id }}
 				<tera-tab-group
 					v-if="openedWorkflowNodeStore.node"
 					class="tab-group"
@@ -70,10 +72,10 @@
 				<tera-stratify
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.STRATIFY"
 				/>
-				<tera-model
+				<tera-model-workflow-wrapper
 					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.MODEL"
-					:asset-id="openedWorkflowNodeStore.assetId as string"
 					:project="project"
+					:node="openedWorkflowNodeStore.node"
 					is-editable
 				/>
 				<tera-dataset
@@ -224,7 +226,7 @@
 import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty, isEqual } from 'lodash';
-import TeraModel from '@/components/models/tera-model.vue';
+import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
 
 import Button from 'primevue/button';
@@ -281,6 +283,10 @@ const menuOpenEvent = ref();
 const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
 const isNoteDeletionConfirmation = ref(false);
+
+// const workflowNode =  ref<WorkflowNode | null>(null);
+// const workflowOperation = ref<string>('');
+
 const noteDeletionConfirmationMenuItem = {
 	label: 'Are you sure?',
 	icon: '',
