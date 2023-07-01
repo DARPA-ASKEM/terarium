@@ -290,7 +290,7 @@ export interface ModelGrounding {
 
 export interface ModelExpression {
     expression: string;
-    expressionMathml: string;
+    expression_mathml: string;
 }
 
 export interface PetriNetTransitionProperties {
@@ -327,7 +327,7 @@ export interface XDDFacetBucket {
 export interface Rate {
     target: string;
     expression: string;
-    expressionMathml: string;
+    expression_mathml: string;
 }
 
 export interface Observable {
@@ -335,7 +335,7 @@ export interface Observable {
     name?: string;
     states: string[];
     expression?: string;
-    expressionMathml?: string;
+    expression_mathml?: string;
 }
 
 export interface TypeSystem {
