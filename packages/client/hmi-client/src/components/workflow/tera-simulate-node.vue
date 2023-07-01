@@ -65,7 +65,7 @@ const runSimulate = async () => {
 	if (!modelConfigurationList?.length) return;
 
 	const modelConfigurationObj = modelConfiguration.value as any;
-	const semantics = modelConfigurationObj.amrConfiguration.semantics;
+	const semantics = modelConfigurationObj.configuration.semantics;
 	const ode = semantics.ode;
 
 	// FIXME: Dummy up the payload to make things work, but not correct results

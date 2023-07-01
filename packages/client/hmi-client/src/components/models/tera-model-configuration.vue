@@ -182,7 +182,7 @@ const selectedInitials = ref<string[]>([]);
 const selectedParameters = ref<string[]>([]);
 
 const configurations = computed<any[]>(
-	() => editableModelConfigs.value?.map((m) => m.amrConfiguration.semantics.ode) ?? []
+	() => editableModelConfigs.value?.map((m) => m.configuration.semantics.ode) ?? []
 );
 
 // TODO: Clean this up and use appropriate loops
@@ -258,11 +258,15 @@ const selectedModelVariables = computed(() => [
 defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
+	const configurationObj = editableModelConfigs.value.length
+		? editableModelConfigs.value[0].configuration
+		: props.model;
+
 	const response = await createModelConfiguration(
 		props.model.id,
 		`Config ${editableModelConfigs.value.length + 1}`,
-		'shawntest',
-		editableModelConfigs.value[editableModelConfigs.value.length - 1].amrConfiguration
+		'Test',
+		configurationObj
 	);
 	console.log(response);
 
@@ -299,10 +303,10 @@ function updateModelConfigValue(
 
 	if (field === 'name' && newValue) {
 		configToUpdate.name = newValue;
-	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value) {
-		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].value = value;
-	} else if (configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression) {
-		configToUpdate.amrConfiguration.semantics.ode[type][typeIndex].expression = value;
+	} else if (configToUpdate.configuration.semantics.ode[type][typeIndex].value) {
+		configToUpdate.configuration.semantics.ode[type][typeIndex].value = value;
+	} else if (configToUpdate.configuration.semantics.ode[type][typeIndex].expression) {
+		configToUpdate.configuration.semantics.ode[type][typeIndex].expression = value;
 	}
 
 	updateModelConfiguration(configToUpdate);
@@ -313,7 +317,7 @@ async function initializeConfigSpace() {
 	editableModelConfigs.value = [];
 
 	const allConfigs = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
-	editableModelConfigs.value = allConfigs.filter((d) => d.amrConfiguration);
+	editableModelConfigs.value = allConfigs.filter((d) => d.configuration);
 
 	console.log('number of configs', editableModelConfigs.value.length);
 	console.log('number of configs', allConfigs);

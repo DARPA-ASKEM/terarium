@@ -160,6 +160,7 @@
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -256,8 +257,22 @@ const testOperation: Operation = {
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
-function selectModel(node: WorkflowNode, data: { id: string }) {
+async function selectModel(node: WorkflowNode, data: { id: string }) {
 	node.state.modelId = data.id;
+
+	// FIXME: Need additional design to work out exactly what to show. June 2023
+	// FIXME: Need to merge with any existing output-port results (e.g. new configs are added)
+	const configurationList = await getModelConfigurations(data.id);
+	node.outputs = [];
+	configurationList.forEach((configuration) => {
+		node.outputs.push({
+			id: uuidv4(),
+			type: 'modelConfigId',
+			label: configuration.name,
+			value: [configuration.id],
+			status: WorkflowPortStatus.NOT_CONNECTED
+		});
+	});
 }
 
 function chartConfigurationChange(node: WorkflowNode, data: { index: number; chartConfig: any }) {
