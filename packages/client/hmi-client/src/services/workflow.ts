@@ -46,6 +46,7 @@ export const addNode = (
 		operationType: op.name,
 		x: pos.x,
 		y: pos.y,
+		state: {},
 
 		inputs: op.inputs.map((port) => ({
 			id: uuidv4(),
