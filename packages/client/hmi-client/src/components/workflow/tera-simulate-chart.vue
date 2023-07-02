@@ -141,8 +141,6 @@ const renderGraph = () => {
 	const { runResults } = props;
 	const runIdList = Object.keys(props.runResults) as string[];
 
-	console.log('renderGraph', runResults, runIdList);
-
 	if (!runIdList.length || isEmpty(runResults)) {
 		return;
 	}
