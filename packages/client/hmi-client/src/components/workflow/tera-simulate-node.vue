@@ -10,13 +10,7 @@
 				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
-		<Button
-			class="add-chart"
-			text
-			@click="openedWorkflowNodeStore.appendChart"
-			label="Add Chart"
-			icon="pi pi-plus"
-		></Button>
+		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -33,7 +27,6 @@ import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/
 import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateOperation, SimulateOperationState } from './simulate-operation';
@@ -42,7 +35,6 @@ const props = defineProps<{
 	node: WorkflowNode;
 }>();
 const emit = defineEmits(['append-output-port', 'configuration-change']);
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const showSpinner = ref(false);
 
@@ -66,12 +58,7 @@ const runSimulate = async () => {
 				start: state.currentTimespan.start,
 				end: state.currentTimespan.end
 			},
-			/*
-			extra: {
-				initials: initialsObj,
-				params: paramsObj
-			},
-			*/
+			extra: {},
 			engine: 'sciml'
 		};
 		const response = await makeForecastJob(payload);
@@ -167,6 +154,8 @@ onMounted(async () => {
 		})
 	);
 });
+
+const addChart = () => {};
 </script>
 
 <style scoped>

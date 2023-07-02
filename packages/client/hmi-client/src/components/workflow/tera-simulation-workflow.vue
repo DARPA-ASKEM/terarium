@@ -36,6 +36,7 @@
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-node="(event) => removeNode(event)"
+				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
@@ -192,6 +193,7 @@ import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
+import { workflowEventBus } from '@/services/workflow';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
@@ -307,6 +309,11 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
+};
+
+const drilldown = (event: WorkflowNode) => {
+	console.log('drilling down', event);
+	workflowEventBus.emit('drilldown', event);
 };
 
 const removeNode = (event) => {
@@ -579,6 +586,7 @@ function resetZoom() {
 	console.log('clean up layout');
 }
 </script>
+
 <style scoped>
 .toolbar {
 	display: flex;

@@ -125,7 +125,6 @@ const activeTab = ref(SimulateTabs.input);
 
 const model = ref<Model | null>(null);
 const runResults = ref<RunResults>({});
-
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 // const TspanUnitList = computed(() =>
@@ -153,11 +152,6 @@ onMounted(async () => {
 
 	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
 	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
-
-	console.log('execution payload', executionPayload);
-	console.log('simulation', simulationObj);
-	console.log('modelConfigId', modelConfigurationId);
-	console.log('modelConfig', modelConfigurationObj);
 	const modelId = modelConfigurationObj.modelId;
 	model.value = await getModel(modelId);
 

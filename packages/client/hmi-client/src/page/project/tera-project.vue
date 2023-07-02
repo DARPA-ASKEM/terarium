@@ -42,40 +42,31 @@
 					@update-project="updateProject"
 				/>
 			</SplitterPanel>
-			<SplitterPanel
-				class="project-page top-z-index"
-				v-if="
-					pageType === ProjectAssetTypes.SIMULATION_WORKFLOW &&
-					((openedWorkflowNodeStore.assetId && openedWorkflowNodeStore.pageType) ||
-						openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION)
-				"
-				:size="20"
-			>
-				!! {{ openedWorkflowNodeStore?.node?.operationType }} <br />
-				!! {{ openedWorkflowNodeStore?.node?.id }}
+			<SplitterPanel class="project-page top-z-index" v-if="workflowNode" :size="20">
 				<tera-tab-group
-					v-if="openedWorkflowNodeStore.node"
+					v-if="workflowNode"
 					class="tab-group"
-					:tabs="[{ assetName: openedWorkflowNodeStore.node.operationType }]"
+					:tabs="[{ assetName: workflowNode.operationType }]"
 					:active-tab-index="0"
 					:loading-tab-index="null"
-					@close-tab="openedWorkflowNodeStore.node = openedWorkflowNodeStore.assetId = null"
+					@close-tab="workflowNode = null"
 				/>
 				<tera-calibration
-					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.CALIBRATION"
-					:node="openedWorkflowNodeStore.node"
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.CALIBRATION"
+					:node="workflowNode"
 				/>
 				<tera-simulate
-					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.SIMULATE"
-					:node="openedWorkflowNodeStore.node"
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.SIMULATE"
+					:node="workflowNode"
 				/>
 				<tera-stratify
-					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.STRATIFY"
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.STRATIFY"
+					:node="workflowNode"
 				/>
 				<tera-model-workflow-wrapper
-					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.MODEL"
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
 					:project="project"
-					:node="openedWorkflowNodeStore.node"
+					:node="workflowNode"
 					is-editable
 				/>
 				<tera-dataset
@@ -228,7 +219,7 @@ import { useRouter } from 'vue-router';
 import { isEmpty, isEqual } from 'lodash';
 import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
 import TeraDataset from '@/components/dataset/tera-dataset.vue';
-
+import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
@@ -254,8 +245,8 @@ import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
 import TeraCalibration from '@/components/workflow/tera-calibration.vue';
 import TeraSimulate from '@/components/workflow/tera-simulate.vue';
-import { WorkflowOperationTypes } from '@/types/workflow';
 import TeraStratify from '@/components/workflow/tera-stratify.vue';
+import { workflowEventBus } from '@/services/workflow';
 import TeraProjectPage from './components/tera-project-page.vue';
 
 // Asset props are extracted from route
@@ -284,8 +275,13 @@ const selectedNoteIndex = ref();
 const isEditingNote = ref(false);
 const isNoteDeletionConfirmation = ref(false);
 
-// const workflowNode =  ref<WorkflowNode | null>(null);
+const workflowNode = ref<WorkflowNode | null>(null);
 // const workflowOperation = ref<string>('');
+
+workflowEventBus.on('drilldown', (payload: any) => {
+	console.log('listener', payload);
+	workflowNode.value = payload;
+});
 
 const noteDeletionConfirmationMenuItem = {
 	label: 'Are you sure?',
