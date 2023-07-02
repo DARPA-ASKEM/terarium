@@ -64,25 +64,6 @@ const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
 
-	// const modelConfigurationObj = modelConfiguration.value as any;
-	// const semantics = modelConfigurationObj.configuration.semantics;
-	// const ode = semantics.ode;
-
-	// FIXME: Dummy up the payload to make things work, but not correct results
-	/*
-	const initials = ode.initials.map((d) => d.target);
-	const rates = ode.rates.map((d) => d.target);
-	const initialsObj = {};
-	const paramsObj = {};
-
-	initials.forEach((d) => {
-		initialsObj[d] = Math.random() * 100;
-	});
-	rates.forEach((d) => {
-		paramsObj[d] = Math.random() * 0.05;
-	});
-	*/
-
 	const state = props.node.state as SimulateOperationState;
 
 	const simulationRequests = modelConfigurationList.map(async (configId: string) => {
