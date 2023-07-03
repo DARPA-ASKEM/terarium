@@ -1,7 +1,7 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate">Run</Button>
-		<div class="chart-container">
+		<div class="chart-container" v-if="runResults">
 			<SimulateChart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -28,13 +28,14 @@ import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateOperation, SimulateOperationState } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port', 'configuration-change']);
+const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
 
@@ -119,10 +120,12 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	});
 };
 
-const configurationChange = (index: number, chartConfig: ChartConfig) => {
-	emit('configuration-change', {
+const configurationChange = (index: number, config: ChartConfig) => {
+	workflowEventBus.emitNodeChartConfigurationChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
 		index,
-		chartConfig
+		config
 	});
 };
 

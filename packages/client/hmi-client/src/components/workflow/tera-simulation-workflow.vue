@@ -62,7 +62,6 @@
 						v-else-if="node.operationType === 'SimulateOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@configuration-change="(event) => chartConfigurationChange(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
@@ -193,10 +192,11 @@ import * as d3 from 'd3';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Dataset, Model } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
-import { workflowEventBus } from '@/services/workflow';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+
+const workflowEventBus = workflowService.workflowEventBus;
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -277,10 +277,6 @@ async function selectModel(node: WorkflowNode, data: { id: string }) {
 	});
 }
 
-function chartConfigurationChange(node: WorkflowNode, data: { index: number; chartConfig: any }) {
-	node.state.chartConfigs[data.index] = data.chartConfig;
-}
-
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
 	node.outputs.push({
 		id: uuidv4(),
@@ -312,9 +308,18 @@ const testNode = (node: WorkflowNode) => {
 };
 
 const drilldown = (event: WorkflowNode) => {
-	console.log('drilling down', event);
 	workflowEventBus.emit('drilldown', event);
 };
+
+workflowEventBus.on('node-chart-configuration-change', (payload: any) => {
+	if (wf.value.id !== payload.workflowId) return;
+	workflowService.updateWorkflowNodeChartConfig(
+		wf.value,
+		payload.nodeId,
+		payload.index,
+		payload.config
+	);
+});
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);

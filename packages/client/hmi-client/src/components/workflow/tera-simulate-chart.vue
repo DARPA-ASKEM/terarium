@@ -6,6 +6,7 @@
 			:selection-limit="hasMultiRuns ? 1 : undefined"
 			:options="stateVariablesList"
 			placeholder="Select a State Variable"
+			@update:model-value="updateSelectedVariable"
 		>
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
@@ -23,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
-import { isEmpty } from 'lodash';
 import MultiSelect from 'primevue/multiselect';
 import Chart from 'primevue/chart';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
@@ -121,7 +122,7 @@ const hasMultiRuns = computed(() => {
 
 const watchRunResults = async (runResults) => {
 	const runIdList = Object.keys(props.runResults) as string[];
-	if (!runIdList.length || isEmpty(runResults)) {
+	if (!runIdList.length || _.isEmpty(runResults)) {
 		return;
 	}
 
@@ -141,7 +142,7 @@ const renderGraph = () => {
 	const { runResults } = props;
 	const runIdList = Object.keys(props.runResults) as string[];
 
-	if (!runIdList.length || isEmpty(runResults)) {
+	if (!runIdList.length || _.isEmpty(runResults)) {
 		return;
 	}
 
@@ -170,19 +171,23 @@ const renderGraph = () => {
 	};
 };
 
+const updateSelectedVariable = () => {
+	console.log('hihi');
+	emit('configuration-change', {
+		selectedVariable,
+		selectedRun: props.chartConfig.selectedRun
+	});
+};
+
 onMounted(() => {
 	// FIXME: Should use deep, need to rewire the dependencies
 	watch(() => props.runResults, watchRunResults, { immediate: true, deep: true });
-	watch(
-		() => selectedVariable.value,
-		() => {
-			renderGraph();
 
-			// Emits new ChartConfig
-			emit('configuration-change', {
-				selectedVariable,
-				selectedRun: props.chartConfig.selectedRun
-			});
+	watch(
+		() => props.chartConfig,
+		() => {
+			selectedVariable.value = props.chartConfig.selectedVariable;
+			renderGraph();
 		},
 		{ immediate: true, deep: true }
 	);

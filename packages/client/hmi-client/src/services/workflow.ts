@@ -167,6 +167,17 @@ export const removeNode = (wf: Workflow, id: string) => {
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
 
+export const updateWorkflowNodeChartConfig = (
+	wf: Workflow,
+	nodeId: string,
+	index: number,
+	config: any
+) => {
+	const node = wf.nodes.find((d) => d.id === nodeId);
+	if (!node) return;
+	node.state.chartConfigs[index] = config;
+};
+
 /**
  * API hooks: Handles reading and writing back to the store
  * */
@@ -238,6 +249,15 @@ class EventEmitter {
 			f(args);
 		});
 		return true;
+	}
+
+	emitNodeChartConfigurationChange(payload: {
+		workflowId: string;
+		nodeId: string;
+		index: number;
+		config: any;
+	}) {
+		this.emit('node-chart-configuration-change', payload);
 	}
 }
 

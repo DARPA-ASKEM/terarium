@@ -241,8 +241,6 @@ const modelConfigurationTable = computed(() => {
 			}
 		}
 
-		// console.log(variables);
-
 		return editableModelConfigs.value.map((modelConfig, i) => ({
 			name: modelConfig.name,
 			...variables[i]
@@ -318,9 +316,6 @@ async function initializeConfigSpace() {
 
 	const allConfigs = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
 	editableModelConfigs.value = allConfigs.filter((d) => d.configuration);
-
-	console.log('number of configs', editableModelConfigs.value.length);
-	console.log('number of configs', allConfigs);
 
 	extractions.value = ['Default'];
 	openValueConfig.value = false;

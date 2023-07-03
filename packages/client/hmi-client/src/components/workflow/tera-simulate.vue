@@ -28,6 +28,7 @@
 				:key="index"
 				:run-results="runResults"
 				:chartConfig="cfg"
+				@configuration-change="configurationChange(index, $event)"
 			/>
 			<!--
 			<Button
@@ -99,7 +100,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
-import { RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
@@ -108,6 +109,7 @@ import { getSimulation, getRunResult } from '@/services/models/simulation-servic
 import { getModel } from '@/services/model';
 import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
+import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -130,6 +132,15 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 // const TspanUnitList = computed(() =>
 // 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
 // );
+
+const configurationChange = (index: number, config: ChartConfig) => {
+	workflowEventBus.emitNodeChartConfigurationChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		index,
+		config
+	});
+};
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
