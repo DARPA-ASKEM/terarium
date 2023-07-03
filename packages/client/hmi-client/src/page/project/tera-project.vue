@@ -67,12 +67,11 @@
 					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.MODEL"
 					:project="project"
 					:node="workflowNode"
-					is-editable
 				/>
-				<tera-dataset
-					v-if="openedWorkflowNodeStore.node?.operationType === WorkflowOperationTypes.DATASET"
-					:asset-id="openedWorkflowNodeStore.assetId as string"
-					is-editable
+				<tera-dataset-workflow-wrapper
+					v-if="workflowNode && workflowNode.operationType === WorkflowOperationTypes.DATASET"
+					:project="project"
+					:node="workflowNode"
 				/>
 			</SplitterPanel>
 		</Splitter>
@@ -218,7 +217,7 @@ import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { isEmpty, isEqual } from 'lodash';
 import TeraModelWorkflowWrapper from '@/components/workflow/tera-model-workflow-wrapper.vue';
-import TeraDataset from '@/components/dataset/tera-dataset.vue';
+import TeraDatasetWorkflowWrapper from '@/components/workflow/tera-dataset-workflow-wrapper.vue';
 import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -229,7 +228,6 @@ import TeraResourceSidebar from '@/page/project/components/tera-resource-sidebar
 import { RouteName } from '@/router/routes';
 import * as ProjectService from '@/services/project';
 import { useTabStore } from '@/stores/tabs';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { Tab, Annotation } from '@/types/common';
 import { IProject, ProjectAssetTypes, ProjectPages, isProjectAssetTypes } from '@/types/Project';
 import { logger } from '@/utils/logger';
@@ -260,7 +258,6 @@ const props = defineProps<{
 const emit = defineEmits(['update-project']);
 
 const tabStore = useTabStore();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const router = useRouter();
 
