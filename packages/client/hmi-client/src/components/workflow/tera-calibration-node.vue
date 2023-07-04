@@ -79,7 +79,11 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
-import { CalibrationOperation, CalibrationOperationState } from './calibrate-operation';
+import {
+	CalibrationOperation,
+	CalibrationOperationState,
+	CalibrateMap
+} from './calibrate-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -104,13 +108,7 @@ const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 
-const mapping = ref<any[]>([
-	{
-		modelVariable: '',
-		datasetVariable: ''
-	}
-]);
-
+const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const disableRunButton = computed(
@@ -198,13 +196,24 @@ const updateOutputPorts = async (runId) => {
 };
 
 // Used from button to add new entry to the mapping object
+// Tom TODO: Make this generic, its copy paste from drilldown
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
 		datasetVariable: ''
 	});
+
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
 }
 
+// Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
