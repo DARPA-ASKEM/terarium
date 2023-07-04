@@ -92,7 +92,7 @@
 					class="add-chart"
 					text
 					:outlined="true"
-					@click="calibrateNumCharts++"
+					@click="addChart"
 					label="Add Chart"
 					icon="pi pi-plus"
 				></Button>
@@ -143,7 +143,6 @@ enum CalibrationView {
 const modelColumnNames = ref<string[] | undefined>();
 
 const calibrationView = ref(CalibrationView.INPUT);
-const calibrateNumCharts = ref<number>(1);
 
 const trainTestValue = ref(80);
 
@@ -163,6 +162,17 @@ const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,

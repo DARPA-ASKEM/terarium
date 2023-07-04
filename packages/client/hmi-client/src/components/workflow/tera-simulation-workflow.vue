@@ -301,7 +301,10 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 	// FIXME: This is a bit hacky, we should split this out into separate events, or the action
 	// should be built into the Operation directly. What we are doing is to update the internal state
 	// and this feels it is leaking too much low-level information
-	if (node.operationType === 'SimulateOperation') {
+	if (
+		node.operationType === WorkflowOperationTypes.SIMULATE ||
+		node.operationType === WorkflowOperationTypes.CALIBRATION
+	) {
 		const state = node.state as SimulateOperationState;
 		if (state.chartConfigs.length === 0) {
 			state.chartConfigs.push({

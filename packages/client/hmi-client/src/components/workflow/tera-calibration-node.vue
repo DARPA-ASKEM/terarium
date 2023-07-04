@@ -47,7 +47,7 @@
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="calibrateNumCharts++"
+				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
@@ -73,7 +73,6 @@ import {
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
@@ -91,7 +90,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['append-output-port']);
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -102,7 +100,6 @@ const completedRunId = ref<string>();
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
-const calibrateNumCharts = ref<number>(1);
 const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
@@ -225,6 +222,17 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	});
 };
 
+const addChart = () => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
 watch(
 	() => props.node.inputs[1],
 	async () => {
@@ -238,7 +246,6 @@ watch(
 watch(
 	() => modelConfigId.value,
 	async () => {
-		console.log(modelConfigId.value);
 		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
@@ -260,12 +267,6 @@ watch(
 		datasetColumnNames.value = csv?.headers;
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => props.node,
-	(node) => openedWorkflowNodeStore.setNode(node ?? null),
-	{ deep: true }
 );
 
 // Fetch simulation run results whenever output changes
