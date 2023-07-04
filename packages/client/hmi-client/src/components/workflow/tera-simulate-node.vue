@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
@@ -121,11 +122,13 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 };
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	workflowEventBus.emitNodeChartConfigurationChange({
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
-		index,
-		config
+		state
 	});
 };
 

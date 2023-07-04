@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -111,6 +112,7 @@ import { csvParse } from 'd3';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
+import { SimulateOperationState } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -134,11 +136,13 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 // );
 
 const configurationChange = (index: number, config: ChartConfig) => {
-	workflowEventBus.emitNodeChartConfigurationChange({
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id,
-		index,
-		config
+		state
 	});
 };
 

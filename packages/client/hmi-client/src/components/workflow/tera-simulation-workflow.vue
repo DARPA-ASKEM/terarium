@@ -311,14 +311,9 @@ const drilldown = (event: WorkflowNode) => {
 	workflowEventBus.emit('drilldown', event);
 };
 
-workflowEventBus.on('node-chart-configuration-change', (payload: any) => {
+workflowEventBus.on('node-state-change', (payload: any) => {
 	if (wf.value.id !== payload.workflowId) return;
-	workflowService.updateWorkflowNodeChartConfig(
-		wf.value,
-		payload.nodeId,
-		payload.index,
-		payload.config
-	);
+	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
 });
 
 const removeNode = (event) => {

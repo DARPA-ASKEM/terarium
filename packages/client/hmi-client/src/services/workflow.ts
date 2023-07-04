@@ -167,15 +167,10 @@ export const removeNode = (wf: Workflow, id: string) => {
 	wf.nodes = wf.nodes.filter((node) => node.id !== id);
 };
 
-export const updateWorkflowNodeChartConfig = (
-	wf: Workflow,
-	nodeId: string,
-	index: number,
-	config: any
-) => {
+export const updateNodeState = (wf: Workflow, nodeId: string, state: any) => {
 	const node = wf.nodes.find((d) => d.id === nodeId);
 	if (!node) return;
-	node.state.chartConfigs[index] = config;
+	node.state = state;
 };
 
 /**
@@ -251,13 +246,8 @@ class EventEmitter {
 		return true;
 	}
 
-	emitNodeChartConfigurationChange(payload: {
-		workflowId: string;
-		nodeId: string;
-		index: number;
-		config: any;
-	}) {
-		this.emit('node-chart-configuration-change', payload);
+	emitNodeStateChange(payload: { workflowId: string; nodeId: string; state: any }) {
+		this.emit('node-state-change', payload);
 	}
 }
 
