@@ -306,7 +306,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		if (state.chartConfigs.length === 0) {
 			state.chartConfigs.push({
 				selectedRun: port.value[0],
-				selectedVariable: ['S']
+				selectedVariable: []
 			});
 		}
 	}
