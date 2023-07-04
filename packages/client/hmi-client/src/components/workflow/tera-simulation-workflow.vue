@@ -44,22 +44,21 @@
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
 						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
 						@select-model="(event) => selectModel(node, event)"
-					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
-						@append-output-port="(event) => appendOutputPort(node, event)"
+						:node="node"
+						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-simulate-node
 						v-else-if="node.operationType === 'SimulateOperation'"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
@@ -275,6 +274,19 @@ async function selectModel(node: WorkflowNode, data: { id: string }) {
 			status: WorkflowPortStatus.NOT_CONNECTED
 		});
 	});
+}
+
+async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+	node.state.datasetId = data.id;
+	node.outputs = [
+		{
+			id: uuidv4(),
+			type: 'datasetId',
+			label: data.name,
+			value: [data.id],
+			status: WorkflowPortStatus.NOT_CONNECTED
+		}
+	];
 }
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {

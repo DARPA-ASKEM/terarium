@@ -1,7 +1,6 @@
 <template>
 	<template v-if="dataset">
 		<h5>{{ dataset.name }}</h5>
-		<!-- display the data preview ** THIS ISN'T WORKING -->
 		<section v-if="csvContent">
 			<span>{{ `${csvContent[0].length} columns | ${csvContent.length} rows` }} </span>
 			<DataTable class="p-datatable-xsm" :value="csvContent.slice(1, 6)">
@@ -32,14 +31,14 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import { downloadRawFile, getDataset } from '@/services/dataset';
-import { DatasetOperation } from './dataset-operation';
+import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{
-	datasetId: string | null;
+	node: WorkflowNode;
 	datasets: Dataset[];
 }>();
 
-const emit = defineEmits(['append-output-port']);
+const emit = defineEmits(['select-dataset']);
 
 const dataset = ref<Dataset | null>(null);
 const rawContent = ref<CsvAsset | null>(null);
@@ -51,18 +50,14 @@ watch(
 	async () => {
 		if (dataset?.value?.id && dataset?.value?.fileNames && dataset?.value?.fileNames?.length > 0) {
 			rawContent.value = await downloadRawFile(dataset.value.id, dataset.value?.fileNames[0] ?? '');
-			emit('append-output-port', {
-				type: DatasetOperation.outputs[0].type,
-				label: dataset.value.name,
-				value: dataset.value.id
-			});
+			emit('select-dataset', { id: dataset.value.id, name: dataset.value.name });
 		}
 	}
 );
 
 onMounted(async () => {
-	if (props.datasetId) {
-		dataset.value = await getDataset(props.datasetId);
+	if (props.node.state.datasetid) {
+		dataset.value = await getDataset(props.node.state.datasetId);
 	}
 });
 </script>

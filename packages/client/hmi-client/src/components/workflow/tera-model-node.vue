@@ -26,7 +26,7 @@ const props = defineProps<{
 	models: Model[];
 }>();
 
-const emit = defineEmits(['append-output-port', 'select-model']);
+const emit = defineEmits(['select-model']);
 
 const model = ref<Model | null>();
 const selectedModel = ref<Model>();
