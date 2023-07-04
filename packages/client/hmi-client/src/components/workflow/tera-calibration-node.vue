@@ -246,7 +246,6 @@ watch(
 watch(
 	() => modelConfigId.value,
 	async () => {
-		console.log(modelConfigId.value);
 		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
