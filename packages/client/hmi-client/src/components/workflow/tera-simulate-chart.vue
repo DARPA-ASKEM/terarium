@@ -172,7 +172,6 @@ const renderGraph = () => {
 };
 
 const updateSelectedVariable = () => {
-	console.log('hihi');
 	emit('configuration-change', {
 		selectedVariable,
 		selectedRun: props.chartConfig.selectedRun
