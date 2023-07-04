@@ -1,4 +1,61 @@
 <template>
+	<div
+		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
+		class="p-datatable model-configuration"
+	>
+		<table class="p-datatable-table">
+			<thead class="p-datatable-thead">
+				<tr v-if="isEditable">
+					<th class="p-frozen-column" />
+					<th class="p-frozen-column" />
+					<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
+						{{ capitalize(name) }}
+					</th>
+				</tr>
+				<tr>
+					<th class="p-frozen-column" header="" />
+					<th class="p-frozen-column">Select all</th>
+					<th
+						v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
+						:header="target"
+						:key="i"
+					>
+						{{ target }}
+					</th>
+					<th
+						v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
+						:header="target"
+						:key="i"
+					>
+						{{ target }}
+					</th>
+					<th
+						v-for="({ id }, i) in configurations[0]?.semantics?.ode.parameters"
+						:header="id"
+						:key="i"
+					>
+						{{ id }}
+					</th>
+				</tr>
+			</thead>
+			<tbody class="p-datatable-tbody">
+				<tr v-for="({ configuration, name }, i) in modelConfigs" :key="i">
+					<td class="p-selection-column p-frozen-column" style="left: 0px">
+						<div class="p-checkbox p-component">
+							<div class="p-hidden-accessible">
+								<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
+							</div>
+							<div class="p-checkbox-box p-component">
+								<span class="p-checkbox-icon"></span>
+							</div>
+						</div>
+					</td>
+					<td>{{ name }} {{ configuration }}</td>
+					<!-- <td v-for="({ name }, i) in tableHeaders">{{ configuration }}</td> -->
+				</tr>
+			</tbody>
+		</table>
+	</div>
 	<DataTable
 		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
 		class="model-configuration"
@@ -24,18 +81,18 @@
 				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
 				<Column :header="isEditable ? 'Select all' : ''" frozen />
 				<Column
-					v-for="(variableName, i) in configurations[0]?.semantics?.ode.rates"
-					:header="variableName.target"
+					v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
+					:header="target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in configurations[0]?.semantics?.ode.initials"
-					:header="variableName.target"
+					v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
+					:header="target"
 					:key="i"
 				/>
 				<Column
-					v-for="(variableName, i) in configurations[0]?.semantics?.ode.parameters"
-					:header="variableName.id"
+					v-for="({ id }, i) in configurations[0]?.semantics?.ode.parameters"
+					:header="id"
 					:key="i"
 				/>
 			</Row>
@@ -51,65 +108,43 @@
 				<InputText v-model="data[field]" autofocus />
 			</template>
 		</Column>
-		<template v-for="({ configuration, id }, i) in [modelConfigs[0]]" :key="i">
-			<Column v-for="(rate, j) of configuration?.semantics?.ode.rates" :key="i + j">
+		<!-- <Column v-for="(rate, j) of configuration?.semantics?.ode.rates" :key="j"> -->
+		<!-- <Column v-for="({ configuration, name }, j) of modelConfigs" :key="j">
+			<template #body>
+				<section class="editable-cell">
+					{{ j }}<span>{{ name }}{{ configuration?.semantics?.ode?.rates }}</span>
+					<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+						icon="pi pi-ellipsis-v"	@click.stop="openValueModal('rates', 'expression', i, j)" />
+				</section>
+			</template>
+			<template #editor>
+				<InputText v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression" autofocus />
+			</template>
+		</Column> -->
+		<!-- <Column v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="j">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ rate.expression }}</span
-						>{{ id }}
-						<Button
-							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-							icon="pi pi-ellipsis-v"
-							@click.stop="openValueModal('rates', 'expression', i, j)"
-						/>
+						<span>{{ initial.expression }}</span>{{ i + j }}
+						<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+							icon="pi pi-ellipsis-v" @click.stop="openValueModal('initials', 'expression', i, j)" />
 					</section>
 				</template>
 				<template #editor>
-					<InputText
-						v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
-						autofocus
-					/>
+					<InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression" autofocus />
 				</template>
 			</Column>
-			<Column v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="i + j + 100">
+			<Column v-for="(parameter, j) of configuration?.semantics?.ode.parameters" :key="j">
 				<template #body>
 					<section class="editable-cell">
-						<span>{{ initial.expression }}</span
-						>{{ i + j }}
-						<Button
-							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-							icon="pi pi-ellipsis-v"
-							@click.stop="openValueModal('initials', 'expression', i, j)"
-						/>
+						<span>{{ parameter.value }}</span>{{ i + j }}
+						<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+							icon="pi pi-ellipsis-v" @click.stop="openValueModal('parameters', 'value', i, j)" />
 					</section>
 				</template>
 				<template #editor>
-					<InputText
-						v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
-						autofocus
-					/>
+					<InputText v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value" autofocus />
 				</template>
-			</Column>
-			<Column v-for="(parameter, j) of configuration?.semantics?.ode.parameters" :key="i + j + 200">
-				<template #body>
-					<section class="editable-cell">
-						<span>{{ parameter.value }}</span
-						>{{ i + j }}
-						<Button
-							class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-							icon="pi pi-ellipsis-v"
-							@click.stop="openValueModal('parameters', 'value', i, j)"
-						/>
-					</section>
-				</template>
-				<template #editor>
-					<InputText
-						v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
-						autofocus
-					/>
-				</template>
-			</Column>
-		</template>
+			</Column>-->
 		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
 			<ColumnGroup v-if="calibrationConfig" type="footer">
 			<Row>
@@ -278,17 +313,17 @@ const onCellEditComplete = ({ newData, index }) => {
 	}
 };
 
-function openValueModal(
-	odeType: string,
-	valueName: string,
-	configIndex: number,
-	odeObjIndex: number
-) {
-	if (props.isEditable) {
-		openValueConfig.value = true;
-		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
-	}
-}
+// function openValueModal(
+// 	odeType: string,
+// 	valueName: string,
+// 	configIndex: number,
+// 	odeObjIndex: number
+// ) {
+// 	if (props.isEditable) {
+// 		openValueConfig.value = true;
+// 		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
+// 	}
+// }
 
 function updateModelConfigValue() {
 	const { configIndex } = modalVal.value;
@@ -345,6 +380,10 @@ onMounted(() => {
 
 .p-datatable:deep(td) {
 	cursor: pointer;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+	border: 1px solid var(--surface-border-light);
 }
 
 th:hover .cell-menu,
