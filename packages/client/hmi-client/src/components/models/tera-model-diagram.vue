@@ -521,39 +521,6 @@ main {
 	position: relative;
 }
 
-.legend {
-	position: absolute;
-	bottom: 0;
-	z-index: 1;
-	margin-bottom: 1rem;
-	margin-left: 1rem;
-	display: flex;
-	gap: 1rem;
-}
-.legend-state {
-	height: 24px;
-	width: 24px;
-	border-radius: 12px;
-}
-
-.legend-transition {
-	height: 16px;
-	width: 16px;
-	border-radius: 4px;
-}
-
-ul {
-	display: flex;
-	gap: 0.5rem;
-	list-style-type: none;
-}
-
-li {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
 .p-toolbar {
 	position: absolute;
 	width: 100%;
