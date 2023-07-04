@@ -33,6 +33,17 @@ export interface GithubRepo {
     totalFiles: number;
 }
 
+export interface Artifact {
+    id?: string;
+    timestamp?: Date;
+    username: string;
+    name: string;
+    description?: string;
+    fileNames: string[];
+    metadata?: any;
+    concepts?: Concept[];
+}
+
 export interface CsvAsset {
     csv: string[][];
     stats?: CsvColumnStats[];
@@ -175,6 +186,14 @@ export interface Links {
     html: string;
     git: string;
     self: string;
+}
+
+export interface Concept {
+    id: string;
+    curie: string;
+    type: Type;
+    status: OntologicalField;
+    object_id: string;
 }
 
 export interface ModelSemantics {
@@ -496,4 +515,19 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum Type {
+    Datasets = "DATASETS",
+    Extractions = "EXTRACTIONS",
+    Intermediates = "INTERMEDIATES",
+    Models = "MODELS",
+    Plans = "PLANS",
+    Publications = "PUBLICATIONS",
+    SimulationRuns = "SIMULATION_RUNS",
+}
+
+export enum OntologicalField {
+    Object = "OBJECT",
+    Unit = "UNIT",
 }
