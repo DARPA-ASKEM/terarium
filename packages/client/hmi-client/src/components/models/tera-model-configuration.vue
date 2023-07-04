@@ -1,167 +1,99 @@
 <template>
 	<div
 		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
-		class="p-datatable model-configuration"
+		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
 	>
-		<table class="p-datatable-table">
-			<thead class="p-datatable-thead">
-				<tr v-if="isEditable">
-					<th class="p-frozen-column" />
-					<th class="p-frozen-column" />
-					<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-						{{ capitalize(name) }}
-					</th>
-				</tr>
-				<tr>
-					<th class="p-frozen-column" header="" />
-					<th class="p-frozen-column">Select all</th>
-					<th
-						v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
-						:header="target"
-						:key="i"
-					>
-						{{ target }}
-					</th>
-					<th
-						v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
-						:header="target"
-						:key="i"
-					>
-						{{ target }}
-					</th>
-					<th
-						v-for="({ id }, i) in configurations[0]?.semantics?.ode.parameters"
-						:header="id"
-						:key="i"
-					>
-						{{ id }}
-					</th>
-				</tr>
-			</thead>
-			<tbody class="p-datatable-tbody">
-				<tr v-for="({ configuration, name }, i) in modelConfigs" :key="i">
-					<td class="p-selection-column p-frozen-column" style="left: 0px">
-						<div class="p-checkbox p-component">
-							<div class="p-hidden-accessible">
-								<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
+		<div class="p-datatable-wrapper">
+			<table class="p-datatable-table p-datatable-scrollable-table">
+				<thead class="p-datatable-thead">
+					<tr v-if="isEditable">
+						<th class="p-frozen-column"></th>
+						<th class="p-frozen-column second-frozen"></th>
+						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
+							{{ capitalize(name) }}
+						</th>
+					</tr>
+					<tr>
+						<th class="p-frozen-column" />
+						<th class="p-frozen-column second-frozen">Select all</th>
+						<th
+							v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
+							:header="target"
+							:key="i"
+						>
+							{{ target }}
+						</th>
+						<th
+							v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
+							:header="target"
+							:key="i"
+						>
+							{{ target }}
+						</th>
+						<th
+							v-for="({ id }, i) in configurations[0]?.semantics?.ode.parameters"
+							:header="id"
+							:key="i"
+						>
+							{{ id }}
+						</th>
+					</tr>
+				</thead>
+				<tbody class="p-datatable-tbody">
+					<tr v-for="({ configuration, name }, i) in modelConfigs" :key="i">
+						<!--TODO: This td is a placeholder, row selection doesn't work-->
+						<td class="p-selection-column p-frozen-column">
+							<div class="p-checkbox p-component">
+								<div class="p-hidden-accessible">
+									<input type="checkbox" tabindex="0" aria-label="Row Unselected" />
+								</div>
+								<div class="p-checkbox-box p-component">
+									<span class="p-checkbox-icon"></span>
+								</div>
 							</div>
-							<div class="p-checkbox-box p-component">
-								<span class="p-checkbox-icon"></span>
-							</div>
-						</div>
-					</td>
-					<td>{{ name }} {{ configuration }}</td>
-					<!-- <td v-for="({ name }, i) in tableHeaders">{{ configuration }}</td> -->
-				</tr>
-			</tbody>
-		</table>
+						</td>
+						<td class="p-frozen-column second-frozen">{{ name }}</td>
+						<td v-for="(rate, j) of configuration?.semantics?.ode.rates" :key="j">
+							<section class="editable-cell">
+								<span>{{ rate.expression }}</span>
+								<Button
+									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+									icon="pi pi-ellipsis-v"
+									@click.stop="openValueModal('rates', 'expression', i, j)"
+								/>
+							</section>
+							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+								autofocus /> -->
+						</td>
+						<td v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="j">
+							<section class="editable-cell">
+								<span>{{ initial.expression }}</span>
+								<Button
+									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+									icon="pi pi-ellipsis-v"
+									@click.stop="openValueModal('initials', 'expression', i, j)"
+								/>
+							</section>
+							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+								autofocus /> -->
+						</td>
+						<td v-for="(parameter, j) of configuration?.semantics?.ode.parameters" :key="j">
+							<section class="editable-cell">
+								<span>{{ parameter.value }}</span>
+								<Button
+									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
+									icon="pi pi-ellipsis-v"
+									@click.stop="openValueModal('parameters', 'value', i, j)"
+								/>
+							</section>
+							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+								autofocus /> -->
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 	</div>
-	<DataTable
-		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
-		class="model-configuration"
-		v-model:selection="selectedModelConfig"
-		:value="modelConfigs"
-		editMode="cell"
-		showGridlines
-		scrollable
-		@cell-edit-complete="onCellEditComplete"
-	>
-		<ColumnGroup type="header">
-			<Row>
-				<Column v-if="isEditable" header="" frozen />
-				<Column header="" frozen />
-				<Column
-					v-for="({ name, colspan }, i) in tableHeaders"
-					:header="capitalize(name)"
-					:colspan="colspan"
-					:key="i"
-				/>
-			</Row>
-			<Row>
-				<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
-				<Column :header="isEditable ? 'Select all' : ''" frozen />
-				<Column
-					v-for="({ target }, i) in configurations[0]?.semantics?.ode.rates"
-					:header="target"
-					:key="i"
-				/>
-				<Column
-					v-for="({ target }, i) in configurations[0]?.semantics?.ode.initials"
-					:header="target"
-					:key="i"
-				/>
-				<Column
-					v-for="({ id }, i) in configurations[0]?.semantics?.ode.parameters"
-					:header="id"
-					:key="i"
-				/>
-			</Row>
-			<!--  Add show in workflow later (very similar to "Select variables and parameters to calibrate") -->
-		</ColumnGroup>
-		<Column v-if="isEditable" selection-mode="multiple" headerStyle="width: 3rem" frozen />
-		<!--Need to get from editableConfigs-->
-		<Column field="name" frozen>
-			<template #body="{ data, field }">
-				{{ data[field] }}
-			</template>
-			<template #editor="{ data, field }">
-				<InputText v-model="data[field]" autofocus />
-			</template>
-		</Column>
-		<!-- <Column v-for="(rate, j) of configuration?.semantics?.ode.rates" :key="j"> -->
-		<!-- <Column v-for="({ configuration, name }, j) of modelConfigs" :key="j">
-			<template #body>
-				<section class="editable-cell">
-					{{ j }}<span>{{ name }}{{ configuration?.semantics?.ode?.rates }}</span>
-					<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-						icon="pi pi-ellipsis-v"	@click.stop="openValueModal('rates', 'expression', i, j)" />
-				</section>
-			</template>
-			<template #editor>
-				<InputText v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression" autofocus />
-			</template>
-		</Column> -->
-		<!-- <Column v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="j">
-				<template #body>
-					<section class="editable-cell">
-						<span>{{ initial.expression }}</span>{{ i + j }}
-						<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-							icon="pi pi-ellipsis-v" @click.stop="openValueModal('initials', 'expression', i, j)" />
-					</section>
-				</template>
-				<template #editor>
-					<InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression" autofocus />
-				</template>
-			</Column>
-			<Column v-for="(parameter, j) of configuration?.semantics?.ode.parameters" :key="j">
-				<template #body>
-					<section class="editable-cell">
-						<span>{{ parameter.value }}</span>{{ i + j }}
-						<Button class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
-							icon="pi pi-ellipsis-v" @click.stop="openValueModal('parameters', 'value', i, j)" />
-					</section>
-				</template>
-				<template #editor>
-					<InputText v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value" autofocus />
-				</template>
-			</Column>-->
-		<!-- FIXME: Add checkboxes for calibrate in a seperate PR
-			<ColumnGroup v-if="calibrationConfig" type="footer">
-			<Row>
-				<Column footer="Select variables and parameters to calibrate" />
-				<Column v-for="(name, i) of Object.keys(initialValues[0])" :key="i">
-					<template #footer>
-						<Checkbox v-model="selectedInitials" :inputId="i.toString()" :value="name" />
-					</template>
-				</Column>
-				<Column v-for="(name, i) of Object.keys(parameterValues[0])" :key="i">
-					<template #footer>
-						<Checkbox v-model="selectedParameters" :inputId="i.toString()" :value="name" />
-					</template>
-				</Column>
-			</Row>
-		</ColumnGroup> -->
-	</DataTable>
 	<Button
 		v-if="isEditable"
 		class="p-button-sm p-button-outlined"
@@ -225,11 +157,7 @@
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
 import { capitalize, isEmpty } from 'lodash';
-import DataTable from 'primevue/datatable';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
-import Column from 'primevue/column';
-import Row from 'primevue/row';
-import ColumnGroup from 'primevue/columngroup';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -250,7 +178,7 @@ const props = defineProps<{
 
 const modelConfigs = ref<ModelConfiguration[]>([]);
 
-const selectedModelConfig = ref();
+// const selectedModelConfig = ref();
 const extractions = ref<any[]>([]);
 
 const openValueConfig = ref(false);
@@ -306,24 +234,24 @@ function addConfigValue() {
 	extractions.value.push(`Untitled`);
 }
 
-const onCellEditComplete = ({ newData, index }) => {
-	if (props.isEditable) {
-		modelConfigs.value[index].configuration = newData;
-		updateModelConfiguration(modelConfigs.value[index]);
-	}
-};
-
-// function openValueModal(
-// 	odeType: string,
-// 	valueName: string,
-// 	configIndex: number,
-// 	odeObjIndex: number
-// ) {
+// const onCellEditComplete = ({ newData, index }) => {
 // 	if (props.isEditable) {
-// 		openValueConfig.value = true;
-// 		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
+// 		modelConfigs.value[index].configuration = newData;
+// 		updateModelConfiguration(modelConfigs.value[index]);
 // 	}
-// }
+// };
+
+function openValueModal(
+	odeType: string,
+	valueName: string,
+	configIndex: number,
+	odeObjIndex: number
+) {
+	if (props.isEditable) {
+		openValueConfig.value = true;
+		modalVal.value = { odeType, valueName, configIndex, odeObjIndex };
+	}
+}
 
 function updateModelConfigValue() {
 	const { configIndex } = modalVal.value;
@@ -382,8 +310,12 @@ onMounted(() => {
 	cursor: pointer;
 }
 
-.p-datatable .p-datatable-thead > tr > th {
-	border: 1px solid var(--surface-border-light);
+.p-frozen-column {
+	left: 0px;
+}
+
+.second-frozen {
+	left: 48px;
 }
 
 th:hover .cell-menu,
