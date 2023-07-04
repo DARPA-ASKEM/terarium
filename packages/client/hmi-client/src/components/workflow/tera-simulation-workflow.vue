@@ -36,6 +36,7 @@
 				@port-mouseleave="onPortMouseleave"
 				@dragging="(event) => updatePosition(node, event)"
 				@remove-node="(event) => removeNode(event)"
+				@drilldown="(event) => drilldown(event)"
 				:canDrag="isMouseOverCanvas"
 			>
 				<template #body>
@@ -43,25 +44,23 @@
 						v-if="node.operationType === 'ModelOperation' && models"
 						:models="models"
 						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
 						@select-model="(event) => selectModel(node, event)"
-					/>
-					<tera-calibration-node
-						v-else-if="node.operationType === 'CalibrationOperation'"
-						:node="node"
-						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-dataset-node
 						v-else-if="node.operationType === 'Dataset' && datasets"
 						:datasets="datasets"
-						:datasetId="node.outputs?.[0]?.value?.[0]?.toString() ?? newAssetId"
-						@append-output-port="(event) => appendOutputPort(node, event)"
+						:node="node"
+						@select-dataset="(event) => selectDataset(node, event)"
 					/>
 					<tera-simulate-node
 						v-else-if="node.operationType === 'SimulateOperation'"
 						:node="node"
 						@append-output-port="(event) => appendOutputPort(node, event)"
-						@configuration-change="(event) => chartConfigurationChange(node, event)"
+					/>
+					<tera-calibration-node
+						v-else-if="node.operationType === 'CalibrationOperation'"
+						:node="node"
+						@append-output-port="(event) => appendOutputPort(node, event)"
 					/>
 					<tera-stratify-node v-else-if="node.operationType === WorkflowOperationTypes.STRATIFY" />
 					<div v-else>
@@ -160,6 +159,7 @@
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { getModelConfigurations } from '@/services/model';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import {
 	Operation,
@@ -194,6 +194,8 @@ import { useDragEvent } from '@/services/drag-drop';
 import { DatasetOperation } from './dataset-operation';
 import TeraDatasetNode from './tera-dataset-node.vue';
 import TeraStratifyNode from './tera-stratify-node.vue';
+
+const workflowEventBus = workflowService.workflowEventBus;
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
@@ -256,12 +258,35 @@ const testOperation: Operation = {
 const models = computed<Model[]>(() => props.project.assets?.models ?? []);
 const datasets = computed<Dataset[]>(() => props.project.assets?.datasets ?? []);
 
-function selectModel(node: WorkflowNode, data: { id: string }) {
+async function selectModel(node: WorkflowNode, data: { id: string }) {
 	node.state.modelId = data.id;
+
+	// FIXME: Need additional design to work out exactly what to show. June 2023
+	// FIXME: Need to merge with any existing output-port results (e.g. new configs are added)
+	const configurationList = await getModelConfigurations(data.id);
+	node.outputs = [];
+	configurationList.forEach((configuration) => {
+		node.outputs.push({
+			id: uuidv4(),
+			type: 'modelConfigId',
+			label: configuration.name,
+			value: [configuration.id],
+			status: WorkflowPortStatus.NOT_CONNECTED
+		});
+	});
 }
 
-function chartConfigurationChange(node: WorkflowNode, data: { index: number; chartConfig: any }) {
-	node.state.chartConfigs[data.index] = data.chartConfig;
+async function selectDataset(node: WorkflowNode, data: { id: string; name: string }) {
+	node.state.datasetId = data.id;
+	node.outputs = [
+		{
+			id: uuidv4(),
+			type: 'datasetId',
+			label: data.name,
+			value: [data.id],
+			status: WorkflowPortStatus.NOT_CONNECTED
+		}
+	];
 }
 
 function appendOutputPort(node: WorkflowNode, port: { type: string; label?: string; value: any }) {
@@ -281,7 +306,7 @@ function appendOutputPort(node: WorkflowNode, port: { type: string; label?: stri
 		if (state.chartConfigs.length === 0) {
 			state.chartConfigs.push({
 				selectedRun: port.value[0],
-				selectedVariable: ['S']
+				selectedVariable: []
 			});
 		}
 	}
@@ -293,6 +318,15 @@ const testNode = (node: WorkflowNode) => {
 	const value = (node.inputs[0].value?.[0] ?? 0) + Math.round(Math.random() * 10);
 	appendOutputPort(node, { type: 'number', label: value.toString(), value });
 };
+
+const drilldown = (event: WorkflowNode) => {
+	workflowEventBus.emit('drilldown', event);
+};
+
+workflowEventBus.on('node-state-change', (payload: any) => {
+	if (wf.value.id !== payload.workflowId) return;
+	workflowService.updateNodeState(wf.value, payload.nodeId, payload.state);
+});
 
 const removeNode = (event) => {
 	workflowService.removeNode(wf.value, event);
@@ -564,6 +598,7 @@ function resetZoom() {
 	console.log('clean up layout');
 }
 </script>
+
 <style scoped>
 .toolbar {
 	display: flex;

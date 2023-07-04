@@ -219,11 +219,15 @@ const selectedModelVariables = computed(() => [
 defineExpose({ selectedModelVariables });
 
 async function addModelConfiguration() {
+	const configurationToAdd = modelConfigs.value.length
+		? modelConfigs.value[0].configuration
+		: props.model;
+
 	const response = await createModelConfiguration(
 		props.model.id,
 		`Config ${modelConfigs.value.length + 1}`,
-		'shawntest',
-		modelConfigs.value[modelConfigs.value.length - 1].configuration
+		'Test',
+		configurationToAdd
 	);
 	console.log(response);
 

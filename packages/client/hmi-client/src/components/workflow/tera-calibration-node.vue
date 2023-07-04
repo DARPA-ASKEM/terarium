@@ -5,6 +5,7 @@
 			<DataTable class="p-datatable-xsm" :value="mapping">
 				<Column field="modelVariable">
 					<template #body="{ data, field }">
+						<!-- Tom TODO: No v-model -->
 						<Dropdown
 							class="w-full"
 							placeholder="Select a variable"
@@ -15,6 +16,7 @@
 				</Column>
 				<Column field="datasetVariable">
 					<template #body="{ data, field }">
+						<!-- Tom TODO: No v-model -->
 						<Dropdown
 							class="w-full"
 							placeholder="Select a variable"
@@ -35,11 +37,11 @@
 		</AccordionTab>
 		<AccordionTab header="Variables">
 			<tera-simulate-chart
-				v-for="index in calibrateNumCharts"
+				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
-				:run-id-list="simulationIds"
-				:chart-idx="index"
+				:chartConfig="cfg"
+				@configuration-change="chartConfigurationChange(index, $event)"
 			/>
 			<Button
 				class="add-chart"
@@ -73,9 +75,11 @@ import {
 } from '@/services/models/simulation-service';
 import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
-import { RunResults } from '@/types/SimulateConfig';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
-import { CalibrationOperation } from './calibrate-operation';
+import { workflowEventBus } from '@/services/workflow';
+import _ from 'lodash';
+import { CalibrationOperation, CalibrationOperationState } from './calibrate-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -151,10 +155,7 @@ const runCalibrate = async () => {
 			filename: currentDatasetFileName.value,
 			mappings: formattedMap
 		},
-		extra: {
-			initials: initialsObj,
-			params: paramsObj
-		},
+		extra: {},
 		engine: 'sciml'
 	};
 	const response = await makeCalibrateJob(calibrationRequest);
@@ -204,16 +205,37 @@ function addMapping() {
 	});
 }
 
+const chartConfigurationChange = (index: number, config: ChartConfig) => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+watch(
+	() => props.node.inputs[1],
+	async () => {
+		console.log(props.node.inputs[1]);
+	},
+	{ immediate: true }
+);
+
 // Set up model config + dropdown names
 // Note: Same as calibrate side panel
 watch(
 	() => modelConfigId.value,
 	async () => {
+		console.log(modelConfigId.value);
 		const { modelConfiguration, modelColumnNameOptions } = await setupModelInput(
 			modelConfigId.value
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
+		console.log(modelConfiguration);
 	},
 	{ immediate: true }
 );

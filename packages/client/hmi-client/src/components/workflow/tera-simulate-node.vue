@@ -1,7 +1,7 @@
 <template>
 	<section v-if="!showSpinner" class="result-container">
 		<Button @click="runSimulate">Run</Button>
-		<div class="chart-container">
+		<div class="chart-container" v-if="runResults">
 			<SimulateChart
 				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
@@ -10,13 +10,7 @@
 				@configuration-change="configurationChange(index, $event)"
 			/>
 		</div>
-		<Button
-			class="add-chart"
-			text
-			@click="openedWorkflowNodeStore.appendChart"
-			label="Add Chart"
-			icon="pi pi-plus"
-		></Button>
+		<Button class="add-chart" text @click="addChart" label="Add Chart" icon="pi pi-plus"></Button>
 	</section>
 	<section v-else>
 		<div>loading...</div>
@@ -24,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, watch, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import { csvParse } from 'd3';
@@ -33,16 +28,15 @@ import { makeForecastJob, getSimulation, getRunResult } from '@/services/models/
 import { WorkflowNode } from '@/types/workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
 import { SimulateOperation, SimulateOperationState } from './simulate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
 }>();
-const emit = defineEmits(['append-output-port', 'configuration-change']);
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+const emit = defineEmits(['append-output-port']);
 
 const showSpinner = ref(false);
 
@@ -53,33 +47,9 @@ const runResults = ref<RunResults>({});
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelConfigId = computed<string | undefined>(() => props.node.inputs[0].value?.[0]);
 
-// FIXME: Replace with event-bus
-watch(
-	() => props.node,
-	(node) => openedWorkflowNodeStore.setNode(node ?? null),
-	{ deep: true }
-);
-
 const runSimulate = async () => {
 	const modelConfigurationList = props.node.inputs[0].value;
 	if (!modelConfigurationList?.length) return;
-
-	const modelConfigurationObj = modelConfiguration.value as any;
-	const semantics = modelConfigurationObj.amrConfiguration.semantics;
-	const ode = semantics.ode;
-
-	// FIXME: Dummy up the payload to make things work, but not correct results
-	const initials = ode.initials.map((d) => d.target);
-	const rates = ode.rates.map((d) => d.target);
-	const initialsObj = {};
-	const paramsObj = {};
-
-	initials.forEach((d) => {
-		initialsObj[d] = Math.random() * 100;
-	});
-	rates.forEach((d) => {
-		paramsObj[d] = Math.random() * 0.05;
-	});
 
 	const state = props.node.state as SimulateOperationState;
 
@@ -90,10 +60,7 @@ const runSimulate = async () => {
 				start: state.currentTimespan.start,
 				end: state.currentTimespan.end
 			},
-			extra: {
-				initials: initialsObj,
-				params: paramsObj
-			},
+			extra: {},
 			engine: 'sciml'
 		};
 		const response = await makeForecastJob(payload);
@@ -154,10 +121,14 @@ const watchCompletedRunList = async (runIdList: string[]) => {
 	});
 };
 
-const configurationChange = (index: number, chartConfig: ChartConfig) => {
-	emit('configuration-change', {
-		index,
-		chartConfig
+const configurationChange = (index: number, config: ChartConfig) => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
 	});
 };
 
@@ -189,6 +160,8 @@ onMounted(async () => {
 		})
 	);
 });
+
+const addChart = () => {};
 </script>
 
 <style scoped>

@@ -61,8 +61,6 @@
 					@click.stop="emit('port-selected', output, WorkflowDirection.FROM_OUTPUT)"
 					@focus="() => {}"
 					@focusout="() => {}"
-					:active="openedWorkflowNodeStore.selectedOutputIndex === index"
-					@click="openedWorkflowNodeStore.selectedOutputIndex = index"
 				>
 					<div class="output port" />
 					{{ output.label }}
@@ -82,9 +80,6 @@ import {
 } from '@/types/workflow';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
-import { isEmpty } from 'lodash';
-import { ProjectAssetTypes, ProjectPages } from '@/types/Project';
 import Menu from 'primevue/menu';
 
 const props = defineProps<{
@@ -97,7 +92,8 @@ const emit = defineEmits([
 	'port-selected',
 	'port-mouseover',
 	'port-mouseleave',
-	'remove-node'
+	'remove-node',
+	'drilldown'
 ]);
 
 const nodeStyle = computed(() => ({
@@ -108,7 +104,6 @@ const nodeStyle = computed(() => ({
 
 const portBaseSize: number = 8;
 const workflowNode = ref<HTMLElement>();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 let tempX = 0;
 let tempY = 0;
@@ -175,42 +170,7 @@ const getInputLabelColor = (edgeIdx: number) => {
 };
 
 function showNodeDrilldown() {
-	let pageType;
-	let assetId;
-
-	switch (props.node.operationType) {
-		case WorkflowOperationTypes.SIMULATE:
-			pageType = ProjectAssetTypes.SIMULATIONS;
-			assetId = props.node.id;
-			break;
-		case WorkflowOperationTypes.CALIBRATION:
-			pageType = ProjectPages.CALIBRATE;
-			assetId = props.node.id;
-			break;
-		case WorkflowOperationTypes.STRATIFY:
-			pageType = ProjectPages.STRATIFY;
-			assetId = props.node.id;
-			break;
-		case WorkflowOperationTypes.MODEL:
-			pageType = ProjectAssetTypes.MODELS;
-			assetId = props.node.state.modelId;
-			break;
-		default:
-			break;
-	}
-
-	if (!isEmpty(props.node.outputs)) {
-		switch (props.node.operationType) {
-			case WorkflowOperationTypes.DATASET:
-				pageType = ProjectAssetTypes.DATASETS;
-				assetId = props.node.outputs[0].value?.[0].toString();
-				break;
-			default:
-				break;
-		}
-	}
-
-	openedWorkflowNodeStore.setDrilldown(assetId, pageType, props.node);
+	emit('drilldown', props.node);
 }
 
 function mouseoverPort(event) {
