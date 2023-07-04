@@ -28,8 +28,8 @@
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
-			<AccordionTab :header="modelConfig.amrConfiguration.name">
-				<tera-model-diagram :model="modelConfig.amrConfiguration" :is-editable="false" />
+			<AccordionTab :header="modelConfig.configuration.name">
+				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
 			</AccordionTab>
 			<AccordionTab header="Mapping">
 				<DataTable class="p-datatable-xsm" :value="mapping">

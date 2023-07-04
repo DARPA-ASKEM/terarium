@@ -134,8 +134,8 @@ const runCalibrate = async () => {
 		formattedMap[ele.datasetVariable] = ele.modelVariable;
 	});
 	// TODO: TS/1225 -> Should not have to rand results
-	const initials = modelConfig.value.amrConfiguration.semantics.ode.initials.map((d) => d.target);
-	const rates = modelConfig.value.amrConfiguration.semantics.ode.rates.map((d) => d.target);
+	const initials = modelConfig.value.configuration.semantics.ode.initials.map((d) => d.target);
+	const rates = modelConfig.value.configuration.semantics.ode.rates.map((d) => d.target);
 	const initialsObj = {};
 	const paramsObj = {};
 
