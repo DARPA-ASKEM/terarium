@@ -17,6 +17,7 @@ describe('test generate age strata model', () => {
 			description: 'Age-contact strata model',
 			schema:
 				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
 			model_version: '0.1',
 			model: {
 				states: [
@@ -119,7 +120,9 @@ describe('test generate age strata model', () => {
 			metadata: {
 				processed_at: 0,
 				processed_by: '',
-				variable_statements: []
+				variable_statements: [],
+				annotations: {},
+				attributes: []
 			}
 		});
 	});
@@ -136,6 +139,7 @@ describe('test generate location strata model', () => {
 			description: 'Location-travel strata model',
 			schema:
 				'https://raw.githubusercontent.com/DARPA-ASKEM/Model-Representations/petrinet_v0.1/petrinet/petrinet_schema.json',
+			schema_name: 'petrinet',
 			model_version: '0.1',
 			model: {
 				states: [
@@ -218,7 +222,9 @@ describe('test generate location strata model', () => {
 			metadata: {
 				processed_at: 0,
 				processed_by: '',
-				variable_statements: []
+				variable_statements: [],
+				annotations: {},
+				attributes: []
 			}
 		});
 	});
