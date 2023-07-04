@@ -3,12 +3,19 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 // import { makeCalibrateJob } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
+import { ChartConfig } from '@/types/SimulateConfig';
+import { TimeSpan } from '@/types/Types';
+
+export interface CalibrationOperationState {
+	chartConfigs: ChartConfig[];
+	currentTimespan: TimeSpan;
+}
 
 export const CalibrationOperation: Operation = {
 	name: WorkflowOperationTypes.CALIBRATION,
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
-	inputs: [{ type: 'modelConfigId' }, { type: 'dataset' }],
+	inputs: [{ type: 'modelConfigId' }, { type: 'datasetId' }],
 	outputs: [{ type: 'number' }],
 	isRunnable: true,
 

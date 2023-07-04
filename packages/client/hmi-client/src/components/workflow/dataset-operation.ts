@@ -9,7 +9,7 @@ export const DatasetOperation: Operation = {
 	description: 'Select a dataset',
 	isRunnable: true,
 	inputs: [],
-	outputs: [{ type: 'dataset' }],
+	outputs: [{ type: 'datasetId' }],
 	action: () => {},
 
 	initState: () => {
