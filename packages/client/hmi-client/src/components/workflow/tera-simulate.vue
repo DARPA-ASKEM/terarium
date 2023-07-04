@@ -30,16 +30,14 @@
 				:chartConfig="cfg"
 				@configuration-change="configurationChange(index, $event)"
 			/>
-			<!--
 			<Button
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="openedWorkflowNodeStore.appendChart"
+				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
-			-->
 		</div>
 		<div v-else-if="activeTab === SimulateTabs.input && node" class="simulate-container">
 			<div class="simulate-model">
@@ -57,7 +55,7 @@
 								<Dropdown
 									id="1"
 									class="p-inputtext-sm"
-									v-model="openedWorkflowNodeStore.tspanUnit"
+									v-model=""
 									:options="TspanUnitList"
 								/>
 							</div>
@@ -138,6 +136,17 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 const configurationChange = (index: number, config: ChartConfig) => {
 	const state: SimulateOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,

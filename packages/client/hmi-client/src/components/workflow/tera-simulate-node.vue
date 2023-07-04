@@ -161,7 +161,16 @@ onMounted(async () => {
 	);
 });
 
-const addChart = () => {};
+const addChart = () => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
 </script>
 
 <style scoped>
