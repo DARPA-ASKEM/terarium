@@ -4,11 +4,15 @@ import { WorkflowPort, Operation, WorkflowOperationTypes } from '@/types/workflo
 import { getModel } from '@/services/model';
 import { AMRToPetri } from '@/model-representation/petrinet/petrinet-service';
 import { ChartConfig } from '@/types/SimulateConfig';
-import { TimeSpan } from '@/types/Types';
+
+export interface CalibrateMap {
+	modelVariable: string;
+	datasetVariable: string;
+}
 
 export interface CalibrationOperationState {
 	chartConfigs: ChartConfig[];
-	currentTimespan: TimeSpan;
+	mapping: CalibrateMap[];
 }
 
 export const CalibrationOperation: Operation = {
@@ -44,5 +48,13 @@ export const CalibrationOperation: Operation = {
 			}
 		}
 		return [{ type: null, value: null }];
+	},
+
+	initState: () => {
+		const init: CalibrationOperationState = {
+			chartConfigs: [],
+			mapping: [{ modelVariable: '', datasetVariable: '' }]
+		};
+		return init;
 	}
 };

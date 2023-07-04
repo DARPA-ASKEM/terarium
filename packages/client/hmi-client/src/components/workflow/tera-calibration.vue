@@ -28,8 +28,42 @@
 			:multiple="true"
 			:active-index="[0, 1, 2, 3, 4]"
 		>
-			<AccordionTab :header="modelConfig.amrConfiguration.name">
-				<tera-model-diagram :model="modelConfig.amrConfiguration" :is-editable="false" />
+			<AccordionTab :header="modelConfig.configuration.name">
+				<tera-model-diagram :model="modelConfig.configuration" :is-editable="false" />
+			</AccordionTab>
+			<AccordionTab header="Mapping">
+				<DataTable class="p-datatable-xsm" :value="mapping">
+					<Column field="modelVariable">
+						<template #body="{ data, field }">
+							<!-- Tom TODO: No v-model -->
+							<Dropdown
+								class="w-full"
+								placeholder="Select a variable"
+								v-model="data[field]"
+								:options="modelColumnNames"
+							/>
+						</template>
+					</Column>
+					<Column field="datasetVariable">
+						<template #body="{ data, field }">
+							<!-- Tom TODO: No v-model -->
+							<Dropdown
+								class="w-full"
+								placeholder="Select a variable"
+								v-model="data[field]"
+								:options="datasetColumnNames"
+							/>
+						</template>
+					</Column>
+				</DataTable>
+				<div>
+					<Button
+						class="p-button-sm p-button-outlined"
+						icon="pi pi-plus"
+						label="Add mapping"
+						@click="addMapping"
+					/>
+				</div>
 			</AccordionTab>
 			<AccordionTab v-if="datasetId" :header="currentDatasetFileName">
 				<tera-dataset-datatable preview-mode :raw-content="csvAsset ?? null" />
@@ -58,7 +92,7 @@
 					class="add-chart"
 					text
 					:outlined="true"
-					@click="calibrateNumCharts++"
+					@click="addChart"
 					label="Add Chart"
 					icon="pi pi-plus"
 				></Button>
@@ -76,6 +110,9 @@ import _ from 'lodash';
 import { computed, ref, shallowRef, watch } from 'vue';
 import { csvParse } from 'd3';
 import Button from 'primevue/button';
+import DataTable from 'primevue/datatable';
+import Dropdown from 'primevue/dropdown';
+import Column from 'primevue/column';
 import { getRunResult } from '@/services/models/simulation-service';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -91,7 +128,7 @@ import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { WorkflowNode } from '@/types/workflow';
 import { workflowEventBus } from '@/services/workflow';
 import TeraSimulateChart from './tera-simulate-chart.vue';
-import { CalibrationOperationState } from './calibrate-operation';
+import { CalibrationOperationState, CalibrateMap } from './calibrate-operation';
 
 const props = defineProps<{
 	node: WorkflowNode;
@@ -106,7 +143,6 @@ enum CalibrationView {
 const modelColumnNames = ref<string[] | undefined>();
 
 const calibrationView = ref(CalibrationView.INPUT);
-const calibrateNumCharts = ref<number>(1);
 
 const trainTestValue = ref(80);
 
@@ -120,7 +156,9 @@ const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value
 const currentDatasetFileName = ref<string>();
 const simulationIds = computed<any | undefined>(() => props.node.outputs[0]?.value);
 const runResults = ref<RunResults>({});
+const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
+// Tom TODO: Make this generic... its copy paste from node.
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
@@ -132,6 +170,34 @@ const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	});
 };
 
+const addChart = () => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+// Used from button to add new entry to the mapping object
+// Tom TODO: Make this generic... its copy paste from node.
+function addMapping() {
+	mapping.value.push({
+		modelVariable: '',
+		datasetVariable: ''
+	});
+
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+}
 // Set up model config + dropdown names
 // Note: Same as calibrate-node
 watch(

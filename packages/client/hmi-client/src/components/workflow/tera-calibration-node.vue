@@ -47,7 +47,7 @@
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="calibrateNumCharts++"
+				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
@@ -73,13 +73,16 @@ import {
 	getSimulation,
 	getRunResult
 } from '@/services/models/simulation-service';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import { setupModelInput, setupDatasetInput } from '@/services/calibrate-workflow';
 import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 import { csvParse } from 'd3';
 import { workflowEventBus } from '@/services/workflow';
 import _ from 'lodash';
-import { CalibrationOperation, CalibrationOperationState } from './calibrate-operation';
+import {
+	CalibrationOperation,
+	CalibrationOperationState,
+	CalibrateMap
+} from './calibrate-operation';
 import TeraSimulateChart from './tera-simulate-chart.vue';
 
 const props = defineProps<{
@@ -87,7 +90,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['append-output-port']);
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const modelConfigId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const datasetId = computed(() => props.node.inputs[1].value?.[0] as string | undefined);
@@ -98,19 +100,12 @@ const completedRunId = ref<string>();
 
 const datasetColumnNames = ref<string[]>();
 const modelColumnNames = ref<string[] | undefined>();
-const calibrateNumCharts = ref<number>(1);
 const runResults = ref<RunResults>({});
 const simulationIds: ComputedRef<any | undefined> = computed(
 	<any | undefined>(() => props.node.outputs[0]?.value)
 );
 
-const mapping = ref<any[]>([
-	{
-		modelVariable: '',
-		datasetVariable: ''
-	}
-]);
-
+const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const disableRunButton = computed(
@@ -136,8 +131,8 @@ const runCalibrate = async () => {
 		formattedMap[ele.datasetVariable] = ele.modelVariable;
 	});
 	// TODO: TS/1225 -> Should not have to rand results
-	const initials = modelConfig.value.amrConfiguration.semantics.ode.initials.map((d) => d.target);
-	const rates = modelConfig.value.amrConfiguration.semantics.ode.rates.map((d) => d.target);
+	const initials = modelConfig.value.configuration.semantics.ode.initials.map((d) => d.target);
+	const rates = modelConfig.value.configuration.semantics.ode.rates.map((d) => d.target);
 	const initialsObj = {};
 	const paramsObj = {};
 
@@ -198,16 +193,38 @@ const updateOutputPorts = async (runId) => {
 };
 
 // Used from button to add new entry to the mapping object
+// Tom TODO: Make this generic, its copy paste from drilldown
 function addMapping() {
 	mapping.value.push({
 		modelVariable: '',
 		datasetVariable: ''
 	});
+
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
 }
 
+// Tom TODO: Make this generic, its copy paste from drilldown
 const chartConfigurationChange = (index: number, config: ChartConfig) => {
 	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
 	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
 
 	workflowEventBus.emitNodeStateChange({
 		workflowId: props.node.workflowId,
@@ -251,12 +268,6 @@ watch(
 		datasetColumnNames.value = csv?.headers;
 	},
 	{ immediate: true }
-);
-
-watch(
-	() => props.node,
-	(node) => openedWorkflowNodeStore.setNode(node ?? null),
-	{ deep: true }
 );
 
 // Fetch simulation run results whenever output changes

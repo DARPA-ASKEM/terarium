@@ -53,7 +53,11 @@
 							</div>
 						</td>
 						<td class="p-frozen-column second-frozen">{{ name }}</td>
-						<td v-for="(rate, j) of configuration?.semantics?.ode.rates" :key="j">
+						<td
+							v-for="(rate, j) of configuration?.semantics?.ode.rates"
+							class="p-editable-column"
+							:key="j"
+						>
 							<section class="editable-cell">
 								<span>{{ rate.expression }}</span>
 								<Button
@@ -62,7 +66,7 @@
 									@click.stop="openValueModal('rates', 'expression', i, j)"
 								/>
 							</section>
-							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
 								autofocus /> -->
 						</td>
 						<td v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="j">
@@ -86,7 +90,7 @@
 									@click.stop="openValueModal('parameters', 'value', i, j)"
 								/>
 							</section>
-							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
 								autofocus /> -->
 						</td>
 					</tr>
@@ -121,7 +125,7 @@
 					<TabPanel v-for="(tab, i) in extractions" :key="tab" :header="tab">
 						<div>
 							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" v-model="extractions[i]" />
+							<InputText class="p-inputtext-sm" v-model="extractions[i]" autofocus />
 						</div>
 						<div>
 							<label for="name">Source</label>
@@ -260,6 +264,7 @@ function openValueModal(
 function updateModelConfigValue() {
 	const { configIndex } = modalVal.value;
 	const configToUpdate = modelConfigs.value[configIndex];
+	console.log(configToUpdate);
 	updateModelConfiguration(configToUpdate);
 	openValueConfig.value = false;
 }
