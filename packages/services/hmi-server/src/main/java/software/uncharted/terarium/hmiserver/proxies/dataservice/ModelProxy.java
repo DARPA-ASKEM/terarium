@@ -95,13 +95,13 @@ public interface ModelProxy {
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response updateModel(
 		@PathParam("id") String id,
-		ModelStub model
+		Model model
 	);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response createModel(
-		ModelStub model
+		Model model
 	);
 
 	@POST

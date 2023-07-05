@@ -25,6 +25,13 @@
 					@click="modelView = ModelView.MODEL"
 					:active="modelView === ModelView.MODEL"
 				/>
+				<Button
+					v-if="isEditable"
+					icon="pi pi-ellipsis-v"
+					class="p-button-icon-only p-button-text p-button-rounded"
+					@click="toggleOptionsMenu"
+				/>
+				<Menu v-if="isEditable" ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
 			</span>
 			<Button
 				v-if="assetId === ''"
@@ -438,6 +445,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { createModel, addModelToProject, getModel } from '@/services/model';
+import { addAsset } from '@/services/project';
 import { getRelatedArtifacts } from '@/services/provenance';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
@@ -445,6 +453,7 @@ import { IProject, ProjectAssetTypes } from '@/types/Project';
 import { Model, Document, Dataset, ProvenanceType, ModelConfiguration } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
+import Menu from 'primevue/menu';
 import TeraModelDiagram from './tera-model-diagram.vue';
 import TeraModelConfiguration from './tera-model-configuration.vue';
 
@@ -491,6 +500,31 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
 const newPetri = ref();
+/*
+ * User Menu
+ */
+const optionsMenu = ref();
+const optionsMenuItems = ref([
+	{ icon: 'pi pi-clone', label: 'Duplicate Model', command: duplicateModel }
+]);
+
+const toggleOptionsMenu = (event) => {
+	optionsMenu.value.toggle(event);
+};
+
+async function duplicateModel() {
+	if (!model.value) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	const duplicateModelResponse = await createModel(model.value);
+	if (!duplicateModelResponse) {
+		console.log('Failed to duplicate model.');
+		return;
+	}
+	await addAsset(props.project.id, ProjectAssetTypes.MODELS, duplicateModelResponse.id);
+	// Should probably refresh or emit update?
+}
 
 /* Model */
 const name = computed(() => highlightSearchTerms(model.value?.name));
