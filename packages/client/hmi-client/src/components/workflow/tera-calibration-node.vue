@@ -127,9 +127,12 @@ const runCalibrate = async () => {
 		return;
 
 	const formattedMap: { [index: string]: string } = {};
-	mapping.value.forEach((ele) => {
-		formattedMap[ele.datasetVariable] = ele.modelVariable;
-	});
+	// If the user has done any mapping populate formattedMap
+	if (mapping.value[0].datasetVariable !== '') {
+		mapping.value.forEach((ele) => {
+			formattedMap[ele.datasetVariable] = ele.modelVariable;
+		});
+	}
 	// TODO: TS/1225 -> Should not have to rand results
 	const initials = modelConfig.value.configuration.semantics.ode.initials.map((d) => d.target);
 	const rates = modelConfig.value.configuration.semantics.ode.rates.map((d) => d.target);
@@ -251,7 +254,22 @@ watch(
 		);
 		modelConfig.value = modelConfiguration;
 		modelColumnNames.value = modelColumnNameOptions;
-		console.log(modelConfiguration);
+		// Preset the mapping for all model columns:
+		mapping.value = [];
+		modelColumnNames.value?.map((columnName) =>
+			mapping.value.push({
+				modelVariable: columnName,
+				datasetVariable: ''
+			})
+		);
+		const state: CalibrationOperationState = _.cloneDeep(props.node.state);
+		state.mapping = mapping.value;
+
+		workflowEventBus.emitNodeStateChange({
+			workflowId: props.node.workflowId,
+			nodeId: props.node.id,
+			state
+		});
 	},
 	{ immediate: true }
 );
