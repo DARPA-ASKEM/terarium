@@ -1,10 +1,11 @@
 <template>
+	<!--TODO: Once we implement the unique border design remove the p-datatable-gridlines class and make a custom series of classes to support the borders we want-->
 	<div
-		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders)"
+		v-if="!isEmpty(configurations) && !isEmpty(tableHeaders) && !isEmpty(cellEditStates)"
 		class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header model-configuration"
 	>
 		<div class="p-datatable-wrapper">
-			<table class="p-datatable-table p-datatable-scrollable-table">
+			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
 				<thead class="p-datatable-thead">
 					<tr v-if="isEditable">
 						<th class="p-frozen-column"></th>
@@ -37,6 +38,7 @@
 						>
 							{{ id }}
 						</th>
+						<!--Insert new th loops for time and observables here-->
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
@@ -52,13 +54,27 @@
 								</div>
 							</div>
 						</td>
-						<td class="p-frozen-column second-frozen">{{ name }}</td>
+						<td class="p-frozen-column second-frozen">
+							<span v-if="!cellEditStates[i].name" @click="cellEditStates[i].name = true">
+								{{ name }}
+							</span>
+							<InputText
+								v-else
+								v-model="modelConfigs[i].name"
+								autofocus
+								@keyup.enter="
+									cellEditStates[i].name = false;
+									updateModelConfigValue(i);
+								"
+							/>
+						</td>
 						<td
 							v-for="(rate, j) of configuration?.semantics?.ode.rates"
 							class="p-editable-column"
 							:key="j"
+							@click="cellEditStates[i].rates[j] = true"
 						>
-							<section class="editable-cell">
+							<section v-if="!cellEditStates[i].rates[j]" class="editable-cell">
 								<span>{{ rate.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -66,11 +82,22 @@
 									@click.stop="openValueModal('rates', 'expression', i, j)"
 								/>
 							</section>
-							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
-								autofocus /> -->
+							<InputText
+								v-else
+								v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
+								autofocus
+								@keyup.enter="
+									cellEditStates[i].rates[j] = false;
+									updateModelConfigValue(i);
+								"
+							/>
 						</td>
-						<td v-for="(initial, j) of configuration?.semantics?.ode.initials" :key="j">
-							<section class="editable-cell">
+						<td
+							v-for="(initial, j) of configuration?.semantics?.ode.initials"
+							:key="j"
+							@click="cellEditStates[i].initials[j] = true"
+						>
+							<section v-if="!cellEditStates[i].initials[j]" class="editable-cell">
 								<span>{{ initial.expression }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -78,11 +105,22 @@
 									@click.stop="openValueModal('initials', 'expression', i, j)"
 								/>
 							</section>
-							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
-								autofocus /> -->
+							<InputText
+								v-else
+								v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+								autofocus
+								@keyup.enter="
+									cellEditStates[i].initials[j] = false;
+									updateModelConfigValue(i);
+								"
+							/>
 						</td>
-						<td v-for="(parameter, j) of configuration?.semantics?.ode.parameters" :key="j">
-							<section class="editable-cell">
+						<td
+							v-for="(parameter, j) of configuration?.semantics?.ode.parameters"
+							:key="j"
+							@click="cellEditStates[i].parameters[j] = true"
+						>
+							<section v-if="!cellEditStates[i].parameters[j]" class="editable-cell">
 								<span>{{ parameter.value }}</span>
 								<Button
 									class="p-button-icon-only p-button-text p-button-rounded p-button-icon-only-small cell-menu"
@@ -90,9 +128,17 @@
 									@click.stop="openValueModal('parameters', 'value', i, j)"
 								/>
 							</section>
-							<!-- <InputText v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
-								autofocus /> -->
+							<InputText
+								v-else
+								v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
+								autofocus
+								@keyup.enter="
+									cellEditStates[i].parameters[j] = false;
+									updateModelConfigValue(i);
+								"
+							/>
 						</td>
+						<!--Insert new td loops for time and observables here-->
 					</tr>
 				</tbody>
 			</table>
@@ -160,7 +206,7 @@
 </template>
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { capitalize, isEmpty } from 'lodash';
+import { capitalize, isEmpty, cloneDeep } from 'lodash';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
@@ -181,6 +227,7 @@ const props = defineProps<{
 }>();
 
 const modelConfigs = ref<ModelConfiguration[]>([]);
+const cellEditStates = ref<any[]>([]);
 
 // const selectedModelConfig = ref();
 const extractions = ref<any[]>([]);
@@ -198,7 +245,7 @@ const configurations = computed<Model[]>(
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
-	if (configurations.value?.[0].semantics) {
+	if (configurations.value?.[0]?.semantics) {
 		const headerNames = Object.keys(configurations.value[0]?.semantics.ode) ?? [];
 		const result: { name: string; colspan: number }[] = [];
 
@@ -210,7 +257,6 @@ const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
 				});
 			}
 		}
-
 		return result;
 	}
 	return [];
@@ -261,8 +307,7 @@ function openValueModal(
 	}
 }
 
-function updateModelConfigValue() {
-	const { configIndex } = modalVal.value;
+function updateModelConfigValue(configIndex: number = modalVal.value.configIndex) {
 	const configToUpdate = modelConfigs.value[configIndex];
 	console.log(configToUpdate);
 	updateModelConfiguration(configToUpdate);
@@ -273,12 +318,33 @@ async function initializeConfigSpace() {
 	modelConfigs.value = [];
 	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
 
-	console.log('number of configs', modelConfigs.value);
+	// console.log('Configs', modelConfigs.value);
 
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
 	modalVal.value = { odeType: '', valueName: '', configIndex: 0, odeObjIndex: 0 };
 }
+
+function resetCellEditing() {
+	const row = { name: false };
+
+	for (let i = 0; i < tableHeaders.value.length; i++) {
+		const { name, colspan } = tableHeaders.value[i];
+		row[name] = Array(colspan).fill(false);
+	}
+
+	// Can't use fill here because the same row object would be referenced throughout the array
+	const cellEditStatesArr = new Array(modelConfigs.value.length);
+	for (let i = 0; i < modelConfigs.value.length; i++) cellEditStatesArr[i] = cloneDeep(row);
+	cellEditStates.value = cellEditStatesArr;
+}
+
+watch(
+	() => tableHeaders.value,
+	() => {
+		resetCellEditing();
+	}
+);
 
 watch(
 	() => props.model,
@@ -308,7 +374,7 @@ onMounted(() => {
 	visibility: hidden;
 }
 
-.p-datatable:deep(.editable-cell) {
+.editable-cell {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
