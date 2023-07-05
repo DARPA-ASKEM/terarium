@@ -10,10 +10,13 @@ import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.net.URLEncoder;
 import java.util.List;
 
 @Path("/api/dkg")
 @Tag(name = "DKG REST Endpoints")
+@Produces(MediaType.APPLICATION_JSON)
 @Slf4j
 public class DKGResource {
 	@Inject
@@ -21,11 +24,12 @@ public class DKGResource {
 	DKGProxy proxy;
 
 	@GET
+	@Path("/{curies}")
 	public List<DKG> searchConcept(
-		@QueryParam("curies") final String curies
+		@PathParam("curies") final String curies
 	) {
 		try {
-			return proxy.getEntities(curies);
+			return  proxy.getEntities(curies);
 		} catch (RuntimeException e) {
 			log.error("Unable to fetch DKG", e);
 			return null;

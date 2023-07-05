@@ -43,7 +43,7 @@ async function getFacets(types: string[], curies?: ClauseValue[]): Promise<Conce
 async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | null> {
 	try {
 		const { status, data } = await API.get(`/dkg/${curies.toString()}`);
-		if (status !== 200) return null;
+		if (status && status !== 200) return null;
 		return data ?? null;
 	} catch (error) {
 		logger.error(error);
