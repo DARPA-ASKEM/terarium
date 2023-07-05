@@ -3,6 +3,7 @@ import API from '@/api/api';
 import { Model } from '@/types/Types';
 
 /**
+ * @deprecated model-service overhaul
  * Create a project
  * @return Model|null - if the creation was succesful
  */
