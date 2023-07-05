@@ -129,7 +129,6 @@ const strataType = ref();
 const labels = ref();
 const strataModel = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
-// const model = computed(() => modelConfiguration.value?.configuration.model);
 const model = ref<Model | null>(null);
 
 function generateStrataModel() {
