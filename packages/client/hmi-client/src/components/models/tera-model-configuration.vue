@@ -38,7 +38,7 @@
 						>
 							{{ id }}
 						</th>
-						<!--Insert new th loops for time and observables here-->
+						<!--TODO: Insert new th loops for time and observables here-->
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
@@ -62,6 +62,7 @@
 								v-else
 								v-model="modelConfigs[i].name"
 								autofocus
+								@focusout="cellEditStates[i].name = false"
 								@keyup.enter="
 									cellEditStates[i].name = false;
 									updateModelConfigValue(i);
@@ -86,6 +87,7 @@
 								v-else
 								v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
 								autofocus
+								@focusout="cellEditStates[i].rates[j] = false"
 								@keyup.enter="
 									cellEditStates[i].rates[j] = false;
 									updateModelConfigValue(i);
@@ -109,6 +111,7 @@
 								v-else
 								v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
 								autofocus
+								@focusout="cellEditStates[i].initials[j] = false"
 								@keyup.enter="
 									cellEditStates[i].initials[j] = false;
 									updateModelConfigValue(i);
@@ -132,13 +135,14 @@
 								v-else
 								v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
 								autofocus
+								@focusout="cellEditStates[i].parameters[j] = false"
 								@keyup.enter="
 									cellEditStates[i].parameters[j] = false;
 									updateModelConfigValue(i);
 								"
 							/>
 						</td>
-						<!--Insert new td loops for time and observables here-->
+						<!--TODO: Insert new td loops for time and observables here-->
 					</tr>
 				</tbody>
 			</table>
@@ -287,13 +291,6 @@ async function addModelConfiguration() {
 function addConfigValue() {
 	extractions.value.push(`Untitled`);
 }
-
-// const onCellEditComplete = ({ newData, index }) => {
-// 	if (props.isEditable) {
-// 		modelConfigs.value[index].configuration = newData;
-// 		updateModelConfiguration(modelConfigs.value[index]);
-// 	}
-// };
 
 function openValueModal(
 	odeType: string,
