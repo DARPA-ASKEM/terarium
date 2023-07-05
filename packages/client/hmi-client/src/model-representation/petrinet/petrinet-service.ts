@@ -211,6 +211,10 @@ export const parseAMRPetriNet2IGraph = (
 	// add each nodes in S
 	for (let i = 0; i < petrinet.states.length; i++) {
 		const aNode = petrinet.states[i];
+		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The first element is a state or transition id, the second element is the type id.
+		// Find the inner array that matches the current state / transition that we are iterating on
+		// Get the second element of that array, which is the id of its type
 		const typeMap = typing?.type_map.find((map) => map.length === 2 && aNode.id === map[0]);
 		const strataType = typeMap?.[1] ?? '';
 		result.nodes.push({
@@ -232,6 +236,10 @@ export const parseAMRPetriNet2IGraph = (
 	// Add each node found in T
 	for (let i = 0; i < petrinet.transitions.length; i++) {
 		const aTransition = petrinet.transitions[i];
+		// The structure of type_map is an array of arrays, where each inner array has 2 elements.
+		// The first element is a state or transition id, the second element is the type id.
+		// Find the inner array that matches the current state / transition that we are iterating on
+		// Get the second element of that array, which is the id of its type
 		const typeMap = typing?.type_map.find((map) => map.length === 2 && aTransition.id === map[0]);
 		const strataType = typeMap?.[1] ?? '';
 		// Add the node for this transition
