@@ -11,7 +11,7 @@
 						<th class="p-frozen-column"></th>
 						<th class="p-frozen-column second-frozen"></th>
 						<th v-for="({ name, colspan }, i) in tableHeaders" :colspan="colspan" :key="i">
-							{{ capitalize(name) }}
+							{{ name }}
 						</th>
 					</tr>
 					<tr>
@@ -210,7 +210,7 @@
 </template>
 <script setup lang="ts">
 import { watch, ref, computed, onMounted } from 'vue';
-import { capitalize, isEmpty, cloneDeep } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 // import Checkbox from 'primevue/checkbox'; // Add back in later
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
@@ -315,7 +315,7 @@ async function initializeConfigSpace() {
 	modelConfigs.value = [];
 	modelConfigs.value = (await getModelConfigurations(props.model.id)) as ModelConfiguration[];
 
-	// console.log('Configs', modelConfigs.value);
+	console.log('Configs', modelConfigs.value);
 
 	extractions.value = ['Default'];
 	openValueConfig.value = false;
@@ -361,6 +361,10 @@ onMounted(() => {
 
 .model-configuration {
 	margin-bottom: 1rem;
+}
+
+.p-datatable-thead th {
+	text-transform: capitalize;
 }
 
 .model-configuration:deep(.p-datatable-tbody > tr > td:empty:before) {
