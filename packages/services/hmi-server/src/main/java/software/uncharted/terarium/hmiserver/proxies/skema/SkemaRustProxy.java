@@ -47,4 +47,9 @@ public interface SkemaRustProxy {
 	@Path("/mathml/acset")
 	@Consumes(MediaType.APPLICATION_JSON)
 	Response convertMathML2ACSet(List<String> mathML);
+
+	@PUT
+	@Path("/mathml/amr")
+	@Consumes(MediaType.APPLICATION_JSON)
+	Response convertMathML2AMR(List<String> mathML);
 }

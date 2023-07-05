@@ -32,6 +32,11 @@ public class TransformResource {
 		return skemaProxy.convertMathML2ACSet(list);
 	}
 
+	@POST
+	@Path("/mathml-to-amr")
+	public Response mathML2AMR(List<String> list) {
+		return skemaProxy.convertMathML2AMR(list);
+	}
 
 	@POST
 	@Path("/acset-to-latex")
