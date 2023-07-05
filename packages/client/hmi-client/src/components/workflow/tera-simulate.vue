@@ -24,16 +24,17 @@
 			class="simulate-container"
 		>
 			<simulate-chart
-				v-for="index in openedWorkflowNodeStore.numCharts"
+				v-for="(cfg, index) of node.state.chartConfigs"
 				:key="index"
 				:run-results="runResults"
-				:chart-idx="index"
+				:chartConfig="cfg"
+				@configuration-change="configurationChange(index, $event)"
 			/>
 			<Button
 				class="add-chart"
 				text
 				:outlined="true"
-				@click="openedWorkflowNodeStore.appendChart"
+				@click="addChart"
 				label="Add Chart"
 				icon="pi pi-plus"
 			></Button>
@@ -42,43 +43,29 @@
 			<div class="simulate-model">
 				<Accordion :multiple="true" :active-index="[0, 1, 2]">
 					<AccordionTab>
-						<template #header> {{ modelConfiguration?.amrConfiguration.name }} </template>
+						<template #header> {{ modelConfiguration?.configuration.name }} </template>
 						<model-diagram v-if="model" :model="model" :is-editable="false" />
-					</AccordionTab>
-					<AccordionTab>
-						<!-- use tera-model-configuration here just don't make it editable etc.
-
-							<template #header> Model configurations ({{ simConfigs.length }}) </template>
-						<DataTable v-if="node.inputs[0].value?.length" class="model-configuration" showGridlines
-							:value="simConfigs">
-							<ColumnGroup type="header">
-								<Row>
-									<Column selection-mode="multiple" headerStyle="width: 3rem" />
-									<Column v-for="(v, i) of simVars" :key="i" :header="v" />
-								</Row>
-							</ColumnGroup>
-							<Column selection-mode="multiple" headerStyle="width: 3rem" />
-							<Column v-for="(value, i) of simVars" :key="i" :field="value"> </Column>
-						</DataTable> -->
 					</AccordionTab>
 					<AccordionTab>
 						<template #header> Simulation Time Range </template>
 						<div class="sim-tspan-container">
+							<!--
 							<div class="sim-tspan-group">
 								<label for="1">Units</label>
 								<Dropdown
 									id="1"
 									class="p-inputtext-sm"
-									v-model="openedWorkflowNodeStore.tspanUnit"
+									v-model=""
 									:options="TspanUnitList"
 								/>
 							</div>
+							-->
 							<div class="sim-tspan-group">
 								<label for="2">Start date</label>
 								<InputNumber
 									id="2"
 									class="p-inputtext-sm"
-									v-model="openedWorkflowNodeStore.tspan[0]"
+									v-model="timespan.start"
 									inputId="integeronly"
 								/>
 							</div>
@@ -87,7 +74,7 @@
 								<InputNumber
 									id="3"
 									class="p-inputtext-sm"
-									v-model="openedWorkflowNodeStore.tspan[1]"
+									v-model="timespan.end"
 									inputId="integeronly"
 								/>
 							</div>
@@ -100,20 +87,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import _ from 'lodash';
+import { ref, onMounted } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 // import Column from 'primevue/column';
 // import Row from 'primevue/row';
 // import ColumnGroup from 'primevue/columngroup';
 // import DataTable from 'primevue/datatable';
-import Dropdown from 'primevue/dropdown';
+// import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import { ModelConfiguration, Model } from '@/types/Types';
-import { RunResults, TspanUnits } from '@/types/SimulateConfig';
-
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
+import { ModelConfiguration, Model, TimeSpan } from '@/types/Types';
+import { ChartConfig, RunResults } from '@/types/SimulateConfig';
 
 import { getModelConfigurationById } from '@/services/model-configurations';
 import ModelDiagram from '@/components/models/tera-model-diagram.vue';
@@ -121,9 +107,16 @@ import ModelDiagram from '@/components/models/tera-model-diagram.vue';
 import { getSimulation, getRunResult } from '@/services/models/simulation-service';
 import { getModel } from '@/services/model';
 import { csvParse } from 'd3';
+import { WorkflowNode } from '@/types/workflow';
+import { workflowEventBus } from '@/services/workflow';
 import SimulateChart from './tera-simulate-chart.vue';
+import { SimulateOperationState } from './simulate-operation';
 
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
+const props = defineProps<{
+	node: WorkflowNode;
+}>();
+
+const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 
 enum SimulateTabs {
 	input,
@@ -131,56 +124,48 @@ enum SimulateTabs {
 }
 
 const activeTab = ref(SimulateTabs.input);
-const node = ref(openedWorkflowNodeStore.node);
 
 const model = ref<Model | null>(null);
 const runResults = ref<RunResults>({});
-
 const modelConfiguration = ref<ModelConfiguration | null>(null);
-// const modelConfigId = computed<string | undefined>(() => node.value?.inputs[0].value?.[0]);
 
-const TspanUnitList = computed(() =>
-	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
-);
-
-// use modelConfiguration.value here
-
-// const simVars = computed(() => [
-// 	'Configuration Name',
-// 	...(node.value?.inputs[0].value as any[])[0].model.model.states.map((state) => state.id),
-// 	...(node.value?.inputs[0].value as any[])[0].model.model.transitions.map((state) => state.id)
-// ]);
-
-// const simConfigs = computed(
-// 	() =>
-// 		node.value?.outputs[0]?.value?.[0].runConfigs.map((runConfig: ModelConfiguration, i: number) => ({
-// 			'Configuration Name': `Config ${i + 1}`,
-// 			...runConfig.initialValues,
-// 			...runConfig.parameterValues
-// 		})) || []
+// const TspanUnitList = computed(() =>
+// 	Object.values(TspanUnits).filter((v) => Number.isNaN(Number(v)))
 // );
 
-// watch(
-// 	() => modelConfigId.value,
-// 	async () => {
-// 		if (modelConfigId.value) {
-// 			modelConfiguration.value = await getModelConfigurationById(modelConfigId.value);
-// 		}
-// 	}
-// );
+const configurationChange = (index: number, config: ChartConfig) => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs[index] = config;
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
+
+const addChart = () => {
+	const state: SimulateOperationState = _.cloneDeep(props.node.state);
+	state.chartConfigs.push(_.last(state.chartConfigs) as ChartConfig);
+
+	workflowEventBus.emitNodeStateChange({
+		workflowId: props.node.workflowId,
+		nodeId: props.node.id,
+		state
+	});
+};
 
 onMounted(async () => {
 	// FIXME: Even though the input is a list of simulation ids, we will assume just a single model for now
 	// e.g. just take the first one.
-	if (!node.value) return;
+	if (!props.node) return;
 
-	const nodeObj = node.value;
+	const nodeObj = props.node;
 
 	if (!nodeObj.outputs[0]) return;
 	const port = nodeObj.outputs[0];
 	if (!port.value) return;
-	const temp = port.value[0];
-	const simulationId = temp.runIdList[0];
+	const simulationId = port.value[0];
 
 	const simulationObj = await getSimulation(simulationId as string);
 	if (!simulationObj) return;
@@ -191,17 +176,12 @@ onMounted(async () => {
 
 	const modelConfigurationId = (simulationObj.executionPayload as any).model_config_id;
 	const modelConfigurationObj = await getModelConfigurationById(modelConfigurationId);
-
-	console.log('execution payload', executionPayload);
-	console.log('simulation', simulationObj);
-	console.log('modelConfigId', modelConfigurationId);
-	console.log('modelConfig', modelConfigurationObj);
 	const modelId = modelConfigurationObj.modelId;
 	model.value = await getModel(modelId);
 
 	// Fetch run results
 	await Promise.all(
-		temp.runIdList.map(async (runId) => {
+		port.value.map(async (runId) => {
 			const resultCsv = await getRunResult(runId, 'result.csv');
 			const csvData = csvParse(resultCsv);
 			runResults.value[runId] = csvData as any;

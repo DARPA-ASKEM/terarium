@@ -8,8 +8,8 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 	if (modelConfigId) {
 		const modelConfiguration: ModelConfiguration = await getModelConfigurationById(modelConfigId);
 		// modelColumnNames.value = modelConfig.value.configuration.model.states.map((state) => state.name);
-		const modelColumnNameOptions: string[] = modelConfiguration.configuration.S.map(
-			(state) => state.sname
+		const modelColumnNameOptions: string[] = modelConfiguration.configuration.model.states.map(
+			(state) => state.id
 		);
 		modelColumnNameOptions.push('timestep');
 		return { modelConfiguration, modelColumnNameOptions };

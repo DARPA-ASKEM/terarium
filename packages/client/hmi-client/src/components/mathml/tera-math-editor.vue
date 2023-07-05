@@ -29,11 +29,7 @@
 			</div>
 		</section>
 		<section v-if="mathMode === MathEditorModes.LIVE">
-			<math-field
-				class="mathlive-equation"
-				ref="mathLiveField"
-				virtual-keyboard-mode="false"
-				:disabled="!isEditingEq"
+			<math-field class="mathlive-equation" ref="mathLiveField" :disabled="!isEditingEq"
 				><slot v-if="mathMode === MathEditorModes.LIVE"></slot
 			></math-field>
 		</section>
@@ -119,6 +115,10 @@ onMounted(() => {
 
 onUpdated(() => {
 	if (mathMode.value === MathEditorModes.LIVE) {
+		// set the keyboard when user clicks on keyboard icon.
+		mathLiveField.value?.setOptions({ virtualKeyboardMode: 'manual' });
+		// show keyboard on focus
+		// mathLiveField.value?.setOptions({ virtualKeyboardMode: 'onfocus' });
 		mathLiveField.value?.setValue(props.latexEquation);
 	} else if (mathMode.value === MathEditorModes.KATEX && katexMathElement.value) {
 		katex.render(addTagToEquations(katexEquation.value, `\\notag`), katexMathElement.value, {
