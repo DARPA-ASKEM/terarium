@@ -1,4 +1,4 @@
-package software.uncharted.terarium.hmiserver.models.dataservice.modelparts;
+package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 import java.util.List;
@@ -20,8 +20,8 @@ public class Observable {
 
     @TSOptional
     private String expression;
-    
+
     @TSOptional
     @JsonAlias("expression_mathml")
-    private String expressionMathml;
+    private String expression_mathml;
 }

@@ -11,6 +11,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelStub;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelFramework;
 import software.uncharted.terarium.hmiserver.models.dataservice.ModelOperationCopy;
+import software.uncharted.terarium.hmiserver.models.dataservice.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.proxies.dataservice.ModelProxy;
 import software.uncharted.terarium.hmiserver.proxies.mira.DKGProxy;
 
@@ -184,5 +185,17 @@ public class ModelResource {
 		@PathParam("id") final String id,
 		final ModelOperationCopy modelOperationCopy) {
 		return proxy.copyModel(modelOperationCopy);
+	}
+
+	@GET
+	@Path("/{id}/model_configurations")
+	public Response getModelConfigurations(
+			@PathParam("id") String id
+	) {
+		final List<ModelConfiguration> configs = proxy.getModelConfigurations(id);
+		return Response
+			.status(Response.Status.OK)
+			.entity(configs)
+			.build();
 	}
 }

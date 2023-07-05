@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import { Model } from '@/types/Types';
+import { Model, ModelConfiguration } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import * as ProjectService from '@/services/project';
 import { ProjectAssetTypes } from '@/types/Project';
@@ -74,4 +74,9 @@ export async function addModelToProject(
 	} else {
 		logger.warn('Could not add new model to project.');
 	}
+}
+
+export async function getModelConfigurations(modelId: string): Promise<ModelConfiguration[] | []> {
+	const response = await API.get(`/models/${modelId}/model_configurations`);
+	return response?.data ?? [];
 }

@@ -412,7 +412,7 @@
 				<AccordionTab v-if="model" header="Model configurations">
 					<tera-model-configuration
 						v-if="modelConfigurations"
-						:model-configurations="modelConfigurations"
+						:model="model"
 						:is-editable="props.isEditable"
 					/>
 				</AccordionTab>
@@ -463,9 +463,7 @@ import { parseIGraph2PetriNet } from '@/petrinet/petrinet-service';
 import { RouteName } from '@/router/routes';
 import { getCuriesEntities } from '@/services/concept';
 import { createModel, addModelToProject, getModel } from '@/services/model';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import { getRelatedArtifacts } from '@/services/provenance';
-import { useOpenedWorkflowNodeStore } from '@/stores/opened-workflow-node';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
@@ -508,7 +506,6 @@ const openValueConfig = ref(false);
 const modelView = ref(ModelView.DESCRIPTION);
 const resources = useResourcesStore();
 const router = useRouter();
-const openedWorkflowNodeStore = useOpenedWorkflowNodeStore();
 
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
@@ -609,62 +606,14 @@ const fetchRelatedTerariumArtifacts = async () => {
 	}
 };
 
-async function getModelConfigurations() {
-	if (openedWorkflowNodeStore.node) {
-		const modelConfigIds = openedWorkflowNodeStore.node.outputs;
-		modelConfigurations.value = [];
-
-		// FIXME: If you keep the drilldown open while switching from one model node to the next you'll see a duplicate of the previous row
-		// It's a duplicate of a config that belongs to that node as they both have the same config id
-		// Also this function seems to run twice and a bunch of petrinet service errors show up (when you switch nodes and drilldown is open)
-		// console.log(openedWorkflowNodeStore.node.outputs)
-
-		if (modelConfigIds) {
-			for (let i = 0; i < modelConfigIds.length; i++) {
-				const modelConfigId = modelConfigIds[i].value?.[0];
-				// Don't need to eslint-disable no await in for loop once we are able to pass in a list of ids
-				// eslint-disable-next-line
-				const response = await getModelConfigurationById(modelConfigId);
-				modelConfigurations.value.push(response);
-			}
-			// FIXME: Why is this called when switching from one drilldown panel to a different type (there is already a guard checking for operation type in the watcher that calls this function)
-			if (modelConfigurations.value[0].modelId) {
-				model.value = await getModel(modelConfigurations.value[0].modelId);
-				fetchRelatedTerariumArtifacts();
-			}
-		}
-	}
-}
-
-watch(
-	() => [openedWorkflowNodeStore.node?.outputs],
-	() => {
-		getModelConfigurations();
-	},
-	{ deep: true }
-);
+// TODO: Get model configurations
 
 watch(
 	() => [props.assetId],
 	async () => {
-		if (openedWorkflowNodeStore.node?.operationType === 'ModelOperation') {
-			getModelConfigurations();
-		} else if (props.assetId !== '') {
+		if (props.assetId !== '') {
 			model.value = await getModel(props.assetId);
 			fetchRelatedTerariumArtifacts();
-
-			// TODO: Display model config in model page (non-drilldown)
-			// When not in drilldown just show defualt config for now???
-			// if (model.value) {
-			// 	modelConfigurations.value.push({
-			// 		id: 'default',
-			// 		name: 'Default',
-			// 		description: 'Default',
-			// 		modelId: model.value.id,
-			// 		amrConfiguration: model.value
-			//		// missing S, T, I, O configuration
-			// 	});
-			// }
 		} else {
 			model.value = null;
 		}
