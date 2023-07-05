@@ -505,7 +505,9 @@ const newPetri = ref();
  */
 const optionsMenu = ref();
 const optionsMenuItems = ref([
-	{ icon: 'pi pi-clone', label: 'Duplicate Model', command: duplicateModel }
+	// { icon: 'pi pi-pencil', label: 'Rename', command: renameModel },
+	{ icon: 'pi pi-clone', label: 'Make a copy', command: duplicateModel }
+	// ,{ icon: 'pi pi-trash', label: 'Remove', command: deleteModel }
 ]);
 
 const toggleOptionsMenu = (event) => {
