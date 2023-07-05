@@ -1,7 +1,7 @@
 <template>
 	<main @scroll="updateScrollPosition">
 		<slot name="nav" />
-		<header v-if="shrinkHeader" class="shrinked">
+		<header v-if="shrinkHeader || showStickyHeader" class="shrinked">
 			<h4 v-html="name" />
 			<aside class="spread-out">
 				<slot name="edit-buttons" />
@@ -13,13 +13,16 @@
 				/>
 			</aside>
 		</header>
-		<header id="asset-top" ref="headerRef">
-			<template v-if="!hideHeader">
+		<template v-if="!hideHeader">
+			<header id="asset-top" ref="headerRef">
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
 					<div v-if="overline" class="vertically-center">
 						<span class="overline">{{ overline }}</span>
 						<slot name="edit-buttons" />
+					</div>
+					<div>
+						<slot name="info-bar" />
 					</div>
 
 					<!--For naming asset such as model or code file-->
@@ -54,8 +57,8 @@
 						@click="emit('close-preview')"
 					/>
 				</aside>
-			</template>
-		</header>
+			</header>
+		</template>
 		<section :style="stretchContentStyle">
 			<slot name="default" />
 		</section>
@@ -75,6 +78,7 @@ const props = defineProps<{
 	doi?: string;
 	publisher?: string;
 	hideHeader?: boolean;
+	showStickyHeader?: boolean;
 	stretchContent?: boolean;
 }>();
 

@@ -10,6 +10,7 @@
 		@close-preview="emit('close-preview')"
 		:hide-header="documentView === DocumentView.PDF"
 		:stretch-content="documentView === DocumentView.PDF"
+		:show-sticky-header="documentView === DocumentView.PDF"
 	>
 		<template #bottom-header-buttons>
 			<Button
@@ -40,12 +41,14 @@
 				/>
 			</span>
 		</template>
-		<div class="container">
-			<Message class="inline-message" icon="none"
-				>This page contains extractions from the document. Use the content switcher above to see the
-				original PDF if it is available.</Message
-			>
-		</div>
+		<template #info-bar>
+			<div class="container">
+				<Message class="inline-message" icon="none"
+					>This page contains extractions from the document. Use the content switcher above to see
+					the original PDF if it is available.</Message
+				>
+			</div>
+		</template>
 		<Accordion
 			v-if="documentView === DocumentView.EXRACTIONS"
 			:multiple="true"
