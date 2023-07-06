@@ -2,6 +2,8 @@ import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { pointOnPath } from '@/utils/svg';
+import { Model } from '@/types/Types';
+import * as petrinetService from '@/model-representation/petrinet/petrinet-service';
 
 export interface NodeData {
 	type: string;
@@ -461,8 +463,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	addNode(type: string, name: string, pos: { x: number; y: number }) {
 		// FIXME: hardwired sizing
 		const size = type === NodeType.State ? 60 : 30;
+		const id = `s-${this.graph.nodes.length + 1}`;
 		this.graph.nodes.push({
-			id: `s-${this.graph.nodes.length + 1}`,
+			id,
 			label: name,
 			x: pos.x,
 			y: pos.y,
@@ -474,6 +477,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			}
 		});
 
+		petrinetService.addNode(this.graph.amr as Model, id, name);
 		this.render();
 	}
 

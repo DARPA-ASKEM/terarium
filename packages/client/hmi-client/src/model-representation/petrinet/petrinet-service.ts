@@ -138,3 +138,36 @@ export const convertToIGraph = (amr: Model) => {
 
 // FIXME AMR todo
 export const convertToAMRModel = (g: IGraph<NodeData, EdgeData>) => g.amr;
+
+export const addState = (amr: Model, id: string, name: string) => {
+	amr.model.states.push({
+		id,
+		name,
+		description: ''
+	});
+	amr.semantics?.ode.initials?.push({
+		target: id,
+		expression: '',
+		expression_mathml: ''
+	});
+};
+
+export const addTransition = (amr: Model, id: string, name: string) => {
+	amr.model.transitions.push({
+		id,
+		input: [],
+		output: [],
+		properties: {
+			name,
+			description: ''
+		}
+	});
+	amr.semantics?.ode.rates?.push({
+		target: id,
+		expression: '',
+		expression_mathml: ''
+	});
+};
+
+// export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
+// };
