@@ -138,8 +138,6 @@ const isEditingEQ = ref<boolean>(false);
 const newModelName = ref('New Model');
 const newPetri = ref();
 
-const selectedVariable = ref('');
-
 const equationLatex = ref<string>('');
 const equationLatexOriginal = ref<string>('');
 const equationLatexNew = ref<string>('');
@@ -195,24 +193,6 @@ const mathEditorSelected = computed(() => {
 	}
 	return '';
 });
-
-const onVariableSelected = (variable: string) => {
-	if (variable) {
-		if (variable === selectedVariable.value) {
-			selectedVariable.value = '';
-			equationLatex.value = equationLatexOriginal.value;
-		} else {
-			selectedVariable.value = variable;
-			equationLatex.value = equationLatexOriginal.value.replaceAll(
-				selectedVariable.value,
-				String.raw`{\color{red}${variable}}`
-			);
-		}
-		renderer?.toggoleNodeSelectionByLabel(variable);
-	} else {
-		equationLatex.value = equationLatexOriginal.value;
-	}
-};
 
 const setNewLatexFormula = (formulaString: string) => {
 	equationLatexNew.value = formulaString;
@@ -309,7 +289,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-circle',
 		command: () => {
 			if (renderer) {
-				renderer.addNode(NodeType.State, '?', { x: eventX, y: eventY });
+				renderer.addNode(NodeType.State, 'state', { x: eventX, y: eventY });
 			}
 		}
 	},
@@ -318,7 +298,7 @@ const contextMenuItems = ref([
 		icon: 'pi pi-fw pi-stop',
 		command: () => {
 			if (renderer) {
-				renderer.addNode(NodeType.Transition, '?', { x: eventX, y: eventY });
+				renderer.addNode(NodeType.Transition, 'transition', { x: eventX, y: eventY });
 			}
 		}
 	}
@@ -354,17 +334,12 @@ watch(
 
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
-
-			// de-select node if selection exists
-			if (selectedVariable.value) {
-				onVariableSelected(selectedVariable.value);
-			}
 		});
 
-		renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-			// Note: do not change the renderer's visuals, this is done internally
-			onVariableSelected(d.label);
-		});
+		// renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
+		// 	// Note: do not change the renderer's visuals, this is done internally
+		// 	onVariableSelected(d.label);
+		// });
 
 		// Render graph
 		await renderer?.setData(graphData);
@@ -469,9 +444,6 @@ const toggleEditMode = () => {
 	if (!isEditing.value && props.model && renderer) {
 		emit('update-model-content', renderer.graph);
 		updateModel(props.model);
-	} else if (isEditing.value && selectedVariable.value) {
-		// de-select node if selection exists
-		onVariableSelected(selectedVariable.value);
 	}
 };
 
