@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import * as d3 from 'd3';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
@@ -203,7 +204,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', 'none')
 			.style('stroke', EDGE_COLOR)
 			.style('stroke-opacity', EDGE_OPACITY)
-			.style('stroke-width', 1)
+			.style('stroke-width', 3)
 			.attr('marker-end', 'url(#arrowhead)');
 
 		this.updateMultiEdgeLabels();
@@ -530,5 +531,25 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			});
 		}
 		this.render();
+
+		const amr = this.graph.amr as Model;
+		petrinetService.addEdge(amr, source.id, target.id);
+	}
+
+	removeEdge(sourceId: string, targetId: string) {
+		const existingEdge = this.graph.edges.find(
+			(edge) => edge.source === sourceId && edge.target === targetId
+		);
+		if (existingEdge && existingEdge.data) {
+			existingEdge.data.numEdges--;
+		} else {
+			this.graph.edges = this.graph.edges.filter(
+				(d) => d.source === sourceId && d.target === targetId
+			);
+		}
+		this.render();
+
+		const amr = this.graph.amr as Model;
+		petrinetService.removeEdge(amr, sourceId, targetId);
 	}
 }
