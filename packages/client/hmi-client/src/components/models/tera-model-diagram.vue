@@ -107,7 +107,6 @@ import { updateModel } from '@/services/model';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-// import { ITypedModel } from '@/types/Model';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
@@ -217,7 +216,6 @@ watch(
 		if (props.model) {
 			const data = await petriToLatex(convertAMRToACSet(props.model));
 
-			console.log('watcher', data);
 			if (data) {
 				updateLatexFormula(data);
 			}
@@ -335,11 +333,6 @@ watch(
 		renderer.on('background-click', () => {
 			if (menu.value) menu.value.hide();
 		});
-
-		// renderer.on('node-click', async (_evtName, _evt, _e, _renderer, d) => {
-		// 	// Note: do not change the renderer's visuals, this is done internally
-		// 	onVariableSelected(d.label);
-		// });
 
 		// Render graph
 		await renderer?.setData(graphData);

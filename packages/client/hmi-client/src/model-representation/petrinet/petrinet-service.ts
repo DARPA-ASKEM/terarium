@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { IGraph } from '@graph-scaffolder/types';
 import { PetriNetModel, Model } from '@/types/Types';
 import { PetriNet } from '@/petrinet/petrinet-service';
@@ -167,6 +168,44 @@ export const addTransition = (amr: Model, id: string, name: string) => {
 		expression: '',
 		expression_mathml: ''
 	});
+};
+
+export const removeState = (amr: Model, id: string) => {
+	const model = amr.model as PetriNetModel;
+
+	// Remove from AMR topology
+	_.remove(model.states, (d) => d.id === id);
+	model.transitions.forEach((t) => {
+		_.remove(t.input, (d) => d === id);
+		_.remove(t.output, (d) => d === id);
+	});
+
+	// Remove from semantics
+	if (amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+		if (ode.initials) {
+			_.remove(ode.initials, (d) => d.target === id);
+		}
+	}
+};
+
+export const removeTransition = (amr: Model, id: string) => {
+	const model = amr.model as PetriNetModel;
+
+	// Remove from AMR topology
+	_.remove(model.states, (d) => d.id === id);
+	model.transitions.forEach((t) => {
+		_.remove(t.input, (d) => d === id);
+		_.remove(t.output, (d) => d === id);
+	});
+
+	// Remove from semantics
+	if (amr.semantics?.ode) {
+		const ode = amr.semantics.ode;
+		if (ode.rates) {
+			_.remove(ode.rates, (d) => d.target === id);
+		}
+	}
 };
 
 // export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
