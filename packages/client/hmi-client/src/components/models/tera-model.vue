@@ -386,11 +386,7 @@
 					/>
 				</AccordionTab>
 				<AccordionTab v-if="model" header="Model configurations">
-					<tera-model-configuration
-						v-if="modelConfigurations"
-						:model="model"
-						:is-editable="props.isEditable"
-					/>
+					<tera-model-configuration :model="model" :is-editable="props.isEditable" />
 				</AccordionTab>
 				<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 					<DataTable :value="relatedTerariumModels">
@@ -442,7 +438,7 @@ import { getRelatedArtifacts } from '@/services/provenance';
 import useResourcesStore from '@/stores/resources';
 import { ResultType } from '@/types/common';
 import { IProject, ProjectAssetTypes } from '@/types/Project';
-import { Model, Document, Dataset, ProvenanceType, ModelConfiguration } from '@/types/Types';
+import { Model, Document, Dataset, ProvenanceType } from '@/types/Types';
 import { isModel, isDataset, isDocument } from '@/utils/data-util';
 import * as textUtil from '@/utils/text';
 import TeraModelDiagram from './tera-model-diagram.vue';
@@ -485,8 +481,6 @@ const router = useRouter();
 const relatedTerariumArtifacts = ref<ResultType[]>([]);
 
 const model = ref<Model | null>(null);
-
-const modelConfigurations = ref<ModelConfiguration[]>([]);
 
 const newModelName = ref('New Model');
 const newDescription = ref<string | undefined>('');
