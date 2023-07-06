@@ -21,9 +21,7 @@
 						<span class="overline">{{ overline }}</span>
 						<slot name="edit-buttons" />
 					</div>
-					<div>
-						<slot name="info-bar" />
-					</div>
+					<slot name="info-bar" />
 
 					<!--For naming asset such as model or code file-->
 					<div class="vertically-center">
