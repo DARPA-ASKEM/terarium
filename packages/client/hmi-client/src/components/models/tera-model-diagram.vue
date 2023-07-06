@@ -91,7 +91,12 @@ import { remove, isEmpty, pickBy, isArray } from 'lodash';
 import { IGraph } from '@graph-scaffolder/index';
 import { watch, ref, computed, onMounted, onUnmounted, onUpdated } from 'vue';
 import { runDagreLayout } from '@/services/graph';
-import { PetrinetRenderer, NodeData, EdgeData, NodeType } from '@/petrinet/petrinet-renderer';
+import {
+	PetrinetRenderer,
+	NodeData,
+	EdgeData,
+	NodeType
+} from '@/model-representation/petrinet/petrinet-renderer';
 import { mathmlToPetri, petriToLatex } from '@/petrinet/petrinet-service';
 import {
 	convertAMRToACSet,
