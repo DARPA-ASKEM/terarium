@@ -60,7 +60,7 @@
 							</span>
 							<InputText
 								v-else
-								:value="modelConfigs[i].name"
+								v-model.lazy="modelConfigs[i].name"
 								autofocus
 								@focusout="cellEditStates[i].name = false"
 								@keyup.enter="
@@ -85,7 +85,7 @@
 							</section>
 							<InputText
 								v-else
-								v-model="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
+								v-model.lazy="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
 								autofocus
 								@focusout="cellEditStates[i].rates[j] = false"
 								@keyup.enter="
@@ -109,7 +109,7 @@
 							</section>
 							<InputText
 								v-else
-								v-model="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
+								v-model.lazy="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
 								autofocus
 								@focusout="cellEditStates[i].initials[j] = false"
 								@keyup.enter="
@@ -133,7 +133,7 @@
 							</section>
 							<InputText
 								v-else
-								v-model="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
+								v-model.lazy="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
 								autofocus
 								@focusout="cellEditStates[i].parameters[j] = false"
 								@keyup.enter="
