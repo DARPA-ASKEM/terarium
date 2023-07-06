@@ -174,7 +174,7 @@ export const removeState = (amr: Model, id: string) => {
 	const model = amr.model as PetriNetModel;
 
 	// Remove from AMR topology
-	_.remove(model.states, (d) => d.id === id);
+	model.states = model.states.filter((d) => d.id !== id);
 	model.transitions.forEach((t) => {
 		_.remove(t.input, (d) => d === id);
 		_.remove(t.output, (d) => d === id);
@@ -208,5 +208,50 @@ export const removeTransition = (amr: Model, id: string) => {
 	}
 };
 
-// export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
-// };
+export const addEdge = (amr: Model, sourceId: string, targetId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === sourceId);
+	if (state) {
+		// if source is a state then the target is a transition
+		const transition = model.transitions.find((d) => d.id === targetId);
+		if (transition) {
+			transition.input.push(sourceId);
+		}
+	} else {
+		// if source is a transition then the target is a state
+		const transition = model.transitions.find((d) => d.id === sourceId);
+		if (transition) {
+			transition.output.push(targetId);
+		}
+	}
+};
+
+export const removeEdge = (amr: Model, sourceId: string, targetId: string) => {
+	const model = amr.model as PetriNetModel;
+	const state = model.states.find((d) => d.id === sourceId);
+	if (state) {
+		const transition = model.transitions.find((d) => d.id === targetId);
+		if (!transition) return;
+
+		let c = 0;
+		transition.input = transition.input.filter((id) => {
+			if (c === 0 && id === sourceId) {
+				c++;
+				return true;
+			}
+			return false;
+		});
+	} else {
+		const transition = model.transitions.find((d) => d.id === sourceId);
+		if (!transition) return;
+
+		let c = 0;
+		transition.output = transition.output.filter((id) => {
+			if (c === 0 && id === targetId) {
+				c++;
+				return true;
+			}
+			return false;
+		});
+	}
+};
