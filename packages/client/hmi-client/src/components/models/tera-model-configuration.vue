@@ -61,7 +61,7 @@
 							<InputText
 								v-else
 								v-model.lazy="modelConfigs[i].name"
-								autofocus
+								v-focus
 								@focusout="cellEditStates[i].name = false"
 								@keyup.enter="
 									cellEditStates[i].name = false;
@@ -86,7 +86,7 @@
 							<InputText
 								v-else
 								v-model.lazy="modelConfigs[i].configuration.semantics.ode.rates[j].expression"
-								autofocus
+								v-focus
 								@focusout="cellEditStates[i].rates[j] = false"
 								@keyup.enter="
 									cellEditStates[i].rates[j] = false;
@@ -110,7 +110,7 @@
 							<InputText
 								v-else
 								v-model.lazy="modelConfigs[i].configuration.semantics.ode.initials[j].expression"
-								autofocus
+								v-focus
 								@focusout="cellEditStates[i].initials[j] = false"
 								@keyup.enter="
 									cellEditStates[i].initials[j] = false;
@@ -134,7 +134,7 @@
 							<InputText
 								v-else
 								v-model.lazy="modelConfigs[i].configuration.semantics.ode.parameters[j].value"
-								autofocus
+								v-focus
 								@focusout="cellEditStates[i].parameters[j] = false"
 								@keyup.enter="
 									cellEditStates[i].parameters[j] = false;
@@ -175,7 +175,7 @@
 					<TabPanel v-for="(tab, i) in extractions" :key="tab" :header="tab">
 						<div>
 							<label for="name">Name</label>
-							<InputText class="p-inputtext-sm" v-model="extractions[i]" autofocus />
+							<InputText class="p-inputtext-sm" v-model="extractions[i]" />
 						</div>
 						<div>
 							<label for="name">Source</label>
@@ -246,6 +246,11 @@ const selectedParameters = ref<string[]>([]);
 const configurations = computed<Model[]>(
 	() => modelConfigs.value?.map((m) => m.configuration) ?? []
 );
+
+// Makes cell inputs focus once they appear
+const vFocus = {
+	mounted: (el) => el.focus()
+};
 
 // Determines names of headers and how many columns they'll span eg. initials, parameters, observables
 const tableHeaders = computed<{ name: string; colspan: number }[]>(() => {
