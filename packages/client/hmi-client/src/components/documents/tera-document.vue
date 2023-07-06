@@ -8,7 +8,7 @@
 		:doi="highlightSearchTerms(doi)"
 		:publisher="highlightSearchTerms(doc.publisher)"
 		@close-preview="emit('close-preview')"
-		:hide-header="documentView === DocumentView.PDF"
+		:hide-intro="documentView === DocumentView.PDF"
 		:stretch-content="documentView === DocumentView.PDF"
 		:show-sticky-header="documentView === DocumentView.PDF"
 	>

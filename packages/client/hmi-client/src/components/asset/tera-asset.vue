@@ -13,7 +13,7 @@
 				/>
 			</aside>
 		</header>
-		<template v-if="!hideHeader">
+		<template v-if="!hideIntro">
 			<header id="asset-top" ref="headerRef">
 				<section>
 					<!-- put the buttons above the title if there is an overline -->
@@ -75,7 +75,7 @@ const props = defineProps<{
 	authors?: string;
 	doi?: string;
 	publisher?: string;
-	hideHeader?: boolean;
+	hideIntro?: boolean;
 	showStickyHeader?: boolean;
 	stretchContent?: boolean;
 }>();
